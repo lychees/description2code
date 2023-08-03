@@ -1,0 +1,108 @@
+#include <iostream>
+#include <cstdio>
+#include <climits>
+#define in(s) scanf("%lld",&s)
+using namespace std;
+// A utility function to find the vertex with minimum distance value, from
+// the set of vertices not yet included in shortest path tree
+long long int V,**road,**rail,**road2,**rail2;
+long long int minDistance(long long int dist[], bool sptSet[])
+{
+   // Initialize min value
+   long long int mini = LONG_LONG_MAX, min_index;
+
+   for (long long int v = 0; v < V; v++)
+     if (sptSet[v] == false && dist[v] <= mini){
+         mini = dist[v];
+         min_index = v;
+     }
+
+   return min_index;
+}
+
+// Funtion that implements Dijkstra's single source shortest path algorithm
+// for a graph represented using adjacency matrix representation
+long long int* dijkstra(long long int** graph,long long int src,long long int dist[])
+{
+     bool sptSet[V]; // sptSet[i] will true if vertex i is included in shortest
+                     // path tree or shortest distance from src to i is finalized
+
+     // Initialize all distances as INFINITE and stpSet[] as false
+     for (long long int i = 0; i < V; i++){
+        dist[i] = LONG_LONG_MAX;
+        sptSet[i] = false;
+     }
+
+     // Distance of source vertex from itself is always 0
+     dist[src] = 0;
+
+     // Find shortest path for all vertices
+     for (long long int count = 0; count < V-1; count++)
+     {
+       // Pick the minimum distance vertex from the set of vertices not
+       // yet processed. u is always equal to src in first iteration.
+       long long int u = minDistance(dist, sptSet);
+
+       // Mark the picked vertex as processed
+       sptSet[u] = true;
+
+       // Update dist value of the adjacent vertices of the picked vertex.
+       for (long long int v = 0; v < V; v++)
+
+         // Update dist[v] only if is not in sptSet, there is an edge from
+         // u to v, and total weight of path from src to  v through u is
+         // smaller than current value of dist[v]
+         if (!sptSet[v] && graph[u][v]!=LONG_LONG_MAX && u!=v && dist[u] != LONG_LONG_MAX
+                                       && dist[u]+graph[u][v] < dist[v])
+            dist[v] = dist[u] + graph[u][v];
+     }
+     return dist;
+}
+// driver program to test above function
+int main()
+{
+    long long int n,s,e,i,d,j;
+    long long int *dist1,*dist2,*dist3,*dist4;
+    cin>>n;
+    V=n;
+    dist1 =new long long int [V];
+    dist2 =new long long int [V];
+    dist3 =new long long int [V];
+    dist4=new long long int [V];
+    rail=new long long int* [V];
+    road=new long long int* [V];
+    rail2=new long long int* [V];
+    road2=new long long int* [V];
+    for(i=0;i<V;i++){
+        road[i]=new long long int [V];
+        rail[i]=new long long int [V];
+        road2[i]=new long long int [V];
+        rail2[i]=new long long int [V];
+    }
+    for(i=0;i<n;i++)
+    for(j=0;j<n;j++){
+        in(road[i][j]);
+        road2[j][i]=road[i][j];
+    }
+    for(i=0;i<n;i++)
+    for(j=0;j<n;j++){
+        in(rail[i][j]);
+        rail2[j][i]=rail[i][j];
+    }
+    cin>>s>>e;
+    s--;
+    e--;
+    d=LONG_LONG_MAX;
+    dist1=dijkstra(road,s,dist1);
+    dist2=dijkstra(rail,s,dist2);
+    dist3=dijkstra(road2,e,dist3);
+    dist4=dijkstra(rail2,e,dist4);
+    for(i=0;i<n;i++){
+        if(i!=s && i!=e){
+           d=min(d,dist1[i]+dist4[i]);
+           d=min(d,dist2[i]+dist3[i]);
+        }
+    }
+    printf("%lld",d);
+ return 0;
+}

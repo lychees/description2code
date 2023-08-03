@@ -1,0 +1,207 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+template <int MOD> struct IntMod {
+  typedef long long ll;
+  int val;
+
+  IntMod()
+      : val(0) {
+  }
+
+  IntMod(ll x)
+      : val((int) (x % MOD)) {
+    if (val < 0) val += MOD;
+  }
+
+  IntMod& operator+=(const IntMod & x) {
+    val += x.val;
+    if (val >= MOD) val -= MOD;
+    return *this;
+  }
+
+  IntMod operator+(const IntMod & x) const {
+    IntMod res(*this);
+    return res += x;
+  }
+
+  IntMod& operator-=(const IntMod & x) {
+    val -= x.val;
+    if (val < 0) val += MOD;
+    return *this;
+  }
+
+  IntMod operator-(const IntMod & x) const {
+    IntMod res(*this);
+    return res -= x;
+  }
+
+  IntMod& operator*=(const IntMod & x) {
+    val = (int) ((ll) (val) * x.val % MOD);
+    return *this;
+  }
+
+  IntMod operator*(const IntMod & x) const {
+    IntMod res(*this);
+    return res *= x;
+  }
+
+  IntMod& operator/=(const IntMod & x) {
+    return *this *= x.inv();
+  }
+
+  IntMod operator/(const IntMod & x) const {
+    IntMod res(*this);
+    return res /= x;
+  }
+
+  IntMod power(long long expon) const {
+    IntMod ans, temp(*this);
+    ans.val = 1;
+    for (; expon > 0; expon >>= 1) {
+      if (expon & 1) ans *= temp;
+      temp *= temp;
+    }
+    return ans;
+  }
+
+  IntMod inv() const {
+    return power(MOD - 2);
+  }
+
+  friend ostream& operator<<(ostream& out, const IntMod & x) {
+    return out << x.val;
+  }
+};
+typedef long long ll;
+struct RowOp {
+  bool is_swap;
+  ll r1, r2, fac;
+  //swap r1, r2
+  //r2 -= fac * f1
+};
+static constexpr ll MODS[3] = { 2, 5, 719 };
+
+// returns index first zero row
+template <ll MOD> ll gauss(const vector<vector<ll>>& inp, vector<RowOp>& ops) {
+  typedef IntMod<MOD> Int;
+  const ll N = inp.size();
+  vector<vector<Int>> arr(N, vector<Int>(N));
+  for (ll r = 0; r < N; ++r) {
+    for (ll c = 0; c < N; ++c) {
+      arr[r][c] = inp[r][c];
+    }
+  }
+  ll kr = 0;
+  for (ll kc = 0; kc < N; ++kc) {
+    ll piv = kr;
+    while (piv < N && arr[piv][kc].val == 0) {
+      ++piv;
+    }
+    if (piv == N) {
+      continue;
+    }
+    ops.push_back( { true, kr, piv, 0 });
+    swap(arr[kr], arr[piv]);
+    for (ll r = kr + 1; r < N; ++r) {
+      const Int fac = arr[r][kc] / arr[kr][kc];
+      ops.push_back( { false, kr, r, (ll) fac.val });
+      for (ll c = kc; c < N; ++c) {
+        arr[r][c] -= arr[kr][c] * fac;
+      }
+    }
+    ++kr;
+  }
+  return kr;
+}
+
+template <ll MOD> bool check(const ll zero_pos, const vector<RowOp>& row_ops,
+    const vector<ll>& yvals) {
+  typedef IntMod<MOD> Int;
+  const ll N = yvals.size();
+  vector<Int> y(N);
+  for (ll i = 0; i < N; ++i) {
+    y[i] = yvals[i];
+  }
+  for (const auto& op : row_ops) {
+    if (op.is_swap) {
+      swap(y[op.r1], y[op.r2]);
+    } else {
+      y[op.r2] -= y[op.r1] * op.fac;
+    }
+  }
+  for (ll i = zero_pos; i < N; ++i) {
+    if (y[i].val != 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void solve(ll test_num) {
+  (void) test_num;
+  ll N, Q;
+  cin >> N >> Q;
+
+  vector<vector<ll>> arr;
+  arr.resize(N, vector<ll>(N));
+  for (int i = 0; i < N; ++i) {
+    for (int j = 0; j < N; ++j) {
+      cin >> arr[i][j];
+    }
+  }
+  vector<RowOp> row_ops[3];
+  ll zero[3];
+  zero[0] = gauss<MODS[0]>(arr, row_ops[0]);
+  zero[1] = gauss<MODS[1]>(arr, row_ops[1]);
+  zero[2] = gauss<MODS[2]>(arr, row_ops[2]);
+  vector<ll> yvals(N);
+  for (ll qq = 0; qq < Q; ++qq) {
+    for (ll& v : yvals) {
+      cin >> v;
+    }
+    const bool res = check<MODS[0]>(zero[0], row_ops[0], yvals)
+        && check<MODS[1]>(zero[1], row_ops[1], yvals) && check<MODS[2]>(zero[2], row_ops[2], yvals);
+    if (res) {
+      cout << "Yes\n";
+    } else {
+      cout << "No\n";
+    }
+  }
+}
+
+void solve() {
+#ifdef AZN
+//make_case();
+  double start_t = (double) clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr);
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+  ll T = 1;
+//  scanf("%d", &T);
+//  cin >> T;
+  for (ll t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << fixed << setprecision(3) << "Took: " << (((double) clock() - start_t) / CLOCKS_PER_SEC)
+      << endl;
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

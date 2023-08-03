@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+#define MAX 100001
+#define left(u) 2*u+1
+#define right(u) 2*u+2
+using namespace std;
+typedef long long int ll;
+
+ll a[MAX];
+
+ll tree[MAX*5];
+ll tree2[MAX*5];
+
+inline void init(int l, int r, int idx){
+	int mid = (l+r)/2;
+	if(l > r) return;
+
+	if(l == r){
+		tree[idx] = a[l]*(l+1);
+		tree2[idx] = a[l];
+		return;
+	}
+
+	init(l,mid,left(idx));
+	init(mid+1,r,right(idx));
+
+	tree[idx] = tree[left(idx)] + tree[right(idx)];
+    tree2[idx] = tree2[left(idx)] + tree2[right(idx)];
+}
+
+inline ll querySq(int s, int e, int qs, int qe, int idx){
+
+    if( s > e || s > qe || e < qs ) return 0LL;
+
+    if( qs <= s && qe >= e ){
+        return tree[idx];
+    }
+
+
+    int mid = (s+e)/2;
+    ll s1 = querySq(s,mid,qs,qe,idx*2+1);
+    ll s2 = querySq(mid+1,e,qs,qe,idx*2+2);
+    return s1+s2;
+}
+
+inline ll query(int s, int e, int qs, int qe, int idx){
+
+    if( s > e || s > qe || e < qs ) return 0LL;
+
+    if( qs <= s && qe >= e ){
+        return tree2[idx];
+    }
+
+
+    int mid = (s+e)/2;
+    ll s1 = query(s,mid,qs,qe,idx*2+1);
+    ll s2 = query(mid+1,e,qs,qe,idx*2+2);
+    return s1+s2;
+}
+
+inline void update(int s, int e, int qidx, ll value, int idx){
+
+    if( s > e || s > qidx || e < qidx ) return ;
+
+    if( qidx <= s && qidx >= e ){
+        tree2[idx] += value;
+        tree[idx] = (tree[idx]/(qidx+1) + value)*(qidx+1);
+//        cout << "returned" << endl;
+        return;
+    }
+
+
+    int mid = (s+e)/2;
+    update(s,mid,qidx,value,idx*2+1);
+    update(mid+1,e,qidx,value,idx*2+2);
+
+    tree[idx] = tree[left(idx)] + tree[right(idx)];
+    tree2[idx] = tree2[left(idx)] + tree2[right(idx)];
+}
+
+int main(){
+//    freopen("in.txt","r",stdin);
+    int n,q;
+    cin >> n >> q;
+    for(int i=0; i<n; i++)
+    	cin >> a[i];
+
+    init(0,n-1,0);
+    ll u,k,l,r,s;
+    while(q--){
+        cin >> u ;
+        if(u == 1){
+            cin >> k >> l >> r;
+
+            if( k < l ){
+                cout << (querySq(0,n-1,l-1,r-1,0) - k*query(0,n-1,l-1,r-1,0)) << endl;
+            }else if( k > r ){
+                cout << (k*query(0,n-1,l-1,r-1,0) - querySq(0,n-1,l-1,r-1,0)) << endl;
+            }else{
+                ll a = k*query(0,n-1,l-1,k-1,0) - querySq(0,n-1,l-1,k-1,0);
+                ll b = querySq(0,n-1,k,r-1,0) - k*query(0,n-1,k,r-1,0);
+                cout << (a+b) << endl;
+            }
+
+        }else if( u == 2 ){
+            cin >> k >> s;
+            update(0,n-1,k-1,s,0);
+        }
+
+    }
+
+    return 0;
+}

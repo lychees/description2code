@@ -1,0 +1,183 @@
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
+
+//blocksize should scale as the square root of the maximum number
+#define BLOCKSIZE 10000
+
+bool primeSieve[BLOCKSIZE];
+int primes[BLOCKSIZE]; //Stores all the initial prime numbers except for prime number 2
+int primeStarts[BLOCKSIZE];
+int initialPrimesCount;
+
+
+void initPrimes(int b);
+int countPrimesSumOfSquares(int a, int b);
+
+int primeCheck2(int a,int b);
+
+int main(int argc, char* argv[]){
+	int a, b;
+	scanf("%d %d",&a,&b);
+	initPrimes(b);
+	printf("%d\n",countPrimesSumOfSquares(a,b));
+	//primeCheck2(a,b);
+	return 0;
+}
+
+void initPrimes(int b){
+	initialPrimesCount=0;
+	//adding 110 is to ensure that the square of the prime numbers added 
+	//will be higher than number b
+	int primeNumIndexLimit=((int)sqrt(b+1))/2+110;
+	//ith entry (starting from zero) in prime sieve corresponds to 
+	//the odd number 2*i+3
+
+	for(int i=0; i < primeNumIndexLimit; i++){ //i corresponds to the number 2*i+3
+		if(!primeSieve[i]) {
+			int curPrime=2*i+3;
+			int curPrimeStart=curPrime*curPrime;
+
+			primes[initialPrimesCount]=curPrime; //storing in primes array
+			primeStarts[initialPrimesCount] = curPrimeStart; //storing where the prime should start marking
+			initialPrimesCount++; //updating the number of primes count
+
+			int primeSieveMaxNum=2*(BLOCKSIZE-1)+3; //The highest number which we are intending to store in 
+								//prime sieve
+			//here j is clearly a multiple of the current prime number
+			//As we are interested only in odd numbers, the difference between the consecutive
+			//multiples would be 2*curPrime
+			for( int j=curPrimeStart;  j <= primeSieveMaxNum; j+=2*curPrime ) 
+					primeSieve[(j-3)/2]=true; //marking number j as not prime
+			
+			//Stop if the square of the current prime number is greater than the maximum number
+			if(curPrimeStart>b)
+				break;
+		}
+	}
+}
+
+int countPrimesSumOfSquares(int a, int b){
+	int count=0;
+	//The numbers we shall consider are the ones of the form 4*n+1.
+
+	//Here we are covering the number 2, which is prime and is a sum of squares 1 and 1
+	if(a<=2 && b>=2)
+		count++;
+
+	//Smallest number >= a and is of the form 4*n+1
+	if(a<=5)
+		a=5;
+	int start = ((a-1)/4+1)*4+1;
+	if( (a-1)%4 == 0)
+		start=a;
+
+	//Largest number <= b and is of the form 4*n+1
+	int end = ((b-1)/4)*4+1;
+	if( (b-1)%4 == 0 )
+		end=b;
+
+	if(start>end)
+		return count;
+
+	//Set the prime starts to be then number just above start, 
+	//and is a multiple of prime number, and mod 4 gives 1.
+	for( int i=0; primeStarts[i] < start; i++){
+		if(start%primes[i]==0)
+			primeStarts[i]=start;
+		else {
+			primeStarts[i]=(start/primes[i]+1)*primes[i];
+			//If the mod 4 is not 1, then look for the higher multiple
+			//The extra operations required is less than 4
+			while(primeStarts[i]%4!=1)
+				primeStarts[i]+=primes[i];
+		}
+	}
+
+	//We will check for the required primes block size. Here we compute the number
+	//of blocks into which the input array should be divided
+	int requiredFullBlocks=(end+4-start)/(4*BLOCKSIZE);
+
+	//prime sieve for ith block will have numbers starting from
+	//start+4*i*BLOCKSIZE and end at start + 4*(i+1)*BLOCKSIZE-4
+	for(int i=0; i<requiredFullBlocks; i++){
+
+		
+		//reset the prime sieve
+		for(int j=0; j<BLOCKSIZE; j++)
+			primeSieve[j]=false;		
+		
+		
+		int curMaxNum = start + 4*(i+1)*BLOCKSIZE-4;
+		int sqrtCurMaxNum = (int)sqrt(curMaxNum+1);
+
+		for(int j=0;  primes[j]<= sqrtCurMaxNum; j++){
+			int curUpdateNum = primes[j];
+			int t; //t corresponds to index with in the array
+				//the number is given by 4*t+4*i*BLOCKSIZE+start
+				//or t is given by (number-start)/4-i*BLOCKSIZE
+			for(t=(primeStarts[j]-start)/4-i*BLOCKSIZE; t<=BLOCKSIZE-1; t+=curUpdateNum )
+				primeSieve[t]=true;
+			
+			//update the prime number starts for the current number to that which 
+			//corresponds to the next loop
+			primeStarts[j]=(t+i*BLOCKSIZE)*4+start;
+		}
+
+		for(int t=0; t<=BLOCKSIZE-1; t++ ){
+			if(!primeSieve[t]) 
+				count++;
+		}
+
+	}
+	
+	//The final block will start with start+4*requiredFullBlocks*BLOCKSIZE and ends with end
+	//for(int i=0; i <= (end-start-4*requiredFullBlocks*BLOCKSIZE)/4 ; i++){
+	for(int i=0; i<BLOCKSIZE; i++){
+			primeSieve[i]=false;		
+	}
+
+	int sqrtEnd=(int)sqrt(end+1);
+	for(int j=0;  primes[j]<= sqrtEnd; j++){
+		int curUpdateNum = primes[j];
+		int endIndex = (end - start)/4 - requiredFullBlocks*BLOCKSIZE;
+		for(int t = (primeStarts[j]-start)/4-requiredFullBlocks*BLOCKSIZE; t<=endIndex; t+=curUpdateNum )
+			primeSieve[ t ]=true;
+	}
+
+	for(int t=0; t<= (end-start-4*requiredFullBlocks*BLOCKSIZE)/4 ; t++ ) {
+		if(!primeSieve[t]) 
+			 count++;
+	}
+
+	return count;
+}
+
+
+int primeCheck2(int a,int b){
+	int count=0;
+	if(a<=5){	
+		a=5;
+	}
+	if(a%2==0)
+		a++;
+
+	for(int i=a; i<=b; i=i+2){
+		//check prime
+		int maxNum=(int)sqrt(i)+1;
+		bool isPrime=true;
+		for(int j=3; j<=maxNum ; j+=2){
+			if(i%j==0) {
+				isPrime=false;
+				break;
+			}
+		}
+
+		if(isPrime && i%4==1){
+			count++;
+		}
+
+	}
+
+	return count;
+}

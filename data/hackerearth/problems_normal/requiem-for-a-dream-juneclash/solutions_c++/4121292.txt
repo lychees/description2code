@@ -1,0 +1,97 @@
+#include<iostream>
+#include<algorithm>
+#include<string.h>
+#include<vector>
+#define MAXM 100000
+using namespace std;
+
+struct Block {
+    long long sum,pref,suf,mx;
+    Block() {
+        sum=suf=pref=mx=0;
+    }
+    Block(int x) {
+        sum=x;
+        pref=max(0,x);
+        mx=suf=pref;
+    }
+};
+
+Block mrge(const Block &A,const Block &B) {
+    Block res;
+    res.sum=A.sum+B.sum;
+    res.pref=max(A.pref,A.sum+B.pref);
+    res.suf=max(B.suf,B.sum+A.suf);
+    res.mx=max(A.mx,max(B.mx,A.suf+B.pref));
+    res.mx=max(res.mx,max(res.pref,res.suf));
+    return res;
+}
+
+vector< pair<int,int> >e[MAXM+10];
+int who[MAXM+10][22],tin[MAXM+10],tout[MAXM+10],tim;
+Block up[MAXM+10][22];
+
+void dfs(int node,int anc,int tot) {
+    tim++; tin[node]=tim;
+    who[node][0]=anc; up[node][0]=Block(tot);
+    int i;
+    for(i=1;i<20;i++) {
+        who[node][i]=who[who[node][i-1]][i-1];
+        up[node][i]=mrge(up[node][i-1],up[who[node][i-1]][i-1]);
+    }
+    for(i=0;i<e[node].size();i++) {
+        if(e[node][i].first!=anc) dfs(e[node][i].first,node,e[node][i].second);
+    }
+    tim++; tout[node]=tim;
+}
+
+bool XisAncOfY(int x,int y) {
+    return (tin[x]<tin[y] && tout[x]>tout[y]);
+}
+
+int lca(int x,int y) {
+    if(x==y) return x;
+    if(XisAncOfY(x,y)) return x;
+    if(XisAncOfY(y,x)) return y;
+    for(int i=18;i>=0;i--) {
+        if(!XisAncOfY(who[x][i],y)) {
+            x=who[x][i];
+        }
+    }
+    return who[x][0];
+}
+
+int main()
+{
+//    freopen("dream_in.txt","r",stdin); freopen("dream_out.txt","w",stdout);
+    int i,j,n,m,temp,q,e1,e2,w;
+    cin>>n>>q;
+    for(i=1;i<n;i++) {
+        cin>>e1>>e2>>w;
+        e[e1].push_back(make_pair(e2,w)); e[e2].push_back(make_pair(e1,w));
+    }
+    tim=0; tout[0]=1e9;
+    dfs(1,0,0);
+    while(q--) {
+        cin>>e1>>e2;
+        w=lca(e1,e2);
+        vector<Block> a,b;
+        for(i=18;i>=0;i--) {
+            if(!XisAncOfY(who[e1][i],w)) {
+                a.push_back(up[e1][i]); e1=who[e1][i];
+            }
+        }
+        for(i=18;i>=0;i--) {
+            if(!XisAncOfY(who[e2][i],w)) {
+                b.push_back(up[e2][i]); e2=who[e2][i];
+            }
+        }
+        reverse(b.begin(),b.end());
+        for(i=0;i<b.size();i++) swap(b[i].suf,b[i].pref);
+        Block res(0);
+        for(i=0;i<a.size();i++) res=mrge(res,a[i]);
+        for(i=0;i<b.size();i++) res=mrge(res,b[i]);
+        cout<<res.mx<<"\n";
+    }
+    return 0;
+}

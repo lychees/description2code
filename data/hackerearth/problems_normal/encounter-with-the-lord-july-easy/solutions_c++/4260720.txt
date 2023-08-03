@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+#define FOR(x,n) for(int x = 0; x < n; x++)
+#define ALL(a) (a).begin(), (a).end()
+#define ll long long
+#define pb push_back
+#define MAXV 230
+using namespace std;
+
+struct NetworkFlow{
+    struct Edge{ int from, to; ll cap, cost; };
+    vector<Edge> E;     vector<int> dist, P;
+    vector< vector<int> > adj;  
+    int N;
+
+    NetworkFlow(int NN): N(NN) { adj.resize(N); }
+
+    void addEdge(int from, int to, int cap, int cost){
+        adj[from].push_back(E.size());     E.push_back(Edge{from,to,cap, cost});
+        adj[to].push_back(E.size());     E.push_back(Edge{to,from,0,-cost});
+    }
+
+    bool find_path(int s, int t){
+        P.assign(N,-1); P[s] = s;
+        dist.assign(N, 1<<28); dist[s] = 0;        
+        queue<int> q; q.push(s);
+        bitset<MAXV> in_queue; in_queue[s] = 1;
+        while(!q.empty()){
+            int u = q.front(); q.pop(); in_queue[u] = 0;
+            for(int eID : adj[u]){
+                int v = E[eID].to;
+                if(E[eID].cap && dist[v] > dist[u] + E[eID].cost) {
+                    dist[v] = dist[u] + E[eID].cost, P[v] = eID;
+                    if(!in_queue[v])
+                        q.push(v), in_queue[v] = 1;
+                }
+            }
+        }
+        return P[t] != -1;
+    }
+
+    pair<ll,ll> getMF(int s, int t){
+        int mf = 0, cost = 0;
+        while(find_path(s,t)){
+            ll mnE = (int)1e9;
+            for(int u = t; u != s; u = E[P[u]].from) mnE = min(mnE, E[P[u]].cap);
+            for(int u = t; u != s; u = E[P[u]].from)
+                E[P[u]].cap -= mnE, E[P[u]^1].cap += mnE, cost += E[P[u]].cost * mnE;
+            mf += mnE;
+        }        
+        return {mf,cost};
+    }
+};
+
+int main() {
+    int T; cin >> T;
+    
+    while(T--){
+        int N, M, K; cin >> N >> M >> K;
+        NetworkFlow G = NetworkFlow(N+2);
+        for(int x = 1; x <= K; x++)
+            G.addEdge(0,x,1,0);
+        for(int x = N-K+1; x <= N; x++)
+            G.addEdge(x,N+1,1,0);
+            
+        FOR(x,M) {
+            int u, v, c; cin >> u >> v >> c;
+            G.addEdge(u,v,(1<<10),c);
+            G.addEdge(v,u,(1<<10),c);
+        }
+        for(int x = 1; x <= N; x++)
+            for(int y = x+1; y <= N; y++)
+                G.addEdge(x,y,(1<<10),(ll)1e4),
+                G.addEdge(y,x,(1<<10),(ll)1e4);
+        cout << G.getMF(0,N+1).second << '\n';
+    }
+}

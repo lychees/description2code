@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+#define ll long long 
+using namespace std;
+ll prime[]={2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101};
+ll val[100];
+ll phi(ll x)
+ {
+   	ll ret = 1,i,pow;
+   	for (i = 2; x != 1; i++) 
+   	{
+    	pow = 1;
+     	if(i>sqrt(x))
+     		break;
+     	while (!(x%i)) 
+     	{
+       		x /= i;
+       		pow *= i;
+     	}
+     	ret *= (pow - (pow/i));
+    }
+    if(x!=1)
+    	ret*=(x-1);
+    return ret;
+}
+ll power(ll a, ll n, ll mod)
+{   ll ans=1;
+	while(n)
+	{
+		if(n&1)
+			ans=(ans*a)%mod;
+		a=(a*a)%mod;
+		n=n/2;
+	}
+	return ans%mod;
+}
+ll modInverse(ll a,ll k) {
+    return power(a,phi(k)-1, k);
+}
+ll gcd(ll a, ll b) {
+  if (b == 0) return a;
+  return gcd(b, a % b);
+}
+ll SmallC(int n, int r, int MOD)
+{
+    vector< vector<ll> > C(2,vector<ll> (r+1,0));
+ 
+    for (int i=0; i<=n; i++)
+    {
+        for (int k=0; k<=r && k<=i; k++)
+            if (k==0 || k==i)
+                C[i&1][k] = 1;
+            else
+                C[i&1][k] = (C[(i-1)&1][k-1] + C[(i-1)&1][k])%MOD;
+    }
+    return C[n&1][r];
+}
+ 
+ll Lucas(ll n,ll m,ll k)
+{
+    if (n==0 && m==0) return 1LL;
+    ll ni = n % k;
+    ll mi = m % k;
+    if (mi>ni) return 0;
+    return Lucas(n/k, m/k, k) * SmallC(ni, mi, k);
+}
+ 
+ll C(ll n,ll r,ll MOD)
+{
+    return Lucas(n, r, MOD);
+}
+ll nCr(ll n,ll r,ll p)
+{
+	ll num,count,N,y,ans=0;
+	for(int i=0;i<26;i++)
+	{
+		if(p%prime[i]==0)
+		{
+			num=p;
+			count=0;
+			while(num%prime[i]==0)
+			{
+				num/=prime[i];
+				++count;
+			}
+			val[prime[i]]=C(n,r,pow(prime[i], count));
+			N=p/pow(prime[i],count);
+			y=modInverse(N, pow(prime[i], count));
+			ans=(ans+val[prime[i]]*N*y)%p;
+		}
+	}
+	return ans%p;
+}
+int main()
+{
+	int t;
+	cin>>t;
+	while(t--)
+	{
+		ll n,m,k,ans;
+		scanf("%lld %lld %lld",&n,&m,&k);
+		--n,--m;
+		ans=nCr(n,m,k);
+		printf("%lld\n",ans);
+	}
+	return 0;
+}

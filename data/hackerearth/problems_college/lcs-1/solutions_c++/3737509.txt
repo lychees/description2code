@@ -1,0 +1,130 @@
+#include <algorithm>
+#include <cassert>
+#include <cstring>
+#include <iostream>
+#include <set>
+
+using namespace std;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define REP(i, n) FOR(i, 0, n)
+#define TRACE(x) cout << #x << " = " << x << endl
+#define _ << " _ " <<
+
+typedef long long llint;
+
+const int MAX = 1e6;
+
+namespace SuffixArray {
+  int lcp[MAX], A[MAX];
+  
+  void build(int *s, int n) {
+    static int tmp[MAX], bc[MAX];
+    REP(i, n) A[i] = i, bc[i] = s[i];
+
+    for (int T = 1; ; T *= 2) {
+      auto cmp = [&s, &T, &n] (const int &a, const int &b) {
+	if (bc[a] != bc[b]) return bc[a] < bc[b];
+	if (a+T >= n || b+T >= n) return a > b;
+	return bc[a+T] < bc[b+T];
+      };
+      sort(A, A + n, cmp);
+      tmp[A[0]] = 0;
+      FOR(i, 1, n) tmp[A[i]] = tmp[A[i-1]] + cmp(A[i-1], A[i]);
+      REP(i, n) bc[i] = tmp[i];
+      if (bc[A[n-1]] == n-1) break;
+    }
+
+    lcp[0] = 0;
+    int h = 0;
+    REP(i, n)
+      if (bc[i] > 0) {
+	int j = A[ bc[i]-1 ];
+	while (i+h < n && j+h < n && s[i+h] == s[j+h]) h++;
+	lcp[bc[i]] = h;
+	if (h > 0) --h;
+      }
+  }
+};
+
+int start[MAX], len[MAX];
+int ans[MAX], who[MAX];
+int s[MAX];
+
+int main(void) {
+  int n;
+  scanf("%d", &n);
+  int cur = 0;
+  REP(i, n) {
+    start[i] = cur;
+    static char buff[MAX];
+    scanf("%s", buff);
+    len[i] = strlen(buff);
+    REP(j, len[i]) who[start[i] + j] = i, s[cur++] = buff[j];
+    s[cur++] = 256 + i;
+  }
+
+  int q;
+  scanf("%d", &q);
+  FOR(i, n, n + q) {
+    start[i] = cur;
+    static char buff[MAX];
+    scanf("%s", buff);
+    len[i] = strlen(buff);
+    REP(j, len[i]) who[start[i] + j] = i, s[cur++] = buff[j];
+    s[cur++] = 256 + i;
+  }
+
+  int m = cur;
+  SuffixArray::build(s, m);
+  int* A = SuffixArray::A;
+  int* lcp = SuffixArray::lcp;
+
+  REP(i, n + q) REP(j, len[i]) who[start[i] + j] = i;
+
+  multiset<int> S;
+
+  int last = -1;
+  REP(i, m) {
+    int x = who[A[i]];
+    int y = A[i] - start[i];
+
+    S.insert(lcp[i]);
+    if (x < n) {
+      while (last != i) S.erase(S.find(lcp[++last]));
+      last = i;
+    } else {
+      if (last != -1) {
+        int l = start[x] + len[x] - y;
+        ans[x - n] = max(ans[x - n], min(l, *S.begin()));
+      }
+    }
+  }
+
+  S.clear();
+  last = m;
+  lcp[m] = MAX;
+  S.insert(lcp[m]);
+
+  for (int i = m-1; i >= 0; --i) {
+    int x = who[A[i]];
+    int y = A[i] - start[i];
+
+    if (x < n) {
+      while (last != i) S.erase(S.find(lcp[last--]));
+      last = i;
+    } else {
+      if (last != -1) {
+        int l = start[x] + len[x] - y;
+        for (int j = i + 1; j <= last; ++j)
+          l = min(l, lcp[j]);
+        ans[x - n] = max(ans[x - n], l);
+      }
+    }
+
+    S.insert(lcp[i]);
+  }
+
+  REP(i, q) printf("%d\n", ans[i]);
+  return 0;
+}

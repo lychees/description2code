@@ -1,0 +1,347 @@
+
+// Copyright 2016 Ricky_Saurav
+
+// Licensed under the "THE BEER-WARE LICENSE" (Revision 42):
+// Ricky_Saurav wrote this file. As long as you retain this notice you
+// can do whatever you want with this stuff. If we meet some day, and you think
+// this stuff is worth it, you can buy me a beer in return.
+#include <stdio.h>
+#include <string>
+#include <map>
+#include <set>
+#include <string.h>
+#include <vector>
+#include <algorithm>
+#include <math.h>
+#define ll long long
+#define fillm(a, val) memset(a, val, sizeof(a))
+#define NL "\n"
+using namespace std;
+const double pi = acos(-1.0);
+const ll mod = 1000000007;
+const ll maxn = 800005;
+const ll inf = 1ll << 30;
+int logtb[maxn];
+char ss[maxn];
+class suffix_array
+{
+   public:
+    string s;
+    int *str, *SA, *sa, *lcp, *rank;
+    int prelen[2005];
+    int ans[2005];
+    vector<int> fidx;
+    int types[maxn];
+    int** st;
+    int len;
+    int flag = 0;
+    suffix_array(string test)
+    {
+        memset(ans, 0, sizeof(ans));
+        s = test + '!';
+        len = s.size();
+        SA = new int[len];
+        str = new int[len];
+        for (int i = 0; i < len; ++i)
+        {
+            str[i] = s[i];
+        }
+        sa_is(str, SA, len, 256);
+        sa = SA + 1;
+        kasai();
+        build_st();
+    }
+    virtual ~suffix_array()
+    {
+        delete[] SA;
+        delete[] str;
+        if (flag)
+        {
+            delete[] lcp;
+            delete[] rank;
+            if (flag == 1)
+                return;
+        }
+        for (int i = 0; i < len; ++i)
+        {
+            delete[] st[i];
+        }
+        delete[] st;
+    }
+    // gets end or start of buckets for the given string s based on the value of end.
+    void getBuckets(int* s, int* bkt, int n, int k, bool end)
+    {
+        int i, sum = 0;
+        memset(bkt, 0, (k + 1) * (sizeof(int)));
+        for (i = 0; i < n; i++)
+            bkt[s[i]]++;
+        for (i = 0; i <= k; i++)
+        {
+            sum += bkt[i];
+            bkt[i] = end ? sum : sum - bkt[i];
+        }
+    }
+    void induceSAl(bool* is_s, int* SA, int* s, int* bkt, int n)
+    {
+        int i, j;
+        for (i = 0; i < n; i++)
+        {
+            j = SA[i] - 1;
+            if (j >= 0 && !is_s[j])
+                SA[bkt[s[j]]++] = j;
+        }
+    }
+    void induceSAs(bool* is_s, int* SA, int* s, int* bkt, int n)
+    {
+        int i, j;
+        for (i = n - 1; i >= 0; i--)
+        {
+            j = SA[i] - 1;
+            if (j >= 0 && is_s[j])
+                SA[--bkt[s[j]]] = j;
+        }
+    }
+    // s is the input string,sa is the output suffix array,n is the number of elements ,k is the alphabet size.
+    // requires s[n-1] to be an arbitrary sentinel i.e. some character lower than all other characters in the string
+    // the returned suffix array is 1 indexed as it also contains the sentinel in the beginning.
+    void sa_is(int* s, int* sa, int n, int k)
+    {
+        // a suffix is s type if suffix(i)<suffix(i+1),l type otherwise,lms type if suffix(i) is s and suffix(i-1) is l.
+        bool* is_s = new bool[n];
+        bool* is_lms = new bool[n];
+        is_s[n - 1] = 1, is_s[n - 2] = 0, is_lms[n - 1] = 1, is_lms[0] = 0;
+        for (int i = n - 3; i >= 0; --i)
+        {
+            is_s[i] = (s[i] < s[i + 1] || (s[i] == s[i + 1] && is_s[i + 1]));
+            is_lms[i + 1] = is_s[i + 1] & (!is_s[i]);
+        }
+        // bkt is the bucket to be used.bkt1 are the two types of buckets already,bkt1 stores the end of all buckets and bkt2 stores beginning of all buckets.
+        int* bkt = new int[k + 1];
+        int* bkt1 = new int[k + 1];
+        int* bkt2 = new int[k + 1];
+        getBuckets(s, bkt1, n, k, true);
+        getBuckets(s, bkt2, n, k, false);
+        memcpy(bkt, bkt1, sizeof(int) * (k + 1));
+        memset(sa, -1, n * sizeof(int));
+        for (int i = 1; i < n; ++i)
+            if (is_lms[i])
+                sa[--bkt[s[i]]] = i;
+        memcpy(bkt, bkt2, sizeof(int) * (k + 1));
+        induceSAl(is_s, sa, s, bkt, n);
+        memcpy(bkt, bkt1, sizeof(int) * (k + 1));
+        induceSAs(is_s, sa, s, bkt, n);
+        int n1 = 0;
+        for (int i = 0; i < n; ++i)
+            if (is_lms[sa[i]])
+                sa[n1++] = sa[i];
+        memset(sa + n1, -1, (n - n1) * sizeof(int));
+        int names = 0, prev = -1;
+        // find out the number of distinct LMS substrings so far.
+        // linear complexity,checks from the start of an LMS substring to the next substring.
+        for (int i = 0; i < n1; ++i)
+        {
+            int pos = sa[i];
+            for (int d = 0; d < n; ++d)
+            {
+                if (prev == -1 || s[prev + d] != s[pos + d] || is_s[prev + d] != is_s[pos + d])
+                {
+                    names++;
+                    prev = pos;
+                    break;
+                }
+                else if (d && (is_lms[prev + d] || is_lms[pos + d]))
+                {
+                    break;
+                }
+            }
+            pos >>= 1;
+            sa[n1 + pos] = names - 1;
+        }
+        for (int i = n - 1, j = n - 1; i >= n1; --i)
+            if (sa[i] >= 0)
+                sa[j--] = sa[i];
+        int *sa1 = sa, *s1 = sa + n - n1;
+        if (names < n1)
+            sa_is(s1, sa1, n1, names);
+        else  // obtain suffix array of LMS directly.
+        {
+            for (int i = 0; i < n1; ++i)
+            {
+                sa[s1[i]] = i;
+            }
+        }
+        memcpy(bkt, bkt1, sizeof(int) * (k + 1));
+        // obtain the list of LMS substrings.
+        for (int i = 0, j = 0; i < n; ++i)
+            if (is_lms[i])
+                s1[j++] = i;
+        // convert sa of s1 to sa of s by replacing LMS substrings by their actual indices obtained in the previous step.
+        for (int i = 0; i < n1; ++i)
+            sa[i] = s1[sa[i]];
+        memset(sa + n1, -1, (n - n1) * sizeof(int));
+        for (int i = n1 - 1; i >= 0; --i)
+        {
+            int j = sa[i];
+            sa[i] = -1;
+            sa[--bkt[s[j]]] = j;
+        }
+        induceSAl(is_s, sa, s, bkt2, n);
+        induceSAs(is_s, sa, s, bkt1, n);
+        delete[] bkt;
+        delete[] bkt1;
+        delete[] bkt2;
+        delete[] is_s;
+        delete[] is_lms;
+    }
+    int get_lcp(int i, int j)
+    {
+        if (i == j)
+            return (len - 1 - sa[i]);
+        if (i > j)
+            swap(i, j);
+        int k = logtb[j - i];
+        return min(lcp[st[i][k]], lcp[st[j - (1 << k)][k]]);
+    }
+    void build_st()
+    {
+        flag = 2;
+        st = new int*[len];
+        for (int i = 0; i < len; ++i)
+        {
+            st[i] = new int[logtb[len] + 1];
+        }
+        for (int i = 0; i < len; ++i)
+            st[i][0] = i;
+        for (int j = 1; (1 << j) <= len; ++j)
+            for (int i = 0; i + (1 << j) - 1 < len; ++i)
+                st[i][j] = lcp[st[i][j - 1]] > lcp[st[i + (1 << (j - 1))][j - 1]] ? st[i + (1 << (j - 1))][j - 1] : st[i][j - 1];
+    }
+    // lcp[i]= lcp(i,i+1);
+    void kasai()
+    {
+        flag = 1;
+        int n = --len;
+        lcp = new int[n];
+        lcp[n - 1] = 0;
+        int k = 0;
+        rank = new int[n];
+        for (int i = 0; i < n; i++)
+            rank[sa[i]] = i;
+        for (int i = 0; i < n; i++, k ? k-- : 0)
+        {
+            if (rank[i] == n - 1)
+            {
+                k = 0;
+                continue;
+            }
+            int j = sa[rank[i] + 1];
+            while (i + k < n && j + k < n && s[i + k] == s[j + k])
+                k++;
+            lcp[rank[i]] = k;
+        }
+    }
+    void set_prelen(vector<int> v)
+    {
+        int len1 = v.size();
+        for (int i = 0; i < len1; ++i)
+        {
+            prelen[i] = v[i];
+        }
+        for (int i = len1; i < 1005; ++i)
+        {
+            prelen[i] = inf;
+        }
+    }
+    void set_type()
+    {
+        int temp1 = prelen[1];
+        for (int i = 0; i < len; ++i)
+        {
+            if (sa[i] < temp1)
+            {
+                types[i] = 0;
+                fidx.push_back(i);
+            }
+            else
+            {
+                int idx = sa[i];
+                if (isalpha(s[idx]))
+                {
+                    auto it = upper_bound(prelen, prelen + 1005, idx);
+                    ll idx1 = it - prelen;
+                    idx1--;
+                    types[i] = idx1;
+                }
+                else
+                {
+                    types[i] = -1;
+                }
+            }
+        }
+    }
+    void set_lcs()
+    {
+        for (int i = 0; i < len; ++i)
+        {
+            if (types[i] <= 0)
+            {
+                continue;
+            }
+            int type = types[i];
+            auto it1 = upper_bound(fidx.begin(), fidx.end(), i);
+            int temp1 = *it1;
+            int temp = get_lcp(i, temp1);
+            ans[type] = max(ans[type], temp);
+            it1--;
+            temp1 = *it1;
+            temp = get_lcp(temp1, i);
+            ans[type] = max(ans[type], temp);
+        }
+    }
+};
+int main()
+{
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "r", stdin);
+    freopen("output1.txt", "w", stdout);
+#endif
+    logtb[1] = 0;
+    for (int i = 2; i < maxn; ++i)
+        logtb[i] = logtb[i - 1] + (!(i & i - 1));
+    int n;
+    scanf("%d", &n);
+    string s;
+    for (int i = 0; i < n; ++i)
+    {
+        scanf("%s", ss);
+        s += ss;
+        s += '$';
+    }
+    s.pop_back();
+    s += '#';
+    vector<int> v;
+    v.push_back(0);
+    int temp = s.size();
+    v.push_back(temp);
+    int queries;
+    int q;
+    scanf("%d", &q);
+    queries = q;
+    while (q--)
+    {
+        scanf("%s", ss);
+        s += ss;
+        s += '@';
+        int temp = s.size();
+        v.push_back(temp);
+    }
+    suffix_array suf(s);
+    suf.set_prelen(v);
+    suf.set_type();
+    suf.set_lcs();
+    for (int i = 1; i <= queries; ++i)
+    {
+        printf("%d\n", suf.ans[i]);
+    }
+    return 0;
+}

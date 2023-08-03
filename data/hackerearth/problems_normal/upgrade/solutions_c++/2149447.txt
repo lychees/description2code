@@ -1,0 +1,260 @@
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <set>
+#include <list>
+#include <queue>
+#include <stack>
+#include <vector>
+#include <cassert>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+struct Node {
+    int prior, cnt = 1, value;
+    int sum;
+    bool rev = false;
+    int l = -1, r = -1;
+    Node(int prior, int value) : prior(prior), value(value), sum(value) {}
+    Node() {}
+};
+
+Node nodes[100005];
+int nodeCount = 0;
+
+inline int cnt(int &node) {
+    return (node != -1) ? nodes[node].cnt : 0;
+}
+
+inline int sum(int &node) {
+    return (node != -1) ? nodes[node].sum : 0;
+}
+
+inline void upd(int node) {
+    if (node != -1) {
+        nodes[node].cnt = cnt(nodes[node].l) + cnt(nodes[node].r) + 1;
+        nodes[node].sum = sum(nodes[node].l) + sum(nodes[node].r) + nodes[node].value;
+    }
+}
+
+void push(int node) {
+    if ((node != -1) && nodes[node].rev) {
+        nodes[node].rev = false;
+        swap(nodes[node].l, nodes[node].r);
+        if (nodes[node].l != -1) nodes[nodes[node].l].rev ^= true;
+        if (nodes[node].r != -1) nodes[nodes[node].r].rev ^= true;
+    }
+}
+
+void merge(int &t, int l, int r) {
+    push(l);
+    push(r);
+    if (l == -1 || r == -1)
+        t = (l != -1) ? l : r;
+    else if (nodes[l].prior > nodes[r].prior)
+        merge(nodes[l].r, nodes[l].r, r), t = l;
+    else
+        merge(nodes[r].l, l, nodes[r].l), t = r;
+    upd(t);
+}
+
+void split(int t, int &l, int &r, int key, int add = 0) {
+    if (t == -1) {
+        l = r = -1;
+        return;
+    }
+    push(t);
+    int cur = add + cnt(nodes[t].l);
+    if (key <= cur)
+        split(nodes[t].l, l, nodes[t].l, key, add), r = t;
+    else
+        split(nodes[t].r, nodes[t].r, r, key, add + 1 + cnt(nodes[t].l)), l = t;
+    upd(t);
+}
+
+void reverse(int &t, int l, int r) {
+    int t1, t2, t3;
+    split(t, t1, t2, l);
+    split(t2, t2, t3, r - l + 1);
+    nodes[t2].rev ^= true;
+    merge(t, t1, t2);
+    merge(t, t, t3);
+}
+
+int getSum(int &t, int l, int r) {
+    int t1, t2, t3;
+    split(t, t1, t2, l);
+    split(t2, t2, t3, r - l + 1);
+    int ret = sum(t2);
+    merge(t, t1, t2);
+    merge(t, t, t3);
+    return ret;
+}
+
+int pri[100005];
+
+inline int getPri() {
+    return pri[nodeCount];
+}
+
+inline int newNode(int value) {
+    nodes[nodeCount] = Node(getPri(), value);
+    return nodeCount++;
+}
+
+int n;
+vector<int> g[100005];
+vector<int> p[100005];
+int val[100005];
+int pathTree[100005];
+int pnum[100005], pind[100005], sz[100005];
+int dep[100005] = {}, uv[100005];
+int pc = 1;
+
+void calcSize(int v, int par) {
+    sz[v] = 1;
+    for (int to : g[v]) if (to != par) {
+        calcSize(to, v);
+        sz[v] += sz[to];
+    }
+}
+
+void dfs(int v, int par, int path) {
+    pnum[v] = path;
+    pind[v] = (int)p[path].size();
+    p[path].pb(v);
+    merge(pathTree[path], pathTree[path], newNode(val[v]));
+    for (int to : g[v]) if (to != par) {
+        if (sz[to] * 2 >= sz[v]) {
+            dfs(to, v, path);
+        } else {
+            dep[pc] = dep[path] + 1;
+            uv[pc] = v;
+            pathTree[pc] = -1;
+            dfs(to, v, pc++);
+        }
+    }
+}
+
+int hldSum(int u, int v) {
+    int pu = pnum[u], pv = pnum[v], ret = 0;
+    while (pu != pv) {
+        if (dep[pu] > dep[pv]) {
+            ret += getSum(pathTree[pu], 0, pind[u]);
+            u = uv[pu];
+            pu = pnum[u];
+        } else {
+            ret += getSum(pathTree[pv], 0, pind[v]);
+            v = uv[pv];
+            pv = pnum[v];
+        }
+    }
+    int from = pind[u], to = pind[v];
+    if (from > to) swap(from, to);
+    ret += getSum(pathTree[pu], from, to);
+    return ret;
+}
+
+void hldReverse(int u, int v) {
+    int ou = u, ov = v;
+    int pu = pnum[u], pv = pnum[v], tmp;
+    int uTree = -1, vTree = -1;
+    while (pu != pv) {
+        if (dep[pu] > dep[pv]) {
+            split(pathTree[pu], tmp, pathTree[pu], pind[u] + 1);
+            merge(uTree, tmp, uTree);
+            u = uv[pu];
+            pu = pnum[u];
+        } else {
+            split(pathTree[pv], tmp, pathTree[pv], pind[v] + 1);
+            merge(vTree, tmp, vTree);
+            v = uv[pv];
+            pv = pnum[v];
+        }
+    }
+    if (pind[u] > pind[v]) {
+        swap(u, v);
+        swap(ou, ov);
+        swap(uTree, vTree);
+    }
+    int ucnt = cnt(uTree);
+    int vcnt = cnt(vTree);
+    if (uTree != -1) nodes[uTree].rev ^= true;
+    int t1, t2, t3;
+    split(pathTree[pu], t1, t2, pind[u]);
+    split(t2, t2, t3, pind[v] - pind[u] + 1);
+    merge(vTree, t2, vTree);
+    merge(vTree, uTree, vTree);
+    split(vTree, vTree, uTree, cnt(vTree) - ucnt);
+    split(vTree, vTree, t2, vcnt);
+    if (t2 != -1) nodes[t2].rev ^= true;
+    if (vTree != -1) nodes[vTree].rev ^= true;
+    merge(pathTree[pu], t1, t2);
+    merge(pathTree[pu], pathTree[pu], t3);
+
+    u = ou, v = ov;
+    pu = pnum[u], pv = pnum[v];
+    while (pu != pv) {
+        if (dep[pu] > dep[pv]) {
+            split(uTree, uTree, tmp, cnt(uTree) - pind[u] - 1);
+            merge(pathTree[pu], tmp, pathTree[pu]);
+            u = uv[pu];
+            pu = pnum[u];
+        } else {
+            split(vTree, vTree, tmp, cnt(vTree) - pind[v] - 1);
+            merge(pathTree[pv], tmp, pathTree[pv]);
+            v = uv[pv];
+            pv = pnum[v];
+        }
+    }
+}
+
+int q, u, v;
+char s[5];
+
+typedef unsigned long long ULL;
+ULL RAND_MUL = 6364136223846793005ll;
+ULL RAND_INC = 1442695040888963407ll;
+ULL randSeed = 1234573;
+
+inline int myRand(int bound) {
+    randSeed = RAND_MUL * randSeed + RAND_INC;
+    return (randSeed >> 32) % bound;
+}
+
+int main() {
+    scanf("%d%d", &n, &q);
+    REP(i, n) scanf("%d", val + i);
+    REP(i, n) pri[i] = i;
+    random_shuffle(pri, pri + n, myRand);
+    REP(i, n - 1) {
+        int from, to;
+        scanf("%d%d", &from, &to), --from, --to;
+        g[from].pb(to);
+        g[to].pb(from);
+    }
+    calcSize(0, -1);
+    pathTree[0] = -1;
+    dfs(0, -1, 0);
+    REP(i, q) {
+        scanf("%s%d%d", s, &u, &v), --u, --v;
+        if (s[0] == 'R') {
+            hldReverse(u, v);
+        } else {
+            printf("%d\n", hldSum(u, v));
+        }
+    }
+	return 0;
+}

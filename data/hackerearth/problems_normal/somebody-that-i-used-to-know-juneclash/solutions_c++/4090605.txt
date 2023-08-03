@@ -1,0 +1,132 @@
+#pragma optimize("tree-vectorize")
+#pragma optimize ("fast-math")
+#pragma optimize ("O3")
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <iostream>
+#include <set>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <complex>
+#include <map>
+#include <queue>
+#include <sys/resource.h>
+using namespace std;
+typedef long long ll;
+typedef unsigned long long ull;
+typedef vector<int> vi;
+typedef vector<ll> vl;
+typedef vector<vl> vvl;
+typedef vector<vi> vvi;
+typedef vector<double> vd;
+typedef pair<ll, int> pli;
+typedef pair<double, double> pdd;
+typedef vector<string> vs;
+
+struct E {
+  int to, w;
+  E(int to, int w): to(to), w(w) {}
+};
+
+vector<vector<E>> g[2];
+int n, m, n2;
+ll d[300][300];
+ll d1[300][300];
+const ll MAX = 2e18;
+
+inline void upd(int i, int j, ll nd, priority_queue<ll> & q) {
+	if (nd < d[i][j]) {
+        d[i][j] = nd;
+        q.push(-nd*n2 - i*2*n - j);
+	}
+}
+
+inline void upd1(int i, int j, ll nd, priority_queue<ll> & q) {
+	if (nd < d1[i][j]) {
+        d1[i][j] = nd;
+        q.push(-nd*n2 - i*2*n - j - n);
+	}
+}
+
+bool cmp(const E & a, const E & b) {
+	return a.to < b.to;
+}
+
+int main() {
+  const rlim_t kStackSize = 256 * 1024 * 1024;
+  struct rlimit rl;
+  getrlimit(RLIMIT_STACK, &rl);
+  rl.rlim_cur = kStackSize;
+  setrlimit(RLIMIT_STACK, &rl);	
+  scanf("%d%d", &n, &m);
+  for (int i = 0; i < n; ++i) for (int j = 0; j < n; ++j) d1[i][j] = d[i][j] = MAX;
+  g[0].resize(n);
+  g[1].resize(n);
+  n2 = 2*n*n;
+  char s[10];
+  for (int i = 0; i < m; ++i) {
+    int a,b,c;
+    scanf("%d%d%d%s", &a, &b, &c, s);
+    --a; --b;
+    if (s[0] == ')') {
+      g[0][a].push_back(E(b, c));
+    } else {
+      g[1][b].push_back(E(a, c));
+    }
+  }
+  for (int i = 0; i < n; ++i) {
+  	sort(g[0][i].begin(), g[0][i].end(), cmp);
+  	sort(g[1][i].begin(), g[1][i].end(), cmp);
+  }
+  priority_queue<ll> q;
+  for (int i = 0; i < n; ++i) {
+    upd(i, i, 0, q);
+  }
+  vvi used(n, vi(n));
+  while (!q.empty()) {
+  	ll H = abs(q.top());
+    int from = H % n2 / n / 2;
+    int to = H % (2*n);
+    ll qd = H / n2;
+    q.pop();
+    if (to >= n) {
+    	to -= n;
+    	if (qd > d1[from][to]) continue;
+    	for (const auto & it : g[0][to]) {
+      		upd(from, it.to, it.w + qd, q);
+    	}
+    	continue;
+    }
+    if (used[from][to]) {
+    	continue;
+    }
+    used[from][to] = 1;
+    for (int i = 0; i < n; ++i) {
+      ll nd = qd + d[to][i];
+      if (used[to][i]) upd(from, i, nd, q);
+      nd = qd + d[i][from];
+      if (used[i][from]) upd(i, to, nd, q);
+    }
+    for (const auto & it : g[1][from]) {
+      upd1(it.to, to, it.w + qd, q);
+    }
+    /*for (const auto & it : g[1][from]) for (const auto & jt : g[0][to]) {
+      int i = it.to, j = jt.to;
+      ll nd = it.w + jt.w + qd;
+      upd(i, j, nd, q);
+    }*/
+  }
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < n; ++j) {
+      if (d[i][j] >= MAX) d[i][j] = -1;
+      printf("%lld ", d[i][j]);
+    }
+    printf("\n");
+  }
+  return 0;
+}

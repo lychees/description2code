@@ -1,0 +1,87 @@
+#include<iostream>
+#include<string>
+#include<algorithm>
+#include<vector>
+#include<utility>
+
+using namespace std;
+
+const int MAXN = 2e3 + 10;
+const int XX = 4e5 + 10;
+const int LOG = 20;
+
+int n, q, sz[MAXN], tt[LOG][XX], nxt[XX], id[XX], lc[LOG][XX], ss[XX], ans[MAXN], cc, sec[XX], cnt[XX];
+pair<pair<int, int>, int>	vec[XX];
+string s[MAXN];
+
+int lcp(int a, int b){
+	int ta = a, tb = b;
+	for (int w = LOG - 1; w >= 0 && a < nxt[ta] && b < nxt[tb]; w--)
+		if (a + (1<<w) <= nxt[ta] && b + (1<<w) <= nxt[tb] && tt[w][a] == tt[w][b])
+			a += (1<<w), b += (1<<w);
+	return a - ta;
+}
+
+int get(int l, int r){
+	int ret = 1e9;
+	for (int w = LOG - 1; w >= 0; w--)
+		if (l + (1<<w) <= r)	
+			ret = min(ret, lc[w][l]), l += (1<<w);
+	return ret;
+}
+
+int main(){
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+	cin >> n;	for (int i = 0; i < n; i++)	cin >> s[i];
+	cin >> q;	for (int i = n; i < n + q; i++)	cin >> s[i];
+	for (int i = 0; i < n + q; i++){
+		sz[i + 1] = sz[i] + (int)s[i].size();
+		for (int j = 0; j < s[i].size(); j++)
+			tt[0][sz[i] + j] = s[i][j], nxt[sz[i] + j] = sz[i + 1], id[sz[i] + j] = i;
+	}
+	for (int w = 1; w < LOG; w++){
+		for (int i = 0; i < n + q; i++)
+			for (int j = 0; j < s[i].size(); j++)
+				if (j + (1<<(w - 1)) >= s[i].size())
+					vec[sz[i] + j] = {{tt[w - 1][sz[i] + j], -1}, sz[i] + j};
+				else
+					vec[sz[i] + j] = {{tt[w - 1][sz[i] + j], tt[w - 1][sz[i] + j + (1<<(w - 1))]}, sz[i] + j};
+
+		sort(vec, vec + sz[n + q]);
+		for (int i = 1; i < sz[n + q]; i++)
+			if (vec[i].first == vec[i - 1].first)
+				tt[w][vec[i].second] = tt[w][vec[i - 1].second];
+			else
+				tt[w][vec[i].second] = i;
+	}
+	for (int i = 0; i < sz[n + q]; i++)	ss[tt[LOG - 1][i] + cnt[tt[LOG - 1][i]]++] = i;
+	for (int i = 0; i < sz[n + q] - 1; i++)
+		lc[0][i] = lcp(ss[i], ss[i + 1]);
+	for (int w = 1; w < LOG; w++)
+		for (int i = 0; i < sz[n + q]; i++)
+			if (i + (1<<(w-1)) < sz[n + q] - 1)
+				lc[w][i] = min(lc[w - 1][i], lc[w - 1][i + (1<<(w-1))]);
+			else
+				lc[w][i] = lc[w - 1][i];
+	
+	for (int i = 0; i < sz[n + q]; i++)
+		if (ss[i] < sz[n])
+			sec[cc++] = i;
+
+	for (int i = 0; i < sz[n + q]; i++)
+		if (ss[i] >= sz[n]){
+			int ret = 0, pos;
+			pos = lower_bound(sec, sec + cc, i) - sec;
+			if (pos){
+				pos--;
+				ans[id[ss[i]]] = max(ans[id[ss[i]]], get(sec[pos], i));
+			}
+			pos = lower_bound(sec, sec + cc, i) - sec;
+			if (pos < cc)
+				ans[id[ss[i]]] = max(ans[id[ss[i]]], get(i, sec[pos]));
+		}
+	for (int i = n; i < n + q; i++)
+		cout << ans[i] << "\n";
+	return	0;
+}

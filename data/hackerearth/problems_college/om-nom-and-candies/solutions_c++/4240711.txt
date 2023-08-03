@@ -1,0 +1,110 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+typedef vector<pii> vpii;
+typedef unsigned long long llu;
+
+#define author ayushtomar
+#define rf freopen("in.txt", "r", stdin)
+#define wf freopen("out.txt", "w", stdout)
+#define debug(x) cerr<<#x<<" "<<x<<endl;
+#define f first
+#define s second
+#define mp make_pair
+#define pb push_back
+int A[1<<21],tree[1<<21];
+void build(int node, int start, int end)
+{
+    if(start == end)
+    {
+        // Leaf node will have a single element
+        tree[node] = A[start];
+    }
+    else
+    {
+        int mid = (start + end) / 2;
+        // Recurse on the left child
+        build(2*node, start, mid);
+        // Recurse on the right child
+        build(2*node+1, mid+1, end);
+        // Internal node will have the sum of both of its children
+        tree[node] = tree[2*node] + tree[2*node+1];
+    }
+}
+void update(int node, int start, int end, int idx, int val)
+{
+    if(start == end)
+    {
+        // Leaf node
+        A[idx] += val;
+        tree[node] += val;
+    }
+    else
+    {
+        int mid = (start + end) / 2;
+        if(start <= idx and idx <= mid)
+        {
+            // If idx is in the left child, recurse on the left child
+            update(2*node, start, mid, idx, val);
+        }
+        else
+        {
+            // if idx is in the right child, recurse on the right child
+            update(2*node+1, mid+1, end, idx, val);
+        }
+        // Internal node will have the sum of both of its children
+        tree[node] = tree[2*node] + tree[2*node+1];
+    }
+}
+int query(int node, int start, int end, int l, int r)
+{
+    if(r < start or end < l)
+    {
+        // range represented by a node is completely outside the given range
+        return 0;
+    }
+    if(l <= start and end <= r)
+    {
+        // range represented by a node is completely inside the given range
+        return tree[node];
+    }
+    // range represented by a node is partially inside and partially outside the given range
+    int mid = (start + end) / 2;
+    int p1 = query(2*node, start, mid, l, r);
+    int p2 = query(2*node+1, mid+1, end, l, r);
+    return (p1 + p2);
+}
+int dp[1<<21];
+int main()
+{
+        int ans=-1,n,m;
+        scanf("%d",&n);
+        for(int i=1;i<=n;i++)
+        {
+            scanf("%d",&A[i]);
+        }
+        dp[1]=A[1];
+        for(int i=2;i<=n;i++)
+        {
+            int x=i;
+            dp[x]=A[x]+dp[1];
+            for(int j=2;j*j<=x;j++)
+            {
+                if(x%j==0)
+                {
+                    dp[x]=max(dp[x],dp[j]+A[x]);
+                    dp[x]=max(dp[x],dp[x/j]+A[x]);
+                }
+
+            }
+        }
+        for(int i=1;i<=n;i++)
+            cout<<dp[i]<< " ";
+        cout<<"\n";
+
+        return 0;
+}

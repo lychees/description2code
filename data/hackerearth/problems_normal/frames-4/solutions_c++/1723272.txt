@@ -1,0 +1,61 @@
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
+const int N = 2010;
+int n, m, t[N], a[N][N];
+int l[N][N], r[N][N], u[N][N], d[N][N];
+long long res;
+char s[N];
+vector<int> v[2 * N];
+
+void upd(int i, int v)
+{
+    for (; i <= m; i += i & -i) t[i] += v;
+}
+
+int get(int i)
+{
+    int s = 0;
+    for (; i; i -= i & -i) s += t[i];
+    return s;
+}
+
+void pro(int x, int y)
+{
+	for (int i = 1; i <= n; i++)
+		while (!v[i].empty()) v[i].pop_back();
+    for (int i = 1; i <= m; i++) t[i] = 0;
+    for (int i = x, j = y; i <= n && j <= m; i++, j++)
+    {
+        if (!a[i][j])
+        {
+            int de = min(l[i][j], u[i][j]);
+            res += 1 + get(j - 1) - get(j - de);
+            de = min(d[i][j], r[i][j]);
+            upd(j, 1);
+            if (i + de - 1 <= n) v[i + de - 1].push_back(j);
+        }
+        for (auto k : v[i]) upd(k, -1);
+    }
+}
+
+int main()
+{
+    scanf("%d %d", &n, &m);
+    for (int i = 1; i <= n; i++)
+    {
+        scanf("%s", s + 1);
+        for (int j = 1; j <= m; j++) if (s[j] == '1') a[i][j] = 1;
+    }
+    for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= m; j++) if (!a[i][j]) l[i][j] = l[i][j - 1] + 1, u[i][j] = u[i - 1][j] + 1;
+    for (int i = n; i; i--)
+        for (int j = m; j; j--) if (!a[i][j]) d[i][j] = d[i + 1][j] + 1, r[i][j] = r[i][j + 1] + 1;
+    for (int t = 1; t <= n; t++) pro(t, 1);
+    for (int t = 2; t <= m; t++) pro(1, t);
+    printf("%lld", res);
+    return 0;
+}

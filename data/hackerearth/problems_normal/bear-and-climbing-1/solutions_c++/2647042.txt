@@ -1,0 +1,210 @@
+/*
+*/
+
+//#pragma comment(linker, "/STACK:16777216")
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <complex>
+#include <math.h>
+#include <set>
+#include <vector>
+#include <map>  
+#include <queue>
+#include <stdio.h>
+#include <stack>
+#include <algorithm>
+#include <list>
+#include <ctime>
+#include <memory.h>
+#include <ctime> 
+#include <assert.h>
+
+#define y0 sdkfaslhagaklsldk
+#define y1 aasdfasdfasdf
+#define yn askfhwqriuperikldjk
+#define j1 assdgsdgasghsf
+#define tm sdfjahlfasfh
+#define lr asgasgash
+
+#define eps 1e-8
+#define M_PI 3.141592653589793
+#define bs 1000000007
+#define bsize 512
+
+using namespace std;
+
+int n;
+long long x[1<<20],h[1<<20];
+long long l,r;
+
+int ptr;
+int can[1<<20];
+int t[1<<22];
+
+multiset<int> reach;
+multiset<int>::iterator it;
+
+void build(int v,int tl,int tr)
+{
+	t[v]=-1e9;
+	
+	if (tl==tr)
+		return;
+	int m=tl+tr;
+	m/=2;
+	build(v*2,tl,m);
+	build(v*2+1,m+1,tr);
+}
+
+int get(int v,int tl,int tr,int l,int r)
+{
+	if (l==tl&&r==tr)
+		return t[v];
+	if (l>r)
+		return -1e9;
+	int tm=tl+tr;
+	tm/=2;
+	return max(get(v*2,tl,tm,l,min(r,tm)),get(v*2+1,tm+1,tr,max(tm+1,l),r));
+}
+
+void update(int v,int tl,int tr,int ps,int val)
+{
+	if (tl==tr)
+	{
+		t[v]=val;
+		return;
+	}
+	int tm=tl+tr;
+	tm/=2;
+	if (ps<=tm)
+		update(v*2,tl,tm,ps,val);
+	else
+		update(v*2+1,tm+1,tr,ps,val);
+	t[v]=max(t[v*2],t[v*2+1]);
+}
+
+long long Gd(int a,int b)
+{
+	return (1ll*(x[a]-x[b])*(x[a]-x[b])+1ll*(h[a]-h[b])*(h[a]-h[b]));
+}
+
+stack<pair<int, int> > s1,s2;
+
+void add(int x)
+{
+	int mx;
+	
+	if (s2.size())
+	{
+		mx=s2.top().second;
+	}
+	else mx=-1e9;
+	mx=max(mx,x);
+	s2.push(make_pair(x,mx));
+}
+
+void reb()
+{
+	while (s2.size())
+	{
+		pair<int, int> tp=s2.top();
+		s2.pop();
+		tp.second=tp.first;
+		if( s1.size())
+			tp.second=max(tp.second,s1.top().second);
+		s1.push(tp);
+	}
+}
+
+void dequeue()
+{
+	if (s1.size()==0)
+	{
+		reb();
+	}
+	s1.pop();
+}
+
+int get()
+{
+	int res=-1e9;
+	if (s1.size())
+		res=max(res,s1.top().second);
+	if (s2.size())
+		res=max(res,s2.top().second);
+	return res;
+}
+
+bool check(long long val)
+{
+	ptr=1;
+	
+	while (s1.size())
+		s1.pop();
+	while (s2.size())
+		s2.pop();
+	
+	for (int i=1;i<=n;i++)
+		can[i]=0;
+	can[1]=1;
+	
+	add(h[1]-x[1]);
+	
+	for (int i=2;i<=n;i++)
+	{
+		//cout<<"@"<<endl;
+		
+		while (Gd(ptr,i)>val)
+		{
+			++ptr;
+			dequeue();
+		}
+		int qd=get();
+//		cout<<val<<"   "<<i<<" "<<qd<<endl;
+		//cout<<qd<<endl;
+		if (qd>h[i]-x[i])
+		{
+			can[i]=1;
+			add(h[i]-x[i]);
+//			add_vertex(i);
+		}
+		else
+			add(-1e9);
+	}
+	return can[n];
+}
+
+int main(){
+//freopen("beavers.in","r",stdin);
+//freopen("beavers.out","w",stdout);
+//freopen("F:/in.txt","r",stdin);
+//freopen("F:/output.txt","w",stdout);
+//ios_base::sync_with_stdio(0);
+
+cin>>n;
+for (int i=1;i<=n;i++)
+{
+	scanf("%d",&x[i]);
+	scanf("%d",&h[i]);
+}
+
+
+l=1;
+r=1e15;
+while (l<r)
+{
+	long long mid=l+r;
+	mid/=2;
+	if (check(mid))
+		r=mid;
+	else
+		l=mid+1;
+}
+if (l>4e14)
+	l=-1;
+	
+cout<<l<<endl;
+
+//cin.get();cin.get();
+return 0;}

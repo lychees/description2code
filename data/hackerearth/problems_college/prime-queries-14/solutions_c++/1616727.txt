@@ -1,0 +1,106 @@
+#include<bits/stdc++.h>
+#define MAXN 100009
+#define MAXVAL 2000007
+#define maximum(a,b) a>b?a:b
+#define minimum(a,b) a<b?a:b
+ 
+using namespace std;
+typedef std::map<int, int>::iterator IT;
+typedef struct Node {
+    int ans = -1;
+} node;
+node tree[4*MAXN];
+int leafInd[MAXN + 5];
+int n;
+bool isPrime[MAXVAL];
+
+node init(int data) {
+	node ans;
+	ans.ans = data;
+	return ans;
+}
+node merge(node left, node right) {
+	node ans;ans.ans=maximum(left.ans, right.ans);return ans;
+}
+
+void build(int index, int start, int en, int arr[]) {
+    if(start == en) {
+        tree[index] = init(arr[start]);
+        leafInd[start] = index;
+    }
+    else if(start < en) {
+        int mid = (start + en)/2;
+        build(2 * index, start, mid, arr);
+        build(2 * index + 1, mid + 1, en, arr);
+ 		
+ 		tree[index] = merge(tree[2*index], tree[2*index + 1]);
+    }
+}
+
+void update(int i, int data) {
+    int index = leafInd[i];
+    tree[index] = init(data);
+    
+    index /= 2;
+    
+    while(index > 0) {
+ 		tree[index] = merge(tree[2*index], tree[2*index + 1]);
+    	index /= 2;
+    }
+}
+node query(int index, int i, int j, int start, int en) {
+
+    if(start >= i && en <= j) {
+    	return tree[index];
+    }
+    int mid = (start + en)/2;    
+    if(j <= mid)
+    	return query(2 * index, i, j, start, mid);
+    else if(i > mid)
+    	return query(2 * index + 1, i, j, mid + 1, en);
+    return merge(query(2 * index, i, j, start, mid), query(2 * index + 1, i, j, mid + 1, en));
+ 
+}
+ 
+void solve(int t) {
+    int q, ch;
+    int a, b, x;
+    scanf("%d%d", &n, &q);
+    int arr[n];
+    for(int i = 0; i < n; i ++ ) {
+        scanf("%d", &arr[i]);
+        if(!isPrime[arr[i]])
+        	arr[i] = -1;
+    }
+    build(1, 0, n - 1, arr);
+    while(q--) {
+        scanf("%d", &ch);
+        if(ch == 0) {
+            scanf("%d%d",&a, &x);
+            if(!isPrime[x])
+            	x = -1;
+            update(a - 1, x);
+        }
+        else {
+            scanf("%d%d",&a,&b);
+            printf("%d\n",query(1, a - 1, b - 1, 0, n - 1).ans);
+        }
+    }
+}
+int main() {
+
+    for(int i = 2; i <= MAXVAL; i ++) {
+        isPrime[i] = true;
+    }
+    isPrime[0] = false;
+    isPrime[1] = false;
+ 
+    for(int i = 2; i * i <= MAXVAL; i ++ ) {
+        if(!isPrime[i])
+            continue;
+        for(int j = i; i * j <= MAXVAL; j ++ )
+            isPrime[i * j] = false;
+    }
+    int t;
+    solve(1);
+}

@@ -1,0 +1,44 @@
+#include <iostream>
+#include <algorithm>
+
+using namespace std;
+
+long long dp[1 << 16];
+long long occ[1 << 16];
+int N;
+
+long long solve(int mask) {
+  if(mask == (1 << N) - 1) return 0;
+  if(dp[mask] != -1) return dp[mask];
+
+  long long ans = 0;
+  for(int i = 0; i < N; i++) {
+    if(mask & (1 << i)) continue;
+    if(i == __builtin_popcount(mask)) continue;
+    int cnt = 0;
+    for(int j = 0; j < N; j++) {
+      if(mask & (1 << j)) if(j > i) cnt++;
+    }
+    long long nxt = solve(mask | (1 << i));
+    if(occ[mask | (1 << i)]) {
+      ans += occ[mask | (1 << i)] * cnt + nxt;
+      occ[mask] += occ[mask | (1 << i)];
+    }
+  }
+  return dp[mask] = ans;
+}
+
+int main() {
+  int T; cin >> T;
+
+  while(T--) {
+    cin >> N;
+
+    for(int i = 0; i < (1 << N); i++) dp[i] = -1, occ[i] = 0;
+    occ[(1 << N) - 1] = 1;
+    dp[(1 << N) - 1] = 0;
+
+    cout << solve(0) << endl;
+  }
+}
+

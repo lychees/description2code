@@ -1,0 +1,184 @@
+//Created By Mayur Agarwal :)
+
+#include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <set>
+#include <algorithm>
+#include <map>
+#include <iterator>
+#include <functional>
+#include <queue>
+
+#define ll long long
+#define ind(a) scanf("%d",&a)
+#define in(a) scanf("%lld",&a)
+#define inc(a) scanf("%c",&a)
+#define ins(a) scanf("%s",a)
+#define pr(a) printf("%lld\n",a)
+#define debug(x) cout << #x << " = " << x << endl
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define ff first
+#define ss second
+#define mod 1000000007
+#define SIZE 1000010
+
+using namespace std;
+typedef pair<ll, ll>pll;
+int start[SIZE], len[SIZE], ans[SIZE], belong[SIZE], s[SIZE], temp[SIZE];
+int sa[SIZE], lcp[SIZE], pos[SIZE];
+int m, gap;
+//int m, gap;
+bool sacmp(int i, int j)
+{
+	if (pos[i] != pos[j])
+	{
+		return pos[i] < pos[j];
+	}
+	i += gap;
+	j += gap;
+	return (i < m && j < m) ? pos[i]<pos[j]: i>j;
+}
+inline void buildSA()
+{
+	//n = strlen(s);
+	for (int i = 0; i < m; i++)
+	{
+		pos[i] = s[i];
+		sa[i] = i;
+	}
+	for (gap = 1;; gap *= 2)
+	{
+		sort(sa, sa + m, sacmp);
+		for (int i = 0; i < m - 1; i++)
+			temp[i + 1] = temp[i] + sacmp(sa[i], sa[i + 1]);
+		for (int i = 0; i < m; i++)
+			pos[sa[i]] = temp[i];
+		if (temp[m - 1] == m - 1)
+			break;
+	}
+}
+inline void buildlcp()
+{
+	for (int i = 0, k = 0; i < m; i++)
+	{
+		if (pos[i] != m - 1)
+		{
+			for (int j = sa[pos[i] + 1]; s[i + k] == s[j + k];)
+			{
+				k++;
+			}
+			lcp[pos[i]] = k;
+			if (k)
+				k--;
+		}
+	}
+}
+
+int main()
+{
+#ifndef ONLINE_JUDGE
+	freopen("input.txt", "r", stdin);
+#endif
+	//ios_base::sync_with_stdio(0); cin.tie(0);
+	int n, q;
+	ind(n);
+	int cur = 0;
+	for (int i = 0; i < n; i++)
+	{
+		start[i] = cur;
+		char buff[SIZE];
+		ins(buff);
+		len[i] = strlen(buff);
+		for (int j = 0; j < len[i]; j++)
+		{
+			belong[start[i] + j] = i;
+			s[cur++] = buff[j];
+		}
+		s[cur++] = 256 + i;
+	}
+
+	ind(q);
+	for (int i = n; i < n + q; i++)
+	{
+		start[i] = cur;
+		char buff[SIZE];
+		ins(buff);
+		len[i] = strlen(buff);
+		for (int j = 0; j < len[i]; j++)
+		{
+			belong[start[i] + j] = i;
+			s[cur++] = buff[j];
+		}
+		s[cur++] = 256 + i;
+	}
+	m = cur;
+	// for (int i = 0; i < m; i++)
+	// {
+	// 	cout << i << " " << s[i] << endl;
+	// }
+	buildSA();
+	buildlcp();
+
+	// for (int i = 0; i < m; i++)
+	// {
+	// 	debug(sa[i]);
+	// }
+	// cout << endl;
+
+	// for (int i = 0; i < m; i++)
+	// {
+	// 	debug(lcp[i]);
+	// }
+	// cout << endl;
+
+	// for (int i = 0; i < n + q; i++)
+	// {
+	// 	for (int j = 0; j < len[i]; j++)
+	// 	{
+	// 		//who[start[i] + j] = i;
+	// 		debug(i);
+	// 		debug(start[i]);
+	// 		debug(belong[start[i] + j]);
+	// 	}
+	// }
+	cur = 0;
+	for (int i = 0 ; i < m ; ++i)
+	{
+		int idx = sa[i];
+		if (belong[idx] >= 0 && belong[idx] < n)
+		{
+			cur = mod;
+		}
+		else if (belong[idx] >= n)
+		{
+			ans[belong[idx] - n] = max(ans[belong[idx] - n] , cur);
+		}
+		cur = min(cur , lcp[i]);
+	}
+	cur = 0;
+	for (int i = m - 1 ; i >= 0 ; --i)
+	{
+		int idx = sa[i];
+		cur = min(cur , lcp[i]);
+		//debug(cur);
+		if (belong[idx] >= 0 && belong[idx] < n)
+		{
+			cur = mod;
+		}
+		else if (belong[idx] >= n)
+		{
+			ans[belong[idx] - n] = max(ans[belong[idx] - n] , cur);
+		}
+	}
+	for (int i = 0 ; i < q ; ++i)
+	{
+		printf("%d\n" , ans[i]);
+	}
+
+	return 0;
+}

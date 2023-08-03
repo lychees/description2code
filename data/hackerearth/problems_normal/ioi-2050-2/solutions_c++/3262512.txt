@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef pair<int ,pair<int, int > > ppa;
+class comp{
+public:
+	bool operator()(ppa p1, ppa p2){
+		return (p1.first>p2.first);
+	}
+};
+priority_queue<ppa, vector<ppa >, comp > pq;
+long a[1001][1001];
+bool visit[1001];
+vector<set<int > > adj;
+map<pair<int, int >, long > weight;
+void dfs(int x, int z, long cost);
+int root(int x, int rep[]);
+
+int main(){
+int test_case;
+scanf("%d", &test_case);
+int n, m, p, x, y, c, c1=1;
+while(test_case--){
+	weight.clear();
+	adj.clear();
+	scanf("%d %d %d", &n, &m, &p);
+	for(int i=1; i<=m; i++){
+		scanf("%d %d %d", &x, &y, &c);
+		pq.push(make_pair(c, make_pair(x, y)));
+	}
+	int rep[n+1];
+	for(int i=1; i<=n; i++){rep[i]=i;}
+	ppa temp;
+	int rx, ry;
+	long sum=0;
+	adj.resize(n+1);
+	while(!pq.empty()){
+		temp = pq.top();
+		pq.pop();
+		rx = root(temp.second.first, rep);
+		ry = root(temp.second.second, rep);
+		if(rx != ry){
+			rep[rx]=ry;
+			x = temp.second.first;
+			y = temp.second.second;
+			adj[x].insert(y);
+			adj[y].insert(x);
+			weight[make_pair(x, y)]=temp.first;
+			weight[make_pair(y, x)]=temp.first;
+		}
+	}
+
+	for(int i=1; i<=n; i++){
+		fill(visit, visit+n+1, false);
+		visit[i]=true;
+		a[i][i]=0;
+		dfs(i, i, 0);
+	}
+	printf("Case: %d\n", c1);
+	c1++;
+	for(int i=0; i<p; i++){
+		scanf("%d %d", &x, &y);
+		printf("%d\n", a[x][y]);
+	}
+}
+}
+void dfs(int x, int z, long cost){
+	for(set<int >::iterator j=adj[x].begin(); j!=adj[x].end(); j++){
+		if(!visit[*j]){
+			visit[*j]=true;
+            a[z][*j]=cost+weight[make_pair(x, *j)];
+            dfs(*j, z, a[z][*j]);
+		}
+	}
+}
+
+int root(int x, int rep[]){
+	while(x != rep[x]){
+		rep[x] = rep[rep[x]];
+		x = rep[x];
+	}
+	return x;
+}

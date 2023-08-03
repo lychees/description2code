@@ -1,0 +1,174 @@
+//Program: e
+//Author: gary
+//Date: 15/08/2015
+#include <cstdio>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <cassert>
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <string>
+#include <algorithm>
+using namespace std;
+#define SZ(x) ( (int) (x).size() )
+#define CNT(s, x) ( (s).find(x) != (s).end() )
+#define ALL(x) (x).begin(), (x).end()
+#define dbg(x) cerr << #x << " = " << x << endl;
+#define mp make_pair
+#define pb push_back
+#define fi first
+#define se second
+typedef long long ll;
+typedef pair<int, int> pii;
+// const int INF = 1e9;
+const ll MAXN = 1e18;
+
+const int mod = 1e9 + 7;
+
+void madd(int& a, int b){
+  a += b;
+  if(a >= mod) a -= mod;
+}
+int mul(int a, int b){
+  return ((ll)a*b)%mod;
+}
+
+int mpow(int a, int n){
+  int r = 1;
+  while(n > 0){
+    if(n & 1)
+      r = mul(r, a);
+    a = mul(a, a);
+    n >>= 1;
+  }
+  return r;
+}
+
+struct node
+{
+    ll sum;
+    int color, lazy;
+    node *l, *r;
+};
+
+typedef node* pnode;
+
+pnode new_node()
+{
+    pnode n = new node();
+    n->sum = n->color = n->lazy = 0;
+    n->l = n->r = NULL;
+    return n;
+}
+
+ll sum(pnode n)
+{
+    return n ? n->sum : 0;
+}
+
+pnode getnode(pnode& n)
+{
+    return n ? n : n = new_node();
+}
+
+void push(pnode cur, ll len)
+{
+    if(!cur->lazy)
+        return;
+    cur->color ^= 1;
+    cur->sum = len - cur->sum;
+    if(len > 1)
+    {
+        getnode(cur->l)->lazy ^= 1;
+        getnode(cur->r)->lazy ^= 1;
+    }
+    cur->lazy = 0;
+}
+
+struct impl_seg 
+{
+    pnode root = NULL;
+    void update(pnode& cur, ll L, ll R, ll i, ll j)
+    {
+        if(cur == NULL)
+            cur = new_node();
+        push(cur, R - L + 1);
+        if(j < L || R < i)
+            return;
+        if(i <= L && R <= j)
+        {
+            cur->lazy = 1;
+            push(cur, R - L + 1);
+        }
+        else
+        {
+            ll mid = (L + R) / 2;
+            update(cur->l, L, mid, i, j);
+            update(cur->r, mid + 1, R, i, j);
+            cur->sum = sum(cur->l) + sum(cur->r);
+        }
+    }
+    void update(ll i, ll j)
+    {
+        update(root, 1, MAXN, i, j);
+    }
+    ll query(pnode cur, ll L, ll R, ll i, ll j)
+    {
+        if(cur == NULL)
+            return 0;
+        if(j < L || R < i)
+            return 0;
+        push(cur, R - L + 1);
+        if(i <= L && R <= j)
+            return cur->sum;
+        ll mid = (L + R) / 2;
+        return query(cur->l, L, mid, i, j) + query(cur->r, mid + 1, R, i, j);
+    }
+
+    ll query(ll i, ll j)
+    {
+        return query(root, 1, MAXN, i, j);
+    }
+} t[2];
+
+int q, qt;
+int ans;
+ll l, r, x, y;
+
+int main()
+{
+    scanf("%d", &q);
+    while(q--)
+    {
+        scanf("%d", &qt);
+        if(qt == 1)
+        {
+            scanf("%lld%lld%lld", &x, &l, &r);
+            l ^= ans, r ^= ans;
+            t[x].update(l, r);
+        }
+        else
+        {
+            scanf("%lld%lld%lld%lld", &l, &r, &x, &y);
+            l ^= ans, r ^= ans, x ^= ans, y ^= ans;
+            ans = 0;
+            if(l <= r && x <= y)
+            {
+                int a1 = t[0].query(l, r) % mod;
+                int a0 = ((r - l + 1) % mod + mod - a1) % mod;
+                int b1 = t[1].query(x, y) % mod;
+                int b0 = ((y - x + 1) % mod + mod - b1) % mod;
+                // dbg(a1); dbg(a0); dbg(b1); dbg(b0);
+                madd(ans, mul(a1, b0));
+                madd(ans, mul(a0, b1));
+            }
+            printf("%d\n", ans);
+        }
+    }
+    return 0;
+}

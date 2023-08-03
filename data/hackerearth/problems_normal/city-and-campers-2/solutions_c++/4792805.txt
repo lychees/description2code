@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define endl "\n"
+#define forn(i, n) for (int i = 0; i < n; ++i)
+#define forl(i, a, b) for (int i = a; i < b; ++i)
+#define fore(i, a, b) for (int i = a; i <= b; ++i)
+#define ul unsigned long
+#define ll long long
+#define pii std::pair<int, int>
+#define vpii vector<pii >
+#define all(x) x.begin(), x.end()
+#define Unique(a) a.erase(unique(all(a)), a.end());
+#define INF 1000000011
+const int MOD = 1e9 + 7;
+const long double PI = 3.14159265358979323846;
+struct myCompare {
+	bool operator() (const pii &l, const pii &r) const {
+		return l.first < r.first;
+	}
+};
+
+
+const int MAXN = 1e5 + 3;
+int n, q;
+int fa[MAXN], height[MAXN];
+int sz[MAXN];
+multiset<int> val;
+multiset<int> dif;
+multiset<int>::iterator it1, it2;
+int findRoot(int x) {
+	while (fa[x] != x) x = fa[x];
+	return x;
+}
+
+inline void eraseGroup(int x) {
+	it1 = val.find(sz[x]); 
+	if (it1 != val.begin()) {
+		it2 = dif.find(sz[x] - *prev(it1));
+		dif.erase(it2);
+	}
+	if (next(it1) != val.end()) {
+		it2 = dif.find(*next(it1) - sz[x]);
+		dif.erase(it2);
+	}
+	if (it1 != val.begin() && next(it1) != val.end()) {
+		dif.insert(*next(it1) - *prev(it1));
+	}
+	val.erase(it1);
+}
+
+inline void insertGroup(int x) {
+	val.insert(sz[x]);
+	it1 = val.find(sz[x]);
+	if (it1 != val.begin()) {
+		dif.insert(sz[x] - *prev(it1));
+	}
+	if (next(it1) != val.end()) {
+		dif.insert(*next(it1) - sz[x]);
+	}
+	if (next(it1) != val.end() && it1 != val.begin()) {
+		it2 = dif.find(*next(it1) - *prev(it1));
+		dif.erase(it2);
+	}
+}
+
+void unionSet(int x, int y) {
+	x = findRoot(x);
+	y = findRoot(y);
+	if (x == y) return;
+	eraseGroup(x);
+	eraseGroup(y);
+	/*it1 = val.find(sz[x]); val.erase(it1);
+	it1 = val.find(sz[y]); val.erase(it1);*/
+
+	if (height[x] > height[y]) {
+		fa[y] = x;
+		sz[x] += sz[y]; sz[y] = 0;
+		insertGroup(x);
+	}
+	else {
+		fa[x] = y;
+		if (height[y] == height[x]) height[y]++;
+		sz[y] += sz[x]; sz[x] = 0;
+		insertGroup(y);
+	}
+}
+
+void solve() {
+	scanf("%d%d", &n, &q);
+	int x, y;
+	fore(i, 1, n) {
+		fa[i] = i; sz[i] = 1;
+		val.insert(1);
+		dif.insert(0);
+	}
+	dif.erase(dif.begin());
+	forn(i, q) {
+		scanf("%d%d", &x, &y);
+		unionSet(x, y);
+		if (!dif.empty()) printf("%d\n", *dif.begin());
+		else printf("0\n");
+	}
+}
+
+int main() {
+	#ifndef ONLINE_JUDGE
+		freopen("input.txt", "rt", stdin);
+		//freopen("output.txt", "wt", stdout);
+	#endif
+	//cout << fixed << setprecision(10);	
+
+	solve();
+
+	return 0;
+}

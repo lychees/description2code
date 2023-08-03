@@ -1,0 +1,158 @@
+
+#include <assert.h>
+#include <iostream>
+#include <sstream>
+#include <vector>
+
+using namespace std;
+
+#define INT_MIN1 = –2147483648
+class node
+{
+public:
+	int idx;
+	long long points;
+	node(int i, long long p) :idx(i), points(p){}
+	bool operator == (const node& n){ return (n.idx == idx && points == n.points); }
+};
+
+class edge
+{
+public:
+	node n1;
+	node n2;
+
+	edge(node f, node s) :n1(f), n2(s){}
+	node either(){ return n1; }
+	node other(node i){ return i == n1 ? n2 : n1; }
+};
+
+class Graph
+{
+	vector<vector <edge>> G;
+	int vertices;
+public:
+	Graph(int v) :vertices(v)
+	{
+		G.resize(v + 1);
+	}
+	void addEdge(int i, long long ip, int j, long long jp)
+	{
+		G[i].push_back(edge(node(i, ip), node(j, jp)));
+		G[j].push_back(edge(node(i, ip), node(j, jp)));
+	}
+	vector<edge> connects(int v){ return G[v]; }
+	int V(){ return vertices; }
+};
+
+class GUtil
+{
+	static long long max_sum;
+	static void print(vector<int>& p)
+	{
+		cout << endl;
+		auto itr = p.begin();
+		while (itr != p.end())
+		{
+			cout << *itr << " ";
+			itr++;
+		}
+		cout << endl;
+	}
+	static void dfsUtil(Graph& g, vector<bool>& mm, int explore, long long sum)
+	{
+		mm[explore] = true;
+		//path.push_back(explore);
+		auto list = g.connects(explore);
+		auto itr = list.begin();
+		while (itr != list.end())
+		{
+			edge& e = *itr;
+			node nxt = e.n1.idx == explore ? e.n2 : e.n1;
+			int nxt_exp = nxt.idx;
+			if (!mm[nxt_exp])
+			{
+				dfsUtil(g, mm, nxt_exp, sum + nxt.points);
+			}
+			itr++;
+		}
+
+		int N = g.V();
+
+		if (explore > (N - 1) / 2)
+		{
+
+			if (max_sum < sum)
+			{
+				max_sum = sum;
+				//print(path);
+			}
+		}
+		mm[explore] = false;
+		//path.pop_back();
+	}
+
+public:
+	static void dfs(Graph& g)
+	{
+		vector<bool> mm(g.V() + 1, false);
+		long long sum = 0;
+		vector<int> path;
+		int N = g.V();
+		max_sum = -9223372036854775807;
+		for (int i = ((N - 1) / 2) + 1; i <= g.V(); i++)
+		{
+			auto e = g.connects(i);
+			assert(e.size() >= 1);
+			sum = g.connects(i).begin()->n1.idx == i ? g.connects(i).begin()->n1.points : g.connects(i).begin()->n2.points;
+			dfsUtil(g, mm, i, sum);
+		}
+		cout << max_sum << endl;
+	}
+};
+
+long long GUtil::max_sum = -9223372036854775807;
+
+int main()
+{
+	//ifstream ifs;
+	//ifs.open("d:\\dfs.txt");
+	int tcs = 0;
+	cin >> tcs;
+	cin.ignore();
+	while (tcs--)
+	{
+		int N;
+		cin >> N;
+		string line;
+		cin.ignore();
+		getline(cin, line);
+		long long* p = new long long[N + 1];
+		int k = -1;
+		int i = 1;
+		istringstream iss(line);
+		while (iss >> k)
+		{
+			p[i] = k;
+			i++;
+		}
+
+		if (N > 1)
+		{
+			Graph g(N);
+			for (int i = 1; i <= (N - 1) / 2; i++)
+			{
+				g.addEdge(i, p[i], 2 * i, p[2 * i]);
+				g.addEdge(i, p[i], 2 * i + 1, p[2 * i + 1]);
+			}
+			GUtil::dfs(g);
+		}
+		else
+		{
+			cout << p[1] << endl;
+		}
+		delete[] p;
+
+	}
+	return 0;
+}

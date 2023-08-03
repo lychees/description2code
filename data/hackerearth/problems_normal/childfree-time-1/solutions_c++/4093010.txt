@@ -1,0 +1,83 @@
+
+// Topological sort using kahns Algorithm
+#include <iostream>
+#include <vector>
+#include <utility>
+#include <queue>
+#include <algorithm>
+using namespace std;
+
+typedef pair < long long, long long > P;
+vector < vector < P > > adjList;
+vector < long long > indegree;
+vector < long long > outdegree;
+vector < long long > TopoSorted;
+
+void TopologicalSort () {
+	queue < long long > q;
+
+	for (long long i=0; i<(signed)indegree.size(); i++) {
+		if (indegree[i] == 0 && outdegree[i] != 0)
+			q.push(i);
+	}
+
+	while (!q.empty()) {
+		long long front = q.front();
+		q.pop();
+		TopoSorted.push_back(front);
+		
+		vector < pair < long long, long long > > :: iterator it = adjList[front].begin();
+		for (it; it!=adjList[front].end(); it++) {
+			indegree[it->first] -= 1;
+			if (indegree[it->first] == 0)	q.push(it->first);
+		}
+	}
+
+	//cout << "Topological Sort : ";
+	//for (vector < long long >:: iterator it = TopoSorted.begin(); it != TopoSorted.end(); it++)
+		//cout << "\t" << *it;
+
+	
+}
+
+void LongestPath () {
+	vector < long long > fx(indegree.size(),0);
+	reverse(TopoSorted.begin(), TopoSorted.end());
+	vector < long long >  :: iterator it = TopoSorted.begin();
+	for (it; it!=TopoSorted.end(); it++) {
+		long long node = *it;
+		if (!adjList[node].empty()) {
+			for (long long i=0; i<adjList[node].size(); i++) {
+				long long nextNode = adjList[node][i].first;
+				long long cost = adjList[node][i].second;
+				long long t = cost + fx[nextNode] + 2;
+				if (fx[node] < t)	fx[node] = t;
+			}
+		}		
+	}
+	sort(fx.begin(),fx.end());
+	//cout << "\n" << fx.back();
+	cout << fx.back();
+}
+
+int main () {
+	long long r,p;
+	cin >> r >> p;
+	adjList = vector < vector < P > > (r);
+	indegree = vector < long long > (r,0);
+	outdegree = vector < long long > (r,0);
+	for (long long i=0; i<p; i++) {
+		long long x,y,t;
+		cin >> x >> y >> t;
+		x--;
+		y--;
+		adjList[x].push_back(make_pair(y,t));
+		indegree[y]++;
+		outdegree[x]++;
+	}
+
+	TopologicalSort();
+
+	LongestPath();
+	return 0;
+}

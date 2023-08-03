@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define ull unsigned long long
+#define MOD 1000000007
+#define INF 999999999
+using namespace std;
+#define MAX 1000050
+#define DBG 0
+bool isprime[MAX] = {};
+set<ll>prime;
+
+
+ll n, a[505], next_prime[1000100], prev_prime[1000100];
+bool sieve[1000100];
+
+
+void initialize () {
+	int i, j;
+	for (i=3; i<1000100; i+=2) sieve[i] = true;
+	sieve[0] = sieve[1] = false;
+	sieve[2] = true;
+	for (i=3; i<1010; i+=2)
+		if (sieve[i])
+			for (j=i*i; j<1000100; j+=i+i)
+				sieve[j] = false;
+	int last = -1;
+	for (i=1000100-1; i>=0; i--) {
+		if (sieve[i]) last = i;
+		next_prime[i] = last;
+	}
+	last = -1;
+	for (i=0; i<1000100; i++) {
+		if (sieve[i]) last = i;
+		prev_prime[i] = last;
+	}
+}
+
+int main()
+{
+	initialize();
+	cin >> n;
+	ll a[505] = {};
+	ll cost[505][505] = {};
+	for(ll i=1;i<=n;i++) cin >> a[i];
+	
+	for(ll i=1;i<=n;i++)
+	{
+		for(ll j=i+1;j<=n;j++)
+		{
+			ll p1 = next_prime[a[i]];
+			ll p2 = next_prime[a[j]];
+			ll add = (p1 - a[i]);
+			if (p1 >= a[j]) add += (next_prime[p1+1]-a[j]);
+			else add += ((p2 - a[j]) + (prev_prime[p2-1]-p1));
+			cost[i][j] = add + 1;
+			//cout << cost[i][j] << " ";
+		}
+		//cout << endl;
+	}
+	
+	ll dp[505][505];
+	//for(ll i=0;i<505;i++)for(ll j=0;j<505;j++) dp[i][j] = INF;
+	//for(ll i=0;i<505;i++) dp[i][i] = 0;
+	
+	//for(ll i=1;i<n;i++) dp[i][i+1] = cost[i][i+1];
+	
+	for(ll i=n-1;i>=1;i--)
+	{
+		for(ll j=i+1;j<=n;j+=2)
+		{
+			//if(dp[i][j] != INF) continue;
+			dp[i][j] = dp[i+1][j-1] + cost[i][j];
+			//cout << i << " " << j << " " << dp[i][j] << endl;
+			for(ll k=i+1;k<=j;k+=2)
+			{
+				dp[i][j] = min(dp[i][j], dp[i+1][k-1]+dp[k+1][j]+cost[i][k]);
+			}
+		}
+	}
+	if(DBG) cout << endl << endl;
+	if(DBG)
+	for(ll i=1;i<=n;i++)
+	{
+		for(ll j=1;j<=n;j++)
+		{
+			if(dp[i][j] == INF)
+			{
+				cout << 0 << "\t";
+				continue;
+			}
+			cout << dp[i][j] << "\t";
+		}
+		cout << endl;
+	}
+	cout << dp[1][n] << "\n";
+	
+}

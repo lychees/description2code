@@ -1,0 +1,73 @@
+#include <iostream>
+#include <stdint.h>
+using namespace std;
+ 
+struct str
+{
+    static const uint_fast64_t modulus;
+    uint_fast32_t value;
+    str(): value(0) {}
+    str(uint_fast32_t v): value(v) {}
+    void operator+=(str r)
+    {
+        value = (uint_fast64_t(value) + uint_fast64_t(r.value)) % modulus;
+    }
+    str operator+(str r)
+    {
+        return str( (uint_fast64_t(value) + uint_fast64_t(r.value)) % modulus );
+    }
+    str operator*(str r)
+    {
+        return str( (uint_fast64_t(value) * uint_fast64_t(r.value)) % modulus );
+    }
+};
+str operator*(uint_fast32_t v, str x) { return str(v) * x; }
+ostream &operator<<(ostream &out, str s) { return (out << s.value); }
+const uint_fast64_t str::modulus = 4294967143;
+ 
+typedef str Tuple[4];
+inline void multiply(Tuple p, Tuple x, Tuple y){
+    p[0] = x[0] * y[0];
+    p[1] = x[1] * y[1];
+    str p2 = x[2] * y[2] + 3 * x[3] * y[3];
+    str p3 = x[2] * y[3] + x[3] * y[2];
+    p[2] = p2;
+    p[3] = p3;
+}
+ 
+int main(){
+    str one_twelfth = 1789569643;
+    Tuple c = { 22 * one_twelfth, 23 * one_twelfth, 22 * one_twelfth, one_twelfth };
+    str a = 21 * one_twelfth;
+    Tuple squares[64];
+    squares[0][0] = 2;
+    squares[0][1] = 3;
+    squares[0][2] = 2;
+    squares[0][3] = 1;
+ 
+    for (int p = 1; p < 64; p++)
+        multiply(squares[p], squares[p-1], squares[p-1]);
+ 
+    uint64_t trials, n;
+    cin >> trials;
+    while (cin >> n)
+    {
+        if (n % 2 == 0)
+            n /= 2;
+        else
+        {
+            cout << 0 << endl;
+            continue;
+        }
+        Tuple x = { c[0], c[1], c[2], c[3] };
+        int p = 0;
+        while (n)
+        {
+            if (n & 1) multiply(x, x, squares[p]);
+            p++;
+            n >>= 1;
+        }
+        cout << a + x[0] + x[1] + x[2] + x[2] << endl; }
+ 
+    return 0;
+}

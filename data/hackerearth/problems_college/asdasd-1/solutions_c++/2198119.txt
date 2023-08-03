@@ -1,0 +1,97 @@
+// 2015-07-25
+#include <bits/stdc++.h>
+#include <unordered_map>
+#include <array>
+#include <forward_list>
+#include <unordered_set>
+using namespace std;
+
+
+#ifndef LOCAL
+//#define LOCAL
+#endif
+
+#define SET_BIT(mask, index) (mask |= (1 << index))
+#define TEST_BIT(mask, index) (mask & (1 << index))
+#define CLEAR_BIT(mask, index) (mask &= ~(1 << index))
+#define TOGGLE_BIT(mask, index) (mask ^= (1 << index))
+const int INF = 1000000000;
+const double EPS = 1.0e-11;
+const int NO_VALUE = -1;
+using ii = pair < int, int > ;
+using ll = long long;
+
+
+const int MAX_N = 1e7 - 2e6 + 5e5 - 1e5 - 1e4 - 1e3;
+ll sieveSize;
+bitset<MAX_N> numberActive;
+vector<int> primes;
+
+void sieve(int upperBound) {
+    sieveSize = upperBound + 1;
+    numberActive.set();
+    numberActive[0] = numberActive[1] = 0;
+    for (ll i = 2; i <= sieveSize; i++) {
+        if (numberActive[i]) {
+            for (ll j = i * i; j <= sieveSize; j += i) {
+                numberActive[j] = 0;
+            }
+            primes.push_back(i);
+        }
+    }
+}
+
+template <typename T>
+T applyModularExponentation(T base, T exp, T modulus) {
+    base %= modulus;
+    T result = 1;
+    while (exp > 0) {
+        if (exp & 1) {
+            result = (result * base) % modulus;
+        }
+        base = (base * base) % modulus;
+        exp >>= 1;
+    }
+    return result;
+}
+
+int GCD(int a, int b) {
+    return b == 0 ? a : GCD(b, a % b);
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w+", stdout);
+#endif
+    sieve(MAX_N);
+    
+    int tc;
+    cin >> tc;
+    while (tc--) {
+        int a, b;
+        cin >> a >> b;
+        int fa = applyModularExponentation(2, a, MAX_N) - 1;
+        int fb = applyModularExponentation(2, b, MAX_N) - 1;
+        
+        int cnt = 0;
+        int gcd = GCD(fa, fb);
+        int div = 0;
+        for (auto prime : primes) {
+            if (gcd % prime == 0) {
+                div++;
+                while (gcd % prime == 0) {
+                    gcd /= prime;
+                }
+            }
+            if (gcd == 1 || prime > gcd) {
+                break;
+            }
+        }
+        cout << div << "\n";
+    }
+    
+    return 0;
+}

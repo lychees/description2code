@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+#define N 100001
+using namespace std;
+
+int bit[N];
+int n;
+void update(int i,int v)
+{
+	while(i<=n)
+	{
+		bit[i]+=v;
+		i+=(i&-i);
+	}
+}
+int query(int i)
+{
+	int ret=0;
+	while(i>0)
+	{
+		ret+=bit[i];
+		i-=(i&-i);
+	}
+	return ret;
+}
+int arr[N],pos[N];
+long long ans[N];
+int main()
+{
+    int m,d,l,r;
+    scanf("%d %d %d",&n,&m,&d);
+    for(int i=1;i<=n;++i)
+    {
+    	scanf("%d",&arr[i]);
+    	pos[arr[i]]=i;
+    	int up=0;
+    	for(int j=max(0,arr[i]-d);j<=min(n,arr[i]+d);++j)
+    	{
+    		if(pos[j]>0) up++;
+    	}
+    	update(i,up);
+    }
+    vector<pair<pair<int,int>,int> > q;
+    for(int i=0;i<m;++i)
+    {
+    	scanf("%d %d",&l,&r);
+    	q.push_back(make_pair(make_pair(l,r),i));
+    }
+    sort(q.begin(),q.end());
+    int prev=1;
+    for(int i=0;i<m;++i)
+    {
+    	l=q[i].first.first;
+    	r=q[i].first.second;
+    	int ind=q[i].second;
+    	if(l>prev) {
+    		while(prev<l){
+    			for(int j=max(0,arr[prev]-d);j<=min(n,arr[prev]+d);++j)
+    			{
+    				if(pos[j]>=prev) update(pos[j],-1);
+    			}
+    			prev++;
+    		}
+    	}
+    	ans[ind] = query(r)-query(l-1);
+    }
+    for(int i=0;i<m;++i)
+    {
+    	printf("%lld\n",ans[i]);
+    }
+    return 0;
+}

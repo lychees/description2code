@@ -1,0 +1,70 @@
+#include<iostream>
+#include<stdio.h>
+#include<vector>
+#include<math.h>
+#include<limits.h>
+#include<algorithm>
+using namespace std;
+int n,a[20];
+vector<pair<int,int> >vec;
+int fmask;
+int maxm(int a,int b){
+	return a>b?a:b;
+}
+int part(){
+	int mask,maxsum,maxdiff=INT_MAX,l=vec.size();
+	for(int i=0;i<l;i++){
+		mask=0;
+		mask|=vec[i].second;
+		for(int j=i+1;j<l;j++){
+			if(mask&vec[j].second)
+				continue;
+			mask|=vec[j].second;
+			for(int k=j+1;k<l;k++){
+				if(!(mask&vec[k].second) &&(mask|vec[k].second)==fmask){
+					int adiff=abs(vec[i].first-vec[j].first)+abs(vec[j].first-vec[k].first);
+					if(adiff<maxdiff){
+						maxdiff=adiff;
+						maxsum=max(vec[i].first,max(vec[j].first,vec[k].first));
+					}
+				}
+			}
+			mask^=vec[j].second;
+		}
+	}
+	return maxsum;
+}
+int minm(int a ,int b){
+	return a<b?a:b;
+}
+int comp(const void *a,const void *b){
+	return (*(int*)a - *(int*)b);
+}
+int rec(int,int,int);
+int main()
+{
+    scanf("%d",&n);
+    fmask=0;
+    for(int i=0;i<n;i++){
+    	fmask|=(1<<i);
+    }
+    for(int i=0;i<n;i++){
+    	scanf("%d",&a[i]);
+    }
+    vec.clear();
+    rec(0,0,0);
+    int m=0;
+    for(int xx=0;xx<100;xx++){
+    	m=maxm(m,xx);
+    }
+    printf("%d\n",part());
+    return 0;
+}
+int rec(int sum, int mask,int in){
+	if(mask)
+		vec.push_back(make_pair(sum,mask));
+	for(int i=in;i<n;i++){
+		if(!(mask&(1<<i)))
+			rec(sum+a[i],mask|(1<<i),i+1);
+	}
+}

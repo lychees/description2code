@@ -1,0 +1,113 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+#define MOD 1000000007
+#define MAX 100005
+
+long long powmod(long long a, int e) {
+    long long ret = 1;
+    for (; e > 0; e >>= 1, a = a * a % MOD)
+        if (e & 1)
+            ret = ret * a % MOD;
+    return ret;
+}
+
+int n, q;
+long long a[MAX], b[MAX];
+vector<int> g[MAX];
+int id, l[MAX], r[MAX];
+long long tree[4*MAX], lazy[4*MAX];
+
+void init(int no, int l, int r) {
+    if (r - l == 1) {
+        tree[no] = b[l];
+        lazy[no] = 1;
+        return;
+    }
+    int m = (l + r) / 2;
+    init(2*no, l, m);
+    init(2*no+1, m, r);
+    tree[no] = (tree[2*no] + tree[2*no+1]) % MOD;
+    lazy[no] = 1;
+}
+
+void prop(int no, int l, int r) {
+    if (lazy[no] != 1) {
+        tree[no] = tree[no] * lazy[no] % MOD;
+        if (r - l > 1) {
+            lazy[2*no] = lazy[2*no] * lazy[no] % MOD;
+            lazy[2*no+1] = lazy[2*no+1] * lazy[no] % MOD;
+        }
+        lazy[no] = 1;
+    }
+}
+
+void update(int no, int l, int r, int a, int b, long long val) {
+    if (a <= l && r <= b) {
+        lazy[no] = lazy[no] * val % MOD;
+        return;
+    }
+    prop(no, l, r);
+    int m = (l + r) / 2;
+    if (a < m)
+        update(2*no, l, m, a, b, val);
+    if (m < b)
+        update(2*no+1, m, r, a, b, val);
+    prop(2*no, l, m);
+    prop(2*no+1, m, r);
+    tree[no] = (tree[2*no] + tree[2*no+1]) % MOD;
+}
+
+long long query(int no, int l, int r, int a, int b) {
+    prop(no, l, r);
+    if (a <= l && r <= b)
+        return tree[no];
+    long long ret = 0;
+    int m = (l + r) / 2;
+    if (a < m)
+        ret = query(2*no, l, m, a, b);
+    if (m < b)
+        ret += query(2*no+1, m, r, a, b);
+    return ret % MOD;
+}
+
+void dfs(int u, int p, long long val) {
+    b[id] = val;
+    l[u] = id++;
+    for (int i = 0; i < g[u].size(); i++)
+        if (g[u][i] != p)
+            dfs(g[u][i], u, val * a[u] % MOD);
+    r[u] = id;
+}
+
+int main() {
+    scanf("%d %d", &n, &q);
+    for (int i = 1; i < n; i++) {
+        int u, v;
+        scanf("%d %d", &u, &v);
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    for (int i = 1; i <= n; i++)
+        scanf("%lld", &a[i]);
+    id = 0;
+    dfs(1, -1, 1);
+    init(1, 0, n);
+    while (q--) {
+        int op, v, x;
+        scanf("%d", &op);
+        if (op == 1) {
+            scanf("%d %d", &v, &x);
+            if (r[v] - l[v] > 1)
+                update(1, 0, n, l[v]+1, r[v], powmod(a[v], MOD-2) * x % MOD);
+            a[v] = x;
+        }
+        else {
+            scanf("%d", &v);
+            printf("%lld\n", query(1, 0, n, l[v], r[v]));
+        }
+    }
+}

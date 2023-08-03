@@ -1,0 +1,179 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+const string YES = "Yes";
+const string NO = "No";
+
+const int MOD_COUNT = 3;
+const int MOD[MOD_COUNT] = {2, 5, 719};
+
+inline void ModMult(int& x, int y, int mod) {
+    x = (1LL * x * y) % mod;
+}
+
+inline int GetModMult(int x, int y, int mod) {
+    ModMult(x, y, mod);
+    return x;
+}
+
+inline void ModSum(int& x, int y, int mod) {
+    x += y;
+    if (x >= mod) {
+        x -= mod;
+    }
+    if (x < 0) {
+        x += mod;
+    }
+}
+
+inline int GetModSum(int x, int y, int mod) {
+    ModSum(x, y, mod);
+    return x;
+}
+
+int GetBinaryPower(int x, int pw, int mod) {
+    if (pw == 0) {
+        return 1;
+    }
+    if (pw & 1) {
+        return GetModMult(x, GetBinaryPower(x, pw - 1, mod), mod);
+    }
+    return GetBinaryPower(GetModMult(x, x, mod), pw >> 1, mod);
+}
+
+inline int GetInv(int x, int mod) {
+    return GetBinaryPower(x, mod - 2, mod);
+}
+
+void FormWYs(vector<vector<int>>& w, vector<vector<int>>& y, int mod) {
+    vector<int> invs(mod);
+    for (int i = 1; i < mod; ++i) {
+        invs[i] = GetInv(i, mod);
+    }
+    int n = w.size();
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            w[i][j] %= mod;
+        }
+    }
+    y.assign(n, vector<int>(n, 0));
+    for (int i = 0; i < n; ++i) {
+        y[i][i] = 1;
+    }
+    for (int i = 0, j = 0; i < n && j < n; ) {
+        int maxPos = i;
+        for (int t = i + 1; t < n; ++t) {
+            if (w[t][j] > w[maxPos][j]) {
+                maxPos = t;
+            }
+        }
+        if (w[maxPos][j] == 0) {
+            ++j;
+            continue;
+        }
+        if (maxPos != i) {
+            for (int t = 0; t < n; ++t) {
+                swap(w[maxPos][t], w[i][t]);
+            }
+            for (int t = 0; t < n; ++t) {
+                swap(y[maxPos][t], y[i][t]);
+            }
+        }
+        if (w[i][j] != 1) {
+            int mult = invs[w[i][j]];
+            for (int t = j; t < n; ++t) {
+                ModMult(w[i][t], mult, mod);
+            }
+            for (int t = 0; t < n; ++t) {
+                ModMult(y[i][t], mult, mod);
+            }
+        }
+        for (int t = i + 1; t < n; ++t) {
+            int mult = GetModSum(0, -w[t][j], mod);
+            for (int k = j; k < n; ++k) {
+                ModSum(w[t][k], GetModMult(w[i][k], mult, mod), mod);
+            }
+            for (int k = 0; k < n; ++k) {
+                ModSum(y[t][k], GetModMult(y[i][k], mult, mod), mod);
+            }
+        }
+        ++i;
+    }
+}
+
+int main() {
+//    freopen("input.txt", "r", stdin);
+
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, q;
+    cin >> n >> q;
+
+    vector<vector<int>> w(n, vector<int>(n));
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            cin >> w[i][j];
+        }
+    }
+
+    vector<vector<int>> ys[MOD_COUNT];
+    vector<vector<int>> ws[MOD_COUNT];
+    for (int modIndex = 0; modIndex < MOD_COUNT; ++modIndex) {
+        ws[modIndex] = w;
+        FormWYs(ws[modIndex], ys[modIndex], MOD[modIndex]);
+        /*
+        cout << "Mod = " << MOD[modIndex] << endl;
+        cout << "  W x Y = " << endl;
+        for (int i = 0; i < n; ++i) {
+            cout << "    ";
+            for (int j = 0; j < n; ++j) {
+                cout  << ws[modIndex][i][j] << " ";
+            }
+            cout << "x ";
+            for (int j = 0; j < n; ++j) {
+                cout << ys[modIndex][i][j] << " ";
+            }
+            cout << endl;
+        }
+        */
+    }
+
+    for (int itr = 0; itr < q; ++itr) {
+        vector<int> y(n);
+        for (int j = 0; j < n; ++j) {
+            cin >> y[j];
+        }
+        bool good = true;
+        for (int modIndex = 0; modIndex < MOD_COUNT; ++modIndex) {
+            vector<int> my = y;
+            for (int i = 0; i < n; ++i) {
+                my[i] %= MOD[modIndex];
+            }
+            for (int i = 0; i < n; ++i) {
+                bool allZeros = true;
+                for (int j = 0; j < n; ++j) {
+                    if (ws[modIndex][i][j] != 0) {
+                        allZeros = false;
+                        break;
+                    }
+                }
+                if (allZeros) {
+                    int s = 0;
+                    for (int j = 0; j < n; ++j) {
+                        ModSum(s, GetModMult(my[j], ys[modIndex][i][j], MOD[modIndex]), MOD[modIndex]);
+                    }
+                    if (s != 0) {
+                        good = false;
+                        break;
+                    }
+                }
+            }
+        }
+        cout << (good ? YES : NO) << endl;
+    }
+
+    return 0;
+}

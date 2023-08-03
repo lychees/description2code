@@ -1,0 +1,204 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+const int MOD=1000000007;
+int modPow ( ll b, int e ) {
+    ll res=1;
+    while ( e ) {
+        if ( e&1 ) res=res*b%MOD;
+        b=b*b%MOD;
+        e>>=1;
+
+    }
+    return res;
+}
+int modInv ( int a ) {
+    return modPow ( a,MOD-2 );
+}
+int det ( const vector<vi> &_a ) {
+    vector<vi> a ( _a );
+    int n=a.size();
+    if ( !n ) return 1;
+    ll d=1;
+    rep ( i,n-1 ) {
+        if ( !a[i][i] ) {
+            d=MOD-d;
+            reu ( j ,i+ 1,n ) {
+                if ( a[j][i] ) {
+                    swap ( a[j],a[i] );
+                    break;
+                }
+            }
+        }
+        if ( !a[i][i] ) return 0;
+        d=d*a[i][i]%MOD;
+        ll diag = modInv ( a[i][i] );
+        reu ( j,i+1,n ) {
+            ll fac=a[j][i]*diag%MOD;
+            reu ( k,i+1,n ) {
+                a[j][k]= ( a[j][k]-fac*a[i][k] ) %MOD;
+                if ( a[j][k]<0 ) a[j][k]+=MOD;
+            }
+        }
+
+    }
+    return d*a[n-1][n-1]%MOD;
+}
+
+struct UnionFind {
+    vi data;
+    int cnt;
+    UnionFind ( int n ) :data ( n,-1 ), cnt ( n ) {  }
+    bool merge ( int x, int y ) {
+        x = root ( x );
+        y = root ( y );
+        if ( x != y ) {
+            if ( data[y] < data[x] ) swap ( x, y );
+            data[x] += data[y];
+            data[y] = x;
+            cnt--;
+        }
+        return x != y;
+    }
+    bool sameSet ( int x, int y ) {
+        return root ( x ) == root ( y );
+    }
+    int root ( int x ) {
+        return data[x] < 0 ? x : data[x] = root ( data[x] );
+    }
+    int size ( int x ) {
+        return -data[root ( x )];
+    }
+};
+
+int countSpanTrees ( const vector<vi> adj ) {
+    int n=adj.size();
+    vector<vi> minr ( n-1,vi ( n-1 ) );
+    rep ( i,n-1 ) {
+        minr[i][i]=adj[i].size();
+        for ( int j:adj[i] ) if ( j<n-1 ) minr[i][j]--;
+
+    }
+    return det ( minr );
+}
+int tSpanCount() {
+    vector<vi> adj= {{1,2},{0,2,3},{0,1,3},{1,2}};
+    assert ( countSpanTrees ( adj ) ==8 );
+    return 0;
+}
+int main() {
+    ios_base::sync_with_stdio ( false );
+    int n, q;
+    cin>>n>>q;
+    vi ssed ( 2* ( n-1 ) );
+    cin>>ssed;
+    map<int, vpii> edges;
+    rep ( i,q ) {
+        int u,v,c;
+        cin>>u>>v>>c;
+        u--;
+        v--;
+        edges[c].push_back ( mp ( u,v ) );
+
+    }
+
+    UnionFind uf ( n );
+    map<int ,bool >uc;
+    ll tot=1;
+    for ( const pair<int,vpii> &ed:edges ) {
+        int cnt=0;
+        vi loc ( n,-1 );
+        rep ( j,n ) {
+            int a=uf.root ( j );
+            if ( loc[a]<0 ) loc[a]=cnt++;
+            loc[j]=loc[a];
+
+        }
+
+        vector<vi> adj ( cnt );
+        for ( pii e: ed.second ) {
+
+            int l1=loc[e.first];
+            int l2=loc[e.second];
+            if ( l1!=l2 ) {
+                adj[l1].push_back ( l2 );
+                adj[l2].push_back ( l1 );
+            }
+            uf.merge ( e.first, e.second );
+        }
+        vector<bool> vis ( cnt );
+        rep ( i,cnt ) {
+            if ( !vis[i] ) {
+                vis[i]=1;
+                vi addi= {i};
+                while ( addi.size() ) {
+                    int k=addi.back();
+                    addi.pop_back();
+                    for ( int j: adj[k] )
+                        if ( !vis[j] ) {
+                            vis[j]=1;
+                            addi.push_back ( j );
+                        }
+                }
+                if ( i>0 ) {
+                    adj[i].push_back ( 0 );
+                    adj[0].push_back ( i );
+                }
+
+            }
+        }
+        tot=tot*countSpanTrees ( adj ) %MOD;
+
+    }
+
+    if ( uf.cnt==1 ) cout<<tot<<endl;
+    else cout<<0<<endl;
+
+}
+

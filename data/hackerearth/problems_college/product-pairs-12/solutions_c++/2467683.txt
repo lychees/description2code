@@ -1,0 +1,168 @@
+/*
+#include <iostream>
+using namespace std;
+
+int main()
+{
+    unsigned int n=0;
+    int i=0,count=0;
+    unsigned long int k=0;
+    unsigned long int first=0;
+    unsigned long int second=0;
+    cin>>n;
+    cin>>k;
+    if(n>100000)
+     {
+     	 return 0;
+     }
+     if(k>10000000000)
+     {
+     	return 0;
+     }
+     
+    for(i=1;i<n;i++)
+    {
+      cin>>first;
+      cin>>second;
+      if(first >=1 && first <=n && second >=1 && second <=n)
+      {
+        if(first * second <= k)
+          count++;
+      }
+    }
+    cout<<count<<endl;
+
+
+}
+*/
+#include <bits/stdc++.h>
+using namespace std;
+int segtree[200010][3]={0};
+int curmake;
+void makesegment(int nodenow,int l, int r)
+{
+  
+    if(l==r)
+    {
+        segtree[nodenow][0]=0;
+        segtree[nodenow][1]=-1;
+        segtree[nodenow][2]=-1;
+    }
+    else
+    {
+        segtree[nodenow][1]=curmake;
+        curmake++;
+        makesegment(curmake-1,l,(l+r)/2);
+        segtree[nodenow][2]=curmake;
+        curmake++;
+        makesegment(curmake-1,(l+r)/2+1,r);
+        segtree[nodenow][0]=segtree[segtree[nodenow][1]][0]+segtree[segtree[nodenow][2]][0];
+    }
+  
+   
+}
+int findsum(int at,int atl,int atr,int l,int r)
+{
+   
+    int a=0,b=0;
+    if(atl==l  &&  atr==r)
+        return segtree[at][0];
+    if((atl+atr)/2>=l)
+    a=findsum(segtree[at][1],atl,(atl+atr)/2,l,min(r,(atl+atr)/2));
+    if((atl+atr)/2+1<=r)
+    b=findsum(segtree[at][2],(atl+atr)/2+1,atr,max(l,(atl+atr)/2+1),r);
+ 
+    return (a+b);
+}
+void makechange(int at,int atl,int atr,int change,int nodeno)
+{
+    segtree[at][0]+=change;
+    if(atl==atr && atl==nodeno)
+        return;
+    if((atl+atr)/2>=nodeno)
+    {
+        makechange(segtree[at][1],atl,(atl+atr)/2,change,nodeno);
+    }
+    else if((atl+atr)/2+1<=nodeno)
+    {
+        makechange(segtree[at][2],(atl+atr)/2+1,atr,change,nodeno);
+    }
+}
+int main()
+{
+	ios::sync_with_stdio(false);
+    int i,n,d=0,md=0;
+    int deg[100]={0};
+    
+    
+    long long K,ans=0;
+    cin>>n>>K;
+    vector<int> adjlist[100001];
+    assert(1<=n && n<=100000 && 1<=K && K<=10000000000ll);
+   
+  
+ 
+    curmake=1;
+    makesegment(0,0,n);
+    
+    
+   	int ischild[100001]={0};
+    for(i=0;i<n-1;i++)
+    {
+    	int a,b;
+    	cin>>a>>b;
+	    assert(1<=a && a<=n && 1<=b && b<=n);
+		//cout<<a<<" "<<b<<" in "<<" "<<n<<endl;
+    	
+    	ischild[b]=1;
+    	adjlist[a].push_back(b);
+  
+    }
+    
+    for(i=1;i<=n;i++)
+    	if(ischild[i]==0)
+    		break;
+    int done[1000001]={0};
+    stack<pair<int,int> > s;
+    s.push(pair<int,int>(0,i));
+    while(s.size()!=0)
+    {
+        pair<int,int> atpair=s.top();
+        s.pop();
+        int at=atpair.second;
+        if(atpair.first==1)
+        {
+      
+             makechange(0,0,n,-1,at);
+	         md=max(md,d);
+	         d--;
+        }
+        else
+        {
+     
+            assert(done[at]==0);
+            done[at]=1;
+	        d++;
+	        long long tar=K/at;	
+	        ans+=(findsum(0,0,n,0,min(tar,(long long)n)));	     
+	        makechange(0,0,n,1,at);
+	        vector<int>::iterator it=adjlist[at].begin();	      
+	        deg[adjlist[at].size()+1]++;
+	        s.push(pair<int,int>(1,at));
+	        while(it!=adjlist[at].end())
+	        {
+		        s.push(pair<int,int>(0,*it));
+		        it++;
+	        }
+	 
+	    }
+	   
+    }
+   cout<<ans<<endl;
+  /* cout<<"n is "<<n<<"max depth is "<<md<<endl;
+    cout<<"Nodes with degree :"<<endl;
+    for(i=0;i<=10;i++)
+        cout<<i<<":"<<deg[i]<<endl;*/
+    return 0;
+}
+

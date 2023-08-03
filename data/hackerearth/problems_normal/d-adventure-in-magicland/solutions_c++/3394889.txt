@@ -1,0 +1,286 @@
+#include<bits/stdc++.h>
+#define ALL(X)        X.begin(),X.end()
+#define FOR(I,A,B)    for(int (I) = (A); (I) <= (B); (I)++)
+#define FORW(I,A,B)   for(int (I) = (A); (I) < (B);  (I)++)
+#define FORD(I,A,B)   for(int (I) = (A); (I) >= (B); (I)--)
+#define FOREACH(I,A)  for(__typeof(A.begin()) I = A.begin(); I != A.end(); ++I)
+#define CLEAR(X)      memset(X,0,sizeof(X))
+#define SIZE(X)       int(X.size())
+#define CONTAIN(A,X)  (A.find(X) != A.end())
+#define PB            push_back
+#define MP            make_pair
+#define X             first
+#define Y             second
+#define LBOUND(P,R,Q) ({__typeof(P) X=P,RR=(R), PP = P; while(PP<RR) {X = (PP+(RR-PP)/2); if(Q) RR = X; else PP = X+1;} PP;})
+using namespace std;
+typedef signed long long slong;
+typedef long double ldouble;
+const slong Infinity = 1000000100;
+const ldouble Epsilon = 1e-9;
+template<typename T, typename U> ostream& operator << (ostream& os, const pair<T,U>&p) { return os << "(" << p.X << "," << p.Y << ")"; }
+template<typename T> ostream& operator << (ostream &os, const vector<T>& V) { os << "["; FORW(i,0,SIZE(V)) os << V[i] << ((i==SIZE(V)-1) ? "" : ","); return os << "]"; }
+template<typename T> ostream& operator << (ostream &os, const set<T>& S) {os << "("; FOREACH(i,S) os << *i << (*i==*S.rbegin()?"":","); return os << ")"; }
+template<typename T, typename U> ostream& operator << (ostream &os, const map<T, U>& M){os << "{"; FOREACH(i,M) os << *i << (*i.X==M.rbegin()->X?"":","); return os << "}"; }
+
+// FFT // FFT // FFT // FFT // FFT // FFT // FFT // FFT // FFT // FFT // 
+namespace FFT
+{
+	const double Pi = 2*acos(0.0);
+	int MAXQ = 1<<18;
+	vector<complex<double> > A, R, T;//(MAXQ), R(MAXQ), T(MAXQ);
+
+	void fft(int n, int p, int s, int q, int znak)
+	{
+		if(n == 1) R[q] = A[p];
+		else
+		{
+			complex<double> en = exp(complex<double>(0.0, znak*2.0*Pi/n));
+			complex<double> e  = complex<double>(1.0,0);
+			fft(n/2, p, s*2, q, znak);
+			fft(n/2, p+s, s*2, 	q+n/2, znak);
+			FORW(k,0,n/2)
+			{
+				T[k] = R[q+k] + e*R[q+n/2+k];
+				T[k+n/2] = R[q+k] - e*R[q+n/2+k];
+				e *= en;
+			}
+			FORW(k,0,n) R[k+q] = T[k];
+		}
+	}
+
+    vector<slong> brut (vector<slong> &X, vector<slong> &Y) {
+        vector<slong> Rq(SIZE(X) + SIZE(Y), 0);
+        FORW(i,0,SIZE(X)) FORW(j,0,SIZE(Y)) Rq[i+j] += X[i] * Y[j];
+        return Rq;
+    }
+
+	vector<slong> multiplication (vector<slong> &X, vector<slong> &Y)
+	{
+        if(SIZE(X) + SIZE(Y) < 2500) {
+            return brut(X, Y);
+        }
+        FOR(i,4,30) if((1<<i) > SIZE(X) and (1<<i) > SIZE(Y)) {
+            MAXQ = (1<<(i+1));
+            break;
+        }
+        A.resize(MAXQ); T.resize(MAXQ); R.resize(MAXQ);
+		X.resize(MAXQ,0);
+		Y.resize(MAXQ,0);
+		int n = SIZE(X);
+		X.resize(MAXQ,0);
+		Y.resize(MAXQ,0);
+		FORW(i,0,n) A[i] = X[i];
+		fft(n,0,1,0,1);
+		vector<complex<double> > Q(ALL(R));
+		FORW(i,0,n) A[i] = Y[i];
+		fft(n,0,1,0,1);
+		FORW(i,0,n) A[i] = R[i]*Q[i];
+		fft(n,0,1,0,-1);
+		vector<slong> Result(n);
+		FORW(i,0,n) Result[i] = round(real(R[i])/n);
+		int t = MAXQ-1;
+		FORD(i,MAXQ-1,0) 
+		{
+			if(Result[i] == 0) t = i;
+			else break;
+		}
+		Result.resize(t);
+		return Result;
+	}
+};
+// FFT // FFT // FFT // FFT // FFT // FFT // FFT // FFT // FFT // FFT // 
+
+const int MAXN = 300010;
+int N, K, Z;
+vector<vector<pair<int,int>>> G, T;
+int S[MAXN];
+bool B[MAXN];
+const int MOD = 1000000007;
+
+void read_data() {
+    int q = scanf("%d %d", &N, &K);
+    Z = N;
+    G.resize(N);
+    T.resize(N);
+    FOR(i,1,N-1) {
+        int a, b;
+        q = scanf("%d %d", &a, &b);
+        --a; --b;
+        G[a].PB(MP(b, 1));
+        G[b].PB(MP(a, 1));
+    }
+    if(q * q == -1) return;
+}
+
+slong fmp(slong a, slong x) {
+    slong r = 1;
+    while(x != 0) {
+        if(x % 2 == 1) r = (r * a) % MOD;
+        a = (a * a) % MOD;
+        x /= 2;
+    }
+    return r;
+}
+
+void dfs1(int v, int p) {
+    for(pair<int,int> e: G[v]) if(e.X != p) {
+        T[v].PB(e);
+        dfs1(e.X, v);
+    }
+}
+
+void binarize() {
+    FORW(i,0,N) while(SIZE(G[i]) > 2) {
+        int e1 = SIZE(G[i]) - 1;
+        int e2 = SIZE(G[i]) - 2;
+        ++N;
+        G.resize(N);
+        G[N-1].PB(G[i][e1]);
+        G[N-1].PB(G[i][e2]);
+        G[i].pop_back();
+        G[i].pop_back();
+        G[i].PB(MP(N-1, 0));
+    }
+}
+
+void dfs2(int v, int p) {
+    S[v] = 1;
+    for(pair<int,int> e: T[v]) if(e.X != p and !B[e.X]) {
+        dfs2(e.X, v);
+        S[v] += S[e.X];
+    }
+}
+
+vector<slong> Result;
+void add_to_result(vector<slong> Q) {
+    if(SIZE(Q) > SIZE(Result)) {
+        Result.resize(SIZE(Q), 0);
+    }
+    FORW(i,0,SIZE(Q)) {
+        Result[i] += Q[i];
+    }
+//    cout << "result: " << Result << endl;
+}
+
+int centroid(int v) {
+    dfs2(v, -1);
+    int half_size = (S[v] + 1) / 2;
+    int parent = -1;
+    while(true) {
+//        cout << v << endl;
+        int max_subtree = -1;
+        int max_subtree_size = -1;
+        for(pair<int,int> e: T[v]) if(!B[e.X]) {
+            if(e.X != parent and S[e.X] > max_subtree_size) {
+                max_subtree_size = S[e.X];
+                max_subtree = e.X;
+            }
+        }
+//        cout << "max_subtree: " << max_subtree << endl;
+//        cout << "max_size: " << max_subtree_size << endl;
+        if(max_subtree_size > half_size) {
+            parent = v;
+            v = max_subtree;
+        } else {
+//            cout << "result: " << v << endl;
+            return v;
+        } 
+    }
+    assert(false);
+}
+
+vector<slong> Distances;
+void dfs3(int v, int p, int d) {
+    //cout << "Distances: " << v << " " << d << endl;
+    if(v < Z and d > 0) {
+        if(SIZE(Distances) < d+1) Distances.resize(d+1, 0);
+        ++Distances[d];
+    }
+    for(pair<int,int> e: T[v]) if(e.X != p and !B[e.X]) {
+        dfs3(e.X, v, d + e.Y);
+    }
+}
+
+vector<slong> distances(int v, int sd) {
+    Distances.resize(0);
+    dfs3(v, -1, sd);
+//    cout << "Distances: " << v << " " << Distances << endl;
+    return Distances;
+}
+
+vector<slong> add(vector<slong> &X, vector<slong> &Y, bool minus) {
+    vector<slong> R(max(SIZE(X), SIZE(Y)), 0);
+    FORW(i,0,SIZE(R)) {
+        if(i < SIZE(X)) R[i] += X[i];
+        if(i < SIZE(Y)) R[i] += minus ? -Y[i] : Y[i];
+    }
+    while(R.back() == 0) R.pop_back();
+    return R;
+}
+
+void rec(int v) {
+//    cout << "REC: " << v << endl;
+    B[v] = true;
+    vector<vector<slong>> Ds;
+    for(pair<int,int> e: T[v]) if(!B[e.X]) {
+        Ds.PB(distances(e.X, e.Y));
+//        if(v == 2) cout << "odległości: " << e.X << " " << ds << endl;
+//        cout << "mnozenie: " << result << " " << ds << endl;
+//        result = FFT::multiplication(result, ds);
+//        cout << "wynik: " << result << endl;
+        int c = centroid(e.X);
+        rec(c);
+    }
+    FORW(i,0,SIZE(Ds)) {
+//        cout << "V: " << v << " " << Ds[i] << endl;
+        add_to_result(Ds[i]);
+    }
+    vector<slong> sum(0);
+//    cout << "distances: " << Ds << endl;
+    FORW(i,0,SIZE(Ds)) {
+        sum = add(sum, Ds[i], false);
+//        cout << "sum: " << sum << endl;
+    }
+    FORW(i,0,SIZE(Ds)) {
+        //cout << "before: " << sum << endl;
+        sum = add(sum, Ds[i], true);
+        add_to_result(FFT::multiplication(sum, Ds[i]));
+        //cout << "after: " << sum << endl;
+    }
+}
+
+void invert() {
+    T.clear();
+    T.resize(N);
+    FORW(i,0,N) for(pair<int,int> e: G[i]) {
+        int j = e.X;
+        int w = e.Y;
+        T[i].PB(MP(j, w));
+        T[j].PB(MP(i, w));
+    }
+}
+
+void solve() {
+    dfs1(0, -1);
+    G = T;
+//    binarize();
+    invert();
+//    FORW(i,0,N) {        cout << "V" << i << " -> " << G[i] << endl;    }
+//    FORW(i,0,N) {        cout << "V" << i << " -> " << T[i] << endl;    }
+    rec(0);
+//    cout << "DONE" << endl;
+//    cout << distances(0);
+//    cout << "final result: " << Result << endl;
+    slong result = 0;
+    FORW(i,1,SIZE(Result)) {
+        result += Result[i] % MOD * fmp(i, K) % MOD;
+        result %= MOD;
+    }
+    printf("%lld\n", result);
+}
+
+int main() {
+    read_data();
+    solve();
+    return 0;
+}

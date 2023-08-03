@@ -1,0 +1,45 @@
+from math import log, ceil, sqrt
+
+E = lambda a,b,c,x: a*x**2 + b*x + c
+
+y = lambda a,b,c: b**2 - 4*a*c
+X = lambda a,b,c, det: ((-b - det)/float(2*a), (-b + det)/float(2*a))
+
+def poly_solver(a,b,c,K):
+    if K < min(a,b,c):
+        # print "%s < min(%s,%s,%s)"%(K, a,b,c)
+        return 0
+    N = 0
+    det = y(a,b,c)
+    # print "det %s"%(det)
+    if det > 0:
+        roota, rootb = X(a,b,c,sqrt(det))
+        root = N = int(min(roota, rootb))
+        if E(a,b,c,root) >= K:
+            N = root + 2
+    if N<=0:
+        t = int(ceil(log(K, 2) + 1))
+        N = t * 10**(int(log(t,2)))
+    root = N
+    lastmid = lefti = mid = 0
+    righti = N-1
+    while lefti<righti:
+        mid = (lefti+righti)/2
+        if lastmid == mid:
+            mid += 1
+        if mid == righti:
+            break
+        if E(a,b,c,mid) >= K:
+            righti = mid
+        else:
+            lefti = mid
+        lastmid = mid
+    assert E(a,b,c,righti) >= K
+    return righti if E(a,b,c,righti) >= K else 0
+
+T = int(raw_input())
+
+for _ in xrange(T):
+	a,b,c,K = map(int, raw_input().strip("\n").split())
+	print poly_solver(a,b,c,K)
+	

@@ -1,0 +1,86 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=1e5+5;
+#define ll long long
+struct suffix{
+	int index;
+	int rank[2];
+};
+bool cmp(struct suffix A,struct suffix B){
+	if(A.rank[0]==B.rank[0]){
+		return A.rank[1]<B.rank[1];
+	}
+	else{
+		return A.rank[0]<B.rank[0];
+	}
+}
+void constructSuffixArray(char *str,int len,suffix *suf){
+	for(int i=0;i<len;i++){
+		suf[i].index=i;
+		suf[i].rank[0]=str[i]-'A';
+		suf[i].rank[1]=(i+1<len)?(str[i+1]-'A'):-1;
+	}
+	sort(suf,suf+len,cmp);
+	int intArr[len];
+	for(int k=4;k<2*len;k=k*2){
+		int prev_rank,rank=0;
+		intArr[suf[0].index]=0;
+		prev_rank=suf[0].rank[0];
+		suf[0].rank[0]=rank;
+		for(int i=1;i<len;i++){
+			if(prev_rank==suf[i].rank[0] && suf[i-1].rank[1]==suf[i].rank[1]){
+				prev_rank=suf[i].rank[0];
+				suf[i].rank[0]=rank;
+			}
+			else{
+				prev_rank=suf[i].rank[0];
+				suf[i].rank[0]=++rank;				
+			}
+			intArr[suf[i].index]=i;
+		}
+		for(int i=0;i<len;i++){
+			int nextIndex=suf[i].index+k/2;
+			if(nextIndex<len){
+				suf[i].rank[1]=suf[intArr[nextIndex]].rank[0];
+			}
+			else{
+				suf[i].rank[1]=-1;
+			}
+		}
+		sort(suf,suf+len,cmp);
+	}
+}
+void constructLCPArray(char *str,int len,suffix *suf,int *lcp){
+	int Rank[len];
+	for(int i=0;i<len;i++){
+		Rank[suf[i].index]=i;
+	}
+	int k=0;
+	for(int i=0;i<len;i++,k?k--:0){
+		if(Rank[i]==len-1){
+			k=0;
+			continue;
+		}
+		int j=suf[Rank[i]+1].index;
+		while(i+k<len && j+k<len && str[i+k]==str[j+k]){
+			k++;
+		}
+		lcp[Rank[i]]=k;
+	}
+}
+int main(){
+	char str[N];
+		ll ans;
+		scanf("%s",str);
+		int len=strlen(str);
+		suffix suf[len];
+		constructSuffixArray(str,len,suf);
+		int lcp[len];
+		constructLCPArray(str,len,suf,lcp);
+		ans=len-suf[0].index;
+		for(int i=0;i<len-1;i++){
+			ans+=(ll)(len-suf[i+1].index)-(ll)lcp[i];
+		}
+		printf("%lld\n",ans);
+	return 0;
+}

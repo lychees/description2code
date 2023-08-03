@@ -1,0 +1,155 @@
+#include<stdio.h>
+#include<iostream>
+#include<vector>
+#include<cmath>
+#include<algorithm>
+#include<memory.h>
+#include<map>
+#include<set>
+#include<queue>
+#include<deque>
+#include<bits/stdc++.h>
+#include<list>
+#include<sstream>
+#include<cstring>
+#include<unordered_map>
+
+#define f first
+#define s second
+#define pb push_back
+// #define mp make_pair
+#define all(x) x.begin(),x.end()
+#define sz(x) ((int)x.size())
+#define eps 1e-9
+#define sqr(x) ((x)*(x))
+#define SET(a,b) memset((a),(b),sizeof((a)))
+#define pw(x) (1ll<<(x))
+#define buli(x) __builtin_popcountll(x)
+#define endl "\n"
+
+const int MOD = 1e9+7;
+const int N = 1e5+3;
+
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef map<int,int> mii;
+typedef map<string,int> msi;
+typedef pair<int,int> pii;
+typedef vector<pii> vpii;
+
+inline bool EQ(double a,double b) { return fabs(a - b) < 1e-9; }
+inline void set_bit(int & n, int b) { n |= pw(b); }
+inline void unset_bit(int & n, int b) { n &= ~pw(b); }
+#define scl(x) scanf("%lld",&x)
+#define sc(x) scanf("%d",&x)
+#define MAXN 1000003
+ 
+ll ar[MAXN];
+pair<ll,ll> arrayy[MAXN];
+int h[MAXN];
+char str[MAXN];
+bool visited[MAXN];
+unordered_map<ll,ll> mp;
+//map<ll,ll> mp;
+bool comp(pair<ll,ll>& A, pair<ll,ll>& B)
+{
+	if(A.f<=B.f)
+		return true;
+	return false;
+}
+int findCeil(int lft, int rght, ll val)
+{
+	if(val<arrayy[lft].f)
+		return lft;
+	if(val>=arrayy[rght].f)
+		return -1;
+	int mid=(lft+rght)>>1;
+	if(arrayy[mid].f==val&&mid+1<=rght)
+		return mid+1;
+	if(arrayy[mid].f>val)
+	{
+		if(mid-1>=lft&&val>=arrayy[mid-1].f)
+			return mid;
+		return findCeil(lft,mid-1,val);
+	}
+	if(mid+1<=rght&&val<arrayy[mid+1].f)
+		return mid+1;
+	return findCeil(mid+1,rght,val);
+}
+int main()
+{
+	// freopen("TASK.in","r",stdin);	
+	// freopen("TASK.out","w",stdout);
+
+	int t;
+	cin>>t;
+	while(t--) {
+	int n,j,m,i,high,z;
+	ll sum;
+	sc(n);sc(m);
+	stack<int> st;
+	mp.clear();
+	for(i=0;i<n;i++)
+	{
+		scl(ar[i]);
+		visited[i]=false;
+		while(!st.empty()&&ar[st.top()]<ar[i])
+			st.pop();
+		if(st.empty())
+			h[i]=-1;
+		else
+			h[i]=st.top();
+		st.push(i);
+	}
+	for(i=n-1;i>=0;i--)
+	{
+		if(!visited[i])
+		{
+			j=i;
+			sum=0;
+			while(h[j]!=-1&&!visited[h[j]])
+			{
+				mp[ar[j]]+=j-h[j];
+				visited[h[j]]=true;
+				mp[ar[h[j]]]+=(sum+j-h[j])*(h[j]-h[h[j]]);
+				sum+=j-h[j];
+				j=h[j];						
+			}
+			visited[j]=true;
+			mp[ar[j]]+=j-h[j];
+		}
+	}
+	unordered_map<ll,ll>::iterator umit=mp.begin();
+	arrayy[0].f=umit->f;
+	arrayy[0].s=umit->s;
+	umit++;
+	z=1;
+	for(;umit!=mp.end();umit++)
+	{
+		arrayy[z].f=umit->f;
+		arrayy[z++].s=umit->s;
+	}
+	sort(arrayy,arrayy+z);
+	for(i=1;i<z;i++)
+		arrayy[i].s+=arrayy[i-1].s;
+	ll ans=0;
+	high=findCeil(0,z-1,m);
+	if(high==-1)
+		ans=0;
+	else
+	{
+		if(high==0)
+			ans=arrayy[z-1].s;
+		else
+		{
+			high--;
+			ans=(arrayy[z-1].s)-(arrayy[high].s);
+		}
+		
+	}
+	cout<<ans<<endl;
+}
+	return 0;
+} 

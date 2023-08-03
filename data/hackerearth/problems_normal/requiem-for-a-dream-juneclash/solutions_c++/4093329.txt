@@ -1,0 +1,215 @@
+#include <bits/stdc++.h>
+
+#define READ(x)		freopen(x, "r", stdin)
+#define WRITE(x)	freopen(x, "w", stdout)
+
+#define REP(i, n)	for(ll i=0LL;i<n;i++)
+#define REPN(i, n)	for(ll i=1;i<=n;i++)
+#define SET(i, n)	memset(i, n, sizeof(i))
+
+#define MAX			100050
+#define INF			(1 << 29)
+#define EPS 		1e-9
+#define pb			push_back
+
+using  namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll>	pii;
+
+struct data{
+	ll sum;
+	ll lbest, rbest, best;
+	data () {}
+	data (ll a, ll b, ll c, ll d){
+		sum = a;
+		lbest = b;
+		rbest = c;
+		best = d;
+	}
+} tree[MAX * 4];
+
+data join(data a, data b){
+	ll sum=0LL, lbest, rbest, best;
+	sum = a.sum + b.sum;
+	best = a.rbest + b.lbest;
+	best = max(best, a.best);
+	best = max(best, b.best);
+	lbest = max(a.lbest, a.sum + b.lbest);
+	rbest = max(b.rbest, b.sum + a.rbest); 
+	return data(sum, lbest, rbest, best);
+}
+
+ll n, q;
+ll L[MAX][20LL];
+ll depth[MAX], sub[MAX], par[MAX];
+ll chainHead[MAX], chainInd[MAX], posInd[MAX], baseInd[MAX], chainNo;
+ll ptr;
+vector<ll>edge[MAX], cost[MAX];
+
+void build(ll b, ll e, ll node){
+	if(b == e){
+		ll x = baseInd[b];
+		tree[node] = data(x, x, x, x);
+		return;
+	}
+	ll mid = (b + e) / 2, l = 2 * node, h = l + 1;
+	build(b, mid, l);
+	build(mid+1,e,h);
+	tree[node] = join(tree[l], tree[h]);
+}
+
+data query(ll b, ll e, ll node, ll x, ll y){
+	if(b >= x && e <= y) return tree[node];
+	ll mid = (b + e) / 2, l = 2 * node, h = l + 1;
+	if(y <= mid) return query(b, mid, l, x, y);
+	else if(x > mid) return query(mid+1, e, h, x, y);
+	else return join(query(b, mid, l, x, y), query(mid+1, e, h, x, y));
+}
+
+ll get(ll x, ll y){
+	if(depth[x] < depth[y]) swap(x, y);
+	for(ll i=19;i>=0LL;i--){
+		if(depth[x] - (1 << i) >= depth[y]){
+			x = L[x][i];
+		}
+	}
+	if(x == y) return x;
+	for(ll i=19;i>=0LL;i--){
+		if(L[x][i] != -1 && L[x][i] != L[y][i]){
+			x = L[x][i];
+			y = L[y][i];
+		}
+	}
+	return par[x];
+}
+
+data queryUp(ll at, ll lc){
+	if(at == lc) return data(0LL, 0LL, 0LL, 0LL);
+	ll cur, idx = chainInd[lc], ans = -1;
+	data ret;
+	while(1){
+		cur = chainInd[at];
+		if(cur == idx){
+			if(at == lc){
+				assert(ans != -1);
+				return ret;
+			}
+			data f = query(1, ptr, 1, posInd[lc]+1, posInd[at]);
+			swap(f.lbest, f.rbest);
+			if(ans == -1) return f;
+			ret = join(ret, f);
+			return ret;
+		}	
+		data f = query(1, ptr, 1, posInd[ chainHead[cur] ], posInd[at]);
+		swap(f.lbest, f.rbest);
+		if(ans == -1){ ans = 0LL; ret = f;}
+		else  ret = join(ret, f);
+		at = chainHead[ cur ];
+		at = par[at];
+	}
+	return ret;
+}
+
+
+ll solve(ll x, ll y){
+	if(x == y) return 0LL;
+	ll md = get(x, y);
+	if(md == x){
+		data f = queryUp(y, md);
+		// cout << "HELL1\n";
+		return max(f.best, 0LL);
+	}
+	if(md == y){
+		data f = queryUp(x, md);
+		// cout << "HELL2\n";
+		// cout << f.best << ' ' << f.lbest << " " << f.rbest << ' ' << f.sum << endl;
+		return max(f.best, 0LL);
+	}
+
+	// data duck = queryUp(y, md);
+	// return max(duck.best, 0LL); 
+	data r1 = queryUp(x, md);
+	data r2 = queryUp(y, md);
+	ll ret = 0LL;
+	// cout << r1.best << ' ' << r1.lbest << ' ' << r1.rbest << ' ' << r1.sum << endl;
+	// cout << r2.best << ' ' << r2.lbest << ' ' << r2.rbest << ' ' << r2.sum << endl;
+	ret = max(ret, r1.best);
+	ret = max(ret, r2.best);
+	ret = max(ret, r1.rbest + r2.rbest);
+	return ret;
+}
+
+void HLD(ll at, ll cst, ll past){
+	if(chainHead[chainNo] == -1){
+		chainHead[chainNo] = at;
+	}
+	chainInd[at] = chainNo;
+	posInd[at]  = ptr;
+	// printf("%lld -> %lld -> %lld -> s%lld\n", at, chainNo, ptr, cst);
+	baseInd[ptr++] = cst; 
+	ll sp = -1, mx = 0LL, cs;
+	REP(i, edge[at].size()){
+		ll u = edge[at][i];
+		ll c = cost[at][i];
+		if(u == past) continue;
+		if(sub[u] > mx){
+			mx = sub[u];
+			sp = u;
+			cs = c;
+		}
+	}
+	if(sp != -1) HLD(sp, cs, at);
+	REP(i, edge[at].size()){
+		ll u = edge[at][i];
+		ll c = cost[at][i];
+		if(u == past || sp == u) continue;
+		chainNo++;
+		HLD(u, c, at); 
+	} 
+}
+
+void dfs(ll at, ll past, ll d){
+	depth[at] = d;
+	par[at] = past;
+	L[at][0LL] = past;
+	sub[at] = 1;
+	REP(i, edge[at].size()){
+		ll u = edge[at][i];
+		if(u == past) continue;
+		dfs(u, at, d+1);
+		sub[at] += sub[u];
+	}
+}
+
+void init(){
+	SET(L, -1);
+ 	SET(chainHead, -1);
+ 	ptr = 1;
+}
+
+int main(){
+	ll x, y, c;
+	init();
+	scanf("%lld %lld", &n, &q);
+	REPN(i, n-1){
+		scanf("%lld %lld %lld", &x, &y, &c);
+		edge[x].pb(y);
+		cost[x].pb(c);
+		edge[y].pb(x);
+		cost[y].pb(c);
+	}
+	dfs(1, -1, 0LL);
+	HLD(1, 0, -1);
+	build(1, ptr, 1);
+	for(ll i=1;(1 << i)<=n;i++){
+		for(ll j=1;j<=n;j++){
+			if(L[j][i-1] != -1) L[j][i] = L[ L[j][i-1] ][i-1]; 
+		}
+	}
+	while(q--){
+		scanf("%lld %lld", &x, &y);
+		printf("%lld\n", solve(x, y));
+	}
+	return 0LL;
+}

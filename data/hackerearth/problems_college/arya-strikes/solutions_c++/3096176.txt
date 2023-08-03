@@ -1,0 +1,155 @@
+#include <iostream> 
+#include <vector> 
+#define add push_back 
+#include <utility> 
+#include <map>
+#include <algorithm> 
+#include <climits> 
+using namespace std;
+class graph
+{
+    int i,j,h;
+    struct node
+    {
+        vector < pair<int, int> > edges; 
+        int visited, tile;
+        pair <int,int> prev;
+    };
+    map <pair<int, int>,node> nodes; map <pair<int, int>,node>::iterator its,ite;
+    public: 
+    void addNode(int **grid, int n)
+    {
+        pair <int,int> pt;
+        for(i=0;i<n;i++)
+        {
+            for(j=0;j<n;j++)
+            {
+              pt.first=i;pt.second=j;
+              {
+                node temp;      
+                if(i!=n-1 && j!=n-1)
+                {
+                    temp.edges.add(make_pair(i,j+1));
+                    temp.edges.add(make_pair(i+1,j));
+                }
+                else if(i!=n-1 && j==n-1)
+                {
+                    temp.edges.add(make_pair(i+1,j));
+                }
+                else if(i==n-1 && j!=n-1)
+                {
+                    temp.edges.add(make_pair(i,j+1));
+                }
+                else if(i==n-1 && j==n-1)
+                {
+                    temp.edges.add(make_pair(-1,-1));
+                }
+                temp.tile=grid[i][j];
+                nodes[pt]=temp;
+              }
+            }
+        }
+    }
+    void displayStructure()
+    {
+        for(its=nodes.begin();its!=nodes.end();its++)
+        {
+            pair<int,int> pt;
+            node temp;
+            pt.first=its->first.first;
+            pt.second=its->first.second;
+            temp=its->second;
+            cout<<"\nIndex: ("<<pt.first<<","<<pt.second<<")=";
+            cout<<"Tile: "<<temp.tile<<" ";
+            for(i=0;i<temp.edges.size();i++)
+            {
+                cout<<"("<<temp.edges[i].first<<","<<temp.edges[i].second<<") ";
+            }
+        }
+    }
+    int attack(int n)
+    {
+        pair <int,int> currentPt;
+        for(its=nodes.begin();its!=nodes.end();its++)
+        {
+            node temp=its->second;
+            temp.visited=0;
+            temp.prev=make_pair(0,0);
+            its->second=temp;
+        }    
+        while(1)
+        {
+               int flag=0;
+               if(currentPt.first==n-1 && currentPt.second==n-1)
+               {
+                   return 1;
+               }
+               ite=nodes.find(currentPt);
+               if(currentPt.first==0 && currentPt.second==0)
+               {
+                   ite->second.prev=make_pair(-2,-2);
+               }
+               node temp=ite->second;
+               for(i=0;i<ite->second.edges.size();i++)
+               {
+                   its=nodes.find(ite->second.edges[i]);
+                   if(its->second.tile==1 && its->second.visited==0)
+                   {
+                       its->second.prev=currentPt;
+                       currentPt=ite->second.edges[i];
+                       its->second.visited=1;
+                       flag=1;
+                       break;
+                   }
+               }
+               if(flag==1)
+               {
+                   continue;
+               }
+               if(flag==0)
+               {
+                   currentPt=ite->second.prev;
+                   if(currentPt.first==-2 && currentPt.second==-2)
+                   {
+                       return 0;
+                   }
+                   continue;
+               }
+        }
+    }
+};
+int main()
+{
+    int t=0;
+    int i=0,j=0,h=0;
+    cin>>t;
+    for(h=0;h<t;h++)
+    {
+        int n=0;
+        graph g;
+        int **grid;
+        cin>>n;
+        grid=new int*[n];
+        for(i=0;i<n;i++)
+        {
+            grid[i]=new int[n];
+        }
+        for(i=0;i<n;i++)
+        {
+            for(j=0;j<n;j++)
+            {
+                cin>>grid[i][j];
+            }
+        }
+        g.addNode(grid,n);
+        if(g.attack(n))
+        {
+            cout<<"POSSIBLE\n";
+        }
+        else 
+        {
+            cout<<"NOT POSSIBLE\n";
+        }
+    }
+    return 0;
+}

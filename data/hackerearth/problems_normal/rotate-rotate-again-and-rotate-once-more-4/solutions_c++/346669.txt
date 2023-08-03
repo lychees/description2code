@@ -1,0 +1,210 @@
+#include<stdio.h>
+#include<iostream>
+#include<cmath>
+#include<string>
+#include<cstring>
+#include<algorithm>
+#include<vector>
+#include<map>
+#include<utility>
+#define PB push_back
+#define MP make_pair
+#define LL long long int
+#define sc(x) scanf("%d",&x)
+#define scl(x) scanf("%lld",&x)
+using namespace std;
+
+char ch;
+int k;
+struct s1
+{
+	int val[4];
+};
+
+struct s2
+{
+	int turns;
+};
+
+struct node
+{
+	int l,r;
+	s1 data; 
+};
+
+
+
+node st[4000001];
+s2 lazy[8000001];
+
+void solve(int i, int d)
+{
+	int j, f;
+	s1 temp;
+	d = d % 4;
+	
+	if(d < 0)
+	d += 4;
+	for(j=0;j<4;j++)
+	{
+		f = (j + d) % 4;
+		temp.val[f] = st[i].data.val[j];
+	}
+	for(j=0;j<4;j++)
+	{
+		st[i].data.val[j] = temp.val[j];
+	}
+	return;
+}
+
+//0 - east 1 - south 2 - west 3 - north
+
+void construct(int i, int left, int right)
+{
+	int j;
+	st[i].l = left;
+	st[i].r = right;
+	if(left == right)
+	{
+		for(j=0;j<4;j++)
+		{
+			st[i].data.val[j] = 0;
+		}
+		st[i].data.val[0] = 1;
+		return;
+	}
+	int mid = (left + right)/2;
+	
+	construct(2 * i, left, mid);
+	construct(2 * i + 1, mid + 1, right);
+	
+	for(j=0;j<4;j++)
+	{
+		st[i].data.val[j] = st[2 * i].data.val[j] + st[2 * i +1].data.val[j];
+	}
+	return;
+}
+
+
+s1 query(int i, int left, int right)
+{
+	s1 data1, data2;
+	solve(i, lazy[i].turns);
+	lazy[2 * i].turns += lazy[i].turns;
+	lazy[2 * i + 1].turns += lazy[i].turns;
+	lazy[i].turns = 0; 
+	
+	if(st[i].l == left && st[i].r == right)
+	{
+		return st[i].data;
+	}
+	
+	int mid = (st[i].l + st[i].r)/2;
+	
+	if(left <= mid && right <= mid)
+	{
+		return query(2 * i, left, right);
+	}
+	if(left > mid && right > mid)
+	{
+		return query(2 * i + 1, left, right);
+	}
+	data1 = query(2 * i, left, mid);
+	data2 = query(2 * i + 1, mid + 1, right);
+	s1 data3;
+	int j;
+	for(j=0;j<4;j++)
+	{
+		data3.val[j] = data1.val[j] + data2.val[j];		
+	}
+	return data3;
+	
+}
+
+void update(int i, int left, int right)
+{
+	int j;
+	//solve(i, lazy[i].turns);
+	lazy[2 * i].turns += lazy[i].turns;
+	lazy[2 * i + 1].turns += lazy[i].turns;
+	
+	if(st[i].l == left && st[i].r == right)
+	{
+		if(ch == 'C')
+		{
+			solve(i,lazy[i].turns + k);
+			lazy[2 * i].turns +=  k;
+			lazy[2 * i + 1].turns += k;
+		}
+		else
+		{
+			solve(i, lazy[i].turns - k);
+			lazy[2 * i].turns -=  k;
+			lazy[2 * i + 1].turns -= k;
+		}
+		lazy[i].turns = 0;
+		return;
+	}
+	lazy[i].turns = 0;
+	
+	int mid = (st[i].l + st[i].r)/2;
+	
+	if(left <= mid && right <= mid)
+	{
+		update(2 * i , left, right);
+		solve(2 * i + 1, lazy[2 * i + 1].turns);
+		lazy[2 * (2 * i + 1)].turns += lazy[2 * i + 1].turns;
+		lazy[2 * (2 * i + 1) + 1].turns += lazy[2 * i + 1].turns;
+		lazy[2 * i + 1].turns = 0;
+	}
+	else if(left > mid && right > mid)
+	{
+		solve(2 * i, lazy[2 * i].turns);
+		lazy[2 * (2 * i)].turns += lazy[2 * i].turns;
+		lazy[2 * (2 * i) + 1].turns += lazy[2 * i].turns;
+		lazy[2 * i].turns = 0;
+		update(2 * i + 1, left, right);
+	}
+	else
+	{
+		update(2 * i, left, mid);
+		update(2 * i + 1, mid + 1, right);
+	}
+	for(j=0;j<4;j++)
+	st[i].data.val[j] = st[2 * i].data.val[j] + st[2 * i + 1].data.val[j];
+	return;
+}
+
+int main()
+{
+	int t,i,j,n,m,left,right,final_ans;
+	s1 ans;
+	cin>>n>>m;
+	construct(1,1,n);
+	//ans = query(1,1,1);
+	while(m--)
+	{
+		//ans = query(1,1,1);
+		cin>>ch;
+		cin>>left>>right;
+		if(ch == 'C' || ch == 'A')
+		{
+			cin>>k;
+			k %= 4;
+			update(1, left, right);
+		}
+		else
+		{
+			ans = query(1, left, right);
+			final_ans = -100;
+			for(j=0;j<4;j++)
+			{
+				if(ans.val[j] > final_ans)
+				final_ans = ans.val[j];
+			}
+			cout<<final_ans<<endl;
+		}
+	}
+	
+	return 0;
+}

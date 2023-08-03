@@ -1,0 +1,101 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int, int> pii; typedef vector<pair<int, int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+template<int MOD>
+struct ModInt {
+	static const int Mod = MOD;
+	unsigned x;
+	ModInt() : x(0) {}
+	ModInt(signed sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	ModInt(signed long long sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	int get() const { return (int)x; }
+
+	ModInt &operator+=(ModInt that) { if((x += that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator-=(ModInt that) { if((x += MOD - that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator*=(ModInt that) { x = (unsigned long long)x * that.x % MOD; return *this; }
+
+	ModInt operator+(ModInt that) const { return ModInt(*this) += that; }
+	ModInt operator-(ModInt that) const { return ModInt(*this) -= that; }
+	ModInt operator*(ModInt that) const { return ModInt(*this) *= that; }
+};
+typedef ModInt<1000000009> mint;
+
+int main() {
+	int T;
+	scanf("%d", &T);
+	for(int ii = 0; ii < T; ++ ii) {
+		int N; int K;
+		scanf("%d%d", &N, &K);
+		vector<int> W(K);
+		for(int i = 0; i < K; ++ i)
+			scanf("%d", &W[i]);
+		vector<int> S(N);
+		for(int i = 0; i < N; ++ i)
+			scanf("%d", &S[i]);
+		int X = *max_element(all(S));
+		vector<vector<mint>> ways(X + 1, vector<mint>(1 << K));
+		ways[0][0] = 1;
+		rer(i, 0, X) rep(j, 1 << K) {
+			mint x = ways[i][j];
+			if(x.x == 0) continue;
+			rep(k, K) if((j & ((1 << k) - 1)) == 0 && i + W[k] <= X)
+				ways[i + W[k]][j | 1 << k] += x;
+		}
+		vector<vi> masks(1 << K);
+		rep(k, 1 << K) if(k) {
+			int mi = -1, ma = -1;
+			rep(i, K) if(k >> i & 1) {
+				if(mi == -1) mi = i;
+				ma = i;
+			}
+			int mask = mi + 1 >= ma ? 0 : ((1 << (ma - mi - 1)) - 1) << (mi + 1);
+			rep(j, 1 << K) if((j & mask) == 0)
+				masks[j].push_back(k);
+		}
+		vector<vector<mint>> dp(N + 1, vector<mint>(1 << K));
+		dp[0][0] = 1;
+		rep(i, N) rep(j, 1 << K) {
+			mint x = dp[i][j];
+			if(x.x == 0) continue;
+			for(int k : masks[j])
+				dp[i + 1][j | k] += x * ways[S[i]][k];
+		}
+		mint ans = accumulate(all(dp[N]), mint());
+		printf("%d\n", ans.get());
+	}
+	return 0;
+}

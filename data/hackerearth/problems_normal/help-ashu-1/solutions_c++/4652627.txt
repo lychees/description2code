@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+using namespace std;
+int eventree[400001];
+int oddtree[400001];
+void build(int node,long a[],int start,int end)
+{
+	if(start==end)
+	{
+		if(a[start]%2==0){
+			eventree[node]=1;
+			oddtree[node]=0;
+		}
+		else{
+			oddtree[node]=1;
+			eventree[node]=0;
+		}
+	}
+	else
+	{
+		int mid=(start+end)/2;
+		build(2*node,a,start,mid);
+		build(2*node+1,a,mid+1,end);
+		eventree[node]=eventree[2*node]+eventree[2*node+1];
+		oddtree[node]=oddtree[2*node]+oddtree[2*node+1];
+	}
+}
+void update(int node,long a[],int start,int end,int idx,long val)
+{
+	if(start==end)
+	{
+		a[idx]=val;
+		if(val%2==0)
+		{
+			eventree[node]=1;
+			oddtree[node]=0;
+		}
+		else
+		{
+			oddtree[node]=1;
+			eventree[node]=0;
+		}
+	}
+	else
+	{
+		int mid=(start+end)/2;
+		if(start<=idx&&idx<=mid)
+		{
+			update(2*node,a,start,mid,idx,val);
+		}
+		else
+		{
+			update(2*node+1,a,mid+1,end,idx,val);
+		}
+		eventree[node]=eventree[2*node]+eventree[2*node+1];
+		oddtree[node]=oddtree[2*node]+oddtree[2*node+1];
+	}
+}
+int evenCount(int node,int start,int end,int l,int r)
+{
+	if(r<start||end<l) return 0;
+	if(l<=start&&end<=r)
+	{
+		return eventree[node];
+	}
+	int mid=(start+end)/2;
+	int p1 = evenCount(2*node, start, mid, l, r);
+    int p2 = evenCount(2*node+1, mid+1, end, l, r);
+    return (p1 + p2);
+}
+int oddCount(int node,int start,int end,int l,int r)
+{
+	if(r<start||end<l) return 0;
+	if(l<=start&&end<=r)
+	{
+		return oddtree[node];
+	}
+	int mid=(start+end)/2;
+	int p1 = oddCount(2*node, start, mid, l, r);
+    int p2 = oddCount(2*node+1, mid+1, end, l, r);
+    return (p1 + p2);
+}
+int main()
+{
+    int n,q;
+    scanf("%d",&n);
+    long a[n+1];
+    for(int i=1;i<=n;i++)
+    	scanf("%ld",&a[i]);
+    build(1,a,1,n);
+    scanf("%d",&q);
+    int qnum;
+    while(q--)
+    {
+    	scanf("%d",&qnum);
+    	if(qnum==0){
+    		int x; long y;
+    		scanf("%d%ld",&x,&y);
+    		update(1,a,1,n,x,y);
+    	}
+    	else if(qnum==1){
+    		int l,r;
+    		scanf("%d%d",&l,&r);
+    		cout<<evenCount(1,1,n,l,r)<<endl;
+    	}
+    	else if(qnum==2){
+    		int l,r;
+    		scanf("%d%d",&l,&r);
+    		cout<<oddCount(1,1,n,l,r)<<endl;
+    	}
+    }
+    return 0;
+}

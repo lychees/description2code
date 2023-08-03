@@ -1,0 +1,57 @@
+#include <bits/stdc++.h>
+using namespace std;
+int a[505];
+long long mem[505][505];
+bool calc[505][505];
+bool isprime[1200005];
+vector<int> primes;
+long long dp(int l, int r) {
+  if (l > r) {
+    return 0;
+  }
+  if (calc[l][r]) {
+    return mem[l][r];
+  }
+  long long p = dp(l + 1, r - 1);
+  int target = lower_bound(primes.begin(), primes.end(), a[l]) - primes.begin();
+  int target2 = lower_bound(primes.begin(), primes.end(), a[r]) - primes.begin();
+  if (target2 <= target) target2 = target + 1;
+  target = target2 - 1;
+  int extra = primes[target] + primes[target2] - a[l] - a[r];
+  //printf("%d %d: %d\n", a[l], a[r], extra);
+  p += extra;
+  for (int i = l + 2; i < r; i += 2) {
+    p = min(p, dp(l, i - 1) + dp(i, r));
+  }
+  calc[l][r] = true;
+  return mem[l][r] = p;
+}
+void solve() {
+  memset(isprime, 1, sizeof isprime);
+  isprime[0] = isprime[1] = false;
+  int m = sqrt(1200000);
+  for (int i = 2; i <= 1200000; i++) {
+    if (isprime[i]) primes.push_back(i);
+    else continue;
+    if (i > m) continue;
+    for (int j = i * i; j <= 1200005; j += i) {
+      isprime[j] = false;
+    }
+  }
+  //printf("%d\n", primes.size());
+  int n;
+  scanf("%d", &n);
+  for (int i = 1; i <= n; i++) {
+    scanf("%d", &a[i]);
+  }
+  printf("%lld\n", dp(1, n) + n / 2);
+  return ;
+}
+int main() {
+  int T = 1;
+  //scanf("%d", &T);
+  while (T--) {
+    solve();
+  }
+  return 0;
+}

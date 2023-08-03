@@ -1,0 +1,144 @@
+//Created By Mayur Agarwal :)
+//Question-https://www.hackerearth.com/problem/algorithm/benny-and-two-strings-2/description/
+//Reference-https://www.hackerearth.com/problem/algorithm/benny-and-two-strings-2/editorial/
+
+#include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <set>
+#include <algorithm>
+#include <map>
+#include <iterator>
+#include <functional>
+#include <queue>
+
+#define ll long long
+#define ind(a) scanf("%d",&a)
+#define in(a) scanf("%lld",&a)
+#define inc(a) scanf("%c",&a)
+#define ins(a) scanf("%s",a)
+#define pr(a) printf("%lld\n",a)
+#define debug(x) cout << #x << " = " << x << endl
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define pb push_back
+#define ff first
+#define ss second
+#define SIZE 200010
+const ll mod = 1000000007L;
+
+using namespace std;
+typedef pair<ll, ll>pll;
+int n, m, k;
+string s, t;
+int lps[202];
+int LCP[202][26];
+bool vis[202][202][502];
+int dp[202][202][502];
+
+//Calculates the longest common prefix of the string A[0, n - 2] and string A[1, n - 1].
+inline ll cal(string str, int len)
+{
+	lps[0] = 0;
+	int j = 0;
+	for (int i = 1; i < len; i++)
+	{
+		//j = lps[i - 1];
+		while (j > 0 && str[i] != str[j])
+		{
+			j = lps[j - 1];
+		}
+		if (str[i] == str[j])
+			j++;
+		lps[i] = j;
+	}
+	return lps[len - 1];
+}
+
+//LCP[i][p] denotes the lps[] array computed above for the prefix of
+//length i appended with char p.
+inline void pre()
+{
+	string st = "";
+	for (char p = 'a'; p <= 'z'; p++)
+	{
+		LCP[0][p - 'a'] = cal(st + p, 1);
+	}
+
+	for (int i = 0; i < n; i++)
+	{
+		st += s[i];
+		for (char p = 'a'; p <= 'z'; p++)
+		{
+			LCP[i + 1][p - 'a'] = cal(st + p, i + 2);
+		}
+	}
+	return;
+}
+
+int get_cost(int a, int b)
+{
+	//a -= 'a';
+	int res = abs(a - b);
+	res = min(res, 26 - res);
+	return res;
+}
+ll solve(int idx, int match, int cost)
+{
+	if (idx == m)
+		return 0;
+	if (vis[idx][match][cost])
+		return dp[idx][match][cost];
+	vis[idx][match][cost] = 1;
+	ll ans = 0;
+	for (char p = 'a'; p <= 'z'; p++)
+	{
+		int dis = get_cost(t[idx] - 'a', p - 'a');
+		// int dis = abs(p - t[idx]);
+		// if (p < t[idx])
+		// {
+		// 	dis = min(dis, p - 'a' + 'z' - t[idx] + 1);
+		// }
+		// else
+		// {
+		// 	dis = min(dis, t[idx] - 'a' + 'z' - p + 1);
+		// }
+
+		if (cost + dis <= k)
+		{
+			if (p == s[match])
+			{
+				if (match == n - 1)
+				{
+					ans = max(ans, 1 + solve(idx + 1, LCP[match][p - 'a'], cost + dis));
+				}
+				else
+				{
+					ans = max(ans, solve(idx + 1, match + 1, cost + dis));
+				}
+			}
+			else
+			{
+				ans = max(ans, solve(idx + 1, LCP[match][p - 'a'], cost + dis));
+			}
+		}
+	}
+	dp[idx][match][cost] = ans;
+	return ans;
+}
+int main()
+{
+#ifndef ONLINE_JUDGE
+	freopen("input.txt", "r", stdin);
+#endif
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	cin >> n >> m >> k;
+	cin >> s >> t;
+
+	pre();
+	cout << solve(0, 0, 0) << endl;
+	return 0;
+}

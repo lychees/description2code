@@ -1,0 +1,96 @@
+/*
+  Beautiful Codes are MUCH better than 'Shorter' ones !
+user  : triveni
+date  : 04/10/2015
+time  : 23:34:05
+*/
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define      pii               std::pair<int,int>
+#define      vi                std::vector<int>
+#define      mp(a,b)           make_pair(a,b)
+#define      pb(a)             push_back(a)
+#define      each(it,s)        for(auto it = s.begin(); it != s.end(); ++it)
+#define      rep(i, n)         for(int i = 0; i < (n); ++i)
+#define      fill(a)           memset(a, 0, sizeof (a))
+#define      sortA(v)          sort(v.begin(), v.end())
+#define      sortD(v)          sort(v.begin(), v.end(), greater<auto>())
+#define      X                 first
+#define      Y                 second
+
+typedef long long LL;
+LL MOD = 1000000007;
+
+struct node{
+	int v;
+	int d;
+	bool operator < (const node & nd) const {
+		return d > nd.d;
+	}
+};
+
+void bfs(int u, vector<vector<int> >& mat, vector<int>& dist){
+	dist[u] = 0;
+	int n = dist.size();
+	priority_queue<node>pq;
+	pq.push({u, 0});
+	vector<bool> vis(n, 0);
+	while(!pq.empty()){
+		node nw = pq.top();
+		pq.pop();
+		if(vis[nw.v]) continue;
+		vis[nw.v] = 1;
+		for(int c = 0; c < n; ++c){
+			if(dist[c] > dist[nw.v] + mat[nw.v][c]){
+				dist[c] = dist[nw.v] + mat[nw.v][c];
+				pq.push({c, dist[c]});
+			}
+		}
+	}
+	return ;
+}
+
+void transpose(vector<vector<int> > & v){
+	int n = v.size();
+	for(int i = 0; i < n; ++i)
+		for(int j = 0; j < i; ++j){
+			swap(v[i][j], v[j][i]);
+		}
+}
+
+int main()
+{
+	int n;
+	cin >> n;
+	vector<vector<int> > rail(n, vector<int>(n, 0));
+	vector<vector<int> > road(n, vector<int>(n, 0));
+	rep(i, n) rep(j, n) scanf("%d", &road[i][j]);
+	rep(i, n) rep(j, n) scanf("%d", &rail[i][j]);
+	int s, d;
+	cin >> s >> d;
+	s -= 1, d -= 1;
+	vector<int> dsRail(n, MOD);
+	vector<int> dsRoad(n, MOD);
+	vector<int> ddRail(n, MOD);
+	vector<int> ddRoad(n, MOD);
+
+	bfs(s, road, dsRoad);
+	bfs(s, rail, dsRail);
+
+	transpose(road);
+	transpose(rail);
+	
+	bfs(d, road, ddRoad);
+	bfs(d, rail, ddRail);
+
+	int ans = MOD;
+	for(int i = 0; i < n; ++i){
+		if(i == s || i == d) continue;
+		ans = min(ans, dsRail[i] + ddRoad[i]);
+		ans = min(ans, dsRoad[i] + ddRail[i]);
+	}
+	cout << ans << endl;
+	return 0;
+}

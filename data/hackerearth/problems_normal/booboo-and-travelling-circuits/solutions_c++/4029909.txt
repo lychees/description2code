@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+#define PII       pair<int,int>
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+#define cin(x)    scanf("%d",&x)
+#define MOD		1000000003
+#define EPS		1E-10
+const int maxn = 2010;
+const int maxm = 10010;
+int A[maxn][maxm], B[maxn][maxm];
+void checkIO(int N,int M)
+{
+	assert(1 <= N && N <= 2000);
+	assert(1 <= M && M <= 10000);
+}
+// calculate LPF
+#define MAXN	10000
+bool marker[MAXN + 1] = {0};
+int lpf[MAXN + 1] = {0};
+void sieve(int limit = MAXN)
+{
+	for(int i = 2; i <= limit; i++) marker[i] = true, lpf[i] = i;
+	for(int i = 2; i <= limit; i++)
+	{
+		if(!marker[i]) continue;
+		int j = 2*i;
+		while(j<=limit)
+		{
+			lpf[j] = min(lpf[j],i);
+			marker[j] = 0;
+			j += i;
+		}
+	}
+}
+// end of LPF
+LL dp[2][maxm]; // cost till i,j
+LL best[100000];
+void genA(int N,int M)
+{
+	LL s0,p0,q0,r0;
+	cin >> s0 >> p0 >> q0 >> r0;
+	for(int i = 0; i < N*M; i++)
+	{
+		LL now = ((s0 * s0) % MOD) * p0 + s0 * q0 + r0;
+		now %= MOD;
+		A[i/M + 1][i%M + 1] = now;
+		s0 = now;
+	}
+}
+void genB(int N,int M)
+{
+	LL s0,p0,q0,r0;
+	cin >> s0 >> p0 >> q0 >> r0;
+	for(int i = 0; i < N*M; i++)
+	{
+		LL now = ((s0 * s0) % MOD) * p0 + s0 * q0 + r0;
+		now %= MOD;
+		B[i/M + 1][i%M + 1] = now;
+		s0 = now;
+	}
+}
+int main()
+{
+	sieve();
+	lpf[1] = 1;
+	int N,M;
+	cin >> N >> M;
+	genA(N,M);
+	genB(N,M);
+	checkIO(N,M);
+	for(int i = 1; i <= N; i++)
+	{
+		for(int j = 1; j <= M; j++)
+			best[j] = 1LL << 60;
+		for(int j = 1; j <= M; j++)
+		{
+			dp[1][j] = dp[0][j] + A[i-1][j]; // initial value.
+			best[1] = min(best[1], dp[0][j] + B[i-1][j]);
+		}
+		dp[1][1] = min(dp[1][1], best[1]);
+		for(int j = 2; j <= M; j++)
+		{
+			int l = lpf[j];
+			dp[1][j] = min(dp[1][j], best[l]);
+			best[l] = min(best[l], dp[0][j] + B[i-1][j]);
+		}
+		for(int j = 1; j <= M; j++)
+			best[j] = 1LL << 60;
+		for(int j = M; j >= 2; j--)
+		{
+			int l = lpf[j];
+			dp[1][j] = min(dp[1][j], best[l]);
+			best[l] = min(best[l], dp[0][j] + B[i-1][j]);
+		}
+		for(int j = 1; j <= M; j++)
+		{
+			dp[0][j] = dp[1][j];
+			dp[1][j] = 0;
+		}
+	}
+	LL ans = 1LL << 60;
+	for(int i = 1; i <= M; i++)
+		ans = min(ans, dp[0][i]);
+	cout << ans << endl;
+	return 0;
+}

@@ -1,0 +1,89 @@
+#include<stack>
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<string>
+#include<cstring>
+using namespace std;
+
+typedef long long LL;
+typedef vector<int> VI;
+
+#define REP(i,n) for(int i=0, i##_len=(n); i<i##_len; ++i)
+#define EACH(i,c) for(__typeof((c).begin()) i=(c).begin(),i##_end=(c).end();i!=i##_end;++i)
+#define eprintf(s...) fprintf(stderr, s)
+
+template<class T> inline void amin(T &a, const T &b) { if (b<a) a=b; }
+template<class T> inline void amax(T &a, const T &b) { if (a<b) a=b; }
+
+
+int N;
+string S[1000011];
+char buf[1000111];
+int lcp[1000011];
+int L;
+LL ans[1000111];
+
+int main() {
+    scanf("%d", &N);
+    REP (i, N) {
+	scanf("%s", buf);
+	S[i] = buf;
+	amax<int>(L, S[i].size());
+    }
+
+    sort(S, S+N);
+    {
+	stack<int> L, R, I;
+	L.push(0); R.push(N); I.push(0);
+	while (!L.empty()) {
+	    int l = L.top(); L.pop();
+	    int r = R.top(); R.pop();
+	    int i = I.top(); I.pop();
+	    while (l+1 < r) {
+		if (S[l][i] == S[r-1][i]) {
+		    if (S[l][i] == 0) {
+			for (int j=l; j<r-1; j++) lcp[j] = i;
+		    } else {
+			L.push(l); R.push(r); I.push(i+1);
+		    }
+		    break;
+		} else {
+		    int lo = l, hi = r;
+		    while (hi - lo > 1) {
+			int m = (lo + hi) / 2;
+			if (S[m][i] == S[l][i]) lo = m;
+			else hi = m;
+		    }
+		    lcp[lo] = i;
+		    L.push(l); R.push(hi); I.push(i);
+		    l = hi;
+		}
+	    }
+	}
+    }
+
+
+    VI left(N-1, -1), right(N-1, -1);
+    stack<int> S; S.push(-1);
+    REP (i, N-1) {
+	while (S.top() != -1 && lcp[S.top()] > lcp[i]) S.pop();
+	left[i] = S.top();
+	S.push(i);
+    }
+    S = stack<int>();
+    S.push(N-1);
+    for (int i=N-1; i--; ) {
+	while (S.top() != N-1 && lcp[S.top()] >= lcp[i]) S.pop();
+	right[i] = S.top();
+	S.push(i);
+    }
+
+    REP (i, N-1) {
+	ans[lcp[i]] += (LL)(i-left[i]) * (right[i]-i);
+    }
+    REP (i, L+1) printf("%lld%c", ans[i], i==L?'\n':' ');
+
+    return 0;
+}

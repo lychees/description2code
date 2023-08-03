@@ -1,0 +1,94 @@
+#include <iostream>
+
+using namespace std;
+
+#define MAXN 105
+#define MAXS 100010
+
+typedef long long ll;
+
+int N;
+int V[MAXN];
+int Q;
+int A;
+bool S[MAXS];
+ll DP[MAXS];
+bool tree[MAXS*16];
+
+void Trie_insert(int val) {
+	int idx = 1;
+	for (int i = 19; i >= 0; i--) {
+		if (val & (1<<i)) {
+			tree[2*idx + 1] = true;
+			idx = 2 * idx + 1;
+		}
+		else {
+			tree[2*idx] = true;
+			idx = 2 * idx;
+		}
+	}
+}
+
+int Trie_query(int val) {
+	int ans = 0;
+	int idx = 1;
+	for (int i = 19; i >= 0; i--) {
+		if (val & (1<<i)) {
+			if (tree[2*idx + 1]) {
+				ans |= (1<<i);
+				idx = 2 * idx + 1;
+			}
+			else {
+				idx = 2 * idx;
+			}
+		}
+		else {
+			if (tree[2*idx]) {
+				idx = 2*idx;
+			}
+			else {
+				ans |= (1<<i);
+				idx = 2 * idx + 1;
+			}
+		}
+	}
+	return ans;
+}
+
+int main() {
+
+	cin >> N;
+
+	for (int i = 1; i <= N; i++) {
+		cin >> V[i];
+	}
+
+	S[0] = true;
+	DP[0] = 1; 
+	for (int i = 1; i <= N; i++) {
+		for (int j = MAXS - 1; j >= 0; j--) {
+			if (S[j] == true) {
+				S[j + V[i]] = true;
+				DP[j + V[i]] += DP[j];
+				DP[j + V[i]] %= 1000000007;
+			}
+		}
+	}
+
+	for (int i = 1; i < MAXS; i++) {
+		if (S[i]) {
+			Trie_insert(i);
+		}
+	}
+
+	cin >> Q;
+
+	for (int i = 1; i <= Q; i++) {
+		cin >> A;
+		int ans = Trie_query(A);
+		cout << ans << " " << DP[ans] << endl;
+	}
+
+	return 0;
+
+}

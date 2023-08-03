@@ -1,0 +1,152 @@
+#include <bits/stdc++.h>
+#define ll long long int
+using namespace std;
+const ll mod = 1000000003;
+const int N = 2005;
+const int M = 10005;
+const ll MAXX = mod*mod;
+ll a[2][M], b[2][M], s[2], w[2], fac[M], ans[2][M], prev[M];
+bool prime[M];
+stack<int> v;
+vector<int> vv[M];
+pair< int,int > pp[M];
+void pre(int m) 
+{
+	for(int i = 0;i < m;i++) prime[i] = 0;
+	prime[1] = 1;
+	for(int i = 3;i*i < m;i += 2) {
+		if(!prime[i]) {
+			//cout<<i<<" ";
+			for(int j = i*i,k = 2*i;j < M;j += k)
+				prime[j] = 1;
+		}
+	}
+	v.push(2);
+	for(int i = 3;i < m;i += 2)
+		if(!prime[i])
+			v.push(i);
+	while(!v.empty()) {
+		int x = v.top();
+		v.pop();
+		int k = x;
+		while(k < M) {
+			fac[k] = x;
+			k += x;
+		}
+	}
+	fac[1] = 1;
+	vv[1].emplace_back(1);
+	for(int i = 2;i < m;i++) {
+		vv[fac[i]].emplace_back(i);
+		vv[1].emplace_back(i);
+	}
+}
+int main()
+{
+    int n, m;
+    ll p, q, r, x, y, z;
+    scanf("%d %d %lld %lld %lld %lld %lld %lld %lld %lld",&n, &m, &s[0], &p, &q, &r, &w[0], &x, &y, &z);
+    pre(m + 1);
+    int fl = 0, ffl = 0, flag = 0;
+    for(int i = 0,k = 0;i < (n*m);i++) {
+    	fl ^= 1;
+    	ll temp = s[fl^1] * s[fl^1];
+    	if(temp >= mod)
+    		temp %= mod;
+    	temp *= p;
+    	if(temp >= mod)
+    		temp %= mod;
+    	s[fl] = r + q * s[fl^1];
+    	if(s[fl] >= mod)
+    		s[fl] %= mod;
+    	s[fl] += temp;
+    	if(s[fl] >= mod)
+    		s[fl] %= mod;
+    	a[ffl][(i%m) + 1] = s[fl];
+    	
+    	temp = w[fl^1] * w[fl^1];
+    	if(temp >= mod)
+    		temp %= mod;
+    	temp *= x;
+    	if(temp >= mod)
+    		temp %= mod;
+    	w[fl] = z + y * w[fl^1];
+    	if(w[fl] >= mod)
+    		w[fl] %= mod;
+    	w[fl] += temp;
+    	if(w[fl] >= mod)
+    		w[fl] %= mod;
+    	b[ffl][(i%m) + 1] = w[fl];
+    	
+    	k++;
+    	
+    	if(k == m) {
+    		int lf = ffl^1;
+    		k = 0;
+    		if(flag == 1) {
+    			for(int j = 0;j <= m;j++)
+    				pp[j].first = pp[j].second = -1;
+    			for(int j = 2;j <= m;j++) {
+    				if(pp[1].first == -1 or b[lf][pp[1].first] > b[lf][j]) {
+    					pp[1].second = pp[1].first;
+    					pp[1].first = j;
+    				}
+    				else if(pp[1].second == -1 or b[lf][pp[1].second] > b[lf][j])
+    					pp[1].second = j;
+    				int x = fac[j];
+    				if(pp[x].first == -1 or b[lf][pp[x].first] > b[lf][j]) {
+    					pp[x].second = pp[x].first;
+    					pp[x].first = j;
+    				}
+    				else if(pp[x].second == -1 or b[lf][pp[x].second] > b[lf][j])
+    					pp[x].second = j;
+    			}
+    		}
+    		else if(flag > 1) {
+    			for(int j = 0;j <= m;j++)
+    				pp[j].first = pp[j].second = -1;
+    			for(int j = 2;j <= m;j++) {
+    				if(pp[1].first == -1 or (b[lf][pp[1].first] + ans[lf][pp[1].first] > b[lf][j] + ans[lf][j])) {
+    					pp[1].second = pp[1].first;
+    					pp[1].first = j;
+    				}
+    				else if(pp[1].second == -1 or (b[lf][pp[1].second] + ans[lf][pp[1].second] > b[lf][j] + ans[lf][j]))
+    					pp[1].second = j;
+    				int x = fac[j];
+    				if(pp[x].first == -1 or (b[lf][pp[x].first] + ans[lf][pp[x].first] > b[lf][j] + ans[lf][j])) {
+    					pp[x].second = pp[x].first;
+    					pp[x].first = j;
+    				}
+    				else if(pp[x].second == -1 or (b[lf][pp[x].second] + ans[lf][pp[x].second] > b[lf][j] + ans[lf][j]))
+    					pp[x].second = j;
+    			}
+    		}
+    		for(int j = 1;j <= m;j++) {
+    			if(!flag)
+    				continue;
+    			ans[ffl][j] = MAXX;
+    			if(flag == 1) {
+    				if(pp[fac[j]].first != -1 && j != pp[fac[j]].first)
+    					ans[ffl][j] = min(a[lf][j],b[lf][pp[fac[j]].first]);
+    				else if(pp[fac[j]].second != -1 && j != pp[fac[j]].second)
+    					ans[ffl][j] = min(a[lf][j],b[lf][pp[fac[j]].second]);
+    				else
+    					ans[ffl][j] = a[lf][j];
+    			}
+    			if(pp[fac[j]].first != -1 && j != pp[fac[j]].first)
+    				ans[ffl][j] = min(a[lf][j] + ans[lf][j], b[lf][pp[fac[j]].first] + ans[lf][pp[fac[j]].first]);
+    			else if(pp[fac[j]].second != -1 && j != pp[fac[j]].second)
+    				ans[ffl][j] = min(a[lf][j] + ans[lf][j], b[lf][pp[fac[j]].second] + ans[lf][pp[fac[j]].second]);
+    			else
+    				ans[ffl][j] = a[lf][j] + ans[lf][j];
+    		}
+     		flag++;
+    		ffl ^= 1;
+    	}
+    }
+    ll mi = MAXX;
+    for(int i = 1;i <= m;i++)
+    	mi = min(mi, ans[ffl^1][i]);
+    printf("%lld\n",mi);
+    return 0;
+}

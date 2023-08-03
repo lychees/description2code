@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define MOD 1000000007
+#define pii pair<int, int>
+#define pll pair<long long, long long>
+#define vi  vector<int>
+#define pb  push_back
+#define mp  make_pair
+#define ALL(x) x.begin(),x.end()
+#define M(a,x) memset(a,x,sizeof(a))
+#define sci(x) scanf("%d",&x); 
+#define scl(x) scanf("%lld",&x);
+#define scs(x) scanf("%s",x);
+#define print(x) printf("%d",x);
+#define nl printf("\n")
+#define fr first
+#define se second
+#define printl(x) printf("%lld",x)
+#define F(i,a,n) for(int i=a;i<n;i++)
+#define INF 100000000000000000LL
+#define LL long long
+
+const int N = 5e5+5;
+int a[N];
+struct node {
+  node *L;
+  node * R;
+  int cnt;
+  node (int _cnt,node *_L, node *_R) {
+    cnt = _cnt;
+    L = _L;
+    R = _R;
+  }
+  node * insert(int level,int val);
+};
+node * null = new node(0,NULL,NULL);
+node * root[N];
+
+node* node:: insert(int level,int val) {
+  if(level<0) {
+    return new node(this->cnt+1,NULL,NULL);
+  }
+  int bit = (((1<<level)&val)>0);
+  if(bit) {
+    return new node(this->cnt+1,L,R->insert(level-1,val));
+  }
+  return new node(this->cnt+1,L->insert(level-1,val),R);
+}
+int query(node* a, node* b,int level,int k) {
+  if(level<0) {
+    return 0;
+  }
+  int bit = (((1<<level)&k)>0);
+  if(bit) {
+    int cnt = a->L->cnt - b->L->cnt;
+    if(cnt == 0) {
+      return query(a->R,b->R,level-1,k);
+    }
+    return (1<<level) + query(a->L,b->L,level-1,k);
+  }
+  int cnt = a->R->cnt - b->R->cnt;
+  if(cnt == 0) {
+    return query(a->L,b->L,level-1,k);
+  }
+  return (1<<level) + query(a->R,b->R,level-1,k);
+}
+int main() {
+  int n,q;
+  sci(n);sci(q);
+  F(i,1,n+1) sci(a[i]);
+  null->L = null->R = null;
+  root[0] = null;
+  F(i,1,n+1) {
+    root[i] = root[i-1];
+    root[i] = root[i]->insert(20,a[i]);
+  }
+  while(q--) {
+    int x;int y;int k;
+    sci(x);sci(y);sci(k);
+    int ans = query(root[y],root[x-1],20,k);
+    printf("%d\n",ans);
+  }
+}

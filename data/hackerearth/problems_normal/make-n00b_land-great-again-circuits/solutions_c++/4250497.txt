@@ -1,0 +1,180 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
+#include <cmath>
+
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <unordered_map>
+#include <set>
+#include <unordered_set>
+#include <queue>
+#include <stack>
+#include <utility>
+#include <vector>
+#include <functional>
+#include <algorithm>
+
+using namespace std;
+
+typedef long double ld;
+typedef long long ll;
+typedef pair <int, int> pii;
+typedef pair <ll, ll> pll;
+
+const int max_N = 5e5 + 10;
+const int max_M = 5e5 + 10;
+const int max_Q = 5e5 + 10;
+
+struct BIT {
+	vector <ll> bit;
+	int N;
+	BIT(int N);
+	void clear();
+	void update(int p, ll x);
+	ll query(int p);
+};
+
+int N, M, Q;
+vector<int> owns[max_M]; //owns[i] -> vector of factories owned by businessman i
+ll threshold[max_M];
+int L[max_M], R[max_M];
+int ans[max_M];
+
+vector<int> mids[max_Q]; //mids[i] -> vector of businessmen whose midpoint is at i
+int F[max_Q]; ll X[max_Q], D[max_Q];
+
+int lvl[max_N], vis[max_N];
+int ent[max_N], ext[max_N];
+vector<int> E[max_N];
+
+int dfs(int node, int curr);
+void update(int node, ll start, ll diff, BIT &constant, BIT &coeff);
+ll query(int node, BIT &constant, BIT &coeff);
+
+int main()
+{
+	scanf("%d%d", &N, &M);
+	for (int v = 2; v <= N; ++v) {
+		int u;
+		scanf("%d", &u);
+		E[u].push_back(v);
+	}
+	int T = dfs(1, 1);
+
+	for (int f = 1; f <= N; ++f) {
+		int b;
+		scanf("%d", &b);
+		owns[b].push_back(f);
+	}
+	for (int b = 1; b <= M; ++b) {
+		ll t;
+		scanf("%lld", &t);
+		threshold[b] = t;
+	}
+	scanf("%d", &Q);
+	for (int q = 1; q <= Q; ++q) {
+		scanf("%d%lld%lld", F + q, X + q, D + q);
+	}
+	for (int b = 1; b <= M; ++b)
+		L[b] = 1, R[b] = Q;
+
+	BIT C(T), B(T);
+	for (int j = 0; j < 20; ++j) {
+		C.clear(); B.clear();
+		for (int q = 1; q <= Q; ++q)
+			mids[q].clear();
+		for (int b = 1; b <= M; ++b) {
+			if (L[b] <= R[b]) {
+				int mid = (L[b] + R[b]) >> 1;
+				mids[mid].push_back(b);
+			}
+		}
+		for (int q = 1; q <= Q; ++q) {
+			int f; ll x, d;
+			f = F[q], x = X[q], d = D[q];
+			update(f, x, d, C, B);
+			for (auto &b : mids[q]) {
+				ll temp = 0;
+				for (auto &fo : owns[b]) {
+					temp += query(fo, C, B);
+					if (temp >= threshold[b])
+						break;
+				}
+				if (temp >= threshold[b]) {
+					ans[b] = q;
+					R[b] = q - 1;
+				} else {
+					L[b] = q + 1;
+				}
+			}
+		}
+	}
+
+	for (int b = 1; b <= M; ++b) {
+		if (ans[b]) {
+			printf("%d\n", ans[b]);
+		} else {
+			printf("rekt\n");
+		}
+	}
+}
+
+BIT::BIT(int N)
+{
+	bit.resize(N + 1);
+	this -> N = N;
+}
+
+void BIT::update(int p, ll x)
+{
+	for (; p <= this -> N; p += (p & -p)) {
+		bit[p] += x;
+	}
+}
+
+ll BIT::query(int p)
+{
+	ll ans = 0;
+	for (; p; p -= (p & -p))
+		ans += bit[p];
+	return ans;
+}
+
+void BIT::clear()
+{
+	for (int i = 0; i <= this -> N; ++i)
+		bit[i] = 0;
+}
+
+int dfs(int node, int curr)
+{
+	ent[node] = curr;
+	vis[node] = 1;
+	for (auto v : E[node])
+		if (!vis[v]) {
+			lvl[v] = lvl[node] + 1;
+			curr = dfs(v, curr + 1);
+		}
+	ext[node] = curr;
+	return curr;
+}
+
+void update(int node, ll start, ll diff, BIT &constant, BIT &coeff)
+{
+	int l = ent[node], r = ext[node];
+	ll height = lvl[node];
+	constant.update(l, start - height * diff);
+	constant.update(r + 1, -(start - height * diff));
+	coeff.update(l, diff);
+	coeff.update(r + 1, -diff);
+}
+
+ll query(int node, BIT &constant, BIT &coeff)
+{
+	int v = ent[node];
+	ll height = lvl[node];
+	return height * coeff.query(v) + constant.query(v);
+}

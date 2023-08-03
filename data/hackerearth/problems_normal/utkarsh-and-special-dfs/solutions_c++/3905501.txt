@@ -1,0 +1,157 @@
+#include <cstdio>
+#include <iostream>
+#include <sstream>
+#include <numeric>
+#include <bitset>
+#include <vector>
+#include <set>
+#include <string>
+#include <map>
+#include <cmath>
+#include <algorithm>
+#include <queue>
+#include <cstdlib>
+#include <functional>
+#include <cstring>
+#include <ctime>
+#include <memory.h>
+#include <cassert>
+#include <unordered_set>
+
+#define y1 AAA_BBB
+#define y0 AAA_AAA
+
+#define pb push_back
+#define mp make_pair
+#define fi first
+#define se second
+#define forn(i, n) for(int i = 0; i < (int)(n); ++i)
+#define ford(i, n) for(int i = (int)(n) - 1; i >= 0; --i)
+#define fore(i, a, b) for(int i = (int)(a); i <= (int)(b); ++i)
+#define for1(i, n) for(int i = 1; i <= (int)(n); ++i)
+#define all(v) (v).begin(), (v).end()
+
+using namespace std;
+
+typedef long long i64;
+typedef unsigned long long u64;
+typedef long double ld;
+typedef vector<int> vi;
+typedef vector<i64> vi64;
+typedef pair<int, int> pii;
+typedef vector<pii> vpi;
+typedef vector<vi> vvi;
+typedef vector<vi64> vvi64;
+
+template <class T> T inline sqr(T x) {
+    return x * x;
+}
+
+const ld pi = 3.1415926535897932384626433832795;
+const ld eps = 1e-8;
+
+const int mod = 1e9 + 7;
+const int N = 100500;
+
+vi g[N];
+i64 a[N];
+int par[N];
+
+int timer = 0, tin[N], tout[N];
+i64 val[N];
+void dfs_init(int v, i64 m = 1) {
+	val[v] = m;
+	tin[v] = timer++;
+	for (int to: g[v])
+	{
+		auto it = find(all(g[to]), v);
+		g[to].erase(it);
+		par[to] = v;
+		dfs_init(to, m * a[v] % mod);
+	}
+	tout[v] = timer;
+}
+
+i64 spow(i64 x, int n) {
+	i64 r = 1;
+	while (n) {
+		if (n & 1) r = (r * x) % mod;
+		x = (x * x) % mod;
+		n >>= 1;
+	}
+	return r;
+}
+const int sd = 1 << 17;
+i64 tree[sd * 2];
+i64 mul[sd * 2];
+
+void upd(int v, i64 m) {
+	tree[v] = tree[v] * m % mod;
+	mul[v] = mul[v] * m % mod;
+}
+
+void push(int v) {
+	upd(v + v, mul[v]);
+	upd(v + v + 1, mul[v]);
+	mul[v] = 1;
+}
+
+i64 get(int v, int cl, int cr, int l, int r) {
+	if (l <= cl && cr <= r) {
+		return tree[v];
+	}
+	if (cl >= r || cr <= l)
+		return 0;
+	push(v); int m = (cl + cr) / 2;
+	return (get(v + v, cl, m, l, r) + get(v + v + 1, m, cr, l, r)) % mod;
+}
+
+void upd(int v, int cl, int cr, int l, int r, i64 d) {
+	if (l <= cl && cr <= r) {
+		upd(v, d);
+		return;
+	}
+	if (cl >= r || cr <= l)
+		return;
+	push(v); int m = (cl + cr) / 2;
+	upd(v + v, cl, m, l, r, d); upd(v + v + 1, m, cr, l, r, d);
+	tree[v] = (tree[v + v] + tree[v + v + 1])%mod;
+}
+
+int main()
+{
+#ifdef HOME
+    freopen("input.txt", "r", stdin);
+#endif
+    ios::sync_with_stdio(false);
+    
+    int n, q; cin >> n >> q;
+    forn (i, n - 1) {
+		int u, v; cin >> u >> v;
+		--u, --v;
+		g[u].pb(v);
+		g[v].pb(u);
+	}
+	forn (i, n) cin >> a[i];
+	
+	dfs_init(0);
+	forn (i, sd * 2) mul[i] = 1;
+	forn (i, n) tree[sd + tin[i]] = val[i];
+	for (int i = sd - 1; i >= 1; i--) tree[i] = (tree[i + i] + tree[i + i + 1])%mod;
+	
+	forn (i, q) {
+		int t; cin >> t;
+		if (t == 1) {
+			int v, x; 
+			cin >> v >> x; --v;
+			i64 diff = spow(a[v], mod - 2) * x % mod;
+			upd(1, 0, sd, tin[v] + 1, tout[v], diff);
+			a[v] = x;
+		}
+		else {
+			int v; cin >> v; -- v;
+			cout << get(1, 0, sd, tin[v], tout[v]) << "\n";
+		}
+	}
+    return 0;
+}

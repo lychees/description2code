@@ -1,0 +1,117 @@
+#include <stdio.h>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <queue>
+#include <set>
+#include <map>
+#include <sstream>
+#include <math.h>
+#include <cassert>
+#include <string.h>
+#include <stack>
+using namespace std;
+#define DEBUG if(0)
+#define pb push_back
+#define mp make_pair
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef long double LD;
+const double PT = acos(-1.0);
+const double EPS = 1e-11;
+const LL INF=20000000000000LL;
+#define MAXN 220
+vector<pair<LL, LL> > inp[MAXN];
+LL setB[MAXN];
+LL g[MAXN][MAXN], linky[MAXN];
+LL lx[MAXN], ly[MAXN], slack[MAXN];
+LL visy[MAXN], visx[MAXN], flag=0, N;
+bool check(int now){
+		visx[now]=flag;
+		for(int i=0;i<N;i++){
+				if(lx[now]+ly[i]==g[now][i] && visy[i]!=flag){
+						visy[i]=flag;
+						if(linky[i]==-1 || check(linky[i])){
+								linky[i]=now;
+								return true;
+						}
+				}
+				slack[i]=min(slack[i], g[now][i]-lx[now]-ly[i]);
+		}
+		return false;
+}
+LL hungarian(int n){
+		N=n;
+		for(int i=0;i<n;i++) 
+				lx[i]=INF, ly[i]=0, linky[i]=-1;
+		for(int i=0;i<n;i++) 
+				for(int j=0;j<n;j++)
+						lx[i] = min(lx[i], g[i][j]);
+		for(int vec=0; vec<n; vec++){
+				for(int j=0; j<n; j++) 
+						slack[j] = INF;
+				for(flag++; !check(vec); flag++){
+						LL dt = INF;
+						for(int j=0; j<n; j++) 
+								if(visy[j]!=flag)
+										dt = min(slack[j], dt);
+						for(int i=0;i<=vec;i++) 
+								if(visx[i]==flag) 
+										lx[i]+=dt;
+						for(int j=0;j<n;j++) 
+								if(visy[j]==flag)
+										ly[j]-=dt;
+						for(int j=0;j<n;j++) 
+								slack[j]=INF;
+						if(lx[vec]>=INF) 
+								return INF + 1;
+				}
+		}
+		LL ans=0;
+		for(int i=0;i<n;i++) 
+				ans+=lx[i]+ly[i];
+		return ans;
+}
+int main()
+{
+		int q, n, m;
+		long long u,v,c;
+		scanf("%d", &n);
+		for(int i=0;i<n;i++){
+			scanf("%d", &m);
+			for(int j=0;j<m;j++){
+				scanf("%lld %lld", &u, &c);
+				inp[i].push_back(make_pair(u,c));
+			}
+			//sort(inp[i].begin(), inp[i].begin()+m);
+		}
+		scanf("%d", &q);
+		while(q--){
+				//scanf("%d%d",&n, &m);
+				for(int i=0;i<n;i++){
+					scanf("%lld", &setB[i]);
+				}
+				for(int i=0;i<n;i++) 
+						for(int j=0;j<n;j++) 
+								g[i][j]=INF;
+				/*for(int i=0;i<m;i++){
+						scanf("%d %d %d",&u,&v,&c);
+						g[u-1][v-1]=c;
+				}*/
+				//sort(setB, setB+n);
+				for(int i=0;i<n;i++){
+					for(int j=0;j<inp[i].size();j++)
+						for(int k=0;k<n;k++)
+							if(inp[i][j].first==setB[k])
+								g[i][k]=inp[i][j].second;
+				}
+				LL res=hungarian(n);
+				if(res>=INF) //meaning some vertex is unmatched, hence not complete matching
+						printf("-1\n");
+				else 
+						printf("%lld\n", res);
+		}
+		return 0;
+}

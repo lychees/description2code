@@ -1,0 +1,213 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define fi first
+#define se second
+#define pb push_back
+#define mp make_pair
+#define MODV 1000000007
+#define MAXV 1000000007
+#define MXC 1000005
+
+typedef long long ll;
+typedef double dbl;
+typedef vector<int> vi;
+typedef pair<int, int> pi;
+int getint(){int a;scanf("%d",&a);return a;}
+class hungarian{
+  static const int N=105;
+  static const int INF=INT_MAX;
+  public:
+  int lx[N],ly[N],xy[N],yx[N];
+  int nx,ny,mx,slack[N],slackx[N],prev[N];
+  bool s[N], t[N];
+  const vector<vi> &cost;
+  hungarian(const int &nx,const int &ny,const vector<vi> &cost):nx(nx),ny(ny),cost(cost){}
+  void init()
+  {
+    memset(lx, 0, sizeof(lx));
+    memset(ly, 0, sizeof(ly));
+    for (int x=0;x<nx; x++)
+      for (int y=0;y<ny; y++)
+        lx[x] = max(lx[x], cost[x][y]);
+  }
+  void update() {
+    int x, y, delta = INF; //init delta as infinity
+    for (y=0;y<ny;y++) //calculate delta using slack
+      if (!t[y]) delta = min(delta, slack[y]);
+    for (x=0;x<nx;x++) //update X labels
+      if (s[x]) lx[x] -= delta;
+    for (y=0;y<ny;y++) //update Y labels
+      if (t[y]) ly[y] += delta;
+    for (y=0;y<ny;y++) //update slack array
+      if (!t[y]) slack[y] -= delta;
+  }
+  void add(int x, int prevx){
+    //x - current vertex,prevx - vertex from X before x in the alternating path,
+    //so we add edges (prevx, xy[x]), (xy[x], x)
+    s[x] = true; //add x to S
+    prev[x] = prevx; //we need this when augmenting
+    for (int y=0;y<ny;y++) //update slacks, because we add new vertex to S
+      if (lx[x] + ly[y] - cost[x][y] < slack[y]){
+        slack[y] = lx[x] + ly[y] - cost[x][y];
+        slackx[y] = x;
+      }
+  }
+
+  void augment(){ //main function of the algorithm
+    if (mx == min(nx,ny)) return; //check wether matching is already perfect
+    int x, y, root; //just counters and root vertex
+    int q[N], wr = 0, rd = 0; //q - queue for bfs, wr,rd - write and read
+    //pos in queue
+    memset(s, false, sizeof(s)); //init set S
+    memset(t, false, sizeof(t)); //init set T
+    memset(prev, -1, sizeof(prev)); //init set prev - for the alternating tree
+    for (x=0;x<nx; x++) //finding root of the tree
+      if (xy[x] == -1){
+        q[wr++] = root = x;
+        prev[x] = -2;
+        s[x] = true;
+        break;
+      }
+    for (y=0;y<ny;y++){ //initializing slack array
+      slack[y] = lx[root] + ly[y] - cost[root][y];
+      slackx[y] = root;
+    }
+    //second part of augment() function
+    while (true) //main cycle
+    {
+      while (rd < wr) //building tree with bfs cycle
+      {
+        x = q[rd++]; //current vertex from X part
+        for (y=0;y<ny;y++) //iterate through all edges in equality graph
+          if (cost[x][y] == lx[x] + ly[y] && !t[y])
+          {
+            if (yx[y] == -1) break; //an exposed vertex in Y found, so augmenting path exists!
+            t[y] = true; //else just add y to T,
+            q[wr++] = yx[y]; //add vertex yx[y], which is matched with y, to the queue
+            add(yx[y], x); //add edges (x,y) and (y,yx[y]) to the tree
+          }
+        if (y<ny) break; //augmenting path found!
+      }
+      if (y<ny) break; //augmenting path found!
+
+      update(); //augmenting path not found, so improve labeling
+      wr = rd = 0;
+      for (y=0;y<ny;y++)
+        //in this cycle we add edges that were added to the equality graph as a
+        //result of improving the labeling, we add edge (slackx[y], y) to the tree if
+        //and only if !T[y] && slack[y] == 0, also with this edge we add another one
+        //(y, yx[y]) or augment the matching, if y was exposed
+        if (!t[y] && slack[y] == 0)
+        {
+          if (yx[y] == -1) //exposed vertex in Y found - augmenting path exists!
+          {
+            x = slackx[y];
+            break;
+          }
+          else
+          {
+            t[y] = true; //else just add y to T,
+            if (!s[yx[y]])
+            {
+              q[wr++] = yx[y]; //add vertex yx[y], which is matched with y, to the queue
+              add(yx[y], slackx[y]); //and add edges (x,y) and (y, yx[y]) to the tree
+            }
+          }
+        }
+      if (y<ny) break; //augmenting path found!
+    }
+    if(y<ny) //we found augmenting path!
+    {
+      mx++; //increment matching in this cycle we inverse edges along augmenting path
+      for (int cx = x, cy = y, ty; cx != -2; cx = prev[cx], cy = ty)
+      {
+        ty = xy[cx];
+        yx[cy] = cx;
+        xy[cx] = cy;
+      }
+      augment(); //recall function, go to step 1 of the algorithm
+    }
+  }//end of augment() function
+  int doit()
+  {
+   int ret = 0; //weight of the optimal matching
+   mx = 0; //number of vertices in current matching
+   memset(xy, -1, sizeof(xy));
+   memset(yx, -1, sizeof(yx));
+   init(); //step 0
+   augment(); //steps 1-3
+   for (int x=0;x<nx;x++) ret += cost[x][xy[x]];
+   return ret;
+  }
+
+};
+class graphal
+{
+  public:
+    int n, res=0;
+    //1 1->bidirectional, 2->reverse edges
+    vector <vi> ed, dp;
+    vector<vi> used;
+    vi &c;
+    graphal(const int &n, vi &c):n(n),ed(n),dp(n,vi(n,0)),used(n,vi(n,0)),c(c){ }
+    void add(int a, int b){ed[a].pb(b);ed[b].pb(a);}
+    void dfsinit(){
+      res=0;
+      fill(used.begin(),used.end(),vi(n,0));
+    }
+    void dfs(int ix=0, int par=-1){
+      bool leaf=true;
+      for(auto i:ed[ix])
+        if(i!=par){ dfs(i,ix);leaf=false; }
+
+      if(leaf){for(int i=0;i<n-1;i++)dp[ix][i]=c[i];return;}
+
+      for(int i=0;i<n-1;i++){
+        //assign color i to the edge this->parent
+        vector<vi> a;
+        a.reserve(n);
+        int v=0;
+        for(auto j:ed[ix])
+          if(j!=par){
+            a.pb(vi(n-1,0));
+            for(int k=0;k<n-1;k++)
+              a[v][k]=MXC-dp[j][k];
+            if(par!=-1)a[v][i]=0;
+            v++;
+          }
+        hungarian hg(v,n-1,a);
+        res=v*MXC - hg.doit();
+        if(par!=-1)res+=c[i];
+        dp[ix][i]=res;
+        if(par==-1)break;
+      }
+    }
+};
+void doit(){
+  int n;
+  int a, b;
+  scanf("%d", &n);
+  vi c(n-1,0);
+  graphal g(n,c);
+  for(auto i=0;i<n-1;i++){c[i]=getint();}
+  sort(c.begin(), c.end());
+  for(auto i=0;i<n-1;i++){
+    scanf("%d %d", &a, &b);
+    a--,b--;
+    g.add(a,b);
+  }
+  g.dfs();
+  cout<<g.dp[0][0]<<endl;
+
+}
+
+int main() {
+  int tc;
+  scanf("%d", &tc);
+  for(int i=0;i<tc;i++){
+    doit();
+  }
+  return 0;
+}

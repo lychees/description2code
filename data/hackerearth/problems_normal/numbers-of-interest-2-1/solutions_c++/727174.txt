@@ -1,0 +1,76 @@
+#include<iostream>
+#include<cstdio>
+#include<cmath>
+#include<cstring>
+#include<string>
+#include<vector>
+#include<sstream>
+#include<algorithm>
+#include<map>
+#include<queue>
+using namespace std;
+typedef pair<int, int> pp;
+#define MAXI 1000010
+long long G[MAXI], F[MAXI];
+int firstPrimeFactor(int n) {
+	int p = -1, t = n;
+	if (F[n]  != 0 ) return F[n];
+	if (n%2 ==0) p = 2;
+	else {
+		for (p = 3; p*p <= n; p+= 2) if (n%p == 0) break;
+	}
+	if (n%p != 0) p = n;
+	return p;
+}
+long long factorSum(int n) {
+	int p = 0;
+	vector<pp> power;
+	while (n%2 ==0 ) {
+		n /= 2;
+		p++;
+	}
+	if (p > 0) {
+		power.push_back(make_pair(2,p));
+	}
+	for (int i = 3;  i*i <= n; i+=2) {
+		p = 0;
+		while (n%i == 0) {
+			n /= i;
+			p++;
+		}
+		if (p > 0) power.push_back(make_pair(i,p));
+	}
+	if (n != 1) power.push_back(make_pair(n,1));
+	long long sum = 1;
+	for (int i = 0; i < power.size(); i++) {
+		long long a = power[i].first, b = 1;
+		long long tmp = b;
+		for (int j = 1; j <= power[i].second; j++) {
+			b *= a;
+			tmp += b;
+		}
+		sum *= tmp;
+	}
+	return sum;
+}
+int main() {
+	//memset(F, 0, sizeof(F));
+	//memset(G, 0, sizeof(G));
+	G[0] = G[1] = F[0] = F[1] = 0;
+	for (int i = 2; i < MAXI ; i++) {
+		//f(i); g(i);
+		//cout << F[i] << " "<< G[i] <<"\n";
+		//f(i);
+		F[i] = F[i-1] + firstPrimeFactor(i);
+		G[i] = G[i-1] + factorSum(i) - i;
+	}
+	//for (int i = 0; i < MAXI; i++) cout <<i << " "<< F[i] << " " << G[i] <<"\n";
+	int T;
+	for (cin >> T; T; T--) {
+		int N; scanf("%d",&N);//cin >> N;
+		int a = (G[N] + F[N])%N;
+		//cout << a <<"\n";
+		printf("%d\n", a);
+	}
+    return 0;
+}

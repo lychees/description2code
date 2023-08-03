@@ -1,0 +1,110 @@
+#include "bits/stdc++.h"
+using namespace std;
+const int N = 5e5 + 5;
+int n , m;
+vector < int > v[N];
+int depth[N];
+int inp;
+vector < int > owns[N];
+long long arr[N];
+int q;
+int f[N];
+int x[N];
+int d[N];
+long long bit1[N];
+long long bit2[N];
+int tin[N];
+int tout[N];
+int timer;
+int start[N];
+int finish[N];
+vector < int > v2[N];
+int tot;
+void dfs(int node){
+	tin[node] = ++timer;
+	for(int next : v[node]){
+		depth[next] = depth[node] + 1;
+		dfs(next);
+	}
+	tout[node] = timer;
+}
+void update(long long bit[] , int idx , long long val){
+	while(idx <= n){
+		bit[idx] += val;
+		idx += idx & -idx;
+	}
+}
+long long query(long long bit[] , int idx){
+	long long res = 0;
+	while(idx){
+		res += bit[idx];
+		idx -= idx & -idx;
+	}
+	return res;
+}
+int main(){
+	scanf("%d %d" , &n , &m);
+	for(int i = 2 ; i <= n ; ++i){
+		scanf("%d" , &inp);
+		v[inp].emplace_back(i);
+	}
+	for(int i = 1 ; i <= n ; ++i){
+		scanf("%d" , &inp);
+		owns[inp].emplace_back(i);
+	}
+	for(int i = 1 ; i <= m ; ++i){
+		scanf("%lld" , arr + i);
+	}
+	scanf("%d" , &q);
+	for(int i = 1 ; i <= q ; ++i){
+		scanf("%d %d %d" , f + i , x + i , d + i);
+	}
+	dfs(1);
+	for(int i = 1 ; i <= m ; ++i){
+		start[i] = 1;
+		finish[i] = q + 1;
+	}
+	do{
+		for(int i = 1 ; i <= m ; ++i){
+			if(start[i] < finish[i]){
+				int mid = start[i] + finish[i] >> 1;
+				v2[mid].emplace_back(i);
+			}
+		}
+		tot = 0;
+		for(int i = 1 ; i <= q ; ++i){
+			update(bit1 , tin[f[i]] , d[i]);
+			update(bit1 , tout[f[i]] + 1 , -d[i]);
+			update(bit2 , tin[f[i]] , x[i] - 1LL * depth[f[i]] * d[i]);
+			update(bit2 , tout[f[i]] + 1 , 1LL * depth[f[i]] * d[i] - x[i]);
+			for(int x : v2[i]){
+				long long sum = 0;
+				for(int node : owns[x]){
+					sum += query(bit1 , tin[node]) * depth[node] + query(bit2 , tin[node]);
+				}
+				if(sum >= arr[x]){
+					finish[x] = i;
+				}
+				else{
+					start[x] = i + 1;
+				}
+				tot += (start[x] < finish[x]);
+			}
+		}
+		if(tot){
+			memset(bit1 , 0 , sizeof(bit1));
+			memset(bit2 , 0 , sizeof(bit2));
+			for(int i = 1 ; i <= q ; ++i){
+				v2[i].clear();
+			}
+		}
+	}while(tot);
+	for(int i = 1 ; i <= m ; ++i){
+		if(start[i] > q){
+			printf("rekt\n");
+		}
+		else{
+			printf("%d\n" , start[i]);
+		}
+	}
+}

@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int n, q;
+vector<int> g[500005];
+vector<int> p[500005], fen[500005];
+int pnum[500005], pind[500005], sz[500005];
+int dep[500005] = {}, uv[500005];
+int pc = 1;
+
+void calcSize(int v, int par) {
+    sz[v] = 1;
+    for (int to : g[v]) if (to != par) {
+        calcSize(to, v);
+        sz[v] += sz[to];
+    }
+}
+
+void dfs(int v, int par, int path) {
+    pnum[v] = path;
+    pind[v] = (int)p[path].size();
+    p[path].pb(v);
+    for (int to : g[v]) if (to != par) {
+        if (sz[to] * 2 >= sz[v]) {
+            dfs(to, v, path);
+        } else {
+            dep[pc] = dep[path] + 1;
+            uv[pc] = v;
+            dfs(to, v, pc++);
+        }
+    }
+}
+
+void fenAdd(vector<int> &fen, int pos, int val) {
+    int n = (int)fen.size();
+    for (; pos < n; pos |= pos + 1) {
+        fen[pos] += val;
+    }
+}
+
+int fenGet(vector<int> &fen, int pos) {
+    int ret = 0;
+    for (; pos >= 0; pos = (pos & (pos + 1)) - 1) {
+        ret += fen[pos];
+    }
+    return ret;
+}
+
+void query(int path, int from, int to) {
+    fenAdd(fen[path], from, 1);
+    fenAdd(fen[path], to + 1, -1);
+}
+
+void hldQuery(int u, int v) {
+    int pu = pnum[u], pv = pnum[v];
+    while (pu != pv) {
+        if (dep[pu] > dep[pv]) {
+            query(pu, 0, pind[u]);
+            u = uv[pu];
+            pu = pnum[u];
+        } else {
+            query(pv, 0, pind[v]);
+            v = uv[pv];
+            pv = pnum[v];
+        }
+    }
+    int from = pind[u], to = pind[v];
+    if (from > to) swap(from, to);
+    query(pu, from, to);
+}
+
+int dist(int u, int v) {
+    int pu = pnum[u], pv = pnum[v], ret = 0;
+    while (pu != pv) {
+        if (dep[pu] > dep[pv]) {
+            ret += pind[u] + 1;
+            u = uv[pu];
+            pu = pnum[u];
+        } else {
+            ret += pind[v] + 1;
+            v = uv[pv];
+            pv = pnum[v];
+        }
+    }
+    return ret + abs(pind[u] - pind[v]);
+}
+
+int main() {
+    scanf("%d%d", &n, &q);
+    REP(i, n - 1) {
+        int from, to;
+        scanf("%d%d", &from, &to), --from, --to;
+        g[from].pb(to);
+        g[to].pb(from);
+    }
+    calcSize(0, -1);
+    dfs(0, -1, 0);
+    REP(i, pc) fen[i].resize(p[i].size() + 1);
+    REP(qq, q) {
+        int qt;
+        scanf("%d", &qt);
+        if (qt == 1) {
+            int u, v;
+            scanf("%d%d", &u, &v), --u, --v;
+            hldQuery(u, v);
+        } else {
+            int x;
+            scanf("%d", &x), --x;
+            printf("%d\n", fenGet(fen[pnum[x]], pind[x]));
+        }
+    }
+	return 0;
+}

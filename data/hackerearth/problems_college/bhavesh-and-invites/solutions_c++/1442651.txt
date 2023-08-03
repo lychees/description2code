@@ -1,0 +1,139 @@
+
+#include<bits/stdc++.h>
+
+#define MAX 100006
+
+#define gc getchar
+#define pc(x) putchar(x)
+inline void writeint (int n)
+{
+    int N = n, rev, count = 0;
+    rev = N;
+    if (N == 0) { pc('0');return;}
+    while ((rev % 10) == 0) { count++; rev /= 10;}
+    rev = 0;
+    while (N != 0) { rev = (rev<<3) + (rev<<1) + N % 10; N /= 10;}
+    while (rev != 0) { pc(rev % 10 + '0'); rev /= 10;}
+    while (count--) pc('0');
+}
+
+inline void scanint(int &x)
+{
+    register int c = gc();
+    x = 0;
+    for(;(c<48 || c>57);c = gc());
+    for(;c>47 && c<58;c = gc()) {x = (x<<1) + (x<<3) + c - 48;}
+}
+
+
+
+using namespace std;
+int maxl=0;
+int ans[100005]={0};
+int level[100005]={0};
+class Graph
+{
+    int V;
+    list<int> *adj;
+public:
+    Graph(int V);
+    void addEdge(int v, int w);
+    void BFS(int s);
+};
+
+Graph::Graph(int V)
+{
+    this->V = V;
+    adj = new list<int>[V];
+}
+
+void Graph::addEdge(int v, int w)
+{
+    adj[v].push_back(w);
+    adj[w].push_back(v);
+}
+
+void Graph::BFS(int s)
+{
+      stack <int> st;
+
+    bool *visited = new bool[V];
+    for(int i = 0; i < V; i++)
+        visited[i] = false;
+
+
+    list<int> queue;
+
+
+    visited[s] = true;
+    queue.push_back(s);
+    level[s]=1;
+    list<int>::iterator i;
+
+    while(!queue.empty())
+    {
+
+        s = queue.front();
+        queue.pop_front();
+        st.push(s);
+        for(i = adj[s].begin(); i != adj[s].end(); ++i)
+        {
+
+            if(!visited[*i])
+            {
+                visited[*i] = true;
+                queue.push_back(*i);
+                if(!level[*i])
+                    level[*i]=level[s]+1;
+            }
+        }
+
+    }
+
+    maxl=level[s];
+    while(!st.empty())
+    {
+        s=st.top();
+        st.pop();
+        if(level[s]==maxl)
+            ans[s]=1;
+        else
+        {
+            for(i = adj[s].begin(); i != adj[s].end(); ++i)
+            {
+                if(level[*i]==level[s]+1)
+                    ans[s]+=ans[*i];
+            }
+        }
+    }
+
+}
+
+int main()
+{
+
+    int n,m;
+    scanint(n);
+    scanint(m);
+    Graph g(n+2);
+    while(m--)
+    {
+        int x,y;
+        scanint(x);
+        scanint(y);
+        g.addEdge(x,y);
+    }
+    int s;
+    scanint(s);
+    g.BFS(s);
+
+    for(int i=1;i<=n;i++)
+    {
+        if(level[i]==maxl)
+            pc('1');
+        else
+            writeint(ans[i]);
+        pc(' ');
+    }
+    return 0;
+}

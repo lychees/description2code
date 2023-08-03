@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define REPU(i, a, b) for (int i = (a); i < (b); ++i)
+#define REPD(i, a, b) for (int i = (a); i > (b); --i)
+#define MEM(a, x) memset(a, x, sizeof(a))
+#define ALL(a) a.begin(), a.end()
+#define UNIQUE(a) a.erase(unique(ALL(a)), a.end())
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) { return (a < b) ? a : b; }
+template<class T> inline T tmax(T a, T b) { return (a > b) ? a : b; }
+template<class T> inline void amax(T &a, T b) { if (b > a) a = b; }
+template<class T> inline void amin(T &a, T b) { if (b < a) a = b; }
+template<class T> inline T tabs(T a) { return (a > 0) ? a : -a; }
+template<class T> T gcd(T a, T b) { while (b != 0) { T c = a; a = b; b = c % b; } return a; }
+
+const int N = 1005;
+int n, y[N], cnt[N], lb[N], rb[N], f[N][N], g[N][N];
+
+int main(int argc, char *argv[]) {
+	ios_base::sync_with_stdio(false);
+	
+	fill(lb, lb + N, N);
+	fill(rb, rb + N, -1);
+	
+	cin >> n;
+	REPU(i, 1, n + 1) {
+		cin >> y[i]; cnt[y[i]]++;
+		amax(rb[y[i]], i); amin(lb[y[i]], i);
+		f[i][y[i]] = 1;
+	}
+	REPU(i, 1, n + 1) f[i][y[i]] = g[i][y[i]] = 1;
+	
+	REPU(i, 1, n + 1) {
+		REPU(j, 1, N) f[i][j] += f[i][j - 1];
+	}
+	REPU(i, 1, n + 1) {
+		REPU(j, 1, N) f[i][j] += f[i - 1][j];
+	}
+	
+	REPD(i, n, 1) {
+		REPU(j, 1, N) g[i][j] += g[i][j - 1];
+	}
+	REPD(i, n, 1) {
+		REPU(j, 1, N) g[i][j] += g[i + 1][j];
+	}
+	
+	int ret = 0;
+	REPU(i, 0, N) REPU(j, i + 1, N) {
+		int score = cnt[i] + cnt[j];
+		if (score == 0) continue;
+		int l = min(lb[i], lb[j]), r = max(rb[i], rb[j]);
+		if (f[l - 1][j - 1] - f[l - 1][i] > 0) score++;
+		if (g[r + 1][j - 1] - g[r + 1][i] > 0) score++;
+		amax(ret, score);
+	}
+	
+	cout << ret << endl;
+	
+	return 0;
+}

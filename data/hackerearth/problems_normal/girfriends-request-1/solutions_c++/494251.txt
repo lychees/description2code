@@ -1,0 +1,149 @@
+// File Name   : girfriends_request_1.cpp
+// Time        : Wednesday 13 August 2014 10:51:10 PM IST
+// Author      : XeRoN!X
+
+#include <bits/stdc++.h>
+
+#if defined(__cplusplus) && __cplusplus == 201103L
+	#define TR(c,i) for ( auto i = (c).begin(); i != (c).end(); i++ ) 
+#else
+	#define TR(c,i) for ( typeof((c).begin()) i = (c).begin(); i != (c).end(); i++ ) 
+#endif
+
+#define FOR(i,a,b) for( i = a; i <= int(b); i++ )
+#define ROF(i,a,b) for( i = a; i >= int(b); i-- )
+#define MEM(t,n) ( t * )malloc( (n)*sizeof( t ) )
+#define ALL(v) (v).begin(), (v).end()
+#define SORT(v) sort( ALL(v) )
+#define RSORT(v) sort( ALL(v), greater<int>() )
+#define SET(x,a) memset(x,a,sizeof(x))
+#define IN(x,a) (x.find(a) != x.end()) 
+
+#define DIST(x1,y1,x2,y2) SQ(x1-x2)+SQ(y1-y2)
+#define DISTS(p,q) SQ(p.x-q.x)+SQ(p.y-q.y)
+#define SQ(x) ((x)*(x))
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+
+#define DEB(x) cout << #x << " = " << x << endl;
+#define DEBA(x,n) { int i; cout << "{\n"; FOR(i,0,n-1)cout << i << " " << x[i] << endl; cout << "}\n"; }
+#define DEBT(x) { cout << "{\n"; TR( x,it ) cout << *it << "\n" ; cout << "}\n"; }
+#define DEBM(x) { cout << "{\n"; TR( x,it ) cout << it->F << " : " << it->S << "\n"; cout << "}\n"; }
+
+#define SYNC ios_base::sync_with_stdio(false);
+#define C(format,n) scanf( "%"#format, &n )
+#define P(format,n) printf( "%"#format, n )
+
+#define LIM 10000000
+#ifdef LIM
+	int S, D, Y, O;
+	char *inp, *out, *ipos, *opos, DIG[30];
+	#define FRMI inp=( char * )malloc( LIM*sizeof( char ) );fread_unlocked( inp,1,LIM,stdin );ipos=inp;
+	#define FWM out=( char * )malloc( LIM*sizeof( char ) );opos=out;
+	#define FWO fwrite_unlocked( out,opos-out,1,stdout );
+	#define GETI(n) n=0;while(*ipos<33){ipos++;}if(*ipos=='-'){S=-1;ipos++;}else{S=1;}while(*ipos>='0'){n=10*n+(*ipos-'0');ipos++;}n*=S;
+	#define PUTI(n) O=n;D=0;if(O<0){*opos++='-';O*=-1;}if(!O)*opos++='0';else{while(O){Y=O/10;DIG[D++]=O-Y*10+'0';O=Y;}\
+	while(D--)*opos++=DIG[D];}
+	#define PUTC(c) *opos++=c;
+#endif
+
+using namespace std;
+
+template<class T1, class T2> inline T2 gcd( T1 a, T2 b ){ while(!b) { T1 temp = a % b; a = b; b = temp; } }
+template<class T> inline string tostring( T n ){ stringstream ss; ss << n; ss.flush(); return ss.str(); }
+template<class T> inline string tobinary( T n ){ string s = n ? "" : "0"; while( n ) { s += ( ( n & 1 ) + '0' ); n >>= 1; } return s; }
+template<class T> inline int digits( T n ){ int cnt = n ? 0 : 1; while( n ){ n /= 10; cnt++; } return cnt; }
+template<class T> inline T abs( T a ){ return a < 0 ? -a : a; }
+
+#define N 1414
+
+int *median[N+1];
+int a[N+1];
+int n;
+
+inline void precompute_range_median() {
+	register int i, j;
+
+	FOR (i,1,n) {
+		priority_queue<int> left_max_heap;
+		priority_queue<int, vector<int>, greater<int> > right_min_heap;
+				
+		int current_median = median[i][i] = a[i];
+		
+		FOR (j,i+1,n) {
+			if (right_min_heap.size() == left_max_heap.size()) { 
+				// insert to right
+				if (a[j] >= current_median) { 
+					// current is greater than median, insert current to right
+					right_min_heap.push(a[j]);
+				} else { 
+					// current is less than median, insert median to right, 
+					// if current is greater than left-max then current is median
+					// else left-max is new median and insert current to left
+					right_min_heap.push(current_median);
+					
+					if (!left_max_heap.empty() && left_max_heap.top() > a[j]) {
+						current_median = left_max_heap.top();
+						left_max_heap.pop();
+						left_max_heap.push(a[j]);
+					} else {
+						current_median = a[j];
+					}
+				}
+			} else { 
+				//insert to left
+				if (a[j] < current_median) {
+					// current is less than median, insert current to left
+					left_max_heap.push(a[j]);
+				} else {
+					// current is greater-equals median, insert median to left
+					// if current is less than right-min then current is new median
+					// else right-min is new median and insert current to right
+					left_max_heap.push(current_median);
+					
+					if (right_min_heap.top() > a[j]) {
+						current_median = a[j];
+					} else {
+						current_median = right_min_heap.top();
+						right_min_heap.pop();
+						right_min_heap.push(a[j]);
+					}
+				}
+			}
+
+			median[i][j] = current_median;
+		}
+	}
+}
+
+int main()
+{
+	int i, j, q;
+	
+//	FRMI;
+	
+//	GETI(n);
+	C(d,n);
+
+	FOR (i,1,n) {
+		median[i] = MEM(int, n+1);
+		C(d,a[i]);
+//		GETI(a[i]);
+	}
+	
+	precompute_range_median();
+
+	C(d,q);
+//	GETI(q);
+
+	while (q--) {
+		C(d,i); C(d,j);
+//		GETI(i);
+//		GETI(j);
+		printf("%d\n", median[i][j]);
+	}
+
+	return 0;
+}

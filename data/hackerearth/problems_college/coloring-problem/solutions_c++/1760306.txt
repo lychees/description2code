@@ -1,0 +1,141 @@
+//********************************************************
+// File name:  
+// Author:    
+// Date:       
+// Class:      CS380
+// Assignment: 
+// Purpose:    
+//********************************************************
+
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <string>
+#include <vector>
+#include <queue>
+#include <stdio.h>
+
+using namespace std;
+
+enum COLOR {WHITE, GRAY, BLACK};
+
+struct Vertice
+{
+	int connected;
+	int distance;
+	int parent;
+	COLOR color;
+	int vertex;
+};
+
+//********************************************************
+// Method:	main
+//
+// Description: 
+//
+// Parameters: None
+//
+// Returned: int - success or failure (-1)
+//	
+//********************************************************
+int main( )
+{
+	const string FILE_NAME = "testBiColor.txt";
+	vector<std::vector<Vertice>> GraphMatrix;
+	queue<Vertice> Queue;
+	ifstream inFile;
+	int vertices = -1, edges, vertex1, vertex2, numTestCases;
+	Vertice source, Parent, Child;
+	bool bCanBeColored = true;
+
+	cin >> numTestCases;
+	
+	for (int l = 0; l < numTestCases; ++l)
+	{
+		cin >> vertices;
+		bCanBeColored = true;
+		cin >> edges;
+
+		GraphMatrix.resize(vertices); 
+		for (int i = 0; i < vertices; ++i)
+		{
+			GraphMatrix[i].resize(vertices); 
+		}
+
+		for (int i = 0; i < vertices; ++i)
+		{
+			for (int j = 0; j < vertices; ++j)
+			{
+				GraphMatrix[i][j].color = WHITE;
+				GraphMatrix[i][j].distance = 0;
+				GraphMatrix[i][j].parent = -1;
+				GraphMatrix[i][j].connected = 0;
+				GraphMatrix[i][j].vertex = i;
+			}
+		}
+
+		for (int i = 0; i < edges; ++i)
+		{
+			cin >> vertex1 >> vertex2; 
+			GraphMatrix[vertex1][vertex2].connected = 1;
+			GraphMatrix[vertex2][vertex1].connected = 1;
+		}
+
+			source.color = GRAY;
+			source.distance = 0;
+			source.parent = -1;
+			source.vertex = 0;
+
+			Queue.push(source);
+
+			while (Queue.size() != 0)
+			{
+				Parent = Queue.front();
+				Queue.pop();
+
+				for (int i = 0; i < vertices && bCanBeColored; ++i)
+				{
+					if (GraphMatrix[Parent.vertex][i].connected == 1)
+					{
+						if (GraphMatrix[Parent.vertex][i].color == WHITE)
+						{
+								for (int j = 0; j < vertices; ++j)
+								{
+									GraphMatrix[i][j].color = GRAY;
+									GraphMatrix[i][j].distance = Parent.distance + 1;
+									GraphMatrix[i][j].parent = Parent.vertex;
+									GraphMatrix[i][j].vertex = i;
+								}
+								Queue.push(GraphMatrix[i][0]);
+								/*
+							GraphMatrix[Parent.vertex][i].color = GRAY;
+							GraphMatrix[Parent.vertex][i].distance = Parent.distance + 1;
+							GraphMatrix[Parent.vertex][i].parent = Parent.vertex;
+							Queue.push(GraphMatrix[Parent.vertex][i]); */
+						}
+						if (abs(Parent.distance - GraphMatrix[i][0].distance) 
+										% 2 == 0)//distance between parent and child is even
+						{
+							bCanBeColored = false;
+							cout << "NOT BICOLORABLE.";
+						}
+					}
+				}
+			}
+
+			if (bCanBeColored)
+			{
+				cout << "BICOLORABLE.";
+			}
+
+		for (int i = 0; i < vertices; ++i)
+		{
+			GraphMatrix[i].clear(); 
+		}
+		GraphMatrix.clear();
+
+		cout << endl;
+	}
+	return EXIT_SUCCESS;
+}

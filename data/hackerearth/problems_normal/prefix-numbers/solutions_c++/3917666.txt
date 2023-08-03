@@ -1,0 +1,109 @@
+#include <iostream>
+
+#include <cstring>
+
+using namespace std;
+
+#define REP(i,n) for(int i=0,_n=(n);i<_n;++i)
+#define FOR(i,a,b) for(int i=(a),_b=(b);i<=_b;++i)
+
+typedef long long llong;
+typedef unsigned long long ullong;
+typedef unsigned int uint;
+
+#define LCM1TO9 504
+#define LCM79 63
+#define MAXD (LCM79 * 5)
+
+void matrix_multiply(const uint A[MAXD][MAXD],
+                     const uint B[MAXD][MAXD],
+                     uint R[MAXD][MAXD]) {
+   memset(R, 0, sizeof(R[0][0])*MAXD*MAXD);
+   for (int i = 0; i < MAXD; ++i) {
+      for (int k = 0; k < MAXD; ++k) {
+         for (int j = 0; j < MAXD; ++j) {
+            R[i][j] += A[i][k] * B[k][j];
+         }
+      }
+   }
+}
+
+void matrix_identity(uint R[MAXD][MAXD]) {
+   memset(R, 0, sizeof(R[0][0])*MAXD*MAXD);
+   for (int i = 0; i < MAXD; ++i)
+      R[i][i] = 1;
+}
+
+void matrix_power(uint A[MAXD][MAXD], llong k, uint R[MAXD][MAXD]) {
+   matrix_identity(R);
+   uint T[MAXD][MAXD];
+   while (k > 0) {
+      if (k & 1) {
+         matrix_multiply(R, A, T);
+         memcpy(R, T, sizeof(T));
+      // --k;
+      }
+      k >>= 1;
+      if (k <= 0) break;
+      matrix_multiply(A, A, T);
+      memcpy(A, T, sizeof(T));
+   }
+}
+
+/*
+divisibility by 8: check last two digits + 8 (or 4)
+0: even + 4 or 8
+1: odd + 2 or 6
+2: even + 2 or 6
+3: odd + 4 or 8
+4: any + odd
+*/
+
+int get_div8_state(int x) {
+   int last_dig = x % 10;
+   if (last_dig & 1) return 4;
+   bool prev_last_dig_is_odd = ((x / 10) % 2) == 1;
+   if (prev_last_dig_is_odd)
+      return (last_dig == 2 || last_dig == 6) ? 1 : 3;
+   else
+      return (last_dig == 0 || last_dig == 4 || last_dig == 8) ? 0 : 2;
+}
+
+uint solve(ullong N) {
+   uint A[MAXD][MAXD];
+   memset(A, 0, sizeof(A));
+
+   REP(mm, LCM1TO9*8) {
+      FOR(d, 1, 9) {
+         if (((mm*10 + d) % d) == 0) {
+            int m   = mm % LCM79;
+            int m8  = get_div8_state(mm);
+            int nm  = (mm*10 + d) % LCM79;
+            int nm8 = get_div8_state(mm*10 + d);
+            A[m8*LCM79 + m][nm8*LCM79 + nm] = 1;
+         }
+      }
+   }
+
+
+   uint Ak[MAXD][MAXD];
+   matrix_power(A, N, Ak);
+
+   uint res = 0;
+   REP(m, MAXD)
+      res += Ak[0][m];
+   return res;
+}
+
+int main(int argc, char* argv[]) {
+   ios_base::sync_with_stdio(false); 
+   cin.tie(NULL);
+
+   ullong N;
+   cin >> N;
+
+   ullong res = solve(N);
+   cout << res << '\n';
+
+   return 0;
+}

@@ -1,0 +1,115 @@
+#include <stdio.h>
+#include <string.h>
+
+#define NMAX 1111111
+
+int drow[4] = {-1, 0, +1, 0};
+int dcol[4] = {0, +1, 0, -1};
+
+char s[NMAX], visited[NMAX][4], split[NMAX][4];
+int M, N;
+
+void ReadInput() {
+	scanf("%d %d", &M, &N);	
+	for (int i = 0; i < M; i++)
+		scanf("%s", &s[i * N]);
+}
+
+int q[NMAX * 4][3], qli, qls;
+
+int Solve() {
+	memset(split, 0, M * N * 4 * sizeof(char));
+	int i, j, k, inew, jnew, knew;
+	for (i = 0; i < M; i++) {
+		for (j = 1; j < N; j++)
+			if (s[i * N + j] != s[i * N + j - 1])
+				split[i * N + j - 1][1] = split[i * N + j][3] = 1;
+		if (i >= 1) {
+			for (j = 0; j < N; j++)
+				if (s[(i - 1) * N + j] != s[i * N + j])
+					split[(i - 1) * N + j][2] = split[i * N + j][0] = 1;
+		}
+	}
+
+	memset(visited, 0, M * N * 4 * sizeof(char));
+	qli = 0; qls = -1;
+	for (j = 0; j < N; j++) {
+		visited[0 * N + j][0] = 1;
+		qls++;
+		q[qls][0] = 0; q[qls][1] = j; q[qls][2] = 0;
+		visited[(M - 1) * N + j][2] = 1;
+		qls++;
+		q[qls][0] = M - 1; q[qls][1] = j; q[qls][2] = 2;
+	}
+	for (i = 0; i < M; i++) {
+		visited[i * N + 0][3] = 1;
+		qls++;
+		q[qls][0] = i; q[qls][1] = 0; q[qls][2] = 3;
+		visited[i * N + N - 1][1] = 1;
+		qls++;
+		q[qls][0] = i; q[qls][1] = N - 1; q[qls][2] = 1;
+	}
+
+	while (qli <= qls) {
+		i = q[qli][0]; j = q[qli][1]; k = q[qli][2];
+		qli++;
+		inew = i + drow[k]; jnew = j + dcol[k]; knew = (k + 2) & 3;
+		if (inew >= 0 && inew < M && jnew >= 0 && jnew < N && !visited[inew * N + jnew][knew]) {
+			visited[inew * N + jnew][knew] = 1;
+			qls++;
+			q[qls][0] = inew; q[qls][1] = jnew; q[qls][2] = knew;
+		}
+		if (k == 0 || k == 2) {
+			// Horizontal segment.
+			if (j + 1 < N && split[i * N + j + 1][k] && !visited[i * N + j + 1][k]) {
+				visited[i * N + j + 1][k] = 1;
+				qls++;
+				q[qls][0] = i; q[qls][1] = j + 1; q[qls][2] = k;
+			}
+			if (j - 1 >= 0 && split[i * N + j - 1][k] && !visited[i * N + j - 1][k]) {
+				visited[i * N + j - 1][k] = 1;
+				qls++;
+				q[qls][0] = i; q[qls][1] = j - 1; q[qls][2] = k;
+			}
+		} else {
+			// Vertical segment.
+			if (i + 1 < M && split[(i + 1) * N + j][k] && !visited[(i + 1) * N + j][k]) {
+				visited[(i + 1) * N + j][k] = 1;
+				qls++;
+				q[qls][0] = i + 1; q[qls][1] = j; q[qls][2] = k;
+			}
+			if (i - 1 >= 0 && split[(i - 1) * N + j][k] && !visited[(i - 1) * N + j][k]) {
+				visited[(i - 1) * N + j][k] = 1;
+				qls++;
+				q[qls][0] = i - 1; q[qls][1] = j; q[qls][2] = k;
+			}
+		}
+		// Stay on the same cell.
+		for (knew = 0; knew < 4; knew++) {
+			if (knew == k || knew == ((k + 2) & 3)) continue;
+			if (split[i * N + j][knew] && !visited[i * N + j][knew]) {
+				visited[i * N + j][knew] = 1;
+				qls++;
+				q[qls][0] = i; q[qls][1] = j; q[qls][2] = knew;
+			}
+		}
+	}
+
+	for (i = 0; i < M; i++)
+		for (j = 0; j < N; j++)
+			for (k = 0; k < 4; k++)
+				if (split[i * N + j][k] && !visited[i * N + j][k])
+					return 0;
+	return 1;
+}
+
+int main() {
+	int T;
+	//freopen("x.txt", "r", stdin);
+	scanf("%d", &T);
+	while (T--) {
+		ReadInput();
+		printf("%s\n", Solve() ? "YES" : "NO");
+	}
+	return 0;
+}

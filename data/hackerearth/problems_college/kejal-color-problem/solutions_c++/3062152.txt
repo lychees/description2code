@@ -1,0 +1,109 @@
+#include<algorithm>
+#include <iostream>
+#include <string.h>
+#include <stdlib.h>
+#include  <stdio.h>
+#include   <math.h>
+#include   <time.h>
+#include   <vector>
+#include    <queue>
+#include      <map>
+#include      <set>
+using namespace std;
+ 
+typedef long long LL;
+ 
+const int N=100005,Mod=1000000007,N2=500000004,N24=41666667;
+ 
+int n,sz=250,Num[N],A[N],m=100000;
+ 
+vector<int> pos[N];
+ 
+inline int C(int n,int m)
+{
+	if(m==2)
+		return n*(n-1ll)%Mod*N2%Mod;
+	else
+		return n*(n-1ll)%Mod*(n-2)%Mod*(n-3)%Mod*N24%Mod;
+}
+ 
+int work1()
+{
+	int S=0,Now=0;
+	for(int i=1;i<=m;i++)
+		S=(S+C(Num[i],2)*(LL)Now)%Mod,Now=(Now+C(Num[i],2))%Mod;
+	return S;
+}
+ 
+int work2()
+{
+	static int s1[N]={},s2[N]={},s=0;
+	for(int i=1;i<=m;s=(s-C(Num[i],4))%Mod,i++)
+		for(int j=0;j<pos[i].size();j++)
+			s1[pos[i][j]]=j,s2[pos[i][j]]=Num[i]-j-1;
+	for(int i=1;i<=n;i++)
+		s1[i]=(s1[i]+s1[i-1])%Mod;
+	for(int i=n;i;i--)
+		s=(s+s1[i-1]*(LL)s2[i])%Mod;
+	return s;
+}
+ 
+namespace BIT
+{
+	int S[N];
+	
+	inline void add(int k)
+	{
+		for(;k<=n;k+=k&-k)
+			S[k]++;
+	}
+	
+	inline int sum(int k)
+	{
+		int s=0;
+		for(;k;k-=k&-k)
+			s=(s+S[k])%Mod;
+		return s;
+	}
+}
+ 
+int work3()
+{
+	int Ans=0;
+	for(int i=1;i<=m;i++)
+		if(Num[i]>sz)
+		{
+			static int S1[N],S2[N],S3[N],Now,S;
+			#define Cle(_) memset(_,0,sizeof _)
+			Cle(S1);Now=0;
+			for(int j=1;j<=n;j++)
+				if(A[j]==i)
+					Now++;
+				else
+					Ans=(Ans+S1[A[j]]*(LL)(Num[i]-Now))%Mod,S1[A[j]]=(S1[A[j]]+Now)%Mod;
+			Cle(S1);Cle(S2);Cle(S3);Now=0;S=0;
+			for(int j=1;j<=n;j++)
+				if(A[j]==i)
+					Now++;
+				else if(Num[A[j]]<=sz)
+					S=(S+Now*(Now-1ll)-(2ll*Now-1)*S1[A[j]]+S2[A[j]])%Mod,S1[A[j]]=(S1[A[j]]+Now)%Mod,S2[A[j]]=(S2[A[j]]+Now*(LL)Now)%Mod;
+			Ans=(Ans+S*(LL)N2)%Mod;
+		}
+	for(int i=n;i;i--)
+		if(Num[A[i]]<=sz)
+			for(int j=Num[A[i]]-1;pos[A[i]][j]!=i;j--)
+				Ans=(Ans+BIT::sum(pos[A[i]][j]-1))%Mod,BIT::add(pos[A[i]][j]);
+	for(int i=1;i<=m;i++)
+		if(Num[i]<=sz)
+			Ans=(Ans-C(Num[i],4))%Mod;
+	return Ans;
+}
+ 
+int main()
+{
+	scanf("%d",&n);
+	for(int i=1;i<=n;i++)
+		scanf("%d",A+i),Num[A[i]]++,pos[A[i]].push_back(i);
+	printf("%lld\n",((work1()-(LL)work2()-work3())%Mod+Mod)%Mod);
+	return 0;
+}

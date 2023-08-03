@@ -1,0 +1,88 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define Int long long
+Int dp[66000][17];
+Int dp2[66000][17];
+Int dp3[66000][17];
+int main()
+{
+    dp3[0][0]=1;
+
+    Int T;
+    cin>>T;
+    while (T--)
+    {
+        Int N,mask,i,j;
+        cin>>N;
+        if (N==1)
+        {
+            cout<<"0\n";
+            continue;
+        }
+        for (mask=2;mask<(1<<N);++mask)
+        {
+            i=__builtin_popcountll(mask)-1;
+            if (i==0)
+            {
+                dp3[mask][0]=1;
+                continue;
+            }
+            for (j=0;j<N;++j)
+            {
+                if (j==i)
+                    continue;
+                if (mask&(1<<j))
+                    dp3[mask][i]+=dp3[mask^(1<<j)][i-1];
+            }
+        }
+        for (mask=2;mask<(1<<N);++mask)
+        {
+            i=__builtin_popcount(mask)-1;
+            if (i==0)
+            {
+                dp2[mask][0]=1;
+                continue;
+            }
+            for (j=0;j<N;++j)
+            {
+                if (j==i)
+                    continue;
+                if (mask&(1<<j))
+                {
+                    dp2[mask][i]+=dp2[mask^(1<<j)][i-1];
+                    if (j>i)
+                    dp2[mask][i]+=dp3[mask^(1<<j)][i-1];
+                }
+            }
+        }
+        for (mask=2;mask<(1<<N);++mask)
+        {
+            i=__builtin_popcount(mask)-1;
+            if (i==0)
+            {
+                dp[mask][0]=0;
+                continue;
+            }
+            for (j=0;j<N;++j)
+            {
+                if (j==i)
+                    continue;
+                if (mask&(1<<j))
+                {
+                    dp[mask][i]+=dp[mask^(1<<j)][i-1];
+                    if (j>i)
+                    dp[mask][i]+=(dp3[mask^(1<<j)][i-1]*i-dp2[mask^(1<<j)][i-1]);
+                    else
+                    dp[mask][i]+=dp2[mask^(1<<j)][i-1];
+                }
+            }
+        }
+        cout<<dp[(1<<N)-1][N-1]<<"\n";
+        for (mask=2;mask<(1<<N);++mask)
+        {
+            i=__builtin_popcount(mask)-1;
+            dp[mask][i]=dp2[mask][i]=dp3[mask][i]=0;
+        }
+    }
+    return 0;
+}

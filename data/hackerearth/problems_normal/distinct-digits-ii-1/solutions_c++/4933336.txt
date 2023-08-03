@@ -1,0 +1,240 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+#define MOD 1000000007
+ll n,a[100005],maxtree[401000][2],mintree[401000][2],b[100005];
+ll getdistinct(ll n)
+{
+    set<int>st;
+    while(n>0)
+    {
+        st.insert(n%10);
+        n/=10;
+    }
+    return st.size();
+}
+void buildtree(ll st,ll en,ll node)
+{
+    if(st==en)
+    {
+        maxtree[node][0]=mintree[node][0]=b[st];
+        maxtree[node][1]=mintree[node][1]=1;
+    }
+    else
+    {
+        ll mid=(st+en)/2;
+        buildtree(st,mid,2*node);
+        buildtree(mid+1,en,2*node+1);
+        maxtree[node][0]=max(maxtree[2*node][0],maxtree[2*node+1][0]);
+        mintree[node][0]=min(mintree[2*node][0],mintree[2*node+1][0]);
+        if(maxtree[2*node][0]==maxtree[2*node+1][0])
+        {
+            maxtree[node][1]=maxtree[2*node][1]+maxtree[2*node+1][1];
+        }
+        else if(maxtree[node][0]==maxtree[2*node][0])
+        {
+             maxtree[node][1]=maxtree[2*node][1];   
+        }
+        else if(maxtree[node][0]==maxtree[2*node+1][0])
+        {
+             maxtree[node][1]=maxtree[2*node+1][1];
+        }
+        if(mintree[2*node][0]==mintree[2*node+1][0])
+        {
+            mintree[node][1]=mintree[2*node][1]+mintree[2*node+1][1];
+        }
+        else if(mintree[node][0]==mintree[2*node][0])
+        {
+             mintree[node][1]=mintree[2*node][1];   
+        }
+        else if(mintree[node][0]==mintree[2*node+1][0])
+        {
+             mintree[node][1]=mintree[2*node+1][1];
+        }
+    }
+}
+void update(ll st,ll en,ll node,ll pos,ll val)
+{
+    if(st==en)
+    {
+        if(st==pos)
+        {
+            maxtree[node][0]=mintree[node][0]=b[st];
+        }
+    }
+    else
+    {
+        ll mid=(st+en)/2;
+        if(pos<=mid&&pos>=st)
+        {
+            update(st,mid,2*node,pos,val);
+        }
+        else
+        {
+            update(mid+1,en,2*node+1,pos,val);
+        }
+         maxtree[node][0]=max(maxtree[2*node][0],maxtree[2*node+1][0]);
+        mintree[node][0]=min(mintree[2*node][0],mintree[2*node+1][0]);
+        if(maxtree[2*node][0]==maxtree[2*node+1][0])
+        {
+            maxtree[node][1]=maxtree[2*node][1]+maxtree[2*node+1][1];
+        }
+        else if(maxtree[node][0]==maxtree[2*node][0])
+        {
+             maxtree[node][1]=maxtree[2*node][1];   
+        }
+        else if(maxtree[node][0]==maxtree[2*node+1][0])
+        {
+             maxtree[node][1]=maxtree[2*node+1][1];
+        }
+        if(mintree[2*node][0]==mintree[2*node+1][0])
+        {
+            mintree[node][1]=mintree[2*node][1]+mintree[2*node+1][1];
+        }
+        else if(mintree[node][0]==mintree[2*node][0])
+        {
+             mintree[node][1]=mintree[2*node][1];   
+        }
+        else if(mintree[node][0]==mintree[2*node+1][0])
+        {
+             mintree[node][1]=mintree[2*node+1][1];
+        }
+    }
+    
+}
+ll getmax(ll st,ll en,ll node,ll l,ll r)
+{
+    if(st>en||r<st||l>en)
+    return 0;
+    else if(l<=st&&r>=en)
+    return maxtree[node][0];
+    else
+    {
+        ll mid=(st+en)/2;
+        return max(getmax(st,mid,2*node,l,r),getmax(mid+1,en,2*node+1,l,r));
+        
+    }
+}
+ll getmin(ll st,ll en,ll node,ll l,ll r)
+{
+    if(st>en||r<st||l>en)
+    return 10000;
+    else if(l<=st&&r>=en)
+    return mintree[node][0];
+    else
+    {
+        ll mid=(st+en)/2;
+        return min(getmin(st,mid,2*node,l,r),getmin(mid+1,en,2*node+1,l,r));
+        
+    }
+}
+ll getcountmax(ll st,ll en,ll node,ll l,ll r,ll val)
+{
+    if(st>en||r<st||l>en)
+    return 0;
+    else if(l<=st&&r>=en)
+    {
+        if(maxtree[node][0]==val)
+        return maxtree[node][1];
+        else
+        return 0;
+    }
+    else
+    {
+        ll mid=(st+en)/2;
+        return (getcountmax(st,mid,2*node,l,r,val)+getcountmax(mid+1,en,2*node+1,l,r,val));
+    }
+}
+ll getcountmin(ll st,ll en,ll node,ll l,ll r,ll val)
+{
+    if(st>en||r<st||l>en)
+    return 0;
+    else if(l<=st&&r>=en)
+    {
+        if(mintree[node][0]==val)
+        return mintree[node][1];
+        else
+        return 0;
+    }
+    else
+    {
+        ll mid=(st+en)/2;
+        return (getcountmin(st,mid,2*node,l,r,val)+getcountmin(mid+1,en,2*node+1,l,r,val));
+    }
+}
+int main()
+{
+    ios::sync_with_stdio(false);
+    cin.tie(false);
+    ll i,j,l,r,u,v,q;
+    cin>>n;
+    for(i=1;i<=n;i++)
+    {
+        cin>>a[i];
+        b[i]=getdistinct(a[i]);
+    }
+    buildtree(1,n,1);
+    cin>>q;
+    while(q--)
+    {
+        string s;
+        cin>>s;
+        //cout<<s<<"\n";
+        if(s=="ADD"||s=="MUL"||s=="REP")
+        {
+            cin>>u>>v;
+            if(s=="ADD")
+            {
+                a[u]=(a[u]+v)%MOD;
+                l=getdistinct(a[u]);
+                if(b[u]!=l)
+                {
+                    b[u]=l;
+                    update(1,n,1,u,l);
+                }
+            }
+            else if(s=="MUL")
+            {
+                a[u]=(a[u]*v)%MOD;
+                l=getdistinct(a[u]);
+                if(b[u]!=l)
+                {
+                    b[u]=l;
+                    update(1,n,1,u,l);
+                }
+            }
+            else if(s=="REP")
+            {
+                a[u]=(v)%MOD;
+                l=getdistinct(a[u]);
+                if(b[u]!=l)
+                {
+                    b[u]=l;
+                    update(1,n,1,u,l);
+                }
+            }
+            else
+            {}
+        }
+        else
+        {
+            cin>>l>>r;
+            if(s=="MAX")
+            {
+                u=getmax(1,n,1,l,r);
+                //cout<<u<<"\n";
+                v=getcountmax(1,n,1,l,r,u);
+                cout<<u<<" "<<v<<"\n";
+            }
+            else if(s=="MIN")
+            {
+                u=getmin(1,n,1,l,r);
+                v=getcountmin(1,n,1,l,r,u);
+                cout<<u<<" "<<v<<"\n";
+            }
+            else
+            {}
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,105 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+
+ll parrent[1000],mark,city,road,ms,dis[105][105];
+struct data
+{
+    ll u,v,w;
+    bool operator < (const data& p) const
+    {
+        return w<p.w;
+    }
+};
+ll find_parrent(ll n)
+{
+    if(parrent[n]==n)
+        return n;
+    else
+        return parrent[n]=find_parrent(parrent[n]);
+}
+vector<data>v;
+int min_mst()
+{
+    ll x,y,i;
+    data D;
+    ll mincost=0;
+    ll takenedge=0;
+    for(i=0; i<=city; i++)
+        parrent[i]=i;
+    for(i=0; i<v.size(); i++)
+    {
+        D=v[i];
+        x=find_parrent(D.u);
+        y=find_parrent(D.v);
+        if(x==y || D.u>ms || D.v>ms || D.u==D.v )
+            continue;
+        else
+        {
+            parrent[x]=parrent[y];
+            takenedge++;
+            mincost=mincost+D.w;
+        }
+        if(takenedge==ms-1)
+        {
+            break;
+        }
+    }
+    return mincost;
+}
+
+void fldwrsl()
+{
+    ll i,j,k;
+    for(k=1; k<=city; k++)
+    for(i=1; i<=city; i++)
+        for(j=1; j<=city; j++)
+            dis[i][j]=min(dis[i][j],dis[i][k]+dis[k][j]);
+}
+
+int main()
+{
+    ll t,T,cost,i,j,n,total,x,y,city1,city2;
+    data D;
+    //freopen("input.txt","r",stdin);
+    scanf("%lld",&T);
+    for(t=1; t<=T; t++)
+    {
+        scanf("%lld %lld %lld",&city,&road,&ms);
+
+        v.clear();
+        for(i=1; i<=city; i++)
+        {
+            for(j=1; j<=city; j++)
+            {
+                dis[i][j]=pow(10,15);
+                if(i==j)
+                    dis[i][j]=0;
+            }
+        }
+
+        for(i=1; i<=road; i++)
+        {
+            scanf("%lld %lld %lld",&city1,&city2,&cost);
+            dis[city1][city2]=cost;
+            dis[city2][city1]=cost;
+        }
+        fldwrsl();
+        for(i=1; i<=ms; i++)
+        {
+            for(j=1; j<=ms; j++)
+            {
+                D.u=i;
+                D.v=j;
+                D.w=dis[i][j];
+                v.push_back(D);
+            }
+        }
+        sort(v.begin(),v.end());
+        total=min_mst();
+        //cout<<n<<"  "<<counter<<"  "<<total<<endl;
+        printf("%lld\n",total);
+    }
+    return 0;
+}
+

@@ -1,0 +1,73 @@
+// RMQ sparse table
+#include <cstdlib>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+using namespace std;
+
+int n;
+int a[100200], m[100200][22];
+
+int p2(int p) { return 1 << p; }
+
+void process() {
+    for (int i = 0; i < n; i++)
+        m[i][0] = i;
+    for (int j = 1; p2(j) <= n; j++) {
+        for (int i = 0; i + p2(j) -1 < n; i++) {
+            int left = m[i][j-1];
+            int right = m[i + p2(j-1)][j-1];
+            if (a[left] > a[right])
+                m[i][j] = left;
+            else
+                m[i][j] = right;
+            assert(i <= m[i][j]);
+            assert(m[i][j] < i + (1 << j));
+        }
+    }
+}
+
+int rmq(int i, int j) {
+    int k = 0, diff = j - i + 1;
+    while (1 << (k+1) < diff)
+        k++;
+    if (a[m[i][k]] > a[m[j - (1 << k) + 1][k]])
+        return m[i][k];
+    else
+        return m[j - (1 << k) + 1][k];
+}
+
+int rmq_slow(int i, int j) {
+    int ret = i;
+    for (int x = i+1; x <= j; x++)
+        if (a[x] > a[ret])
+            ret = x;
+    return ret;
+}
+
+long long cost(int low, int high) {
+    if (low >= high)
+        return 0;
+    if (low + 1 == high)
+        return max(a[low], a[high]);
+    int mid = rmq(low, high);
+    long long ret = 0;
+    if (low < mid)
+        ret += a[mid] + cost(low, mid - 1);
+    if (mid < high)
+        ret += a[mid] + cost(mid + 1, high);
+    return ret;
+}
+
+int main() {
+    int cases;
+    scanf("%d", &cases);
+    for (int cs = 1; cs <= cases; cs++) {
+        scanf("%d", &n);
+        for (int i = 0; i < n; i++)
+            scanf("%d", &a[i]);
+        process();
+        printf("%lld\n", cost(0, n - 1));
+    }
+}
+

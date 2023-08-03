@@ -1,0 +1,166 @@
+#include<bits/stdc++.h>
+
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+
+#define RI(a) scanf("%d",&a);
+#define RL(a) scanf("%lld",&a);
+#define PI(a) printf("%d\n",a);
+#define PL(a) printf("%lld\n",a);
+
+#define SZ(a) (int)(a.size())
+
+#define SET(a,b) memset(a,b,sizeof(a))
+
+#define TR(a,t) for(__typeof(a.begin()) t=a.begin();t!=a.end();t++)
+
+#define REP(i,l,h) for(int i=(l); i<=(h);i++)
+#define REPD(i,h,l) for(int i=(h);i>=(l);i--)
+
+#define ALL(a) a.begin(),a.end()
+
+#define DRT()  int t; cin>>t; while(t--)
+
+#define PRSNT(a,e) (a.find(e) != a.end())
+
+#define MINH priority_queue<int, vector<int>, greater<int> >
+
+#define trace1(x) cerr << #x << ": " << x << endl;
+#define trace2(x, y) cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z) cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define mem(a,b) memset(a,b,sizeof(a))
+#define N 400044
+#define MOD 1000000007
+
+typedef long long LL;
+using namespace std;
+
+LL a[N];
+
+typedef struct tree_node {
+	int pref, suf, ans;
+} tree_node;
+
+tree_node tree[N];
+
+void build(int node, int start, int end) {
+	if(start == end) {
+		tree[node].pref = tree[node].suf = tree[node].ans = 1;
+		return;
+	}
+	else {
+		int mid = (start + end)/2;
+		build(2*node, start, mid);
+		build(2*node + 1, mid+1, end);
+
+		tree[node].ans = max(tree[2*node].ans, tree[2*node+1].ans);
+		tree[node].pref = tree[2*node].pref;
+		tree[node].suf = tree[2*node+1].suf;
+		if(a[mid] < a[mid+1]) {
+
+			tree[node].ans = max(tree[node].ans, tree[2*node].suf + tree[2*node+1].pref);
+
+			if(tree[2*node].ans == mid - start + 1) {
+				tree[node].pref += (tree[2*node+1].pref);
+			}
+			if(tree[2*node+1].ans == end - mid) {
+				tree[node].suf += (tree[2*node].suf);
+			}
+		}
+
+
+	}
+}
+tree_node query_range(int node, int start, int end, int l, int r) {
+	tree_node ans={0,0,0};
+
+	if(r < start || l > end) {
+		return ans;
+	}
+	if(l <= start && r >= end) {
+
+		return tree[node];
+	}
+
+	int mid = (start + end)/2;
+	tree_node lq = query_range(2*node, start, mid, l, r);
+	tree_node rq = query_range(2*node+1, mid+1, end, l, r);
+	ans.ans = max(lq.ans, rq.ans);
+		ans.pref = lq.pref;
+		ans.suf = rq.suf;
+		if(a[mid] < a[mid+1]) {
+
+			ans.ans = max(ans.ans, lq.suf + rq.pref);
+
+			if(tree[2*node].ans == mid - start + 1) {
+				ans.pref += (rq.pref);
+			}
+			if(tree[2*node+1].ans == end - mid) {
+				ans.suf += (lq.suf);
+			}
+		}
+	return ans;
+
+}
+void update_range(int node, int start, int end, int idx,int val) {
+	if(idx > end || idx < start) return ;
+	if(start == end && idx==start) {
+		a[idx]+=val;
+	}
+	else {
+		int mid = (start + end)/2;
+		
+		update_range(node*2, start, mid, idx,val);
+		update_range(node*2 + 1, mid + 1, end, idx,val);
+		tree[node].ans = max(tree[2*node].ans, tree[2*node+1].ans);
+		tree[node].pref = tree[2*node].pref;
+		tree[node].suf = tree[2*node+1].suf;
+		if(a[mid] < a[mid+1]) {
+
+			tree[node].ans = max(tree[node].ans, tree[2*node].suf + tree[2*node+1].pref);
+
+			if(tree[2*node].ans == mid - start + 1) {
+				tree[node].pref += (tree[2*node+1].pref);
+			}
+			if(tree[2*node+1].ans == end - mid) {
+				tree[node].suf += (tree[2*node].suf);
+			}
+		}
+
+
+
+	}
+}
+
+int main()
+{
+	DRT() {
+		int n,q,opt,l,r;
+		cin>>n>>q;
+		mem(tree,0);
+		REP(i,1,n) RL(a[i]);
+		build(1, 1, n); 
+
+		REP(i,1,q)
+		{
+			RI(opt);
+			RI(l);
+			RI(r);
+
+			if(opt==1)
+				update_range(1,1,n,l,r);
+
+			if(opt==0)
+				PI(query_range(1,1,n,l,r).ans);        
+
+		}
+	}
+
+
+
+
+	return 0;
+}
+

@@ -1,0 +1,409 @@
+#include<bits/stdc++.h>
+#define MAX 1000001
+
+using namespace std;
+
+typedef long long int lli;
+
+struct node{
+	
+	lli north,south,east,west;
+	
+	node(){	north=south=east=west=0; }
+	
+	struct node operator +(struct node rhs){
+		
+		struct node result;
+		
+		result.north=north+rhs.north;
+		result.east=east+rhs.east;
+		result.west=west+rhs.west;
+		result.south=south+rhs.south;
+		
+		return result;
+		
+	}
+	
+	
+};
+
+lli maxOf(lli a,lli b){ return (a>b)?(a):(b);}
+
+void init(lli ,lli ,lli );
+void update(lli ,lli ,lli ,lli ,lli ,lli );
+lli query(lli ,lli ,lli ,lli ,lli ,lli );
+
+struct node Tree[4*MAX];
+lli Lazy[4*MAX];
+
+int main(void){
+	
+	lli totalElements,queries,start,end,amount;
+	char queryType;
+	
+	scanf("%lld%lld",&totalElements,&queries);
+	
+	init(0,0,totalElements-1);
+    	
+//	scanf("%*c");
+	while(queries--){
+		
+		//cout<<"\nHi i entered here";
+		
+	//	scanf("%*c");
+	//	scanf("%c%lld%lld",queryType,start,end);
+	    cin>>queryType>>start>>end;
+		
+		start--;
+		end--;
+		
+		if(queryType=='C'){
+			
+			scanf("%lld",&amount);
+			update(0,0,totalElements-1,start,end,amount);
+			
+		}
+		
+		else if(queryType=='A'){
+			
+			scanf("%lld",&amount);
+			update(0,0,totalElements-1,start,end,-amount);
+			
+			
+		}
+		
+		else{
+			
+			lli ans=INT_MIN,i;
+			
+			for(i=1;i<=4;i++)
+			  ans=maxOf(ans,query(0,0,totalElements-1,start,end,i));	
+				
+			printf("%lld\n",ans);
+			
+		}
+		
+	}
+	
+	
+	return 0;
+	
+}
+
+void init(lli idx,lli start,lli end){
+	
+	if(start==end){
+		
+		Tree[idx].east=1;
+		return;		
+	}
+	
+	lli mid=(start+end)/2;
+		
+	init(2*idx+1,start,mid);
+	init(2*idx+2,mid+1,end);
+	
+	Tree[idx]=Tree[2*idx+1]+Tree[2*idx+2];
+	
+}
+
+void update(lli idx,lli assStart,lli assEnd,lli start,lli end,lli amount){
+	
+//	cout<<"\nassStart :- "<<assStart<<" and assEnd :- "<<assEnd;
+	
+	if(Lazy[idx]){
+		
+		lli net_rotate=(Lazy[idx]>0?Lazy[idx]:-Lazy[idx]);	
+		net_rotate%=4;	
+		
+		if(net_rotate!=0){
+		
+		  lli e=Tree[idx].east,s=Tree[idx].south,w=Tree[idx].west,n=Tree[idx].north;
+		
+		  if(Lazy[idx]>0){//rotation was made in clockwise direction direction
+						
+			if(net_rotate==1){
+								
+				Tree[idx].south=e;
+				Tree[idx].west=s;
+				Tree[idx].north=w;
+				Tree[idx].east=n;	
+				
+			}
+			
+			else if(net_rotate==2){
+				
+				Tree[idx].south=n;
+				Tree[idx].west=e;
+				Tree[idx].north=s;
+				Tree[idx].east=w;
+				
+			}
+			
+			else{
+				
+				Tree[idx].south=w;
+				Tree[idx].west=n;
+				Tree[idx].north=e;
+				Tree[idx].east=s;
+				
+			}
+			
+		  }
+		
+		  else{//if net rotation is in anti-clockwise rotation
+			
+			if(net_rotate==1){
+				
+				Tree[idx].south=w;
+				Tree[idx].west=n;
+				Tree[idx].north=e;
+				Tree[idx].east=s;
+				
+			}
+			
+			else if(net_rotate==2){
+				
+				Tree[idx].south=n;
+				Tree[idx].west=e;
+				Tree[idx].north=s;
+				Tree[idx].east=w;		
+				
+			}
+			
+			else{
+				
+				Tree[idx].south=e;
+				Tree[idx].west=s;
+				Tree[idx].north=w;
+				Tree[idx].east=n;				
+				
+			}
+			
+		  }
+	    
+		}
+		
+		if(assStart!=assEnd){
+			
+			Lazy[2*idx+1]+=Lazy[idx];
+			Lazy[2*idx+2]+=Lazy[idx];
+			
+		}
+		
+		Lazy[idx]=0;		
+		
+	}
+	
+	if(assStart>assEnd||start>assEnd||end<assStart)//out of range
+	  return;
+	
+	if(assStart>=start&&assEnd<=end){//within range
+		
+		lli net_rotate=(amount>0?amount:-amount);	
+		net_rotate%=4;	
+		
+		if(net_rotate!=0){
+		
+		  lli e=Tree[idx].east,s=Tree[idx].south,w=Tree[idx].west,n=Tree[idx].north;
+		
+		  if(amount>0){//rotation was made in clockwise direction direction
+						
+			if(net_rotate==1){
+								
+				Tree[idx].south=e;
+				Tree[idx].west=s;
+				Tree[idx].north=w;
+				Tree[idx].east=n;	
+				
+			}
+			
+			else if(net_rotate==2){
+				
+				Tree[idx].south=n;
+				Tree[idx].west=e;
+				Tree[idx].north=s;
+				Tree[idx].east=w;
+				
+			}
+			
+			else{
+				
+				Tree[idx].south=w;
+				Tree[idx].west=n;
+				Tree[idx].north=e;
+				Tree[idx].east=s;
+				
+			}
+			
+		  }
+		
+		  else{//if net rotation is in anti-clockwise rotation
+			
+			if(net_rotate==1){
+				
+				Tree[idx].south=w;
+				Tree[idx].west=n;
+				Tree[idx].north=e;
+				Tree[idx].east=s;
+				
+			}
+			
+			else if(net_rotate==2){
+				
+				Tree[idx].south=n;
+				Tree[idx].west=e;
+				Tree[idx].north=s;
+				Tree[idx].east=w;		
+				
+			}
+			
+			else{
+				
+				Tree[idx].south=e;
+				Tree[idx].west=s;
+				Tree[idx].north=w;
+				Tree[idx].east=n;				
+				
+			}
+			
+		  }
+	    
+		}
+		
+		if(assStart!=assEnd){
+			
+			Lazy[2*idx+1]+=amount;
+			Lazy[2*idx+2]+=amount;
+			
+		}
+		
+		return;
+		
+	}   
+		
+	lli mid=(assStart+assEnd)/2;
+	
+	update(2*idx+1,assStart,mid,start,end,amount);
+	update(2*idx+2,mid+1,assEnd,start,end,amount);
+	
+	Tree[idx]=Tree[2*idx+1]+Tree[2*idx+2];
+	
+}     
+    
+lli query(lli idx,lli assStart,lli assEnd,lli start,lli end,lli askedDirection){
+	
+	if(assStart>assEnd||assStart>end||assEnd<start)//out of range query
+	  return 0;
+	
+	if(Lazy[idx]){
+	
+	    lli net_rotate=(Lazy[idx]>0?Lazy[idx]:-Lazy[idx]);	
+		net_rotate%=4;	
+		
+		if(net_rotate!=0){
+		
+		  lli e=Tree[idx].east,s=Tree[idx].south,w=Tree[idx].west,n=Tree[idx].north;
+		
+		  if(Lazy[idx]>0){//rotation was made in clockwise direction direction
+						
+			if(net_rotate==1){
+								
+				Tree[idx].south=e;
+				Tree[idx].west=s;
+				Tree[idx].north=w;
+				Tree[idx].east=n;	
+				
+			}
+			
+			else if(net_rotate==2){
+				
+				Tree[idx].south=n;
+				Tree[idx].west=e;
+				Tree[idx].north=s;
+				Tree[idx].east=w;
+				
+			}
+			
+			else{
+				
+				Tree[idx].south=w;
+				Tree[idx].west=n;
+				Tree[idx].north=e;
+				Tree[idx].east=s;
+				
+			}
+			
+		  }
+		
+		  else{//if net rotation is in anti-clockwise rotation
+			
+			if(net_rotate==1){
+				
+				Tree[idx].south=w;
+				Tree[idx].west=n;
+				Tree[idx].north=e;
+				Tree[idx].east=s;
+				
+			}
+			
+			else if(net_rotate==2){
+				
+				Tree[idx].south=n;
+				Tree[idx].west=e;
+				Tree[idx].north=s;
+				Tree[idx].east=w;		
+				
+			}
+			
+			else{
+				
+				Tree[idx].south=e;
+				Tree[idx].west=s;
+				Tree[idx].north=w;
+				Tree[idx].east=n;				
+				
+			}
+			
+		  }
+	    
+		}
+	    
+	    if(assStart!=assEnd){
+			
+			Lazy[2*idx+1]+=Lazy[idx];
+			Lazy[2*idx+2]+=Lazy[idx];
+			
+		}
+		
+		Lazy[idx]=0;
+	
+	
+    }
+    
+    if(assStart>=start&&assEnd<=end){
+    	
+    	if(askedDirection==1)
+           return Tree[idx].north;
+		
+		if(askedDirection==2)
+		  return Tree[idx].east;
+		  
+		if(askedDirection==3)
+		  return Tree[idx].south;
+		       	  
+    	if(askedDirection==4)
+    	   return Tree[idx].west;    	
+    	
+    }
+    
+    lli v1,v2,mid;
+    
+    mid=(assStart+assEnd)/2;
+    
+    v1=query(2*idx+1,assStart,mid,start,end,askedDirection);
+    v2=query(2*idx+2,mid+1,assEnd,start,end,askedDirection);
+    
+    return v1+v2;
+    
+}    

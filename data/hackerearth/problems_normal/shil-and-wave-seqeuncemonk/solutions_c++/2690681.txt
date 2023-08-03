@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+#define endl '\n'
+
+using namespace std;
+#define dec sajhgkajfhasjk
+#define deci uhkjaghjk
+const long long MOD = (1e9) + 7;
+const int SIZE = 1<<17;
+
+template <typename T>
+struct fenwick_tree {
+private:
+	int n;
+	vector <T> a;
+
+public:
+	void initialize(int k) {
+		n=k;
+		a.assign(n+1,0);
+	}
+	
+	void update(int pos, T val) {
+		for(;pos<=n;pos+=pos&(-pos)) a[pos]+=val,a[pos]%=MOD;
+	}
+
+	T query(int pos) {
+		T ans=0;
+		for(;pos>=1;pos-=pos&(-pos)) ans+=a[pos],ans%=MOD;
+		return ans;
+	}
+	
+	T get(int from, int to) {
+		return (query(to)-query(from-1)+MOD)%MOD;
+	}
+};
+
+template <typename T, typename MAX=int>
+struct dynamic_fenwick_tree {
+private:
+	MAX n;
+	unordered_map <MAX, T> a;
+
+public:
+	void initialize(MAX k) {
+		n=k;
+		a.clear();
+	}
+
+	void update(MAX pos, T val) {
+		for(;pos<=n;pos+=pos&(-pos)) a[pos]+=val;
+	}
+
+	T query(MAX pos) {
+		T ans=0;
+		for(;pos>=1;pos-=pos&(-pos)) ans+=a[pos];
+		return ans;
+	}
+	
+	T get(MAX from, MAX to) {
+		return query(to)-query(from-1);
+	}
+};
+
+int n;
+fenwick_tree <long long> inc,dec;
+long long ans;
+long long deci[SIZE],inci[SIZE];
+long long a[SIZE];
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	int i;
+	
+	cin>>n;
+	for(i=1;i<=n;i++) {
+		cin>>a[i];
+	}
+	
+	inc.initialize(SIZE-1);
+	dec.initialize(SIZE-1);
+	
+	for(i=1;i<=n;i++) {
+		deci[i]=1+inc.get(a[i]+1,SIZE-1);
+		inci[i]=1+dec.query(a[i]-1);
+		deci[i]%=MOD;
+		inci[i]%=MOD;
+		inc.update(a[i],inci[i]);
+		dec.update(a[i],deci[i]);
+		ans+=inci[i]+deci[i];
+		ans%=MOD;
+	}
+	
+	cout<<(ans-2*n+MOD+MOD)%MOD<<endl;
+	
+	return 0;
+}

@@ -1,0 +1,134 @@
+#include <iostream>
+#include<bits/stdc++.h>
+using namespace std;
+long n;
+char a[2*200000];
+long lazy[4* 200000];
+struct tree
+{
+    long l,r;
+    //for all edges covered by a node of st l stores the number of edges pointing to left ans r stores the number of edges pointing to right
+    void merger(struct tree a,struct tree b)
+    {
+        l=a.l+b.l;
+        r=a.r+b.r;
+    }
+};
+tree st[4* 200000];
+void build(long node,long start,long endo)
+{
+    if(start==endo)
+    {
+        st[node].l=0;
+        st[node].r=0;
+        if(a[start]=='>')
+            st[node].r=1;
+        else if(a[start]=='<')
+            st[node].l=1;
+    }
+    else
+    {
+        long mid=(start+endo)/2;
+        build(2*node,start,mid);
+        build((2*node)+1,mid+1,endo);
+        st[node].merger(st[2*node],st[(2*node)+1]);
+    }
+}
+void update(long node,long start,long endo,long l,long r)
+{
+    if((lazy[node]%2)!=0)
+    {
+        //lazy[k]=0 means nothing to be done if lazy[k]=1 then the directions of all edges covered by node k have to be reversed swap(l,r)
+        //as after reversing edges to the right > become edges to the left < and vice versa
+        swap(st[node].l,st[node].r);
+        if(start!=endo)
+        {
+            lazy[2*node]+=lazy[node];
+            lazy[(2*node)+1]+=lazy[node];
+        }
+        lazy[node]=0;
+    }
+    if(start>endo||start>r||endo<l)
+        return ;
+    else if(start>=l&&endo<=r)
+    {
+        long tem=st[node].l;
+        st[node].l=st[node].r;
+        st[node].r=tem;
+        if(start!=endo)
+        {
+            lazy[2*node]+=1;
+            lazy[(2*node)+1]+=1;
+        }
+        lazy[node]=0;
+    }
+    else
+    {
+        long mid=(start+endo)/2;
+        update(2*node,start,mid,l,r);
+        update((2*node)+1,mid+1,endo,l,r);
+        st[node].merger(st[2*node],st[(2*node)+1]);
+    }
+}
+long query(long node,long start,long endo,long l,long r)
+{
+    if(start>endo||start>r||endo<l)
+        return 0;
+    if((lazy[node]%2)!=0)
+    {
+        swap(st[node].l,st[node].r);
+        if(start!=endo)
+        {
+            lazy[2*node]+=lazy[node];
+            lazy[(2*node)+1]+=lazy[node];
+        }
+        lazy[node]=0;
+    }
+    if(start>=l&&endo<=r)
+    {
+        return st[node].l;
+    }
+    else
+    {
+        long mid=(start+endo)/2;
+        long a=query(2*node,start,mid,l,r);
+        long b=query((2*node)+1,mid+1,endo,l,r);
+        return (a+b);
+    }
+}
+int main()
+{
+    long i,m,l,r,f,t,ch,ans;
+    scanf("%ld %ld",&n,&m);
+    n=n-1;
+    for(i=0;i<n;i++)
+    {
+        scanf(" %c",&a[i]);
+    }
+    memset(lazy,0,sizeof(lazy));
+    build(1,0,n-1);
+    while(m--)
+    {
+        scanf("%ld",&ch);
+        if(ch==1)
+        {
+            scanf("%ld %ld",&l,&r);
+            update(1,0,n-1,l-1,r-2);
+        }
+        else if(ch==2)
+        {
+            scanf("%ld %ld",&f,&t);
+            if(f==t)
+                ans=0;
+            else if(t>f)
+                ans=query(1,0,n-1,f-1,t-2);
+            else
+            {
+                swap(t,f);
+                ans=(t-f)-query(1,0,n-1,f-1,t-2);
+            }
+            printf("%ld\n",ans);
+        }
+    }
+    return 0;
+}

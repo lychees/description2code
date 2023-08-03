@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+const int MOD = 1e9 + 7;
+int tr[10005][11][12], cnt[10005][11][12];
+char n[10005];
+int k, len;
+
+inline void modAdd(int &x, int y) {
+    x += y;
+    if (x >= MOD) x -= MOD;
+}
+
+int main() {
+    //freopen("input.txt", "r", stdin);
+    scanf("%d%s", &k, n), ++k;
+    len = strlen(n);
+    REP(i, len + 1) {
+        REP(p, k) REP(q, k + 1) {
+            int &ctr = tr[i][p][q] = p;
+            int &ccnt = cnt[i][p][q] = 0;
+            if (i) {
+                int qq = min(q + 1, k);
+                REP(z, 10) if (z == 4 || z == 7) {
+                    modAdd(ccnt, cnt[i - 1][ctr][qq]);
+                    ctr = tr[i - 1][ctr][qq];
+                } else {
+                    modAdd(ccnt, cnt[i - 1][ctr][q]);
+                    ctr = tr[i - 1][ctr][q];
+                }
+            } else {
+                REP(z, 10) if ((ctr += (z == 4 || z == 7) + q) >= k) {
+                    ctr = 0;
+                    ++ccnt;
+                }
+            }
+        }
+    }
+    int q = 0;
+    int ctr = 0, ccnt = 0;
+    REP(ii, len) {
+        int num = n[ii] - '0';
+        int i = len - 1 - ii;
+        if (i) {
+            int qq = min(q + 1, k);
+            REP(z, num) if (z == 4 || z == 7) {
+                modAdd(ccnt, cnt[i - 1][ctr][qq]);
+                ctr = tr[i - 1][ctr][qq];
+            } else {
+                modAdd(ccnt, cnt[i - 1][ctr][q]);
+                ctr = tr[i - 1][ctr][q];
+            }
+        } else {
+            REP(z, num + 1) if ((ctr += (z == 4 || z == 7) + q) >= k) {
+                ctr = 0;
+                modAdd(ccnt, 1);
+            }
+        }
+        if (num == 4 || num == 7) q = min(q + 1, k);
+    }
+    printf("%d\n", ccnt);
+    return 0;
+}

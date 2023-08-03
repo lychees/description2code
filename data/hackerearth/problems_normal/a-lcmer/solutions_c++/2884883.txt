@@ -1,0 +1,137 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+#define MP make_pair
+#define PB push_back
+#define LL long long
+#define int LL
+#define st first
+#define nd second
+#define FI st
+#define SE nd
+#define FOR(i,a,b) for(int i = (a); i <= (b); i++)
+#define RE(i,n) FOR(i,1,n)
+#define R(i,n) FOR(i,0,(int)(n)-1)
+#define REP(i,n) R(i,n)
+#define ALL(x) (x).begin(), (x).end()
+#define SZ(x) ((int)(x).size())
+#define PII pair<int,int>
+#define VI vector<int>
+template<class C> void mini(C&a4, C b4){a4=min(a4,b4);}
+template<class C> void maxi(C&a4, C b4){a4=max(a4,b4);}
+
+template<class TH> void _dbg(const char *sdbg, TH h){cerr<<sdbg<<"="<<h<<"\n";}
+template<class TH, class... TA> void _dbg(const char *sdbg, TH h, TA... a){
+  while(*sdbg!=',')cerr<<*sdbg++;cerr<<"="<<h;_dbg(sdbg+1,a...);
+}
+
+#ifdef LOCAL
+#define debug(...) _dbg(#__VA_ARGS__, __VA_ARGS__)
+#define debugv(C) {for(auto&c:C)cerr<<c<<",";cerr<<endl;}
+#else
+#define debug(...) (__VA_ARGS__)
+#define debugv(C) {}
+#define cerr if(0)cout
+#endif
+
+const LL Mod = 1000000007;
+
+LL invMods[500];
+
+LL pow_mod(LL a, LL n){
+  LL result = 1;
+  while(n){
+    if(n & 1) result = (result * a) % Mod;
+    a = (a * a) % Mod;
+    n >>= 1;
+  }
+  return result;
+}
+
+LL inv_mod(LL a){
+  return pow_mod(a, Mod-2);
+}
+
+void preprocs_invs(){
+  for(int i = 0; i < 500; i++){
+    invMods[i] = inv_mod(i);
+  }
+}
+
+LL newton(LL N, LL K){
+  LL result = 1;
+  for(int i = 0; i < K; i++){
+    result = (result * (N-i)) % Mod;
+    result = (result * invMods[i+1]) % Mod;
+  }
+  return result;
+}
+
+void test(){
+  int N, L, R, X;
+  cin >> N >> L >> R >> X;
+  
+  vector<PII> fact;
+  vector<int> num;
+  
+  for(int p = 2; p*p <= X; p++){
+    if(X % p == 0){
+      int t = 0, l = 1;
+      while(X%p==0){ X /= p; t++; l *= p; }
+      fact.emplace_back(p, t); num.push_back(l);
+    }
+  }
+  if(X > 1){
+    fact.emplace_back(X, 1);
+    num.push_back(X);
+  }
+  
+  int K = SZ(fact);
+  VI facCount(1<<K);
+  for(int i = (1<<K)-1; i >= 0; i--){
+    int dv = 1;
+    for(int j = 0; j < K; j++) if(i & (1<<j)) dv *= num[j];
+    
+    facCount[i] = R/dv - (L-1)/dv;
+    for(int j = i; j < (1<<K); j = ((j+1)|i)){
+      if(j == i) continue;
+      facCount[i] -= facCount[j];
+    }
+    debug(i, facCount[i]);
+  }
+  
+  LL result = 0;
+  for(int i = 0; i < (1<<K); i++){
+    LL addend = 0;
+    int rem = (1<<K) - i - 1;
+    for(int j = rem; j > 0; j = ((j-1)&rem)) addend += facCount[j];
+    addend += facCount[0];
+    debug(i, addend);
+    
+    addend = newton(addend+N-1, N);
+    debug(addend);
+    if(__builtin_popcount(i) % 2 == 0){
+      result = (result+addend) % Mod;
+    } else {
+      result = (result-addend+Mod) % Mod;
+    }
+  }
+  cout << result << endl;
+}
+
+
+#undef int
+int main(){
+#define int LL
+  ios_base::sync_with_stdio(0);
+  cin.tie(0);
+  cout<<fixed<<setprecision(10);
+  
+  preprocs_invs();
+  int T;
+  cin >> T;
+  for(int i = 0; i < T; i++) test();
+  
+  
+  return 0; 
+}

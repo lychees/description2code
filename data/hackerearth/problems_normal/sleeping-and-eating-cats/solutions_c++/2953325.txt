@@ -1,0 +1,122 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int N, M;
+int A[100001];
+
+struct node
+{
+    int ltype, rtype, lcnt, rcnt, len, lazy;
+    long long ans;
+} seg[262144], dummy;
+
+node make_node(int t, int begin, int end)
+{
+    node ret;
+    ret.ltype=ret.rtype=ret.lazy=t;
+    ret.lcnt=ret.rcnt=end-begin+1;
+    ret.len=end-begin+1;
+    ret.ans=1LL*(end-begin+2)*(end-begin+1)/2;
+    return ret;
+}
+
+node combine(node a, node b)
+{
+    if(a.ans==-1)
+        return b;
+    if(b.ans==-1)
+        return a;
+    node c;
+    c.ltype=a.ltype;
+    c.lcnt=a.lcnt;
+    if(c.lcnt==a.len && b.ltype==c.ltype)
+        c.lcnt+=b.lcnt;
+    c.rtype=b.rtype;
+    c.rcnt=b.rcnt;
+    if(c.rcnt==b.len && a.rtype==c.rtype)
+        c.rcnt+=a.rcnt;
+    c.len=a.len+b.len;
+    c.lazy=0;
+    c.ans=a.ans+b.ans;
+    if(a.rtype==b.ltype)
+        c.ans+=1LL*a.rcnt*b.lcnt;
+    return c;
+}
+
+void down(int idx, int begin, int end)
+{
+    if(seg[idx].lazy)
+    {
+        int mid=(begin+end)/2;
+        seg[idx*2]=make_node(seg[idx].lazy, begin, mid);
+        seg[idx*2+1]=make_node(seg[idx].lazy, mid+1, end);
+        seg[idx].lazy=0;
+    }
+}
+
+void build(int idx, int begin, int end)
+{
+    if(begin==end)
+        seg[idx]=make_node(A[begin], begin, end);
+    else
+    {
+        int mid=(begin+end)/2;
+        build(idx*2, begin, mid);
+        build(idx*2+1, mid+1, end);
+        seg[idx]=combine(seg[idx*2], seg[idx*2+1]);
+    }
+}
+
+void update(int idx, int begin, int end, int l, int r, int v)
+{
+    if(r<begin || end<l)
+        return;
+    if(l<=begin && end<=r)
+        seg[idx]=make_node(v, begin, end);
+    else
+    {
+        down(idx, begin, end);
+        int mid=(begin+end)/2;
+        update(idx*2, begin, mid, l, r, v);
+        update(idx*2+1, mid+1, end, l, r, v);
+        seg[idx]=combine(seg[idx*2], seg[idx*2+1]);
+    }
+}
+
+node query(int idx, int begin, int end, int l, int r)
+{
+    if(r<begin || end<l)
+        return dummy;
+    if(l<=begin && end<=r)
+        return seg[idx];
+    down(idx, begin, end);
+    int mid=(begin+end)/2;
+    return combine(query(idx*2, begin, mid, l, r),
+                   query(idx*2+1, mid+1, end, l, r));
+}
+
+int main()
+{
+    dummy.ans=-1;
+    scanf("%d%d", &N, &M);
+    for(int i=1; i<=N; i++)
+        scanf("%d", A+i);
+    build(1, 1, N);
+    int op, a, b, c;
+    for(int i=0; i<M; i++)
+    {
+        scanf("%d", &op);
+        if(op==0)
+        {
+            scanf("%d%d%d", &a, &b, &c);
+            update(1, 1, N, a, b, c);
+        }
+        else
+        {
+            scanf("%d%d", &a, &b);
+            printf("%lld\n", query(1, 1, N, a, b).ans);
+        }
+    }
+    return 0;
+}

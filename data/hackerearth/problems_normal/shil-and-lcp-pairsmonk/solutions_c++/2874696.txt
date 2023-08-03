@@ -1,0 +1,108 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include<sstream>
+#include<iostream>
+#include<cstdio>
+#include<cstdlib>
+#include<cstring>
+#include<climits>
+#include<cmath>
+#include<string>
+#include<vector>
+#include<set>
+#include<map>
+#include<queue>
+#include<numeric>
+#include<functional>
+#include<algorithm>
+#include<bitset>
+#include<tuple>
+#include<unordered_set>
+#include<random>
+using namespace std;
+#define INF (1<<29)
+#define rep(i,n) for(int i=0;i<(int)(n);i++)
+#define all(v) v.begin(),v.end()
+#define uniq(v) v.erase(unique(all(v)),v.end())
+#define indexOf(v,x) (find(all(v),x)-v.begin())
+
+long long ans[1000001];
+
+int L = 0;
+
+class Trie {
+	Trie *child[26];
+	int c;
+public:
+	Trie() :c(0){
+		std::memset(child, 0, sizeof(child));
+	}
+	Trie* next(char c) {
+		int n = c-'a';
+		if (child[n])return child[n];
+		//return child[n] = new Trie();
+		return NULL;
+	}
+	void add(string s) {
+		Trie *t = this;
+		c++;
+		for (int i = 0; i<(int)s.size(); i++) {
+			int c = s[i]-'a';
+			if (t->child[c])t = t->child[c];
+			else t = t->child[c] = new Trie();
+			t->c++;
+		}
+	}
+	~Trie() {
+		for (int i = 0; i<26; i++)
+			if (child[i])delete child[i];
+	}
+	void solve(int h) {
+		if (h == L) {
+			ans[h] += (long long)(c)*(c - 1) / 2;
+			return;
+		}
+		int v[27] ,size=0,sum=0;
+		rep(i,26) {
+			if (child[i]) {
+				child[i ]->solve(h + 1);
+				sum += child[i ]->c;
+				v[size++] = child[i] ->c ;
+			}
+		}
+		if (c - sum) {
+			ans[h] += (long long)(c - sum)*(c - sum - 1) / 2;
+			v[size++] = c - sum;
+		}
+		sum = v[0];
+		for (int i = 1; i < size;i++) {
+			ans[h] += sum*(long long)v[i];
+			sum += v[i];
+		}
+	}
+};
+
+
+
+
+
+
+int main() {
+	ios::sync_with_stdio(0);
+	cin.tie(0);
+	Trie t;
+	int n;
+	cin >> n;
+	
+	rep(i,n) {
+		string s;
+		cin >> s;
+		t.add(s);
+		L = max(L,(int)s.size());
+	}
+	t.solve(0);
+	cout << ans[0];
+	rep(i, L)cout << ' ' << ans[i + 1];
+	cout << endl;
+
+	return 0;
+}

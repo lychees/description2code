@@ -1,0 +1,117 @@
+#include <vector>
+#include <cstdio>
+#include <cstdlib>
+#include <map>
+#include <algorithm>
+ 
+using namespace std;
+ 
+typedef vector<int> VI;
+typedef vector<VI> VVI;
+ 
+struct Point
+{
+    int x, y;       
+};
+ 
+bool compareX(const Point &a, const Point &b)
+{
+    return a.x < b.x; 
+}
+ 
+bool compareY(const Point &a, const Point &b)
+{
+    return a.y < b.y; 
+}
+ 
+bool FindMatch(int i, const VVI &w, VI &mr, VI &mc, VI &seen) 
+{
+    for (int j = 0; j < w[i].size(); j++) 
+    {
+        if (w[i][j] && !seen[j]) 
+        {
+            seen[j] = true;
+            if (mc[j] < 0 || FindMatch(mc[j], w, mr, mc, seen)) 
+            {
+                mr[i] = j;
+                mc[j] = i;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+ 
+int BipartiteMatching(const VVI &w, VI &mr, VI &mc) {
+    mr = VI(w.size(), -1);
+    mc = VI(w[0].size(), -1);
+  
+    int ct = 0;
+    for (int i = 0; i < w.size(); i++) 
+    {
+        VI seen(w[0].size());
+        if (FindMatch(i, w, mr, mc, seen)) ct++;
+    }
+    return ct;
+}
+ 
+int main()
+{
+    int t, n;
+    scanf("%d", &t);
+    
+    while (t--)
+    {  
+        map< pair<int, bool> , int> table;  
+        scanf("%d", &n);
+        vector<Point> coord(n);
+        
+        for (int i = 0; i<n ; i++)
+            scanf("%d%d", &coord[i].x, &coord[i].y);    
+        
+        int  M =0;
+        sort(coord.begin(), coord.end(), compareX);
+        for (int i =0 ; i<n ;)
+        {
+            if (i != n)
+            {
+                table[make_pair(coord[i].x, true)] = M++;
+            }
+            int temp = coord[i].x;
+            while (i<n && coord[i].x == temp)
+            {
+                i++;      
+            }         
+        }
+        
+        sort(coord.begin(), coord.end(), compareY);
+        for (int i =0 ; i<n ;)
+        {
+            if (i != n)
+            {
+                table[make_pair(coord[i].y, false)] = M++;
+            }
+            
+            int temp = coord[i].y;
+            while (i<n && coord[i].y == temp)
+            {
+                i++;      
+            }         
+        }
+        
+        VVI graph(M);
+        for (int i=0 ; i<M ; i++)
+            graph[i].resize(M);
+        
+        VI mr, mc;
+        
+        for (int i =0 ; i<n ; i++)
+        {
+            //printf("%d - %d\n", table[make_pair(coord[i].x, true)], table[make_pair(coord[i].y, false)]);
+            graph[table[make_pair(coord[i].x, true)]][table[make_pair(coord[i].y, false)]] = 1;        
+        }
+        printf("%d\n", BipartiteMatching(graph, mr, mc));    
+    }
+           
+    return 0;  
+}

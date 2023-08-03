@@ -1,0 +1,157 @@
+#include <iostream>
+#include <fstream>
+#include <set>
+#include <map>
+#include <string>
+#include <vector>
+#include <bitset>
+#include <algorithm>
+#include <cstring>
+#include <cstdlib>
+#include <cmath>
+#include <cassert>
+#include <queue>
+
+
+typedef long long ll;
+typedef long double ld;
+
+using namespace std;
+const ll MOD = 1000000007;
+const int MAXN = 1200000;
+
+int n, q;
+char s[MAXN];
+int a[MAXN];
+int mp[100];
+int dp[2097152][5][5];
+/*
+ll dp2[1200000];
+ll *dp = dp2 + 1;
+
+ll solve() {
+	memset(lst, 255, sizeof(lst));
+	dp[0] = 1;
+	dp[-1] = 0;
+	for (int i = 0; i < n; ++i) {
+		dp[i + 1] = (dp[i] + dp[i] - dp[lst[s[i] - 'A']] + MOD) % MOD;
+		lst[s[i] - 'A'] = i;
+	}
+	return dp[n];
+}*/
+
+/*
+void rebuild(int bl) {
+	int l = bl * SQ;
+	int r = min(n, l + SQ);
+	int (*dp)[5] = dpg[bl];
+	for (int i = 0; i < 5; ++i)
+		for (int j = 0; j < 5; ++j)
+			dp[i][j] = (i == j ? 1 : 0);
+	for (int i = l; i < r; ++i) {
+		for (int j = 0; j < 5; ++j) {
+			int tmp = dp[0][j];
+			dp[0][j] = 2 * dp[0][j] - dp[a[i]][j];
+			dp[a[i]][j] = tmp;
+			if (dp[0][j] >= MOD)
+				dp[0][j] -= MOD;
+			else if (dp[0][j] < 0)
+				dp[0][j] += MOD;
+		}
+	}
+}
+
+
+
+int merge() {
+	ll ans[5] = {1, 0, 0, 0, 0};
+	ll ans2[5];
+	for (int it = 0; it < bl; ++it) {
+		for (int i = 0; i < 5; ++i) {
+			ans2[i] = 0;
+			for (int j = 0; j < 5; ++j)
+				ans2[i] += ans[j] * dpg[it][i][j];
+			ans2[i] %= MOD;
+		}
+		for (int i = 0; i < 5; ++i)
+			ans[i] = ans2[i];
+	}
+	return ans[0];
+}
+
+*/
+
+
+void merge(int dp[5][5], const int a[5][5], const int b[5][5]) {
+	ll dp2[5][5];
+	memset(dp2, 0, sizeof(dp2));
+	for (int i = 0; i < 5; ++i)
+		for (int j = 0; j < 5; ++j)
+			for (int k = 0; k < 5; ++k)
+				dp2[i][k] += (ll)a[j][k] * b[i][j];
+	for (int i = 0; i < 5; ++i)
+		for (int j = 0; j < 5; ++j)
+			dp[i][j] = dp2[i][j] % MOD;
+}
+
+int ini[5][5];
+
+
+void build(int v, int tl, int tr) {
+	if (tl + 1 == tr) {
+		memcpy(dp[v], ini, sizeof(ini));
+		dp[v][a[tl]][a[tl]] = 0;
+		dp[v][a[tl]][0] = 1;
+		dp[v][0][a[tl]] = MOD - 1;
+		return;
+	}
+	int m = (tl + tr) >> 1;
+	build(v * 2 + 1, tl, m);
+	build(v * 2 + 2, m, tr);
+	merge(dp[v], dp[v * 2 + 1], dp[v * 2 + 2]);
+}
+
+void upd(int v, int tl, int tr, int x) {
+	if (tl + 1 == tr) {
+		memcpy(dp[v], ini, sizeof(ini));
+		dp[v][a[tl]][a[tl]] = 0;
+		dp[v][a[tl]][0] = 1;
+		dp[v][0][a[tl]] = MOD - 1;
+		return;
+	}
+	int m = (tl + tr) >> 1;
+	if (x < m)
+		upd(v * 2 + 1, tl, m, x);
+	else
+		upd(v * 2 + 2, m, tr, x);
+	merge(dp[v], dp[v * 2 + 1], dp[v * 2 + 2]);
+}
+
+
+int main() {
+	for (int i = 0; i < 5; ++i)
+		for (int j = 0; j < 5; ++j)
+			ini[i][j] = (i == j ? 1 : 0);
+	ini[0][0] = 2;
+	scanf("%d%d", &n, &q);
+	scanf("%s", s);
+	mp['A'] = 1;
+	mp['C'] = 2;
+	mp['T'] = 3;
+	mp['G'] = 4;
+	for (int i = 0; i < n; ++i)
+		a[i] = mp[(int)s[i]];
+	build(0, 0, n);
+	while (q--) {
+		int p;
+		char c;
+		scanf("%d %c", &p, &c);
+		--p;
+		a[p] = mp[(int)c];
+		upd(0, 0, n, p);
+		printf("%d\n", dp[0][0][0]);
+	}
+	return 0;
+}
+
+

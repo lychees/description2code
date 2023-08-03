@@ -1,0 +1,71 @@
+#include <iostream>
+#include <algorithm>
+#include <stack>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+int a[100500];
+int left_idx[100500], right_idx[100500];
+
+int solve()
+{
+    stack<int> order;
+    int n;
+    cin >> n;
+
+    for(int i = 0; i < n; i++)
+        left_idx[i] = right_idx[i] = -1;
+
+    for(int i = 0; i < n; i++) {
+        cin >> a[i];
+        while(!order.empty() and a[order.top()] <= a[i]) {
+            right_idx[order.top()] = i;
+            order.pop();
+        }
+        if(!order.empty())
+            left_idx[i] = order.top();
+        order.push(i);
+    }
+
+    for(int i = 0; i < n; i++) {
+        int idx = left_idx[i];
+        if(idx == -1)
+            continue;
+        idx = left_idx[idx];
+        if(idx == -1)
+            continue;
+        left_idx[i] = idx;
+    }
+
+    for(int i = n - 1; i >= 0; i--) {
+        int idx = right_idx[i];
+        if(idx == -1)
+            continue;
+        idx = right_idx[idx];
+        if(idx == -1)
+            continue;
+        right_idx[i] = idx;
+    }
+
+    int ret = 0;
+    for(int i = 0; i < n; i++) {
+        if(left_idx[i] == -1 or right_idx[i] == -1)
+            continue;
+        int height = min(a[left_idx[i]], a[right_idx[i]]);
+        ret += height - a[i];
+        if(ret >= MOD)
+            ret -= MOD;
+    }
+
+    return ret;
+}
+
+int main()
+{
+    cin.sync_with_stdio(false);
+    int t;
+    cin >> t;
+    for(int i = 0; i < t; i++)
+        cout << solve() << "\n";
+    return 0;
+}

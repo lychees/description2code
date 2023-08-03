@@ -1,0 +1,205 @@
+#include <iostream>
+#include <vector>
+#include <cstdio>
+#include <sstream>
+#include <map>
+#include <string>
+#include <algorithm>
+#include <queue>
+#include <cmath>
+#include <set>
+#include "assert.h"
+using namespace std;
+
+typedef struct{
+	int to;
+	int cost;
+}edge;
+ 
+
+ vector<int> last;
+ 
+//distance from s
+//O(E log V)
+void dijkstra(vector<vector<edge> > &G, vector<int> &dist, int s){
+
+	//INF as distance
+	const int INF = 1000000;
+	
+	//first : distance from s, second : its vertex
+	priority_queue< pair<int,int> , vector<pair<int,int> >, greater< pair<int,int> > > pq;
+	 
+	fill(dist.begin(), dist.end(), INF);
+	dist[s] = 0;
+	pq.push( make_pair(dist[s], s) );
+
+	last[s] = s;
+
+	while(!pq.empty()){
+		pair<int,int> q = pq.top();
+		pq.pop();
+		int from = q.second;
+		if(dist[from] < q.first) continue; // it's not minimum distance
+		int n=G[from].size();
+		for(int i=0; i<n; i++){
+			edge e = G[from][i];
+			if(dist[e.to] > dist[from] + e.cost){
+				dist[e.to] = dist[from] + e.cost;
+
+				last[e.to] = from;
+
+				pq.push( make_pair(dist[e.to], e.to) );
+			}
+		}
+	}
+}
+ 
+void add_edge(vector<vector<edge> > &G, int from, int to, int cost){
+	G[from].push_back( (edge){to, cost} );
+	//G[to].push_back( (edge){from, cost} );
+}
+
+int dx[] = {0,1,0,-1,0};
+int dy[] = {1,0,-1,0,0};
+
+int main(){
+	int n,m;
+	cin >> n >> m;
+	n += 2;
+
+	vector<string> v(n);
+	for(int i=0; i<n; i++){
+		cin >> v[i];
+		//v[i] += v[i];
+	}
+
+	int start = v[0].find('B');
+	int goal = v[n-1].find('T');
+
+	assert(start == 0);
+	assert(goal == m-1);
+
+	int M = m*2;
+
+	auto to_ld = [&](int y, int x, int t_){
+		return m*n*(t_%M) + y*m + x;
+	};
+
+	auto solve = [&](int flag){
+
+		auto func = [&](int my_i, int my_j, int t_){
+			return make_pair(my_i, (my_j + M + (flag?1:-1) * ((my_i%2==1)?-1:+1) * (t_%M) )%m);
+		};
+
+		vector<vector<edge>> G(n*m*M);
+		for(int t=0; t<M; t++){
+			for(int i=0; i<n; i++){
+				for(int j=0; j<m; j++){
+					auto p = func(i,j,t);
+					int i_t = p.first;
+					int j_t = p.second;
+
+					if(v[i_t][j_t] == 'X') continue;
+
+					for(int k=0; k<5; k++){
+						int next_i = i + dy[k];
+						int next_j = j + dx[k];
+						if(next_j < 0 || next_j >= m || next_i < 0 || next_i >= n) continue;
+
+						auto q = func(next_i, next_j, t+1);
+						int next_i_t = q.first;
+						int next_j_t = q.second;
+
+						//if(v[next_i_t][next_j_t] == 'X') continue;
+
+						auto r = func(next_i, next_j, t);
+						int now_i_t = r.first;
+						int now_j_t = r.second;
+
+						//if(v[now_i_t][now_j_t] == 'X') continue;
+					
+						//cerr << "\t" << t+1 << " : " << next_i << " " << next_j << endl;
+
+						add_edge(G, to_ld(i,j,t), to_ld(next_i, next_j, t+1), ((k==4)&&(i==(n-1))&&(j==(m-1)))?0:1);
+					}
+				}
+			}
+		}
+
+
+		vector<int> dist(n*m*M);
+		last.resize(n*m*M);
+
+		dijkstra(G, dist, to_ld(0,0,1) );
+		int ans = dist[to_ld(n-1,m-1,0)] + 1;
+
+		dijkstra(G, dist, to_ld(0,1,1));
+		ans = min(ans, dist[to_ld(n-1,m-1,0)] + 1);
+
+		/*if(v[1][0] != 'X' && v[1][m-1] != 'X')*/{
+			dijkstra(G, dist, to_ld(1,0,1));
+			ans = min(ans, dist[to_ld(n-1,m-1,0)] + 1);
+		}
+
+		return ans;
+	};
+	
+
+	int ans = min(solve(0), solve(1));
+
+	if(ans<1000000) cout << ans << endl;
+	else cout << "Impossible" << endl;
+/*
+	for(int t=0; t<m; t++){
+		cerr << "t = " << t << endl;
+		for(int i=0; i<n; i++){
+			for(int j=0; j<m; j++){
+				int j_t = (j + m + (i&1?-1:+1)*t)%m;
+				int i_t = i;
+				cerr << v[i_t][j_t];
+			}
+			cerr << endl;
+		}
+		cerr << endl;
+	}
+	
+	for(int t=0; t<m; t++){
+		cerr << "t = " << t << endl;
+		for(int i=0; i<n; i++){
+			for(int j=0; j<m; j++){
+				cerr << dist[ n*m*t + i*m + j] << "\t";
+			}
+			cerr << endl;
+		}
+		cerr << endl;
+	}
+
+	for(int t=0; t<m; t++){
+		cerr << "t = " << t << endl;
+		for(int i=0; i<n; i++){
+			for(int j=0; j<m; j++){
+				int val = last[ n*m*t + i*m + j];
+				cerr << val/(m*n) <<":"<< val%(m*n)/m << ":" << val%(m*n)%m << "\t";
+			}
+			cerr << endl;
+		}
+		cerr << endl;
+	}	
+*/
+/*
+	for(int t=0; t<m; t++){
+		cerr << "t = " << t << endl;
+		for(int i=0; i<n; i++){
+			for(int j=0; j<m; j++){
+				cerr << i << "," << j << " -> " << endl;
+				for(auto to : G[n*m*t + i*m + j]){
+					cerr << to.to/(m*n) << " " << (to.to%(m*n))/m << " " << (to.to%(m*n))%m << " " << to.cost << endl;
+				}
+			}
+			cerr << endl;
+		}
+		cerr << endl;
+	}
+*/
+	return 0;
+}

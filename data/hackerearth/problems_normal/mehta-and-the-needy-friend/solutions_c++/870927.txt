@@ -1,0 +1,124 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <queue>
+#include <algorithm>
+#include <functional>
+
+using namespace std;
+
+long long func(const long long &X){
+	int digits;
+	vector<int> d;
+	for(long long tmp=X; tmp>0; tmp/=10){
+		d.push_back(tmp%10);
+	}
+	digits = d.size();
+	reverse(d.begin(), d.end());
+
+	vector<int> state = {0,0,1,2,0,4,3,8,1,0};
+
+	vector<vector<vector<long long> > > dp(digits+1, vector<vector<long long> >(2, vector<long long>(16, 0)));
+	for(int i=1; i<=d[0]; i++){
+		dp[1][i==d[0]?1:0][state[i]] += 1;
+	}
+	for(int i=1; i<digits; ++i){
+		//?????
+		for(int j=0; j<2; ++j){
+			//2,3,5,7???4bit
+			for(int k=0; k<16; ++k){
+				//i?????l?????
+				for(int l=1; l<=9; ++l){
+					//???????????i?????X?i?????????????
+					if(j==1 && l > d[i]) break;
+					bool next_j = j;
+					//?????????????????
+					if(j==1 && l < d[i]) next_j = false;
+					dp[i+1][next_j][ k^state[l] ] += dp[i][j][k];
+					
+				}
+				
+			}
+		}
+	}
+	return dp[digits][0][0] + dp[digits][1][0];
+}
+
+//???X???????????????????
+long long func2(const long long &X){
+	int digits;
+	vector<int> d;
+	for(long long tmp=X; tmp>0; tmp/=10){
+		d.push_back(tmp%10);
+	}
+	digits = d.size();
+	reverse(d.begin(), d.end());
+
+	vector<int> state = {0,0,1,2,0,4,3,8,1,0};
+
+	vector<vector<long long> > dp(digits+1, vector<long long>(16, 0));
+	for(int i=1; i<=d[0]; i++){
+		dp[1][state[i]] += 1;
+	}
+	for(int i=1; i<digits; ++i){
+		for(int k=0; k<16; ++k){
+			for(int l=1; l<=9; ++l){
+				if(l > d[i]) break;
+				dp[i+1][ k^state[l] ] += dp[i][k];
+				
+			}
+			
+		}
+	}
+	return dp[digits][0];
+}
+
+long long calc(const long long &X){
+	int digits=0;
+	for(long long tmp=X; tmp>0; tmp/=10){
+		++digits;
+	}
+	long long ret = 0;
+	for(long long i=1, tmp=1; i<=digits; ++i, tmp*=10){
+		if(i==digits) ret += func(X);
+		else ret += func2(tmp*10-1);
+	}
+	return ret;
+}
+
+//[ (lb,ub] )
+long long bf(long long lb, long long ub, long long K){
+	long long offset = calc(lb);
+	while(ub - lb > 1){
+		long long mid = (lb+ub)/2;
+		long long val = calc(mid) - offset;
+		
+		if(val >= K){
+			//[ (lb,mid] )
+			ub = mid;
+				
+		}else{
+			//[ (mid, ub] )
+			lb = mid;
+		}
+	}
+	return ub;
+}
+
+int main(){
+	int T;
+	cin >> T;
+	for(int t=0; t<T; ++t){
+		long long A,B,K;
+		cin >> A >> B >> K;
+		long long num = calc(B) - calc(A-1);
+		if(num < K){
+			cout << -1 << endl;
+			continue;
+		}
+		long long ans = bf(A-1, B, K);
+		cout << ans << endl;
+
+	}
+	return 0;
+}

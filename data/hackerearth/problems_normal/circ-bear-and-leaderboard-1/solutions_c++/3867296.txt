@@ -1,0 +1,57 @@
+//Pranet Verma
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN = 500005;
+template<class T> 
+struct BIT
+{
+    T *bit;int n;
+    BIT(int n):n(n){bit=(T*)calloc(n+1,sizeof(T));}
+    ~BIT(){free(bit);}
+    void reset(){memset(bit,0,sizeof(T)*(n+1));}
+    void update(int u,T v){while(u<=n)bit[u]+=v,u+=(u&-u);}
+    T read(int u){T ret=0;while(u)ret+=bit[u],u-=(u&-u);return ret;}    
+};
+long long a[MAXN], b[MAXN], val[MAXN], B[MAXN];
+int ptr;
+int get(long long x) {
+    return 1 + lower_bound(B, B + ptr, x) - B;
+}
+BIT<long long> *b1;
+BIT<int> *b2;
+int index(int x, int n) {
+    return 1 + n - b2->read(x);
+}
+int main() {
+    int n, q;
+    scanf("%d %d", &n, &q);
+    B[ptr++] = 0;
+    for (int i = 0; i < q; ++i) {
+        scanf("%lld %lld", &a[i], &b[i]);
+        B[ptr++] = val[a[i]] += b[i];
+    }
+    sort(B, B + ptr);
+   
+    b1 = new BIT<long long>(ptr + 5);
+    b2 = new BIT<int>(ptr + 5); 
+    long long sum = 0;
+    for (int i = 0; i < n; ++i) {
+        b2->update(get(0), 1);   
+    }
+    memset(val, 0, sizeof val);
+    for (int i = 0; i < q; ++i) {
+        long long oldVal = val[a[i]];
+        val[a[i]] += b[i];
+        long long newVal = val[a[i]];
+        int key_oldVal = get(oldVal);
+        int key_newVal = get(newVal); 
+        sum -= index(key_oldVal, n) * oldVal;
+        b1->update(key_oldVal, -oldVal);
+        b2->update(key_oldVal, -1);
+        sum += b1->read(key_newVal - 1) - b1->read(key_oldVal - 1);
+        b2->update(key_newVal, 1);
+        b1->update(key_newVal, newVal);
+        sum += index(key_newVal, n) * newVal;
+        printf("%lld\n", sum); 
+    }
+}

@@ -1,0 +1,224 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define ll long long int
+#define s(x) scanf("%d", &x)
+#define sl(x) scanf("%lld", &x)
+#define mod 1000000007
+#define get getchar_unlocked
+
+int n, val;
+
+vector <int> v[500005];
+int par[500005];
+int clr[500005];
+int path[500005];
+int pos[500005];
+int level[500005];
+int treeSize[500005];
+int Col = 0;
+int lc[32][500005];
+int w[500005];
+
+int scan()
+{
+    int n = 0, ch = get();
+    while (ch < '0' || ch > '9')
+        ch = get();
+    while (ch >= '0' && ch <= '9') {
+        n = (n << 3) + (n << 1) + ch - '0';
+        ch = get();
+    }
+    return n;
+}
+
+struct hld
+{
+    vector <int> nodes;
+
+    vector <int> seg, lazy;
+
+    void C_S_T()
+    {
+        seg.resize(4*nodes.size());
+        lazy.resize(4*nodes.size());
+    }
+
+    void update(int x, int y, int val, int l, int r, int ind)
+    {
+        if (x > y || r < x || y < l)
+            return;
+        if (x <= l && r <= y) {
+            lazy[ind] += val;
+            seg[ind] += val;
+            return;
+        }
+        int m = (l+r)/2;
+        int p = 2*ind+1;
+        int q = p+1;
+        if (lazy[ind] && l != r) {
+            lazy[p] += lazy[ind];
+            lazy[q] += lazy[ind];
+            seg[p] += lazy[ind];
+            seg[q] += lazy[ind];
+            lazy[ind] = 0;
+        }
+        update(x, y, val, l, m, p);
+        update(x, y, val, m+1, r, q);
+    }
+
+    int get_answer(int x, int l, int r, int ind)
+    {
+        if (l <= x && x <= r) {
+            if (l == r)
+                return seg[ind];
+            int m = (l+r)/2;
+            int p = 2*ind+1;
+            int q = p+1;
+            if (lazy[ind]) {
+                lazy[p] += lazy[ind];
+                lazy[q] += lazy[ind];
+                seg[p] += lazy[ind];
+                seg[q] += lazy[ind];
+                lazy[ind] = 0;
+            }
+            return get_answer(x, l, m, p) + get_answer(x, m+1, r, q);
+        }
+        return 0;
+    }
+};
+
+vector <hld> data;
+
+void precompute(int node, int pr, int lev)
+{
+    int i, mx = 0, j = -1;
+    par[node] = pr;
+    level[node] = lev;
+    for (i = 0; i < v[node].size(); ++i) {
+        if (v[node][i] == pr)
+            continue;
+        precompute(v[node][i], node, lev+1);
+        treeSize[node] += treeSize[v[node][i]];
+        if (mx < treeSize[v[node][i]]) {
+            mx = treeSize[v[node][i]];
+            j = v[node][i];
+        }
+    }
+    path[node] = j;
+    ++treeSize[node];
+}
+
+void HLD(int node)
+{
+    int i = 0;
+    if (!clr[node]) {
+        hld Hld;
+        assert(data.size() == Col);
+        int tmp = node;
+        do {
+            clr[tmp] = Col;
+            Hld.nodes.pb(tmp);
+            pos[tmp] = i;
+            ++i;
+            tmp = path[tmp];
+        } while (tmp != -1);
+        ++Col;
+        data.pb(Hld);
+    }
+    for (i = 0; i < v[node].size(); ++i) {
+        if (v[node][i] != par[node])
+            HLD(v[node][i]);
+    }
+}
+
+void LCA()
+{
+    int i, j;
+    for (i = 0; i < n; ++i) {
+        for (j = 0; (1<<j) < n; ++j)
+            lc[j][i] = -1;
+    }
+    for (i = 0; i < n; ++i)
+        lc[0][i] = par[i];
+    for (j = 1; (1<<j) <= n; ++j) {
+        for (i = 0; i < n; ++i) {
+            if (lc[j-1][i] != -1)
+                lc[j][i] = lc[j-1][lc[j-1][i]];
+        }
+    }
+}
+
+int lca(int p, int q)
+{
+    int log, i;
+    if (level[p] < level[q])
+        swap(p, q);
+    for (log = 1; (1<<log) <= level[p]; ++log);
+    --log;
+    for (i = log; i >= 0; --i) {
+          if (level[p] - (1 << i) >= level[q])
+              p = lc[i][p];
+    }
+    if (p == q)
+        return p;
+    for (i = log; i >= 0; --i) {
+          if (lc[i][p] != -1 && lc[i][p] != lc[i][q])
+              p = lc[i][p], q = lc[i][q];
+    }
+    return par[p];
+}
+
+int main()
+{
+    int t, q, a, b, val, i, x, y, z, tmp, p, ans;
+    n = scan();
+    q = scan();
+    Col = 1;
+    for (i = 1; i < n; ++i) {
+        x = scan()-1;
+        y = scan()-1;
+        v[x].pb(y);
+        v[y].pb(x);
+    }
+    hld tmp1;
+    data.pb(tmp1);
+    precompute(0, 0, 0);
+    HLD(0);
+    for (i = 1; i < data.size(); ++i)
+        data[i].C_S_T();
+    LCA();
+    int cnt;
+    while (q--) {
+        z = scan();
+        if (z == 1) {
+            x = scan()-1;
+            y = scan()-1;
+            p = lca(x, y);
+            tmp = 1;
+            cnt = 0;
+            while (clr[x] != clr[p]) {
+                data[clr[x]].update(0, pos[x], tmp, 0, data[clr[x]].nodes.size()-1, 0);
+                x = data[clr[x]].nodes[0];
+                assert(x != par[x]);
+                x = par[x];
+            }
+            data[clr[x]].update(pos[p], pos[x], tmp, 0, data[clr[x]].nodes.size()-1, 0);
+            while (clr[y] != clr[p]) {
+                data[clr[y]].update(0, pos[y], tmp, 0, data[clr[y]].nodes.size()-1, 0);
+                y = data[clr[y]].nodes[0];
+                assert(y != par[y]);
+                y = par[y];
+            }
+            data[clr[y]].update(pos[p]+1, pos[y], tmp, 0, data[clr[y]].nodes.size()-1, 0);
+        }
+        else {
+            x = scan()-1;
+            printf("%d\n", data[clr[x]].get_answer(pos[x], 0, data[clr[x]].nodes.size()-1, 0));
+        }
+    }
+    return 0;
+}

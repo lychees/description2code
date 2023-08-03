@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int n, m, k;
+long long dist[402][402];
+int l[21];
+long long dp[1 << 17][21];
+
+long long find(int b, int v)
+{
+	if(dp[b][v] == 1e18)
+	{
+		for(int i = 0; i < k; i++)
+		{
+			if(i != v && ((1 << i) & b)) dp[b][v] = min(dp[b][v], find(b ^ (1 << v), i) + dist[l[i]][l[v]]);
+		}
+	}
+	return dp[b][v];
+}
+
+int main()
+{
+	ios::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin >> n >> m >> k;
+
+	for(int i = 1; i <= n; i++)
+	{
+		for(int j = 1; j <= n; j++) dist[i][j] = 1e18;
+	}
+
+	while(m--)
+	{
+		int u, v, c;
+		cin >> u >> v >> c;
+		dist[u][v] = dist[v][u] = c;
+	}
+
+	for(int p = 1; p <= n; p++)
+	{
+		for(int i = 1; i <= n; i++)
+		{
+			for(int j = 1; j <= n; j++) dist[i][j] = min(dist[i][j], dist[i][p] + dist[p][j]);
+		}
+	}
+
+	if(k == 0)
+	{
+		cout << dist[1][n];
+		return 0;
+	}
+
+	for(int i = 0; i < (1 << k); i++)
+	{
+		for(int j = 0; j < k; j++) dp[i][j] = 1e18;
+	}
+
+	for(int i = 0; i < k; i++)
+	{
+		cin >> l[i];
+		dp[1 << i][i] = dist[1][l[i]];
+	}
+
+	long long ans = 1e18;
+	for(int i = 0; i < k; i++) ans = min(ans, dist[l[i]][n] + find((1 << k) - 1, i));
+
+	cout << ans;
+
+	return 0;
+}

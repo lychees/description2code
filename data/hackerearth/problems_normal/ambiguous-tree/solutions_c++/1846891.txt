@@ -1,0 +1,237 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<unordered_map>
+#include<unordered_set>
+using namespace std;
+#define MAX 100012
+int n;
+vector<int> v[MAX];
+vector<int> g[MAX];
+#define MAX_LOG 17
+int lcc[MAX_LOG][MAX];
+long long int cost[MAX_LOG][MAX];
+int dep[MAX];
+bool use[MAX];
+//dfs order
+int st[MAX];
+int en[MAX];
+long long int bit[MAX];
+void add(int i, long long int x){
+	i++;
+	while (i < MAX){
+		bit[i] += x;
+		i += i&-i;
+	}
+}
+long long int sum(int i){
+	long long int r = 0;
+	i++;
+	while (i){
+		r += bit[i];
+		i -= i&-i;
+	}
+	return r;
+}
+int ord = 0;
+inline void dfs(int b, int pre = -1, int h = 0){
+	use[b] = true;
+	dep[b] = h;
+	lcc[0][b] = pre;
+	st[b] = ord;
+	ord++;
+	for (int i = 0; i < v[b].size(); i++){
+		if (use[v[b][i]] == false){
+			dfs(v[b][i], b, h + 1);
+			g[b].push_back(v[b][i]);
+		}
+	}
+	en[b] = ord;
+}
+int lca(int a, int b){
+	if (dep[a] < dep[b]){
+		swap(a, b);
+	}
+	for (int i = 0; i < MAX_LOG; i++){
+		if (((dep[a] - dep[b]) >> i) & 1){
+			a = lcc[i][a];
+		}
+	}
+	if (a == b){
+		return a;
+	}
+	for (int i = MAX_LOG - 1; i >= 0; i--){
+		if (lcc[i][a] != lcc[i][b]){
+			a = lcc[i][a];
+			b = lcc[i][b];
+		}
+	}
+	return lcc[0][a];
+}
+int dist(int a, int b){
+	return dep[a] + dep[b] - 2 * dep[lca(a, b)];
+}
+int countt[MAX];  //subtree size
+int up[MAX];
+inline void dfs2(int b){
+	for (int i = 0; i < g[b].size(); i++){
+		dfs2(g[b][i]);
+		countt[b] += countt[g[b][i]];
+	}
+	up[b] = n - countt[b];
+	countt[b]++;
+}
+vector<int> cy;
+vector<int> cc;
+set<int> s;
+int exp(int a, int b){  //a to b
+	if (a == b){
+		return 0;
+	}
+	if (dep[a]<dep[b]){
+		return -countt[b];
+	}
+	else{
+		return -(n - countt[a]);
+	}
+}
+set<int> con[MAX];
+int Go(int a, int b){
+	for (int i = 0; i<MAX_LOG; i++){
+		if ((b >> i) & 1){
+			a = lcc[i][a];
+		}
+	}
+	return a;
+}
+long long int costt(int a, int b){
+	if (dep[a] > dep[b]){
+		swap(a, b);
+	}
+	long long int summ = sum(st[b]);
+	int dis = abs(dep[b] - dep[a]);
+	dis--;
+	int c = Go(b, dis);
+	summ -= sum(st[c]);
+	return summ;
+}
+long long int leave(int a){
+	int go = lcc[0][a];
+	long long int siz= -exp(a, go);
+	siz = n - siz;
+	return siz*(siz - 1LL);
+}
+long long int root(int lc,int a,int b){
+	long long int siz = 0;
+	int dis = abs(dep[lc] - dep[a]);
+	if (lc != a){
+		dis--;
+		a = Go(a, dis);
+		siz = -exp(lc, a);
+	}
+	if (lc != b){
+		dis = abs(dep[lc] - dep[b]);
+		dis--;
+		b = Go(b, dis);
+		siz += -exp(lc, b);
+	}
+	siz = n - siz;
+	return (siz)*(siz - 1LL);
+}
+int main(){
+	scanf("%d", &n);
+	for (int i = 1; i < n; i++){
+		int a, b;
+		scanf("%d%d", &a, &b);
+		a--;
+		b--;
+		v[a].push_back(b);
+		v[b].push_back(a);
+		con[a].insert(b);
+		con[b].insert(a);
+	}
+	dfs(0);
+	dfs2(0);
+	for (int i = 0; i + 1 < MAX_LOG; i++){
+		for (int j = 0; j < n; j++){
+			if (lcc[i][j] == -1){
+				lcc[i + 1][j] = -1;
+				continue;
+			}
+			lcc[i + 1][j] = lcc[i][lcc[i][j]];
+		}
+	}
+	for (int i = 0; i < n; i++){
+		if (lcc[0][i] == -1){
+			continue;
+		}
+		for (int j = 0; j < g[i].size(); j++){
+			int go = g[i][j];
+			long long int siz = n;
+			siz -= countt[go];
+			siz += exp(i, lcc[0][i]);
+			siz *= (siz - 1LL);
+	//		cout << i << " " << go << " " << siz << endl;
+
+			add(st[g[i][j]], siz);
+			add(en[g[i][j]], -siz);
+		}
+	}
+	int q;
+	scanf("%d", &q);
+	long long int N=n;
+	while (q--){
+		int a, b;
+		scanf("%d%d", &a, &b);
+		a--;
+		b--;
+		if (a == b){
+			puts("0");
+			continue;
+		}
+		if (a>b){
+			swap(a, b);
+		}
+		long long int ans = N*(N - 1LL);
+		int lc = lca(a, b);
+		long long int siz = n;
+		ans -= root(lc, a, b);
+		if (lc != a){
+			ans -= leave(a);
+		}
+		if (lc != b){
+			ans -= leave(b);
+		}
+		if (lc != a){
+			ans -= costt(lc, a);
+		}
+		if (lc != b){
+			ans -= costt(lc, b);
+		}
+		ans /= 2LL;
+		printf("%lld\n", ans);
+	}
+	return 0;
+}

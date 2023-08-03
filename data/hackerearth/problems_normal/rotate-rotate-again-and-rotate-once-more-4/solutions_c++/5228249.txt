@@ -1,0 +1,216 @@
+#include <bits/stdc++.h>
+#define MAX 1000005
+
+using namespace std;
+
+typedef struct
+{
+    long int dir[4];
+}node;
+
+node merge(node l,node r)
+{
+    node n;
+    for(int i = 0;i < 4;i++)
+        n.dir[i] = l.dir[i] + r.dir[i];
+    return n;
+}
+
+node segtree[4*MAX];
+long long int lazy[4*MAX];
+
+void build(int pos,int l,int r)
+{
+    if(l == r)
+    {
+        for(int i = 0;i < 4;i++)
+            segtree[pos].dir[i] = 0;
+        segtree[pos].dir[0] = 1;
+        lazy[pos] = 0;
+        return;
+    }
+
+    int mid = (l + r)>>1;
+    build(2*pos,l,mid);
+    build(2*pos+1,mid+1,r);
+    segtree[pos] = merge(segtree[2*pos],segtree[2*pos+1]);
+    lazy[pos] = 0;
+}
+
+void update(int lQ,int rQ,int pos,int l,int r,long int k,int clk)
+{
+    if(lazy[pos]!=0)
+    {
+        if(lazy[pos]>=0)
+        {
+            int t = lazy[pos]%4;
+            while(t--)
+            {
+                long int temp = segtree[pos].dir[0];
+                segtree[pos].dir[0] = segtree[pos].dir[1];
+                segtree[pos].dir[1] = segtree[pos].dir[2];
+                segtree[pos].dir[2] = segtree[pos].dir[3];
+                segtree[pos].dir[3] = temp;
+            }
+        }
+        else
+        {
+            int t = (-lazy[pos])%4;
+            while(t--)
+            {
+                long int temp = segtree[pos].dir[0];
+                segtree[pos].dir[0] = segtree[pos].dir[3];
+                segtree[pos].dir[3] = segtree[pos].dir[2];
+                segtree[pos].dir[2] = segtree[pos].dir[1];
+                segtree[pos].dir[1] = temp;
+            }
+        }
+        if(l!=r)
+        {
+            lazy[2*pos] += lazy[pos];
+            lazy[2*pos+1] += lazy[pos];
+        }
+        lazy[pos] = 0;
+    }
+
+    if(rQ<l||lQ>r)
+        return;
+
+    if(lQ<=l&&rQ>=r)
+    {
+        if(clk==1)
+        {
+            int t = k%4;
+            while(t--)
+            {
+                long int temp = segtree[pos].dir[0];
+                segtree[pos].dir[0] = segtree[pos].dir[1];
+                segtree[pos].dir[1] = segtree[pos].dir[2];
+                segtree[pos].dir[2] = segtree[pos].dir[3];
+                segtree[pos].dir[3] = temp;
+            }
+            if(l!=r)
+            {
+                lazy[2*pos] += k;
+                lazy[2*pos+1] += k;
+            }
+        }
+        else
+        {
+            int t = k%4;
+            while(t--)
+            {
+                long int temp = segtree[pos].dir[0];
+                segtree[pos].dir[0] = segtree[pos].dir[3];
+                segtree[pos].dir[3] = segtree[pos].dir[2];
+                segtree[pos].dir[2] = segtree[pos].dir[1];
+                segtree[pos].dir[1] = temp;
+            }
+
+            if(l!=r)
+            {
+                lazy[2*pos] -= k;
+                lazy[2*pos+1] -= k;
+            }
+        }
+        return;
+    }
+
+    int mid = (l + r)>>1;
+    update(lQ,rQ,2*pos,l,mid,k,clk);
+    update(lQ,rQ,2*pos+1,mid+1,r,k,clk);
+    segtree[pos] = merge(segtree[2*pos],segtree[2*pos+1]);
+}
+
+node query(int lQ,int rQ,int pos,int l,int r)
+{
+    if(lazy[pos]!=0)
+    {
+        if(lazy[pos]>=0)
+        {
+            int t = lazy[pos]%4;
+            while(t--)
+            {
+                long int temp = segtree[pos].dir[0];
+                segtree[pos].dir[0] = segtree[pos].dir[1];
+                segtree[pos].dir[1] = segtree[pos].dir[2];
+                segtree[pos].dir[2] = segtree[pos].dir[3];
+                segtree[pos].dir[3] = temp;
+            }
+        }
+        else
+        {
+            int t = (-lazy[pos])%4;
+            while(t--)
+            {
+                long int temp = segtree[pos].dir[0];
+                segtree[pos].dir[0] = segtree[pos].dir[3];
+                segtree[pos].dir[3] = segtree[pos].dir[2];
+                segtree[pos].dir[2] = segtree[pos].dir[1];
+                segtree[pos].dir[1] = temp;
+            }
+        }
+        if(l!=r)
+        {
+            lazy[2*pos] += lazy[pos];
+            lazy[2*pos+1] += lazy[pos];
+        }
+        lazy[pos] = 0;
+    }
+
+    if(rQ<l||lQ>r)
+    {
+        node n;
+        for(int i = 0;i < 4;i++)
+            n.dir[i] = 0;
+        return n;
+    }
+
+    if(lQ<=l&&rQ>=r)
+    {
+        return segtree[pos];
+    }
+
+    int mid = (l + r)>>1;
+    node n = merge(query(lQ,rQ,2*pos,l,mid),query(lQ,rQ,2*pos+1,mid+1,r));
+    return n;
+}
+
+int main()
+{
+    int n,q;
+    cin>>n>>q;
+    build(1,0,n-1);
+    while(q--)
+    {
+        char ch;
+        cin>>ch;
+        //cout<<" ch = "<<ch<<endl;
+        if(ch == 'C')
+        {
+            int lQ,rQ;
+            long int k;
+            scanf("%d %d %ld",&lQ,&rQ,&k);
+            update(--lQ,--rQ,1,0,n-1,k,1);
+        }
+        else if(ch == 'A')
+        {
+            int lQ,rQ;
+            long int k;
+            scanf("%d %d %ld",&lQ,&rQ,&k);
+            update(--lQ,--rQ,1,0,n-1,k,0);
+        }
+        else
+        {
+            int lQ,rQ;
+            scanf("%d %d",&lQ,&rQ);
+            node N = query(--lQ,--rQ,1,0,n-1);
+            long int ans = 0;
+            for(int i = 0;i < 4;i++)
+                ans = max(ans,N.dir[i]);
+            printf("%d\n",ans);
+        }
+    }
+    return 0;
+}
+

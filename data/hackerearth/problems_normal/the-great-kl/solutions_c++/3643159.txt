@@ -1,0 +1,100 @@
+#pragma comment(linker, ”/STACK:36777216“)
+#include<bits/stdc++.h>
+
+#define x first
+#define y second
+#define y0 hi1
+#define y1 hi2
+#define ll long long
+#define mp make_pair
+#define pb push_back
+#define sqr(a) (a)*(a)
+#define ld long double
+#define all(a) (a).begin(), (a).end()
+
+using namespace std;
+
+const int inf = 2000000000;
+const int N = 100005;
+const int LCA = 30;
+
+#define int ll
+
+vector<int> g[N];
+int c[N], tik = 0, d[N], up[N][LCA], tin[N], tout[N];
+
+bool upper(int x, int y){
+    if(x == 0)return true;
+    return(tin[x] <= tin[y] && tout[x] >= tout[y]);
+}
+
+int lca(int x, int y){
+    if(upper(x, y))return x;
+    if(upper(y, x))return y;
+
+    for(int i = LCA - 1; i >= 0; i--){
+        if(!upper(up[x][i], y))x = up[x][i];
+    }
+    return up[x][0];
+}
+
+vector<int> a[N];
+void dfslca(int v, int pr = 0){
+    if(pr == 0)d[v] = 0; else d[v] = d[pr] + 1;
+
+    tin[v] = ++tik;
+
+    up[v][0] = pr;
+    for(int j = 1; j < LCA; j++){
+        up[v][j] = up[up[v][j - 1]][j - 1];
+    }
+
+    for(int i = 0; i < g[v].size(); i++){
+        int to = g[v][i];
+        if(to == pr)continue;
+
+        dfslca(to, v);
+    }
+
+    a[c[v]].pb(v);
+    tout[v] = tik;
+}
+
+int getd(int x, int y){
+    return d[x] + d[y] - 2 * d[lca(x, y)];
+}
+
+main(){
+    int n, t;
+    cin >> n >> t;
+    for(int i = 1; i <= n; i++){
+        cin >> c[i];
+    }
+    for(int i = 1; i <= n - 1; i++){
+        int q, w;
+        cin >> q >> w;
+        g[q].pb(w);
+        g[w].pb(q);
+    }
+    dfslca(1);
+    for(int i = 1; i <= t; i++){
+        int res = 0;
+        if(a[i].size() > 1){
+            int q = a[i][0], v;
+            for(int j = 0; j < a[i].size(); j++){
+                int x = getd(q, a[i][j]);
+                if(x > res){
+                    res = x;
+                    v = a[i][j];
+                }
+            }
+            for(int j = 0; j < a[i].size(); j++){
+                int x = getd(v, a[i][j]);
+                if(x > res){
+                    res = x;
+                }
+            }
+        }
+        cout << res << " ";
+    }
+}

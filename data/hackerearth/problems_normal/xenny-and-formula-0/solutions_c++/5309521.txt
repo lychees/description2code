@@ -1,0 +1,101 @@
+#include <iostream>
+#include <bits/stdc++.h>
+using namespace std;
+#define lli long long int
+lli seg[400005], a[100005];
+long int mod = 1e9 + 7;
+void build(lli l, lli r, lli ind)
+{
+	if (l == r)
+	{
+		seg[ind] = a[l];
+		return;
+	}
+	lli m = (l + r) / 2;
+	build(l, m, ind * 2);
+	build(m + 1, r, 2 * ind + 1);
+	seg[ind] = seg[2 * ind] + seg[2 * ind + 1];
+	seg[ind] %= mod;
+}
+void update(lli i, lli x, lli l, lli r, lli ind)
+{
+	if (l == r)
+	{
+		seg[ind] += x;
+		a[i] += x;
+		seg[ind] %= mod;
+		return;
+	}
+	lli m = (l + r) / 2;
+	if (i <= m)
+	{
+		update(i, x, l, m, 2 * ind);
+	}
+	else
+	{
+		update(i, x, m + 1, r, 2 * ind + 1);
+	}
+	seg[ind] = seg[ind * 2] + seg[2 * ind + 1];
+	seg[ind] %= mod;
+}
+lli query(lli ql, lli qr, lli l, lli r, lli ind)
+{
+	if (qr<l || r<ql)
+	{
+		return 0;
+	}
+	if (ql <= l&&r <= qr)
+	{
+		return seg[ind];
+	}
+	lli m = (l + r) / 2;
+	return (query(ql, qr, l, m, 2 * ind) + query(ql, qr, m + 1, r, 2 * ind + 1)) % mod;
+}
+int main()
+{
+	lli dis, r, n, ans, x, i, ss, w, d, inc, k;
+	scanf("%lld", &r);
+	scanf("%lld", &n);
+	for (i = 1; i <= n; i++)
+	{
+		scanf("%lld", &a[i]);
+	}
+	build(1, n, 1);
+	while (r--)
+	{
+		scanf("%lld%lld%lld%lld", &ss, &w, &d, &inc);
+		ans = 0;
+		k = w / d;
+		dis = (k + 1)*w;
+		dis -= (k*(k + 1)*d) / 2;
+		dis++;
+		//cout<<dis<<" ";
+		x = dis / n;
+		ans = (x%mod)*(query(1, n, 1, n, 1)) % mod;
+		ans %= mod;
+		x = dis%n;
+		if (x == 1)
+		{
+			ans += a[ss];
+			ans %= mod;
+		}
+		else if ((n - ss + 1) >= x)
+		{
+			ans += query(ss, x - 1 + ss, 1, n, 1);
+			ans %= mod;
+		}
+		else
+		{
+			ans += query(ss, n, 1, n, 1);
+			ans %= mod;
+			x -= (n - ss + 1);
+			ans += query(1, x, 1, n, 1);
+			ans %= mod;
+		}
+		ans += mod;
+		ans %= mod;
+		printf("%lld\n", ans);
+		update(ss, inc, 1, n, 1);
+	}
+	return 0;
+}

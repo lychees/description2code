@@ -1,0 +1,103 @@
+#include <string>
+#include <vector>
+#include<iostream>
+#include<cstdio>
+#include<cstdlib>
+#include<stack>
+#include<queue>
+#include<cmath>
+#include<algorithm>
+#include<functional>
+#include<list>
+#include<deque>
+#include<bitset>
+#include<set>
+#include<map>
+#include<unordered_map>
+#include<cstring>
+#include<sstream>
+#include<complex>
+#include<iomanip>
+#include<numeric>
+#define X first
+#define Y second
+#define pb push_back
+#define rep(X,Y) for (int (X) = 0;(X) < (Y);++(X))
+#define rrep(X,Y) for (int (X) = (Y)-1;(X) >=0;--(X))
+#define repe(X,Y) for ((X) = 0;(X) < (Y);++(X))
+#define peat(X,Y) for (;(X) < (Y);++(X))
+#define all(X) (X).begin(),(X).end()
+#define rall(X) (X).rbegin(),(X).rend()
+#define eb emplace_back
+#define UNIQUE(X) (X).erase(unique(all(X)),(X).end())
+
+using namespace std;
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+template<class T> using vv=vector<vector<T>>;
+template<class T> ostream& operator<<(ostream &os, const vector<T> &t) {
+os<<"{"; rep(i,t.size()) {os<<t[i]<<",";} os<<"}"<<endl; return os;}
+template<class S, class T> ostream& operator<<(ostream &os, const pair<S,T> &t) { return os<<"("<<t.first<<","<<t.second<<")";}
+const ll MOD=1e9+7;
+int n,m;
+inline int fun(int x,int y){
+  return x+y*(m+1);
+}
+void add(vv<int> &g,int x,int y,int X,int Y){
+  int a=fun(x,y),b=fun(X,Y);
+  g[a].pb(b);
+  g[b].pb(a);
+}
+struct UF{
+  vector<int> data;
+  UF(int size):data(size,-1){}
+  bool unite(int x,int y){
+    x=root(x); y=root(y);
+    if(x!=y){
+      if(data[y]<data[x]) swap(x,y);
+      data[x]+=data[y]; data[y]=x;
+    }
+    return x!=y;
+  }
+  bool findSet(int x,int y){return root(x)==root(y);}
+  int root(int x){return data[x]<0?x:data[x]=root(data[x]);}
+  int size(int x) {return -data[root(x)];}
+};
+
+int main(){
+  ios_base::sync_with_stdio(false);
+  cout<<fixed<<setprecision(0);
+  int T;
+  cin>>T;
+  while(T--){
+    cin>>n>>m;
+    vector<string> strs(n);
+    rep(i,n) cin>>strs[i];
+    vv<int> g((n+1)*(m+1));
+    rep(i,n)rep(j,m){
+      if(i && strs[i-1][j]!=strs[i][j]){
+	add(g,j,i,j+1,i);
+      }
+      if(j && strs[i][j-1]!=strs[i][j]){
+	add(g,j,i,j,i+1);
+      }
+    }
+    UF uf(g.size());
+    rep(i,n+1){
+      uf.unite(0,fun(0,i));
+      uf.unite(0,fun(m,i));
+    }
+    rep(j,m+1){
+      uf.unite(0,fun(j,0));
+      uf.unite(0,fun(j,n));
+    }
+    rep(i,g.size())
+      for(int v:g[i]) uf.unite(i,v);
+    int f=0;
+    rep(i,g.size())
+      if(g[i].size() && !uf.findSet(0,i)) f=1;
+    cout<<(f?"NO":"YES")<<endl;
+  }
+  return 0;
+}

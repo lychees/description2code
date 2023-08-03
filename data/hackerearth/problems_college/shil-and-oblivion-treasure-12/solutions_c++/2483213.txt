@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define mp make_pair
+#define pb push_back
+#define F first
+#define S second
+#define all(a) a.begin(),a.end()
+#define siz 1001
+#define mod 1000000007
+vector<pair<int,int> >fac[1001];
+vector<int >v[36000],vec,prime;
+int sol[siz],n,q;
+int fast(long long base,long long ex){
+	long long res=1;
+	while(ex){
+		if(ex&1)res=(res*base)%mod;
+		base=(base*base)%mod;
+		ex>>=1;
+	}
+	return res;
+}
+void factor(){
+	for(int i=0;i<36000;i++)for(int j=0;j<siz;j++)v[i].pb(0);
+	for(int i=2;i<siz;i++){
+		if(!fac[i].size()){prime.pb(i);
+			for(int j=i;j<siz;j+=i){
+				int num=j,co=0;
+				while(num && num%i==0){
+					num/=i;
+					co++;
+				}
+				fac[j].pb(mp(i,co));
+			}
+		}
+	}
+}
+void build(int l,int h,int in){
+	if(l>h)return;
+	if(l==h){
+		int num=vec[l];
+		for(int i=0;i<fac[num].size();i++)
+		{
+			int no=fac[num][i].F;
+			int val=fac[num][i].S;
+			v[in][no]=val;
+		}
+		return;
+	}
+	int mid=(l+h)/2;
+	build(l,mid,2*in+1);
+	build(mid+1,h,2*in+2);
+	for(int i=0;i<prime.size();i++)v[in][prime[i]]=max(v[2*in+1][prime[i]],v[2*in+2][prime[i]]);
+
+}
+void query(int l,int h,int ql,int qh,int in){
+	if(h<ql || l>h || l>qh)return;
+	if(l>=ql && h<=qh){
+		for(int i=0;i<prime.size();i++)sol[prime[i]]=max(sol[prime[i]],v[in][prime[i]]);
+		return;
+	}
+	int mid=(l+h)>>1;
+	if(l!=h){
+		query(l,mid,ql,qh,2*in+1);
+		query(mid+1,h,ql,qh,2*in+2);    		
+	}
+}
+void update(int l,int h,int in,int ind,int val){
+	if(l>ind || h<ind || l>h)return;
+	int mid=(l+h)/2;
+	if(l!=h){
+		update(l,mid,2*in+1,ind,val);
+		update(mid+1,h,2*in+2,ind,val);
+		for(int i=0;i<prime.size();i++)v[in][prime[i]]=max(v[2*in+1][prime[i]],v[2*in+2][prime[i]]);		
+	}
+	else if(l==h && l==ind){
+		for(int i=0;i<prime.size();i++)v[in][prime[i]]=0;
+		for(int i=0;i<fac[val].size();i++)
+		{
+			int no=fac[val][i].F;
+			int va=fac[val][i].S;
+			v[in][no]=va;
+		}
+	}
+}
+int main()
+{
+	ios::sync_with_stdio(false); 
+	factor();
+    int type,low,high;
+    cin>>n;
+    vec.resize(n);
+    for(int i=0;i<n;i++)cin>>vec[i];
+    build(0,n-1,0);//pr();
+    for(cin>>q;q;q--){
+    	cin>>type>>low>>high;
+    	if(type==1){
+    		low--;
+    	//	if(high==vec[low])continue;    		
+    		update(0,n-1,0,low,high);
+    	}
+    	else{
+    		low--,high--;
+    		long long ans=1;
+    		memset(sol,0,sizeof(sol));
+    		query(0,n-1,low,high,0);
+    		for(int i=0;i<prime.size();i++)if(sol[prime[i]])ans=(ans*fast(prime[i],sol[prime[i]]))%mod;
+    		cout<<ans<<endl;
+    	}
+    }
+    return 0;
+}

@@ -1,0 +1,133 @@
+#include <iostream>
+#define MAX 100010
+#define MOD 1000000007
+using namespace std;
+int bit[11][MAX],digits[MAX];
+int n;
+int countDig(long long int num)
+{
+//	cout<<"fck";
+	int count[10];
+	for(int i=0;i<10;i++)
+	count[i]=0;
+	
+	while(num)
+	{
+		count[num%10]++;
+		num=num/10;
+	//	cout<<num;
+	}
+	int temp=0;	
+	for(int i=0;i<10;i++)
+	{
+		if(count[i])
+		temp++;
+	}
+	return temp;
+	
+}
+
+void update(int id,int val,int count)
+{
+//	cout<<"fck";
+	while(id<=n)
+	{
+		bit[count][id]+=val;
+		id+=(id)&(-id);
+	}
+}
+
+int query(int count,int id)
+{
+	
+	int sum=0;
+	while(id>0)
+	{
+		sum+=bit[count][id];
+		id-=id&(-id);
+	}
+	return sum;
+}
+
+int main()
+{
+    int q;
+    cin>>n;
+    long long int a[n];
+    for(int i=0;i<n;i++)
+    {
+    //	cout<<"hell";
+    	cin>>a[i];
+    	digits[i]=countDig(a[i]);
+    	
+    	update(i+1,1,digits[i]);
+    
+    	
+    }
+    cin>>q;
+    
+    while(q--)
+    {
+    //	cout<<"hello";
+    	string s;
+   		long long int l,r;
+    	cin>>s>>l>>r;
+    	if(s[0]=='A')	//ADD
+    	{
+    		l--;
+    		a[l]=(a[l]%MOD+r%MOD)%MOD;
+    		update(l+1,-1,digits[l]);
+    		digits[l]=countDig(a[l]);
+    		update(l+1,1,digits[l]);
+    	}
+    	
+    	else if(s[1]=='U')  //MUL
+    	{
+    		l--;
+    		a[l]=((a[l]%MOD)*(r%MOD))%MOD;
+    		update(l+1,-1,digits[l]);
+    		digits[l]=countDig(a[l]);
+    		update(l+1,1,digits[l]);
+    	}
+    	
+    	else if(s[0]=='R')
+    	{
+    		l--;
+    		a[l]=r%MOD;
+    		update(l+1,-1,digits[l]);
+    		digits[l]=countDig(a[l]);
+    		update(l+1,1,digits[l]);
+    		
+    	}
+    	
+    	else if(s[2]=='X')   //MAX
+    	{
+    		
+    		for(int i=10;i>=1;i--)
+    		{
+    			int T=query(i,r)-query(i,l-1);
+    			if(T)
+    			{
+    				cout<<i<<" "<<T<<endl;
+    				break;
+    			}
+    		}
+    	}
+    	
+   		else if(s[1]=='I')   //MIN
+    	{
+    		for(int i=1;i<=10;i++)
+    		{
+    			int T=query(i,r)-query(i,l-1);
+    			if(T)
+    			{
+    				cout<<i<<" "<<T<<endl;
+    				break;
+    			}
+    		}
+    	} 	
+    	
+    }
+    
+    return 0;
+}

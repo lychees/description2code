@@ -1,0 +1,92 @@
+#include <iostream>
+#define ALPHABET_SIZE 26
+using namespace std;
+
+int words = 0;
+struct TrieNode {
+    TrieNode *children[ALPHABET_SIZE];
+    
+    // isLeaf is true if node represents end of word
+    bool isLeaf;
+};
+
+TrieNode *makeNode() {
+    TrieNode *newNode = new TrieNode;
+    
+    newNode->isLeaf = false;
+    for (int i = 0; i < ALPHABET_SIZE; ++i) {
+        newNode->children[i] = nullptr;
+    }
+    return newNode;
+}
+
+void insert(TrieNode *root, string key) {
+    int level, length = key.size(), index;
+    
+    TrieNode *pCrawl = root;
+    
+    for (level = 0; level < length; ++level) {
+        index = key[level] - 'a';
+
+        if (!pCrawl->children[index]) {
+            pCrawl->children[index] = makeNode();
+        }
+        pCrawl = pCrawl->children[index];
+    }
+
+    if (pCrawl->isLeaf == false) words++;
+    // mark last node as leaf
+    pCrawl->isLeaf = true;
+}
+
+bool search(TrieNode *root, string key) {
+    TrieNode *pCrawl = root;
+    
+    for (int level = 0, length = key.size(); level < length; ++level) {
+        int index = key[level] - 'a';
+        if (!pCrawl->children[index]) return false;
+        
+        pCrawl = pCrawl->children[index];
+    }
+    
+    return (pCrawl != nullptr && pCrawl->isLeaf);
+}
+
+int getWords() {
+    return words;
+}
+
+void traverseTrie(TrieNode *node, string & prefix) {
+    if (node->isLeaf) {
+        cout << prefix << endl;
+    }
+    
+    for (int index = 0; index < ALPHABET_SIZE; ++index) {
+        char next = index + 'a';
+        TrieNode *pChild = node->children[index];
+        if (pChild) {
+          prefix += next;
+          traverseTrie(pChild, prefix);
+          prefix.pop_back();
+        }
+    }
+}
+
+int main() {
+    long int T;
+    cin >> T;
+    
+    TrieNode *root = makeNode();
+
+    while (T--) {
+        string customer;
+        cin >> customer;
+
+        insert(root, customer);
+    }
+    
+    cout << getWords() << endl;
+    string str;
+
+    traverseTrie(root, str);
+}

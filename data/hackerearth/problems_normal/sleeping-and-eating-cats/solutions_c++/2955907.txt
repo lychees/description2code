@@ -1,0 +1,198 @@
+#include <iostream>
+#include <cmath>
+#include <math.h>
+#include <vector>
+#include <algorithm>
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <set>
+#include <map>
+#include <stack>
+#include <queue>
+#include <tuple>
+
+#include <time.h>
+
+using namespace std;
+
+#define vec vector
+#define ALL(x) (x).begin(), (x).end()
+#define mp make_pair
+#define mt make_tuple 
+
+typedef long long ll;
+typedef long double ld;
+typedef unsigned long long ull;
+
+const ll inf = 1000000000ll;
+const ll inf64 = inf * inf;
+const ll base = inf + 7;
+const ld pi = acos(-1.0);
+
+vec< ll > dp;
+
+struct Node {
+	int first, last, delt;
+	int suff, preff, len;
+	ll ans;
+	Node() {
+		first = last = ans = delt = suff = preff = len = 0;
+	}
+};
+
+vec< Node > t;
+
+Node merge(Node l, Node r) {
+	Node ret;
+	ret.first = l.first;
+	ret.last = r.last;
+	ret.delt = 0;
+	ret.ans = l.ans + r.ans + ll(l.last == r.first) * ll(l.suff) * ll(r.preff); 
+	ret.len = l.len + r.len;
+
+	if(l.len == l.preff && l.last == r.first) ret.preff = l.len + r.preff;
+	else ret.preff = l.preff;
+	if(r.len == r.suff && l.last == r.first) ret.suff = l.suff + r.len;
+	else ret.suff = r.suff;
+
+	return ret;
+}
+
+void build(const vec< int > & a, int v, int tl, int tr) {
+	if(tl == tr) {
+		t[v].first = t[v].last = a[tl];
+		t[v].delt = 0;
+		t[v].ans = 1;
+		t[v].suff = t[v].preff = t[v].len = 1;
+	}else {
+		int tm = (tl + tr) >> 1;
+		build(a, v << 1, tl, tm);
+		build(a, v << 1 | 1, tm + 1, tr);
+		t[v] = merge(t[v << 1], t[v << 1 | 1]);
+	}
+}
+
+void push(int v) {
+	if(t[v].delt) {
+		t[v << 1].delt = t[v << 1 | 1].delt = t[v].delt;
+		t[v << 1].first = t[v << 1].last = t[v].delt;
+		t[v << 1 | 1].first = t[v << 1 | 1].last = t[v].delt;
+		
+		t[v << 1].ans = dp[t[v << 1].len];
+		t[v << 1 | 1].ans = dp[t[v << 1 | 1].len];
+
+		t[v << 1].preff = t[v << 1].suff = t[v << 1].len;
+		t[v << 1 | 1].preff = t[v << 1 | 1].suff = t[v << 1 | 1].len;
+
+		t[v].delt = 0;
+	}
+}
+
+void rebuild(int v, int tl, int tr) {
+	if(tl == tr) return;
+	else {
+		int tm = (tl + tr) >> 1;
+		push(v);
+		rebuild(v << 1, tl, tm);
+		rebuild(v << 1 | 1, tm + 1, tr);
+		t[v] = merge(t[v << 1], t[v << 1 | 1]);
+	}
+}
+
+void show(int v, int tl, int tr) {
+	cout << "[" << tl << " ; " << tr << "] : " << t[v].ans << " { preff = " << t[v].preff << " ; suff = " << t[v].suff << " ; len = " << t[v].len << " }\n";
+	if(tl == tr) return;
+	int tm = (tl + tr) >> 1;
+	show(v << 1, tl, tm);
+	show(v << 1 | 1, tm + 1, tr);
+}
+
+void upd(int v, int tl, int tr, int l, int r, int value) {
+	//cout << tl << " " << tr << "\n";
+	if(l <= tl && tr <= r) {
+		t[v].ans = dp[tr - tl + 1];
+		t[v].first = t[v].last = value;
+		t[v].delt = value;
+		t[v].preff = t[v].suff = tr - tl + 1;
+	}else {
+		int tm = (tl + tr) >> 1;
+		push(v);
+		if(l <= tm) upd(v << 1, tl, tm, l, r, value);
+		if(r > tm) upd(v << 1 | 1, tm + 1, tr, l, r, value);
+		t[v] = merge(t[v << 1], t[v << 1 | 1]);
+	}
+}
+
+Node get(int v, int tl, int tr, int l, int r) {
+	if(l <= tl && tr <= r) {
+		return t[v];
+	}else {
+		int tm = (tl + tr) >> 1;
+		push(v);
+		Node ans;
+		if(l <= tm) {
+			if(r > tm) {
+				ans = merge(get(v << 1, tl, tm, l, r), get(v << 1 | 1, tm + 1, tr, l, r));
+			}else ans = get(v << 1, tl, tm, l, r);
+		}else ans = get(v << 1 | 1, tm + 1, tr, l, r);
+		t[v] = merge(t[v << 1], t[v << 1 | 1]);
+		return ans;
+	}
+}
+
+bool solve() {
+
+	int n, m;
+
+	scanf("%d %d", &n, &m);
+
+	dp.resize(n + 1);
+	dp[1] = 1;
+
+	for(int i = 2;i <= n;i++) {
+		dp[i] = dp[i - 1] + i;
+	}
+
+	/*cout << "\n dp : \n";
+	for(int i = 1;i <= n;i++) cout << dp[i] << ' ';
+	cout << '\n';*/
+
+	vec< int > a(n + 1);
+
+	for(int i = 1;i <= n;i++) scanf("%d", &a[i]);
+
+	t.resize(4 * n, Node());
+
+	build(a, 1, 1, n);
+	
+	//rebuild(1, 1, n);
+	//show(1, 1, n);
+
+	Node ans;
+
+	for(int ty, l, r, value;m;m--) {
+		scanf("%d %d %d", &ty, &l, &r);
+		if(ty == 0) {
+			scanf("%d", &value);
+			upd(1, 1, n, l, r, value);
+			//rebuild(1, 1, n);
+			//show(1, 1, n);
+		}else {
+			ans = get(1, 1, n, l, r);
+			//printf("%lld\n", ans.ans);
+			printf("%lld\n", ans.ans);
+			//show(1, 1, n);
+		}
+	}
+
+	return true;
+}
+
+int main() {
+	
+	//while(solve());
+	solve();	
+
+	return 0;
+}

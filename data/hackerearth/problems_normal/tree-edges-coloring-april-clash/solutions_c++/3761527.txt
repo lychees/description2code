@@ -1,0 +1,153 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int, int> pii; typedef vector<pair<int, int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+vector<int> t_parent;
+vi t_ord;
+
+void tree_getorder(const vector<vi> &g, int root) {
+	int n = g.size();
+	t_parent.assign(n, -1);
+	t_ord.clear();
+
+	vector<int> stk; stk.push_back(root);
+	while(!stk.empty()) {
+		int i = stk.back(); stk.pop_back();
+		t_ord.push_back(i);
+		for(int j = (int)g[i].size() - 1; j >= 0; j --) {
+			int c = g[i][j];
+			if(t_parent[c] == -1 && c != root)
+				stk.push_back(c);
+			else
+				t_parent[i] = c;
+		}
+	}
+}
+
+typedef int Weight;
+const Weight InfWeight = INF;
+
+Weight hungarianMin(const vector<vector<Weight> > &A) {
+	if(A.empty()) return 0;
+	int h = A.size(), n = A[0].size();
+	if(h > n) return InfWeight;
+	vector<Weight> fx(h), fy(n);
+	vector<int> x(h, -1), y(n, -1);
+	vector<int> t(n), s(h + 1);
+	for(int i = 0; i < h; ) {
+		fill(t.begin(), t.end(), -1);
+		s[0] = i;
+		int q = 0;
+		for(int p = 0; p <= q; ++ p) {
+			for(int k = s[p], j = 0; j < n; ++ j) {
+				if(fx[k] + fy[j] == A[k][j] && t[j] < 0) {
+					s[++ q] = y[j];
+					t[j] = k;
+					if(s[q] < 0) {
+						for(p = j; p >= 0; j = p) {
+							y[j] = k = t[j];
+							p = x[k];
+							x[k] = j;
+						}
+						++ i;
+						goto continue_;
+					}
+				}
+			}
+		}
+		if(0) {
+		continue_:;
+		} else {
+			Weight d = InfWeight;
+			for(int j = 0; j < n; j++) if(t[j] < 0) {
+				for(int k = 0; k <= q; ++ k) if(A[s[k]][j] != InfWeight)
+					d = min(d, A[s[k]][j] - fx[s[k]] - fy[j]);
+			}
+			if(d == InfWeight)
+				return InfWeight;
+			for(int j = 0; j < n; ++ j) {
+				if(t[j] >= 0)
+					fy[j] -= d;
+			}
+			for(int k = 0; k <= q; ++ k)
+				fx[s[k]] += d;
+		}
+	}
+	Weight res = 0;
+	for(int i = 0; i < h; ++ i)
+		res += A[i][x[i]];
+	return res;
+}
+
+int main() {
+	int T;
+	scanf("%d", &T);
+	for(int ii = 0; ii < T; ++ ii) {
+		int n;
+		scanf("%d", &n);
+		int K = n - 1;
+		vector<int> cost(K);
+		for(int i = 0; i < K; ++ i) {
+			scanf("%d", &cost[i]);
+		}
+		vector<vector<int> > g(n);
+		for(int i = 0; i < n - 1; ++ i) {
+			int u, v;
+			scanf("%d%d", &u, &v), -- u, -- v;
+			g[u].push_back(v);
+			g[v].push_back(u);
+		}
+		tree_getorder(g, 0);
+		vector<vi> dp(n, vi(K, INF));
+		for(int ix = (int)t_ord.size() - 1; ix >= 0; -- ix) {
+			int i = t_ord[ix], p = t_parent[i];
+			vi children;
+			for(int j : g[i]) if(j != p)
+				children.push_back(j);
+			rep(k, K) {
+				vector<vector<Weight>> mat(children.size(), vector<Weight>(K, InfWeight));
+				rep(l, K) if(i == 0 || k != l) {
+					rep(j, children.size())
+						mat[j][l] = dp[children[j]][l] + cost[l];
+				}
+				dp[i][k] = hungarianMin(mat);
+			}
+		}
+		int ans = n == 1 ? 0 : *min_element(all(dp[0]));
+		printf("%d\n", ans);
+	}
+	return 0;
+}

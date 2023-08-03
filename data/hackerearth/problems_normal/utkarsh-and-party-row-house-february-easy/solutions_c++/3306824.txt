@@ -1,0 +1,146 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define ll long long
+#define S(x) scanf("%lld", &x)
+#define mem(a,x) memset(a,x,sizeof(a))
+
+ll a[100001] = {0};
+ll tree[400005] = {0};
+ll tree_2[400005] = {0};
+
+void buildTree(ll node, ll start, ll endd)
+{
+    if(start == endd){
+        tree[node] = a[start]*start;
+    }
+    else{
+        ll mid;
+
+        mid = (start + endd) / 2;
+
+        buildTree((2 * node), start, mid);
+
+        buildTree(((2 * node) + 1), mid + 1, endd);
+
+        tree[node] = tree[2 * node] + tree[(2 * node) + 1];
+    }
+}
+
+void buildTree_2(ll node, ll start, ll endd)
+{
+    if(start == endd){
+        tree_2[node] = a[start];
+    }
+    else{
+        ll mid;
+
+        mid = (start + endd) / 2;
+
+        buildTree_2((2 * node), start, mid);
+
+        buildTree_2(((2 * node) + 1), mid + 1, endd);
+
+        tree_2[node] = tree_2[2 * node] + tree_2[(2 * node) + 1];
+    }
+}
+
+ll query(ll node, ll start, ll endd, ll L, ll R)
+{
+    if(start > R || endd < L)
+        return 0;
+
+    if(start >= L && endd <= R)
+        return tree[node];
+
+    ll mid, p1, p2;
+
+    mid = (start + endd) / 2;
+    p1 = query((2 * node), start, mid, L, R);
+    p2 = query((2 * node) + 1, mid + 1, endd, L, R);
+
+    return (p1 + p2);
+}
+
+ll query_2(ll node, ll start, ll endd, ll L, ll R)
+{
+    if(start > R || endd < L)
+        return 0;
+
+    if(start >= L && endd <= R)
+        return tree_2[node];
+
+    ll mid, p1, p2;
+
+    mid = (start + endd) / 2;
+    p1 = query_2((2 * node), start, mid, L, R);
+    p2 = query_2((2 * node) + 1, mid + 1, endd, L, R);
+
+    return (p1 + p2);
+}
+
+
+void update(ll node, ll start, ll endd, ll idx, ll val)
+{
+    if(start == endd){
+        a[idx] = a[idx] + val;
+        tree[node] = tree[node] + idx*val;
+        tree_2[node] = tree_2[node] + val;
+    }
+    else{
+        ll mid;
+
+        mid = (start + endd) / 2;
+
+        if(idx >= start && idx <= mid){
+            update((2 * node), start, mid, idx, val);
+        }
+        else{
+            update((2 * node) + 1, mid + 1, endd, idx, val);
+        }
+
+        tree[node] = tree[2 * node] + tree[(2 * node) + 1];
+        tree_2[node] = tree_2[2 * node] + tree_2[(2 * node) + 1];
+    }
+}
+
+int main()
+{
+    ll n,q,i,type,k,l,r,x,y,stu;
+
+    S(n); S(q);
+
+    for(i = 1; i <= n; ++i){
+        S(a[i]);
+    }
+
+    buildTree(1,1,n);
+    buildTree_2(1,1,n);
+
+    while(q--){
+        S(type);
+
+        if(type == 1){
+            S(k); S(l); S(r);
+
+            if(k >= r || k <= l){
+                x = query(1,1,n,l,r);
+                y = query_2(1,1,n,l,r)*k;
+                printf("%lld\n", abs(x-y));
+            }
+            else{
+                x = abs(query(1,1,n,l,k-1)-k*query_2(1,1,n,l,k-1));
+                y = abs(query(1,1,n,k,r) - query_2(1,1,n,k,r)*k);
+                printf("%lld\n", abs(x+y));
+            }
+
+        }
+        else{
+            S(k); S(stu);
+
+            update(1,1,n,k,stu);
+        }
+    }
+    return 0;
+}

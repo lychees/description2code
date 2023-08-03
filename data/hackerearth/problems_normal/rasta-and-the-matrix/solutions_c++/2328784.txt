@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const long long MAXN=1000000000000000000LL;
+const int MOD=1000000007;
+int N, ans;
+
+struct segtree
+{
+    const static int SZ=8000000;
+    long long seg[SZ];
+    bitset<SZ> lazy;
+    int lc[SZ], rc[SZ], nid;
+    segtree()
+    {
+        nid=2;
+    }
+    void down(int idx, long long begin, long long end)
+    {
+        if(lazy[idx])
+        {
+            long long mid=(begin+end)/2;
+            if(!lc[idx])
+                lc[idx]=++nid;
+            seg[lc[idx]]=(mid-begin+1)-seg[lc[idx]];
+            lazy[lc[idx]]=!lazy[lc[idx]];
+            if(!rc[idx])
+                rc[idx]=++nid;
+            seg[rc[idx]]=(end-mid)-seg[rc[idx]];
+            lazy[rc[idx]]=!lazy[rc[idx]];
+            lazy[idx]=0;
+        }
+    }
+    int update(int idx, long long begin, long long end, long long l, long long r)
+    {
+        if(r<begin || end<l)
+            return idx;
+        if(!idx)
+            idx=++nid;
+        if(l<=begin && end<=r)
+        {
+            seg[idx]=(end-begin+1)-seg[idx];
+            lazy[idx]=!lazy[idx];
+        }
+        else
+        {
+            down(idx, begin, end);
+            long long mid=(begin+end)/2;
+            lc[idx]=update(lc[idx], begin, mid, l, r);
+            rc[idx]=update(rc[idx], mid+1, end, l, r);
+            seg[idx]=seg[lc[idx]]+seg[rc[idx]];
+        }
+        return idx;
+    }
+    long long query(int idx, long long begin, long long end, long long l, long long r)
+    {
+        if(!idx || r<begin || end<l)
+            return 0;
+        if(l<=begin && end<=r)
+            return seg[idx];
+        down(idx, begin, end);
+        long long mid=(begin+end)/2;
+        return query(lc[idx], begin, mid, l, r)+
+               query(rc[idx], mid+1, end, l, r);
+    }
+} seg[2];
+
+long long rlong()
+{
+    long long x;
+    scanf("%lld", &x);
+    return x^ans;
+}
+
+int main()
+{
+    scanf("%d", &N);
+    long long a, b, c, d;
+    int op;
+    while(N--)
+    {
+        scanf("%d", &op);
+        if(op==1)
+        {
+            scanf("%lld", &a);
+            b=rlong();
+            c=rlong();
+            seg[a].update(1, 1, MAXN, b, c);
+        }
+        else
+        {
+            a=rlong();
+            b=rlong();
+            c=rlong();
+            d=rlong();
+            long long x=seg[0].query(1, 1, MAXN, a, b);
+            long long y=seg[1].query(1, 1, MAXN, c, d);
+            ans=((x%MOD)*((d-c+1-y)%MOD)+(y%MOD)*((b-a+1-x)%MOD))%MOD;
+            printf("%d\n", ans);
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,64 @@
+#include <iostream>
+#include <cstring>
+#include <algorithm>
+
+using namespace std;
+
+struct entry
+{
+    int nr[2];
+    int p;
+
+    bool operator< (const entry& b) const
+    {
+        return (nr[0] == b.nr[0])?(nr[1] < b.nr[1]):(nr[0] < b.nr[0]);
+    }
+
+} L[1000001];
+int P[22][1000001];
+
+int N, Q;
+string A;
+
+int m[1000001];
+
+int main()
+{
+    cin.sync_with_stdio(false);
+    cin >> N >> A >> Q;
+
+    for(int i = 0; i < N; i++)
+        P[0][i] = (int)A[i];
+
+    int stp, cnt;
+    for(stp = 1, cnt = 1; cnt/2 < N; stp++, cnt*=2)
+    {
+        for(int i = 0; i < N; i++)
+        {
+            L[i].nr[0] = P[stp - 1][i];
+            L[i].nr[1] = i + (cnt < N)?P[stp-1][i+cnt]:-1;
+            L[i].p = i;
+        }
+
+        sort(L, L+N);
+        for(int i = 0; i < N; i++)
+            P[stp][L[i].p] = ((i > 0) && (L[i].nr[0] == L[i-1].nr[0]) && (L[i].nr[1] == L[i-1].nr[1]))?P[stp][L[i-1].p]:i;
+    }
+
+    stp--;
+    int vmin = 1e9;
+    for(int i = 0; i < N; i++)
+    {
+        m[i] = (P[stp][i] < vmin)?i:m[i-1];
+        vmin = min(vmin, P[stp][i]);
+    }
+
+    while(Q--)
+    {
+        int k;
+        cin >> k;
+        cout << m[k] << '\n';
+    }
+
+    return 0;
+}

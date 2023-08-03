@@ -1,0 +1,146 @@
+//mishraiiit
+#include<bits/stdc++.h>
+#define ll long long int
+#define fastScan ios_base::sync_with_stdio(0); cin.tie(NULL);
+using namespace std;
+typedef pair <ll, ll> pll;
+
+#define MAXN 100500
+#define MAXLOGN 19
+
+struct Node {
+  ll sum;
+  ll pref;
+  ll suff;
+  ll ans;
+};
+
+Node empty = {LONG_MIN, LONG_MIN, LONG_MIN, LONG_MIN};
+
+int bpar[MAXN][MAXLOGN], tin[MAXN], tout[MAXN], timer = 0;
+Node bdistS[MAXN][MAXLOGN];
+Node bdistU[MAXN][MAXLOGN];
+Node nodeval[MAXN];
+vector<int> adj[MAXN];
+ 
+Node merge(Node lhs, Node rhs) {
+  if(lhs.ans == LONG_MIN) return rhs;
+  if(rhs.ans == LONG_MIN) return lhs;
+  Node res;
+  res.sum = lhs.sum + rhs.sum;
+  res.pref = max(lhs.pref, lhs.sum + rhs.pref);
+  res.suff = max(rhs.suff, rhs.sum + lhs.suff);
+  res.ans = max(lhs.ans, rhs.ans);
+  res.ans = max(res.ans, lhs.suff + rhs.pref);
+  return res;
+}
+
+inline void dfs(int start, int parent = -1) {
+  tin[start] = timer++;
+  bpar[start][0] = parent;
+  bdistS[start][0] = nodeval[start];
+  bdistU[start][0] = nodeval[start];
+  for(int i = 1; i < MAXLOGN; i++) {
+    int halfP = bpar[start][i - 1];
+    bpar[start][i] = (halfP == -1) ? -1 : bpar[halfP][i - 1];
+    if(bpar[start][i] != -1) {
+      bdistU[start][i] = merge(bdistU[halfP][i - 1], bdistU[start][i - 1]);
+      bdistS[start][i] = merge(bdistS[start][i - 1], bdistS[halfP][i - 1]);
+    }
+  }
+  for(int i = 0; i < adj[start].size(); i++) {
+    if(adj[start][i] == parent) continue;
+    dfs(adj[start][i], start);
+  }
+  tout[start] = timer++;
+}
+
+bool upper(int a, int b) {
+  if(a == -1) return true;
+  return ((tin[a] <= tin[b]) && (tout[a] >= tout[b]));
+}
+
+int lca(int a, int b) {
+  if(upper(a, b)) return a;
+  if(upper(b, a)) return b;
+  for(int i = MAXLOGN - 1; i >= 0; i--) {
+    if(upper(bpar[a][i], b) == false) {
+      a = bpar[a][i];
+    }
+  }
+  return bpar[a][0];
+}
+
+
+Node upqueryLeft(int a, int b) {
+  Node sum = empty;
+  for(ll i = MAXLOGN - 1; i >= 0; i--) {
+    int bp = bpar[a][i];
+    if(bp != -1 && upper(bp, b) == false) {
+      sum = merge(sum, bdistS[a][i]);
+      a = bp;
+    }
+  }
+  sum = merge(sum, bdistS[a][0]);
+  return sum;
+}
+
+Node upqueryRight(ll a, ll b) {
+  Node sum = empty;
+  for(int i = MAXLOGN - 1; i >= 0; i--) {
+    int bp = bpar[a][i];
+    if(bp != -1 && upper(bp, b) == false) {
+      sum = merge(bdistU[a][i], sum);
+      a = bp;
+    }
+  }
+  sum = merge(bdistU[a][0], sum);
+  return sum;
+}
+
+Node query(int a, int b) {
+
+  if(a == b) return nodeval[a];
+
+  if(upper(a, b)) {
+    return merge(nodeval[a], upqueryRight(b, a));
+  }
+
+  if(upper(b, a)) {
+    return merge(upqueryLeft(a, b), nodeval[b]);
+  }
+
+  int _lca = lca(a, b);
+  return merge(merge(upqueryLeft(a, _lca), nodeval[_lca]), upqueryRight(b, _lca));
+}
+
+
+int main() {
+
+    int n, a, b, vall;
+    scanf("%d", &n);
+
+    for(int i = 0; i < n - 1; i++) {
+      scanf("%d%d", &a, &b);
+      adj[a].push_back(b);
+      adj[b].push_back(a);
+    }
+
+    for(int i = 1; i <= n; i++) {
+      scanf("%d", &vall);
+      nodeval[i] = (Node) {vall, vall, vall, vall};
+    }
+
+    dfs( (rand() % n) + 1);
+
+    int q;
+    scanf("%d", &q);
+
+    for(int i = 0; i < q; i++) {
+      scanf("%d%d", &a, &b);
+      Node res = query(a, b);
+      printf("%lld\n", res.ans);
+    }
+     
+    return 0;
+}

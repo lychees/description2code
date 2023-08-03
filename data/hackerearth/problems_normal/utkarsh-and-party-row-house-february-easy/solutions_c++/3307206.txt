@@ -1,0 +1,130 @@
+/*_______SHREY MANIK______*/
+#include <iostream>
+#include <string>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+#include <utility>
+#include <queue>
+#include <stack>
+#include <map>
+#include <set>
+#include <cstring>
+#include <iomanip>
+#include <list>
+#include <bitset>
+#define ff first
+#define ss second
+#define mod 1000000007
+#define SET(a) memset(a,-1,sizeof(a))
+#define CLEAR(a) memset(a,0,sizeof(a))
+#define mp(a,b) make_pair(a,b)
+#define pb(a) push_back(a)
+using namespace std;
+typedef long long LL;
+typedef pair< int , int > pii;
+typedef pair< int , LL> pil;
+typedef pair< LL, int>pli;
+typedef pair< LL, LL> pll;
+typedef vector< LL >vl;
+typedef vector< int > vi;
+template<class T>T gcd(T a,T b){return (b==0)?a:gcd(b,a%b);}
+template<class T>T lcm(T a,T b){return (a*b)/gcd(a,b);}
+template<class T>T powmod(T a,T b) {T res=1;if(a>=mod)a%=mod;for(;b;b>>=1){if(b&1)res=res*a;if(res>=mod)res%=mod;a=a*a;if(a>=mod)a%=mod;}return res;}
+
+LL arr[100005];
+struct tree
+{
+	LL val;
+	LL ct;
+}st[4*100005];
+LL n,k,l,r,s,q,op;
+using namespace std;
+tree solve(tree a,tree b)
+{
+	tree c;
+	c.ct=a.ct+b.ct;
+	c.val=a.val+b.val;
+	return c;
+}
+void build(LL N,LL l,LL h)
+{
+    if(l>h)
+    return;
+    if(l==h)
+    {
+        st[N].ct=arr[l];
+        st[N].val=arr[l]*(l);
+        return ;
+    }
+    LL mid=(l+h)>>1;
+    build(2*N,l,mid);
+    build(2*N+1,mid+1,h);
+    st[N]=solve(st[2*N],st[2*N+1]);
+}
+void update(LL N,LL l,LL h,LL x,LL y,LL val)
+{
+    if(l>h||x>h||y<l)
+    return;
+    if(l==h)
+    {
+        
+        st[N].val+=val*l;
+        st[N].ct+=val;
+		
+        return;
+    }
+    LL mid=(l+h)>>1;
+    update(2*N,l,mid,x,y,val);
+    update(2*N+1,mid+1,h,x,y,val);
+     st[N]=solve(st[2*N],st[2*N+1]);
+}
+tree query(LL N,LL l,LL h,LL x,LL y)
+{
+    if(l>h||x>h||y<l)
+    return {0,0};
+    if(x<=l&&y>=h)
+    return st[N];
+    LL mid=(l+h)>>1;
+    tree q1=query(2*N,l,mid,x,y);
+    tree q2=query(2*N+1,mid+1,h,x,y);
+    return  solve(q1,q2);
+}
+int main()
+{
+   scanf("%lld %lld",&n,&q);
+   for(LL i=1;i<=n;i++)
+   scanf("%lld",&arr[i]);
+   build(1,1,n);
+   while(q--)
+   {
+   	
+   cin>>op;
+   if(op == 1)
+   {
+   	cin>>k>>l>>r;
+   	
+   	if(k>=r||k<=l)
+   	{
+   		tree d=query(1,1,n,l,r);
+   //		cout<<d.val<<" ";
+		cout<<abs((d.ct)*k-d.val)<<"\n"; 	
+	}
+	else
+	{
+		tree d=query(1,1,n,l,k);
+		tree f=query(1,1,n,k,r);
+		cout<<(abs(d.ct*k - d.val)+abs(f.ct*k - f.val))<<"\n";
+	}
+   }
+   else
+   {
+   	cin>>k>>s;
+   	update(1,1,n,k,k,s);
+   }
+   }
+  return 0;
+}

@@ -1,0 +1,131 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const int N = (int)1e5+11;
+vector<pair<int,int> > edg,nedg,wts;
+vector<int> nwts,g[N];
+int dsu[N],ranks[N],lev[N],dp[N][12];
+long long int len[N];
+
+void dfs(int v,int p,long long int l){
+	lev[v]=lev[p]+1;
+	dp[v][0]=p;
+	len[v]=l;
+	for(int i=0;i<g[v].size();i++){
+		int e = g[v][i];
+		int w = (nedg[e].first==v)?nedg[e].second:nedg[e].first;
+		if(w!=p)
+			dfs(w,v,l+(long long int)nwts[e]);
+	}
+}
+
+int find(int x){
+	int stx=x;
+	int v = dsu[x];
+	while(v){
+		x=v;
+		v=dsu[x];
+	}
+	while(x!=stx){
+		v = dsu[stx];
+		dsu[stx]=x;
+		stx = v;
+	}
+	return x;
+}
+
+void merge(int u,int v){
+	if(ranks[u]>ranks[v]){
+		dsu[v]=u;
+		ranks[u]+=ranks[v];
+	}
+	else{
+		dsu[u]=v;
+		ranks[v]+=ranks[u];
+	}
+}
+
+void bddp(int n){
+	for(int i=1;i<12;i++){
+		for(int j=1;j<=n;j++)
+			dp[j][i]=dp[dp[j][i-1]][i-1];
+	}
+}
+
+
+int lca(int u,int v){
+	if(lev[u]>lev[v])
+		swap(u,v);
+	int d = lev[v]-lev[u];
+	for(int i=0;i<12;i++){
+		if(d&(1<<i))
+			v=dp[v][i];
+	}
+	if(v==u)
+		return v;
+	for(int i=11;i>=0;i--){
+		if(dp[u][i]!=dp[v][i]){
+			v=dp[v][i];
+			u=dp[u][i];
+		}
+	}
+	return dp[v][0];
+}
+
+void clearr(int n){
+	edg.clear();
+	wts.clear();
+	nedg.clear();
+	nwts.clear();
+	for(int i=0;i<=n;i++){
+		g[i].clear();
+		dsu[i]=0;
+		ranks[i]=1;
+	}
+}
+
+bool cmp(pair<int,int> aa , pair<int,int> bb){
+	return aa.first<=bb.first;
+}
+
+
+int main()
+{
+	int t;
+	cin>>t;
+	for(int tt=1;tt<=t;tt++){	
+		int n,p,m;
+		scanf("%d%d%d",&n,&p,&m);
+		clearr(n);
+		for(int i=0;i<p;i++){
+			int u,v,w;
+			scanf("%d%d%d",&u,&v,&w);
+			edg.push_back({u,v});
+			wts.push_back({w,i});
+		}
+		sort(wts.begin(),wts.end(),cmp);
+		for(int i=0;i<p;i++){
+			int e = wts[i].second;
+			int u = find(edg[e].first);
+			int v = find(edg[e].second);
+			if(u!=v){
+				merge(u,v);
+				nedg.push_back(edg[e]);
+				nwts.push_back(wts[i].first);
+				g[edg[e].first].push_back(nwts.size()-1);
+				g[edg[e].second].push_back(nwts.size()-1);
+			}
+		}
+		dfs(1,0,0);
+		bddp(n);
+		printf("Case: %d\n",tt);
+		while(m--){
+			int u,v;
+			scanf("%d%d",&u,&v);
+			long long int L = len[lca(u,v)];
+			long long int ans = len[u]+len[v];
+			printf("%lld\n",ans-2LL*L);
+		}
+	}
+	return 0;
+}

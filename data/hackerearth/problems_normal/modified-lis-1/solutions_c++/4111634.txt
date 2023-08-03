@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+const int N = 100001;
+const int M = N << 3;
+const int MOD = 1000000007;
+ 
+typedef pair<int, int> pii;
+typedef long long LL;
+ 
+#define mp make_pair
+#define pb push_back
+ 
+pii positive[M], negative[M];
+int A;
+ 
+inline void add(int &a, int b) {
+    a += b;
+    if (a >= MOD) a -= MOD;
+}
+ 
+pii best(pii &a, pii b, pii c) {
+    a = max(b, c);
+    if (b.first == c.first) a.second = (b.second + c.second) % MOD;
+}
+ 
+void update(int S, int E, int L, int R, int I, int J, int V, pii *tree) {
+    if (S > E || E < L || S > R) return;
+    if (S == E) {
+        int P = tree[I].first;
+        if (P > J) return;
+        else if (P == J) add(tree[I].second, V);
+        else {tree[I] = mp(J, V);}
+        return;
+    }
+    int Mid = (S + E) >> 1; int Lt = (I << 1); int Rt = Lt | 1;
+    update(S, Mid, L, R, Lt, J, V, tree);
+    update(Mid + 1, E, L, R, Rt, J, V, tree);
+    best(tree[I], tree[Lt], tree[Rt]);
+}
+ 
+pii read(int S, int E, int L, int R, int I, pii *tree) {
+    if (S > E || E < L || S > R) return mp(0, 0);
+    if (L <= S && E <= R) return tree[I];
+    int Mid = (S + E) >> 1; int Lt = (I << 1); int Rt = Lt | 1;
+    pii a = read(S, Mid, L, R, Lt, tree);
+    pii b = read(Mid + 1, E, L, R, Rt, tree);
+    pii res;
+    best(res, a, b);
+    return res;
+}
+ 
+void print(pii x) {
+    cout << x.first << " " << x.second << "\n";
+}
+ 
+int main() {
+    //freopen("input.in", "r", stdin);
+    //freopen("output.out", "w", stdout);
+    pii ans = mp(-1, -1), call;
+    int n, sign = 1;
+    scanf("%d", &n);
+    for (int i = 1; i <= n; ++i) {
+        scanf("%d", &A);
+        assert(A != 0);
+        sign = (A > 0);
+        if (!sign) A = -A;
+        call = read(1, N - 1, 1, A - 1, 1, sign ? negative : positive);
+        if (call.second == 0) ++call.second;
+        ++call.first;
+        update(1, N - 1, A, A, 1, call.first, call.second, sign ? positive : negative);
+    }
+    best(ans, positive[1], negative[1]);
+    printf("%d %d\n", ans.first, ans.second);
+    return 0;
+}

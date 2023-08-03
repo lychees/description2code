@@ -1,0 +1,170 @@
+#include <stdio.h>
+#include <set>
+#include <vector>
+
+using namespace std;
+
+#define NMAX 131072
+#define DEBUG 0
+
+long long sum[2 * NMAX];
+int N, M;
+set<pair<int, pair<int, int> > > intv;
+set<pair<int, pair<int, int> > >::const_iterator it;
+vector<pair<int, pair<int, int> > > to_add, to_remove;
+int li[2 * NMAX], ls[2 * NMAX];
+
+void ReadInput() {
+	scanf("%d %d", &N, &M);
+	int begin = 0, end = 0, color = 0, c;
+	for (int i = 1; i <= N; i++) {
+		scanf("%d", &c);
+		if (c == color) end = i;
+		else {
+			if (color > 0) {
+				intv.insert(make_pair(begin, make_pair(end, color)));
+				if (DEBUG) fprintf(stderr, "init intv: [%d,%d] color=%d\n", begin, end, color);
+			}
+			begin = end = i;
+			color = c;
+		}
+	}
+	if (color > 0) {
+		intv.insert(make_pair(begin, make_pair(end, color)));
+		if (DEBUG) fprintf(stderr, "init intv: [%d,%d] color=%d\n", begin, end, color);
+	}
+}
+
+void InitSegTree() {
+	int i, lson, rson;
+	for (i = NMAX; i < 2 * NMAX; i++) {
+		li[i] = ls[i] = i - NMAX + 1;
+		sum[i] = 0;
+	}
+	for (it = intv.begin(); it != intv.end(); it++) {
+		int len = it->second.first - it->first + 1;
+		long long cnt = (long long) len * (long long) (len + 1) / 2;
+		if (DEBUG) fprintf(stderr, "init intv cnt: begin=%d len=%d cnt=%lld\n", it->first, len, cnt);
+		sum[it->first + NMAX - 1] += cnt;
+	}
+	for (i = NMAX - 1; i >= 1; i--) {
+		lson = i << 1; rson = lson + 1;
+		li[i] = li[lson];
+		ls[i] = ls[rson];
+		sum[i] = sum[lson] + sum[rson];
+	}
+}
+
+void AddToTree(int poz, long long x) {
+	poz += (NMAX - 1);
+	while (poz >= 1) {
+		sum[poz] += x;
+		poz >>= 1;
+	}
+}
+
+long long ans;
+int L, R;
+
+void QuerySegTree(int node) {
+	if (L <= li[node] && ls[node] <= R) {
+		ans += sum[node];
+		return;
+	}
+	int lson = node << 1;
+	int rson = lson + 1;
+	if (L <= ls[lson]) QuerySegTree(lson);
+	if (R >= li[rson]) QuerySegTree(rson);
+}
+
+void ProcessQueries() {
+	int op, c;
+	while (M--) {
+		scanf("%d %d %d", &op, &L, &R);
+		if (op == 0) {
+			scanf("%d", &c);
+			if (DEBUG) fprintf(stderr, "### Update L=%d R=%d c=%d ###\n", L, R, c);
+			to_remove.clear();
+			to_add.clear();
+			it = intv.upper_bound(make_pair(L, make_pair(N + 1, 0)));
+			for (it--; it != intv.end() && it->first <= R; it++) {
+				if (it->first < L) to_add.push_back(make_pair(it->first, make_pair(L - 1, it->second.second)));
+				if (it->second.first > R) to_add.push_back(make_pair(R + 1, make_pair(it->second.first, it->second.second)));
+				to_remove.push_back(*it);
+			}
+			for (int i = 0; i < to_remove.size(); i++) {
+				int len = to_remove[i].second.first - to_remove[i].first + 1;
+				long long cnt = (long long) len * (long long) (len + 1) / 2;
+				AddToTree(to_remove[i].first, -cnt);
+				intv.erase(to_remove[i]);
+			}
+			for (int i = 0; i < to_add.size(); i++) {
+				int len = to_add[i].second.first - to_add[i].first + 1;
+				long long cnt = (long long) len * (long long) (len + 1) / 2;
+				AddToTree(to_add[i].first, cnt);
+				intv.insert(to_add[i]);
+			}
+			to_remove.clear();
+			to_add.clear();
+			if (L > 1) {
+				it = intv.upper_bound(make_pair(L, make_pair(N + 1, 0))); it--;
+				if (it->second.second == c) {
+					L = it->first;
+					to_remove.push_back(*it);
+				}
+			}
+			if (R < N) {
+				it = intv.upper_bound(make_pair(R, make_pair(N + 1, 0)));
+				if (it->second.second == c) {
+					R = it->second.first;
+					to_remove.push_back(*it);
+				}				
+			}
+			to_add.push_back(make_pair(L, make_pair(R, c)));
+			for (int i = 0; i < to_remove.size(); i++) {
+				int len = to_remove[i].second.first - to_remove[i].first + 1;
+				long long cnt = (long long) len * (long long) (len + 1) / 2;
+				AddToTree(to_remove[i].first, -cnt);
+				intv.erase(to_remove[i]);
+			}
+			for (int i = 0; i < to_add.size(); i++) {
+				int len = to_add[i].second.first - to_add[i].first + 1;
+				long long cnt = (long long) len * (long long) (len + 1) / 2;
+				AddToTree(to_add[i].first, cnt);
+				intv.insert(to_add[i]);
+			}
+			if (DEBUG) {
+				fprintf(stderr, "Intervals:\n");
+				for (it = intv.begin(); it != intv.end(); it++)
+					fprintf(stderr, " [%d-%d] c=%d\n", it->first, it->second.first, it->second.second);
+			}
+		} else {
+			if (DEBUG) fprintf(stderr, "### Query L=%d R=%d ###\n", L, R);
+			ans = 0;
+			it = intv.upper_bound(make_pair(L, make_pair(N + 1, 0))); it--;
+			int len;
+			if (it->second.first <= R) len = it->second.first - L + 1;
+			else len = R - L + 1;
+			ans += (long long) len * (long long) (len + 1) / 2;
+			L = it->second.first + 1;
+			if (DEBUG) fprintf(stderr, "Handled first intv: L=%d R=%d ans=%lld\n", L, R, ans);
+			if (L <= R) {
+				it = intv.upper_bound(make_pair(R, make_pair(N + 1, 0))); it--;
+				len = R - it->first + 1;
+				ans += (long long) len * (long long) (len + 1) / 2;
+				R = it->first - 1;
+				if (DEBUG) fprintf(stderr, "Handled last intv: L=%d R=%d ans=%lld\n", L, R, ans);
+			}
+			if (L <= R) QuerySegTree(1);
+			printf("%lld\n", ans);
+		}
+	}
+}
+
+int main() {
+	//freopen("x.txt", "r", stdin);
+	ReadInput();
+	InitSegTree();
+	ProcessQueries();
+	return 0;
+}

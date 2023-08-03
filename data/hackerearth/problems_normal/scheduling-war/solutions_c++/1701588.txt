@@ -1,0 +1,236 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class Systems
+{
+private:
+	int m_nTotalSystems;
+	vector <int> m_vctPrateeks;
+	vector<bool> m_vctReplaced;
+public:
+	Systems()
+	{
+		m_nTotalSystems = 0;
+		m_vctPrateeks.clear();
+		m_vctReplaced.clear();
+	}
+	void GetInput()
+	{
+		cin >> m_nTotalSystems;
+		for(int i = 0; i < m_nTotalSystems; i++)
+		{
+			int temp;
+			cin >> temp;
+			m_vctPrateeks.push_back(temp);
+			m_vctReplaced.push_back(false);
+		}
+	}
+	int GetSystemProcess(int systemNo)
+	{
+		if(m_vctReplaced[systemNo])
+			return 0;
+
+		return m_vctPrateeks[systemNo];
+	}
+	int GetTotalProcess()
+	{
+		int retVal = 0;
+		for(int i = 0; i < m_nTotalSystems; i++)
+		{
+			retVal += m_vctPrateeks[i];
+		}
+		return retVal;
+	}
+	void Markreplaced(int systemNo)
+	{
+		m_vctReplaced[systemNo] = true;
+	}
+
+	int GetPrateekSystemsCount()
+	{
+		int count = 0;
+		for(int i = 0; i < m_nTotalSystems; i++)
+		{
+			if(!m_vctReplaced[i])
+				count++;
+		}
+		return count;
+	}
+	int GetPrateeksActiveCount()
+	{
+		int count = 0;
+		for(int i = 0; i < m_nTotalSystems; i++)
+		{
+			if(!m_vctReplaced[i])
+				count += m_vctPrateeks[i];
+		}
+		return count;
+	}
+};
+
+class Batch
+{
+private:
+	int m_nNoSystemsReq;
+	vector<int> m_vctReqSystems;
+	int m_nTotalProcess;
+public:
+	bool m_bProcessed;
+public:
+	Batch()
+	{
+		m_nNoSystemsReq = 0;
+		m_nTotalProcess = 0;
+		m_bProcessed = false;
+		m_vctReqSystems.clear();
+	}
+	void ReadInput()
+	{
+		cin >> m_nNoSystemsReq;
+		for(int i = 0; i < m_nNoSystemsReq; i++)
+		{
+			int temp;
+			cin >> temp;
+			m_vctReqSystems.push_back(temp);
+		}
+		cin >> m_nTotalProcess;
+	}
+	int GetTotalProcess()
+	{
+		return m_nTotalProcess;
+	}
+	int GetNoSystems()
+	{
+		return m_nNoSystemsReq;
+	}
+	int GetSystemNo(int index)
+	{
+		return m_vctReqSystems[index];
+	}
+};
+class Chintu
+{
+private:
+	int m_nNoBatches;
+	vector<Batch> m_vctBatches;
+public:
+	Chintu()
+	{
+		m_nNoBatches = 0;
+		m_vctBatches.clear();
+	}
+	void ReadInput()
+	{
+		cin >> m_nNoBatches;
+		for(int i = 0; i < m_nNoBatches; i++)
+		{
+			Batch* ptrTemp = new Batch();
+			ptrTemp->ReadInput();
+			m_vctBatches.push_back(*ptrTemp);
+		}
+	}
+	int GetNOBatches()
+	{
+		return m_nNoBatches;
+	}
+	int GetTotalProcess()
+	{
+		int retVal = 0;
+		for(int i = 0; i < m_nNoBatches; i++)
+		{
+			retVal += m_vctBatches[i].GetTotalProcess();
+		}
+		return retVal;
+	}
+	bool InitalProcess(Systems *s)
+	{
+		bool bCompletelyProcessed = true;
+		int nRemainingSystems = s->GetPrateekSystemsCount();
+		while(true)
+		{
+			bCompletelyProcessed = true;
+			nRemainingSystems = s->GetPrateekSystemsCount();
+			for(int batchNo = 0; batchNo < m_nNoBatches; batchNo++)
+			{
+				Batch *b = &(m_vctBatches[batchNo]);
+				if(b->m_bProcessed)
+					continue;
+
+				int total = 0;
+				for(int i = 0; i < b->GetNoSystems(); i++)
+				{
+					total += s->GetSystemProcess((b->GetSystemNo(i)-1));
+				}
+				if(b->GetTotalProcess() > total)
+				{
+					b->m_bProcessed = true;
+					for(int i = 0; i < b->GetNoSystems(); i++)
+					{
+						s->Markreplaced((b->GetSystemNo(i)-1));
+					}
+				}
+				else
+				{
+					bCompletelyProcessed = false;
+				}
+			}
+			if(nRemainingSystems == s->GetPrateekSystemsCount())
+			{
+				//No point of processing further.
+				break;
+			}
+		}
+		return bCompletelyProcessed;
+	}
+
+	int FinalProcess(Systems *s)
+	{
+		int totalProcess = 0;
+		if(InitalProcess(s))
+		{
+			// Processed completely. No Need to further process
+		}
+		else
+		{
+			// Need further processing
+		}
+		//count the process.
+		for(int batchNo = 0; batchNo < m_nNoBatches; batchNo++)
+		{
+			Batch b = m_vctBatches[batchNo];
+			if(b.m_bProcessed)
+				totalProcess += b.GetTotalProcess();
+		}
+		//add prateeks count as well.
+		totalProcess += s->GetPrateeksActiveCount();
+
+		return totalProcess;
+	}
+};
+
+int main()
+{
+	Systems s;
+	s.GetInput();
+	Chintu c;
+	c.ReadInput();
+	//Start processing
+	if(c.GetTotalProcess() > s.GetTotalProcess())
+	{
+		cout << (c.GetTotalProcess() - s.GetTotalProcess());
+	}
+	else
+	{
+		int total = 0;
+
+		total = c.FinalProcess(&s);
+		int extra = total - s.GetTotalProcess();
+		cout << extra ;
+	}
+	cin.ignore();
+	cin.ignore();
+	return 0;
+}

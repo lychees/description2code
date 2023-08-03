@@ -1,0 +1,119 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+template <typename T>
+T modpow(T base, T exp, T modulus) {
+  base %= modulus;
+  T result = 1;
+  while (exp > 0) {
+    if (exp & 1) result = (result * base) % modulus;
+    base = (base * base) % modulus;
+    exp >>= 1;
+  }
+  return result;
+}
+
+int A[100005],tree[400005];
+
+void build(int node, int start, int end)
+{
+    // cout<<node<<" "<<start<<" "<<end<<endl;
+    if(start == end)
+    {
+        // Leaf node will have a single element
+        tree[node] = A[start];
+        // cout<<start<<A[start]<<endl;
+    }
+    else
+    {
+        int mid = (start + end) / 2;
+        // Recurse on the left child
+        build(2*node, start, mid);
+        // Recurse on the right child
+        build(2*node+1, mid+1, end);
+        // Internal node will have the sum of both of its children
+        tree[node] = ((tree[2*node]*modpow(2,(end-start+1)/2,3))%3 + tree[2*node+1])%3;
+    }
+}
+
+void update(int node, int start, int end, int idx)
+{
+    if(start == end)
+    {
+        // Leaf node
+        if(tree[node]==0)
+            tree[node]=1;
+    }
+    else
+    {
+        int mid = (start + end) / 2;
+        if(start <= idx and idx <= mid)
+        {
+            // If idx is in the left child, recurse on the left child
+            update(2*node, start, mid, idx);
+        }
+        else
+        {
+            // if idx is in the right child, recurse on the right child
+            update(2*node+1, mid+1, end, idx);
+        }
+        // Internal node will have the sum of both of its children
+        tree[node] = ((tree[2*node]*modpow(2,(end-start+1)/2,3))%3 + tree[2*node+1])%3;
+    }
+}
+
+int query(int node, int start, int end, int l, int r)
+{
+    if(r < start or end < l)
+    {
+        // range represented by a node is completely outside the given range
+        return 0;
+    }
+    if(l <= start and end <= r)
+    {
+        // range represented by a node is completely inside the given range
+        return (tree[node]*modpow(2,r-end,3))%3;
+    }
+    // range represented by a node is partially inside and partially outside the given range
+    int mid = (start + end) / 2;
+    int p1 = query(2*node, start, mid, l, r);
+    int p2 = query(2*node+1, mid+1, end, l, r);
+    return (p1+p2)%3;
+}
+
+string a;
+
+int main(){
+    int n,q,q_type,l,r,in;
+    cin>>n;
+    cin>>a;
+    for(int i=0;i<n;i++)
+        if(a[i]=='1')
+            A[i]=1;
+        else
+            A[i]=0;
+    build(1,0,n-1);
+    // for(int i=0;i<n;i++)
+    //     cout<<A[i];
+    // cout<<endl;
+    // int x = (int)(ceil(log2(n))); 
+    // for(int i=1;i<=2*(int)pow(2, x) - 1;i++)
+    //     cout<<tree[i];
+    // cout<<endl;
+    cin>>q;
+    while(q--){
+        cin>>q_type;
+        if(q_type==0){
+            cin>>l>>r;
+            cout<<query(1,0,n-1,l,r)<<endl;
+        }
+        else{
+            cin>>in;
+            update(1,0,n-1,in);
+            // for(int i=1;i<=2*(int)pow(2, x) - 1;i++)
+            //     cout<<tree[i];
+            // cout<<endl;
+        }
+    }
+    return 0;
+}

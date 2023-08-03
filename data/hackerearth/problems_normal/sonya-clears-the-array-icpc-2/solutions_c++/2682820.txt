@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+int  a[2000001]={0};
+int prime[2000005];
+
+map<int,int> nextPrime;
+map<int,int> prevPrime;
+
+set<int> isPrime;
+
+long long eval(int x,int y)
+{
+	long long c=0;
+	while(isPrime.find(x)==isPrime.end())
+		{
+			
+		x++;c++;
+		}
+	while(isPrime.find(y)==isPrime.end())
+		{
+			y++;
+			c++;
+		}
+	if(y<=x)
+	{
+		
+		c+=x-y;
+
+	c+=nextPrime[x]-x;
+	return c;
+	}
+	int dest=prevPrime[y];
+	c+=dest-x;
+	  return c;
+	
+}
+
+int p=1;
+void generate(int y)
+    {int i,j;
+     prime[0]=2;
+	 for(i=3;i*i<=y;i+=2)
+        {if(a[i])
+          continue;
+         prime[p++]=i;
+		for(j=i*i;j<=y;j+=2*i)
+           {a[j]=1;
+           }
+        }
+        for(i;i<=y;i+=2)
+          if(!a[i])
+            prime[p++]=i;
+     //   for(i=0;i<p;i++)
+             ;//cout<<prime[i]<<" ";
+    }
+    
+long long dp[505][505]={{0}};
+
+  int main()
+    {
+     generate(1005000);
+	  
+	 int n;
+	 cin>>n;
+	 vector<int> a(n);
+	 for(int i=0;i<n;i++)
+	   cin>>a[i];
+	for(int i=0;i<n;i++)
+	 {
+	 	for(int j=i+1;j<n;j++)
+	 	  dp[i][j]=LLONG_MAX;
+	 	dp[i][i]=0;
+	 }
+	 for(int i=0;i<p;i++)
+	  {
+	  	isPrime.insert(prime[i]);
+	  	if(i<p)
+	  	nextPrime[prime[i]]=prime[i+1];
+	  	else
+	  	 nextPrime[prime[i]]=INT_MAX;
+	  	if(i>0)
+	  	prevPrime[prime[i]]=prime[i-1];
+	  	else
+	  	 prevPrime[prime[i]]=INT_MIN;
+	  }
+	
+	for(int len=2;len<=n;len+=2)
+	 {
+	 	for(int i=0;i<=n-len;i++)
+	 	 {
+	 	 	int j=i+len-1;
+	 	 	long long currCost=LLONG_MAX;
+			for(int k=j;k<=j;k++)
+			 {
+				long long cost=eval(a[i],a[k]) + dp[i+1][k-1];
+				currCost=min(cost,currCost);	
+			 }	
+			for(int k=i+2;k<=j;k+=2)
+			  currCost=min(currCost,dp[i][k-1]+dp[k][j]);
+			dp[i][j]=currCost;
+		//	cout<<i<<" "<<j<<" "<<dp[i][j]<<endl;
+		 }
+	 }
+	 cout<<dp[0][n-1]+n/2<<endl;
+
+	}

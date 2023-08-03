@@ -1,0 +1,92 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define LL long long
+#define F first
+#define S second
+#define MP make_pair
+#define PB push_back
+#define SZ(a) (int)(a.size())
+#define BS(vec,val) (int)(lower_bound(vec.begin(),vec.end(),val) - vec.begin())
+#define bitcount __builtin_popcountll
+#define LET(it,container) __typeof(container.begin()) it(container.begin())
+#define ITER(it,container) for(__typeof(container.begin()) it=container.begin();it!=container.end();it++)
+
+#define PREC cout << setprecision(10) << fixed;
+#define FI ios_base::sync_with_stdio(0); cin.tie(NULL);
+#define DB(x) cerr << #x << ": " << x << " ";
+#define TRACE
+#ifdef TRACE
+#define trace(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+	cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+	const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define trace(...)
+#endif
+
+const double PI = acos(-1.0);
+const int MOD = 1e9 + 7;
+const int INF = 1e9 + 9;
+const int MX = 1e5 + 5;
+
+int n;
+// ways, count
+pair<LL,LL> dp[17][(1<<17)];
+
+pair<LL,LL> solve(int pos,int mask)
+{
+	if(pos == n+1) return MP(1,0);
+	pair<LL,LL> &ret = dp[pos][mask];
+	if(ret.F != -1) return ret;
+	LL ans = 0;
+	LL ways = 0;
+	int flag = 0;
+	for(int i=0;i<n;i++)
+	{
+		if((mask&(1<<i)) == 0)
+		{
+			//i+1 available
+			if(i+1 != pos)
+			{
+				pair<LL,LL> check = solve(pos+1,(mask|(1<<i)));
+				if(check.F != -INF)
+				{
+					// if this arrangement is possible
+					flag = 1;
+					ways = ways + check.F;
+					LL bigger = 0;
+					for(int j=i+1;j<n;j++)
+						if((mask&(1<<j)))
+							bigger++;
+					ans = ans + check.S + check.F * bigger;
+				}
+			}
+		}
+	}
+	// flag = 0 denotes, no possible arrangement could be found from the current state
+	if(flag == 0) return ret = MP(-INF,0);
+	return ret = MP(ways,ans);
+}
+
+int main()
+{
+	int t;
+	cin >> t;
+	while(t--)
+	{
+		cin >> n;
+		if(n == 1) cout << 0 << endl;
+		else
+		{
+			memset(dp,-1,sizeof dp);
+			cout << solve(1,0).S << endl;
+		}
+	}
+	return 0;
+}

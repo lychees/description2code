@@ -1,0 +1,91 @@
+#include<string>
+#include<iostream>
+#include<algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+struct trie
+{
+    trie *child[26];
+    int f;
+};
+
+long long prefix[100005];
+
+void insert(trie *t, string &s, int i)
+{
+    if(i==s.length())
+    {
+        t->f++;
+        return;
+    }
+
+    if(t->child[s[i]-'a']==NULL)
+    {
+        t->child[s[i]-'a'] = new trie();
+        t->child[s[i]-'a']->f = 0;
+    }
+
+    t->f -= t->child[s[i]-'a']->f;
+    insert(t->child[s[i]-'a'],s,i+1);
+    t->f += t->child[s[i]-'a']->f;
+}
+
+void calc(trie *t, int k)
+{
+    if(t==NULL)
+        return;
+
+    ll cnt=0;
+    ll cnt1=0;
+    ll p;
+
+    for(int i=0;i<26;++i)
+    {
+        if(t->child[i]!=NULL)
+        {
+            p=t->child[i]->f;
+            cnt += p;
+            cnt1 += p*p;
+            calc(t->child[i],k+1);
+        }
+    }
+
+    p = cnt*cnt-cnt1;
+    p /= 2;//no. of pairs formed by the children.
+    //identity used (a+b+c...)^2 = a^2 + b^c + c^2 +... + 2a*(b+c+d...) + 2b*(c+d+e...) + 2c(d+e+...) + ...
+    prefix[k]+=p;
+
+    p = t->f - cnt;//prefixes ending at 't'
+
+    prefix[k] += p*cnt;//prefixes ending at 't' forms pair with all its children
+
+    prefix[k] += (p*(p-1)/2);//if there are multiple prefixes ending at 't', then number of pairs formed with itself is nc2;
+}
+
+int main()
+{
+    ll n;
+    cin>>n;
+
+    trie *t = new trie();
+    t->f = 0;
+
+    string s;
+    ll maxlen=0;
+    for(int i=0;i<n;++i)
+    {
+        cin>>s;
+        maxlen = max(maxlen, (ll)s.size());
+        insert(t,s,0);
+    }
+    calc(t,0);
+
+    for(int i=0;i<=maxlen;++i)
+    {
+        cout<<prefix[i]<<" ";
+    }
+    return 0;
+}

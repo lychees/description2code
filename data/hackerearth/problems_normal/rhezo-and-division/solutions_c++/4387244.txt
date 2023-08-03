@@ -1,0 +1,106 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MOD 1000000007
+const int maxn = 1e4+4;
+typedef long long ll;
+struct node {
+    int _2, _3, _5, _7;
+    node():_2(0),_3(0),_5(0),_7(0){}
+    node(int x,int y,int z,int t): _2(x),_3(y),_5(z),_7(t){}
+    bool operator < (const node &b) const {
+        if(_2 != b._2) return _2 < b._2;
+        if(_3 != b._3) return _3 < b._3;
+        if(_5 != b._5) return _5 < b._5;
+        return _7 < b._7;
+    }
+};
+vector<node> v;
+void zFunction(char *S, int *Z){
+    int L, R, N;
+    N = strlen(S);
+    L = R = 0;
+    for (int i = 1; i < N; i++){
+        if (i > R){
+            L = R = i;
+            while (R < N && S[R - L] == S[R]) R++;
+            Z[i] = R - L;
+            R--;
+        } else {
+            int k = i - L;
+            if (Z[k] < R - i + 1) Z[i] = Z[k];
+            else {
+                L = i;
+                while (R < N && S[R - L] == S[R]) R++;
+                Z[i] = R - L;
+                R--;
+            }
+        }
+    }
+}
+bool ok(node x) {
+    if(x._2>=3&&x._3>=2&&x._5>0&&x._7>0)return 1;
+    return 0;
+}
+node sum(node x, node y) {
+    node ret = node();
+    ret._2 =min(3,x._2+y._2);
+    ret._3 =min(2,x._3+y._3);
+    ret._5 =min(1,x._5+y._5);
+    ret._7 =min(1,x._7+y._7);
+    return ret;
+}
+int z[2*maxn];
+char s[2*maxn],t[maxn];
+int main() {
+  //  freopen("input.txt","r",stdin);
+    scanf("%s%s",s,t);
+    int n = strlen(s),k= strlen(t);
+    int N = n;
+    s[N++]='#';
+    for(int i = 0, sz = strlen(t);i < sz; ++i) s[N++]=t[i];
+    zFunction(s,z);
+    ll p = 1;
+    int pr[] = {2,3,5,7}, M[] = {3,2,1,1};
+    for(int i = n+1; i < N; ++i) {
+        if(z[i]<n) continue;
+        int tmp = i-n;
+            int t1 = tmp;
+        int x[4] = {0};
+        for(int i = 0; i < 4; ++i) {
+            while(tmp%pr[i]==0) {
+                tmp/=pr[i];
+                ++x[i];
+            }
+            x[i] = min(x[i],M[i]);
+        }
+        if(x[0]==0&&x[1]==0&&x[2]==0&&x[3]==0)p = (p*2)%MOD;
+        else {v.push_back(node(x[0],x[1],x[2],x[3]));}//cout<<t1<<' '<<x[0]<<' '<<x[1]<<' '<<x[2]<<' '<<x[3]<<endl;}
+    }
+
+  //  cout<<"p"<<' '<<p<<endl;
+    int m = v.size();
+    map<node,ll> mp,tmp;
+    node x;
+ //   x._2 = x._3 = x._5 = x._7 = 0;
+    mp[x] = 1;
+    for(int i = 0; i < m; ++i) {
+        tmp.clear();
+        node x = v[i];
+        for(map<node,ll>::iterator it = mp.begin(); it != mp.end(); ++it) {
+            node y = it->first;
+            node Z = sum(x,y);
+            if(tmp.find(Z)==tmp.end())tmp[Z] = it->second;
+            else tmp[Z] = (tmp[Z]+it->second)%MOD;
+        }
+        for(map<node,ll>::iterator it = tmp.begin(); it != tmp.end(); ++it) {
+            if(mp.find(it->first)!=mp.end()) mp[it->first] = (mp[it->first]+it->second)%MOD;
+            else mp[it->first] = it->second;
+        }
+     //   cout<<"Case "<<i<<' '<<z[i]<<endl;
+   //     for(map<node,ll>::iterator it = mp.begin(); it != mp.end(); ++it) cout<<it->first._2<<' '<<it->first._3<<' '<<it->first._5<<' '<<it->first._7<<' '<<it->second<<endl;
+    }
+    ll res = 0;
+    for(map<node,ll>::iterator it = mp.begin(); it != mp.end(); ++it)if(ok(it->first))res = (res+it->second)%MOD;
+    res = (res*p)%MOD;
+    printf("%lld\n",res);
+}

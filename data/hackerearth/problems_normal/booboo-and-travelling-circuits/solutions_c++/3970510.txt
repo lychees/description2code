@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int mod = 1000000003;
+long long S;
+long long P, Q, R;
+long long X, Y, Z;
+int A[2022][10021], B[2022][10021];
+long long DP[10021], temp[10021];
+vector<int> bucket[100021];
+int spf[100021];
+priority_queue<pair<long long, int> > at[10021];
+vector<int> primes;
+int nextPrime[100021];
+int main() {
+    for (int i = 1; i <= 10000; ++i) {
+        spf[i] = i;
+        for (int s = 2; s * s <= i; ++s) {
+            if (i % s == 0) {
+                spf[i] = s;
+                break;
+            }
+        }
+        if (spf[i] == i) {
+            primes.push_back(i);
+        }
+        bucket[spf[i]].push_back(i);
+    }
+    primes.push_back(1e9);
+    for (int i = 0; i < (int)primes.size() - 1; ++i) {
+        nextPrime[primes[i]] = primes[i + 1];
+    }
+    int N, M;
+    scanf("%d %d", &N, &M);
+    scanf("%lld %lld %lld %lld", &S, &P, &Q, &R);
+    int u = 0;
+    for (int i = 1; i <= N; ++i) {
+        for (int j = 1; j <= M; ++j) {
+            A[i][j] = S = (S * (Q + P * S % mod) + R) % mod;
+            ++u;
+        }
+    }
+    scanf("%lld %lld %lld %lld", &S, &X, &Y, &Z);
+    u = 0;
+    for (int i = 1; i <= N; ++i) {
+        for (int j = 1; j <= M; ++j) {
+            B[i][j] = S = (S * (Y + X * S % mod) + Z) % mod;
+            ++u;
+        }
+    }
+    for (int i = N - 1; i >= 1; --i) {
+        for (int j = 1; j <= M; j = nextPrime[j]) {
+            while (!at[j].empty()) {
+                at[j].pop();    
+            }
+        }
+        for (int j = 1; j <= M; ++j) {
+            at[spf[j]].push({DP[j], j});
+            if (at[spf[j]].size() > 2) {
+                at[spf[j]].pop();
+            }
+        }
+        for (int j = 1; j <= M; j = nextPrime[j]) {
+            if (j > 1) {
+                at[j].push({DP[1], 1});
+            }
+            if (at[j].size() > 2) {
+                at[j].pop();
+            }
+            while (at[j].size() < 2) {
+                at[j].push({1e18, 0});
+            }
+        }
+        for (int j = 1; j <= M; ++j) {
+            temp[j] = DP[j] + A[i][j];
+        }
+        for (int j = 1; j <= M; j = nextPrime[j]) {
+            auto sbest = at[spf[j]].top();
+            at[spf[j]].pop();
+            auto best = at[spf[j]].top();
+            at[spf[j]].push(sbest);
+            for (auto u : bucket[j]) {
+                if (best.second != u) {
+                    temp[u] = min(temp[u], best.first + B[i][u]);
+                }
+                if (sbest.second != u) {
+                    temp[u] = min(temp[u], sbest.first + B[i][u]);
+                }    
+            }
+        }
+        for (int i = 1; i <= M; ++i) {
+            DP[i] = temp[i];
+        }
+    } 
+    printf("%lld\n", *min_element(DP + 1, DP + M + 1));
+}

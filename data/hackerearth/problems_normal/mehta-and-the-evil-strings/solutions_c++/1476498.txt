@@ -1,0 +1,173 @@
+#include <bits/stdc++.h>
+#define _ ios_base::sync_with_stdio(0);cin.tie(0);
+
+using namespace std;
+
+
+#define ll long long
+#define ff first
+#define ss second
+#define mpa make_pair
+#define MOD 1000000007
+#define pb push_back
+#define lld I64d
+#define MXN 1000000
+
+int bitcnt(int mask){return __builtin_popcount(mask);}
+int SET(int N,int pos){ return N=N | (1<<pos);}
+int RESET(int N,int pos){   return N= N & ~(1<<pos);}
+int check(int N,int pos){   return (N & (1<<pos));}
+int toggle(int N,int pos){if(check(N,pos))return N=RESET(N,pos);return N=SET(N,pos);}
+void PRINTBIT(int N){   printf("("); for(int i=6;i>=1;i--)  {bool x=check(N,i);cout<<x;}    puts(")");}
+int mod(int a, int b) { return a - a/b * b;}
+void Print(vector<int> Vec) { for(int i = 0; i < Vec.size(); ++i) cout<<Vec[i] << " ";puts("");}void Print(vector<ll> Vec) {for(int i = 0; i < Vec.size(); ++i) cout<< Vec[i] << "  "; puts("");}
+void Print(vector<string> Vec) {for(int i = 0; i < Vec.size(); ++i) cout<< Vec[i] << " ";puts("");}
+void Print(vector<double> Vec) {for(int i = 0; i < Vec.size(); ++i) cout<< Vec[i] << " ";puts("");}
+
+int prime[] = {2, 3, 5, 7};
+
+ll N;
+
+typedef vector<ll> row;
+typedef vector<row> matrix;
+
+bool is(int mask)
+{
+	for(int i = 0; i <= 3; ++i) {
+		if(mask & (1 << i))
+			return true;
+	}
+	return false;
+}
+
+ll dp[101][1 << 4];
+
+ll rec(ll len, int mask)
+{
+	if(len == 0) {
+		if(is(mask))
+			return 1;
+		return 0;
+	}
+	
+	if(dp[len][mask] != -1)
+		return dp[len][mask];
+	
+	ll ans = 0;
+	for(int i = 1; i <= 9; ++i) {
+		ll temp = mask;
+		int num = i;
+		for(int j = 0; j <= 3; ++j) {
+			while(num%prime[j] == 0) {
+				temp = toggle(temp, j);
+				num /= prime[j];
+			}
+		}
+		ans += rec(len - 1, temp);
+		if(ans >= MOD)
+			ans %= MOD;
+	}
+	
+	return dp[len][mask] = ans;
+}
+
+matrix Pre()
+{
+	int sz = 1 << 0;
+	sz |= 1 << 1;
+	sz |= 1 << 2;
+	sz |= 1 << 3;
+	
+//	cout<<"sz => " << sz <<"\n";
+	
+	matrix mat = matrix(sz + 2, row(sz + 2, 0));
+	for(int mask = 0; mask <= sz; ++mask) {
+		for(int i = 1; i <= 9; ++i) {
+			int temp = mask;
+			int num = i;
+			for(int j = 0; j <= 3; ++j) {
+				while(num && num%prime[j] == 0) {
+					temp = toggle(temp, j);
+					num /= prime[j];
+				}
+			}
+			mat[mask][temp]++;
+		}
+	}
+	
+	/*
+	puts("Matrix");
+	for(int i = 0; i < mat.size(); ++i) {
+		for(int j = 0; j < mat.size(); ++j) {
+			cout<< mat[i][j] << " ";
+		}
+		puts("");
+	}
+	*/
+	
+	return mat;
+}
+
+matrix mul(matrix a, matrix b)
+{
+	int sz = a.size();
+	matrix c = matrix(sz, row(sz, 0));
+	for(int i = 0; i < sz; ++i) {
+		for(int j = 0; j < sz; ++j) {
+			for(int k = 0; k < sz; ++k) {
+				c[i][j] += (a[i][k] * b[k][j]);
+				if(c[i][j] >= MOD)
+					c[i][j] %= MOD;
+			}
+		}
+	}
+	
+	return c;
+}
+
+matrix Pow_(matrix mat, ll N)
+{
+	if(N == 0 || N == 1)
+		return mat;
+	matrix c = Pow_(mat, N >> 1);
+	c = mul(c, c);
+	if(N&1)
+		c = mul(c, mat);
+	return c;
+}
+
+int main()
+{
+	int T;
+	scanf("%d", &T);
+	
+	memset(dp, -1, sizeof dp);
+	matrix Mat = Pre();
+	
+	int oy = 0;
+	oy |= 1 << 0;
+	oy |= 1 << 1;
+	oy |= 1 << 2;
+	oy |= 1 << 3;
+	
+	while(T--) {
+		scanf("%lld", &N);
+		ll ans = 0;
+		
+		//cout<<"kyu bhai\n";
+		
+		matrix mat = Pow_(Mat, N);
+	
+		for(int i = 0; i <= oy; ++i) {
+			if(is(i)) {
+				ans += mat[0][i];
+				if(ans >= MOD)
+					ans %= MOD;
+			}
+		}
+		
+		printf("%lld\n", ans);	
+	}
+	
+	return 0;
+}

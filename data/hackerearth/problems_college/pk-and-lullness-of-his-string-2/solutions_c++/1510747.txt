@@ -1,0 +1,91 @@
+#include <iostream>
+#include <cstring>
+using namespace std;
+#define mod 1000000007
+typedef long long ll;
+int n;
+int p1[100001],p2[100001];
+ll fn[100001],ifn[100001];
+ll modexp(ll a, ll b){
+	ll res = 1;
+	while (b){
+		if (b&1){
+			res *= a;
+			res %= mod;
+		}
+		a = (a*a) % mod;
+		b >>= 1;
+	}
+	return res;
+}
+ll ncr(ll x, ll y){
+	return (((fn[x]*ifn[y])%mod)*ifn[x-y])%mod;
+}
+int main()
+{
+    string s;
+    int t;
+    cin>>t;
+    fn[0] = 1;
+    fn[1] = 1;
+    ifn[0] = 1;
+    ifn[1] = 1;
+    for(int i=2;i<=100000;i++){
+    	fn[i] = fn[i-1]*i;
+    	fn[i] %= mod;
+    	ifn[i] = modexp(fn[i],mod-2);
+    }
+    while(t--){
+    	cin>>s>>n;
+    	int m = n/2;
+    	int low = 0, high = s.length()-1;
+    	bool flag1 = false, flag2 = false;
+    	int tmp = 0;
+    	for(int i=0;i<s.length();i++){
+    		if (s[i]=='l') tmp++;
+    		if (tmp==m){
+    			low = i;
+    			flag1 = true;
+    			break;
+    		}
+    	}
+    	tmp = 0;
+    	for(int i=s.length()-1;i>=0;i--){
+    		if (s[i]=='l') tmp++;
+    		if (tmp==m){
+    			high = i;
+    			flag2 = true;
+    			break;
+    		}
+    	}
+    	if (!flag1 || !flag2) {
+    		cout << "0\n";
+    		continue;
+    	}
+    	if (low>=high){
+    		cout << "0\n";
+    		continue;
+    	}
+    	memset(p1,0,sizeof(p1));
+    	memset(p2,0,sizeof(p2));
+    	p1[low] = m;
+    	p2[high] = m;
+    	for(int i=low+1;i<high;i++){
+    		p1[i] = p1[i-1];
+    		if (s[i]=='l') p1[i]++;
+    	}
+    	for(int i=high-1;i>low;i--){
+    		p2[i] = p2[i+1];
+    		if (s[i]=='l') p2[i]++;
+    	}
+    	ll ans = 0;
+    	for(int i=low+1;i<high;i++){
+    		if (s[i]=='u'){
+    			ans +=ncr(p1[i-1],m)*ncr(p2[i+1],m);
+    			ans %= mod;
+    		}
+    	}
+    	printf("%lld\n",ans);
+    }
+    return 0;
+}

@@ -1,0 +1,67 @@
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <algorithm>
+using namespace std;
+struct entry
+{
+  int nr[2];
+  int p;
+};
+const int MAXN = 200009, MAXLG = 25;
+
+entry L[MAXN];
+int P[MAXLG][MAXN], N, stp, cnt, S[MAXN];
+char A[MAXN];
+
+inline int cmp(struct entry a, struct entry b) {
+	return a.nr[0] == b.nr[0] ? (a.nr[1] < b.nr[1] ? 1 : 0) : (a.nr[0] < b.nr[0] ? 1 : 0);
+}
+
+inline int lcp(int x, int y) {
+	int k, ret = 0;
+	if(x < 0 || y < 0) return 0;
+	if(x == y) return N - x;
+	for(k = stp - 1; k >= 0 && x < N && y < N; k--)
+		if(P[k][x] == P[k][y]){
+			x += 1 << k;
+            y += 1 << k;
+            ret += 1 << k;
+		}
+	return ret;
+}
+
+int main()
+ {
+	int i,j, tot,l,q,qs;
+		scanf("%s",A);
+		l=strlen(A);
+		for(i=l-1,j=0;i>=0&&j<l;i--,j++) P[0][j] = A[i] - 'a';
+		N = l;
+		//for(i=0;i<l;i++)
+		//printf("%d ",P[0][i]);
+		for(stp = 1, cnt = 1; (cnt >> 1) < N; stp++, cnt <<= 1)
+		 {
+			for(i = 0; i < N; i++)
+			{
+				L[i].nr[0] = P[stp - 1][i];
+				L[i].nr[1] = i + cnt < N ? P[stp - 1][i + cnt] : -1;
+				L[i].p = i;
+			}
+			sort(L, L + N, cmp);
+			for(i = 0; i < N; i++)
+			{
+				P[stp][L[i].p] = (i>0 && L[i].nr[0]==L[i-1].nr[0] && L[i].nr[1]==L[i-1].nr[1])? P[stp][L[i-1].p] : i;
+			}
+		}
+       //for(i=0;i<N;i++)
+         // printf("%d ",P[stp-1][i]);
+          // printf("\n");
+        scanf("%d",&q);
+        while(q--)
+        {
+        	scanf("%d",&qs);
+        	printf("%d\n",(lcp(0,l-qs)));
+        }
+  return 0;
+}

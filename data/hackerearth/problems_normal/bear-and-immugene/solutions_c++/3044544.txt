@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+typedef long long ll;
+int add(int a, int b) { return a+b-MOD*(a+b>=MOD); }
+int sub(int a, int b) { return a-b+MOD*(a-b<0); }
+int mult(int a, int b) { return ((ll) a*b)%MOD; }
+
+int s[1000013];
+int st[1<<21][5][5];
+
+class ST {
+private:
+	int size;
+	
+	void make(int w, int L, int R) {
+		assert(L==R);
+		for (int i=0;i<5;i++) for (int j=0;j<5;j++) st[w][i][j] = 0;
+		for (int j=0;j<5;j++) st[w][s[L]][j] = 1;
+		for (int i=0;i<5;i++) st[w][i][i] = 1;
+	}
+	void pull(int w, int L, int R) {
+		for (int i=0;i<5;i++) for (int j=0;j<5;j++) st[w][i][j] = 0;
+		for (int i=0;i<5;i++) {
+			for (int k=0;k<5;k++) {
+				for (int j=0;j<5;j++) {
+					st[w][i][j] = add(st[w][i][j],mult(st[w*2+1][i][k],st[w*2][k][j]));
+				}
+			}
+		}
+	}
+	void build(int w, int L, int R) {
+		if (L==R) make(w,L,R);
+		else {
+			build(w*2,L,(L+R)/2), build(w*2+1,(L+R)/2+1,R);
+			pull(w,L,R);
+		}
+	}
+	
+	void updateI(int w, int L, int R, int a) {
+		if (a<L || R<a) return;
+		if (L==R) make(w,L,R);
+		else {
+			updateI(w*2,L,(L+R)/2,a), updateI(w*2+1,(L+R)/2+1,R,a);
+			pull(w,L,R);
+		}
+	}
+	int queryI(int w) {
+		int res = 0;
+		for (int i=0;i<5;i++) res = add(res,st[w][i][4]);
+		return res;
+	}
+public:
+	ST(int s=0) {
+		size = s;
+		if (s) build(1,0,size-1);
+	}
+	void update(int a) { updateI(1,0,size-1,a); }
+	int query() { return queryI(1); }
+};
+
+int n,q;
+char buff[1000013];
+
+int main() {
+	scanf("%d%d %s",&n,&q,&buff);
+	for (int i=0;i<n;i++) {
+		if (buff[i]=='A') s[i] = 0;
+		if (buff[i]=='T') s[i] = 1;
+		if (buff[i]=='C') s[i] = 2;
+		if (buff[i]=='G') s[i] = 3;
+	}
+	ST tree(n);
+	for (int i=0;i<q;i++) {
+		int a;
+		char c;
+		scanf("%d %c",&a,&c);
+		a-=1;
+		if (c=='A') s[a] = 0;
+		if (c=='T') s[a] = 1;
+		if (c=='C') s[a] = 2;
+		if (c=='G') s[a] = 3;
+		tree.update(a);
+		printf("%d\n",tree.query());
+	}
+	
+    return 0;
+}

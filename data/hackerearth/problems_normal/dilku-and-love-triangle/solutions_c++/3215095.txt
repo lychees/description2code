@@ -1,0 +1,214 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, from, to) for (int i = from; i < int(to); ++i)
+#define trav(a, x) for (auto& a : x)
+#define all(x) x.begin(), x.end()
+#define sz(x) (int)(x).size()
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+void PR(vi &v) { trav(x, v) cout << x << ' '; cout << endl; }
+
+struct LazySegmentTree {
+	typedef int T; typedef vector<T> vt;
+	int N;
+	vt leaf, upd;
+	LazySegmentTree() : N(-1) {}
+	void init(int size, int zero) {
+		N = size;
+		leaf.resize(4*N);
+		upd.resize(4*N);
+	}
+	void build(int cur, int a, int b, vt& li) {
+		if (a == b)
+			leaf[cur] = li[a];
+		else {
+			int mid = (a+b)/2;
+			build(2 * cur, a, mid, li);
+			build(2 * cur + 1, mid+1, b, li);
+			leaf[cur] = leaf[2*cur] + leaf[2*cur+1];
+		}
+	}
+	void update(int a, int b, T val) { // add val to [a,b)
+		assert(0 <= a && a <= b && b <= N);
+		update(1,0,N-1,a,b-1,val);
+	}
+	void update(int cur, int L, int R, int a, int b, T val) {
+		if(a <= L && R <= b)
+			upd[cur] += val;
+		else {
+			leaf[cur] += (min(b,R)-max(a,L)+1) * val;
+			int mid = (L+R)/2;
+			if (mid >= a && L <= b)
+				update(2*cur, L, mid, a, b, val);
+			if (R >= a && mid+1 <= b)
+				update(2*cur+1, mid+1, R, a, b, val);
+		}
+	}
+	T query(int a, int b) { // compute sum of values in [a,b)
+		assert(0 <= a && a <= b && b <= N);
+		return query(1,0,N-1,a,b-1);
+	}
+	T query(int cur, int L, int R, int a, int b) {
+		if (upd[cur]) {
+			leaf[cur] += (R-L+1) * upd[cur];
+			if (cur < 2*N) {
+				upd[2*cur] += upd[cur];
+				upd[2*cur+1] += upd[cur];
+			}
+			upd[cur] = 0;
+		}
+		if (a <= L && R <= b)
+			return leaf[cur];
+		int mid = (L+R)/2;
+		T ret = 0;
+		if (mid >= a && L <= b)
+			ret += query(2*cur, L, mid, a, b);
+		if (R >= a && mid+1 <= b)
+			ret += query(2*cur+1, mid+1, R, a, b);
+		return ret;
+	}
+};
+
+typedef vector<pii> vpi;
+
+struct Node {
+	int id;
+	int d, par, val, chain = -1, pos = -1;
+};
+
+struct Chain {
+	int par, val;
+	vector<int> nodes;
+	LazySegmentTree tree;
+};
+
+struct HLD {
+	typedef int T;
+	const T LOW = -(1<<29);
+	void f(T& a, T b) { a = max(a, b); }
+
+	vector<Node> V;
+	vector<Chain> C;
+
+	HLD(vector<vpi>& g) : V(sz(g)) {
+		rep(i,0,sz(g)) V[i].id = i;
+		dfs(0, -1, g, 0);
+		trav(c, C){
+			c.tree.init(sz(c.nodes), 0);
+			for (int ni : c.nodes)
+				c.tree.update(V[ni].pos, V[ni].pos+1, V[ni].val);
+		}
+	}
+
+	void update(int node) {
+		Node& n = V[node];
+		if (n.chain == -1) {
+// cerr << "single update " << node << endl;
+			n.val++;
+		}
+		else {
+// cerr << "tree update on " << node << endl;
+			C[n.chain].tree.update(n.pos, n.pos+1, 1);
+		}
+	}
+
+	int query(int node) {
+		Node& n = V[node];
+		if (n.chain == -1) {
+// cerr << "returning " << n.val << " for " << node << ' ' << n.id << endl;
+			return n.val;
+		}
+		else return C[n.chain].tree.query(n.pos, n.pos+1);
+	}
+
+	int pard(Node& nod) {
+		if (nod.par == -1) return -1;
+		return V[nod.chain == -1 ? nod.par : C[nod.chain].par].d;
+	}
+
+	// update all *edges* between n1, n2
+	int upd(int i1, int i2) {
+		while(i1 != i2) {
+			Node n1 = V[i1], n2 = V[i2];
+			if (n1.chain != -1 && n1.chain == n2.chain) {
+				int lo = n1.pos, hi = n2.pos;
+				if (lo > hi) swap(lo, hi);
+				C[n1.chain].tree.update(lo, hi, 1);
+				i1 = i2 = C[n1.chain].nodes[hi];
+			} else {
+				if (pard(n1) < pard(n2))
+					n1 = n2, swap(i1, i2);
+				if (n1.chain == -1) {
+// cerr << "updating " << n1.id << endl;
+					V[i1].val++, i1 = n1.par;
+				}
+				else {
+					Chain& c = C[n1.chain];
+// cerr << "updating range " << n1.pos << ' ' << sz(c.nodes) << " in some tree" << endl;
+					c.tree.update(n1.pos, sz(c.nodes), 1);
+					i1 = c.par;
+				}
+			}
+		}
+		return i1;
+	}
+
+	void upd2(int i1, int i2) {
+		int lca = upd(i1, i2);
+		update(lca);
+	}
+
+	pii dfs(int at, int par, vector<vpi>& g, int d) {
+		V[at].d = d; V[at].par = par;
+		int sum = 1, ch, nod, sz;
+		tuple<int,int,int> mx(-1,-1,-1);
+		trav(e, g[at]){
+			if (e.first == par) continue;
+			tie(sz, ch) = dfs(e.first, at, g, d+1);
+			V[e.first].val = e.second;
+			sum += sz;
+			mx = max(mx, make_tuple(sz, e.first, ch));
+		}
+		tie(sz, nod, ch) = mx;
+		if (2*sz < sum) return pii(sum, -1);
+		if (ch == -1) { ch = sz(C); C.emplace_back(); }
+		V[nod].pos = sz(C[ch].nodes);
+		V[nod].chain = ch;
+		C[ch].par = at;
+		C[ch].nodes.push_back(nod);
+		return pii(sum, ch);
+	}
+};
+
+int main() {
+	cin.sync_with_stdio(false);
+	int N, Q;
+	cin >> N >> Q;
+	vector<vpi> g(N);
+	rep(i,0,N-1) {
+		int a, b;
+		cin >> a >> b;
+		--a, --b;
+		g[a].emplace_back(b, 0);
+		g[b].emplace_back(a, 0);
+	}
+	HLD hld(g);
+	rep(i,0,Q) {
+		int t;
+		cin >> t;
+		if (t == 1) {
+			int u, v;
+			cin >> u >> v;
+			--u, --v;
+			hld.upd2(u, v);
+		}
+		else if (t == 2) {
+			int x;
+			cin >> x;
+			--x;
+			cout << hld.query(x) << '\n';
+		}
+	}
+}

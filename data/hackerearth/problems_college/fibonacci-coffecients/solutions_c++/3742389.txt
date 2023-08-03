@@ -1,0 +1,103 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+const int N = 2e5 + 5;
+
+int mod;
+
+int A[N];
+int fib[N][2][2], invfib[N][2][2];
+int seg[4*N][2][2];
+int res[2][2], lol[2][2];
+
+void mult(int a[2][2], int b[2][2], int c[2][2]){
+    for(int i = 0; i < 2; i++){
+        for(int j = 0; j < 2; j++){
+            a[i][j] = 0;
+            for(int k = 0; k < 2; k++){
+                ll temp = (1LL * b[i][k] * c[k][j]) % mod;
+                a[i][j] = (a[i][j] + temp) % mod;
+            }
+        }
+    }
+}
+
+void scalar_mult(int a[2][2], int k, int b[2][2]){
+    for(int i = 0; i < 2; i++)
+        for(int j = 0; j < 2; j++)
+            a[i][j] = (1LL * k * b[i][j]) % mod;
+}
+
+void add(int a[2][2], int b[2][2], int c[2][2]){
+    for(int i = 0; i < 2; i++)
+        for(int j = 0; j < 2; j++)
+            a[i][j] = (b[i][j] + c[i][j]) % mod;
+}
+
+void build(int nd, int l, int r){
+    if(l == r)  scalar_mult(seg[nd], A[l], fib[l]);
+    else{
+        int mid = (l + r)/2;
+        build(nd*2, l, mid);
+        build(nd*2 + 1, mid + 1, r);
+        add(seg[nd], seg[nd*2], seg[nd*2 + 1]);
+    }
+}
+
+void update(int nd, int l, int r, int x){
+    if(l == r)  scalar_mult(seg[nd], A[l], fib[l]);
+    else{
+        int mid = (l + r)/2;
+        if(x <= mid)    update(nd*2, l, mid, x);
+        else update(nd*2 + 1, mid + 1, r, x);
+        add(seg[nd], seg[nd*2], seg[nd*2 + 1]);
+    }
+}
+
+void query(int nd, int l, int r, int x, int y){
+    if(l > y or r < x)  return ;
+    else if(l >= x and r <= y){
+        add(lol, res, seg[nd]);
+        res[0][0] = lol[0][0], res[0][1] = lol[0][1], res[1][0] = lol[1][0], res[1][1] = lol[1][1];
+    }
+    else{
+        int mid = (l + r)/2;
+        query(nd*2, l, mid, x, y);
+        query(nd*2 + 1, mid + 1, r, x, y);
+    }
+}
+
+int main(){
+    int n, m, type, l, r;
+
+    cin>>n>>m>>mod;
+    for(int i = 1; i <= n; i++) cin>>A[i];
+
+    fib[0][0][0] = 1, fib[0][1][1] = 1, invfib[0][0][0] = 1, invfib[0][1][1] = 1;
+
+    fib[1][0][0] = fib[1][0][1] = fib[1][1][0] = 1, fib[1][1][1] = 0;
+    invfib[1][0][0] = 0, invfib[1][0][1] = invfib[1][1][0] = 1, invfib[1][1][1] = mod - 1;
+
+    for(int i = 2; i <= n; i++){
+        mult(fib[i], fib[i - 1], fib[1]);
+        //cout<<i<<" --> "<<fib[i][0][1]<<endl;
+        mult(invfib[i], invfib[i - 1], invfib[1]);
+    }
+
+    build(1, 1, n);
+
+    while(m--){
+        cin>>type>>l>>r;
+        if(type == 1){
+            A[l] = r;
+            update(1, 1, n, l);
+        }
+        else{
+            memset(res, 0, sizeof(res));
+            query(1, 1, n, l, r);
+            mult(lol, res, invfib[l - 1]);
+            cout<<lol[0][1]<<'\n';
+        }
+    }
+}

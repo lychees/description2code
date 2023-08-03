@@ -1,0 +1,123 @@
+//#pragma comment(linker, "/STACK:16777216")
+#include <cstdio>
+#include <iostream>
+#include <iomanip>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <map>
+#include <set>
+#include <limits>
+#include <climits>
+#include <cmath>
+#include <functional>
+#include <ctime>
+#include <cstdlib>
+#include <fstream>
+#include <typeinfo>
+#include <cassert>
+
+#define endl '\n'
+#define remainder safdskhaslfa
+#define pow aafkhffhlgsdas
+#define distance dagkjsdsdsara
+#define left askfjasieqwskajdaks
+#define right sakjjlkjlkjlashfjas
+#define y0 kshjlhlliahjajkdhkasfdg
+#define y1 kjlajhjaskhajkhjfkahgjahjkas
+
+using namespace std;
+
+const int SIZE = 1<<17;
+
+int n,tests;
+int a[SIZE],x[SIZE];
+int best;
+long long inv_cnt,max_inv;
+
+struct fenwick_tree {
+	int a[SIZE];
+	void Initialize() {
+		memset(a,0,sizeof(a));
+	}
+	void Update(int pos, int val) {
+		for(;pos<SIZE;pos+=pos&(-pos)) a[pos]+=val;
+	}
+	int Query(int pos) {
+		int ans=0;
+		for(;pos>=1;pos-=pos&(-pos)) ans+=a[pos];
+		return ans;
+	}
+}it;
+
+int next(int p) {
+	p++;
+	if(p>n) p=1;
+	return p;
+}
+
+bool compare(int idx1, int idx2) {
+	int cnt;
+	for(cnt=1;cnt<=min(n,1000);cnt++,idx1=next(idx1),idx2=next(idx2)) {
+		if(a[idx1]<a[idx2]) return true;
+		if(a[idx1]>a[idx2]) return false;
+	}
+	return false;
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(NULL);
+  //ifstream cin("test.txt");
+  //freopen("test.txt","r",stdin);
+  int i,left,right,middle;
+
+  cin>>tests;
+  while(tests--) {
+		cin>>n;
+		for(i=1;i<=n;i++) cin>>a[i];
+		for(i=1;i<=n;i++) x[i]=a[i];
+		sort(x+1,x+1+n);
+		for(i=1;i<=n;i++) {
+			if(a[i]==x[1]) a[i]=1;
+			else {
+				left=1;
+				right=n;
+				while(right-left>1) {
+					middle=(left+right)>>1;
+					if(x[middle]<a[i]) left=middle;
+					else right=middle;
+				}
+				a[i]=right;
+			}
+		}
+		//for(i=1;i<=n;i++) assert(a[i]>=1 && a[i]<SIZE);
+
+		it.Initialize();
+		inv_cnt=0;
+		for(i=n;i>=1;i--) {
+			inv_cnt+=it.Query(a[i]-1);
+			it.Update(a[i],1);
+		}
+		max_inv=inv_cnt;
+		best=0;
+		for(i=1;i<n;i++) {
+			inv_cnt-=it.Query(a[i]-1);
+			inv_cnt+=it.Query(SIZE-1)-it.Query(a[i]);
+			if(inv_cnt>max_inv) {
+				max_inv=inv_cnt;
+				best=i;
+			}
+			else if(inv_cnt==max_inv) {
+				if(compare(i+1,best+1)) best=i;
+			}
+		}
+		cout<<best<<' '<<max_inv<<endl;
+  }
+
+  return 0;
+}

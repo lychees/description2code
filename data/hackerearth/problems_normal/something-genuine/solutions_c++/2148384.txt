@@ -1,0 +1,83 @@
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+#include <map>
+
+using namespace std;
+
+#define all(a) (a).begin(),(a).end()
+#define pb push_back
+#define sz(a) ((int)(a).size())
+#define mp make_pair
+#define fi first
+#define se second
+
+typedef pair<int,int> pint;
+typedef long long ll;
+typedef vector<int> vi;
+
+
+#define MAX_N 200005
+#define MOD 1000000007
+#define left(i) ((i)*2)
+#define right(i) (left(i)+1)
+
+int n,a[MAX_N],lo[MAX_N];
+int sq[4*MAX_N],lin[4*MAX_N],lazy[4*MAX_N];
+
+void lazyupd(int i, int l, int r)
+{
+	if (lazy[i])
+	{
+	//	sq[i]+=2*lazy[i]*lin[i]+(r-l+1)*lazy[i]*lazy[i];
+		sq[i]=(sq[i]+2LL*lazy[i]*1LL*lin[i])%MOD;
+		sq[i]=(sq[i]+(((r-l+1)*1LL*lazy[i])%MOD)*1LL*lazy[i])%MOD;
+	//	lin[i]+=(r-l+1)*lazy[i];
+		lin[i]=(lin[i]+(r-l+1)*1LL*lazy[i])%MOD;
+		if (l!=r)
+		{
+			lazy[left(i)]=(lazy[left(i)]+lazy[i])%MOD;
+			lazy[right(i)]=(lazy[right(i)]+lazy[i])%MOD;
+		}
+		lazy[i]=0;
+	}
+}
+
+void add(int i, int l, int r, int sl, int sr, int v)
+{
+	lazyupd(i,l,r);
+	if (l>sr||r<sl)
+		return;
+	if (l>=sl&&r<=sr)
+	{
+		lazy[i]=v;
+		lazyupd(i,l,r);
+		return;
+	}
+	add(left(i),l,(l+r)/2,sl,sr,v);
+	add(right(i),(l+r)/2+1,r,sl,sr,v);
+	sq[i]=(sq[left(i)]+sq[right(i)])%MOD;
+	lin[i]=(lin[left(i)]+lin[right(i)])%MOD;
+}
+#define add(l,r,v) add(1,1,n,l,r,v)
+
+int main()
+{
+	scanf("%d",&n);
+	for (int i=1; i<=n; i++)
+		scanf("%d",a+i);
+	map<int,int> pos;
+	for (int i=1; i<=n; i++)
+	{
+		lo[i]=pos[a[i]]+1;
+		pos[a[i]]=i;
+	}
+	int ans=0;
+	for (int i=1; i<=n; i++)
+	{
+		add(lo[i],i,1);
+		ans=(ans+sq[1])%MOD;
+	}
+	printf("%d\n",ans);
+	return 0;
+}

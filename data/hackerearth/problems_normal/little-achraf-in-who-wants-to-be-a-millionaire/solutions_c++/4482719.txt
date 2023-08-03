@@ -1,0 +1,94 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1000000007;
+
+ll Pot(ll a, ll w)
+{
+    ll odp = 1;
+    for (int i = 0; i < w; ++i) odp = (odp * a) % MOD;
+    return odp;
+}
+
+ll Normalny(vector<ll>& dl, ll n, ll index, ll l)
+{
+    if (n < l) return n;
+    ll s = 0, i;
+    for (i = n - l; i < n; ++i)
+    {
+        if (s + dl[i] - 1 < index) s += dl[i];
+        else
+        {
+            index -= s;
+            n = i;
+            break;
+        }
+    }
+    return Normalny(dl, n, index, l);
+}
+
+ll Ktory(vector<ll>& dl, ll n, ll index, ll l)
+{
+    if (n < (ll) dl.size()) return Normalny(dl, n, index, l);
+    ll il = (n + 1) - (ll) dl.size();
+    ll nowy_n = n - (il / l * l);
+    while (nowy_n < (ll) dl.size()) nowy_n += l;
+    ll s = 0;
+    ll i;
+    for (i = nowy_n - l; i < nowy_n; ++i)
+    {
+        if (s + dl[i] - 1 < index) s += dl[i];
+        else
+        {
+            index -= s;
+            n = i;
+            break;
+        }
+    }
+    if (i == nowy_n)
+    {
+        index -= s;
+        n = (ll) dl.size();
+    }
+    return Normalny(dl, n, index, l);
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    ll l, c;
+    cin >> l >> c;
+    vector<ll> dl;
+    for (int i = 0; i < l; ++i) dl.push_back(1);
+    for (int i = l; true; ++i)
+    {
+        ll s = 0;
+        for (int j = 0; j < l; ++j) s += dl[i - l + j];
+        if (s <= 100000000000000000) dl.push_back(s);
+        else break;
+    }
+    vector<char> pocz(l, '*');
+    for (int i = 0; i < c; ++i)
+    {
+        ll n, x;
+        char znak;
+        cin >> n >> x >> znak;
+        --n;
+        --x;
+        ll nr = Ktory(dl, x, n, l);
+        if (pocz[nr] != '*' && pocz[nr] != znak)
+        {
+            cout << "0";
+            return 0;
+        }
+        else pocz[nr] = znak;
+    }
+    ll puste = 0;
+    for (int j = 0; j < l; ++j) if (pocz[j] == '*') ++puste;
+    cout << Pot(62, puste) << endl;
+    return 0;
+}

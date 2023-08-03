@@ -1,0 +1,91 @@
+#define _USE_MATH_DEFINES
+#include <algorithm>
+#include <cstdio>
+#include <functional>
+#include <iostream>
+#include <cfloat>
+#include <climits>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <time.h>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> i_i;
+typedef pair<ll, int> ll_i;
+typedef pair<double, int> d_i;
+typedef pair<ll, ll> ll_ll;
+typedef pair<double, double> d_d;
+struct edge { int u, v; ll w; };
+
+ll MOD = 1000000007;
+ll _MOD = 1000000009;
+double EPS = 1e-10;
+
+int main() {
+	int N; cin >> N;
+	vector<int> A(N);
+	for (int i = 0; i < N; i++)
+		scanf("%d", &A[i]);
+	vector<int> a = A;
+	sort(a.begin(), a.end());
+	a.erase(unique(a.begin(), a.end()), a.end());
+	int n = a.size();
+	for (int i = 0; i < N; i++) {
+		A[i] = lower_bound(a.begin(), a.end(), A[i]) - a.begin();
+		A[i] = n - 1 - A[i];
+	}
+	vector<vector<int> > v(n);
+	for (int i = 0; i < N; i++)
+		v[A[i]].push_back(i);
+	vector<int> sum(n + 1), l(n + 1), r(n + 1);
+	l[0] = N; r[0] = 0;
+	for (int j = 0; j < n; j++) {
+		sum[j + 1] = sum[j];
+		l[j + 1] = l[j];
+		r[j + 1] = r[j];
+		for (int k = 0; k < v[j].size(); k++) {
+			int i = v[j][k];
+			sum[j + 1]++;
+			l[j + 1] = min(l[j + 1], i);
+			r[j + 1] = max(r[j + 1], i + 1);
+		}
+	}
+	vector<int> imos(N + 2);
+	for (int j = 1; j <= n; j++) {
+		int cnt = 0;
+		if (j < n)
+			for (int k = 0; k < v[j].size(); k++) {
+				int i = v[j][k];
+				if (l[j] <= i && i < r[j]) cnt++;
+			}
+		if (r[j] - l[j] > sum[j] + cnt) continue;
+		imos[r[j] - l[j]]++;
+		for (; l[j] - 1 >= 0 && A[l[j] - 1] == j; l[j]--);
+		for (; r[j] < N && A[r[j]] == j; r[j]++);
+		imos[r[j] - l[j] + 1]--;
+	}
+	for (int i = 0; i < N; i++)
+		imos[i + 1] += imos[i];
+	int x = 0;
+	for (int i = 0; i < N; i++) {
+		if (A[i] == 0) x++;
+		else x = 0;
+		imos[x] = 1;
+	}
+	for (int i = 1; i <= N; i++)
+		if (imos[i])
+			printf("1");
+		else
+			printf("0");
+	cout << endl;
+}

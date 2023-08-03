@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ull unsigned long long int
+#define N 500000
+
+vector<int> st;
+
+void build_seg(int idx,int ss,int se){
+	if(ss==se){
+		st[idx]=1;
+		return;
+	}
+	int mid=(ss+se)>>1;
+	build_seg(2*idx+1,ss,mid);
+	build_seg(2*idx+2,mid+1,se);
+	st[idx]=st[2*idx+1]+st[2*idx+2];
+}
+
+int query(int idx,int ss,int se,int k){
+	if(ss==se)return ss;
+	int mid=(ss+se)>>1;
+	return (st[2*idx+1]>=k)? query(2*idx+1,ss,mid,k) : query(2*idx+2,mid+1,se,k-st[2*idx+1]);
+}
+
+void update(int idx,int ss,int se,int x){
+	if(ss==se){
+		st[idx]=0;
+		return;
+	}
+	int mid=(ss+se)>>1;
+	if(x<=mid)	update(2*idx+1,ss,mid,x);
+	else update(2*idx+2,mid+1,se,x);
+	st[idx]=st[2*idx+1]+st[2*idx+2];
+}
+char str[N][15];
+int main()
+{
+	int64_t t;
+	scanf("%I64d",&t);
+	for(int64_t j=0;j<t;j++){
+		int n;
+		scanf("%d",&n);
+		
+		int size=(ceil)(log2(n))+1;
+		st.resize(1<<size);
+		
+		build_seg(0,0,n-1);
+		long long int arr[n];
+		for(int i=0;i<n;i++){
+			scanf("%s",str[i]);
+		}
+		
+		for(int i=0;i<n;i++){
+			scanf("%lld",&arr[i]);
+		}
+	long long int MAX=-1;	
+		for(int i=0;i<n-1;i++){
+			int x;
+			scanf("%d",&x);
+			int getx=query(0,0,n-1,x);
+			
+			MAX=max(MAX,arr[getx]);
+			printf("%s %lld\n",str[getx],MAX);
+			update(0,0,n-1,getx);
+		}
+		int getx=query(0,0,n-1,1);
+			
+			MAX=max(MAX,arr[getx]);
+			printf("%s %lld\n",str[getx],MAX);
+			update(0,0,n-1,getx);
+	}
+    return 0;
+}

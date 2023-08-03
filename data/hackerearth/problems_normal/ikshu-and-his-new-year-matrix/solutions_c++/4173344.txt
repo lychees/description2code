@@ -1,0 +1,101 @@
+//https://www.hackerearth.com/problem/algorithm/ikshu-and-his-new-year-matrix/
+#include <bits/stdc++.h>
+#define max 10001
+using namespace std;
+map<int,int> prime;
+typedef long long int ll;
+void sieve()
+{
+	vector<bool> p(max,true);
+	for(int i=2;i<=sqrt(max)+1;i++)
+	{
+		if(p[i]==true)
+		{
+			for(int j=2*i;j<max;j+=i)
+				p[j]=false;
+		}
+	}
+	for(int i=2;i<max;i++)
+	{
+		if(p[i]==true)
+			prime[i]=1;
+	}
+}
+int main()
+{
+	sieve();
+	ll n,k;
+	cin>>n>>k;
+	vector<vector<int> > num(n,vector<int>(n,0));
+	vector<vector<ll> > res(n,vector<ll>(n,ll(-1)));
+	for(int i=0;i<n;i++)
+		for(int j=0;j<n;j++)
+			cin>>num[i][j];
+	if(n<=2)
+	{
+		cout<<"no"<<endl;
+		return 0;
+	}
+	for(int i=0;i<n;i++)
+	{
+		for(int j=0;j<n;j++)
+		{
+			if(prime.find(num[i][j])!=prime.end())
+				res[i][j]=0;
+			else
+			{
+				auto it=prime.lower_bound(num[i][j]);
+				if(it!=prime.end())
+				{
+					if((it->first-num[i][j])%k==0)
+					{
+						res[i][j]=(it->first-num[i][j]);
+					}
+					for(auto it1=it;it1!=prime.end();it1++)
+					{
+						if((it1->first-num[i][j])%k==0)
+							{
+								res[i][j]=(it1->first-num[i][j])/k;
+								break;
+							}
+					}
+				}
+			}
+
+		}
+	}
+	// for(int i=0;i<n;i++)
+	// 	for(int j=0;j<n;j++)
+	// 		cout<<res[i][j]<<endl;
+	ll val=LLONG_MAX;
+	pair<int,int> cent;int inc=0;
+	for(int i=0;i<n-2;i++)
+	{
+		for(int j=0;j<n-2;j++)
+		{
+			if(res[i][j]==-1)
+				continue;
+			ll temp=res[i][j];
+			if(res[i+2][j]!=-1 && res[i][j+2]!=-1 && res[i+1][j+1]!=-1 && res[i+2][j+2]!=-1)
+			{
+				temp+=res[i+2][j]+res[i][j+2]+res[i+1][j+1]+res[i+2][j+2];
+				if(val>temp)
+				{
+					cent=make_pair(i+2,j+2);
+					inc=temp;
+					val=temp;
+				}
+			}
+
+		}
+	}
+	if(val<LLONG_MAX)
+	{
+		cout<<"yes"<<endl;
+		cout<<inc<<endl;
+		cout<<cent.first<<" "<<cent.second<<endl;
+	}
+	else
+		cout<<"no"<<endl;
+	return 0;
+}

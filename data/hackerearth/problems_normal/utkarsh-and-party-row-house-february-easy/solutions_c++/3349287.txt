@@ -1,0 +1,133 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+vector<long long int> v1,tree1,tree2;
+long long int build_tree1(long long int node,long long int s,long long int e)
+{
+	if(s==e)
+	{
+		tree1[node]=v1[s];
+	//	cout<<s<<" "<<e<<" "<<tree1[node]<<endl;
+		return 0;
+	}
+	long long int mid=(s+e)/2;
+	build_tree1(node*2,s,mid);
+	build_tree1(node*2+1,mid+1,e);
+	tree1[node]=tree1[node*2]+tree1[node*2+1];
+//	cout<<s<<" "<<e<<" "<<tree1[node]<<endl;
+	return 0;
+}
+long long int query_tree1(long long int node,long long int s,long long int e,long long int l,long long int r)
+{
+	//if(e<l||r<s)
+	//	return 0;
+	if(l<=s&&e<=r)
+		return tree1[node];
+	int mid=(s+e)/2;
+	if(mid>=r)
+		return query_tree1(node*2,s,mid,l,r);
+	else if(mid<l)
+		return query_tree1(node*2+1,mid+1,e,l,r);
+	else
+		return query_tree1(node*2,s,mid,l,r)+query_tree1(node*2+1,mid+1,e,l,r);
+}
+long long int update_tree1(long long int node,long long int s,long long int e,long long int id,long long int val)
+{
+	if(s==e)
+	{
+		tree1[node]+=val;
+		return 0;
+	}
+	long long int  mid=(s+e)/2;
+	if(id<=mid)
+		update_tree1(node*2,s,mid,id,val);
+	else
+		update_tree1(node*2+1,mid+1,e,id,val);
+	tree1[node]=tree1[node*2]+tree1[node*2+1];
+	return 0;
+}
+long long int build_tree2(long long int node,long long int s,long long int e)
+{
+	if(s==e)
+	{
+		tree2[node]=v1[s];
+	//	cout<<s<<" "<<e<<" "<<tree1[node]<<endl;
+		return 0;
+	}
+	long long int mid=(s+e)/2;
+	build_tree2(node*2,s,mid);
+	build_tree2(node*2+1,mid+1,e);
+	tree2[node]=tree2[node*2]+tree2[node*2+1];
+//	cout<<s<<" "<<e<<" "<<tree1[node]<<endl;
+	return 0;
+}
+long long int query_tree2(long long int node,long long int s,long long int e,long long int l,long long int r)
+{
+	//if(e<l||r<s)
+	//	return 0;
+	if(l<=s&&e<=r)
+		return tree2[node];
+	long long int mid=(s+e)/2;
+	if(mid>=r)
+		return query_tree2(node*2,s,mid,l,r);
+	else if(mid<l)
+		return query_tree2(node*2+1,mid+1,e,l,r);
+	else
+		return query_tree2(node*2,s,mid,l,r)+query_tree2(node*2+1,mid+1,e,l,r);
+}
+long long int update_tree2(long long int node,long long int s,long long int e,long long int id,long long int val)
+{
+	if(s==e)
+	{
+		tree2[node]+=val;
+		return 0;
+	}
+	long long int  mid=(s+e)/2;
+	if(id<=mid)
+		update_tree2(node*2,s,mid,id,val);
+	else
+		update_tree2(node*2+1,mid+1,e,id,val);
+	tree2[node]=tree2[node*2]+tree2[node*2+1];
+	return 0;
+}
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    long long int n,q,op,k,l,r,s,p1,p2,result_cur;
+    cin>>n>>q;
+    v1.resize(n+1);
+    tree1.resize(4*n+1);
+    tree2.resize(4*n+1);
+    for(p1=1;p1<=n;p1++)
+    	cin>>v1[p1];
+    build_tree1(1,1,n);
+    for(p1=1;p1<=n;p1++)
+    	v1[p1]*=p1;
+    build_tree2(1,1,n);
+    while(q--)
+    {
+    	cin>>op;
+    	if(op==1)
+    	{
+    		cin>>k>>l>>r;
+    		result_cur=0;
+    		if(k<=l)
+    			cout<<query_tree2(1,1,n,l,r)-query_tree1(1,1,n,l,r)*k<<endl;
+    		else if(k<=r)
+    		{
+    			result_cur+=query_tree1(1,1,n,l,k)*k-query_tree2(1,1,n,l,k)+query_tree2(1,1,n,k,r)-query_tree1(1,1,n,k,r)*k;
+    			cout<<result_cur<<endl;
+    		}
+    		else
+    			cout<<query_tree1(1,1,n,l,r)*k-query_tree2(1,1,n,l,r)<<endl;
+    	}
+    	else
+    	{
+    		cin>>k>>s;
+    		update_tree1(1,1,n,k,s);
+    		update_tree2(1,1,n,k,s*k);
+    	}
+    }
+    return 0;
+}

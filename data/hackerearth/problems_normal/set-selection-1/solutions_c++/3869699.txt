@@ -1,0 +1,120 @@
+#include<iostream>
+#include<vector>
+#include<string.h>
+
+using namespace std;
+
+vector<int> bits[12];
+bool visited[100];
+int arr[100];
+
+
+
+bool isvalid(int inp) {
+  int num = 1;
+  int index = 0;
+  while(num <= inp) {
+    if(num & inp) {
+      for(vector<int>::iterator it = bits[index].begin(); it != bits[index].end(); it++) {
+	if(!visited[*it]) {
+	  visited[*it] = true;
+	  if((arr[*it] ^ inp) == 0)
+	    return true;
+	  bool ret = isvalid(inp ^ arr[*it]);
+	  if(ret)
+	    return true;
+	  visited[*it] = false;
+	}
+      }
+    }
+    num = num << 1;
+    index++;
+  }
+  return false;
+}
+
+int subset[100001][101];
+
+
+void isSubsetSum(int set[], int n, int sum)
+{
+    // The value of subset[i][j] will be true if there is a subset of set[0..j-1]
+    //  with sum equal to i
+    //bool subset[sum+1][n+1];
+ 
+    // If sum is 0, then answer is true
+    for (int i = 0; i <= n; i++)
+      subset[0][i] = true;
+ 
+    // If sum is not 0 and set is empty, then answer is false
+    for (int i = 1; i <= sum; i++)
+      subset[i][0] = false;
+ 
+     // Fill the subset table in botton up manner
+     for (int i = 1; i <= sum; i++)
+     {
+       for (int j = 1; j <= n; j++)
+       {
+         subset[i][j] = subset[i][j-1];
+         if (i >= set[j-1])
+           subset[i][j] = subset[i][j] || subset[i - set[j-1]][j-1];
+       }
+     }
+ 
+     
+ 
+     //return subset[sum][n];
+}
+
+
+int main() {
+  int N;
+  cin>>N;
+  for(int i = 0; i < N; i++) {
+    cin>>arr[i];
+
+    int num = 1;
+    int index = 0;
+    while(num <= arr[i]) {
+      if(arr[i] & num)
+	bits[index].push_back(i);
+      num = num << 1;
+      index++;
+    }
+  }
+
+  isSubsetSum(arr, N, 100000);
+
+  int T;
+  cin>>T;
+  for(int i = 0; i < T; i++) {
+    int x;
+    cin>>x;
+    if(x > 100000) {
+    	cout<<"No"<<endl;
+    	continue;
+    }
+    memset(visited, false, 100 * sizeof(bool));
+    /*if(isvalid(x))
+      cout<<"Yes"<<endl;
+    else
+    cout<<"No"<<endl;*/
+
+    bool flag = false;
+    for(int i = 0; i <= 100; i++) {
+      if(subset[x][i] == true) {
+	flag = true;
+	break;
+      }
+
+    }
+    if(flag)
+      	cout<<"Yes"<<endl;
+    else
+	cout<<"No"<<endl;
+      
+  }
+
+  
+  
+}

@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define pi pair<int,int>
+#define pii pair<pi, int>
+const int MAX = 1e5+10;
+#define fi first
+#define se second
+#define mp make_pair
+int arr[MAX];
+
+pii qry[MAX];
+int pos[MAX];
+int ans[MAX];
+int bit[MAX];
+int n;
+
+bool comp(const pii a, const pii b) {
+    return a.fi.se < b.fi.se;
+}
+void update(int ind) {
+    while(ind <= n) {
+        bit[ind] += 1;
+        ind += ind&(-ind);
+    }
+}
+int query(int l , int r) {
+    int ls = 0, rs = 0;
+    int ind = l-1;
+    while(ind) {
+        ls += bit[ind];
+        ind -= ind&(-ind);
+    }
+    ind = r;
+    while(ind) {
+        rs += bit[ind];
+        ind -= ind&(-ind);
+    }
+    return rs-ls;
+}
+int main()
+{
+    int q,d,l,r;
+    scanf("%d%d%d", &n,&q,&d);
+    for(int i = 1; i <= n; i++) {
+        scanf("%d", &arr[i]);
+        pos[arr[i]] = i;
+    }
+    for(int i = 0; i < q; i++) {
+        scanf("%d%d", &l,&r);
+        qry[i] = {{l,r}, i};
+    }
+    sort(qry , qry+n, comp);
+    int k = 0;
+    for(int i = 1; i <= n; i++) {
+
+        for(int j = max(1,arr[i]-d); j <= min(n, arr[i]+d); j++) {
+            if(pos[j] <= i) {
+                update(pos[j]);
+            }
+        }
+        while(k < q && qry[k].fi.se == i) {
+            ans[qry[k].se] = query(qry[k].fi.fi , qry[k].fi.se);
+            k++;
+        }
+    }
+    for(int i = 0; i < q; i++)
+        printf("%d\n", ans[i]);
+
+return 0;
+}

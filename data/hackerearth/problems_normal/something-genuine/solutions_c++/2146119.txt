@@ -1,0 +1,157 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+using namespace std;
+#define MAX 200002
+#define MOD 1000000007
+int a[MAX];
+int n;
+long long int countt[MAX];
+vector<int> oc[MAX];
+bool use[MAX];
+long long int V = 0;
+set<int> s;
+struct st{
+	long long int area=0;
+	long long int sum=0;  //a^2
+	long long int sum2=0;  //a
+	long long int lazy = 0;
+};
+st seg[MAX * 4];
+void update(int b){
+	if (seg[b].lazy == 0LL){
+		return;
+	}
+	long long int de = seg[b].lazy*seg[b].area;
+	de %= MOD;
+	de = seg[b].sum2+MOD - de;
+	de %= MOD;
+	long long int chu = -2LL * seg[b].lazy*seg[b].sum2;
+	chu += ((seg[b].lazy*seg[b].lazy) % MOD)*seg[b].area;
+	chu %= MOD;
+	chu += seg[b].sum;
+	chu %= MOD;
+	seg[b].sum = chu;
+	seg[b].sum2 = de;
+	if (seg[b].area > 1LL){
+		seg[b * 2 + 1].lazy += seg[b].lazy;
+		seg[b * 2 + 1].lazy %= MOD;
+		seg[b * 2 + 2].lazy += seg[b].lazy;
+		seg[b * 2 + 2].lazy %= MOD;
+	}
+	seg[b].lazy = 0LL;
+}
+inline void init(int b, int l, int r){
+	seg[b].area = r - l;
+	if (l + 1 == r){
+		seg[b].sum = countt[l] * countt[l];
+		seg[b].sum2 = countt[l];
+		return;
+	}
+	init(b * 2 + 1, l, (l + r) >> 1);
+	init(b * 2 + 2, (l + r) >> 1, r);
+	seg[b].sum = seg[b * 2 + 1].sum + seg[b * 2 + 2].sum;
+	seg[b].sum2 = seg[b * 2 + 1].sum2 + seg[b * 2 + 2].sum2;
+}
+inline long long  q(int b, int l, int r,int ll,int rr){
+	update(b);
+	if (r <= ll || rr <= l){
+		return 0;
+	}
+	if (ll <= l&&r <= rr){
+		return seg[b].sum;
+	}
+	return (q(b * 2 + 1, l, (l + r) >> 1, ll, rr) + q(b * 2 + 2, (l + r) >> 1, r, ll, rr))%MOD;
+}
+inline void add(int b, int l, int r, int ll, int rr,int x){
+	update(b);
+	if (r <= ll || rr <= l){
+		return;
+	}
+	if (ll <= l&&r <= rr){
+		seg[b].lazy += x;
+		update(b);
+		return;
+	}
+	add(b * 2 + 1, l, (l + r) >> 1, ll, rr, x);
+	add(b * 2 + 2, (l + r) >> 1, r, ll, rr, x);
+	seg[b].sum = seg[b * 2 + 1].sum + seg[b * 2 + 2].sum;
+	seg[b].sum2 = seg[b * 2 + 1].sum2 + seg[b * 2 + 2].sum2;
+	seg[b].sum %= MOD;
+	seg[b].sum2 %= MOD;
+}
+int main(){
+	scanf("%d", &n);
+	for (int i = 0; i < n; i++){
+		scanf("%d", &a[i]);
+		oc[a[i]].push_back(i);
+		s.insert(a[i]);
+	}
+	for (int i = 0; i <= n; i++){
+		oc[i].push_back(n);
+	}
+	if (s.size() == n){
+		long long int way = 0;
+		for (long long int i = 1; i <= n; i++){
+			long long int di = n - i + 1;
+			di *= (long long int)(i*i);
+			way += di;
+			way %= MOD;
+		}
+		printf("%lld\n", way);
+		return 0;
+	}
+	long long int ans = 0;
+	{
+		long long int cc = 0;
+		for (int i = 0; i < n; i++){
+			if (use[a[i]]){
+
+			}
+			else{
+				cc++;
+				use[a[i]] = true;
+			}
+			ans += cc*cc;
+			ans %= MOD;
+			V += cc*cc;
+			V %= MOD;
+			countt[i] = cc;
+		}
+	}
+	init(0, 0, n);
+	for (int i = 0; i + 1 < n; i++){
+		int las = upper_bound(oc[a[i]].begin(), oc[a[i]].end(), i) - oc[a[i]].begin();
+		las = oc[a[i]][las];
+		add(0, 0, n, i + 1, las, 1);
+		ans += q(0, 0, n, i+1, n);
+		ans %= MOD;
+	}
+	while(ans<0){
+		ans+=MOD;
+	}
+	printf("%lld\n", ans);
+	return 0;
+}

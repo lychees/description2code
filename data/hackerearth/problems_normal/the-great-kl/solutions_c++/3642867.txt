@@ -1,0 +1,155 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define FOR(i,a,b)		for(int i=(a),_b=(b);i<(_b);++i)
+#define FORD(i,a,b)		for(int i=(a),_b=(b);i>(_b);--i)
+#define pb			push_back
+#define mp			make_pair
+#define	all(c)			(c).begin(),(c).end()
+#define	present(c,x)		((c).find(x) != (c).end())
+#define	cpresent(c,x)		(find(all(c),x) != (c).end())
+#define	endl			'\n'
+
+typedef long long		ll;
+typedef unsigned long long	ull;
+typedef unsigned char	 	byte;
+typedef vector<int>		vi;
+typedef pair<int, int>		pii;
+typedef pair<ll, ll>		pll;
+typedef vector<pii>		vpii;
+
+const int MX = 100005;
+
+vi g[MX];
+
+typedef struct _Node {
+	int v;
+	int d;
+} Node;
+
+bool visited[MX];
+int D[MX];
+int ans[MX];
+int P[MX][20];
+int T[MX];
+int L[MX];
+
+void dfs(int u, int p, int level)
+{
+	T[u] = p;
+	L[u] = level;
+	int sz = g[u].size();
+	FOR(i,0,sz) {
+		int v = g[u][i];
+		if (!visited[v]) {
+			visited[v] = true;
+			dfs(v,u,level+1);
+		}
+	}
+}
+
+int query(int p, int q)
+{
+	int tmp, log, i;
+	//if p is situated on a higher level than q then we swap them
+	if (L[p] < L[q]) tmp = p, p = q, q = tmp;
+
+	//we compute the value of [log(L[p)]
+	for (log = 1; 1 << log <= L[p]; log++);
+	log--;
+	
+	//we find the ancestor of node p situated on the same level
+	//with q using the values in P
+	for (i = log; i >= 0; i--)
+		if (L[p] - (1 << i) >= L[q])
+			p = P[p][i];
+ 
+ 	if (p == q)
+		return p;
+	
+	//we compute LCA(p, q) using the values in P
+	for (i = log; i >= 0; i--)
+		if (P[p][i] != -1 && P[p][i] != P[q][i])
+			p = P[p][i], q = P[q][i];
+	return T[p];
+}
+
+int main(int argc, char *argv[])
+{
+#ifndef ONLINE_JUDGE
+	freopen(argv[1],"r",stdin);
+#endif
+#ifndef ONLINE_JUDGE
+	ifstream cin(argv[1]);
+#endif
+#if 0
+	ofstream cout(argv[2]);
+#endif
+	ios :: sync_with_stdio(false);
+	cin.tie(NULL);
+
+	int n,m;
+	cin >> n >> m;
+	pii c[n+1];
+	FOR(i,1,n+1) {
+		cin >> c[i].first;
+		c[i].second = i;
+	}
+	sort(c+1,c+n+1);
+	FOR(i,0,n-1) {
+		int u,v;
+		cin >> u >> v;
+		g[u].pb(v);
+		g[v].pb(u);
+	}
+	queue<Node> q;
+	Node x;
+	x.v = 1;
+	x.d = 0;
+	q.push(x);
+	visited[1] = true;
+	while (!q.empty()) {
+		x = q.front();
+		D[x.v] = x.d;
+		q.pop();
+		int sz = g[x.v].size();
+		FOR(i,0,sz) {
+			if (!visited[g[x.v][i]]) {
+				Node y;
+				y.v = g[x.v][i];
+				y.d = x.d+1;
+				q.push(y);
+				visited[y.v] = true;
+			}
+		}
+	}
+	FOR(i,1,n+1) visited[i] = false;
+	visited[1] = true;
+	dfs(1,1,0);
+	// LCA
+	FOR(i,1,n+1) for (int j = 0; 1<<j <= n; ++j) P[i][j] = -1;
+	FOR(i,1,n+1) P[i][0] = T[i];
+	for (int j = 1; 1<<j <= n; ++j) FOR(i,1,n+1) if (P[i][j-1] != -1) {
+		P[i][j] = P[P[i][j-1]][j-1];
+	}
+
+	FOR(i,1,n+1) {
+		int j = i;
+		while (j <= n && c[j].first == c[i].first) ++j;
+		if (j-i > 1) {
+			vpii d(j-i);
+			FOR(k,i,j) d[k-i].first = D[c[k].second], d[k-i].second = c[k].second;
+			sort(all(d));
+			FORD(k,j-2,i-1) {
+				int lca = query(d[j-i-1].second,d[k-i].second);
+				int dist = d[j-i-1].first+d[k-i].first-2*D[lca];
+				ans[c[i].first] = max(ans[c[i].first],dist);
+			}
+		}
+		i = j-1;
+	}
+	FOR(i,1,m+1) cout << ans[i] << " ";
+	cout << endl;
+	return 0;
+}

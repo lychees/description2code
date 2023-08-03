@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+ll a,b,s;
+ll dp[15][1000];
+int Dig[15];
+ll bt(int pos,int sum,bool tight){
+    if(sum>s)return 0;
+    if(pos==-1&&sum!=s)return 0;
+    if(sum==s)return 1;
+    if(dp[pos][sum]!=-1&&!tight)return dp[pos][sum];
+    ll &ret = dp[pos][sum];
+    ret = 0;
+    int ED = 9;
+    if(tight){
+        ED = Dig[pos];
+    }
+    for(int i=0;i<ED;i++){
+        ret += bt(pos-1,sum+i,0);
+    }
+    ret += bt(pos-1,sum+ED,tight);
+    return ret;
+}
+ll get(ll num){
+    memset(dp,-1,sizeof(dp));
+    int len=0;
+    while(num){
+        Dig[len++]=num%10;
+        num/=10;
+    }
+    return bt(len-1,0,1);
+}
+ll convert(int len){
+    ll num=0;
+    ll c = 1;
+    for(int i=0;i<len;i++){
+        num+=Dig[i]*c;
+        c*=10;
+    }
+    return num;
+}
+ll  GetTheFirstNum(ll num){
+    memset(Dig,0,sizeof(Dig));
+    ll needed_len = ceil((double)s/9);
+    ll len=0,sum=0,onum=num;
+    while(num){num/=10;len++;}
+    if(sum==s)return onum;
+    len = max(0ll,needed_len-len);
+    while(onum){
+        Dig[len++]=onum%10;
+        onum/=10;
+        sum+=Dig[len-1];
+    }
+    for(int i=0;i<len;i++){
+        if(sum+(9-Dig[i])<s){
+            sum += (9-Dig[i]);
+            Dig[i]=9;
+        }
+        else{
+            Dig[i] += (s-sum);
+            return convert(len);
+        }
+    }
+}
+int main(){
+    cin>>a>>b>>s;
+    cout<<get(b)-get(a-1)<<endl;
+    cout<<GetTheFirstNum(a)<<endl;
+}

@@ -1,0 +1,126 @@
+#include <iostream>
+#include <vector>
+#include <cstdio>
+#include <sstream>
+#include <map>
+#include <string>
+#include <algorithm>
+#include <queue>
+#include <cmath>
+#include <set>
+#include "assert.h"
+using namespace std;
+
+template<class T = int>
+class BinaryIndexedTree_1_indexed{
+	void init(const vector<T> &A){
+		for(int i=0; i<N; i++){
+			add(i+1, A[i]);
+		}
+	}
+	
+public:
+	vector<T> tree;
+	int N;
+	
+	BinaryIndexedTree_1_indexed(const int n) : tree(n+1,0), N(n){
+		
+	}
+	
+	BinaryIndexedTree_1_indexed(const vector<T> &A) : tree(A.size()+1,0), N(A.size()){
+		init(A);
+	}
+
+	//caution : position "i" must be 1-indexed
+	void add(int i, const T x){
+		while(i <= N){
+			tree[i] += x;
+			i += i & -i;
+		}
+	}
+
+	//get sums [0,i]
+	T get_sum(int i){
+		T ret=0;
+		while(i>0){
+			ret += tree[i];
+			i -= i & -i;
+		}
+		return ret;
+	}
+
+	//get sums [from,to]
+	T get_sums_range(const int from, const int to){
+		return get_sum(to) - get_sum(from-1);
+	}
+
+	//get at [i]
+	T get_at(const int i){
+		return get_sum(i) - get_sum(i-1);
+	}
+
+	int lower_bound(T val){
+		if(val<=0) return 0;
+		int x = 0;
+		int k = 1;
+		while((k<<1) <= N) k<<=1;
+		
+		for( ; k>0; k>>=1){
+			if( x+k <= N && tree[x+k] < val ){
+				val -= tree[x+k];
+				x += k;
+			}
+		}
+		return x+1;
+	}
+
+	void print(){
+		for(int i=0; i<=N; i++){
+			cerr << tree[i] << " ";
+		}
+		cerr << endl;
+	}
+};
+
+
+int main(){
+	int N;
+	cin >> N;
+	vector<int> A(N);
+	for(int i=0; i<N; i++){
+		scanf("%d", &A[i]);
+		A[i]++;
+	}
+
+	int M = 100000+10;
+	BinaryIndexedTree_1_indexed<int> BIT(M);
+	for(int i=0; i<N; i++){
+		BIT.add(A[i], 1);
+	}
+
+	int Q;
+	cin >> Q;
+	while(Q--){
+		int x,y,z;
+		scanf("%d", &x);
+		if(x==0){
+			scanf("%d%d", &y,&z);
+			y++;
+			z++;
+			int ret = BIT.get_sums_range(y,z);
+			printf("%d\n", ret);
+
+		}else if(x==1){
+			scanf("%d", &y);
+			y++;
+			BIT.add(y, -1);
+
+		}else{
+			scanf("%d", &y);
+			y++;
+			BIT.add(y, +1);
+
+		}
+	}
+	return 0;
+}

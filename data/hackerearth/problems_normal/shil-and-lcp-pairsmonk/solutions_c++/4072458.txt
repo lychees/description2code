@@ -1,0 +1,61 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+using namespace std;
+
+#define ll long long
+#define N 1000001
+
+char str[N];
+
+struct node{
+	int cnt[26];
+	node* child[26];
+	int las;
+};
+
+ll ans[N];
+
+void insert(node* root,int in,int len){
+	if(in==len){
+		root->las++;
+		return;
+	}
+	if(root->child[str[in]-'a']==NULL)
+		root->child[str[in]-'a']=new node();
+	root->cnt[str[in]-'a']++;
+	insert(root->child[str[in]-'a'],in+1,len);
+}
+
+void calculate(node* root,int len){
+	int sum=0;
+	for(int i=0;i<26;i++)
+		sum+=root->cnt[i];
+	ans[len]+=((ll)root->las*(root->las-1))/2;
+	ans[len]+=(ll)root->las*sum;
+	ll temp=0;
+	for(int i=0;i<26;i++){
+		if(root->child[i]!=NULL)
+			calculate(root->child[i],len+1);
+		temp+=((ll)(sum-(root->cnt[i]))*(ll)(root->cnt[i]));
+	}
+	ans[len]+=temp/2;
+}
+
+int main(){
+	int n;
+	scanf("%d",&n);
+	node* root=new node();
+	int len1=0;
+	for(int i=0;i<n;i++){
+		scanf("%s",str);
+		int len2=strlen(str);
+		insert(root,0,len2);
+		if(len2>len1)
+			len1=len2;
+	}
+	calculate(root,0);
+	for(int i=0;i<=len1;i++)
+		printf("%lld ",ans[i]);
+	printf("\n");
+}

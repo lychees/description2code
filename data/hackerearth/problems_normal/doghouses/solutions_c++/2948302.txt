@@ -1,0 +1,254 @@
+//satyaki3794
+#include <iostream>
+#include <cstdio>
+#include <cmath>
+#include <vector>
+#include <cstring>
+#include <algorithm>
+#include <climits>
+#include <string>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <cctype>
+#include <cassert>
+#include <bitset>
+#include <iomanip>
+#define gc getchar_unlocked
+#define pc putchar_unlocked
+#define PI (3.14159265)
+#define ff first
+#define ss second
+#define pb push_back
+#define MOD (1000000007LL)
+#define INF (100000005)
+#define SIZE (2)
+#define TREESIZE (302144)
+#define LEFT(n) (2*n)
+#define RIGHT(n) (2*n+1)
+#define epsilon 1e-8 //add to double before casting to integer
+ 
+using namespace std;
+ 
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> ii;
+typedef pair<int, ii> iii;
+typedef pair<ll, int> pli;
+
+
+#define matrix vector< vector<ll> >
+
+matrix matmul(matrix &a, matrix &b){
+    int i, j, k, n = a.size();
+    matrix ans (n, vector<ll>(n));
+    for(i=0;i<n;i++)
+        for(j=0;j<n;j++){
+            ll temp = 0;
+            for(k=0;k<n;k++)    temp = (temp + a[i][k] * b[k][j]) % MOD;
+            ans[i][j] = temp;
+        }
+
+    return ans;
+}
+
+matrix matpwr(matrix &a, ll p){
+    int n = a.size();
+    matrix ans(n, vector<ll> (n));
+    for(int i=0;i<n;i++)    ans[i][i] = 1;
+
+    while(p){
+        if(p&1) ans = matmul(ans, a);
+
+        a = matmul(a, a);
+        p >>= 1;
+    }
+    return ans;
+}
+
+
+ll pwr(ll base, ll p, ll mod = MOD){
+    ll ans = 1;
+    while(p){
+        if(p & 1)   ans = (ans * base) % mod;
+        base = (base * base) % mod;
+        p /= 2;
+    }
+    return ans;
+}
+
+
+ll gcd(ll a, ll b){
+    if(b == 0)  return a;
+    return gcd(b, a%b);
+}
+
+
+ll lcm(ll a, ll b){
+    return (a*b) / gcd(a, b);
+}
+
+
+ll invMod(ll n, ll mod = MOD){
+    return pwr(n, mod-2);
+}
+
+const int InfCost=1e9;
+struct MinimumCostMaximumFlow {
+    typedef int Index; typedef int Flow; typedef int Cost;
+    static const Flow InfCapacity = INF;
+    struct Edge {
+        Index to; Index rev;
+        Flow capacity; Cost cost;
+    };
+    vector<vector<Edge> > g;
+    void init(Index n) { g.assign(n, vector<Edge>()); }
+    void add(Index i, Index j, Flow capacity = InfCapacity, Cost cost = Cost()) {
+      // cout<<i<<" "<<j<<" "<<capacity<<" "<<cost<<"\n";
+        Edge e, f; e.to = j, f.to = i; e.capacity = capacity, f.capacity = 0; e.cost = cost, f.cost = -cost;
+        g[i].push_back(e); g[j].push_back(f);
+        g[i].back().rev = (Index)g[j].size() - 1; g[j].back().rev = (Index)g[i].size() - 1;
+    }
+    void addB(Index i, Index j, Flow capacity = InfCapacity, Cost cost = Cost()) {
+        add(i, j, capacity, cost);
+        add(j, i, capacity, cost);
+    }
+    pair<Cost,Flow> minimumCostMaximumFlow(Index s, Index t, Flow f = InfCapacity, bool bellmanFord = false) {
+        int n = g.size();
+        vector<Cost> dist(n); vector<Index> prev(n); vector<Index> prevEdge(n);
+        pair<Cost,Flow> total = make_pair(0, 0);
+        vector<Cost> potential(n);
+        while(f > 0) {
+            fill(dist.begin(), dist.end(), InfCost);
+            if(bellmanFord || total.second == 0) {
+                dist[s] = 0;
+                for(int k=0;k<n;k++){
+                    bool update = false;
+                    for(int i=0;i<n;i++)
+                        if(dist[i] != InfCost)
+                    for(Index ei = 0; ei < (Index)g[i].size(); ei ++) {
+                        const Edge &e = g[i][ei];
+                        if(e.capacity <= 0) continue;
+                        Index j = e.to; Cost d = dist[i] + e.cost;
+                        if(dist[j] > d ) {  //èª¤å·®â�¦
+                            dist[j] = d; prev[j] = i; prevEdge[j] = ei;
+                            update = true;
+                        }
+                    }
+                    if(!update) break;
+                }
+            }else {
+                vector<bool> vis(n);
+                priority_queue<pair<Cost,Index> > q;
+                q.push(make_pair(-0, s)); dist[s] = 0;
+                while(!q.empty()) {
+                    Index i = q.top().second; q.pop();
+                    if(vis[i]) continue;
+                    vis[i] = true;
+                    for(Index ei = 0; ei < (Index)g[i].size(); ei ++) {
+                        const Edge &e = g[i][ei];
+                        if(e.capacity <= 0) continue;
+                        Index j = e.to; Cost d = dist[i] + e.cost + potential[i] - potential[j];
+                        if(d < dist[i])  d = dist[i];    //èª¤å·®â�¦
+                        if(dist[j] > d) {
+                            dist[j] = d; prev[j] = i; prevEdge[j] = ei;
+                            q.push(make_pair(-d, j));
+                        }
+                    }
+                }
+            }
+            if(dist[t] == InfCost) break;
+            if(!bellmanFord) for(Index i = 0; i < n; i ++) potential[i] += dist[i];
+            Flow d = f; Cost distt = 0;
+            for(Index v = t; v != s; ) {
+                Index u = prev[v]; const Edge &e = g[u][prevEdge[v]];
+                d = min(d, e.capacity); distt += e.cost; v = u;
+            }
+            f -= d; total.first += d * distt; total.second += d;
+            for(Index v = t; v != s; v = prev[v]) {
+                Edge &e = g[prev[v]][prevEdge[v]];
+                e.capacity -= d; g[e.to][e.rev].capacity += d;
+            }
+        }
+        return total;
+    }
+};
+
+
+int n, arr[1003], ps[1004][1004], l[1004], r[1004], cnt[1004];
+
+
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    // freopen("input.txt", "r", stdin);
+
+    for(int j=0;j<=1000;j++){
+        l[j] = INF;
+        r[j] = 0;
+    }
+
+    cin>>n;
+    for(int i=1;i<=n;i++){
+        cin>>arr[i];
+        if(l[arr[i]] == INF)  l[arr[i]] = i;
+        r[arr[i]] = i;
+        for(int j=0;j<=1000;j++)
+            ps[i][j] = ps[i-1][j];
+        ps[i][arr[i]]++;
+        cnt[arr[i]]++;
+    }
+
+    if(n == 1){
+        cout<<"1";
+        return 0;
+    }
+
+    for(int j=1;j<=1000;j++)
+        for(int i=1;i<=n;i++)
+            ps[i][j] += ps[i][j-1];
+
+    int ans = 2;
+    for(int j=0;j<=1000;j++)
+        ans = max(ans, cnt[j]);
+
+    for(int y1=0;y1<=1000;y1++)
+        for(int y2=y1+1;y2<=1000;y2++){
+
+            int ll = min(l[y1], l[y2]);
+            int rr = max(r[y1], r[y2]);
+
+            int temp = cnt[y1]+cnt[y2];
+            if(temp == 0)   continue;
+            if(ll != 1){
+                int z = ps[ll-1][y2];
+                if(y1 != 0)
+                    z -= ps[ll-1][y1-1];
+                if(z > 0)
+                    temp++;
+            }
+            if(rr != n){
+                int z = (ps[n][y2]-ps[rr][y2]);
+                if(y1 != 0)
+                    z -= (ps[n][y1-1]-ps[rr][y1-1]);
+                if(z > 0)
+                    temp++;
+            }
+            ans = max(ans, temp);
+        }
+
+    cout<<ans;
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+

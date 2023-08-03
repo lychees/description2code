@@ -1,0 +1,98 @@
+#include <iostream>
+
+using namespace std;
+
+typedef long long llong;
+
+// Recursive GCD
+llong gcd(llong a, llong b) {
+   return b == 0 ? a : gcd(b, a % b);
+}
+
+// LCM
+llong lcm(llong a, llong b) {
+// a*b/gcd(a,b) overflows !!!
+   return a / gcd(a,b) * b;
+}
+
+bool trace;
+
+const int UPTO = 41;
+int SMALL_LEN[UPTO+1];
+llong START[UPTO+1];
+void precompute_small() {
+   SMALL_LEN[1] = 1;
+   SMALL_LEN[2] = 1;
+   for (int n = 3; n <= UPTO; ++n) {
+      int d;
+      for (d = 2; d < n && (n % d) == 0; ++d);
+      if (d >= n)
+         SMALL_LEN[n] = 1;
+      else
+         SMALL_LEN[n] = SMALL_LEN[d] + 1;
+   }
+
+   START[2] = 3;
+   START[3] = 4;
+   if (trace)
+      cerr << 3 << ": " << START[3] << endl;
+
+   llong m = 6;
+   for (int n = 4; n <= UPTO; ) {
+      START[n] = m;
+      m = lcm(m, n);
+      if (trace)
+         cerr << n << ": " << START[n] << endl;
+      do {
+         ++n;
+      } while (n <= UPTO && m == lcm(m, n));
+   }
+}
+
+llong count(llong x) {
+   if (x <= 2) return x;
+
+   llong res = 2;
+   // count odds between 3 and x
+   llong nevens = (x/2 - 1);
+   llong total_numbers = (x - 3 + 1);
+   llong nodds = total_numbers - nevens;
+
+   res += nodds * (SMALL_LEN[2] + 1);
+   if (trace)
+      cerr << "res = " << res << endl;
+
+   llong m = 2;
+   for (int n = 3; n <= UPTO && START[n] <= x; ++n) {
+      if (START[n] == 0) continue;
+      llong newm = lcm(m, n);
+      llong cnt = 1 + (x - START[n]) / m
+                - x / newm;
+      if (trace)
+         cerr << n << " : " << cnt << endl;
+      res += cnt * (SMALL_LEN[n] + 1);
+      m = newm;
+   }
+
+   return res;
+}
+
+int main(int argc, char* argv[]) {
+   ios_base::sync_with_stdio(false); 
+   cin.tie(NULL);
+
+   llong A, B;
+   cin >> A >> B;
+
+   //trace = true;
+   precompute_small();
+
+   //trace = true;
+   //count(B);
+
+   trace = false;
+   //cerr << count(B) << " - " << count(A-1) << endl;
+   cout << count(B) - count(A-1) << endl;
+
+   return 0;
+}

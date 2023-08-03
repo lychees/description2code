@@ -1,0 +1,150 @@
+#include"stdio.h"
+#include"vector"
+#include"stdlib.h"
+#include"string.h"
+using namespace std;
+int min(int x,int y)
+{
+  return x>y?y:x;
+}
+struct Edge
+{
+  int cost;
+  int capacity;
+  int u,v;
+  Edge *rev;
+};
+// void print(vector<Edge*> G[],int n)
+// {
+//   for(int x=0;x<n;x++)
+//   {
+//     printf("\nVertex %d:",x);
+//     for (vector<Edge*>::iterator it=G[x].begin();it < G[x].end(); it++ )
+//     {
+//       printf("\n\tcost: %d\tcapacity: %d\tdestination: %d\tReverse Destination: %d",(*it)->cost,(*it)->capacity,(*it)->dest,((*it)->rev)->dest==x);
+//     }
+//   }
+// }
+int findAndFlow(Edge* G[],int n,int m)
+{
+  int dist[n];
+  Edge* parent[n];
+  //   memset(dist,0,n*(sizeof int));
+  for(int x=0;x<n;x++){
+    parent[x]=NULL;
+    dist[x]=0;
+  }
+  for(int i=0;i<=n;i++)
+  {
+    for(int x=0;x<m;x++)
+    {
+      Edge* it=G[x];
+      if(it->capacity)
+      {
+	if(dist[it->v]>(dist[it->u]+it->cost))
+	{
+	  dist[it->v]=(dist[it->u]+it->cost);
+	  parent[it->v]=it;
+	}
+      }
+    }
+  }
+  int vertex=-1,diff=0;
+  for(int x=0;x<m;x++)
+  {
+    Edge* it=G[x];
+    if(it->capacity)
+    {
+      if(diff<dist[it->v]-(dist[it->u]+it->cost))
+      {
+	diff=dist[it->v]-(dist[it->u]+it->cost);
+// 	printf("diff:%d vertex:%d \n",diff,x);
+	vertex=it->v;
+      }
+    }
+  }
+  if(vertex==-1)return 0;
+  char flag[n];
+  memset(flag,0,sizeof(flag));
+  while(!flag[vertex])
+  {
+    flag[vertex]=1;
+    vertex=(parent[vertex]->u);
+  }
+  int v=vertex;int capacity=50000;
+  do
+  {
+    if(capacity>(parent[v]->capacity))capacity=(parent[v]->capacity);
+    v=(parent[v]->u);
+  }
+  while(v!=vertex);
+  int cost=0;
+  do
+  {
+    (parent[v]->capacity)-=capacity;
+    (parent[v]->rev->capacity)+=capacity;
+    cost+=(parent[v]->cost);
+    v=(parent[v]->u);
+  }
+  while(v!=vertex);
+  return -(cost*capacity);
+}
+int main()
+{
+  int T;
+  scanf("%d",&T);
+  while(T--)
+  {
+    int n,m;
+    scanf("%d%d",&n,&m);
+    Edge* edges[(m+n)<<1];
+    int t=0;
+    for(int x=0;x<n;x++)
+    {
+      Edge *e1=(Edge*)malloc(sizeof (Edge));
+      Edge *e2=(Edge*)malloc(sizeof (Edge));
+      scanf("%d%d%d",&(e1->v),&(e2->v),&(e2->cost));
+      e1->rev=e2;
+      e1->capacity=1;
+      e1->cost=-e2->cost;
+      e2->capacity=0;
+      e2->rev=e1;
+      (e1->u)=(e2->v);
+      (e2->u)=(e1->v);
+      edges[t++]=e1;
+      edges[t++]=e2;
+    }
+    for(int x=0;x<m;x++)
+    {
+      Edge *e1=(Edge*)malloc(sizeof (Edge));
+      Edge *e2=(Edge*)malloc(sizeof (Edge));
+      e1->v=x+1;
+      e1->cost=0;
+      scanf("%d",&(e1->capacity));
+      e1->rev=e2;
+      e2->v=x;
+      e2->cost=0;
+      e2->capacity=0;
+      e2->rev=e1;
+      (e1->u)=(e2->v);
+      (e2->u)=(e1->v);
+//       printf("\n vertex: %d, edges, dest:%d reverse Dest:%d",x,(e1->rev)->dest,(e2->rev)->dest);
+      edges[t++]=e1;
+      edges[t++]=e2;
+    }
+//     print(graph,m+1);
+//     fflush(stdout);
+    int cost=0,sum;
+    while(1)
+    {
+      sum=findAndFlow(edges,m+1,(m+n)<<1);
+      if(sum==0)
+      {
+	printf("%d\n",cost);
+	break;
+      }
+//       printf("sum:%d\n",sum);
+      cost+=sum;
+    }
+  }
+} 

@@ -1,0 +1,98 @@
+#include <iostream>
+#include <math.h>
+using namespace std;
+
+int cache[10000];
+
+bool isPrime(int p)
+{
+	if(p < 2) return false;
+	if(p == 2) return true;
+	if((p&1) == 0) return false;
+
+	int s = int(sqrt(double(p)));
+	for(int i=3; i <= s; i += 2)
+	{
+		if(p%i == 0) return false;
+	}
+	return true;
+}
+
+int makePrime(int n, int k)
+{
+	// look in cache
+	if(cache[n] == -2)
+	{
+		// calculate and store
+		for(int i = n; i <= 10000; i += k)
+		{
+			if(isPrime(i))
+			{
+				cache[n] = (i - n) / k;
+				return cache[n];
+			}
+		}
+		cache[n] = -1;
+	}
+	return cache[n];
+}
+
+int makePrimes(int nums[], int k)
+{
+	int steps = 0;
+	for(int i = 0; i<5; i++)
+	{
+		int isteps = makePrime(nums[i], k);
+		if(isteps >= 0) steps += isteps; else return -1;
+	}
+	return steps;
+}
+
+int main()
+{
+	int n;
+	int k;
+	int **m;
+
+	// initialize cache
+	for(int i=0; i<10000; i++) cache[i] = -2;
+
+	// read input
+	cin >> n;
+	cin >> k;
+	m = new int*[n];
+	for(int i = 0; i<n; i++)
+	{
+		m[i] = new int[n];
+		for(int j = 0; j < n; j++) cin >> m[i][j];
+	}
+
+	int besti = 0;
+	int bestj = 0;
+	int beststeps = -1;
+
+	// search valid middles
+	for(int i = 1; i < n-1; i++)
+	{
+		for(int j = 1; j < n-1; j++)
+		{
+			int arr[5] = {m[i-1][j-1], m[i-1][j+1], m[i][j], m[i+1][j-1], m[i+1][j+1]};
+			int steps = makePrimes(arr, k);
+			if(steps > -1 && (beststeps < 0 || steps < beststeps))
+			{
+				beststeps = steps;
+				besti = i;
+				bestj = j;
+			}
+		}
+	}
+
+	if(beststeps < 0)
+	{
+		cout << "no" << endl;
+	} else {
+		cout << "yes" << endl << beststeps << endl << (besti+1) << " " << (bestj+1) << endl;
+	}
+
+    return 0;
+}

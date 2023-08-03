@@ -1,0 +1,100 @@
+#include<iostream>
+
+using namespace std;
+
+#define MAX 100001
+#define mp make_pair
+#define mod 1000000007
+
+pair<int, int> tree_p[MAX << 3];
+pair<int, int> tree_n[MAX << 3];
+
+void update(int n, int s, int f, int index, pair<int, int> val, bool pn){
+    if(s == f){
+        if(pn){
+            if(tree_p[n].first > val.first) return;
+            else if(tree_p[n].first < val.first) tree_p[n] = mp(val.first, val.second);
+            else tree_p[n] = mp(val.first, (tree_p[n].second+val.second)%mod);
+        }
+        else{
+            if(tree_n[n].first > val.first) return;
+            else if(tree_n[n].first < val.first) tree_n[n] = mp(val.first, val.second);
+            else tree_n[n] = mp(val.first, (tree_n[n].second+val.second)%mod);
+        }
+    }
+    else{
+        int mid = (s+f) >> 1;
+        if(s <= index && index <= mid) update(n*2, s, mid, index, val, pn);
+        else update(n*2+1, mid+1, f, index, val, pn);
+
+        if(pn){
+            if(tree_p[n*2].first > tree_p[n*2+1].first){
+                tree_p[n] = mp(tree_p[n*2].first, tree_p[n*2].second);
+            }
+            else if(tree_p[n*2].first < tree_p[n*2+1].first){
+                tree_p[n] = mp(tree_p[n*2+1].first, tree_p[n*2+1].second);
+            }
+            else{
+                tree_p[n] = mp(tree_p[n*2].first, (tree_p[n*2].second + tree_p[n*2+1].second)%mod);
+            }
+        }
+        else{
+            if(tree_n[n*2].first > tree_n[n*2+1].first){
+                tree_n[n] = mp(tree_n[n*2].first, tree_n[n*2].second);
+            }
+            else if(tree_n[n*2].first < tree_n[n*2+1].first){
+                tree_n[n] = mp(tree_n[n*2+1].first, tree_n[n*2+1].second);
+            }
+            else{
+                tree_n[n] = mp(tree_n[n*2].first, (tree_n[n*2].second + tree_n[n*2+1].second)%mod);
+            }
+        }
+    }
+}
+
+pair<int, int> query(int n, int s, int f, int l, int r, bool pn){
+    if(s > f || s > r || f < l){
+        return mp(0, 0);
+    }
+    if(l <= s && f <= r){
+        if(pn) return tree_p[n];
+        else return tree_n[n];
+    }
+    int mid = (s+f) >> 1;
+    pair<int, int> p1 = query(n*2, s, mid, l, r, pn);
+    pair<int, int> p2 = query(n*2+1, mid+1, f, l, r, pn);
+    if(p1.first > p2.first) return p1;
+    else if(p1.first < p2.first) return p2;
+    else return mp(p1.first, (p1.second+p2.second)%mod);
+}
+
+int main(){
+    int n;
+    cin >> n;
+    int val;
+    for(int i=0;i<n;i++){
+        cin >> val;
+        if(val > 0){
+            pair<int, int> temp = query(1, 1, MAX-1, 1, val-1, 0);
+            temp.first++;
+            if(temp.second == 0) temp.second++;
+            update(1, 1, MAX-1, val, temp, 1);
+        }
+        else{
+            val = -1*val;
+            pair<int, int> temp = query(1, 1, MAX-1, 1, val-1, 1);
+            temp.first++;
+            if(temp.second == 0) temp.second++;
+            update(1, 1, MAX-1, val, temp, 0);
+        }
+    }
+    if(tree_p[1].first > tree_n[1].first){
+        cout << tree_p[1].first << " " << tree_p[1].second << endl;
+    }
+    else if(tree_p[1].first < tree_n[1].first){
+        cout << tree_n[1].first << " " << tree_n[1].second << endl;
+    }
+    else{
+        cout << tree_p[1].first << " " << tree_p[1].second+tree_n[1].second << endl;
+    }
+}

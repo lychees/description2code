@@ -1,0 +1,323 @@
+// Author: thecodekaiser
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int MXN = 101010;
+const int LVL = 20;
+
+#define pb push_back
+#define mp make_pair
+
+struct SegTree
+{
+    int N;
+    vector< pair<ll, int> > t;
+    vector<ll> lazy;
+    vector<int> inv;
+    ll *dist;
+    
+    void init(int n, ll dis[], int invp[])
+    {
+        N = n;
+        t.resize(4 * N + 1);
+        lazy.resize(4 * N + 1);
+
+        inv.resize(N + 1);
+        for(int i = 1; i <= n; i++)
+            inv[i] = invp[i];
+        dist = dis;
+        build(1, 1, N);
+    }
+    
+    void build(int Node, int l, int r)
+    {
+    	if(l > r)
+    		return;
+
+        if(l == r)
+        { 
+        	t[Node] = {dist[l], l}; 
+        	return; 
+        }
+
+        int mid = (l+r)/2, left = 2*Node, right = 2*Node+1;
+        build(left, l, mid);
+        build(right, mid+1, r);
+        t[Node] = max(t[left], t[right]);
+    }
+    
+    void update(int l, int r, int w) 
+    {
+        update(1, 1, N, l, r, w);
+    }
+    
+    void adjust(int Node, int l, int r)
+    {
+    	t[Node].first += lazy[Node];
+    	if(l != r)
+    	{
+    		lazy[2*Node]   += lazy[Node];
+    		lazy[2*Node+1] += lazy[Node];
+    	}
+    	lazy[Node] = 0;
+    	return;
+    }
+
+    void update(int Node, int l, int r, int i, int j, int w)
+    {
+    	if(lazy[Node])
+    		adjust(Node, l, r);
+
+    	if(l > r or r < i or j < l)
+    		return;
+
+        if(i <= l and r <= j)
+        {
+        	t[Node].first += w;
+        	if(l != r)
+        	{
+        		lazy[2*Node]   += w;
+        		lazy[2*Node+1] += w;
+        	}
+        	return;
+        }
+
+        int mid = (l+r)/2, left = 2*Node, right = 2*Node+1;
+        update(left, l, mid, i, j, w);
+        update(right, mid+1, r, i, j, w);
+        t[Node] = max(t[left], t[right]);
+        return;
+    }
+        
+    ll query(int l, int r)
+    {
+        if(!(1 <= l && l <= r && r <= N)) 
+        	return 0;
+
+        ll ret = query(1, 1, N, l, r);
+
+        return ret;
+    }
+    
+    ll query(int Node, int l, int r, int i, int j)
+    {
+    	if(lazy[Node])
+    		adjust(Node, l, r);
+
+    	if(l > r or r < i or j < l)
+    		return 0LL;
+
+        if(i <= l and r <= j)
+        	return t[Node].first;
+
+       	int mid = (l+r)/2, left = 2*Node, right = 2*Node+1;
+       	ll lval = query(left, l, mid, i, j);
+       	ll rval = query(right, mid+1, r, i, j);
+       	return max(lval, rval);
+    }
+
+} tree[MXN];
+
+vector<int> gph[MXN];
+int U[MXN], V[MXN], sub[MXN], done[MXN];
+int mxlevel[MXN], tin[LVL][MXN], tout[LVL][MXN], centroid[LVL][MXN], lastInPath[LVL][MXN], inv[MXN];
+ll dist[MXN];
+map< pair<int,int>, int> edges;
+int N, Q, _tm;
+
+int adj(int u, int e)
+{
+	return U[e] ^ V[e] ^ u;
+}
+
+void dfs(int cur, int pre)
+{
+	sub[cur] = 1;
+	for(auto edge : gph[cur])
+	{
+		int child = adj(cur, edge);
+		if(child != pre)
+		{
+			dfs(child, cur);
+			sub[cur] += sub[child];
+		}
+	}
+	
+	return;
+}
+
+int dfs_cen(int cur, int sz)
+{
+	int branch = cur;
+	for(auto edge : gph[cur])
+	{
+		if(done[edge]) continue;
+
+		int child = adj(cur, edge);
+		if(sub[child] > (sz/2))
+		{
+			branch = child;	break;
+		}
+	}
+
+	if(branch == cur) return cur;
+	sub[cur] -= sub[branch];
+	sub[branch] += sub[cur];
+	return dfs_cen(branch, sz);
+}
+
+void dfs2(int cur, int pre, ll dis, int cen, int level, int x)
+{
+	tin			[level][cur] = ++_tm;
+	centroid	[level][cur] = cen;
+	mxlevel			   [cur] = level;
+	lastInPath	[level][cur] = x;
+	inv				   [_tm] = cur;
+	dist			   [_tm] = dis;
+
+	for(auto edge : gph[cur])
+	{
+		if(done[edge])
+			continue;
+
+		int child = adj(cur, edge);
+
+		int u = cur, v = child;
+		if(u > v) swap(u, v);
+		ll wt = edges[{u, v}];
+
+		if(child != pre)
+		{
+			dfs2(child, cur, dis + wt, cen, level, x);
+		}
+	}
+
+	tout[level][cur] = _tm;
+//    cout << "CUR: " << cur << " LEVEL: " << level << " TIN: " << tin[level][cur] << " TOUT: " << tout[level][cur] << "\n";
+}
+
+void decompose(int root, int level)
+{
+	int cen = dfs_cen(root, sub[root]);
+
+	_tm 					 = 1;
+	tin			[level][cen] = _tm;
+	centroid	[level][cen] = cen;
+	mxlevel			   [cen] = level;
+	inv[1] 					 = cen;
+
+	for(auto edge : gph[cen])
+	{
+		if(done[edge])
+			continue;
+
+		int child = adj(cen, edge);
+
+		int u = cen, v = child;
+		if(u > v) swap(u, v);
+		ll wt = edges[{u, v}];
+
+		dfs2(child, cen, wt, cen, level, child);
+	}
+
+	tout		[level][cen] = _tm;
+    //cout << "ROOT: " << cen << " TIN: " << tin[level][cen] << " TOUT: " << tout[level][cen] << " LEVEL: " << level << endl;
+	tree[cen].init(sub[cen], dist, inv);
+	//cout << "tree[cen].t[1].first: " << tree[cen].t[1].first << "\n";
+
+	for(auto edge : gph[cen])
+	{
+		if(done[edge])
+			continue;
+
+		done[edge] = 1;
+		int child = adj(cen, edge);
+		decompose(child, level+1);
+	}
+	return;
+
+}
+void solve()
+{
+	cin >> N >> Q;
+
+	for(int i = 1; i <= N-1; i++)
+	{
+		int w;
+		cin >> U[i] >> V[i] >> w;
+		gph[U[i]].pb(i); gph[V[i]].pb(i);
+
+		if(U[i] > V[i])
+			swap(U[i], V[i]);
+
+		edges[{U[i], V[i]}] = w;
+	}
+	dfs(1, -1);
+	decompose(1, 1);
+
+	for(int i = 0; i < Q; i++)
+	{
+		int cmd;
+		scanf("%d", &cmd);
+
+		if(cmd == 1)
+		{
+			int u, v, w;
+			scanf("%d %d %d", &u, &v, &w);
+			if(u > v)
+				swap(u, v);
+			int mnlvl = min(mxlevel[u], mxlevel[v]);
+			int prevw = edges[{u, v}];
+			for(int i = 1; i <= mnlvl; i++)
+			{
+				int away = u, closer = v; 		// Closer to centroid
+				if(tin[i][away] < tin[i][closer])
+					swap(away, closer);
+
+				tree[ centroid[i][away] ].update(tin[i][away], tout[i][away], w - prevw);
+			}
+			edges[{u, v}] = w;
+		}
+		else if(cmd == 2)
+		{
+			int v;
+			scanf("%d", &v);
+
+			ll ans = 0LL;
+
+			auto f = tree[v].t[1];
+
+			int l = mxlevel[v];
+			int splitIdx = lastInPath[l][ tree[v].inv[f.second] ];
+
+			assert(sub[v] == tout[l][v]);
+			ll val = max(tree[v].query(1, tin[l][splitIdx]-1), tree[v].query(tout[l][splitIdx]+1, sub[v]));
+
+			ans = max(ans, f.first + val);
+
+			for(int i = 1; i <= l-1; i++)
+			{
+				int cen = centroid[i][v];
+
+				ll one = tree[cen].query(tin[i][v], tout[i][v]);
+
+				int splitIdx = lastInPath[i][v];
+
+				assert(sub[cen] == tout[i][cen]);
+				ll two = max(tree[cen].query(1, tin[i][splitIdx]-1), tree[cen].query(tout[i][splitIdx]+1, sub[cen]));
+
+				ans = max(ans, one + two);
+			}
+
+			printf("%lld\n", ans);
+		}
+	}
+	return;
+}
+
+int main()
+{
+	solve();
+	return 0;
+}

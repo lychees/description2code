@@ -1,0 +1,158 @@
+//http://www.codechef.com/OCT13/problems/KMHAMHA
+
+
+#include<iostream>
+#include<sstream>
+#include<cstdio>
+#include<stdlib.h>
+#include<string>
+#include<cstring>
+#include<cmath>
+#include<algorithm>
+#include<stack>
+#include<queue>
+#include<vector>
+#include<utility>
+#include<set>
+#include<map>
+ 
+using namespace std;
+ 
+typedef long long LL;
+typedef unsigned long long ull;
+typedef pair<int,int> pa;
+typedef vector<int> ve;
+ 
+#define REP(i,a,b) for(int i=a;i<b;i++)
+#define rep(i,n) REP(i,0,n)
+#define pb push_back
+#define inf 1000000000
+#define mp make_pair
+#define NIL 0
+
+inline int ni()
+{
+    register int r=0,c;
+    for(c=getchar_unlocked();c<=32;c=getchar_unlocked());
+    if(c=='-')
+        return -ni();
+    for(;c>32;r=(r<<1)+(r<<3)+c-'0',c=getchar_unlocked());
+    return r;
+}
+
+int G1_size,G2_size;
+int Pair_G1[1005],Pair_G2[1005];
+int Dist[1005];
+queue<int> Q;
+vector< vector<int> > Adj; 
+
+bool BFS()
+{
+    for(int v=1;v<=G1_size;v++)
+    {
+        if( Pair_G1[v] == NIL )
+        {
+            Dist[v] = 0;
+            Q.push(v);
+        }
+        else
+        {
+            Dist[v] = inf;
+        }
+    }
+    Dist[NIL] = inf;
+    while( Q.empty() == false )
+    {
+        int v = Q.front();
+        Q.pop();
+        if( Dist[v] < Dist[NIL] )
+        {
+            for(int i=0;i<Adj[v].size();i++)
+            {
+                int u = Adj[v][i];
+                if( Dist[Pair_G2[u]] == inf )
+                {
+                    Dist[Pair_G2[u]] = Dist[v] + 1;
+                    Q.push(Pair_G2[u]);
+                }
+            }
+        }
+    }
+    return Dist[NIL] != inf;
+}
+
+bool DFS(int v)
+{
+    if( v != NIL )
+    {
+        for(int i=0;i<Adj[v].size();i++)
+        {
+            int u = Adj[v][i];
+            if( Dist[Pair_G2[u]] == Dist[v] + 1 )
+            {
+                if( DFS(Pair_G2[u]) == true )
+                {
+                    Pair_G2[u] = v;
+                    Pair_G1[v] = u;
+                    return true;
+                }
+            }
+        }
+        Dist[v] = inf;
+        return false;
+    }
+    return true;
+}
+
+int main()
+{
+    // freopen("input.txt","r",stdin);
+    
+    int T;
+    T = ni();
+    while(T--)
+    {
+
+        int N;
+        N = ni();
+
+        vector< pair < int,int > > zeroes(N);
+        for(int i=0;i<N;i++)
+        {
+            zeroes[i].first = ni();
+            zeroes[i].second = ni();
+        }
+        map < int,int > rowMap,colMap;
+        int rowInd = 1, colInd = 1;
+        for(int i=0;i<N;i++)
+        {
+            if( rowMap.count(zeroes[i].first)<=0 )
+                rowMap[zeroes[i].first] = rowInd++;
+            if( colMap.count(zeroes[i].second)<=0 )
+                colMap[zeroes[i].second] = colInd++;
+        }
+
+        Adj.clear();
+        vector<int> temp;
+        for(int i=0;i<1005;i++)
+            Adj.pb(temp);
+
+        for(int i=0;i<N;i++)
+            Adj[rowMap[zeroes[i].first]].pb(colMap[zeroes[i].second]);
+
+        G1_size = rowInd - 1;
+
+        for(int i=0;i<1005;i++)
+            Pair_G1[i] = Pair_G2[i] = NIL;
+        int matching = 0;
+        while( BFS() == true )
+        {
+            for(int v=1;v<=G1_size;v++)
+                if( Pair_G1[v] == NIL )
+                    if( DFS(v) == true )
+                        matching++;
+        }
+        printf("%d\n",matching);
+    }
+    return 0;
+}       

@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+#define MOD 1000000003
+using namespace std;
+long long int A[10010], B[10010], f[10010], mp[10010];
+long long int C[10010], c[2][10010];
+int indx[1300];
+int n, m, cnt;
+bool prime[10010];
+
+vector <pair <long long int, int> > vec;
+vector <int> fc[1300];
+
+void precompute(){
+	mp[1] = 1;
+	int idx = 2;
+	cnt = 1;
+	for (int i = 2; i <= m; i++){
+		if (!prime[i]){
+			cnt++;
+			fc[idx].push_back(1);
+			for (int j = i; j <= m; j += i){
+				if (!prime[j]){
+					f[j] = i;
+					fc[idx].push_back(j);
+					prime[j] = true;
+				}
+			}
+			mp[i] = idx;
+			idx++;
+		}
+	}
+	cnt = idx;
+}
+
+int main(){
+	scanf("%d%d", &n, &m);
+	precompute();
+	int p, q, r, x, y, z;
+	long long atemp, btemp, a, b;
+
+	scanf("%lld%d%d%d", &a, &p, &q, &r);
+	scanf("%lld%d%d%d", &b, &x, &y, &z);
+
+	for (int i = 1; i < n; i++){
+		for (int j = 1; j <= m; j++){
+			atemp = a * p + q;
+			if (atemp >= MOD)
+				atemp %= MOD;
+			atemp = atemp * a + r;
+			if (atemp >= MOD)
+				atemp %= MOD;
+
+			btemp = b * x + y;
+			if (btemp >= MOD)
+				btemp %= MOD;
+			btemp = btemp * b + z;
+			if (btemp >= MOD)
+				btemp %= MOD;
+
+			A[j] = atemp;
+			B[j] = btemp;
+			a = atemp;
+			b = btemp;
+		}
+
+		memset(c[0], 127, (cnt << 3) + 16);
+		memset(c[1], 127, (cnt << 3) + 16);
+
+		for (int j = 1; j <= m; j++){
+			long long val = B[j] + C[j];
+			if (val < c[0][mp[f[j]]]){
+				c[1][mp[f[j]]] = c[0][mp[f[j]]];
+				indx[mp[f[j]]] = j;
+				c[0][mp[f[j]]] = val;
+			}
+			else if (val < c[1][mp[f[j]]])
+				c[1][mp[f[j]]] = val;
+		}
+
+		for (int j = 1; j <= m; j++){
+			C[j] += A[j];
+		}
+
+		for (int j = 2; j < cnt; j++){
+			for (int k = 0; k < fc[j].size(); k++){
+				if (fc[j][k] != indx[j])
+					C[fc[j][k]] = min(c[0][j], C[fc[j][k]]);
+				else
+					C[fc[j][k]] = min(c[1][j], C[fc[j][k]]);
+			}
+		}
+	}
+
+	long long ans = C[1];
+	for (int j = 1; j <= m; j++)
+		ans = min(ans, C[j]);
+	printf("%lld\n", ans);
+}

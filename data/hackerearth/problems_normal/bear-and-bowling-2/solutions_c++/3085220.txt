@@ -1,0 +1,133 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<unordered_set>
+#include<unordered_map>
+using namespace std;
+
+#define MAX 100002
+
+map<int, vector<int> > mp;
+
+int bit[MAX];
+void add(int b, int x){
+	b++;
+	while (b < MAX){
+		bit[b] += x;
+		b += b&-b;
+	}
+}
+int sum(int b){
+	int r = 0;
+	b++;
+	while (b){
+		r += bit[b];
+		b -= b&-b;
+	}
+	return r;
+}
+int ar[MAX];
+
+int b2[MAX];
+void add2(int b, int x){
+	b++;
+	while (b<MAX){
+		b2[b] += x;
+		b += b&-b;
+	}
+}
+int sum2(int b){
+	int r = 0;
+	b++;
+	while (b){
+		r += b2[b];
+		b -= b&-b;
+	}
+	return r;
+}
+int main(){
+	int n;
+	scanf("%d", &n);
+	for (int i = 0; i < n; i++){
+		int a;
+		scanf("%d", &a);
+		mp[-a].push_back(i);
+		ar[i] = a;
+	}
+	int lef = INT_MAX;
+	int rig = INT_MIN;
+	int cnt = 0;
+	for (auto it = mp.begin(); it != mp.end(); it++){
+		int LL = lef;
+		int RR = rig;
+		for (int i = 0; i < (*it).second.size(); i++){
+			lef = min(lef, (*it).second[i]);
+			rig = max(rig, (*it).second[i]);
+			add2((*it).second[i], 1);
+			cnt++;
+		}
+		if (it == mp.begin()){
+			int cc = 0;
+			int rng = 0;
+			for (int i = 0; i < n; i++){
+				if (ar[i] == -(*it).first){
+					cc++;
+					rng = max(rng, cc);
+				}
+				else{
+					cc = 0;
+				}
+			}
+			add(0, 1);
+			add(rng + 1, -1);
+		}
+		if (it != mp.begin() && sum2(RR) - sum2(LL - 1) == RR - LL + 1){
+			int LEF = LL;
+			int RIG = RR;
+			while (LEF >= 0 && ar[LEF] >= -(*it).first){
+				LEF--;
+			}
+			while (RIG <n && ar[RIG] >= -(*it).first){
+				RIG++;
+			}
+			int mm = RR - LL + 1;
+			LEF++;
+			RIG--;
+			int m2 = RIG - LEF + 1;
+			add(m2 + 1, -1);
+			add(mm, 1);
+		}
+	}
+	for (int i = 1; i <= n; i++){
+		if (sum(i)){
+			putchar('1');
+		}
+		else{
+			putchar('0');
+		}
+	}
+	puts("");
+	return 0;
+}

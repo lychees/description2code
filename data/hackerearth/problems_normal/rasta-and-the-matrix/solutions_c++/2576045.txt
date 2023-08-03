@@ -1,0 +1,180 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<unordered_map>
+#include<unordered_set>
+//#include<quadmath.h>
+using namespace std;
+#define MAX 100002
+int n;
+struct st{
+	long long int w=0;
+	long long int b=0;
+	long long int lef;
+	long long int rig;
+	int lazy = 0;
+	int op = 0;
+	st *l=NULL;
+	st *r=NULL;
+};
+st *neww(){
+	return new st();
+}
+void update(st *b){
+	b->op += b->lazy;
+	bool flag = false;
+	if (!b->l){
+		flag = true;
+		b->l = neww();
+		b->l->op = 0;
+		b->l->lazy = b->op;
+		b->l->lef = b->lef;
+		b->l->rig = (b->lef + b->rig) / 2LL;
+		b->l->w = b->l->rig - b->l->lef;
+	}
+	bool flag2 = false;
+	if (!b->r){
+		flag2 = true;
+		b->r = neww();
+		b->r->op = 0;
+		b->r->lazy = b->op;
+		b->r->lef = (b->lef + b->rig) / 2LL;
+		b->r->rig = b->rig;
+		b->r->w = b->r->rig - b->r->lef;
+	}
+	b->lazy %= 2;
+	if (b->lazy){
+		if (flag == false){
+			b->l->lazy++;
+		}
+		if (flag2 == false){
+			b->r->lazy++;
+		}
+		swap(b->w, b->b);
+	}
+	b->lazy = 0;
+}
+const unsigned long long int MAXX = 1000000000000000001LL;
+class Dynamicsegtree{
+public:
+	st *root;
+	Dynamicsegtree(){
+		root = neww();
+		root->w = MAXX;
+		root->lef = 0;
+		root->rig = MAXX;
+	}
+	inline void add(st *b, long long int l, long long int r, long long ll, long long int rr){
+		update(b);
+		if (ll <= l&&r <= rr){
+			b->lazy++;
+			update(b);
+			return;
+		}
+		if (rr <= l || r <= ll){
+			return;
+		}
+		add(b->l, l, (l + r) >> 1LL, ll, rr);
+		add(b->r, (l + r) >> 1LL, r, ll, rr);
+		b->w = b->l->w + b->r->w;
+		b->b = b->l->b + b->r->b;
+	}
+	inline pair<long long int, long long int> q(st *b, unsigned long long int l, unsigned long long int r, unsigned long long int ll, unsigned long long int rr){
+		update(b);
+		if (ll <= l&&r <= rr){
+			return make_pair(b->w, b->b);
+		}
+		if (rr <= l || r <= ll){
+			return make_pair(0, 0);
+		}
+		
+		if (b->w == b->rig - b->lef){
+			return make_pair(min(r, rr) - max(l, ll), 0);
+		}
+		if (b->b == b->rig - b->lef){
+			return make_pair(0,min(r, rr) - max(l, ll));
+		}
+		pair<long long int, long long int> r1 = q(b->l, l, (l + r) >> 1ULL, ll, rr);
+		pair<long long int, long long int> rr1 = q(b->r, (l + r) >> 1ULL, r, ll, rr);
+		r1.first += rr1.first;
+		r1.second += rr1.second;
+		return r1;
+	}
+}; 
+Dynamicsegtree row;
+Dynamicsegtree col;
+long long int Lastans;
+const unsigned long long int MOD = 1000000007LL;
+int main(){
+	int q;
+	scanf("%d", &q);
+	while (q--){
+		int ty;
+		scanf("%d", &ty);
+		if (ty == 1){
+			int x;
+			long long int l;
+			long long int r;
+			scanf("%d%lld%lld", &x, &l, &r);
+			l ^= Lastans;
+			r ^= Lastans;
+			if (x == 0){
+				row.add(row.root, 0, MAXX, l, r + 1LL);
+			}
+			else{
+				col.add(col.root, 0, MAXX, l, r + 1LL);
+			}
+			continue;
+		}
+		else{
+			long long int l;
+			long long int r;
+			long long int x;
+			long long int y;
+			scanf("%lld%lld%lld%lld", &l, &r, &x, &y);
+			l ^= Lastans;
+			r ^= Lastans;
+			x ^= Lastans;
+			y ^= Lastans;
+			pair<long long int, long long int> k = row.q(row.root, 0, MAXX, l, r+1LL);
+			pair<long long int, long long int> kk = col.q(col.root, 0, MAXX, x, y + 1LL);
+			k.first%=MOD;
+			k.second%=MOD;
+			kk.second%=MOD;
+			kk.first%=MOD;
+			k.first *= kk.second;
+			k.second *= kk.first;
+			k.first %= MOD;
+			k.second %= MOD;
+			long long int ans = k.first + k.second;
+			if (ans >= MOD){
+				ans %= MOD;
+			}
+			printf("%lld\n", ans);
+			Lastans = ans;
+		}
+	}
+	return 0;
+}

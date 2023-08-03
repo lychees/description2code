@@ -1,0 +1,117 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+using namespace std;
+#define MOD 1000000007
+long long int dp[2][20];
+vector<vector<long long int> > mat;
+vector<vector<long long int> > bas;
+int addd[11];
+bool use[11];
+#define MAX 11
+vector<vector<long long int> > mul(vector<vector<long long int> > &vv, vector<vector<long long int> > &vvv){
+	vector<vector<long long int> > r(vv.size(), vector<long long int>(vvv[0].size(), 0));
+	for (int i = 0; i < vv.size(); i++){
+		for (int j = 0; j < vvv.size(); j++){
+			for (int jj = 0; jj < vvv[0].size(); jj++){
+				r[i][j] += vv[i][jj] * vvv[jj][j];
+				r[i][j] %= MOD;
+			}
+		}
+	}
+	return r;
+}
+vector<vector<long long int> > ppow(vector<vector<long long int> > a, long long int n){
+	if (n == 1){
+		return a;
+	}
+	vector<vector<long long int> > r(a.size(), vector<long long int>(a[0].size(), 0));
+	if (n == 0){
+		for (int i = 0; i < a.size(); i++){
+			r[i][i] = 1;
+		}
+		return r;
+	}
+	n--;
+	r = a;
+	while (n){
+		if (n & 1){
+			r = mul(r, a);
+		}
+		a = mul(a, a);
+		n >>= 1LL;
+	}
+	return r;
+}
+int main(){
+	int countt = 0;
+	for (int i = 2; i < MAX; i++){
+		if (!use[i]){
+			for (int j = i; j < MAX; j += i){
+				int aa = j;
+				while (aa%i == 0){
+					addd[j] ^= (1 << countt);
+					aa /= i;
+				}
+				use[j] = true;
+			}
+			countt++;
+		}
+	}
+	for (int i = 1; i < 10; i++){
+		dp[1][addd[i]]++;
+	}
+	mat.assign(16, vector<long long int>(16, 0));
+	int maxt = 0;
+	for (int i = 0; i < 16; i++){
+		//if (dp[1][i]){
+			for (int k = 1; k < 10; k++){
+				int go = addd[k] ^ i;
+				if(go>=16){
+					continue;
+				}
+				mat[go][i]++;
+				maxt = max(maxt, go);
+			}
+		//}
+	}
+	int t;
+	scanf("%d", &t);
+	while (t--){
+		long long int n;
+		scanf("%lld", &n);
+		bas = mat;
+		bas = ppow(bas, n-1);
+		long long int sum = 0;
+		for (int i = 1; i < 16; i++){  //bas???
+			for (int j = 0; j < 16; j++){
+				sum += dp[1][j] * bas[i][j];
+				sum %= MOD;
+			}
+		}
+		printf("%lld\n", sum);
+	}
+	return 0;
+}

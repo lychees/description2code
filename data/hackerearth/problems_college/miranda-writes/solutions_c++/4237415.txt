@@ -1,0 +1,117 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int,int> ii;
+typedef pair<ll,ll> pll;
+
+#define TRACE
+#ifdef TRACE
+template<class T, class U>
+ostream& operator<<(ostream& out, const pair<T,U>& a){out<<"["<<a.first<<" "<<a.second<<"]";return out;}
+template<class T>
+ostream& operator<<(ostream& out, const vector<T>& a){out<<"[ ";for(auto &it:a)out<<it<<" ";out<<"]";return out;}
+template<class T>
+ostream& operator<<(ostream& out, const set<T>& a){out<<"[ ";for(auto &it:a)out<<it<<" ";out<<"]";return out;}
+template<class T,class U>
+ostream& operator<<(ostream& out, const map<T,U>& a){for(auto &it:a)out<<it.first<<" -> "<<it.second<<" | ";return out;}
+#define pra(a,n) cerr<<#a<<" : ";for(int i=0;i<n;++i)cerr<<a[i]<<" ";cerr<<endl;
+#define pr(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+  cerr << name << " : " << arg1 << endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+  const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+} 
+#else
+#define pr(...)
+#define pra(a,n)
+#endif
+#define fill(a,x) memset(a,x,sizeof(a)) 
+#define all(x) (x).begin(), (x).end()
+#define sz(a) int((a).size()) 
+#define pb push_back 
+#define F first
+#define S second
+#define FOR(i,a,b) for(int i = a; i<=b; ++i)
+#define NFOR(i,a,b) for(int i = a; i>=b; --i)
+#define NOFLUSH ios_base::sync_with_stdio(false),cin.tie(0),cout.tie(0);
+
+const ll INF = 1e18;
+const int mod = 1e9+7;
+const int N = 4e2+10; 
+const double eps = 1e-9;
+
+ll expo(ll a,ll b,ll c = mod){
+    if(!b)return 1;
+    ll temp = expo(a,b/2,c);
+    temp = (temp*temp)%c;
+    if(b&1)temp = (temp*a)%c;
+    return temp; 
+}
+int n,m,k,vis[N][(1<<15)+1],a[20];
+int val[N][(1<<15)+1],dist[N][N];
+int dp(int at,int mask){
+	int &A = val[at][mask];
+	if(A != -1){
+		return A;
+	}
+	if(mask == (1<<k)-1){
+		return A=dist[at][n-1];
+	}
+	int ans = mod;
+	FOR(i,0,k-1){
+		if(!(mask&(1<<i))){
+			int cost = dp(a[i],mask|(1<<i)) + dist[at][a[i]];
+			ans = min(ans,cost);
+		}
+	}
+	return A = ans;
+}
+int main(){
+  
+  clock_t tm = clock();
+  NOFLUSH;
+  int __t = 1;
+  //cin >> __t;
+  FOR(_t,1,__t){
+    cin >> n >> m >> k;
+    fill(dist,0);
+    fill(val,-1);
+    FOR(i,0,n-1){
+    	FOR(j,0,n-1){
+    		if(i!=j)dist[i][j]=mod;
+    	}
+    }
+    FOR(i,0,m-1){
+    	int u,v,w;
+    	cin >> u >> v >> w;
+    	u--,v--;
+    	dist[u][v]=min(dist[u][v],w);
+    	dist[v][u]=min(dist[u][v],w);
+    }  
+    FOR(i,0,n-1){
+    	FOR(j,0,n-1){
+    		FOR(k,0,n-1){
+    			dist[j][k] = min(dist[j][k],dist[j][i]+dist[i][k]); 
+    		}
+    	}
+    }
+    FOR(i,0,k-1){
+    	cin >> a[i];
+    	a[i]--;
+    }
+    int ans = mod;
+    FOR(i,0,k-1){
+    	ans = min(ans,dist[0][a[i]]+dp(a[i],1<<i));
+    }
+    if(ans == mod)ans = dist[0][n-1];
+    cout << ans << "\n";
+  }
+  tm = clock()-tm ;
+  cerr << (float)(tm)/CLOCKS_PER_SEC << "\n";
+  return 0;
+}

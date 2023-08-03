@@ -1,0 +1,173 @@
+#include <iostream>
+#include <fstream>
+using namespace std;
+
+
+//ifstream f("wow.in");
+
+#define ll long long
+#define MOD ((ll)1000000007)
+#define f cin
+
+class mat
+{
+public:
+
+    ll a[20][20];
+    int i,j,k;
+
+    mat(int n2)
+    {
+        for(i=0; i<=16; ++i)
+            for(j=0; j<=16; ++j)
+                a[i][j]=0;
+    }
+
+    void operator*=(mat B)
+    {
+        mat C(16);
+
+        for(i=0; i<=16; ++i)
+            for(j=0; j<=16; ++j)
+                for(k=0; k<=16; ++k)
+                    C.a[i][j]=(C.a[i][j]+(a[i][k]*B.a[k][j]))%MOD;
+
+        for(i=0; i<=16; ++i)
+            for(j=0; j<=16; ++j)
+                a[i][j]=C.a[i][j];
+    }
+};
+
+mat lgpow(mat M,ll xp)
+{
+    ll i;
+    mat res(16);
+    for(i=0; i<=16; ++i) res.a[i][i]=1;
+
+    for(i=60; i>=0; --i)
+    {
+        res*=res;
+
+        if (xp&(ll)1<<i)
+            res*=M;
+    }
+    return res;
+}
+
+ll vxor[666];
+ll val[666];
+
+ll invers(ll v1,ll v2)
+{
+    ll x1=1,y1=0,x2=0,y2=1;
+
+    while (v1&&v2)
+    {
+        if (v1>=v2)
+        {
+          ll D=v1/v2;
+          x1-=D*x2;
+          y1-=D*y2;
+          v1%=v2;
+        }
+        else
+        {
+          ll D=v2/v1;
+          x2-=D*x1;
+          y2-=D*y1;
+          v2%=v1;
+        }
+    }
+
+    ll res;
+    if (v1) res=x1;
+    else res=x2;
+
+    res%=MOD;
+
+    if (res<0) res+=MOD;
+    return res;
+}
+
+ll lgpow_val(ll val,ll xp)
+{
+   ll res=1;
+
+   for(ll i=60;i>=0;--i)
+   {
+      res*=res;
+      res%=MOD;
+
+      if (xp&((ll)1<<i))
+      {
+        res*=val;
+        res%=MOD;
+      }
+   }
+
+   return res;
+}
+
+
+int main()
+{
+    ll nrt,i,n,j;
+
+    f>>nrt;
+
+    for(; nrt; --nrt)
+    {
+        f>>n;
+
+        ll v9=lgpow_val(9,n+1)-1;
+        v9*=invers(8,MOD);
+        v9%=MOD;
+        v9--;
+
+        ll v10=lgpow_val(10,n);
+
+        ll result=v10-v9;
+        result%=MOD;
+
+        vxor[1]=0;
+        vxor[2]=1;
+        vxor[3]=2;
+        vxor[4]=0;
+        vxor[5]=4;
+        vxor[6]=3;
+        vxor[7]=8;
+        vxor[8]=1;
+        vxor[9]=0;
+
+        for(i=0;i<=20;++i) val[i]=0;
+
+        for(i=1; i<=9; ++i)
+            val[vxor[i]]++;
+
+        val[16]=3;
+
+        mat M(16);
+
+        for(i=0; i<16; ++i)
+            for(j=1; j<=9; ++j)
+            {
+                int new_val=i^vxor[j];
+                M.a[new_val][i]++;
+                if (new_val==0) M.a[16][i]++;
+            }
+
+        M.a[16][16]=1;
+
+        mat C=lgpow(M,n-1);
+
+        for(i=0; i<=16; ++i)
+        {
+            result+=C.a[16][i]*val[i];
+            result%=MOD;
+        }
+
+        cout<<result<<'\n';
+    }
+
+    return 0;
+}

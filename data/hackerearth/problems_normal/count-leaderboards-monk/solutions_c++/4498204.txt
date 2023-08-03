@@ -1,0 +1,58 @@
+#include <iostream>
+using namespace std;
+
+using ull = unsigned long long;
+constexpr ull mod = 1000000007;
+
+ull distr[1001] = {};
+ull factorial[1001];
+ull invfactorial[1001];
+
+ull powm(ull x, ull n) {
+	ull res = 1;
+	while (n) {
+		if (n % 2)
+			res = (res * x) % mod;
+		x = (x * x) % mod;
+		n /= 2;
+	}
+	return res;
+}
+
+ull inversem(ull n) {
+	return powm(n, mod - 2);
+}
+
+void prepare() {
+	factorial[0] = 1;
+	for (int i = 1; i <= 1000; ++i) 
+		factorial[i] = (i * factorial[i - 1]) % mod;
+	invfactorial[1000] = inversem(factorial[1000]);
+	for (int i = 999; i >= 0; --i) 
+		invfactorial[i] = ((i + 1) * invfactorial[i + 1]) % mod;
+}
+
+ull binomial(unsigned n, unsigned k) {
+	ull res = (factorial[n] * invfactorial[k]) % mod;
+	return (res * invfactorial[n - k]) % mod;
+}
+
+int main() {
+	
+	prepare();
+	ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    int n, k;
+    cin >> n >> k;
+    
+    distr[0] = 1;
+    for (int i = 1; i <= n; ++i)
+    	for (int j = n; j >= 0; --j) 
+    		for (int l = 1; j >= l * i; ++l)
+    			distr[j] = (distr[j] + distr[j - l * i] * invfactorial[l]) % mod;
+    
+    cout << (((distr[n] * binomial(n, k)) % mod) * factorial[n]) % mod << '\n';
+    
+    return 0;
+}

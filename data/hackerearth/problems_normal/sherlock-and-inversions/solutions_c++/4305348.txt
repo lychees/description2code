@@ -1,0 +1,94 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define lli long long int
+const int N=1e5;
+int n,q,bsz;
+long long int curr_ans=0;
+long long int answers[N+4];
+int a[N+4],b[N+5];
+long long int bit[N+4];
+pair<pair<int,int>,int> c[N+4];
+inline bool mo_cmp(const pair<pair<int,int>,int> &A,
+        const pair<pair<int,int>,int> &B)
+{
+    int blck_A=A.first.first/bsz;
+    int blck_B=B.first.first/bsz;
+    if(blck_A!=blck_B)
+        return blck_A<blck_B;
+    return A.first.second < B.first.second;
+}
+inline void upd(int at, long long int  by)
+{
+    for(;at<=n;at+=at&-at)
+        bit[at]+=by;
+}
+inline lli  qry(int at)
+{
+    lli  sum=0;
+    for(;at>=1;at-=at&-at)
+        sum+=bit[at];
+    return sum;
+}
+int main()
+{
+    scanf("%d %d",&n,&q);
+    bsz=static_cast<int>(sqrt(n));
+   // printf("bsz is %d\n",bsz);
+    for(int i=0;i<n;++i)
+    {
+        scanf("%d",&a[i]);
+        b[i]=a[i];
+    }
+    sort(b,b+n);
+    for(int i=0;i<n;++i)
+        a[i]=int(lower_bound(b,b+n,a[i])-b)+1;
+    for(int i=0;i<q;++i)
+    {
+        int l,r;
+        scanf("%d %d",&l,&r);
+        l--,r--;
+        c[i].first.first=l;
+        c[i].first.second=r;
+        c[i].second=i;
+    }
+    memset(bit,0,sizeof bit);
+    sort(c,c+q,mo_cmp);
+    curr_ans=0;
+    int mo_lft=0,mo_rt=0;
+    upd(a[mo_rt],+1);
+    for(int i=0;i<q;++i)
+    {
+        int l=c[i].first.first;
+        int r=c[i].first.second;
+     //   printf("l is %d r is %d\n",l,r);
+        while(mo_lft<l)//delete an elem
+        {
+            upd(a[mo_lft],-1);
+            curr_ans-=qry(a[mo_lft]-1);
+            mo_lft++;
+        }
+        while(mo_lft>l)//add an elem
+        {
+            mo_lft--;
+            curr_ans+=qry(a[mo_lft]-1);
+            upd(a[mo_lft],+1);
+        }
+        while(mo_rt<r)//add an elem  to right
+        {
+            
+                curr_ans+=(mo_rt-mo_lft+1)-qry(a[mo_rt+1]);
+                upd(a[mo_rt+1],+1);
+                mo_rt++;
+        }
+        while(mo_rt>r)//del an elem 
+        {
+                upd(a[mo_rt],-1);//remove element from consideration
+                curr_ans-=(mo_rt-1-mo_lft+1)-qry(a[mo_rt]);
+                mo_rt--;
+        }
+        answers[c[i].second]=curr_ans;
+    }
+    for(int i=0;i<q;++i)
+        printf("%lld\n",answers[i]);
+    return 0;
+}

@@ -1,0 +1,107 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ull long long int
+#define INF 1000000009
+ull arr[1003][1003],n,m;
+vector<vector<pair<ull,ull> > >graph;
+bool finalize[1000006];
+ull dist[1000006];
+priority_queue<pair<ull,ull>,vector<pair<ull,ull> >,greater<pair<ull,ull> > >pq;
+bool safe(int i,int j)
+{
+    if(i>0 && j>0 && i<=n && j<=m)
+        return true;
+    return false;
+}
+int point(int i,int j)
+{
+    int k= (i-1)*m+j;
+    return k;
+}
+void dijkstra(int x)
+{
+    ull p,vertex,weight;
+    pq.push(make_pair(arr[1][1],x));
+    while(!pq.empty())
+    {
+        p=pq.top().second;
+        pq.pop();
+        if(finalize[p])
+            continue;
+        for(ull i=0;i<graph[p].size();i++)
+        {
+            vertex=graph[p][i].first;
+            weight=graph[p][i].second;
+            if(!finalize[vertex] && dist[vertex]>dist[p]+weight)
+            {
+                dist[vertex]=dist[p]+weight;
+                pq.push(make_pair(dist[vertex],vertex));
+            }
+        }
+        finalize[p]=true;
+    }
+    return;
+}
+int main()
+{
+    ios::sync_with_stdio(false);
+    ull t,i,j,p,k,w,s;
+    cin>>t;
+    while(t--)
+    {
+        cin>>n>>m;
+        for(i=1;i<=n;i++)
+        for(j=1;j<=m;j++)
+            cin>>arr[i][j];
+        graph.resize(n*m+5);
+        for(i=1;i<=n;i++)
+        {
+            for(j=1;j<=m;j++)
+            {
+                k=point(i,j);
+                s=arr[i][j];
+                if(safe(i+1,j))
+                {
+                    p=point(i+1,j);
+                    w=arr[i+1][j];
+                    graph[k].push_back(make_pair(p,w));
+                    graph[p].push_back(make_pair(k,s));
+                }
+                if(safe(i-1,j))
+                {
+                    p=point(i-1,j);
+                    w=arr[i-1][j];
+                    graph[k].push_back(make_pair(p,w));
+                    graph[p].push_back(make_pair(k,s));
+                }
+                if(safe(i,j+1))
+                {
+                    p=point(i,j+1);
+                    w=arr[i][j+1];
+                    graph[k].push_back(make_pair(p,w));
+                    graph[p].push_back(make_pair(k,s));
+                }
+                if(safe(i,j-1))
+                {
+                    p=point(i,j-1);
+                    w=arr[i][j-1];
+                    graph[k].push_back(make_pair(p,w));
+                    graph[p].push_back(make_pair(k,s));
+                }
+            }
+        }
+        for(i=1;i<=n*m;i++)
+            dist[i]=INF;
+        dist[1]=arr[1][1];
+        memset(finalize,false,sizeof(finalize));
+        dijkstra(1);
+        cin>>i>>j>>p;
+        w=point(i,j);
+        if(dist[w]>p)
+            cout<<"NO\n";
+        else
+            cout<<"YES\n"<<p-dist[w]<<"\n";
+        graph.clear();
+    }
+    return 0;
+}

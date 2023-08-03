@@ -1,0 +1,182 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define fru(j,n) for(int j=0; j<(n); ++j)
+//#define tr(it,v) for(typeof((v).begin()) it=(v).begin(); it!=(v).end(); ++it)
+#define tr(it,v) for(auto it=(v).begin(); it!=(v).end(); ++it)
+#define x first
+#define y second
+#define pb push_back
+#define ALL(G) (G).begin(),(G).end()
+
+#if 0
+	#define DEB printf
+#else
+	#define DEB(...)
+#endif
+
+typedef long long ll;
+typedef long long LL;
+typedef double D;
+typedef pair<int,int> pii;
+typedef vector<int> vi;
+typedef vector<ll> vll;
+
+const int inft = 1000000009;
+const int mod = 1000000007;
+const int MAXN = 1000006;
+
+namespace FFT{
+	const double PI=atan(1)*4;
+	typedef vector<complex<double> > VC;
+	int deg,log_deg;
+	VC C;
+	int rev(int a){
+		int wyn=0;
+		fru(i,log_deg){
+			wyn*=2;
+			wyn+=a%2;
+			a/=2;
+		}
+		return wyn;
+	}
+	void DFT(int strona, VC &A){
+		VC AD(deg);
+		fru(k,deg) AD[rev(k)]=A[k];
+		int m=1;
+		for(int s=1;s<=log_deg;s++){
+			m*=2;
+			complex<double> l=1.0,t,u;
+			fru(j,m/2){
+				for(int k=j;k<deg;k+=m){
+					t=l*AD[k+m/2];
+					u=AD[k];
+					AD[k]=u+t;
+					AD[k+m/2]=u-t;
+				}
+				l=polar(1.0,2*PI*(j+1)/(double)(strona*m));
+			}
+		}
+		swap(A,AD);
+	}
+	vll FFT(VC A, VC B){
+		int n=max(A.size(),B.size());
+		log_deg=1;
+		while((1<<log_deg)<n)log_deg++;
+		log_deg++;
+		deg=1<<log_deg;
+		A.resize(deg,0);B.resize(deg,0);
+		DFT(1,A);
+		DFT(1,B);
+		C.resize(deg);
+		fru(i,deg) C[i]=A[i]*B[i];
+		DFT(-1,C);
+		fru(i,deg) C[i]/=deg;
+		vll X(deg);
+		fru(i,deg) X[i]=round(real(C[i]));
+		return X;
+	}
+	vll FFT(vi A, vi B) {
+		VC AA(A.size()), BB(B.size());
+		fru(j,A.size()) AA[j] = A[j];
+		fru(j,B.size()) BB[j] = B[j];
+		return FFT(AA,BB);
+	}
+}
+
+struct centroid{
+	vector<vi> WC;
+	vi SAS;
+};
+centroid CEN[MAXN];
+vi V[MAXN];
+int weight[MAXN];
+
+int SUB_SIZE[MAXN];
+int sub_size_dfs(int u, int par, vi &SKL) {
+	int s=1;
+	tr(it, V[u]) if(*it!=par) s += sub_size_dfs(*it,u,SKL);
+	SKL.pb(u);
+	return SUB_SIZE[u] = s;
+}
+
+void dfs(vi &R, int u, int par, int depth) {
+	if(depth>=R.size()) R.resize(depth+1);
+	R[depth]++;
+	tr(it, V[u]) if(*it != par) dfs(R,*it,u,depth+1);
+}
+
+vll ANS(MAXN);
+void oblicz_wew_cen(int u){
+	DEB("centroid %d\n",u+1);
+	vi S(1,1);
+	vll K;
+	tr(it, V[u]) {
+		vi R;
+		dfs(R, *it, u, 1);
+		DEB("dla syna %d: ",*it+1);
+		tr(it2,R) DEB("%lld ",*it2); DEB("\n");
+		if(S.size() < R.size()) S.resize(R.size());
+		fru(j,R.size()) S[j] += R[j];
+		vll KK = FFT::FFT(R,R);
+		if(K.size() < KK.size()) K.resize(KK.size());
+		fru(j,KK.size()) K[j] += KK[j];
+	}
+	vll SK = FFT::FFT(S,S);
+	if(SK.size() < K.size()) SK.resize(K.size());
+	fru(j,K.size()) SK[j] -= K[j];
+	fru(j,SK.size())if(j) {
+		assert(SK[j] %2 == 0);
+		SK[j]/=2;
+	}
+	fru(j,SK.size()) ANS[j] += SK[j];
+
+}
+
+int find_centroid(int u){
+	vi SKL;
+	int all=sub_size_dfs(u,-1,SKL);
+	tr(it,SKL) {
+		int s=*it;
+		int gora=all-SUB_SIZE[s];
+		bool ok=gora*2<=all;
+		tr(i2,V[s]) if(SUB_SIZE[*i2]<SUB_SIZE[s])
+			if(SUB_SIZE[*i2]*2>all) {ok=0;break;}
+		if(ok) return s;
+	}
+	DEB("nie ma centroida w %d (size %lu)\n",u,SKL.size());
+	return u;
+}
+
+void go(int u) {
+	u = find_centroid(u);
+	oblicz_wew_cen(u);
+	tr(it,V[u]) V[*it].erase(find(ALL(V[*it]), u));
+	swap(CEN[u].SAS, V[u]);
+	tr(it, CEN[u].SAS) go(*it);
+}
+int qp(int a, int b){
+	if(b==0) return 1;
+	int y=qp(a,b/2);
+	y=1LL*y*y%mod;
+	if(b%2) y=1LL*y*a%mod;
+	return y;
+}
+int main() {
+	int n,k;
+	scanf("%d%d",&n,&k);
+	fru(i,n-1) {
+		int a, b;
+		scanf("%d%d",&a,&b);
+		a--; b--;
+		V[a].pb(b);
+		V[b].pb(a);
+	}
+	go(0);
+//	fru(i,n) printf("ANS[%d] = %lld\n",i,ANS[i]);
+	LL ret=0;
+	fru(i,n) ret+=ANS[i]*qp(i,k);
+	printf("%lld\n",ret%mod);
+
+	return 0;
+}

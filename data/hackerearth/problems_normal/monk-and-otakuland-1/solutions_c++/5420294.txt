@@ -1,0 +1,116 @@
+#include<bits/stdc++.h>
+using namespace std;
+class SegTree
+{
+	int size;
+	int *segTree, *lazy;
+	public:
+		SegTree(char *a,int n)
+		{
+			size=pow(2,ceil(log2(n))+1);
+			segTree=new int[size];
+			lazy=new int[size];
+			build(a,1,1,n);
+			for(int i=0;i<size;i++)
+				lazy[i]=0;
+		}
+		void build(char *a,int i,int start,int end)
+		{
+			if(start==end)
+			{
+				segTree[i]=a[start];
+				return;
+			}
+			int mid=(start+end)/2;
+			build(a,2*i,start,mid);
+			build(a,2*i+1,mid+1,end);
+			segTree[i]=segTree[2*i]+segTree[2*i+1];
+		}
+		int query(int l,int r,int i,int start,int end)
+		{
+			if(start>r||end<l)
+				return 0;
+			if(lazy[i])
+			{
+				if(lazy[i]%2)
+					segTree[i]=(end+1-start)-segTree[i];
+				if(start!=end)
+				{
+					lazy[2*i]+=lazy[i];
+					lazy[2*i+1]+=lazy[i];
+				}
+				lazy[i]=0;
+			}
+			if(start>=l&&end<=r)
+				return segTree[i];
+			int mid=(start+end)/2;
+			return (query(l,r,2*i,start,mid)+query(l,r,2*i+1,mid+1,end));
+		}
+		void updateRange(int l,int r,int i,int start,int end)
+		{
+			if(lazy[i])
+			{
+				if(lazy[i]%2)
+					segTree[i]=(end+1-start)-segTree[i];
+				if(start!=end)
+				{
+					lazy[2*i]+=lazy[i];
+					lazy[2*i+1]+=lazy[i];
+				}
+				lazy[i]=0;
+			}
+			if(start>r||end<l)
+				return;
+			if(start>=l&&end<=r)
+			{
+				segTree[i]=(end+1-start)-segTree[i];
+				if(start!=end)
+				{
+					lazy[2*i]++;
+					lazy[2*i+1]++;
+				}
+				return;
+			}
+			int mid=(start+end)/2;
+			updateRange(l,r,2*i,start,mid);
+			updateRange(l,r,2*i+1,mid+1,end);
+			segTree[i]=segTree[2*i]+segTree[2*i+1];
+		}
+};
+int main()
+{
+	int n,m;
+	cin>>n>>m;
+	char a[n+1];
+	cin>>(a+1);
+	for(int i=1;i<=n-1;i++)
+		a[i]=(a[i]-60)/2;
+	SegTree S(a,n-1);
+	int type,l,r,f,t;
+	while(m--)
+	{
+		scanf("%d",&type);
+		if(type==1)
+		{
+			scanf("%d %d",&l,&r);
+			S.updateRange(l,r-1,1,1,n-1);
+		}
+		else
+		{
+			scanf("%d %d",&f,&t);
+			if(f<t)
+			{
+				t--;
+				printf("%d\n",(t+1-f)-S.query(f,t,1,1,n-1));
+			}
+			else if(t<f)
+			{
+				f--;
+				printf("%d\n",S.query(t,f,1,1,n-1));
+			}
+			else
+				printf("0\n");
+		}
+	}
+	return 0;
+}

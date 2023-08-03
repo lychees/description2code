@@ -1,0 +1,173 @@
+// ADITYA VARSHNEY
+
+#include <iostream>
+#include <bitset>
+#include <cmath>
+#include <queue>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+#include <climits>
+
+#define pb push_back
+#define mp make_pair
+#define mod 1000000007
+
+typedef long long int ll;
+
+using namespace std;
+
+#define getcx getchar//_unlocked
+#define mod2 4294967296
+
+long long int powr (long long int a, long long int b)
+{
+if (b == 0)
+return 1;
+long long int x = powr(a, b/2);
+if (b % 2 == 0)
+return (x*x)%mod;
+else
+return (((x*x)%mod)*a)%mod;
+}
+
+
+long long int scanll()
+{
+    long long int n=0;
+    char ch = getcx();
+    int sign=1;
+    while( ch < '0' || ch > '9' ) {
+        if(ch=='-')
+            sign = -1;
+        ch=getcx();
+    }
+    while( ch >= '0' && ch <= '9' )
+        n = (n<<3)+(n<<1) + ch-'0',
+    ch=getcx();
+    return(n * sign);
+}
+
+int scani()
+{
+    int n=0;
+    char ch = getcx();
+    int sign=1;
+    while( ch < '0' || ch > '9' ) {
+        if(ch=='-')
+            sign = -1;
+        ch=getcx();
+    }
+    while( ch >= '0' && ch <= '9' )
+        n = (n<<3)+(n<<1) + ch-'0',
+    ch=getcx();
+    return(n * sign);
+}
+
+struct holder {
+	long long suml,sumr,no;
+};
+
+holder join(holder,holder,ll,ll,ll);
+
+ll a[100005];
+holder t[4*100005];
+
+void construct (long long v, long long tl, long long tr)
+{
+	if (tl == tr) {
+		t[v].no = a[tl];
+		t[v].suml = 0;
+		t[v].sumr = 0;
+	} else {
+		long long tm = (tl + tr) / 2;
+		construct (v*2, tl, tm);
+		construct (v*2+1, tm+1, tr);
+		t[v] = join (t[v*2], t[v*2+1],tl,tm+1,tr);
+	}
+}
+
+void update (long long v, long long tl, long long tr, long long pos, long long new_val)
+{
+	if (tl == tr) {
+		t[v].no += new_val;
+	} else {
+		long long tm = (tl + tr) / 2;
+		if (pos <= tm)
+			update (v*2, tl, tm, pos, new_val);
+		else
+			update (v*2+1, tm+1, tr, pos, new_val);
+		t[v] = join (t[v*2], t[v*2+1],tl,tm+1,tr);
+    }
+}
+
+holder find (long long v, long long tl, long long tr, long long l, long long r)
+{
+	if (l <= tl && tr <= r) {
+		return t[v];
+	}
+	long long tm = (tl + tr) / 2;
+	if (r <= tm)
+		return find (v*2, tl, tm, l, r);
+	if (l > tm)
+		return find (v*2+1, tm+1, tr, l, r);
+	return join (find (v*2, tl, tm, l, tm), find (v*2+1, tm+1, tr, tm+1, r),l,tm+1,r);
+}
+
+holder join (holder x, holder y, ll tl, ll tm, ll tr) {
+	holder ret;
+    ret.suml = x.suml + (tm-tl)*y.no + y.suml;
+	ret.sumr = y.sumr + (tr-tm+1)*x.no + x.sumr;
+	ret.no = x.no + y.no;
+	return ret;
+}
+
+int main()
+{
+    long long i,n,m,k,l,r,val;
+	n = scanll();
+	m = scanll();
+	for(i = 0; i < n; i++)
+	{
+		a[i] = scanll();
+	}
+	int x;
+	holder data;
+	construct(1, 0, n-1);
+	while(m--)
+	{
+		long long x,y,z;
+		x = scani();
+		if(x == 1)
+		{
+            k = scanll();
+            l = scanll();
+            r = scanll();
+            ll ans = 0;
+            if(k == l) {
+                ans = find(1,0,n-1,l-1,r-1).suml;
+            } else if(k == r) {
+                ans = find(1,0,n-1,l-1,r-1).sumr;
+            }else if(k > l && k < r) {
+                ans = find(1,0,n-1,l-1,k-1).sumr + find(1,0,n-1,k-1,r-1).suml;
+            } else if(k > r) {
+                data = find(1,0,n-1,l-1,r-1);
+                ans = data.sumr + data.no*(k-r);
+            } else if(k < l) {
+                data = find(1,0,n-1,l-1,r-1);
+                ans = data.suml + data.no*(l-k);
+            }
+            printf("%lld\n",ans);
+		}
+		else if(x == 2)
+		{
+            k = scanll();
+            val = scanll();
+			update(1, 0, n-1, k-1, val);
+		}
+	}
+    return 0;
+}

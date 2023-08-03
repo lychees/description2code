@@ -1,0 +1,125 @@
+#include <bits/stdc++.h>
+#define pb push_back
+#define x first
+#define ll long long
+#define mk make_pair
+#define y second
+#define pii pair<int, int>
+#define pll pair<ll, ll>
+#define rep(i, a, b) for (ll i = a; i <= b; ++i)
+#define rrep(i, a, b) for (ll i = a; i >= b; i--)
+using namespace std;
+const int mod = 1e9 + 7;
+const int inf = 1e7 + 7;
+const int maxn = 1e5 + 5;
+int n, m;
+set<int> s;
+int type[maxn];
+int p[maxn][600];
+int t[maxn], l[maxn];
+int mark[maxn] = {0};
+std::vector<int> adj[maxn];
+vector<int> no[maxn];
+int ans = -inf;
+int lca(int x, int y) {
+  int log;
+  if (l[x] < l[y])
+    swap(x, y);
+  for (log = 1; 1 << log <= l[x]; log++)
+    ;
+  log--;
+  for (int i = log; i >= 0; --i) {
+    if (l[x] - (1 << i) >= l[y])
+      x = p[x][i];
+  }
+  if (x == y)
+    return x;
+  for (int i = log; i >= 0; i--) {
+    if (p[x][i] != -1 and p[x][i] != p[y][i]) {
+      x = p[x][i];
+      y = p[y][i];
+    }
+  }
+  return t[x];
+}
+void find_par(int i, int par, int lev) {
+  l[i - 1] = lev;
+  t[i - 1] = par - 1;
+  for (auto v : adj[i]) {
+    if (v == par)
+      continue;
+    find_par(v, i, lev + 1);
+  }
+  return;
+}
+pii dfs(int i, int par, int typ) {
+  int mx = 0, mx1 = 0;
+  int fl = 0;
+  for (auto v : adj[i]) {
+    if (v == par)
+      continue;
+    pair<int, int> now = dfs(v, i, typ);
+    if (now.y == 0)
+      continue;
+    fl++;
+    if (now.x >= mx) {
+      mx1 = mx;
+      mx = now.x;
+    } else if (now.x > mx1)
+      mx1 = now.x;
+  }
+  if (type[i] == typ or fl > 1)
+    ans = max(ans, mx + mx1);
+  if (fl or type[i] == typ)
+    return {max(mx, mx1) + 1, fl | (type[i] == typ)};
+  return {0, 0};
+}
+int main() {
+  ios::sync_with_stdio(false);
+  int n, m;
+  std::cin >> n >> m;
+  rep(i, 1, n) {
+    int x;
+    std::cin >> x;
+    no[x].pb(i);
+    type[i] = x;
+    mark[x]++;
+    s.insert(x);
+  }
+  rep(i, 0, n - 2) {
+    int u, v;
+    std::cin >> u >> v;
+    adj[u].pb(v);
+    adj[v].pb(u);
+  }
+  find_par(1, 0, 1);
+  memset(p, -1, sizeof(p));
+  rep(i, 0, n - 1) p[i][0] = t[i];
+  for (int j = 1; 1 << j < n; j++) {
+    rep(i, 0, n - 1) {
+      if (p[i][j - 1] != -1)
+        p[i][j] = p[p[i][j - 1]][j - 1];
+    }
+  }
+  for (auto u : s) {
+    if (no[u].size() > 140) {
+      ans = -inf;
+      dfs(1, -1, u);
+      if (mark[u] == 1)
+        std::cout << "0"
+                  << " ";
+      else
+        std::cout << ans << " ";
+    } else {
+      int ans = 0;
+      rep(i, 0, no[u].size() - 1) {
+        rep(j, i + 1, no[u].size() - 1) {
+          int ca = lca(no[u][i] - 1, no[u][j] - 1);
+          ans = max(ans, l[no[u][i] - 1] + l[no[u][j] - 1] - 2 * l[ca]);
+        }
+      }
+      std::cout << ans << " ";
+    }
+  }
+  return 0;
+}

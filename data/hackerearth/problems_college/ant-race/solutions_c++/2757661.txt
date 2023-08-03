@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int inorder[1001], preorder[1001],hashe[1001];
+int lastinserted;
+int ans[1001];
+
+void solve(int l,int r,int node)
+{
+	if(l>r)
+	 return;
+	lastinserted++;
+	int idx=hashe[preorder[lastinserted]];
+	ans[node]=preorder[lastinserted];
+	solve(l,idx-1,2*node);
+	solve(idx+1,r,2*node+1);
+}
+
+vector < int > adj[1001];
+bool vis[1001];
+
+int bfs(int x,int y)
+{
+	memset(vis,0,sizeof vis);
+	queue < pair < int , int > > q;
+	q.push(make_pair(x,0));
+
+	while(q.empty()==false)
+	{
+		int p=q.front().first;
+		int dis=q.front().second;
+		if(vis[p]==true)
+		  continue;
+		q.pop();
+
+		if(p==y)
+		 return dis;
+
+		for(int i=0; i<adj[p].size(); i++)
+		{
+			if(vis[adj[p][i]]==0)
+			 q.push(make_pair(adj[p][i],dis+1));
+		}
+	}
+	return 1234567;
+}
+
+int main()
+{
+    int t;
+    cin>>t;
+
+    while(t--)
+    {
+    	int n;
+    	scanf("%d",&n);
+
+    	for(int i=1; i<=n; i++) scanf("%d",&inorder[i]),hashe[inorder[i]]=i;
+    	for(int i=1; i<=n; i++) scanf("%d",&preorder[i]);
+    	lastinserted=0;
+    	solve(1,n,1);
+
+    	for(int i=1; i<=n; i++) adj[i].clear();
+    	for(int i=1; i<=n; i++)
+    	{
+    		int x1=2*i;
+    		int x2=2*i+1;
+
+    		if(x1<=n)
+    		{
+    			adj[ans[i]].push_back(ans[x1]);
+    			adj[ans[x1]].push_back(ans[i]);
+    		}
+    		if(x2<=n)
+    		{
+    			adj[ans[i]].push_back(ans[x2]);
+    			adj[ans[x2]].push_back(ans[i]);
+    		}
+    	}
+
+    	int x,y,z;
+    	scanf("%d%d%d",&x,&z,&y);
+
+    	int a=bfs(x,z);
+    	int b=bfs(y,z);
+
+    	(a<b)?puts("FIRST"):puts("SECOND");
+    }
+    return 0;
+}

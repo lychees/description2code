@@ -1,0 +1,85 @@
+#define _USE_MATH_DEFINES
+#include <algorithm>
+#include <cstdio>
+#include <functional>
+#include <iostream>
+#include <cstring>
+#include <climits>
+#include <cmath>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <time.h>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> i_i;
+typedef pair<ll, int> ll_i;
+typedef pair<double, int> d_i;
+typedef pair<ll, ll> ll_ll;
+typedef pair<double, double> d_d;
+struct edge { int u, v; double w; };
+
+ll MOD = 1000000007;
+ll _MOD = 1000000009;
+ll MOD2 = 1LL << 32;
+int dx[4] = {-1, 0, 1, 0};
+int dy[4] = {0, -1, 0, 1};
+
+void dijkstra(int n, vector<edge> G[], int s, ll d[]) {
+	fill(d, d + n, LLONG_MAX); d[s] = 0;
+	priority_queue<ll_i, vector<ll_i>, greater<ll_i> > q;
+	q.push(ll_i(0, s));
+	while (!q.empty()) {
+		ll_i p = q.top(); q.pop();
+		int u = p.second;
+		if (p.first > d[u]) continue;
+		for (int i = 0; i < G[u].size(); i++) {
+			edge e = G[u][i];
+			if (d[e.v] > d[u] + e.w) {
+				d[e.v] = d[u] + e.w;
+				q.push(ll_i(d[e.v], e.v));
+			}
+		}
+	}
+}
+
+vector<edge> G[500500];
+ll d[500500];
+
+int main() {
+	int t; cin >> t;
+	while (t--) {
+		int n, m, B; cin >> n >> m >> B;
+		fill(G, G + 500500, vector<edge>());
+		while (m--) {
+			ll u, v, c, l; cin >> u >> v >> c >> l;
+			u--; v--;
+			for (int i = 0; i + c <= B; i++) {
+				edge e = {u * (B + 1) + i, v * (B + 1) + (i + c), l};
+				G[u * (B + 1) + i].push_back(e);
+				//edge _e = {v * (B + 1) + i, u * (B + 1) + (i + c), l};
+				//G[v * (B + 1) + i].push_back(_e);
+			}
+		}
+		dijkstra(n * (B + 1), G, 0, d);
+		vector< vector<ll> > a(n, vector<ll>(B + 1));
+		for (int u = 0; u < n; u++) {
+			a[u][0] = LLONG_MAX;
+			for (int i = 1; i <= B; i++)
+				a[u][i] = min(a[u][i - 1], d[u * (B + 1) + i]);
+		}
+		int q; cin >> q;
+		while (q--) {
+			int x, y; scanf("%d%d", &x, &y); x--;
+			if (x == 0) printf("0\n");
+			else if (y == 0) printf("-1\n");
+			else printf("%lld\n", a[x][y] < LLONG_MAX ? a[x][y] : -1LL);
+		}
+	}
+}

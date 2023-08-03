@@ -1,0 +1,137 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+
+struct SaturationInt {
+	typedef long long T; typedef double Float;
+	static T Max;
+	T x;
+	static inline T sat(T x) { return x > Max ? Max : x; }
+	SaturationInt(): x(0) { }
+	SaturationInt(T x_): x(sat(x_)) { }
+	T get() const { return x; }
+
+	SaturationInt operator+(const SaturationInt &that) const {
+		return SaturationInt(x + that.x);
+	}
+	SaturationInt operator*(const SaturationInt &that) const {
+		return SaturationInt((Float)x * that.x > Max ? Max : x * that.x);
+	}
+	SaturationInt &operator+=(const SaturationInt &that) { return *this = *this + that; }
+	SaturationInt &operator*=(const SaturationInt &that) { return *this = *this * that; }
+
+	SaturationInt operator^(long long k) const {
+		long long r = 1, a = x;
+		while(k) {
+			if(k & 1) r *= a;
+			if(k >>= 1) {
+				if((Float)a * a * r > Max) return SaturationInt(Max);
+				a *= a;
+			}
+		}
+		return SaturationInt(r);
+	}
+};
+SaturationInt::T SaturationInt::Max = INFL;
+typedef SaturationInt sint;
+
+sint memo[20][2][2][2][11][2];
+int Ls[20], Rs[20];
+sint rec(int i, bool lt, bool gt, bool lz, int prevd, bool way) {
+	sint &r = memo[i+1][lt][gt][lz][prevd][way];
+	if(r.x != -1) return r;
+	if(i == -1) return r = 1;
+	if(i == 0 && way && lz) return r = 0;
+	r.x = 0;
+	int L = Ls[i], R = Rs[i];
+	rep(d, 10) {
+		if(!lt && d > R) continue;
+		if(!gt && d < L) continue;
+		if(prevd != 10 && !(!way ? prevd < d : prevd > d)) continue;
+		r += rec(i-1, lt || d < R, gt || d > L, lz && d == 0, lz && d == 0 ? 10 : d, !way);
+	}
+	return r;
+}
+
+sint getcnt(ll L, ll R) {
+	mset(memo, -1);
+	{	ll X = L;
+		rep(i, 20) Ls[i] = X % 10, X /= 10;
+	}
+	{	ll X = R;
+		rep(i, 20) Rs[i] = X % 10, X /= 10;
+	}
+	sint res;
+	res += rec(18, false, false, true, 10, false);
+	res += rec(18, false, false, true, 10, true);
+//	cerr << L << ", " <<R << ": " << res.get() << endl;
+	return res;
+}
+
+int main() {
+	int T;
+	scanf("%d", &T);
+	rep(ii, T) {
+		long long N, K;
+		scanf("%lld%lld", &N, &K);
+		ll L, R;
+		{	ll l = 1, u = N;
+			while(u - l > 0) {
+				ll mid = (l + u + 2) / 2 - 1;
+				sint cnt = getcnt(mid, N);
+				if(cnt.get() <= K)
+					u = mid;
+				else
+					l = mid+1;
+			}
+			L = getcnt(l, N).get() != K ? -1 : l;
+		}
+		{	ll l = N, u = (ll)1e18+1;
+			while(u - l > 0) {
+				ll mid = (l + u + 2 + 1) / 2 - 1;
+				sint cnt = getcnt(N, mid);
+				if(cnt.get() <= K)
+					l = mid;
+				else
+					u = mid-1;
+			}
+			R = u > (ll)1e18 || getcnt(N, u).get() != K ? -1 : l;
+		}
+		printf("%lld %lld\n", L, R);
+	}
+	return 0;
+}

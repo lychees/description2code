@@ -1,0 +1,161 @@
+/* --- author: enot-the-rockstar ---*/
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <set>
+#include <map>
+#include <ctime>
+#include <cassert>
+
+#define fs first
+#define sc second
+#define pb push_back
+#define mp make_pair
+#define forn(i, n) for(int i = 0 ; (i) < (n) ; ++i)
+#define forit(it,v) for(typeof((v).begin()) it = v.begin() ; it != (v).end() ; ++it)
+#define eprintf(...) fprintf(stderr, __VA_ARGS__),fflush(stderr)
+#define sz(a) ((int)(a).size())
+#define all(a) (a).begin(),a.end()
+
+static inline unsigned long long rdtsc() { unsigned long long d; __asm__ __volatile__ ("rdtsc" : "=A" (d) ); return d; }
+
+using namespace std;
+
+typedef long long ll;
+typedef double dbl;
+typedef vector<int> vi;
+typedef pair<int, int> pi;
+
+const int inf = (int)1e9;
+const dbl eps = 1e-9;
+
+/* --- main part --- */
+
+#define TASK "a"
+
+ll d[20][2][2][11]; //pos, eq, dir
+map<ll, ll> mem;
+int a[20];
+
+ll get(ll x)
+{
+    ll X = x;
+    if (x < 10) return x;
+    if (mem.find(x) != mem.end()) return mem[x];
+    memset(d, 0, sizeof d);
+    forn(i, 20) a[i] = x % 10, x /= 10;
+    d[19][1][0][10] = 1;
+    for (int i = 18; i >= 0; --i)
+    {
+        forn(j, 10) forn(k, 10)
+        {
+            if (j < k) d[i][0][0][j] += d[i + 1][0][1][k];
+            if (j > k) d[i][0][1][j] += d[i + 1][0][0][k];
+        }
+        for (int j = 1; j < 10; ++j)
+        {
+            d[i][0][0][j] += d[i + 1][0][0][10];
+            d[i][0][1][j] += d[i + 1][0][0][10];
+        }
+        d[i][0][0][10] += d[i + 1][0][0][10];
+        forn(dd, 2) forn(k, 10) if (d[i + 1][1][dd][k] != 0)
+        {
+            if (dd == 0)
+            {
+                for (int j = k + 1; j < a[i]; ++j) d[i][0][1][j] += d[i + 1][1][dd][k];
+                if (a[i] > k) d[i][1][1][a[i]] += d[i + 1][1][dd][k];
+            }
+            else
+            {
+                for (int j = 0; j < min(a[i], k); ++j) d[i][0][0][j] += d[i + 1][1][dd][k];
+                if (a[i] < k) d[i][1][0][a[i]] += d[i + 1][1][dd][k];
+            }
+        }
+        if (d[i + 1][1][0][10] != 0)
+        {
+            if (a[i] == 0)
+            {
+                d[i][1][0][10] = d[i + 1][1][0][10];
+            }
+            else
+            {
+                d[i][0][0][10] += d[i + 1][1][0][10];
+                for (int j = 1; j < a[i]; ++j)
+                {
+                    d[i][0][0][j] += d[i + 1][1][0][10];
+                    d[i][0][1][j] += d[i + 1][1][0][10];
+                }
+                d[i][1][0][a[i]] += d[i + 1][1][0][10];
+                d[i][1][1][a[i]] += d[i + 1][1][0][10];
+            }
+        }
+    }
+    //forn(i, 20) forn(j, 2) forn(dd, 2) forn(k, 11) if (d[i][j][dd][k] != 0) eprintf("%d %d %d %d --> %I64d\n", i, j, dd, k, d[i][j][dd][k]);
+    ll val = -9;
+    forn(i, 2) forn(j, 2) forn(k, 10) val += d[0][i][j][k];
+    mem[x] = val;
+    //eprintf("%I64d --> %I64d\n", X, val);
+    return val;
+}
+
+ll calc(ll L, ll R)
+{
+    return get(R) - get(L - 1);
+}
+
+ll getl(ll n, ll k)
+{
+    if (calc(1, n) < k) return -1;
+    ll L = 1;
+    ll R = n;
+    while (L < R)
+    {
+        ll M = (L + R) / 2;
+        if (calc(M, n) <= k) R = M;
+        else L = M + 1;
+    }
+    return L;
+}
+
+ll getr(ll n, ll k)
+{
+    if (calc(n, 1e18) < k) return -1;
+    ll L = n;
+    ll R = 1e18;
+    while (L < R)
+    {
+        ll M = (L + R + 1) / 2;
+        if (calc(n, M) <= k) L = M;
+        else R = M - 1;
+    }
+    return R;
+}
+
+int main()
+{
+    #ifdef home
+        assert(freopen(TASK".in", "r", stdin));
+        assert(freopen(TASK".out", "w", stdout));
+    #endif
+    //get(132);
+    int tn;
+    cin >> tn;
+    forn(tt, tn)
+    {
+        ll n, k;
+        cin >> n >> k;
+        ll l = getl(n, k);
+        ll r = getr(n, k);
+        cout << l << " " << r << "\n";
+    } 
+    #ifdef home
+        eprintf("Time: %d ms\n", (int)(clock() * 1000. / CLOCKS_PER_SEC));
+    #endif
+    return 0;
+}
+ 

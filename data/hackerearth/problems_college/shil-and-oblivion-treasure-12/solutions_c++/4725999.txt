@@ -1,0 +1,155 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+ll hi = 1000000007;
+int pr[10005],ind[10005],tree[170][4*10005];
+int a[10005],fa[10005];
+ll po(ll a,ll b)
+{
+	if(b==0)return 1;
+	ll x= po(a,b/2);
+	x = (x*x)%hi;
+	if(b%2)x = (a*x)%hi;
+	return x;
+}
+void build(int in, int v, int lo, int hi)
+{
+	if(lo==hi)
+	{
+		int cur = a[lo];
+		int cc = 0;
+		while(cur % pr[in]==0){
+			cc++;
+			cur/=pr[in];
+		}
+		tree[in][v] = cc;
+		return;
+	}
+	int mid = (lo + hi)/2;
+	build(in,2*v,lo,mid);
+	build(in,2*v+1,mid+1,hi);
+	tree[in][v] = max(tree[in][2*v],tree[in][2*v+1]);
+	
+}
+void update(int in, int v, int lo, int hi, int pos, int val)
+{
+    //printf("update query for %d %d %d %d %d\n",pr[in],lo,hi,pos,val);
+	if(lo==hi)
+	{
+		
+		tree[in][v] = val;
+		return;
+	}
+	int mid = (lo + hi)/2;
+	if(pos<=mid)update(in,2*v,lo,mid,pos,val);
+	else update(in,2*v+1,mid+1,hi,pos,val);
+    tree[in][v] = max(tree[in][2*v],tree[in][2*v+1]);
+}
+int query(int in, int v, int lo, int hi, int l, int r)
+    {
+    if(l>r)return 0;
+    //printf("query %d %d %d %d %d %d\n",in,v,lo,hi,l,r);
+    if(lo==l && hi==r)return tree[in][v];
+    int mid = (lo + hi)/2;
+  //  if(l>mid)return query(in, 2*v+1, mid+1, hi, l, r);
+    //if(r<=mid)return query(in, 2*v, lo, mid, l, r);
+    int fir = query(in,2*v,lo,mid,l,min(mid,r));
+    int sec = query(in,2*v+1,mid+1,hi,max(l,mid+1),r);
+    return max(fir,sec);
+}
+int main()
+{
+   // cout << "Hello World!" << endl;
+   int n,q,cur;
+   int in = 0;
+   fa[1] = 1;
+   for(n=2;n<=1000;n++)
+   {
+   	if(a[n]==0)
+   	{
+   		 cur = n;
+   		ind[n] = in;
+   			pr[in++] = n;
+   		while(cur<=1000)
+   		{
+   			fa[cur] = a[cur] = n;
+   			cur+=n;
+   		
+   		}
+   	}
+   }
+  // printf("totla primes %d\n",in);
+   scanf("%d",&n);
+   int i;
+  
+   for(i=0;i<n;i++)
+   scanf("%d",&a[i]);
+   for(i=0;i<168;i++){
+    // printf("%d is changed to ",tree[i][1]);
+   build(i,1,0,n-1);
+  // printf("%d\n",tree[i][1]);
+   }
+   scanf("%d",&q);
+ //  printf(" query %d\n",q);
+  // return 0;
+   for(i=0;i<q;i++)
+   {
+   	int ty,x,y;
+   	scanf("%d%d%d",&ty,&x,&y);
+   	if(ty==1)
+   	{
+   	x--;
+   	cur = a[x];
+   	a[x] = y;
+       // printf("factor %d\n",cur);
+   	while(1)
+   	{
+   		if(cur ==1)break;
+   		int cc = 0;
+   		int val = fa[cur];
+       // printf("div by %d\n",val);
+   		while(cur%val==0){
+   			cur/=val;
+   			
+   		}
+       // printf("hence updating %d %d with 0\n",val,ind[val]);
+   		update(ind[val],1,0,n-1,x,0);
+   	}
+   	cur = y;
+   //	printf("break\n");
+   	//return 0;
+   	while(1)
+   	{
+   		if(cur==1)break;
+   		int cc = 0;
+   		int val = fa[cur];
+   		while(cur%val==0){
+   			cur/=val;
+   			cc++;
+   		}
+   		update(ind[val],1,0,n-1,x,cc);
+   		//printf("updating %d %d with %d\n",val,ind[val],cc);
+   	}
+   	}
+   	else {
+        x--;
+        y--;
+        long long res = 1;
+        int co = 0;
+        //printf("query %d %d\n",x,y);
+        for(int ii=0;ii<168;ii++)
+            {
+           
+            co = query(ii,1,0,n-1,x,y);
+            if(co)
+                {
+              //  printf("%d is present with po %d\n",pr[ii],co);
+                res = (res * po(pr[ii],co))%hi;
+            }
+        }
+        printf("%lld\n",res);
+    }
+   	}
+   
+    return 0;
+}

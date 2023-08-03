@@ -1,0 +1,222 @@
+#include<iostream>
+#include<algorithm>
+#include<cstdio>
+#include<cmath>
+#include<string>
+#include<cstring>
+#include<vector>
+#include<set>
+#include<iomanip>
+#include<queue>
+#include<map>
+#include<list>
+#include<stack>
+#define fl(i,s,n) for(i=s;i<n;i++)
+#define flr(i,s,n) for(i=s;i>n;i--)
+#define ls(i,s) for(i=0;s[i]!='\0';i++)
+#define gi(x) fastscan(x)
+#define pi(x) printf("%d",x)
+#define checkline(x) while(x!='\0' && x!='\n')
+#define pt(s) printf(s)
+#define PI acos(-1)
+#define f_in freopen("input.txt","r",stdin)
+#define f_out freopen("output.txt","w",stdout)
+#define in(i,j,k) ((j<=i) && (i<k))
+#define ull unsigned long long int
+#define lli long long int
+#define sd(x) scanf("%d",&x)
+#define sd2(x,y) scanf("%d%d",&x,&y)
+#define sd3(x,y,z) scanf("%d%d%d",&x,&y,&z)
+#define fi first
+#define se second
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair(x,y)
+#define r0 return 0
+#define mod 1000000007
+using namespace std;
+vector<lli> all_prim;
+lli ps;
+lli **nop;
+lli exp(lli a, lli p )
+{
+lli result = 1;
+if(p==0)
+    return 1;
+if(p==1)
+    return a;
+while(p)
+{
+    if(p&1)
+        result *= a;
+    result%=mod;
+    p >>=1;
+    a*=a;
+    a%=mod;
+}
+return result;
+}
+bool is_prime(lli n)
+{
+    if(n==2)
+        return true;
+    lli j = sqrt(n);
+    for(int i=2;i<=(j+1);i++)
+        if(n%i==0)
+            return false;
+    return true;
+}
+void init()
+{
+    lli i,j,k,x,y,z;
+    fl(i,2,1001)
+    {
+        if(is_prime(i))
+            all_prim.pb(i);
+    }
+    ps = all_prim.size();
+    //fl(i,0,ps)
+        //cout<<all_prim[i]<<"  ";
+    //cout<<ps<<endl;
+    nop = new lli * [1001];
+    fl(i,0,1001)
+    {
+        nop[i] = new lli [ps];
+        fl(j,0,ps)
+            nop[i][j]=0;
+        y = i;
+        if(y<=1)
+            continue;
+        fl(j,0,ps)
+        {
+            x = all_prim[j];
+            if(y==1)
+                break;
+            while(y%x==0)
+            {
+                y/=x;
+                nop[i][j]+=1;
+            }
+        }
+    }
+}
+struct seg_tree
+{
+    lli hs[200];
+    lli start;
+    lli last;
+};
+int main()
+{
+    //f_in;
+    init();
+    int p_val,q_val;
+    lli n,N,T,x,a,b,y,i,j,k,z,l,r,first,last,iter,t,value,L,R,q;
+    n=0;
+    scanf("%lld",&n);
+    lli *num;
+    num = new lli[n];
+    fl(i,0,n)
+        scanf("%lld",&num[i]);
+    lli x_1,x_2,x_3,var,var1;
+    double ln;
+    ln = log2(n);
+    if((lli)ln == ln)
+        N =n;
+    else
+        N = 1LL<<((lli)ln + 1);
+    seg_tree *tree;
+    tree = new seg_tree[2*N];
+    fl(i,N-1,N+n-1)
+    {
+        y = num[i-(N-1)];
+        fl(j,0,ps)
+            tree[i].hs[j]=nop[y][j];
+        tree[i].start = i;
+        tree[i].last = i;
+    }
+    fl(i,N+n-1,2*N)
+    {
+        fl(j,0,ps)
+            tree[i].hs[j]=0;
+        tree[i].start = i;
+        tree[i].last = i;
+    }
+    T=N-1;
+    var = 1;
+    while(T!=0)
+    {
+        last = N-2;
+        t= T<<1;
+        j = (T-1)>>1;
+        for(i=T;i<t;i+=2)
+        {
+            first = last+1;
+            fl(k,0,ps)
+                tree[j].hs[k]=max(tree[i].hs[k],tree[i+1].hs[k]);
+            tree[j].start=tree[i].start;
+            tree[j].last =tree[i+1].last;
+            last=first + var;
+            j++;
+        }
+    T>>=1;
+    var=1+(var<<1);
+    }
+    scanf("%lld",&q);
+    while(q--)
+    {
+        scanf("%lld%lld%lld",&value,&l,&r);
+        if(value==2)
+        {
+        L=l;
+        R=r;
+        l+=N-2;
+        r+=N-2;
+        lli ra[ps];
+        fl(i,0,ps)
+            ra[i]=0;
+        while(l<=r)
+        {
+        var  = l;
+        var1 = l>>1;
+        while(1)
+        {
+            if(tree[var1].start!=l)
+                break;
+            if(tree[var1].last>r)
+                break;
+            var = var1;
+            var1>>=1;
+        }
+        fl(i,0,ps)
+            ra[i]=max(ra[i],tree[var].hs[i]);
+        l = tree[var].last  + 1;
+        }
+        x=1;
+        fl(i,0,ps)
+        {
+            x*=exp(all_prim[i],ra[i]);
+            x%=mod;
+        }
+        printf("%lld\n",x);
+    }
+        else
+            {
+            L=l;
+            l+=N-2;
+            fl(i,0,ps)
+                tree[l].hs[i]=nop[r][i];
+            x=r;
+            while(l!=0)
+                {
+                l=(l-1)>>1;
+                a=(l*2)+1;
+                b=(l*2)+2;
+                fl(i,0,ps)
+                {
+                    tree[l].hs[i]=max(tree[a].hs[i],tree[b].hs[i]);
+                }
+            }
+        }
+    }
+    return 0;
+}

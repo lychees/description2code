@@ -1,0 +1,97 @@
+#include<bits/stdc++.h>
+#define MOD 1000000007
+using namespace std ;
+int n , sum[100002] , a[101] ;
+long long sset[100002] ;
+
+struct trie {
+    struct trie* next[2] ;
+};
+
+void insert ( struct trie** root , int i ) {
+    if ( (*root)->next[i] == NULL ) {
+        (*root)->next[i] = (struct trie* ) malloc ( sizeof ( struct trie ) ) ;
+        (*root)->next[i]->next[0] = NULL ;
+        (*root)->next[i]->next[1] = NULL ;
+    }
+}
+int expo ( int a , int b ) {
+	if ( b == 0 )
+		return 1 ;
+	int ans = 1 ;
+	while ( b ) {
+		if ( b&1 )
+			ans = ans*a ;
+		a = a*a ;
+		b /= 2 ;
+	}
+	return ans ;
+}
+int main () {
+    struct trie* root = (struct trie*) malloc ( sizeof ( struct trie ) );
+    root->next[0] = NULL ;
+    root->next[1] = NULL ;
+    scanf ( "%d" , &n ) ;
+    for ( int i = 0 ; i < n ; i++ ) {
+        scanf ( "%d" , &a[i] ) ;
+    }
+    sum[0] = sset[0] = 1 ;
+    for ( int i = 0 ; i < n ; i++ ) {
+        for ( int j = 100000 ; j >= 0 ; j-- ) {
+            if ( sum[j] ) {
+                sum[j+a[i]] = 1 ;
+                sset[j+a[i]] += sset[j] ;
+                sset[j+a[i]] %= MOD ;
+            }
+        }
+    }
+    int p[22] ;
+    p[0] = 1 ;
+    for ( int i = 1 ; i <= 21 ; i++ ) {
+        p[i] = p[i-1]*2 ;
+    }
+    for ( int i = 1 ; i <= 100000 ; i++ ) {
+        if ( sum[i] ) {
+            struct trie* ptr = root ;
+            for ( int j = 21 ; j >= 0 ; j-- ) {
+                if ( i&p[j] ) {
+                    insert ( &ptr , 1 ) ;
+                    ptr = ptr->next[1] ;
+                }
+                else {
+                    insert ( &ptr , 0 ) ;
+                    ptr = ptr->next[0] ;
+                }
+            }
+        }
+    }
+    
+    int q , query ;
+    scanf ( "%d" , &q ) ;
+    while ( q-- ) {
+        scanf ( "%d" , &query ) ;
+        struct trie* ptr = root ;
+        int ans = 0 ;
+        for ( int j = 21 ; j >= 0 ; j-- ) {
+            if ( query&p[j] ) {
+                if ( ptr->next[1] != NULL ) {
+                    ptr = ptr->next[1] ;
+                    ans += p[j] ;
+                }
+                else if ( ptr->next[0] != NULL )
+                    ptr = ptr->next[0] ;
+            }
+            else {
+                if ( ptr->next[0] != NULL ) {
+                    ptr = ptr->next[0] ;
+                }
+                else if ( ptr->next[1] != NULL ) {
+                    ans += p[j] ;
+                    ptr = ptr->next[1] ;
+                }
+            }
+        }
+        printf ( "%d %lld\n" , ans , sset[ans] ) ;
+    }
+    return 0 ;
+}

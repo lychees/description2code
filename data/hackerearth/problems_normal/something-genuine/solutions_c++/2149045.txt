@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+
+#define pii pair<int, int>
+
+#define pb push_back
+#define mp make_pair
+
+#define f first
+#define s second
+
+using namespace std;
+
+typedef long long ll;
+
+const int INF = (int) 1e9 + 7;
+const int MAXN = (int) 2e6 + 7;
+
+ll add[MAXN];
+ll sum[MAXN];
+
+ll squareSum[MAXN];
+
+inline void upd(ll &x, ll y) {
+  y %= INF;
+  x += y;
+  if (x >= INF)
+    x -= INF;
+  if (x < 0)
+    x += INF;
+}
+
+void push(int v, int tl, int tr) {
+  upd(squareSum[v], 2 * sum[v] * add[v] + (tr - tl + 1) * add[v] * add[v]);
+  upd(sum[v], add[v] * (tr - tl + 1));
+
+  upd(add[v + v], add[v]);
+  upd(add[v + v + 1], add[v]);
+
+  add[v] = 0;
+}
+
+int n;
+int a[MAXN];
+
+int pos[MAXN];
+map<int, int> last;
+
+void inc(int l, int r, int x, int v = 1, int tl = 1, int tr = n) {
+  push(v, tl, tr);
+  if (tl > r || tr < l) return;
+  if (l <= tl && tr <= r) {
+    upd(add[v], x);
+    push(v, tl, tr);
+    return;
+  }
+  int mid = (tl + tr) / 2;
+  inc(l, r, x, v + v, tl, mid);
+  inc(l, r, x, v + v + 1, mid + 1, tr);
+  sum[v] = (sum[v + v] + sum[v + v + 1]) % INF;
+  squareSum[v] = (squareSum[v + v] + squareSum[v + v + 1]) % INF;
+}
+
+ll getSum(int l, int r, int v = 1, int tl = 1, int tr = n) {
+  push(v, tl, tr);
+  if (tl > r || tr < l) return 0;
+  if (l <= tl && tr <= r) {
+    return squareSum[v];
+  }
+  int mid = (tl + tr) / 2;
+  return getSum(l, r, v + v, tl, mid) + getSum(l, r, v + v + 1, mid + 1, tr);
+}
+
+int main() {
+  #ifdef LOCAL
+  freopen("in", "r", stdin);
+  #endif // LOCAL
+
+  scanf("%d", &n);
+  for (int i = 1; i <= n; i++) {
+    scanf("%d", &a[i]);
+    last[i] = pos[a[i]];
+    pos[a[i]] = i;
+  }
+  ll ans = 0;
+  for (int i = 1; i <= n; i++) {
+    int l = last[i] + 1;
+    int r = i;
+    inc(l, r, 1);
+    upd(ans, getSum(1, i));
+  }
+  cout << ans;
+  return 0;
+}

@@ -1,0 +1,82 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+int const MOD = 1e9 + 7;
+int const N = 2e5 + 41;
+
+int n, m, ans = 1, f[N], invF[N];
+vector<int> a[N];
+
+int bp(int x, int d){
+	if(!d){
+		return 1;
+	}
+	if(d&1){
+		return x * 1LL * bp(x, d-1) % MOD;
+	}
+	int r = bp(x, d/2);
+	return r * 1LL * r % MOD;
+}
+
+void prepare(){
+	f[0] = invF[0] = f[1] = invF[1] = 1;
+	for(int i=2;i<N;++i){
+		f[i] = f[i-1] * 1LL * i % MOD;
+		//invF[i] = bp(f[i], MOD-2);
+	}
+}
+
+int getC(int n, int k){
+	k = min(k, n-k);
+	if(k == 0 || k == n){
+		return 1;
+	}
+	if(k == 1){
+		return n;
+	}
+	return f[n] * 1LL * bp(f[k], MOD-2) % MOD * 1LL * bp(f[n-k], MOD-2) % MOD;
+}
+
+int main()
+{
+	prepare();
+	scanf("%d",&n);
+	for(int i=0;i<n;++i){
+		scanf("%d",&m);
+		for(int j=0;j<m;++j){
+			int v;
+			scanf("%d",&v);
+			a[i].push_back(v);
+		}
+	}
+	for(int i=0;i<n;++i){
+		sort(a[i].begin(), a[i].end());
+	}
+	
+	for(int i=0;i<n;++i){
+		int cnt = 1;
+		for(int j=0;j<a[i].size();++j){
+			if(j > 0){
+				if(a[i][j] == a[i][j-1]){
+					++cnt;
+				}
+				if(a[i][j] != a[i][j-1] || (j + 1 == a[i].size())){
+					ans = ans * 1LL * f[cnt] % MOD;
+					cnt = 1;
+				}
+			}
+		}
+	}
+	
+	int cur = 0;
+	for(int i=0;i<n;++i){
+		ans = ans * 1LL * getC(cur + (int)a[i].size(), cur) % MOD;
+		cur += (int)a[i].size();
+	}
+	
+	printf("%d\n",ans);
+    
+    return 0;
+}

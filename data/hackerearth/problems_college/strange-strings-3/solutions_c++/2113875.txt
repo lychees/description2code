@@ -1,0 +1,450 @@
+#pragma comment(linker, "/STACK:66777216")
+#include <cstdio>
+#pragma warning(disable : 4996)
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <set>
+#include <map>
+#include <unordered_set>
+#include <unordered_map>
+#include <bitset>
+#include <utility>
+#include <functional>
+#include <iostream>
+#include <iomanip>
+#include <ctime>
+#include <cassert>
+#include <queue>
+#include <cmath>
+#include <random>
+#include <sstream>
+#include <numeric>
+#include <limits>
+#include <chrono>
+#pragma hdrstop
+
+using namespace std;
+
+
+#define fill(a, x) memset(a, x, sizeof(a))
+#define Y second
+
+
+inline bool isDigit(const char ch) {
+	return (ch >= '0' && ch <= '9');
+}
+
+
+class IO {
+public:
+
+	static const int IO_ERR = -1;
+	static const int BUFFER_SIZE = 1 << 18;
+	
+	bool eof;
+	char curChar;
+
+	IO() : rbCount(0), rbOffset(0), curChar(0), eof(false) {}
+
+	~IO() {
+		fwrite(writeBuffer, sizeof(writeBuffer[0]), wbOffset, stdout);
+	}
+
+
+	inline int nextInt();
+	inline void nextString(char * s);
+
+	IO& operator >>(int& x);
+	IO& operator >>(char * s);
+
+	void newline();
+
+	void printInt(int x);
+
+	IO& operator <<(int x);
+	IO& operator <<(ostream& (*fn)(ostream&));
+
+
+private:
+	char readBuffer[BUFFER_SIZE], writeBuffer[BUFFER_SIZE];
+	size_t rbCount, rbOffset, wbOffset;
+
+};
+
+extern bool useFastIO;
+extern istream * pin;
+extern ostream * pout;
+extern IO io;
+
+inline int nextInt() {
+	if (useFastIO) {
+		return io.nextInt();
+	}
+	int ret;
+	*pin >> ret;
+	return ret;
+}
+
+
+inline void nextString(char * s) {
+	if (useFastIO) {
+		io.nextString(s);
+		return;
+	}
+	*pin >> s;
+}
+
+
+inline void newline() {
+	if (useFastIO) {
+		io.newline();
+		return;
+	}
+	*pout << endl;
+}
+
+inline void printInt(int x) {
+	if (useFastIO) {
+		io.printInt(x);
+		return;
+	}
+	*pout << x;
+}
+
+
+namespace Random {
+
+
+}
+
+
+template<size_t N>
+class SuffixAutomaton {
+public:
+	
+	class State {
+	public:
+		int len, link, cnt;
+		unordered_map<char, int> next;
+
+		void setState(const int _len, const int _link, const unordered_map<char, int>& _next);
+
+	};
+
+	State states[N];
+	int sz, last;
+
+	void clear();
+	void init();
+	void extend(const char ch);
+
+};
+
+template<size_t N>
+void SuffixAutomaton<N>::State::setState(const int _len, const int _link, const unordered_map<char, int>& _next)
+// assign values to the state, similar to constructor
+{
+	len = _len;
+	link = _link;
+	next = _next;
+	cnt = 0;
+}
+
+template<size_t N>
+void SuffixAutomaton<N>::clear()
+// clear all automaton states
+{
+	for (int i = 0; i < sz; ++i) {
+		states[i].next.clear();
+	}
+}
+
+template<size_t N>
+void SuffixAutomaton<N>::init()
+// adding initial state to automaton
+{
+	sz = 1;
+	last = 0;
+	states[0].len = 0;
+	states[0].link = -1;
+}
+
+template<size_t N>
+void SuffixAutomaton<N>::extend(const char ch) {
+	int cur = sz++, p;
+	states[cur].len = states[last].len + 1;
+	for (p = last; p != -1 && !states[p].next.count(ch); p = states[p].link) {
+		states[p].next[ch] = cur;
+	}
+	if (p == -1) {
+		states[cur].link = 0;
+	}
+	else {
+		int q = states[p].next[ch];
+		if (states[p].len + 1 == states[q].len) {
+			states[cur].link = q;
+		}
+		else {
+			int clone = sz++;
+			states[clone].setState(states[p].len + 1, states[q].link, states[q].next);
+			for (; p != -1 && states[p].next[ch] == q; p = states[p].link) {
+				states[p].next[ch] = clone;
+			}
+			states[q].link = states[cur].link = clone;
+		}
+	}
+	last = cur;
+	states[cur].cnt = 1;
+}
+
+
+int __;
+IO io;
+const int MAXN = 64;
+
+int n, k, ans, d[MAXN];
+char s[MAXN];
+SuffixAutomaton<64> sa;
+
+int dfs(int v) {
+	d[v] = 1;
+	for (auto& it : sa.states[v].next) {
+		d[v] += dfs(it.Y);
+	}
+	return d[v];
+}
+
+void go(int pos) {
+	if (pos == n) {
+		sa.clear();
+		sa.init();
+		for (int i = 0; i < n; ++i) {
+			sa.extend(s[i]);
+		}
+		fill(d, 0);
+		ans += (dfs(0) - 1 <= k);
+		return;
+	}
+	if (s[pos] == '!') {
+		for (int i = '0'; i <= '1'; ++i) {
+			s[pos] = i;
+			go(pos + 1);
+		}
+		s[pos] = '!';
+	}
+	else {
+		go(pos + 1);
+	}
+}
+
+void solve(istream& ins, ostream& out) {
+	io >> __;
+	for (int _ = 0; _ < __; ++_) {
+		io >> n >> k >> s;
+		for (int i = 0; i < n; ++i) {
+			if (s[i] == '3') {
+				s[i] = '0';
+			} else
+			if (s[i] == '5') {
+				s[i] = '1';
+			}
+		}
+		if (n > 24) {
+			char ch = '$';
+			bool ok = true;
+			for (int i = 0; ok && i < n; ++i) {
+				if (s[i] != '!') {
+					if (ch == '$') {
+						ch = s[i];
+					}
+					else {
+						ok &= (ch == s[i]);
+					}
+				}
+			}
+			io << (int)ok << endl;
+			continue;
+		}
+		ans = 0;
+		go(0);
+		io << ans << endl;
+	}
+}
+#include <fstream>
+
+
+extern class IO io;
+bool useFastIO = false;
+istream * pin;
+ostream * pout;
+
+int main() {
+    srand(time(NULL));
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+    istream& in = cin;
+    useFastIO = true;
+
+    ostream& out = cout;
+    out << fixed << setprecision(16);
+    pin = &in; pout = &out;
+    solve(in, out);
+    return 0;
+}
+
+
+inline int IO::nextInt() {
+	while (!eof && !isDigit(curChar) && curChar != '-') {
+		// shiftChar begin
+		if (rbOffset == rbCount) {
+			rbCount = fread(readBuffer, sizeof(readBuffer[0]), sizeof(readBuffer), stdin);
+			if (rbCount <= 0) {
+				eof = true;
+				return IO_ERR;
+			}
+			rbOffset = 0;
+		}
+		curChar = readBuffer[rbOffset++];
+		// shiftChar end
+	}
+	bool neg = false;
+	if (curChar == '-') {
+		neg = true;
+		// shiftChar begin
+		if (rbOffset == rbCount) {
+			rbCount = fread(readBuffer, sizeof(readBuffer[0]), sizeof(readBuffer), stdin);
+			if (rbCount <= 0) {
+				eof = true;
+				return IO_ERR;
+			}
+			rbOffset = 0;
+		}
+		curChar = readBuffer[rbOffset++];
+		// shiftChar end
+	}
+	int result = 0;
+	while (!eof && isDigit(curChar)) {
+		result = (result << 3) + (result << 1) + curChar - '0';
+		// shiftChar begin
+		if (rbOffset == rbCount) {
+			rbCount = fread(readBuffer, sizeof(readBuffer[0]), sizeof(readBuffer), stdin);
+			if (rbCount <= 0) {
+				eof = true;
+				return (neg ? -result : result);
+			}
+			rbOffset = 0;
+		}
+		curChar = readBuffer[rbOffset++];
+		// shiftChar end
+	}
+	return (neg ? -result : result);
+}
+
+
+inline void IO::nextString(char * s) {
+	if (!curChar) {
+		rbCount = fread(readBuffer, sizeof(readBuffer[0]), sizeof(readBuffer), stdin);
+		if (rbCount <= 0) {
+			eof = true;
+			return;
+		}
+		rbOffset = 0;
+		curChar = readBuffer[rbOffset++];
+	}
+	while (!eof && (curChar == ' ' || curChar == '\n')) {
+		// shiftChar begin
+		if (rbOffset == rbCount) {
+			rbCount = fread(readBuffer, sizeof(readBuffer[0]), sizeof(readBuffer), stdin);
+			if (rbCount <= 0) {
+				eof = true;
+				return;
+			}
+			rbOffset = 0;
+		}
+		curChar = readBuffer[rbOffset++];
+		// shiftChar end
+	}
+	int ind = 0;
+	while (!eof && curChar != ' ' && curChar != '\n') {
+		s[ind++] = curChar;
+		// shiftChar begin
+		if (rbOffset == rbCount) {
+			rbCount = fread(readBuffer, sizeof(readBuffer[0]), sizeof(readBuffer), stdin);
+			if (rbCount <= 0) {
+				eof = true;
+				return;
+			}
+			rbOffset = 0;
+		}
+		curChar = readBuffer[rbOffset++];
+		// shiftChar end
+	}
+	s[ind] = 0;
+}
+
+
+IO& IO::operator >>(int& x) {
+	x = ::nextInt();
+	return *this;
+}
+
+
+IO& IO::operator >>(char * s) {
+	::nextString(s);
+	return *this;
+}
+
+
+void IO::newline() {
+	if (wbOffset == BUFFER_SIZE) {
+		// flush begin
+		fwrite(writeBuffer, sizeof(writeBuffer[0]), wbOffset, stdout);
+		wbOffset = 0;
+		// flush end
+	}
+	writeBuffer[wbOffset++] = '\n';
+}
+
+void IO::printInt(int x) {
+	if (wbOffset + 12 > BUFFER_SIZE) {
+		// flush begin
+		fwrite(writeBuffer, sizeof(writeBuffer[0]), wbOffset, stdout);
+		wbOffset = 0;
+		// flush end
+	}
+	if (x < 0) {
+		writeBuffer[wbOffset++] = '-';
+		x = -x;
+	}
+	else
+	if (!x) {
+		writeBuffer[wbOffset++] = '0';
+		return;
+	}
+	int st = wbOffset;
+	while (x) {
+		writeBuffer[wbOffset++] = x % 10 + '0';
+		x /= 10;
+	}
+	for (int l = st, r = wbOffset - 1; l < r; ++l, --r) {
+		char t = writeBuffer[l];
+		writeBuffer[l] = writeBuffer[r];
+		writeBuffer[r] = t;
+	}
+}
+
+
+IO& IO::operator <<(int x) {
+	::printInt(x);
+	return *this;
+}
+
+
+IO& IO::operator <<(ostream& (*fn)(ostream&)) {
+	::newline();
+	return *this;
+}

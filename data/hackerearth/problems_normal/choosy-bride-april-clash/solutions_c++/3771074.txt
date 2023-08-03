@@ -1,0 +1,145 @@
+#include <cstdio>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <stack>
+using namespace std;
+
+#define INF 0x3f3f3f3f3f3f3f3fLL
+#define MAX 250005
+
+const int BLOCK_SIZE = 500;
+
+int n, blocks;
+vector<long long> values;
+vector<vector<long long> > block_values;
+long long lazy[MAX];
+
+void build_block(int k) {
+    lazy[k] = 0;
+
+    vector<long long> &v = block_values[k];
+    v.clear();
+
+    int l = k * BLOCK_SIZE, r = min((k+1) * BLOCK_SIZE, n);
+    long long max_val = -INF;
+    for (int i = l; i < r; i++) {
+        if (values[i] >= max_val) {
+            v.push_back(values[i]);
+            max_val = values[i];
+        }
+    }
+}
+
+void init() {
+    block_values = vector<vector<long long> >(blocks);
+    for (int i = 0; i < blocks; i++)
+        build_block(i);
+}
+
+void propagate(int k) {
+    if (lazy[k]) {
+        int l = k * BLOCK_SIZE, r = min((k+1) * BLOCK_SIZE, n);
+        for (int i = l; i < r; i++)
+            values[i] += lazy[k];
+        lazy[k] = 0;
+    }
+}
+
+int query(int a, int b) {
+    int ret = 0;
+    long long last = -INF;
+    for (int k = 0; k < blocks; k++) {
+        int l = k * BLOCK_SIZE, r = min((k+1) * BLOCK_SIZE, n);
+        if (l < b && b <= r) {
+            for (int i = max(l, a); i < b; i++) {
+                if (values[i] + lazy[k] >= last) {
+                    ret++;
+                    last = values[i] + lazy[k];
+                }
+            }
+            break;
+        }
+        else if (l <= a && a < r) {
+            for (int i = a; i < r; i++) {
+                if (values[i] + lazy[k] >= last) {
+                    ret++;
+                    last = values[i] + lazy[k];
+                }
+            }
+        }
+        else if (a <= l && r <= b) {
+            const vector<long long> &v = block_values[k];
+            int lo = 0, hi = v.size();
+            while (lo < hi) {
+                int mi = (lo + hi) / 2;
+                if (v[mi] + lazy[k] < last)
+                    lo = mi + 1;
+                else
+                    hi = mi;
+            }
+            if (lo < v.size()) {
+                ret += v.size() - lo;
+                last = v.back() + lazy[k];
+            }
+        }
+    }
+    return ret;
+}
+
+void update(int a, int b, long long x) {
+    for (int k = 0; k < blocks; k++) {
+        int l = k * BLOCK_SIZE, r = min((k+1) * BLOCK_SIZE, n);
+        if (l < b && b <= r) {
+            propagate(k);
+            for (int i = max(l, a); i < b; i++)
+                values[i] += x;
+            build_block(k);
+            break;
+        }
+        else if (l <= a && a < r) {
+            propagate(k);
+            for (int i = a; i < r; i++)
+                values[i] += x;
+            build_block(k);
+        }
+        else if (a <= l && r <= b) {
+            lazy[k] += x;
+        }
+    }
+}
+
+int main() {
+    int T;
+    scanf("%d", &T);
+    while (T--) {
+        int q;
+        scanf("%d %d", &n, &q);
+        values = vector<long long>(2 * n);
+        for (int i = 0; i < n; i++) {
+            long long x;
+            scanf("%lld", &x);
+            values[i] = values[2*n - i - 1] = x;
+        }
+        n *= 2;
+        blocks = (n + BLOCK_SIZE - 1) / BLOCK_SIZE;
+        init();
+        while (q--) {
+            int op, l, r;
+            long long x;
+            scanf("%d %d %d", &op, &l, &r);
+            l--, r--;
+            if (op == 1) {
+                if (l <= r)
+                    printf("%d\n", query(l, r+1));
+                else
+                    printf("%d\n", query(n-l-1, n-r));
+            }
+            else {
+                scanf("%lld", &x);
+                update(l, r+1, x);
+                update(n-r-1, n-l, x);
+            }
+        }
+    }
+}

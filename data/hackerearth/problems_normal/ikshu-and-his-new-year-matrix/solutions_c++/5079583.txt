@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+#define ll long long int
+using namespace std;
+
+int a[1005][1005];
+vector <int> prime;
+bool p[10000];
+ll dp[10005];
+
+void sieve()
+{
+	for (int i = 2; i * i <= 10000; i++) {
+		if (p[i] == true) {
+			for (int j = 2 * i; j <= 10000; j += i) {
+				p[j] = false;			
+			}
+		}
+	}
+	
+	for (int i = 2; i <= 10000; i++) {
+		if (p[i] == true) {
+			prime.push_back(i);
+		}
+	}
+}
+
+ll solve(int i, int j)
+{
+	if (dp[a[i][j]] == INT_MAX) {
+		return -1;
+	}
+	if (dp[a[i+1][j+1]] == INT_MAX) {
+		return -1;
+	}
+	if (dp[a[i-1][j-1]] == INT_MAX) {
+		return -1;
+	}
+	if (dp[a[i-1][j+1]] == INT_MAX) {
+		return -1;
+	}
+	if (dp[a[i+1][j-1]] == INT_MAX) {
+		return -1;
+	}
+	ll tmp = 0;
+	tmp += dp[a[i][j]];
+	tmp += dp[a[i+1][j+1]];
+	tmp += dp[a[i-1][j-1]];
+	tmp += dp[a[i+1][j-1]];
+	tmp += dp[a[i-1][j+1]];
+	//cout << tmp << endl;
+	return tmp;
+}
+
+int main()
+{
+	memset(p, true, sizeof(p));
+	int n, k;
+	cin >> n >> k;
+	sieve();
+
+	cout << endl;
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < n; j++) {
+			scanf("%d", &a[i][j]);
+		}
+	}
+	
+	for (int i = 0; i <= 10005; i++) {
+		dp[i] = INT_MAX;
+	}
+	
+	for (int i = 0; i < prime.size(); i++) {
+		ll x = prime[i];
+		ll op = 0;
+		while (x >= 0) {
+			dp[x] = min(dp[x], op);
+			op++;
+			x -= k;
+		}
+	}
+	// for (int i = 0; i < 30; i++) {
+	// 	cout << dp[i] << " ";
+	// }
+//	cout << endl;
+	pair<int, int> ans;
+	ll tmp = INT_MAX;
+	for (int i = 1; i < n - 1; i++) {
+		for (int j = 1; j < n - 1; j++) {
+			ll an = solve(i, j);
+			if (an == -1) {
+				continue;
+			}
+			if (an < tmp) {
+				tmp = an;
+				ans.first = i+1;
+				ans.second = j+1;
+			}
+		}
+	}
+	
+	if (tmp != INT_MAX) {
+		cout << "yes\n";
+		cout << tmp << endl;
+		cout << ans.first << " " << ans.second << endl;
+	} else {
+		cout << "no\n";
+	}
+	return 0;
+}

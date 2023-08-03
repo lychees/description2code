@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int n, k;
+char s[100005];
+vector<int> pos[27];
+int cnt[27] = {};
+
+int main() {
+    scanf("%d%d%s", &n, &k, s);
+    REP(i, n) pos[s[i] - 'a'].pb(i);
+    REP(i, n) if (k > 1) {
+        int best = 26;
+        REP(j, 26) if (!pos[j].empty() && pos[j].back() >= i) {
+            best = j;
+            break;
+        }
+        bool done = false;
+        REP(j, best + 1) if (cnt[j]) {
+            if (s[i] == '?') {
+                s[i] = 'a' + j;
+                --cnt[j];
+            } else if (s[i] > 'a' + j) {
+                --k;
+                ++cnt[s[i] - 'a'];
+                s[i] = 'a' + j;
+                --cnt[j];
+            }
+            done = true;
+            break;
+        }
+        if (done || best == 26) continue;
+        if (s[i] == '?' || s[i] > 'a' + best) {
+            if (s[i] != '?') {
+                ++cnt[s[i] - 'a'];
+                --k;
+            }
+            s[i] = 'a' + best;
+            s[pos[best].back()] = '?';
+            --k;
+            pos[best].pop_back();
+        }
+    } else if (k) {
+        if (s[i] == '?') {
+            int best = 26;
+            REP(j, 26) if (!pos[j].empty() && pos[j].back() >= i) {
+                best = j;
+                break;
+            }
+            bool done = false;
+            REP(j, best + 1) if (cnt[j]) {
+                s[i] = 'a' + j;
+                --cnt[j];
+                done = true;
+                break;
+            }
+            if (!done) {
+                s[i] = 'a' + best;
+                s[pos[best].back()] = '?';
+                --k;
+                pos[best].pop_back();
+            }
+        } else {
+            REP(j, 26) if (cnt[j]) {
+                if (s[i] > 'a' + j) {
+                    ++cnt[s[i] - 'a'];
+                    --k;
+                    s[i] = 'a' + j;
+                    --cnt[j];
+                }
+                break;
+            }
+        }
+    }
+    int cur = 0;
+    REP(i, n) if (s[i] == '?') {
+        while (cnt[cur] == 0) ++cur;
+        --cnt[cur];
+        s[i] = 'a' + cur;
+    }
+    printf("%s\n", s);
+    return 0;
+}

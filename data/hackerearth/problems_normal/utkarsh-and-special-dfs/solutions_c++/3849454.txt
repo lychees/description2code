@@ -1,0 +1,149 @@
+#include <bits/stdc++.h>
+#define MAX(a,b) (a>b?a:b)
+#define MIN(a,b) (a<b?a:b)
+#define UP upper_bound
+#define LB lower_bound
+#define LL long long 
+#define Pi 3.14159265358
+#define si size()
+#define en end()
+#define be begin()
+#define fi first
+#define se second
+#define pb push_back
+#define mp make_pair
+#define ii set<int>::iterator
+#define Tree int ind, int L, int R
+#define Left 2*ind,L,(L+R)/2
+#define Right 2*ind+1,(L+R)/2+1,R
+using namespace std;
+const LL m7=1000000007;
+int a[100001];
+int num[100001];
+int par[100001];
+LL sum[300001];
+LL tree[300001];
+int child[100001];
+LL add;
+int n, m, k, i, j, l, r, x, y, q, type;
+vector < int > V, g[100001]; 
+LL bipow(LL n, LL k)
+{
+   LL Ans=1;
+   while(k)
+    {
+     if(k&1)Ans=(Ans*n)%m7;
+     n=(n*n)%m7;
+     k>>=1;
+    }
+   return Ans;
+}
+int dfs(int v, int p)
+{
+	par[v]=p;
+	V.pb(v); num[v]=V.si; child[v]=0;
+	for(int j=0;j<g[v].si;j++)
+	  if(g[v][j]!=p)
+	    child[v]+=dfs(g[v][j],v)+1;
+	return child[v];   
+}
+void update(Tree)
+{
+	 if(L>r || l>R)return;
+	 if(L>=l && R<=r)
+	  {
+	   if(tree[ind]==0)tree[ind]=add;	  
+	   else tree[ind]=(tree[ind]*add)%m7;
+	   if(sum[ind]==0)sum[ind]=add;
+	   else sum[ind]=(sum[ind]*add)%m7;
+	   //cout<<L<<" "<<R<<" "<<tree[ind]<<" "<<sum[ind];
+	   //system("pause");
+	   return;	
+	  }
+	 if(sum[ind])
+	  {
+	   if(sum[2*ind]==0)sum[2*ind]=sum[ind];
+	   else sum[2*ind]=(sum[2*ind]*sum[ind])%m7;
+	   if(sum[2*ind+1]==0)sum[2*ind+1]=sum[ind];
+	   else sum[2*ind+1]=(sum[2*ind+1]*sum[ind])%m7;
+	   if(tree[2*ind]==0)tree[2*ind]=sum[ind];
+	   else tree[2*ind]=(tree[2*ind]*sum[ind])%m7;
+	   if(tree[2*ind+1]==0)tree[2*ind+1]=sum[ind];
+	   else tree[2*ind+1]=(tree[2*ind+1]*sum[ind])%m7;
+	   sum[ind]=1; 	
+	  } 
+	 update(Left);
+	 update(Right);
+	 tree[ind]=(max(tree[2*ind],1ll)+max(tree[2*ind+1],1ll))%m7; 
+}
+int get_ans(Tree)
+{
+	if(L>r || l>R)return 0;
+	if(L>=l && R<=r)
+	 {
+	  return tree[ind];
+      //cout<<tree[ind]<<" oe\n";
+     // system("pause");
+	 }
+	if(sum[ind])
+	 {
+	  if(sum[2*ind]==0)sum[2*ind]=sum[ind];
+	  else sum[2*ind]=(sum[2*ind]*sum[ind])%m7;
+	  if(sum[2*ind+1]==0)sum[2*ind+1]=sum[ind];
+	  else sum[2*ind+1]=(sum[2*ind+1]*sum[ind])%m7;
+	  if(tree[2*ind]==0)tree[2*ind]=sum[ind];
+	  else tree[2*ind]=(tree[2*ind]*sum[ind])%m7;
+	  if(tree[2*ind+1]==0)tree[2*ind+1]=sum[ind];
+	  else tree[2*ind+1]=(tree[2*ind+1]*sum[ind])%m7;
+	  sum[ind]=1;	
+	 }
+	return (get_ans(Left)+get_ans(Right))%m7; 	
+}
+main(){
+	   //freopen("3B.in","r",stdin);
+	   //freopen("OU2.out","w",stdout);
+	   cin>>n>>q;
+	   for(i=1;i<n;i++)
+	    {
+	     scanf("%d%d",&x,&y);
+		 g[x].pb(y);
+		 g[y].pb(x);	
+		}
+	   dfs(1,0);
+	   l=1; r=n; add=1;
+	   update(1,1,n);	
+	   for(i=1;i<=n;i++)
+	    {
+	     scanf("%d",&a[i]);
+		 for(j=0;j<g[i].si;j++)
+		  if(g[i][j]!=par[i])
+		   {
+		    l=num[g[i][j]]; r=num[g[i][j]]+child[g[i][j]]; add=1ll*a[i];
+		    update(1,1,n);	
+		   }
+	    }
+	   while(q--)
+	    {
+	     scanf("%d",&type);
+		 if(type==1)
+		  {
+		   scanf("%d%d",&i,&x);
+		   for(j=0;j<g[i].si;j++)
+		    if(g[i][j]!=par[i])
+			 {
+		      l=num[g[i][j]]; r=num[g[i][j]]+child[g[i][j]];
+			  add=bipow(a[i],m7-2);
+		      update(1,1,n);
+		      add=1ll*x;
+		      update(1,1,n);	
+		     }
+		   a[i]=x;  
+		  }	
+		 else
+		  {
+		   scanf("%d",&i);
+		   l=num[i]; r=num[i]+child[i];
+		   cout<<get_ans(1,1,n)<<endl;	
+		  } 
+		} 
+       }

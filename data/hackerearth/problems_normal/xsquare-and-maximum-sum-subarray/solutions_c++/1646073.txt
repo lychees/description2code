@@ -1,0 +1,138 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define lld long long int
+#define llu long long unsigned int
+#define mod 1000000007
+
+#define sz size()
+#define ins(x) insert(x)
+#define pb push_back
+
+#define p pair<lld,lld>
+#define pii pair<ll,pi>
+#define s second
+#define f first
+
+#define rep(i,n) for(int i=0;i<n;i++)
+#define repb(i,n) for(int i=n-1;i>=0;i--)
+#define forup(i,a,b) for(int i=a;i<=b;i++)
+#define ford(i,a,b) for(int i=a;i>=b;i--)
+
+#define gi(x) scanf("%d",&x)
+#define gl(x) scanf("%lld",&x)
+#define pi(x) printf("%d ",x)
+#define pl(x) printf("%lld ",x)
+#define pin(x) printf("%d\n",x)
+#define pln(x) printf("%lld\n",x)
+#define fr freopen("input06.txt","r",stdin)
+#define fo freopen("output06.txt","w",stdout)
+
+struct stree{
+	lld left,right,sum,best;
+	stree(){
+		left=-1e12;
+		right=-1e12;
+		sum=left;
+		best=left;
+	}
+	stree(lld _left,lld _right,lld _sum,lld _best){
+		left=_left;
+		right=_right;
+		sum=_sum;
+		best=_best;
+	}
+
+};
+
+stree tree[2000011];
+lld a[500011];
+
+stree combine(stree l,stree r){
+
+	lld left=l.left;
+	left=max(left,l.sum+r.left);
+
+	lld right=r.right;
+	right=max(right,l.right+r.sum);
+
+	lld best=max(r.best,l.best);
+	best=max(l.right+r.left,best);
+
+	return stree(left,right,l.sum+r.sum,best);
+
+}
+
+void build(int node,int l,int r){
+
+	if(l==r){
+		tree[node].left = tree[node].right = tree[node].sum = tree[node].best = a[l];
+		return;
+	}
+
+	int mid=(l+r)/2;
+	build(2*node,l,mid);
+	build(2*node+1,mid+1,r);
+
+	tree[node]=combine(tree[2*node],tree[2*node+1]);
+
+}
+
+void update(int node,int l,int r,int ind,int val){
+
+	if(l==r){
+		tree[node].left = tree[node].right = tree[node].best = tree[node].sum = val;
+		return;
+	}
+	int mid=(l+r)/2;
+	if(ind<=mid){
+		update(2*node,l,mid,ind,val);
+	}
+	else{
+		update(2*node+1,mid+1,r,ind,val);
+	}
+	tree[node]=combine(tree[2*node],tree[2*node+1]);
+}
+
+int main(){
+
+int n,q;
+lld k;
+gi(n),gi(q);
+vector<p>v,u;
+lld ans[q];
+
+rep(i,n){
+	gl(a[i+1]);
+	v.pb({a[i+1],i+1});
+}
+
+sort(v.begin(),v.end());
+
+rep(i,q){
+	gl(k);
+	u.pb({k,i});
+	ans[i]=-1e12;
+}
+sort(u.begin(),u.end());
+
+int it=0;
+int cur=0;
+
+for(auto x:u){
+	while(it<v.size() and v[it].f<=x.f){
+		update(1,1,n,v[it].s,v[it].f);
+		it++;
+	}
+	ans[x.s]=tree[1].best;
+}
+
+rep(i,q){
+	if(ans[i]==-1e12){
+		cout<<"No Solution\n";
+	}
+	else{
+		cout<<ans[i]<<"\n";
+	}
+}
+
+}

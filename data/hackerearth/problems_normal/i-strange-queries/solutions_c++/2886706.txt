@@ -1,0 +1,182 @@
+#include<bits/stdc++.h>
+#define ALL(X)        X.begin(),X.end()
+#define FOR(I,A,B)    for(int (I) = (A); (I) <= (B); (I)++)
+#define FORW(I,A,B)   for(int (I) = (A); (I) < (B);  (I)++)
+#define FORD(I,A,B)   for(int (I) = (A); (I) >= (B); (I)--)
+#define FOREACH(I,A)  for(__typeof(A.begin()) I = A.begin(); I != A.end(); ++I)
+#define CLEAR(X)      memset(X,0,sizeof(X))
+#define SIZE(X)       int(X.size())
+#define CONTAIN(A,X)  (A.find(X) != A.end())
+#define PB            push_back
+#define MP            make_pair
+#define X             first
+#define Y             second
+#define LBOUND(P,R,Q) ({__typeof(P) X=P,RR=(R), PP = P; while(PP<RR) {X = (PP+(RR-PP)/2); if(Q) RR = X; else PP = X+1;} PP;})
+using namespace std;
+typedef signed long long slong;
+typedef long double ldouble;
+const slong Infinity = 1000000100;
+const ldouble Epsilon = 1e-9;
+template<typename T, typename U> ostream& operator << (ostream& os, const pair<T,U>&p) { return os << "(" << p.X << "," << p.Y << ")"; }
+template<typename T> ostream& operator << (ostream &os, const vector<T>& V) { os << "["; FORW(i,0,SIZE(V)) os << V[i] << ((i==SIZE(V)-1) ? "" : ","); return os << "]"; }
+template<typename T> ostream& operator << (ostream &os, const set<T>& S) {os << "("; FOREACH(i,S) os << *i << (*i==*S.rbegin()?"":","); return os << ")"; }
+template<typename T, typename U> ostream& operator << (ostream &os, const map<T, U>& M){os << "{"; FOREACH(i,M) os << *i << (*i.X==M.rbegin()->X?"":","); return os << "}"; }
+
+long long ANS[50500];
+int Z[300300];
+int N[300300];
+int L[300300];
+int R[300300];
+long long ans;
+int A,B;
+
+int T[50500];
+int D[50500];
+
+void zap(int a,int b){
+    while(a < A){
+        A--;
+        ans += T[D[A]];
+        T[D[A]]++;
+//        printf("%d ", T[D[A]]);
+    }
+    while(b > B){
+        B++;
+        ans += T[D[B]];
+  //      printf("%d ", T[D[B]]);
+        T[D[B]]++;
+    }
+    while(a > A){
+        T[D[A]]--;
+        ans -= T[D[A]];
+    //    printf("%d[%d] ", T[D[A]],D[A]);
+        A++;
+    }
+    
+    while(b < B){
+        T[D[B]]--;
+        ans -= T[D[B]];
+      //  printf("%d ", T[D[B]]);
+        B--;
+    }
+//    printf("ZZ: %d %d:-> %lld\n", a,b,ans);
+}
+
+void query(int i ){
+    zap(L[i],R[i]);
+    ANS[N[i]] += Z[i]*ans;
+}
+
+vector<pair<pair<int,int>,int>> Q;
+
+int qq;
+
+void make_q(int z, int n, int r11, int l11){
+    int l = min(r11,l11);
+    int r = max(r11,l11);
+    if(l != r11) return;
+    qq++;
+    Q.PB({{l/333,r},qq});
+    L[qq] = l;
+    R[qq] = r;
+    N[qq] = n;
+    Z[qq] = z;
+}
+
+int numZ;
+
+void wcz(){
+    ++numZ;
+    int l1,r1,l2,r2;
+    scanf("%d%d%d%d",&l1,&r1,&l2,&r2);
+    if(l1 > l2){
+        swap(l1,l2);
+        swap(r1,r2);
+    }
+    if(r2 >= r1){
+    make_q(1,numZ,min(l1,l2),max(r1,r2));
+    make_q(-1,numZ,min(l1,l2),max(l1,l2)-1);
+    make_q(-1,numZ,min(r1,r2)+1,max(r1,r2));
+    if(min(r1,r2) <  max(l1,l2)){
+        make_q(1,numZ,min(r1,r2)+1,max(l1,l2)-1);
+    }
+    else{
+        ANS[numZ] -= max(l1,l2) - min(r1,r2)-1;
+        make_q(1,numZ,max(l1,l2),min(r1,r2));
+        
+    }
+    }
+    else{
+        ANS[numZ] += r2-l2 +1;
+        make_q(1,numZ,l1,r2);
+        make_q(1,numZ,l2,r1);
+        make_q(-1,numZ,l1,l2-1);
+        make_q(-1,numZ,r2+1,r1);
+    }
+}
+
+int main() {
+    ans = -1;
+    int n;
+    scanf("%d",&n);
+    FOR(i,1,n){
+       scanf("%d",&D[i]); 
+    }
+    int q;
+    scanf("%d",&q);
+    FOR(i,1,q){
+        wcz();
+    }
+    sort(ALL(Q));
+    for(auto q : Q){
+        query(q.Y);
+    }
+    FOR(i,1,q){
+        printf("%lld\n", ANS[i]);
+    }
+    return 0;
+}
+
+/*
+ZZ: 1 1:-> 0
+ZZ: 1 2:-> 0
+ZZ: 1 3:-> 0
+ZZ: 2 3:-> 0
+ZZ: 1 3:-> 0
+ZZ: 2 3:-> 0
+ZZ: 3 4:-> 0
+ZZ: 2 4:-> 0
+ZZ: 4 4:-> 0
+ZZ: 3 4:-> 0
+ZZ: 3 4:-> 0
+ZZ: 1 5:-> 1
+ZZ: 4 5:-> 0
+ZZ: 2 5:-> 0
+ZZ: 3 5:-> 0
+ZZ: 4 5:-> 0
+ZZ: 1 5:-> 1
+ZZ: 3 5:-> 0
+ZZ: 2 5:-> 0
+ZZ: 4 5:-> 0
+ZZ: 4 6:-> 0
+ZZ: 1 6:-> 2
+ZZ: 5 6:-> 0
+ZZ: 2 7:-> 3
+ZZ: 4 7:-> 1
+ZZ: 1 7:-> 4
+ZZ: 5 7:-> 1
+ZZ: 2 7:-> 3
+ZZ: 7 7:-> 0
+ZZ: 6 7:-> 1
+ZZ: 3 7:-> 3
+ZZ: 4 7:-> 1
+1
+2
+3
+3
+1
+2
+1
+0
+
+*/

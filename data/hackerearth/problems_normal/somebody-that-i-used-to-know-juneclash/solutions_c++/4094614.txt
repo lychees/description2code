@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define X first
+#define Y second
+const long long INF = 1E18;
+int n, m;
+vector< pair<pair<int, int>, int> > v[310];
+vector< pair<int, int> > in[310], out[310];
+bool has[310][310];
+long long ans[310][310][2];
+set<pair<long long, pair<pair<int, int>, int > > > s;
+int main()
+{
+    cin >> n >> m;
+    assert(1 <= n && n <= 300);
+    assert(0 < m && m <= min(n*(n - 1), 80000) );
+    for (int i = 0; i < m; i++) {
+    	int aa, bb, ww;
+    	char cc;
+    	cin >> aa >> bb >> ww >> cc;
+    	assert(0 < aa && aa <= n);
+    	assert(0 < bb && bb <= n);
+    	assert(aa != bb);
+    	assert(has[aa][bb] == false);
+    	assert(1 <= ww && ww <= 1E9);
+    	assert(cc == '(' || cc == ')' );
+    	has[aa][bb] = true;
+    	if (cc == '(') {
+    		v[aa].push_back( make_pair(make_pair(bb, ww), 1) );
+    		in[bb].push_back( make_pair(aa, ww) );
+    	}
+    	else {
+    		v[aa].push_back( make_pair(make_pair(bb, ww), -1) );
+    		out[aa].push_back( make_pair(bb, ww) );
+    	}
+    }
+    for (int i = 0; i < 310; i++) {
+    	for (int j = 0; j < 310; j++) {
+    		ans[i][j][0] = ans[i][j][1] = INF;
+    	}
+    }
+    for (int i = 1; i <= n; i++) {
+    	ans[i][i][0] = 0;
+    	s.insert( make_pair(0, make_pair(make_pair(i, i), 0) ) );
+    }
+    while (!s.empty() ) {
+    	long long d = s.begin()->X;
+    	int a = s.begin()->Y.X.X;
+    	int b = s.begin()->Y.X.Y;
+    	int tp = s.begin()->Y.Y;
+    	s.erase(s.begin() );
+    	if (tp == 0) {
+    		for (int i = 0; i < in[a].size(); i++) {
+    			int to = in[a][i].X;
+    			int add = in[a][i].Y;
+    			if (ans[to][b][1] > d + add) {
+    				s.erase( make_pair(ans[to][b][1], make_pair( make_pair(to, b), 1 )));
+    				ans[to][b][1] = d + add;
+    				s.insert( make_pair(ans[to][b][1], make_pair( make_pair(to, b), 1 )));
+    			}
+    		}
+    		for (int i = 1; i <= n; i++) {
+    			if (i != a) {
+    				if (ans[i][b][0] > ans[i][a][0] + ans[a][b][0]) {
+    					s.erase( make_pair(ans[i][b][0], make_pair(make_pair(i, b), 0)));
+    					ans[i][b][0] = ans[i][a][0] + ans[a][b][0];
+    					s.insert( make_pair(ans[i][b][0], make_pair(make_pair(i, b), 0)));
+    				}
+    			}
+    		}
+    		for (int i = 1; i <= n; i++) {
+    			if (i != b) {
+    				if (ans[a][i][0] > ans[a][b][0] + ans[b][i][0]) {
+    					s.erase( make_pair(ans[a][i][0], make_pair(make_pair(a, i), 0)));
+    					ans[a][i][0] = ans[a][b][0] + ans[b][i][0];
+    					s.insert( make_pair(ans[a][i][0], make_pair(make_pair(a, i), 0)));
+    				}
+    			}
+    		}
+    	}
+    	if (tp == 1) {
+    		for (int i = 0; i < out[b].size(); i++) {
+    			int to = out[b][i].X;
+    			int add = out[b][i].Y;
+    			if (ans[a][to][0] > ans[a][b][1] + add) {
+    				s.erase( make_pair(ans[a][to][0], make_pair(make_pair(a, to), 0)));
+    				ans[a][to][0] = ans[a][b][1] + add;
+    				s.insert( make_pair(ans[a][to][0], make_pair(make_pair(a, to), 0)));
+    			}
+    		}
+    	}
+    }
+    for (int i = 1; i <= n; i++) {
+    	for (int j = 1; j <= n; j++) {
+    		if (ans[i][j][0] == INF) {
+    			cout << -1 << " ";
+    		}
+    		else {
+    			cout << ans[i][j][0] << " ";
+    		}
+    	}
+    	printf("\n");
+    }
+    return 0;
+}

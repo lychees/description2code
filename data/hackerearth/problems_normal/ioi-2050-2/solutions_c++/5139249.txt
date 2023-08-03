@@ -1,0 +1,154 @@
+#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
+#include <iterator>
+#include <algorithm>
+#include <string>
+#include <cmath>
+#include <map>
+#include <set>
+#include <queue>
+#include <stack>
+#include <fstream>
+
+#define gc getchar_unlocked
+
+using namespace std;
+
+typedef long long        ll;
+typedef pair<int, int>   pii;
+typedef pair<int, pii>   piii;
+typedef vector<int>      vi;
+typedef set<int>         si;
+typedef vector<pii>      vii;
+typedef vector<piii>     viii;
+
+#define forup(a,b,c) for (int (a)=(b); (a)<(c); (a)++)
+#define forn(a,b,c)  for (int (a)=(b); (a)<=(c); (a)++)
+#define ford(a,b,c)  for (int (a)=(b); (a)>=(c); (a)--)
+#define rep(i,n)     forup(i,0,n)
+#define repn(i,n)    forn(i,1,n)
+#define repd(i,n)    ford(i,n,1)
+#define foreach(i,X) for(__typeof((X).begin()) i = (X).begin(); i != (X).end(); i++)
+#define all(a)       a.begin(),a.end()
+
+const int inf = numeric_limits<int>::max();
+const ll linf = numeric_limits<ll>::max();
+
+#define fi           first
+#define se           second
+#define pb           push_back
+#define mp           make_pair
+
+void fs(int &x)
+{
+	register int c = gc();
+	x = 0;
+	int neg = 0;
+	for (; ((c<48 || c>57) && c != '-'); c = gc());
+	if (c == '-') { neg = 1; c = gc(); }
+	for (; c>47 && c<58; c = gc()) { x = (x << 1) + (x << 3) + c - 48; }
+	if (neg) x = -x;
+}
+
+viii e;
+int n, m, q;
+int id[1001];
+vii mst[1001];
+int seen[1001];
+int dp[1001][1001];
+
+void init()
+{
+	repn(i, n) id[i] = i;
+}
+
+int root(int x)
+{
+	while (id[x] != x)
+	{
+		id[x] = id[id[x]];
+		x = id[x];
+	}
+	return x;
+}
+
+void unionn(int a, int b)
+{
+	int u = root(a);
+	int v = root(b);
+	id[u] = v;
+}
+
+void kruskal()
+{
+	foreach(it, e)
+	{
+		int d = it->fi;
+		int a = (it->se).fi;
+		int b = (it->se).se;
+		if (root(a) != root(b))
+		{
+			unionn(a, b);
+			mst[a].pb(mp(b, d));
+			mst[b].pb(mp(a, d));
+		}
+	}
+}
+
+int calc(int a, int b)
+{
+	if (dp[a][b] != 0) return dp[a][b];
+	seen[a] = 1;
+
+	foreach(it, mst[a])
+	{
+		if (it->fi == b)
+		{
+			dp[a][b] = it->se;
+			return it->se;
+		}
+		if (!seen[it->fi])
+		{
+			int ans = calc(it->fi, b);
+			if (ans != -1)
+			{
+				dp[a][b] = it->se + ans;
+				return dp[a][b];
+			}
+		}
+	}
+	return -1;
+}
+
+int main()
+{
+	int t; cin >> t;
+	repn(i, t)
+	{
+		cin >> n >> m >> q;
+		repn(i, n) repn(j, n) dp[i][j] = 0;
+		repn(i, n) mst[i].clear();
+		e.clear();
+		rep(i, m)
+		{
+			int a, b, d;
+			fs(a); fs(b); fs(d);
+			e.pb(mp(d, mp(a, b)));
+		}
+		init();
+		sort(all(e));
+		kruskal();
+		printf("Case: %d\n", i);
+		//cout<<"Case: "<<t<<endl;
+		while (q--)
+		{
+			int a, b;
+			repn(i, n) seen[i] = 0;
+			fs(a); fs(b);
+			printf("%d\n", calc(a, b));
+			//cout<<calc(a,b)<<endl;
+		}
+	}
+	return 0;
+}

@@ -1,0 +1,151 @@
+//#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
+#include <iterator>
+#include <algorithm>
+#include <string>
+#include <cmath>
+#include <map>
+#include <set>
+#include <queue>
+#include <stack>
+#include <fstream>
+
+#define gc getchar_unlocked
+
+using namespace std;
+
+typedef long long        ll;
+typedef pair<int, int>   pii;
+typedef pair<int, pii>   piii;
+typedef vector<int>      vi;
+typedef set<int>         si;
+typedef vector<pii>      vii;
+typedef vector<piii>     viii;
+
+#define forup(a,b,c) for (int (a)=(b); (a)<(c); (a)++)
+#define forn(a,b,c)  for (int (a)=(b); (a)<=(c); (a)++)
+#define ford(a,b,c)  for (int (a)=(b); (a)>=(c); (a)--)
+#define rep(i,n)     forup(i,0,n)
+#define repn(i,n)    forn(i,1,n)
+#define repd(i,n)    ford(i,n,1)
+#define foreach(i,X) for(__typeof((X).begin()) i = (X).begin(); i != (X).end(); i++)
+#define all(a)       a.begin(),a.end()
+
+const int inf = numeric_limits<int>::max();
+const ll linf = numeric_limits<ll>::max();
+
+#define fi           first
+#define se           second
+#define pb           push_back
+#define mp           make_pair
+
+void fs(int &x)
+{
+    register int c = gc();
+    x = 0;
+    int neg = 0;
+    for(;((c<48 || c>57) && c != '-');c = gc());
+    if(c=='-') {neg=1;c=gc();}
+    for(;c>47 && c<58;c = gc()) {x = (x<<1) + (x<<3) + c - 48;}
+    if(neg) x=-x;
+}
+
+
+
+
+int main()
+{
+    int t; cin>>t;
+    while(t--)
+    {
+        int n,m; cin>>n>>m;
+        vii e[n+1];
+        rep(i,m)
+        {
+            int a,b,c;
+            cin>>a>>b>>c;
+            e[a].pb(mp(c,b));
+            e[b].pb(mp(c,a));
+        }
+        int a,b,c; cin>>a>>b>>c;
+        ll dis1[n+1];
+        repn(i,n) dis1[i]=linf;
+        dis1[a]=0;
+        int seen[n+1];
+        repn(i,n) seen[i]=0;
+        int nodeto1[n+1];
+        multiset<pair<ll,int> > ms;
+        ms.insert(mp(0,a));
+        while(ms.size())
+        {
+            pair<ll,int> p=*ms.begin();
+            ms.erase(ms.begin());
+            int x=p.se;
+            ll w=p.fi;
+            seen[x]=1;
+            foreach(it, e[x])
+            {
+                if(seen[it->se]) continue;
+                if(w+it->fi < dis1[it->se])
+                {
+                    dis1[it->se]=w+it->fi;
+                    nodeto1[it->se]=x;
+                    ms.insert(mp(dis1[it->se],it->se));
+                }
+            }
+        }
+
+        ll dis2[n+1];
+        repn(i,n) dis2[i]=linf;
+        dis2[b]=0;
+        int nodeto2[n+1];
+        repn(i,n) seen[i]=0;
+        ms.insert(mp(0,b));
+        while(ms.size())
+        {
+            pair<ll,int> p=*ms.begin();
+            ms.erase(ms.begin());
+            int x=p.se;
+            ll w=p.fi;
+            seen[x]=1;
+            foreach(it, e[x])
+            {
+                if(seen[it->se]) continue;
+                if(w+it->fi < dis2[it->se])
+                {
+                    dis2[it->se]=w+it->fi;
+                    nodeto2[it->se]=x;
+                    ms.insert(mp(dis2[it->se],it->se));
+                }
+            }
+        }
+
+        if(dis1[b]==linf || dis2[c]==linf) cout<<"No Train Found."<<endl;
+        else
+        {
+            cout<<dis1[b]+dis2[c]<<endl;
+            stack<int> stk;
+            int x=c;
+            while(x!=b)
+            {
+                stk.push(x);
+                x=nodeto2[x];
+            }
+            x=b;
+            while(x!=a)
+            {
+                stk.push(x);
+                x=nodeto1[x];
+            }
+            stk.push(a);
+            while(stk.size())
+            {
+                cout<<stk.top()<<" ";
+                stk.pop();
+            }
+            cout<<endl;
+        }
+    }
+    return 0;
+}

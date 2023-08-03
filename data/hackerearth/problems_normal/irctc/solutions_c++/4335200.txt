@@ -1,0 +1,117 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef long l;
+typedef unsigned long long ull;
+typedef pair<int,int> pii;
+typedef pair<int,pair<int,int> > tii;
+typedef vector<int> vec;
+typedef vector<long long> vecll;
+typedef vector<pair<int,int> > vec_pii;
+typedef vector<vector<int> > ugraph;
+typedef vector<vector<pair<int,int> > > wgraph;
+#define mp make_pair
+#define setbits(n) __builtin_popcount((n))
+#define pb push_back
+#define mod 1000000007
+#define gcd(a,b) __gcd(a,b)
+#define sf(n) scanf("%lld",&(n))
+#define pf(n) printf("%lld\n",(n))
+#define min3(a,b,c) (min((c),min((a),(b))))
+#define max3(a,b,c) (max((a),max((b),(c))))
+#define newline "\n"
+int ans;
+int dist[100005];
+vector<pii> adj[100005];
+int parent[100005];
+bool visited[100005];
+void ini()
+{
+	for(int i=0;i<=100004;i++)
+		adj[i].clear();
+}
+vector<int> dijkstra(vector<pii> adj[],int source,int destination)
+{
+	
+	fill(visited,visited+100005,false);
+	fill(dist,dist+100005,mod);
+	fill(parent,parent+100005,-1);
+	dist[source] = 0;
+	parent[source]= source;
+	priority_queue<pii, vec_pii,greater<pii> > q;
+	q.push(mp(0,source));
+	while(!q.empty())
+	{
+		pii current = q.top();
+		q.pop();
+		if(current.second==destination)
+			break;
+		if(visited[current.second]==true)
+			continue;
+		visited[current.second] = true;
+		for(int i=0;i<adj[current.second].size();++i)
+		{
+			int node = adj[current.second][i].second;
+            int wt  = adj[current.second][i].first;
+            if(dist[node]> dist[current.second]+wt)
+            {
+                dist[node] = dist[current.second] + wt;
+                q.push(mp(dist[node],node));
+                parent[node] = current.second;
+            }
+		}
+	}
+	vector<int> v;
+	ans+= dist[destination];
+	if(dist[destination]<mod)
+	{
+		int current = destination;
+		while(current!=parent[current])
+		{
+			v.pb(current);
+			current = parent[current];
+		}
+		reverse(v.begin(),v.end());
+		// for(int i=0;i<v.size();++i)
+		// 	cout<<v[i]<<" ";
+	}
+	return v;
+}
+int main()
+{
+	int test;
+	cin>>test;
+	for(int ts=1;ts<=test;++ts)
+	{
+		int n,k;
+		ans = 0;
+		
+		ini();
+		cin>>n>>k;
+		for(int i=1;i<=k;++i)
+		{
+			int x,y,d;
+			cin>>x>>y>>d;
+			adj[x].pb(mp(d,y));
+			adj[y].pb(mp(d,x));
+		}
+		int a,b,c;
+		cin>>a>>b>>c;
+		vector<int> temp1,temp2;
+		temp1 = dijkstra(adj,a,b);
+		temp2 = dijkstra(adj,b,c);
+		if(ans>=mod)
+			cout<<"No Train Found."<<newline;
+		else
+		{
+			cout<<ans<<newline<<a<<" ";
+			for(int i=0;i<temp1.size();++i)
+				cout<<temp1[i]<<" ";
+			for(int i=0;i<temp2.size();++i)
+				cout<<temp2[i]<<" ";
+			cout<<newline;
+		}
+	}
+}

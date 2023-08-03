@@ -1,0 +1,164 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define MAXN 100005
+#define MOD 1000000007
+#define INF 1e15
+
+vector<long long> A;
+vector<long long> cntA;
+
+struct ele {
+	long long mx, cnt_mx, mn, cnt_mn;
+	ele() { mx = cnt_mx = mn = cnt_mn = -1; }
+	ele(long long val) { mx = mn = val; cnt_mn = cnt_mx = 1; }
+	ele operator+(const ele &rhs) const {
+		ele tmp;
+
+		if (rhs.mx == -1) {
+			return *this;
+		}
+		else if (mx == -1) {
+			return rhs;
+		}
+
+		if (mx == rhs.mx) {
+			tmp.mx = mx;
+			tmp.cnt_mx = cnt_mx + rhs.cnt_mx;
+		}
+		else {
+			if (mx > rhs.mx) {
+				tmp.mx = mx, tmp.cnt_mx = cnt_mx;
+			}
+			else {
+				tmp.mx = rhs.mx, tmp.cnt_mx = rhs.cnt_mx;
+			}
+		}
+
+		if (mn == rhs.mn) {
+			tmp.mn = mn;
+			tmp.cnt_mn = cnt_mn + rhs.cnt_mn;
+		}
+		else {
+			if (mn < rhs.mn) {
+				tmp.mn = mn, tmp.cnt_mn = cnt_mn;
+			}
+			else {
+				tmp.mn = rhs.mn, tmp.cnt_mn = rhs.cnt_mn;
+			}
+		}
+		return tmp;
+	}
+}tree[4*MAXN];
+
+
+void build(long long node, long long start, long long end)
+{
+	if (start == end)
+		tree[node] = ele(cntA[start]);
+	else {
+		long long mid = (start + end) / 2;
+		build(node * 2, start, mid);
+		build(node * 2 + 1, mid + 1, end);
+
+		tree[node] = tree[node * 2] + tree[node * 2 + 1];
+	}
+}
+
+ele query(long long node, long long start, long long end, long long left, long long right)
+{
+	/*if (start > right || end < left)
+		return ele();*/
+		
+	if (start >= left && end <= right)
+		return tree[node];
+
+	long long mid = (start + end) / 2;
+	if (mid >= right)
+		return query(node * 2, start, mid, left, right);
+	if (mid < left)
+		return query(node * 2 + 1, mid + 1, end, left, right);
+
+	return query(node * 2, start, mid, left, right) + query(node * 2 + 1, mid + 1, end, left, right);
+}
+
+void update(long long node, long long start, long long end, long long pos, long long val) {
+	if (start == end)
+		tree[node] = ele(val);
+	else {
+		long long mid = (start + end) / 2;
+		if (mid >= pos)
+			update(node * 2, start, mid, pos, val);
+		if (mid < pos)
+			update(node * 2 + 1, mid + 1, end, pos, val);
+
+		tree[node] = tree[node * 2] + tree[node * 2 + 1];
+	}
+}
+
+// return no. of distinct digits
+long long getdigitcnt(long long no)
+{
+	vector<bool> digitset(10, 0);
+	while (no > 0) {
+		digitset[no % 10] = 1;
+		no /= 10;
+	}
+
+	long long cnt = 0;
+	for (long long j = 0; j < 10; j++) {
+		if (digitset[j]) cnt++;
+	}
+
+	return cnt;
+}
+
+int main()
+{
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+
+	long long n, m;
+	cin >> n;
+
+	A.resize(n);
+	cntA.resize(n);
+	for (long long i = 0; i < n; i++) {
+		cin >> A[i];
+		cntA[i] = getdigitcnt(A[i]);
+	}
+
+	build(1, 0, n - 1);
+
+	cin >> m;
+	while (m--) {
+		string type;
+		long long a, b;
+		cin >> type >> a >> b;
+		if (type == "ADD") {
+			long long no = (long long)(A[a - 1] + b) % MOD;
+			A[a - 1] = no;
+			long long new_val = getdigitcnt(no);
+			update(1, 0, n - 1, a - 1, new_val);
+		}
+		else if (type == "MUL") {
+			long long no = (long long)(A[a - 1] * b) % MOD;
+			A[a - 1] = no;
+			long long new_val = getdigitcnt(no);
+			update(1, 0, n - 1, a - 1, new_val);
+		}
+		else if (type == "REP") {
+			long long no = (long long)b % MOD;
+			A[a - 1] = no;
+			long long new_val = getdigitcnt(no);
+			update(1, 0, n - 1, a - 1, new_val);
+		}
+		else if (type == "MAX") {
+			ele ans = query(1, 0, n - 1, a - 1, b - 1);
+			cout << ans.mx << " " << ans.cnt_mx << "\n";
+		}
+		else {
+			ele ans = query(1, 0, n - 1, a - 1, b - 1);
+			cout << ans.mn << " " << ans.cnt_mn << "\n";
+		}
+	}
+}

@@ -1,0 +1,100 @@
+#include<iostream>
+#include<algorithm>
+#include<string>
+#include<stack>
+using namespace std;
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <vector>
+#include <string>
+#include <map>
+#include <set>
+#include <algorithm>
+#include <numeric>
+#include <iterator>
+#include <functional>
+#include <complex>
+#include <queue>
+#include <stack>
+#include <cmath>
+#include <cassert>
+#include <tuple>
+using namespace std;
+typedef long long LL;
+typedef complex<double> CMP;
+
+enum Type {X, SUM, MAX};
+struct Tree {
+	Type type;
+	Tree* left;
+	Tree* right;
+	int size;
+	~Tree() { delete left; delete right; }
+};
+
+	int plusdepth(Tree* t)
+	{
+		switch(t->type)
+		{
+		case X:
+			return 0;
+		case SUM:
+			return plusdepth(t->left) + plusdepth(t->right) + 1;
+		case MAX:
+			return max(plusdepth(t->left), plusdepth(t->right));
+		}
+	}
+	int solve(Tree* t, const vector<int>& c)
+	{
+		int n = plusdepth(t)+1;
+		return accumulate(c.begin(), c.begin()+n, 0);
+	}
+	Tree* parse(const char*& p)
+	{
+		char tc = *p++;
+		Tree* t = new Tree;
+		t->type = (tc=='X' ? X : tc=='A' ? SUM : MAX);
+		if(tc=='X') {
+			t->left = t->right = 0;
+			t->size = 1;
+		} else {
+			t->left = parse(p);
+			t->right = parse(p);
+			t->size = t->left->size + t->right->size;
+		}
+		return t;
+	}
+	int maximizeResistance(string circuit, vector <int> conductors)
+	{
+		sort(conductors.rbegin(), conductors.rend());
+		const char* p = circuit.c_str();
+		Tree* t = parse(p);
+		int ans = solve(t, conductors);
+		delete t;
+		return ans;
+	}
+
+
+
+int main()
+{
+	int test;
+	cin>>test;
+	while(test--)
+	{
+		string str;
+		cin>>str;
+		int n=0;
+		for(int i=0;i<str.length();i++)
+		{
+			if(str[i]=='X')
+			n++;
+		}
+		vector<int> arr(n,0);
+		for(int i=0;i<n;i++)
+		cin>>arr[i];
+		cout<<maximizeResistance(str, arr)<<endl;
+	}
+	return 0;
+}

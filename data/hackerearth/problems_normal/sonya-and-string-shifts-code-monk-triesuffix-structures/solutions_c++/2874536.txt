@@ -1,0 +1,109 @@
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<string>
+#include<cstring>
+using namespace std;
+
+#define rank MY_RANK
+typedef long long LL;
+typedef vector<int> VI;
+
+#define REP(i,n) for(int i=0, i##_len=(n); i<i##_len; ++i)
+#define EACH(i,c) for(__typeof((c).begin()) i=(c).begin(),i##_end=(c).end();i!=i##_end;++i)
+#define eprintf(s...) fprintf(stderr, s)
+
+template<class T> inline void amin(T &a, const T &b) { if (b<a) a=b; }
+template<class T> inline void amax(T &a, const T &b) { if (a<b) a=b; }
+
+
+int N, Q, K;
+char buf[1000011];
+int ans[1000011];
+pair<LL, int> sa[1000011], P[2][1000011];
+int rank[2][1000011];
+
+int main() {
+    scanf("%d", &N);
+    scanf("%s", buf);
+
+    REP (i, N) P[0][i] = make_pair(buf[i], i);
+
+    REP (i, N) sa[i] = make_pair(0, i);
+
+
+    int len = 0;
+    
+    REP (t, 21) {
+	sort(P[t&1], P[t&1]+N);
+	REP (i, N) rank[t&1][P[t&1][i].second] = i;
+
+	// if ((1 << cur) > N) break;
+	
+	int k = -1, last = -1;
+
+	REP (i, N) {
+	    if (P[t&1][i].first != last) {
+		last = P[t&1][i].first;
+		++k;
+	    }
+	    P[t&1][i].first = k;
+	}
+
+	/////////
+	if (N & (1<<t)) {
+	    REP (i, N) {
+		int h = (sa[i].second + len) % N;
+		sa[i].first = sa[i].first * N + P[t&1][rank[t&1][h]].first;
+	    }
+	    sort(sa, sa+N);
+	    
+	    len += 1<<t;
+	    k = -1, last = -1;
+	    int j = 0;
+	    REP (i, N) {
+		if (sa[i].first != last) {
+		    last = sa[i].first;
+		    ++k;
+		}
+		sa[j++].first = k;
+	    }
+	    if (len == N) break;
+	}
+	///////////////
+
+	if (t == 20) break;
+
+	REP (i, N) {
+	    int h = (P[t&1][i].second + (1<<t)) % N;
+
+	    P[~t&1][i] = make_pair((LL)P[t&1][i].first * N + P[t&1][rank[t&1][h]].first, P[t&1][i].second);
+	}
+    }
+
+    memset(ans, -1, sizeof ans);
+    {
+	int last = N;
+	REP (i, N) {
+	    if (last > sa[i].second) {
+		last = sa[i].second;
+		ans[last] = last;
+	    }
+	}
+	last = -1;
+	REP (i, N) {
+	    if (ans[i] != -1) last = ans[i];
+	    ans[i] = last;
+	}
+    }
+    scanf("%d", &Q);
+
+    
+    REP ($, Q) {
+	int K;
+	scanf("%d", &K);
+	printf("%d\n", ans[K]);
+    }
+    return 0;
+}

@@ -1,0 +1,100 @@
+#include <iostream>
+#include <climits>
+#include <cstdio>
+#include <sstream>
+#include <algorithm>
+#include <vector>
+#include <list>
+#include <map>
+#include <queue>
+#include <cstring>
+#define iofast ios_base::sync_with_stdio(false)
+#define ull unsigned long long
+#define ll long long
+#define ui unsigned int
+#define db double
+#define pb push_back
+#define mp make_pair
+#define INF 1000000000
+#define MOD 1000000009
+
+using namespace std;
+
+typedef pair<int,int> pii;
+typedef vector<int> vi;
+typedef vector< vector<int> > vvi;
+typedef vector< vector< pii > > vvp;
+
+string lit,op;
+ll dpt[301][301];
+ll dpf[301][301];
+
+void init(int n){
+	for(int i=0;i<n;i++)
+		for(int j=0;j<n;j++){
+			dpt[i][j] = -1;
+			dpf[i][j] = -1;
+		}
+}
+
+ll memoize(int i,int j,bool x){
+	if (x && dpt[i][j]!=-1) return dpt[i][j];
+	else if (!x && dpf[i][j]!=-1) return dpf[i][j];
+	
+	ll ans = 0;
+	
+	if (x && j==i) ans += ((lit[i]=='1') ? 1 : 0 ); 
+	else if (!x && j==i) ans += ((lit[i]=='0') ? 1 : 0 );
+	
+	else{
+		for(int p=i;p<j;p++){
+			if (op[p]=='a'){
+				if (x) {ans += (memoize(i,p,true) * memoize(p+1,j,true))%MOD;ans%=MOD;}
+				else{
+					ans += (memoize(i,p,true)*memoize(p+1,j,false))%MOD;ans%=MOD;
+					ans += (memoize(i,p,false)*memoize(p+1,j,false))%MOD;ans%=MOD;
+					ans += (memoize(i,p,false)*memoize(p+1,j,true))%MOD;ans%=MOD;
+				}
+			}
+			else if (op[p]=='o'){
+				if (!x) {ans += (memoize(i,p,false) * memoize(p+1,j,false))%MOD;ans%=MOD;}
+				else{
+					ans += (memoize(i,p,true)*memoize(p+1,j,false))%MOD;ans%=MOD;
+					ans += (memoize(i,p,false)*memoize(p+1,j,true))%MOD;ans%=MOD;
+					ans += (memoize(i,p,true)*memoize(p+1,j,true))%MOD;ans%=MOD;
+				}	
+			}
+			else{
+				if (x){
+					ans += (memoize(i,p,true)*memoize(p+1,j,false))%MOD;ans%=MOD;
+					ans += (memoize(i,p,false)*memoize(p+1,j,true))%MOD;ans%=MOD;
+				}
+				else{
+					ans += (memoize(i,p,false)*memoize(p+1,j,false))%MOD;ans%=MOD;
+					ans += (memoize(i,p,true)*memoize(p+1,j,true))%MOD;ans%=MOD;	
+				}
+			}
+		}
+	}
+	ans%=MOD;
+	if (x) dpt[i][j] = ans;
+	else dpf[i][j] = ans;
+	return ans;
+}
+
+int main(){
+	iofast;
+	stringstream ss;
+	cin>>lit>>op;
+	int q;
+	cin>>q;
+	int n = lit.length();
+	init(n);
+	for(int i=0;i<q;i++){
+		int l,r;
+		string res;
+		cin>>l>>r>>res;
+		ss<<((res=="true") ? memoize(l-1,r-1,true) : memoize(l-1,r-1,false) )<<"\n";
+	}
+	cout<<ss.str()<<endl;
+}

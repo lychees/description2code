@@ -1,0 +1,82 @@
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <bits/stdc++.h>
+using namespace std;
+typedef pair<int,int> ii;
+int t,n,m;
+char str[1000005];
+vector <string> v;
+vector <vector<ii> > pa;
+vector <ii> pa2;
+vector <vector<int> > size;
+vector <int> size2;
+ii findpa(int x, int y){
+	if(pa[x][y]==ii(x,y)) return ii(x,y);
+	return pa[x][y]=findpa(pa[x][y].first,pa[x][y].second);
+}
+void setunion(int x, int y, int x2, int y2){
+	ii p1=findpa(x,y),p2=findpa(x2,y2);
+	if(p1==p2) return;
+	pa[p1.first][p1.second]=p2;
+	size[p2.first][p2.second]+=size[p1.first][p1.second];
+}
+int main(){
+	const rlim_t kStackSize=64L * 1024L * 1024L;
+    struct rlimit rl;
+    int result;
+    result=getrlimit(RLIMIT_STACK, &rl);
+    if (result==0){
+        if (rl.rlim_cur<kStackSize){
+            rl.rlim_cur=kStackSize;
+            setrlimit(RLIMIT_STACK, &rl);
+        }
+    }
+	scanf("%d\n",&t);
+	while(t--){
+		v.clear();
+		pa.clear();
+		size.clear();
+		scanf("%d %d\n",&n,&m);
+		for(int x=0;x<=n;x++){
+			pa.push_back(pa2);
+			size.push_back(size2);
+			for(int y=0;y<=m;y++){
+				pa[x].push_back(ii(x,y));
+				size[x].push_back(1);
+			}
+		}
+		for(int x=0;x<=m;x++){
+			setunion(0,0,0,x);
+			setunion(0,0,n,x);
+		}
+		for(int x=0;x<=n;x++){
+			setunion(0,0,x,0);
+			setunion(0,0,x,m);
+		}
+		for(int x=0;x<n;x++){
+			scanf("%s\n",str);
+			v.push_back(string(str));
+		}
+		for(int x=1;x<n;x++){
+			for(int y=1;y<m;y++){
+				if(v[x-1][y-1]!=v[x-1][y]) setunion(x,y,x-1,y);
+				if(v[x-1][y-1]!=v[x][y-1]) setunion(x,y,x,y-1);
+				if(v[x-1][y]!=v[x][y]) setunion(x,y,x,y+1);
+				if(v[x][y-1]!=v[x][y]) setunion(x,y,x+1,y);
+			}
+		}
+		bool fail=0;
+		for(int x=0;x<=n;x++){
+			for(int y=0;y<=m;y++){
+				if(findpa(x,y)!=findpa(0,0)&&size[x][y]>1){
+					printf("NO\n");
+					fail=1;
+					break;
+				}
+			}
+			if(fail) break;
+		}
+		if(!fail) printf("YES\n");
+	}
+	return 0;
+}

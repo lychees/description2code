@@ -1,0 +1,125 @@
+#include <cstdio>
+#include <utility>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll, ll> pii;
+typedef pair<ll, pii> pip;
+
+#define X first
+#define Y second
+
+const ll MAXN = 2e5 + 10;
+
+ll MOD;
+ll t[2][MAXN];
+pii seg[MAXN * 4];
+ll addS[MAXN * 4];
+ll f[MAXN], psF[MAXN];
+
+ll val;
+
+pii retTof;
+inline pii mergeSeg(const pii& a, const pii& b, const ll& len) {
+	retTof.X = (a.X + 1ll * b.X * t[0][len] % MOD + 1ll * b.Y * t[1][len] % MOD) % MOD;
+	retTof.Y = (a.Y + 1ll * b.X * t[0][len + 1] % MOD + 1ll * b.Y * t[1][len + 1] % MOD) % MOD;
+	return retTof;
+}
+
+inline void addToNode(ll toftof, ll x, ll s, ll e) {
+	seg[x].X = (seg[x].X + 1ll * toftof * psF[e - s] % MOD) % MOD;
+	seg[x].Y = (seg[x].Y + 1ll * toftof * (psF[e - s + 1] - psF[1] + MOD) % MOD) % MOD;
+	addS[x] = (addS[x] + toftof) % MOD;
+}
+
+ll plcF;
+
+void setSeg(ll x, ll s, ll e) {
+	if (e - s < 2) {
+		seg[x] = pii(val, val);
+		return;
+	}
+	//	shiftSeg(x, s, e);
+	if (addS[x]) {
+		addToNode(addS[x], x * 2, s, (s + e) >> 1);
+		addToNode(addS[x], x * 2 + 1, (s + e) >> 1, e);
+		addS[x] = 0;
+	}
+	if (plcF < ((s + e) >> 1))
+		setSeg(x * 2, s, (s + e) >> 1);
+	else
+		setSeg(x * 2 + 1, (s + e) >> 1, e);
+	seg[x] = mergeSeg(seg[x * 2], seg[x * 2 + 1], ((s + e) >> 1) - s);
+}
+
+ll ql, qr;
+pip fuckingEmp;
+
+pip ask(ll x, ll s, ll e) {
+	if (ql <= s & e <= qr)
+		return pip(e - s, seg[x]);
+	//	shiftSeg(x, s, e);
+	if (addS[x]) {
+		addToNode(addS[x], x * 2, s, (s + e) >> 1);
+		addToNode(addS[x], x * 2 + 1, (s + e) >> 1, e);
+		addS[x] = 0;
+	}
+	pip ret = fuckingEmp;
+	if (ql < ((s + e) >> 1) && qr > ((s + e) >> 1)) {
+		pip valL = ask(x * 2, s, (s + e) >> 1);
+		pip valR = ask(x * 2 + 1, (s + e) >> 1, e);
+		ret = pip(valL.X + valR.X, mergeSeg(valL.Y, valR.Y, valL.X));
+	}
+	else if (ql < (s + e) >> 1)
+		ret = ask(x * 2, s, (s + e) >> 1);
+	else if (qr > ((s + e) >> 1))
+		ret = ask(x * 2 + 1, (s + e) >> 1, e);
+	seg[x] = mergeSeg(seg[x * 2], seg[x * 2 + 1], ((s + e) >> 1) - s);
+	return ret;
+}
+
+int main() {
+	ll n, m;
+	scanf("%lld%lld%lld", &n, &m, &MOD);
+	f[0] = f[1] = 1;
+	for (ll i = 2; i < MAXN; i++)
+		f[i] = (f[i - 1] + f[i - 2]) % MOD;
+	for (ll i = 0; i < MAXN; i++)
+		psF[i + 1] = (psF[i] + f[i]) % MOD;
+	t[0][0] = 1, t[1][0] = 0;
+	t[1][0] = 0, t[1][1] = 1;
+	for (ll i = 2; i < MAXN; i++) {
+		t[0][i] = (t[0][i - 1] + t[0][i - 2]) % MOD;
+		t[1][i] = (t[1][i - 1] + t[1][i - 2]) % MOD;
+	}
+	for (ll i = 0; i < n; i++) {
+		ll x;
+		scanf("%lld", &x);
+		val = x;
+		plcF = i;
+		setSeg(1, 0, n);
+	}
+	for (ll i = 0; i < m; i++) {
+		ll type;
+		scanf("%lld", &type);
+		if (type == 1){
+			ll x, y;
+			scanf("%lld%lld", &x, &y);
+			x--;
+			val = y;
+			plcF = x;
+			setSeg(1, 0, n);
+		}
+		else{
+			ll l, r;
+			scanf("%lld%lld", &l, &r);
+			l--;
+			ql = l;
+			qr = r;
+			pip cur = ask(1, 0, n);
+			printf("%lld\n", cur.Y.X);
+		}
+	}
+	return 0;
+}

@@ -1,0 +1,110 @@
+#include <cstdio>
+#include <ctime>
+#include <cstdlib>
+
+#define MAX_N 512
+
+
+int tree[MAX_N];
+int maxSum[MAX_N/2];
+bool maxSumComputed[MAX_N/2];
+int magicSum[MAX_N/2];
+bool magicSumComputed[MAX_N/2];
+int n;
+
+void reset();
+int  getMaxSum(int loc);
+int getMagicSum(int loc);
+int getMagicSum2();
+
+int main(int argc, char * argv[]){
+
+	srand(time(NULL));
+	//We can store the tree in an array
+	//We will start with i=0;
+	//The left child is 2*i+1
+	//The right child is 2*(i+1)
+	int cases;
+	cases=1000;
+	scanf("%d ",&cases);
+
+	n=15;
+	for(int i=0; i<cases; i++){
+		scanf("%d ",&n);
+		for(int j=0; j<n; j++){
+			scanf("%d ", tree+j);
+		}
+		reset();
+		printf("%d\n",getMagicSum(0));
+	}
+
+	return 0;
+}
+
+
+void reset(){
+	for(int i=0; i<(n-1)/2; i++){
+		maxSumComputed[i]=false;
+		magicSumComputed[i]=false;
+	}
+}
+
+
+int  getMaxSum(int loc){
+	if( loc >=(n-1)/2)
+		return tree[loc];
+	if (!maxSumComputed[loc]) {
+		int leftSum=getMaxSum(loc*2+1);
+		//printf("leftsum[%d]: \t%d\n",loc*2+1, leftSum);
+		int rightSum=getMaxSum(2*(loc+1));
+		//printf("rightsum[%d]: \t%d\n",loc*2+2, rightSum);
+		if(leftSum>rightSum)
+			maxSum[loc]=tree[loc]+leftSum;
+		else
+			maxSum[loc]=tree[loc]+rightSum;
+		maxSumComputed[loc]=true;
+	}
+	return maxSum[loc];
+}
+
+
+int getMagicSum(int loc){
+	if( loc >=(n-1)/2 )
+		return tree[loc];
+	if(!magicSumComputed[loc]){
+		int leftSum=getMaxSum(loc*2+1);
+		int rightSum=getMaxSum(2*(loc+1));
+		int candidates[3];
+		candidates[0]=leftSum+rightSum+tree[loc];
+		candidates[1]=getMagicSum(loc*2+1);
+		candidates[2]=getMagicSum(2*(loc+1));
+		int max=candidates[0];
+		for(int i=1;i<=2; i++){
+			if(candidates[i]>max)
+				max=candidates[i];
+		}
+		magicSum[loc]=max;
+		magicSumComputed[loc]=true;
+	}
+	return magicSum[loc];
+}
+
+int getMagicSum2(){
+	int max=-1000*1000*1000;
+	for(int i=(n-1)/2; i<n; i++){
+		for(int j=(n-1)/2; j<n; j++){
+			int startloc=i;
+			int endloc=j;
+			int cost=0;
+			while(startloc!=endloc){
+				cost+=tree[startloc]+tree[endloc];
+				startloc=(startloc-1)/2;
+				endloc=(endloc-1)/2;
+			}
+			cost+=tree[startloc];
+			if(cost>max)
+				max=cost;
+		}
+	}
+	return max;
+}

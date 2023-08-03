@@ -1,0 +1,107 @@
+/*    SHUBHAM SINHA    */
+ 
+ 
+ 
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <string.h>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <list>
+#include <math.h>
+ 
+#define ll long long int
+#define maxN 100000
+#define maxVal 100000000
+#define minVal -100000000
+#define mod 1000000007LL
+ 
+#define gcd(a,b) __gcd(a,b)
+ 
+using namespace std;
+
+struct data
+{
+	int k;
+	ll c;		//k is length and c is count
+};
+ 
+int a[maxN+5]; 
+data bit[2][maxN+5];
+//bit[0] for positive and bit[1] for negative
+
+data query(int k,int i)
+{
+	data r;
+	r.k=r.c=0;
+	while(i>0)
+	{
+		if(bit[k][i].k>r.k)
+			r=bit[k][i];
+		else if(bit[k][i].k==r.k)
+			r.c=(r.c+bit[k][i].c)%mod;
+		i=i-(i&(-1*i));
+	}
+	return r;
+}
+
+void update(int k,int i,data v)
+{
+	while(i<=maxN)
+	{
+		if(bit[k][i].k<v.k)
+			bit[k][i]=v;
+		else if(bit[k][i].k==v.k)
+			bit[k][i].c=(bit[k][i].c+v.c)%mod;
+		i=i+(i&(-1*i));
+	}
+}
+
+int main()
+{
+    #ifndef ONLINE_JUDGE
+    	//freopen("in.txt","r",stdin);
+    	//freopen("out.txt","w",stdout);
+    #endif
+	int n,i;
+	data p,x,y;
+	scanf("%d",&n);
+	for(i=0;i<=maxN;i++)
+		bit[0][i].k=bit[0][i].c=bit[1][i].k=bit[1][i].c=0;
+	for(i=0;i<n;i++)
+	{
+		scanf("%d",&a[i]);
+		if(a[i]<0)
+		{
+			p=query(0,-1*a[i]-1);
+			p.k++;
+			if(p.c==0)
+				p.c++;
+			update(1,-1*a[i],p);
+		}
+		else
+		{
+			p=query(1,a[i]-1);
+			p.k++;
+			if(p.c==0)
+				p.c++;
+			update(0,a[i],p);
+		}
+    }
+    x=query(0,maxN);
+    y=query(1,maxN);
+    if(x.k>y.k)
+    	p=x;
+    else if(x.k<y.k)
+    	p=y;
+    else
+    {
+    	p=x;
+    	p.c=(x.c+y.c)%mod;
+    }
+    printf("%d %lld\n",p.k,p.c);
+    return 0;
+}

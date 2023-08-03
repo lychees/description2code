@@ -1,0 +1,126 @@
+#include <cstdio>
+#include <vector>
+#include <cstdlib>
+
+#define MAX			3000
+#define MAX_CONN	10000
+
+std::vector<int> graph[MAX_CONN];
+std::vector<int> vx, vy;
+int h, w;
+
+void dfs(int node, bool *mark);
+int count_conn(void)
+{
+	bool mark[MAX_CONN] = {false};
+	int i, j;
+
+	for(i = MAX_CONN; i --;)
+		graph[i].clear();
+
+	for(i = 1; i < (int)vx.size(); i ++)
+	{
+		for(j = 0; j < i; j ++)
+		{
+			if(abs(vx[i] - vx[j]) < w && abs(vy[i] - vy[j]) < h)
+			{
+				graph[i].push_back(j);
+				graph[j].push_back(i);
+			}
+		}
+	}
+
+	j = 0;
+	for(i = 0; i < vx.size(); i ++)
+	{
+		if(!mark[i])
+		{
+			j ++;
+			dfs(i, mark);
+		}
+	}
+
+	vx.clear();
+	vy.clear();
+
+	return j;
+}
+
+void dfs(int node, bool *mark)
+{
+	int i;
+	mark[node] = true;
+
+	for(i = graph[node].size(); i --;)
+	{
+		if(!mark[graph[node][i]])
+			dfs(graph[node][i], mark);
+	}
+}
+
+int main(void)
+{
+	int n, m;
+	int x, y;
+	int i, j;
+	int q, c;
+
+	int **grid;
+	int **query;
+
+	grid = new int *[MAX];
+	query = new int *[MAX];
+
+	for(y = 0; y < MAX; y ++)
+	{
+		grid[y] = new int[MAX];
+		query[y] = new int[MAX];
+	}
+
+	scanf("%d %d", &n, &m);
+
+	for(y = 0; y < n; y ++)
+	{
+		for(x = 0; x < m; x ++)
+		{
+			scanf("%d", &grid[y][x]);
+		}
+	}
+
+	for(scanf("%d", &q); q --;)
+	{
+
+		scanf("%d %d", &h, &w);
+		for(y = 0; y < h; y ++)
+			for(x = 0; x < w; x ++)
+				scanf("%d", &query[y][x]);
+
+		for(x = 0; x <= m - w; x ++)
+		{
+			for(y = 0; y <= n - h; y ++)
+			{
+				for(i = 0; i < w; i ++)
+				{
+					for(j = 0; j < h; j ++)
+					{
+						if(grid[y + j][x + i] != query[j][i])
+							break;
+					}
+
+					if(j < h)
+						break;
+				}
+
+				if(i >= w)
+				{
+					vx.push_back(x);
+					vy.push_back(y);
+				}
+			}
+		}
+
+		printf("%d\n", count_conn());
+	}
+
+	return 0;
+}

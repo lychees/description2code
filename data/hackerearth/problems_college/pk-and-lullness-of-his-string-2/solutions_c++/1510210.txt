@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define mem(a, x) memset(a, x, sizeof(a))
+#define all(a) a.begin(), a.end()
+#define uni(a) a.erase(unique(all(a)), a.end())
+#define count_bits(x) __builtin_popcount(x)
+#define count_bitsll(x) __builtin_popcountll(x)
+#define least_bits(x) __builtin_ffs(x)
+#define least_bitsll(x) __builtin_ffsll(x)
+#define most_bits(x) 32 - __builtin_clz(x)
+#define most_bitsll(x) 64 - __builtin_clz(x)
+
+vector<string> split(const string &s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c)) v.push_back(x);
+	return v;
+}
+
+#define error(args...) { vector<string> _v = split(#args, ','); err(_v.begin(), args); }
+
+void err(vector<string>::iterator it) {}
+
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << '\n';
+	err(++it, args...);
+}
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {while (b != 0) {T c = a; a = b; b = c % b;} return a;}
+
+const int N = 100005;
+int f[N];
+ll dp[N], inv[N];
+
+ll mod_pow(ll x, ll y) {
+    ll res = 1;
+    ll a = x;
+    while (y > 0) {
+        if (y & 1) {
+            res = (res * a) % MOD;
+        }
+        a = (a * a) % MOD;
+        y >>= 1;
+    }
+    return res;
+}
+
+
+ll comb(int k, int n) {
+	if (k > n) return 0;
+	if (k == n || k == 0) return 1;
+	ll ans = (dp[n] * inv[k]) % MOD;
+	ans = (ans * inv[n - k]) % MOD;
+	return ans;
+}
+
+int main(int argc, char *argv[]) {
+    ios_base::sync_with_stdio(false);
+    string s;
+    int ntest, n;
+    
+    dp[0] = inv[0] = 1;
+    repu(i, 1, N) {
+    	dp[i] = (i * dp[i - 1]) % MOD;
+    	inv[i] = mod_pow(dp[i], MOD - 2);
+    }
+    
+    cin >> ntest;
+    while (ntest--) {
+    	cin >> s >> n;
+    	mem(f, 0);
+    	int m = s.length();
+    	repu(i, 0, m) {
+    		f[i + 1] = f[i] + ((s[i] == 'l') ? 1 : 0);
+    	}
+    	ll ans = 0;
+    	int len = n >> 1;
+    	repu(i, 0, m) {
+    		if (s[i] == 'u') {
+    			int lb = f[i + 1], rb = f[m] - f[i + 1];
+    			ans = (ans + comb(len, lb) * comb(len, rb)) % MOD;
+    		}
+    	}
+    	cout << ans << endl;
+    }
+    return 0;
+}

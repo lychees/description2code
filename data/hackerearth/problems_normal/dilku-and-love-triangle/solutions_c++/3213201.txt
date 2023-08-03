@@ -1,0 +1,81 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int uli;
+const int mx=5e5+10;
+const int mxl=20;
+vector<int>g[mx];
+int ft[mx];
+int lyr[mx];
+int f[mxl][mx];
+
+int idx[mx],id=0;
+int rht[mx];
+
+void dfs(int u){
+   idx[u]=rht[u]=id++;
+   for(int i=0;i<int(g[u].size());i++){
+      int v=g[u][i];
+      if(v!=f[0][u]){
+         lyr[v]=1+lyr[u];
+         f[0][v]=u;
+         dfs(v);
+         rht[u]=max(rht[u],rht[v]);
+      }
+   }
+}
+int lca(int u,int v){
+   if(lyr[u]>lyr[v])swap(u,v);
+   for(int l=mxl-1;l>=0;l--)
+      if(lyr[u]<=lyr[f[l][v]])
+         v=f[l][v];
+   if(u==v)return u;
+   for(int l=mxl-1;l>=0;l--)
+      if(f[l][u]!=f[l][v])
+         u=f[l][u],v=f[l][v];
+   return f[0][u];
+}
+void upd(int i,int v){
+   for(++i;i<mx;i+=(i&-i))ft[i]+=v;
+}
+int qry(int i){
+   int a=0;
+   for(++i;i>0;i-=(i&-i))a+=ft[i];
+   return a;
+}
+int rng(int l,int r){
+   return qry(r)-qry(l-1);
+}
+int main(){
+   int n,q,u,v,op;
+   scanf("%d %d",&n,&q);
+   for(int i=0;i<n-1;i++){
+      scanf("%d %d",&u,&v);
+      g[--u].push_back(--v);
+      g[v].push_back(u);
+   }
+   dfs(0);
+   for(int l=1;l<mxl;l++)
+      for(int i=0;i<n;i++)
+         f[l][i]=f[l-1][f[l-1][i]];
+   while(q--){
+      scanf("%d",&op);
+      if(op==1){
+         scanf("%d %d",&u,&v);
+         --u,--v;
+         int x=lca(u,v);
+         upd(idx[u],1);
+         upd(idx[v],1);
+         upd(idx[x],-1);
+         int y=f[0][x];
+         if(y!=x)upd(idx[y],-1);
+      }
+      else{
+         scanf("%d",&u);
+         --u;
+         int ans=rng(idx[u],rht[u]);
+         printf("%d\n",ans);
+      }
+   }
+   return 0;
+}
+

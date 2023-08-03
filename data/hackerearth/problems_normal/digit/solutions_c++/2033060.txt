@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define LIM 5000
+#define MOD 1000000007
+#define N 14
+
+typedef long long ll;
+
+ll a, b, x, y, k, start, stop, cnt;
+
+ll dp[N+1][N*9+9][LIM][2];
+int num[N*2];
+
+ll getAns(ll n)
+{
+	int nxtSum, nxtMod;
+	memset(dp, 0, sizeof(dp) );
+	for(int i=N;i>0;i--)
+	{
+		num[i]=n%10;
+		n/=10;
+	}
+	dp[0][0][0][0]=1;
+	//cout<<"Point 1"<<endl;
+	for(int i=0;i<N;i++)
+	{
+		for(int sum=0;sum<=(i*9);sum++)
+		{
+			for(int mod=0;mod<k;mod++)
+			{
+				ll cur = dp[i][sum][mod][0];
+				for(int dig=0;dig<num[i+1];dig++)
+				{
+					nxtSum = sum+dig;
+					nxtMod =((mod*10)+dig)%k;
+					dp[i+1][nxtSum][nxtMod][1]+=cur;
+				}
+				dp[i+1][sum+num[i+1]][((mod*10)+num[i+1])%k][0]+=cur;
+				cur = dp[i][sum][mod][1];
+				for(int dig=0;dig<10;dig++)
+				{
+					nxtSum = sum+dig;
+					nxtMod =((mod*10)+dig)%k;
+					dp[i+1][nxtSum][nxtMod][1]+=cur;
+				}
+			}
+		}
+	}
+	//cout<<"Point 2"<<endl;
+	ll ans =0;
+	for(int i=x;i<=min(N*9*1LL, y);i++)
+	{
+		ans+=dp[N][i][0][0];
+		ans+=dp[N][i][0][1];
+	}
+	return ans;
+}
+
+int digSum(ll num)
+{
+	int sum=0;
+	while(num)
+	{
+		sum+=num%10;
+		num/=10;
+	}
+	return sum;
+}
+
+int main()
+{
+	cin>>a>>b>>x>>y>>k;
+	if(k>=LIM)
+	{
+		start = (a)+(k-(a%k));
+		stop = (b)-(b%k);
+		cnt=0;
+		//cout<<start<<" : "<<stop<<endl;
+		for(ll i=start;i<=stop;i+=k)
+		{
+			ll sum = digSum(i);
+			if(sum>=x && sum<=y)
+				cnt++;
+		}
+		cout<<cnt<<endl;
+	}
+	else
+	{
+		cout<<getAns(b) - getAns(a-1)<<endl;
+	}
+	return 0;
+}

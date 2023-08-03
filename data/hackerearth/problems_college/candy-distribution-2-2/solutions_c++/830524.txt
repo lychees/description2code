@@ -1,0 +1,115 @@
+/*
+* @author: mtyamatau
+* @version: 1.0
+* @name:Guardians of the Galaxy - HackerEarth
+* @lang: C++
+*/
+
+#include <bits/stdc++.h>
+#define lld long long int
+#define MOD 1000000007
+using namespace std;
+
+
+typedef double coord_t;         // coordinate type
+typedef double coord2_t;  // must be big enough to hold 2*max(|coordinate|)^2
+ 
+struct Point {
+	coord_t x, y;
+ 
+	bool operator <(const Point &p) const {
+		return x < p.x || (x == p.x && y < p.y);
+	}
+};
+ 
+// 2D cross product of OA and OB vectors, i.e. z-component of their 3D cross product.
+// Returns a positive value, if OAB makes a counter-clockwise turn,
+// negative for clockwise turn, and zero if the points are collinear.
+coord2_t cross(const Point &O, const Point &A, const Point &B)
+{
+	return (A.x - O.x) * (B.y - O.y) - (A.y - O.y) * (B.x - O.x);
+}
+ 
+// Returns a list of points on the convex hull in counter-clockwise order.
+// Note: the last point in the returned list is the same as the first one.
+vector<Point> convex_hull(vector<Point> P)
+{
+	int n = P.size(), k = 0;
+	vector<Point> H(2*n);
+ 
+	// Sort points lexicographically
+	sort(P.begin(), P.end());
+ 
+	// Build lower hull
+	for (int i = 0; i < n; ++i) {
+		while (k >= 2 && cross(H[k-2], H[k-1], P[i]) <= 0) k--;
+		H[k++] = P[i];
+	}
+ 
+	// Build upper hull
+	for (int i = n-2, t = k+1; i >= 0; i--) {
+		while (k >= t && cross(H[k-2], H[k-1], P[i]) <= 0) k--;
+		H[k++] = P[i];
+	}
+ 
+	H.resize(k);
+	return H;
+}
+
+bool compare(pair<int, int> p1, pair<int, int> p2) {
+	if(p1.second != p2.second)		
+		return p1.second > p2.second;
+	else {
+		return p1.first > p2.first;
+	}
+}
+
+
+int main(int argc, char const *argv[]) {
+	int t;
+	scanf("%d", &t);
+	while(t--) {
+		int n, x_min = INT_MAX, x_max = INT_MIN, y_min = INT_MAX, y_max = INT_MIN;
+		scanf("%d", &n);
+		vector <Point> vec, ans;
+		for (int i = 0; i < n; ++i) {
+			double a,b;
+			/*if(a < x_min)
+				x_min = a;
+			if(a > x_max)
+				x_max = a;
+			if(b < y_min)
+				y_min = b;
+			if(b > y_max)
+				y_max = b;*/
+			scanf("%lf %lf", &a, &b);
+			struct Point point;
+			point.x = a;
+			point.y = b;
+			vec.push_back(point);
+		}
+
+		ans = convex_hull(vec);
+		double dist = 0.0, maxi = 0.0;
+		for (int i = 0; i < ans.size()-1; ++i) {
+			double temp = sqrt((ans[i].x-ans[i+1].x)*(ans[i].x-ans[i+1].x) + (ans[i].y-ans[i+1].y)*(ans[i].y-ans[i+1].y));
+			if(temp > maxi)
+				maxi = temp;
+			dist += temp;
+		}
+		dist -= maxi;
+		printf("%.2lf\n", dist);
+		/*sort(point.begin(),point.end(), compare);
+		int x_cur = point[n-1].first, y_cur = point[n-1].second;
+		ans.push_back(make_pair(x_cur,y_cur));
+		while(x_cur != x_max) {
+			int i = 1;
+			while(point[i++].first < x_cur);
+			ans.push_back(make_pair(point[i].first,point[i].second));
+			
+
+		}*/
+
+	}
+	return 0;
+}

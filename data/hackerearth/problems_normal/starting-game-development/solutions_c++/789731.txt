@@ -1,0 +1,79 @@
+#include<iostream>
+
+using namespace std;
+
+int bin_search(int str, int ** arr, int params, int levels) {
+        int low = 0, high = levels-1, mid; // we need to find a level whose strrngth <= str
+        while(low <= high) {
+                mid = (low+high)/2;
+                if(str == arr[params][mid])
+                        return mid;
+                else if(str > arr[params][mid])
+                        low = mid+1;
+                else
+                        high = mid-1;
+        }
+        return (low);
+}
+
+int main() {
+        int params, levels, q;
+        cin >> params >> levels >> q;
+        int ** lps = new int *[params];
+        for(int i=0;i<params;i++)
+                lps[i] = new int[levels];
+
+        //input
+        for(int i=0;i<params;i++) {
+                for(int j=0;j<levels;j++) {
+                        cin >> lps[i][j];
+                }
+        }
+
+        int * ps = new int[params];
+        int * maxa = new int[params];
+        for(int k=0;k<q;k++) {
+                for(int i=0;i<params;i++) {
+                        cin >> ps[i];
+                        maxa[i] = -1;
+//                      cout << "passing the following params to bin search param = " << i << " elvel = " << levels << endl;
+                        //now we have param strengths, calculate max level for which str[i]>=lps[i][levels];
+                        int ind = bin_search(ps[i], lps, i, levels);
+//                      cout <<" ouuttput from bin seach = " << ind << endl;
+                        if(ps[i] == lps[i][ind]) {
+                                while(ind<levels && ps[i]>=lps[i][ind])
+                                        ind++;
+                                if(ind == levels)
+                                        maxa[i] = levels-1;
+                                else
+                                        maxa[i] = ind-1;
+                        } else if(ps[i] > lps[i][ind]) {
+                                while(ind<levels && ps[i]>=lps[i][ind])
+                                        ind++;
+                                if(ind == levels)
+                                        maxa[i] = levels-1;
+                                else
+                                        maxa[i] = ind-1;
+                        } else if(ps[i] < lps[i][ind]) {
+                                //we need to move to the prev index
+                                maxa[i] = ind-1;
+                        }
+//                      cout << "ind " << maxa[i] << endl;
+                        //now maxa[i] has the level which has the strength <= str
+                        //for(int j=0;j<levels;j++) {
+                        //      if(ps[i] >= lps[i][j])
+                        //              maxa[i] = j;
+                        //}
+                }
+                //now find min of all levels
+                int min = levels+1;
+                for(int i=0;i<params;i++) {
+                        if(maxa[i]>=0 && min > maxa[i])
+                                min = maxa[i];
+                }
+//              cout << "min = " << min << endl;
+                if(min < levels)
+                        cout << (min+1) << endl;
+        }
+        return 0;
+}

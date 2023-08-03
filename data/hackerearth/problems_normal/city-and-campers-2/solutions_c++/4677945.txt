@@ -1,0 +1,115 @@
+#include<stdio.h>
+typedef long long ll;
+ 
+const ll SIZE = (1e+5)+5;
+ 
+ll arr[SIZE], siz[SIZE],n;
+ll ht[SIZE];//example: ht[10] means number of groups having size 10
+ 
+void initialize()
+{
+    for(ll i=0;i<SIZE;++i)
+    {
+        arr[i] = i;
+        siz[i] = 1;
+    }
+    ht[1] = n;//initially there are n groups of size 1
+}
+ 
+ll root(ll a)
+{
+    ll i=a;
+    while(arr[i]!=i)
+    {
+        arr[i] = arr[arr[i]];
+        i = arr[i];
+    }
+    return i;
+}
+ 
+ll max_size=1;//this keeps track of the largest size of a group in all groups. Initially all groups have size 1, hence max_size is 1
+ 
+void uni(ll a, ll b)
+{
+    ll root_a = root(a);
+    ll root_b = root(b);
+ 
+    if(root_a != root_b)
+    {
+        ll siz_root_a = siz[root_a]; //size of group having root as a
+        ll siz_root_b = siz[root_b]; //size of group having root as b
+ 
+        ht[siz_root_a]--;
+        ht[siz_root_b]--;
+        ht[siz_root_a + siz_root_b]++;
+        //the no. of groups having size equal to siz_root_a and size_root_b is decreased by 1, while no. of groups having size siz_root_a+siz_root_b is increased by 1
+ 
+        siz[root_a] += siz[root_b];
+        arr[root_b] = root_a;
+ 
+        if( (siz_root_a+siz_root_b) > max_size)
+            max_size = siz_root_a+siz_root_b;
+    }
+}
+ 
+void print_ans(ll a, ll b)
+{
+    uni(a,b);
+ 
+    ll min_diff=n+1;//this keeps track of the min distance between two groups.
+ 
+    ll i=1,j;
+ 
+    while(ht[i]==0)
+    {
+        i++;
+    }
+ 
+    if(i==max_size)
+    {
+        printf("0\n");
+        return;
+        //this is the condition when there are only groups(s) having size of max_size left.
+    }
+ 
+    while(i<=(max_size-1))
+    {
+        j = i+1;
+ 
+        if(ht[i]>1)
+        {
+            printf("0\n");
+            return;
+            //if more than one group have size of i then their size difference is 0
+        }
+ 
+        //if ht[i]=1, then we have to find another group with ht>=1. the conditions for ht[i]=0 and ht[i]>1 are already checked above. hence it has to be 1.
+        while(ht[j]==0)
+        {
+            j++;
+        }
+ 
+        //we check and assign min_difference if the difference between groups with size i and j is less than the min_difference found till now
+        if((j-i)<min_diff)
+            min_diff = j-i;
+ 
+        i=j;
+        //i is incremented to next size j and the above conditions checked again
+    }
+    printf("%lld\n",min_diff);
+}
+ 
+int main()
+{
+    ll q,a,b;
+    scanf("%lld%lld",&n,&q);
+ 
+    initialize();
+ 
+    while(q--)
+    {
+        scanf("%lld%lld",&a,&b);
+        print_ans(a,b);
+    }
+    return 0;
+}

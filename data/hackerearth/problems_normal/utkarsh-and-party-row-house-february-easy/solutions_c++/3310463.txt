@@ -1,0 +1,140 @@
+/*input
+8 1
+2 3 7 4 5 6 8 9
+1 5 3 8
+*/
+//14+12+20+30+48+63
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define PII pair<ll, ll>
+#define f first
+#define s second
+#define F(i,a,b) for(ll i = (ll)(a); i <= (ll)(b); i++)
+#define RF(i,a,b) for(ll i = (ll)(a); i >= (ll)(b); i--)
+#define inf LLONG_MAX
+#define mod 1000000007
+#define MAXN 100005
+#define pb(x) push_back(x)
+
+ll n, q, arr[MAXN], ch, k, l, r, s;
+ll tree1[4*MAXN];
+ll tree2[4*MAXN];
+
+void build_tree1(ll node, ll a, ll b)
+{
+	if(a > b) 
+		return;
+	if(a == b) 
+	{
+		tree1[node]= arr[a]; // Init value
+		return;
+	}
+	build_tree1(node*2, a, (a+b)/2); // Init left child
+	build_tree1(node*2+1, 1+(a+b)/2, b); // Init right child	
+	tree1[node] = tree1[node*2] + tree1[node*2+1]; // Init root value
+}
+
+void build_tree2(ll node, ll a, ll b)
+{
+	if(a > b) 
+		return;
+	if(a == b) 
+	{
+		tree2[node]= arr[a]*a; // Init value
+		return;
+	}
+	build_tree2(node*2, a, (a+b)/2); // Init left child
+	build_tree2(node*2+1, 1+(a+b)/2, b); // Init right child	
+	tree2[node] = tree2[node*2] + tree2[node*2+1]; // Init root value
+}
+
+void update1(ll node, ll a, ll b, ll i, ll val)
+{
+	if(a > b || a > i || b < i)
+		return;
+	if (a==b) //at leaf node
+	{
+		tree1[node] += val;
+		return;
+	}
+	update1(node*2, a, (a+b)/2, i, val);
+	update1(node*2+1, (a+b)/2+1, b, i, val);
+	tree1[node] = tree1[node*2] + tree1[node*2+1]; // Init root value
+}
+
+void update2(ll node, ll a, ll b, ll i, ll val)
+{
+	if(a > b || a > i || b < i)
+		return;
+	if (a==b) //at leaf node
+	{
+		tree2[node] += a*val;
+		return;
+	}
+	update2(node*2, a, (a+b)/2, i, val);
+	update2(node*2+1, (a+b)/2+1, b, i, val);
+	tree2[node] = tree2[node*2] + tree2[node*2+1]; // Init root value
+}
+
+ll query1(ll node, ll a, ll b, ll i, ll j)
+{
+	if(a > b || a > j || b < i)
+		return 0;
+	if(a >= i && b <= j) // Current segment is totally within range [i, j]
+		return tree1[node];
+	ll q1 = query1(node*2, a, (a+b)/2, i, j); // Query left child
+	ll q2 = query1(1+node*2, 1+(a+b)/2, b, i, j); // Query right child
+	return q1+q2;
+}
+
+ll query2(ll node, ll a, ll b, ll i, ll j)
+{
+	if(a > b || a > j || b < i)
+		return 0;
+	if(a >= i && b <= j) // Current segment is totally within range [i, j]
+		return tree2[node];
+	ll q1 = query2(node*2, a, (a+b)/2, i, j); // Query left child
+	ll q2 = query2(1+node*2, 1+(a+b)/2, b, i, j); // Query right child
+	return q1+q2;
+}
+
+int main() 
+{
+	ios_base::sync_with_stdio(false);cin.tie(0);
+	//freopen("inp.txt","r",stdin);
+	//freopen("out.txt","w",stdout);
+	cin>>n>>q;
+	F(i,1,n)
+		cin>>arr[i];
+	build_tree1(1,1,n);
+	build_tree2(1,1,n);
+	while(q--)
+	{
+		cin>>ch;
+		if(ch==1)
+		{
+			ll ans, t1, t2;
+			cin>>k>>l>>r;
+			if(k<=l)
+				ans=query2(1,1,n,l,r)-k*query1(1,1,n,l,r);
+			else if(k>=r)
+				ans=k*query1(1,1,n,l,r)-query2(1,1,n,l,r);
+			else
+			{
+				t1=k*query1(1,1,n,l,k-1)-query2(1,1,n,l,k-1);
+				t2=query2(1,1,n,k+1,r)-k*query1(1,1,n,k+1,r);
+				ans=t1+t2;
+			}
+			cout<<ans<<endl;
+		}
+		else
+		{
+			cin>>k>>s;
+			update1(1,1,n,k,s);
+			update2(1,1,n,k,s);
+		}
+	}	
+	return 0;
+}

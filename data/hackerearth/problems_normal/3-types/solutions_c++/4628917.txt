@@ -1,0 +1,150 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define MAX 2000000
+
+int visit_m[MAX];
+int visit_w[MAX];
+int parentm[MAX];
+int parentw[MAX];
+vector<pair<int,pair<int,int> > >edges;
+vector<ll>graphm[MAX];
+vector<ll>graphw[MAX];
+
+int dfs_m(int index)
+{
+  int i;
+  if (visit_m[index]==0)
+  {
+    visit_m[index]=1;
+    for(i=0;i<graphm[index].size();i++)
+    {
+      dfs_m(graphm[index][i]);
+    }
+  }
+}
+
+int dfs_w(int index)
+{
+  int i;
+  if (visit_w[index]==0)
+  {
+    visit_w[index]=1;
+    for(i=0;i<graphw[index].size();i++)
+    {
+      dfs_w(graphw[index][i]);
+    }
+  }
+}
+
+int find_parent_m(int x)
+{
+  if (parentm[x]==x)
+  return x;
+  else
+  {
+    parentm[x]=find_parent_m(parentm[x]);
+    return parentm[x];
+  }//else
+
+}//find_parent_m
+
+int find_parent_w(int x)
+{
+  if(parentw[x]==x)
+  return x;
+  else
+  {
+    parentw[x]=find_parent_w(parentw[x]);
+    return parentw[x];
+  }//else
+}
+
+int main()
+{
+  int n,m;
+  cin>>n>>m;
+  int i;int a,b,c;
+  memset(visit_w,0,sizeof(visit_w));
+  memset(visit_m,0,sizeof(visit_m));
+  for(i=0;i<=n;i++)
+  {
+    parentw[i]=i;
+    parentm[i]=i;
+  }
+  for(i=0;i<m;i++)
+  {
+    cin>>a>>b>>c;
+    edges.pb(mp(c,mp(a,b)));
+    if (c==1 || c==3)
+    {
+      graphm[a].pb(b);
+      graphm[b].pb(a);
+    }
+
+    if (c==2 || c==3)
+    {
+      graphw[a].pb(b);
+      graphw[b].pb(a);
+    }
+  }
+  dfs_m(1);
+  dfs_w(1);
+  for(i=1;i<=n;i++)
+  {
+    if (visit_m[i]==0 || visit_w[i]==0)
+    {
+      cout<<"-1\n";
+      return 0;
+    }
+  }
+  sort(edges.begin(),edges.end());
+  reverse(edges.begin(),edges.end());ll result=0;
+  for(i=0;i<edges.size();i++)
+  {
+  //  cout<<edges[i].ff<<" \n";
+    int s= edges[i].ss.ff;
+    int d= edges[i].ss.ss;
+    if (edges[i].ff==3)
+    {
+      if (find_parent_w(s)!=find_parent_w(d))
+      {
+        int p=find_parent_w(s);
+        parentw[p]=find_parent_w(d);
+         p=find_parent_m(s);
+        parentm[p]=find_parent_m(d);
+      }
+      else
+      result++;
+    }
+    else if (edges[i].ff==2)
+    {
+      if (find_parent_w(s)!=find_parent_w(d))
+      {
+        int p=find_parent_w(s);
+        parentw[p]=find_parent_w(d);
+      }
+      else
+      result++;
+    }
+    else
+    {
+      if (find_parent_m(s)!=find_parent_m(d))
+      {
+        int p=find_parent_m(s);
+        parentm[p]=find_parent_m(d);
+      }
+      else
+      result++;
+    }
+  }//i
+
+cout<<result<<"\n";
+
+
+return 0;
+}

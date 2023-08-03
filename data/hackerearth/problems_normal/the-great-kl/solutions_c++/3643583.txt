@@ -1,0 +1,118 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+typedef long long ll;
+const ll MAX = 1LL << 17;
+const ll LOG = 17;
+const ll LIM = 256;
+vector<ll> adj[MAX], locs[MAX];
+ll par[LOG][MAX];
+vector<ll> depth;
+
+void dfs(ll at) {
+  for (const ll to : adj[at]) {
+    if (to != par[0][at]) {
+      par[0][to] = at;
+      depth[to] = depth[at] + 1;
+      dfs(to);
+    }
+  }
+}
+
+ll get_lca(ll a, ll b) {
+  if (depth[a] < depth[b]) {
+    swap(a, b);
+  }
+  for (ll i = LOG - 1; i >= 0; --i) {
+    if (depth[par[i][a]] >= depth[b]) {
+      a = par[i][a];
+    }
+  }
+  if (a == b) {
+    return a;
+  }
+  for (ll i = LOG - 1; i >= 0; --i) {
+    if (par[i][a] != par[i][b]) {
+      a = par[i][a];
+      b = par[i][b];
+    }
+  }
+  return par[0][a];
+}
+
+ll get_dist(ll a, ll b) {
+  const ll lca = get_lca(a, b);
+  return depth[a] + depth[b] - 2 * depth[lca];
+}
+
+void solve(ll test_num) {
+  (void) test_num;
+  ll M, N;
+  cin >> N >> M;
+  for (ll v = 1, type; v <= N; ++v) {
+    cin >> type;
+    locs[type].push_back(v);
+  }
+  for (ll e = 0, a, b; e < N - 1; ++e) {
+    cin >> a >> b;
+    adj[a].push_back(b);
+    adj[b].push_back(a);
+  }
+  depth.resize(N + 1);
+  par[0][1] = 0;
+  dfs(1);
+  for (ll j = 0; j + 1 < LOG; ++j) {
+    for (ll i = 1; i <= N; ++i) {
+      par[j + 1][i] = par[j][par[j][i]];
+    }
+  }
+  for (ll m = 1; m <= M; ++m) {
+    ll res = 0;
+    ll deep = locs[m].front();
+    for (ll v : locs[m]) {
+      if (depth[v] > depth[deep]) {
+        deep = v;
+      }
+    }
+    for (ll v : locs[m]) {
+      res = max(res, get_dist(deep, v));
+    }
+    cout << res << " ";
+  }
+}
+
+void solve() {
+#ifdef AZN
+//make_case();
+  double start_t = (double) clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr);
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+  ll T = 1;
+//  scanf("%d", &T);
+//  cin >> T;
+  for (ll t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << fixed << setprecision(3) << "Took: " << (((double) clock() - start_t) / CLOCKS_PER_SEC)
+      << endl;
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

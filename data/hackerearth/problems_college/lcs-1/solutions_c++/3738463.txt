@@ -1,0 +1,208 @@
+#include <iostream>
+#include <cstdio>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <sstream>
+#include <cmath>
+
+typedef long long ll;
+
+#define forn(i, n) for (int i = 0; i < (int)(n); i++)
+#define forv(i, v) forn(i, v.size())
+
+using namespace std;
+
+const int NMAX = 420005;
+const int VMAX = 2 * NMAX + 100000;
+const int INF = 1000000000;
+
+int s[NMAX];
+
+struct node
+{
+    int parent;
+    int l;
+    int r;
+    int link;
+    map<int, int> next;
+    int term_id;
+    node() {}
+    node (int parent, int l, int r) : parent(parent), l(l), r(r)
+    {
+        link = -1;
+        next = map<int, int>();
+        term_id = -1;
+        has_a = false;
+    }
+    bool has_a;
+};
+
+struct state
+{
+    int v, l;
+    state() {}
+    state(int v, int l) : v(v), l(l) {}
+};
+
+int kv;
+node v[VMAX];
+
+inline int len(int w)
+{
+    return v[w].r - v[w].l;
+}
+
+int add(int parent, int l, int r, int term_id = -1)
+{
+    v[kv] = node(parent, l, r);
+    v[parent].next[s[l]] = kv;
+    if (r == INF) {
+        v[kv].term_id = term_id;
+    }
+    return kv++;
+}
+
+int split(const state &t)
+{
+    int w = t.v;
+    int l = t.l;
+    if (l == 0) return v[w].parent;
+    if (l == len(w)) return w;
+    int nw = add(v[w].parent, v[w].l, v[w].l + l);
+    v[w].l += l;
+    v[w].parent = nw;
+    v[nw].next[s[v[w].l]] = w;
+    return nw;
+}
+
+state down(int w, int l, int r)
+{
+    if (l == r) return state(w, 0);
+    while (1)
+    {
+        w = v[w].next[s[l]];
+        if (len(w) >= r - l) return state(w, r - l);
+        l += len(w);
+    }
+}
+
+state go(const state &t, int c)
+{
+    int w = t.v, l = t.l;
+    if (l != len(w)) return (s[v[w].l + l] == c) ? state(w, l + 1) : state(-1, -1);
+    else
+    {
+        auto it = v[w].next.find(c);
+        int nw = (it == v[w].next.end() ? -1 : it->second);
+        return (nw != -1) ? state(nw, 1) : state(-1, -1);
+    }
+}
+
+int link(int w)
+{
+    if (v[w].link != -1) return v[w].link;
+    return (v[w].link = split(down(link(v[w].parent), v[w].l + int(v[w].parent == 0), v[w].r)));
+}
+
+state addchar(state ptr, int c, int term_id)
+{
+    while (1)
+    {
+        state nptr = go(ptr, s[c]);
+        if (nptr.v != -1) return nptr;
+        int w = split(ptr);
+        add(w, c, INF, term_id);
+        ptr.v = link(w);
+        ptr.l = len(ptr.v);
+        if (w == 0) return ptr;
+    }
+}
+
+bool make_step(state& ptr, int c)
+{
+    int w = ptr.v;
+    if (len(w) == ptr.l)
+    {
+        auto it = v[w].next.find(c);
+        if (it == v[w].next.end()) return false;
+        ptr = state(it->second, 1);
+    }
+    else
+    {
+        if (s[v[w].l + ptr.l] != c) return false;
+        ptr.l++;
+    }
+    return true;
+}
+
+int n, q;
+vector<int> ans;
+
+void dfs1(int w) {
+    v[w].has_a = v[w].term_id != -1 && v[w].term_id < n;
+    for (auto p : v[w].next) {
+        dfs1(p.second);
+        v[w].has_a |= v[p.second].has_a;
+    }
+}
+
+void dfs2(int w, int depth, int maxDepth) {
+    if (v[w].term_id >= n) {
+        ans[v[w].term_id - n] = max(ans[v[w].term_id - n], maxDepth);
+    }
+    if (v[w].has_a) maxDepth = depth;
+    for (auto p : v[w].next) {
+        dfs2(p.second, depth + len(p.second), maxDepth);
+    }
+}
+
+int main() {
+#ifdef NEREVAR_PROJECT
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    kv = 1;
+    v[0] = node(0, 1, 1);
+    v[0].link = 0;
+    state ptr;
+    ptr.v = 0;
+    ptr.l = 0;
+    scanf("%d\n", &n);
+    vector<string> a(n);
+    forn(i, n) getline(cin, a[i]);
+    scanf("%d\n", &q);
+    vector<string> b(q);
+    forn(i, q) getline(cin, b[i]);
+    int len = 0;
+    forn(i, n) {
+        forv(j, a[i]) {
+            s[len++] = a[i][j] - 'a';
+            ptr = addchar(ptr, len - 1, i);
+        }
+        s[len++] = 26 + i;
+        ptr = addchar(ptr, len - 1, i);
+    }
+    forn(i, q) {
+        forv(j, b[i]) {
+            s[len++] = b[i][j] - 'a';
+            ptr = addchar(ptr, len - 1, i + n);
+        }
+        s[len++] = 26 + i + n;
+        ptr = addchar(ptr, len - 1, i + n);
+    }
+    ans = vector<int>(q);
+    dfs1(0);
+    dfs2(0, 0, 0);
+    
+    forn(i, q) {
+        cout << ans[i] << endl;
+    }
+    
+    return 0;
+}

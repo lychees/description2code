@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN = 100005;
+const int INF = 1000000000;
+pair <int,int> A[MAXN];
+vector <int> numbers[MAXN];
+int ans[MAXN];
+int abs_distance(int pos, int lo, int hi)
+{
+	if(lo <= pos && pos <= hi)
+		return 0;
+	return min(abs(pos-lo),abs(pos-hi));
+}
+int main()
+{
+	ios_base::sync_with_stdio(0);
+	int n;
+	cin>>n;
+	for (int i = 0; i < n; ++i)
+	{
+		cin>>A[i].first;
+		A[i].second = i;
+	}
+	sort(A, A+n);
+	int pos = 0;
+	numbers[pos].push_back(A[0].second);
+	for (int i = 1; i < n; ++i)
+	{
+		if(A[i].first == A[i-1].first)
+			numbers[pos].push_back(A[i].second);
+		else
+			numbers[++pos].push_back(A[i].second);
+	}
+	// handle largest number separately
+	int maxlen = 1,temp = 1;
+	for (int i = 1; i < numbers[pos].size(); ++i)
+	{
+		if(numbers[pos][i] == numbers[pos][i-1]+1)
+			temp++;
+		else
+			temp = 1;
+		maxlen = max(maxlen,temp);
+	}
+	for (int i = 1; i <= maxlen; ++i)
+	{
+		ans[i] = 1;
+	}
+	// handle the rest now
+	int lo = numbers[pos].front(), hi = numbers[pos].back(), processed = numbers[pos].size();
+	for (int i = pos-1; i >= 0; --i)
+	{
+		int sp = 0;
+		for (int j = 1; j < numbers[i].size(); ++j)
+		{
+			if(abs_distance(numbers[i][j],lo,hi) < abs_distance(numbers[i][sp],lo,hi))
+				sp = j;
+		}
+		int lf = sp-1, rt = sp;
+		while(lf >= 0 || rt < numbers[i].size())
+		{
+			int lf_dist = INF, rt_dist = INF;
+			if(lf >= 0)
+				lf_dist = abs_distance(numbers[i][lf],lo,hi);
+			if(rt < numbers[i].size())
+				rt_dist = abs_distance(numbers[i][rt],lo,hi);
+			if(lf_dist < rt_dist)
+			{
+				lo = min(lo,numbers[i][lf]);
+				hi = max(hi,numbers[i][lf]);
+				processed++;
+				lf--;
+			}
+			else
+			{
+				lo = min(lo,numbers[i][rt]);
+				hi = max(hi,numbers[i][rt]);
+				processed++;
+				rt++;
+			}
+			if(hi+1-lo == processed)
+				ans[processed] = 1;
+		}
+	}
+	// print ans
+	for (int i = 1; i <= n; ++i)
+	{
+		cout<<ans[i];
+	}
+	return 0;
+}

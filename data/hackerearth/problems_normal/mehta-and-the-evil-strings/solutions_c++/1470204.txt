@@ -1,0 +1,145 @@
+ #include <bits/stdc++.h>
+using namespace std;
+
+#define rep1(i, begin, end) for (__typeof(begin) i = (begin) - ((begin) > (end)); i != (end) - ((begin) > (end)); i += 1 - 2 * ((begin) > (end)))
+#define rep2(i, begin, end) for (__typeof(begin) i = (begin); i != (end) + 1 - 2 * ((begin) > (end)); i += 1 - 2 * ((begin) > (end)))
+#define mem(a, x) memset(a, x, sizeof(a))
+#define all(a) a.begin(), a.end()
+#define count_bits(x) __builtin_popcount(x)
+#define count_bitsll(x) __builtin_popcountll(x)
+#define least_bits(x) __builtin_ffs(x)
+#define least_bitsll(x) __builtin_ffsll(x)
+#define most_bits(x) 32 - __builtin_clz(x)
+#define most_bitsll(x) 64 - __builtin_clz(x)
+
+vector<string> split(const string &s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c)) v.push_back(x);
+	return v;
+}
+
+#define error(args...) { vector<string> _v = split(#args, ','); err(_v.begin(), args); }
+
+void err(vector<string>::iterator it) {}
+
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << '\n';
+	err(++it, args...);
+}
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {while (b != 0) {T c = a; a = b; b = c % b;} return a;}
+
+
+typedef vector<ll> vl;
+typedef vector<vl> Mat;
+
+void unit(Mat &data) {
+    int sz = data.size();
+    rep1(i, 0, sz) data[i][i] = 1;
+}
+
+void print(Mat &data) {
+    int sz = data.size();
+    rep1(i, 0, sz) {
+        rep1(j, 0, sz) {
+            if (j == sz - 1) printf("%lld\n", data[i][j]);
+            else printf("%lld ", data[i][j]);
+        }
+    }
+}
+
+Mat mul(Mat x, Mat y) {
+    int sz = x.size();
+    Mat ans(sz, vl(sz, 0));
+    rep1(i, 0, sz) rep1(j, 0, sz) rep1(k, 0, sz) {
+        ans[i][j] = (ans[i][j] + x[i][k] * y[k][j]) % MOD;
+    }
+    return ans;
+}
+
+Mat pow(Mat x, ll n) {
+    int sz = x.size();
+    Mat ans(sz, vl(sz, 0));
+    unit(ans);
+    while (n) {
+        if (n & 1) ans = mul(ans, x);
+        x = mul(x, x);
+        n >>= 1;
+    }
+    return ans;
+}
+
+const int p[4] = {2, 3, 5, 7};
+
+int main(int argc, char *argv[]) {
+    ios_base::sync_with_stdio(false);
+    int ntest;
+    ll n;
+    
+    
+    Mat base(16, vl(16, 0));
+    vector<int> good;
+    
+    vector<ll> tt(16);
+    tt[0] = 3;
+    tt[1] = 2;
+    tt[2] = tt[4] = tt[8] = 1;
+    tt[3] = 1;
+    
+    rep1(i, 0, 16) {
+    	int x = 0;
+    	rep1(j, 0, 4) {
+    		if (i & (1 << j)) x ^= p[j];
+    	}
+    	if (x > 0) good.push_back(i);
+    }
+    
+    good.push_back(13);
+    
+    rep1(i, 0, 16) rep1(j, 0, 16) {
+    	int x = i ^ j;
+    	int bc = count_bits(x);
+    	if (x == 0) base[i][j] = 3;
+    	if (bc == 1) {
+    		rep1(k, 0, 4) {
+    			if (x & (1 << k)) {
+    				if (k == 0) base[i][j] = 2;
+    				else base[i][j] = 1;
+    			}
+    		}
+    	}
+    	if (bc == 2) {
+    		int tot = 0;
+    		rep1(k, 0, 4) {
+    			if (x & (1 << k)) tot = tot * 10 + k;
+    		}
+    		if (tot == 1) base[i][j] = 1;
+    	}
+    }
+    
+    //print(base);
+
+    cin >> ntest;
+
+    while (ntest--) {
+    	cin >> n;
+    	Mat res = pow(base, n - 1);
+    	ll ans = 0;
+    	rep1(i, 0, good.size()) rep1(j, 0, 16) {
+    		ans = (ans + res[good[i]][j] * tt[j]) % MOD;
+    	}
+    	printf("%lld\n", ans);
+    }
+    return 0;
+}

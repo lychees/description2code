@@ -1,0 +1,133 @@
+/*logic ------------
+
+*/
+#include<iostream>
+#include<cmath>
+#include<cstring>
+#include<string>
+#include<bitset>
+#include<algorithm>
+#include<vector>
+#include<set>
+#include<map>
+#include<stack>
+#include<stdio.h>
+#include<queue>
+#define si(n) scanf("%d",&n)
+#define sll(n) scanf("%lld",&n)
+#define mod 1000000007 // 10**9 + 7
+#define INF 1e9
+#define FOR(i,a,b) for(int (i) = (a); (i) < (b); ++(i))
+#define RFOR(i,a,b) for(int (i) = (a)-1; (i) >= (b); --(i))
+#define CLEAR(a) memset((a),0,sizeof(a))
+#define mp(a, b) make_pair(a, b)
+#define pb(a) push_back(a)
+#define rep(i, a, b) for (int i = a; i < b; i++)
+#define rrep(i, b, a) for (int i = b; i > a; i--)
+#define all(v) v.begin(), v.end()
+#define GETCHAR getchar_unlocked
+#define pi(n) printf("%d\n",n)
+#define pll(n) printf("%lld\n",n)
+#define rk() int t; scanf("%d",&t); while(t--)
+using namespace std;
+const double pi = acos(-1.0);
+//freopen("in","r",stdin);
+//freopen("out","w",stdout);
+
+const int er[8] = {-1,-1,0,1,1,1,0,-1};
+const int ec[8] = {0,1,1,1,0,-1,-1,-1};
+const int fr[4] = {-1,1,0,0};
+const int fc[4] = {0,0,1,-1};
+typedef unsigned long long ull;
+typedef long long ll;
+typedef long l;
+typedef pair<int,int> pii;
+typedef vector<int> vec;
+typedef vector<pii> vpii;
+ll po(ll a,ll p)
+{ll ret = 1;while(p){if(p&1)ret = (ret*a)%mod;a=(a*a)%mod;p=p>>1;}return ret%mod;}
+
+
+#define MAXN 1000003
+#define MAXLG 50
+
+char A[MAXN];
+
+struct entry {
+	int nr[2], p;
+} L[MAXN];
+
+int P[MAXLG][MAXN], N, i, stp, cnt;
+
+struct elem {
+	ll rank,ind;
+};
+int cmp(struct entry a, struct entry b)
+{
+return a.nr[0] == b.nr[0] ? (a.nr[1] < b.nr[1] ? 1 : 0) : (a.nr[0] < b.nr[0] ? 1 : 0);
+}
+bool compare(elem e1, elem e2)
+{
+	return (e1.rank<e2.rank);
+}
+int lcp(int x, int y);
+char c[1000003];
+int main(void)
+{
+	int T;
+    
+	cin >> T;
+
+	for (int sds = 0; sds < T; ++sds) {
+     
+	cin >> c;
+	int flag[125]={0};
+	int i=0;
+        int j=0;
+        while(c[i]!='\0'){
+        	if(!flag[c[i]]){A[j++]=c[i];flag[c[i]]=1;}
+        	i++;
+        }
+        A[j]='\0';
+		for (N = strlen(A), i = 0; i < N; i ++)
+			P[0][i] = A[i] - 'a';
+		for (stp = 1, cnt = 1; cnt >> 1 < N; stp ++, cnt <<= 1) {
+			for (i = 0; i < N; i ++) {
+				L[i].nr[0] = P[stp - 1][i];
+				L[i].nr[1] = i + cnt < N ? P[stp - 1][i + cnt] : -1;
+				L[i].p = i;
+			}
+		
+			sort(L, L + N, cmp);
+			for (i = 0; i < N; i ++) {
+				P[stp][L[i].p] = i > 0 && L[i].nr[0] == L[i - 1].nr[0] && L[i].nr[1] == L[i - 1].nr[1] ? P[stp][L[i - 1].p] : i;
+			}
+		}
+		vector <elem> str(N);
+		for (int i = 0; i < N; ++i) {
+			str[i].rank = P[stp-1][i];
+			str[i].ind = i;
+		}
+		sort(str.begin(), str.end(), compare);
+
+		ll cnt = N-str[0].ind;
+		for (int i = 1; i < N; i++) {
+			//cout << str[i].ind << " " << str[i].rank << " " << lcp(str[i-1].ind,str[i].ind) << endl;
+			cnt += N-str[i].ind - lcp(str[i-1].ind,str[i].ind);
+		}
+
+		cout << cnt << endl;
+	}
+
+	return 0;
+}
+
+int lcp(int x, int y)
+{
+	int k, ret = 0;
+	if (x == y) return N - x;
+	for (k = stp - 1; k >= 0 && x < N && y < N; k --)
+		if (P[k][x] == P[k][y])
+			x += 1 << k, y += 1 << k, ret += 1 << k;
+	return ret;
+}

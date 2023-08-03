@@ -1,0 +1,110 @@
+#include <iostream>
+#include <vector>
+#include <list>
+#include <stack>
+#include <algorithm>
+#include <cstdlib>
+#include <cstring>
+
+using namespace std;
+
+class Graph{
+    int V;
+    list<int> *AdjList;
+public:
+    Graph(int Vertex){
+        this->V = Vertex;
+        AdjList = new list<int>[V];
+    }   
+    void AddEdge(int u, int v){ 
+        AdjList[u].push_back(v);
+        AdjList[v].push_back(u);
+    }   
+    int ListSize(int v){ return AdjList[v].size(); }
+    void CountConnComponent();
+    int  ReCountConnComponent(int v); 
+    void DFSUtils(int v, bool *Visited);
+    void ReDFSUtils(int v, bool *Visited, int u); 
+};
+
+int ConnComponentCount = 0;
+
+void Graph::DFSUtils(int v, bool Visited[]){
+    Visited[v] = true;
+    list<int>::iterator it; 
+
+    for(it = AdjList[v].begin(); it != AdjList[v].end(); it++){
+        if(!Visited[*it])
+        DFSUtils(*it, Visited);
+    }   
+}
+void Graph::ReDFSUtils(int v, bool Visited[], int u){ 
+    Visited[v] = true;
+    Visited[u] = true;
+
+    list<int>::iterator it; 
+
+    for(it = AdjList[v].begin(); it != AdjList[v].end(); it++){
+        if(*it == u)
+             continue;
+
+        if(!Visited[*it])
+             DFSUtils(*it, Visited);
+    }
+}
+
+void Graph::CountConnComponent(){
+    bool Visited[V];
+    memset(Visited, false, V);
+
+    for(int i = 1; i < V; i++){
+        if(Visited[i] == false){
+            ConnComponentCount++;
+            DFSUtils(i, Visited);
+        }
+    }
+}
+
+int Graph::ReCountConnComponent(int u){
+    bool Visited[V];
+    memset(Visited, false, V);
+    int Count = 0;
+    for(int i = 1; i < V; i++){
+        if(i == u){
+          continue;
+        }
+        if(Visited[i] == false){
+            Count++;
+            ReDFSUtils(i, Visited, u);
+        }
+    }
+    return Count;
+}
+int main(){
+    int N, M;
+    cin >> N >> M;
+
+    Graph G(N+1);
+    for(int i = 0; i < M; i++){
+        int u, v;
+        cin >> u >> v;
+        G.AddEdge(u, v);
+    }
+
+    G.CountConnComponent();
+
+    int Q;
+    cin >> Q;
+    while(Q--){
+        int X;
+        cin >> X;
+        int Count = G.ReCountConnComponent(X);
+        if(Count > ConnComponentCount){
+            cout << "Satisfied "<< G.ListSize(X)<<endl;
+        }else{
+            cout << "Not Satisfied"<<endl;
+        }
+    }
+
+    return 0;
+}

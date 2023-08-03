@@ -1,0 +1,91 @@
+#include <iostream>
+#include <queue>
+#include <functional>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
+struct DJNode
+{
+    DJNode* root;
+};
+
+struct Edge
+{
+    int w;
+    DJNode *a, *b;
+};
+
+DJNode* get_root(DJNode& node)
+{
+    DJNode* ret = &node;
+
+    while (ret->root != ret)
+    {
+        ret = ret->root;
+    }
+
+    node.root = ret;
+
+    return ret;
+}
+
+void join_sets(DJNode& a, DJNode& b)
+{
+    get_root(a)->root = get_root(b);
+}
+
+
+int main()
+{
+    int N, M;
+    cin >> N >> M;
+
+    vector<DJNode> nodes(N);
+    for (auto& x : nodes)
+    {
+        x.root = &x;
+    }
+
+    vector<Edge> edges(M);
+    for (int i = 0; i < M; ++i)
+    {
+        edges[i].w = i + 1;
+        int tmp;
+        cin >> tmp;
+        edges[i].a = &nodes[tmp - 1];
+        cin >> tmp;
+        edges[i].b = &nodes[tmp - 1];
+    }
+
+    sort(begin(edges), end(edges), [](const Edge& a, const Edge& b)
+    {
+        return a.w > b.w;
+    });
+
+    vector<int> cancelled;
+    cancelled.reserve(M);
+
+    for (auto& x : edges)
+    {
+        if (get_root(*x.a) == get_root(*x.b)) // already joined
+        {
+            cancelled.push_back(x.w);
+        }
+        else
+        {
+            join_sets(*x.a, *x.b);
+        }
+    }
+
+    sort(begin(cancelled), end(cancelled));
+
+    printf("%d\n", cancelled.size());
+    for (auto& x : cancelled)
+    {
+        printf("%d\n", x);
+    }
+
+    return 0;
+}

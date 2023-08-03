@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 607;
+const int INF = 100000;
+
+struct edge
+{
+    int a,b,cap,flow;
+};
+
+vector<edge> e;
+vector<int> g[MAXN];
+int dist[MAXN],ptr[MAXN],a[MAXN],f[MAXN];
+queue<int> q;
+int s,t;
+void Add(int u,int v,int cap)
+{
+    edge e1 = {u,v,cap,0};
+    edge e2 = {v,u,0,0};
+    g[u].push_back(e.size());
+    e.push_back(e1);
+    g[v].push_back(e.size());
+    e.push_back(e2);
+}
+
+bool bfs()
+{
+    memset(dist,-1,sizeof(dist));
+    int i,v,to;
+    dist[s] = 0;
+    q.push(s);
+    while ((!q.empty())&&(dist[t]==-1))
+    {
+        v = q.front();
+        q.pop();
+        for (i=0;i<g[v].size();i++)
+        {
+           to = e[g[v][i]].b;
+           if (dist[to]!=-1) continue;
+           if (e[g[v][i]].cap>e[g[v][i]].flow)
+           {
+           dist[to] = dist[v]+1;
+           q.push(to);
+           }
+        }
+    }
+    while (!q.empty()) q.pop();
+    return (dist[t]!=-1);
+}
+
+int dfs(int v,int flow)
+{
+    int i,id,to,pushed,pt;
+    if (!flow) return 0;
+    if (v==t) return flow;
+    pt = ptr[v];
+    for (i=pt;i<g[v].size();i++)
+    {
+        ptr[v]++;
+        id = g[v][i];
+        to = e[id].b;
+        if ((dist[v]+1)!=dist[to]) continue;
+        pushed = dfs(to,min(flow,e[id].cap-e[id].flow));
+        if (pushed)
+        {
+            e[id].flow+=pushed;
+            e[id^1].flow-=pushed;
+            return pushed;
+        }
+    }
+    return 0;
+}
+
+int dinic()
+{
+    int flow = 0,pushed;
+    for (;;)
+    {
+        if (!bfs()) break;
+        memset(ptr,0,sizeof(ptr));
+        while (pushed = dfs(s,INF)) flow+=pushed;
+    }
+    return flow;
+}
+
+int main()
+{
+    int n,m,i,lg,rg,mid,j;
+    scanf("%d%d",&n,&m);
+    for (i=0;i<n;i++) scanf("%d",&a[i]);
+    for (i=0;i<n+m-1;i++) scanf("%d",&f[i]);
+    lg = 0;
+    rg = 1000000009;
+    while (rg-lg>1)
+    {
+        mid = (lg+rg)/2;
+        e.clear();
+        for (i=0;i<2*(n+1);i++) g[i].clear();
+        for (i=0;i<n;i++)
+        {
+            for (j=0;j<n;j++)
+            {
+                if (f[i+a[j]]<=mid)
+                {
+                    Add(i,n+j,1);
+                }
+            }
+        }
+        for (i=0;i<n;i++)
+        {
+            Add(2*n,i,1);
+            Add(n+i,2*n+1,1);
+        }
+        s = 2*n;
+        t = 2*n+1;
+        if (dinic()==n) rg = mid; else lg = mid;
+    }
+    printf("%d\n",rg);
+    return 0;
+}

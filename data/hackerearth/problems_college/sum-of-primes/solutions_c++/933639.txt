@@ -1,0 +1,206 @@
+/*logic ------------
+
+*/
+#include<iostream>
+#include<cmath>
+#include<cstring>
+#include<string>
+#include<bitset>
+#include<algorithm>
+#include<vector>
+#include<set>
+#include<map>
+#include<stack>
+#include<stdio.h>
+#include<queue>
+#define si(n) scanf("%d",&n)
+#define sll(n) scanf("%lld",&n)
+#define mod 1000000007 // 10**9 + 7
+#define INF 1e9
+#define FOR(i,a,b) for(int (i) = (a); (i) < (b); ++(i))
+#define RFOR(i,a,b) for(int (i) = (a)-1; (i) >= (b); --(i))
+#define CLEAR(a) memset((a),0,sizeof(a))
+#define mp(a, b) make_pair(a, b)
+#define pb(a) push_back(a)
+#define rep(i, a, b) for (int i = a; i < b; i++)
+#define rrep(i, b, a) for (int i = b; i > a; i--)
+#define all(v) v.begin(), v.end()
+#define GETCHAR getchar_unlocked
+#define pi(n) printf("%d\n",n)
+#define pll(n) printf("%lld\n",n)
+#define rk() int t; scanf("%d",&t); while(t--)
+using namespace std;
+const double pi = acos(-1.0);
+//freopen("in","r",stdin);
+//freopen("out","w",stdout);
+
+const int er[8] = {-1,-1,0,1,1,1,0,-1};
+const int ec[8] = {0,1,1,1,0,-1,-1,-1};
+const int fr[4] = {-1,1,0,0};
+const int fc[4] = {0,0,1,-1};
+typedef unsigned long long ull;
+typedef long ll;
+typedef long long i64;
+typedef long l;
+typedef pair<int,int> pii;
+typedef vector<int> vec;
+typedef vector<pii> vpii;
+ll po(ll a,ll p)
+{ll ret = 1;while(p){if(p&1)ret = (ret*a)%mod;a=(a*a)%mod;p=p>>1;}return ret%mod;}
+
+
+const int MAX = 1000000;
+int flag[MAX>>6],a[78501],tot;
+i64 arr[78501];
+#define chk(x) (flag[x>>6]&(1<<((x>>1)&31)))
+#define set(x) (flag[x>>6]|=(1<<((x>>1)&31)))
+void sieve(){
+        register int i,j,k;
+        for(i=3;i<=1000;i+=2)
+                if(!chk(i))
+                        for(j=i*i,k=i<<1;j<MAX;j+=k)
+                                set(j);
+        a[0] = 2;
+        for(i=3,j=1;i<=MAX;i+=2)
+                if(!chk(i))
+                        a[j++] = i;
+        tot=j;
+        arr[0]=2;
+        for(int i=1;i<tot;i++){
+        	arr[i]=a[i]+arr[i-1];
+        }
+        //cout<<arr[tot-1]<<endl;
+        //cout<<tot<<endl;
+}
+
+
+/*
+bool fast(int &x)
+{
+	char c,r=0,n=0;
+	x=0;
+		for(;;)
+		{
+			c=GETCHAR();
+				if ((c<0) && (!r))
+					return(0);
+				if ((c=='-') && (!r))
+					n=1;
+				else
+				if ((c>='0') && (c<='9'))
+					x=x*10+c-'0',r=1;
+				else
+				if (r)
+					break;
+		}
+		if (n)
+			x=-x;
+	return(1);
+}*/
+
+i64 mulmod(i64 a1,i64 b,i64 c)        // a*b%mod taking care of overflow
+{
+         i64 x = 0;
+         while(b)
+         {
+            if(b&1)
+            {
+                 x=(x+a1)%c; 
+            }
+            a1=(a1*2)%c;
+            b/=2;
+         }
+         return x;
+}
+
+
+
+i64 rabbin_mod(i64 base,i64 power,i64 mm)       // a^b%mod
+{
+     i64 result=1;
+     while(power)
+     {
+          if(power&1)
+          {
+                result=mulmod(result,base,mm);
+          }
+          power/=2;
+          base=mulmod(base,base,mm);
+     }
+     return result;
+}
+
+
+
+int rabbin_test(i64 n)       //n-1=(2^k)d where d is some odd
+{
+    i64 k=0,d=0;
+    i64 n1 = n-1;
+    while(1)
+    {  
+           if(n1%2==0)
+           {
+                 k++;
+                 n1/=2;
+           }
+           else
+           {
+                   d=n1;
+                   break;
+           }
+    }
+    for(int i=1; i<=3 ;i++)// just 5 iterations - can b more
+    {
+            
+          
+          i64 ran = rand()%(n-1)+1; // rendom no between 1 and n-1 
+          i64 f0= rabbin_mod(ran,d,n);
+          i64 f1;
+          for(int j=1;j<=k;j++) 
+          {
+                  f1=mulmod(f0,f0,n);
+                  if(f1==1 && f0!=1 && f0!=n-1)
+                  {
+			           return 0;
+                  }
+                  f0=f1;
+		  }
+		  f1=f0;
+		  if(f1!=1)
+		    return 0;
+		   
+    }
+    return 1; // prime
+    
+}
+
+int main()
+{
+    sieve();
+    rk(){
+    	int a1,b,x,y;
+    	si(a1);si(b);
+    	i64 sum=0;
+    	int dd=a[tot-1];
+    	if(a1>dd){cout<<"NO\n";continue;}
+    	if(b>dd)y=tot-1;
+    	else{
+    		y=lower_bound(a,a+tot,b)-a;
+    	}
+    	x=lower_bound(a,a+tot,a1)-a;
+    	//cout<<x<<" "<<y;
+    	if(a[y]>b)--y;
+    	//cout<<y;
+    	sum=arr[y];
+    	if(x!=0){
+    		sum-=arr[x-1];
+    	}
+    	
+    	//cout<<x<<" "<<y<<endl;
+    	//cout<<sum<<endl;
+    	if(sum%2==0)printf("NO\n");
+    	else if(rabbin_test(sum))printf("YES\n");
+    	else printf("NO\n");
+    }
+}
+    	

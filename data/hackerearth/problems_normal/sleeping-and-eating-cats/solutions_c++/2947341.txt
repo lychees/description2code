@@ -1,0 +1,122 @@
+#include <bits/stdc++.h>
+
+#define pb push_back
+#define pp pop_back
+#define f first
+#define s second
+#define mp make_pair
+#define sz(a) int((a).size())
+#ifdef _WIN32
+#  define I64 "%I64d"
+#else
+#  define I64 "%lld"
+#endif
+#define fname "."
+#define pi pair < int, int >
+
+typedef long long ll;
+typedef unsigned long long ull;
+
+const int MAX_N = (int)1e5 + 123;
+const double eps = 1e-6;
+const int inf = (int)1e9 + 123;
+
+using namespace std;
+
+struct tree {
+	ll ans;
+	pi pref, suff;
+	int add, size;
+	tree() : ans(-1), pref(mp(0, 0)), suff(mp(0, 0)), add(-1), size(0) {}
+	tree(ll ans, pi pref, pi suff, int add, int size) : ans(ans), pref(pref), suff(suff), add(add), size(size) {}
+	tree(int x, int len) : ans(1ll * len * (len + 1) / 2), pref(mp(x, len)), suff(mp(x, len)), add(-1), size(len) {}
+	tree operator + (tree b) {
+	    if (ans == -1)
+	    	return b;
+		if (b.ans == -1)
+			return tree(ans, pref, suff, add, size);
+		if (suff.f != b.pref.f)
+			return tree(ans + b.ans, pref, b.suff, -1, size + b.size);
+		ll res = ans + b.ans - 1ll * suff.s * (suff.s + 1) / 2 - 1ll * b.pref.s * (b.pref.s + 1) / 2;
+		res += 1ll * (suff.s + b.pref.s) * (suff.s + b.pref.s + 1) / 2;
+		pi l = pref;
+		if (l.s == size && l.f == b.pref.f)
+			l.s += b.pref.s;
+		pi r = b.suff;
+		if (r.s == b.size && r.f == suff.f)
+			r.s += suff.s;
+		return tree(res, l, r, -1, size + b.size);
+	}
+} t[4 * MAX_N];
+
+int n, q;
+int a[MAX_N];
+
+void build(int v = 1, int tl = 1, int tr = n) {
+	if (tl == tr) {
+		t[v] = tree(a[tl], 1);
+		return;
+	}
+	int tm = (tl + tr) / 2;
+	build(v * 2, tl, tm);
+	build(v * 2 + 1, tm + 1, tr);
+	t[v] = t[v * 2] + t[v * 2 + 1];
+}
+
+void push(int v, int tl, int tr) {
+	if (t[v].add == -1)
+		return;
+	if (tl != tr)
+		t[v * 2 + 1].add = t[v * 2].add = t[v].add;
+	t[v] = tree(t[v].add, tr - tl + 1);
+}
+
+void update(int l, int r, int x, int v = 1, int tl = 1, int tr = n) {
+	push(v, tl, tr);
+	if (tl > r || l > tr)
+		return;
+	if (tl >= l && tr <= r) {
+		t[v].add = x;
+		push(v, tl, tr);
+//		cout << tl << ' ' << tr << " --> " << t[v].ans << " pref is " << t[v].pref.f << ' ' << t[v].pref.s << " suff is " << t[v].suff.f << ' ' << t[v].suff.s << endl;	
+		return;
+	}
+	int tm = (tl + tr) / 2;
+	update(l, r, x, v * 2, tl, tm);
+	update(l, r, x, v * 2 + 1, tm + 1, tr);
+	t[v] = t[v * 2] + t[v * 2 + 1];
+//	cout << tl << ' ' << tr << " --> " << t[v].ans << " pref is " << t[v].pref.f << ' ' << t[v].pref.s << " suff is " << t[v].suff.f << ' ' << t[v].suff.s << endl;	
+}
+
+tree get(int l, int r, int v = 1, int tl = 1, int tr = n) {
+	push(v, tl, tr);
+	if (tl > r || l > tr)
+		return tree();
+	if (tl >= l && tr <= r)
+		return t[v];
+	int tm = (tl + tr) / 2;
+	return get(l, r, v * 2, tl, tm) + get(l, r, v * 2 + 1, tm + 1, tr);
+}
+
+int tp, l, r, x;
+
+int main() {
+	#ifdef Nick
+	freopen(fname"in","r",stdin);
+	freopen(fname"out","w",stdout);
+	#endif
+	scanf("%d%d", &n, &q);
+	for (int i = 1; i <= n; i++)
+		scanf("%d", &a[i]);
+	build();
+	for (int i = 1; i <= q; i++) {
+		scanf("%d%d%d", &tp, &l, &r);
+		if (!tp) {
+			scanf("%d", &x);
+			update(l, r, x);
+		}
+		else
+			printf(I64"\n", get(l, r).ans);
+	}
+	return 0;
+}

@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+#define endl '\n'
+
+using namespace std;
+
+const unsigned long long B1 = 139, B2 = 137;
+const int HASH_SIZE = 1<<20;
+unsigned long long pow1[HASH_SIZE],pow2[HASH_SIZE];
+struct rolling_hash {
+	unsigned long long h1,h2;
+
+	void initialize() {
+		h1=0ll;
+		h2=0ll;
+	}
+
+	void append(char a) {
+		h1*=B1;h1+=a-'a'+1;
+		h2*=B2;h2+=a-'a'+1;
+	}
+
+	bool operator <(const rolling_hash &a) const {
+		if(h1<a.h1) return true;
+		if(h1>a.h1) return false;
+		return h2<a.h2;
+	}
+
+	bool operator ==(const rolling_hash &a) const {
+		return (h1==a.h1 && h2==a.h2);
+	}
+};
+void hash_preprocess() {
+	int i;
+	pow1[0]=1;
+	pow2[0]=1;
+	for(i=1;i<HASH_SIZE;i++)
+		pow1[i]=pow1[i-1]*B1,
+		pow2[i]=pow2[i-1]*B2;
+}
+rolling_hash get_hash(rolling_hash *ph, int from, int to) {
+	rolling_hash h1,h2,ans;
+	h1=ph[to];
+	h2=ph[from-1];
+	h2.h1=h2.h1*pow1[to-from+1];
+	h2.h2=h2.h2*pow2[to-from+1];
+	ans.h1=(h1.h1-h2.h1);
+	ans.h2=(h1.h2-h2.h2);
+	return ans;
+}
+
+char a[HASH_SIZE],b[HASH_SIZE];
+int n,m;
+int ans;
+
+bool check(int l) {
+	int pos=l,i;
+	for(i=m;i>=1;i--) {
+		if(b[i]==a[pos]) --pos;
+		if(pos==0) return true;
+	}
+	return false;
+}
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	int left,right,middle;
+	
+	cin>>(a+1);
+	cin>>(b+1);
+	n=strlen(a+1);
+	m=strlen(b+1);
+	
+	left=0;
+	right=n+1;
+	while(right-left>1) {
+		middle=(left+right)>>1;
+		if(check(middle)) left=middle;
+		else right=middle;
+	}
+	
+	
+	
+	cout<<left<<endl;
+	
+	return 0;
+}

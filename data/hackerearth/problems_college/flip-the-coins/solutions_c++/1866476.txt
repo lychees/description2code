@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define MAX 100005
+ 
+int tree[4 * MAX];
+int lazy[4 * MAX];
+ 
+void update_tree(int v, int tl, int tr, int i, int j)
+{
+    if(lazy[v] != 0) {
+        tree[v] = (tr - tl + 1) - tree[v];
+        if(tl != tr) {
+            lazy[v * 2] ^= 1;
+            lazy[v * 2 + 1] ^= 1;
+        }
+        lazy[v] = 0;
+    }
+    if(tl > tr || tl > j || tr < i) {
+        return;
+    }
+    if(tl >= i && tr <= j) {
+        tree[v] = (tr - tl + 1) - tree[v];
+ 
+        if(tl != tr) {
+            lazy[v * 2] ^= 1;
+            lazy[v * 2 + 1] ^= 1;
+        }
+        lazy[v] = 0;
+        return;
+    }
+ 
+    int tm = (tl + tr) / 2;
+    update_tree(v * 2, tl, tm, i, j);
+    update_tree(v * 2 + 1, tm + 1, tr, i, j);
+    tree[v] = tree[v * 2] + tree[v * 2 + 1];
+    return;
+}
+ 
+int query_tree(int v, int tl, int tr, int i, int j)
+{
+    if(lazy[v] != 0) {
+        tree[v] = (tr - tl + 1) - tree[v];
+        if(tl != tr) {
+            lazy[v * 2] ^= 1;
+            lazy[v * 2 + 1] ^= 1;
+        }
+        lazy[v] = 0;
+    }
+    if(tl > tr || tl > j || tr < i) {
+        return 0;
+    }
+    if(tl >= i && tr <= j) {
+        return tree[v];
+    }
+    int tm = (tl + tr) / 2;
+    int q1 = query_tree(v * 2, tl, tm, i, j);
+    int q2 = query_tree(v * 2 + 1, tm + 1, tr, i, j);
+    return q1 + q2;
+}
+ 
+int main()
+{
+    int n, m;
+    scanf("%d%d", &n, &m);
+    while(m--) {
+        int type;
+        scanf("%d", &type);
+        if(type == 0) {
+            int p, q;
+            scanf("%d%d", &p, &q);
+            
+            update_tree(1, 0, n - 1, p, q);
+        }
+        else if(type == 1) {
+            int p, q;
+            scanf("%d%d", &p, &q);
+            
+            int ans = query_tree(1, 0, n - 1, p, q);
+            printf("%d\n", ans);
+        }
+    }
+    return 0;
+}

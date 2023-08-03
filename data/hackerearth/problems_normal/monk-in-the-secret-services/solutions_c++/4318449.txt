@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+#define INFI 1e8
+#define mp make_pair
+using namespace std;
+typedef pair<pair<int,int> ,int> ppi;
+typedef pair<int,int>  pi;
+int main(){
+	int T;
+	cin>>T;
+	while(T--){
+		int n,m;
+		cin>>n>>m;
+		vector<vector<pi> > graph(n+3);
+		vector<ppi> edges;
+		for(int i=0;i<m;i++){
+			int x,y,t;
+			cin>>x>>y>>t;
+			graph[x].push_back(make_pair(y,t));
+			edges.push_back(mp(mp(x,y),t));
+		}
+		int S,A,H;
+		cin>>S>>A>>H;
+		/*
+		//bellman ford
+		vector<int> dist(n,INFI);
+		dist[S]=0;
+		for(int i=1;i<n;i++){
+			for(int j=0;j<m;j++){
+				if(  (dist[edges[j].first.first]+edges[j].second  <    dist[edges[j].first.second]){
+					dist[edges[j].first.second]=  dist[edges[j].first.first]+edges[j].second ;
+				}
+			}
+		}
+		int ans=0;
+		for(int i=0;i<n;i++){
+			if(i!=S  i!=A  i!=H){
+				ans+=dist[i];
+			}
+		}
+		*/
+		//or we can simply apply all pair shortest path and then we can find shortest path from S and then from each enemy base
+
+		//i dont need predecessor matrix down here so neglect it
+
+		vector<vector<int> > distrix(n+3,vector<int>(n+3));
+		for(int i=1;i<=n;i++){
+			for(int j=1;j<=n;j++){
+				if(i!=j)
+					distrix[i][j]=INFI;
+				else
+					distrix[i][j]=0;
+			}
+		}
+		for(ppi a: edges){
+			distrix[a.first.first][a.first.second]=min(distrix[a.first.first][a.first.second],a.second);
+			distrix[a.first.second][a.first.first]=min(distrix[a.first.second][a.first.first],a.second);
+		}
+		for(int k=1;k<=n;k++){
+			for(int i=1;i<=n;i++){
+				//this is important that k!=0 because in that case above two loops are doing
+				for(int j=1;j<=n;j++){
+					distrix[i][j]=min(distrix[i][j],distrix[i][k]+distrix[k][j]);
+				}
+			}
+		}
+		int ans=0;
+		for(int i=1;i<=n;i++){
+			if(i!=S   && i!=A  &&  i!=H){
+				ans=max(ans,distrix[S][i]+2*distrix[i][A]+distrix[i][H]);
+			}
+		}
+		cout<<ans<<endl;
+	}
+	return 0;
+}

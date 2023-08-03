@@ -1,0 +1,104 @@
+#include <cstdio>
+
+int n, m, direction[200000], segTree[600000], lazy[600000] = {0}; //direction counts how many point right
+
+int constructTree(int ind, int l, int u)
+{
+	if (l == u)
+	{
+		segTree[ind] = direction[l];
+		return segTree[ind];
+	}
+	segTree[ind] = constructTree(2*ind+1, l, (l+u)/2) + constructTree(2*ind+2, (l+u)/2+1, u);
+	return segTree[ind];
+}
+
+void pushLaziness(int ind, int l, int u)
+{
+	if (lazy[ind])
+	{
+		segTree[ind] = u-l+1-segTree[ind];
+		lazy[ind] = 0;
+		if (l != u)
+		{
+			lazy[2*ind+1] = !lazy[2*ind+1];
+			lazy[2*ind+2] = !lazy[2*ind+2];
+		}
+	}
+}
+
+void updateTree(int ind, int l, int u, int rl, int ru)
+{
+	if (l >= rl && u <= ru)
+	{
+		lazy[ind] = !lazy[ind];
+	}
+	pushLaziness(ind, l, u);
+	if (l > ru || u < rl)
+	{
+		return;
+	}
+	if (l >= rl && u <= ru)
+	{
+		return;
+	}
+	updateTree(2*ind+1, l, (l+u)/2, rl, ru);
+	updateTree(2*ind+2, (l+u)/2+1, u, rl, ru);
+	segTree[ind] = segTree[2*ind+1] + segTree[2*ind+2];
+}
+
+int getVal(int ind, int l, int u, int rl, int ru)
+{
+	pushLaziness(ind, l, u);
+	if (l > ru || u < rl)
+	{
+		return 0;
+	}
+	if (l >= rl && u <= ru)
+	{
+		return segTree[ind];
+	}
+	return getVal(2*ind+1, l, (l+u)/2, rl, ru) + getVal(2*ind+2, (l+u)/2+1, u, rl, ru);
+}
+
+int main()
+{
+	int a, b, c;
+	char str[200001];
+	scanf("%d %d %s", &n, &m, str);
+	for (int i = 0; i < n-1; i++)
+	{
+		if (str[i] == '<')
+		{
+			direction[i] = 0;
+		}
+		else
+		{
+			direction[i] = 1;
+		}
+	}
+	constructTree(0, 0, n-2);
+	while (m--)
+	{
+		scanf("%d %d %d", &a, &b, &c);
+		if (a == 1)
+		{
+			updateTree(0, 0, n-2, b-1, c-2);
+		}
+		else
+		{
+			if (b < c)
+			{
+				printf("%d\n", c-b-getVal(0, 0, n-2, b-1, c-2));
+			}
+			else if (c < b)
+			{
+				printf("%d\n", getVal(0, 0, n-2, c-1, b-2));
+			}
+			else
+			{
+				printf("0\n");
+			}
+		}
+	}
+}

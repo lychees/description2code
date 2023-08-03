@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+#define MAXN 200010
+#define MOD 1000000007
+using namespace std;
+ 
+int prv[MAXN];
+struct node
+{
+	int sum,sumsq,elem,lazy;
+} tree[3*MAXN];
+ 
+void build(int n,int l,int r)
+{
+	if(l>r) return;
+	if(l==r){
+		tree[n].elem=1;
+		tree[n].sum=tree[n].sumsq=tree[n].lazy=0;
+		return;
+	}
+	int mid=(l+r)/2;
+	build(2*n,l,mid);
+	build(2*n+1,mid+1,r);
+	tree[n].elem=tree[2*n].elem+tree[2*n+1].elem;
+}
+void print(int n,int l,int r)
+{
+	if(l>r) return;
+	if(l==r){
+		printf("%d %d %d %d %d %d\n",n,l,r,tree[n].sum,tree[n].sumsq,tree[n].elem);
+		return;
+	}
+	int mid=(l+r)/2;
+	print(2*n,l,mid);
+	print(2*n+1,mid+1,r);
+	printf("%d %d %d %d %d %d\n",n,l,r,tree[n].sum,tree[n].sumsq,tree[n].elem);
+}
+void modify(int n,int l,int r,int v)
+{
+	tree[n].sumsq = (tree[n].sumsq+2LL*tree[n].sum*v+1LL*tree[n].elem*v*v)%MOD;
+	tree[n].sum = (tree[n].sum + 1LL*tree[n].elem*v)%MOD;
+	//printf("%d %d %d %d %d\n",n,l,r,tree[n].sum,tree[n].sumsq);
+	if(l!=r)
+	{
+		tree[2*n].lazy+=v;
+		tree[2*n+1].lazy+=v;
+	}
+}
+void prop(int n,int l,int r)
+{
+	if(tree[n].lazy!=0)
+	{
+		modify(n,l,r,tree[n].lazy);
+		tree[n].lazy=0;
+	}
+}
+void update(int n,int l,int r,int i,int j,int v)
+{
+	prop(n,l,r);
+	if(l>j || r<i) return;
+	
+	if(l>=i && r<=j){
+		modify(n,l,r,v);
+		return;
+	}
+	int mid=(l+r)/2;
+	update(2*n,l,mid,i,j,v);
+	update(2*n+1,mid+1,r,i,j,v);
+	tree[n].sum=(tree[2*n].sum + tree[2*n+1].sum)%MOD;
+	tree[n].sumsq=(tree[2*n].sumsq + tree[2*n+1].sumsq)%MOD;
+	
+}
+int query(int n,int l,int r,int i,int j)
+{
+	if(l>j || r<i) return 0;
+	
+	prop(n,l,r);
+	if(l>=i && r<=j){
+		return tree[n].sumsq;
+	}
+	int mid=(l+r)/2;
+	int val1 = query(2*n,l,mid,i,j);
+	int val2 = query(2*n+1,mid+1,r,i,j);
+	return (val1+val2)%MOD;
+}
+int main()
+{
+    int n;
+    scanf("%d",&n);
+    build(1,1,n);
+    int ans=0,num;
+    for(int i=1;i<=n;++i)
+    {
+    	scanf("%d",&num);
+    	update(1,1,n,prv[num]+1,i,1);
+    	ans+=query(1,1,n,1,i);
+    	ans%=MOD;
+    	//print(1,1,n);
+    	//printf("%d\n",ans);
+    	prv[num]=i;
+    }
+    
+    printf("%d\n",ans);
+    return 0;
+}

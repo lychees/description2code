@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = (int)2e5 + 10;
+int n, m, x, y, arr[MAXN], tree_max[MAXN * 4], tree_min[MAXN * 4];
+char type[2];
+
+void build(int idx, int lo, int hi) {
+	if (lo > hi) return;
+	if (lo == hi) {
+		tree_min[idx] = tree_max[idx] = arr[lo];
+		return;
+	}
+	int mid = lo + (hi - lo) / 2;
+	build(idx * 2, lo, mid);
+	build(idx * 2 + 1, mid + 1, hi);
+	tree_max[idx] = max(tree_max[idx * 2], tree_max[idx * 2 + 1]);
+	tree_min[idx] = min(tree_min[idx * 2], tree_min[idx * 2 + 1]);
+}
+
+void update(int idx, int lo, int hi, int pos, int new_val) {
+	if (lo > hi) return;
+	if (hi < pos || pos < lo) return;
+	if (lo == hi) {
+		tree_min[idx] = tree_max[idx] = new_val;
+		return;
+	}
+	int mid = lo + (hi - lo) / 2;
+	update(idx * 2, lo, mid, pos, new_val);
+	update(idx * 2 + 1, mid + 1, hi, pos, new_val);
+	tree_max[idx] = max(tree_max[idx * 2], tree_max[idx * 2 + 1]);
+	tree_min[idx] = min(tree_min[idx * 2], tree_min[idx * 2 + 1]);
+}
+
+pair<int, int> query(int idx, int lo, int hi, int start, int end) {
+	if (lo > hi) return {-1, -1};
+	if (end < lo || hi < start) return {-1, -1};
+	if (start <= lo && hi <= end) return {tree_min[idx], tree_max[idx]};
+	int mid = lo + (hi - lo) / 2;
+	pair<int, int> left_val = query(idx * 2, lo, mid, start, end);
+	pair<int, int> right_val = query(idx * 2 + 1, mid + 1, hi, start, end);
+	if (left_val.first == -1) return right_val;
+	if (right_val.first == -1) return left_val;
+	return {min(left_val.first, right_val.first), max(left_val.second, right_val.second)};
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    for (int i = 1; i <= n; i++) scanf("%d", &arr[i]);
+    build(1, 1, n);
+    while (m--) {
+    	scanf("%s%d%d", type, &x, &y);
+    	if (type[0] == 'U') {
+    		update(1, 1, n, x, y);
+    		arr[x] = y;
+    	} else {
+    		int ans = -1, lo = x, hi = n, mid;
+			int valid_lo = arr[x] - y, valid_hi = arr[x] + y;
+			pair<int, int> ans_val;
+    		while (lo <= hi) {
+    			mid = lo + (hi - lo) / 2;
+    			pair<int, int> q_val = query(1, 1, n, x, mid);
+    			if (valid_lo <= q_val.first && q_val.second <= valid_hi) {
+    				ans = mid;
+    				lo = mid + 1;
+    				ans_val = q_val;
+    			} else hi = mid - 1;
+    		}
+    		if (ans == -1) printf("-1 -1\n");
+    		else {
+    			printf("%d %d\n", ans - x + 1, max(ans_val.second - arr[x], arr[x] - ans_val.first));
+    		}
+    	}
+    }
+    return 0;
+}

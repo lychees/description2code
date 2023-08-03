@@ -1,0 +1,73 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+using namespace std;
+
+int N, X, Y, Z, T;
+char A[2001];
+char B[2001];
+int dp[2002][2002];
+int zero[2001], nzero;
+int one[2001], none;
+int more0[2001][2001];
+int more1[2001][2001];
+
+void _main()
+{
+    scanf("%d%d%d%d%d", &N, &X, &Y, &Z, &T);
+    scanf("%s%s", A, B);
+    nzero=none=0;
+    for(int i=0; i<N; i++)
+    {
+        if(B[i]=='0')
+            zero[nzero++]=i;
+        else
+            one[none++]=i;
+    }
+    for(int i=0; i<=nzero; i++)
+        for(int j=0; j<=N; j++)
+            more0[i][j]=0;
+    for(int i=0; i<=none; i++)
+        for(int j=0; j<=N; j++)
+            more1[i][j]=0;
+    for(int i=0; i<nzero; i++)
+        for(int j=0; j<=zero[i]; j++)
+            more0[i+1][j]++;
+    for(int i=0; i<none; i++)
+        for(int j=0; j<=one[i]; j++)
+            more1[i+1][j]++;
+    for(int i=1; i<=nzero; i++)
+        for(int j=0; j<N; j++)
+            more0[i][j]+=more0[i-1][j];
+    for(int i=1; i<=none; i++)
+        for(int j=0; j<N; j++)
+            more1[i][j]+=more1[i-1][j];
+    for(int i=0; i<=nzero; i++)
+        for(int j=0; j<=none; j++)
+            dp[i][j]=0x3f3f3f3f;
+    dp[0][0]=0;
+    for(int i=0; i<=nzero; i++)
+        for(int j=0; j<=none; j++)
+        {
+            if(i==nzero && j==none)
+                continue;
+            char cur=A[i+j];
+            int change0=cur=='0'?0:cur=='1'?Y:Z;
+            int change1=cur=='0'?X:cur=='1'?0:Z;
+            if(i+1<=nzero)
+                dp[i+1][j]=min(dp[i+1][j], dp[i][j]+change0+T*(more0[i][zero[i]]+more1[j][zero[i]]));
+            if(j+1<=none)
+                dp[i][j+1]=min(dp[i][j+1], dp[i][j]+change1+T*(more0[i][one[j]]+more1[j][one[j]]));
+        }
+    printf("%d\n", dp[nzero][none]);
+}
+
+int main()
+{
+    int TEST;
+    scanf("%d", &TEST);
+    while(TEST--)
+        _main();
+    return 0;
+}

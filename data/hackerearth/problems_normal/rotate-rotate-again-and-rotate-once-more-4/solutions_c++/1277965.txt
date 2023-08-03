@@ -1,0 +1,111 @@
+#include<stdio.h>
+#include<algorithm>
+struct leaf{
+    int z[4];
+};
+typedef struct leaf leaf;
+leaf T[6000010];
+int Flag[6000010];
+int i,j,k,t,ch,n,m,a,b;
+void update(leaf *a,leaf *b,leaf *c){
+    a->z[0]=b->z[0]+c->z[0];
+    a->z[1]=b->z[1]+c->z[1];
+    a->z[2]=b->z[2]+c->z[2];
+    a->z[3]=b->z[3]+c->z[3];
+}
+void build(int node,int b,int e){
+    int mid=b+e>>1;
+    if(b==e){
+        Flag[node]=0;
+        T[node].z[0]=1;
+        T[node].z[1]=T[node].z[2]=T[node].z[3]=0;
+    }
+    else{
+        build(node<<1,b,mid);
+        build(node<<1|1,mid+1,e);
+        update(&T[node],&T[node<<1],&T[node<<1|1]);
+    }
+}
+void Refresh(int node){
+    if(Flag[node]){
+        Flag[node<<1]+=Flag[node];
+        if(Flag[node<<1]>=4) Flag[node<<1]-=4;
+        Flag[node<<1|1]+=Flag[node];
+        if(Flag[node<<1|1]>=4) Flag[node<<1|1]-=4;        
+        while(Flag[node]){
+            int tmp=T[node].z[3];
+            T[node].z[3]=T[node].z[2];
+            T[node].z[2]=T[node].z[1];
+            T[node].z[1]=T[node].z[0];
+            T[node].z[0]=tmp;
+            Flag[node]--;
+        }
+    }
+}
+void modify(int node,int b,int e,int i,int j,int d){
+    Refresh(node);
+    int mid=b+e>>1;
+    if(b>j || e<i) return;
+    else if(b>=i && e<=j){
+        Flag[node]+=d;
+        if(Flag[node]>=4) Flag[node]-=4;
+        Refresh(node);
+    }
+    else{
+	modify(node<<1,b,mid,i,j,d);
+        modify(node<<1|1,mid+1,e,i,j,d);
+        update(&T[node],&T[node<<1],&T[node<<1|1]);
+    }
+}
+leaf query(int node,int b,int e,int i,int j){
+    Refresh(node);
+    int mid=b+e>>1;
+    if(b>=i && e<=j){
+        return T[node];
+    }
+    else{
+        if(i>mid) return query(node<<1|1,mid+1,e,i,j);
+        else if(j<=mid) return query(node<<1,b,mid,i,j);
+        else{
+            leaf tmp,x,y;
+            x=query(node<<1,b,mid,i,mid);
+            y=query(node<<1|1,mid+1,e,mid+1,j);
+            update(&tmp,&x,&y);
+            return tmp;
+        }
+    }
+}
+#define s(n)					scanf("%d",&n)
+#define sl(n) 					scanf("%lld",&n)
+#define sf(n) 					scanf("%lf",&n)
+#define ss(n) 					scanf("%s",n)
+#define sc(n)                   {char temp[4]; ss(temp); n=temp[0];}
+int main(){
+    scanf("%d",&n);
+    scanf("%d",&m);
+    build(1,0,n-1);
+    while(m--){
+        sc(ch);
+        s(a);
+        s(b);
+        --a,--b;
+        if(ch=='Q') {
+        	leaf res=query(1,0,n-1,a,b);
+        	int mx=res.z[0];
+        	for(int i=1;i<4;i++) mx=std::max(res.z[i],mx);        	
+        	printf("%d\n",mx);	
+        }
+        else {
+        	int d;
+        	s(d);
+        	if(ch=='C')
+        	 modify(1,0,n-1,a,b,d%4);	
+        	else {
+        		d=-d;
+        		d=(d%4)+4;
+        		modify(1,0,n-1,a,b,d);	
+        	}
+        }
+    }
+    return 0;
+} 

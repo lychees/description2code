@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define alok(n,t) ((t*)malloc((n)*sizeof(t)))
+
+#define ADD 1
+#define ASK 0
+#define LIM 300011//1000011
+int *rs[LIM];
+int rc[LIM];
+int ts[LIM];
+int vs[LIM];
+int as[LIM];
+int bs[LIM];
+int *ds[LIM];
+int dc[LIM];
+#define ms vs
+
+int count(int *as, int n, int v) {
+    if (!n) return 0;
+    if (as[0] > v) return 0;
+    int l = 0, r = n;
+    while (r - l > 1) {
+        int m = l + r >> 1;
+        (as[m] <= v ? l : r) = m;
+    }
+    return r;
+}
+char cmd[111];
+int main() {
+    for (int i = 1; i < LIM; i++) rc[i] = dc[i] = 0;
+    for (int i = 1; i < LIM; i++) {
+        for (int j = i; j < LIM; j += i) {
+            dc[j]++;
+        }
+    }
+    for (int i = 1; i < LIM; i++) {
+        ds[i] = alok(dc[i], int);
+        dc[i] = 0;
+    }
+    for (int i = 1; i < LIM; i++) {
+        for (int j = i; j < LIM; j += i) {
+            ds[j][dc[j]++] = i;
+        }
+    }
+    int q;
+    scanf("%d", &q);
+    for (int i = 0; i < q; i++) {
+        scanf("%s", cmd);
+        if (cmd[0] == '+') {
+            scanf("%d", vs + i);
+            ts[i] = ADD;
+            int v = vs[i];
+            for (int j = 0; j < dc[v]; j++) {
+                rc[ds[v][j]]++;
+            }
+        } else {
+            ts[i] = ASK;
+            scanf("%d%d%d", as + i, bs + i, ms + i);
+        }
+    }
+    for (int i = 1; i < LIM; i++) {
+        rs[i] = alok(rc[i], int);
+        rc[i] = 0;
+    }
+    for (int i = 0; i < q; i++) {
+        if (ts[i] == ADD) {
+            int v = vs[i];
+            for (int j = 0; j < dc[v]; j++) {
+                int d = ds[v][j];
+                rs[d][rc[d]++] = v;
+            }
+        } else {
+            int a = as[i], b = bs[i], m = ms[i];
+            printf("%d\n", count(rs[m], rc[m], b) - count(rs[m], rc[m], a-1));
+        }
+    }
+    
+}

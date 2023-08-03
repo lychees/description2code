@@ -1,0 +1,209 @@
+#include <iostream>
+#include <iterator>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct tournament_tree {
+    typedef long long llong;
+    struct node {
+        int lval;
+        int rval;
+        llong left;
+        llong right;
+        llong ccomb;
+        node(int lval = 0, int rval = 0, llong left = -1, llong right = -1,
+             llong ccomb = 0) :
+            lval(lval), rval(rval), left(left), right(right), ccomb(ccomb) {}
+
+        void write() {
+            cout << '(' << lval << ", " << left << " | " << ccomb << " | "
+                 << right << ", " << rval << ')';
+        }
+    };
+
+    size_t offset;
+    vector<node> data;
+
+    tournament_tree(size_t size) :
+        offset(pow2(size) - 1), data(2*offset + 1) {}
+
+    tournament_tree(const vector<int> &data) :
+        offset(pow2(data.size()) - 1), data(2*offset + 1) {
+        for (size_t i = 0; i < data.size(); ++i) {
+            this->data[offset + i] = node(data[i], data[i], -1, -1, 0);
+        }
+        recursive_update(0, 0, offset + 1);
+    }
+
+    void recursive_update(size_t ind, size_t start, size_t end) {
+        if (start + 1 == end) return;
+        size_t mid = (start + end) / 2;
+        recursive_update(2*ind + 1, start, mid);
+        recursive_update(2*ind + 2, mid, end);
+        update_node(ind, start, end);
+    }
+
+    void set_range(size_t start, size_t end, int value) {
+        set_range(start, end, value, 0, 0, offset + 1);
+    }
+
+    void set_range(size_t start, size_t end, int value, size_t ind,
+                   size_t nl, size_t nr) {
+        if (start == nl && end == nr) {
+            data[ind] = node(value, value, -1, -1, 0);
+            return;
+        }
+        size_t mid = (nl + nr) / 2;
+        downdate_node(ind, nl, nr);
+        if (end <= mid) {
+            set_range(start, end, value, 2*ind + 1, nl, mid);
+        } else if (start >= mid) {
+            set_range(start, end, value, 2*ind + 2, mid, nr);
+        } else {
+            set_range(start, mid, value, 2*ind + 1, nl, mid);
+            set_range(mid, end, value, 2*ind + 2, mid, nr);
+        }
+        update_node(ind, nl, nr);
+    }
+
+    llong get_range(size_t start, size_t end) {
+        node tmp = get_range(start, end, 0, 0, offset + 1);
+        //cout << "Range: ";
+        //tmp.write();
+        //cout << endl;
+        if (tmp.left == -1) {
+            llong diff = end - start;
+            return diff * (diff + 1) / 2;
+        } else {
+            llong diff1 = tmp.left - start;
+            llong diff2 = end - tmp.right;
+            return tmp.ccomb + diff1 * (diff1 + 1) / 2 +
+                   diff2 * (diff2 + 1) / 2;
+        }
+    }
+
+    node get_range(size_t start, size_t end, size_t ind, size_t nl,
+                    size_t nr) {
+        if (start == nl && end == nr) {
+            return data[ind];
+        }
+        downdate_node(ind, nl, nr);
+        size_t mid = (nl + nr) / 2;
+        //cout << start << " | " << mid << " | " << end << endl;
+        if (end <= mid) {
+            return get_range(start, end, 2*ind + 1, nl, mid);
+        } else if (start >= mid) {
+            return get_range(start, end, 2*ind + 2, mid, nr);
+        } else {
+            node tmp;
+            node left = get_range(start, mid, 2*ind + 1, nl, mid);
+            node right = get_range(mid, end, 2*ind + 2, mid, nr);
+            update_node(tmp, left, right, nl, nr);
+            return tmp;
+        }
+    }
+
+    void downdate_node(size_t ind, size_t start, size_t end) {
+        node &curr = data[ind];
+        node &left = data[2*ind + 1];
+        node &right = data[2*ind + 2];
+        if (start + 1 == end || curr.left != -1) return;
+        left = node(curr.lval, curr.lval, -1, -1, 0);
+        right = node(curr.rval, curr.lval, -1, -1, 0);
+    }
+
+    void update_node(size_t ind, size_t start, size_t end) {
+        update_node(data[ind], data[2*ind + 1], data[2*ind + 2], start, end);
+    }
+
+    void update_node(node &curr, node &left, node &right,
+                     size_t start, size_t end) {
+        size_t mid = (start + end) / 2;
+        if (left.left == -1 && right.left == -1) {
+            if (left.rval == right.lval) {
+                curr = node(left.lval, right.rval, -1, -1, 0);
+            } else {
+                curr = node(left.lval, right.rval, mid, mid, 0);
+            }
+        } else if (left.left == -1) {
+            if (left.rval == right.lval) {
+                curr = node(left.lval, right.rval, right.left, right.right,
+                            right.ccomb);
+            } else {
+                llong diff = right.left - mid;
+                curr = node(left.lval, right.rval, mid, right.right,
+                            right.ccomb + diff * (diff + 1) / 2);
+            }
+        } else if (right.left == -1) {
+            if (left.rval == right.lval) {
+                curr = node(left.lval, right.rval, left.left, left.right,
+                            left.ccomb);
+            } else {
+                llong diff = mid - left.right;
+                curr = node(left.lval, right.rval, left.left, mid,
+                            left.ccomb + diff * (diff + 1) / 2);
+            }
+        } else {
+            llong combs;
+            if (left.rval == right.lval) {
+                llong diff = right.left - left.right;
+                combs = diff * (diff + 1) / 2;
+            } else {
+                llong diff1 = mid - left.right;
+                llong diff2 = right.left - mid;
+                combs = diff1 * (diff1 + 1) / 2 + diff2 * (diff2 + 1) / 2;
+            }
+            curr = node(left.lval, right.rval, left.left, right.right,
+                        left.ccomb + right.ccomb + combs);
+        }
+    }
+
+    size_t pow2(size_t size) {
+        size_t p = 1;
+        while (p < size) p *= 2;
+        return p;
+    }
+
+
+    void write() {
+        int step = 1;
+        for (size_t i = 0; i < data.size();) {
+            for (int j = 0; j < step; ++j) {
+                data[i++].write();
+                cout << ' ';
+            }
+            cout << '\n';
+            step *= 2;
+        }
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    int n, m;
+    cin >> n >> m;
+    vector<int> tmp(n);
+    copy_n(istream_iterator<int>(cin), n, tmp.begin());
+    tournament_tree bowls(tmp);
+
+    //bowls.write();
+
+    for (int i = 0; i < m; ++i) {
+        int type;
+        cin >> type;
+        if (type == 0) {
+            int l, r, v;
+            cin >> l >> r >> v;
+            bowls.set_range(l-1, r, v);
+        } else {
+            int l, r;
+            cin >> l >> r;
+            cout << bowls.get_range(l-1, r) << '\n';
+        }
+        //bowls.write();
+    }
+    return 0;
+}
+

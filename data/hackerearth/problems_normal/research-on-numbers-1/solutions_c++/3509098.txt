@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+int get_id(int l, int r) {
+    return l + r | l != r;
+}
+
+vector<int> val[2000010];
+int A[1000010];
+
+vector<int> merge(vector<int> lson, vector<int> rson) {
+    int l = 0, r = 0, cnt = 0;
+    int lsz = lson.size(), rsz = rson.size();
+    vector<int> ret;
+    while (l < lsz || r < rsz) {
+        if (cnt >= 100) break;
+        ++ cnt;
+        if (l < lsz && r < rsz) {
+            if (lson[l] <= rson[r])
+                ret.emplace_back(lson[l ++]);
+            else
+                ret.emplace_back(rson[r ++]);
+        } else if (l < lsz) {
+            ret.emplace_back(lson[l ++]);
+        } else if (r < rsz) {
+            ret.emplace_back(rson[r ++]);
+        }
+    }
+    return ret;
+}
+
+void build(int l, int r) {
+    int id = get_id(l, r);
+    val[id].clear();
+    if (l == r) {
+        val[id].emplace_back(A[l]);
+        return ;
+    }
+    int mid = l + r >> 1;
+    build(l, mid);
+    build(mid + 1, r);
+    val[id] = merge(val[get_id(l, mid)], val[get_id(mid+1, r)]);
+}
+
+vector<int> query(int l, int r, int ql, int qr) {
+    if (l > qr || r < ql) return vector<int>();
+    int id = get_id(l, r);
+    if (l >= ql && r <= qr) return val[id];
+    int mid = l + r >> 1;
+    return merge(query(l, mid, ql, qr), query(mid+1, r, ql, qr));
+}
+
+int main(void) {
+    ios::sync_with_stdio(false);
+    int T;
+    cin >> T;
+    while (T -- > 0) {
+        int Q, K;
+        cin >> Q >> K;
+        vector<int> B(K+1), C(K+1);
+        for (int i = 1; i <= K; ++ i) {
+            cin >> B[i];
+            A[i] = B[i];
+        }
+        for (int i = 1; i <= K; ++ i) cin >> C[i];
+        for (int i = K+1; i <= 1000000; ++ i) {
+            long long tmp = 0;
+            for (int j = 1; j <= K; ++ j) {
+                tmp = (tmp + (long long)A[i - j] * C[j]) % MOD;
+            }
+            A[i] = tmp;
+        }
+
+        build(1, 1000000);
+        for (int i = 0; i < Q; ++ i) {
+            int l, r;
+            cin >> l >> r;
+            vector<int> ans = query(1, 1000000, l, r);
+            int sz = ans.size();
+            for (int i = 0; i < sz; ++ i) {
+                cout << ans[i];
+                cout << (i == sz - 1? '\n': ' ');
+            }
+        }
+    }
+
+    return 0;
+}

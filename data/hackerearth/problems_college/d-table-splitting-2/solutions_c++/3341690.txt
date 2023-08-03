@@ -1,0 +1,128 @@
+#include <bits/stdc++.h>
+#include <sys/resource.h>
+
+using namespace std;
+
+const int MAX_N = 1000001;
+
+int n, m;
+
+char a[MAX_N];
+
+bool u[MAX_N*4];
+
+int odd;
+
+inline bool ok(int x, int y) {
+	return x >= 0 && x <= n && y >= 0 && y <= m;
+}
+
+inline int getIndex(int x, int y) {
+    return x*m+y;
+}
+
+inline int getX(int index) {
+    return index%m;
+}
+
+inline int getY(int index) {
+    return index%m;
+}
+
+void dfs(int x, int y) {
+    if (u[getIndex(x, y)])
+        return;
+    u[getIndex(x, y)] = true;
+    int cnt = 0;
+    if (ok(x-1, y) && y > 0 && y < m && a[getIndex(x-1, y-1)] != a[getIndex(x-1, y)]) {
+        ++cnt;
+        dfs(x-1, y);
+    }
+    if (ok(x+1, y) && y > 0 && y < m && a[getIndex(x, y-1)] != a[getIndex(x, y)]) {
+        ++cnt;
+        dfs(x+1, y);
+    }
+    if (ok(x, y-1) && x > 0 && x < n && a[getIndex(x-1, y-1)] != a[getIndex(x, y-1)]) {
+        ++cnt;
+        dfs(x, y-1);
+    }
+    if (ok(x, y+1) && x > 0 && x < n && a[getIndex(x-1, y)] != a[getIndex(x, y)]) {
+        ++cnt;
+        dfs(x, y+1);
+    }
+    if (cnt%2 == 1)
+        ++odd;
+}
+
+bool isCross(int x, int y) {
+	return (ok(x-1, y) && y > 0 && y < m && a[getIndex(x-1, y-1)] != a[getIndex(x-1, y)]) ||
+		    (ok(x+1, y) && y > 0 && y < m && a[getIndex(x, y-1)] != a[getIndex(x, y)]) ||
+		    (ok(x, y-1) && x > 0 && x < n && a[getIndex(x-1, y-1)] != a[getIndex(x, y-1)]) ||
+		    (ok(x, y+1) && x > 0 && x < n && a[getIndex(x-1, y)] != a[getIndex(x, y)]);
+}
+
+void read() 
+{
+    scanf("%d %d", &n, &m);
+    for (int i = 0; i < n; ++i) 
+        for (int j = 0; j < m; ++j) 
+        {
+            char c = getchar(); 
+            while (!isalpha(c))
+                c = getchar();
+            int ind = getIndex(i, j);
+            a[ind] = c;
+        } 
+}
+
+void solve() 
+{
+    memset(u, false, (n+1)*(m+1));
+    for (int i = 1; i < m; ++i)
+    {
+        if (!u[getIndex(0, i)])
+        {
+            dfs(0, i);
+        }
+        if (!u[getIndex(n, i)]) 
+        {
+            dfs(n, i);
+        } 
+    }
+    for (int i = 1; i < n; ++i)
+    {
+        if (!u[getIndex(i, 0)])
+        {
+            dfs(i, 0);
+        }
+        if (!u[getIndex(i,m)])
+        {
+            dfs(i, m);
+        }
+    }
+    for (int i = 1; i < n; ++i)
+    	for (int j = 1; j < m; ++j)
+    		if (!u[getIndex(i, j)] && isCross(i, j))
+    		{
+    			printf("NO\n");
+    			return;
+    		}
+    printf("YES\n");
+}
+
+int main()
+{
+	rlimit r;
+
+  r.rlim_cur = 65000000;
+  r.rlim_max = 65000000;
+
+  setrlimit(RLIMIT_STACK, &r);
+    int t;
+    scanf("%d", &t);
+    for (int it = 0; it < t; ++it) {
+        read(); 
+        solve();
+    }
+    return 0;
+}

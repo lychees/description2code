@@ -1,0 +1,107 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define For(i,a,b) for(int i=a;i<b;i++)
+#define mp make_pair
+#define pb push_back
+
+long long n,cur,q,ss,ee;
+string s,o,ta;
+long long dp[303][303][2],lis[303];
+const long long mo=1000000009;
+
+long long f(int st,int en,int tar)
+{
+    long long ans=dp[st][en][tar];
+    if(ans!=-1) return ans;
+    ans=0;
+    if(tar==0)
+    {
+        For(i,st,en)
+        {
+            if(o[i]=='a')
+            {
+                ans+=f(st,i,0)*f(i+1,en,0);
+                ans%=mo;
+                ans+=f(st,i,0)*f(i+1,en,1);
+                ans%=mo;
+                ans+=f(st,i,1)*f(i+1,en,0);
+                ans%=mo;
+            }
+            else if(o[i]=='x')
+            {
+                ans+=f(st,i,0)*f(i+1,en,0);
+                ans%=mo;
+                ans+=f(st,i,1)*f(i+1,en,1);
+                ans%=mo;
+            }
+            else
+            {
+                ans+=f(st,i,0)*f(i+1,en,0);
+                ans%=mo;
+            }
+        }
+    }
+    else
+    {
+        For(i,st,en)
+        {
+            if(o[i]=='a')
+            {
+                ans+=f(st,i,1)*f(i+1,en,1);
+                ans%=mo;
+            }
+            else if(o[i]=='x')
+            {
+                ans+=f(st,i,0)*f(i+1,en,1);
+                ans%=mo;
+                ans+=f(st,i,1)*f(i+1,en,0);
+                ans%=mo;
+            }
+            else
+            {
+                ans+=f(st,i,1)*f(i+1,en,0);
+                ans%=mo;
+                ans+=f(st,i,0)*f(i+1,en,1);
+                ans%=mo;
+                ans+=f(st,i,1)*f(i+1,en,1);
+                ans%=mo;
+            }
+        }
+    }
+    dp[st][en][tar]=ans;
+    return ans;
+}
+
+int main()
+{
+    //freopen("input.txt","r",stdin);
+    cin>>s>>o;
+    n=s.size();
+    For(i,0,n) For(j,0,n) For(k,0,2) dp[i][j][k]=-1;
+    For(i,0,n)
+    {
+        cur=s[i]-'0';
+        lis[i]=cur;
+        dp[i][i][cur]=1;
+        dp[i][i][1-cur]=0;
+    }
+    For(i,0,n-1)
+    {
+        if(o[i]=='a') cur=lis[i]&lis[i+1];
+        else if(o[i]=='x') cur=lis[i]^lis[i+1];
+        else cur=lis[i]|lis[i+1];
+        dp[i][i+1][cur]=1;
+        dp[i][i+1][1-cur]=0;
+    }
+    //const mo=1000000009;
+    cin>>q;
+    while(q--)
+    {
+        cin>>ss>>ee>>ta;
+        ss--;
+        ee--;
+        if(ta=="true") cout<<f(ss,ee,1)<<endl;
+        else cout<<f(ss,ee,0)<<endl;
+    }
+    return 0;
+}

@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+
+#define true 1
+#define false 0
+#define size 100005
+#define lli long long int
+
+lli tree[300000] ;
+lli a[200000];
+
+void build_tree(lli node , lli start , lli end){
+
+	if(start == end){
+		tree[node] = a[start];		
+	}
+	else{
+		lli mid = (start+end)/2;
+		build_tree(2*node , start , mid);
+		build_tree(2*node +1, mid+1,end);
+		tree[node] = tree[2*node] + tree[node*2 + 1];	
+	}
+}
+
+
+void update_tree(lli node , lli start , lli end ,lli index , lli value){
+	if(start == end ){
+		a[index] = value;
+		tree[node] = value;	
+		
+	}else{
+		lli mid = (start + end )/2;
+		if(start <=index && index <= mid){
+			update_tree(node*2,start,mid,index,value);
+		}else{
+			update_tree(node*2+1,mid+1,end,index,value);
+		}
+		
+		tree[node] = tree[2*node] + tree[node*2+1];	
+	}
+		
+}
+
+lli count(lli  node , lli start , lli end , lli l ,lli r){
+	if(r < start || l >end){
+		return 0;
+	}
+	
+	if(l<=start && r >=end){
+		return tree[node];
+	}
+	
+	lli mid = (start + end)/2;
+	lli p1 = count(node*2,start,mid,l,r);
+	lli p2 = count(node*2+1,mid+1,end,l,r);
+	
+	return p1+p2;
+}
+
+
+int main(){
+	lli N , Q;
+	lli x,y,type;
+	
+	scanf("%lld",&N);
+//	printf("%lld",N);	
+	for(lli i=1;i<=N;++i){
+		
+		lli temp;
+		scanf("%lld",&temp);
+		a[i]= temp%2==0 ? 1:0;
+	}
+	
+	build_tree(1,1,N);
+	
+/*	for(int i=1;i<=2*N+1;++i){
+		printf("%lld\t%lld\n",tree[i].even,tree[i].odd);
+	}
+*/
+	scanf("%lld",&Q);
+	for(lli i=0;i<Q;++i){
+		scanf("%lld%lld%lld",&type ,&x,&y);
+		
+		switch(type){
+			case 0:
+				//lli temp = y%2==0 ? 1:0 ;
+				lli temp;
+				if(y%2==0)
+					temp = 1;
+				else
+					temp=0;
+				update_tree(1,1,N,x,temp);			
+			break;
+			
+			case 1:
+				printf("%lld\n",count(1,1,N,x,y));
+			break;
+			
+			case 2:
+				lli total = y-x + (x!=y ?1:0);
+				printf("%lld\n",total-count(1,1,N,x,y));
+			break;
+		}
+	}
+	return 0;
+}

@@ -1,0 +1,97 @@
+// Example program
+#include <iostream>
+#include <string>
+#include <bitset>
+#include <climits>
+#include <sstream>
+#include <math.h>
+#include <set>
+
+using namespace std;
+
+bitset<64> increment ( std::bitset<64> in ) {
+//  add 1 to each value, and if it was 1 already, carry the 1 to the next.
+    for ( size_t i = 0; i < 64; ++i ) 
+    {
+        if ( in[i] == 0 ) {  // There will be no carry
+            in[i] = 1;
+            break;
+            }
+        in[i] = 0;  // This entry was 1; set to zero and carry the 1
+    }
+    return in;
+}
+
+unsigned long toInt(std::string const &s) {
+    static const std::size_t MaxSize = CHAR_BIT*sizeof(unsigned long);
+    if (s.size() > MaxSize) return 0; // handle error or just truncate?
+
+    std::bitset<MaxSize> bits;
+    std::istringstream is(s);
+    is >> bits;
+    return bits.to_ulong();
+}
+
+bool strSatisfies(string match, string pattern){
+    bool matched = false;
+    long int patlen = pattern.length();
+    long int matlen = match.length();
+    for(int i = 0; i < matlen; i++){
+        if(match[matlen - i - 1] == '1' && pattern[patlen - i - 1] == match[matlen - i - 1]){
+            matched = true;
+            break;
+        }
+    }
+    return matched;
+}
+
+int main()
+{     
+    int size;
+    cin>>size;
+    set<string> strset;
+    while(size--){
+        strset.clear();
+    	unsigned long long int n, k, orred = 0;
+    	cin>>n>>k;
+    	bitset<64> bitst = 0; 
+    	bitset<64> ans;
+    	unsigned long long int maxed = pow(2, k) - 1;
+    	while(n--){
+    	    string match;
+    	    cin>>match;
+    	    strset.insert(match);
+    	}
+    	set<string>::iterator it;
+    	bool proceed = true;    
+    	bool once = false;
+    	if(strset.size() == 1)
+    	    cout<<1<<"\n";
+        else
+        {
+            while(maxed--)
+            {
+                proceed = true;
+                bitst = increment(bitst);
+                for (it=strset.begin(); it!=strset.end(); ++it)
+                {    	            
+    	            bool val = strSatisfies(*it, bitst.to_string());
+    	            //cout<<*it<<" "<<bitst.to_string()<<" "<<val<<"\n";
+    	            proceed = proceed && val;    	            
+    	        }
+    	        if(proceed == true)
+    	        {
+    	            if(once == false)
+    	            {
+    	                ans = bitst;
+    	                once = true;
+    	            }    	        
+    	            else 
+    	                ans = __builtin_popcount(toInt(ans.to_string())) < __builtin_popcount(toInt(bitst.to_string())) ? ans : bitst;   
+    	        }       
+            }            
+    	    cout<<__builtin_popcount(toInt(ans.to_string()))<< "\n";
+        }
+    }
+    return 0;
+}

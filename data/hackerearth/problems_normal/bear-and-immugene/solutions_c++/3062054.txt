@@ -1,0 +1,186 @@
+//satyaki3794
+#include <iostream>
+#include <cstdio>
+#include <cmath>
+#include <vector>
+#include <cstring>
+#include <algorithm>
+#include <climits>
+#include <string>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <cctype>
+#include <cassert>
+#include <bitset>
+#include <iomanip>
+#define gc getchar_unlocked
+#define pc putchar_unlocked
+#define PI (3.14159265)
+#define ff first
+#define ss second
+#define pb push_back
+#define MOD (1000000007LL)
+#define INF (100000005)
+#define SIZE (2)
+#define TREESIZE (302144)
+#define LEFT(n) (2*n)
+#define RIGHT(n) (2*n+1)
+#define epsilon 1e-8 //add to double before casting to integer
+ 
+using namespace std;
+ 
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> ii;
+typedef pair<int, ii> iii;
+typedef pair<ll, int> pli;
+
+
+#define matrix vector< vector<ll> >
+
+matrix matmul(matrix &a, matrix &b){
+    int i, j, k, n = a.size();
+    matrix ans (n, vector<ll>(n));
+    for(i=0;i<n;i++)
+        for(j=0;j<n;j++){
+            ll temp = 0;
+            for(k=0;k<n;k++)    temp = (temp + a[i][k] * b[k][j]) % MOD;
+            ans[i][j] = temp;
+        }
+
+    return ans;
+}
+
+matrix matpwr(matrix &a, ll p){
+    int n = a.size();
+    matrix ans(n, vector<ll> (n));
+    for(int i=0;i<n;i++)    ans[i][i] = 1;
+
+    while(p){
+        if(p&1) ans = matmul(ans, a);
+
+        a = matmul(a, a);
+        p >>= 1;
+    }
+    return ans;
+}
+
+
+ll pwr(ll base, ll p, ll mod = MOD){
+    ll ans = 1;
+    while(p){
+        if(p & 1)   ans = (ans * base) % mod;
+        base = (base * base) % mod;
+        p /= 2;
+    }
+    return ans;
+}
+
+
+ll gcd(ll a, ll b){
+    if(b == 0)  return a;
+    return gcd(b, a%b);
+}
+
+
+ll lcm(ll a, ll b){
+    return (a*b) / gcd(a, b);
+}
+
+
+ll invMod(ll n, ll mod = MOD){
+    return pwr(n, mod-2, mod);
+}
+
+
+int n;
+int segtree[(1<<21)][5][5];
+char str[1000004];
+
+int idx(char ch){
+    if(ch == 'A')   return 0;
+    if(ch == 'G')   return 1;
+    if(ch == 'T')   return 2;
+    return 3;
+}
+
+void matmul(int a, int b, int res){
+    for(int i=0;i<5;i++)
+        for(int j=0;j<5;j++){
+            segtree[res][i][j] = 0;
+            for(int k=0;k<5;k++)
+                segtree[res][i][j] = (segtree[res][i][j] + 1LL*segtree[a][i][k]*segtree[b][k][j]) % MOD;
+        }
+}
+
+void build(int node, int s, int e){
+    if(s > e)   return;
+    if(s == e){
+        for(int i=0;i<5;i++)
+            for(int j=0;j<5;j++)
+                if(i == j)  segtree[node][i][j] = 1;
+                else    segtree[node][i][j] = 0;
+        for(int j=0;j<5;j++)
+            segtree[node][idx(str[s])][j] = 1;
+        return;
+    }
+    int mid = (s + e)/2;
+    build(LEFT(node), s, mid);
+    build(RIGHT(node), mid+1, e);
+    matmul(LEFT(node), RIGHT(node), node);
+}
+
+
+void update(int node, int s, int e, int pos){
+    if(s > e || pos < s || pos > e) return;
+    if(s == e){
+        for(int i=0;i<5;i++)
+            for(int j=0;j<5;j++)
+                if(i == j)  segtree[node][i][j] = 1;
+                else    segtree[node][i][j] = 0;
+        for(int j=0;j<5;j++)
+            segtree[node][idx(str[s])][j] = 1;
+        return;
+    }
+    int mid = (s + e)/2;
+    update(LEFT(node), s, mid, pos);
+    update(RIGHT(node), mid+1, e, pos);
+    matmul(LEFT(node), RIGHT(node), node);
+}
+
+
+int main()
+{
+    // ios_base::sync_with_stdio(0);
+    // freopen("input.txt", "r", stdin);
+    
+    int q;
+    scanf("%d%d%s", &n, &q, str+1);
+    char s[3];
+    build(1, 1, n);
+    while(q--){
+        int pos;
+        scanf("%d%s", &pos, s);
+        str[pos] = s[0];
+        update(1, 1, n, pos);
+        ll ans = 0;
+        for(int i=0;i<5;i++)
+            ans = (ans + segtree[1][i][4]) % MOD;
+        printf("%lld\n", ans);
+    }
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+

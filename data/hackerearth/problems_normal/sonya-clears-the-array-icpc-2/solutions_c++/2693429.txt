@@ -1,0 +1,55 @@
+#include <iostream>
+#include <stdio.h>
+
+using namespace std;
+
+const int N = 2e6 + 7;
+
+int pr[N];
+int pv[N];
+int nx[N];
+
+int ar[507],n;
+int dp[507][507];
+
+int val(int a,int b)
+{
+	int sum = a+b;
+	if(a<=b and pv[b-1]>=a) return nx[b]+pv[b-1]-a-b;
+	a = max(a,b);
+	a = nx[a];
+	b = nx[a+1];
+	return a+b-sum;
+}
+int main()
+{
+	#ifndef ONLINE_JUDGE
+		freopen("I.in","r",stdin);
+	#endif
+	pr[1] = 1;
+	for(int i=2;i*i<N;i++) if(!pr[i])
+		for(int j=i*i;j<N;j+=i) pr[j]=1;
+	for(int i=N-1;i>=0;i--)
+	{
+		if(pr[i]==0) nx[i] = i;
+		else nx[i] = nx[i+1];
+	}
+	for(int i=1;i<N;i++)
+	{
+		if(pr[i]==0) pv[i] = i;
+		else pv[i] = pv[i-1];
+	}
+	cin>>n;
+	for(int i=1;i<=n;i++) scanf("%d",&ar[i]);
+	for(int i=1;i<=n;i++)
+	{
+		for(int j=i-1;j>=1;j-=2)
+		{
+			dp[j][i] = 1e9;
+			for(int k=j;k<i;k+=2)
+				dp[j][i] = min(dp[j][i],dp[j][k-1]+dp[k+1][i-1]+val(ar[k],ar[i]));
+		}
+	}
+	cout<<dp[1][n]+n/2<<endl;
+	return 0;
+}

@@ -1,0 +1,147 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <map>
+#include <climits>
+#include <cmath>
+#include <cfloat>
+#include <cstdio>
+#include <functional>
+#include <algorithm>
+
+using namespace std;
+#define EPS 1e-6
+
+class xy{
+	
+public:
+	double x;
+	double y;
+
+	xy(){
+
+	}
+	
+	xy(double xx, double yy){
+		x = xx;
+		y = yy;
+	}
+
+	xy(const xy &v){
+		x = v.x;
+		y = v.y;
+	}
+
+	xy& operator=(const xy &v){
+		x = v.x;
+		y = v.y;
+		return *this;
+	}
+
+	xy operator+(const xy &v) const{
+		return xy(this->x+v.x, this->y+v.y);
+		
+	}
+	
+	xy operator-(const xy &v) const{
+		return xy(this->x-v.x, this->y-v.y);
+	}
+	
+	void operator+=(const xy &v){
+		x+=v.x;
+		y+=v.y;
+	}
+	void operator-=(const xy &v){
+		x-=v.x;
+		y-=v.y;
+	}
+
+	bool operator<(const xy &v){
+		if(this->x!=v.x) return this->x < v.x;
+		return this->y < v.y;
+	}
+	bool operator>(const xy &v){
+		if(this->x!=v.x) return this->x > v.x;
+		return this->y > v.y;
+	}
+
+};
+
+//u,v : vector O = (0,0)
+double cross(const xy &u, const xy &v){
+	return u.x*v.y - u.y*v.x;
+}
+
+//u,v : vector O = (0,0)
+double dot(const xy &u, const xy &v){
+	return u.x*v.x + u.y*v.y;
+}
+
+//distance between two points
+double dist_p_p(const xy &a, const xy &b){
+	return sqrt( dot(a-b, a-b) );
+}
+
+//for sorting
+bool comp_xy(const xy &a, const xy &b){
+	if(a.x != b.x) return a.x < b.x;
+	return a.y < b.y;
+}
+
+//convex_hull
+vector<xy> convex_hull(vector<xy> &v){
+	sort( v.begin(), v.end() , comp_xy);
+	int k = 0;	//nums of vertex
+	vector<xy> tmp(v.size()*2);
+	//conect i from k
+	for(int i=0; i<v.size(); i++){
+		while(k>1 && cross (tmp[k-1] - tmp[k-2], v[i] - tmp[k-1]) <= 0 ) k--;
+		tmp[k] = v[i];
+		k++;
+	}
+	
+	for(int i=v.size()-2, t=k; i>=0; i--){
+		while(k>t && cross(tmp[k-1] - tmp[k-2], v[i] - tmp[k-1]) <= 0 ) k--;
+		tmp[k] = v[i];
+		k++;
+	}
+
+	tmp.resize(k-1);
+	return tmp;
+}
+
+int main(){
+	long long T;
+	cin >> T;
+	for(long long t=0; t<T; t++){
+		int N;
+		cin >> N;
+		vector<xy> p(N);
+		for(int i=0; i<N; i++){
+			int x,y;
+			cin >> x >> y;
+			p[i] = xy(x,y);
+		}
+		if(N==1){
+			cout << "0.00" << endl;
+			continue;
+		}else if(N==2){
+			printf("%.2f\n", dist_p_p(p[0], p[1]));
+			//cout << dist_p_p(p[0], p[1]) << endl;
+			continue;
+		}
+		
+		vector<xy> v = convex_hull(p);
+
+		double max_l = 0;
+		double ans = 0;
+		for(int i=0; i<v.size(); i++){
+			double d = dist_p_p(v[i], v[(i+1)%v.size()]);
+			ans += d;
+			max_l = max(max_l, d);
+		}
+		printf("%.2f\n", ans-max_l);
+		//cout << ans - max_l << endl;
+	}
+	return 0;
+}

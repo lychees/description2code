@@ -1,0 +1,117 @@
+#include <cassert>
+#include <cstdio>
+#include <iostream>
+#include <sstream>
+#include <numeric>
+#include <bitset>
+#include <vector>
+#include <set>
+#include <string>
+#include <map>
+#include <cmath>
+#include <algorithm>
+#include <queue>
+#include <cstdlib>
+#include <functional>
+#include <cstring>
+#include <ctime>
+#include <memory.h>
+#include <unordered_set>
+
+#define y1 AAA_BBB
+#define y0 AAA_AAA
+
+#define pb push_back
+#define mp make_pair
+#define fi first
+#define se second
+#define forn(i, n) for(int i = 0; i < (int)(n); ++i)
+#define ford(i, n) for(int i = (int)(n) - 1; i >= 0; --i)
+#define fore(i, a, b) for(int i = (int)(a); i <= (int)(b); ++i)
+#define for1(i, n) for(int i = 1; i <= (int)(n); ++i)
+#define all(v) (v).begin(), (v).end()
+
+using namespace std;
+
+typedef long long i64;
+typedef unsigned long long u64;
+typedef long double ld;
+typedef vector<int> vi;
+typedef vector<i64> vi64;
+typedef pair<int, int> pii;
+typedef vector<pii> vpi;
+typedef vector<vi> vvi;
+typedef vector<vi64> vvi64;
+
+template <class T> T inline sqr(T x) {
+    return x * x;
+}
+
+const ld pi = 3.1415926535897932384626433832795;
+const ld eps = 1e-8;
+
+int greedy(int n, const vi& x, const vi& y) {
+	int ans=0;
+	forn(i,n)forn(j,n)forn(k,n){
+		set<int> S = {i, j, k};
+		if (S.size() != 3) continue;
+		i64 cx = x[j] + x[k];
+		i64 cy = y[j] + y[k];
+		if (abs(cx) + abs(cy)) {
+			ans += (x[i] * cx + y[i] * cy == 0);
+		}
+	}
+	return ans;
+}
+
+int q(const vi64& a, const pii& w) {
+	return upper_bound(all(a), (i64(w.fi) << 31) + w.se) - lower_bound(all(a), (i64(w.fi) << 31) + w.se);
+}
+
+int main()
+{
+	srand(time(NULL));
+#ifdef HOME
+    freopen("input.txt", "r", stdin);
+#endif
+    ios::sync_with_stdio(false);
+    int n=8; cin >> n;
+    vi x(n), y(n);
+	//forn(i,n)while(!x[i] && !y[i])x[i]=rand()%4-2,y[i]=rand()%4-2;
+    forn(i, n) 
+		cin >> x[i] >> y[i];
+    vi64 a;
+    forn (i, n)
+		forn (j, i)  {
+			int cx = x[i] + x[j];
+			int cy = y[i] + y[j];
+			if (cx || cy) {
+				int g = abs(__gcd(cx, cy));
+				cx /= g; cy /= g;
+				a.pb((i64(cx) << 31) + cy);
+			}
+		}
+	sort(all(a)); 
+	i64 ans = 0;
+	forn (i, n) {
+		int cx = x[i], cy = y[i];
+		int g = __gcd(cx, cy);
+		cx /= g; cy /= g;
+		ans += q(a,mp(-cy, cx));
+		ans += q(a,mp(cy, -cx));
+	}
+	ans *= 2;
+	forn (i, n) {
+		i64 cx = x[i], cy = y[i];
+		i64 c = cx * cx + cy * cy;
+		forn (j, n)
+			if (c + cx * x[j] + cy * y[j] == 0 && mp(x[j], y[j]) != mp(-x[i], -y[i]))
+				ans-=2;
+	}
+	//forn (i, n) cout << x[i] << " " << y[i] << endl;
+	//cout << greedy(n, x, y) << endl;
+	cout << ans << endl;
+	//assert(ans == greedy(n, x, y));
+    return 0;
+}
+	

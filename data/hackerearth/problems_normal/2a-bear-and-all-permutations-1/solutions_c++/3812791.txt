@@ -1,0 +1,145 @@
+#include <iostream>
+#include <cstdio>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <sstream>
+#include <cmath>
+
+typedef long long ll;
+
+#define forn(i, n) for (int i = 0; i < (int)(n); i++)
+#define forv(i, v) forn(i, v.size())
+
+using namespace std;
+
+const int N = 12;
+const int M = 5;
+
+const ll mods[M] = {1000200001, 1000200013, 1000200029, 1000200031, 1000200059};
+ll mods8[M];
+
+int g[N][N];
+int p[N];
+int n;
+ll ans[M], prod[M];
+
+void brute() {
+    cerr << n << endl;
+    forn(k, M) mods8[k] = mods[k] * 1e8;
+    forn(i, n) p[i] = i;
+    for (int i = 1; i < n; i++) {
+        for (int j = 1; j < n; j++) {
+            for (int k = 1; k < n; k++) {
+                if (i % k == 0 && j % k == 0) g[i][j] = k;
+            }
+        }
+    }
+    forn(k, M) ans[k] = 0;
+    do {
+        forn(k, M) prod[k] = 1;
+        forn(i, n) {
+            for (int j = i + 2; j < n; j++) {
+                int c = g[j - i][abs(p[i] - p[j])];
+                if (c > 1) {
+                    forn(k, M) {
+                        prod[k] *= c;
+                        if (prod[k] >= mods8[k]) {
+                            prod[k] %= mods[k];
+                        }
+                    }
+                }
+            }
+        }
+        forn(k, M) {
+            ans[k] += prod[k];
+            ans[k] %= mods[k];
+        }
+    } while(next_permutation(p, p + n));
+    cout << "{";
+    forn(k, M) {
+        cout << ans[k];
+        if (k < M - 1) cout << ",";
+    }
+    cout << "},\n";
+}
+
+ll rem[12][M] = {
+    {1,1,1,1,1},
+    {2,2,2,2,2},
+    {8,8,8,8,8},
+    {68,68,68,68,68},
+    {1504,1504,1504,1504,1504},
+    {127792,127792,127792,127792,127792},
+    {57140352,57140352,57140352,57140352,57140352},
+    {971800127,971797043,971792931,971792417,971785221},
+    {483996107,362203727,199813887,179515157,895532996},
+    {428264862,27541978,161690024,428640743,168235473},
+    {442334253,385141207,160037009,66341560,725117853},
+    {531861799,676522674,911774191,590309082,442142062}
+};
+
+ll modPow(ll a, ll b, ll m) {
+    ll d = 1;
+    for (int i = 30; i >= 0; i--) {
+        d = (d * d) % m;
+        if (b & (1ll << i)) {
+            d = (d * a) % m;
+        }
+    }
+    return d;
+}
+
+ll inv(ll a, ll m) {
+    return modPow(a, m - 2, m);
+}
+
+ll restore(vector<ll> u, vector<ll> m, ll mod) {
+    int k = (int)u.size();
+    vector<ll> v(k);
+    forn(i, k) {
+        v[i] = u[i];
+        forn(j, i) {
+            v[i] = inv(m[j], m[i]) * (v[i] - v[j]);
+            v[i] = (v[i] % m[i] + m[i]) % m[i];
+        }
+    }
+    ll ret = 0;
+    for (int i = k - 1; i >= 0; i--) {
+        ret = ret * m[i] + v[i];
+        ret %= mod;
+    }
+    return ret;
+}
+
+void solveCase() {
+    cin >> n;
+    ll mod; cin >> mod;
+    vector<ll> r(M), m(M);
+    forn(i, M) {
+        r[i] = rem[n - 1][i];
+        m[i] = mods[i];
+    }
+    cout << restore(r, m, mod) << endl;
+}
+
+int main() {
+#ifdef NEREVAR_PROJECT
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    /*
+    for (n = 1; n <= 12; n++) {
+        brute();
+    }*/
+    
+    int t; cin >> t;
+    forn(i, t) solveCase();
+    
+    return 0;
+}

@@ -1,0 +1,175 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <map>
+
+#include <cassert>
+using namespace std;
+
+const int MOD = 1e9 + 3;
+
+const long long INF = 1e18;
+
+inline void ModSum(int& x, int y) {
+    x += y;
+    if (x >= MOD) {
+        x -= MOD;
+    }
+}
+
+inline void ModMul(int& x, int y) {
+    x = (1LL * x * y) % MOD;
+}
+
+inline int GetModMul(int x, int y) {
+    ModMul(x, y);
+    return x;
+}
+
+void Generate(vector<vector<int>>& a, int n, int m) {
+	const int LIM = 1e9;
+    int s, p, q, r;
+    assert(s >= 0 && s <= LIM);
+    assert(p >= 0 && p <= LIM);
+    assert(q >= 0 && q <= LIM);
+    assert(r >= 0 && r <= LIM);
+    cin >> s >> p >> q >> r;
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < m; ++j) {
+            a[i][j] = s;
+            ModMul(a[i][j], s);
+            ModMul(a[i][j], p);
+            ModSum(a[i][j], r);
+            ModSum(a[i][j], GetModMul(s, q));
+            s = a[i][j];
+        }
+    }
+}
+
+const int MAX_N = 1e4;
+
+vector<int> minDel;
+
+void BuildInfo() {
+    vector<bool> isPrime(MAX_N + 1, true);
+    for (int i = 2; i <= MAX_N; ++i) {
+        if (isPrime[i]) {
+        	if (1LL * i * i <= MAX_N) {
+            	for (int j = i * i; j <= MAX_N; j += i) {
+                	isPrime[j] = false;
+            	}
+        	}
+        }
+    }
+    vector<int> primes;
+    for (int i = 2; i <= MAX_N; ++i) {
+        if (isPrime[i]) {
+            primes.push_back(i);
+        }
+    }
+    minDel.resize(MAX_N + 1, -1);
+    for (int i = 2; i <= MAX_N; ++i) {
+    	for (int j = 0; j < (int) primes.size(); ++j) {
+            if (i % primes[j] == 0) {
+                minDel[i] = primes[j];
+                break;
+            }
+        }
+        assert(minDel[i] != -1);
+    }
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    BuildInfo();
+
+    int n, m;
+    cin >> n >> m;
+    
+    assert(n >= 1 && n <= 2000);
+    assert(m >= 1 && m <= 10000);
+
+    vector<vector<int>> a(n, vector<int>(m));
+    Generate(a, n, m);
+    vector<vector<int>> b(n, vector<int>(m));
+    Generate(b, n, m);
+
+    vector<int> allMinDels;
+    for (int x = 2; x <= m; ++x) {
+        allMinDels.push_back(minDel[x]);
+    }
+    if (allMinDels.size() > 0) {
+    	sort(allMinDels.begin(), allMinDels.end());
+    	allMinDels.resize(unique(allMinDels.begin(), allMinDels.end()) - allMinDels.begin());
+    }
+    
+    for (int i = 1; i < (int) allMinDels.size(); ++i) {
+    	assert(allMinDels[i] != allMinDels[i - 1]);
+    }
+
+    map<int, int> minDelId;
+    for (int i = 0; i < (int) allMinDels.size(); ++i) {
+        minDelId[allMinDels[i]] = i;
+    }
+
+    vector<vector<int>> ids(allMinDels.size());
+    for (int i = 2; i <= m; ++i) {
+        ids[minDelId[minDel[i]]].push_back(i);
+    }
+
+    vector<long long> dp[2];
+    int curPtr = 0;
+
+    dp[curPtr].assign(m + 1, 0);
+
+    for (int itr = 0; itr + 1 < n; ++itr) {
+        int nxtPtr = 1 - curPtr;
+        dp[nxtPtr].assign(m + 1, INF);
+
+        for (int i = 2; i <= m; ++i) {
+            dp[nxtPtr][1] = min(dp[nxtPtr][1], dp[curPtr][i] + b[itr][i - 1]);
+        }
+        dp[nxtPtr][1] = min(dp[nxtPtr][1], dp[curPtr][1] + a[itr][0]);
+
+        for (int i = 2; i <= m; ++i) {
+            dp[nxtPtr][i] = min(dp[nxtPtr][i], dp[curPtr][i] + a[itr][i - 1]);
+        }
+
+        for (int delId = 0; delId < (int) allMinDels.size(); ++delId) {
+            const vector<int>& poses = ids[delId];
+            long long mn = dp[curPtr][poses.back()] + b[itr][poses.back() - 1];
+            for (int i = ((int) poses.size()) - 2; i >= 0; --i) {
+                dp[nxtPtr][poses[i]] = min(dp[nxtPtr][poses[i]], mn);
+
+                mn = min(mn, dp[curPtr][poses[i]] + b[itr][poses[i] - 1]);
+            }
+        }
+        for (int delId = 0; delId < (int) allMinDels.size(); ++delId) {
+            const vector<int>& poses = ids[delId];
+            long long mn = dp[curPtr][poses[0]] + b[itr][poses[0] - 1];
+            for (int i = 1; i < (int) poses.size(); ++i) {
+                dp[nxtPtr][poses[i]] = min(dp[nxtPtr][poses[i]], mn);
+
+                mn = min(mn, dp[curPtr][poses[i]] + b[itr][poses[i] - 1]);
+            }
+        }
+        
+        swap(curPtr, nxtPtr);
+        
+        for (int i = 1; i <= m; ++i) {
+        	assert(dp[curPtr][i] < INF);
+        }
+    }
+
+    long long result = dp[curPtr][1];
+    for (int i = 2; i <= m; ++i) {
+        result = min(result, dp[curPtr][i]);
+    }
+
+    cout << result << endl;
+
+    return 0;
+}

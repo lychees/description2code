@@ -1,0 +1,58 @@
+// Hackerearth - Sum of Digits
+// Dynamic Programming
+// Count the number of +ve integers whose digits sum is S.
+
+#include <stdio.h>
+#include <string.h>
+#include <iostream>
+
+using namespace std;
+typedef long long LL;
+
+int S;
+LL A, B;
+LL tenPower[20]; // n <= 10**15.
+LL dp[20][140]; // S <= 135.
+LL minValue = -1;
+
+// Count the # of integers in [A, B] whose digit's sum = S. 
+LL solve(LL prefix, int digits, int sum) 
+{
+  LL min0 = prefix;
+  LL max0 = prefix + tenPower[digits] - 1;
+  LL result = 0;
+  bool memoize = (min0 >= A && max0 <= B);
+
+  if(sum < 0) return 0;
+  if(min0 > B || max0 < A) return 0;
+
+  if(digits == 0) 
+  {
+    if(sum > 0) return 0;
+    if(minValue == -1) minValue = prefix;
+    return 1;
+  }
+
+  if(memoize && dp[digits][sum] != -1) return dp[digits][sum];
+  for(int digit = 0; digit < 10; ++digit)
+   result += solve(prefix + digit * tenPower[digits - 1], digits - 1, sum - digit);
+
+  if(memoize) dp[digits][sum] = result;
+  return result;
+}
+//
+
+int main(void) 
+{
+  // Preprocess
+  tenPower[0] = 1;
+  for(int i = 1; i <= 15; ++i) 
+   tenPower[i] = tenPower[i - 1] * 10;
+
+  scanf("%lld %lld %d", &A, &B, &S);
+  memset(dp, -1, sizeof dp);
+  printf("%lld\n", solve(0, 15, S));
+  printf("%lld\n", minValue);
+
+  return 0;
+}

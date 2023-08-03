@@ -1,0 +1,122 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+
+
+using namespace std;
+
+pair<int, pair<int, int> > graph[10001];
+
+int p1[1001];
+int p2[1001];
+bool visited1[1001];
+bool visited2[1001];
+bool can_ans = false;
+vector<pair<int, int> > check[1001];
+
+
+void init(){
+    for(int i=0;i<=1000;i++){
+        p1[i] = i;
+        p2[i] = i;
+        visited1[i] = 0;
+        visited2[i] = 0;
+    }
+}
+
+int root(int a, int type){
+    if(type == 0){
+        while(p1[a] != a){
+            p1[a] = p1[p1[a]];
+            a = p1[a];
+        }
+    }
+    else{
+        while(p2[a] != a){
+            p2[a] = p2[p2[a]];
+            a = p2[a];
+        }
+    }
+    return a;
+}
+
+void unionn(int a, int b, int type){
+    int x = root(a, type);
+    int y = root(b, type);
+    if(type == 0) p1[x] = p1[y];
+    else p2[x] = p2[y];
+}
+
+int kruskal1(int m){
+    int min_cost = 0;
+    for(int i=0;i<m;i++){
+        int x = graph[i].second.first;
+        int y = graph[i].second.second;
+        int z = graph[i].first;
+        if(z == -1) break;
+        if(root(x, 0) != root(y, 0)){
+            unionn(x, y, 0);
+            visited1[x] = true;
+            visited1[y] = true;
+            min_cost++;
+            if(z == -3) graph[i] = make_pair(-4, make_pair(x, y));
+        }
+    }
+    return min_cost;
+}
+
+int kruskal2(int m){
+    int min_cost = 0;
+    for(int i=0;i<m;i++){
+        int x = graph[i].second.first;
+        int y = graph[i].second.second;
+        int z = graph[i].first;
+        if(z == -2) continue;
+        if(root(x, 1) != root(y, 1)){
+            unionn(x, y, 1);
+            if(visited1[x] == true || visited1[y] == true){
+                can_ans = true;
+            }
+            if(z != -4) min_cost++;
+            visited2[x] = true;
+            visited2[y] = true;
+        }
+    }
+    return min_cost;
+}
+
+int main(){
+    int n, m;
+    cin >> n >> m;
+    init();
+    int begin1 = 0;
+    int begin2 = 0;
+    for(int i=0;i<m;i++){
+        int a, b, c;
+        cin >> a >> b >> c;
+        graph[i] = make_pair(-c, make_pair(a, b));
+    }
+    sort(graph, graph+m);
+    int temp = kruskal1(m);
+    sort(graph, graph+m);
+    temp += kruskal2(m);
+    for(int i=1;i<=n;i++){
+        if(!visited1[i] && !visited2[i]){
+            can_ans = false;
+        }
+    }
+    int cc = 0;
+    for(int i=1;i<=n;i++){
+        if(p1[i] == i){
+            cc++;
+        }
+        if(p2[i] == i){
+            cc++;
+        }
+    }
+    if(cc > 2){ cout << "-1" << endl;}
+    else{
+        if(can_ans) cout << m-temp << endl;
+        else cout << "-1" << endl;
+    }
+}

@@ -1,0 +1,78 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int n;
+const int N=100100;
+typedef long long ll;
+
+int dad[N];
+
+struct planet {
+    int x,y;
+    int index;
+    friend bool operator<(const planet& A,const planet& B) {
+        if(A.x!=B.x) {
+            return A.x<B.x;
+        }
+        if(A.y!=B.y) {
+            return A.y<B.y;
+        }
+        return false;
+    }
+    friend int dist(const planet& A,const planet& B) {
+        return min(abs(A.x-B.x),abs(A.y-B.y));
+    }
+} p[N],org[N];
+struct edge {
+    int idxa,idxb;
+    int cost;
+    edge(int a,int b) : idxa(a),idxb(b) {
+        cost=dist(org[idxa],org[idxb]);
+    }
+    friend bool operator < (const edge& A,const edge& B) {
+        return A.cost<B.cost;
+    }
+};
+vector<edge>E;
+bool xCmp(const planet& A,const planet& B) {
+    return A.x<B.x;
+}
+bool yCmp(const planet& A,const planet& B) {
+    return A.y<B.y;
+}
+int findDad(int x) {
+    if(dad[x]==-1) {
+        return x;
+    }
+    return dad[x]=findDad(dad[x]);
+}
+int main() {
+    scanf("%d",&n);
+    for(int i=0;i<n;i++) {
+        scanf("%d%d",&p[i].x,&p[i].y);
+        p[i].index=i;
+        org[i]=p[i];
+    }
+    sort(p,p+n,xCmp);
+    for(int i=1;i<n;i++) {
+        E.push_back(edge(p[i-1].index,p[i].index));
+    }
+    sort(p,p+n,yCmp);
+    for(int i=1;i<n;i++) {
+        E.push_back(edge(p[i-1].index,p[i].index));
+    }
+    sort(E.begin(),E.end());
+    ll sum=0;
+    memset(dad,-1,sizeof(dad));
+    vector<edge>:: iterator it;
+    for(it=E.begin();it!=E.end();it++) {
+        int A=findDad(it->idxa);
+        int B=findDad(it->idxb);
+        if(A!=B) {
+            sum+=it->cost;
+            dad[A]=B;
+        }
+    }
+    printf("%lld\012",sum);
+    return 0;
+}

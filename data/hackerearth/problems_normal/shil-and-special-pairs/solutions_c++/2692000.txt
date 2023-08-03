@@ -1,0 +1,166 @@
+#include <bits/stdc++.h>
+using namespace std ;
+
+#define ft first
+#define sd second
+#define pb push_back
+#define all(x) x.begin(),x.end()
+
+#define ll long long int
+#define vi vector<int>
+#define vii vector<pair<int,int> >
+#define pii pair<int,int>
+#define vl vector<ll>
+#define vll vector<pair<ll,ll> >
+#define pll pair<ll,ll>
+#define mp make_pair
+
+#define sc1(x) scanf("%d",&x)
+#define sc2(x,y) scanf("%d%d",&x,&y)
+#define sc3(x,y,z) scanf("%d%d%d",&x,&y,&z)
+
+#define scll1(x) scanf("%lld",&x)
+#define scll2(x,y) scanf("%lld%lld",&x,&y)
+#define scll3(x,y,z) scanf("%lld%lld%lld",&x,&y,&z)
+
+#define pr1(x) printf("%d\n",x)
+#define pr2(x,y) printf("%d %d\n",x,y)
+#define pr3(x,y,z) printf("%d %d %d\n",x,y,z)
+
+#define prll1(x) printf("%lld\n",x)
+#define prll2(x,y) printf("%lld %lld\n",x,y)
+#define prll3(x,y,z) printf("%lld %lld %lld\n",x,y,z)
+
+#define pr_vec(v) for(int i=0;i<v.size();i++) cout << v[i] << " " ;
+
+#define f_in(st) freopen(st,"r",stdin)
+#define f_out(st) freopen(st,"w",stdout)
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+
+using namespace __gnu_pbds;
+
+const int maxn = 1e5 + 10;
+const int mod = 1e9 + 7;
+
+int A[maxn], P[maxn], E[maxn];
+
+ll ans[maxn];
+vector<int> p;
+
+class BIT_PointUpdateRangeQuery {
+
+	public:
+		BIT_PointUpdateRangeQuery( int n ) {
+			this->sz = n;
+			BIT.resize( sz+1 );
+			fill( all(BIT), 0 );
+		}
+
+		void Update( int idx, ll val ) {
+			while( idx <= sz ) {
+				BIT[idx] += val;
+				if( BIT[idx] >= mod ) BIT[idx] -= mod;
+				idx += idx & -idx;
+			}
+		}
+
+		ll Query( int idx ) {
+			ll sum = 0;
+			while( idx ) {
+				sum += BIT[idx];
+				if( sum >= mod ) sum -= mod;
+				idx -= idx & -idx;
+			}
+			return sum;
+		}
+
+		ll RangeQuery( int l, int r ) {
+		    if(r < l) return 0;
+		    int x = Query(r) - Query(l-1);
+		    if( x < 0 ) x += mod;
+			return x;
+		}
+
+	private:
+
+		vector<ll> BIT;
+		int sz;
+};
+
+
+bool cmp( const pair<pii, int> &a, const pair<pii, int> &b) {
+    return a.ft.sd < b.ft.sd;
+}
+
+int main() {
+
+    int n, q, d; sc1( n ); sc1( q ); sc1( d );
+
+    BIT_PointUpdateRangeQuery *BIT = new BIT_PointUpdateRangeQuery(n);
+
+    for(int i=1; i<=n; i++) {
+        sc1( A[i] );
+    }
+
+    for(int i=n; i>=1; i--) {
+        P[A[i]] = i;
+        int c = 0;
+        for(int j=max(1, A[i]-d); j<=min(n, A[i]+d); j++) {
+            if(P[j]) {
+                p.pb( P[j] );
+                c ++;
+            }
+        }
+        E[i] = c;
+    }
+
+    reverse(all(p));
+    for(int i=1; i<=n; i++) E[i] += E[i-1];
+
+    vector< pair<pii ,int> > qty( q );
+
+    for(int i=0; i<q; i++) {
+        sc2( qty[i].ft.ft, qty[i].ft.sd );
+        qty[i].sd = i;
+    }
+
+    sort( all(qty) );
+
+    n = E[n];
+    int i = 0;
+    int idx = 0;
+    while( i < q ) {
+        int e = E[qty[i].ft.ft-1];
+        while( idx < e ) {
+            BIT->Update(p[idx], 1);
+            idx ++;
+        }
+        int l = qty[i].ft.ft;
+        while( i < q && l == qty[i].ft.ft ) {
+            ans[qty[i].sd] -= BIT->RangeQuery(qty[i].ft.ft, qty[i].ft.sd);
+            i ++;
+        }
+    }
+
+    BIT = new BIT_PointUpdateRangeQuery(n);
+    sort( all(qty), cmp );
+    i = 0;
+    idx = 0;
+    while( i < q ) {
+        int e = E[qty[i].ft.sd];
+        while( idx < e ) {
+            BIT->Update(p[idx], 1);
+            idx ++;
+        }
+        int r = qty[i].ft.sd;
+        while( i < q && r == qty[i].ft.sd ) {
+            ans[qty[i].sd] += BIT->RangeQuery(qty[i].ft.ft, qty[i].ft.sd);
+            i ++;
+        }
+    }
+
+    for(int i=0; i<q; i++) cout << ans[i] << "\n";
+    return 0;
+}

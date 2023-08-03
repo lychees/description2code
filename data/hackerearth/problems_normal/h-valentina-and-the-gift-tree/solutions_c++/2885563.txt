@@ -1,0 +1,139 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int MX = 100007;
+const int LG = 17;
+#define REP(i, n) for(int i = 0; i < (n); i++)
+
+struct JP {
+	int nxt;
+	int sum;
+	int minprefix;
+	int minsufix;
+	int bestseq;
+};
+
+JP compose(const JP& a, const JP& b) {
+	return JP { b.nxt, a.sum+b.sum, 
+		min(a.minprefix, a.sum+b.minprefix),
+		min(b.minsufix, b.sum + a.minsufix),
+		max({a.bestseq, b.bestseq, a.sum+b.sum-a.minprefix - b.minsufix})};
+}
+
+JP reverse(JP a) {
+	swap(a.minprefix, a.minsufix);
+	return a;
+}
+
+JP init(int x, int nxt) {
+	return JP{nxt, x, 0, 0, x};
+}
+
+JP jmp [MX][LG];
+int parent[MX];
+int d[MX];
+vector<int> graf[MX];
+int g[MX];
+int n, q;
+
+void dfs(int v, int p, int dist) {
+	d[v] = dist;
+	parent[v] = p;
+	for(auto i : graf[v])
+		if(i!=p)
+			dfs(i, v, dist+1);
+}
+
+void read() {
+	scanf("%lld", &n);
+	REP(i, n-1) {
+		int a, b;
+		scanf("%lld %lld", &a, &b);
+		graf[a].push_back(b);
+		graf[b].push_back(a);
+	}
+	for(int i = 1; i<=n;i++)
+		scanf("%lld", &g[i]);
+	scanf("%lld", &q);
+}
+
+void prepare() {
+	dfs(1, 1, 0);
+	for(int i = 1; i<=n; i++) {
+		jmp[i][0] = init(g[i], parent[i]);
+	}
+	for(int l = 1; l < LG; l++) {
+		for(int i = 1; i <= n; i++) {
+			int half = jmp[i][l-1].nxt;
+			jmp[i][l] = compose(jmp[i][l-1], jmp[half][l-1]);
+		}
+	}
+}
+
+int lca(int u, int v) {
+	if(d[u] < d[v])
+		swap(u, v);
+	int ile = d[u] - d[v];
+	for(int i = LG - 1; i >= 0; i--) {
+		int len = 1<<i;
+		if(ile >= len) {
+			u = jmp[u][i].nxt;
+			ile -= len;
+		}
+	}
+	if(u == v)
+		return u;
+	int wsk = LG-1;
+	while(parent[u] != parent[v]) {
+		while(jmp[u][wsk].nxt == jmp[v][wsk].nxt)
+			wsk--;
+		if(wsk>=0) {
+			u = jmp[u][wsk].nxt;
+			v = jmp[v][wsk].nxt;
+		}
+	}
+	return parent[u];
+}
+
+JP recover_path(int v, int up) {
+	bool started = false;
+	JP akt {0,0,0,0,0};
+	for(int i = LG-1; i>=0; i--) {
+		int len = 1<<i;
+		if(up >= len) {
+			up -= len;
+			if(!started) {
+				akt = jmp[v][i];
+				started = true;
+			}
+			else
+				akt = compose(akt, jmp[v][i]);
+			v = jmp[v][i].nxt;
+		}
+	}
+	return akt;
+}
+int query() {
+	int a, b;
+	scanf("%lld %lld", &a, &b);
+	int l = lca(a, b);
+	if(d[a] > d[b])
+		swap(a, b);
+	if(a==b)
+		return g[a];
+	int lena = d[a] - d[l] + 1,
+			lenb = d[b] - d[l];
+	//cerr << a << " " << b << " "<< l << endl;
+	JP tmp = compose(recover_path(a, lena), reverse(recover_path(b, lenb)));
+	return tmp.bestseq;
+}
+
+main() {
+	read();
+	prepare();
+	while(q--)
+		printf("%lld\n",query());
+}
+
+
+

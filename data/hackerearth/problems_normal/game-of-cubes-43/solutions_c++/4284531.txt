@@ -1,0 +1,198 @@
+#include <bits/stdc++.h>
+#define pb push_back
+#define mp make_pair
+#define X first
+#define Y second
+
+using namespace std;
+int l,b;
+char a[101][101];
+vector<pair<int,int> > v;
+void smash(int h,int move) {
+	int x,y;
+	bool found = false;
+	if (move == 0) {
+		for (int i = 0; i < b; i++) {
+			if (a[h][i] == 'x') {
+				x = h;
+				y = i;
+				found = true;
+				break;
+			}
+		}
+	} else {
+		for (int i = b - 1; i >= 0; i--) {
+			if (a[h][i] == 'x') {
+				x = h;
+				y = i;
+				found = true;
+				break;
+			}
+		}
+	}
+	if (found) {
+		a[x][y] = '.';
+		int idx = -1;
+		for (int i = 0; i < v.size(); i++) {
+			if (v[i].X == x && v[i].Y == y) {
+				idx = i;
+				break;
+			}
+		}
+		v.erase(v.begin() + idx);
+	}
+
+	return ;
+}
+
+vector<pair<int,int> > c[101];
+
+bool isvalid(int x,int y) {
+	if (x >= 0 && x < l && y >= 0 && y < b && a[x][y] == 'x') {
+		return true;
+	}
+	return false;
+}
+
+int check() {
+	for (int i = 0; i < 101; i++) {
+		c[i].clear();
+	}
+	bool vis[101][101];
+	memset(vis,false,sizeof(vis));
+	queue<pair<int,int> > q;
+	int idx = 0;
+	//int dx[8] = {-1,-1,-1,0,1,1,1,0};
+	//int dy[8] = {-1,0,1,1,1,0,-1,-1};
+	int dx[4] = {-1,0,1,0};
+	int dy[4] = {0,1,0,-1};
+	for (int i = 0; i < v.size(); i++) {
+		if (vis[v[i].X][v[i].Y]) {
+			continue;
+		}
+		q.push(mp(v[i].X,v[i].Y));
+		while (!q.empty()) {
+			pair<int,int> t = q.front();
+			q.pop();
+			vis[t.X][t.Y] = true;
+			c[idx].pb(mp(t.X,t.Y));
+			for (int j = 0; j < 4; j++) {
+				int xx = t.X + dx[j];
+				int yy = t.Y + dy[j];
+				if (isvalid(xx,yy) && !vis[xx][yy]) {
+					q.push(mp(xx,yy));
+					vis[xx][yy] = true;
+				}
+			}
+		}
+		idx++;
+	}
+/*	cout << "Components : " << idx << "\n";
+
+	for (int i = 0; i < idx; i++) {
+		cout << i << endl;
+		for (int j = 0; j < c[i].size(); j++) {
+			cout << c[i][j].X << " " << c[i][j].Y << endl;
+		}
+	}*/
+	return idx;
+}
+
+bool comp(const pair<int,int> &a,const pair<int,int> &b) {
+	if (a.X > b.X) {
+		return true;
+	}
+	return false;
+}
+
+void stabilise(int sz) {
+	int mn = INT_MAX,mn_idx;
+	for (int i = 0; i < sz; i++) {
+		sort(c[i].begin(),c[i].end(),comp);
+		if (c[i][0].X < mn) {
+			mn = c[i][0].X;
+			mn_idx = i;
+		}
+	}
+	if (sz == 1 && mn == (l-1)) {
+		return;
+	}
+	//	cout << mn << " " << mn_idx << endl;
+	vector<pair<int,int> > tmp = c[mn_idx];
+	while (1) {
+		bool ok = false;
+		vector<pair<int,int> > cpy;
+		map<pair<int,int>,bool> same;
+		for (int i = 0; i < tmp.size(); i++) {
+			same[tmp[i]] = true;
+		}
+		for (int i = 0; i < tmp.size(); i++) {
+			pair<int,int> t = tmp[i];
+			if (t.X == l - 1 || a[t.X + 1][t.Y] == 'x' && !same[mp(t.X+1,t.Y)]) {
+				ok = true;
+			}
+		}
+		if (ok) {
+			break;
+		}
+		for (int i = 0; i < tmp.size(); i++) {
+			pair<int,int> t = tmp[i];
+			a[t.X][t.Y] = '.';
+		}
+		for (int i = 0; i < tmp.size(); i++) {
+			pair<int,int> t = tmp[i];
+			a[t.X + 1][t.Y] = 'x';
+			cpy.pb(mp(t.X+1,t.Y));
+		}
+		tmp.clear();
+		tmp = cpy;
+		/*for (int i = 0; i < l; i++) {
+		  for (int j = 0; j < b; j++) {
+		  cout << a[i][j];
+		  }cout << endl;
+		  }*/
+	}
+	v.clear();
+	for (int i = 0; i < l; i++) {
+		for (int j = 0; j < b; j++) {
+			if (a[i][j] == 'x') {
+				v.pb(mp(i,j));
+			}
+		}
+
+	}
+}
+
+int main()
+{
+	cin >> l >> b;
+
+	for (int i = 0; i < l; i++) {
+		for (int j = 0; j < b; j++) {
+			cin >> a[i][j];
+			if (a[i][j] == 'x') {
+				v.pb(mp(i,j));
+			}
+		}
+	}
+	int n,hgt;
+	cin >> n;
+	bool move = 0;
+	while (n--) {
+		cin >> hgt;
+		hgt = l - hgt;
+		smash(hgt,move);
+		int chk = check();
+		stabilise(chk);
+		move = !move;
+	}
+
+	for (int i = 0; i < l; i++) {
+		for (int j = 0; j < b; j++) {
+			cout << a[i][j] ;
+		}cout << endl;
+	}
+
+	return 0;
+}
+

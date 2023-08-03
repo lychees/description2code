@@ -1,0 +1,101 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<long long> a[100000];
+long long v[100000];
+long long dis[100000];
+long long cost[100000];
+
+long long dp[100000][3];
+
+long long dfs(long long x,long long p)
+{
+	
+	if(dp[x][p]!=LLONG_MIN)
+		return dp[x][p];
+	
+    v[x] = 1;
+
+    if(p==1){
+        long long ans = cost[x];
+        long long temp = 0;
+        long long cn = a[x].size();
+
+        for(long long i=0;i<cn;i++){
+            //cout<<a[x][i]<<endl;
+            if(v[a[x][i]]==0)
+                temp = max(temp,dfs(a[x][i],1));
+        }
+        v[x] = 0;
+        return dp[x][p] = max(0ll,ans+temp);
+    }
+    else{
+
+        long long r = LLONG_MIN;
+        long long cn = a[x].size();
+
+        for(long long i=0;i<cn;i++){
+            //cout<<a[x][i]<<endl;
+            if(v[a[x][i]]==0)
+                r = max(r,dfs(a[x][i],0));
+        }
+
+        long long mx = 0;
+        long long smx = 0;
+        long long temp;
+
+        cn = a[x].size();
+        for(long long i=0;i<cn;i++){
+            //cout<<a[x][i]<<endl;
+            if(v[a[x][i]]==0){
+                temp = dfs(a[x][i],1);
+                if(temp>mx){
+                    smx = mx;
+                    mx = temp;
+                }
+                else if(temp>smx)
+                    smx = temp;
+            }
+        }
+
+        long long q = mx + smx + cost[x];
+
+        v[x] = 0;
+        return dp[x][p] = max(r,q);
+    }
+}
+
+int main()
+{
+    long long t;
+
+    cin>>t;
+
+    while(t--){
+        long long n;
+        cin>>n;
+        for(long long i=0;i<n+10;i++){
+            dis[i]=0;
+            v[i] = 0;
+            a[i].resize(0);
+        }
+
+		for(int i=0;i<n+10;i++)
+			for(int j=0;j<3;j++)
+				dp[i][j] = LLONG_MIN;
+
+        for(long long i=1;i<=n;i++)
+            cin>>cost[i];
+
+        for(long long i=0;i<n-1;i++){
+            long long x,y;
+            cin>>x>>y;
+            a[x].push_back(y);
+            a[y].push_back(x);
+        }
+
+        cout<<dfs(1,0)<<endl;
+    }
+
+    return 0;
+}

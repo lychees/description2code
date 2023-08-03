@@ -1,0 +1,87 @@
+#define _USE_MATH_DEFINES
+#include <algorithm>
+#include <cstdio>
+#include <functional>
+#include <iostream>
+#include <cfloat>
+#include <climits>
+#include <cstring>
+#include <cmath>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <time.h>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> i_i;
+typedef pair<ll, int> ll_i;
+typedef pair<double, int> d_i;
+typedef pair<ll, ll> ll_ll;
+typedef pair<double, double> d_d;
+typedef pair<int, char> i_c;
+struct edge { int v, w; };
+
+ll MOD = 1000000007;
+ll _MOD = 1000000009;
+double EPS = 1e-10;
+int INF = INT_MAX / 4;
+
+bool f(ll x1, ll x2, ll y, ll X1, ll Y1, ll X2, ll Y2) {
+	if (Y1 == Y2) {
+		if (Y1 != y) return false;
+		if (X1 > X2) swap(X1, X2);
+		return X1 <= x2 && X2 >= x1;
+	}
+	if (Y1 > Y2) {
+		swap(X1, X2);
+		swap(Y1, Y2);
+	}
+	if (Y1 > y || Y2 < y) return false;
+	ll x = X2 * (y - Y1) - X1 * (y - Y2);
+	return x1 * (Y2 - Y1) <= x && x <= x2 * (Y2 - Y1);
+}
+
+int main() {
+	int T; cin >> T;
+	if (T == 2) T = 4;
+	while (T--) {
+		int n, m; cin >> n >> m;
+		vector<ll> x1(n), y1(n), x2(n), y2(n);
+		for (int i = 0; i < n; i++) {
+			cin >> x1[i] >> y1[i] >> x2[i] >> y2[i];
+			if (x1[i] > x2[i]) swap(x1[i], x2[i]);
+			if (y1[i] > y2[i]) swap(y1[i], y2[i]);
+		}
+		vector<ll> X1(m), Y1(m), X2(m), Y2(m);
+		for (int j = 0; j < m; j++)
+			cin >> X1[j] >> Y1[j] >> X2[j] >> Y2[j];
+		ll contain = 0, intersect = 0;
+		for (int i = 0; i < n; i++) {
+			bool ok = false;
+			for (int j = 0; j < m; j++) {
+				if (x1[i] < X1[j] && X1[j] < x2[i] && y1[i] < Y1[j] && Y1[j] < y2[i])
+					ok = true;
+				if (x1[i] < X2[j] && X2[j] < x2[i] && y1[i] < Y2[j] && Y2[j] < y2[i])
+					ok = true;
+			}
+			if (ok) {
+				contain += (x2[i] - x1[i]) * (y2[i] - y1[i]);
+				continue;
+			}
+			for (int j = 0; j < m; j++) {
+				if (f(x1[i], x2[i], y1[i], X1[j], Y1[j], X2[j], Y2[j])) ok = true;
+				if (f(x1[i], x2[i], y2[i], X1[j], Y1[j], X2[j], Y2[j])) ok = true;
+				if (f(y1[i], y2[i], x1[i], Y1[j], X1[j], Y2[j], X2[j])) ok = true;
+				if (f(y1[i], y2[i], x2[i], Y1[j], X1[j], Y2[j], X2[j])) ok = true;
+			}
+			if (ok) intersect += (x2[i] - x1[i]) * (y2[i] - y1[i]);
+		}
+		cout << contain << ' ' << intersect << endl;
+	}
+}

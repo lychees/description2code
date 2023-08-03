@@ -1,0 +1,177 @@
+//  O_o  =>  -_-
+//
+//  Created by shikhar thakur
+//
+
+#include <bits/stdc++.h>
+
+#define ll long long
+#define pb push_back
+#define mp make_pair
+#define gcd(a,b) __gcd(a,b)
+#define fillm(v,val) memset(v,val,sizeof(v))
+#define NL "\n"
+#define _iosync ios_base::sync_with_stdio(false);cin.tie(0);
+ll mod ;
+const double pi = acos(-1.0);
+
+using namespace std;
+
+struct fuck
+{
+    ll f0, f1;
+};
+
+#define maxn 200007
+ll ar[maxn];
+fuck segtree[4 * maxn];
+ll n;//don't forget to initialize
+
+ll res[2][2], identity[2][2] = {{1, 0}, {0, 1}};
+
+void multiply(ll a[2][2], ll b[2][2])
+{
+    ll temp[2][2] = {0};
+    ll i, j, k;
+    for (i = 0; i < 2; i++)
+    {
+        for (j = 0; j < 2; j++)
+        {
+            for (k = 0; k < 2; k++)
+            {
+                temp[i][j] += a[i][k] * b[k][j];
+                temp[i][j] %= mod;
+            }
+        }
+    }
+    memcpy(a, temp, sizeof(temp));
+}
+
+inline void power(ll topower)
+{
+    ll base[2][2] = {{1, 1}, {1, 0}};
+    memcpy(res, identity, sizeof(identity));
+    //res holds final (base^topower).
+    while (topower > 0)
+    {
+        if (topower & 1)
+        {
+            multiply(res, base);
+        }
+        multiply(base, base);
+        topower >>= 1;
+    }
+}
+
+fuck fib(fuck x, ll p)
+{
+    power(p - 1);
+    ll ran[2][2] = {{x.f1, 0}, {x.f0, 0}};
+    multiply(res, ran);
+    fuck ans;
+    ans.f1 = res[0][0] % mod;
+    ans.f0 = res[1][0] % mod;
+    return ans;
+}
+
+void Build(ll node = 1, ll l = 1, ll r = n)
+{
+    if (r < l)
+        return;
+    if (l == r)
+    {
+        segtree[node].f0 = ar[l] % mod;
+        segtree[node].f1 = ar[l] % mod;
+        //cout << l << " " << r << " " << segtree[node].f0 << " " << segtree[node].f1 << NL;
+        return;
+    }
+    ll mid = (l + r) >> 1;
+    ll xx = (node << 1);
+    Build(xx, l, mid);
+    Build(xx | 1, mid + 1, r);
+    fuck x = segtree[xx | 1];
+    ll siz = mid - l + 1;
+    fuck ff = fib(x, siz + 1);
+    segtree[node].f0 = segtree[xx].f0 + ff.f0;
+    segtree[node].f0 %= mod;
+    segtree[node].f1 = segtree[xx].f1 + ff.f1;
+    segtree[node].f1 %= mod;
+    //cout << l << " " << r << " " << segtree[node].f0 << " " << segtree[node].f1 << NL;
+
+}
+
+void PtUpd(ll idx, ll val, ll node = 1, ll l = 1, ll r = n)
+{
+    if (r < l || idx < l || idx > r)
+        return;
+    if (l == r) //leaf node
+    {
+        segtree[node].f1 = val % mod;
+        segtree[node].f0 = val % mod;
+        return;
+    }
+    ll mid = (l + r) >> 1;
+    ll xx = (node << 1);
+    PtUpd(idx, val, xx, l, mid);
+    PtUpd(idx, val, xx | 1, mid + 1, r);
+    fuck x = segtree[xx | 1];
+    ll siz = mid - l + 1;
+    fuck ff = fib(x, siz + 1);
+    segtree[node].f0 = segtree[xx].f0 + ff.f0;
+    segtree[node].f1 = segtree[xx].f1 + ff.f1;
+    segtree[node].f1 %= mod;
+    segtree[node].f0 %= mod;
+}
+
+fuck RangeQ(ll i, ll j, ll node = 1, ll l = 1, ll r = n)
+{
+    if (r < l || l > j || r < i) //out of range
+        return (fuck) {0, 0};
+    if (l >= i && r <= j) //completely inside range
+        return segtree[node];
+    ll mid = (l + r) >> 1;
+    ll xx = (node << 1);
+    fuck v1 = RangeQ(i, j, xx, l, mid);
+    fuck v2 = RangeQ(i, j, xx | 1, mid + 1, r);
+    ll siz = mid - max(i, l) + 1;
+    fuck ff = fib(v2, siz + 1);
+    fuck res;
+    res.f0 = v1.f0 + ff.f0;
+    res.f1 = v1.f1 + ff.f1;
+    res.f0 %= mod;
+    res.f1 %= mod;
+    return res;
+}
+
+int main()
+{
+#ifdef LOCAL_SYS
+    freopen("input.txt", "r", stdin);
+#endif
+    _iosync
+    cin >> n;
+    int q;
+    cin >> q;
+    cin >> mod;
+    for (int i = 1; i <= n; i++)
+        cin >> ar[i];
+    Build();
+    while (q--)
+    {
+        int ty;
+        cin >> ty;
+        if (ty == 1)
+        {
+            int l, x;
+            cin >> l >> x;
+            PtUpd(l, x);
+        }
+        else
+        {
+            int l, r;
+            cin >> l >> r;
+            cout << RangeQ(l, r).f0 % mod << NL;
+        }
+    }
+    return 0;
+}

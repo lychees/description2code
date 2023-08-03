@@ -1,0 +1,208 @@
+#include <iostream>
+#include <cstdio>
+#include <string>
+#include <sstream> 
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <cmath>
+#include <algorithm>
+#include <cstring>
+#include <ctime>
+#include <cassert>
+
+#include <sys/resource.h>
+
+using namespace std;
+#define pb push_back
+#define mp make_pair
+#define pii pair<int,int>
+#define vi vector<int>
+#define vpii vector<pii>
+#define SZ(x) ((int)(x.size()))
+#define fi first
+#define se second
+#define FOR(i,n) for(int (i)=0;(i)<(n);++(i))
+#define FORI(i,n) for(int (i)=1;(i)<=(n);++(i))
+#define IN(x,y) ((y).find((x))!=(y).end())
+#define ALL(t) t.begin(),t.end()
+#define FOREACH(i,t) for (typeof(t.begin()) i=t.begin(); i!=t.end(); i++)
+#define REP(i,a,b) for(int (i)=(a);(i)<=(b);++i)
+#define REPD(i,a,b) for(int (i)=(a); (i)>=(b);--i)
+#define REMAX(a,b) (a)=max((a),(b));
+#define REMIN(a,b) (a)=min((a),(b));
+#define DBG cerr << "debug here" << endl;
+#define DBGV(vari) cerr << #vari<< " = "<< (vari) <<endl;
+
+typedef long long ll;
+
+const int INF = 1e9;
+
+const int N = 300;
+const int Qv = 100;
+const int Qf = 1000;
+
+int n;
+
+int dx[] = {-1, 0, 1, 0};
+int dy[] = {0, 1, 0, -1};
+
+bool is_valid_state(int x, int y)
+{
+    return min(x, y) >= 0 && max(x, y) <= n;
+}
+
+vector<pii> g[N + 1][N + 1];
+
+set<pii> additional_moves[N + 1][N + 1];
+
+set<pii> forbidden_moves[N + 1][N + 1];
+
+int res = -1;
+
+bool visited[N + 1][N + 1];
+int mylow[N + 1][N + 1];
+int disc[N + 1][N + 1];
+pii par[N + 1][N + 1];
+
+int mytime = 0;
+
+void bridges(int x, int y, int px, int py, int steps)
+{
+    visited[x][y] = 1;
+    ++mytime;
+    disc[x][y] = mytime;
+    mylow[x][y] = mytime;
+    
+    FOR(i, g[x][y].size())
+    {
+        int nx = g[x][y][i].fi;
+        int ny = g[x][y][i].se;
+
+        if(!visited[nx][ny])
+        {
+            par[nx][ny] = mp(x, y);
+            bridges(nx, ny, x, y, steps + 1);
+
+            REMIN(mylow[x][y], mylow[nx][ny]);
+
+            
+            if(mylow[nx][ny] > disc[x][y])
+            {
+                //we have a bridge
+                int evaluation = x * y + nx * ny;
+                if(res == -1 || res < evaluation) res = evaluation;
+            }
+        }
+        else if(mp(nx, ny) != mp(px, py))
+        {
+            REMIN(mylow[x][y], disc[nx][ny]);
+        }
+    }
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    int qv, qf;
+    cin >> n >> qv >> qf;
+    assert(n >= 1 && n <= N);
+    assert(qv >= 0 && qv <= Qv);
+    assert(qf >= 0 && qf <= Qf);
+
+    set<pair<pii, pii>> added_edges;
+
+    FOR(i, qv)
+    {
+        int x, y, deltax, deltay;
+        cin >> x >> y >> deltax >> deltay;
+        assert(deltax != 0 && deltay != 0);
+        assert(abs(deltax) != n && abs(deltay) != n);
+
+        int nx = x + deltax;
+        int ny = y + deltay;
+        assert(is_valid_state(nx, ny));
+
+        additional_moves[x][y].insert(mp(nx, ny));
+        assert(additional_moves[nx][ny].find(mp(x, y)) == additional_moves[nx][ny].end());
+
+        g[x][y].pb(mp(nx, ny));
+        g[nx][ny].pb(mp(x, y));
+
+        pii v = mp(x,y);
+        pii u = mp(nx, ny);
+        if(u < v) swap(v, u);
+
+        added_edges.insert(mp(v, u));
+    }
+
+    assert(SZ(added_edges) == qv);
+
+    REP(x, 0, n) REP(y, 0, n) qv -= additional_moves[x][y].size();
+    assert(qv == 0);
+
+    set<pair<pii, pii>> removed_edges;
+
+    FOR(i, qf)
+    {
+        int x, y;
+        string color;
+        cin >> x >> y >> color;
+        assert(x >= 0 && x <= n);
+        assert(y >= 0 && y <= n);
+        int nx = x, ny = y;
+        if(color == "BLACK")
+        {
+            assert(y > 0);
+            nx++;
+        }
+        else if(color == "WHITE")
+        {
+            assert(x < n);
+            ny++;
+        }
+        else assert(false);
+
+        forbidden_moves[x][y].insert(mp(nx, ny));
+        assert(forbidden_moves[nx][ny].find(mp(x, y)) == forbidden_moves[nx][ny].end());
+
+    }
+
+    REP(x, 0, n) REP(y, 0, n) qf -= forbidden_moves[x][y].size();
+    assert(qf == 0);
+
+
+    REP(x, 0, n) REP(y, 0, n)
+    {
+        FOR(i, 4)
+        {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+            if(is_valid_state(nx, ny))
+            {
+                if(forbidden_moves[x][y].find(mp(nx, ny)) != forbidden_moves[x][y].end()) continue;
+                if(forbidden_moves[nx][ny].find(mp(x, y)) != forbidden_moves[nx][ny].end()) continue;
+                g[x][y].pb(mp(nx, ny));
+            }
+        }
+    }
+
+    g[0][0].pb(mp(n, n));
+    g[n][n].pb(mp(0, 0));
+
+
+    //graph is ready
+    
+    //finding the best bridge
+    
+    
+    bridges(0, 0, -1, -1, 0);
+
+    REP(x, 0, n) REP(y, 0, n) assert(visited[x][y]);
+
+    cout << res << endl;
+
+    return 0;
+}

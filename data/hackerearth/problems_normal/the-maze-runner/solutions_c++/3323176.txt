@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define eps 1e-9
+#define pdd pair<double,double>
+pdd p[110];
+double h;
+double dist[110][2];
+
+double distance(double x1 ,double y1, double x2, double y2) {
+	return sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
+}
+bool check(int l , int r, double y) {
+	for(int i = l; i <= r; i++) {
+		//cout << y << " & " << p[i].second << " " << p[i].second+h << endl;
+		if(y < p[i].second-eps || y > p[i].second+eps+h)
+			return false;
+	}
+	//cout << "true l " << l << " h = " << h << " " << y << endl;
+	return true;
+}
+bool valid(int l , int r, double x1 ,double y1, double x2, double y2) {
+	for(int i = l; i <= r; i++) {
+		double x = p[i].first;
+		//double y = y1 + ((y2-y1)*(x-x1)) / (x2-x1);
+		double y = (x-x1)*(y2-y1)/(x2-x1)+y1;
+		if(y < p[i].second-eps || y > p[i].second+h+eps)
+			return false;
+	}
+	return true;
+}
+int main()
+{
+	int n;
+	scanf("%d", &n);
+	for(int i = 0; i <= n; i++) scanf("%lf%lf", &p[i].first,&p[i].second);
+	scanf("%lf", &h);
+	
+	for(int i = 0; i <= n; i++)
+		dist[i][0] = dist[i][1] = 1e9;
+	dist[0][0] = dist[0][1] = 0;
+
+	for(int i = 1; i <= n; i++) {
+		if(check(0,i-1, p[i].second))
+			dist[i][0] = min(dist[i][0], p[i].first-p[0].first);
+		if(check(0,i-1, p[i].second+h))
+			dist[i][1] = min(dist[i][1], p[i].first-p[0].first);
+	}
+
+	for(int i = 0; i <= n; i++) {
+		for(int  j= i+1; j <= n; j++) {
+			if(valid(i+1,j-1,p[i].first, p[i].second, p[j].first, p[j].second))
+				dist[j][0] = min(dist[j][0], dist[i][0]+distance(p[i].first, p[i].second, p[j].first, p[j].second));
+			if(valid(i+1,j-1,p[i].first, p[i].second, p[j].first, p[j].second+h))
+				dist[j][1] = min(dist[j][1], dist[i][0]+distance(p[i].first, p[i].second, p[j].first, p[j].second+h));
+			
+		}
+		for(int  j= i+1; j <= n; j++) {
+			if(valid(i+1,j-1,p[i].first, p[i].second+h, p[j].first, p[j].second))
+				dist[j][0] = min(dist[j][0], dist[i][1]+distance(p[i].first, p[i].second+h, p[j].first, p[j].second));
+			if(valid(i+1,j-1,p[i].first, p[i].second+h, p[j].first, p[j].second+h))
+				dist[j][1] = min(dist[j][1], dist[i][1]+distance(p[i].first, p[i].second+h, p[j].first, p[j].second+h));
+			
+		}
+
+	}
+	double ans = 1e9;
+	//cout << "------------------------\n";
+	for(int i = 0; i <= n; i++) {
+		if(check(i+1, n, p[i].second)){
+			//cout << i << " if1\n";
+			ans = min(ans , dist[i][0]+p[n].first-p[i].first);
+		}
+		if(check(i+1,n,p[i].second+h)){
+			//cout << i << " if2\n";
+			ans = min(ans , dist[i][1]+p[n].first-p[i].first);
+		}
+		//cout << ans << " ->" << endl;
+	}
+	// for(int i= 0; i <= n; i++) {
+	// 	cout << dist[i][0] << " " << dist[i][1] << endl;
+	// }
+	printf("%.10f\n", ans);
+
+return 0;
+}

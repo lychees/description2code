@@ -1,0 +1,211 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MAX 101
+#define mod 3
+
+int org[10][10],dup[10][10];
+
+int find_block(int i,int j)
+{
+    if(i>=1&&i<=3)
+    {
+        if(j>=1&&j<=3)
+            return 1;
+        if(j>=4&&j<=6)
+            return 2;
+        if(j>=7&&j<=9)
+            return 3;
+    }
+    else if(i>=4&&i<=6)
+    {
+        if(j>=1&&j<=3)
+            return 4;
+        if(j>=4&&j<=6)
+            return 5;
+        if(j>=7&&j<=9)
+            return 6;
+    }
+    else
+    {
+        if(j>=1&&j<=3)
+            return 7;
+        if(j>=4&&j<=6)
+            return 8;
+        if(j>=7&&j<=9)
+            return 9;
+
+    }
+}
+void get_init_block(int b,int& i,int& j)
+{
+    switch(b)
+    {
+    case 1:
+        i=1;j=1;
+        break;
+    case 2:
+        i=1;j=4;
+        break;
+    case 3:
+        i=1;j=7;
+        break;
+    case 4:
+        i=4;j=1;
+        break;
+    case 5:
+        i=4;j=4;
+        break;
+    case 6:
+        i=4;j=7;
+        break;
+    case 7:
+        i=7;j=1;
+        break;
+    case 8:
+        i=7;j=4;
+        break;
+    case 9:
+        i=7;j=7;
+        break;
+    }
+}
+void get_ele_block(int b,int a[])
+{
+    int i,j;
+    get_init_block(b,i,j);
+    for(int p=i;p<i+3;++p)
+    {
+        for(int q=j;q<j+3;++q)
+        {
+            if(dup[p][q])
+            {
+                a[dup[p][q]]=0;
+            }
+        }
+    }
+}
+void get_ele_row(int i,int a[])
+{
+    for(int j=1;j<=9;++j)
+    {
+        if(dup[i][j])
+        {
+            a[dup[i][j]]=0;
+        }
+    }
+}
+
+void get_ele_col(int j,int a[])
+{
+    for(int i=1;i<=9;++i)
+    {
+        if(dup[i][j])
+        {
+            a[dup[i][j]]=0;
+        }
+    }
+
+}
+
+void get_ele(int i,int j,queue<int>& q)
+{
+    int b=find_block(i,j);
+    int a[10];
+    memset(a,1,sizeof(a));
+    get_ele_block(b,a);
+    get_ele_row(i,a);
+    get_ele_col(j,a);
+    for(int p=1;p<10;++p)
+    {
+        if(a[p])
+        {
+            q.push(p);
+        }
+
+    }
+}
+
+void solve(int i,int j,bool& done)
+{
+    if(i==9&&j==9&&dup[i][j])
+    {
+        done=true;
+        return;
+    }
+    if(dup[i][j])
+    {
+        if(j<9)
+            solve(i,j+1,done);
+        else
+            solve(i+1,1,done);
+        return;
+    }
+    queue<int> q;
+    get_ele(i,j,q);
+    if(i==9&&j==9&&!q.empty())
+    {
+        done=true;
+        dup[i][j]=q.front();
+        //cout<<"inside 9 ";
+        //cout<<dup[i][j]<<endl;
+        q.pop();
+        return;
+    }
+    while(!q.empty())
+    {
+        int ele=q.front();
+        q.pop();
+        dup[i][j]=ele;
+        //cout<<"dup[i][j] "<<dup[i][j]<<" i "<<i<<" j "<<j<<endl;
+        if(j<9)
+            solve(i,j+1,done);
+        else
+            solve(i+1,1,done);
+        if(done)
+            return;
+        dup[i][j]=0;
+    }
+}
+
+
+int main()
+{
+    //freopen("in.txt","r",stdin);
+    //freopen("out.txt","w",stdout);
+    int t;
+    int ans=0;
+    scanf("%d",&t);
+    while(t--)
+    {
+        int a[10][10];
+        for(int i=1;i<=9;++i)
+        {
+            for(int j=1;j<=9;++j)
+            {
+                scanf("%1d",&org[i][j]);
+                dup[i][j]=org[i][j];
+            }
+        }
+        /*for(int i=1;i<=9;++i)
+        {
+            for(int j=1;j<=9;++j)
+                cout<<dup[i][j]<<" ";
+            cout<<endl;
+        }*/
+        bool done=false;
+        solve(1,1,done);
+        for(int i=1;i<=9;++i)
+        {
+            for(int j=1;j<=9;++j)
+            {
+                //cout<<dup[i][j]<<"   ";
+                if(i==j)
+                    ans+=dup[i][j];
+            }
+            //cout<<endl;
+        }
+
+    }
+    printf("%d\n",ans);
+    return 0;
+}

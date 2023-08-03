@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+string s;
+int sz;
+bool vis[19][162][1458];
+ll dp[19][162][1458];
+ll cal(int idx, int dig_sum, int dig_sq_sum)
+{
+	if ( idx == -1 ) return (__gcd(dig_sum,dig_sq_sum) == 1);
+	if ( vis[idx][dig_sum][dig_sq_sum] ) return dp[idx][dig_sum][dig_sq_sum];
+	vis[idx][dig_sum][dig_sq_sum] = true;
+	ll ans = 0;
+	for ( int i = 0; i <= 9; i++ ) ans += cal(idx-1, dig_sum+i, dig_sq_sum+i*i);
+	dp[idx][dig_sum][dig_sq_sum] = ans;
+	return ans;
+}
+ll f(int idx, int tight, int dig_sum, int dig_sq_sum)
+{
+	if ( idx == sz ) return (__gcd(dig_sum,dig_sq_sum) == 1);
+	ll ans = 0;
+	if ( tight == 0 ) ans += cal(sz-idx-1, dig_sum, dig_sq_sum);
+	else {
+		for ( int i = 0; i <= s[idx]-'1'; i++ ) ans += f(idx+1, 0, dig_sum+i, dig_sq_sum+i*i);
+		ans += f(idx+1, 1, dig_sum + s[idx]-'0', dig_sq_sum + (s[idx]-'0')*(s[idx]-'0'));
+	}
+	return ans;
+}
+ll get(ll n)
+{
+	stringstream ss;
+	ss.clear();
+	ss << n;
+	s = ss.str();
+	sz = (int)s.size();
+	return f(0,1,0,0);
+}
+//Code for FAST INPUT :)
+template <typename T>
+inline void fi(T *a)
+{
+    register char c=0;
+    while (c<33) c=getchar_unlocked();
+    *a=0;
+    int tmp = 0;
+    while (c>33)
+    {
+        if ( c == 45 ) tmp = 1;
+        else *a=*a*10+c-'0';
+        c=getchar_unlocked();
+    }
+    if ( tmp == 1 ) *a = 0-(*a);
+}
+int main()
+{
+	int t;
+	ll x,y;
+	fi(&t);
+//	assert(t >= 1 && t <= 1000);
+	while ( t-- ) {
+		fi(&x), fi(&y);
+	//	assert(x >= 1 && y >= 1 && x <= y);
+	//	assert(x <= 1000000000000000000LL);
+	//	assert(y <= 1000000000000000000LL);
+		printf("%lld\n", get(y) - get(x-1));
+	}
+	return 0;
+}

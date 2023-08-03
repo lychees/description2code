@@ -1,0 +1,154 @@
+#include <assert.h>
+#include <stdio.h>
+#include <time.h>
+#include <vector>
+
+using namespace std;
+
+#define SOLUTION 3
+#define NMAX 500000
+#define QMAX 50000
+#define VALMOD 1000000007
+#define H 1000
+
+vector<int> child[NMAX], vec[NMAX];
+long long val[NMAX];
+int parent[NMAX], N, Q;
+
+void ReadTree() {
+	int i, j, k;
+	scanf("%d %d", &N, &Q);
+	assert(1 <= N && N <= 500000);
+	for (k = 1; k < N; k++) {
+		i = j = -1;
+		scanf("%d %d", &i, &j);
+		i--; j--;
+		vec[i].push_back(j);
+		vec[j].push_back(i);
+	}
+}
+
+char visited[NMAX];
+int level[NMAX], q[NMAX], qli, qls;
+
+void BFS() {
+	int i, j, k;
+	level[0] = 0;
+	q[qli = qls = 0] = 0;
+	visited[0] = 1;
+	while (qli <= qls) {
+		i = q[qli];
+		qli++;
+		for (k = 0; k < vec[i].size(); k++) {
+			j = vec[i][k];
+			if (visited[j]) continue;
+			visited[j] = 1;
+			parent[j] = i;
+			child[i].push_back(j);
+			level[j] = level[i] + 1;
+			qls++;
+			q[qls] = j;
+		}
+	}
+	assert(qli == N);
+}
+
+namespace SPECIAL_NODES_OPT {
+char special[NMAX], marked[NMAX];
+int special_node_below[NMAX], special_parent[NMAX];
+int val[NMAX], pval[NMAX];
+
+void SelectSpecialNodes() {
+	int i, j;
+	for (i = 0; i < N; i++) {
+		special[i] = ((level[i] % H) == 0);
+		marked[i] = 0;
+		special_node_below[i] = -1;
+	}
+	for (i = 1; i < N; i++)
+		if (special[i]) {
+			j = parent[i];
+			while (!special[j] && !marked[j]) {
+				marked[j] = 1;
+				j = parent[j];
+			}
+			if (!special[j]) special[j] = 1;
+		}
+	special_parent[0] = -1;
+	special_node_below[0] = 0;
+	pval[0] = 0;
+	for (i = 1; i < N; i++)
+		if (special[i]) {
+			pval[i] = val[i];
+			special_node_below[i] = i;
+			j = parent[i];
+			while (!special[j]) {
+				special_node_below[j] = i;
+				pval[i] += val[j];
+				j = parent[j];
+			}
+			special_parent[i] = j;
+		}
+	for (i = 0; i < N; i++) marked[i] = 0;
+	for (i = 1; i < N; i++)
+		if (!special[i] && !marked[i]) {
+			j = i;
+			while (!special[j] && !marked[j]) j = parent[j];
+			if (special[j]) special_parent[i] = j;
+			else special_parent[i] = special_parent[j];
+			marked[i] = 1;
+			j = parent[i];
+			while (j != special_parent[i] && !marked[j]) {
+				marked[j] = 1;
+				special_parent[j] = special_parent[i];
+				j = parent[j];
+			}
+		}
+}
+
+void Solve() {
+	SelectSpecialNodes();
+	for (int q = 0; q < Q; q++) {
+        int t;
+        scanf("%d", &t);
+        if (t == 1) {
+            int x, y;
+            scanf("%d %d", &x, &y); x--; y--;
+    		while (x != y) {
+	    		if (level[x] > level[y]) {
+		      		if (special[x] && special_parent[x] != special_parent[y]) {
+		      		    pval[x]++;
+				    	x = special_parent[x];
+				    } else {
+				        val[x]++;
+    					x = parent[x];
+				    }
+	       		} else {
+			     	if (special[y] && special_parent[x] != special_parent[y]) {
+			 	       	pval[y]++;
+					    y = special_parent[y];
+			     	} else {
+				    	val[y]++;
+					    y = parent[y];
+				    }
+			    }
+		    }
+		    val[x]++;
+        } else {
+            int x;
+            scanf("%d", &x); x--;
+            int ans = val[x];
+            if (special_node_below[x] >= 0) ans += pval[special_node_below[x]];
+            printf("%d\n", ans);
+        }
+	}
+}
+}
+
+int main() {
+//	freopen("dilku.in", "r", stdin);
+	ReadTree();
+	BFS();
+	SPECIAL_NODES_OPT::Solve();
+	return 0;
+}

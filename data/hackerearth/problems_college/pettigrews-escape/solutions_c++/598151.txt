@@ -1,0 +1,105 @@
+#include <iostream>
+#include <vector>
+
+class Board
+{
+public:
+	explicit Board(int size);
+	
+	int size() const;
+	
+	bool get_cell(int x, int y) const;
+	void set_cell(int x, int y, bool v);
+	
+	bool in_bounds(int x, int y) const;
+	
+	template <typename Func>
+	void walk(int x, int y, Func f);
+	
+private:
+	template <typename Func>
+	void try_walk(int x, int y, Func f);
+	
+private:
+	// char not bool, because we don't want space optimizations that lose speed.
+	typedef std::vector< std::vector<char> > board_type;
+	
+	board_type m_board;
+	int m_size;
+};
+
+Board::Board(int size)
+	: m_board(size, std::vector<char>(size, 0)),
+	  m_size(size) { }
+	
+bool Board::get_cell(int x, int y) const
+{
+	return m_board[x][y] != 0;
+}
+
+void Board::set_cell(int x, int y, bool v)
+{
+	m_board[x][y] = static_cast<char>(v ? 1 : 0);
+}
+
+int Board::size() const
+{
+	return m_size;
+}
+
+bool Board::in_bounds(int x, int y) const
+{
+	return x >= 0 && x < m_size && y >= 0 && y < m_size;
+}
+
+template <typename Func>
+void Board::walk(int x, int y, Func f)
+{
+	if (!get_cell(x, y)) { return; }
+	
+	set_cell(x, y, 0);
+	f(x, y);
+	try_walk(x - 1, y    , f);
+	try_walk(x + 1, y    , f);
+	try_walk(x    , y + 1, f);
+	try_walk(x    , y - 1, f);
+	set_cell(x, y, 1);
+}
+
+template <typename Func>
+void Board::try_walk(int x, int y, Func f)
+{
+	if (in_bounds(x, y)) {
+		walk(x, y, f);
+	}
+}
+
+int main()
+{
+	int size;
+	std::cin >> size;
+	
+	Board board{size};
+	
+	for (int y = 0; y < size; ++y) {
+		for (int x = 0; x < size; ++x) {
+			int cell;
+			std::cin >> cell;
+			
+			board.set_cell(x, y, static_cast<char>(!cell));
+		}
+	}
+	
+	--size;
+	int count = 0;
+	
+	board.walk(0, 0, [size, &count] (int x, int y) {
+		if (x == size && y == size) {
+			++count;
+		}
+	});
+	
+	std::cout << count << std::endl;
+	
+    return 0;
+}

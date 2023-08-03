@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+int hi;
+int bit[2000005];
+void update(int pos, int val)
+{
+	while (pos <= hi)
+	{
+		bit[pos] += val;
+		pos += pos&(-pos);
+	}
+}
+int query(int pos)
+{
+	if (pos > hi)return 0;
+	int res = 0;
+	while (pos > 0)
+	{
+		res += bit[pos];
+		pos -= pos&(-pos);
+	}
+	return res;
+}
+int qq[1000005][5];
+int a[1000005];
+int main()
+{
+	// cout << "Hello World!" << endl;
+	int n, q, k;
+	scanf("%d%d%d", &n, &q, &k);
+	int i;
+	set<int> s;
+	for (i = 1; i <= n; i++){
+		scanf("%d", &a[i]);
+		s.insert(a[i]);
+	}
+	int ty, x1, y1, x2, y2, x, y;
+	for (i = 1; i <= q; i++)
+	{
+		scanf("%d", &qq[i][0]);
+		if (qq[i][0] == 0){
+			scanf("%d%d", &qq[i][1], &qq[i][2]);
+			s.insert(qq[i][2]);
+		}
+		else {
+			int j;
+			for (j = 1; j <= 4; j++)
+			{
+				scanf("%d", &qq[i][j]);
+				//	printf("%d ",qq[i][j]);
+				s.insert(qq[i][j]);
+			}
+			//	printf("\n");
+		}
+	}
+	map<int, int> ran;
+	int st = 1;
+	set<int>::iterator I;
+	for (I = s.begin(); I != s.end(); I++)
+		ran[*I] = st++;
+	hi = st;
+	// printf("total dif %d\n",s.size());
+	for (i = 1; i <= n; i++){
+		a[i] = ran[a[i]];
+		update(a[i], 1);
+	}
+	for (i = 1; i <= q; i++)
+	{
+		if (qq[i][0] == 0)
+		{
+			x = qq[i][1];
+			y = qq[i][2];
+			y = ran[y];
+			int cur = a[x];
+			update(cur, -1);
+			if (x <= n)
+				a[x] = y;
+			update(y, 1);
+		}
+		else {
+			x1 = qq[i][1];
+			y1 = qq[i][2];
+			x2 = qq[i][3];
+			y2 = qq[i][4];
+			//printf("given query %d %d %d %d\n",x1,y1,x2,y2);
+			x1 = ran[x1];
+			y1 = ran[y1];
+			x2 = ran[x2];
+			y2 = ran[y2];
+			//	printf("given query %d %d %d %d\n",x1,y1,x2,y2);
+			x = max(x1, x2);
+			y = min(y1, y2);
+			int res = 0;
+			if (x <= y)res = query(y) - query(x - 1);
+			//	printf("actual query %d %d and res is %d\n",x,y,res);
+			if (res >= k)printf("Propose\n");
+			else printf("Do not propose\n");
+		}
+	}
+	return 0;
+}

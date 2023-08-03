@@ -1,0 +1,179 @@
+#include <cstring>
+#include <cassert>
+#include <iostream>
+#include <algorithm>
+#include <cstdio>
+#include <complex>
+
+using namespace std;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define REP(i, n) FOR (i, 0, n)
+#define TRACE(x) cout << #x << " = " << x << endl
+#define _ << " _ " <<
+
+typedef long long llint;
+
+const int MOD = 1000000007;
+const int MAXN = 131072;
+
+namespace FFT {
+  typedef complex<double> cd;
+  const int MAX = 2*MAXN;
+
+  int p[MAX];
+  cd w[MAX];
+  cd a[MAX], b[MAX], c[MAX];
+  cd a2[MAX], b2[MAX], c2[MAX];
+
+  void fft(cd *pol, cd *ret, int N) {
+    REP (i, N) ret[i] = pol[p[i]];
+
+    for (int sz = 1; sz < N; sz *= 2) {
+      for (int i = 0; i < N; i+=2*sz) {
+        for (int j = 0; j < sz; ++j) {
+          cd l = ret[i+j], r = ret[i+j+sz];
+          ret[i+j] = l + w[j*(N/(2*sz))] * r;
+          ret[i+j+sz] = l + w[(j+sz)*(N/(2*sz))] * r;
+        }
+      }
+    }
+  }
+
+  void init(int N) {
+    REP (i, N/2) {
+      double alpha = 2*M_PI*i/N;
+      double wx = cos(alpha), wy = sin(alpha);
+      w[i] = cd(wx, wy);
+      w[i+N/2] = cd(-wx, -wy);
+    }
+
+    p[0] = 0;
+    int k = 0, t = -1;
+    while ((1<<k) < N) ++k;
+    for (int i = 1; i < N; ++i) {
+      if ((i&(i-1)) == 0) ++t;
+      p[i] = p[i^(1<<t)];
+      p[i] |= 1<<(k-t-1);
+    }
+  }
+
+  void mult(llint *A, llint *B, llint *C, int len) {
+    int N = 2*len;
+    while (N&(N-1)) ++N;
+
+    init(N);
+    REP (i, N) {
+      a[i] = i < len ? cd(A[i], 0) : 0;
+      b[i] = i < len ? cd(B[i], 0) : 0;
+    }
+    
+    fft(a, a2, N);
+    fft(b, b2, N);
+    REP (i, N) c[i] = a2[i]*b2[i];
+    fft(c, c2, N);
+    reverse(c2+1, c2+N);
+    REP (i, 2*len) C[i] = round(c2[i].real()/N);
+  }
+};
+
+int n, k;
+vector<int> e[MAXN];
+
+int bal[MAXN];
+int subtree[MAXN];
+int depth[MAXN];
+bool blocked[MAXN];
+vector<int> visited;
+
+llint total[2*MAXN+1];
+llint poly[2*MAXN+1];
+
+int pow(int x, int e) {
+  if (e == 0) return 1;
+  if (e&1) return (llint)x*pow(x, e-1) % MOD;
+  int tmp = pow(x, e/2);
+  return (llint)tmp*tmp % MOD;
+}
+
+void add_tree(int sgn, int shift) {
+  int max_depth = 0;
+  for (int v: visited)
+    max_depth = max(max_depth, depth[v]+shift);
+
+  for (int d = 0; d <= max_depth; ++d)
+    poly[d] = 0;
+  for (int v: visited)
+    poly[depth[v]+shift] += 1;
+
+  FFT::mult(poly, poly, poly, max_depth+1);
+  for (int d = 1; d <= 2*max_depth; ++d)
+    total[d] += poly[d]*sgn;
+}
+
+void dfs(int p, int u) {
+  visited.push_back(u);
+  subtree[u] = 1;
+  bal[u] = 0;
+  for (int v: e[u])
+    if (p != v && !blocked[v]) {
+      depth[v] = 1+depth[u];
+      dfs(u, v);
+      subtree[u] += subtree[v];
+      bal[u] = max(bal[u], subtree[v]);
+    }
+}
+
+void solve(int u, bool first = false) {
+  visited.clear();
+  depth[u] = 0;
+  dfs(-1, u);
+  if (!first) add_tree(-1, 1);
+
+  for (int v: visited) {
+    bal[v] = max(bal[v], (int)visited.size()-subtree[v]);
+    if (bal[v] < bal[u]) u = v;
+  }
+
+  visited.clear();
+  depth[u] = 0;
+  dfs(-1, u);
+  add_tree(1, 0);
+
+  blocked[u] = true;
+  for (int v: e[u])
+    if (!blocked[v])
+      solve(v);
+  blocked[u] = false;
+}
+
+int main(void) {
+
+//  llint A[] = {1, 2, 3};
+//  llint B[] = {1, 2, 3};
+//  llint C[10];
+//
+//  FFT::mult(A, B, C, 3);
+//  for (int i = 0; i <= 4; ++i)
+//    printf("%lld ", C[i]);
+//  printf("\n");
+
+  scanf("%d%d", &n, &k);
+  REP (i, n-1) {
+    int a, b;
+    scanf("%d%d", &a, &b);
+    --a; --b;
+    e[a].push_back(b);
+    e[b].push_back(a);
+  }
+
+  solve(0, true);
+
+  llint ans = 0;
+  for (int d = 1; d <= n-1; ++d)
+    ans += (total[d]/2 % MOD)*pow(d, k) % MOD;
+  printf("%lld\n", ans%MOD);
+
+  return 0;
+
+}

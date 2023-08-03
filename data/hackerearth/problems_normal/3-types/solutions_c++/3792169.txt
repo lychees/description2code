@@ -1,0 +1,170 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+/*
+enum{
+		men,
+		women,
+		both,
+	}roadType;
+	*/
+
+int root(vector<int> &ids, int i)
+{
+	while(ids[i] != i)
+	{
+		i = ids[i];
+	}
+	return i;
+}
+void initIds(vector<int> &mIds, vector<int> &wIds,vector<int> &mSize, vector<int> &wSize)
+{
+	for(int i =0; i<mIds.size(); i++)
+	{
+		mIds[i] = i;
+		wIds[i] = i;
+		mSize[i] = 1;
+		wSize[i] = 1;
+	
+	}
+}
+int maxKrusk(vector<pair<int, pair<int, int>>>& edgeNodes,vector<int>& menIds,
+vector<int>& womenIds, vector<int> &mSize, vector<int> &wSize )
+{
+	int i, MaxCount,r1,r2;
+	MaxCount = 0;
+	for(i =0;i<edgeNodes.size();i++)
+	{
+		
+		switch(edgeNodes[i].first)
+		{
+			
+			case 3: //common for both men and women
+			{
+				r1 = root(menIds, edgeNodes[i].second.first);
+				r2 = root(menIds, edgeNodes[i].second.second);
+				if(r1!=r2)
+				{
+					
+					if(mSize[r1] > mSize[r2])
+					{
+						menIds[r2] = r1;
+						womenIds[r2] = r1;
+						mSize[r1] = mSize[r1] + mSize[r2];
+						wSize[r1] = wSize[r1] + wSize[r2];
+					}
+					else
+					{
+						menIds[r1] = r2;
+						womenIds[r1] = r2;
+						mSize[r2] = mSize[r1] + mSize[r2];
+						wSize[r2] = wSize[r1] + wSize[r2];
+					}
+				}
+				else
+				{
+					MaxCount++;//removing this edge
+				}
+				break;
+			}
+			case 2: //only for women
+			{
+				r1 = root(womenIds, edgeNodes[i].second.first);
+				r2 = root(womenIds, edgeNodes[i].second.second);
+				if(r1!=r2)
+				{
+					
+					if(wSize[r1] > wSize[r2])
+					{
+						womenIds[r2] = r1;
+						wSize[r1] = wSize[r1] + wSize[r2];
+					}
+					else
+					{
+						womenIds[r1] = r2;
+						wSize[r2] = wSize[r1] + wSize[r2];
+					}
+				}
+				else
+				{
+					MaxCount++;//removing this edge
+				}
+				break;
+			}
+			case 1: //only for men
+			{
+				r1 = root(menIds, edgeNodes[i].second.first);
+				r2 = root(menIds, edgeNodes[i].second.second);
+				if(r1!=r2)
+				{
+					
+					if(mSize[r1] > mSize[r2])
+					{
+						menIds[r2] = r1;
+						mSize[r1] = mSize[r1] + mSize[r2];
+					}
+					else
+					{
+						menIds[r1] = r2;
+						mSize[r2] = mSize[r1] + mSize[r2];
+					}
+				}
+				else
+				{
+					MaxCount++;//removing this edge
+				}
+				break;
+				
+			}
+		}
+		
+		
+	
+	}
+	int mRoots, wRoots;
+	mRoots = wRoots = 0;
+	for(int t=0; t<menIds.size() &&mRoots<2 &&wRoots<2 ;t++)
+	{
+		if(menIds[t] == t)
+		{
+			mRoots++;
+		}
+		if(womenIds[t] == t)
+		{
+			wRoots++;
+		}
+	}
+	if(mRoots >=2 || wRoots >=2)
+	{
+		MaxCount = -1;
+	}
+	return MaxCount;
+
+}
+int main()
+{
+
+    	vector<pair<int, pair<int, int>>> edgeNodes;
+    	vector<int> menIds,womenIds, mSize,wSize;
+    	int N, M,n1,n2,w;
+    	cin>>N>>M;
+    	menIds.resize(N);
+    	womenIds.resize(N);
+    	mSize.resize(N);
+    	wSize.resize(N);
+    	initIds(menIds,womenIds, mSize,wSize);
+    	while(M)
+    	{
+    		cin>>n1>>n2>>w;
+    		n1--;n2--;
+    		edgeNodes.push_back(pair<int, pair<int, int>>(w, pair<int,int>(n1,n2)));
+    		
+    		M--;
+    	}
+    	sort(edgeNodes.begin(), edgeNodes.end(), greater<pair<int, pair<int, int>>>());
+    	
+    	cout<<maxKrusk(edgeNodes,menIds,womenIds, mSize,wSize)<<endl;
+ 
+    return 0;
+}

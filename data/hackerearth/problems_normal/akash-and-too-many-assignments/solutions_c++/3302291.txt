@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define sz 1000002
+namespace fenwicktree{
+	struct data
+	{
+		int arr[26];
+		//bool updated;
+	}bit[sz];
+	int n;
+	string input;
+
+   void ini_all(int index)
+   {   
+	   //for(index=0;index<=n;index++)
+	   //{
+	   for(int i=0;i<26;i++)
+		 bit[index].arr[i]=0;
+	   //}
+   }
+	void buildupdate(int index,char value)
+	{   
+		for(;index<=n;index+=index&-index)
+		{
+			bit[index].arr[value-'a']++;
+		}
+	}
+
+	void update(int index,char value,char prev)
+	{
+		for(;index<=n;index+=index&(-index))
+		{
+            bit[index].arr[prev-'a']--;  
+            bit[index].arr[value-'a']++;
+		}
+	}
+    
+    data add(data a,data b)
+    {
+    	for(int i=0;i<26;i++)
+    		a.arr[i]+=b.arr[i];
+    	return a;
+    }
+    
+    data subtract(data a,data b)
+    {
+    	for(int i=0;i<26;i++)
+    	{
+    		a.arr[i]=a.arr[i]-b.arr[i];
+    	}
+    	return a;
+    }
+
+	data query(int index)
+	{
+		data tmp;
+		for(int i=0;i<26;i++) tmp.arr[i]=0;
+		    for(;index>0;index-=index&-index)
+		    {
+		    	tmp=add(tmp,bit[index]);
+		    }
+		return tmp;
+	}
+}
+
+using namespace fenwicktree;
+    
+ 
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	//freopen("output1.txt","w",stdout);
+	int q;
+	cin>>n>>q;
+	cin>>input;
+	for(int i=0;i<=n;i++)
+	ini_all(i);
+	for(int i=1;i<=n;i++)
+	{
+		buildupdate(i,input[i-1]);
+	}
+	int a,b,type,k;
+	char c;
+	while(q--)
+	{
+	  cin>>type;
+      if(type==0)
+      { 
+      	cin>>a>>c;
+      	update(a,c,input[a-1]);
+      	input[a-1]=c;
+      }
+      else
+      {   
+      	cin>>a>>b>>k;
+        if(b>n) b=n;
+      	if(b-a+1<k)
+      	printf("Out of range\n");
+      	else
+      	{
+	     data ans1 = query(b);
+	     data ans2 = query(a-1);
+      	 data ans= subtract(ans1,ans2);
+      	 int index;
+      	 //for(int i=0;i<26;i++) printf("%d ",ans.arr[i]);
+      	 int hold=0;
+      	 for(int i=0;i<26;i++)
+      	 {  
+      	 	hold+=ans.arr[i];
+      	 	if(hold>=k){index=i; break;}
+      	 }
+      	 char ansc='a'+index;
+      	 printf("%c\n",ansc);
+	    }
+	}
+ }
+ return 0;
+}

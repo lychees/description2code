@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define MAXN 405
+ll d[MAXN][MAXN];
+int a[15];
+ll dp[1<<15][15];
+int N,M,K;
+
+const ll INF=1e18;
+
+void FLoydWarshall()
+{
+	for(int k=1;k<=N;k++)
+	for(int i=1;i<=N;i++)
+	for(int j=1;j<=N;j++)
+	d[i][j]=min(d[i][j],d[i][k]+d[k][j]);	
+}
+
+void DP()
+{
+	for(int mask=0;mask<(1<<K);mask++)
+	{
+		if(mask==0)
+			continue;
+		int c=__builtin_popcount(mask);
+		for(int i=0;i<K;i++)
+		{
+			if(mask&(1<<i))
+			{
+				if(c==1)
+				{
+					//First city
+					dp[mask][i]=d[1][a[i]];
+					continue;
+				}
+				for(int j=0;j<K;j++)
+				{
+					if(j==i)continue;
+					if(!(mask&(1<<j)))continue;
+					dp[mask][i]=min(dp[mask][i],dp[mask^(1<<i)][j]+d[a[j]][a[i]]);
+				}
+			}
+		}
+	}
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin>>N>>M>>K;
+
+	for(int i=0;i<=N;i++)
+	for(int j=0;j<=N;j++)
+	d[i][j]=INF;	
+		
+	for(int i=1;i<=N;i++)
+	d[i][i]=0;	
+
+	for(int mask=0;mask<(1<<K);mask++)
+	for(int i=0;i<K;i++)
+	dp[mask][i]=INF;	
+	
+	for(int i=1;i<=M;i++)
+	{
+		int u,v,c;
+		cin>>u>>v>>c;
+		d[u][v]=d[v][u]=c;
+	}
+
+	for(int i=0;i<K;i++)
+		cin>>a[i];
+	
+	if(K==0)
+	{
+		cout<<d[1][N]<<endl;
+		return 0;
+	}
+
+	FLoydWarshall();
+	DP();
+	ll ans=INF;
+
+	
+	int mask=(1<<K)-1;
+	for(int i=0;i<K;i++)
+		ans=min(ans,dp[mask][i]+d[a[i]][N]);
+
+	cout<<ans<<endl;
+
+
+	return 0;
+}

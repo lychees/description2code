@@ -1,0 +1,125 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+struct STree {
+    int n;
+    int size;
+    vi tree;
+    STree ( int _n ) {
+        int n2=1;
+        while ( n2<_n ) n2*=2;
+        n=n2;
+        size=2*n2;
+        tree=vi ( size );
+    }
+    void set ( int no, int l, int r, int pos, int v ) {
+        if ( r-l<=1 ) {
+
+            tree[no]=v;
+            return;
+        }
+        int s= ( l+r ) /2;
+        if ( pos<s ) set ( 2*no, l,s,pos,v );
+        else set ( 2*no+1,s,r,pos,v );
+        tree[no]= tree[2*no]+tree[2*no+1];
+    }
+    int query ( int no, int l, int r, int s, int e ) {
+        if ( s<=l &&r<=e ) {
+            return tree[no];
+        }
+        int m=0;
+        int sp= ( l+r ) /2;
+        if ( s<sp ) m= m +query ( 2*no,l,sp,s,e );
+        if ( e>sp ) m= m +query ( 2*no+1,sp,r,s,e );
+        return m;
+
+    }
+};
+int main() {
+    ios_base::sync_with_stdio ( false );
+    int n,q;
+    cin>>n>>q;
+    vector<STree> trees ( 26, STree ( n ) );
+    int N=trees[0].n;
+    string s;
+    cin>>s;
+    rep ( i,n ) {
+        trees[s[i]-'a'].set ( 1,0,N,i,1 );
+    }
+    rep ( i,q ) {
+        int t;
+        cin>>t;
+        if ( !t ) {
+            int ind;
+            char c;
+            cin>>ind>>c;
+            ind--;
+            char cO=s[ind];
+            trees[cO-'a'].set ( 1,0,N,ind,0 );
+            s[ind]=c;
+            trees[c-'a'].set ( 1,0,N,ind,1 );
+        } else {
+            int l,r,k;
+            cin>>l>>r>>k;
+            l--;
+            if ( r-l<k ) cout<<"Out of range\n";
+            else {
+                char res='a';
+                int su=0;
+                rep ( j,26 ) {
+                    su+=trees[j].query(1,0,N,l,r);
+                    if(su>=k)break;
+                    res++;
+                }
+                cout<<res<<'\n';
+            }
+        }
+
+    }
+}

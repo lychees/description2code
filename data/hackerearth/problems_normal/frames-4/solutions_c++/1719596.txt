@@ -1,0 +1,113 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+#define left _left
+#define right _right
+#define up _up
+#define down _down
+
+const int N = 2020;
+int a[N][N], fst[N], snd[N];
+int left[N][N], right[N][N], up[N][N], down[N][N];
+int tree[N], adj[N][N], deg[N];
+char s[N];
+
+struct fenwick
+{
+	int pref(int x)
+	{
+		int ret = 0;
+		for (int i = x; i >= 0; i = (i & (i+1)) - 1) ret += tree[i];
+		return ret;
+	}
+	inline void upd(int x, int val) { for (int i = x; i < N; i |= i+1) tree[i] += val; }
+	inline int que(int x, int y) { return pref(y) - pref(x-1); }
+} bit;
+
+int go(int a[], int b[], int n)
+{
+	int ret = 0;
+	for (int i = 0; i < n; i++)
+		ret += a[i] >= i;
+
+	memset(deg, 0, sizeof(deg));
+	memset(tree, 0, sizeof(tree));
+	for (int i = 0; i < n; i++)
+		adj[b[i] + 10][deg[b[i] + 10]++] = i;
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < deg[i + 10]; j++)
+			bit.upd(adj[i + 10][j], 1);
+		if (a[i] > i)
+			ret += bit.que(i + 1, a[i]);
+	}
+	return ret;
+}
+
+int main()
+{
+	int n, m;
+	scanf("%d%d", &n, &m);
+	for (int i = 1; i <= n; i++)
+	{
+		scanf("%s", s);
+		for (int j = 1; j <= m; j++)
+			a[i][j] = (s[j - 1] == '0');
+	}
+
+	for (int i = 1; i <= n; i++)
+		for (int j = 1; j <= m; j++)
+			if (a[i][j] == 0) left[i][j] = 0;
+			else left[i][j] = 1 + left[i][j - 1];
+
+	for (int i = 1; i <= n; i++)
+		for (int j = m; j >= 1; j--)
+			if (a[i][j] == 0) right[i][j] = 0;
+			else right[i][j] = 1 + right[i][j + 1];
+
+	for (int j = 1; j <= m; j++)
+		for (int i = 1; i <= n; i++)
+			if (a[i][j] == 0) up[i][j] = 0;
+			else up[i][j] = 1 + up[i - 1][j];
+
+	for (int j = 1; j <= m; j++)
+		for (int i = n; i >= 1; i--)
+			if (a[i][j] == 0) down[i][j] = 0;
+			else down[i][j] = 1 + down[i + 1][j];
+
+	long long ret = 0;
+	for (int sum = 2; sum <= n + m; sum++)
+	{
+		int sz = 0;
+		for (int x = max(sum - m, 1); x <= min(sum - 1, n); x++)
+		{
+			int y = sum - x;
+			fst[sz] = sz + min(left[x][y], down[x][y]) - 1;
+			snd[sz] = sz - min(right[x][y], up[x][y]) + 1;
+			sz++;
+		}
+		ret += go(fst, snd, sz);
+	}
+	printf("%lld\n", ret);
+
+	return 0;
+}

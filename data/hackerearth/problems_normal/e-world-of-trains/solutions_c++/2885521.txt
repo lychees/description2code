@@ -1,0 +1,81 @@
+#include <iostream>
+using namespace std;
+
+long long mod=1000000007;
+
+int dp[3500][3500]; // i for length - j for subseg
+int sm[3500][3500]; //sum vertical
+int di[3500][3500]; //sum diagonal
+
+long long pw(int b,int k){
+	long long ret=1;
+	long long p2=b;
+	while(k>0){
+		if(k%2){
+			ret*=p2;
+			ret%=mod;
+		}
+		p2*=p2;
+		p2%=mod;
+		k/=2;
+	}
+	return ret;
+}
+int n,l,t,k;
+int main(){
+	cin>>n>>l>>t>>k;
+	if(l==1){
+		if(n!=t){
+			cout<<0<<endl;
+			return 0;
+		}
+		long long ret=pw(k,n);
+		cout<<ret<<endl;
+		return 0;
+	}
+	if(k==1){
+		if(n-l+1==t){
+			cout<<1<<endl;
+		} else {
+			cout<<0<<endl;
+		}
+		return 0;
+	}
+	dp[0][0]=1;
+	sm[0][0]=1;
+	di[0][0]=1;
+	for(int i=1;i<=n;i++){
+		for(int j=0;j<=n;j++){
+			dp[i][j]=0;
+			int dd=i-l+1;
+			if(dd>=0){
+				dp[i][j]+=(di[dd][j]*1ll*(k-1))%mod;
+				dp[i][j]%=mod;
+			}
+			dp[i][j]+=(sm[i-1][j]*1ll*(k-1))%mod;
+			dp[i][j]%=mod;
+			if(dd>=0){
+				dp[i][j]-=(sm[dd][j]*1ll*(k-1))%mod;
+				dp[i][j]=((dp[i][j]%mod)+mod)%mod;
+			}
+			sm[i][j]=dp[i][j]+sm[i-1][j];
+			sm[i][j]%=mod;
+			
+			di[i][j]=dp[i][j];
+			if(j>0)
+			di[i][j]+=di[i-1][j-1];
+			di[i][j]%=mod;
+		}
+	}
+	/*for(int i=4;i>=0;i--){
+		for(int j=0;j<=4;j++){
+			cout<<dp[i][j]<<" ";
+		}
+		cout<<endl;
+	}*/
+	dp[n][t]=(k*1ll*dp[n][t])%mod;
+	long long inv=pw(k-1,mod-2);
+
+
+	cout<<(dp[n][t]*inv)%mod<<endl;
+}

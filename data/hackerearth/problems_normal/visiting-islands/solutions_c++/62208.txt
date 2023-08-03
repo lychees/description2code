@@ -1,0 +1,70 @@
+#include <iostream>
+#include <cstdio>
+#include <map>
+#include <set>
+#include <cstring>
+#include <cstdlib>
+#define s(x) scanf("%d",&x)
+#define MAX(a,b) ((a>b)?(a):(b))
+int mark[1000009];
+int next[1000009];
+int sizes[1000009];
+bool inCycle[1000009];
+int n;
+int dfsno;
+int cycleSize;
+void dealCycle(int cn,int size,int start){
+	cycleSize = MAX(cycleSize,size);
+	inCycle[cn] = 1;
+	if(next[cn] != start){
+		dealCycle(next[cn],size+1,start);
+	}
+	sizes[cn] = cycleSize;
+}
+int visit(int cn){
+	if(mark[cn])
+		return sizes[cn];
+	mark[cn] = dfsno;
+	if(mark[next[cn]] == dfsno){
+		cycleSize=0;
+		dealCycle(cn,1,cn);
+	}
+	if(!inCycle[cn]){
+		int s = 1;
+		s += visit(next[cn]);
+		if(inCycle[cn]){
+			return sizes[cn];
+		}
+		return sizes[cn] = s;
+	}else{
+		return sizes[cn];
+	}
+}
+int main(){
+	int t;
+	s(t);
+	while(t--){
+		memset(mark,0,sizeof(mark));
+		memset(inCycle,0,sizeof(inCycle));
+		dfsno = 1;
+		int n;
+		s(n);
+		for(int i=0;i<n;i++){
+			s(next[i]);
+		}
+		for(int i=0;i<n;i++){
+			if(!mark[i]){
+				visit(i);
+				dfsno++;
+			}
+		}
+		int ms = 0, ans;
+		for(int i=0;i<n;i++)
+			if(sizes[i]>ms){
+				ans=i;
+				ms=sizes[i];
+			}
+		printf("%d\n",ans);
+	}
+	return 0;
+}

@@ -1,0 +1,104 @@
+#include<iostream>
+#include<algorithm>
+#include<string.h>
+#include<cmath>
+#include<vector>
+#include<set>
+
+using namespace std;
+
+struct trie {
+
+    trie * bit[5];
+    vector<long long>s1;
+    vector<long long>s2;
+
+} *head ;
+
+void init() {
+
+    head = new trie();
+
+}
+
+void update(long long *a,long long pos) {
+
+    long long i,temp;
+    trie * current = head;
+    for(i=0;i<20;i++) {
+        temp = a[i];
+        if(current->bit[temp] == NULL) {
+            current->bit[temp] = new trie();
+            if(temp) (current->s1).push_back(pos);
+            else (current->s2).push_back(pos);
+        }
+        else {
+            if(temp) (current->s1).push_back(pos);
+            else (current->s2).push_back(pos);
+        }
+        current = current->bit[temp];
+    }
+
+}
+
+long long query(long long l,long long r,long long x) {
+
+    long long i,temp,pos,ans=0,j;
+    vector<long long>:: iterator it;
+    trie * current = head;
+    for(i=0;i<20;i++) {
+        if(x & (1<<(19 - i))) temp = 1;
+        else temp = 0;
+        if(current->bit[!temp] != NULL) {
+            if(!temp) {it = lower_bound((current->s1).begin(),(current->s1).end(),l);
+            if(it != (current->s1).end() && *it <= r) {
+                current = current->bit[!temp];
+                ans += (1<<(19 - i));
+            }
+            else current = current->bit[temp];
+            }
+            else {
+                it = lower_bound((current->s2).begin(),(current->s2).end(),l);
+                if(it != (current->s2).end() && *it <= r) {
+                current = current->bit[!temp];
+                ans += (1<<(19 - i));
+            }
+            else current = current->bit[temp];
+            }
+        }
+        else current = current->bit[temp];
+    }
+    return ans;
+
+
+}
+
+int main(){
+
+    ios_base::sync_with_stdio(false);
+    cin.tie(0); cout.tie(0);
+    init();
+    long long n,i,x,a[30],q,j;
+    cin >> n >> q;
+    for(i=1;i<=n;i++) {
+        cin >> x;
+        for(j=0;j<20;j++) {
+            if(x & (1<<j)) a[19 - j] = 1;
+            else a[19 - j] = 0;
+        }
+        update(a,i);
+    }
+    while(q--) {
+        long long l,r,ans=0;
+        cin >> l >> r >> x;
+        ans = query(l,r,x);
+        cout << ans << "\n";
+    }
+    return 0;
+
+
+
+
+
+
+}

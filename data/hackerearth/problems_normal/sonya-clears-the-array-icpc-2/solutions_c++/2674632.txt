@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+#define _ ios_base::sync_with_stdio(false);cin.tie(0);
+using namespace std;
+#define pb push_back
+#define pob pop_back
+#define pf push_front
+#define pof pop_front
+#define mp make_pair
+#define all(a) a.begin(),a.end()
+#define bitcnt(x) __builtin_popcountll(x)
+#define MOD 1000000007
+#define BASE 31
+typedef unsigned long long int uint64;
+typedef long long int int64;
+ 
+int arr[505];
+int64 dp[505][505];
+int sieve[1000035];
+int np[1000035];
+int pp[1000035];
+vector<int>v;
+
+int n;
+
+int64 getcase(int a,int b){
+	int64 ret=0;
+	int val=np[b];
+	ret=val-a;
+	val++;
+	val=np[val];
+	ret+=val-b;
+	return ret;
+}
+
+
+int getval(int a,int b){
+	int lo=0,hgh=v.size()-1,ans=-1;
+	while(lo<=hgh){
+		int mid=(lo+hgh)/2;
+		if((v[mid]>=b)&(pp[v[mid]]>=a)){
+			ans=mid;
+			hgh=mid-1;
+		}
+		else{
+			lo=mid+1;
+		}
+	}
+	return v[ans];
+}
+
+int64 conv(int a,int b){
+	if(a==b){
+		return getcase(a,b);
+	}
+	int val=getval(a,b);
+	/*
+	int val=b;
+	while(1){
+		val=np[val];
+		if(pp[val]>=a)
+		break;
+		val++;
+	}
+	*/
+	int64 ret=val-b;
+	val=pp[val];
+	ret+=val-a;
+	return ret;
+}
+
+int64 go(int lo,int hgh){
+	if(lo>hgh)
+	return 0;
+	
+	if(dp[lo][hgh]!=-1)
+	return dp[lo][hgh];
+	
+	int64 ret=1e18;
+	for(int i=lo+1;i<=hgh;i+=2){
+		ret=min(ret,1+conv(arr[lo],arr[i])+go(lo+1,i-1)+go(i+1,hgh));
+	}
+	dp[lo][hgh]=ret;	
+	return ret;
+}
+
+int main(){
+	int i;
+	sieve[1]=1;
+	
+	for(i=2;i<=1000033;i++){
+		if(sieve[i])
+		continue;
+		for(int j=2*i;j<=1000033;j+=i)
+		sieve[j]=1;
+		v.pb(i);
+	}
+	int ans=-1;
+	
+	for(i=1000033;i>=1;i--){
+		if(sieve[i]==0)
+		ans=i;
+		np[i]=ans;
+	}
+	ans=-1;
+	for(i=1;i<=1000033;i++){
+		pp[i]=ans;
+		if(sieve[i]==0)
+		ans=i;
+	}	
+	memset(dp,-1,sizeof(dp));
+	cin>>n;
+	for(i=0;i<n;i++)
+	cin>>arr[i];	
+	printf("%lld",go(0,n-1));
+	return 0;
+}

@@ -1,0 +1,101 @@
+using namespace std;
+#include<bits/stdc++.h>
+
+#define BG begin()
+#define ED end()
+#define st first
+#define nd second
+#define PB push_back
+#define PF push_front
+#define FOR(i,a,b) for (long long i=a;i<b;i++)
+#define FORE(i,a,b) for (long long i=a;i<=b;i++)
+#define FORD(i,a,b) for (long long i=a;i>=b; i--)
+#define TR(c, it) for(typeof((c).begin()) it=(c).begin(); it!=(c).end(); it++)
+#define ri(n)({\
+    int neg=0;\
+    n=0;\
+    char ch;\
+    for(ch=getchar(); ch<'0' || ch>'9'; ch=getchar()) if (ch=='-') neg=1-neg;\
+    n=ch-48;\
+    for(ch=getchar(); ch>='0' && ch<='9'; ch=getchar()) n=(n<<3)+(n<<1)+ch-48;\
+    if (neg) n=-n;\
+})
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int,int> II;
+typedef pair<ll,ll> LL;
+const ll INF=1000000000+7;
+const double esp=1e-13;
+const double pi=3.141592653589;
+
+typedef struct node{
+    node *next[3];
+} *pnode;
+
+int bit(int x, int y){
+    return x>>(y-1)&1;
+}
+
+pnode root,cur;
+int a[100+10],n,sum,d,q,x,ans,S[100000+10],DP[100000+10];
+
+void init(pnode &x){
+    FORE(i,0,1) x->next[i]=NULL;
+}
+
+void insert(int x){
+    cur=root;
+    FORD(i,31,1){
+        d=bit(x,i);
+        if (cur->next[d]==NULL){
+            cur->next[d]=new node;
+            init(cur->next[d]);
+        }
+        cur=cur->next[d];
+    }
+}
+
+int query(int x){
+    int res=0;
+    cur=root;
+    FORD(i,31,1){
+        d=bit(x,i);
+        if (cur->next[d]) cur=cur->next[d];
+        else{
+            res|=(1<<(i-1));
+            cur=cur->next[1-d];
+        }
+    }
+    return res;
+}
+
+int main(){
+ //   freopen("ma5termind-and-xor-minimization.inp", "r", stdin);
+ //   freopen("ma5termind-and-xor-minimization.out", "w", stdout);
+    root=new node;
+    init(root);
+    cin >> n;
+    sum=0;
+    FORE(i,1,n){
+        cin >> a[i];
+        sum+=a[i];
+    }
+    S[0]=1;
+    DP[0]=1;
+    ans=0;
+    FORE(i,1,n)
+    FORD(j,sum,0)
+    if (j>=a[i] && S[j-a[i] ]){
+        S[j]=1;
+        DP[j]=(DP[j]+DP[j- a[i] ])%INF;
+    }
+    FORE(i,1,sum)
+    if (S[i]) insert(i);
+    ri(q);
+    while (q--){
+        ri(x);
+        ans=x^query(x);
+        printf("%d %d\n", ans, DP[ans]);
+    }
+}

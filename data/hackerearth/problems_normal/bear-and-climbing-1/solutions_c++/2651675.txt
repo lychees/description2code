@@ -1,0 +1,66 @@
+#include <iostream>
+#include <vector>
+#include <cstdio>
+#include <sstream>
+#include <map>
+#include <string>
+#include <algorithm>
+#include <queue>
+#include <cmath>
+#include <set>
+using namespace std;
+
+int main(){
+	int n;
+	cin >> n;
+	vector<int> x(n),h(n);
+	for(int i=0; i<n; i++){
+		scanf("%d%d", &x[i],&h[i]);
+	}
+
+	vector<pair<long long, int>> dist(n);
+	long long a = 1;
+	long long b = h[0];
+	for(int i=0; i<n; i++){
+		long long d = (x[i]-x[0]) + b - h[i];
+		dist[i] = {d,-i};
+	}
+	sort(dist.begin(), dist.end());
+
+	int start;
+	for(int i=0; i<n; i++){
+		if(dist[i].second == 0){
+			start = i;
+		}
+	}
+
+	auto movable = [&](int from, int to, long long L) -> bool{
+		long long dx = x[to] - x[from];
+		long long dy = h[to] - h[from];
+		return dx*dx+dy*dy <= L;
+	};
+
+	auto check = [&](long long len){
+		int last = start;
+		for(int pos = start+1; pos<n; pos++){
+			if(-dist[pos].second <= -dist[last].second) continue;
+			if(dist[pos].first <= dist[last].first) continue;
+			if(movable(-dist[last].second, -dist[pos].second, len)){
+				last = pos;
+			}
+		}
+		return dist[last].second == -(n-1);
+	};
+
+	long long lb = 0;
+	long long ub = 1e17;
+	while(ub-lb>1){
+		long long mid = (lb+ub)/2;
+		bool ok = check(mid);
+		(ok? ub : lb) = mid;
+	}
+
+	cout << (check(ub)?ub:-1) << endl;
+
+	return 0;
+}

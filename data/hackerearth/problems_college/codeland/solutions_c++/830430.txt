@@ -1,0 +1,145 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii;
+typedef long long ll; typedef vector<long long> vl; typedef pair<long long,long long> pll; typedef vector<pair<long long,long long> > vpll;
+typedef vector<string> vs; typedef long double ld;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+//multigraph??????
+struct BiconnectedComponents {
+	struct Edge {
+		int from, to;
+	};
+	struct To {
+		int to; int edge;
+	};
+	vector<Edge> edges;
+	vector<vector<To> > g;
+	vector<int> low, ord, depth;
+	vector<bool> isArtic;
+	vector<int> edgeColor;
+	vector<int> edgeStack;
+	int colors;
+	int dfsCounter;
+
+	void init(int n) {
+		edges.clear();
+		g.assign(n, vector<To>());
+	}
+
+	void addEdge(int u, int v) {
+		if(u > v) swap(u, v);
+		Edge e = { u, v };
+		int ei = edges.size();
+		edges.push_back(e);
+		To tu = { v, ei }, tv = { u, ei };
+		g[u].push_back(tu);
+		g[v].push_back(tv);
+	}
+
+	void run() {
+		int n = g.size(), m = edges.size();
+		low.assign(n, -2);
+		ord.assign(n, -1);
+		depth.assign(n, -2);
+		isArtic.assign(n, false);
+		edgeColor.assign(m, -1);
+		edgeStack.clear();
+		colors = 0;
+
+		for(int i = 0; i < n; ++ i) if(ord[i] == -1) {
+			dfsCounter = 0;
+			dfs(i);
+		}
+	}
+
+private:
+	void dfs(int i) {
+		low[i] = ord[i] = dfsCounter ++;
+		for(int j = 0; j < (int)g[i].size(); ++ j) {
+			int to = g[i][j].to, ei = g[i][j].edge;
+			if(ord[to] == -1) {
+				depth[to] = depth[i] + 1;
+				edgeStack.push_back(ei);
+				dfs(to);
+				low[i] = min(low[i], low[to]);
+				if(ord[i] == 0 || low[to] >= ord[i]) {
+					if(ord[i] != 0 || j >= 1)
+						isArtic[i] = true;
+					while(!edgeStack.empty()) {
+						int fi = edgeStack.back(); edgeStack.pop_back();
+						edgeColor[fi] = colors;
+						if(fi == ei) break;
+					}
+					++ colors;
+				}
+			}else if(depth[to] < depth[i] - 1) {
+				low[i] = min(low[i], ord[to]);
+				edgeStack.push_back(ei);
+			}
+		}
+	}
+};
+
+
+
+int main() {
+	int N, M;
+	scanf("%d%d", &N, &M);
+	BiconnectedComponents bc;
+	bc.init(N);
+	rep(i, M) {
+		int A, B;
+		scanf("%d%d", &A, &B), -- A, -- B;
+		bc.addEdge(A, B);
+	}
+	bc.run();
+	vector<vector<bool> > vis(N);
+	int blocks = bc.colors;
+//	cerr << "blocks: " << blocks << endl;
+//	rep(i, M) cerr << bc.edgeColor[i] << ", "; cerr << endl;
+	long long ans = (long long)blocks * (blocks-1) / 2;
+	vector<int> v;
+	rep(i, N) if(bc.isArtic[i]) {
+		v.clear();
+		each(j, bc.g[i])
+			v.push_back(bc.edgeColor[j->edge]);
+		sort(all(v));
+		int d = unique(all(v)) - v.begin();
+		ans -= (long long)d * (d-1) / 2;
+	}
+	printf("%lld\n", ans);
+	return 0;
+}

@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef complex<int> Point;
+#define x real()
+#define y imag()
+
+#define MP make_pair
+#define A first
+#define B second
+typedef long long ll;
+
+int gcd(int a, int b) { return a ? gcd(b%a,a) : b; }
+
+Point reduce(Point p) {
+	int g = gcd(abs(p.x),abs(p.y));
+	p = Point(p.x/g,p.y/g);
+	if (p.x<0 || (p.x==0 && p.y<0)) p = -p;
+	return p;
+}
+Point perp(Point p) {
+	p = Point(-p.y,p.x);
+	return reduce(p);
+}
+
+int n;
+Point p[3013], red[3013];
+vector<pair<int,int> > has, need;
+
+int main() {
+	scanf("%d",&n);
+	for (int i=0;i<n;i++) {
+		int a,b;
+		scanf("%d%d",&a,&b);
+		p[i] = Point(a,b);
+		red[i] = reduce(p[i]);
+		has.push_back(MP(red[i].x,red[i].y));
+	}
+	ll ans = 0;
+	for (int i=0;i<n;i++) {
+		for (int j=i+1;j<n;j++) {
+			Point s = p[i]+p[j];
+			if (s==Point(0,0)) continue;
+			s = perp(s);
+			need.push_back(MP(s.x,s.y));
+			if (s==red[i]) ans-=1;
+			if (s==red[j]) ans-=1;
+		}
+	}
+	sort(has.begin(),has.end());
+	sort(need.begin(),need.end());
+	int i = 0, j = 0;
+	for (auto p: need) {
+		while (i<has.size() && has[i]<p) i+=1;
+		j = max(j,i);
+		while (j<has.size() && has[j]==has[i]) j+=1;
+		if (p==has[i]) ans+=j-i;
+	}
+	printf("%lld\n",ans*2);
+	
+    return 0;
+}

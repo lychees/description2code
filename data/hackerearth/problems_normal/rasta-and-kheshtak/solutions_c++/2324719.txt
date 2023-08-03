@@ -1,0 +1,206 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+unsigned long long readTimeStampCounter() {
+	unsigned a = 123456789, b = 987654321;
+#ifdef __GNUC__
+	asm (
+		"rdtsc;\n\t"
+		: "=d" (a), "=a" (b)
+	);
+#else
+	__asm {
+		rdtsc;
+		mov a, edx;
+		mov b, eax;
+	};
+#endif
+	return (unsigned long long)a << 32 | b;
+}
+unsigned xor128() {
+	static unsigned x = 123456789, y = 362436069,
+		z = (unsigned)(readTimeStampCounter() >> 32), w = (unsigned)readTimeStampCounter();
+	unsigned t = x ^ (x << 11);
+	x = y; y = z; z = w;
+	return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
+}
+
+
+struct PolynomialHash2D {
+	static const int D = 2;
+	static const int NumMods = 2;
+	static const unsigned Mods[NumMods];
+	typedef unsigned long long ull;
+	struct Hash {
+		unsigned hs[NumMods];
+		Hash() { for(int k = 0; k < NumMods; ++ k) hs[k] = 0; }
+		Hash(unsigned x) {
+			if(x < Mods[NumMods-1]) {
+				for(int k = 0; k < NumMods; ++ k) hs[k] = x;
+			}else {
+				for(int k = 0; k < NumMods; ++ k) hs[k] = x % Mods[k];
+			}
+		}
+		bool operator==(const Hash &that) const {
+			bool res = true;
+			for(int k = 0; k < NumMods; ++ k)
+				res &= hs[k] == that.hs[k];
+			return res;
+		}
+		bool operator<(const Hash &that) const {
+			for(int k = 0; k < NumMods; ++ k)
+				if(hs[k] != that.hs[k])
+					return hs[k] < that.hs[k];
+			return false;
+		}
+		Hash &operator+=(const Hash &that) {
+			for(int k = 0; k < NumMods; ++ k)
+				if((hs[k] += that.hs[k]) >= Mods[k])
+					hs[k] -= Mods[k];
+			return *this;
+		}
+		Hash &operator-=(const Hash &that) {
+			for(int k = 0; k < NumMods; ++ k)
+				if((hs[k] += Mods[k] - that.hs[k]) >= Mods[k])
+					hs[k] -= Mods[k];
+			return *this;
+		}
+		Hash operator*(const Hash &that) const {
+			Hash res;
+			for(int k = 0; k < NumMods; ++ k)
+				res.hs[k] = (ull)hs[k] * that.hs[k] % Mods[k];
+			return res;
+		}
+	};
+	static Hash seeds[D];
+	static std::vector<Hash> powh[D];
+
+	static void initSeeds() {
+		for(int d = 0; d < D; ++ d)
+		for(int k = 0; k < NumMods; ++ k) {
+			unsigned x;
+			do x = xor128(); while(x == 0 || x >= Mods[k]);
+			seeds[d].hs[k] = x;
+		}
+	}
+	static void precomputePowerTable(int newSize) {
+		if((int)powh[0].size() >= newSize) return;
+		if(seeds[0].hs[0] == 0) initSeeds();
+		for(int d = 0; d < D; ++ d) {
+			int oldSize = powh[d].size();
+			powh[d].resize(newSize);
+			if(oldSize == 0)
+				for(int k = 0; k < NumMods; ++ k) powh[d][0].hs[k] = 1;
+			for(int i = std::max(1, oldSize); i < newSize; i ++) for(int k = 0; k < NumMods; ++ k)
+				powh[d][i].hs[k] = (ull)powh[d][i-1].hs[k] * seeds[d].hs[k] % Mods[k];
+		}
+	}
+};
+const unsigned PolynomialHash2D::Mods[PolynomialHash2D::NumMods] = { 2147483647U, 2147483629U  };
+PolynomialHash2D::Hash PolynomialHash2D::seeds[PolynomialHash2D::D];
+std::vector<PolynomialHash2D::Hash> PolynomialHash2D::powh[PolynomialHash2D::D];
+
+struct SubrectangleHash : PolynomialHash2D {
+	std::vector<std::vector<Hash> > preh;
+
+	template<typename V>
+	void init(const V &v, int n, int m) {
+		precomputePowerTable(std::max(n, m)+1);
+		preh.assign(n+1, std::vector<Hash>(m+1));
+		for(int i = 0; i < n; i ++) for(int j = 0; j < m; ++ j) {
+			Hash t(v[i][j]);
+			t += preh[i][j+1] * seeds[0];
+			t += preh[i+1][j] * seeds[1];
+			t -= preh[i][j] * seeds[0] * seeds[1];
+			preh[i+1][j+1] = t;
+		}
+	}
+
+	Hash hash(int i, int j) const {
+		return preh[i][j];
+	}
+	Hash hash(int il, int jl, int iu, int ju) const {
+		Hash res;
+		res += preh[iu][ju];
+		res -= preh[il][ju] * powh[0][iu - il];
+		res -= preh[iu][jl] * powh[1][ju - jl];
+		res += preh[il][jl] * powh[0][iu - il] * powh[1][ju - jl];
+		return res;
+	}
+};
+
+int main() {
+	int n, m;
+	while(cin >> n >> m) {
+		vector<vi> A(n, vi(m));
+		rep(i, n) rep(j, m)
+			scanf("%d", &A[i][j]);
+		int x, y;
+		cin >> x >> y;
+		vector<vi> B(x, vi(y));
+		rep(i, x) rep(j, y)
+			scanf("%d", &B[i][j]);
+		typedef SubrectangleHash::Hash Hash;
+		SubrectangleHash subrA, subrB;
+		subrA.init(A, n, m);
+		subrB.init(B, x, y);
+		const int BucketSize = 1 << 16;
+		vector<vector<Hash> > buckets(BucketSize);
+		int l = 0, u = min(min(n, m), min(x, y));
+		while(u - l > 0) {
+			int mid = (l + u + 1) / 2;
+			rer(i, 0, n - mid) rer(j, 0, m - mid) {
+				Hash h = subrA.hash(i, j, i + mid, j + mid);
+				buckets[h.hs[0] % BucketSize].push_back(h);
+			}
+			bool ok = false;
+			rer(i, 0, x - mid) rer(j, 0, y - mid) {
+				if(ok) break;
+				Hash h = subrB.hash(i, j, i + mid, j + mid);
+				const auto &t = buckets[h.hs[0] % BucketSize];
+				ok = find(all(t), h) != t.end();
+			}
+			if(ok) {
+				l = mid;
+			}else {
+				u = mid - 1;
+			}
+		}
+		printf("%d\n", l);
+	}
+	return 0;
+}

@@ -1,0 +1,173 @@
+#include <iostream>
+
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#define HIGHESTSETBIT(mask) ( sizeof(int)*8-1-__builtin_clz((mask)) )
+
+inline long long Choose2(long long n) {
+   return n * (n + 1) / 2;
+}
+
+struct SegmentTreeLazyPropNode {
+   long long sum;
+   bool multiple;
+   int Lval, Rval;
+   int Llen, Rlen;
+   int delay;
+   SegmentTreeLazyPropNode() :
+      sum(0), multiple(false), Lval(0), Rval(0), Llen(0), Rlen(0), delay(0) { }
+   SegmentTreeLazyPropNode operator+(const SegmentTreeLazyPropNode& R) const {
+      SegmentTreeLazyPropNode res;
+      res.Lval = Lval;
+      res.Rval = R.Rval;
+      res.multiple = true;
+      if (Rval != R.Lval) {
+         res.sum = sum + R.sum;
+         res.Llen = Llen;
+         res.Rlen = R.Rlen;
+      }
+      else {
+         res.sum = sum + R.sum - Choose2(Rlen) - Choose2(R.Llen)
+                               + Choose2(Rlen + R.Llen);
+         if (multiple) {
+            if (R.multiple) {
+               res.Llen = Llen;
+               res.Rlen = R.Rlen;
+            }
+            else {
+               res.Llen = Llen;
+               res.Rlen = Rlen + R.Llen;
+            }
+         }
+         else {
+            if (R.multiple) {
+               res.Llen = Llen + R.Llen;
+               res.Rlen = R.Rlen;
+            }
+            else {
+               res.multiple = false;
+               res.Llen = res.Rlen = Llen + R.Llen;
+            }
+         }
+      }
+      return res;
+   }
+   void update(int L, int R, int val) {
+      delay = val;
+      sum = Choose2(R-L+1);
+      multiple = false;
+      Lval = Rval = val;
+      Llen = Rlen = R-L+1;
+   }
+   void propagate(SegmentTreeLazyPropNode& pL,
+                  SegmentTreeLazyPropNode& pR,
+                  int L, int R)
+   {
+      if (delay) {
+         // push sum to children
+         pL.update(L, (L+R)/2, delay);
+         pR.update((L+R)/2+1, R, delay);
+         delay = 0;
+      }
+   }
+
+};
+
+class SegmentTreeLazyProp {
+   int N;
+   vector<SegmentTreeLazyPropNode> tree;
+
+   void _preprocess(const vector<int>& A, int node, int L, int R);
+   void _update(int p, int q, int val, int node, int L, int R);
+   SegmentTreeLazyPropNode _query(int p, int q, int node, int L, int R);
+public:
+   SegmentTreeLazyProp(const vector<int>& A) {
+      N = A.size();
+   // int NODES = 2 * ( 1 << int( floor(log(N)/log(2))+1 ) ) + 1;
+   // int NODES = 2 * ( 1 << int( ceil(log(N)/log(2)) ) );
+      int NODES = N > 1 ? 2 * ( 1 << (HIGHESTSETBIT(N-1)+1) ) : 2;
+      tree = vector<SegmentTreeLazyPropNode>(NODES);
+      _preprocess(A, 1, 0, N-1);
+   }
+   void update(int p, int q, int val) {
+      _update(p, q, val, 1, 0, N-1);
+   }
+   SegmentTreeLazyPropNode query(int p, int q) {
+      return _query(p, q, 1, 0, N-1);
+   }
+};
+
+void SegmentTreeLazyProp::_preprocess(const vector<int>& A, int node, int L, int R) {
+   if (L == R) {
+   // tree[node] = SegmentTreeLazyPropNode();
+      tree[node].sum = 1;
+      tree[node].Lval = tree[node].Rval = A[L];
+      tree[node].Llen = tree[node].Rlen = 1;
+      return;
+   }
+
+   //compute the values in the left and right subtrees
+   _preprocess(A, 2*node, L, (L+R)/2);
+   _preprocess(A, 2*node+1, (L+R)/2+1, R);
+
+   const SegmentTreeLazyPropNode& pL = tree[2*node];
+   const SegmentTreeLazyPropNode& pR = tree[2*node+1];
+
+   // merge the first and second half of the interval
+   tree[node] = pL + pR;
+}
+
+void SegmentTreeLazyProp::_update(int p, int q, int val, int node, int L, int R) {
+   if (q < L || p > R) return;
+   if (p <= L && R <= q) {
+      tree[node].update(L, R, val);
+      return;
+   }
+   tree[node].propagate(tree[2*node], tree[2*node+1], L, R);
+   _update(p, q, val, 2*node, L, (L+R)/2);
+   _update(p, q, val, 2*node+1, (L+R)/2+1, R);
+   tree[node] = tree[2*node] + tree[2*node+1];
+}
+
+SegmentTreeLazyPropNode SegmentTreeLazyProp::_query(
+   int p, int q, int node, int L, int R)
+{
+   if (q < L || p > R) return SegmentTreeLazyPropNode();
+   if (p <= L && R <= q) return tree[node];
+   tree[node].propagate(tree[2*node], tree[2*node+1], L, R);
+   SegmentTreeLazyPropNode resL = _query(p, q, 2*node, L, (L+R)/2);
+   SegmentTreeLazyPropNode resR = _query(p, q, 2*node+1, (L+R)/2+1, R);
+   return resL + resR;
+}
+
+int main(int argc, char* argv[]) {
+   ios_base::sync_with_stdio(false); 
+   cin.tie(NULL);
+
+   int N, Q;
+   cin >> N >> Q;
+   vector<int> A(N);
+   for (int i = 0; i < N; ++i)
+      cin >> A[i];
+
+   SegmentTreeLazyProp st(A);
+   for (int q = 1; q <= Q; ++q) {
+      int t, a, b;
+      cin >> t >> a >> b;
+      --a, --b;
+      if (t == 1) {
+         SegmentTreeLazyPropNode res = st.query(a, b);
+         cout << res.sum << '\n';
+      }
+      else {
+         int val;
+         cin >> val;
+         st.update(a, b, val);
+      }
+   }
+
+   return 0;
+}

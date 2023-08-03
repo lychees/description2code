@@ -1,0 +1,83 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <queue>
+#include <set>
+#include <cstdio>
+#include <cstdlib>
+#include <stack>
+#include <cstring>
+#include <iomanip>
+#include <cctype>
+#include <map>
+#include <ctime>
+
+using namespace std;
+
+long long dp[(1<<21) + 10];
+long long a[25][25];
+
+#define INFY 1000000000000
+
+void solve() {
+    int n; cin>>n;
+    for(int i = 0;i < n;i++) {
+        string s; cin>>s;
+        for(int  j = 0;j < n;j++) {
+            if(s[j] <= '9') a[i][j] = s[j] - '0';
+            else a[i][j] = s[j] - 'A' + 10;
+        }
+    }
+    string s; cin>>s;
+    int k; cin>>k;
+    int mainMask = 0;
+    int cnt = 0;
+    for(int i = 0;i < n;i++) {
+        mainMask+= (1<<i) * (s[i] == 'Y');
+        cnt+=(s[i] == 'Y');
+    }
+    if(cnt >= k) {
+        cout<<0<<endl;
+        return;
+    }
+    for(int i = 0;i < (1<<n);i++) dp[i] = INFY;
+    dp[mainMask] = 0;
+    for(int mask = 0;mask < (1<<n);mask++) {
+        if( (mainMask & mask) == mainMask ) {
+            for(int i = 0;i < n;i++) {
+                if((1<<i) & mask) {
+                    long long mnCost = INFY;
+                    for(int j = 0;j < n;j++) {
+                        if((j != i) && (1<<j & mask) ) {
+                            mnCost = min(mnCost,a[j][i]);
+                        }
+                    }
+                    dp[mask] = min(dp[mask],mnCost + dp[mask - (1<<i)]);
+                }
+            }
+        }
+    }
+    long long ba = INFY;
+    for(int i = 0;i < (1<<n);i++) {
+        int cnt = 0;
+        for(int j = 0;j < n;j++) cnt+= (((1<<j) & i) != 0);
+        if(cnt >= k) {
+            ba = min(ba,dp[i]);
+        }
+    }
+    if(ba == INFY) {
+        cout<<"Poor Navkrish."<<endl;
+        return;
+    }
+    cout<<ba<<endl;
+    
+}
+int main() {
+    int t; cin>>t;
+    while(t--) {
+        solve();
+    }
+    
+    
+}

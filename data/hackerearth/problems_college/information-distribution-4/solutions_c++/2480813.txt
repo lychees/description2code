@@ -1,0 +1,91 @@
+#include<bits/stdc++.h>
+using namespace std;
+// returns x where (a * x) % b == 1
+long long int mul_inv(long long int a,long long int b)
+{
+	long long int b0 = b, t, q;
+	long long int x0 = 0, x1 = 1;
+	if (b == 1) return 1;
+	while (a > 1) {
+		q = a / b;
+		t = b, b = a % b, a = t;
+		t = x0, x0 = x1 - q * x0, x1 = t;
+	}
+	if (x1 < 0) x1 += b0;
+	return x1;
+}
+
+long long int chinese_remainder(long long int *n,long long int *a,long long int len)
+{
+	long long int p, i, prod = 1, sum = 0;
+
+	for (i = 0; i < len; i++) prod *= n[i];
+
+	for (i = 0; i < len; i++) {
+		p = prod / n[i];
+		sum += a[i] * mul_inv(p, n[i]) * p;
+	}
+
+	return sum % prod;
+}
+long long SmallC(long long int n,long long int r,long long int MOD)
+{
+    vector< vector<long long> > C(2,vector<long long> (r+1,0));
+
+    for (long long int i=0; i<=n; i++)
+    {
+        for (long long int k=0; k<=r && k<=i; k++)
+            if (k==0 || k==i)
+                C[i&1][k] = 1;
+            else
+                C[i&1][k] = (C[(i-1)&1][k-1] + C[(i-1)&1][k])%MOD;
+    }
+    return C[n&1][r];
+}
+
+long long Lucas(long long int n,long long int m,long long int p)
+{
+    if (n==0 && m==0) return 1;
+    long long int ni = n % p;
+    long long int mi = m % p;
+    if (mi>ni) return 0;
+    return Lucas(n/p, m/p, p) * SmallC(ni, mi, p);
+}
+
+long long C(long long int n,long long int r,long long int MOD)
+{
+    return Lucas(n, r, MOD);
+}
+long long prime[]={2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103};
+int main()
+{
+    long long n,r,m,i,N,M,k;
+    int t;
+    scanf("%d",&t);
+    while(t--)
+    {
+        scanf("%lld%lld%lld",&N,&M,&k);
+        n=N-1;
+        r=M-1;
+        m=k;
+        long long int p[101],a[101];
+        long long int k=0;
+        for(i=0;prime[i]<=97;i++)
+        {
+            if(prime[i]>m)
+            break;
+            if(m%prime[i]==0)
+            p[k++]=prime[i];
+        }
+        //printf("ihr");
+        for(i=0;i<k;i++)
+        {
+            a[i]=C(n,r,p[i]);
+        }
+        /*for(i=0;i<k;i++)
+        {
+            printf("%lld %lld\n",p[i],a[i]);
+        }*/
+        printf("%lld\n",chinese_remainder(p,a,k));
+    }
+}

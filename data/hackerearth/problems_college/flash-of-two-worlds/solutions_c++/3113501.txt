@@ -1,0 +1,151 @@
+#include<bits/stdc++.h>
+#define LL long long int
+#define REP(i,n) for(int i=0;i<n;++i)
+#define REPP(i,a,b) for(int i=a;i<b;++i)
+#define TC int t;scanf("%d",&t);while (t-->0)
+#define INP(x) scanf("%d",&x)
+#define OUT(x) printf("%d\n",x)
+#define INPLL(x) scanf("%lld",&x)
+#define OUTLL(x) printf("%lld\n",x)
+#define INPS(x) scanf("%s",x)
+#define MEM(a,b) memset(a,b,sizeof(a))
+#define MP make_pair
+#define PB push_back
+#define PII pair<int,int>
+#define PLL pair<long long,long long>
+#define VPII vector<pair<int,int >
+#define F first
+#define S second
+#define MOD 1000000007
+#define mod 10000007
+using namespace std;
+vector<int> adj[100005];
+int tin[100005],tout[100005];
+int timer;
+void dfs(int cur,int par)
+{
+    int i;
+    tin[cur] = ++timer;
+    for(i=0;i<adj[cur].size();i++)
+    {
+        int nxt = adj[cur][i];
+        if(nxt != par)
+        {
+            dfs(nxt,cur);
+        }
+    }
+    tout[cur] = timer;
+}
+struct node
+{
+    int cnt;
+    int lazy;
+}t[4*100005];
+void build(int node,int s,int e)
+{
+    if(s == e)
+    {
+        t[node].cnt = 1;
+        t[node].lazy = 0;
+        return;
+    }
+    int m = (s+e)/2;
+    int c = 2*node;
+    build(c,s,m);
+    build(c+1,m+1,e);
+    t[node].cnt = t[c].cnt + t[c+1].cnt;
+}
+void update(int node,int s,int e,int x,int y,int v)
+{
+    if(s > e)
+        return;
+    int m = (s+e)/2;
+    int c = 2*node;
+    if(t[node].lazy)
+    {
+        if(t[node].lazy == 1)
+            t[node].cnt = 0;
+        else
+            t[node].cnt = e - s + 1;
+        if(s != e)
+        {
+            t[c].lazy = t[c+1].lazy = t[node].lazy;
+        }
+        t[node].lazy = 0;
+    }
+    if(s > y || e < x)
+        return;
+    if(x <= s && e <= y)
+    {
+        if(v == 1)
+            t[node].cnt = 0;
+        else
+            t[node].cnt = e - s + 1;
+        if(s != e)
+        {
+            t[c].lazy = t[c+1].lazy = v;
+        }
+        return;
+    }
+    update(c,s,m,x,y,v);
+    update(c+1,m+1,e,x,y,v);
+    t[node].cnt = t[c].cnt + t[c+1].cnt;
+}
+int query(int node,int s,int e,int x,int y)
+{
+    if(s > e || s > y || e < x)
+        return 0;
+    int m = (s+e)/2;
+    int c = 2*node;
+    if(t[node].lazy)
+    {
+        if(t[node].lazy == 1)
+            t[node].cnt = 0;
+        else
+            t[node].cnt = e - s + 1;
+        if(s != e)
+        {
+            t[c].lazy = t[c+1].lazy = t[node].lazy;
+        }
+        t[node].lazy = 0;
+    }
+    if(x <= s && e <= y)
+    {
+        return t[node].cnt;
+    }
+    return query(c,s,m,x,y) + query(c+1,m+1,e,x,y);
+}
+int main()
+{
+    int n,i;
+    INP(n);
+    int root = -1;
+    for(i=1;i<=n;i++)
+    {
+        int j;
+        INP(j);
+        if(j == 0)
+            root = i;
+        else
+            adj[j].PB(i);
+    }
+    dfs(root,0);
+	build(1,1,n);
+    int q;
+    INP(q);
+    while(q--)
+    {
+        int op,u;
+        INP(op);INP(u);
+        if(op <= 2)
+        {
+            update(1,1,n,tin[u]+1,tout[u],3-op);
+        }
+        else
+        {
+            int ans = query(1,1,n,tin[u]+1,tout[u]);
+            OUT(ans);
+        }
+    }
+    return 0;
+}

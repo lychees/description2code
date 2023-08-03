@@ -1,0 +1,119 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, q;
+
+long long pun[1000007];
+
+int p1, p2;
+vector < pair <int,long long> > zmi;
+
+long long nap[1000007];
+long long ma[1000007];
+
+vector <long long> dos;
+
+int ozn[1000007];
+int l;
+
+long long wyn;
+
+long long drzewo[1000007];
+long long drzewo2[1000007];
+
+void pisz(int v, long long w)
+{
+    if (!v)
+    return;
+    for (int i=v; i<=1000000; i+=(-i&i))
+    {
+        drzewo[i]+=w;
+    }
+}
+
+void pisz2(int v, long long w)
+{
+    if (!v)
+    return;
+    for (int i=v; i<=1000000; i+=(-i&i))
+    {
+        drzewo2[i]+=w;
+    }
+}
+
+long long czyt(int v, int u)
+{
+    long long ret=0;
+    for (int i=u; i>0; i-=(-i&i))
+    ret+=drzewo[i];
+    for (int i=v-1; i>0; i-=(-i&i))
+    ret-=drzewo[i];
+    return ret;
+}
+
+long long czyt2(int v, int u)
+{
+    long long ret=0;
+    for (int i=u; i>0; i-=(-i&i))
+    ret+=drzewo2[i];
+    for (int i=v-1; i>0; i-=(-i&i))
+    ret-=drzewo2[i];
+    return ret;
+}
+
+int main()
+{
+    scanf("%d%d", &n, &q);
+    for (int i=1; i<=q; i++)
+    {
+        scanf("%d%d", &p1, &p2);
+        pun[p1]+=p2;
+        zmi.push_back(make_pair(p1, pun[p1]));
+        dos.push_back(pun[p1]);
+        nap[i-1]=pun[p1];
+    }
+    sort(dos.begin(), dos.end());
+    for (int i=0; i<q; i++)
+    {
+        if (!i || dos[i]!=dos[i-1])
+        l++;
+        ozn[i]=l;
+    }
+    for (int i=0; i<q; i++)
+    {
+        zmi[i].second=ozn[lower_bound(dos.begin(), dos.end(), zmi[i].second)-dos.begin()];
+    }
+    for (int i=1; i<=n; i++)
+    pun[i]=0;
+    for (int i=0; i<zmi.size(); i++)
+    {
+        //printf("%d\n", i);
+        p1=zmi[i].first;
+        p2=zmi[i].second;
+
+        wyn-=ma[p1]*czyt2(pun[p1]+1, p2);
+        wyn+=(nap[i]-ma[p1])*czyt2(p2+1, 1000000);
+
+        wyn+=czyt(pun[p1], p2-1)-ma[p1];
+
+        //printf("- %lld * %lld\n", ma[p1], czyt2(pun[p1]+1, p2));
+
+        //printf("+ %lld * %lld\n", (nap[i]-ma[p1]), czyt2(p2+1, 1000000));
+
+        //printf("+ %lld\n", czyt(pun[p1], p2-1)-ma[p1]);
+
+        //printf("tak\n");
+
+        pisz(pun[p1], -ma[p1]);
+        pisz2(pun[p1], -1);
+
+        //printf("po\n");
+
+        pun[p1]=p2;
+        ma[p1]=nap[i];
+        pisz(pun[p1], ma[p1]);
+        pisz2(pun[p1], 1);
+        printf("%lld\n", wyn+czyt(1, 1000000));
+    }
+    return 0;
+}

@@ -1,0 +1,162 @@
+#include <math.h>
+#include<iostream>
+#include<vector>
+#include<array>
+#include<algorithm>
+#define M 1000000007
+#define pb push_back
+using namespace std;
+vector<long long> primeFactors(long long n)
+{
+    vector<long long> a;
+    while (n%2 == 0)
+    {
+        a.pb(2);
+        n = n/2;
+    }
+    for (long long i = 3; i <= sqrt(n); i = i+2)
+    {
+        while (n%i == 0)
+        {
+            a.pb(i);
+            n = n/i;
+        }
+    }
+    if (n > 2)
+        a.pb(n);
+    return a;
+}
+vector<long long> join(vector<long long> arr1, vector<long long> arr2)
+{
+    long long m=arr1.size();
+    long long n=arr2.size();
+    vector<long long> c;
+  long long i = 0, j = 0;
+  while (i < m && j < n)
+  {
+    if (arr1[i] < arr2[j])
+      c.pb(arr1[i++]);
+    else if (arr2[j] < arr1[i])
+      c.pb(arr2[j++]);
+    else
+    {
+      c.pb(arr2[j++]);
+      i++;
+    }
+  }
+ while(i < m)
+   c.pb(arr1[i++]);
+  while(j < n)
+   c.pb(arr2[j++]);
+return c;
+}
+long long getMid(long long s, long long e) {  return s + (e -s)/2;  }
+template<std::size_t SIZE>
+vector<long long> RMQUtil(array<vector<long long>,SIZE> &st, long long ss, long long se, long long qs, long long qe, long long index)
+{
+    if (qs <= ss && qe >= se)
+        return st[index];
+    if (se < qs || ss > qe)
+    {
+        vector<long long> c;
+        c.pb(1);
+        return c;
+    }
+    long long mid = getMid(ss, se);
+    return join(RMQUtil(st, ss, mid, qs, qe, 2*index+1),
+                  RMQUtil(st, mid+1, se, qs, qe, 2*index+2));
+}
+template<std::size_t SIZE>
+vector<long long> RMQ(array<vector<long long>,SIZE> &st, long long n, long long qs, long long qe)
+{
+    return RMQUtil(st, 0, n-1, qs, qe, 0);
+}
+template<std::size_t SIZE>
+vector<long long> constructSTUtil(long long arr[], long long ss, long long se, array<vector<long long>,SIZE> &st, long long si)
+{
+    if (ss == se)
+    {
+        st[si] = primeFactors(arr[ss]);
+        return st[si];
+    }
+    long long mid = getMid(ss, se);
+    st[si] =  join(constructSTUtil(arr, ss, mid, st, si*2+1),
+                     constructSTUtil(arr, mid+1, se, st, si*2+2));
+    return st[si];
+}
+template<std::size_t SIZE>
+void update(array<vector<long long>,SIZE> &st,long long low,long long high,long long i,long long val,long long pos)
+{
+	if(i < low || i > high)
+	return;
+	if(low==high)
+    {
+		st[pos]=primeFactors(val);
+		return ;
+	}
+	int mid=(low+high)/2;
+	update(st,low,mid,i,val,pos*2+1);
+	update(st,mid+1,high,i,val,pos*2+2);
+	st[pos]=join(st[2*pos+1],st[2*pos+2]);
+}
+/*vector<long long*> constructST(long long arr[], long long n)
+{
+
+    long long x = (long long)(ceil(log2(n)));
+    long long max_size = 2*(long long)pow(2, x) - 1;
+    vector<long long*> st;
+    constructSTUtil(arr, 0, n-1, st, 0);
+    return st;
+}*/
+int main()
+{
+    long long t;
+    //cin>>t;
+    //while(t--)
+    {
+        long long n,i,m,qs,qe,l,p,j;
+        cin>>n;
+        long long a[n],ith,val,ch;
+        for(i=0;i<n;i++)
+            cin>>a[i];
+        //long long x = (long long)(ceil(log2(n)));
+        //const long long max_size = 2*(long long)pow(2, x) - 1;
+        array<vector<long long>,100000> st;
+        constructSTUtil(a, 0, n-1, st, 0);
+        //cout<<st[0].size();
+        /*for(i=0;i<st.size();i++)
+        {
+            for(j=0;j<st[i].size();j++)
+            cout<<st[i][j]<<" ";
+            cout<<endl;
+        }*/
+        cin>>m;
+        for(i=0;i<m;i++)
+        {
+            cin>>ch;
+            if(ch==2)
+            {
+            cin>>qs>>qe;
+            qs--;
+            qe--;
+            vector<long long> c=RMQ(st, n, qs, qe);
+            l=c.size();
+            p=1;
+            for(j=0;j<l;j++)
+            {
+                p=(p*c[j])%M;
+                if(p<0)
+                    p+=M;
+            }
+            cout<<p<<endl;
+            }
+            else
+            {
+                cin>>ith>>val;
+                ith--;
+                update(st,0,n-1,ith,val,0);
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,81 @@
+#include <iostream>
+#include <complex>
+#include <queue>
+#include <set>
+#include <vector>
+#include <cmath>
+#include <string>
+#include <cstring>
+#include <map>
+#include <iomanip>
+#include <cstdio>
+#include <algorithm>
+#include <fstream>
+#include <utility>
+#include <list>
+#define ll long long
+#define pii pair<int,int>
+#define pll pair<long long,long long>
+#define X first
+#define Y second
+#define pb push_back
+#define eps 0.000001
+using namespace std;
+const int maxn = 1000 * 100 + 10;
+const ll inf = 10000000000000000ll;
+typedef complex<long double> point;
+//ifstream fin("input.txt");
+//ofstream fout("output.txt");
+ll n,m,p[maxn],dist[maxn],st,k,now = inf,par[maxn],ans;
+vector <pll> v[maxn];
+set <pll>s;
+vector<pair<ll,pll> >vv;
+bool mark[maxn];
+ll find(int x) {
+    if(par[x] == x) return x;
+    return par[x] = find(par[x]);
+}
+void un(int x,int y) { par[find(x)] = find(y); }
+void dij_mst() {
+    for(int i = 0 ; i < maxn ; i++) dist[i] = inf;
+    for(int i = 1 ; i <= k ; i++) { s.insert(pll(0,p[i])); par[p[i]] = p[i]; dist[p[i]] = 0; }
+    while(!s.empty()) {
+        ll cur = (*s.begin()).Y;
+        ll ndist = (*s.begin()).X;
+        mark[cur] = 1;
+        s.erase(s.begin());
+        for(int i = 0 ; i < v[cur].size() ; i++) if(!mark[v[cur][i].X]) {
+            ll next = v[cur][i].X;
+            ll cost = v[cur][i].Y;
+            if(ndist + cost < dist[next]) { 
+                s.erase(pll(dist[next],next));
+                dist[next] = ndist + cost; 
+                par[next] = cur; 
+                s.insert(pll(dist[next],next));
+            }
+        }
+    }
+    ans = dist[1];
+    for(int i = 1 ; i <= n ; i++) for(int j = 0 ; j < v[i].size() ; j++) {
+        ll cur = v[i][j].X;
+        ll cost = v[i][j].Y;
+        if(find(cur) != find(i)) { vv.pb(pair<ll,pll>(cost + dist[cur] + dist[i],pll(i,cur))); }
+    }
+    sort(vv.begin(),vv.end());
+    for(int i = 0 ; i < vv.size() ; i++) {
+        ll cost = vv[i].X;
+        ll x = vv[i].Y.X;
+        ll y = vv[i].Y.Y;
+        if(find(x) != find(y)) { ans += cost; un(x,y); }
+    }
+} 
+        
+int main () {
+    cin >> n >> m;
+    for(int i = 0 ; i < m ; i ++) { ll a,b,z; cin >> a >> b >> z; v[a].pb(pll(b,z)); v[b].pb(pll(a,z)); }
+    cin >> k;
+    for(int i = 1 ; i <= k ; i++) cin >> p[i];
+    dij_mst();
+    cout << ans << endl;
+    return 0;
+}

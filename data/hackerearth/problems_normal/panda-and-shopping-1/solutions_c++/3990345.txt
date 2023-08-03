@@ -1,0 +1,54 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<utility>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MAXN = 1e5 + 10;
+
+ll n, w[MAXN], val[MAXN], sec[MAXN], weed[4 * MAXN], ans;
+
+bool cmp(ll u, ll v){
+	if (w[u] != w[v])
+		return w[u] < w[v];
+	return u < v;
+}
+
+void water(ll v, ll b, ll e, ll pos, ll val){
+	if (e - b == 1){
+		weed[v] = val;
+		ans = max(ans, val);
+		return;
+	}
+
+	ll mid = (b + e)/ 2;
+	if (pos < mid)
+		water(v<<1, b, mid, pos, val);
+	else
+		water(v<<1^1, mid, e, pos, val);
+	weed[v] = max(weed[v<<1], weed[v<<1^1]);
+}
+
+ll smoke(ll v, ll b, ll e, ll l, ll r){
+	if (l <= b && e <= r)	return weed[v];
+	if (r <= b || e <= l)	return 0;
+
+	ll mid = (b + e)/ 2;
+	return max(smoke(v<<1, b, mid, l, r), smoke(v<<1^1, mid, e, l, r));
+}
+
+int main(){
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+	cin >> n;
+	for (ll i = 0; i < n; i++)
+		cin >> val[i] >> w[i], sec[i] = i;
+	sort(sec, sec + n, cmp);
+	for (ll i = 0; i < n; i++)
+		water(1, 0, n, sec[i], smoke(1, 0, n, 0, sec[i]) + val[sec[i]]);
+	cout << ans << "\n";
+	return 0;	
+}

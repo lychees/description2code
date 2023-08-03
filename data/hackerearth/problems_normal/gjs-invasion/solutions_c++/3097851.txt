@@ -1,0 +1,44 @@
+//Complexity O(2^n) Inversions in Derangements of 'n' Objects using bitmask and dynamic programming
+//Inversions in a permutation are nothing but number of objects with lesser index in higher position or the opposite case
+#include <bits/stdc++.h>
+using namespace std;
+#define  modulo 1000000007
+int bitcount(long long a){
+    int count = 0;
+    while(a){
+        count += a&1;
+        a >>= 1;
+    }
+    return count;
+}
+int main(){
+    int t;
+    cin>>t;
+    int n = 2;
+    vector<int> ques;
+    while(t--){
+        int x;
+        cin>>x;
+        n = max(n,x);
+        ques.push_back(x);
+    }
+    vector<long long> ways(1<<n,0);                                             // ways[2^n] to store all the number of Derangements for dp
+    ways[0] = 1;
+    vector<long long> inv(1<<n,0);                                              // inv[2^n] to store the number of inversions
+    for(long long mask = 0 ; mask < 1<<n ; mask++)                              // bitmask representing the subset of already filled positions
+        for(int i = 0; i < n ; i++)                                             // filling the (i+1)th position
+            if(!((1<<i)&mask))
+                if(bitcount(mask) != i){                                        // bitcount(a)+1'th object filling i+1'th position - shouldn't happen if both indices are same.
+                    int count = 0;
+                    for(int j=i+1; j < n; j++)
+                        if((1<<j)&mask)
+                            ++count;                                            // number of inversions i.e, objects with lesser index in higher position
+                    long long m = mask | (1<<i);
+                    ways[m] += ways[mask];
+                    inv[m] += inv[mask];                                            // number of inversions due to the already existing subset
+                    inv[m] += count*ways[mask];                                   // number of inversions due to the newly added value (=inversions_per_way*ways)
+                }
+    for(int i=0;i<ques.size();i++)
+        cout<<inv[(1<<ques[i]) - 1]<<endl;
+    return 0;
+}

@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define long long long
+
+const int M = 400200;
+const int mod = 1000000007;
+
+long s[4 * M], b[4 * M], s2[4 * M];
+
+void upd(int v, long len) {
+    long sum = s[2 * v] + s[2 * v + 1];
+    long sum2 = s2[2 * v] + s2[2 * v + 1];
+
+    s[v] = (sum + len * b[v]) % mod;
+    s2[v] = (sum2 + 2 * b[v] * sum + b[v] * (b[v] * len) % mod) % mod;
+}
+
+void add(int v, int le, int re, int l, int r, long val) {
+    if (l == le && r == re) {
+        b[v] += val;
+        upd(v, re - le);
+        return;
+    }
+
+    int m = (le + re) / 2;
+    if (l < m)
+        add(2 * v, le, m, l, min(m, r), val);
+    if (m < r)
+        add(2 * v + 1, m, re, max(l, m), r, val);
+    upd(v, re - le);
+}
+
+int n, a[M];
+
+void read() {
+    cin >> n;
+    for (int i = 1; i <= n; ++i)
+        cin >> a[i];
+}
+
+void kill() {
+    map<int, int> prev;
+    long ans = 0;
+    for (int i = 1; i <= n; ++i) {
+        add(1, 0, n, prev[a[i]], i, 1);
+        prev[a[i]] = i;
+        ans = (ans + s2[1]) % mod;
+    }
+    cout << ans << "\n";
+}
+
+
+int main() {
+    read();
+    kill();
+    return 0;
+}

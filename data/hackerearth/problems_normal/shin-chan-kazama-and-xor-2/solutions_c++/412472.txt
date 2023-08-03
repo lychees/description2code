@@ -1,0 +1,141 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+typedef pair<LL,int> pii;
+
+const int SQ = 225;
+const int NN = 1000005, MM = 50005;
+
+struct query{
+    int st,en,x,id;
+    query(){}
+    query(int a,int b,int c,int d):st(a),en(b),x(c),id(d){}
+    bool operator < (const query &N) const {
+        if (st/SQ != N.st/SQ)
+            return (st/SQ < N.st/SQ);
+        return (en < N.en);
+    }
+} q[MM];
+
+int A[NN];
+pii ans[MM];
+
+struct node{
+    int p[2],en,cnt;
+    node(){
+        en = cnt = 0;
+        memset(p,-1,sizeof(p));
+    }
+} trie[15*NN];
+int nodes = 1;
+
+int addnode(){
+    trie[nodes].p[0] = trie[nodes].p[1] = -1;
+    trie[nodes].en = trie[nodes].cnt = 0;
+    return nodes++;
+}
+
+void add(int st,int num,int id){
+    if (id < 0) {
+        trie[st].cnt++, trie[st].en++;
+        return;
+    }
+    int d = ((num >> id) & 1),index;
+    trie[st].p[d] = (index = (trie[st].p[d] == -1) ? addnode() : trie[st].p[d]);
+    ++trie[st].cnt;
+    add(index,num,id-1);
+}
+
+void rem(int st,int num,int id){
+    if (id < 0){
+        --trie[st].cnt,--trie[st].en;
+        return;
+    }
+
+    int d = ((num >> id) & 1),index;
+    index = (trie[st].p[d]);                   //assert(index != -1);
+    --trie[st].cnt;
+    rem(index,num,id-1);
+    trie[st].p[d] = (trie[index].cnt <= 0) ? -1 : index;
+    /*if (id <= 5){
+        cerr << "removed " << st << " " << id << " " << trie[st].p[d] << " " << d << " " << num << endl;
+        cerr << trie[index].cnt << endl;
+    }*/
+}
+
+LL MXOR(int st,int num,int id,int &cnt){
+    if (id < 0) {
+        cnt = trie[st].en;
+        return 0LL;
+    }
+
+    int d = ((num >> id) & 1),index;
+    LL ans = 0;
+    if (trie[st].p[d] == -1) d = d ^ 1;
+    index = trie[st].p[d];
+    if (d) ans += (1LL << id);
+    //cerr << "at " << st << " " << id << " going " << d << endl;
+    ans += MXOR(index,num,id-1,cnt);
+    return ans;
+}
+
+void solve(){
+    int n,m;
+    cin >> n;
+    for(int i = 0; i < n; ++i)
+        cin >> A[i];
+
+    cin >> m;
+    for(int i = 0; i < m; ++i){
+        int a,b,x;
+        cin >> a >> b >> x;
+        --a,--b;
+        q[i] = query(a,b,x,i);
+    }
+
+    sort(q,q+m);
+    int mbit = 29;
+
+    int L = 0 ,R = 0;
+    add(0,A[0],mbit);
+    for(int i = 0; i < m; ++i){
+        int st = q[i].st, en = q[i].en;
+        //cerr << st << " " << en << " " << L << " " << R << endl;
+        while(R > en){
+            //cerr << R << " removed\n";
+            rem(0,A[R],mbit);
+            --R;
+        }
+        while(R < en){
+            ++R;
+            //cerr << R << " added\n";
+            add(0,A[R],mbit);
+        }
+        while(L > st){
+            --L;
+            //cerr << L << " added\n";
+            add(0,A[L],mbit);
+        }
+        while(L < st){
+            //cerr << L << " removed\n";
+            rem(0,A[L],mbit);
+            ++L;
+        }
+
+        int index = q[i].id;
+        ans[index].first = MXOR(0,q[i].x,mbit,ans[index].second);
+        //cerr << ans[index].first << " " << ans[index].second << endl;
+        //cin.get(); cin.get();
+        //cerr << "DONE\n";
+    }
+
+    for(int i = 0; i < m; ++i)
+        cout << ans[i].first << " " << ans[i].second << endl;
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    solve();
+    return 0;
+}

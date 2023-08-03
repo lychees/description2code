@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e5 + 5, MOD = 1e9 + 7;
+int A[N];
+pair<int, int> seg[2][4*N], dp, ans;
+
+pair<int, int> max_query(int nd, int l, int r, int x, int y, int yo){
+	if(x > r or y < l or l > r)	return {0, 0};
+	else if(l >= x and r <= y)	return seg[yo][nd];
+	else{
+		int mid = (l + r)/2;
+		pair<int, int> a = max_query(nd * 2, l, mid, x, y, yo), b = max_query(nd * 2 + 1, mid + 1, r, x, y, yo);
+		if(a.first < b.first)	swap(a, b);
+		if(a.first == b.first)	return {a.first, (a.second + b.second)%MOD};
+		else return a;
+	}
+}
+
+void update(int nd, int l, int r, int x, int yo, pair<int, int> val){
+	if(l == r){
+		if(seg[yo][nd].first == val.first)	seg[yo][nd].second = (seg[yo][nd].second + val.second)%MOD;
+		else seg[yo][nd] = val;
+	}
+	else{
+		int mid = (l + r)/2;
+		if(x <= mid)	update(nd * 2, l, mid, x, yo, val);
+		else update(nd * 2 + 1, mid + 1, r, x, yo, val);
+		if(seg[yo][nd*2].first > seg[yo][nd*2 + 1].first)	seg[yo][nd] = seg[yo][nd*2];
+		else if(seg[yo][nd*2].first < seg[yo][nd*2 + 1].first)	seg[yo][nd] = seg[yo][nd*2 + 1];
+		else seg[yo][nd] = {seg[yo][nd*2].first, (seg[yo][nd*2].second + seg[yo][nd*2 + 1].second)%MOD};
+	}
+}
+
+int main(){
+	int n, yo;
+	cin>>n;
+	for(int i = 1; i <= n; i++)	cin>>A[i];
+	for(int i = 1; i <= n; i++){
+		yo = (A[i] > 0);
+		dp = max_query(1, 1, N, 1, abs(A[i]) - 1, !yo);
+		if(dp.first == 0)	dp.second = 1;
+		dp.first++;
+		if(dp.first > ans.first)	ans = dp;
+		else if(dp.first == ans.first)	ans.second = (ans.second + dp.second)%MOD;
+		update(1, 1, N, abs(A[i]), yo, dp);
+	}
+	cout<<ans.first<<" "<<ans.second<<endl;
+}

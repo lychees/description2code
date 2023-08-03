@@ -1,0 +1,93 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int a[100010];
+
+struct nodetype{
+	int len;
+	int mod;
+}seg[500010];
+
+int mullmod(int exp){
+	int x=1,y=2;
+	while(exp>0){
+		if(exp&1)
+			x=(x*y)%3;
+		exp/=2;
+		y=(y*y)%3;
+	}
+	return (x*y)%3;
+}
+
+nodetype combine(nodetype left,nodetype right){
+	nodetype ret;
+	ret.len=left.len+right.len;
+	ret.mod=((right.mod%3)+(((left.mod%3)*mullmod(right.len))%3))%3;
+	return ret;
+}
+void build(int node,int start,int end){
+	if(start==end){
+		seg[node].mod=a[start];
+		seg[node].len=1;
+	}
+	else{
+		int mid=start+(end-start)/2;
+		build(2*node,start,mid);
+		build(2*node+1,mid+1,end);
+		seg[node]=combine(seg[2*node],seg[2*node+1]);
+	}
+}
+
+void update(int node,int start,int end,int idx){
+	if(start==end){
+		a[start]=1;
+		seg[node].mod=a[start];
+		seg[node].len=1;
+	}
+	else{
+		int mid=start+(end-start)/2;
+		if(idx<=mid)
+			update(2*node,start,mid,idx);
+		else
+			update(2*node+1,mid+1,end,idx);
+		seg[node]=combine(seg[2*node],seg[2*node+1]);
+	}
+}
+
+nodetype query(int node,int start,int end,int u,int v){
+	if(u<=start && end<=v)
+		return seg[node];
+	else{
+		int mid=start+(end-start)/2;
+		if(v<=mid)
+			return query(2*node,start,mid,u,v);
+		if(u>mid)
+			return query(2*node+1,mid+1,end,u,v);
+		nodetype p=query(2*node,start,mid,u,v);
+		nodetype q=query(2*node+1,mid+1,end,u,v);
+		return combine(p,q);
+	}
+}
+int main(){
+	int n;
+	scanf("%d",&n);
+	for(int i=0;i<n;i++)
+		scanf("%1d",&a[i]);
+	build(1,0,n-1);
+	int q,c,l,r;
+	scanf("%d",&q);
+	for(int i=0;i<q;i++){
+		scanf("%d",&c);
+		if(c==0){
+			scanf("%d%d",&l,&r);
+			nodetype p=query(1,0,n-1,l,r);
+			printf("%d\n",p.mod);
+		}
+		else{
+			scanf("%d",&l);
+			update(1,0,n-1,l);
+		}
+	}
+	return 0;
+}

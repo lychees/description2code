@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+#include<math.h>
+using namespace std;
+
+#define f(i,n) for(int i=0;i<n;i++)
+#define rep(i,a,b) for(int i=a;i<=b;i++)
+#define r(v) {reverse(all(v));}
+#define pb push_back
+#define mp make_pair
+#define sf(x) sort(x.begin(),x.end(),func)
+#define s(x) sort(x.begin(),x.end())
+#define all(v) v.begin(),v.end()
+#define ll long long
+
+const ll mod = 1000000007;
+const ll INF = LLONG_MAX;
+const ll NINF = LLONG_MIN;
+vector<ll> v;
+int countbits(int x)
+{   int ans;
+    if(x==0)
+        return 1;
+    while(x)
+    {
+        ans++;
+        x=x/2;
+    }
+return ans;
+}
+ll power(ll a,ll b)
+{
+    ll x=1,y=a;
+    while(b>0)
+    {
+        if(b%2==1)
+        {
+            x=(x*y);
+           if(x>3) x%=3;
+        }
+        y = (y*y);
+            if(y>3) y%=3;
+        b /= 2;
+    }
+    return x;
+}
+void build(ll node,ll start,ll en,ll seg[],string arr)
+{
+    if(start==en)
+    {
+        seg[node]=arr[start] - '0';
+        //cout<<start<<" found "<<node<<endl;
+        return;
+    }
+    ll mid = (start+en)/2;
+    build(2*node+1,start,mid,seg,arr);
+    build(2*node+2,mid+1,en,seg,arr);
+    seg[node] = ((seg[2*node+1]*power(2,en - mid)) % 3 + seg[2*node+2])%3; //Operation to be applied here
+}
+void Update(ll idx ,ll node ,ll start ,ll en ,ll seg[] ,string &arr ,ll update)
+{   if(start==en)
+    {
+        arr[idx]='1';
+        seg[node]=1;
+        return ;
+    }
+    ll mid=(start + en)/2;
+    if(start<=idx&&idx<=mid)
+        Update(idx,2*node+1,start,mid,seg,arr,update);  //Update left child
+    else
+        Update(idx,2*node+2,mid+1,en,seg,arr,update);  //Update right child
+    seg[node] = ((seg[2*node+1]*power(2,en - mid)) % 3 + seg[2*node+2])%3;  //Operation to be applied
+}
+
+ll query(ll seg[], ll l, ll r, ll i, ll x, ll y)
+{
+    	if(l==r){
+		return seg[i];
+	}
+	int lc=(i<<1)+1;
+	int rc=(i<<1)+2;
+	int mid=(l+r)>>1;
+
+	if(x==l && y==r)
+		return seg[i];
+	
+	if(y<=mid)
+		return query(seg,l,mid,lc,x,y);
+	else if(x>mid)
+		return query(seg,mid+1,r,rc,x,y);
+	else{
+		int a=query(seg,l,mid,lc,x,mid);
+		int b=query(seg,mid+1,r,rc,mid+1,y);
+		//cout<<a<<" "<<b<<endl;
+		return(power(2, y-mid)*a+b)%3;
+	}
+}
+
+ll seg[2000004];
+ll a[2000004];
+
+int main()
+{   ios_base::sync_with_stdio(0);
+   // freopen("input.txt","r",stdin);
+    ll n,q;
+    cin>>n;
+    string s;
+    cin>>s;
+    build(0,0,n-1,seg,s);
+
+    cin>>q;
+    f(i,q)
+    {   int ty;
+        cin>>ty;
+        if(ty==0)
+        {   int a,b;
+            cin>>a>>b;
+
+           cout<<query(seg,0,n - 1,0,a,b)<<endl;
+        }
+        else
+        {   int l;
+            cin>>l;
+            if(s[l]=='0')
+            Update(l,0,0,n-1,seg,s,0);
+        }
+    }
+    //cout<<s<<endl;
+
+return 0;
+}
+
+

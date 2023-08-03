@@ -1,0 +1,130 @@
+#include <bits/stdc++.h>
+ 
+#define FOR(i,a,b) for(int i=(a);i<(b);++i)
+#define FORD(i, a, b) for(int i = (a); i >= (b); --i)
+#define VAR(v, i) __typeof(i) v=(i)
+#define FORE(i, c) for(VAR(i, (c).begin()); i != (c).end(); ++i)
+#define all(v) (v).begin(),(v).end()
+ 
+#define VI vector<int>
+#define PII pair<int,int>
+#define st first
+#define nd second
+#define mp make_pair
+#define pb push_back
+#define lint long long int
+ 
+#define debug(x) {cerr <<#x <<" = " <<x <<endl; }
+#define debug2(x,y) {cerr <<#x <<" = " <<x << ", "<<#y<<" = "<< y <<endl; } 
+#define debug3(x,y,z) {cerr <<#x <<" = " <<x << ", "<<#y<<" = "<< y << ", " << #z << " = " << z <<endl; } 
+#define debugv(x) {{cerr <<#x <<" = "; FORE(itt, (x)) cerr <<*itt <<", "; cerr <<endl; }}
+#define debugt(t,n) {{cerr <<#t <<" = "; FOR(it,0,(n)) cerr <<t[it] <<", "; cerr <<endl; }}
+ 
+#define make( x) int (x); scanf("%d",&(x));
+#define make2( x, y) int (x), (y); scanf("%d%d",&(x),&(y));
+#define make3(x, y, z) int (x), (y), (z); scanf("%d%d%d",&(x),&(y),&(z));
+#define make4(x, y, z, t) int (x), (y), (z), (t); scanf("%d%d%d%d",&(x),&(y),&(z),&(t));
+#define makev(v,n) VI (v); FOR(i,0,(n)) { make(a); (v).pb(a);} 
+#define IOS ios_base::sync_with_stdio(0)
+#define HEAP priority_queue
+ 
+#define read( x) scanf("%d",&(x));
+#define read2( x, y) scanf("%d%d",&(x),&(y));
+#define read3(x, y, z) scanf("%d%d%d",&(x),&(y),&(z));
+#define read4(x, y, z, t) scanf("%d%d%d%d",&(x),&(y),&(z),&(t));
+#define readv(v,n) FOR(i,0,(n)) { make(a); (v).pb(a);}
+
+#define REP(i,n) FOR(i,0,(n))
+ 
+using namespace std;
+
+
+
+using namespace std;
+
+int p[]={2,5,719};
+int inv[800][3];
+
+int w[305][305][3];
+int que[305][3];
+int zerowy[305][3];
+int y[305];
+VI op[3];
+
+int main() {
+	make2(n, q);
+	FOR(i,0,n) FOR(j,0,n) {
+		make(a); 
+		FOR(k,0,3) w[i][j][k] = a%p[k];
+	}
+	
+	FOR(k,0,3) FOR(j,1,p[k]) FOR(s,1,p[k]) if (((j*s)%p[k])==(p[k]-1)) inv[j][k] = s;
+	FOR(k,0,3) inv[0][k] = 0;
+	
+
+	FOR(k,0,3) {
+		int row = 0;
+		FOR(col,0,n) {
+			int nonzero = -1;
+			FOR(rw,row,n) {
+				if (w[rw][col][k] != 0) {
+					nonzero = rw;
+					break;
+				}
+			}
+			if (nonzero == -1) {
+				op[k].pb(-1001);
+				continue;
+			}
+			op[k].pb(nonzero);
+			FOR(i,0,n) swap(w[nonzero][i][k], w[row][i][k]);
+			
+			FOR(rw, row+1, n) {
+				int mnoz = (inv[w[row][col][k]][k]*w[rw][col][k])%p[k];
+				op[k].pb(mnoz);
+				FOR(i,0,n) {
+					w[rw][i][k] += (mnoz*w[row][i][k])%p[k];
+					w[rw][i][k] %= p[k];
+				}
+			}
+			row++;
+		}
+	}
+	FOR(i,0,n) FOR(j,0,n) FOR(k,0,3) w[i][j][k]%=p[k];
+	FOR(k,0,3) FOR(j,0,n) zerowy[j][k] = 1;
+	FOR(k,0,3) FOR(i,0,n) FOR(j,0,n) if(w[i][j][k]!=0) zerowy[i][k] = 0;
+
+
+	while(q--) {
+		FOR(i,0,n) {
+			make(a); y[i] = a;
+		}
+		FOR(k,0,3) FOR(i,0,n) que[i][k] = y[i]%p[k];
+		bool ok = true;
+		FOR(k,0,3) {
+			int j = 0;
+			int row = 0;
+			FOR(col,0,n) {
+					if (op[k][j]==-1001) {
+						j++;
+						continue;
+					}
+					swap(que[op[k][j]][k], que[row][k]);
+					j++;
+					FOR(rw,row+1,n) {
+						que[rw][k] += (op[k][j]*que[row][k])%p[k];
+						que[rw][k] %= p[k];
+						j++;
+					}
+					row++;
+			}
+			FOR(i,0,n) if(zerowy[i][k]==1 && (que[i][k]%p[k])!=0) ok = false;
+		}
+		if (ok) printf("Yes\n");
+		else printf("No\n");
+	}
+}
+
+
+
+

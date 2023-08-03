@@ -1,0 +1,56 @@
+#include <algorithm>
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <vector>
+
+constexpr int N = 500010;
+
+int pos[N], tree[N * 3];
+
+void add(int p) {
+    for (; p < N * 3; tree[p]++, p += p & -p);
+}
+
+void rem(int p) {
+    for (; p < N * 3; tree[p]--, p += p & -p);
+}
+
+int query(int p) {
+    int ret = 0;
+    for (; p; ret += tree[p], p &= p - 1);
+    return ret;
+}
+
+int main() {
+//    freopen("in", "r", stdin);
+//    freopen("out", "w", stderr);
+    int n, m;
+    scanf("%d %d", &n, &m);
+    for (int i = 1; i <= n; ++i) {
+        int a;
+        scanf("%d", &a);
+        pos[a] = i + N;
+        add(pos[a]);
+    }
+    int head = 1 + N;
+    int tail = n + N;
+    long long answer = 0;
+    while (m--) {
+        int v;
+        char s[2];
+        scanf("%d %s", &v, s);
+        int p = query(pos[v]);
+        int q = std::min(p - 1, n - p);
+        answer += q;
+        rem(pos[v]);
+        if (*s == 'l') {
+            pos[v] = --head;
+        } else {
+            pos[v] = ++tail;
+        }
+        add(pos[v]);
+    }
+    printf("%lld", answer);
+}

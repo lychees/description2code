@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAXN = 200000 + 10;
+const int MOD = 1000000009;
+
+string s;
+int n;
+
+struct BIT {
+    int T[MAXN];
+    int n;
+
+    void init(int _n) {
+        n = _n;
+        for(int i = 0; i <= n; i++) T[i] = 0;
+    }
+
+    void update(int i, int v) {
+        while (i <= n) {
+            T[i] += v;
+            i += i & (-i);
+        }
+    }
+
+    int get(int i) {
+        int ret = 0;
+        while (i > 0) {
+            ret += T[i];
+            i -= i & (-i);
+        }
+        return ret;
+    }
+
+    int k_th(int k) {
+        int ret = -1;
+        int low = 1, high = n;
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            if (get(mid) >= k) {
+                ret = mid;
+                high = mid - 1;
+            }
+            else low = mid + 1;
+        }
+        return ret;
+    }
+
+} T[26];
+
+int main()
+{
+    cin >> s;
+    n = s.length();
+    vector<vector<int> > a(26);
+    for(int i = 0; i < n; i++) {
+        a[s[i] - 'a'].push_back(i + 1);
+    }
+    for(int i = 0; i < 26; i++) T[i].init(n);
+    for(int i = 0; i < 26; i++) {
+        for(int j = 0; j < a[i].size(); j++) T[i].update(a[i][j], 1);
+    }
+    int q;
+    cin >> q;
+    while (q--) {
+        int k; char c;
+        cin >> k >> c;
+        int p = T[c - 'a'].k_th(k);
+        T[c - 'a'].update(p, -1);
+    }
+    vector<char> ans(n, '0');
+    for(int i = 0; i < 26; i++) {
+        int k = 0;
+        for(int j = 1; j <= n; j++) {
+            int p = T[i].k_th(j);
+            if (p == -1) break;
+            ans[p - 1] = char(i + (int)('a'));
+        }
+    }
+    for(int i = 0; i < n; i++) {
+        if (ans[i] != '0') cout << ans[i];
+    }
+    cout << endl;
+}

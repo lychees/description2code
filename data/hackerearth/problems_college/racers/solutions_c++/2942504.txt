@@ -1,0 +1,56 @@
+#include <cstdio>
+#include <vector>
+using namespace std;
+const int N=250;
+int n,m,k,a[N],b[N],c[N],d[N],tpair[N];
+bool done[N], paired[N];
+vector<int> v[N];
+bool dfs(int a) {
+    done[a] = true;
+    for (int u: v[a]) {
+        if (tpair[u] == -1 || ((!done[tpair[u]]) && dfs(tpair[u]))) {
+            paired[a] = true;
+            tpair[u] = a;
+            return true;
+        }
+    }
+    return false;
+}
+long long dist(int x, int y) {
+    return (a[x]-c[y])*(long long)(a[x]-c[y])+(b[x]-d[y])*(long long)(b[x]-d[y]);
+}
+bool enough(long long r) {
+    for (int i=0; i<n; i++) v[i].clear();
+    for (int i=0; i<n; i++) 
+        for (int j=0; j<m; j++)
+            if (dist(i,j) <= r)
+                v[i].push_back(j);
+    int con = 0;
+    for (int i=0; i<n; i++) paired[i] = false;
+    for (int i=0; i<m; i++) tpair[i] = -1;
+    int old = -1;
+    while (con != old && con < k) {
+        old = con;
+        for (int i=0; i<n; i++) {
+            for (int i=0; i<n; i++) done[i]=false;
+            if (!(paired[i]) && (!done[i]))
+                if (dfs(i)) con++;
+        }
+    }
+    return con >= k;
+}
+int main() {
+    scanf("%d%d%d", &n,&m,&k);
+    for (int i=0; i<n; i++) scanf("%d%d", &a[i],&b[i]);
+    for (int i=0; i<m; i++) scanf("%d%d", &c[i],&d[i]);
+    long long beg=0, end=(long long)(2e7)*int(2e7);
+    while (beg < end) {
+        long long cen = (beg+end)/2;
+        if (!enough(cen))
+            beg = cen+1;
+        else
+            end = cen;
+    }
+    printf("%lld\n", beg);
+    return 0;
+}

@@ -1,0 +1,184 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define mem0(arr) memset(arr , 0 , sizeof arr)
+#define memf(arr) memset(arr , false , sizeof arr)
+#define memdp(arr) memset(arr , -1 , sizeof arr)
+#define rep(i , n) for(int i = 1; i <= n; i++)
+#define loop(i , n) for(int i = 0; i < n; i++)
+#define pb push_back
+#define fi first
+#define se second
+#define cs(y) cout << "Case " << y << ": "
+#define cs2(y) cout << "Case " << y << ":" << "\n"
+
+typedef long long ll;
+
+int preIndex = 0;
+
+int ini[1000 + 10];
+int pree[1000 + 10];
+
+vector < pair < int , int > > v [10000 + 10];
+int dist [10000 + 10];
+bool vis [10000 + 10];
+
+void digstra(int st){
+
+    memset(vis, false , sizeof vis);
+    dist[st] = 0;
+    set < pair < int , int > > s;
+    s.insert({0 , st});
+    while(!s.empty()){
+
+        pair <int , int> p = *s.begin();
+        s.erase(s.begin());
+
+        int x = p.se; int wei = p.fi;
+        if( vis[x] ) continue;
+         vis[x] = true;
+
+        for(int i = 0; i < v[x].size(); i++){
+            int e = v[x][i].fi; int w = v[x][i].se;
+            if(dist[x] + w < dist[e]  ){
+                dist[e] = dist[x] + w;
+                s.insert({dist[e],  e} );
+            }
+        }
+    }
+}
+
+
+
+
+
+struct node
+{
+  int data;
+  struct node* left;
+  struct node* right;
+};
+
+/* Prototypes for utility functions */
+int search(int arr[], int strt, int end, int value);
+struct node* newNode(int data);
+
+/* Recursive function to construct binary of size len from
+   Inorder traversal in[] and Preorder traversal pre[].  Initial values
+   of inStrt and inEnd should be 0 and len -1.  The function doesn't
+   do any error checking for cases where inorder and preorder
+   do not form a tree */
+struct node* buildTree(int in[], int pre[], int inStrt, int inEnd)
+{
+
+  if(inStrt > inEnd)
+     return NULL;
+
+  /* Pick current node from Preorder traversal using preIndex
+    and increment preIndex */
+  struct node *tNode = newNode(pre[preIndex++]);
+
+  /* If this node has no children then return */
+  if(inStrt == inEnd)
+    return tNode;
+
+  /* Else find the index of this node in Inorder traversal */
+  int inIndex = search(in, inStrt, inEnd, tNode->data);
+
+  /* Using index in Inorder traversal, construct left and
+     right subtress */
+  tNode->left = buildTree(in, pre, inStrt, inIndex-1);
+  tNode->right = buildTree(in, pre, inIndex+1, inEnd);
+
+  return tNode;
+}
+
+/* UTILITY FUNCTIONS */
+/* Function to find index of value in arr[start...end]
+   The function assumes that value is present in in[] */
+int search(int arr[], int strt, int end, int value)
+{
+  int i;
+  for(i = strt; i <= end; i++)
+  {
+    if(arr[i] == value)
+      return i;
+  }
+}
+
+/* Helper function that allocates a new node with the
+   given data and NULL left and right pointers. */
+struct node* newNode(int data)
+{
+  struct node* node = (struct node*)malloc(sizeof(struct node));
+  node->data = data;
+  node->left = NULL;
+  node->right = NULL;
+
+  return(node);
+}
+
+/* This funtcion is here just to test buildTree() */
+void printInorder(struct node* node)
+{
+  if (node == NULL)
+     return;
+
+  /* first recur on left child */
+  printInorder(node->left);
+
+  /* then print the data of node */
+  //printf("%d\n", node->data);
+    if(node->left != NULL){
+        v[node->left->data].pb({node->data , 1});
+        //printf("%d\n", node->left->data);
+    }
+    if(node->left != NULL)
+        v[node->data].pb(  {node->left->data, 1} );
+
+  /* now recur on right child */
+  printInorder(node->right);
+  if(node->right != NULL) {v[node->right->data].pb({node->data , 1});}
+  if(node->right != NULL) v[node->data].pb(  {node->right->data, 1} );
+
+}
+
+/* Driver program to test above functions */
+int main()
+{
+
+  int t, len, st , en, cho;
+
+    cin >> t;
+
+  while(t--){
+
+
+     cin >> len;
+
+
+    for(int i = 0; i < len; i++) cin >> ini[i];
+    for(int i = 0; i < len; i++) cin >> pree[i];
+
+    int in [len];
+    int pre [len];
+    preIndex = 0;
+
+    for(int i = 0; i < len; i++) in[i]  = ini[i];
+    for(int i = 0; i < len; i++) pre[i] = pree[i];
+
+    cin >> st >> cho >> en;
+    for(int i = 0; i < 1000 + 10; i++) {dist[i] = 1e9; v[i].clear();}
+    int sto = sizeof(in)/sizeof(in[0]);
+
+    struct node *root = buildTree(in, pre, 0, sto - 1);
+    printInorder(root);
+    digstra(cho);
+    if(dist[st] < dist[en]){
+        cout << "FIRST\n";
+    }else cout << "SECOND\n";
+
+  }
+
+}

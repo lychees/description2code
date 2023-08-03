@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+#define mp make_pair
+#define pi pair<int,int>
+using namespace std;
+vector<pi>T(1<<20);vector<int>L(1<<20,0);
+string s;
+pi Query(int l,int r,int ss ,int se,int ind)
+{
+	if(L[ind]!=0)
+	{
+		swap(T[ind].first,T[ind].second);
+		if(ss!=se)
+		{
+			L[2*ind]=1-L[2*ind];
+			L[2*ind+1]=1-L[2*ind+1];	
+		}
+		L[ind]=0;
+	}
+	if(ss>r||se<l)
+		return mp(0,0);
+	else if(ss>=l&&se<=r)
+		return T[ind];
+	else
+	{
+		int mid=ss+(se-ss)/2;
+		pi T1= Query(l,r,ss,mid,2*ind);
+		pi T2= Query(l,r,mid+1,se,2*ind+1);
+		return mp(T1.first+T2.first,T1.second+T2.second);
+	}
+	
+}
+void Update(int l,int r,int ss,int se,int ind)
+{
+	if(L[ind]!=0)
+	{
+		swap(T[ind].first,T[ind].second);
+		if(ss!=se)
+		{
+			L[2*ind]=1-L[2*ind];
+			L[2*ind+1]=1-L[2*ind+1];
+		}
+		L[ind]=0;
+	}
+	if(ss>r||se<l)
+		return;
+	else if(ss>=l&&se<=r)
+	{
+		swap(T[ind].first,T[ind].second);
+		if(ss!=se)
+		{
+			L[2*ind]=1-L[2*ind];
+			L[2*ind+1]=1-L[2*ind+1];
+		}
+		return;
+	}
+	else
+	{
+		int mid=ss+(se-ss)/2;
+		Update(l,r,ss,mid,2*ind);
+		Update(l,r,mid+1,se,2*ind+1);
+		T[ind]=mp(T[2*ind].first+T[2*ind+1].first,T[2*ind].second+T[2*ind+1].second);
+		return;
+	}
+}
+void Const(int ss,int se,int ind)
+{
+	if(ss==se)
+	{
+		if(s[ss]=='>')
+			T[ind]=mp(1,0);
+		else
+			T[ind]=mp(0,1);
+	}
+	else
+	{
+		int mid=ss+(se-ss)/2;
+		Const(ss,mid,2*ind);
+		Const(mid+1,se,2*ind+1);
+		T[ind]=mp(T[2*ind].first+T[2*ind+1].first,T[2*ind].second+T[2*ind+1].second);
+	}
+}
+int main()
+{
+    int n,m;
+    scanf("%d %d",&n,&m);
+    cin>>s;
+    Const(0,n-2,1);
+    int t,l,r;
+    /*for(int i=1;i<=9;i++)
+    cout<<T[i].first<<" "<<T[i].second<<endl;*/
+    while(m--)
+    {
+    	scanf("%d %d %d",&t,&l,&r);
+    	if(t==1)
+    	{
+    		Update(l-1,r-2,0,n-2,1);
+    		/*for(int i=1;i<=9;i++)
+    		cout<<T[i].first<<" "<<T[i].second<<endl;
+    		cout<<"%%%%%%%%%%"<<endl;*/
+    	}
+    	else
+    	{
+    		int l1=min(l,r),r1=max(l,r);
+    		l1-=1;r1-=2;
+    		pi Q=Query(l1,r1,0,n-2,1);
+    		if(l>r)
+    			cout<<Q.first<<endl;
+    		else
+    			cout<<Q.second<<endl;
+    	}
+    	
+    }
+}

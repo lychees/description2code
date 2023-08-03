@@ -1,0 +1,159 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+#define vi vector < int >
+#define pii pair < int , int >
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define foreach(it,v) for( __typeof((v).begin())it = (v).begin() ; it != (v).end() ; it++ )
+#define ll long long
+#define llu unsigned long long
+#define MOD 1000000007
+#define INF 0x3f3f3f3f
+#define dbg(x) { cout<< #x << ": " << (x) << endl; }
+#define dbg2(x,y) { cout<< #x << ": " << (x) << " , " << #y << ": " << (y) << endl; }
+#define all(x) x.begin(),x.end()
+#define mset(x,v) memset(x, v, sizeof(x))
+#define sz(x) (int)x.size()
+
+vi g[100005];
+
+struct node
+{
+    ll res,sum,lsum,rsum;
+    node()
+    {
+        res = sum = lsum = rsum = -INF;
+    }
+    node(ll _res,ll _sum,ll _lsum,ll _rsum)
+    {
+        res = _res, sum = _sum , lsum = _lsum , rsum = _rsum;
+    }
+    friend node operator+(const node& a,const node& b)
+    {
+    	if(a.res == -INF)
+        return b;
+	    if(b.res == -INF)
+	        return a;
+	    node ret;
+	    ret.sum = a.sum + b.sum;
+	    ret.lsum = max(a.lsum,a.sum + b.lsum);
+	    ret.rsum = max(a.rsum + b.sum,b.rsum);
+	    ret.res = max(max(a.res,b.res),a.rsum + b.lsum);
+	    return ret;
+    }
+};
+
+int val[100005];
+int dep[100005];
+int anc[100005][17];
+node best[100005][17];
+
+node merge(node a,node b)
+{
+    if(a.res == -INF)
+        return b;
+    if(b.res == -INF)
+        return a;
+    node ret;
+    ret.sum = a.sum + b.sum;
+    ret.lsum = max(a.lsum,a.sum + b.lsum);
+    ret.rsum = max(a.rsum + b.sum,b.rsum);
+    ret.res = max(max(a.res,b.res),a.rsum + b.lsum);
+    return ret;
+}
+
+void dfs(int u,int p)
+{
+    anc[u][0] = p;
+    best[u][0] = node(val[u],val[u],val[u],val[u]);
+    int i;
+    for(i=1;i<17;i++)
+    {
+        anc[u][i] = anc[anc[u][i-1]][i-1];
+        best[u][i] = best[u][i-1] + best[anc[u][i-1]][i-1];
+    }
+    for(i=0;i<sz(g[u]);i++)
+    {
+        int v = g[u][i];
+        if(v != p)
+        {
+            dep[v] = dep[u] + 1;
+            dfs(v,u);
+        }
+    }
+}
+
+int lca(int u,int v)
+{
+    if(dep[u] > dep[v])
+        swap(u,v);
+    int i;
+    for(i=16;i>=0;i--)
+    {
+        if(dep[anc[v][i]] >= dep[u])
+            v = anc[v][i];
+    }
+    for(i=16;i>=0;i--)
+    {
+        if(anc[u][i] == anc[v][i])
+            continue;
+        u = anc[u][i];
+        v = anc[v][i];
+    }
+    if(u == v)
+        return u;
+    return anc[u][0];
+}
+
+node go(int u,int v,int f)
+{
+    node ret;
+    int i;
+    for(i=16;i>=0;i--)
+    {
+        if(dep[v] > dep[u] - (1<<i))
+            continue;
+        ret = ret + best[u][i];
+        u = anc[u][i];
+    }
+    if(f)
+        swap(ret.lsum,ret.rsum);
+    return ret;
+}
+
+int main()
+{
+    int n,i;
+    scanf("%d",&n);
+    for(i=0;i<n-1;i++)
+    {
+        int u,v;
+        scanf("%d%d",&u,&v);
+        u--,v--;
+        g[u].pb(v);
+        g[v].pb(u);
+    }
+    for(i=0;i<n;i++)
+    {
+        scanf("%d",&val[i]);
+    }
+    dfs(0,0);
+    int q;
+    scanf("%d",&q);
+    while(q--)
+    {
+        int u,v;
+        scanf("%d%d",&u,&v);
+        u--,v--;
+        int l = lca(u,v);
+        node L = go(u,l,0);
+        node R = go(v,l,1);
+        node tmp = L + best[l][0] + R;
+        printf("%lld\n",tmp.res);
+    }
+    return 0;
+}

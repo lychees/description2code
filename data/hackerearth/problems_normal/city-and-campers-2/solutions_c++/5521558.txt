@@ -1,0 +1,97 @@
+//Reference taken from one of the submitted solutions
+#include<bits/stdc++.h>
+using namespace std;
+int arr[100005];
+int size[100005];
+int sizeA,sizeB,sizeC;
+
+map <int,int> m;
+int root(int i)
+{
+    while(i!=arr[i])
+    {
+        arr[i]=arr[arr[i]];
+        i=arr[i];
+    }
+    return i;
+}
+void union1(int a,int b)
+{
+    int rootA=root(a);
+    int rootB=root(b);
+    if(rootA!=rootB)
+    {
+        sizeA=size[rootA];
+        sizeB=size[rootB];
+        sizeC=size[rootA]+size[rootB];
+        if(size[rootA] < size[rootB])
+        {
+            arr[rootA]=arr[rootB];
+            size[rootB]+=size[rootA];
+        }
+        else
+        {
+            arr[rootB]=arr[rootA];
+            size[rootA]+=size[rootB];
+        }
+        m[sizeA]--;
+        if(m[sizeA]==0)
+            m.erase(sizeA);
+
+        m[sizeB]--;
+        if(m[sizeB]==0)
+            m.erase(sizeB);
+
+        if(m.find(sizeC)!=m.end())
+            m[sizeC]++;
+        else
+            m.insert(make_pair(sizeC,1));
+
+    }
+}
+int main()
+{
+    int n,q,a,b;
+    cin>>n>>q;
+    for(int i=1;i<=n;i++)
+    {
+        arr[i]=i;
+        size[i]=1;
+    }
+    m.insert(make_pair(1,n));
+    map<int,int>::iterator it;
+    while(q--)
+    {
+        cin>>a>>b;
+        long long min=INT_MAX;
+        long long diff=0;
+        union1(a,b);
+        if(m.size()==1)
+            cout<<0<<"\n";
+        else
+        {
+            it=m.begin();
+            if(it->second > 1)
+                cout<<0<<"\n";
+            else
+            {
+                diff=it->first;
+                ++it;
+                while(it!=m.end())
+                {
+                    if(it->second > 1)
+                    {
+                        min=0;
+                        break;
+                    }
+                    if(it->first - diff < min)
+                        min=it->first-diff;
+                    diff=it->first;
+                    ++it;
+                }
+                cout<<min<<endl;
+            }
+        }
+    }
+    return 0;
+}

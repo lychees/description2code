@@ -1,0 +1,172 @@
+//HackerEarth--DynamicArray
+#include<bits/stdc++.h>
+#define MAX 1000015
+
+using namespace std;
+
+struct node{
+	
+	int freq,gcd;
+	
+	node(){
+		
+		freq=0;
+		gcd=-1;
+		
+	}
+	
+	void makeLeaf(int queryType,int actualNumber){
+		
+		if(queryType==1){//addition in the array
+		
+		  //  cout<<"\nWe have added "<<actualNumber<<" successfully.";
+	      	gcd=actualNumber;
+			freq++;
+			
+		}
+		
+		else{
+			
+			//cout<<"\nWe have deleted "<<actualNumber<<" successfully.";
+			freq--;
+			freq=max(freq,0);
+			if(freq==0) gcd=-1;			
+			
+		}
+		
+		
+	}
+	
+	void merge(struct node &lhs,struct node &rhs){
+		
+		if(lhs.gcd!=-1&&rhs.gcd!=-1) this->gcd=__gcd(lhs.gcd,rhs.gcd);
+		else if(lhs.gcd==-1) this->gcd=rhs.gcd;
+		else if(rhs.gcd==-1) this->gcd=lhs.gcd;		
+		this->freq=lhs.freq+rhs.freq;
+		
+	}
+	
+};
+
+struct node Tree[4*MAX];
+int getSmallest(int ,int );
+int getGcd(int ,int ,int ,int ,int );
+void update(int,int,int ,int ,int ,int );
+
+
+int main(void){
+	
+	int queries,queryType,number,l,r,totalElements;
+	
+	totalElements=MAX-2;
+	
+	scanf("%d",&queries);
+	while(queries--){
+		
+		scanf("%d",&queryType);
+		
+		if(queryType==1||queryType==2){//add-->1 and delete-->2
+			
+			scanf("%d",&number);
+			update(0,0,totalElements-1,number,number,queryType);
+			
+		}
+				
+		else if(queryType==3){//kth smallest
+			
+			scanf("%d",&number);
+			int ans=getSmallest(totalElements,number);
+			printf("%d\n",ans);
+			
+		}
+		
+		else if(queryType==4){//getGcd
+			
+			scanf("%d%d",&l,&r);
+			int ans=getGcd(0,0,totalElements-1,l,r);
+			printf("%d\n",ans);
+			
+		}
+		
+		
+	}	
+	
+	return 0;
+	
+}    
+          
+void update(int idx,int assStart,int assEnd,int s,int e,int queryType){
+	
+	if(assStart>assEnd||assStart>e||s>assEnd)//out of range
+	  return;
+	
+//	cout<<"\nCurrent Start and end is - "<<assStart<<" and "<<assEnd;
+	
+	if(assStart>=s&&assEnd<=e){
+		
+//		cout<<"\nWe came here";
+		Tree[idx].makeLeaf(queryType,assStart);
+		return;
+		
+	}
+	
+	int mid=(assStart+assEnd)>>1;
+		
+	update(2*idx+1,assStart,mid,s,e,queryType);
+	update(2*idx+2,mid+1,assEnd,s,e,queryType);	
+	
+	Tree[idx].merge(Tree[2*idx+1],Tree[2*idx+2]);
+	
+}   
+    
+int getSmallest(int totalElements,int k){
+	
+	int assStart=0,assEnd=totalElements-1,mid,idx=0,offset=0;
+	
+	/*
+	Remider--Handle the query where you are asked to find the minimum element
+	when there is no element in the array
+	*/
+	
+	while(assStart!=assEnd){
+				
+		mid=(assStart+assEnd)>>1;		
+				
+	    if(Tree[2*idx+1].freq+offset>=k){//trying to go in left
+	    	
+	    	idx=2*idx+1;
+	    	assEnd=mid;
+	    	    	
+		}
+	    
+	    else{
+	    	
+	    	offset+=Tree[2*idx+1].freq;
+	    	idx=2*idx+2;
+	    	assStart=mid+1;
+	    	
+		}
+	    
+	}
+	
+	return assStart;//smallest element
+	
+}   
+    
+int getGcd(int idx,int assStart,int assEnd,int s,int e){
+	
+	if(assStart>assEnd||assStart>e||s>assEnd) return -1;
+	
+	if(assStart>=s&&assEnd<=e)
+	  return Tree[idx].gcd;
+	
+	int v1=1,v2=1,mid=(assStart+assEnd)>>1;
+	
+	v1=getGcd(2*idx+1,assStart,mid,s,e);
+	v2=getGcd(2*idx+2,mid+1,assEnd,s,e);
+	
+	if(v1!=-1&&v2!=-1) return __gcd(v1,v2);
+	if(v1==-1) return v2;
+	if(v2==-1) return v1;
+     
+}   

@@ -1,0 +1,209 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <ctype.h>
+#include <deque>
+#include <queue>
+#include <cstring>
+#include <set>
+#include <list>
+#include <map>
+#include <unordered_map>
+#include <stdio.h>
+#include <ctime>
+#include <cstdlib>
+
+using namespace std;
+
+typedef long long ll;
+typedef std::vector<int> vi;
+typedef std::vector<bool> vb;
+typedef std::vector<string> vs;
+typedef std::vector<double> vd;
+typedef std::vector<long long> vll;
+typedef std::vector<std::vector<int> > vvi;
+typedef std::vector<std::vector<bool> > vvb;
+typedef std::vector<std::pair<int, int> > vpi;
+typedef std::pair<int, int> pi;
+typedef std::pair<ll, ll> pll;
+typedef std::vector<pll> vpll;
+
+const long long mod = 1000000007;
+
+#define all(c) (c).begin(),(c).end()
+#define sz(c) (int)(c).size()
+#define forn(i, a, b) for(int i = a; i < b; i++)
+
+#define pb push_back
+#define mp make_pair
+
+struct item {
+    int prior, cnt, add;
+    ll key;
+    ll sum;
+    ll cum_sum;
+    item * l, * r;
+    item() : l(nullptr), r(nullptr), cnt(0), sum(0), cum_sum(0) { }
+    item (int key, int prior) : key(key), prior(prior), l(nullptr), r(nullptr), cnt(0), sum(0), cum_sum(0) { }
+};
+typedef item * pitem;
+
+int cnt (pitem t) {
+    return t ? t->cnt : 0;
+}
+
+ll sum (pitem t) {
+    return t ? t->sum : 0;
+}
+
+ll cum_sum (pitem t) {
+    return t ? t->cum_sum : 0;
+}
+
+void push (pitem it) {
+    if (it && it->add) {
+        if (it->l)  it->l->add = it->add;
+        if (it->r)  it->r->add = it->add;
+        it->add = 0;
+    }
+}
+
+void upd_cnt (pitem t) {
+    if (t)
+        t->cnt = 1 + cnt(t->l) + cnt (t->r);
+}
+
+void upd_sum (pitem t) {
+    if (t)
+        t->sum = t->key + sum(t->l) + sum(t->r);
+}
+
+void upd_cum_sum (pitem t) {
+    if (t) {
+        ll cntl = cnt(t->l);
+        t->cum_sum = (cntl+1) * (t->key + sum(t->r)) + cum_sum(t->l) + cum_sum(t->r);
+    }
+}
+
+void upd_all (pitem t) {
+    upd_cnt(t);
+    upd_sum(t);
+    upd_cum_sum(t);
+}
+
+void merge (pitem & t, pitem l, pitem r) {
+    if (!l || !r)
+        t = l ? l : r;
+    else if (l->prior > r->prior || (l->prior == r->prior && rand()%2))
+        merge (l->r, l->r, r),  t = l;
+    else
+        merge (r->l, l, r->l),  t = r;
+    upd_all (t);
+}
+
+void split (pitem t, pitem & l, pitem & r, ll key, int add = 0) {
+    if (!t)
+        return void( l = r = 0 );
+   // int cur_key = add + cnt(t->l);
+    if (key < t->key || (key==t->key && rand()%2))
+        split (t->l, l, t->l, key, add),  r = t;
+    else
+        split (t->r, t->r, r, key, add),  l = t;
+    upd_all (t);
+}
+
+void insert (pitem & t, pitem it) {
+    if (!t)
+        t = it;
+    else if (it->prior > t->prior || (it->prior == t->prior && rand()%2))
+        split (t, it->l, it->r, it->key),  t = it;
+    else {
+        if (it->key == t->key && rand() % 2) insert(t->l, it);
+        else insert (it->key < t->key ? t->l : t->r, it);
+    }
+    upd_all (t);
+}
+
+void erase (pitem & t, ll key) {
+    if (t->key == key)
+        merge (t, t->l, t->r);
+    else
+        erase (key < t->key ? t->l : t->r, key);
+    upd_all (t);
+}
+
+//pitem unite (pitem l, pitem r) {
+//    if (!l || !r)  return l ? l : r;
+//    if (l->prior < r->prior)  swap (l, r);
+//    pitem lt, rt;
+//    split (r, lt, rt, l->key);
+//    l->l = unite (l->l, lt);
+//    l->r = unite (l->r, rt);
+//    return l;
+//}
+
+//void add (pitem t, int l, int r) {
+//    pitem t1, t2, t3;
+//    split (t, t1, t2, l);
+//    split (t2, t2, t3, r-l+1);
+//    t2->rev ^= true;
+//    merge (t, t1, t2);
+//    merge (t, t, t3);
+//}
+
+pitem search (pitem t, ll key) {
+    if (t->key > key) return search(t->r, key);
+    else if (t->key < key) return search(t->l, key);
+    else return t;
+}
+
+int main()
+{
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "rt", stdin);
+    freopen("output.txt", "wt", stdout);
+#endif
+    int n,q;
+    scanf("%d %d", &n,&q);
+    vll p(n,0);
+    map<ll, int> num;
+    vector<item> items(n + q);
+    std::srand ( unsigned ( std::time(0) ) );
+    std::vector<int> prior;
+    for (int i=0; i<n; ++i) prior.push_back(i);
+    std::random_shuffle (all(prior));
+    forn(i,0,n) {
+        items[i].key = 0;
+        items[i].sum = 0;
+        items[i].prior = prior[i];
+    }
+    pitem root(nullptr);
+    forn(i,0,n) {
+        insert(root, &items[i]);
+    }
+    int cur = n;
+    num[0] = n;
+    ll add = 0;
+    forn(i,0,q) {
+        int a,b;
+        scanf("%d %d", &a, &b);
+        a--;
+        num[p[a]]--;
+        add += num[p[a]] * p[a];
+        pitem root2=root;
+        erase(root, p[a]);
+        p[a]-=b;
+        add -= num[p[a]] * p[a];
+        num[p[a]]++;
+        //items.emplace_back();
+        items[cur].prior = rand()%n;
+        items[cur].key=p[a];
+        insert(root, &items[cur]);
+        cur++;
+        printf("%lld\n", -cum_sum(root)-add);;
+    }
+    
+    
+}
+

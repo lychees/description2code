@@ -1,0 +1,79 @@
+#include <iostream>
+#include <cstdio>
+#include <memory.h>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+long long dp[17][1<<16], ways[17][1<<16];
+
+void add(long long &r, long long a) {
+	if (r == -1) r = a;
+	else r += a;
+}
+
+// long long ans[] = {0, 0, 1, 4, 34, 260, 2275, 21784, 228676, 2614296, 32372805, 431971100LL, 6182204006LL, 94495208444LL, 1536740258599LL, 26498747241680LL, 482990781797000LL, 9279452377499504LL};
+
+long long solve(int n) {
+	// return ans[n];
+	
+	if (n == 1) {
+		return 0;
+	}
+	
+	memset(dp, -1, sizeof(dp));
+	memset(ways, 0, sizeof(ways));
+	dp[0][0] = 0; ways[0][0] = 1;
+	for (int i = 0; i < n; ++i) {
+		for (int mask = 0; mask < (1<<n); ++mask) {
+			if (dp[i][mask] == -1) continue;
+			
+			int cnt = 0;
+			for (int j = 0; j < n; ++j) {
+				if (mask & (1<<j)) continue;
+				if (i != j) {
+					add(dp[i + 1][mask | (1<<j)], dp[i][mask] + cnt * ways[i][mask]);
+					add(ways[i + 1][mask | (1<<j)], ways[i][mask]);
+				}
+				++cnt;
+			}
+		}
+	}
+	return dp[n][(1<<n) - 1];
+}
+
+int stupid(int n) {
+	vector<int> p;
+	for (int i = 0; i < n; ++i)
+		p.push_back(i);
+		
+	int ans = 0;
+	do {
+		bool ok = true;
+		for (int i = 0; i < n; ++i)
+			if (p[i] == i) ok = false;
+		if (ok) {
+			for (int j = 0; j < n; ++j) {
+				for (int i = j + 1; i < n; ++i)
+					ans += p[j] > p[i];
+			}
+		}
+	} while (next_permutation(p.begin(), p.end()));
+	
+	return ans;
+}
+
+int main() {
+	//for (int i = 1; i <= 9; ++i)
+	//	cout << solve(i) << "	" << stupid(i) << endl;
+	//cout << solve(16) << endl;
+   	int T;
+   	scanf("%d", &T);
+   	while (T--) {
+   		int n;
+   		scanf("%d", &n);
+   		printf("%lld\n", solve(n));
+   	}
+    return 0;
+}

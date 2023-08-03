@@ -1,0 +1,92 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int n;
+
+vector<long long> dijkstra(vector<pair<int, long long> > gr[], int src) {
+	long long INF = numeric_limits<long long>::max();
+	vector<long long> dis(n + 1, INF);
+	set< pair<long long, int> > pq;
+
+	pq.insert(pair<long long, int>(0LL, src));
+	dis[src] = 0LL;
+
+	while (!pq.empty()) {
+		pair<long long, int> curr = *(pq.begin());
+		int at = curr.second;
+		long long base = curr.first;
+		
+		pq.erase(pq.begin());
+
+		dis[at] = base;
+		
+		int adj = gr[at].size();
+
+		for (int i = 0; i < adj; i ++) {
+			int nex = gr[at][i].first;
+			long long wt = gr[at][i].second;
+			
+			if (dis[nex] > dis[at] + wt) {
+				if (dis[nex] != INF)
+					pq.erase(pq.find(pair<long long, int>(dis[nex], nex) ) );
+
+				dis[nex] = dis[at] + wt;
+				pq.insert(pair<long long, int>(dis[nex], nex) );
+			}
+
+		}
+	}
+	return dis;
+}
+int main() {
+	scanf("%d", &n);
+
+	long long x;
+	vector<pair<int, long long> > road[1400];
+	vector<pair<int, long long> > rail[1400];
+	vector<pair<int, long long> > rev_road[1400];
+	vector<pair<int, long long> > rev_rail[1400];
+	for (int i = 1; i <= n; i ++) {
+		for (int j = 1; j <= n; j ++) {
+			scanf("%lld", &x);
+			road[i].push_back(pair<int, long long>(j, x));
+			rev_road[j].push_back(pair<int, long long>(i, x));
+		}
+	}
+
+	for (int i = 1; i <= n; i ++) {
+		for (int j = 1; j <= n; j ++) {
+			scanf("%lld", &x);
+			if (i == j)
+				continue;
+			rail[i].push_back(pair<int, long long>(j, x));
+			rev_rail[j].push_back(pair<int, long long>(i, x));
+		}
+	}
+
+	int u, v;
+	scanf("%d%d", &u, &v);
+	vector<long long> rd = dijkstra(road, u);
+	vector<long long> rev_rl = dijkstra(rev_rail, v);
+	vector<long long> rl = dijkstra(rail, u);
+	vector<long long> rev_rd = dijkstra(rev_road, v);
+
+
+	/*for (int i = 1; i <= n; i ++)
+		printf("%lld ", rd[i]);
+	printf("\n");
+	for (int i = 1; i <= n; i ++)
+		printf("%lld ", rev_rl[i]);
+	printf("\n");*/
+
+
+	long long ans = numeric_limits<long long>::max();
+	for (int i = 1; i <= n; i ++) {
+		if (i == u || i == v)
+			continue;
+		ans = min (ans, rd[i] + rev_rl[i]);
+		ans = min (ans, rl[i] + rev_rd[i]);
+	}
+	printf("%lld\n", ans);
+	return 0;
+}

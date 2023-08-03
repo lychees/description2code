@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define M 100007
+typedef long long ll;
+
+struct node {
+	ll leftVal;
+	int leftSize;
+	ll rightVal;
+	int rightSize;
+	int Lidx, Ridx;
+	int size;
+};
+
+typedef node T;
+ll v[M];
+node st[3 * M];
+
+T startingValue(int i) {
+	node res;
+	res.leftVal = res.rightVal = v[i];
+	res.leftSize = res.rightSize = 1;
+	res.Lidx = res.Ridx = i;
+	res.size = 1;
+	return res;
+}
+
+T merge(T a, T b) {
+	node res;
+	if (a.leftVal == INT_MAX)
+		return b;
+	else if (b.leftVal == INT_MAX)
+		return a;
+
+	res.size = max(a.size, b.size);
+	if (a.rightVal < b.leftVal)
+		res.size = max(res.size, a.rightSize + b.leftSize);
+
+	res.leftVal = a.leftVal;        res.rightVal = b.rightVal;
+	res.leftSize = a.leftSize;      res.rightSize = b.rightSize;
+	res.Lidx = a.Lidx;              res.Ridx = b.Ridx;
+
+	if (a.leftSize == a.Ridx - a.Lidx + 1 && a.rightVal < b.leftVal)
+		res.leftSize += b.leftSize;
+	if (b.rightSize == b.Ridx - b.Lidx + 1 && a.rightVal < b.leftVal)
+		res.rightSize += a.rightSize;
+
+	return res;
+}
+
+T noChangeObject() {
+	node res;
+	res.leftVal = INT_MAX;
+	return res;
+}
+
+void build(int idx, int lo, int hi) {
+	if (lo == hi) {
+		st[idx] = startingValue(lo);
+	}
+	else {
+		int mid = (lo + hi) / 2;
+		build(2 * idx, lo, mid);
+		build(2 * idx + 1, mid + 1, hi);
+		st[idx] = merge(st[2 * idx], st[2 * idx + 1]);
+	}
+}
+
+//  change return type accordingly
+T query(int idx, int lo, int hi, int i, int j) {
+	if (i > hi || j < lo)
+		return noChangeObject();
+	if (lo >= i && hi <= j)
+		return st[idx];
+	int mid = (lo + hi) / 2;
+	return merge(query(2 * idx, lo, mid, i, j), query(2 * idx + 1, mid + 1, hi, i, j));
+}
+
+void update(int idx, int lo, int hi, int i) {
+	if (i < lo || i > hi)
+		return;
+	if (lo == hi) {
+		st[idx] = startingValue(i);
+		return;
+	}
+
+	int mid = (lo + hi) / 2;
+	update(2 * idx, lo, mid, i);
+	update(2 * idx + 1, mid + 1, hi, i);
+
+	st[idx] = merge(st[2 * idx], st[2 * idx + 1]);
+}
+
+int main() {
+	int T, N, Q, a, b, type;
+	scanf("%d", &T);
+
+	while (T--) {
+		scanf("%d %d", &N, &Q);
+		for (int i = 0; i < N; i++)
+			scanf("%lld", &v[i]);
+
+		build(1, 0, N - 1);
+		while (Q--) {
+			scanf("%d %d %d", &type, &a, &b);
+			if (type) {
+				a--;
+				v[a] += b;
+				update(1, 0, N - 1, a);
+			}
+			else {
+				a--;    b--;
+				node res = query(1, 0, N - 1, a, b);
+				printf("%d\n", res.size);
+			}
+		}
+	}
+}

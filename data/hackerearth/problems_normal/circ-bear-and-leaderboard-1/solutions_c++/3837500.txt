@@ -1,0 +1,60 @@
+#include<iostream>
+#include<algorithm>
+#include<string.h>
+#include<map>
+#include<set>
+#define MAXM 500000
+using namespace std;
+
+long long fen[2][MAXM+10];
+long long cur[MAXM+10],query[MAXM+10][2];
+map< long long,long long >mp;
+set< long long >s;
+set< long long >::iterator it;
+
+void update(long long idx,long long val,long long col) {
+    for(;idx<=MAXM;idx+=idx&-idx) fen[col][idx]+=val;
+}
+
+long long get_sum(long long idx,long long col) {
+    long long sum=0;
+    for(;idx>0;idx-=idx&-idx) sum+=fen[col][idx];
+    return sum;
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    long long i,j,n,m,temp,q,idx,val,cur_pos,look=1;
+    unsigned long long ans=0;
+    cin>>n>>q;
+    memset(fen,0,sizeof(fen)); memset(cur,0,sizeof(cur));
+    for(i=1;i<=q;i++) {
+        cin>>idx>>val;
+        query[i][0]=idx; query[i][1]=val;
+        cur[idx]+=val; s.insert(cur[idx]);
+    }
+    for(it=s.begin();it!=s.end();it++) {
+        mp[*it]=look++;
+//        cout<<*it<<" "<<look<<"\n";
+    }
+//    cout<<"\n";
+    memset(cur,0,sizeof(cur));
+    for(i=1;i<=q;i++) {
+        idx=query[i][0]; val=query[i][1];
+        if(cur[idx]>0) {
+	        cur_pos=get_sum(MAXM+1,0)-get_sum(mp[cur[idx]],0);
+	        ans-=(cur[idx]*(cur_pos+1));
+	        update(mp[cur[idx]],-1,0); update(mp[cur[idx]],-cur[idx],1);
+        }
+        ans+=(get_sum(mp[cur[idx]+val]-1,1)-get_sum(mp[cur[idx]]-1,1));
+        cur[idx]+=val;
+        update(mp[cur[idx]],1,0); update(mp[cur[idx]],cur[idx],1);
+        cur_pos=get_sum(MAXM+1,0)-get_sum(mp[cur[idx]],0);
+        ans+=((cur_pos+1)*cur[idx]);
+//        cout<<ans<<" ";
+//        ans+=get_sum(mp[cur[idx]]-1,1);
+        cout<<ans<<"\n";
+    }
+    return 0;
+}

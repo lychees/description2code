@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+const int MAX = 1e5 + 5;
+int n;
+long long tree1[MAX], tree2[MAX], A[MAX];
+
+long long read(long long* tree, int idx)
+{
+    long long sum = 0;
+    while(idx > 0)
+    {
+        sum += tree[idx];
+        idx -= (idx & -idx);
+    }
+    return sum;
+}
+
+void update(long long* tree, int idx, long long val)
+{
+    while(idx <= n)
+    {
+        tree[idx] += val;
+        idx += (idx & -idx);
+    }
+}
+
+int main()
+{
+    int q, k, l, r;
+    int c;
+    long long s;
+    scanf("%d %d", &n, &q);
+    for(int i = 1;i <= n;++i)
+        scanf("%lld", &A[i]);
+    for(int i = 1;i <= n;++i)
+    {
+        update(tree1, i, A[i]);
+        update(tree2, i, A[i]*i);
+    }
+    while(q--)
+    {
+        scanf("%d", &c);
+        if(c == 1)
+        {
+            scanf("%d %d %d", &k, &l, &r);
+            if(k < l)
+            {
+                s = read(tree2, r) - read(tree2, l-1);
+                s -= k*(read(tree1, r) - read(tree1, l-1));
+            }
+            else if(k > r)
+            {
+                s = k*(read(tree1, r) - read(tree1, l-1));
+                s -= (read(tree2, r) - read(tree2, l-1));
+            }
+            else
+            {
+                s = read(tree2, r) - read(tree2, k);
+                s -= k*(read(tree1, r) - read(tree1, k));
+                s += k*(read(tree1, k-1) - read(tree1, l-1));
+                s -= (read(tree2, k-1) - read(tree2, l-1));
+            }
+            printf("%lld\n", s);
+        }
+        else
+        {
+            scanf("%d %lld", &k, &s);
+            update(tree1, k, s);
+            update(tree2, k, s*k);
+        }
+    }
+    return 0;
+}

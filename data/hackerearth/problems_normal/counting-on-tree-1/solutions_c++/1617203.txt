@@ -1,0 +1,82 @@
+
+
+    #include <bits/stdc++.h>
+    #define bs 1000000007
+    using namespace std;
+    int tests,n,k,a,b;
+    vector<int> g[1<<20];
+    int cost[1<<20];
+    int dp[55000][101];
+    int answ;
+    int used[55000];
+    long tdp[55000];
+    int subsize[55000];
+    int tsz[55000];
+    void dfs(int v)
+    {
+    used[v]=1;
+    subsize[v]=cost[v];
+    tsz[v]=cost[v];
+    vector<int> sons;
+    for (int i=0;i<g[v].size();i++)
+    {
+    int to=g[v][i];
+    if (used[to])continue;
+    dfs(to);
+    sons.push_back(to);
+    tsz[v]+=tsz[to];
+    }
+    for (int i=0;i<=tsz[v]&&i<=k;i++)
+    dp[v][i]=0;
+    dp[v][cost[v]]=1;
+    for (int ii=0;ii<sons.size();ii++)
+    {
+    int id=sons[ii];
+    for (int i=0;i<=k&&i<=subsize[v]+subsize[id];i++)
+    tdp[i]=0;
+    for (int i=0;i<=k&&i<=subsize[v];i++)
+    tdp[i]=dp[v][i];
+//    static const long MAX = 8e18;
+    for (int i=0;i<=k&&i<=subsize[v];i++)
+    for (int j=0;j<=k-i&&j<=subsize[id];j++)
+    {
+    tdp[i+j]=tdp[i+j]+1ll*dp[v][i]*dp[id][j];
+    if (tdp[i+j]>8e18)
+    tdp[i+j]%=bs;
+    }
+    for (int i=0;i<=subsize[v]+subsize[id]&&i<=k;i++)
+    dp[v][i]=tdp[i]%bs;
+    subsize[v]+=subsize[id];
+    }
+    }
+    int main(){
+    ios_base::sync_with_stdio(0);
+    //cin.tie(0);
+    scanf("%d",&tests);
+    for (;tests;--tests)
+    {
+    scanf("%d %d",&n,&k);
+    for (int i=1;i<=n;i++)
+    used[i]=0;
+    for (int i=1;i<=n;i++)
+    {
+    scanf("%d",&cost[i]);
+    }
+    for (int i=1;i<=n;i++)
+    g[i].clear();
+    for (int i=1;i<n;i++)
+    {
+    scanf("%d %d",&a,&b);
+    g[a].push_back(b);
+    g[b].push_back(a);
+    }
+    dfs(1);
+    answ=0;
+    for (int i=1;i<=n;i++)
+    if (tsz[i]>=k)
+    answ=(answ+dp[i][k])%bs;
+    cout<<answ<<endl;
+    }
+    cin.get();cin.get();
+    return 0;}
+

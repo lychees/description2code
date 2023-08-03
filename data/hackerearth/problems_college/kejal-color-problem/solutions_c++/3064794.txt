@@ -1,0 +1,96 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef unsigned long long ull;
+typedef long double ld;
+typedef pair<int,int> pr;
+const double pi=acos(-1);
+#define rep(i,a,n) for(int i=a;i<=n;i++)
+#define per(i,n,a) for(int i=n;i>=a;i--)
+#define Rep(i,u) for(int i=head[u];i;i=Next[i])
+#define clr(a) memset(a,0,sizeof a)
+#define pb push_back
+#define mp make_pair
+#define fi first
+#define sc second
+ld eps=1e-9;
+ll pp=1000000007;
+ll mo(ll a,ll pp){if(a>=0 && a<pp)return a;a%=pp;if(a<0)a+=pp;return a;}
+ll powmod(ll a,ll b,ll pp){ll ans=1;for(;b;b>>=1,a=mo(a*a,pp))if(b&1)ans=mo(ans*a,pp);return ans;}
+ll read(){
+	ll ans=0;
+	char last=' ',ch=getchar();
+	while(ch<'0' || ch>'9')last=ch,ch=getchar();
+	while(ch>='0' && ch<='9')ans=ans*10+ch-'0',ch=getchar();
+	if(last=='-')ans=-ans;
+	return ans;
+}
+//head
+#define N 110000
+int col[N],n,f[N];
+ll s[N],s0[N],s1[N],s2[N],c[N];
+vector<int>q[N];
+int lowbit(int x){return x&(-x);}
+ll Sum(int x){
+	ll ans=0;
+	for(;x;x-=lowbit(x))ans+=c[x];
+	return ans;
+}
+void add(int x,int w){
+	c[0]+=w;
+	for(;x<=n;x+=lowbit(x))c[x]+=w;
+}
+ll Calc(ll x){
+	return x*(x-1)/2%pp;
+}
+int main(){
+	n=read();
+	rep(i,1,n)col[i]=read(),s[col[i]]++;
+	ll ans=0,tot=0;
+	rep(i,1,100000){
+		ll t=1LL*s[i]*(s[i]-1)/2%pp;
+		ans=(ans+tot*t)%pp;
+		tot=(tot+t)%pp;
+	}
+	memset(s,0,sizeof s);
+	rep(i,1,n)f[i]=(f[i-1]+s[col[i]])%pp,s[col[i]]++;
+	memset(s0,0,sizeof s0);
+	per(i,n,1){
+		ans=mo(ans-1LL*mo(f[i-1]-Calc(s[col[i]]-s0[col[i]]-1),pp)*s0[col[i]],pp);
+		s0[col[i]]++;
+	}
+	int lim=(int)(sqrt(n)/2+1);
+	rep(i,1,100000)
+		if(s[i]>lim){
+			ll z=s[i],tot=0;;
+			memset(s0,0,sizeof s0);
+			memset(s1,0,sizeof s1);
+			memset(s2,0,sizeof s2);
+			ll t=0;
+			rep(j,1,n)
+				if(col[j]==i)++t;
+				else
+				if(s[col[j]]<=lim || col[j]>i){
+					ll t0=s0[col[j]],t1=s1[col[j]],t2=s2[col[j]];
+					tot=mo(tot+t2+t*t%pp*t0-4*t1*t-t*t0+t1+2*t1*z,pp);
+					s0[col[j]]++;
+					s1[col[j]]=(s1[col[j]]+t)%pp;
+					s2[col[j]]=(s2[col[j]]+t*t)%pp;
+				}
+			tot=tot*powmod(2,pp-2,pp)%pp;
+			ans=mo(ans-tot,pp);
+		}
+	tot=0;
+	rep(i,1,n)
+		if(s[col[i]]<=lim){
+			int len=q[col[i]].size()-1;
+			rep(j,0,len)
+				tot=mo(tot+c[0]-Sum(q[col[i]][j])-Calc(len-j),pp);
+			rep(j,0,len)
+				add(q[col[i]][j],1);
+			q[col[i]].pb(i);
+		}
+	ans=mo(ans-tot,pp);
+	cout<<ans<<endl;
+	return 0;
+} 

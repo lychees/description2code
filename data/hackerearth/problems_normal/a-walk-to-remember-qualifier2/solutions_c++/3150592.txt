@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+const int max_n = 1e5 + 10;
+
+bool visited[max_n], onstack[max_n];
+
+ll n, m, a, b, ans[max_n], lev[max_n], node_lev=0;
+
+vector<ll> vtr[max_n];
+
+stack<ll> stk;
+
+ll dfs(ll node)
+{
+	ll i, siz, child, stk_top, cnt, child_low;
+	
+	visited[node]= true;
+	
+	stk.push(node);
+	
+	onstack[node]= true;
+	lev[node]= ++node_lev;
+	
+	child_low= lev[node];
+	
+	siz = vtr[node].size();
+	
+	for(i=0;i<siz;++i)
+	{
+		child = vtr[node][i];
+		
+		if(!visited[child])
+		{
+			child_low= min(child_low, dfs(child));
+		}
+		else if(onstack[child])
+		{
+			child_low= min(child_low, lev[child]);
+		}
+	}
+	
+	//cout<<"node= "<<node<<"     lev= "<<lev[node]<<"     ch_low= "<<child_low<<endl;
+	
+	if(child_low==lev[node])
+	{
+		cnt= 0;
+		
+		while(true)
+		{
+			++cnt;
+			
+			stk_top= stk.top();
+			
+			ans[stk_top]= 1;
+			
+			onstack[stk_top]= false;
+			
+			stk.pop();
+			
+			if(stk_top==node)
+			break;
+		}
+		
+		if(cnt==1)
+		ans[stk_top]=0;
+	}
+	
+	return min(child_low, lev[node]);
+}
+
+int main()
+{
+	ll i, j;
+	
+	cin>>n>>m;
+	
+	for(i=1;i<=m;++i)
+	{
+		cin>>a>>b;
+		
+		if(a!=b)
+		{
+			vtr[a].push_back(b);
+		}
+	}
+	
+	for(i=1;i<=n;++i)
+	{
+		if(!visited[i])
+		{
+			dfs(i);
+		}
+	
+		cout<<ans[i]<<" ";
+	}
+	
+    return 0;
+}

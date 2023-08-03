@@ -1,0 +1,117 @@
+#include <bits/stdc++.h>
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <string>
+#include <cstring>
+#include <sstream>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+
+#define rep(i,n) for(int i=0;i<(int)(n);++i)
+#define iter(a) __typeof(a.begin())
+#define FOR(it,a) for(iter(a)it=a.begin();it!=a.end();++it)
+#define F first
+#define S second
+#define SZ(a) (int)((a).size())
+#define sz(a) SZ(a)
+#define pb(a) push_back(a)
+#define mp(a,b) make_pair(a,b)
+#define ALL(a) (a).begin(),(a).end()
+using namespace std;
+
+typedef long long ll;
+typedef pair<int,int> PI;
+typedef unsigned long long ull;
+
+#define PR(...) do{cerr << "line : " << __LINE__ << endl; pr(#__VA_ARGS__, __VA_ARGS__);}while(0);
+template<class T>
+void pr(const string& name, T t){
+  cerr << name << ": " << t << endl;
+}
+
+template<typename T, typename ... Types>
+void pr(const string& names, T t, Types ... rest) {
+  auto comma_pos = names.find(',');
+  cerr << names.substr(0, comma_pos) << ": " << t << ", ";
+  auto next_name_pos = names.find_first_not_of(" \t\n", comma_pos + 1);
+  pr(string(names, next_name_pos), rest ...);
+}
+
+template<class T,class U> ostream& operator<< (ostream& o, const pair<T,U>& v){return o << "(" << v.F << ", " << v.S << ")";}
+template<class T> ostream& operator<< (ostream& o, const vector<T>& v){o << "{";rep(i,SZ(v)) o << (i?", ":"") << v[i];return o << "}";}
+template<class T> string to_s(const T& v){ostringstream is;is << v;return is.str();}
+//                 <  ^  >  V
+const int dx[] = { 0,-1, 0, 1};
+const int dy[] = {-1, 0, 1, 0};
+#define endl '\n'
+
+ll memo[120];
+const int mod = 1e9 + 7;
+
+ll modpow(ll p, ll n, ll mod){
+  ll ret = 1;
+  p %= mod;
+  while(n){
+    if(n&1) ret = (ret*p)%mod;
+    p = p*p % mod;
+    n >>= 1;
+  }
+  return ret;
+}
+
+ll iceil(int n,int p){
+  if(n%p) return n/p+1;
+  return n/p;
+}
+
+ll rec(int n){
+  if(n < 3) return 1;
+  if(n <= 10){
+    ll ret = 1;
+    // 2,3,5,7
+    for(auto p : {3,5,7}){
+      if(p <= n) ret *= p;
+    }
+    return ret;
+  }
+  if(memo[n] >= 0) return memo[n];
+  ll& ret = memo[n] = 1;
+  ret *= modpow(2,iceil(n,4),mod);
+  ret *= rec(iceil(n,5));
+  ret %= mod;
+  ret *= rec(iceil(n,10));
+  return ret %= mod;
+}
+
+
+void solve(){
+  int n;
+  cin >> n;
+  n = rec(n);
+  ll ans = 0;
+  //PR(n);
+  for(ll x = 0; x <= 5; ++x){
+    for(ll y = 0; y <= 5; ++y){
+      if(__gcd(n*x,n*y) != n) continue;
+      ans = max(ans, modpow(x*n,y*n,mod));
+    }
+  }
+  cout << ans << endl;
+}
+
+int main(int argc, char *argv[])
+{
+  memset(memo,-1,sizeof(memo));  
+  int t;
+  cin >> t;
+  rep(i, t) solve();
+  return 0;
+
+  for(int i = 0; i <= 30; ++i)
+    PR(i, rec(i));
+  return 0;
+}

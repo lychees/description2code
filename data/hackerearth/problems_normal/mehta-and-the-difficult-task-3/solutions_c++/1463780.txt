@@ -1,0 +1,69 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+using namespace std;
+
+#define MOD 1000000007
+
+int main()
+{
+    long long dp[105][2][2][2][2] = {};
+    for (int i = 0; i <= 9; i++) {
+        switch(i) {
+            case 2: dp[0][1][0][0][0] = 1; break;
+            case 3: dp[0][0][1][0][0] = 1; break;
+            case 5: dp[0][0][0][1][0] = 1; break;
+            case 7: dp[0][0][0][0][1] = 1; break;
+            default: dp[0][0][0][0][0] += 1; break;
+        }
+    }
+    for (int i = 1; i <= 64; i++)
+        for (int k2 = 0; k2 <= 1; k2++)
+            for (int k3 = 0; k3 <= 1; k3++)
+                for (int k5 = 0; k5 <= 1; k5++)
+                    for (int k7 = 0; k7 <= 1; k7++)
+                        for (int p2 = 0; p2 <= 1; p2++)
+                            for (int p3 = 0; p3 <= 1; p3++)
+                                for (int p5 = 0; p5 <= 1; p5++)
+                                    for (int p7 = 0; p7 <= 1; p7++) {
+                                        dp[i][(k2+p2) % 2][(k3+p3) % 2][(k5+p5) % 2][(k7+p7) % 2] += (dp[i-1][k2][k3][k5][k7] * dp[i-1][p2][p3][p5][p7]) % MOD;
+                                        dp[i][(k2+p2) % 2][(k3+p3) % 2][(k5+p5) % 2][(k7+p7) % 2] %= MOD;
+                                    }
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        long long ways[2][2][2][2][2] = {};
+        long long n;
+        int tp, thp, fp, sp;
+        scanf("%lld%d%d%d%d", &n, &tp, &thp, &fp, &sp);
+        int prev = 0, current = 1;
+        bool flag = 1;
+        for (int i = 63; i >= 0; i--) {
+            if (n & (1LL << i)) {
+                memset(ways[current], 0, sizeof(ways[current]));
+                if (flag) {
+                    for (int k2 = 0; k2 <= 1; k2++)
+                            for (int k3 = 0; k3 <= 1; k3++)
+                                for (int k5 = 0; k5 <= 1; k5++)
+                                    for (int k7 = 0; k7 <= 1; k7++)
+                                        ways[current][k2][k3][k5][k7] = dp[i][k2][k3][k5][k7];
+                    flag = 0;
+                } else {
+                        for (int k2 = 0; k2 <= 1; k2++)
+                            for (int k3 = 0; k3 <= 1; k3++)
+                                for (int k5 = 0; k5 <= 1; k5++)
+                                    for (int k7 = 0; k7 <= 1; k7++)
+                                        for (int p2 = 0; p2 <= 1; p2++)
+                                            for (int p3 = 0; p3 <= 1; p3++)
+                                                for (int p5 = 0; p5 <= 1; p5++)
+                                                    for (int p7 = 0; p7 <= 1; p7++) {
+                                                        ways[current][(k2+p2) % 2][(k3+p3) % 2][(k5+p5) % 2][(k7+p7) % 2] += (ways[prev][k2][k3][k5][k7] * dp[i][p2][p3][p5][p7]) % MOD;
+                                                        ways[current][(k2+p2) % 2][(k3+p3) % 2][(k5+p5) % 2][(k7+p7) % 2] %= MOD;
+                                                    }
+                }
+                swap(prev, current);
+            }
+        }
+        printf("%lld\n", ways[prev][tp][thp][fp][sp]);
+    }
+}

@@ -1,0 +1,215 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,a,b) for (int i=a;i<=b;i++)
+#define per(i,a,b) for (int i=a;i>=b;i--)
+#define reps(i,a,b,s) for (int i=a; i<=b; i+=s)
+#define pers(i,a,b,s) for (int i=a; i>=b; i-=s)
+#define all(x) (x).begin(),(x).end()
+#define sz(x) ((int)(x).size())
+#define F first
+#define S second
+#define gc getchar
+#define mp make_pair
+#define pb push_back
+#define in(a,b) ((b).find(a) != (b).end())
+#define fore(v, c) for(auto&& (v): (c))
+#define gcd __gcd
+#define bcnt __builtin_popcount
+#define fix std::fixed
+#define spr(x) std::setprecision(x)
+#define prd(x) fix<<spr(10)<<(x)
+#define mt make_tuple
+#define eb emplace_back
+#define rdup(a) (a).erase(unique((a).begin(),(a).end()),(a).end())
+#define idx(a,v) (lower_bound(all(a),v) - a.begin())
+
+typedef vector<int> vi;
+typedef long long ll;
+typedef unsigned int ui;
+typedef pair<int,int> pii;
+typedef long double ld;
+typedef unsigned long long ull;
+typedef vector<string> vs;
+typedef vector<pii> vpii;
+
+template<typename T1, typename T2>
+std::ostream &operator <<(std::ostream &os, const std::pair<T1,T2> &v) {
+  os<<"("<<v.first<<","<<v.second<<")";
+  return os;
+}
+
+template<typename T>
+std::ostream &operator <<(std::ostream &os, const std::vector<T> &v) {
+  fore(x,v) {
+    os<<x<<",";
+  }
+  return os;
+}
+
+#ifdef loc
+  #define tra1(x)           cerr<<__FUNCTION__<<":"<<__LINE__<<": "#x" = "<<x<<endl
+  #define tra2(x,y)         cerr<<__FUNCTION__<<":"<<__LINE__<<": "#x" = "<<x<<" | "#y" = "<<y<<endl
+  #define tra3(x,y,z)       cerr<<__FUNCTION__<<":"<<__LINE__<<": "#x" = "<<x<<" | "#y" = "<<y<<" | "#z" = "<<z<<endl
+  #define tra4(a,b,c,d)     cerr<<__FUNCTION__<<":"<<__LINE__<<": "#a" = "<<a<<" | "#b" = "<<b<<" | "#c" = "<<c<<" | "#d" = "<<d<<endl
+  #define tra5(a,b,c,d,e)   cerr<<__FUNCTION__<<":"<<__LINE__<<": "#a" = "<<a<<" | "#b" = "<<b<<" | "#c" = "<<c<<" | "#d" = "<<d<<" | "#e" = "<<e<<endl
+  #define tra6(a,b,c,d,e,f) cerr<<__FUNCTION__<<":"<<__LINE__<<": "#a" = "<<a<<" | "#b" = "<<b<<" | "#c" = "<<c<<" | "#d" = "<<d<<" | "#e" = "<<e<<" | "#f" = "<<f<<endl
+  #define traa(x,a,b)       cerr<<__FUNCTION__<<":"<<__LINE__<<": "#x" = "; rep(i,a,b) cerr<<x[i]<<","; cerr<<endl;
+#else
+  #define tra1(x)
+  #define tra2(x,y)
+  #define tra3(x,y,z)
+  #define tra4(a,b,c,d)
+  #define tra5(a,b,c,d,e)
+  #define tra6(a,b,c,d,e,f)
+  #define traa(x,a,b)
+  #define endl '\n'
+#endif
+
+const ll mod=1000000007;
+const ld pi = 3.14159265358979323846264338327950288419716939937510;
+ll po(ll a,ll b) {ll res=1%mod;a%=mod;for(;b;b>>=1){if(b&(1LL))res=res*a%mod;a=a*a%mod;}return res;}
+const ld eps = 1e-10;
+const int oo = 1000000009;
+const ll ooo = 2e18+5;
+
+
+ll sl(){ 
+  int c =gc();
+  while((c<'0' || c>'9') && c!='-') {
+    c = gc();
+  }
+  bool sign = 0;
+  if(c=='-') {
+    sign = 1;
+    c = gc();
+  }
+  ll ret = 0;
+  while(c>='0' && c<='9') {
+    ret = 10 * ret + c - 48;
+    c = gc();
+  }
+  if(sign) return -ret;
+  return ret;
+}
+
+int ss(char *s) {
+  int n = 0;
+  int c = gc();
+  while(!((c>='a' && c<='z') || (c>='A' && c<='Z'))) c = gc();
+  while(((c>='a' && c<='z') || (c>='A' && c<='Z'))) {
+    s[n] = (char)(c);
+    n++;
+    c = gc();
+  }
+  return n;
+}
+
+typedef vector<int> VI;
+typedef vector<VI> VVI;
+typedef long long L;
+typedef vector<L> VL;
+typedef vector<VL> VVL;
+typedef pair<int, int> PII;
+typedef vector<PII> VPII;
+
+const L INF = numeric_limits<L>::max() / 4;
+
+struct MinCostMaxFlow {
+  int N;
+  VVL cap, flow, cost;
+  VI found;
+  VL dist, pi, width;
+  VPII dad;
+
+  MinCostMaxFlow(int N) : 
+    N(N), cap(N, VL(N)), flow(N, VL(N)), cost(N, VL(N)), 
+    found(N), dist(N), pi(N), width(N), dad(N) {}
+  
+  void AddEdge(int from, int to, L cap, L cost) {
+    this->cap[from][to] = cap;
+    this->cost[from][to] = cost;
+  }
+  
+  void Relax(int s, int k, L cap, L cost, int dir) {
+    L val = dist[s] + pi[s] - pi[k] + cost;
+    if (cap && val < dist[k]) {
+      dist[k] = val;
+      dad[k] = make_pair(s, dir);
+      width[k] = min(cap, width[s]);
+    }
+  }
+
+  L Dijkstra(int s, int t) {
+    fill(found.begin(), found.end(), false);
+    fill(dist.begin(), dist.end(), INF);
+    fill(width.begin(), width.end(), 0);
+    dist[s] = 0;
+    width[s] = INF;
+    
+    while (s != -1) {
+      int best = -1;
+      found[s] = true;
+      for (int k = 0; k < N; k++) {
+        if (found[k]) continue;
+        Relax(s, k, cap[s][k] - flow[s][k], cost[s][k], 1);
+        Relax(s, k, flow[k][s], -cost[k][s], -1);
+        if (best == -1 || dist[k] < dist[best]) best = k;
+      }
+      s = best;
+    }
+
+    for (int k = 0; k < N; k++)
+      pi[k] = min(pi[k] + dist[k], INF);
+    return width[t];
+  }
+
+  pair<L, L> GetMaxFlow(int s, int t) {
+    L totflow = 0, totcost = 0;
+    while (L amt = Dijkstra(s, t)) {
+      totflow += amt;
+      for (int x = t; x != s; x = dad[x].first) {
+        if (dad[x].second == 1) {
+          flow[dad[x].first][x] += amt;
+          totcost += amt * cost[dad[x].first][x];
+        } else {
+          flow[x][dad[x].first] -= amt;
+          totcost -= amt * cost[x][dad[x].first];
+        }
+      }
+    }
+    return make_pair(totflow, totcost);
+  }
+};
+
+
+int a[25], b[25];
+
+int main() {
+  srand((ui)time(0));
+  ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+  int n;
+  cin>>n;
+  for(int i=0; i<n; i++) {
+    cin>>a[i];
+  }
+  for(int i=0; i<n; i++) {
+    cin>>b[i];
+  }
+  MinCostMaxFlow mf(2*n+2);
+  int source = 2*n, sink = 2*n+1;
+  for(int i=0; i<n; i++) {
+    mf.AddEdge(source,i,1,0);
+    mf.AddEdge(n+i,sink,1,0);
+  }
+  for(int i=0; i<n; i++) {
+    for(int j=0; j<n; j++) {
+      if(b[i]<a[j]) mf.AddEdge(i,j+n,1,0);
+      else if(b[i]==a[j]) mf.AddEdge(i,j+n,1,50);
+      else if(b[i]>a[j]) mf.AddEdge(i,j+n,1,100);
+    }
+  }
+  cout<<n*100-mf.GetMaxFlow(source,sink).second<<endl;
+  
+  
+  return 0;
+}

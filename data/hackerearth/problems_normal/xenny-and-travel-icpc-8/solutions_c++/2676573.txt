@@ -1,0 +1,83 @@
+#include <cstdio>
+#include <utility>
+#include <cmath>
+#include <algorithm>
+#include <cassert>
+
+using namespace std;
+
+const int kMaxN = 1300;
+const int kInf = int(1e9);
+
+int n;
+
+void Trans(int a[kMaxN][kMaxN]) {
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < i; ++j) {
+      swap(a[i][j], a[j][i]);
+    }
+  }
+}
+
+void Dijkstra(int g[kMaxN][kMaxN], int s, int d[kMaxN]) {
+  for (int i = 0; i < n; ++i) {
+    d[i] = kInf;
+  }
+  d[s] = 0;
+  vector<int> used(n);
+  for (int step = 0; step < n; step++) {
+    int minv = -1;
+    for (int v = 0; v < n; ++v) {
+      if (!used[v] && (minv == -1 || d[v] < d[minv])) {
+        minv = v;
+      }
+    }
+    assert(minv != -1);
+    assert(d[minv] != kInf);
+    used[minv] = true;
+    for (int u = 0; u < n; ++u) {
+      if (d[u] > d[minv] + g[minv][u]) {
+        d[u] = d[minv] + g[minv][u];
+      }
+    }
+  }
+}
+
+int d[2][kMaxN][kMaxN];
+int dists[2][kMaxN], distt[2][kMaxN];
+
+int main() {
+#ifdef ssu1
+  freopen("input.txt", "r", stdin);
+#endif
+  scanf("%d", &n);
+  for (int k = 0; k < 2; ++k) {
+    for (int i = 0; i < n; ++i) {
+      for (int j = 0; j < n; ++j) {
+        scanf("%d", &d[k][i][j]);
+      }
+      d[k][i][i] = 0;
+    }
+  }
+  int s, t;
+  scanf("%d%d", &s, &t);
+  --s, --t;
+  for (int k = 0; k < 2; ++k) {
+    Dijkstra(d[k], s, dists[k]);
+  }
+  for (int k = 0; k < 2; ++k) {
+    Trans(d[k]);
+    Dijkstra(d[k], t, distt[k]);
+  }
+
+  int ans = kInf;
+  for (int mid = 0; mid < n; ++mid) {
+    if (mid != s && mid != t) {
+      for (int k = 0; k < 2; ++k) {
+        ans = min(ans, dists[k][mid] + distt[k ^ 1][mid]);
+      }
+    }
+  }
+  printf("%d\n", ans);
+  return 0;
+}

@@ -1,0 +1,153 @@
+#include<iostream>
+#include<string.h>
+#include<math.h>
+#include<stdlib.h>
+#include<algorithm>
+#define ll long long
+using namespace std;
+ll dddkiarray[1100]={0};
+ll optimuseskiarray[100000];
+ll ps=0,n;
+ll arr[100000];
+ll thepeds[100000][168]={0};
+ll le(ll x){ return x*2+1;}
+ll re(ll x){ return x*2+2;}
+ll maarsaaleke[200];
+ll dtatti(ll a,ll b)
+{
+	ll prashankauttar=1,temp=a;
+	while(b>0)
+	{
+		if(b&1)
+		prashankauttar=(prashankauttar*temp)%1000000007;
+		b>>=1;
+		temp=(temp*temp);
+	}
+	return prashankauttar;
+}
+void banade(ll l,ll r,ll pos)
+{
+	if(l>r) return ;
+	else if(l==r)
+	{
+		ll i=0;
+		while(arr[l]>1)
+		{
+			while(arr[l]%optimuseskiarray[i]==0)
+				thepeds[pos][i]++,arr[l]/=optimuseskiarray[i];
+			i++;
+		}
+	}
+	else
+	{
+		ll ulta=le(pos),seedha=re(pos);
+		banade(l,(l+r)/2,ulta);banade((l+r)/2+1,r,seedha);
+		for(ll i=0;i<ps;i++)
+		{
+			ll mi=0;
+			if(l<=(l+r)/2) mi=thepeds[ulta][i];
+			if((l+r)/2+1<=r) mi=(mi>thepeds[seedha][i])?mi:thepeds[seedha][i];
+			thepeds[pos][i]=mi;
+		}
+	}
+}
+void jamakrde(ll x,ll l,ll r,ll pos,ll val)
+{
+	if(l>r || x>r || x<l)
+	return ;
+	else if(l==r )
+	{
+		if(l!=x)
+		return ;
+		ll i=0;
+		while(i<ps)
+		{
+			thepeds[pos][i]=0;
+			i++;
+		}
+		i=0;
+		while(val>1)
+		{
+			while(val%optimuseskiarray[i]==0)
+			thepeds[pos][i]++,val/=optimuseskiarray[i];
+			i++;
+		}
+	}
+	else
+	{
+		ll ulta=le(pos),seedha=re(pos);
+		jamakrde(x,l,(l+r)/2,ulta,val);jamakrde(x,(l+r)/2+1,r,seedha,val);
+		for(ll i=0;i<ps;i++)
+		{
+			ll mi=0;
+			if(l<=(l+r)/2) mi=thepeds[ulta][i];
+			if((l+r)/2+1<=r) mi=(mi>thepeds[seedha][i])?mi:thepeds[seedha][i];
+			thepeds[pos][i]=mi;
+		}
+	}
+}
+void sanganak(ll x,ll y,ll l,ll r,ll pos)
+{
+	if(l>r || l>y || r<x)
+	return ;
+	else 
+	{
+		ll ulta=le(pos),seedha=re(pos);
+		if(l>=x && y>=r )
+		{			
+			for(ll i=0;i<ps;i++)
+			{
+				if(maarsaaleke[i]<thepeds[pos][i]) maarsaaleke[i]=thepeds[pos][i];
+			}
+		}
+		else
+		{
+			sanganak(x,y,l,(l+r)/2,ulta);sanganak(x,y,(l+r)/2+1,r,seedha);
+		}
+	}
+}
+int main()
+{
+	ps=0;
+	for(ll i=2;i<=1000;i++)
+	{
+		if(!dddkiarray[i])
+		{
+			optimuseskiarray[ps]=i;
+			ps++;
+			for(ll j=i*2;j<=1000;j+=i)
+			{
+				dddkiarray[j]=1;
+			}
+		}
+	}
+	cin>>n;
+	for(ll i=0;i<n;i++)	cin>>arr[i];
+	banade(0,n-1,0);
+	ll q;
+	cin>>q;
+	for(ll i=0;i<q;i++)
+	{
+		ll t,l,r;
+		cin>>t>>l>>r;
+		if(t==1)
+		{
+			l--;
+			jamakrde(l,0,n-1,0,r);
+		}
+		else
+		{
+			l--;r--;
+			for(int jj=0;jj<200;jj++)
+			maarsaaleke[jj]=0;
+			sanganak(l,r,0,n-1,0);
+			ll prashankauttar=1;
+			for(int i=0;i<ps;i++)
+			{
+				prashankauttar=(prashankauttar*dtatti(optimuseskiarray[i],maarsaaleke[i]))%1000000007;
+			}
+			cout<<prashankauttar<<endl;
+		}
+	}
+	return 0;
+}

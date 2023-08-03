@@ -1,0 +1,119 @@
+/*
+By : Yash Kumar
+Dhirubhai Ambani Institute Of Information And Communication Technology, Gandhinagar (DA-IICT GANDHINAGAR)
+*/
+#include<bits/stdc++.h>
+
+#define lli long long int
+#define llu unsigned long long int
+#define all(v) v.begin(),v.end()
+#define pb push_back
+#define mp make_pair
+#define F first
+#define S second
+#define si(n) scanf("%d",&n)
+#define slli(n) scanf("%lld",&n);
+#define ss(n) scanf("%s",n);
+
+const double EPS = 1e-10;
+const lli MOD = 1000000007ll;
+const lli mod1 = 1000000009ll;
+const lli mod2 = 1100000009ll;
+const double PI = 3.14159265359;
+int INF = 2147483645;
+lli INFINF = 9223372036854775807;
+int debug = 0;
+
+using namespace std;
+
+lli bit_count(lli _x){lli _ret=0;while(_x){if(_x%2==1)_ret++;_x/=2;}return _ret;}
+lli bit(lli _mask,lli _i){return (_mask&(1<<_i))==0?0:1;}
+lli powermod(lli _a,lli _b,lli _m){lli _r=1;while(_b){if(_b%2==1)_r=(_r*_a)%_m;_b/=2;_a=(_a*_a)%_m;}return _r;}
+lli add(lli a,lli b){lli x=a+b;if(x>=MOD)x-=MOD;return x;}
+lli sub(lli a,lli b){lli x=a-b;if(x<0)x+=MOD;return x;}
+lli mul(lli a,lli b){lli x=a*b;x%=MOD;return x;}
+
+void fft(vector<complex<double> >&a,bool invert){
+	int n=(int) a.size();
+	for (int i=1,j=0;i<n;++i){
+		int bit=n>>1;
+		for(;j>=bit;bit>>=1)
+			j-=bit;
+		j+=bit;
+		if(i<j)
+			swap(a[i], a[j]);
+	}
+	for (int len=2;len<=n;len<<=1) {
+		double ang=2*PI/len*(invert?-1:1);
+		complex<double> wlen(cos(ang),sin(ang));
+		for (int i=0;i<n;i+=len){
+			complex<double> w(1);
+			for(int j=0;j<len/2;++j){
+				complex<double> u=a[i+j],v=a[i+j+len/2]*w;
+				a[i+j]=u+v;
+				a[i+j+len/2]=u-v;
+				w*=wlen;
+			}
+		}
+	}
+	if(invert)
+		for(int i=0;i<n;++i)
+			a[i]/=n;
+}
+
+void multiply(const vector<lli> &a,const vector<lli> &b,vector<lli> &res){
+	vector<complex<double> > fa,fb;
+	int i;
+	int sz=a.size();
+	for(i=0;i<sz;i++) fa.push_back(a[i]);
+	sz=b.size();
+	for(i=0;i<sz;i++) fb.push_back(b[i]);
+	size_t n=1;
+	while (n<max(a.size(), b.size()))n <<= 1;
+	n<<=1;
+	fa.resize(n),fb.resize(n);
+	fft(fa,false),fft(fb,false);
+	for(i=0;i<n;++i) fa[i]*=fb[i];
+	fft (fa, true);
+	res.resize(n);
+	for(i=0;i<n;++i)
+		res[i]=(lli)(fa[i].real() + 0.5);
+}
+
+int n;
+int a[100010];
+int M = 100010;
+int vis[100010];
+
+int main()
+{
+#ifndef ONLINE_JUDGE
+    freopen("input.txt","r",stdin);
+    //freopen("output.txt","w",stdout);
+    debug = 1;
+    //M=20;
+#endif
+    srand (time(NULL));
+
+    si(n);
+    for(int i=0;i<n;i++)
+        si(a[i]);
+    vector<lli> x,y,z;
+    x.resize(M);
+    y.resize(M);
+    for(int i=0;i<n;i++){
+        x[a[i]]=1;
+        y[M-1-a[i]]=1;
+    }
+    multiply(x,y,z);
+    lli ans= 0;
+    for(int i=M;i<z.size();i++)
+        if(z[i])
+            ans++;
+    int ans2=0;
+    for(int i=0;i<n;i++)vis[a[i]]++;
+    for(int i=0;i<n;i++) if(vis[a[i]]>=2)ans2=1;
+    cout<<ans+ans2;
+    return 0;
+}
+

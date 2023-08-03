@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+#define MAX 200005
+#define INF 2000000000
+
+using namespace std;
+
+struct node {
+    int mx;
+    int mn;
+    node() { }
+    node(int mx, int mn)
+    {
+        this->mx = mx;
+        this->mn = mn;
+    }
+}tree[1<<20];
+
+//Code for FAST INPUT :)
+template <typename T>
+inline void fi(T *a)
+{
+register char c=0;
+while (c<33) c=getchar_unlocked();
+*a=0;
+int tmp = 0;
+while (c>33)
+{
+if ( c == 45 ) tmp = 1;
+else *a=*a*10+c-'0';
+c=getchar_unlocked();
+}
+if ( tmp == 1 ) *a = 0-(*a);
+}
+
+int A[MAX];
+
+node combine(node p1, node p2)
+{
+    node ret;
+    ret.mx = max(p1.mx, p2.mx);
+    ret.mn = min(p1.mn, p2.mn);
+    return ret;
+}
+
+void build(int where, int left, int right)
+{
+    if ( left > right ) return;
+    if ( left == right ) {
+        tree[where].mn = tree[where].mx = A[left];
+        return;
+    }
+    int mid = (left+right)/2;
+    build(where*2, left, mid);
+    build(where*2+1, mid+1, right);
+    tree[where] = combine(tree[where*2], tree[where*2+1]);
+}
+
+void update(int where, int left, int right, int idx, int val)
+{
+    if ( left > right || left > idx || right < idx ) return;
+    if ( left == right ) {
+        A[left] = val;
+        tree[where].mn = tree[where].mx = A[left];
+        return;
+    }
+    int mid = (left+right)/2;
+    update(where*2, left, mid, idx, val);
+    update(where*2+1, mid+1, right, idx, val);
+    tree[where] = combine(tree[where*2], tree[where*2+1]);
+}
+
+node query(int where, int left, int right, int i, int j)
+{
+    if ( left > right || left > j || right < i ) return node(-INF,INF);
+    if ( left >= i && right <= j ) return tree[where];
+    int mid = (left+right)/2;
+    return combine(query(where*2, left, mid, i, j), query(where*2+1, mid+1, right, i, j));
+}
+
+int main()
+{
+    int n,q,x,y;
+    char s[4];
+    fi(&n), fi(&q);
+    for ( int i = 0; i < n; i++ ) fi(&A[i]);
+    build(1,0,n-1);
+    while ( q-- ) {
+        scanf("%s", s);
+        if ( s[0] == 'U' ) {
+            fi(&x), fi(&y);
+            x--;
+            update(1,0,n-1,x,y);
+        }
+        else {
+            fi(&x), fi(&y);
+            x--;
+            if ( y < 0 ) printf("-1 -1\n");
+            else {
+                int v1 = A[x] - y;
+                int v2 = A[x] + y;
+                int l,r,m,ans=-1;
+                l = x, r = n-1;
+                node pp1;
+                while ( l <= r ) {
+                    m = (l+r)/2;
+                    node pp = query(1,0,n-1,x,m);
+                    if ( pp.mx >= v1 && pp.mx <= v2 && pp.mn >= v1 && pp.mn <= v2 ) {
+                        l = m+1;
+                        pp1.mx = pp.mx;
+                        pp1.mn = pp.mn;
+                        ans = m;
+                    }
+                    else r = m-1;
+                }
+                if ( ans == -1 ) printf("-1 -1\n");
+                else printf("%d %d\n", ans-x+1, max(pp1.mx-A[x], A[x]-pp1.mn));
+            }
+        }
+    }
+    return 0;
+}

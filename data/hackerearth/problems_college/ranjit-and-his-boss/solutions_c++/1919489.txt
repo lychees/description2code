@@ -1,0 +1,76 @@
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+const int M = 1e5 + 10;
+const int T = 320;
+
+set<int> x, y;
+vector<int> g[M], g2[M];
+int ans = 0;
+
+#define pb push_back
+
+bool is(int x, int y) {
+    if (x >= M) return false;
+    if (y >= M) return false;
+    if (x < 0) return false;
+    if (y < 0) return false;
+    if (!g[x].size()) return false;
+    int i = lower_bound(g[x].begin(), g[x].end(), y) - g[x].begin();
+    return i != (int)g[x].size() && g[x][i] == y;
+}
+
+void go(int v) {
+    for (int i = 0; i < (int)g[v].size(); ++i) {
+        for (int j = i + 1; j < (int)g[v].size(); ++j) {
+            int d = g[v][j] - g[v][i];
+            if (is(v - d, g[v][i]) && is(v - d, g[v][j])) ans++;
+            if (is(v + d, g[v][i]) && is(v + d, g[v][j])) ans++;
+        }
+    }
+}
+
+int main()
+{
+    int n;
+    scanf("%d", &n);
+    for (int i = 0; i < n; ++i) {
+        int x1, x2;
+        scanf("%d%d", &x1, &x2);
+        g[x1].pb(x2);
+        x.insert(x1);
+        y.insert(x2);
+    }
+    for (set<int>::iterator it = x.begin(); it != x.end(); it++) {
+        int i = *it;
+        sort(g[i].begin(), g[i].end());
+    }
+    for (set<int>::iterator it = x.begin(); it != x.end(); it++) {
+        int i = *it;
+        if ((int)g[i].size() < T) {
+            go(i);
+            g[i].resize(0);
+        }
+        for (int j = 0; j < (int)g[i].size(); ++j) {
+            g2[g[i][j]].pb(i);
+        }
+    }
+    for (int i = 0; i < M; ++i) g[i] = g2[i];
+    for (set<int>::iterator it = y.begin(); it != y.end(); it++) {
+        int i = *it;
+        sort(g[i].begin(), g[i].end());
+    }
+    for (set<int>::iterator it = y.begin(); it != y.end(); it++) {
+        int i = *it;
+        go(i);
+        g[i].resize(0);
+    }
+    printf("%d\n", ans);
+
+    return 0;
+}

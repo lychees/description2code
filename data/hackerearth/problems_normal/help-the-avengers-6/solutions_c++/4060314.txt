@@ -1,0 +1,135 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+#define mod 1000000007
+#define pb push_back
+
+ll prime[1000008];
+
+void comp()
+{
+	ll i,j;
+	for(i=4;i<1000008;i+=2)
+	{
+		prime[i]=1;
+	}
+	prime[0]=prime[1]=1;
+	for(i=3;i*i<1000008;i++)
+	{
+		if(prime[i]==0)
+		{
+			j=3*i;
+			while(j<1000008)
+			{
+				prime[j]=1;
+				j+=2*i;
+			}
+		}
+	}
+//	for(i=0;i<100;i++)
+//	{
+//		if(prime[i]==0)
+//		{
+//			cout<<i<<endl;
+//		}
+//	}	
+}
+
+ll a[32008];
+
+struct st
+{
+	ll nm;
+}tree[200000];
+
+void build(ll node,ll l,ll r)
+{
+	if(l==r)
+	{
+		if(prime[a[l]]==0)
+		tree[node].nm=1;
+		else tree[node].nm=0;
+		return;
+	}
+	ll m=(l+r)/2;
+	build(2*node,l,m);
+	build(2*node+1,m+1,r);
+	tree[node].nm=tree[2*node].nm+tree[2*node+1].nm;
+}
+
+void update(ll node,ll l, ll r,ll idx,ll val)
+{
+	if(l==r)
+	{
+		if(prime[a[l]]==0)
+		tree[node].nm=1;
+		else tree[node].nm=0;
+		return;
+	}
+	ll m=(l+r)/2;
+	if(idx>=l && idx<=m)
+	{
+		update(2*node,l,m,idx,val);
+	}
+	else
+	{
+		update(2*node+1,m+1,r,idx,val);
+	}
+	tree[node].nm=tree[2*node].nm+tree[2*node+1].nm;
+}
+
+st query(ll node,ll l,ll r,ll s,ll e)
+{
+	if(l>r || s>r || e<l)
+	{
+		st node;
+		node.nm=0;
+		return node;
+	}
+	if(l>=s && r<=e)
+	{
+		return tree[node];
+	}
+	ll m=(l+r)/2;
+	st t1=query(2*node,l,m,s,e);
+	st t2=query(2*node+1,m+1,r,s,e);
+	st t3;
+	t3.nm=t1.nm+t2.nm;
+	return t3;
+}
+
+int main()
+{
+	comp();
+	ll tt;
+	scanf("%lli",&tt);
+	while(tt--)
+	{
+		ll q,n,i,j;
+		scanf("%lli",&n);
+		for(i=1;i<=n;i++)
+		{
+			scanf("%lli",&a[i]);
+		}
+		build(1,1,n);
+		scanf("%lli",&q);
+		while(q--)
+		
+		{
+			string s;
+			cin>>s;
+			ll g,h;
+			scanf("%lli%lli",&g,&h);
+			if(s[0]=='C')
+			{
+				a[g]=h;
+				update(1,1,n,g,h);
+			}
+			else
+			{
+				st tr=query(1,1,n,g,h);
+				printf("%lli\n",tr.nm);
+			}
+		}
+	}
+}

@@ -1,0 +1,92 @@
+#include<bits/stdc++.h>
+#define pb push_back
+#define ff first
+#define ss second
+using namespace std;
+typedef long long int ll;
+typedef pair<int,int> ii;
+typedef pair<ll,pair<ii,int> > tpy;
+vector<ii>in[301],out[302];
+set<tpy>s;
+const ll inf=1e18;
+ll ans[301][301][2];
+int main()
+{
+    #ifndef ONLINE_JUDGE
+    freopen("inp.txt","r",stdin);
+    #endif // ONLINE_JUDGE
+    cin.sync_with_stdio(false);
+    int n,m;
+    cin>>n>>m;
+    for(int i=0,v,u,w;i<m;i++)
+    {
+        char c;
+        cin>>v>>u>>w>>c;v--;u--;
+        if(c=='(')
+            in[u].pb({v,w});
+        else
+            out[v].pb({u,w});
+    }
+    for(int i=0;i<n;i++)
+        for(int j=0;j<n;j++)
+            ans[i][j][0]=ans[i][j][1]=inf;
+    for(int i=0;i<n;i++)
+        ans[i][i][0]=0,s.insert({0,{{i,i},0}});
+    while(!s.empty())
+    {
+        ll d=s.begin()->ff;
+        int a=s.begin()->ss.ff.ff;
+        int b=s.begin()->ss.ff.ss;
+        int tp=s.begin()->ss.ss;
+        s.erase(s.begin());
+        if(tp==0)
+        {
+            for(int i=0,to,add;i<in[a].size();i++)
+            {
+                to=in[a][i].ff;
+                add=in[a][i].ss;
+                if(ans[to][b][1]>d+add)
+                {
+                    s.erase({ans[to][b][1],{{to,b},1}});
+                    ans[to][b][1]=d+add;
+                    s.insert({ans[to][b][1],{{to,b},1}});
+                }
+            }
+            for(int i=0;i<n;i++)
+                if(i!=a and ans[i][b][0]>ans[i][a][0]+ans[a][b][0])
+                {
+                    s.erase({ans[i][b][0],{{i,b},0}});
+                    ans[i][b][0]=ans[i][a][0]+ans[a][b][0];
+                    s.insert({ans[i][b][0],{{i,b},0}});
+                }
+            for(int i=0;i<n;i++)
+                if(i!=b and ans[a][i][0]>ans[a][b][0]+ans[b][i][0])
+                {
+                    s.erase({ans[a][i][0],{{a,i},0}});
+                    ans[a][i][0]=ans[a][b][0]+ans[b][i][0];
+                    s.insert({ans[a][i][0],{{a,i},0}});
+                }
+        }
+        else if(tp==1)
+        {
+            for(int i=0,to,add;i<out[b].size();i++)
+            {
+                to=out[b][i].ff;
+                add=out[b][i].ss;
+                if(ans[a][to][0]>ans[a][b][1]+add)
+                {
+                    s.erase({ans[a][to][0],{{a,to},0}});
+                    ans[a][to][0]=add+ans[a][b][1];
+                    s.insert({ans[a][to][0],{{a,to},0}});
+                }
+            }
+        }
+    }
+    for(int i=0;i<n;i++,cout<<"\n")
+            for(int j=0;j<n;j++)
+            {
+                if(ans[i][j][0]>=inf)cout<<"-1 ";
+                else cout<<ans[i][j][0]<<" ";
+            }
+    return 0;
+}

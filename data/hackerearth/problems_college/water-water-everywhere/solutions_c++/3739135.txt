@@ -1,0 +1,199 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+#define sd(x) scanf("%d",&x);
+#define slld(x) scanf("%lld",&x);
+#define LL long long
+#define LD long double
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+#define Fill(a, b) memset(a, b, sizeof(a))
+#define INF 2000000009
+
+typedef pair<int,int> PII;
+typedef vector<int> VI;
+
+#define N 100010
+#define bias 500
+#define LN 20
+
+VI vec[N],cost[N];
+int p[N][LN],depth[N],mi[N][LN];
+
+void dfs(int a,int par,int cst)
+{
+    int len = vec[a].size();
+    p[a][0] = par;
+    depth[a] = depth[par] + 1;
+    mi[a][0] = cst;
+    for(int i=0;i<len;i++)
+    {
+        if(vec[a][i] == par)continue;
+        dfs(vec[a][i],a,cost[a][i]);
+    }
+}
+
+int lca(int a,int b)
+{
+    //cout<<a<<" "<<b<<endl;
+    if(depth[a] < depth[b])swap(a,b);
+    int len = depth[a] - depth[b],i=0;
+    //cout<<len<<endl;
+    while(len > 0)
+    {
+        if(len&1)a = p[a][i];
+        i++;
+        len>>=1;
+    }
+    //cout<<a<<" "<<b<<endl;
+    if(a==b)return a;
+
+    for(int i=LN-1;i>=0;i--)
+    {
+        if(p[a][i] != p[b][i])
+        {
+            a = p[a][i];
+            b = p[b][i];
+        }
+    }
+    return p[a][0];
+}
+
+int get_min(int a,int len)
+{
+    int ret = INF,i = 0;
+    while(len > 0)
+    {
+        if(len&1)
+        {
+            ret = min(ret,mi[a][i]);
+            a = p[a][i];
+        }
+        i++;
+        len>>=1;
+    }
+    return ret;
+
+}
+
+int cnt[N],ar[N],head[N];
+
+pair<int,PII > edges[N];
+
+int get_par(int a)
+{
+    if(head[a] == a)return a;
+    head[a] = get_par(head[a]);
+    return head[a];
+}
+
+LL mrge(int a,int b)
+{
+    LL ret = 0;
+    a = get_par(a);
+    b = get_par(b);
+    if(a == b)return 0;
+    ret = cnt[a];
+    ret*=cnt[b];
+    head[a] = b;
+    cnt[b] += cnt[a];
+    return ret;
+}
+
+void solve()
+{
+    int n,a,b,c;
+    sd(n);
+    for(int i=1;i<n;i++)
+    {
+        sd(a);sd(b);sd(c);
+        vec[a].PB(b);
+        vec[b].PB(a);
+        cost[a].PB(c);
+        cost[b].PB(c);
+        edges[i].F = c;
+        edges[i].S.F = a;
+        edges[i].S.S = b;
+    }
+    sort(edges+1,edges+n);
+    dfs(1,0,0);
+
+    for(int j=1;j<LN;j++)
+    {
+        for(int i=1;i<=n;i++)
+        {
+            p[i][j] = p[p[i][j-1]][j-1];
+            mi[i][j] = min(mi[i][j-1], mi[p[i][j-1]][j-1]);
+        }
+    }
+
+    int q;
+    sd(q);
+    while(q--)
+    {
+        int c;
+        sd(c);
+        for(int i=0;i<c;i++)
+        {
+            sd(ar[i]);
+        }
+        if(c >= bias)
+        {
+            for(int i=1;i<=n;i++)
+            {
+                cnt[i] = 0;
+                head[i] = i;
+            }
+            for(int i=0;i<c;i++)
+            {
+                cnt[ar[i]] = 1;
+                //cout<<ar[i]<<endl;
+            }
+            LL ans = 0,tmp;
+
+            for(int i=n-1;i>0;i--)
+            {
+                tmp = mrge(edges[i].S.F,edges[i].S.S);
+                ans += tmp*edges[i].F;
+                //cout<<i<<" "<<tmp<<" "<<edges[i].F<<endl;
+            }
+            printf("%lld\n",ans);
+        }
+        else
+        {
+            int l,len,ans = 0;
+            LL fans = 0;
+            for(int i=0;i<c;i++)
+            {
+                for(int j=i+1;j<c;j++)
+                {
+                    l = lca(ar[i],ar[j]);
+                    len = depth[ar[i]] - depth[l];
+                    ans = get_min(ar[i],len);
+                    //cout<<ans<<endl;
+
+                    len = depth[ar[j]] - depth[l];
+                    ans = min(ans,get_min(ar[j],len));
+                    //cout<<ar[i]<<ar[j]<<" "<<l<<" "<<ans<<endl;
+                    fans += ans;
+                }
+            }
+            printf("%lld\n",fans);
+        }
+
+    }
+}
+
+int main()
+{
+	int t=1;
+	//scanf("%d",&t);
+	for(int i=1;i<=t;i++)
+	{
+		solve();
+	}
+}
+

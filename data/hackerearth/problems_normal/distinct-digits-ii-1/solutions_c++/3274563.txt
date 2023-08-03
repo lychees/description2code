@@ -1,0 +1,171 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define mod 1000000007
+#define sz 100001
+#define ll long long int 
+// namespace definition :|
+namespace segtree 
+{
+long long input[sz];
+struct data
+ {
+	int minimum;
+	int maximum;
+	int countofmin;
+	int countofmax;
+	
+ }tree[3*sz];
+
+data putdata(int value)
+{
+	data tmp;
+	int count=0;
+	 set<int> distinct;
+	     while(value!=0)
+	      {  
+		    distinct.insert(value%10);
+		    value=value/10;
+	      }
+	      count=distinct.size();
+	tmp.minimum=tmp.maximum=count;
+	tmp.countofmin=tmp.countofmax=1;
+	return tmp;
+	//tmp.mul=1;
+	//tmp.add=tmp.rep=0;
+}
+
+data combine(data a,data b)
+{
+	data tmp;
+	tmp.minimum=min(a.minimum,b.minimum);
+	tmp.maximum=max(a.maximum,b.maximum);
+	if(a.minimum<b.minimum)
+	{
+		tmp.countofmin=a.countofmin;
+	}
+	if(a.minimum>b.minimum)
+	{
+		tmp.countofmin=b.countofmin;
+	}
+	if(a.minimum==b.minimum)
+	{
+		tmp.countofmin=a.countofmin+b.countofmin;
+	}
+	if(a.maximum<b.maximum)
+	{
+		tmp.countofmax=b.countofmax;
+	}
+	if(a.maximum>b.maximum)
+	{
+		tmp.countofmax=a.countofmax;
+	}
+	if(a.maximum==b.maximum)
+	{
+		tmp.countofmax=a.countofmax+b.countofmax;
+	}
+	
+	return tmp;
+}
+void buildsegtree(int node,int low,int high)
+{
+	if(low==high)
+	{
+		tree[node]=putdata(input[low]);
+		return;
+	}
+     int mid=(low+high)>>1;
+     buildsegtree(2*node,low,mid);
+     buildsegtree(2*node +1 ,mid+1,high);
+     tree[node]=combine(tree[2*node],tree[2*node+1]);
+}
+void update(int node,int low,int high,string opr,int index,int value)
+{
+	if(low>high) 
+		return;
+	if(low==high)
+	{  
+		if(opr=="ADD")
+	    input[index]+=value;
+        if(opr=="MUL")
+        input[index]*=value;
+        if(opr=="REP")
+        input[index]=value;
+         //printf("reached index %d \n",index);
+       // calculation  ------- 
+        input[index]%=mod;
+		int count=0;
+	    int v=input[index];
+	    set<int> distinct;
+	     while(v!=0)
+	      {  
+		    distinct.insert(v%10);
+		    v=v/10;
+	      }
+	      count=distinct.size();
+            tree[node].minimum=count;
+            tree[node].maximum=count;
+            tree[node].countofmin=tree[node].countofmax=1;
+        return;
+	}
+    int mid=(low+high)>>1;
+    if(low<=index && index<=mid)
+	update(2*node,low,mid,opr,index,value);
+    else
+	update(2*node+1,mid+1,high,opr,index,value);
+	tree[node]=combine(tree[2*node],tree[2*node+1]);
+}
+
+data query(int node,int low,int high,int l,int r)
+{
+	 if(l<=low && r>=high)
+	  {
+	     return tree[node];
+	  }  	
+     // remember me :) 
+	       int mid=(low+high)>>1;
+	        if(r<=mid)
+			return query(2*node,low,mid,l,r);
+		   else if(l>mid)
+			return query(2*node+1,mid+1,high,l,r);
+
+      data p1=query(2*node,low,mid,l,r);
+      data p2=query(2*node+1,mid+1,high,l,r);
+      return combine(p1,p2);
+}
+
+}
+
+// end of the namespace :)
+using namespace segtree;
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	int n,q;
+	cin>>n;
+	for(int i=0;i<n;i++)
+		cin>>input[i];
+	buildsegtree(1,0,n-1);
+	int a,b;
+	string s;
+	cin>>q;
+	while(q--)
+	{
+      cin>>s;
+      cin>>a>>b;
+      if(s=="MIN" || s=="MAX")
+      { 
+      	data tmp=query(1,0,n-1,a-1,b-1);
+      	if(s=="MIN")
+         printf("%d %d\n",tmp.minimum,tmp.countofmin);
+        else
+         printf("%d %d\n",tmp.maximum,tmp.countofmax);
+
+      }
+      else
+      	{
+      		update(1,0,n-1,s,a-1,b);
+      		
+      	}
+	}
+ return 0;
+}

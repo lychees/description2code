@@ -1,0 +1,82 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define MAX 600008
+ 
+ll arr[100008];
+ll tree[MAX];
+
+void build_tree(ll node, ll a, ll b) {
+    if(a > b) return;
+  	
+  	if(a == b) {
+    	tree[node] = arr[a];
+		return;
+	}
+	
+	build_tree(node*2, a, (a+b)/2);
+	build_tree(node*2+1, 1+(a+b)/2, b);
+	
+	tree[node] = (tree[node*2] + tree[node*2+1]);
+}
+
+void update_tree(ll node, ll a, ll b, ll i, ll j, ll value) {
+    
+	if(a > b || a > j || b < i)
+		return;
+    
+  	if(a == b) {
+    	tree[node] += value;
+    	return;
+	}
+ 
+	update_tree(node*2, a, (a+b)/2, i, j, value);
+	update_tree(1+node*2, 1+(a+b)/2, b, i, j, value);
+ 
+	tree[node] = (tree[node*2] + tree[node*2+1]);
+}
+
+ll query_tree(ll node, ll a, ll b, ll i, ll j) {
+	
+	if(a > b || a > j || b < i) return 0;
+ 
+	if(a >= i && b <= j)
+		return tree[node];
+ 
+	ll q1 = query_tree(node*2, a, (a+b)/2, i, j);
+	ll q2 = query_tree(1+node*2, 1+(a+b)/2, b, i, j);
+ 
+	ll res = (q1 + q2);
+	
+	return res;
+}
+ 
+int main() {
+	ll n,i,p,q,N;
+	cin>>n;
+	for(i=0;i<n;i++){
+	 	cin>>p;
+	 	arr[p]++;
+	}
+ 	
+ 	N=100001;
+	build_tree(1, 0, N-1);
+	
+	cin>>q;
+	for(i=0;i<q;i++){
+		ll L,R,Z;
+		cin>>p;
+		if(p==0){
+			cin>>L>>R;
+			cout << query_tree(1, 0, N-1, L, R) << endl;
+		}
+		else{
+			cin>>Z;
+			if(p==1)
+				update_tree(1, 0, N-1, Z, Z, -1);
+			else
+				update_tree(1, 0, N-1, Z, Z, 1);
+		}
+	}
+ 	return 0;
+}

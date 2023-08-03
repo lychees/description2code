@@ -1,0 +1,89 @@
+#define _USE_MATH_DEFINES
+#include <algorithm>
+#include <cstdio>
+#include <functional>
+#include <iostream>
+#include <cstring>
+#include <climits>
+#include <cmath>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <time.h>
+#include <vector>
+using namespace std;
+ 
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> i_i;
+typedef pair<ll, int> ll_i;
+typedef pair<double, int> d_i;
+typedef pair<ll, ll> ll_ll;
+typedef pair<double, double> d_d;
+struct edge { int u, v; ll w; };
+ 
+ll MOD = 1000000007;
+
+ll extgcd(ll a, ll b, ll& x, ll& y) {
+	if (b == 0) {
+		x = (a >= 0) ? 1 : -1;
+		y = 0;
+		return abs(a);
+	}
+	else {
+		ll res = extgcd(b, a % b, y, x);
+		y -= (a / b) * x;
+		return res;
+	}
+}
+ 
+ll mod_inverse(ll a, ll m) {
+	ll x, y;
+	extgcd(a, m, x, y);
+	return (m + x % m) % m;
+}
+ 
+ll c(ll n, ll k) {
+	ll res = 1;
+	for (int i = 0; i < k; i++)
+		res = (res * ((n - i) % 1000000007)) % 1000000007;
+	for (int i = 1; i <= k; i++)
+		res = (res * mod_inverse(i, 1000000007)) % 1000000007;
+	return res;
+}
+
+int pow_mod(ll x, ll n, int m) {
+	ll res = 1;
+	for (; n > 0; n >>= 1) {
+		if (n & 1) res = (res * x) % m;
+		x = (x * x) % m;
+	}
+	return res;
+}
+
+int main() {
+	int T; cin >> T;
+	while (T--) {
+		ll N; cin >> N;
+		ll ans = c(N + 2, 2);
+		vector<int> a(62);
+		for (int i = 0; i < 62; i++)
+			a[i] = ((N >> i) & 1);
+		vector<ll> dp0(63), dp1(63);
+		dp0[0] = 1;
+		for (int i = 0; i < 62; i++) {
+			if (a[i] == 0) {
+				dp0[i + 1] = (dp0[i + 1] + dp0[i]) % MOD;
+				dp1[i + 1] = (dp1[i + 1] + dp0[i] * 3 + dp1[i] * 3) % MOD;
+			}
+			else {
+				dp0[i + 1] = (dp0[i + 1] + dp0[i] * 3 + dp1[i]) % MOD;
+				dp1[i + 1] = (dp1[i + 1] + dp1[i] * 3) % MOD;
+			}
+		}
+		cout << (ans - dp0[62] + MOD * 2) % MOD << endl;
+	}
+}

@@ -1,0 +1,134 @@
+#include <iostream>
+#include<math.h>
+using namespace std;
+//Segment Trees
+
+void build(long long int tree[], long long int A[], long long int node, long long int start, long long int end)
+{
+	if (start==end)  //leaf
+	{
+		if (A[start]%2==0) //1 represents even number
+		{
+			tree[node]=1;
+		}
+		else
+		{
+			tree[node]=0;
+		}
+	}
+	else
+	{
+		long long int mid=(start+end)/2;
+		build(tree,A,2*node,start,mid);
+		build(tree,A,(2*node)+1,mid+1,end);
+		tree[node]=tree[node*2]+tree[(node*2) + 1];
+	}
+}
+
+long long int powerToTwo(long long int a)
+{
+	long long int counter=0, n=0, flag1, flag2;
+	long long int k=pow(2,n);
+	while(a%k==0)
+	{
+		if ((pow(2,n)) < a)
+		{
+			flag1=pow(2,n);
+			n++;	
+		}
+		else
+		{
+			flag2=pow(2,n);
+			counter++;
+		}
+		if (counter==1)
+		{
+			return flag2;
+		}
+	}
+}
+
+void update(long long int A[], long long int tree[], long long int node,long long int val,long long int idx, long long int start, long long int end)
+{
+	if (start==end)
+	{
+		A[idx]=val;
+		if (val%2==0)
+		{
+			tree[node]=1;
+		}
+		else
+		{
+			tree[node]=0;
+		}
+	}
+	else
+	{
+		long long int mid=(start+end)/2;
+		if (idx<=mid && idx>=start)
+		{
+			update(A,tree,2*node,val,idx,start,mid);
+		}
+		else
+		{
+			update(A,tree,(2*node)+1,val,idx,mid+1,end);
+		}
+		tree[node]=tree[node*2]+tree[(node*2)+1];
+	}
+}
+
+long long int query(long long int A[],long long int tree[], long long int node, long long int l,long long  int r,long long int start,long long int end)
+{
+	if (start>r ||  end < l)
+	{  
+		return 0;
+	}
+	else if (start>=l && end<=r)
+	{
+		return tree[node];
+	}
+	long long int mid=(start+end)/2;
+	long long int p1=query(A,tree,node*2,l,r,start,mid);
+	long long int p2=query(A,tree,(node*2)+1,l,r,mid+1,end);
+	return (p1+p2);
+}
+
+//we have an array of N natural numbers! //something still bugged in the fkin code! make a tree for holding odd values MAYBE xd
+
+int main()
+{
+	long long int N,Q;
+	cin>>N;
+	long long int treeN=powerToTwo(N);
+	
+	long long int arr[N+1];
+	
+	for (int i=1; i<N+1; i++)
+	{
+		cin>>arr[i];
+	}
+	cin>>Q;
+	long long int tree[treeN*2+1];
+	build(tree,arr,1,0,N);
+	while (Q>0)
+	{
+		Q--;
+		long long int a,x,y;
+		cin>>a>>x>>y;
+		if (a==0)
+		{
+			update(arr,tree,1,y,x,0,N);
+		}
+		else if(a==1)
+		{
+			cout<<query(arr,tree,1,x,y,0,N)<<endl;
+		}
+		else
+		{
+			cout<<abs(y-x+1)-query(arr,tree,1,x,y,0,N)<<endl;
+		}
+	}
+	
+	
+	
+}

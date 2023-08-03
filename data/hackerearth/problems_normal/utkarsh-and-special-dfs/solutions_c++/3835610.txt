@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+int add(int a, int b) { return a+b-(a+b>=MOD)*MOD; }
+int sub(int a, int b) { return a-b+(a-b<0)*MOD; }
+int mult(int a, int b) { return (1LL*a*b)%MOD; }
+int inv(int a) {
+	int ans = 1;
+	int p = MOD-2;
+	while (p) {
+		if (p&1) ans = mult(ans,a);
+		p>>=1;
+		a = mult(a,a);
+	}
+	return ans;
+}
+
+class ST {
+private:
+	int size;
+	int st[1<<18], lazy[1<<18];
+	void push(int w, int L, int R) {
+		st[w] = mult(st[w],lazy[w]);
+		if (L!=R) {
+			lazy[w*2] = mult(lazy[w*2],lazy[w]);
+			lazy[w*2+1] = mult(lazy[w*2+1],lazy[w]);
+		}
+		lazy[w] = 1;
+	}
+	void updateI(int w, int L, int R, int a, int b, int v) {
+		push(w,L,R);
+		if (b<L || R<a) return;
+		if (a<=L && R<=b) lazy[w] = v, push(w,L,R);
+		else {
+			updateI(w*2,L,(L+R)/2,a,b,v), updateI(w*2+1,(L+R)/2+1,R,a,b,v);
+			st[w] = add(st[w*2],st[w*2+1]);
+		}
+	}
+	int queryI(int w, int L, int R, int a, int b) {
+		push(w,L,R);
+		if (b<L || R<a) return 0;
+		if (a<=L && R<=b) return st[w];
+		return add(queryI(w*2,L,(L+R)/2,a,b),queryI(w*2+1,(L+R)/2+1,R,a,b));
+	}
+public:
+	ST(int s=0) {
+		size = s;
+		fill(st,st+(1<<18),1);
+		fill(lazy,lazy+(1<<18),1);
+	}
+	void update(int a, int b, int v) { updateI(1,1,size,a,b,v); }
+	int query(int a, int b) { return queryI(1,1,size,a,b); }
+};
+
+int n,q;
+vector<int> adj[100013];
+int a[100013];
+
+int counter = 0;
+int s[100013], e[100013];
+
+ST tree;
+
+void setup(int x, int p=0) {
+	s[x] = ++counter;
+	for (int i: adj[x]) if (i!=p) {
+		if (!s[i]) setup(i,x);
+	}
+	e[x] = counter;
+}
+
+int main() {
+	scanf("%d%d",&n,&q);
+	for (int i=1;i<n;i++) {
+		int a,b;
+		scanf("%d%d",&a,&b);
+		adj[a].push_back(b);
+		adj[b].push_back(a);
+	}
+	for (int i=1;i<=n;i++) scanf("%d",&a[i]);
+	setup(1);
+	tree = ST(n);
+	for (int i=1;i<=n;i++) tree.update(s[i]+1,e[i],a[i]);
+	while (q--) {
+		int type,v;
+		scanf("%d%d",&type,&v);
+		if (type==1) {
+			int x;
+			scanf("%d",&x);
+			tree.update(s[v]+1,e[v],mult(inv(a[v]),x));
+			a[v] = x;
+		} else printf("%d\n",tree.query(s[v],e[v]));
+	}
+	
+    return 0;
+}

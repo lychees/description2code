@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, a, b) for(int i = (a); i < int(b); ++i)
+#define rrep(i, a, b) for(int i = (a) - 1; i >= int(b); --i)
+#define trav(it, v) for(typeof((v).begin()) it = (v).begin(); it != (v).end(); ++it)
+#define all(v) (v).begin(), (v).end()
+#define what_is(x) cerr << #x << " is " << x << endl;
+
+typedef double fl;
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef vector<pii> vpi;
+
+int rem[20];
+bool isPrime[110];
+
+struct State{
+	int r[16];
+	int digitsDone;
+	int prevDigit;
+	bool primeDone;
+
+	State(){
+		prevDigit=10;
+		digitsDone=0;
+		rep(i,0,16)
+			r[i]=0;
+		primeDone=false;
+	}
+};
+
+int digitN;
+
+vector<ll> rec(State s){
+	if(s.digitsDone == digitN){
+		vector<ll> ret;
+		if(s.primeDone){
+			ret.push_back(0);
+		}
+		return ret;
+	}
+	vector<ll> ret;
+	ll ten=1;
+	rep(i,s.digitsDone,digitN-1)
+		ten *= 10;
+	rep(d,0,10){
+		if(!d && !s.digitsDone)
+			continue;
+		State newState=s;
+		rep(i,s.digitsDone+1,digitN+1){
+			newState.r[i]=(newState.r[i]*10+d)%i;
+		}
+		if(newState.r[s.digitsDone+1] != rem[s.digitsDone+1])
+			continue;
+		++newState.digitsDone;
+		if(isPrime[s.prevDigit*10+d])
+			newState.primeDone=true;
+		newState.prevDigit=d;
+		vector<ll> res=rec(newState);
+		rep(i,0,res.size()){
+			ret.push_back(d*ten+res[i]);
+		}
+	}
+	return ret;
+}
+	
+vector<ll> allUni;
+
+ll getAns(ll A){
+	int ret=lower_bound(all(allUni), A)-allUni.begin();
+	return ret;
+}
+
+int main(){
+	rep(i,2,100){
+		isPrime[i]=true;
+		for(int j=2; j*j <= i; ++j)
+			if(i%j == 0)
+				isPrime[i]=false;
+	}
+	rep(i,1,16)
+		scanf("%d", rem+i);
+	State start;
+	for(digitN=1; digitN <= 15; ++digitN){
+		vector<ll> uni=rec(start);
+		rep(i,0,uni.size())
+			allUni.push_back(uni[i]);
+	}
+	sort(all(allUni));
+	int N;
+	scanf("%d", &N);
+	while(N--){
+		ll A, B;
+		scanf("%lld%lld", &A, &B);
+		printf("%lld\n", getAns(B+1)-getAns(A));
+	}
+}

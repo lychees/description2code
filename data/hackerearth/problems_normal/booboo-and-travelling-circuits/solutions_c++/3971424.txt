@@ -1,0 +1,84 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <iostream>
+#include <set>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <complex>
+#include <map>
+using namespace std;
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<ll> vl;
+typedef vector<vl> vvl;
+typedef vector<vi> vvi;
+typedef vector<double> vd;
+typedef pair<ll, int> pli;
+typedef pair<double, double> pdd;
+typedef vector<string> vs;
+const int mod = 1000000003;
+
+int A[2000][10005];
+int B[2000][10005];
+
+int main() {
+    int n,M;
+    ll S,P,Q,R,W,X,Y,Z;
+    cin >> n >> M >> S >> P >> Q >> R >> W >> X >> Y >> Z;
+    for(int i = 0; i < n; i++) for (int j = 1; j <= M; ++j) {
+	    S = (P * S % mod * S + Q * S + R) % mod;
+	    A[i][j] = S;
+	}
+	for(int i = 0; i < n; i++) for (int j = 1; j <= M; ++j) {
+	    W = (X * W % mod * W + Y * W + Z) % mod;
+	    B[i][j] = W;
+	}
+	vi was(M+1);
+	vvi v(M+1);
+	for (int i = 2; i <= M; ++i) if (!was[i]) {
+		for (int j = i; j <= M; j += i) if (!was[j]) {
+			was[j] = 1;
+			v[i].push_back(j);
+		}
+	}
+	vl d(M+1);
+	vector<pair<pli, pli> > c(M+1, make_pair(pli(1e18, 0), pli(1e18, 0)));
+	for (int i = 0; i < n-1; ++i) {
+		for (int j = 2; j < c.size(); ++j) if (!v[j].empty()) {
+			c[j] = make_pair(pli(1e18, 0), pli(1e18, 0));
+			for (int x : v[j]) {
+				pli cand(d[x] + B[i][x], x);
+				if (cand < c[j].second) c[j].second = cand;
+				if (cand < c[j].first) swap(c[j].first, c[j].second);
+			}
+		}
+		ll d1 = d[1] + A[i][1];
+		for (int j = 2; j <= M; ++j) {
+			d1 = min(d1, d[j] + B[i][j]);
+		}
+		for (int j = 1; j <= M; ++j) {
+			d[j] += A[i][j];
+		}
+		//cout << 1 << ' ' << d[1] << ' ' << d1 << endl;
+		d[1] = d1;
+		for (int j = 2; j <= M; ++j) for (int x : v[j]) {
+			if (c[j].first.second != x) {
+				d[x] = min(d[x], c[j].first.first);
+			}
+			if (c[j].second.second != x) {
+				d[x] = min(d[x], c[j].second.first);
+			}
+			//d[x] = min(d[x], c[j]);
+			//cout << j << ' ' << d[j] << ' ' << c[j] << endl;
+		}
+	}
+	ll res = 1e18;
+	for (int i = 1; i <= M; ++i) res = min(res, d[i]);
+	cout << res << endl;
+    return 0;
+}

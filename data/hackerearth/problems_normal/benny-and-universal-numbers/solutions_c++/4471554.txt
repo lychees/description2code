@@ -1,0 +1,94 @@
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <algorithm>
+
+using namespace std;
+
+#define DMAX 15
+#define XMAX 10
+#define PMAX 100
+
+int rems[DMAX + 1], N;
+long long A, B;
+
+void ReadInput() {
+	for (int i = 1; i <= DMAX; i++) scanf("%d", &rems[i]);
+	scanf("%d", &N);
+}
+
+int good_prime[PMAX];
+
+void InitGoodPrimes() {
+	memset(good_prime, 0, sizeof(good_prime));
+	good_prime[2] = 1;
+	good_prime[3] = 1;
+	good_prime[5] = 1;
+	good_prime[7] = 1;
+	good_prime[11] = 1;
+	good_prime[13] = 1;
+	good_prime[17] = 1;
+	good_prime[19] = 1;
+	good_prime[23] = 1;
+	good_prime[29] = 1;
+	good_prime[31] = 1;
+	good_prime[37] = 1;
+	good_prime[41] = 1;
+	good_prime[43] = 1;
+	good_prime[47] = 1;
+	good_prime[53] = 1;
+	good_prime[59] = 1;
+	good_prime[61] = 1;
+	good_prime[67] = 1;
+	good_prime[71] = 1;
+	good_prime[73] = 1;
+	good_prime[79] = 1;
+	good_prime[83] = 1;
+	good_prime[89] = 1;
+	good_prime[97] = 1;
+}
+
+vector<long long> num;
+
+void GenerateNumbers(long long X, int len, int has_prime) {
+	if (has_prime) {
+		num.push_back(X);
+		assert(2 <= len && len <= 15);
+	}
+	if (len == DMAX) return;
+	int x = X % 10;
+	for (int y = len > 0 ? 0 : 1; y < XMAX; y++) {
+		long long Y = X * 10 + y;
+		if (Y % (len + 1) != rems[len + 1]) continue;
+		GenerateNumbers(Y, len + 1, len == 0 ? 0 : has_prime | good_prime[x * 10 + y] /*| good_prime[y * 10 + x]*/);
+	}
+}
+
+int FindIndex(long long X) {
+	int li = 0, ls = num.size() - 1, ans = -1;
+	while (li <= ls) {
+		int mid = (li + ls) >> 1;
+		if (num[mid] <= X) {
+			ans = mid;
+			li = mid + 1;
+		} else ls = mid - 1;
+	}
+	return ans;
+}
+
+int main() {
+	//freopen("x.txt", "r", stdin);
+	ReadInput();
+	InitGoodPrimes();
+	GenerateNumbers(0, 0, 0);
+	sort(num.begin(), num.end());
+	while (N--) {
+		scanf("%lld %lld", &A, &B);
+		if (num.empty()) printf("0\n");
+		else {
+			int idxa = FindIndex(A - 1), idxb = FindIndex(B);
+			printf("%d\n", idxb - idxa);
+		}
+	}
+	return 0;
+}

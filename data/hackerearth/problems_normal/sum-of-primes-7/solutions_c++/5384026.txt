@@ -1,0 +1,67 @@
+/* sea@members.fsf.org */
+#include <iostream>
+#include <set>
+#include <vector>
+#include <math.h>
+typedef unsigned int uint;
+typedef long long unsigned int luint;
+typedef std::set<uint> uint_set;
+typedef std::vector<uint> uint_vector;
+typedef std::vector<unsigned long long int> luint_vector;
+
+void generate_scan_prime_sum_values(uint n, luint * scan_prime_sum_function_values) {
+  uint sqrt_n = uint(sqrt(n)+1);
+  uint * eratosthenes_base = new uint[1000000];
+  for(uint i=0;i<1000000;i++)eratosthenes_base[i] = 0;
+  for(uint i=2;i<n;i+=2)
+    eratosthenes_base[i] = 1;
+  /* Find the next free prime and sieve with it, selecting in the range [3,sqrt(max)] */
+  for(uint p=3;p<sqrt_n;p++) {
+    if(eratosthenes_base[p] == 0) {
+      for(uint p_i = p+p; p_i < n; p_i += p)
+	eratosthenes_base[p_i] = 1;
+    }
+  }
+  unsigned long long int sum = 2;
+  scan_prime_sum_function_values[2] = 2;
+  for(uint i=3;i<n;i+=2) {
+    if(eratosthenes_base[i] == 0) {
+      sum += i;
+      scan_prime_sum_function_values[i] = sum;
+    }
+  }
+  delete [] eratosthenes_base;
+  /* Now fill in the zeros of the function: */
+  sum = 0;
+  for(uint i=0;i<1000000;i++) {
+    if(scan_prime_sum_function_values[i] == 0) {
+      scan_prime_sum_function_values[i] = sum;
+    } else sum = scan_prime_sum_function_values[i];
+  }
+}
+
+/* Calculate the sum of primes in [lower,upper] within prime_set. */
+inline unsigned long long int prime_range_sum(uint lower, uint upper, const luint * scan_prime_sum_values, uint scan_prime_sum_values_size) {
+  if(upper >= scan_prime_sum_values_size) upper = scan_prime_sum_values_size - 1;
+  if(lower == 0) lower = 1; /* Corner case. */
+  /* Now we do something like applying the fundamental theorem of calculus: */
+  return scan_prime_sum_values[upper] - scan_prime_sum_values[lower-1];
+}
+
+int main(int argc, char ** argv) {
+  luint * scan_prime_sum_function_values = new luint[1000000];
+  for(uint i=0;i<1000000;i++)scan_prime_sum_function_values[i] = 0;
+  generate_scan_prime_sum_values(1000000,scan_prime_sum_function_values);
+  {
+    uint num_queries = 0;
+    std::cin>>num_queries;
+    for(uint i=0;i<num_queries;i++) {
+      uint l = 0;
+      uint r = 0;
+      std::cin>>l>>r;
+      //      std::cin.sync();
+      std::cout<<prime_range_sum(l,r,scan_prime_sum_function_values,1000000)<<std::endl;
+    }
+  }
+  return 0;
+}

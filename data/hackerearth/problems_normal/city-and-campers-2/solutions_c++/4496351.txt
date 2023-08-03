@@ -1,0 +1,73 @@
+#include <iostream>
+using namespace std;
+
+void initialize(long int Arr[], long int size[], long int count[], long int n){
+	for(long int i = 1L; i <= n; i++){
+		Arr[i] = i;
+		size[i] = 1L;
+		count[i] = 0L;
+	}
+	count[1] = n;
+}
+
+long int root(long int Arr[], long int i){
+	while(Arr[i] != i){
+		Arr[i] = Arr[Arr[i]];
+		i = Arr[i];
+	}
+	return i;
+}
+
+void _union(long int Arr[], long int size[], long int i, long int j, long int &min, long int &max, long int count[]){
+	long int root_i = root(Arr, i), root_j = root(Arr, j);
+	if(root_i == root_j)
+		return;
+	count[size[root_i]]--;
+	count[size[root_j]]--;
+	if(size[root_i] > size[root_j]){
+		Arr[root_j] = root_i;
+		size[root_i] += size[root_j];
+		if(size[root_i] > max)
+			max = size[root_i];
+		count[size[root_i]]++;
+	}
+	else{
+		Arr[root_i] = root_j;
+		size[root_j] += size[root_i];
+		if(size[root_j] > max)
+			max = size[root_j];
+		count[size[root_j]]++;
+	}
+	while(count[min] == 0L)
+		min++;
+}
+
+long int compute_min_diff(long int count[], long int min, long int max){
+	if(min == max || count[min] > 1L)
+		return 0L;
+	long int i = min + 1L, prev = min, diff = max - min;
+	while(i <= max){
+		if(count[i] > 1L)
+			return 0L;
+		else if(count[i] > 0L){
+			if(i - prev < diff)
+				diff = i - prev;
+			prev = i;
+		}
+		i++;
+	}
+	return diff;
+}
+
+int main()
+{
+    long int n, q, Arr[100005], size[100005], count[100005], min = 1L, max = 1L, i, j;
+    cin >> n >> q;
+    initialize(Arr, size, count, n);
+    while(q--){
+    	cin >> i >> j;
+    	_union(Arr, size, i, j, min, max, count);
+    	cout << compute_min_diff(count, min, max) << endl;
+    }
+    return 0;
+}

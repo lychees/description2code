@@ -1,0 +1,86 @@
+//Pranet Verma
+#include <bits/stdc++.h>
+using namespace std;
+const int LIM=1e6+1e5;
+bool isPrime[LIM];
+vector<int> primes;
+unsigned int  DP[510][510];
+int a[510];
+int IDX[LIM+1]; 
+int LB[LIM+1],UB[LIM+1];
+inline unsigned int solve(int u,int v)
+{
+    int nv=LB[v];
+    int nu=LB[u];
+    if(nu==nv)
+        nv=UB[nv];
+    else if(nu>nv)
+    {
+        int pu=IDX[nu];
+        nv=primes[pu+1];
+    }
+    else
+    {
+        int pv=IDX[nv];
+        nu=primes[pv-1];
+    }
+    return nv-v+nu-u;
+}
+
+int main()
+{
+
+    memset(isPrime,true,sizeof isPrime);
+    isPrime[0]=0;
+    isPrime[1]=0;
+    for(int i=2;i<LIM;++i)
+        if(isPrime[i])
+        {
+            IDX[i]=primes.size();
+            primes.push_back(i);
+            for(long long j=(long long)i*i;j<LIM;j+=i)
+                isPrime[j]=0;
+        }
+    for(int i=LIM-2;i>=0;--i)
+    {
+        if(isPrime[i])
+            LB[i]=i;
+        else
+            LB[i]=LB[i+1];
+
+        if(isPrime[i+1])
+            UB[i]=i+1;
+        else
+            UB[i]=UB[i+1];
+    }
+    int n;
+    scanf("%d",&n);
+    for(int i=0;i<n;++i)
+        scanf("%d",&a[i]);        
+    for(int len=1;len<=n;++len)
+    {       
+        for(int i=0;i<n;++i)
+        {
+            int j=i+len-1;
+            if(j>=n)
+                continue;
+            if(len&1)
+                DP[i][j]=1e9;
+            else
+            {   
+                unsigned int &ret=DP[i][j];
+                ret=1e9;
+                for(int k=i;k<j;++k)
+                {
+                    unsigned int temp=1+solve(a[k],a[j]);
+                    if(k-1>=i)
+                        temp+=DP[i][k-1];
+                    if(k+1<=j-1)
+                        temp+=DP[k+1][j-1];
+                    ret=min(ret,temp);
+                }    
+            }
+        }
+    }
+    cout<<DP[0][n-1];
+}

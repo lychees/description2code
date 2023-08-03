@@ -1,0 +1,191 @@
+//Created By Mayur Agarwal :)
+
+#include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <set>
+#include <algorithm>
+#include <map>
+#include <iterator>
+#include <functional>
+#include <queue>
+
+#define ll long long
+#define ind(a) scanf("%d",&a)
+#define in(a) scanf("%lld",&a)
+#define inc(a) scanf("%c",&a)
+#define ins(a) scanf("%s",a)
+#define pr(a) printf("%lld\n",a)
+#define debug(x) cout << #x << " = " << x << endl
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define pb push_back
+#define ff first
+#define ss second
+
+const int SIZE = 5 * 1e5 + 7;
+const ll mod = 1000000007L;
+
+using namespace std;
+typedef pair<ll, ll>pll;
+
+ll n, q, m;
+vector<int>vec[SIZE], entries[SIZE], tocheck[SIZE];
+ll in_time[SIZE], out_time[SIZE], height[SIZE];
+ll bit[2][SIZE];
+ll tim, low[SIZE], high[SIZE];
+ll threshold[SIZE], owner[SIZE];
+ll f[SIZE], x[SIZE], d[SIZE];
+
+inline void dfs(ll current, ll parent)
+{
+  in_time[current] = ++tim;
+  for (ll i = 0; i < vec[current].size(); i++)
+  {
+    ll next = vec[current][i];
+    if (next != parent)
+    {
+      height[next] = height[current] + 1;
+      dfs(next, current);
+    }
+  }
+  out_time[current] = tim;
+}
+
+void update(int t, int idx, int val)
+{
+  while (idx <= SIZE)
+  {
+    bit[t][idx] += val;
+    idx += (idx & -idx);
+  }
+}
+
+ll query(int t, int idx)
+{
+  ll result = 0;
+  while (idx > 0)
+  {
+    result += bit[t][idx];
+    idx -= (idx & -idx);
+  }
+  return result;
+}
+
+// long long query(int id, int r)
+// {
+//   long long res = 0;
+//   for (; r >= 0; r = (r & (r + 1)) - 1)
+//     res += bit[id][r];
+//   return res;
+// }
+// void update(int id, int i, long long val)
+// {
+//   for (; i < n; i = (i | (i + 1)))
+//     bit[id][i] += val;
+// }
+
+inline void clean_stuff()
+{
+  MS0(bit);
+  for (int i = 1; i <= q + 1; i++)
+  {
+    tocheck[i].clear();
+  }
+  for (int i = 1; i <= m; i++)
+  {
+    if (low[i] == high[i])
+      continue;
+    int mid = (low[i] + high[i]) / 2;
+    tocheck[mid].pb(i);
+  }
+}
+int main()
+{
+
+#ifndef ONLINE_JUDGE
+  freopen("input.txt", "r", stdin);
+#endif
+  ios::sync_with_stdio(0); cin.tie(0);
+  cin >> n >> m;
+  for (int p, i = 2; i <= n; i++)
+  {
+    cin >> p;
+    vec[p].push_back(i);
+  }
+  for (int i = 1; i <= n; i++)
+  {
+    cin >> owner[i];
+    entries[owner[i]].pb(i);
+  }
+
+  for (int i = 1; i <= m; i++)
+  {
+    cin >> threshold[i];
+  }
+  dfs(1, -1);
+
+  cin >> q;
+  for (int i = 1; i <= q; i++)
+  {
+    cin >> f[i] >> x[i] >> d[i];
+  }
+
+  f[q + 1] = 1;
+  for (int i = 1; i <= n; i++)
+  {
+    low[i] = 1;
+    high[i] = q + 1;
+  }
+  for (int iter = 1; iter <= 20; iter++)
+  {
+    clean_stuff();
+    int cnt = 0;
+    for (int i = 1; i <= q + 1; i++)
+    {
+      ll on_ground = (x[i] - 1ll * height[f[i]] * d[i]);
+      //cout << on_ground << endl;
+      update(1, in_time[f[i]], on_ground);
+      update(1, out_time[f[i]] + 1, -on_ground);
+      update(0, in_time[f[i]], d[i]);
+      update(0, out_time[f[i]] + 1, -d[i]);
+
+      for (int j = 0; j < tocheck[i].size(); j++)
+      {
+        ++cnt;
+        int buisnessman = tocheck[i][j];
+        ll total = 0;
+
+        for (int t = 0; t < entries[buisnessman].size(); t++)
+        {
+          int factory = entries[buisnessman][t];
+          //cout << factory << endl;
+          total += query(1, in_time[factory]);
+          //debug(total);
+          total += 1ll * query(0, in_time[factory]) * height[factory];
+          //debug(total);
+          if (total >= 2e18)
+            total = 2e18;
+        }
+        //cout << buisnessman << " " << total << endl;
+        if (total >= threshold[buisnessman])
+          high[buisnessman] = i;
+        else
+          low[buisnessman] = i + 1;
+      }
+    }
+    if (cnt == 0)
+      break;
+  }
+  for (int i = 1; i <= m; i++)
+  {
+    if (low[i] == q + 1)
+      cout << "rekt\n";
+    else
+      cout << low[i] << endl;
+  }
+  return 0;
+}

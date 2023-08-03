@@ -1,0 +1,125 @@
+#include <iostream>
+#include <fstream>
+using namespace std;
+
+#define ll long long
+#define MOD ((ll)1000000007)
+
+//ifstream f("wow.in");
+#define f cin
+
+class Matrix
+{
+public:
+
+    ll n;
+    ll A[12][12];
+
+    Matrix(int N)
+    {
+        n=N;
+
+        for(int i=0; i<=N; ++i)
+            for(int j=0; j<=N; ++j)
+                A[i][j]=0;
+    }
+
+    void operator*=(Matrix B)
+    {
+        Matrix C(9);
+
+        for(int i=0; i<9; ++i)
+            for(int j=0; j<9; ++j)
+                for(int k=0; k<9; ++k)
+                    C.A[i][j]=(C.A[i][j]+A[i][k]*B.A[k][j]);
+
+
+        for(int i=0; i<9; ++i)
+            for(int j=0; j<9; ++j)
+                A[i][j]=C.A[i][j]%MOD;
+    }
+
+    void operator=(Matrix M2)
+    {
+        for(int i=0; i<9; ++i)
+            for(int j=0; j<9; ++j)
+                A[i][j]=M2.A[i][j];
+    }
+};
+
+ll mdl(ll val)
+{
+    return (val<0?-val:val);
+}
+
+int fu(int i,int j,int x,int y)
+{
+    return mdl(x-i)+mdl(y-j)+mdl(i+j-x-y);
+}
+
+#include <vector>
+#define pb push_back
+vector<Matrix> M_prec;
+
+ll ini[15],result[15];
+
+int main()
+{
+    int nrt;
+    f>>nrt;
+
+     ll i,j;
+
+        Matrix M(9);
+
+        for(i=0; i<3; ++i)
+            for(j=0; j<3; ++j)
+                for(int x=0; x<3; ++x)
+                    for(int y=0; y<3; ++y)
+                        M.A[i*3+j][x*3+y]=fu(i,j,x,y);
+
+        M_prec.pb(M);
+
+        for(i=1;i<=40;++i)
+        {
+          Matrix M2(9);
+          M2=M_prec[i-1];
+          M2*=M2;
+          M_prec.pb(M2);
+        }
+
+
+    for(; nrt; --nrt)
+    {
+        ll n,i,j;
+        f>>n;
+
+        for(i=0; i<3; ++i)
+            for(j=0; j<3; ++j)
+                f>>ini[i*3+j];
+
+        Matrix M2(9);
+        for(i=0;i<9;++i) M2.A[i][i]=1;
+
+        for(i=0;i<40;++i)
+        {
+          if (n&((ll)1<<i))
+             M2*=M_prec[i];
+        }
+
+        for(i=0; i<9; ++i)
+            for(j=0; j<9; ++j)
+            {
+                result[i]+=ini[j]*M2.A[i][j];
+                result[i]%=MOD;
+            }
+
+        for(i=0; i<3; ++i,cout<<'\n')
+            for(j=0; j<3; ++j)
+            {
+                cout<<result[i*3+j]<<" ";
+                result[i*3+j]=0;
+            }
+    }
+    return 0;
+}

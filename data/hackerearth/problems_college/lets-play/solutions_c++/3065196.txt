@@ -1,0 +1,82 @@
+#include <cstdio>
+#include <cassert>
+#include <climits>
+#include <set>
+#include <queue>
+#include <vector>
+#include <utility>
+#include <algorithm>
+using std::set;
+using std::pair;
+using std::vector;
+using std::priority_queue;
+
+int n, k;
+struct Cell {
+  Cell(int id) : id(id) {}
+  void Input() { assert(scanf("%d%d", &a, &b) == 2); }
+  int id, a, b;
+};
+vector<Cell> board;
+
+bool CellCompare(const Cell &x, const Cell &y) {
+  return x.a < y.a;
+}
+
+void Init() {
+  assert(scanf("%d%d", &n, &k) == 2);
+  for (int i = 1; i <= n; ++i) {
+    Cell cell(i);
+    cell.Input();
+    board.push_back(cell);
+  }
+}
+
+void Work() {
+  // Sort the cells by the order of A_i
+  std::sort(board.begin(), board.end(), CellCompare);
+  set<int> used;
+  used.insert(0);
+  used.insert(n + 1);
+  priority_queue< pair<int, int> > queue;
+  int ans = INT_MAX;
+  int gap_cnt = 1;
+  for (const Cell &cell : board) {
+    // Insert the cells one by one and try to remove the cells with largest B_i
+    if (gap_cnt) {
+      auto rit = used.lower_bound(cell.id);
+      auto lit = rit; --lit;
+      if (*rit - *lit > k) --gap_cnt;
+      auto it = used.insert(cell.id).first;
+      lit = it; --lit;
+      rit = it; ++rit;
+      if (*it - *lit > k) ++gap_cnt;
+      if (*rit - *it > k) ++gap_cnt;
+      queue.push({cell.b, cell.id});
+    } else if (queue.top().first >= cell.b) {
+      used.insert(cell.id);
+      queue.push({cell.b, cell.id});
+    }
+    if (gap_cnt) continue;
+    while (!queue.empty()) {
+      int id = queue.top().second;
+      auto it = used.find(id);
+      auto lit = it; --lit;
+      auto rit = it; ++rit;
+      if (*rit - *lit <= k) {
+        used.erase(it);
+        queue.pop();
+      } else {
+        break;
+      }
+    }
+    ans = std::min(ans, queue.top().first * cell.a);
+  }
+  printf("%d\n", ans);
+}
+
+int main() {
+  Init();
+  Work();
+  return 0;
+}

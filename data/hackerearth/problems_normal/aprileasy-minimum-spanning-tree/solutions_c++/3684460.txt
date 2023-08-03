@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define mp make_pair
+#define pb push_back
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+const int MAXN = 100100;
+
+int n, m, X, A, C, MOD, XX;
+int p[MAXN];
+int comps;
+ll mst;                  
+struct Edge {
+  int a, b, w;
+  Edge(int a = 0, int b = 0, int w = 0) : a(a), b(b), w(w) {}
+  bool operator<(const Edge &p) const {
+    return w < p.w;
+  }
+} e[600010];
+int sz;
+
+inline int root(int x) {
+  return x == p[x] ? x : p[x] = root(p[x]);
+}
+
+bool merge(int a, int b) {
+  a = root(a);
+  b = root(b);
+  p[a] = b;
+  return a != b;
+}
+
+inline int getNext() {
+  return X = (X * 1ll * A + C) % MOD;
+}
+
+void solve(ll l, ll r) {
+  X = XX;
+  sz = 0;
+  for (int i = 0, u, v, w; i < m; ++i) {
+    u = getNext() % n;
+    v = getNext() % n;
+    w = getNext();
+    if (w >= l && w < r) {
+      e[sz].a = u;
+      e[sz].b = v;
+      e[sz].w = w;
+      ++sz;
+    }
+    if (sz > 600000) break;
+  }
+  sort(e, e + sz);
+  for (int i = 0; i < sz; ++i) {
+    if (merge(e[i].a, e[i].b)) {
+      mst += e[i].w;          
+      --comps;
+    }
+  }
+}
+
+int main() {
+#ifdef LOCAL
+  freopen("input.txt", "r", stdin);
+#endif
+  scanf("%d%d%d%d%d%d", &n, &m, &X, &A, &C, &MOD);
+  XX = X;
+  assert(X >= 0);
+  assert(A >= 0);
+  assert(C >= 0);
+  comps = n;
+  for (int i = 0; i < n; ++i) {
+    p[i] = i;
+  }
+  int delta = max(MOD / 30, 1);
+  int start = 0;
+  for (int i = 0; comps > 1; ++i) {
+    solve(start, start + delta);
+    start += delta;
+  }
+  printf("%lld\n", mst);
+  return 0;
+}

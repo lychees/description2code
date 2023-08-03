@@ -1,0 +1,158 @@
+//Segment tree with lazy propogation
+//Reference https://gist.github.com/shobhit6993/7088061
+#include<stdio.h>
+#include<algorithm>
+struct leaf{
+    int z[4];
+};
+typedef struct leaf leaf;
+leaf T[6000010];
+int Flag[6000010];
+int i,j,k,t,ch,n,m,a,b;
+void update(leaf *a,leaf *b,leaf *c){
+    a->z[0]=b->z[0]+c->z[0];
+    a->z[1]=b->z[1]+c->z[1];
+    a->z[2]=b->z[2]+c->z[2];
+    a->z[3]=b->z[3]+c->z[3];
+}
+leaf NewLeaf() {
+	leaf res;
+	res.z[0]=res.z[1]=res.z[2]=res.z[3]=0;
+	return res;
+}
+void build(int node,int b,int e){
+    int mid=b+e>>1;
+    if(b==e){
+        Flag[node]=0;
+        T[node].z[0]=1;
+        T[node].z[1]=T[node].z[2]=T[node].z[3]=0;
+    }
+    else{
+        build(node<<1,b,mid);
+        build(node<<1|1,mid+1,e);
+        update(&T[node],&T[node<<1],&T[node<<1|1]);
+    }
+}
+void modify(int node,int l,int r,int i,int j,int d) {
+    if(Flag[node]!=0) {
+        if(l!=r) {
+            Flag[node*2]+=Flag[node];
+            if(Flag[node*2]>=4) {
+            	Flag[node*2]-=4;
+            }
+            Flag[node*2+1]+=Flag[node];
+            if(Flag[node*2+1]>=4) {
+            	Flag[node*2+1]-=4;
+            }
+            
+        }
+        while(Flag[node]) {
+                 int tmp=T[node].z[3];
+                T[node].z[3]=T[node].z[2];
+                T[node].z[2]=T[node].z[1];
+                T[node].z[1]=T[node].z[0];
+                T[node].z[0]=tmp;
+                Flag[node]--;
+       }
+    }
+    if(l > r || l > j || r < i) {
+        return;
+    }
+    if(l>=i&&r<=j) {
+       Flag[node]+=d;
+       if(Flag[node]>=4) Flag[node]-=4;
+        if(l!=r) {
+            Flag[node*2]+=d;
+            if(Flag[node*2]>=4) {
+            	Flag[node*2]-=4;
+            }
+            Flag[node*2+1]+=d;
+            if(Flag[node*2+1]>=4) {
+            	Flag[node*2+1]-=4;
+            }
+            
+        }
+        while(Flag[node]) {
+                int tmp=T[node].z[3];
+                T[node].z[3]=T[node].z[2];
+                T[node].z[2]=T[node].z[1];
+                T[node].z[1]=T[node].z[0];
+                T[node].z[0]=tmp;
+                Flag[node]--;
+       }
+       Flag[node]=0;
+       return;
+    }
+    modify(node*2,l,(l+r)/2,i,j,d);
+    modify(node*2+1,1+(l+r)/2,r,i,j,d);
+    update(&T[node],&T[node*2],&T[node*2+1]);
+    return;
+}
+leaf query(int node,int l,int r,int i,int j) {
+	if(l>r||l>j||r<i) {
+		return NewLeaf();
+	}
+	if(Flag[node]!=0) {
+		 if(l!=r) {
+            Flag[node*2]+=Flag[node];
+            if(Flag[node*2]>=4) {
+            	Flag[node*2]-=4;
+            }
+            Flag[node*2+1]+=Flag[node];
+            if(Flag[node*2+1]>=4) {
+            	Flag[node*2+1]-=4;
+            }
+            
+        }
+        while(Flag[node]) {
+                int tmp=T[node].z[3];
+                T[node].z[3]=T[node].z[2];
+                T[node].z[2]=T[node].z[1];
+                T[node].z[1]=T[node].z[0];
+                T[node].z[0]=tmp;
+                Flag[node]--;
+       }
+	}
+	if(l>=i&&r<=j) {
+		return T[node];
+	}
+	leaf temp;
+	leaf q1=query(node*2,l,(l+r)/2,i,j);
+	leaf q2=query(node*2+1,1+(l+r)/2,r,i,j);
+	update(&temp,&q1,&q2);
+	return temp;
+} 
+#define s(n)					scanf("%d",&n)
+#define sl(n) 					scanf("%lld",&n)
+#define sf(n) 					scanf("%lf",&n)
+#define ss(n) 					scanf("%s",n)
+#define sc(n)                   {char temp[4]; ss(temp); n=temp[0];}
+int main(){
+    scanf("%d",&n);
+    scanf("%d",&m);
+    build(1,0,n-1);
+    while(m--){
+        sc(ch);
+        s(a);
+        s(b);
+        --a,--b;
+        if(ch=='Q') {
+        	leaf res=query(1,0,n-1,a,b);
+        	int mx=res.z[0];
+        	for(int i=1;i<4;i++) mx=std::max(res.z[i],mx);        	
+        	printf("%d\n",mx);	
+        }
+        else {
+        	int d;
+        	s(d);
+        	if(ch=='C')
+        	 modify(1,0,n-1,a,b,d%4);	
+        	else {
+        		d=-d;
+        		d=(d%4)+4;
+        		modify(1,0,n-1,a,b,d);	
+        	}
+        }
+    }
+    return 0;
+} 

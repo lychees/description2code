@@ -1,0 +1,119 @@
+//mishraiiit
+#include<bits/stdc++.h>
+#define ll long long int
+#define fastScan ios_base::sync_with_stdio(0); cin.tie(NULL);
+using namespace std;
+typedef pair <ll, ll> pll;
+
+const int N = 50011;
+
+int countArr1[N + 1];
+int countArr2[N + 1];
+int arr[N + 1];
+ll ans = 0;
+int q, l, r, n;
+int SQRT;
+
+map< pair<int, int> , ll> M;
+
+void init() {
+  l = 1, r = 1, ans = 1;
+  countArr1[arr[l]]++;
+  countArr2[arr[r]]++;
+}
+
+void add1(int idx) {
+  countArr1[arr[idx]]++;
+  ans += countArr2[arr[idx]];
+}
+
+void add2(int idx) {
+  countArr2[arr[idx]]++;
+  ans += countArr1[arr[idx]];
+}
+
+void remove1(int idx) {
+  countArr1[arr[idx]]--;
+  ans -= countArr2[arr[idx]];
+}
+
+void remove2(int idx) {
+  countArr2[arr[idx]]--;
+  ans -= countArr1[arr[idx]];
+}
+
+typedef pair<int, int> Query;
+
+struct ActQuery {
+  int l1, r1, l2, r2;
+} AQ[N + 1];
+
+Query Q[N * 4 + 1];
+
+set < pair<int, int> > ADDED;
+
+int actq = 0;
+int qcount = 0;
+
+void addQuery(int a, int b) {
+  if(a == 0 || b == 0) return;
+  if(a > b) swap(a, b);
+  if(ADDED.count(make_pair(a, b)) == 0) {
+    Q[qcount++] = make_pair(a, b);
+    ADDED.insert(make_pair(a, b));
+  }
+}
+
+ll get(int a, int b) {
+  if(a > b) return get(b, a);
+  if(a == 0) return 0;
+  return M[make_pair(a, b)];
+}
+
+bool cmp(Query a, Query b) {
+  if(a.first / SQRT == b.first / SQRT) return a.second < b.second;
+  else return a.first < b.first;
+}
+
+int main() {
+
+    scanf("%d", &n);
+
+    SQRT = sqrt(n);
+
+    for(int i = 1; i <= n; i++) {
+      scanf("%d", arr + i);
+    }
+
+    scanf("%d", &q);
+
+    int l1, l2, r1, r2;
+
+    for(int i = 0; i < q; i++) {
+      scanf("%d%d%d%d", &l1, &r1, &l2, &r2);
+      AQ[actq++] = (ActQuery) {l1, r1, l2, r2};
+      addQuery(r1, r2);
+      addQuery(l1 - 1, r2);
+      addQuery(l1 - 1, l2 - 1);
+      addQuery(r1, l2 - 1);
+    }
+
+    sort(Q, Q + qcount, cmp);
+
+    init();
+
+    for(int i = 0; i < qcount; i++) {
+      while(l < Q[i].first) add1(++l);
+      while(l > Q[i].first) remove1(l--);
+      while(r < Q[i].second) add2(++r);
+      while(r > Q[i].second) remove2(r--);
+      M.insert(make_pair(make_pair(Q[i].first, Q[i].second), ans));
+    }
+
+    for(int i = 0; i < actq; i++) {
+      cout << (get(AQ[i].r1, AQ[i].r2) + get(AQ[i].l1 - 1, AQ[i].l2 - 1) \
+      - get(AQ[i].l1 - 1, AQ[i].r2) - get(AQ[i].r1, AQ[i].l2 - 1)) << endl;
+    }
+     
+    return 0;
+}

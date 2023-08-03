@@ -1,0 +1,84 @@
+//there’s light at end of every dark tunnel...keep moving
+#include <iostream>
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+#define inf 1000000000000
+#define mod 1000000007
+#define pb push_back
+#define mp make_pair
+#define all(v) v.begin(),v.end()
+#define S second
+#define F first
+#define boost ios::sync_with_stdio(false);
+
+pair<ll,ll>tree[4000001];
+ll lazy[4000001],last[4000001],ans;
+
+void update(ll node,ll a,ll b,ll l,ll r,ll val)
+{
+	if(lazy[node]!=0)
+	{
+		tree[node].S=(tree[node].S+(b-a+1)*lazy[node]*lazy[node]+2*lazy[node]*tree[node].F)%mod;
+		tree[node].F=(tree[node].F+(b-a+1)*lazy[node])%mod;
+		if(a!=b)
+		{
+			lazy[2*node]+=lazy[node];
+			lazy[2*node+1]+=lazy[node];
+		}
+		lazy[node]=0;
+	}
+	if(a>b || a>r || b<l)
+	return ;
+	if(a>=l && b<=r)
+	{
+		tree[node].S+=(b-a+1)*val*val+2*val*tree[node].F;
+		tree[node].F+=(b-a+1)*val;
+		if(a!=b)
+		{
+			lazy[2*node]+=val;
+			lazy[2*node+1]+=val;
+		}
+		return;
+	}
+	ll mid=(a+b)/2;
+	update(2*node,a,mid,l,r,val);
+	update(2*node+1,mid+1,b,l,r,val);
+	tree[node].F=(tree[2*node].F+tree[2*node+1].F)%mod;
+	tree[node].S=(tree[2*node].S+tree[2*node+1].S)%mod;
+}	
+ll query(ll node,ll a,ll b,ll l,ll r)
+{
+	if(lazy[node]!=0)
+	{
+		tree[node].S+=(b-a+1)*lazy[node]*lazy[node]+2*lazy[node]*tree[node].F;
+		tree[node].F+=(b-a+1)*lazy[node];
+		if(a!=b)
+		{
+			lazy[2*node]+=lazy[node];
+			lazy[2*node+1]+=lazy[node];
+		}
+		lazy[node]=0;
+	}
+	if(a>b || a>r || b<l)
+	return 0;
+	if(a>=l && b<=r)
+	return tree[node].S;
+	ll mid=(a+b)/2;
+	return (query(2*node,a,mid,l,r)+query(2*node+1,mid+1,b,l,r))%mod;
+}
+int main() 
+{
+	ll i,j,n,x;
+	cin>>n;
+	for(i=1;i<=n;i++)
+	{
+		cin>>x;
+		update(1,1,n,last[x]+1,i,1);
+		ans+=query(1,1,n,1,i);
+		ans%=mod;
+		last[x]=i;
+	}
+	cout<<ans;
+	return 0;
+}

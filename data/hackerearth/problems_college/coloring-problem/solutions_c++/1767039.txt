@@ -1,0 +1,219 @@
+//******************************************************************************
+// File name:  main.cpp
+// Authors:    Brianna Alcoran & Abby Jones
+// Date:       4/27/2015
+// Class:      CS380
+// Assignment: In-Class Algorithm Problems
+//******************************************************************************
+
+#include <cstdlib>
+#include <fstream>
+#include <string>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+const string INPUT_FILE = "graph.txt";
+
+enum NodeColor { UNDEFINED, RED, BLACK };
+
+struct GraphNode 
+{
+  int ID;
+  NodeColor mColor;
+  bool bAdded;
+};
+
+
+void addVertex (vector <vector<GraphNode>> &, vector<GraphNode> &, 
+                int node1, int node2);
+bool BFSredBlack (vector <vector<GraphNode>> &, vector<GraphNode> &);
+void deallocate (vector <vector<GraphNode>> &, vector<GraphNode> &);
+
+//******************************************************************************
+// Method:	    main
+//
+// Description: read from a file that contains the number of vertices,
+//              number of edges, and which two vertices form an edge.
+//              using this data, we determine if the graph described can be
+//              bicolorable or not bicolorable.
+//
+// Parameters:	none
+//
+// Returned:	  exit status
+//******************************************************************************
+int main ()
+{
+//  ifstream inFile;
+  string buffer;
+  //inFile.open(INPUT_FILE);
+
+  int numNodes, numEdges;
+  GraphNode sNode, sNodeAdj;
+  vector <vector<GraphNode>> sVertexList;
+  vector<GraphNode> sNodeLookup;
+  int numTests;
+
+
+  //if (!inFile)
+  //{
+  //  exit(-1);
+  //}
+  
+  cin >> numTests;
+
+  for ( int j = 0 ; j < numTests; ++j)
+  {
+  	cin >> numNodes;
+      /*getline(inFile, buffer);*/
+
+      cin >> numEdges;
+     /* getline(inFile, buffer);*/
+
+      sNodeLookup.resize (numNodes);
+    
+      for (int i = 0; i < numNodes; ++i) /* initialize all nodes in the lookup */
+      {
+        sNodeLookup[i].bAdded = false;
+        sNodeLookup[i].mColor = UNDEFINED;
+        sNodeLookup[i].ID = i;
+      }
+
+      sVertexList.resize(numNodes); /* initialize adjacency list */
+
+      for (int i = 0; i < numEdges; ++i) /* fill adjacency list */
+      {
+        cin >> sNode.ID >> sNodeAdj.ID;
+        
+        /* look up each node read in - if it has not already been added to the 
+            look up table, add it now. otherwise, just add to the adjacency list*/
+        addVertex (sVertexList, sNodeLookup, sNode.ID, sNodeAdj.ID);
+        addVertex (sVertexList, sNodeLookup, sNodeAdj.ID, sNode.ID);
+      }
+
+      if (BFSredBlack (sVertexList, sNodeLookup)) /* determine if colorable or not */
+      {
+        cout << "BICOLORABLE." << endl;
+      }
+      else
+      {
+        cout << "NOT BICOLORABLE." << endl;
+      }
+
+      deallocate (sVertexList, sNodeLookup);
+  }
+     
+
+  return EXIT_SUCCESS;
+}
+
+//******************************************************************************
+// Method:	    add vertex
+//
+// Description: adds a vertex to the lookup if it has not been addded. also add
+//              the vertex to the adjacency list
+//
+// Parameters:	none
+//
+// Returned:	  none
+//******************************************************************************
+void addVertex (vector <vector<GraphNode>> &sVertexList, 
+                          vector<GraphNode> &sNodeLookup, int node1, int node2)
+{
+  if (sNodeLookup[node1].bAdded == false)
+  {
+    sNodeLookup[node1].bAdded = true;
+    sVertexList[node1].push_back(sNodeLookup[node1]);
+    sVertexList[node1].push_back(sNodeLookup[node2]);
+  }
+  else
+  {
+    sVertexList[node1].push_back(sNodeLookup[node2]);
+  }
+}
+
+//******************************************************************************
+// Method:	    BFSredBlack
+//
+// Description: determines if a graph is bicolorable or not
+//
+// Parameters:	sVertexList - adjacency list of vertices
+//              sNodeLookup - table to lookup the node
+//
+// Returned:	  bool - true, if bicolored; otherwise, false
+//******************************************************************************
+bool BFSredBlack (vector <vector<GraphNode>> &sVertexList, 
+                                                vector<GraphNode> &sNodeLookup)
+{
+  bool bBiColored = true;
+
+  for (int i = 0; i < (int)sVertexList.size(); ++i)
+  {
+    if (sNodeLookup[sVertexList[i][0].ID].mColor == UNDEFINED)
+    {
+      sNodeLookup[sVertexList[i][0].ID].mColor = RED;
+      for (int j = 1; j < (int)sVertexList[i].size(); ++j)
+      {
+        if (sNodeLookup[sVertexList[i][j].ID].mColor == UNDEFINED )
+        {
+          sNodeLookup[sVertexList[i][j].ID].mColor = BLACK;
+        }
+        else if (sNodeLookup[sVertexList[i][j].ID].mColor == RED )
+        { /* an adjacent node is the same color... bad! */
+          bBiColored = false;
+        }
+      }
+    }
+    else if (sNodeLookup[sVertexList[i][0].ID].mColor == BLACK)
+    {
+      for (int j = 1; j < (int)sVertexList[i].size(); ++j)
+      {
+        if (sNodeLookup[sVertexList[i][j].ID].mColor == UNDEFINED )
+        {
+          sNodeLookup[sVertexList[i][j].ID].mColor = RED;
+        }
+        else if (sNodeLookup[sVertexList[i][j].ID].mColor == BLACK )
+        { /* an adjacent node is the same color... bad! */
+          bBiColored = false;
+        }
+      }
+    }
+    else if (sNodeLookup[sVertexList[i][0].ID].mColor == RED)
+    {
+      for (int j = 1; j < (int)sVertexList[i].size(); ++j)
+      {
+        if (sNodeLookup[sVertexList[i][j].ID].mColor == UNDEFINED )
+        {
+          sNodeLookup[sVertexList[i][j].ID].mColor = BLACK;
+        }
+        else if (sNodeLookup[sVertexList[i][j].ID].mColor == RED ) 
+        {  /* an adjacent node is the same color... bad! */
+          bBiColored = false;
+        }
+      }
+    }
+  }
+
+  return bBiColored;
+}
+
+//******************************************************************************
+// Method:	    deallocate
+//
+// Description: clears adjacency list and the lookup table
+//
+// Parameters:	none
+//
+// Returned:	  none
+//******************************************************************************
+void deallocate (vector <vector<GraphNode>> &sVertexList, 
+                                                vector<GraphNode> &sNodeLookup)
+{
+  sNodeLookup.clear();
+  for (int i = 0; i < (int)sVertexList.size (); ++i)
+	{
+		sVertexList[i].clear();
+	}
+	sVertexList.clear();
+}

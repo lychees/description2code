@@ -1,0 +1,60 @@
+using namespace std;
+#include <bits/stdc++.h>
+const int MAX=1e5+5;
+vector<int> indx(100005);
+vector<int> tree(100005);
+vector<int> ans(100005);
+int n;
+vector<pair<pair<int,int>,int> > pr(100005);
+bool cmp(pair<pair<int,int>,int > a,pair<pair<int,int>,int > b){
+	return (a.first.second<b.first.second);
+}
+int next_index(int x){
+	return (x + ((~(x)+1) & x));
+}
+int parent(int x){
+	return (x - ((~(x)+1) & x));
+}
+void update(int idx){
+	while(idx<=n){
+		tree[idx]+=1;
+		idx = next_index(idx);
+	}
+}
+int query(int x){
+	int ans = 0;
+	while(x>0){
+		ans += tree[x];
+		x = parent(x);
+	}
+	return ans;
+}
+int main(){
+	vector<int> array(MAX);
+	int m,d,i,j,k=0,l,r;
+    scanf("%d%d%d",&n,&m,&d);
+    for(i=1;i<=n;++i){
+        scanf("%d",&array[i]);
+        //cin>>array[i];
+        indx[array[i]]=i;
+    }
+    for(i=0;i<m;++i){
+        scanf("%d%d",&l,&r);
+        pr[i]=make_pair(make_pair(l,r),i);
+    }
+    sort(pr.begin(),pr.begin()+m,cmp);
+    for(i=1;i<=n;++i){
+        for(j=max(1,array[i]-d);j<=min(n,array[i]+d);++j){
+            if(indx[j]<=i){
+                update(indx[j]);
+            }
+        }
+        while(k<m && pr[k].first.second==i){
+            ans[pr[k].second]=query(pr[k].first.second)-query(pr[k].first.first-1);
+            k++;
+        }
+    }
+    for(i=0;i<m;++i){
+    	printf("%d\n",ans[i]);
+    }
+}

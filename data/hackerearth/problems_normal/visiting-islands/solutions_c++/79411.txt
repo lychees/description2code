@@ -1,0 +1,72 @@
+#include <cstdio>
+#include <map>
+#include <vector>
+using namespace std;
+
+int main() {
+	int t; scanf("%d", &t);
+	while(t--){
+		int n; scanf("%d", &n);
+		int chain[1000001];
+		int distances[1000001];
+		for(int i = 0; i < n; i++){
+			scanf("%d", &chain[i]);
+			distances[i] = 0;
+		}
+		
+		int max = 0, best = -1;
+		for(int i = 0; i < n; i++){
+			int distance = distances[i];
+			if(distance == 0){
+				int nextDistance = distances[chain[i]];
+				if(nextDistance > 0) distance = distances[i] = nextDistance + 1;
+				else{
+					map<int, int> path;
+					vector<int> crumbs;
+					path[i] = 0;
+					crumbs.push_back(i);
+					distance = 0;
+					int j, k;
+					map<int, int>::iterator it;
+					bool hasLoop = true;
+					for(j = chain[i], it = path.find(j), k = 1; it == path.end(); j = chain[j], it = path.find(j), k++){
+						distance = distances[j];
+						if(distance > 0){
+							hasLoop = false;
+							break;
+						}
+						path[j] = k;
+						crumbs.push_back(j);
+					}
+					
+					vector<int>::reverse_iterator rt = crumbs.rbegin();
+					int crumb = *rt;
+					if(hasLoop){
+						int loopLength = k - it->second;
+						while(crumb != j){
+							distances[crumb] = loopLength; //printf("LOOP %d (%d)\n", crumb, loopLength);
+							rt++;
+							crumb = *rt;
+						}
+						distance = distances[crumb] = loopLength; //printf("LOOP %d (%d)\n", crumb, loopLength);
+						rt++;
+						crumb = *rt;
+					}
+					
+					while(rt != crumbs.rend()){
+						distances[crumb] = ++distance; //printf("%d (%d)\n", crumb, distance);
+						rt++;
+						crumb = *rt;
+					}
+				}
+				
+				if(distance > max){ best = i; max = distance; } //printf("ROUND %d (%d)\n", i, distance);
+			}
+			
+			//printf("ROUND %d\n", i);
+		}
+		
+		printf("%d\n", best);
+	}
+	return 0;
+}

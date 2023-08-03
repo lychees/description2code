@@ -1,0 +1,137 @@
+#include <stdexcept>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <fstream>
+#include <cassert>
+#include <cstring>
+#include <cstdarg>
+#include <cstdio>
+#include <memory>
+#include <random>
+#include <cmath>
+#include <ctime>
+#include <functional>
+#include <algorithm>
+#include <complex>
+#include <numeric>
+#include <limits>
+#include <vector>
+#include <string>
+#include <queue>
+#include <deque>
+#include <array>
+#include <list>
+#include <map>
+#include <set>
+
+using namespace std;
+
+#define all(a) (a).begin(), (a).end()
+#define sz(a) static_cast<int>((a).size())
+#define FOR(i, a, b) for (int i(a), b_(b); i < b_; ++i)
+#define REP(i, n) FOR (i, 0, n)
+#define FORD(i, a, b) for (int i(a), b_(b); i >= b_; --i)
+#define UNIQUE(a) sort(all(a)), (a).erase(unique(all(a)), (a).end())
+#define CL(a, v) memset(a, v, sizeof a)
+#define eb emplace_back
+#define pb push_back
+#define X first
+#define Y second
+
+typedef long long ll;
+typedef long double ld;
+typedef vector<int> vi;
+typedef pair<int, int> pii;
+template <class T> using min_queue = priority_queue<T, vector<T>, greater<T>>;
+
+const int INF = static_cast<int>(1e9);
+const long long INF_LL = static_cast<long long>(4e18);
+const double pi = acos(-1.0);
+
+template <class T> T& smin(T& x, const T& y) { if (x > y) x = y; return x; }
+template <class T> T& smax(T& x, const T& y) { if (x < y) x = y; return x; }
+template <class T> T sqr(const T& x) { return x * x; }
+
+template <class T> T gcd(T a, T b) {
+  for (a = abs(a), b = abs(b); a && b; a >= b ? a %= b : b %= a);
+  return a + b;
+}
+
+template <typename Iterator>
+void print(const char* fmt, Iterator first, Iterator last,
+           const char* delimiter = " ", const char* closing = "\n") {
+  for (; first != last; ++first != last ? printf("%s", delimiter) : 0)
+    printf(fmt, *first);
+  printf("%s", closing);
+}
+
+const int N = 1e6+5;
+int t, n, m, k;
+char s[N];
+int c[N], q[N];
+vi e[N];
+
+int main() {
+  cin.tie(NULL);
+  //ios_base::sync_with_stdio(false);
+#ifdef LocalHost
+  freopen("input.txt", "r", stdin);
+  //freopen("output.txt", "w", stdout);
+#endif
+
+  for (scanf("%d", &t); t--; ) {
+    scanf("%d%d", &n, &m);
+    REP(i, n) scanf("%s", s + m * i);
+    CL(c, -1);
+    e[0].clear();
+    k = 1;
+    REP(u, n*m) if (c[u] == -1) {
+      c[u] = k;
+      q[0] = u;
+      set<int> a;
+      for (int *head = q, *tail = head + 1; head != tail; ++head) {
+        int v = *head;
+        int i = v / m, j = v % m;
+        FOR(dx, -1, 2) FOR(dy, -1, 2) {
+          int x = i + dx, y = j + dy;
+          int w = x * m + y;
+          if (x < 0 || x >= n || y < 0 || y >= m) {
+            a.insert(0);
+            continue;
+          }
+          if (abs(dx) + abs(dy) == 1 && s[v] == s[w] && c[w] == -1) {
+            c[w] = c[v];
+            *tail++ = w;
+          }
+          if (c[w] != -1 && c[w] != c[v]) a.insert(c[w]);
+        }
+      }
+      e[k].clear();
+      for (int v : a) {
+        e[v].pb(k);
+        e[k].pb(v);
+      }
+      ++k;
+    }
+//    REP(i, k) print("%d", all(e[i]));
+    CL(c, 0);
+    for (int v : e[0]) c[v] = 1;
+    c[0] = 2;
+    q[0] = 0;
+    for (int *head = q, *tail = head + 1; head != tail; ++head) {
+      int v = *head;
+      for (int u : e[v]) {
+        ++c[u];
+        if (c[u] == 2) *tail++ = u;
+      }
+    }
+    bool ok = find(c, c + k, 1) == c + k;
+    printf("%s\n", ok ? "YES" : "NO");
+  }
+
+#ifdef LocalHost
+  cerr << endl << endl << static_cast<double>(clock()) / CLOCKS_PER_SEC << endl;
+#endif
+  return 0;
+}

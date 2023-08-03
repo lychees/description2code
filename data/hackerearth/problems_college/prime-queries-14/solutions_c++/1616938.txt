@@ -1,0 +1,108 @@
+#include <iostream>
+#include<bits/stdc++.h>
+using namespace std;
+int ch[1000005];
+int a[1000005];
+int tr[1000005*4];
+void build(int v,int l,int r)
+{
+	if(l==r){tr[v] = a[l];
+	
+//	printf("while building at %d %d %d\n",v,l,r);
+//	printf("%d is max for it\n",tr[v]);
+	}
+	else {
+		int m = (l+r)/2;
+		build(2*v, l, m);
+		build(2*v+1, m+1, r);
+		tr[v] = max(tr[2*v],tr[2*v+1]);
+		
+//	printf("while building at %d %d %d\n",v,l,r);
+	//	printf("max is of %d %d\n",tr[2*v],tr[2*v+1]);
+	}
+}
+int get(int v, int lo, int hi, int l, int r)
+{
+//	printf("search for %d %d %d looks for %d %d\n",v,lo,hi,l,r);
+	if(lo > hi)return -1;
+	if(lo==l && hi==r)
+	{
+	//	printf("surely we can return %d\n",tr[v]);
+		return tr[v];
+	}
+	int m = (l+r)/2;
+	int fir,sec;
+	fir = get(2*v, lo, min(hi,m), l,m);
+	sec = get(2*v+1, max(lo,m+1),hi,m+1,r);
+//	printf("we need to send max of %d and %d\n",fir,sec);
+	return max(fir,sec);
+}
+void update(int v, int x, int y, int l, int r)
+{
+//	printf("root request %d %d %d\n",v,l,r);
+	if(l==r){
+		tr[v] = y;
+	//	printf("updating root %d pre value %d to %d range %d %d\n",v,x,y,l,r);
+	}
+	else {
+		int m  = (l+r)/2;
+		if(x <=m){
+			update(2*v, x, y, l,m);
+		}
+		else {update(2*v+1, x,y,m+1,r);
+	//	printf("updated child %d %d %d\n",2*v+1,m+1,r);
+		}
+		//	printf("updating root %d pre value %d to %d range %d %d\n",v,x,y,l,r);
+			//printf("and assigned max of %d and %d location was %d %d\n",tr[2*v],tr[2*v+1],2*v,2*v+1);
+		tr[v] = max(tr[2*v],tr[2*v+1]);
+	}
+}
+int main()
+{
+	int hi,m,cur;
+	hi = 1000001;
+	for(m=2;m<=hi;m++)
+	{
+		if(ch[m]==0){
+			cur = 2*m;
+			while(1)
+			{
+				if(cur > hi)break;
+				ch[cur] = 1;
+				cur+=m;
+			}
+		}
+	}
+  ch[0]=ch[1] = 1;
+
+int n,t;
+scanf("%d%d",&n,&t);
+int i;
+for(i=0;i<n;i++)
+{
+	scanf("%d",&m);
+	if(ch[m]==0)a[i] = m;
+	else a[i] = -1;
+}
+build(1,0,n-1);
+for(i=0;i<t;i++)
+{
+	int x,y,z;
+	scanf("%d%d%d",&z,&x,&y);
+	x--;
+	y--;
+	if(z==0)
+	{
+			y++;
+		if(ch[y])y=-1;
+	//	printf("updating %d\n",y);
+		update(1,x,y,0,n-1);
+	}
+	else {
+//	printf("searching for %d %d\n",x,y);
+		printf("%d\n",get(1,x,y,0,n-1));
+	}
+}
+
+    return 0;
+}

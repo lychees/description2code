@@ -1,0 +1,88 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+// index starts with 1
+template<class T>
+class BIT {
+  vector<T> bit;
+public:
+  BIT() {}
+  BIT(int n): bit(n+1) {}
+  T sum(int i) {
+    T s = 0;
+    while(i > 0) {
+      s += bit.at(i);
+      i &= i - 1;
+    }
+    return s;
+  }
+  void add(int i, T x) {
+    while(i < bit.size()) {
+      bit.at(i) += x;
+      i += i & -i;
+    }
+  }
+  void resize(int n) {
+    bit.resize(n+1);
+  }
+};
+
+int main() {
+    int T;
+    scanf("%d", &T);
+    while(T--) {
+        int N;
+        scanf("%d", &N);
+        vector<int> A(N);
+        for (int i = 0; i < N; i++) {
+            scanf("%d", &A[i]);
+        }
+        vector<int> B = A;
+        sort(B.begin(), B.end());
+        B.resize(unique(B.begin(), B.end()) - B.begin());
+        for (int i = 0; i < N; i++) {
+            A[i] = lower_bound(B.begin(), B.end(), A[i]) - B.begin() + 1;
+        }
+        BIT<int> bit(N);
+        vector<long long> left1(N), right1(N), left2(N), right2(N);
+        for (int i = 0; i < N; i++) {
+            left1[i] = bit.sum(A[i]-1);
+            left2[i] = bit.sum(N) - bit.sum(A[i]);
+            bit.add(A[i], 1);
+        }
+        bit = BIT<int>(N);
+        for (int i = N-1; i >= 0; i--) {
+            right1[i] = bit.sum(A[i]-1);
+            right2[i] = bit.sum(N) - bit.sum(A[i]);
+            bit.add(A[i], 1);
+        }
+        long long t1 = 0, t2 = 0;
+        // for(int i = 0; i < N; i++) {
+        //     cerr << left[i] << ' ' << right[i] << endl;
+        // }
+        for (int i = 0; i < N; i++) {
+            t1 += left1[i] * right1[i];
+            t2 += left2[i] * right2[i];
+            // cerr << t1 << ' ' << t2 << endl; 
+            
+        }
+        int start;
+        scanf("%d", &start);
+        if (t1 <= t2) {
+            if (start == 0) {
+                puts("Sarika");
+            } else {
+                puts("Ananya");
+            }
+            printf("%lld\n", t1 * 2);
+        } else {
+            if (start == 0) {
+                puts("Ananya");
+            } else {
+                puts("Sarika");
+            }            
+            printf("%lld\n", t2 * 2 + 1);
+        }
+    }
+}

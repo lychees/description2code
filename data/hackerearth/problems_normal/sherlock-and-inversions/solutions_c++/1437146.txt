@@ -1,0 +1,96 @@
+/* code copied from http://www.codechef.com/viewplaintext/3323253 */
+
+#include<bits/stdc++.h>
+using namespace std;
+#define inf 1000000000
+#define VI vector<int>
+#define pb push_back
+#define L(s) ((int)(s).size())
+#define mp make_pair
+#define pii pair<int, int>
+#define x first
+#define y second
+#define all(s) (s).begin(), (s).end()
+#define ll long long
+#define pi 2 * acos(0.)
+#define inf 1000000000
+int n, a[100010], q, l, k;
+pair<pii, int> qs[100010];
+int data[100010];
+ll ans[100010];
+ll sum[100010];
+ll sum2[100010];
+int K = 300;
+void add(int pos, int val) {
+	for(; pos < k; pos |= (pos + 1)) sum[pos] += val;
+}
+ll fnd(int pos) {
+	ll ans = 0;
+	for(; pos >= 0; (pos &= (pos + 1))--) ans += sum[pos];
+	return ans;
+}
+void add2(int pos, int val) {
+	for(; pos >= 0; (pos &= (pos + 1))--) sum2[pos] += val;
+}
+ll fnd2(int pos) {
+	ll ans = 0;
+	for(; pos < k; pos |= (pos + 1)) ans += sum2[pos];
+	return ans;
+}
+inline bool byroot(const pair<pii, int>&a, const pair<pii, int> &b) {
+	if (a.x.y / K != b.x.y / K) return a.x.y / K < b.x.y / K;
+	return a.x.x < b.x.x;
+}
+int main() {
+		scanf("%d %d", &n, &q);
+		for(int i = 0; i < n; ++i) { 
+			scanf("%d", &a[i]); 
+			data[i] = a[i]; }
+		sort(data, data + n); k = unique(data, data + n) - data;
+		for(int i = 0; i < n; ++i) a[i] = lower_bound(data, data + k, a[i]) - data;
+	
+
+		for(int i = 0; i < k; ++i) sum[i] = sum2[i] = 0;
+
+		for(int i = 0; i < q; ++i) { 
+			int l, r;
+			scanf("%d%d", &l, &r);
+			--l; --r;
+			qs[i] = mp(mp(l, r), i);
+		}
+		sort(qs, qs + q, byroot);
+
+		int l = 0, r = -1;
+		ll tot = 0;
+		for(int i = 0; i < q; ++i) {
+			while(r < qs[i].x.y) {
+				++r;
+				add(a[r], 1);
+				add2(a[r], 1);
+				tot += fnd2(a[r] + 1);
+			}
+			while(r > qs[i].x.y) {
+				add(a[r], -1);
+				add2(a[r], -1);
+				tot -= fnd2(a[r] + 1);
+				--r;
+			}
+			while(l > qs[i].x.x) {
+				--l;
+				add(a[l], 1);
+				add2(a[l], 1);
+				tot += fnd(a[l] - 1);
+			}
+			while(l < qs[i].x.x) {
+				add(a[l], -1);
+				add2(a[l], -1);
+				tot -= fnd(a[l] - 1);
+				++l;
+			}
+			ans[qs[i].y] = tot;
+		}
+
+		for(int i = 0; i < q; ++i) {
+			printf("%lld\n", ans[i]);
+		}
+}

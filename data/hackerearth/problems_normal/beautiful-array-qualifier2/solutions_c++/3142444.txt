@@ -1,0 +1,86 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int, int> pii; typedef vector<pair<int, int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+int main() {
+	int N; int K; int M;
+	while(~scanf("%d%d%d", &N, &K, &M)) {
+		assert(K >= 2);
+		vector<int> B(M);
+		for(int i = 0; i < M; ++ i)
+			scanf("%d", &B[i]);
+		sort(B.begin(), B.end());
+		vi ans(N);
+		int first = 1;
+		while(binary_search(all(B), first))
+			++ first;
+		if(first != 1) {
+			for(int i = 0; i < N; ++ i) {
+				ans[i] = first;
+			}
+		} else {
+			const int MaxX = 500000;
+			vector<bool> bad(MaxX+1);
+			each(i, B) if(*i <= MaxX)
+				bad[*i] = true;
+			int KK = min(K, 30);
+			vector<set<int> > sets(KK);
+			sets[0].insert(1);
+			int num = first;
+			for(int i = 0; i < N; ++ i) {
+				while(bad[num]) ++ num;
+				ans[i] = num;
+				for(int j = 0; j < KK; ++ j) {
+					auto R = sets[j].upper_bound(MaxX / num);
+					for(auto it = sets[j].begin(); it != R; ++ it) {
+						int t = *it * num;
+						assert(t <= MaxX);
+						bad[t] = true;
+						if(t <= MaxX / num && j + 1 < KK)
+							sets[j + 1].insert(t);
+					}
+					sets[j].erase(R, sets[j].end());
+				}
+			}
+		}
+		for(int i = 0; i < N; ++ i) {
+			if(i != 0) putchar(' ');
+			printf("%d", ans[i]);
+		}
+		puts("");
+	}
+	return 0;
+}

@@ -1,0 +1,94 @@
+
+#include<iostream>
+#include<algorithm>
+#include<map>
+#include<vector>
+
+#define MOD 1000000007
+
+using namespace std;
+
+long long int factorial[100001];
+long long calculate_power(long long m, long long n);
+long long findAns(vector< map<int, int> > data);
+void calculateFactorial();
+
+int main(void)
+{
+   calculateFactorial();
+   vector< map<int,int> > data;
+   map<int,int> store_data;
+   map<int,int>::iterator it;
+   int faculties,conceptual_point,courses;;
+   
+   cin>>faculties;
+   for(int i=0;i<faculties;i++)
+   {
+       store_data.clear();
+       cin>>courses;
+       for(int j=0;j<courses;j++)
+       {
+           cin>>conceptual_point;
+           it = store_data.find(conceptual_point);
+           if(it!=store_data.end())
+               store_data[conceptual_point]++;
+           else
+               store_data[conceptual_point] = 1;
+       }
+       data.push_back(store_data);
+   }
+   cout<<findAns(data)<<endl;
+   return 0;
+
+}
+
+long long calculate_power(long long m, long long n)
+{
+   if(n==0)
+      return 1;
+   if(n==1)
+       return m;
+   long long halfn=calculate_power(m,n/2);
+   if(n%2==0)
+       return ( halfn * halfn ) % MOD;
+   else
+       return ( ( ( halfn * halfn ) % MOD ) * m ) % MOD;
+}
+
+long long findAns(vector< map<int, int> > data)
+{
+   long long courses_under_faculty = 0, courses_under_all_faculty = 0 ;
+   long long numerator = 1, denominator = 1;
+   
+
+   for(int i=0;i<data.size();i++)
+   {
+       courses_under_faculty = 0;
+       map<int,int>::iterator it;
+       for(it=data[i].begin();it!=data[i].end();it++)
+       {
+           courses_under_faculty = courses_under_faculty + it->second;
+           numerator = (numerator * factorial[it->second])%MOD;
+       }
+       denominator = (denominator * factorial[courses_under_faculty])%MOD;
+       courses_under_all_faculty+=courses_under_faculty;
+   }
+
+   for(long long k=2;k<=courses_under_all_faculty;k++)
+       numerator = (numerator*k)%MOD;
+
+   long long ans = (numerator * (calculate_power(denominator,MOD-2)))%MOD;
+
+   return ans;
+
+}
+
+void calculateFactorial()
+{
+   factorial[1]=1;
+   for(int i=2;i<=100001;i++)
+   {
+       factorial[i] = (i*factorial[i-1])%MOD;
+   }
+}
+

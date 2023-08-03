@@ -1,0 +1,117 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int tt, n, k;
+int sz, mat[49][49], res[49][49], tmp[49][49];
+const unsigned long long INF = 17e18;
+const int MOD = 1e9 + 7;
+int s[6][49][49];
+const int smuls[6] = {1, 3, 2, 6, 4, 5};
+
+void matMul(int (&a)[49][49], int (&b)[49][49]) {
+    REP(i, sz) REP(j, sz) {
+        unsigned long long x = 0;
+        REP(k, sz) {
+            x += (LL)a[i][k] * b[k][j];
+            if (x > INF) x %= MOD;
+        }
+        tmp[i][j] = x % MOD;
+    }
+    REP(i, sz) REP(j, sz) a[i][j] = tmp[i][j];
+}
+
+void matExp(int p) {
+    REP(i, sz) REP(j, sz) res[i][j] = i == j;
+    while (p) {
+        if (p & 1) matMul(res, mat);
+        p >>= 1;
+        if (p) matMul(mat, mat);
+    }
+}
+
+int main() {
+    //freopen("input.txt", "r", stdin);
+    scanf("%d", &tt);
+    REP(test, tt) {
+        scanf("%d%d", &n, &k);
+        if (k == 10) {
+            printf("1\n");
+            continue;
+        }
+        int nn = min(n, 5);
+        if (n > 5) {
+            if (k == 2 || k == 5 || k == 6) nn = 1;
+            else if (k == 4) nn = 3;
+            else if (k == 8) nn = 5;
+            else nn = 0;
+        }
+        int ans = 0;
+        for (int i = 0, dig = 1, nx = 10; dig <= nn; ) {
+            int rev = 0;
+            for (int j = i; j > 0; j /= 10) {
+                rev = 10 * rev + j % 10;
+            }
+            if (rev % k == 0) ++ans;
+            if ((i += k) >= nx) ++dig, nx *= 10;
+        }
+        if (n <= 5) {
+            printf("%d\n", ans);
+            continue;
+        }
+        if (k == 2 || k == 4 || k == 8 || k == 5) {
+            int mul;
+            if (k == 2) mul = 20, n -= 1;
+            else if (k == 4) mul = 25 * 20, n -= 3;
+            else if (k == 8) mul = 125 * 100, n -= 5;
+            else mul = 2, n -= 1;
+            sz = 2;
+            mat[0][0] = 10, mat[0][1] = 1;
+            mat[1][0] = 0,  mat[1][1] = 1;
+            matExp(n);
+            ans = (ans + (LL)res[0][1] * mul) % MOD;
+            printf("%d\n", ans);
+        } else if (k == 3) {
+            sz = 3;
+            REP(i, 3) REP(j, 3) mat[i][j] = 0;
+            REP(i, 3) REP(j, 10) ++mat[i][(i + j) % 3];
+            matExp(n);
+            printf("%d\n", res[0][0]);
+        } else if (k == 9) {
+            sz = 9;
+            REP(i, 9) REP(j, 9) mat[i][j] = 0;
+            REP(i, 9) REP(j, 10) ++mat[i][(i + j) % 9];
+            matExp(n);
+            printf("%d\n", res[0][0]);
+        } else if (k == 6) {
+            n -= 1;
+            sz = 6;
+            REP(i, 6) REP(j, 6) mat[i][j] = 0;
+            REP(i, 3) REP(j, 10) ++mat[i][(i + j) % 3];
+            REP(i, 3) mat[i][3 + i] = mat[3 + i][3 + i] = 1;
+            matExp(n);
+            ans = (ans + 6ll * res[0][3] + 7ll * res[0][4] + 7ll * res[0][5]) % MOD;
+            printf("%d\n", ans);
+        } else {
+            sz = 49;
+            memset(s, 0, sizeof s);
+            REP(z, 6) REP(i, 7) REP(j, 7) REP(dig, 10) {
+                int ni = (i + smuls[z] * dig) % 7;
+                int nj = (10 * j + dig) % 7;
+                ++s[z][7 * i + j][7 * ni + nj];
+            }
+            REP(i, 49) REP(j, 49) mat[i][j] = i == j;
+            REP(i, 6) matMul(mat, s[i]);
+            matExp(n / 6);
+            REP(z, n % 6) matMul(res, s[z]);
+            printf("%d\n", res[0][0]);
+        }
+    }
+    return 0;
+}

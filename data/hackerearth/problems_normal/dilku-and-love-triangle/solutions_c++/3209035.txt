@@ -1,0 +1,99 @@
+#include<iostream>
+#include<cstdio>
+#include<cstdlib>
+#include<algorithm>
+#include<vector>
+#include<string>
+#include<set>
+#include<map>
+#include<cmath>
+#include<memory.h>
+#include<assert.h>
+using namespace std;
+typedef long long ll;
+typedef long double ld;
+
+const int N = 5e5+5;
+const int L = 19;
+
+vector<int> g[N];
+int ti[N], to[N], tm;
+int p[N][L];
+
+void dfs(int v, int par = -1){
+	ti[v] = ++tm;
+	p[v][0] = par;
+	for(int l=1;l<L;++l) if(p[v][l-1]==-1) p[v][l] = -1; else p[v][l] = p[p[v][l-1]][l-1];
+	for(int i : g[v]) if(i!=par) dfs(i,v);
+	to[v] = ++tm;
+}
+
+bool anc(int x, int y){
+	return x==-1 || ti[x]<=ti[y]&&to[x]>=to[y];
+}
+
+int lca(int x, int y){
+	if(anc(x,y)) return x;
+	if(anc(y,x)) return y;
+	for(int l=L-1;l>=0;--l) if(!anc(p[x][l],y)) x = p[x][l];
+	return p[x][0];
+}
+
+int fn;
+int f[N*2];
+void add(int i, int x){
+	for(;i<fn;i|=i+1) f[i]+=x;
+}
+
+int sum(int i){
+	int s = 0;
+	for(;i>=0; i=(i&(i+1))-1) s+=f[i];
+	return s;
+}
+
+int sum(int l, int r){
+	return sum(r)  -sum(l-1);
+}
+
+int main(){
+	//freopen("input.txt","r",stdin);// freopen("output.txt","w",stdout);
+	
+	int n, m;
+	scanf("%d%d", &n, &m);
+	for(int k=1;k<n;++k){
+		int i,j;
+		scanf("%d%d", &i, &j);
+		--i;--j;
+		g[i].push_back(j);
+		g[j].push_back(i);
+	}
+	
+	dfs(0);
+	
+	fn = tm+1;
+	
+	while(m--){
+		int tp;
+		scanf("%d", &tp);
+		if(tp==1){
+			int i,j;
+			scanf("%d%d", &i, &j);
+			--i;--j;
+			int k = lca(i,j);
+			add(ti[i], +1);
+			add(ti[j], +1);
+			add(ti[k], -1);
+			if(p[k][0]!=-1) add(ti[p[k][0]], -1);
+		}else{
+			int i;
+			scanf("%d", &i);
+			--i;
+			printf("%d\n",sum(ti[i], to[i]));
+		}
+	}
+	
+	
+	
+	return 0;
+}
+

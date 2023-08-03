@@ -1,0 +1,62 @@
+#include <iostream>
+#include <algorithm>
+#define MAXN 200010
+#define MOD 1000000007
+
+using namespace std;
+
+struct seg {
+    long long sum,ssum,lz;
+} s[4*MAXN];
+
+void push(int i, int l, int r) {
+    long long x = s[i].lz;
+    if (x == 0) return;
+    long long d = r - l + 1;
+    s[i].ssum += d * x*x;
+    s[i].ssum += 2 * s[i].sum * x;
+    s[i].sum += d * x;
+    s[i].ssum %= MOD;
+    s[i].sum %= MOD;
+    if (l < r) {
+        s[2*i].lz += x;
+        s[2*i+1].lz += x;
+    }
+    s[i].lz = 0;
+}
+
+void update(int i, int l, int r, int ll, int rr) {
+    push(i,l,r);
+    if (r < ll || l > rr) return;
+    if (l >= ll && r <= rr) {
+        s[i].lz++;
+        push(i,l,r);
+        return;
+    }
+    int mid = (l + r) / 2;
+    update(2*i,l,mid,ll,rr);
+    update(2*i+1,mid+1,r,ll,rr);
+    s[i].sum = s[2*i].sum + s[2*i+1].sum;
+    s[i].ssum = s[2*i].ssum + s[2*i+1].ssum;
+    s[i].sum %= MOD;
+    s[i].ssum %= MOD;
+}
+
+int n;
+int prv[MAXN];
+long long ans;
+
+int main() {
+    ios::sync_with_stdio(0);
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        int a;
+        cin >> a;
+        update(1,1,n,prv[a]+1,i);
+        prv[a] = i;
+        push(1,1,n);
+        ans += s[1].ssum;
+        ans %= MOD;
+    }
+    cout << ans % MOD << '\n';
+}

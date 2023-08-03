@@ -1,0 +1,100 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define mod 3
+using namespace std;
+ll int tree[300000],A[300000];
+ll pot[300000];
+void build(ll int node,ll int start,ll int end)
+{
+    if(start == end)
+    {
+        // Leaf node will have a single element
+        tree[node] = A[start];
+    }
+    else
+    {
+        ll int mid = (start + end) / 2;
+        // Recurse on the left child
+        build(2*node, start, mid);
+        // Recurse on the right child
+        build(2*node+1, mid+1, end);
+        // Internal node will have the sum of both of its children
+        tree[node] = (tree[2*node]*pot[end-mid] + tree[2*node+1])%mod;
+    }
+}
+void update(ll int node,ll int start,ll int end,ll int idx,ll int val)
+{
+    if(start == end)
+    {
+        // Leaf node
+        tree[node] = 1;
+        A[idx] = 1;
+    }
+    else
+    {
+        ll int mid = (start + end) / 2;
+        if(start <= idx and idx <= mid)
+        {
+            // If idx is in the left child, recurse on the left child
+            update(2*node, start, mid, idx, val);
+        }
+        else
+        {
+            // if idx is in the right child, recurse on the right child
+            update(2*node+1, mid+1, end, idx, val);
+        }
+        // Internal node will have the sum of both of its children
+        tree[node] = ((tree[2*node]*pot[end-mid]%mod) + tree[2*node+1]%mod);
+    }
+}
+ll int query(ll int node,ll int start,ll int end,ll int l,ll int r)
+{
+    if(r < start or end < l)
+    {
+        // range represented by a node is completely outside the given range
+        return 0;
+    }
+    if(l <= start and end <= r)
+    {
+        // range represented by a node is completely inside the given range
+        return (tree[node]*pot[r-end])%mod;
+    }
+    // range represented by a node is partially inside and partially outside the given range
+    ll int mid = (start + end) / 2;
+    ll int p1 = query(2*node, start, mid, l, r);
+    ll int p2 = query(2*node+1, mid+1, end, l, r);
+    return (p1 + p2)%mod;
+}
+int main()
+{
+    pot[0]=1;
+    for(int i=1;i<=100000;i++)
+        pot[i]=(pot[i-1]*2)%mod;
+    long long int  n,i,q,c,qlow,qhigh,len,val;
+    string str;
+    cin>>n>>str;
+    for(i=1;i<=n;i++)
+    {
+        A[i]=str[i-1]-48;
+    }
+    build(1,1,n);
+    cin>>q;
+    while(q--)
+    {
+        cin>>c;
+        if(c==0)
+        {
+            cin>>qlow>>qhigh;
+            cout<<query(1,1,n,qlow+1,qhigh+1)<<endl;
+        }
+        else
+        {
+            cin>>qlow;
+            if(A[qlow+1]==0)
+            {
+                update(1,1,n,qlow+1,1);
+            }
+        }
+    }
+}
+

@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+#define lli long long int
+#define pb push_back
+#define mod 1000000003
+using namespace std;
+
+int A[2009][10009];
+int B[2009][10009];
+int prim[10009];
+lli dp[2][10009];
+int n,m;
+lli alpha[10009];
+void get_min_prime_factor(){
+    prim[1]=1;
+    for(int i = 2; i<10009;i++){
+        if(prim[i]==0){
+            prim[i] = i;
+            for(int j =2;i*j<10009;j++){
+                if(prim[i*j] == 0)prim[i*j]=i;
+            }
+        }
+    }
+
+    return;
+}
+int main()
+{
+    cin>>n>>m;
+    lli P,Q,R,s;
+    get_min_prime_factor();
+    cin>>s>>P>>Q>>R;
+    for(int i = 0; i < n*m; i++){
+        s = ((P * ((s*s)% mod))%mod + ((Q*s)%mod + R)%mod )%mod ;
+        A[(i/m) + 1][(i%m) + 1] = s;
+    }
+    lli X,Y,Z,w;
+    cin>>w>>X>>Y>>Z;
+    for(int i = 0; i < n*m; i++){
+        w = ((X * ((w*w)%mod))%mod + ((Y * w)%mod + Z)%mod)%mod;
+        B[(i/m) + 1][(i%m) + 1] = w;
+    }
+
+
+    for(int i=0;i<n;i++){
+        int a = i%2;
+        dp[1-a][1] = dp[a][1] + A[i][1];
+        for(int j =1;j<=m;j++)alpha[j]=1e17;
+        for(int j=1;j<=m;j++){
+                if(j!=1)dp[1-a][1] = min(dp[1-a][1] , dp[a][j] + B[i][j]);
+                dp[1-a][j] =  dp[a][j] + A[i][j];
+                dp[1-a][j] = min(dp[1-a][j] , alpha[prim[j]]);
+                alpha[prim[j]] = min(alpha[prim[j]] , dp[a][j] + B[i][j]);
+        }
+        for(int j =1;j<=m;j++)alpha[j]=1e17;
+        for(int j=m;j>=2;j--){
+            dp[1-a][j] = min(dp[1-a][j],alpha[prim[j]]);
+            alpha[prim[j]] = min(alpha[prim[j]] , dp[a][j] + B[i][j]);
+        }
+    }
+
+    lli ans = 1e17;
+    for(int i=1;i<=m;i++)ans= min(ans , dp[n%2][i]);
+    cout<<ans;
+ 
+    return 0;
+}

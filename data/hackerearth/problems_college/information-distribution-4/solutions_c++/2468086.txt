@@ -1,0 +1,132 @@
+#include<cstdio>
+#include<ctime>
+#include<cstdlib>
+#include<cstring>
+#include<climits>
+#include<cctype>
+#include<cassert>
+#include<algorithm>
+#include<vector>
+#include<map>
+typedef long long ll;
+using namespace std;
+#define si(x) scanf("%d", &(x))
+#define sll(x) scanf("%lld", &(x))
+#define ss(x) scanf("%s", x)
+#define sc(x) scanf("%c", &(x))
+#define sline(x) scanf("%[^\n]", x)
+inline ll fmod(ll a, ll b)
+{
+	return (b + (a % b)) % b;
+}
+inline ll powmod(ll a, ll b, ll m)
+{
+	if(b == 0)
+		return 1 % m;
+	ll prod = 1;
+	ll s = a;
+	while(b)
+	{
+		if(b & 1)
+			prod = fmod(prod * s, m);
+		b>>=1;
+		s = fmod(s * s, m);
+	}
+	return prod;
+}
+ll small(ll n, ll k, ll m)
+{
+	ll p = 1;
+	for(ll i = 1; i <= k; ++i)
+		p = ((p * (n - (k - i))) * powmod(i, m - 2, m)) % m;
+	return p;
+}
+ll large(ll n, ll k, ll m)
+{
+	if(k > n)
+		return 0;
+	if(n < m)
+		return small(n, k, m);
+	return (large(n / m, k / m, m) * large(n % m, k % m, m)) % m;
+}
+#define PMAX 100
+vector<ll> num;
+void sieve()
+{
+	bool isCom[PMAX + 10];
+	memset(isCom, 0, sizeof(isCom));
+	for(ll i = 2; i <= (ll)PMAX; i++)
+	{
+		if(!isCom[i])
+		{	
+			num.push_back(i);
+			for(ll k = i * i; k <= (ll) PMAX; k += i)
+				isCom[k] = true;
+		}
+	}
+}
+vector<ll> nfact ;
+void factorize(ll N)
+{
+	nfact.clear();
+	for(int j = 0; j < num.size() && num[j] * num[j] <= N; j++)
+	{
+		if(N <= 1)
+			return;
+		if(N % num[j] == 0)
+			nfact.push_back(num[j]);
+		while(N % num[j] == 0)
+			N /= num[j];
+	}
+	nfact.push_back(N);
+}
+ll ec(ll a, ll b, ll &x, ll &y) {  
+	ll xx = y = 0;
+	ll yy = x = 1;
+	while(b)
+	{
+		ll q = a / b;
+		ll t = b; b = a % b; a = t;
+		t = xx; xx = x - q * xx; x = t;
+		t = yy; yy = y - q * yy; y = t;
+	}
+	return a;
+}
+pair<ll, ll> crt(ll x, ll a, ll y, ll b) {
+	ll s, t;
+	ll d = ec(x, y, s, t);
+	if(a % d != b % d)
+		return make_pair(0, -1);
+	return make_pair(fmod(s * b * x + t * a * y, x * y) / d, x * y / d);
+}
+pair<ll, ll> crt(const vector<ll> &x, const vector<ll> &a) {
+	pair<ll, ll> ret = make_pair(a[0], x[0]);
+	for(int i = 1; i < x.size(); i++)
+	{
+		ret = crt(ret.second, ret.first, x[i], a[i]);
+		if(ret.second == -1)
+			break;
+	}
+	return ret;
+}
+int a[100000];
+int test, ans;
+ll N, M, K;
+vector<ll> rem;
+int main()
+{
+	sieve();
+	si(test);
+	while(test--)
+	{
+		sll(N);
+		sll(M);
+		sll(K);
+		factorize(K);
+		rem.clear();
+		for(int i = 0; i < nfact.size(); i++)
+			rem.push_back(large(N - 1, M - 1, nfact[i]));
+		printf("%lld\n", crt(nfact, rem).first);
+	}
+	return 0;
+}

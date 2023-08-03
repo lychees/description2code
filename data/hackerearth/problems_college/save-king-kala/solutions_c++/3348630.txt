@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+typedef long long LL;
+ 
+#define PII       pair<int,int>
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+#define cin(x)	scanf("%d" , &x)
+#define MOD		10000000000037
+#define EPS       1E-10
+
+vector<LL> divs[10001];
+vector<LL> sum[10001];
+
+LL mulmod(LL a,LL b,LL c = MOD)
+{
+	LL res = 0;
+	if(a < b)
+		swap(a, b);
+	while(b)
+	{
+		if(b & 1)
+		{
+			res = (res + a);
+			if(res >= c) {
+				res -= c;
+			}
+		}
+		a = (a + a);
+		if(a >= c)
+			a -= c;
+		b >>= 1;
+	}
+	return res;
+}
+
+int calc(int n)
+{
+	int ret = 1;
+	for(int i = 2; 1LL * i * i <= n; i++)
+	{
+		int c = 0;
+		while(n%i == 0)
+		{
+			n /= i;
+			c += 1;
+		}
+		ret = ret * (2 * c + 1);
+		if(ret > 10000) break;
+	}
+	if(n > 1)
+		ret *= 3;
+	if(ret > 10000) return 0;
+	return ret;
+}
+
+LL Q(LL val , int P)
+{
+	if(P == 0) return 1;
+	LL ret = val;
+	for(int i = 2; i <= P; i++)
+		ret = mulmod(ret , val , MOD);
+	return ret;
+}
+
+int p;
+
+void pre()
+{
+	for(int i = 0; i <= 10000; i++)
+	{
+		divs[i].pb(0);
+		sum[i].pb(0);
+	}
+	for(int i = 1; i <= 100000; i++)
+	{
+		int f = calc(i);
+		if(f%2 == 0) continue;
+		divs[f].pb(1LL*i*i);
+		sum[f].pb(Q(1LL*i*i , p));
+	}
+	for(int i = 0; i <= 10000; i++)
+	{
+		divs[i].pb(MOD);
+		sum[i].pb(MOD);
+	}
+	for(int i = 1; i <= 10000; i += 2)
+		for(int j = 1; j < sz(sum[i]); j++)
+			sum[i][j] = (sum[i][j-1] + sum[i][j]) % MOD;
+}
+
+LL F(LL limit , int d)
+{
+	int ptr = (int)(upper_bound(all(divs[d]) , limit) - divs[d].begin());
+	return sum[d][ptr - 1];
+}
+
+void solve()
+{
+	int k;
+	LL a,b;
+	scanf("%d%lld%lld" , &k , &a , &b);
+	LL ans = (F(b,k) - F(a-1,k)) % MOD;
+	if(ans < 0) ans += MOD;
+	printf("%lld\n", ans);
+}
+
+int main()
+{
+	int t;
+	cin(t);
+	cin(p);
+	pre();
+	while(t--)
+		solve();
+	return 0;
+}

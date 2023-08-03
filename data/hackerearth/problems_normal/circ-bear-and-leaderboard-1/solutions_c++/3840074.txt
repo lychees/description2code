@@ -1,0 +1,327 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define li long long int
+#define ll long long int
+#define pb push_back
+#define mp make_pair
+#define lb lower_bound
+#define mx 500010
+
+ll pts[ mx], ans, ts, sm;
+
+li a, b, n, q, i, tmp, plc;
+
+struct node
+{
+    ll point, sum;
+    li cnt;
+
+    struct node *l, *r, *par;
+
+}*start, *temp, *run, *run_d, *rr, *create;
+
+void del_b()
+{
+    if( run_d-> l== NULL&& run_d-> r== NULL)
+    {
+        temp= run_d-> par;
+
+        if( temp!= NULL)
+        {
+            if( (*temp). l== run_d) (*temp). l= NULL;
+            if( (*temp). r== run_d) (*temp). r= NULL;
+        }
+
+        free( run_d);
+        return;
+    }
+
+    rr= run_d;
+
+    if( (*run_d). l==NULL)
+    {
+        run_d= (*run_d). r;
+        while( (*run_d). l!= NULL) run_d= (*run_d). l;
+
+        (*rr). point= (*run_d). point;
+
+        tmp= (*run_d). cnt;
+        ts= (*run_d). sum;
+
+        if( (*run_d). l!= NULL)
+        {
+            tmp-= (*((*run_d). l)). cnt;
+            ts-= (*((*run_d). l)). sum;
+        }
+
+        if( (*run_d). r!= NULL)
+        {
+            tmp-= (*((*run_d). r)). cnt;
+            ts-= (*((*run_d). r)). sum;
+        }
+
+        (*run_d). cnt-= tmp;
+        (*run_d). sum-= ts;
+
+        rr= (*rr). r;
+
+        while( rr!= run_d)
+        {
+            (*rr). cnt-= tmp;
+            (*rr). sum-= ts;
+
+            rr= (*rr). l;
+        }
+
+        del_b();
+
+        return;
+    }
+
+    if( (*run_d). l!=NULL)
+    {
+        run_d= (*run_d). l;
+        while( (*run_d). r!= NULL) run_d= (*run_d). r;
+
+        (*rr). point= (*run_d). point;
+
+        tmp= (*run_d). cnt;
+        ts= (*run_d). sum;
+
+        if( (*run_d). l!= NULL)
+        {
+            tmp-= (*((*run_d). l)). cnt;
+            ts-= (*((*run_d). l)). sum;
+        }
+
+        if( (*run_d). r!= NULL)
+        {
+            tmp-= (*((*run_d). r)). cnt;
+            ts-= (*((*run_d). r)). sum;
+        }
+
+        (*run_d). cnt-= tmp;
+        (*run_d). sum-= ts;
+
+        rr= (*rr). l;
+
+        while( rr!= run_d)
+        {
+            (*rr). cnt-= tmp;
+            (*rr). sum-= ts;
+
+            rr= (*rr). r;
+        }
+
+        del_b();
+
+        return;
+    }
+}
+
+void del()
+{
+    if( pts[ a]== 0) return;
+
+    run= start;
+    plc= 0;
+    sm= 0;
+
+    while( (*run). point!= pts[ a])
+    {
+        if( pts[ a]< (*run). point)
+        {
+            plc+= run-> cnt- run-> l-> cnt;
+            (*run). cnt--;
+            (*run). sum-= pts[ a];
+            run= (*run). l;
+            continue;
+        }
+        if( pts[ a]> (*run). point)
+        {
+            sm+= (*run). sum- (*((*run). r)). sum;
+            (*run). cnt--;
+            (*run). sum-= pts[ a];
+            run= (*run). r;
+        }
+    }
+    if( (*run). r!= NULL) plc+= (*((*run). r)). cnt;
+
+    if( (*run). l!= NULL) sm+= (*((*run). l)). sum;
+
+    ans-=( plc+ 1)* pts[ a];
+
+    (*run). cnt--;
+
+    (*run). sum-= pts[ a];
+
+    ans-= sm;
+
+    if( (*run). r== NULL&& (*run). l== NULL)
+    {
+        if( (*run). cnt== 0)
+        {
+            temp= (*run). par;
+
+            if( temp!= NULL)
+            {
+                if( (*temp). l== run) (*temp). l= NULL;
+                if( (*temp). r== run) (*temp). r= NULL;
+            }
+
+            free( run);
+        }
+    }
+
+    if( (*run). r!= NULL&& (*run). l== NULL)
+    {
+        if( (*run). cnt== (*((*run). r)). cnt)
+        {
+            run_d= run;
+
+            del_b();
+        }
+    }
+
+    if( (*run). r== NULL&& (*run). l!= NULL)
+    {
+        if( (*run). cnt== (*((*run). l)). cnt)
+        {
+            run_d= run;
+
+            del_b();
+        }
+    }
+
+    if( (*run). r!= NULL&& (*run). l!= NULL)
+    {
+        if( (*run). cnt== (*((*run). r)). cnt+ (*((*run). l)). cnt)
+        {
+            run_d= run;
+
+            del_b();
+        }
+    }
+
+    return;
+}
+
+void ins()
+{
+    if( start== NULL)
+    {
+        create= (struct node*) malloc( sizeof( struct node));
+
+        start= create;
+
+        (*start). point= pts[ a];
+
+        (*start). par= NULL;
+
+        (*start). cnt= 1;
+
+        (*start). sum= pts[ a];
+
+        (*start). l= NULL;
+
+        (*start). r= NULL;
+
+        ans= pts[ a];
+
+        return;
+    }
+
+    run= start;
+    plc= 0;
+    sm= 0;
+
+    while( run!= NULL&& (*run). point!= pts[ a])
+    {
+        if( pts[ a]< (*run). point)
+        {
+            plc+= (*run). cnt;
+            if( (*run). l!= NULL) plc-= (*((*run). l)). cnt;
+            (*run). cnt++;
+            (*run). sum+= pts[ a];
+            if( (*run). l== NULL) temp= run;
+            run= (*run). l;
+            continue;
+        }
+        if( pts[ a]> (*run). point)
+        {
+            sm+= (*run). sum;
+            if( (*run). r!= NULL) sm-= (*((*run). r)). sum;
+            (*run). cnt++;
+            (*run). sum+= pts[ a];
+            if( (*run). r== NULL) temp= run;
+            run= (*run). r;
+        }
+    }
+
+    if( run== NULL)
+    {
+        create= (struct node*) malloc( sizeof( struct node));
+
+        run= create;
+
+        if( temp-> point> pts[ a]) temp-> l= run;
+
+        if( temp-> point< pts[ a]) temp-> r= run;
+
+        (*run). l= NULL;
+
+        (*run). r= NULL;
+
+        (*run). par= temp;
+
+        (*run). point= pts[ a];
+
+        (*run). cnt= 0;
+
+        (*run). sum= 0;
+    }
+
+    if( (*run). r!= NULL) plc+= (*((*run). r)). cnt;
+
+    if( (*run). l!= NULL) sm+= (*((*run). l)). sum;
+
+    ans+=( plc+ 1)* pts[ a];
+
+    (*run). cnt++;
+
+    (*run). sum+= pts[ a];
+
+    ans+= sm;
+
+    return;
+}
+
+void solve()
+{
+    scanf( "%lld %lld", &n, &q);
+
+    start= NULL;
+
+    for( i= 0; i< q; i++)
+    {
+        scanf( "%lld %lld", &a, &b);
+
+        del();
+
+        pts[ a]+= b;
+
+        ins();
+
+        printf( "%lld\n", ans);
+    }
+
+    return;
+}
+
+int main()
+{
+    solve();
+    return 0;
+}
+

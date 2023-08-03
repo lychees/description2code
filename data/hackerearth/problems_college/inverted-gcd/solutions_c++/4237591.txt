@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int prime[100005], squared[100005], tmp[100005], A[100005];
+vector<int> divisor[100005], X[100005];
+
+long long merger(int i, int left, int mid, int right)
+{
+	int p = left, q = mid+1, r = left;
+	long long ans = 0;
+	
+	if(i>=0)
+	{
+		while(p<=mid && q<=right)
+		{
+			if(X[i][p]<=X[i][q])
+				tmp[r++] = X[i][p++];
+			else
+			{
+				ans += (mid-p+1);
+				tmp[r++] = X[i][q++];
+			}
+		}
+	
+		while(p<=mid)
+			tmp[r++] = X[i][p++];
+		while(q<=right)
+			tmp[r++] = X[i][q++];
+	
+		for(int k=left; k<=right; k++)
+			X[i][k] = tmp[k];
+	}
+	else
+	{
+		while(p<=mid && q<=right)
+		{
+			if(A[p]<=A[q])
+				tmp[r++] = A[p++];
+			else
+			{
+				ans += (mid-p+1);
+				tmp[r++] = A[q++];
+			}
+		}
+	
+		while(p<=mid)
+			tmp[r++] = A[p++];
+		while(q<=right)
+			tmp[r++] = A[q++];
+	
+		for(int k=left; k<=right; k++)
+			A[k] = tmp[k];
+	}
+	
+	return ans;
+}
+
+long long getInversions(int i, int left, int right)
+{
+	long long ans = 0;
+	int mid = (left+right)/2;
+	
+	if(left<right)
+	{
+		ans += getInversions(i, left, mid);
+		ans += getInversions(i, mid+1, right);
+		
+		ans += merger(i, left, mid, right);
+	}
+	
+	return ans;
+}
+
+int main()
+{
+    int N;
+    scanf("%d", &N);
+    
+    for(int i=2; i<=100000; i++)
+    	for(int j=i; j<=100000; j+=i)
+    		divisor[j].push_back(i);
+    
+    for(int i=2; i<=100000; i++)
+    {
+    	if(!prime[i])
+    	{
+    		for(int j=i; j<=100000; j+=i)
+    			prime[j]++;
+    		
+    		long long x = (long long)i*i;
+    		
+    		for(long long j=x; j<=100000; j+= x)
+    			squared[j] = 1;
+    	}
+    }
+    
+    long long ans = 0;
+    
+    for(int i=1; i<=N; i++)
+    {
+    	int x;
+    	scanf("%d", &x);
+    	
+    	A[i] = x;
+    	
+    	if(x==1)
+    		continue;
+    		
+    	for(int j=0; j<divisor[x].size(); j++)
+    		X[divisor[x][j]].push_back(x);
+    }
+    
+    for(int i=2; i<=100000; i++)
+    {
+    	if(squared[i])
+    		continue;
+    	
+    	if(prime[i]%2)
+	    	ans += getInversions(i, 0, X[i].size()-1);
+	    else
+	    	ans -= getInversions(i, 0, X[i].size()-1);
+    }
+    
+    ans = getInversions(-1, 1, N) - ans;
+    
+    printf("%lld\n", ans);
+    
+    return 0;
+}

@@ -1,0 +1,128 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define pb push_back
+#define mp make_pair
+#define f first
+#define s second
+
+typedef vector<int> vi;
+typedef vector< vector<int> > vvi;
+typedef pair<int, int> pi;
+typedef pair<int, pair<int, int> > pii;
+
+int graph[101][101];
+vector<int> shortest_path[101][101];
+
+void init(int n, int m){
+	for(int i=0;i<n;i++){
+		for(int j=0;j<m;j++){
+			shortest_path[i][j].clear();
+		}
+	}
+}
+
+bool isSafe(int i, int j, int n, int m){
+	if(i>=0 && i<n && j>=0 && j<m ){
+		if(graph[i][j]!=-10) return true;
+	}
+	return false;
+}
+
+int solve(int i, int j, int k){
+	vector<int> sp = shortest_path[i][j];
+	sort(sp.begin(), sp.end());
+	if(sp.size()>=k) return sp[k-1];
+	return -1;
+}
+
+void precalc(int n, int m){
+	shortest_path[0][0].pb(graph[0][0]);
+	//cout<<"kk";
+	for(int i=1;i<n && graph[i][0]!=-10;i++) shortest_path[i][0].pb(shortest_path[i-1][0][0] + graph[i][0]); 
+	for(int i=1;i<m && graph[0][i]!=-10;i++) shortest_path[0][i].pb(shortest_path[0][i-1][0] + graph[0][i]);
+	//cout<<"kk";
+	for(int i=1;i<n;i++){
+		for(int j=1;j<m;j++){
+			//cout<<i<<" "<<j<<endl;
+			if(graph[i][j]!=-10){
+				int l1 = shortest_path[i-1][j].size();
+				int l2 = shortest_path[i][j-1].size();
+				
+				int x=0, y=0, z=0;
+				while(x<l1 && y<l2  && z!=101){
+					int sp1 = shortest_path[i-1][j][x];
+					int sp2 = shortest_path[i][j-1][y];
+					//cout<<sp1<<" "<<sp2;
+					if(sp1<sp2){
+						shortest_path[i][j].pb(sp1 + graph[i][j]);
+						x++;
+					}else{
+						shortest_path[i][j].pb(sp2 + graph[i][j]);
+						y++;
+					}
+					z++;
+				}
+				
+				while(x<l1  && z!=101){
+					int sp1 = shortest_path[i-1][j][x];
+					shortest_path[i][j].pb(sp1+graph[i][j]);
+					x++;
+					z++;
+				}
+				
+				while(y<l2  && z!=101){
+					int sp2 = shortest_path[i][j-1][y];
+					shortest_path[i][j].pb(sp2+graph[i][j]);
+					y++;
+					z++;
+				}
+				//cout<<i<<" "<<j<<endl;
+			}
+		}
+	}
+}
+
+int main() {
+	// your code goes here
+	int t;
+	//cin>>t;
+	scanf("%d", &t);
+	while(t--){
+		int n, m;
+		//cin>>n>>m;
+		scanf("%d %d", &n, &m);
+		init(n,m);
+		string s;
+		for(int i=0;i<n;i++){
+			for(int j=0;j<m;j++){
+				stringstream ss;
+				ss.clear();
+				cin>>s;
+				if(s!="##"){
+					ss << s;
+					ss  >> graph[i][j];
+					//ss << s;
+        			//ss >> A[i][j];
+				}else{
+					graph[i][j] = -10;
+				}
+			}
+		}
+		precalc(n, m);
+		int q, a, b, k;
+		//cin>>q;
+		scanf("%d", &q);
+		while(q--){
+			//cin>>a>>b>>k;
+			scanf("%d %d %d", &a, &b, &k);
+			if(graph[a][b]==-10) printf("Obstacle\n");
+			else {
+				int ans = solve(a, b, k); 
+				if(ans==-1) printf("Not so many paths\n");
+				else printf("%d\n", ans);
+			}
+			//cout<<endl;
+		}
+	}
+	return 0;
+}

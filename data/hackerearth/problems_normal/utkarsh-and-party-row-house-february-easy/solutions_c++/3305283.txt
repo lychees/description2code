@@ -1,0 +1,58 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MAXN = 1e5 + 10;
+
+ll n, q, a[MAXN], d[3][MAXN];
+
+ll ff(ll v, ll t){
+	ll ret = 0;
+	for (; v; v -= v & (-v))
+		ret += d[t][v];
+	return	ret;
+}
+
+ll get(ll l, ll r, ll t){
+	if (r <= l)	return	0;
+	return	ff(r, t) - ff(l, t);
+}
+
+void add(ll v, ll val, ll t){
+	for (v++; v < MAXN; v += v & (-v))
+		d[t][v] += val;
+}
+
+int main(){
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+	cin >> n >> q;
+	for (ll i = 0; i < n; i++){
+		cin >> a[i];
+		add(i, a[i], 0);
+		add(i, a[i] * (n - i), 1);
+		add(i, a[i] * i, 2);
+	}
+
+	while (q--){
+		ll type;	cin >> type;
+		if (type == 2){
+			ll ind, x;	cin >> ind >> x;	ind--;
+			add(ind, x, 0);
+			add(ind, x * (n - ind), 1);
+			add(ind, x * ind, 2);
+		}
+		else{
+			ll ind, l, r;	cin >> ind >> l >> r;	l--, ind--;
+			
+			ll ret = get(l, min(r, ind), 1) - get(l, min(r, ind), 0) * (n - ind);
+			ret += get(max(l, ind + 1), r, 2) - get(max(l, ind + 1), r, 0) * ind;
+			cout << ret << "\n";
+		}
+	}
+	return	0;
+}

@@ -1,0 +1,100 @@
+#include <vector>
+#include <string>
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <map>
+#include <set>
+#include <stack>
+
+using namespace std;
+
+#define sz(x) int((x).size())
+#define FOR(i,a,b) for(int (i) = (a); (i) <= (b); ++(i))
+#define ROF(i,a,b) for(int (i) = (a); (i) >= (b); --(i))
+#define rep(i,n) for (int (i) = 0; (i) < (n); ++(i))
+#define repd(i,n) for (int (i) = n; (i)--; )
+#define fe(i,a) for (int (i) = 0; (i) < int((a).size()); ++(i))
+#define mem(a, val) memset((a),val,sizeof(a))
+#define inf 1000000000
+#define pb push_back
+#define ppb pop_back
+#define all(c) (c).begin(), (c).end()
+#define pi acos(-1.0)
+#define sqr(a) ((a)*(a))
+#define mp(a,b) make_pair((a), (b))
+#define xx first
+#define yy second
+#define MOD 1000000007LL
+
+typedef vector<int> vint;
+typedef vector< pair<int, int> > vpii;
+typedef long long LL;
+typedef pair<int, int> pii;
+
+string s;
+int c[152];
+int F[152][152];
+int B[152][152];
+int T[152][152][152];
+
+int main() {
+  int n;
+  cin >> n;
+  rep(i, n) cin >> c[i + 1];
+  cin >> s;
+  s = '0' + s;
+
+  FOR(i, 0, n)
+    FOR(j, 0, n) {
+      FOR(k, 0, n) T[i][j][k] = -inf;
+      F[i][j] = B[i][j] = -inf;
+    }
+  FOR(i, 0, n)
+      T[i+1][i][0] = 0;
+
+  int cur, r;
+  FOR(cur_l, 1, n) {
+    FOR(l, 1, n + 1 - cur_l) {
+      r = l + cur_l - 1;
+
+      /// TIME
+      cur = -1;
+      FOR(f, l + 1, r) cur = max(cur, F[l][f - 1] + T[f + 1][r][0]);
+      cur = max(cur, T[l + 1][r][0]);
+      T[l][r][1] = cur >= 0 ? cur : -inf;
+      if (l == r) T[l][r][1] = 0;
+      FOR(len, 2, cur_l) {
+        cur = -1;
+        if (s[l] == s[r])
+          cur = max(cur, T[l + 1][r - 1][len - 2]);
+
+        for(int f = l + 1; r - f + 1 >= len; ++f) cur = max(cur, F[l][f - 1] + T[f][r][len]);
+        for(int f = r - 1; f - l + 1 >= len; --f) cur = max(cur, T[l][f][len] + F[f + 1][r]);
+
+        T[l][r][len] = cur >= 0 ? cur : -inf;
+      }
+
+      /// FULL
+      cur = -1;
+      FOR(len, 1, cur_l) if (c[len] >= 0) cur = max(cur, T[l][r][len] + c[len]);
+      T[l][r][0] = F[l][r] = cur >= 0 ? cur : -inf;
+
+      /// BEST
+      cur = max(0, F[l][r]);
+      FOR(mid, l, r - 1) cur = max(cur, B[l][mid] + B[mid + 1][r]);
+      B[l][r] = cur;
+
+//      printf(":: %d - %d : %d : %d\n", l, r, B[l][r], F[l][r]);
+    }
+//    printf("\n");
+  }
+
+  printf("%d\n", max(0, B[1][n]));
+
+  return 0;
+}

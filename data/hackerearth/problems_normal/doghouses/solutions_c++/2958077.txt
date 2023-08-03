@@ -1,0 +1,169 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define mid (s+e)/2
+#define lc 2*node
+#define rc 2*node+1
+#define inf 10000000
+#define mp make_pair
+#define pb push_back
+#define ff first
+#define ss second
+int y[1010];
+int a[1010];
+int maxy[1010];
+int miny[1010];
+int mx=-1;
+int mincalc[101000];
+int arr[10101];
+int maxcalc[101000];
+int ival[1010];
+void build1(int node, int s,int e)
+{
+	           if(s==e)
+	           {
+	           	     mincalc[node]=ival[s];
+						return ;    
+			   }
+			   build1(2*node,s,mid);
+			   build1(2*node+1,mid+1,e);
+			   mincalc[node]=min(mincalc[lc],mincalc[rc]);
+}
+void build2(int node, int s,int e)
+{
+	           if(s==e)
+	           {
+	           	     maxcalc[node]=ival[s];
+						return ;    
+			   }
+			   build2(lc,s,mid);
+			   build2(rc,mid+1,e);
+			   maxcalc[node]=max(maxcalc[lc],maxcalc[rc]);
+}
+int qmax(int node, int s, int e,int ql,int qh)
+{
+                     if(s>e || ql>e || qh<s)
+					 return	-inf;
+					 else if(s>=ql && e<=qh)
+					 return maxcalc[node];
+					 int n1=qmax(2*node,s,(s+e)/2,ql,qh);
+					 int n2=qmax(2*node+1,(s+e)/2+1,e,ql,qh);
+					 return max(n1,n2);
+}
+int qmin(int node, int s, int e,int ql,int qh)
+{
+                     if(s>e || ql>e || qh<s)
+					 return	inf;
+					 else if(s>=ql && e<=qh)
+					 return mincalc[node];
+					 int n1=qmin(2*node,s,(s+e)/2,ql,qh);
+					 int n2=qmin(2*node+1,(s+e)/2+1,e,ql,qh);
+					 return min(n1,n2);
+}
+int main()
+{
+	int n;
+	cin>>n;
+	int ans=min(n,2);
+	vector<pair<int,int> > v;
+	for(int i=0;i<n;i++)
+	{
+		 cin>>a[i];
+		 v.push_back(mp(a[i],i));
+		 if(a[i]>mx)
+		 mx=a[i];
+		 y[a[i]]++;
+	}
+	sort(v.begin(),v.end());
+	for(int i=0;i<n;i++)
+	{
+		      maxy[a[i]]=i;
+	}
+	for(int i=n-1;i>=0;i--)
+	{
+		 miny[a[i]]=i;
+	}
+//	for(int i=0;i<n;i++)
+//	{
+//		 cout<<"setmaxess "<<a[i]<<" "<<maxy[a[i]]<<" "<<endl;
+//	}
+//	for(int i=0;i<n;i++)
+//	{
+//		 cout<<"setminess "<<a[i]<<" "<<miny[a[i]]<<" "<<endl;
+//	}
+//	cout<<endl;
+	for(int i=0;i<n;i++)
+	{
+		       ival[i]=v[i].ss;
+		       arr[i]=v[i].ff;
+	}
+//	cout<<"arr "<<endl; 
+//	for(int i=0;i<n;i++)
+//	cout<<arr[i]<<" ";
+//	cout<<endl;
+//	cout<<"ival "<<endl;
+//	for(int i=0;i<n;i++)
+//	cout<<ival[i]<<" ";
+//	cout<<endl;
+	build1(1,0,n-1);
+	build2(1,0,n-1);
+//	cout<<"ter  "<<endl;
+//	for(int i=1;i<=12;i++)
+//	cout<<i<<" "<<mincalc[i]<<endl;
+//	cout<<"tree printed "<<endl;
+	for(int i=0;i<=1000;i++)
+	{
+		   if(y[i]!=0)
+		   {
+		        for(int l=1;l<=1000;l++)
+		        {
+		             int d=i+l;
+					 if(d>mx)
+					 break;
+					 if(y[d]==0)
+					 continue;
+					 int temp=y[i]+y[d];
+					 
+					 int low=upper_bound(arr,arr+n,i)-arr;
+					 int up=lower_bound(arr,arr+n,d)-arr;
+					 up--;
+					 
+//					 cout<<"fixinf "<<i<<" "<<d<<endl;
+//					 if(i==0 && d==1000)
+//					 cout<<"lpow up "<<low<<" "<<up<<endl;
+					
+				//	 cout<<"temp is "<<temp<<endl;
+					 
+                        if(up>low)
+                        {
+				//		         cout<<"entering "<<endl;
+					 int mv=qmax(1,0,n-1,low,up);
+					 int miv=qmin(1,0,n-1,low,up);
+					  int setmin=min(miny[i],miny[d]);
+					 int setmax=max(maxy[i],maxy[d]);
+//					 if(i==0 && d==1000)
+//					 cout<<"setss "<<setmin<<" "<<setmax<<endl;
+//					  if(i==0 && d==1000)
+//					  cout<<"mv "<<mv<<" "<<miv<<endl;
+					 if(mv!=miv)
+					 {
+					        if(miv<setmin)
+							temp++;
+							if(mv>setmax)
+							temp++;	
+					 }
+					 else 
+					 {
+					         if(mv<setmin)
+							 temp++;
+							 if(mv>setmax)
+							 temp++;	  
+					 }
+				}
+//					 cout<<"temp is "<<temp<<endl;
+		        ans=max(ans,temp);
+				} 
+	       }
+	}
+	cout<<ans<<endl;
+	return 0;
+}

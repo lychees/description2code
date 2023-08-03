@@ -1,0 +1,115 @@
+#include <iostream>
+#include <cstdio>
+#include <string>
+#include <sstream> 
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <cmath>
+#include <algorithm>
+#include <cstring>
+#include <ctime>
+#include <cassert>
+using namespace std;
+#define pb push_back
+#define mp make_pair
+#define pii pair<int,int>
+#define vi vector<int>
+#define vll vector<ll>
+#define SZ(x) ((int)(x.size()))
+#define fi first
+#define se second
+#define FOR(i,n) for(int (i)=0;(i)<(n);++(i))
+#define FORI(i,n) for(int (i)=1;(i)<=(n);++(i))
+#define IN(x,y) ((y).find((x))!=(y).end())
+#define ALL(t) t.begin(),t.end()
+#define FOREACH(i,t) for (typeof(t.begin()) i=t.begin(); i!=t.end(); i++)
+#define REP(i,a,b) for(int (i)=(a);(i)<=(b);++i)
+#define REPD(i,a,b) for(int (i)=(a); (i)>=(b);--i)
+#define REMAX(a,b) (a)=max((a),(b));
+#define REMIN(a,b) (a)=min((a),(b));
+#define DBG cerr << "debug here" << endl;
+#define DBGV(vari) cerr << #vari<< " = "<< (vari) <<endl;
+typedef long long ll;
+const ll MAXN = 1e12;
+const int M = 1e9 + 7;
+map<ll, ll> mem;
+ll mpow(ll n, ll k)
+{
+    if(k == 0) return 1;
+    if(k % 2 == 0) 
+    {
+        ll tmp = mpow(n, k / 2);
+        return (tmp * tmp) % M;
+    }
+    return ((n % M) * mpow(n, k - 1)) % M;
+}
+vll get_divisors(ll n)
+{
+    vll res;
+    for(ll i = 2; i * i <= n; ++i)
+    {
+        if(n % i == 0)
+        {
+            ll d = n / i;
+            res.pb(i);
+            if(d != i) 
+            {
+                res.pb(d);
+            }
+        }
+    }
+    return res;
+}
+ll solve(ll N)
+{
+    //cout << "solving for " << N << endl;
+    if(N == 1) return 1;
+    if(N == 2) return 1;
+    map<ll, ll>::iterator it = mem.find(N);
+    if(it != mem.end()) return it->se;
+    ll n = N - 1;
+    ll res = 1;
+    vll ds = get_divisors(n);
+    for(int i = 0; i < ds.size(); ++i)
+    {
+        ll d = ds[i];
+        ll tmp = mpow(solve(d), n / d);
+        res += tmp;
+        res %= M;
+    }
+    mem.insert(mp(N, res));
+    return res;
+}
+bool cmp(pair<ll, ll> a, pair<ll, ll> b)
+{
+    return a.se > b.se;
+}
+bool TEST = 0;
+int main()    
+{
+    ios_base::sync_with_stdio(0);
+    if(TEST)
+    {
+        vector<pair<ll, ll> > v;
+        for(int i = 0; i < 1000; ++i)
+        {
+            ll k = MAXN - i;
+            vll ds = get_divisors(k);
+            v.pb(mp(k, ds.size()));
+        }
+        sort(ALL(v), cmp);
+        for(int i = 0; i < min(20, SZ(v)); ++i)
+        {
+            cout << v[i].fi + 1 << " " << v[i].fi << ": " << v[i].se << endl;
+        }
+        return 0;
+    }
+    ll n;
+    cin >> n;
+    ll res = solve(n);
+    cout << res << endl; 
+    return 0;
+}

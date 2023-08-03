@@ -1,0 +1,136 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define MOD 1000000007
+#define MAX 100005
+ll dis[12][MAX];
+ll arr[MAX];
+int dis_digit(ll n)
+{
+	ll te=n;
+	int a[12]={0};
+	while(te)
+	{
+		a[te%10]++;
+		te/=10;
+	}
+	int dist=0;
+	for(int i=0;i<=9;i++)
+	{
+		if(a[i])
+		 dist++;
+	}
+	return dist;
+	
+}
+
+void modify(int dig,int i,int val)
+{
+	while(i<MAX)
+	{
+		dis[dig][i] += val;
+		i += (i & (-i));
+	}
+}
+int query(int dig,int i)
+{
+	int ret=0;
+	while(i)
+	{
+		ret += dis[dig][i];
+		i -= (i& (-i));
+	}
+	return ret;
+}
+int main()
+{
+	int n;
+	scanf("%d",&n);
+	for(int i=1;i<=n;i++)
+	{
+		scanf("%lld",&arr[i]);
+		
+		int x= dis_digit(arr[i]);
+		modify(x, i,1);
+	}
+	int q;
+	scanf("%d",&q);
+	string s;
+	for(int i=0;i<q;i++)
+	{
+		cin>>s;
+		if(s=="ADD")
+		{
+			int u;ll v;
+			scanf("%d%lld",&u,&v);
+			int prev= dis_digit(arr[u]);
+			arr[u] += v;
+			arr[u] %= MOD;
+			int new_v= dis_digit(arr[u]);
+			if(prev==new_v)
+			 continue;
+			modify(new_v,u,1);
+			modify(prev,u,-1);
+		}
+		else if(s=="MUL")
+		{
+			int u;ll v;
+			scanf("%d%lld",&u,&v);
+			int prev= dis_digit(arr[u]);
+			arr[u] *= v;
+			arr[u] %= MOD;
+			int new_v= dis_digit(arr[u]);
+			if(prev==new_v)
+			 continue;
+			modify(new_v,u,1);
+			modify(prev,u,-1);
+			
+		}
+		else if(s=="REP")
+		{
+			int u; ll v;
+			scanf("%d%lld",&u,&v);
+			int prev= dis_digit(arr[u]);
+			arr[u]  = v;
+			arr[u] %= MOD;
+			int new_v= dis_digit(arr[u]);
+			if(prev==new_v)
+			 continue;
+			modify(new_v,u,1);
+			modify(prev,u,-1);
+		}
+		else if(s=="MAX")
+		{
+			int l, r;
+			scanf("%d%d",&l,&r);
+			
+			for(int j=9;j>=1;j--)
+			{
+				int  tem = query(j,r)-query(j,l-1);
+				if(tem>0)
+				{
+					printf("%d %d\n",j,tem);
+					break;
+				}
+			}
+			
+		}
+		else
+		{
+			int l,r;
+			scanf("%d%d",&l,&r);
+			
+			for(int j=1;j<=9;j++)
+			{
+				
+				int  tem = query(j,r)-query(j,l-1);
+			    if(tem>0)
+			    {
+			    	printf("%d %d\n",j,tem);
+			    	break;
+			    }
+			}
+			
+		}
+	}
+}

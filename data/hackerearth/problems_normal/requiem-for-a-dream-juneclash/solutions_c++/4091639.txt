@@ -1,0 +1,144 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+struct node
+{
+    long long sum, maxL, maxR, ans;
+} seg[1<<18];
+
+node combine(node a, node b)
+{
+    node c;
+    c.sum=a.sum+b.sum;
+    c.maxL=max(a.maxL, a.sum+b.maxL);
+    c.maxR=max(b.maxR, a.maxR+b.sum);
+    c.ans=max(a.ans, b.ans);
+    c.ans=max(c.ans, a.maxR+b.maxL);
+    return c;
+}
+
+int N, Q;
+vector<pair<int, int>> adj[100001];
+int parent[100001];
+int depth[100001];
+int sz[100001];
+int top[100001];
+int son[100001];
+int newid[100001], nextid;
+int A[100001];
+
+void build(int idx, int begin, int end)
+{
+    if(begin==end)
+    {
+        seg[idx].sum=A[begin];
+        seg[idx].maxL=max(0, A[begin]);
+        seg[idx].maxR=max(0, A[begin]);
+        seg[idx].ans=max(0, A[begin]);
+    }
+    else
+    {
+        int mid=(begin+end)/2;
+        build(idx*2, begin, mid);
+        build(idx*2+1, mid+1, end);
+        seg[idx]=combine(seg[idx*2], seg[idx*2+1]);
+    }
+}
+
+node query(int idx, int begin, int end, int l, int r)
+{
+    if(r<begin || end<l)
+        return (node){0LL, 0LL, 0LL, 0LL};
+    if(l<=begin && end<=r)
+        return seg[idx];
+    int mid=(begin+end)/2;
+    return combine(query(idx*2, begin, mid, l, r),
+                   query(idx*2+1, mid+1, end, l, r));
+}
+
+void dfs(int u, int p)
+{
+    sz[u]=1;
+    for(auto& it: adj[u])
+    {
+        int v=it.first;
+        if(v==p)
+            continue;
+        parent[v]=u;
+        depth[v]=depth[u]+1;
+        dfs(v, u);
+        sz[u]+=sz[v];
+        if(sz[v]>sz[son[u]])
+            son[u]=v;
+    }
+}
+
+void dfs2(int u, int p)
+{
+    newid[u]=++nextid;
+    if(son[parent[u]]==u)
+        top[u]=top[parent[u]];
+    else
+        top[u]=u;
+    if(son[u])
+        dfs2(son[u], u);
+    for(auto& it: adj[u])
+    {
+        int v=it.first;
+        if(v==p)
+            continue;
+        if(v!=son[u])
+            dfs2(v, u);
+        A[newid[v]]=it.second;
+    }
+}
+
+long long hld_query(int u, int v)
+{
+    node L=(node){0LL, 0LL, 0LL, 0LL};
+    node R=(node){0LL, 0LL, 0LL, 0LL};
+    while(top[u]!=top[v])
+    {
+        if(depth[top[u]]>depth[top[v]])
+        {
+            L=combine(query(1, 1, N, newid[top[u]], newid[u]), L);
+            u=parent[top[u]];
+        }
+        else
+        {
+            R=combine(query(1, 1, N, newid[top[v]], newid[v]), R);
+            v=parent[top[v]];
+        }
+    }
+    if(u!=v)
+    {
+        if(depth[u]>depth[v])
+            L=combine(query(1, 1, N, newid[son[v]], newid[u]), L);
+        else
+            R=combine(query(1, 1, N, newid[son[u]], newid[v]), R);
+    }
+    swap(R.maxL, R.maxR);
+    return combine(R, L).ans;
+}
+
+int main()
+{
+    scanf("%d%d", &N, &Q);
+    int a, b, c;
+    for(int i=0; i<N-1; i++)
+    {
+        scanf("%d%d%d", &a, &b, &c);
+        adj[a].push_back({b, c});
+        adj[b].push_back({a, c});
+    }
+    dfs(1, 1);
+    dfs2(1, 1);
+    build(1, 1, N);
+    while(Q--)
+    {
+        scanf("%d%d", &a, &b);
+        printf("%lld\n", hld_query(a, b));
+    }
+    return 0;
+}

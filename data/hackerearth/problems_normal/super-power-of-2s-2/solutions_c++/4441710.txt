@@ -1,0 +1,67 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int MOD=1000*1000*1000LL+7LL;
+const int N=2*1000*100+9;
+typedef long long int lli;
+int n;
+lli  arr[N],bitadd[N],bitmul[N];
+lli  neg_mod(lli  a){
+    if(a<0)a+=MOD;
+    return a%MOD;
+}
+void upd(lli  *bit,int at,lli  by){
+   by=neg_mod(by);
+    for(;at<=n;at+=at&-at)
+    {
+        bit[at]=neg_mod(bit[at]+by);
+    }
+    return;
+}
+lli  qry(lli  *bit,int at){
+    lli sum=0;
+    for(;at>=1;at-=at&-at){
+        sum=neg_mod(sum+bit[at]);
+    }
+    return sum%MOD;
+}
+lli mpow(lli  a,lli  b){
+    lli  ret=1;
+    a=neg_mod(a);
+    while(b>0){
+        if(b%2==1){
+            ret=(ret*a)%MOD;
+        }
+        a=(a*a)%MOD;
+        b=b>>1;
+    }
+    return ret%MOD;
+}
+int main(){
+    ios::sync_with_stdio(false);
+    cin>>n;
+    arr[0]=0LL;
+    for(int i=1;i<=n;++i){
+        cin>>arr[i];
+        arr[i]=neg_mod(arr[i]+arr[i-1]);
+    }
+    int m;
+    cin>>m;
+    while(m--){
+        int typ,l,r;cin>>typ>>l>>r;
+        if(typ==0){
+            upd(bitadd,l,-2LL); 
+            upd(bitadd,r,mpow(2,r-l+2));
+            lli inv=mpow(mpow(2,l),MOD-2LL);
+            upd(bitmul,l,inv);
+            upd(bitmul,r,-inv);
+        }else{
+            lli  ans=0;
+            ans+=(qry(bitadd,r)-qry(bitadd,l-1));
+            ans+=((qry(bitmul,r)*mpow(2,r+2))-
+                    (qry(bitmul,l-1)*mpow(2,l-1+2)));
+            ans=neg_mod(neg_mod((arr[r]-arr[l-1]))+neg_mod(ans));
+            cout<<ans<<"\n";
+        }
+    }
+    return 0;
+}

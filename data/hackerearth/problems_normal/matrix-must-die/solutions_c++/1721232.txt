@@ -1,0 +1,72 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MOD 1000000007
+#define LOGMAX 40
+
+int Tlog[LOGMAX][9][9], A0[9];
+
+void ComputeTransitionMatrices() {
+	int i, j, idx1, x, y, idx2, idx3, tidx;
+	for (i = 0; i < 3; i++)
+		for (j = 0; j < 3; j++) {
+			idx1 = i * 3 + j;
+			for (x = 0; x < 3; x++)
+				for (y = 0; y < 3; y++) {
+					idx2 = x * 3 + y;
+					Tlog[0][idx1][idx2] = abs(i - x) + abs(j - y) + abs(i + j - x - y);
+				}
+		}
+	for (tidx = 1; tidx < LOGMAX; tidx++) {
+		for (idx1 = 0; idx1 < 9; idx1++)
+			for (idx2 = 0; idx2 < 9; idx2++)
+				for (idx3 = 0; idx3 < 9; idx3++)
+					Tlog[tidx][idx1][idx2] = ((long long) Tlog[tidx][idx1][idx2] + (long long) Tlog[tidx - 1][idx1][idx3] * (long long) Tlog[tidx - 1][idx3][idx2]) % MOD;
+	}
+}
+
+int Ttmp[9][9], TN[9][9];
+
+void RaiseTransitionMatrixToPower(long long N) {
+	int i, j, k;
+	int b;
+	memset(TN, 0, sizeof(TN));
+	for (i = 0; i < 9; i++) TN[i][i] = 1;
+	for (b = 0; b < LOGMAX; b++)
+		if ((N & (1LL << b)) > 0) {
+			memset(Ttmp, 0, sizeof(Ttmp));
+			for (k = 0; k < 9; k++)
+				for (i = 0; i < 9; i++)
+					for (j = 0; j < 9; j++)
+						Ttmp[i][j] = ((long long) Ttmp[i][j] + (long long) TN[i][k] * (long long) Tlog[b][k][j]) % MOD;
+			memcpy(TN, Ttmp, sizeof(TN));
+		}
+}
+
+int main() {
+	ComputeTransitionMatrices();
+//	freopen("y.txt", "r", stdin);
+	int T, t;
+	long long N;
+	scanf("%d", &T);
+	for (t = 1; t <= T; t++) {
+		int i, j, k, idx, ans;
+		scanf("%lld", &N);
+		for (i = 0; i < 9; i++)
+			scanf("%d", &A0[i]);
+		RaiseTransitionMatrixToPower(N);
+		for (i = 0; i < 3; i++) {
+			for (j = 0; j < 3; j++) {
+				idx = i * 3 + j;
+				ans = 0;
+				for (k = 0; k < 9; k++)
+					ans = ((long long) ans + (long long) TN[idx][k] * (long long) A0[k]) % MOD;
+				if (j > 0) printf(" ");
+				printf("%d", ans);
+			}
+			printf("\n");
+		}
+	}
+	return 0;
+}

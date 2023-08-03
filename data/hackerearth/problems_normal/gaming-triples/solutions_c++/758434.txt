@@ -1,0 +1,90 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii;
+typedef long long ll; typedef vector<long long> vl; typedef pair<long long,long long> pll; typedef vector<pair<long long,long long> > vpll;
+typedef vector<string> vs; typedef long double ld;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+struct FenwickTree {
+	typedef int T;
+	vector<T> v;
+	FenwickTree(int n): v(n, 0) {}
+	void add(int i, T x) {
+		for(; i < (int)v.size(); i |= i+1) v[i] += x;
+	}
+	T sum(int i) {	//[0, i)
+		T r = 0;
+		for(-- i; i >= 0; i = (i & (i+1)) - 1) r += v[i];
+		return r;
+	}
+	T sum(int left, int right) {	//[left, right)
+		return sum(right) - sum(left);
+	}
+};
+
+
+int main() {
+	int T;
+	scanf("%d", &T);
+	rep(ii, T) {
+		int N;
+		scanf("%d", &N);
+		vector<int> A(N);
+		rep(i, N) scanf("%d", &A[i]);
+		int first;
+		scanf("%d", &first);
+		vector<int> values = A;
+		sort(all(values));
+		values.erase(unique(all(values)), values.end());
+		rep(i, N)
+			A[i] = lower_bound(all(values), A[i]) - values.begin();
+		int X = values.size();
+		long long cnt1 = 0, cnt2 = 0;
+		FenwickTree ftL(X), ftR(X);
+		rep(i, N) ftR.add(A[i], +1);
+		rep(i, N) {
+			ftR.add(A[i], -1);
+//			cerr << i << ": " << ftL.sum(A[i]) << ", " << ftR.sum(A[i]) << endl;
+//			cerr << i << ": " << (i - ftL.sum(A[i]+1)) << ", " << ((N - 1 - i) - ftR.sum(A[i]+1)) << endl;
+			cnt1 += (long long)ftL.sum(A[i]) * ftR.sum(A[i]);
+			cnt2 += (long long)(i - ftL.sum(A[i]+1)) * ((N - 1 - i) - ftR.sum(A[i]+1));
+			ftL.add(A[i], +1);
+		}
+//		cerr << cnt1 << ", " << cnt2 << endl;
+		puts((cnt2 < cnt1) != (first != 0) ? "Ananya" : "Sarika");
+		printf("%lld\n", min(cnt1, cnt2) * 2 + (cnt2 < cnt1));
+	}
+	return 0;
+}

@@ -1,0 +1,204 @@
+/*
+* @problem: booboo-and-travelling-circuits
+*/
+
+#include <iostream>
+#include <cstring>
+#include <cstdio>
+#include <cmath>
+#include <limits.h>
+#include <vector>
+#include <map>
+#include <bitset>
+#include <string>
+#include <iterator>
+#include <set>
+#include <utility>
+#include <queue>
+#include <numeric>
+#include <functional>
+#include <ctype.h>
+#include <stack>
+#include <algorithm>
+#include <cstdlib>
+#define MAX 11111
+#define mod 1000000003LL
+#define bitcnt(x) __builtin_popcountll(x)
+#define MS0(x) memset(x, 0, sizeof(x))
+#define MS1(x) memset(x, -1, sizeof(x))
+#define ll long long int
+#define mp(x, y) make_pair(x, y)
+#define pii pair<int, int>
+#define pll pair<ll, ll>
+#define in(x) scanf("%lld", &x)
+#define ind(x) scanf("%d", &x)
+#define ins(x) scanf("%s", x)
+#define pr(x) printf("%lld\n", x)
+#define prd(x) printf("%d\n", x)
+#define prs(x) printf("%s\n", x)
+#define pi acos(-1.0)
+#define ff first
+#define ss second
+
+using namespace std;
+int n, m, prime[MAX], pm = 1;
+ll A[2][MAX], B[2][MAX], S[2], W[2], dp1[2][MAX], a, b;
+pair<ll, int> dp[2][MAX][2];
+
+void sieve()
+{
+	prime[0] = prime[1] = 1;
+	for (int i = 2; i < MAX; i++)
+	{
+		if (prime[i] == 0)
+		{
+			prime[i] = i;
+			for (int j = i * i; j < MAX; j += i)
+			{
+				if (prime[j] == 0)
+					prime[j] = i;
+			}
+		}
+	}
+}
+
+int main()
+{
+#ifndef ONLINE_JUDGE
+	freopen("../input.txt", "r", stdin);
+	//freopen("output.txt", "w", stdout);
+#endif
+	sieve();
+	cin >> n >> m;
+	//cout << pm << endl;
+	ll p, q, r, x, y, z, tmp, tmp1;
+	int cur = 0, prev = 1;
+	int cur1 = 0, prev1 = 1;
+	cin >> S[cur1] >> p >> q >> r;
+	// for (int i = 0, j = n * m; i < j; i++)
+	// {
+	// 	cur = 1 - cur;
+	// 	prev = 1 - prev;
+	// 	tmp = (p * S[prev]) % mod;
+	// 	if (tmp < 0)
+	// 		tmp += mod;
+	// 	tmp = (tmp * S[prev]) % mod;
+	// 	if (tmp < 0)
+	// 		tmp += mod;
+	// 	tmp1 = (q * S[prev]) % mod;
+	// 	if (tmp1 < 0)
+	// 		tmp1 += mod;
+	// 	S[cur] = (tmp + tmp1 + r) % mod ;
+	// 	if (S[cur] < 0)
+	// 		S[cur] += mod;
+	// 	A[(i / m) + 1][(i % m) + 1] = S[cur];
+	// }
+
+	cin >> W[cur1] >> x >> y >> z;
+
+	// for (int i = 0, j = n * m; i < j; i++)
+	// {
+	// 	cur = 1 - cur;
+	// 	prev = 1 - prev;
+	// 	tmp = (x * W[prev]) % mod;
+	// 	if (tmp < 0)
+	// 		tmp += mod;
+	// 	tmp = (tmp * W[prev]) % mod;
+	// 	if (tmp < 0)
+	// 		tmp += mod;
+	// 	tmp1 = (y * W[prev]) % mod;
+	// 	if (tmp1 < 0)
+	// 		tmp1 += mod;
+	// 	W[cur] = (tmp + tmp1 + z) % mod;
+	// 	if (W[cur] < 0)
+	// 		W[cur] += mod;
+	// 	B[(i / m) + 1][(i % m) + 1] = W[cur];
+	// }
+
+
+	for (int j = 1; j <= m; j++)
+	{
+		dp[cur][j][0].ff = 1e18;
+		dp[cur][j][1].ff = 1e18;
+	}
+	for (int i = 1; i <= n; i++)
+	{
+		cur = 1 - cur;
+		prev = 1 - prev;
+		for (int j = 1; j <= m; j++)
+		{
+			dp[cur][j][0].ff = 1e18;
+			dp[cur][j][1].ff = 1e18;
+		}
+		for (int j = 1; j <= m; j++)
+		{
+			cur1 = 1 - cur1;
+			prev1 = 1 - prev1;
+			tmp = (p * S[prev1]) % mod;
+			if (tmp < 0)
+				tmp += mod;
+			tmp = (tmp * S[prev1]) % mod;
+			if (tmp < 0)
+				tmp += mod;
+			tmp1 = (q * S[prev1]) % mod;
+			if (tmp1 < 0)
+				tmp1 += mod;
+			S[cur1] = (tmp + tmp1 + r) % mod ;
+			if (S[cur1] < 0)
+				S[cur1] += mod;
+			A[cur][j] = S[cur1];
+			dp1[cur][j] = dp1[prev][j] + A[prev][j];
+			if (dp[prev][prime[j]][0].ff != 1e18)
+			{
+				if (dp[prev][prime[j]][0].ss != j)
+					dp1[cur][j] = min(dp1[cur][j], dp[prev][prime[j]][0].ff);
+				else if (dp[prev][prime[j]][1].ff != 1e18)
+					dp1[cur][j] = min(dp1[cur][j], dp[prev][prime[j]][1].ff);
+			}
+			tmp = (x * W[prev1]) % mod;
+			if (tmp < 0)
+				tmp += mod;
+			tmp = (tmp * W[prev1]) % mod;
+			if (tmp < 0)
+				tmp += mod;
+			tmp1 = (y * W[prev1]) % mod;
+			if (tmp1 < 0)
+				tmp1 += mod;
+			W[cur1] = (tmp + tmp1 + z) % mod;
+			if (W[cur1] < 0)
+				W[cur1] += mod;
+			B[cur][j] = W[cur1];
+			tmp = dp1[cur][j] + B[cur][j];
+			if (tmp < dp[cur][prime[j]][0].ff)
+			{
+				dp[cur][prime[j]][1] = dp[cur][prime[j]][0];
+				dp[cur][prime[j]][0] = mp(tmp, j);
+			}
+			else if (tmp < dp[cur][prime[j]][1].ff)
+			{
+				dp[cur][prime[j]][1] = mp(tmp, j);
+			}
+			if (j != 1)
+			{
+				if (tmp < dp[cur][1][0].ff)
+				{
+					dp[cur][1][1] = dp[cur][1][0];
+					dp[cur][1][0] = mp(tmp, j);
+				}
+				else if (tmp < dp[1][1][1].ff)
+				{
+					dp[cur][1][1] = mp(tmp, j);
+				}
+			}
+
+		}
+	}
+	ll ans = dp1[cur][1];
+	for (int i = 2; i <= m; i++)
+	{
+		ans = min(ans, dp1[cur][i]);
+	}
+
+	cout << ans << endl;
+	return 0;
+}

@@ -1,0 +1,129 @@
+#include <iostream>
+#include <cstring>
+#include <cstdio>
+#include <cmath>
+#include <algorithm>
+#include <set>
+#include <map>
+#include <queue>
+#include <vector>
+#include <cstdlib>
+#include <fstream>
+#include <sstream>
+#include <deque>
+#include <cassert>
+#include <unordered_map>
+
+using namespace std;
+
+#ifdef WIN32
+    #define I64 "%I64d"
+#else
+    #define I64 "%lld"
+#endif
+
+typedef long long ll;
+
+#define f first
+#define s second
+#define mp make_pair
+#define pb push_back
+#define all(s) s.begin(), s.end()
+#define sz(s) (int(s.size()))
+#define fname "a"
+#define ms(a,x) memset(a, x, sizeof(a))
+#define forit(it,s) for(__typeof(s.begin()) it = s.begin(); it != s.end(); ++it)
+#define MAXN 1001
+#define INF 1000000000000000LL
+
+int n, m, p;
+vector < pair<int, int> > g[MAXN];
+vector < pair<int, int> > gr[MAXN];
+int a[MAXN];
+ll d[MAXN];
+int k[MAXN];
+unordered_map <int, ll> f[MAXN];
+priority_queue < pair<ll, int> > q;
+
+inline void solve()
+{
+    scanf("%d%d%d", &n, &m, &p);
+    for (int i = 0; i < n; ++i)
+        scanf("%d", &a[i]);
+    for (int i = 0; i < m; ++i)
+    {
+        int v1, v2, cost;
+        scanf("%d%d%d", &v1, &v2, &cost);
+        g[v1].pb(mp(v2, cost));
+        gr[v2].pb(mp(v1, cost));
+    }
+
+    if (a[0] == 0)
+    {
+    	puts("-1");
+    	return;
+    }
+
+    for (int i = 0; i < n; ++i)
+    	d[i] = INF;
+    d[n - 1] = 0;
+    q.push(mp(0, n - 1));
+
+	 while(!q.empty())
+    {
+    	ll dist = -q.top().f;
+    	int v = q.top().s;
+    	q.pop();
+    	if (d[v] != dist) continue;
+    	for (auto& it : gr[v])
+    	{
+    		int v2 = it.f;
+    		int cost = it.s;
+         if (d[v2] > d[v] + cost)
+         {
+         	d[v2] = d[v] + cost;
+         	q.push(mp(-d[v2], v2));
+         }
+    	}
+    }
+	
+	 q.push(mp(-d[0], 0));
+	 f[0][0] = 0;
+	 while(!q.empty())
+	 {
+	 	int v = q.top().s;
+	 	ll dist = -q.top().f - d[v];
+	 	q.pop();
+	 	if (f[v][dist % p] != dist) continue;
+	 	++k[v];
+	 	if (v == n - 1)
+	 	{
+	 		printf(I64"\n", dist);
+	 		return;
+	 	}
+		for (auto i : g[v])
+		{
+			int v2 = i.f;
+			int cost = i.s;
+			ll ndist = dist + cost;
+			if (ndist % p != a[v2] && (f[v2].find(ndist % p) == f[v2].end() || f[v2][ndist % p] > ndist))
+			{
+				f[v2][ndist % p] = ndist;
+				q.push(mp(-(ndist + d[v2]), v2));
+			}
+		}
+	 }
+	 puts("-1");
+}
+
+int main()
+{
+    #ifdef LOCAL
+    freopen(fname".in", "r", stdin);
+    freopen(fname".out", "w", stdout);
+    #endif
+    
+    solve();
+
+    return 0;
+}

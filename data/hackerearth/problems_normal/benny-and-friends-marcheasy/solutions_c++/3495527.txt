@@ -1,0 +1,154 @@
+#include "bits/stdc++.h"
+using namespace std;
+const int N = 1e5 + 5;
+const int LN = 17;
+const int inf = 1e9 + 9;
+int n , m;
+pair < int , pair < int , int > > edges[N];
+int dsup[N];
+int a , b , c;
+vector < pair < int , int > > v[N];
+bool done[N];
+int parent[N];
+int dist[LN][N];
+int level[N];
+int subtree[N];
+int sz;
+multiset < int > ms[N];
+int q;
+char type;
+int qnode;
+int dsufind(int node){
+    if(dsup[node] == node){
+        return node;
+    }
+    return dsup[node] = dsufind(dsup[node]);
+}
+bool dsujoin(int a , int b){
+    int x = dsufind(a);
+    int y = dsufind(b);
+    if(x == y){
+        return 0;
+    }
+    dsup[y] = x;
+    return 1;
+}
+void dfs1(int node , int baap){
+    subtree[node] = 1;
+    for(auto next : v[node]){
+        if(!done[next.first] && next.first != baap){
+            dfs1(next.first , node);
+            subtree[node] += subtree[next.first];
+        }
+    }
+}
+int find(int node , int baap){
+    for(auto next : v[node]){
+        if(!done[next.first] && next.first != baap && subtree[next.first] > sz){
+            return find(next.first , node);
+        }
+    }
+    return node;
+}
+void go(int node , int depth , int sum , int baap){
+    dist[depth][node] = sum;
+    for(auto next : v[node]){
+        if(!done[next.first] && next.first != baap){
+            go(next.first , depth , max(sum , next.second) , node);
+        }
+    }
+}
+void decompose(int node , int depth , int baap){
+    dfs1(node , 0);
+    sz = subtree[node] >> 1;
+    int centroid = find(node , 0);
+    parent[centroid] = baap;
+    done[centroid] = 1;
+    level[centroid] = depth;
+    go(centroid , depth , 0 , 0);
+    for(auto next : v[centroid]){
+        if(!done[next.first]){
+            decompose(next.first , depth + 1 , centroid);
+        }
+    }
+}
+void add(int node){
+    ms[node].insert(0);
+    int x = node;
+    node = parent[node];
+    while(node){
+        ms[node].insert(dist[level[node]][x]);
+        node = parent[node];
+    }
+}
+void remove(int node){
+    ms[node].erase(ms[node].find(0));
+    int x = node;
+    node = parent[node];
+    while(node){
+        ms[node].erase(ms[node].find(dist[level[node]][x]));
+        node = parent[node];
+    }
+}
+void solve(int node){
+    int x = node;
+    int ans = inf;
+    if(!ms[node].empty()){
+        ans = *ms[node].begin();
+    }
+    node = parent[node];
+    while(node){
+        if(!ms[node].empty()){
+            ans = min(ans , max(dist[level[node]][x] , (*ms[node].begin())));
+        }
+        node = parent[node];
+    }
+    if(ans >= inf){
+        ans = -1;
+    }
+    printf("%d\n" , ans);
+}
+int main(){
+    scanf("%d %d" , &n , &m);
+    for(int i = 1 ; i <= m ; ++i){
+        scanf("%d %d %d" , &a , &b , &c);
+        edges[i] = make_pair(c , make_pair(a , b));
+    }
+    sort(edges + 1 , edges + 1 + m);
+    for(int i = 1 ; i <= n ; ++i){
+        dsup[i] = i;
+    }
+    int cnt = 0;
+    for(int i = 1 ; i <= m ; ++i){
+        a = edges[i].second.first;
+        b = edges[i].second.second;
+        c = edges[i].first;
+        if(dsujoin(a , b)){
+            v[a].emplace_back(make_pair(b , c));
+            v[b].emplace_back(make_pair(a , c));
+            ++cnt;
+        }
+    }
+    for(int i = 1 ; i <= n ; ++i){
+        if(!done[i]){
+            decompose(i , 0 , 0);
+        }
+    }
+    scanf("%d" , &q);
+    while(q--){
+        type = '$';
+        while(!(type == '+' || type == '-' || type == '?')){
+            type = getchar();
+        }
+        scanf("%d" , &qnode);
+        if(type == '+'){
+            add(qnode);
+        }
+        if(type == '-'){
+            remove(qnode);
+        }
+        if(type == '?'){
+            solve(qnode);
+        }
+    }
+}

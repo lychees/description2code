@@ -1,0 +1,184 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define F(i, x) for(long long int i=0; i<x; i++)
+
+struct node{
+	ll l;
+	ll r_idx;
+	ll l_idx;
+	ll lm, rm;
+	ll lm_idx, rm_idx;
+};
+
+node T[300010];
+ll p[100005];
+
+void build(ll x, ll s, ll e)
+{
+	if(s>e)
+	{
+		return;
+	}
+	if(s==e)
+	{
+		T[x].l=1;
+		T[x].r_idx=T[x].l_idx=s;
+		T[x].lm=p[s];
+		T[x].rm=p[e];
+		T[x].lm_idx=s;
+		T[x].rm_idx=e;
+		return;
+	}
+	ll mid=(s+e)/2;
+	build(x*2+1, s, mid);
+	build(x*2+2, mid+1, e);
+	
+	T[x].l=max(T[x*2+1].l, T[x*2+2].l);
+	T[x].l_idx=T[x*2+1].l_idx;
+	T[x].r_idx=T[x*2+2].r_idx;
+	T[x].rm=p[e];
+	T[x].lm=p[s];
+	T[x].lm_idx=s;
+	T[x].rm_idx=e;
+	if(p[mid]<p[mid+1])
+	{
+		T[x].l=max(T[x].l, T[x*2+2].l_idx-T[x*2+1].r_idx+1);
+		if(T[x*2+1].l_idx==mid)
+		{
+			T[x].l_idx=T[x*2+2].l_idx;
+		}
+		else T[x].l_idx=T[x*2+1].l_idx;
+		if(T[x*2+2].r_idx==mid+1)
+		{
+			T[x].r_idx=T[x*2+1].r_idx;
+		}
+		else T[x].r_idx=T[x*2+2].r_idx;
+	}
+}
+
+void update(ll x, ll s, ll e, ll val, ll idx)
+{
+	if(idx<s || idx>e) return;
+	if(s==e)
+	{
+		p[s]+=val;
+		T[x].rm=p[e];
+		T[x].lm=p[s];
+		return;
+	}
+	ll mid=(s+e)/2;
+	update(x*2+1, s, mid, val, idx);
+	update(x*2+2, mid+1, e, val, idx);
+	T[x].l=max(T[x*2+1].l, T[x*2+2].l);
+	T[x].l_idx=T[x*2+1].l_idx;
+	T[x].r_idx=T[x*2+2].r_idx;
+	T[x].rm=p[e];
+	T[x].lm=p[s];
+	T[x].lm_idx=s;
+	T[x].rm_idx=e;
+	if(p[mid]<p[mid+1])
+	{
+		T[x].l=max(T[x].l, T[x*2+2].l_idx-T[x*2+1].r_idx+1);
+		if(T[x*2+1].l_idx==mid)
+		{
+			T[x].l_idx=T[x*2+2].l_idx;
+		}
+		else T[x].l_idx=T[x*2+1].l_idx;
+		if(T[x*2+2].r_idx==mid+1)
+		{
+			T[x].r_idx=T[x*2+1].r_idx;
+		}
+		else T[x].r_idx=T[x*2+2].r_idx;
+	}
+}
+node combine(node le, node r)
+{
+	//cout<<"l"<<endl;
+	node x;
+	x.l=max(le.l, r.l);
+	x.l_idx=le.l_idx;
+	x.r_idx=r.r_idx;
+	x.lm=le.lm;
+	x.lm_idx=le.lm_idx;
+	x.rm=r.rm;
+	x.rm_idx=x.rm_idx;
+	//cout<<le.lm_idx<<" "<<r.rm_idx<<"$"<<x.r_idx<<" "<<x.l_idx<<endl;
+	if(le.rm<r.lm)
+	{
+		x.l=max(r.l_idx-le.r_idx+1, x.l);
+		if(le.rm_idx==le.l_idx)
+		x.l_idx=r.l_idx;
+		else x.l_idx=le.l_idx;
+		if(r.lm_idx==r.r_idx)
+		x.r_idx=le.r_idx;
+		else x.r_idx=r.r_idx;
+		//cout<<le.lm_idx<<" "<<r.rm_idx<<"$"<<x.r_idx<<" "<<x.l_idx<<endl;
+	}
+	return x;
+}
+node query(ll x, ll s, ll e, ll li, ll ri)
+{
+	node temp;
+	//cout<<s<<" "<<e<<endl;
+	if(li<=s && ri>=e)
+	return T[x];
+	if(s==e) 
+	return T[x];
+	ll mid=(s+e)/2;
+	if(li<=mid && ri>mid)
+	{
+		node left = query(x*2+1, s, mid, li, ri);
+		node right = query(x*2+2, mid+1, e, li, ri);
+		temp=combine(left, right);
+	}
+	else if(li<=mid && ri<=mid)
+	{
+		temp = query(x*2+1, s, mid, li, ri);
+	}
+	else
+	{
+		temp = query(x*2+2, mid+1, e, li, ri);
+	}
+	return temp;
+}
+int main()
+{
+    int t;
+    scanf("%d", &t);
+    while(t--)
+    {
+    	F(i, 200010)
+    	{
+    		T[i].l=0;
+    		T[i].l_idx=0;
+    		T[i].r_idx=0;
+    	}
+    	ll n, q, ty, x, y;
+    	scanf("%lld%lld", &n, &q);
+    	F(i, n)
+    	{
+    		scanf("%lld", &p[i]);
+    	}
+    	build(0LL, 0LL, n-1);
+    	while(q--)
+    	{
+//    		F(i, 2*n)
+//    		cout<<T[i].l<<" "<<T[i].l_idx<<" "<<T[i].r_idx<<" "<<"$"<<endl;
+    		scanf("%lld%lld%lld", &ty, &x, &y);
+    		if(ty==1)
+    		{
+    			update(0LL, 0LL, n-1, y, x-1);
+    		}
+    		else
+    		{
+    			node temp=query(0LL, 0LL, n-1, x-1, y-1);
+    			printf("%lld\n", temp.l);
+    			//cout<<temp.l;
+    		}
+    	}
+    	
+    }
+    return 0;
+}

@@ -1,0 +1,114 @@
+#include <cstdio>
+#include <stdlib.h>
+#include <memory.h>
+#include <algorithm>
+#include <vector>
+#include <iterator>
+#include <map>
+#include <set>
+
+ 
+// Code: Little Achraf in Who Wants to be a Millionaire
+typedef unsigned long long int llu;
+typedef long long int lls;
+typedef unsigned int uint;
+
+#define f(i,s,e) for(uint i=s;i<e;++i)
+#define fe(i,s,e) for(uint i=s;i<=e;++i)
+const llu mod = 1000000007;
+
+llu pow_mod(llu b, llu e, llu m) {
+	llu r = 1; while (e>0) { if (e & 1) { if ((r = (r*b) % m) == 0)return 0; } e >>= 1; b = (b*b) % m; } return r;
+}
+char* read_int(char* pC, uint& res) {
+	uint r = 0; char c = 0; bool digit = false;
+	while (c = *pC++) { if (c <= '9' && c >= '0') { digit = true; r = (r << 3) + (r << 1) + (c - '0'); } else if (digit) { break; } }
+	res = r;
+	return pC;
+}
+char* read_llu(char* pC, llu& res) {
+	llu r = 0; char c = 0; bool digit = false;
+	while (c = *pC++) { if (c <= '9' && c >= '0') { digit = true; r = (r << 3) + (r << 1) + (c - '0'); } else if (digit) { break; } }
+	res = r;
+	return pC;
+}
+uint L, C;
+char CH[101];
+llu len[1001];
+uint maxl;
+void calc_len() {
+	len[0] = 0;
+	fe(i, 1, L)len[i] = 1;
+	int i = L;
+	do {
+		++i;
+		llu l = 0;
+		f(j, i - L, i)l += len[j];
+		len[i] = l;
+	} while (len[i] <= 1000000000000000LL);
+	maxl = i;
+}
+
+uint get_idx(llu n0, llu x0) {
+	llu x = x0;
+	if (x <= L) return (uint)x;
+	if (x > maxl) {
+		x = x0%(llu)L;
+		while (x<=maxl && n0 >= len[x]) {
+			x += L;
+		}
+	}
+	if (x <= L) return (uint)x;
+	llu n = n0;
+	uint d = L;
+	while (n>0) {
+		if (n <= len[x - d]) {
+			return get_idx(n, x - d);
+		}
+		n -= len[x - d];
+		d--;
+	}
+	return 1;
+};
+bool check(llu n0, llu x0, char c) {
+
+	uint idx = get_idx(n0, x0);
+	if (CH[idx] == 0) {
+		CH[idx] = c;
+		return true;
+	}
+	return (CH[idx] == c);
+}
+
+int main(){
+	char * sLine = new char[1024];
+	char * pC;
+	gets(sLine); pC = sLine;
+	pC = read_int(pC, L);
+	pC = read_int(pC, C);
+	fe(i, 1, L)CH[i] = 0;
+	llu n, x; 
+	if (C > 0) {
+		calc_len();
+		f(c, 0, C){
+			gets(sLine); pC = sLine;
+			pC = read_llu(pC, n);
+			pC = read_llu(pC, x);
+			while (*pC == ' ' &&*pC!=0)++pC;
+			if (!check(n, x, *pC)) {
+				printf("0\n");
+				return 0;
+			}
+		}
+		uint n0 = 0;
+		fe(i, 1, L){
+			if (CH[i] == 0)++n0;
+		}
+		printf("%llu\n", (n0 == 0) ? 1LL : pow_mod(62, n0, mod));
+	}
+	else {
+		printf("%llu\n", pow_mod(62, L, mod));
+	}
+	return 0;
+} 
+ 

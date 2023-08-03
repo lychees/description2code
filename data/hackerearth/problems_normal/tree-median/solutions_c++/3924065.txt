@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define sd(x) scanf("%d", &x)
+#define boost ios_base::sync_with_stdio(false);
+#define mp make_pair
+#define pb push_back
+#define all(a) a.begin(), a.end()
+#define f first
+#define s second
+
+typedef pair<int, int> pii;
+typedef long long ll;
+
+const int mod = 1000000007;
+const int inf = 50000000;
+const int maxn = 300010;
+
+int n, x, siz, beauty[maxn], taken[maxn], sub[maxn];
+ll ans[maxn];
+vector<int> adj[maxn];
+map<int, ll> paths;
+
+void dfs(int cur, int p)
+{
+	sub[cur] = 1;
+	for(int it:adj[cur]){
+		if(!taken[it] && it!=p){
+			dfs(it, cur);
+			sub[cur] += sub[it];
+		}
+	}
+}
+
+int find(int cur, int p)
+{
+	for(int it:adj[cur]){
+		if(!taken[it] && it!=p){
+			if(sub[it] > siz)
+				return find(it, cur);
+		}
+	}
+	return cur;
+}
+
+void push(int cur, int p, int d, int val)
+{
+	d += beauty[cur];
+	paths[d] += val;
+	for(int it:adj[cur]){
+		if(!taken[it] && it!=p)
+			push(it, cur, d, val);
+	}
+}
+
+ll compute(int cur, int p, int d)
+{
+	d += beauty[cur];
+	ll ret = paths[-1-d] + paths[-2-d];
+	for(int it:adj[cur]){
+		if(!taken[it] && it!=p)
+			ret += compute(it, cur, d);
+	}
+	if(beauty[cur]==-1)
+		ans[cur] += ret;
+	return ret;
+}
+
+void add(int centroid)
+{
+	paths.clear();
+	push(centroid, 0, 0, 1);
+	ll temp = paths[-1] + paths[-2];
+	for(int it:adj[centroid]){
+		if(!taken[it]){
+			push(it, centroid, beauty[centroid], -1);
+			temp += compute(it, centroid, 0);
+			push(it, centroid, beauty[centroid], 1);
+		}
+	}
+	if(beauty[centroid]==-1)
+		ans[centroid] += (temp/2);
+}
+
+void solve(int cur)
+{
+	int i, centroid;
+	dfs(cur, 0);
+	siz = sub[cur] >> 1;
+	centroid = find(cur, centroid);
+	add(centroid);
+	taken[centroid] = 1;
+	for(int it:adj[centroid]){
+		if(!taken[it])
+			solve(it);
+	}
+}
+
+int main()
+{
+	//freopen("i.txt", "r", stdin);
+	//freopen("o.txt", "w", stdout);
+	int i, u, v;
+	scanf("%d%d", &n, &x);
+	for(i=1; i<n; i++){
+		scanf("%d%d", &u, &v);
+		adj[u].pb(v);
+		adj[v].pb(u);
+	}
+	for(i=1; i<=n; i++){
+		scanf("%d", &beauty[i]);
+		beauty[i] = (beauty[i]>=x)?1:-1;
+	}
+	solve(1);
+	ll sol = 0;
+	for(i=1; i<=n; i++)
+		sol = max(sol, ans[i]);
+	printf("%lld\n", sol);
+	return 0;
+}

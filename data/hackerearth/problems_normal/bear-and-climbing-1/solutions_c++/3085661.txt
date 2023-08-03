@@ -1,0 +1,119 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<unordered_set>
+#include<unordered_map>
+using namespace std;
+#define MAX 1000002
+
+int n;
+vector<pair<long long int, long long int> > v;
+
+long long int flag[MAX];
+vector<long long int> vv;
+
+long long int x[MAX];
+long long int y[MAX];
+long long int f[MAX];
+
+bool ok(long long int a){
+	int lef = 0;
+	int rig = 0;
+	x[lef] = v[0].first;
+	y[lef] = v[0].second;
+	f[lef] = flag[0];
+	rig++;
+	for (int i = 1; i < n; i++){
+		while (lef < rig){
+			long long int S = x[lef] - v[i].first;
+			long long int SS = y[lef] - v[i].second;
+			S *= S;
+			SS *= SS;
+			S += SS;
+			if (S > a){
+				lef++;
+			}
+			else{
+				break;
+			}
+		}
+		if (lef == rig){
+			return false;
+		}
+		if (f[lef] <= flag[i]){
+			if (i == n - 1){
+				return false;
+			}
+			continue;
+		}
+		while (lef!=rig&&f[rig-1] <flag[i]){
+			rig--;
+		}
+		x[rig] = v[i].first;
+		y[rig] = v[i].second;
+		f[rig] = flag[i];
+		rig++;
+	}
+	return true;
+}
+int main(){
+	scanf("%d", &n);
+	for (int i = 0; i < n; i++){
+		int a, b;
+		scanf("%d%d", &a, &b);
+		v.push_back(make_pair(a, b));
+		flag[i] = b - a;
+		vv.push_back(flag[i]);
+	}
+	sort(vv.begin(), vv.end());
+	vv.erase(unique(vv.begin(), vv.end()), vv.end());
+	for (int i = 0; i < n; i++){
+		flag[i] = lower_bound(vv.begin(), vv.end(), flag[i]) - vv.begin();
+	}
+	//flag[b]<flag[a]
+	long long int mint = 0;
+	long long int maxt = (long long int)(v[0].first - v.back().first)*(long long int)(v[0].first - v.back().first) + (long long int)(v[0].second - v.back().second)*(long long int)(v[0].second - v.back().second);
+	while (mint + 1LL < maxt){
+		long long int mid = (mint + maxt) >> 1LL;
+		if (ok(mid)){
+			maxt = mid;
+		}
+		else{
+			mint = mid + 1LL;
+		}
+	}
+	if (ok(mint)){
+		printf("%lld\n", mint);
+	}
+	else{
+		if (ok(maxt)){
+			printf("%lld\n", maxt);
+		}
+		else{
+			puts("-1");
+		}
+	}
+	return 0;
+}

@@ -1,0 +1,99 @@
+#include<iostream>
+using namespace std;
+int primes[110]={0},pc=0,prime[110];
+int fact[110][110],dfact[110][110];
+long long pow(long long a, long long b, long long MOD) {
+long long x = 1, y = a;
+    while(b > 0) {
+        if(b%2 == 1) {
+            x=(x*y);
+            if(x>MOD) x%=MOD;
+        }
+        y = (y*y);
+        if(y>MOD) y%=MOD;
+        b /= 2;
+    }
+    return x;
+}
+long long inv(long long a,long long m) {return pow(a,m-2,m);}
+void prec()
+{
+	for(int i=2;i<=100;i++)
+	{
+		if(primes[i]==0)
+		{
+			prime[pc]=i;
+			pc++;
+			for(int j=i*2;j<=100;j+=i)
+			primes[j]=1;
+		}
+	}
+	for(int i=0;i<pc;i++)
+	{
+		fact[i][0]=1,dfact[i][0]=1;
+		for(int j=1;j<=100;j++)
+		{
+			fact[i][j]=(fact[i][j-1]*j)%prime[i];
+			dfact[i][j]=(inv(j,prime[i])*dfact[i][j-1])%prime[i];
+		}
+	}
+}
+long long lucas(long long a,long long b,long long c)
+{
+	if(a==0 || b==0) return 1;
+	else
+	{
+		long long d1=a%prime[c],d2=b%prime[c];
+		if(d1<d2)
+		return 0;
+		else
+		 return ((fact[c][d1]*dfact[c][d1-d2]*dfact[c][d2])*lucas(a/prime[c],b/prime[c],c))%prime[c];
+	}
+}
+int xx[1000],pp[1000],k=0;
+long long f(long long a,long long b, long long c)
+{
+	k=0;
+	for(int i=0;i<pc;i++)
+	{
+		if(c%prime[i]==0)
+		{
+			pp[k]=prime[i];
+			xx[k]=lucas(a,b,i);
+			k++;
+		}
+	}
+	long long p, i, prod = 1, sum = 0;
+ 
+	for (i = 0; i < k; i++) prod *= pp[i];
+ 
+	for (i = 0; i < k; i++) {
+		p = prod / pp[i];
+		sum = (sum+(xx[i] * inv(p, pp[i]) * p)%c)%c;
+	}
+ 
+	return sum %c;
+}
+int main()
+{
+	prec();
+	int test;
+	cin>>test;
+	for(int i=0;i<test;i++)
+	{
+		long long a,b,c;
+		cin>>a>>b>>c;
+		if(a<b)
+		cout<<0<<endl;
+		else if(c==1)
+		cout<<0<<endl;
+		else if(b==1)
+		cout<<1<<endl;
+		else
+		{
+			a=a-b;
+		cout<<f(a+b-1,b-1,c)<<endl;
+		}
+	}
+	return 0;
+}

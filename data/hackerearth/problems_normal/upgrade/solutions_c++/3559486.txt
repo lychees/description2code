@@ -1,0 +1,234 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e5 + 5, LOGN = 20;
+
+struct node{
+    int val, sum, prior, size, me;
+    bool lazy;
+    node *l, *r;
+    node(int _val, int _me = 1){
+        val = _val;
+        prior = rand();
+        size = _me;
+        me = _me;
+        sum = val;
+        lazy = 0;
+        l = r = NULL;
+    }
+};
+
+typedef node* pnode;
+
+pnode root = NULL, tmp1 = NULL, tmp2 = NULL, tmp3 = NULL, tmp4 = NULL, tmp5 = NULL, tmp6 = NULL;
+
+int sz(pnode t){
+    return (t ? t->size : 0);
+}
+
+int sm(pnode t){
+    return (t ? t->sum : 0);
+}
+
+void lazy_push(pnode t){
+    if(!t or !t->lazy)  return ;
+    if(t->l)    t->l->lazy ^= 1;
+    if(t->r)    t->r->lazy ^= 1;
+    swap(t->l, t->r);
+    t->lazy = 0;
+}
+
+void update(pnode t){
+    if(!t)  return ;
+    lazy_push(t->l), lazy_push(t->r);
+    t->size = sz(t->l) + t->me + sz(t->r);
+    t->sum = sm(t->l) + t->val + sm(t->r);
+}
+
+void split(pnode t, pnode &l, pnode &r, int key, int add = 0){
+    if(!t)  return void(l = r = NULL);
+    lazy_push(t);
+    int current = add + sz(t->l) + t->me;
+    if(current <= key)   split(t->r, t->r, r, key, current), l = t;
+    else split(t->l, l, t->l, key, add), r = t;
+    update(t);
+}
+
+void merge(pnode &t, pnode l, pnode r){
+    lazy_push(l), lazy_push(r);
+    if(!l or !r)    return void(t = l ? l : r);
+    if(l->prior > r->prior) merge(l->r, l->r, r), t = l;
+    else merge(r->l, l, r->l), t = r;
+    update(t);
+}
+
+void inOrder(pnode t){
+    if(!t)  return ;
+    lazy_push(t);
+    inOrder(t->l);
+    cout<<t->val<<" ";
+    inOrder(t->r);
+    update(t);
+}
+
+int treap_query(int l, int r){
+    if(l > r)   swap(l, r);
+    split(root, tmp1, tmp2, l - 1);
+    split(tmp2, tmp3, tmp4, r - l + 1);
+    int ans = tmp3->sum;
+    merge(tmp2, tmp3, tmp4);
+    merge(root, tmp1, tmp2);
+    return ans;
+}
+
+void treap_extract(pnode &t, int l, int r){
+    if(l > r)   swap(l, r);
+    split(root, tmp1, tmp2, l - 1);
+    split(tmp2, tmp3, tmp4, r - l + 1);
+    tmp3->lazy ^= 1;
+    merge(t, t, tmp3);
+    pnode LOL = new node(0, r - l + 1);
+    merge(tmp2, LOL, tmp4);
+    merge(root, tmp1, tmp2);
+}
+
+void treap_return(pnode &t, int l, int r){
+    if(l > r)   swap(l, r);
+    //cout<<"WOW --> "<<l<<" "<<r<<endl; inOrder(t); cout<<endl;
+    split(root, tmp1, tmp2, l - 1);
+    split(tmp2, tmp3, tmp4, r - l + 1);
+    split(t, tmp5, tmp6, r - l + 1);
+    //cout<<"CRAP --> "; inOrder(tmp5); cout<<endl;
+    t = tmp6;
+    tmp5->lazy ^= 1;
+    merge(tmp2, tmp5, tmp4);
+    merge(root, tmp1, tmp2);
+}
+
+//HLD
+
+int siz[N];
+int p[N], h[N], head[N], chain[N], pos[N], rpos[N], cntr = 0, chainNo = 0;
+vector<int> adj[N];
+int A[N];
+
+void dfs(int u, int prev){
+    siz[u] = 1, p[u] = prev, h[u] = h[prev] + 1;
+    for(auto v : adj[u]){
+        if(v == prev)   continue;
+        dfs(v, u);
+        siz[u] += siz[v];
+    }
+}
+
+void hld_build(int u, int prev){
+    if(head[chainNo] == -1) head[chainNo] = u;
+    chain[u] = chainNo, pos[u] = ++cntr, rpos[cntr] = u;
+    int myChild = -1;
+    for(auto v : adj[u]){
+        if(v == prev)   continue;
+        if(myChild == -1 or siz[myChild] < siz[v])  myChild = v;
+    }
+    if(myChild != -1)   hld_build(myChild, u);
+    for(auto v : adj[u]){
+        if(v == prev or v == myChild)   continue;
+        chainNo++;
+        hld_build(v, u);
+    }
+}
+
+int lca(int u, int v){
+    while(chain[u] != chain[v]){
+        if(h[head[chain[v]]] > h[head[chain[u]]])   swap(u, v);
+        u = p[head[chain[u]]];
+    }
+    if(h[v] > h[u]) swap(u, v);
+    return v;
+}
+
+int querySum(int u, int v){
+    int tot = 0;
+    while(chain[u] != chain[v]){
+        tot += treap_query(pos[u], pos[head[chain[u]]]);
+        u = p[head[chain[u]]];
+    }
+    tot += treap_query(pos[u], pos[v]);
+    return tot;
+}
+
+void queryRev(int u, int v){
+
+    //cout<<"LOL --> "; inOrder(root); cout<<endl;
+
+    int orignal_u = u, orignal_v = v;
+
+    int LCA = lca(u, v);
+    pnode a = NULL, b = NULL;
+    while(chain[u] != chain[LCA]){
+        treap_extract(a, pos[u], pos[head[chain[u]]]);
+        u = p[head[chain[u]]];
+    }
+    treap_extract(a, pos[u], pos[LCA]);
+    while(chain[v] != chain[LCA]){
+        treap_extract(b, pos[v], pos[head[chain[v]]]);
+        v = p[head[chain[v]]];
+    }
+    if(v != LCA)    treap_extract(b, pos[v], pos[LCA] + 1);
+    if(b)   b->lazy = 1;
+    merge(a, a, b);
+    a->lazy ^= 1;
+
+    //cout<<"DBG --> "; inOrder(a);   cout<<endl;
+
+    u = orignal_u, v = orignal_v;
+
+    while(chain[u] != chain[LCA]){
+        treap_return(a, pos[u], pos[head[chain[u]]]);
+        u = p[head[chain[u]]];
+    }
+    treap_return(a, pos[u], pos[LCA]);
+
+    if(a)   a->lazy ^= 1;
+
+    while(chain[v] != chain[LCA]){
+        treap_return(a, pos[v], pos[head[chain[v]]]);
+        v = p[head[chain[v]]];
+    }
+    if(v != LCA)    treap_return(a, pos[v], pos[LCA] + 1);
+
+    //cout<<"LOL --> "; inOrder(root); cout<<endl;
+}
+
+int main(){
+
+    int n, q, u, v;
+
+    cin>>n>>q;
+    for(int i = 1; i <= n; i++) cin>>A[i];
+    for(int i = 1; i < n; i++){
+        cin>>u>>v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    dfs(1, 0);
+    memset(head, -1, sizeof(head));
+    hld_build(1, 0);
+
+    for(int i = 1; i <= n; i++) merge(root, root, new node(A[rpos[i]]));
+
+    //for(int i = 1; i <= n; i++) cout<<i<<" --> "<<chain[i]<<endl;
+    //for(int i = 1; i <= n; i++) cout<<rpos[i]<<" ";
+    //cout<<endl;
+
+    char type;
+
+    while(q--){
+        cin>>type>>u>>v;
+        if(type == 'R') queryRev(u, v);
+        else{
+            int LCA = lca(u, v);
+            cout<<querySum(u, LCA) + querySum(v, LCA) - querySum(LCA, LCA)<<endl;
+        }
+    }
+}

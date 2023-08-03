@@ -1,0 +1,89 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef double ld;
+typedef pair<ll,ll> pl;
+
+#define sl(x) scanf("%lld",&x)
+#define pl(x) printf("%lld\n",x)
+#define sf(x) sort(x.begin(),x.end(),func)
+#define s(x) sort(x.begin(),x.end())
+#define all(v) v.begin(),v.end()
+#define rs(v) { s(v) ; r(v) ; }
+#define r(v) {reverse(all(v));}
+#define pb push_back
+#define mp make_pair
+#define F first
+#define S second
+#define f(i,n) for(int i=0;i<n;i++)
+#define rep(i,a,b) for(int i=a;i<=b;i++)
+
+const ll mod = 1000000007;
+const ll inf = 1e16;
+const ll ninf = LLONG_MIN;
+const ld eps = 1e-12;
+const ll N = 1000005;
+const ll LOGN = 19;
+const ld PI = 3.14159265358979323846;
+ll n;
+vector < ll > g[N];
+ll c[2][N];
+ll is[N], req[N], dp[N][2];
+void dfs(ll u, ll pre)
+{
+    if(req[u]) c[1][u] = 1;
+    else c[0][u] = 1;
+    for(ll v : g[u])
+    {
+        if(v == pre) continue;
+        dfs(v, u);
+        c[0][u] += c[0][v];
+        c[1][u] += c[1][v];
+    }
+}
+ll dfs2(ll u, ll pre, ll t)
+{
+    if(dp[u][t] != -1) return dp[u][t];
+    ll ret1 = is[u] ^ t;
+    for(ll v : g[u])
+    {
+        if(v == pre) continue;
+        ret1 += dfs2(v, u, t);
+    }
+    ll ret2 = 2 - (is[u] ^ t);
+    for(ll v : g[u])
+    {
+        if(v == pre) continue;
+        ret2 += dfs2(v, u, 1 - t);
+    }
+    dp[u][t] = min(ret1, ret2);
+    return min(ret1, ret2);
+}
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    cin >> n;
+    f(i, n - 1)
+    {
+        ll u, v;
+        cin >> u >> v;
+        g[u].pb(v);
+        g[v].pb(u);
+    }
+    rep(i, 1, n)
+    {
+        cin >> is[i];
+    }
+    rep(i, 1, n)
+    {
+        ll x;
+        cin >> x;
+        req[i] = x;
+        is[i] ^= x;
+    }
+    dfs(1, 0);
+    memset(dp, -1, sizeof(dp));
+    cout << dfs2(1, 0, 0) << "\n";
+    return 0;
+}

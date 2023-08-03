@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, from, to) for (int i = from; i < int(to); ++i)
+#define trav(a, x) for (auto& a : x)
+#define all(x) x.begin(), x.end()
+#define sz(x) (int)(x).size()
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+
+ll mod = 1000000007;
+
+ll N, M, P, Q;
+ll DX[8], DY[8];
+
+ll s1() {
+#define ADD(x, N, v) if (0 < v && v < N) x.insert(v)
+	set<ll> xs, ys;
+	ADD(xs, M, P);
+	ADD(xs, M, Q);
+	ADD(xs, M, M-Q);
+	ADD(xs, M, M-P);
+	ADD(ys, N, P);
+	ADD(ys, N, Q);
+	ADD(ys, N, N-Q);
+	ADD(ys, N, N-P);
+	xs.insert(M);
+	ys.insert(N);
+	ll res = 0;
+	ll lastx = 0;
+	trav(x, xs) {
+		ll lasty = 0;
+		trav(y, ys) {
+			int c = 0;
+			rep(d,0,8) {
+				ll x2 = lastx + DX[d], y2 = lasty + DY[d];
+				if (x2 < 0 || y2 < 0 || x2 >= M || y2 >= N) continue;
+				++c;
+			}
+			res += (x - lastx) * (y - lasty) % mod * c;
+			lasty = y;
+		}
+		lastx = x;
+	}
+
+#ifdef SLOW
+	ll res2 = 0;
+	rep(i,0,N) {
+		rep(j,0,M) {
+			rep(k,0,N) {
+				rep(l,0,M) {
+					if ((abs(k-i) == P && abs(l-j) == Q) ||
+						(abs(k-i) == Q && abs(l-j) == P))
+						++res2;
+				}
+			}
+		}
+	}
+cout << res << ' ' << res2 << endl;
+#endif
+
+	return res % mod;
+}
+
+ll sum3(ll n) {
+	ll a = n * (2*n+1) % mod * (n+1) % mod;
+	while (a % 6) a += mod;
+	return a / 6;
+}
+
+ll s2() {
+	ll res = 0;
+	res += sum3(N);
+	res += (M-N)*N % mod * N % mod;
+	res += sum3(N-1) % mod;
+	res *= 2;
+	res -= N*M % mod;
+
+#ifdef SLOW
+	ll res2 = 0;
+	rep(i,0,N) {
+		rep(j,0,M) {
+			rep(k,0,N) {
+				rep(l,0,M) {
+					if (abs(k-i) == abs(l-j))
+						++res2;
+				}
+			}
+		}
+	}
+cout << res << ' ' << res2 << endl;
+#endif
+
+	return res % mod;
+}
+
+int main() {
+	cin.sync_with_stdio(false);
+	cin >> N >> M >> P >> Q;
+	if (N > M) swap(N, M);
+	if (P > Q) swap(P, Q);
+	DX[0] = DX[1] = P; DY[0] = Q; DY[1] = -Q;
+	DX[2] = DX[3] = -P; DY[2] = Q; DY[3] = -Q;
+	DX[4] = DX[5] = Q; DY[4] = P; DY[5] = -P;
+	DX[6] = DX[7] = -Q; DY[6] = P; DY[7] = -P;
+	ll res = N * M % mod * N % mod * M % mod;
+	res -= s1();
+	res -= s2();
+	res %= mod;
+	if (res < 0) res += mod;
+	cout << res << endl;
+}

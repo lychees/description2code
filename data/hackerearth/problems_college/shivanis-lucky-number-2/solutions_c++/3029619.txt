@@ -1,0 +1,160 @@
+#include<cstdio>
+#include<cstring>
+#include<cassert>
+#include<cstdlib>
+#include<vector>
+#include<queue>
+#include<algorithm>
+using namespace std;
+
+#define MAXX 			1000
+#define MAXL 			100
+#define CALLOC(nn)	(char*)malloc(sizeof(char)*nn)
+#define MKP(aa,bb)	make_pair(aa,bb)
+
+struct Bigint{
+	char *dig;
+	int ndig;
+	bool valid;
+	
+public:
+	
+	Bigint(){
+		valid=0;
+	}
+	
+	Bigint(char* _d){
+		valid=1;
+		ndig=strlen(_d);
+		dig = CALLOC(ndig+1);
+		strcpy(dig,_d);
+	}
+	
+	Bigint DivideBy(int x){
+		int posi=0,cur=0,poso=0;
+		char* o = CALLOC(ndig);
+		while (cur<x && posi<ndig){
+			cur = cur*10+(dig[posi]-'0');
+			posi++;
+		}
+		while (1){
+			o[poso++]='0'+cur/x;
+			cur%=x;
+			if (posi==ndig)break;
+			cur=cur*10+dig[posi]-'0';
+			posi++;
+		}
+		o[poso]='\0';
+		assert(poso>0);
+		return Bigint(o);
+	}
+	
+	char* getDigits(){
+		char* r = CALLOC(ndig+1);
+		strcpy(r,dig);
+		return r;
+	}
+	
+	bool isValid(){ return valid; }
+};
+
+void test_Bigint(){
+	char d[]="145";
+	Bigint b1=Bigint(d);
+	Bigint b2=b1.DivideBy(145);
+	printf("b1:%s\n",b1.getDigits());
+	printf("b2:%s\n",b2.getDigits());
+}
+
+char line[MAXL];
+	
+int getint(){
+	fgets(line,MAXL,stdin);
+	return atoi(line);
+}
+
+void getlist(vector<int>& v){
+	int idx=0;
+	fgets(line,MAXL,stdin);
+	idx=0;
+	while (line[idx]!='\n'){
+		while ( (line[idx]!='\n') && (line[idx]<'0' || line[idx]>'9') ) idx++;
+		if (line[idx]=='\n')break;
+		v.push_back(line[idx]-'0');
+		idx++;
+	}	
+}
+
+int pdig[MAXX][1024];
+pair<int,int> pmod[MAXX][1024];
+
+Bigint leastMultipleOfX(vector<int>& lucky, int x){
+	queue<pair<int,int> > Q;
+	int mod=0,nmod,msk=0,nmsk,reqmsk,L=(int)lucky.size();
+	pair<int,int> p;
+	Bigint r=Bigint();
+	sort(lucky.begin(),lucky.end());
+	for(int i=0;i<x;i++) for(int j=0;j<1024;j++)
+		pmod[i][j]=MKP(-1,-1);
+	reqmsk=0;
+	for(int i=0;i<L;i++){
+		reqmsk |= (1<<lucky[i]);
+		mod=lucky[i]%x;
+		msk=(1<<lucky[i]);
+		if (pmod[mod][msk].first==-1 && lucky[i]>0){
+			Q.push(MKP(mod,msk));
+			pmod[mod][msk]=MKP(-2,0);
+			pdig[mod][msk]=lucky[i];
+		}
+	}
+	while (!Q.empty()){
+		p=Q.front(); Q.pop();
+		mod=p.first;
+		msk=p.second;
+		if(mod==0 && msk==reqmsk)break;
+		for (int i=0;i<L;i++){
+			nmod=(mod*10+lucky[i])%x;
+			nmsk=msk|(1<<lucky[i]);
+			if (pmod[nmod][nmsk].first == -1){
+				pmod[nmod][nmsk] = MKP(mod,msk);
+				pdig[nmod][nmsk]= lucky[i];
+				Q.push(MKP(nmod,nmsk));
+			}
+		}
+	}
+	if (mod!=0 || msk!=reqmsk || pmod[mod][msk].second<0)
+		return r;
+	char *dig = CALLOC(x+10);
+	char t;
+	int poso=0;
+	while (mod>=0){
+		dig[poso++] = pdig[mod][msk]+'0';
+		nmod = pmod[mod][msk].first;
+		nmsk = pmod[mod][msk].second;
+		mod = nmod; msk = nmsk;
+	}
+	dig[poso]='\0';
+	for(int i=0,j=poso-1;i<j;i++,j--){
+		t=dig[i]; dig[i] = dig[j]; dig[j]=t;
+	}
+	r= Bigint(dig);
+	return r;
+}
+
+int main(){
+	int N,x;
+	Bigint y;
+	vector<int> lucky;
+	N=getint();
+	while (N--){
+		lucky.clear();
+		getlist(lucky);
+		x=getint();
+		y=leastMultipleOfX(lucky,x);
+		if(y.isValid())
+			printf("%s = %d * %s\n", y.getDigits(), x, y.DivideBy(x).getDigits());
+		else
+			printf("Impossible\n");
+	}
+	return 0;
+}

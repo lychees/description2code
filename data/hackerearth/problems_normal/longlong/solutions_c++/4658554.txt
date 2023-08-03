@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+bool predicate(const string &str, int length)
+{
+    using ull = unsigned long long;
+    constexpr ull BASE = 193;
+
+    int N = str.size();
+    ull base = 1;
+
+    for (int i = 1; i <= length; ++i)
+        base *= BASE;
+
+    unordered_set<ull> hashTable;
+    hashTable.reserve(4096);
+    hashTable.max_load_factor(0.5);
+
+    ull hcode = 0;
+    bool valid = false;
+
+    for (int i = 0; i < N; ++i)
+    {
+        hcode = hcode * BASE + str[i];
+
+        if (i + 1 > length)
+            hcode -= base * str[i - length];
+
+        if (i + 1 >= length)
+        {
+            valid |= (hashTable.find(hcode) != hashTable.end());
+            hashTable.insert(hcode);
+        }
+    }
+
+    return valid;
+}
+
+int main()
+{
+    string S;
+    cin >> S;
+
+    int l = 0, r = S.size(), found = -1;
+
+    while (l <= r)
+    {
+        int m = (l + r) / 2;
+
+        if (predicate(S, m))
+        {
+            found = m;
+            l = m + 1;
+        }
+        else
+            r = m - 1;
+    }
+
+    assert(found != -1);
+    cout << found << endl;
+
+    return 0;
+}

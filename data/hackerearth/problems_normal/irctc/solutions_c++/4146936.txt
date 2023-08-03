@@ -1,0 +1,96 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define pb push_back
+#define mp make_pair
+long long inf=1e15;
+struct node
+{
+	int id;
+	long long w;
+};
+struct compare
+{
+	bool operator() (const node &a,const node &b)
+	{
+		return a.w > b.w;
+	}
+};
+
+vector< pair<int,int> > adj[100001];
+long long dis[100001];
+bool visit[100001];
+int parent[100001];
+
+void dijkstra(int,int);
+int main()
+{
+	stack<int>s;
+	int t;
+	cin>>t;
+	while(t--)
+	{
+		while(!s.empty())s.pop();
+		for(int i=0;i<100001;i++)adj[i].clear();
+		long long ans; 
+		int n,k,a,b,c;
+		
+		cin>>n>>k;
+		while(k--)
+		{
+			cin>>a>>b>>c;
+			adj[a].pb(mp(b,c));
+			adj[b].pb(mp(a,c));
+		}
+		cin>>a>>b>>c;
+		dijkstra(a,n);
+		ans=dis[b];
+		if(ans==inf)cout<<"No Train Found."<<endl;
+		else
+		{
+			int x=b;
+			while(parent[x]!=x){s.push(x);x=parent[x];}
+			s.push(x);
+			dijkstra(b,n);
+			if(dis[c]==inf)cout<<"No Train Found."<<endl;
+			else 
+			{
+				cout<<ans+dis[c]<<endl;
+				while(!s.empty()){cout<<s.top()<<" ";s.pop();} 
+				while(parent[c]!=c)
+				{
+					s.push(c);
+					c=parent[c];
+				}
+				while(!s.empty()){cout<<s.top()<<" ";s.pop();}
+				cout<<endl;
+			}
+		}
+	}
+	return 0;
+}
+void dijkstra(int s,int n)
+{
+	for(int i=1;i<=n;i++){dis[i]=inf;visit[i]=false;parent[i]=-1;}
+	dis[s]=0;
+	parent[s]=s;
+	priority_queue<node ,vector<node> ,compare>pq;
+	pq.push({s,0});
+	while(!pq.empty())
+	{
+		node temp=pq.top();pq.pop();
+		int u=temp.id;
+		if(visit[u])continue;
+		visit[u]=true;
+		for(int i=0;i<adj[u].size();i++)
+		{
+			int v=adj[u][i].first;
+			int w=adj[u][i].second;
+			if(dis[v]>dis[u]+w)
+			{
+				parent[v]=u;
+				dis[v]=dis[u]+w;
+				pq.push({v,dis[v]});
+			}
+		}
+	}
+}

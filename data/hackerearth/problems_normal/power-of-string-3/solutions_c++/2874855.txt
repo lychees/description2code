@@ -1,0 +1,106 @@
+#include <cstring>
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+#include <stack>
+using namespace std;
+
+namespace su{
+	int __gap;
+	int *suf, *lcp, *temp, *pref;
+	
+	bool cmp(const pair<int, pair<int, int> > &a, const pair<int, pair<int, int> > &b){
+		if(a.second.first==b.second.first){
+			return a.second.second<b.second.second;
+		}
+		return a.second.first<b.second.first;
+	}
+
+	int * suffix(char *s, int N){
+		int i, k, j;
+		vector<pair<int, pair<int, int> > > arr(N);
+		int *ans;
+		ans = new int[N];
+	
+		for(i=0;i<N;i++){
+			arr[i].first = i;
+			arr[i].second = make_pair(s[i]-'0', 0);
+		}
+		sort(arr.begin(), arr.end(), cmp);
+	
+		for(k=1;k<2*N;k*=2){
+			j=0;
+			ans[arr[0].first] = 0;
+			for(i=1;i<N;i++){
+				if(arr[i].second.first==arr[i-1].second.first&&arr[i].second.second==arr[i-1].second.second){
+					ans[arr[i].first] = j;
+				}
+				else{
+					j++;
+					ans[arr[i].first] = j;
+				}
+			}
+			for(i=0;i<N;i++){
+				arr[i].second.first = ans[arr[i].first];
+				if(arr[i].first+k<N){
+					arr[i].second.second = ans[arr[i].first+k];
+				}
+				else arr[i].second.second = -1;
+			}
+			sort(arr.begin(), arr.end(), cmp);
+		}
+		for(i=0;i<N;i++){
+			ans[i] = arr[i].first;
+		}
+		return ans;
+	}
+	
+	void ConstLCP(char *__s, int N){
+		int t=0, i, j;
+		temp = new int[N];
+		lcp = new int[N];
+		
+		for(i=0;i<N;i++){
+			temp[suf[i]] = i;
+			lcp[i] = 0;
+		}
+		for(i=0;i<N;i++){
+			if(temp[i]!=N-1){
+				j = suf[temp[i]+1];
+				while(i+t<N&&j+t<N&&__s[i+t]==__s[j+t]) t++;
+			 	lcp[temp[i]] = t;
+			 	if(t!=0) t--;
+			}
+		}
+		delete [] temp;
+	}
+	void delSuf(){ delete [] suf;}
+	void delLCP(){ delete [] lcp;}
+};
+
+char s[2000010];
+
+int main(){
+	int N, i, j, K, ans=0, x, k;
+	
+	scanf("%d %d", &K, &N);
+	scanf("%s", s);
+	
+	su::suf = su::suffix(s, N);
+	su::ConstLCP(s, N);
+	
+	ans = 0;
+	for(i=0;i<N;i++){
+		//printf("%s %d\n", s+su::suf[i], su::lcp[i]);
+		if(su::lcp[i]>0){
+			j=i+1;
+			while(j<N&&su::lcp[j]>=su::lcp[i]) j++;
+			k = i-1;
+			while(k>=0&&su::lcp[k]>=su::lcp[i]) k--;
+			if(j-k>=K&&su::lcp[i]>ans) ans = su::lcp[i];
+		}
+	}
+	if(K==1) ans=N;
+	printf("%d\n", ans);
+	return 0;
+}

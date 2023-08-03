@@ -1,0 +1,113 @@
+#include <cstdio>
+#include <vector>
+#include <queue>
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <map>
+#include <utility>
+#define MOD 1000000007
+#define PB push_back
+#define pii pair<int, int>
+
+typedef long long LLD;
+using namespace std;
+vector<int> G[20000];
+pii darr[40000];
+pii tree[80000];
+bool vis[20000];
+int idx[40000];
+int pos;
+
+void maketree(int l, int h, int cur)
+{
+    if(l == h)
+    {
+	tree[cur] = darr[l];
+	return;
+    }
+    int m = (l+h)/2;
+    maketree(l, m, 2*cur);
+    maketree(m+1, h, 2*cur+1);
+    pii p1 = tree[2*cur];
+    pii p2 = tree[2*cur+1];
+    tree[cur] = min(p1, p2);
+}
+pii query(int l, int h, int i, int j, int c)
+{
+    if(l == i && h == j)
+	return tree[c];
+    int m = (l + h) / 2;
+    if(i > m)
+	return query(m + 1, h, i, j, 2*c + 1);
+    if(j <= m)
+	return query(l, m, i, j, 2*c);
+    pii a = query(l, m, i, m, 2*c);
+    pii b = query(m + 1, h, m + 1, j, 2*c + 1);
+    return min(a, b);
+}
+void dfs(int I, int lvl)
+{
+    vis[I] = true;
+    idx[I] = pos;
+    darr[pos++] = pii(lvl, I);
+    int sz = G[I].size();
+    for(int i = 0; i < sz; i ++)
+    {
+	if(!vis[G[I][i]])
+	{
+	    dfs(G[I][i], lvl+1);
+	    darr[pos++] = pii(lvl, I);
+	}
+    }
+    darr[pos++] = pii(lvl, I);
+}
+int main()
+{
+    int t, n;
+    scanf("%d", &t);
+    while(t--)
+    {
+	scanf("%d", &n);
+	memset(vis, 0, sizeof vis);
+	for(int i = 1; i <= n; i ++)
+	    G[i].clear();
+	for(int i = 1; i <= n-1; i ++)
+	{
+	    int x, y;
+	    scanf("%d %d", &x, &y);
+	    G[x].PB(y);
+	    G[y].PB(x);
+	}
+	int q;
+	pos = 1;
+	dfs(1, 0);
+	maketree(1, pos-1, 1);
+	/*
+	for(int i = 1; i < pos; i ++)
+	    cout << darr[i].second << " " ;
+	cout << endl;
+	for(int i = 1; i <= n; i ++)
+	    cout << idx[i] << " ";
+	cout << endl;
+	*/
+	scanf("%d", &q);
+	while(q--)
+	{
+	    int x, y;
+	    scanf("%d %d", &x, &y);
+	    int one = min(idx[x], idx[y]);
+	    int two = max(idx[x], idx[y]);
+	    pii ans = query(1, pos-1, one, two, 1);
+	    int lca = ans.second;
+	    int dlca = ans.first;
+	    int d1 = darr[idx[x]].first;
+	    int d2 = darr[idx[y]].first;
+	    int xxx = (d1 - dlca)*2 + max(0, (d2 - dlca)*2 - 1);
+	    cout << xxx << endl;
+	}
+    }
+    return 0;
+}

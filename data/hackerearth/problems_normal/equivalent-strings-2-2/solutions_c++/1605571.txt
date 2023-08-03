@@ -1,0 +1,81 @@
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+const int N = 100010, mod = 1000000007, B = 1373;
+int n, q;
+ll f[N], r[N];
+ll h[2][26][N];
+char a[2][N];
+vector<int> v[2];
+
+ll calc(ll c, int a)
+{
+    if (!a) return 1;
+    ll y = calc(c, a >> 1);
+    y = y * y % mod;
+    if (a & 1) y = y * c % mod;
+    return y;
+}
+
+void init()
+{
+    f[0] = 1;
+    for (int i = 1; i < N; i++) f[i] = f[i - 1] * B % mod;
+    r[N - 1] = calc(f[N - 1], mod - 2);
+    for (int i = N - 2; i >= 0; i--) r[i] = r[i + 1] * B % mod;
+}
+
+void solve()
+{
+    scanf("%s %s", a[0] + 1, a[1] + 1);
+    n = strlen(a[0] + 1);
+    for (int g = 0; g < 2; g++)
+        for (int i = 1; i <= n; i++)
+        {
+            for (int k = 0; k < 26; k++) h[g][k][i] = h[g][k][i - 1];
+            int c = a[g][i] - 'a';
+            h[g][c][i] = (h[g][c][i] + f[i - 1] % mod) % mod;
+        }
+    scanf("%d", &q);
+    while (q--)
+    {
+        int t[2], k;
+        scanf("%d %d %d", &t[0], &t[1], &k);
+        for (int g = 0; g < 2; g++)
+        {
+            for (int i = 0; i < 26; i++)
+            {
+                ll x = (h[g][i][t[g] + k - 1] - h[g][i][t[g] - 1]) % mod;
+                x = x * r[t[g] - 1] % mod;
+                if (x < 0) x += mod;
+                v[g].push_back(x);
+            }
+            sort(v[g].begin(), v[g].end());
+        }
+        bool f = true;
+        for (int i = 0; i < 26; i++) if (v[0][i] != v[1][i])
+        {
+            f = false;
+            break;
+        }
+        if (f) printf("yes\n"); else
+        printf("no\n");
+        v[0].clear();
+        v[1].clear();
+    }
+}
+
+int main()
+{
+    int t;
+    init();
+    scanf("%d", &t);
+    while (t--) solve();
+    return 0;
+}

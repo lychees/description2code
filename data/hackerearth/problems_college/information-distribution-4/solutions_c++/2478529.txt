@@ -1,0 +1,96 @@
+#include<string.h>
+#include<math.h>
+#include<stdlib.h>
+#include<algorithm>
+#include<iostream>
+#define ll long long
+using namespace std;
+int optimuses[110]={0},pc=0,optimus[110];
+int thefactor[110][110],thefatorial[110][110];
+ll calculatepower(ll a, ll b, ll MOD) {
+ll x = 1, y = a;
+    while(b > 0) {
+        if(b%2 == 1) {
+            x=(x*y);
+            if(x>MOD) x%=MOD;
+        }
+        y = (y*y);
+        if(y>MOD) y%=MOD;
+        b /= 2;
+    }
+    return x;
+}
+ll inverting(ll a,ll m) {return calculatepower(a,m-2,m);}
+void seive()
+{
+	for(int i=2;i<=100;i++)
+	{
+		if(optimuses[i]==0)
+		{
+			optimus[pc]=i;
+			pc++;
+			for(int j=i*2;j<=100;j+=i)
+			optimuses[j]=1;
+		}
+	}
+	for(int i=0;i<pc;i++)
+	{
+		thefactor[i][0]=1,thefatorial[i][0]=1;
+		for(int j=1;j<=100;j++)
+		{
+			thefactor[i][j]=(thefactor[i][j-1]*j)%optimus[i];
+			thefatorial[i][j]=(inverting(j,optimus[i])*thefatorial[i][j-1])%optimus[i];
+		}
+	}
+}
+ll lukkhialgo(ll a,ll b,ll c)
+{
+	if(a==0 || b==0) return 1;
+	else
+	{
+		ll d1=a%optimus[c],d2=b%optimus[c];
+		if(d1<d2)	return 0;
+		else	return ((thefactor[c][d1]*thefatorial[c][d1-d2]*thefatorial[c][d2])*lukkhialgo(a/optimus[c],b/optimus[c],c))%optimus[c];
+	}
+}
+int porn[1000],doublepp[1000],k=0;
+ll f(ll a,ll b, ll c)
+{
+	k=0;
+	for(int i=0;i<pc;i++)
+	{
+		if(c%optimus[i]==0)
+		{
+			doublepp[k]=optimus[i];
+			porn[k]=lukkhialgo(a,b,i);
+			k++;
+		}
+	}
+	ll p, i, sbguna = 1, plus = 0;
+	for (i = 0; i < k; i++) sbguna *= doublepp[i];
+	for (i = 0; i < k; i++) {
+		p = sbguna / doublepp[i];
+		plus = (plus+(porn[i] * inverting(p, doublepp[i]) * p)%c)%c;
+	}
+	return plus %c;
+}
+int main()
+{
+	seive();
+	int test;
+	cin>>test;
+	while(test--)
+	{
+		ll a,b,c;
+		cin>>a>>b>>c;
+		if(a<b)	cout<<0<<endl;
+		else if(c==1)	cout<<0<<endl;
+		else if(b==1)	cout<<1<<endl;
+		else
+		{
+			a-=b;
+			cout<<f(a+b-1,b-1,c)<<endl;
+		}
+	}
+	return 0;
+}

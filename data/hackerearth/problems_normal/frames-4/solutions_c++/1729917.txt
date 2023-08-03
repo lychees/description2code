@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+#define N 2010
+using namespace std;
+
+string grid[N];
+int cntup[N][N];
+int cntleft[N][N];
+int cntright[N][N],cntdown[N][N];
+int bit[N];
+int n,m;
+vector<int> del[N];
+void update(int i,int val)
+{
+	while(i<=n)
+	{
+		bit[i]+=val;
+		i+=(i&-i);
+	}
+}
+int query(int i)
+{
+	int res=0;
+	while(i>0)
+	{
+		res+=bit[i];
+		i-=(i&-i);
+	}
+	return res;
+}
+int sum(int l,int r)
+{
+	return query(r)-query(l-1);
+}
+int main()
+{
+    scanf("%d %d",&n,&m);
+    for(int i=1;i<=n;++i) cin>>grid[i];
+    for(int i=1;i<=n;++i)
+    {
+    	for(int j=1;j<=m;++j)
+    	{
+    		if(grid[i][j-1]=='1') continue;
+    		cntleft[i][j]=1+cntleft[i][j-1];
+    		cntup[i][j]=1+cntup[i-1][j];
+    	}
+    }
+    for(int i=n;i>0;--i)
+    {
+    	for(int j=m;j>0;--j)
+    	{
+    		if(grid[i][j-1]=='1') continue;
+    		cntright[i][j]=1+cntright[i][j+1];
+    		cntdown[i][j]=1+cntdown[i+1][j];
+    	}
+    }
+    long long ans=0;
+    for(int i=1;i<=n;++i)
+    {
+    	memset(bit,0,sizeof(bit));
+    	for(int j=1;j<=m;++j) del[j].clear();
+    	int x=i,y=1;
+    	while(x<=n && y<=m)
+    	{
+    		int lim=min(cntdown[x][y],cntright[x][y]);
+    		del[y+lim].push_back(y);
+    		update(y,1);
+    		for(int j=0;j<del[y].size();++j) update(del[y][j],-1);
+    		int ul=min(cntup[x][y],cntleft[x][y]);
+    		if(ul>0)
+    		ans+=sum(y-ul+1,y);
+    		//printf("%d %d %lld %d %d\n",x,y,ans,ul,lim);
+    		x++;y++;
+    	}
+    }
+    for(int i=2;i<=m;++i)
+    {
+    	memset(bit,0,sizeof(bit));
+    	for(int j=1;j<=n;++j) del[j].clear();
+    	int x=1,y=i;
+    	while(x<=n && y<=m)
+    	{
+    		int lim=min(cntdown[x][y],cntright[x][y]);
+    		del[x+lim].push_back(x);
+    		update(x,1);
+    		for(int j=0;j<del[x].size();++j) update(del[x][j],-1);
+    		int ul=min(cntup[x][y],cntleft[x][y]);
+    		if(ul>0)
+    		ans+=sum(x-ul+1,x);
+    		//printf("%d %d %lld %d %d\n",x,y,ans,ul,lim);
+    		x++;y++;
+    		
+    	}
+    }
+    printf("%lld",ans);
+    return 0;
+}

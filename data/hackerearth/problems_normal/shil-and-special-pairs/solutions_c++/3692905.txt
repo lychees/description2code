@@ -1,0 +1,134 @@
+/*input
+10 10 10
+2 4 3 8 10 5 6 9 7 1 
+2 8
+3 6
+8 10
+2 10
+1 5
+5 8
+3 7
+1 1
+4 9
+3 7
+*/
+#include <bits/stdc++.h>
+#include<stdio.h>
+using namespace std;
+#define pii pair<long long,long long>
+#define F(i,a,b) for(ll i = (ll)(a); i <= (ll)(b); i++)
+#define RF(i,a,b) for(ll i = (ll)(a); i >= (ll)(b); i--)
+#define PI 3.14159265
+#define ll long long
+#define ff first
+#define ss second
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair(x,y)
+#define INF 1000000009
+#define mod 1000000007
+ll p[200005];
+ll bit[200005];
+void update(ll id,ll val,ll maxn)
+{
+	while(id<maxn)
+	{
+		bit[id] += val;
+		id += (id & -id);
+	}
+}
+ll query(ll id)
+{
+	ll sum = 0;
+	while(id>0)
+	{
+		sum += bit[id];
+		id -= (id & -id);
+	}
+	return sum;
+}
+struct node
+{
+	ll l,r,id;
+};
+ll block;
+bool comp(node a,node b)
+{
+	if(a.l/block != b.l/block)
+		return a.l/block < b.l/block;
+	else
+		return a.r<b.r;
+}
+node q[200005];
+ll arr[200005];
+int main() 
+{
+	std::ios::sync_with_stdio(false);
+	ll n,m,d;
+	cin>>n>>m>>d;
+	F(i,1,n)
+		cin>>p[i];
+	block = sqrt(n);
+	F(i,0,m-1)
+	{
+		ll l,r;
+		cin>>l>>r;
+		q[i].l = l;
+		q[i].r = r;
+		q[i].id = i;
+	}
+	sort(q,q+m,comp);
+	ll cl,cr;
+	cl = q[0].l;
+	cr = q[0].r;
+	ll ans = 0;
+	F(i,cl,cr)
+	{
+		update(p[i],1,n+20);
+		ans += query(p[i]+d) - query(p[i]-d-1);
+	}
+	arr[q[0].id] = ans;
+	//cout<<cl<<" "<<cr<<" "<<ans<<endl;
+	F(i,1,m-1)
+	{
+		ll l,r,id;
+		l = q[i].l;
+		r = q[i].r;
+		id = q[i].id;
+		while(cl<l)
+		{
+			//cout<<"a"<<endl;
+			ans -= (query(p[cl]+d) - query(p[cl]-d-1));
+			update(p[cl],-1,n+20);
+			cl++;
+		}
+		while(cl>l)
+		{
+			//cout<<"b"<<endl;
+			cl--;
+			update(p[cl],1,n+20);
+			ans += (query(p[cl]+d) - query(p[cl]-d-1));
+		}
+		while(cr<r)
+		{
+			//cout<<"c"<<endl;
+			cr++;
+			update(p[cr],1,n+20);
+			ans += (query(p[cr]+d) - query(p[cr]-d-1));
+			//cout<<query(p[cr]+d)<<endl;
+		}
+		while(cr>r)
+		{
+			//cout<<"d"<<endl;
+			ans -= (query(p[cr]+d) - query(p[cr]-d-1));
+			update(p[cr],-1,n+20);
+			cr--;	
+		}
+		arr[id] = ans;
+		//cout<<l<<" "<<r<<" "<<ans<<endl;
+	}
+	F(i,0,m-1)
+	{
+		cout<<arr[i]<<endl;
+	}
+	return 0;
+}

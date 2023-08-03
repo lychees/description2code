@@ -1,0 +1,150 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+const int MX = 1e6;
+//int alpha[MX];
+//int beta[MX];
+int MOD;
+
+#define plus twolinescrossing
+
+int plus(int& a, int b)
+{
+	a += b;
+	if (a >= MOD)
+		a -= MOD;
+}
+
+int add(int a, int b)
+{
+	plus(a, b);
+	return a;
+}
+
+int mul(int a, int b)
+{
+	ll x = a;
+	x *= b;
+	x %= MOD;
+	return x;
+}
+
+struct Mat
+{
+	int v[2][2];
+	Mat operator * (const Mat& m) const
+	{
+		Mat ret;
+		for (int i = 0; i < 2; i++)
+			for (int j = 0; j < 2; j++)
+				ret.v[i][j] = 0;
+		for (int i = 0; i < 2; i++)
+			for (int j = 0; j < 2; j++)
+				for (int k = 0; k < 2; k++)
+					plus(ret.v[i][j], mul(v[i][k], m.v[k][j]));
+		return ret;
+	}
+} fibmat;
+Mat f_iterated[MX];
+//Mat tree[MX];
+
+struct Vec {
+	int alpha, beta;
+};
+Vec ZeroVec {0, 0};
+
+Vec operator * (const Mat& m, const Vec& v)
+{
+	Vec ret;
+	ret.beta = add(mul(m.v[0][0], v.beta), mul(m.v[0][1], v.alpha));
+	ret.alpha = add(mul(m.v[1][0], v.beta), mul(m.v[1][1], v.alpha));
+	return ret;
+}
+
+Vec operator + (const Vec& a, const Vec& b)
+{
+	Vec ret;
+	ret.alpha = add(a.alpha, b.alpha);
+	ret.beta = add(a.beta, b.beta);
+	return ret;
+}
+
+Vec tree[MX];
+
+void update(int idx, int l, int r, int pos, int val)
+{
+	if (pos < l || pos > r)
+		return;
+	if (l == r) {
+		tree[idx].alpha = val;
+		tree[idx].beta = 0;
+		return;
+	}
+	int mid = (l + r) / 2;
+	update(idx*2+1, l, mid, pos, val);
+	update(idx*2+2, mid+1, r, pos, val);
+	tree[idx] = tree[idx*2+1] + f_iterated[mid-l+1] * tree[idx*2+2];
+//	alpha[idx] = beta[idx] = 0;
+//	plus(alpha[idx], alpha[idx*2+1]);
+//	plus(beta[idx], beta[idx*2+1]);
+//	const Mat& transform = f_iterated[mid - l + 1];
+//	plus(alpha[idx], mul(transform.v[1][0], beta[idx*2+2]));
+//	plus(alpha[idx], mul(transform.v[1][1], alpha[idx*2+2]));
+//	plus(beta[idx],  mul(transform.v[0][0], beta[idx*2+2]));
+//	plus(beta[idx],  mul(transform.v[0][1], beta[idx*2+2]));
+}
+
+pair<Vec, int> query(int idx, int l, int r, int a, int b) {
+	//printf("%d %d %d %d %d\n", idx, l, r, a, b);
+	if (a <= l && b >= r)
+		return {tree[idx], r-l+1};
+	if (b < l || a > r)
+		return {ZeroVec, 0};
+	int mid = (l + r) / 2;
+	auto v1 = query(idx*2+1, l, mid, a, b);
+	auto v2 = query(idx*2+2, mid+1, r, a, b);
+	int sz = v1.second + v2.second;
+	Vec v = v1.first + f_iterated[v1.second] * v2.first;
+	//printf("%d %d %d %d %d -> {%d %d} %d (l={%d %d} r={%d %d})\n", idx, l, r, a, b, v.alpha, v.beta, sz, v1.first.alpha, v1.first.beta, v2.first.alpha, v2.first.beta);
+	return {v, sz};
+}
+
+int main()
+{
+	int n, m;
+	scanf("%d%d%d", &n, &m, &MOD);
+	Mat fib_mat;
+	fib_mat.v[0][0] = 1;
+	fib_mat.v[0][1] = 1;
+	fib_mat.v[1][0] = 1;
+	fib_mat.v[1][1] = 0;
+	Mat identity;
+	identity.v[0][0] = 1;
+	identity.v[1][1] = 1;
+	identity.v[0][1] = 0;
+	identity.v[1][0] = 0;
+	f_iterated[0] = identity;
+	for (int i = 1; i < MX; i++)
+		f_iterated[i] = fib_mat * f_iterated[i-1];
+	for (int i = 0; i < n; i++) {
+		int v;
+		scanf("%d", &v);
+		update(0, 0, n-1, i, v);
+	}
+	while (m--)
+	{
+		int typ;
+		int param1, param2;
+		scanf("%d%d%d", &typ, &param1, &param2);
+		if (typ == 1) {
+			update(0, 0, n-1, param1-1, param2);
+		} else {
+			auto ans = query(0, 0, n-1, param1-1, param2-1);
+			Vec v = ans.first;
+			//printf("{%d %d} %d\n", v.alpha, v.beta, add(v.alpha, v.beta));
+			printf("%d\n", add(v.alpha, v.beta));
+			assert(ans.second == param2 - param1 + 1);
+		}
+	}
+}

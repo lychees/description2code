@@ -1,0 +1,124 @@
+#include <bits/stdc++.h>
+#define gcd         __gcd
+#define bitcount    __builtin_popcountll
+#define rep(i,j,n)  for(i=j;i<n;i++)
+#define tr(it,c)    for(auto it=(c).begin();it!=(c).end();it++)
+#define pb          push_back
+#define mp          make_pair
+#define hell        1000000007
+#define uset        unordered_set
+#define umap        unordered_map
+#define ft          first
+#define sc          second
+using namespace std;
+typedef pair<int,int> pi;
+typedef long long ll;
+
+template <class T> T& get(T &n) {
+    cin>>n;
+    return n;
+}
+
+#ifdef TRACE
+template<class T> ostream& printContainer(ostream &o,const T &c){
+    o<<"[";
+    tr(it,c){
+        o<<*it<<",";
+    }
+    if(!c.empty())
+        o<<"\b";
+    o<<"]";
+    return o;
+}
+
+template<class T> ostream& operator<<(ostream &o,const vector<T> &c){return printContainer(o,c);}
+template<class T> ostream& operator<<(ostream &o,const deque<T> &c){return printContainer(o,c);}
+template<class T> ostream& operator<<(ostream &o,const list<T> &c){return printContainer(o,c);}
+template<class T> ostream& operator<<(ostream &o,const set<T> &c){return printContainer(o,c);}
+template<class T> ostream& operator<<(ostream &o,const uset<T> &c){return printContainer(o,c);}
+template<class T> ostream& operator<<(ostream &o,const multiset<T> &c){return printContainer(o,c);}
+template<class T,class V> ostream& operator<<(ostream &o,const map<T,V> &c){return printContainer(o,c);}
+template<class T,class V> ostream& operator<<(ostream &o,const umap<T,V> &c){return printContainer(o,c);}
+template<class T,class V> ostream& operator<<(ostream &o,const pair<T,V> &c){return (o<<"("<<c.ft<<","<<c.sc<<")");}
+
+#define trace(x)                 cerr << #x << ": " << x << endl;
+#define trace1(x)                cerr << #x << ": " << x << endl;
+#define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define trace4(a, b, c, d)       cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+#define trace5(a, b, c, d, e)    cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << endl;
+#define trace6(a, b, c, d, e, f) cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << " | " << #f << ": " << f << endl;
+#else
+#define trace(x)
+#define trace1(x)
+#define trace2(x, y)
+#define trace3(x, y, z)
+#define trace4(a, b, c, d)
+#define trace5(a, b, c, d, e)
+#define trace6(a, b, c, d, e, f)
+#endif
+
+template<class T> struct BIT_Max{
+    vector<T> a;
+    int N;
+    BIT_Max(int N):N(N){
+        a.resize(N+1);
+        int i;
+        rep(i,1,N+1)
+            a[i]=0;
+    }
+    ///CAUTION:indices are 1-based
+    void update(int pos,T x){
+        while(pos<=N){
+            a[pos]=max(a[pos],x);
+            pos+=(pos&(-pos));
+        }
+    }
+    T read(int pos){
+        T s=0;
+        while(pos){
+            s=max(a[pos],s);
+            pos&=pos-1;
+        }
+        return s;
+    }
+};
+
+void coordinate_compress(vector<int> &v){// transforms to 1-indexed compressed coordinates
+    int i,N=v.size();
+    vector<int> t(N);
+    copy(v.begin(), v.end(), t.begin());
+    sort(t.begin(), t.end());
+    rep(i,0,N){
+        v[i]=lower_bound(t.begin(), t.end(), v[i])-t.begin()+1;
+    }
+}
+
+int main() {
+    int T,N,i;
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    get(T);
+    while(T--) {
+        get(N);
+        vector<int> a(N);
+        rep(i,0,N){
+            get(a[i]);
+        }
+        coordinate_compress(a);
+        trace(a);
+        BIT_Max<int> up(N);
+        BIT_Max<int> down(N);
+        int ans=0;
+        rep(i,0,N){
+            int u=down.read(N-a[i]+1);
+            int d=up.read(a[i]);
+            up.update(a[i],u+1);
+            down.update(N-a[i]+1,d+1);
+        }
+        ans=max(up.read(N),down.read(N));
+        cout<<ans<<"\n";
+    }
+    return 0;
+}

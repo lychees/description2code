@@ -1,0 +1,161 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<algorithm>
+#include<vector>
+#include<memory.h>
+using namespace std;
+const int MAXN = 2 * 1e5 + 5;
+const long long BASE = 1e9 + 7;
+int N;
+int S[MAXN];
+int sa[MAXN];
+long long h[MAXN], hPow[MAXN];
+
+long long getHash(int lo , int sz)
+{
+    long long ans = h[lo + sz - 1];
+    if(lo > 0) ans -= h[lo - 1] * hPow[sz];
+    return ans;
+}
+inline bool sufCmp(int i, int j)
+{
+    int lo = 0, hi = N, ans = 0;
+    while (lo <= hi)
+    {
+        int mid = (lo + hi) >> 1;
+        if (getHash(i, mid) == getHash(j, mid))
+        {
+            ans = mid;
+            lo = mid + 1;
+        }
+        else
+            hi = mid - 1;
+    }
+    if(ans == N)
+        return i < j;
+    else
+        return S[i + ans] < S[j + ans];
+}
+
+void buildSA()
+{
+    hPow[0] = 1;
+    for (int i = 1; i <= 2 * N; ++i)
+        hPow[i] = hPow[i - 1] * BASE;
+
+    for(int i = 0;i < 2 * N;i ++)
+        if(i == 0)
+            h[i] = S[i];
+        else
+            h[i] = h[i - 1] * BASE + S[i];
+}
+struct fenwick
+{
+    int sum[MAXN];
+    void clear()
+    {
+        memset(sum , 0 , sizeof sum);
+    }
+    void update(int x)
+    {
+        for(x;x < MAXN;x += (x & -x))
+            sum[x] ++;
+    }
+    int get(int x)
+    {
+        int ans = 0;
+        for(x; x > 0;x -= (x & -x))
+            ans += sum[x];
+        return ans;
+    }
+} fen1 , fen2;
+long long inv[MAXN] , revin[MAXN] , inv2[MAXN] , revin2[MAXN];
+vector<int> V;
+int main()
+{
+    int T;
+    cin >> T;
+    for(int i = 0;i < T;i ++)
+    {
+        cin >> N;
+
+        V.clear();
+        fen1.clear();
+        fen2.clear();
+
+        memset(inv , 0 , sizeof inv);
+        memset(inv2 , 0 , sizeof inv2);
+        memset(revin2 , 0 , sizeof revin2);
+        memset(revin , 0 , sizeof revin);
+
+        for(int i = 0;i < N;i ++)
+        {
+            cin >> S[i];
+            V.push_back(S[i]);
+        }
+        sort(V.begin() , V.end());
+        V.resize(unique(V.begin() , V.end()) - V.begin());
+
+        for(int i = 0;i < N;i ++)
+        {
+            int pos = lower_bound(V.begin() , V.end() , S[i]) - V.begin() + 1;
+            int t1 = fen1.get(N + 1);
+            int t2 = fen1.get(pos);
+            inv[i] = inv[i - 1] + (long long)(t1 - t2);
+            t1 = fen1.get(pos - 1);
+            inv2[i] = inv2[i - 1] + (long long)(t1);
+            fen1.update(pos);
+        }
+        for(int i = N - 1;i >= 0;i --)
+        {
+            int pos = lower_bound(V.begin() , V.end() , S[i]) - V.begin() + 1;
+            int t1 = fen2.get(pos - 1);
+            revin[i] = revin[i + 1] + (long long)(t1);
+            t1 = fen2.get(N + 1);
+            int t2 = fen2.get(pos);
+            revin2[i] = revin2[i + 1] + (long long)(t1 - t2);
+            fen2.update(pos);
+        }
+
+        long long total = inv[N - 1] , total2 = inv2[N - 1];
+        long long mn = 0;
+        mn = total;
+
+        for(int i = 0;i < N - 1;i ++)
+        {
+            long long ev = (i * (long long)(N - i));
+            long long barbet = ev - ((total - inv[i] - revin[i + 1]) + (total2 - inv2[i] - revin2[i + 1]));
+            long long bet = ev - (total - inv[i] - revin[i + 1]) - barbet;
+            long long thi = inv[i] + revin[i + 1] + bet;
+            mn = max(mn , thi);
+        }
+
+        vector<int> poses;
+        if(total == mn)
+            poses.push_back(0);
+
+        for(int i = 0;i < N - 1;i ++)
+        {
+            long long ev = (i * (long long)(N - i));
+            long long barbet = ev - ((total - inv[i] - revin[i + 1]) + (total2 - inv2[i] - revin2[i + 1]));
+            long long bet = ev - (total - inv[i] - revin[i + 1]) - barbet;
+            long long thi = inv[i] + revin[i + 1] + bet;
+
+            if(thi == mn)
+                poses.push_back(i + 1);
+        }
+
+        for(int i = 0;i < N;i ++)
+            S[i + N] = S[i];
+
+        buildSA();
+
+        int mnans = poses[0];
+        for(int i = 1;i < poses.size();i ++)
+            if(sufCmp(poses[i] , mnans))
+                mnans = poses[i];
+
+        cout << mnans << " " << mn << endl;
+    }
+}

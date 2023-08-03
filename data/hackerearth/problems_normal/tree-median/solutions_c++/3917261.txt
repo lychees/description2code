@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int N, X;
+vector<int> adj[300001];
+int A[300001];
+int sz[300001];
+bool bad[300001];
+long long inc[300001];
+map<int, int> cnt;
+vector<int> tmp;
+
+void dfs(int u, int p)
+{
+    sz[u]=1;
+    for(auto& v: adj[u]) if(!bad[v] && v!=p)
+    {
+        dfs(v, u);
+        sz[u]+=sz[v];
+    }
+}
+
+long long dfs2(int u, int p, int s)
+{
+    s+=A[u];
+    long long ret=cnt[-1-s]+cnt[-2-s];
+    tmp.push_back(s);
+    for(auto& v: adj[u]) if(!bad[v] && v!=p)
+        ret+=dfs2(v, u, s);
+    inc[u]+=ret;
+    return ret;
+}
+
+void solve(int u)
+{
+    dfs(u, u);
+    while(1)
+    {
+        int w=-1;
+        for(auto& v: adj[u]) if(!bad[v] && (w==-1 || sz[v]>sz[w]))
+            w=v;
+        if(w==-1 || sz[w]*2<=sz[u])
+            break;
+        sz[u]-=sz[w];
+        sz[w]+=sz[u];
+        u=w;
+    }
+    for(int t=0; t<2; t++)
+    {
+        cnt.clear();
+        if(t)
+            cnt[A[u]]=1;
+        for(auto& v: adj[u]) if(!bad[v])
+        {
+            tmp.clear();
+            inc[u]+=t*dfs2(v, u, 0);
+            for(auto& it: tmp)
+                cnt[it+A[u]]++;
+        }
+        reverse(adj[u].begin(), adj[u].end());
+    }
+    bad[u]=true;
+    for(auto& v: adj[u]) if(!bad[v])
+        solve(v);
+}
+
+int main()
+{
+    scanf("%d%d", &N, &X);
+    int a, b;
+    for(int i=0; i<N-1; i++)
+    {
+        scanf("%d%d", &a, &b);
+        adj[a].push_back(b);
+        adj[b].push_back(a);
+    }
+    for(int i=1; i<=N; i++)
+    {
+        scanf("%d", &a);
+        if(a>=X)
+            A[i]=1;
+        else
+            A[i]=-1;
+    }
+    solve(1);
+    long long ans=0;
+    for(int i=1; i<=N; i++) if(A[i]==-1)
+        ans=max(ans, inc[i]);
+    printf("%lld\n", ans);
+    return 0;
+}

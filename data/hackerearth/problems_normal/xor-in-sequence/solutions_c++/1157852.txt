@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Trie
+{
+  int cnt;
+  Trie *child[2];
+  
+  Trie() 
+  {
+    cnt = 0;
+    child[0] = NULL;
+    child[1] = NULL;
+  }
+  
+  void add(int i, int value)
+  {
+    cnt++;
+    if (i < 0) return;
+    int bit = value >> i & 1;
+    if (!child[bit])
+      child[bit] = new Trie();
+    child[bit] -> add(i - 1, value);
+  }
+  
+  int get(int i, int value, int S)
+  {
+    if (i < 0) return cnt;
+    int res = 0;
+    for (int x = 0; x < 2; x++)
+    {
+      if (!child[x]) continue;
+      if ((x ^ (value >> i & 1)) < (S >> i & 1)) res += child[x] -> cnt;
+    }
+    int bit = (S ^ value) >> i & 1;
+    if (child[bit]) res += child[bit] -> get(i - 1, value, S);
+    return res;
+  }
+};
+
+int n, Q, a[100100], l[11], r[11];
+long long ans[11];
+
+void solve()
+{
+  Trie *trie = new Trie();
+  trie -> add(29, 0);
+  for (int i = 1; i <= n; i++)
+  {
+    for (int j = 0; j < Q; j++)
+    {
+      if (l[j] >= 0) ans[j] -= trie -> get(29, a[i], l[j]);
+      ans[j] += trie -> get(29, a[i], r[j]);
+    }
+    trie -> add(29, a[i]);
+  }
+}
+
+int main()
+{
+  ios::sync_with_stdio(0);
+  //freopen("i.in", "r", stdin);
+  int test;
+  cin >> test;
+  while (test--)
+  {
+    cin >> n;
+    for (int i = 1; i <= n; i++) 
+    {
+      cin >> a[i];
+      a[i] ^= a[i - 1];
+    }
+    
+    cin >> Q;
+    for (int i = 0; i < Q; i++) 
+    {
+      cin >> l[i] >> r[i];
+      l[i]--;
+      ans[i] = 0;
+    }
+    
+    solve();
+    
+    for (int i = 0; i < Q; i++) cout << ans[i] << endl;
+  }
+}

@@ -1,0 +1,183 @@
+/*input
+5 5 10000000
+1 1 1 1 1 
+2 1 4
+2 1 5
+2 2 4
+1 3 1
+2 1 5
+
+*/
+#include <bits/stdc++.h>
+#include <stdlib.h>
+using namespace std;
+long long int mod;
+ 
+typedef long long unsigned llu;
+typedef long long int lld;
+typedef long ld;
+#define rep(i,a,n) for(long long int i = (a); i <= (n); ++i)
+#define repI(i,a,n) for(int i = (a); i <= (n); ++i)
+#define repD(i,a,n) for(long long int i = (a); i >= (n); --i)
+#define repDI(i,a,n) for(int i = (a); i >= (n); --i)
+
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define sc(a) scanf("%lld",&a)
+#define sc2(a,b) scanf("%lld%lld",&a,&b)
+#define sc3(a,b,c) scanf("%lld%lld%lld",&a,&b,&c)
+#define scd(a) scanf("%d",&a)
+#define scd2(a,b) scanf("%d%d",&a,&b)
+#define scd3(a,b,c) scanf("%d%d%d",&a,&b,&c)
+#define scf(a) scanf("%lf",&a)
+#define scf2(a,b) scanf("%lf%lf",&a,&b)
+#define scf3(a,b,c) scanf("%lf%lf%lf",&a,&b,&c)
+#define prL(a) printf("%lld\n",a)
+#define prS(a) printf("%lld ",a)
+#define prdL(a) printf("%d\n",a)
+#define prdS(a) printf("%d ",a)
+#define prfL(a) printf("%lf\n",a)
+#define prfS(a) printf("%lf ",a)
+#define popcount __builtin_popcountll
+#define swap(a,b,t) t=a;a=b;b=t
+typedef pair<lld,lld> PA;
+ 
+#define lim 1000003
+#define lim2 3003
+inline lld sqr(lld x) { return x * x; }
+
+
+typedef struct node{
+    lld leftChild,rightChild;
+    lld xCoff,yCoff;
+}treeNode;
+
+lld A[lim],X[lim],Y[lim];
+treeNode M[lim<<2];
+
+lld findS(lld p){
+    lld t,c;
+    t=abs(p);
+    c=t/mod;
+    t=(p+(c+1)*mod)%mod;
+    return t;
+}
+
+// treeNode combineNodes(treeNode p1,treeNode p2){
+//     treeNode pAns;
+//     pAns.totalSum=p1.totalSum+p2.totalSum;
+//     pAns.leftSum=max(p1.leftSum,p1.totalSum+p2.leftSum);
+//     pAns.rightSum=max(p2.rightSum,p2.totalSum+p1.rightSum);
+//     pAns.maxSum=max(max(p1.maxSum,p2.maxSum),p1.rightSum+p2.leftSum);
+
+//     pAns.leftChild=p1.leftChild+p1.rightChild;
+//     pAns.rightChild=p2.leftChild+p2.rightChild;
+
+//     return pAns;
+// }
+
+void buildTree(int st,int end,int ind){
+    if(st==end){
+        M[ind].xCoff=A[st];
+        M[ind].yCoff=0;
+        // M[ind].leftChild=0;
+        // M[ind].rightChild=0;
+        // printf("ind=%d st=%d end=%d x=%lld y=%lld\n",ind,st,end,M[ind].xCoff,M[ind].yCoff);
+        return ;
+    }
+    int mid,a,b;
+    mid=st+(end-st)/2;
+    a=(ind<<1)+1;
+    b=(ind<<1)+2;
+    buildTree(st,mid,a);
+    buildTree(mid+1,end,b);
+    // M[ind]=combineNodes(M[a],M[b]);
+    lld x,y;
+    x=0;
+    y=0;
+    rep(i,st,end){
+        x=(x+X[i-st]*A[i]%mod)%mod;
+        y=(y+Y[i-st]*A[i]%mod)%mod;
+    }
+    M[ind].xCoff=x;
+    M[ind].yCoff=y;
+        // printf("ind=%d st=%d end=%d x=%lld y=%lld\n",ind,st,end,M[ind].xCoff,M[ind].yCoff);
+    // M[ind].leftChild=mid-st+1;
+}
+
+void updateTree(int st,int end,int ind,int updateInd,long long val){
+    if(updateInd==st && updateInd==end){
+        M[ind].xCoff=val;
+        M[ind].yCoff=0;
+        // printf("ind=%d st=%d end=%d x=%lld y=%lld\n",ind,st,end,M[ind].xCoff,M[ind].yCoff);
+        // M[ind].leftChild=0;
+        return ;
+    }
+    int mid,a,b;
+    mid=st+(end-st)/2;
+    a=(ind<<1)+1;
+    b=(ind<<1)+2;
+    if(updateInd<=mid) updateTree(st,mid,a,updateInd,val);
+    else updateTree(mid+1,end,b,updateInd,val);
+    // M[ind]=combineNodes(M[a],M[b]);
+    M[ind].xCoff=(M[ind].xCoff+X[updateInd-st]*((val-A[updateInd]+mod)%mod)%mod)%mod;
+    M[ind].yCoff=(M[ind].yCoff+Y[updateInd-st]*((val-A[updateInd]+mod)%mod)%mod)%mod;
+    // printf("ind=%d st=%d end=%d x=%lld y=%lld\n",ind,st,end,M[ind].xCoff,M[ind].yCoff);
+}
+
+lld query(int st,int end,int ind,int l,int r,int numC){
+    if(st==l && end==r){
+        lld fib1,fib2;
+        fib1=(X[numC]+Y[numC])%mod;
+        fib2=(X[numC+1]+Y[numC+1])%mod;
+        return (M[ind].xCoff*fib1%mod+M[ind].yCoff*fib2%mod)%mod;
+    }
+    int mid;
+    lld p1,p2;
+    mid=st+(end-st)/2;
+    if(r<=mid) return query(st,mid,(ind<<1)+1,l,r,numC);
+    if(l>mid) return query(mid+1,end,(ind<<1)+2,l,r,numC);
+
+    p1=query(st,mid,(ind<<1)+1,l,mid,numC);
+    p2=query(mid+1,end,(ind<<1)+2,mid+1,r,numC+mid-l+1);
+    return (p1+p2)%mod;
+}
+
+int main(){
+    // std::ios::sync_with_stdio(false);
+    lld T,i,j,h,l,r,k,s,a,b,c,d,w,x,y,v,z,t,p,q,n,m,curr,prev,sum,ans,pos,val,countA,secondMin,indicator;
+    sc3(n,m,mod);
+    X[0]=1;
+    X[1]=0;
+    Y[0]=0;
+    Y[1]=1;
+    rep(i,2,lim-1){
+        X[i]=(X[i-1]+X[i-2])%mod;
+        Y[i]=(Y[i-1]+Y[i-2])%mod;
+    }
+    rep(i,0,n-1){
+        sc(curr);
+        A[i]=findS(curr);
+        // prS(A[i]);
+    }
+    // printf("\n");
+    buildTree(0,n-1,0);
+    // sc(m);
+    while(m--){
+        sc3(k,l,r);
+        l--;
+        if(k==2){
+            r--;
+            prL(query(0,n-1,0,l,r,0));
+        }
+        else{
+            r=findS(r);
+            updateTree(0,n-1,0,l,r);
+            A[l]=r;
+        }
+    }
+    return 0;
+}
+

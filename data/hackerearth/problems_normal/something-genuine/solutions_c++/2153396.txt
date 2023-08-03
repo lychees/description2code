@@ -1,0 +1,182 @@
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <utility>
+#include <cstdlib>
+#include <memory>
+#include <queue>
+#include <cassert>
+#include <cmath>
+#include <ctime>
+#include <complex>
+#include <bitset>
+
+using namespace std;
+
+#define pb push_back
+#define fst first
+#define snd second
+#define mp make_pair 
+#define sz(C) ((int) (C).size())
+#define forn(i, n) for (int i = 0; i < (int) n; ++i)
+#define ford(i, n) for (int i = ((int) n) - 1; i >= 0; --i)
+#define y1 gftxdtrtfhyjfctrxujkvbhyjice
+#define y0 ehfoiuvhefroerferjhfjkehfjke
+#define left sdhfsjkshdjkfsdfgkqqweqweh
+#define right yytrwtretywretwreytwreytwr
+#define next jskdfksdhfjkdsjksdjkgf
+#define prev koeuigrihjdkjdfj
+#define hash kjfdkljkdhgjdkfhgurehg
+#define all(C) begin(C), end(C)
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef unsigned int uint;
+typedef pair <int,int> pii;
+typedef pair <ll, ll> pll;
+typedef vector <ll> vll;
+typedef vector <int> vi;
+typedef vector <vector <int> > vvi;
+typedef vector <pii> vii;
+typedef long double ld;
+typedef complex<double> cd;
+typedef vector<cd> vcd;
+
+#define FILE_NAME ""
+
+const ld EPS = 1e-9;
+const int MOD = 1e9 + 7;
+
+inline void add(int& x, int y) {
+  ((x += y) >= MOD) && (x -= MOD);
+}
+
+inline int mul(int x, int y) {
+  return x * 1ll * y % MOD;
+}
+
+struct SegmTree {
+  vi sum_sq;
+  vi sum;
+  vi to_add;
+  int sz;
+
+  SegmTree(int n = 0) {
+    for (sz = 1; sz < n; sz *= 2);
+    sum_sq.assign(sz * 2, 0);
+    sum.assign(sz * 2, 0);
+    to_add.assign(sz * 2, 0);
+  }
+
+  void push(int v, int tl, int tr) {
+    if  (!to_add[v]) {
+      return;
+    }
+    int val = to_add[v];
+    int len = (tr - tl + 1) / 2;
+    for (int u : { v * 2, v * 2 + 1 }) {
+      add(sum_sq[u], mul(2, mul(val, sum[u])));
+      add(sum_sq[u], mul(mul(val, val), len));
+      add(sum[u], mul(val, len));
+      add(to_add[u], val);
+    }
+    to_add[v] = 0;
+  }
+
+  void recalc(int v) {
+    assert(!to_add[v]);
+    sum_sq[v] = sum_sq[v * 2];
+    add(sum_sq[v], sum_sq[v * 2 + 1]);
+    sum[v] = sum[v * 2];
+    add(sum[v], sum[v * 2 + 1]);
+  }
+
+  void go_add(int v, int tl, int tr, int l, int r, int val) {
+    l = max(l, tl);
+    r = min(r, tr);
+
+    if  (l > r) {
+      return;
+    }
+
+    if  (l == tl && r == tr) {
+      // sum_sq += 2 * val * sum + val^2 * (tr - tl + 1)
+      // sum += val * (tr - tl + 1)
+      int len = tr - tl + 1;
+      add(sum_sq[v], mul(2, mul(val, sum[v])));
+      add(sum_sq[v], mul(mul(val, val), len));
+      add(sum[v], mul(val, len));
+      add(to_add[v], val);
+      return;
+    }
+
+    push(v, tl, tr);
+
+    int tm = (tl + tr) / 2;
+    go_add(v * 2, tl, tm, l, r, val);
+    go_add(v * 2 + 1, tm + 1, tr, l, r, val);
+    recalc(v);
+  }
+
+  void go_add(int l, int r, int val) {
+    go_add(1, 0, sz - 1, l, r, val);
+  }
+
+  int get_sum_sq(int v, int tl, int tr, int l, int r) {
+    l = max(l, tl);
+    r = min(r, tr);
+
+    if  (l > r) {
+      return 0;
+    }
+
+    if  (l == tl && r == tr) {
+      return sum_sq[v];
+    }
+
+    push(v, tl, tr);
+
+    int tm = (tl + tr) / 2;
+    int res = get_sum_sq(v * 2, tl, tm, l, r);
+    add(res, get_sum_sq(v * 2 + 1, tm + 1, tr, l, r));
+    recalc(v);
+    return res;
+  }
+
+  int get_sum_sq(int l, int r) {
+    return get_sum_sq(1, 0, sz - 1, l, r);
+  }
+};
+
+int main() {
+#ifdef LOCAL
+  freopen(FILE_NAME ".in", "r", stdin);
+//  freopen(FILE_NAME ".out", "w", stdout);
+#endif
+
+  int n;
+  scanf("%d", &n);
+  vi a(n);
+  forn(i, n) {
+    scanf("%d", &a[i]);
+    --a[i];
+  }
+
+  SegmTree T(n);
+  vi last(n, -1);
+  int ans = 0;
+  forn(i, n) {
+    int pos = last[a[i]];
+    T.go_add(pos + 1, i, +1);
+    add(ans, T.get_sum_sq(0, i));
+    last[a[i]] = i;
+  }
+
+  cout << ans << '\n';
+  return 0;
+}

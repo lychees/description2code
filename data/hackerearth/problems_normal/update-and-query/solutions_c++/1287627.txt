@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+#define lson (rt<<1)
+#define rson (rt<<1|1)
+#define mid ((l+r)>>1)
+using namespace std;
+const int MAXN = 200000 + 10;
+typedef pair<int, int> PII;
+
+PII mx[MAXN << 2];
+int n, m;
+
+void update(PII &a, PII b) {
+  a.first = min(a.first, b.first);
+  a.second = max(a.second, b.second);
+}
+
+void build(int rt = 1, int l = 0, int r = n) {
+  if (l + 1 == r) {
+    int x; scanf("%d", &x);
+    mx[rt] = PII(x, x);
+    return;
+  }
+  build(lson, l, mid); build(rson, mid, r);
+  mx[rt] = mx[lson]; update(mx[rt], mx[rson]);
+}
+
+void ins(int p, int v, int rt = 1, int l = 0, int r = n) {
+  if (l + 1 == r) {
+    mx[rt] = PII(v, v);
+    return;
+  }
+  if (p < mid) ins(p, v, lson, l, mid);
+  else ins(p, v, rson, mid, r);
+  mx[rt] = mx[lson]; update(mx[rt], mx[rson]);
+}
+
+int idx(int p, int rt = 1, int l = 0, int r = n) {
+  if (l + 1 == r) return mx[rt].first;
+  if (p < mid) return idx(p, lson, l, mid);
+  else return idx(p, rson, mid, r);
+}
+
+PII get(int L, int R, int rt = 1, int l = 0, int r = n) {
+  if (L <= l && R >= r) return mx[rt];
+  PII ret(1e9, -1e9);
+  if (L < mid) update(ret, get(L, R, lson, l, mid));
+  if (R > mid) update(ret, get(L, R, rson, mid, r));
+  return ret;
+}
+
+int main() {
+  scanf("%d%d", &n, &m);
+  build();
+  while (m --) {
+    char op[10]; int x, y;
+    scanf("%s%d%d", op, &x, &y); -- x;
+    if (op[0] == 'Q') {
+      if (y < 0) {puts("-1 -1"); continue;}
+      int left = 0, right = n - x;
+      int ax = idx(x);
+      int L = ax - y, R = ax + y;
+      while (left < right) {
+        int mm = (left + right + 1) >> 1;
+        PII t = get(x, x + mm);
+        if (t.first < L || t.second > R) right = mm - 1;
+        else left = mm;
+      }
+      PII t = get(x, x + left);
+      right = max(ax - t.first, t.second - ax);
+      printf("%d %d\n", left, right);
+    }
+    else ins(x, y);
+  }
+  return 0;
+}

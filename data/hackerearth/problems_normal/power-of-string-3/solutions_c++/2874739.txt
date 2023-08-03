@@ -1,0 +1,120 @@
+#include <iostream>
+#include <cmath>
+#include <math.h>
+#include <vector>
+#include <algorithm>
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <set>
+#include <map>
+#include <stack>
+#include <queue>
+#include <tuple>
+
+using namespace std;
+
+#define vec vector
+#define ALL(x) (x).begin(), (x).end()
+#define mp make_pair
+#define mt make_tuple 
+
+typedef long long ll;
+typedef double LD;
+typedef unsigned long long ull;
+
+const ll inf = 1000000000ll;
+const ll inf64 = inf * inf;
+const ll base = inf + 7;
+
+const int N = 2001000;
+char buffer[N];
+
+inline void read(string & s) {
+	scanf("%s", &buffer);
+	s = buffer;
+}
+
+map< int, int > nxt[N];
+int lnk[N], len[N], cnt[N], isClone[N], vis[N], sz = 1, last = 0, k, n, ans = 0;
+string s;
+
+void init() {
+	for(int i = 0;i < N;i++) {
+		lnk[i] = -1;
+		cnt[i] = 0;
+		len[i] = 0;
+		isClone[i] = 0;
+	}
+}
+
+void add(char x) {
+	int cur = sz++, p;
+	len[cur] = len[last] + 1;
+	for(p = last;p != -1 && !nxt[p].count(x);p = lnk[p]) {
+		nxt[p][x] = cur;
+	}
+	if(p == -1) {
+		lnk[cur] = 0;
+	}else {
+		int q = nxt[p][x];
+		if(len[p] + 1 == len[q]) {
+			lnk[cur] = q;
+		}else {
+			int clone = sz++;
+			lnk[clone] = lnk[q];
+			nxt[clone] = nxt[q];
+			len[clone] = len[p] + 1;
+			isClone[clone] = 1;
+			lnk[q] = lnk[cur] = clone;
+			for(;p != -1 && nxt[p][x] == q;p = lnk[p]) {
+				nxt[p][x] = clone;
+			}
+		}
+	}
+	last = cur;
+}
+
+bool cmp(int v1, int v2) {
+	return (len[v1] > len[v2]);
+}
+
+bool solve()
+{
+	init();
+
+	scanf("%d %d", &k, &n);
+	read(s);
+
+	for(auto i : s) add(i);
+
+	for(int i = 1;i < sz;i++) {
+		if(!isClone[i]) cnt[i] = 1;
+	}
+
+	vec< int > tmp(sz);
+	for(int i = 0;i < sz;i++) tmp[i] = i;
+
+	sort(ALL(tmp), cmp);
+
+	for(int i = 0;i < sz;i++) {
+		int v = tmp[i];
+		if(lnk[v] != -1) cnt[lnk[v]] += cnt[v];
+	}
+
+	for(int i = 0;i < sz;i++) {
+		if(cnt[i] >= k) ans = max(ans, len[i]);
+	}
+
+	printf("%d\n", ans);
+
+	return true;
+} 
+
+int main() {
+
+	//while(solve());
+	solve();	
+
+	return 0;
+}

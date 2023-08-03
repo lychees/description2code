@@ -1,0 +1,130 @@
+#include <iostream>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <algorithm>
+#include <cmath>
+#include <climits>
+#include <stdio.h>
+#define all(x) x.begin(),x.end()
+
+using namespace std;
+typedef long long int ll;
+pair<int, int> arr[2000010];
+bool lazy[2000010];
+int ip[200010];
+
+
+void swap(int *a, int *b){
+	int temp;
+	temp = *a;
+	*a = *b;
+	*b = temp;
+}
+
+
+void buildTree(int node, int st, int e){
+	if(st>e){
+		return;
+	}
+	if(st==e){
+		if(ip[st] == 1){
+			arr[node].first=1;
+			arr[node].second=0;
+		} else {
+			arr[node].first=0;
+			arr[node].second=1;
+		}
+		return;
+	}
+	int mid=(st+e)/2;
+	buildTree(2*node+1, st, mid);
+	buildTree(2*node+2,mid+1, e);
+	arr[node].first = arr[2*node+1].first+arr[2*node+2].first;
+	arr[node].second = arr[2*node+1].second+arr[2*node+2].second;
+}
+
+pair<int, int> minEdges(int node, int st, int e, int l, int r){
+	if(lazy[node]){
+		swap(&arr[node].first, &arr[node].second);
+		if(st!=e){
+			lazy[2*node+1] = !lazy[2*node+1];
+			lazy[2*node+2] = !lazy[2*node+2];
+		}
+		lazy[node] = false;
+	}
+	pair<int, int> res = make_pair(0,0);
+	if(st>e || l>e || r<st){
+		return res;
+	}
+	if(st>=l && e<=r){
+		return arr[node];
+	}
+	int mid = (st+e)/2;
+	pair<int, int> p1=minEdges(2*node+1, st, mid, l, r);
+	pair<int, int> p2=minEdges(2*node+2, mid+1, e, l, r);
+	res.first = p1.first+p2.first;
+	res.second = p1.second+p2.second;
+	return res;
+}
+
+void updateRange(int node, int st, int e, int l, int r){
+	if(lazy[node]){
+		swap(&arr[node].first, &arr[node].second);
+		if(st!=e){
+			lazy[2*node+1] = !lazy[2*node+1];
+			lazy[2*node+2] = !lazy[2*node+2];
+		}
+		lazy[node] = false;
+	}
+	if(st>e || l>e || r<st){
+		return;
+	}
+	if(st>=l && e<=r){
+		swap(&arr[node].first, &arr[node].second);
+		if(st!=e){
+			lazy[2*node+1] = !lazy[2*node+1];
+			lazy[2*node+2] = !lazy[2*node+2];
+		}
+		return;
+	}
+	int mid = (st+e)/2;
+	updateRange(2*node+1, st, mid, l, r);
+	updateRange(2*node+2, mid+1, e, l, r);
+	arr[node].first = arr[2*node+1].first + arr[2*node+2].first;
+	arr[node].second = arr[2*node+1].second+arr[2*node+2].second;
+}
+
+int main(){
+	int m, n, i=0, type, l, r;
+	scanf("%d %d",&n,&m);
+	char dir[200010];
+	scanf("%s", dir);
+	for(i=0; i<n-1; i++){
+		if(dir[i]=='<'){
+			ip[i]=0;
+		} else {
+			ip[i]=1;
+		}
+	}
+	buildTree(0,0,n-2);
+	int rev = false;
+	for(i=0; i<m; i++){
+		scanf("%d %d %d", &type, &l, &r);
+		if(type==1){
+			updateRange(0,0,n-2,l-1,r-2);
+		} else {
+			rev = false;
+			if(l>r){
+				rev = true;
+				swap(&l, &r);
+			}
+			pair<int, int> p = minEdges(0,0,n-2,l-1,r-2);
+			if(rev){
+				printf("%d\n", p.first);
+			} else {
+				printf("%d\n", p.second);
+			}
+		}
+	}
+}

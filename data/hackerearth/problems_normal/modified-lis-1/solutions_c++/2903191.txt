@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MOD = 1e9 + 7;
+const int N = 1e5 + 5;
+int n, a[N];
+pair<int, int> negative[N*4], positive[N*4];
+
+pair<int, int> combine(pair<int, int> l, pair<int, int> r){
+    if (l.first == r.first) l.second += r.second, l.second %= MOD;
+    else if (r.first > l.first) l = r;
+    return l;
+}
+
+pair<int, int> get(pair<int, int> *node, int id, int left, int right, int v){
+    if (left > v) return make_pair(0, 0);
+    if (right <= v) return node[id];
+    int mid = (left+right)>>1, idL = id*2, idR = idL | 1;
+    pair<int, int> l = get(node, idL, left, mid, v);
+    pair<int, int> r = get(node, idR, mid+1, right, v);
+    return combine(l, r);
+}
+
+void update(pair<int, int> *node, int id, int left, int right, pair<int, int> val, int pos){
+//    cout << left << ' ' << right << ' ' << pos << endl;
+    if (left > pos || right < pos) return;
+    if (left == right && left == pos){
+        node[id] = combine(node[id], val);
+        return;
+    }
+    int mid = (left + right) >> 1, idL = id*2, idR = idL+1;
+    update(node, idL, left, mid, val, pos);
+    update(node, idR, mid+1, right, val, pos);
+    node[id] = combine(node[idL], node[idR]);
+}
+
+int main(){
+//    freopen("input.txt", "r", stdin);
+    scanf("%d", &n);
+    for (int i = 0; i < n; ++i)
+        scanf("%d", &a[i]);
+
+    for (int i = 0; i < n; ++i){
+        pair<int, int> cur = make_pair(0, 0);
+        if (a[i] > 0){
+            int v = a[i];
+            cur = get(positive, 1, 1, N-5, v - 1);
+            ++cur.first; if (cur.second == 0) ++cur.second;
+            update(negative, 1, 1, N-5, cur, v);
+        } else {
+            int v = -a[i];
+            cur = get(negative, 1, 1, N-5, v - 1);
+            ++cur.first; if (cur.second == 0) ++cur.second;
+            update(positive, 1, 1, N-5, cur, v);
+        }
+//        cout << cur.first << ' ' << cur.second << endl;
+    }
+    pair<int, int> ans1 = negative[1];
+//    cout << ans1.first << ' ' << ans1.second << endl;
+    pair<int, int> ans2 = positive[1];
+//    cout << ans2.first << ' ' << ans2.second << endl;
+    if (ans2.first == ans1.first) ans1.second += ans2.second, ans1.second %= MOD;
+    else if (ans2.first > ans1.first) ans1 = ans2;
+    cout << ans1.first << ' ' << ans1.second << endl;
+}

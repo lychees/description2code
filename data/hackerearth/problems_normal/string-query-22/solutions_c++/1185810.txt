@@ -1,0 +1,104 @@
+/*Author :rednivrug15 */
+#include <bits/stdc++.h>
+#define pb push_back
+#define mp make_pair
+#define rep(i,n) for(int i=0; i<n ; i++)
+using namespace std;
+
+#define REP(i,n) for (int i = 1; i <= n; i++)
+#define ll long long
+const int mod=((int)(1e9)+7);
+
+long long gcd(long long a,long long b)
+{
+    return b==0?a:gcd(b,a%b);
+}
+
+long long int lcm(long long int a, long long int b) {
+  return (a/gcd(a,b))*b;
+}
+
+long long extended_euclid(long long int a, long long int b,long long int &x,long long int &y) {
+  long long int xx = y = 0;
+  long long int yy = x = 1;
+  while (b) {
+    long long int q = a/b;
+    long long int t = b; b = a%b; a = t;
+    t = xx; xx = x-q*xx; x = t;
+    t = yy; yy = y-q*yy; y = t;
+  }
+  return a;
+}
+/*Actual solution starts from here*/
+
+char str[200005];
+int len[26],n;
+vector < int > tree[26];
+
+void build(int idx,int node,int i,int j)
+{
+    if(i==j)
+    {
+        tree[idx][node]=1;
+        return;
+    }
+    build(idx,2*node,i,(i+j)/2);
+    build(idx,2*node+1,(i+j)/2+1,j);
+    tree[idx][node]=tree[idx][2*node]+tree[idx][2*node+1];
+}
+
+void update(int idx,int node,int i,int j,int x)
+{
+    if(i==j)
+    {
+        tree[idx][node]=0;
+        return;
+    }
+    if(tree[idx][2*node]>=x)
+        update(idx,2*node,i,(i+j)/2,x);
+    else
+        update(idx,2*node+1,(i+j)/2+1,j,x-tree[idx][2*node]);
+     tree[idx][node]=tree[idx][2*node]+tree[idx][2*node+1];
+}
+
+bool query(int idx,int node,int i,int j,int x)
+{
+    if(i>x || j<x)
+        return true;
+    if(i==x && j==x)
+        return tree[idx][node];
+    return (query(idx,2*node,i,(i+j)/2,x) and query(idx,2*node+1,(i+j)/2+1,j,x));
+}
+
+int hashe[26];
+
+int main() {
+    scanf("%s",str);
+    n=strlen(str);
+
+    for(int i=0; i<n; ++i) len[str[i]-'a']++;
+
+    for(int i=0; i<26; i++) for(int j=0; j<4*len[i]; j++) tree[i].push_back(0);
+    for(int i=0; i<26; i++) {
+        if(tree[i].size()!=0)
+            build(i,1,1,len[i]);
+    }
+
+    int q;
+    cin>>q;
+
+    while(q--)
+    {
+        int x;
+        char y;
+        cin>>x>>y;
+        update(y-'a',1,1,len[y-'a'],x);
+    }
+
+    for(int i=0; i<n; i++) {
+        hashe[str[i]-'a']++;
+        if(query(str[i]-'a',1,1,len[str[i]-'a'],hashe[str[i]-'a'])==1)
+            printf("%c",str[i]);
+    }
+	return 0;
+}

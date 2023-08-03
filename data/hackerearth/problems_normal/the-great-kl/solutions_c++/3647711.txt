@@ -1,0 +1,119 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define pb push_back
+#define m_p make_pair
+#define F first
+#define S second
+#define For(i,a,b) for(int i=a;i<b;i++)
+#define Fore(i,a,b) for(int i=a;i<=b;i++)
+#define rFore(i,a,b) for(int i=a;i>=b;i--)
+#define tr(it,a) for(__typeof((a).begin()) it=(a).begin();it!=(a).end();it++)
+#define all(a) a.begin(),a.end()
+#define mem(a,b) memset(a,b,sizeof(a))
+#define clr clear
+typedef long long int lli;
+typedef pair<int,int> pii;
+typedef pair<int,pii> pi3;
+typedef vector<int> vi;
+typedef vector<pii> vpii;
+void sc(int& a){scanf("%d",&a);}
+void sc(lli& a){scanf("%lld",&a);}
+void sc(int& a,int& b){sc(a);sc(b);}
+void sc(lli& a,lli& b){sc(a);sc(b);}
+void sc(int& a,int& b,int& c){sc(a,b);sc(c);}
+void sc(lli& a,lli& b,lli& c){sc(a,b);sc(c);}
+void prl(int a){printf("%d\n",a);}
+void prl(lli a){printf("%lld\n",a);}
+void prl(){printf("\n");}
+void prs(int a){printf("%d ",a);}
+void prs(lli a){printf("%lld ",a);}
+void prl(lli a, lli b, lli c=-1, lli d=-1, lli e=-1, lli f=-1){cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<e<<" "<<f<<endl;}
+int mod = 1000000007;
+lli modpow(lli a, lli b, lli mod){lli res=1;while(b>0){if(b&1)res=(res*a)%mod;a=(a*a)%mod;b=b/2;}return res%mod;}
+lli pow(lli a, lli b){lli res=1;while(b>0){if(b&1)res=(res*a);a=(a*a);b=b/2;}return res;}
+#define inf INT_MAX
+#define N 100000+5
+int n,c[N],height[N],ans[N],parent[N],vis[N],parent_lca[N][21];
+vi v[N],temp[N];
+void dfs(int u)
+{
+	vis[u]=1;
+	tr(it,v[u]){
+		int to=*it;
+		if(vis[to]==0){
+			parent[to]=u;
+			height[to]=height[u]+1;
+			dfs(to);
+		}
+	}
+}
+
+void LCA()
+{
+	mem(parent_lca,-1);
+	Fore(i,1,n) parent_lca[i][0]=parent[i];
+	for(int j=1;(1<<j)<n;j++){
+		Fore(i,1,n){
+			if(parent_lca[i][j-1]!=-1)
+				parent_lca[i][j]=parent_lca[parent_lca[i][j-1]][j-1];
+		}
+	}
+}
+int get_lca(int x, int y)
+{
+	if(height[x]<height[y]) swap(x,y);
+	int h=height[x]-height[y];
+	int i=0;
+	while(h){
+		if(h&1) x=parent_lca[x][i];
+		h/=2;
+		i++;
+	}
+	if(x==y) return x;
+	i=0;
+	while(parent_lca[x][i]!=parent_lca[y][i]) i++;
+	i--;
+	while(i>=0){
+		if(parent_lca[x][i]!=parent_lca[y][i]){
+			x=parent_lca[x][i];
+			y=parent_lca[y][i];
+		}
+		i--;
+	}
+	return parent_lca[x][0];
+}
+int main()
+{
+	int m,x,y;
+	sc(n,m);
+	Fore(i,1,n){
+		sc(x); temp[x].pb(i);
+	}
+	For(i,0,n-1){
+		sc(x,y); v[x].pb(y); v[y].pb(x);
+	}
+	dfs(1);
+	LCA();
+	Fore(i,1,m){
+		int m=temp[i].size();
+		if(m<2) {ans[i]=0; continue;}
+		int index=0,maxx=0;
+		For(j,1,m){
+			x=temp[i][j];
+			y=temp[i][0];
+			int par=get_lca(x,y);
+			int zz=height[x]+height[y]-2*height[par];
+			if(zz>ans[i]){
+				ans[i]=zz; index=x;
+			}
+		}
+		y=index;
+		For(j,1,m){
+			x=temp[i][j];
+			int par=get_lca(x,y);
+			int zz=height[x]+height[y]-2*height[par];
+			ans[i]=max(ans[i],zz);
+		}
+	}
+	Fore(i,1,m) prs(ans[i]);
+}

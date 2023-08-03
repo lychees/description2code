@@ -1,0 +1,90 @@
+#include<bits/stdc++.h>
+
+#define gc getchar
+#define ii(x) scanf(" %d", &x)
+#define ill(x) scanf(" %lld", &x)
+#define ll long long
+#define pb push_back
+#define mp make_pair
+#define F first
+#define S second
+#define all(x) x.begin(),x.end()
+#define set(a,b) memset(a,b,sizeof(a))
+#define clinic(a) memset(a,0,sizeof(a))
+#define rep(i,a,b) for(i=a;i<b;i++)
+
+using namespace std;
+
+void in(int &x){
+    register int c=gc();
+    x=0;
+    for(;(c<48||c>57);c=gc());
+    for(;c>47&&c<58;c=gc()){x=(x<<1)+(x<<3)+c-48;}
+}
+
+const ll mod=1e9+7;
+
+ll a[100005],st[100005<<2];
+
+ll powmod(ll base, ll exp) {
+	ll res=1;
+	while(exp>0) {
+		if(exp&1) res=(res*base)%mod;
+		base=(base*base)%mod;
+		exp>>=1;
+	}
+	return res%mod;
+}
+
+void build(ll i, ll begin, ll end){
+	if(begin==end) st[i]=a[begin];
+	else{
+		ll mid=(begin+end)>>1;
+		build(i<<1,begin,mid);
+		build((i<<1)+1,mid+1,end);
+		st[i]=(st[i<<1]*st[(i<<1)+1])%mod;
+	}
+}
+
+void update(ll i, ll begin, ll end, ll pos, ll val){
+	if(begin==end) st[i]=val;
+	else{
+		ll mid=(begin+end)>>1;
+		pos<=mid?update(i<<1,begin,mid,pos,val):update((i<<1)+1,mid+1,end,pos,val);
+		st[i]=(st[i<<1]*st[(i<<1)+1])%mod;
+	}
+}
+
+ll query(ll i, ll begin, ll end, ll l, ll r){
+	if(l>r) return 1;
+	if(begin>=l&&end<=r) return st[i];
+	ll mid=(begin+end)>>1;
+	if(r<=mid) return query(i<<1,begin,mid,l,r);
+	else if(l>mid) return query((i<<1)+1,mid+1,end,l,r);
+	else return (query(i<<1,begin,mid,l,mid)*query((i<<1)+1,mid+1,end,mid+1,r))%mod;
+}
+
+int main()
+{
+    ll n,q,i,id,shit;
+    ill(n);
+    rep(i,0,n) ill(a[i]);build(1,0,n-1);
+    ill(q);
+    while(q--){
+    	ill(id);
+    	if(id&1){
+    		ill(i);i--;
+    		shit=(query(1,0,n-1,0,i-1)*query(1,0,n-1,i+1,n-1))%mod;
+    		printf("%lld\n", shit);
+    	}else{
+    		ill(id);
+    		i=powmod(a[id-1],mod-2);
+    		update(1,0,n-1,id-1,i);
+			ill(i);a[id-1]=i;
+    		update(1,0,n-1,id-1,i);
+    	}
+    }
+
+
+    return 0;
+}

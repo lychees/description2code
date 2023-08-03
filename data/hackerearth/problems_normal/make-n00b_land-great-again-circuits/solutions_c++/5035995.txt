@@ -1,0 +1,171 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define ff first
+#define ss second
+#define m_p make_pair
+#define pb push_back
+#define ppb pop_back
+#define pf push_front
+#define ppf pop_front
+#define ll long long
+#define l_b lower_bound
+#define u_b upper_bound
+
+struct Graph
+{
+	static const ll maxN=500100;
+	vector<ll>edge[maxN];
+	ll n,m;
+	void setNodeEdge(ll _n,ll _m=-1)
+	{
+		n=_n;
+		if(_m==-1) m=n-1;
+		else m=_m;
+		for(ll i=0;i<=n;i++) edge[i].clear();
+	}
+	//treeDFS method
+		ll level[maxN];
+		ll parent[maxN];
+		ll subtreesz[maxN];
+		ll root;
+		ll time;
+		ll starT[maxN],endT[maxN];
+		void treeDFS(ll cn,ll curlev)
+		{
+			ll subtreeszcnt=0,spchildind=-1;
+			level[cn]=curlev;
+			 starT[cn]=++time;
+			for(ll i=0;i<edge[cn].size();i++)
+			{
+				ll to=edge[cn][i];
+				if(parent[cn]!=to) 
+				{
+					parent[to]=cn;
+					treeDFS(to,curlev+1);
+					subtreeszcnt+=subtreesz[to];
+				}
+			}
+			subtreesz[cn]=subtreeszcnt+1;
+			endT[cn]=time;
+		}
+		void treeDFS(ll _root)
+		{
+		    this->root=_root;
+		    memset(parent,-1,sizeof(parent));
+			time=0;
+			treeDFS(root,0);
+		}
+};
+
+
+ll n,m,u,thr[500100],q,f[500100],x[500100],d[500100],L[500100],R[500100];
+vector<ll>bman[500100];
+vector<ll> pp[500100];
+
+ll tree[3][500100],ans[500100];
+
+
+void up(ll tree[],ll x,ll v)
+{
+	for(ll i=x;i<=500005;i+=(i&-i)) tree[i]+=v;
+}
+
+ll read(ll tree[],ll x)
+{
+	ll sum=0;
+	for(ll i=x;i>0;i-=(i&-i)) sum+=tree[i];
+	return sum;
+}
+
+Graph G;
+
+int  main()
+{
+	cin>>n>>m;
+	G.setNodeEdge(n);
+	for(ll i=2;i<=n;i++)
+	{
+		cin>>u;
+		G.edge[u].pb(i);
+		G.edge[i].pb(u);
+	}
+	G.treeDFS(1);
+	
+	for(ll i=1;i<=n;i++)
+	{
+		cin>>u;
+		bman[u].pb(i);
+	}
+	
+	for(ll i=1;i<=m;i++) cin>>thr[i];
+	
+	cin>>q;
+	for(ll i=1;i<=q;i++) cin>>f[i]>>x[i]>>d[i];
+	
+	for(ll i=1;i<=m;i++) L[i]=1,R[i]=q+1,ans[i]=q+1;
+	f[q+1]=1;
+	
+	
+	while(1)
+	{
+	
+		bool update=0;
+		memset(tree,0,sizeof(tree));
+		
+		for(ll i=1;i<=m;i++)
+		{
+			if(L[i]>R[i]) continue;
+			ll mid=(L[i]+R[i])/2;
+			pp[mid].pb(i);
+			update=1;
+			//cout<<i<<" ## "<<mid<<endl;
+		}
+		
+		if(!update) break;
+		
+		//cout<<"came"<<endl;
+		//getchar();
+		for(ll i=1;i<=q+1;i++)
+		{
+			up(tree[0],G.starT[f[i]],d[i]);
+			up(tree[0],G.endT[f[i]]+1,-d[i]);
+			
+			up(tree[1],G.starT[f[i]],x[i]-d[i]*G.level[f[i]]);
+			up(tree[1],G.endT[f[i]]+1,-x[i]+d[i]*G.level[f[i]]);
+			
+			while(!pp[i].empty())
+			{
+				ll bmanid=pp[i].back();
+				pp[i].pop_back();
+				
+				ll sum=0;
+				
+				for(ll j=0;j<bman[bmanid].size();j++)
+				{
+					ll fact=bman[bmanid][j];
+					
+					sum+=read(tree[0],G.starT[fact])*G.level[fact];
+					sum+=read(tree[1],G.starT[fact]);
+					
+					if(sum>=thr[bmanid]) break;
+				}
+				//cout<<bmanid<<" <SUMMATION> "<<sum<<" "<<thr[bmanid]<<"  >>>>---- "<<i<<endl;
+				if(sum>=thr[bmanid])  R[bmanid]=i-1,ans[bmanid]=min(ans[bmanid],i);
+				//{
+					//cout<<"enter the zone"<<endl;	
+					
+					 //cout<<"** "<<ans[i]<<endl;
+				//}
+				else L[bmanid]=i+1;
+			}
+		}
+	}
+	
+	for(ll i=1;i<=m;i++)
+	{
+		//cout<<"???"<<ans[i]<<endl;
+		if(ans[i]<=q) cout<<ans[i]<<endl;
+		else cout<<"rekt"<<endl;
+	}
+}

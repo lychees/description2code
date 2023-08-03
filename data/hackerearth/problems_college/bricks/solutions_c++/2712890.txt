@@ -1,0 +1,85 @@
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <cstdint>
+using namespace std;
+unsigned mod = 1000000007;
+int modpow(int base, int exponent) {
+    uint64_t e = base;
+    int x = exponent;
+    uint64_t r = 1;
+    //cout <<"modpow" << base << " " << exponent << endl;
+    while(x) {
+        if(x&1) {
+            r = r*e % mod;
+        }
+        x >>= 1;
+        e = e * e % mod;
+    }
+    //cout << r << endl;
+    return r;
+}
+//number of combinations for one row of n elements
+unsigned c1cache[1001];
+unsigned c1(int n) {
+    if(n < 0)
+        return 0;
+    if(n == 0)
+        return 1;
+    if(!c1cache[n])    //unsigned should be big enough (32bit) to hold 4 summands
+        c1cache[n] = (c1(n-1) + c1(n-2) + c1(n-3) + c1(n-4)) %mod;
+    return c1cache[n];
+}
+unsigned *ccache[1001];
+unsigned c(unsigned m, unsigned n) {
+    if(!ccache[m][n]) {
+       ccache[m][n] = modpow(c1(n), m);//mult reicht
+  //      cout << "c(" << m << "," << n << ")=" << ccache[n] << endl;
+	}
+    return ccache[m][n];
+}
+unsigned *fcache[1001];
+unsigned f(unsigned m, unsigned n) {
+    if(n==1)
+        return 1;
+    if(!fcache[m][n]) {
+        uint64_t result = c(m,n);
+        for(int i=1;i<n;i++) {
+	    //cout << "split" << endl;
+            uint64_t ff = f(m,i);
+            uint64_t cc = c(m,n-i);
+	        //cout << ff << endl;
+        	//cout << cc << endl;
+            result = (result + mod - (ff*cc%mod)) % mod;
+        }
+        fcache[m][n] = result+1; 
+//        cout << "f(" << m << "," << n << ")=" << result << endl;
+    }
+    return fcache[m][n]-1;
+}
+//number of combinations for one row
+int main() {
+    /* Enter your code here. Read input from STDIN. Print output to STDOUT */   
+    int cases;
+    
+    cin >> cases;
+    for(int i = 0; i < cases; i++) {
+        int n,m;
+        cin >> m;
+        cin >> n;
+        
+        if(!ccache[m]) {
+            ccache[m]=(unsigned int*) calloc(1001, sizeof **ccache);
+        }
+        if(!fcache[m]) {
+            fcache[m]=(unsigned int*) calloc(1001, sizeof **fcache);
+        }        
+        //cout << m << endl;
+        //cout << n << endl;
+        cout << f(m,n) << endl;
+    }
+    
+    return 0;
+}

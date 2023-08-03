@@ -1,0 +1,134 @@
+#include <cstdio>
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <cstring>
+#include <queue>
+#include <vector>
+using namespace std;
+
+typedef long long Long;
+typedef pair<int, int> PII;
+typedef pair<PII, int> PPI;
+
+const int LIM = (1<<20)+10;
+Long FEN_S[LIM];
+Long FEN_C[LIM];
+void ins(int x,int s, Long FEN[LIM]){
+	x++;
+	while(x < LIM){
+		FEN[x] += s;
+		x += x & -x;
+	}
+}
+Long que(int x, Long FEN[LIM]){
+	if(x >= 1000000)x = 1000000;
+	Long r = 0;
+	x++;
+	while(x > 0){
+		r += FEN[x];
+		x -= x & -x;
+	}
+	return r;
+}
+
+pair<Long,Long> eval(Long fs, Long ss, Long fc, Long m, int S, int M,int P, int n){
+
+//	Long fs = que(m,FEN_S);
+	ss = ss - fs;
+//	Long fc = que(m,FEN_C);
+	Long sc = n-fc;
+	
+	Long fe = m*fc*P - fs*P;
+	Long se = ss*M - m*sc*M;
+	return make_pair(fe,se);
+}
+
+pair<Long,Long> eval2(Long m, Long ss, int S, int M,int P, int n){
+
+	Long fs = que(m,FEN_S);
+	ss = ss - fs;
+	Long fc = que(m,FEN_C);
+	Long sc = n-fc;
+	
+	Long fe = m*fc*P - fs*P;
+	Long se = ss*M - m*sc*M;
+	return make_pair(fe,se);
+}
+
+Long mat[2510][2510];
+Long mem[2510][2510];
+int N;
+
+Long dp(int i,int j, Long S){
+	if(j == N-1){
+		return -mat[i][j] + S*(j-i);
+	}
+	if(mem[i][j] != -1)return mem[i][j];
+	
+	Long w = 0;
+	
+	// add
+	w = max(w, dp(i,j+1,S));
+	
+	// start again
+	w = max(w, dp(j+1,j+1,S) - mat[i][j] + S*(j-i));
+	
+	return mem[i][j] = w;
+}
+
+int main() {
+	
+	int S, M, P;
+	cin >> N >> S >> M >> P;
+	vector<int> V(N);
+	for(int &v : V)cin >> v;
+	
+	for(int i = 0; i < N; ++i){
+		Long ss = 0;
+		set<int> SET;
+		for(int j = i; j < N; ++j){
+			ins(V[j],V[j],FEN_S);
+			ins(V[j],1,FEN_C);
+			ss += V[j];
+			SET.insert(V[j]);
+			Long fs=0,fc=0;
+			int b = 0;
+			for(int k = 19; k >= 0; --k){
+				b += (1<<k);
+				fs += FEN_S[1<<k];
+				fc += FEN_C[1<<k];
+				pair<Long,Long> e = eval(fs,ss,fc,b,S,M,P,j-i+1);
+				if(e.first > e.second){
+					b -= (1<<k);
+					fs -= FEN_S[1<<k];
+					fc -= FEN_C[1<<k];
+				}
+			}
+//			cout << "("<< l << "," << h << ")";
+			pair<Long,Long> e = eval2(b,ss,S,M,P,j-i+1);
+//			cout<<e.first+e.second<<" ";
+			mat[i][j] = e.first + e.second;
+			set<int>::iterator it = SET.lower_bound(b);
+			if(it != SET.begin()){ it--; }
+			if(it != SET.begin()){ it--; }
+			if(it != SET.begin()){ it--; }
+			for(int k = 0; k < 6 && it != SET.end(); ++k, it++){
+				int m = *it;
+				e = eval2(m,ss,S,M,P,j-i+1);
+//				cout << m << ":" << e.first+e.second<< " ";
+				mat[i][j] = min(mat[i][j], e.first+e.second);
+			}
+//			cout << mat[i][j] << " ";
+//			cout << "\t";
+		}
+//		cout << endl;
+		for(int j = i; j < N; ++j){
+			ins(V[j],-V[j],FEN_S);
+			ins(V[j],-1,FEN_C);
+		}
+	}
+	memset(mem,-1,sizeof(mem));
+	cout << dp(0,0,S) << endl;
+	
+}

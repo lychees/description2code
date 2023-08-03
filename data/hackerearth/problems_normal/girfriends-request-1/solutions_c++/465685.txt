@@ -1,0 +1,72 @@
+#include <cstdio>
+#include <vector>
+#include <queue>
+#include <assert.h>
+using namespace std;
+#define MAX 1414
+#define MAXQ 1000405
+#define VAL 1000000000
+int ar[MAX];
+//vector<pair<int, pair<int, int> > > quers;
+//int ans[MAXQ];
+int med[MAX][MAX];
+int N, Q;
+priority_queue<int> left;
+priority_queue<int> right;
+void compute(){
+	int median;
+	for(int i=0;i<N;i++){
+		while(!left.empty())
+			left.pop();
+		while(!right.empty())
+			right.pop();
+		left.push(ar[i]);
+		med[i][i] = ar[i];
+		for(int j=i+1;j<N;j++){
+			if((j-i)%2==0){	//adding 3,5,7...etc number
+				median = -right.top();
+				if(median>=ar[j]){
+					left.push(ar[j]);
+				}else{
+					left.push(median);
+					right.pop();
+					right.push(-ar[j]);
+				}
+				med[i][j] = left.top();
+			}else{	//adding 2, 4, 6... etc number
+				median = left.top();
+				if(median<=ar[j]){
+					right.push(-ar[j]);
+				}else{
+					right.push(-median);
+					left.pop();
+					left.push(ar[j]);
+				}
+				med[i][j] = left.top();
+			}
+		}
+	}
+}
+int main(){
+	int x, y;
+	scanf("%d", &N);
+	assert(N>0 and N<=MAX);
+	for(int i=0;i<N;i++){
+		scanf("%d", &ar[i]);
+		assert(ar[i]>0 and ar[i]<=VAL);
+	}
+	
+	compute();
+	scanf("%d", &Q);
+	assert(Q>0 and Q<=MAXQ);
+	for(int i=0;i<Q;i++){
+		scanf("%d %d", &x, &y);
+		assert(x>0 and x<=N);
+		assert(y>0 and y<=N);
+		//quers.push_back(make_pair(x, make_pair(y, i)));
+		x--, y--;
+		printf("%d\n", med[x][y]);
+	}
+	//sort(quers.begin(), quers.begin() + )
+	return 0;
+}

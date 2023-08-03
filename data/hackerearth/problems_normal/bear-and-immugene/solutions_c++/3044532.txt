@@ -1,0 +1,135 @@
+#include <algorithm>
+#include <bitset>
+#include <cassert>
+#include <cctype>
+#include <cmath>
+#include <complex>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <map>
+#include <queue>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+using namespace std;
+
+#define fi first
+#define se second
+#define pb push_back
+#define all(x) (x).begin(), (x).end()
+#define sz(x) (int((x).size()))
+#define bit(x) (1 << (x))
+#define cnt1(x) (__builtin_popcount(x))
+
+template<class T>
+inline void chkmax(T& x, T y) {
+	if (x < y) x = y;
+}
+
+template<class T>
+inline void chkmin(T& x, T y) {
+	if (y < x) x = y;
+}
+
+typedef long long LL;
+typedef double DB;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+const int MX = bit(21) + 5;
+const int M = 1000000007;
+char str[] = "ACTG";
+int n;
+char s[MX];
+
+inline int get(char c) {
+	return strchr(str, c) - str;
+}
+
+inline void add(int& x, int y) {
+	x += y;
+	if (x >= M) x -= M;
+}
+
+struct Data {
+	bool f[4];
+	int a[4][4];
+	
+	void make(int x) {
+		fill_n(f, 4, 0);
+		fill_n(a[0], 16, 0);
+		f[x]++;
+		a[x][x]++;
+	}
+} d[MX];
+
+void up(Data& d, Data& d1, Data& d2) {
+	int i, j, k;
+	int sum[4];
+	LL tp;
+	
+	for (i = 0; i < 4; i++) {
+		d.f[i] = d1.f[i] || d2.f[i];
+		sum[i] = 0;
+		for (j = 0; j < 4; j++) add(sum[i], d1.a[i][j]);
+	}
+	
+	for (i = 0; i < 4; i++) {
+		for (j = 0; j < 4; j++) {
+			if (d1.f[i]) {
+				tp = d1.a[i][j] + d2.a[i][j];
+				for (k = 0; k < 4; k++) {
+					tp += LL(sum[i] + (M - d1.a[i][k])) * d2.a[k][j];
+				}
+			}
+			else tp = d2.a[i][j];
+			d.a[i][j] = tp % M;
+		}
+	}
+}
+
+void build(int u, int st, int en) {
+	if (st == en) {
+		d[u].make(get(s[st]));
+		return;
+	}
+	int md = (st + en) / 2;
+	build(u * 2, st, md);
+	build(u * 2 + 1, md + 1, en);
+	up(d[u], d[u * 2], d[u * 2 + 1]);
+}
+
+void update(int u, int st, int en, int p, int x) {
+	if (st == en) {
+		d[u].make(x);
+		return;
+	}
+	int md = (st + en) / 2;
+	if (p <= md) update(u * 2, st, md, p, x);
+	else update(u * 2 + 1, md + 1, en, p, x);
+	up(d[u], d[u * 2], d[u * 2 + 1]);
+}
+
+int main() {
+//	freopen("in.txt", "r", stdin);
+//	freopen("out.txt", "w", stdout);
+	
+	int q, i, j, rlt;
+	char t[5];
+	
+	scanf("%d%d%s", &n, &q, s + 1);
+	build(1, 1, n);
+	while (q--) {
+		scanf("%d%s", &i, t);
+		update(1, 1, n, i, get(t[0]));
+		rlt = 1;
+		for (i = 0; i < 4; i++) {
+			for (j = 0; j < 4; j++) add(rlt, d[1].a[i][j]);
+		}
+		printf("%d\n", rlt);
+	}
+	return 0;
+}

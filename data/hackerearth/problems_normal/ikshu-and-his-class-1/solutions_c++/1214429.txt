@@ -1,0 +1,101 @@
+#include<bits/stdc++.h>
+#define MOD 1000000007
+#define MAX 100009
+#define NIL 0
+#define WHITE 0
+#define GRAY 1
+#define BLACK 2
+using namespace std;
+
+typedef long long ll;
+
+list<int> planets[MAX];
+int cc[MAX];
+int color[MAX];
+int parent[MAX];
+int components = 0;
+long long mulmod(long long a,long long b,long long c){
+    long long x = 0,y=a%c;
+    while(b > 0){
+        if(b%2 == 1){
+            x = (x+y)%c;
+        }
+        y = (y*2)%c;
+        b /= 2;
+    }
+    return x%c;
+}
+void add (int a,int b) {
+    planets[a].push_back(b);
+    planets[b].push_back(a);
+    //cout << planets[a].front() << " ";
+}
+
+void dfs_visit(list<int> u , int i) {
+  //  cout << i << " dfs_visit..  ";
+    color[i] = GRAY;
+    list<int>::iterator itr = u.begin();
+    for( ; itr != u.end() ; itr++) {
+        if(color[*itr] == WHITE) {
+            parent[*itr] = i;
+            cc[*itr] = cc[i];
+            dfs_visit(planets[*itr],*itr);
+        }
+    }
+    color[i]  = BLACK;
+}
+
+void dfs(int n) {
+    /*for(int i=1;i<=n;i++) {
+        //cout << planets[i].front() << " ";
+        color[i] = WHITE;
+        parent[i] = NIL;
+    }*/
+    //cout << "coloring done..";
+    for(int i=1;i<=n;i++) {
+        if(color[i] == WHITE) {
+      //      cout << "nodes visiting..";
+            cc[i] = ++components;
+            dfs_visit(planets[i],i) ;
+        }
+    }
+}
+void adjList(int n) {
+    for(int i=1;i<=n;i++) {
+        cout << i << " ";
+        for(list<int>::iterator itr = planets[i].begin() ; itr != planets[i].end(); itr++)
+        cout << *itr << " ";
+        cout << endl;
+    }
+}
+
+int main() {
+	vector<long long> f(MAX + 1,1);
+	for (int i=2; i<=MAX;i++)
+        f[i]= (f[i-1]*i) % MOD;
+        
+	int n,m,a,b;
+    cin >> n >> m;
+    
+    for(int i=0;i<m;i++) {
+        cin >> a >> b;
+        add(a,b);
+    }   
+	dfs(n);
+	/*
+	for(int i=0;i<n;i++){
+		cout<<cc[i]<<" ";
+	}
+	*/
+	map<int,int> store;
+	for(int i=0;i<n;i++){
+		store[cc[i]]++;
+	}
+	long long int ans=1;
+	for(map<int,int>::iterator i=store.begin();i!=store.end();i++){
+		//cout<<i->second<<" ";
+		ans=mulmod(ans,f[i->second],MOD);
+	}
+	cout<<ans<<"\n";
+	
+}

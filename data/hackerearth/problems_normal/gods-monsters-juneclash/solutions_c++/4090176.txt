@@ -1,0 +1,133 @@
+#include "bits/stdc++.h"
+using namespace std;
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+static const int INF = 0x3f3f3f3f; static const long long INFL = 0x3f3f3f3f3f3f3f3fLL;
+typedef vector<int> vi; typedef pair<int, int> pii; typedef vector<pair<int, int> > vpii; typedef long long ll;
+template<typename T, typename U> static void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> static void amax(T &x, U y) { if(x < y) x = y; }
+
+template<int MOD>
+struct ModInt {
+	static const int Mod = MOD;
+	unsigned x;
+	ModInt() : x(0) {}
+	ModInt(signed sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	ModInt(signed long long sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	int get() const { return (int)x; }
+
+	ModInt &operator+=(ModInt that) { if((x += that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator-=(ModInt that) { if((x += MOD - that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator*=(ModInt that) { x = (unsigned long long)x * that.x % MOD; return *this; }
+	ModInt &operator/=(ModInt that) { return *this *= that.inverse(); }
+
+	ModInt operator+(ModInt that) const { return ModInt(*this) += that; }
+	ModInt operator-(ModInt that) const { return ModInt(*this) -= that; }
+	ModInt operator*(ModInt that) const { return ModInt(*this) *= that; }
+	ModInt operator/(ModInt that) const { return ModInt(*this) /= that; }
+
+	ModInt inverse() const {
+		signed a = x, b = MOD, u = 1, v = 0;
+		while(b) {
+			signed t = a / b;
+			a -= t * b; std::swap(a, b);
+			u -= t * v; std::swap(u, v);
+		}
+		if(u < 0) u += Mod;
+		ModInt res; res.x = (unsigned)u;
+		return res;
+	}
+
+	bool operator==(ModInt that) const { return x == that.x; }
+	bool operator!=(ModInt that) const { return x != that.x; }
+};
+typedef ModInt<1000000007> mint;
+
+
+void fib(long long n, mint &a, mint &b) {
+	if(n == -1) {
+		a = 1, b = 0;
+		return;
+	}else if(n <= 2) {
+		assert(n >= 0);
+		a = (n + 1) / 2, b = (n + 2) / 2;
+		return;
+	}
+	fib(n / 2 - 1, a, b);
+	a *= a, b *= b;
+	mint c = b + a, d = b * 4 - a + (n / 2 % 2 ? -2 : 2);
+	if(n % 2)
+		a = d, b = d + d - c;
+	else
+		a = d - c, b = d;
+}
+
+typedef mint Num;
+typedef array<Num, 4> RowVec;
+
+int main() {
+	int Q;
+	while(~scanf("%d", &Q)) {
+		vector<RowVec> A; vector<mint> b;
+		const int m = 4;
+		vector<bool> found(m, false);
+		vector<mint> invs(m);
+		vector<RowVec> basis(m);
+		vector<Num> basisb(m);
+		int rank = 0;
+
+		rep(qi, Q) {
+			{
+				long long i; long long j; int x;
+				scanf("%lld%lld%d", &i, &j, &x);
+				mint fi0, fi1, fj0, fj1;
+				fib(i - 1, fi0, fi1);
+				fib(j - 1, fj0, fj1);
+				mint ca = fi0 * fj0, cb = fi0 * fj1;
+				mint cc = fi1 * fj0, cd = fi1 * fj1;
+				A.emplace_back(RowVec{ { ca, cb, cc, cd } });
+				b.emplace_back(x);
+			}
+
+			rep(j, m) if(found[j]) {
+				RowVec row = basis[j];
+				Num rowb = basisb[j];
+				Num coeff = A.back()[j] * invs[j];
+				rep(l, m)
+					A.back()[l] -= coeff * row[l];
+				b.back() -= coeff * rowb;
+			}
+
+			rep(j, m) if(!found[j] && A.back()[j] != Num()) {
+				RowVec row = A.back();
+				Num rowb = b.back();
+				swap(A.back(), A[rank]);
+				swap(b.back(), b[rank]);
+				++ rank;
+				Num inv = Num(1) / row[j];
+				for(int k = rank; k < (int)A.size(); ++ k) {
+					Num coeff = A[k][j] * inv;
+					rep(l, m)
+						A[k][l] -= coeff * row[l];
+					b[k] -= coeff * rowb;
+				}
+
+				found[j] = true;
+				basis[j] = row;
+				invs[j] = inv;
+				basisb[j] = rowb;
+				break;
+			}
+
+			bool ans = true;
+			for(int i = rank; i < (int)A.size(); ++ i)
+				if(b[i].get() != 0)
+					ans = false;
+
+			putchar(ans ? '1' : '0');
+		}
+		puts("");
+	}
+	return 0;
+}

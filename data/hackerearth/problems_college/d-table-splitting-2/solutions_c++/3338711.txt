@@ -1,0 +1,123 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#include<set>
+#include<map>
+#include<queue>
+#include<vector>
+#include<string>
+#include<cstring>
+#include<unordered_map>
+#include<cassert>
+#include<cmath>
+
+//code by cl3488
+
+#define dri(X) int (X); scanf("%d", &X)
+#define drii(X, Y) int X, Y; scanf("%d%d", &X, &Y)
+#define driii(X, Y, Z) int X, Y, Z; scanf("%d%d%d", &X, &Y, &Z)
+#define pb push_back
+#define mp make_pair
+#define rep(i, s, t) for ( int i=(s) ; i <(t) ; i++)
+#define fill(x, v) memset (x, v, sizeof(x))
+#define all(x) (x).begin(), (x).end()
+#define why(d) cerr << (d) << "!\n"
+#define whisp(X, Y) cerr << (X) << " " << (Y) << "#\n"
+#define exclam cerr << "!!\n"
+typedef long long ll;
+using namespace std;
+typedef pair<int, int> pii;
+const ll inf = (ll)1e9 + 70;
+const ll mod = 1e9 + 7;
+
+int dir[8][2] = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }, { -1, -1 }, { 1, 1 }, { -1, 1 }, { 1, -1 } };
+
+int main(){
+	if (fopen("input.txt", "r")) freopen("input.txt", "r", stdin);
+	dri(T);
+	rep(tc, 0, T){
+		drii(r, c);
+		string ee(c + 2, '!');
+		vector<string> gr;
+		gr.push_back(ee);
+		rep(i, 0, r){
+			string s; cin >> s; s = "!" + s + "!";
+			gr.push_back(s);
+		}
+		gr.push_back(ee);
+		r += 2;
+		c += 2;
+		bool good = true;
+		vector<vector<int>> id(r, vector<int>(c, -1));
+		int tt = -1;
+		for (int i = 1; i < r - 1 && good; i++){
+			for (int j = 1; j < c - 1 && good; j++){
+				if (id[i][j] != -1) continue;
+				vector<pii> here;
+				char now = gr[i][j];
+				tt++;
+				vector<pii> Q; Q.push_back(pii(i, j));
+				while (!Q.empty()){
+					pii x = Q.back(); Q.pop_back();
+					if (id[x.first][x.second] != -1) continue;
+					id[x.first][x.second] = tt;
+					here.push_back(x);
+					rep(d, 0, 4){
+						int ii = x.first + dir[d][0]; int jj = x.second + dir[d][1];
+						if (ii >= 0 && jj >= 0 && ii < r && jj < c && gr[ii][jj] == now){
+							Q.push_back(pii(ii, jj));
+						}
+					}
+				}
+
+				vector<pii> border;
+				for (pii x : here){
+					rep(d, 0, 4){//might have to be 8, but I think 4 should suffice.
+						int ii = x.first + dir[d][0]; int jj = x.second + dir[d][1];
+						if (ii >= 0 && jj >= 0 && ii < r && jj < c && id[ii][jj] != tt){
+							border.push_back(pii(ii, jj));
+						}
+					}
+				}
+				sort(border.begin(), border.end());
+				int k = unique(border.begin(), border.end()) - border.begin();
+				vector<bool> seen(k);
+				//assert(Q.empty());
+				Q.push_back(border[0]); seen[0] = true;
+				while (!Q.empty()){
+					pii x = Q.back(); Q.pop_back();
+					rep(d, 0, 8){
+						int ii = x.first + dir[d][0]; int jj = x.second + dir[d][1];
+						if (ii >= 0 && jj >= 0 && ii < r && jj < c){
+							pii y = pii(ii, jj);
+							int gh = lower_bound(border.begin(), border.begin() + k, y) - border.begin();
+							if (gh != k && border[gh] == y && !seen[gh]){
+								seen[gh] = true;
+								Q.push_back(y);
+							}
+						}
+					}
+				}
+				rep(e, 0, k){
+					if (!seen[e]){
+						good = false;
+						break;
+					}
+				}
+			}
+		}
+		//rep(i, 0, r){
+		//	rep(j, 0, c){
+		//		cout << id[i][j] << " ";
+		//	}cout << endl;
+		//}
+
+
+		if (good) cout << "YES\n";
+		else cout << "NO\n";
+	}
+	return 0;
+}

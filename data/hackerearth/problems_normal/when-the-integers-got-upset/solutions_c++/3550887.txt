@@ -1,0 +1,84 @@
+// The constraints will allow us to brute force this. 
+// Calculate the answers for the n! combinations and print out the best one. 
+
+// Attempt 1 : TLE
+
+// All right, I guess, creating a couple of new vectors (copying the n values is 
+// slowing me down )
+// I need a bitmask :p
+
+// Attempt 2: I have a bitmask but still TLEing.
+
+// Attempt 3: Adding a bitmask dp
+
+#include<bits/stdc++.h>
+using namespace std;
+
+// We need to minimize this baby!
+int gAns;
+int N;
+int dp[13][13][1<<13];
+int powers[13];
+int numbers[13];
+const int MAXN = (1<<30);
+
+int countSetBits(int n)
+{
+	int cnt = 0;
+	if (n == 0) return cnt;
+	do 
+	{
+		++cnt; 
+		n &= (n-1);
+	}while(n);
+	return cnt;
+}
+
+int generate_permutations(int ind1, int ind2, int mask)
+{
+	int setBits = countSetBits(mask);
+	if (setBits == N) 
+		return 0;
+	if (dp[ind1][ind2][mask] != MAXN)
+	{
+		return dp[ind1][ind2][mask];
+	}
+	int state_min = MAXN;
+	for (int i = 0; i < N; ++i)
+	{
+		if (mask & (1<<i)) continue;
+		int local_sum = 0;
+		if (setBits > 1)
+			local_sum = (numbers[ind1]^numbers[ind2]^numbers[i])*powers[setBits];
+		state_min = min(state_min, local_sum + generate_permutations(ind2, i, mask|(1<<i)));
+	}
+	return dp[ind1][ind2][mask] = state_min;
+}
+
+void solve()
+{
+	gAns = generate_permutations(0, 0, 0);
+}
+
+int main()
+{
+	int t, num, power, n; 
+	cin >> t; 
+	while (t--)
+	{
+		for (int i = 0; i < 13; ++i)
+		for (int j = 0; j < 13; ++j)
+		for (int k = 0; k < 1<<13; ++k)
+		dp[i][j][k] = MAXN;
+		cin >> n;
+		N = n;
+		for (int i = 0; i < N; ++i)
+			cin >> numbers[i];
+		for (int i = 0; i < N; ++i)
+			cin >> powers[i];
+		solve();
+		printf("%d\n", gAns);
+		
+	}
+    return 0;
+}

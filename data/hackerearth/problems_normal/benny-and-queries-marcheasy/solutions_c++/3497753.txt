@@ -1,0 +1,85 @@
+#include<iostream>
+#include<algorithm>
+#include<set>
+#include<string>
+#include<vector>
+
+using namespace std;
+
+int const N = 5e5 + 41;
+
+int n, q, a[N];
+vector<int> T[N * 4];
+
+void build(int v, int tl, int tr){
+	if(tl == tr){
+		T[v].push_back(a[tl]);
+	}else{
+		int tm = (tl+tr)/2;
+		build(v*2, tl, tm);
+		build(v*2+1,tm+1,tr);
+		merge(T[v*2].begin(), T[v*2].end(),T[v*2+1].begin(),T[v*2+1].end(),back_inserter(T[v]));
+	}
+}
+
+int getMaximalValue(int id, int x){
+	int ret = 0;
+	int curL = -1, curR = T[id].size();
+	for(int i=19;i>=0;--i){
+		int l = curL, r = curR;
+		if( ((1<<i) & T[id][l+1]) == ((1<<i) & T[id][r-1]) ){
+			int v1 = ((1<<i) & T[id][l+1]);
+			int v2 = ((1<<i) & x);
+			ret += (v1 ^ v2);
+			continue;
+		} 
+		while(r-l>1){
+			int m = (l+r)/2;
+			if(T[id][m] & (1 << i)){
+				r = m;
+			}else{
+				l = m;
+			}
+		}
+		if((1<<i)&x){
+			curR = r;
+		}else{
+			curL = l;
+		}
+		ret += (1 << i);
+	}
+	return ret;
+}
+
+int getMaxi(int v, int tl, int tr, int l, int r, int x){
+	if(l > r){
+		return 0;
+	}else{
+		if(tl == l && tr == r){
+			return getMaximalValue(v, x);
+		}else{
+			int tm = (tl+tr)/2;
+			return max(getMaxi(v*2, tl, tm, l, min(tm, r), x), getMaxi(v*2+1,tm+1,tr,max(tm+1,l),r, x));
+		}
+	}
+}
+
+int main(){
+#ifdef _DEBUG
+	freopen("input.txt","r",stdin);
+	freopen("output.txt","w",stdout);
+#endif
+
+	scanf("%d%d",&n,&q);
+	for(int i=0;i<n;++i){
+		scanf("%d",&a[i]);
+	}
+	build(1, 0, n-1);
+	for(int i=0;i<q;++i){
+		int l, r, x;
+		scanf("%d%d%d",&l,&r,&x);
+		printf("%d\n",getMaxi(1, 0, n-1, l-1, r-1, x));
+	}
+
+	return 0;
+}

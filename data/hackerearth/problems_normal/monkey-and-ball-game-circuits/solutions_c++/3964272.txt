@@ -1,0 +1,182 @@
+/*
+*/
+
+//#pragma comment(linker, "/STACK:16777216")
+#define _CRT_SECURE_NO_WARNINGS
+
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <complex>
+#include <math.h>
+#include <set>
+#include <vector>
+#include <map>
+#include <queue>
+#include <stdio.h>
+#include <stack>
+#include <algorithm>
+#include <list>
+#include <ctime>
+#include <memory.h>
+#include <assert.h>
+
+#define y0 sdkfaslhagaklsldk
+#define y1 aasdfasdfasdf
+#define yn askfhwqriuperikldjk
+#define j1 assdgsdgasghsf
+#define tm sdfjahlfasfh
+#define lr asgasgash
+#define norm asdfasdgasdgsd
+
+#define eps 1e-9
+#define M_PI 3.141592653589793
+#define bs 1000000007
+#define bsize 256
+
+using namespace std;
+
+const int INF = 1e9;
+const int N = 331;
+
+int n;
+int qv, qf;
+int ban[N][N][2];
+
+vector<int> g[N*N];
+
+int used[N*N];
+int ans;
+
+int eval(int a, int b)
+{
+	return a*(n + 1) + b;
+}
+
+set<vector<int> > done;
+
+void add_move(int a, int b, int c, int d)
+{
+	vector<int> v;
+	v.push_back(a);
+	v.push_back(b);
+	v.push_back(c);
+	v.push_back(d);
+	assert(done.find(v) == done.end());
+	done.insert(v);
+
+	//cout << a << " " << b << " " << c << " " << d << endl;
+	//cout << eval(a, b) << " " << eval(a + c, b + d) << endl;
+
+	assert(a + c <= n&&a + c >= 0 && b + d <= n&&b + d >= 0);
+
+	g[eval(a, b)].push_back(eval(a + c, b + d));
+
+	g[eval(a + c, b + d)].push_back(eval(a, b));
+}
+
+int timer, tin[N*N], fup[N*N];
+
+int eval(int v)
+{
+	int a = v / (n + 1);
+	int b = v % (n + 1);
+	return a*b;
+}
+
+void BRIDGE(int v1, int v2)
+{
+	int score1 = eval(v1);
+	int score2 = eval(v2);
+	ans = max(ans, score1 + score2);
+}
+
+void dfs(int v, int p = -1)
+{
+	used[v] = 1;
+	tin[v] = fup[v] = timer++;
+	for (int i = 0; i < g[v].size(); i++)
+	{
+		int to = g[v][i];
+		if (to == p)
+			continue;
+		if (used[to])
+			fup[v] = min(fup[v], tin[to]);
+		else
+		{
+			dfs(to, v);
+			fup[v] = min(fup[v], fup[to]);
+			if (fup[to] > tin[v])
+				BRIDGE(v, to);
+		}
+	}
+}
+
+int main(){
+	//freopen("fabro.in","r",stdin);
+	//freopen("fabro.out","w",stdout);
+	//freopen("F:/in.txt", "r", stdin);
+	//freopen("F:/output.txt", "w", stdout);
+	ios_base::sync_with_stdio(0);
+	//cin.tie(0);
+
+	cin >> n >> qv >> qf;
+
+	assert(n <= 300);
+	assert(qv >= 0 && qv <= 100);
+	assert(qf >= 0 && qf <= 100);
+
+	for (int i = 0; i < qv; i++)
+	{
+		int b, w, adb, adw;
+		cin >> b >> w >> adb >> adw;
+		assert(abs(adb)>0 && abs(adw) > 0 && abs(adb) < n && abs(adw) < n);
+		add_move(b, w, adb, adw);
+	}
+
+	for (int i = 0; i < qf; i++)
+	{
+		int a, b;
+		string temp;
+		cin >> a >> b >> temp;
+		assert(temp == "BLACK" || temp == "WHITE");
+
+		assert(a < n&&b < n&&a >= 0 && b >= 0);
+
+		if (temp == "BLACK")
+			ban[a][b][0] = 1;
+		else
+			ban[a][b][1] = 1;
+	}
+
+	for (int i = 0; i <= n; i++)
+	{
+		for (int j = 0; j <= n; j++)
+		{
+			if (ban[i][j][0] == 0 && i < n)
+				add_move(i, j, 1, 0);
+			if (ban[i][j][1] == 0 && j < n)
+				add_move(i, j, 0, 1);
+		}
+	}
+
+	add_move(0, 0, n, n);
+
+	ans = -1;
+
+	int comps = 0;
+
+	for (int i = 0; i < (n + 1)*(n + 1); i++)
+	{
+		if (used[i])
+			continue;
+		dfs(i);
+		++comps;
+	}
+
+	assert(comps == 1);//connected
+	cout << ans << endl;
+
+	cin.get(); cin.get();
+	return 0;
+}

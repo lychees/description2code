@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+#include <sys/resource.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int tt, n, m;
+string s[1111111];
+char buf[1111111];
+vector<int> c[1111111];
+vector<int> g[1111111];
+bool used[1111111];
+vector<bool> vis[1111111];
+int cur;
+
+int tin[1111111], fup[1111111], timer;
+
+bool ok;
+void dfs3(int v, int p) {
+    tin[v] = fup[v] = timer++;
+    int ch = 0;
+    for (int to : g[v]) if (to != p) {
+        if (tin[to] == -1) {
+            ++ch;
+            dfs3(to, v);
+            if (fup[to] >= tin[v] && p != -1) {
+                ok = false;
+            }
+            fup[v] = min(fup[v], fup[to]);
+        } else {
+            fup[v] = min(fup[v], tin[to]);
+        }
+    }
+    if (p == -1 && ch > 1) ok = false;
+}
+
+queue<PII> q;
+
+int main() {
+	const rlim_t kStackSize = 96L * 1024L * 1024L;
+	struct rlimit rl;
+	int result;
+	
+	result = getrlimit(RLIMIT_STACK, &rl);
+	if (result == 0)
+	{
+	    if (rl.rlim_cur < kStackSize)
+	    {
+	        rl.rlim_cur = kStackSize;
+	        result = setrlimit(RLIMIT_STACK, &rl);
+	        if (result != 0)
+	        {
+	            fprintf(stderr, "setrlimit returned result = %d\n", result);
+	        }
+	    }
+	}
+    //freopen("input.txt", "r", stdin);
+    scanf("%d", &tt);
+    REP(test, tt) {
+        scanf("%d%d", &n, &m);
+        s[0].assign(m + 2, '~');
+        s[n + 1].assign(m + 2, '~');
+        REP(i, n) {
+            scanf("%s", buf);
+            s[i + 1] = "~" + string(buf) + "~";
+        }
+        n += 2, m += 2;
+        REP(i, n) c[i].assign(m, -1);
+        cur = 0;
+        REP(i, n) REP(j, m) if (c[i][j] == -1) {
+            q.push(mp(i, j));
+            c[i][j] = cur;
+            while (!q.empty()) {
+                int x = q.front().first;
+                int y = q.front().second;
+                q.pop();
+                for (int di = -1; di <= 1; ++di) for (int dj = -1; dj <= 1; ++dj) if (di != 0 || dj != 0) {
+                    int ii = x + di;
+                    int jj = y + dj;
+                    if (ii < 0 || jj < 0 || ii >= n || jj >= m) continue;
+                    if (s[ii][jj] == s[x][y] && c[ii][jj] == -1) {
+                        c[ii][jj] = cur;
+                        q.push(mp(ii, jj));
+                    }
+                }
+            }
+            ++cur;
+        }
+        REP(i, cur) used[i] = false;
+        REP(i, cur) g[i].clear();
+        REP(i, n) vis[i].assign(m, false);
+        REP(i, n) REP(j, m) if (!used[c[i][j]]) {
+            used[c[i][j]] = true;
+            vis[i][j] = true;
+            q.push(mp(i, j));
+            while (!q.empty()) {
+                int x = q.front().first;
+                int y = q.front().second;
+                q.pop();
+                for (int di = -1; di <= 1; ++di) for (int dj = -1; dj <= 1; ++dj) if (di != 0 || dj != 0) {
+                    int ii = x + di;
+                    int jj = y + dj;
+                    if (ii < 0 || jj < 0 || ii >= n || jj >= m) continue;
+                    if (c[ii][jj] == c[x][y] && !vis[ii][jj]) {
+                        vis[ii][jj] = true;
+                        q.push(mp(ii, jj));
+                    } else if (c[ii][jj] != c[x][y]) {
+                        g[c[x][y]].pb(c[ii][jj]);
+                    }
+                }
+            }
+
+            vector<int> &v = g[c[i][j]];
+            sort(v.begin(), v.end());
+            v.erase(unique(v.begin(), v.end()), v.end());
+        }
+        //REP(i, cur) for (int to : g[i]) if (to > i) printf("%d %d\n", i, to);
+        ok = true;
+        REP(i, cur) tin[i] = -1;
+        REP(i, cur) if (tin[i] == -1 && ok) {
+            dfs3(i, -1);
+        }
+        if (ok) printf("YES\n");
+        else printf("NO\n");
+    }
+    return 0;
+}
+

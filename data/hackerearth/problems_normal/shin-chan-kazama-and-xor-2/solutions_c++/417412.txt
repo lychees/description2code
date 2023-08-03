@@ -1,0 +1,190 @@
+#include<cstdio>
+#include<cstdlib>
+#include<cmath>
+#include<cstring>
+using namespace std;
+
+#define Get getchar()
+int getInt() { int a=0,s=1; char c=0; while(c<33) c=Get; if(c=='-') {s=-1; c=Get;} while(c>33) {a=(a<<3)+(a<<1)+c-'0'; c=Get;} return a*s; }
+
+struct node
+{
+	int l,r;
+	struct node *left,*right;
+	int *a,*f;
+	int size,space;
+};
+
+typedef struct node Node;
+
+Node* getNode()
+{
+	Node *z = (Node*) malloc(sizeof(Node));
+	z->left = z->right = NULL;
+	z->size=0; z->space=1;
+	z->a = (int*) malloc(sizeof(int));
+	z->f = (int*) malloc(sizeof(int));
+	return z;
+}
+
+/*
+void PrintNode(Node *n)
+{
+	printf("L: %d  R: %d\n",n->l,n->r);
+	printf("size: %d  space: %d\n",n->size,n->space);
+	int i; for(i=0; i< n->size; i++)
+	printf("[%d %d] ",n->a[i],n->f[i]);
+	printf("\n");
+}
+*/
+
+void BinarySearch(Node *n,int bit,int pos,int b,int e,int *ret_b,int *ret_e)
+{
+	int save_b=b, save_e=e, bit_first = (n->a[b] & (1<<pos))?1:0, bit_last = (n->a[e] & (1<<pos))?1:0;
+	if(bit_first == bit_last) {
+		if(bit_first==bit) {
+			*ret_b = b; *ret_e = e;
+		}
+		else {
+			*ret_b = -1; *ret_e = -1;
+		}
+		return;
+	}
+	int res=-1;
+	while(b<=e)
+	{
+		if(b==e) {
+			int c_bit = (n->a[b] & (1<<pos))?1:0;
+			res = (c_bit==0)?b:b-1;
+			break;
+		}
+		if(b==e-1) {
+			int bit1 = (n->a[b] & (1<<pos))?1:0, bit2 = (n->a[e] & (1<<pos))?1:0;
+			res = (bit2==0)?e:(bit1==0?b:b-1);
+			break;
+		}
+		int m=(b+e)>>1;
+		int c_bit = (n->a[m] & (1<<pos))?1:0;
+		if(c_bit==0) b=m;
+		else e=m;
+	}
+	if(bit==0) {
+		*ret_b = save_b; *ret_e = res;
+	}
+	else {
+		*ret_b = res+1; *ret_e = save_e;
+	}
+}
+
+void Match(Node *n,int val,int *num,int *freq)
+{
+	int i,b=0,e=(n->size)-1;
+	for(i=30;i>=0;i--)
+	{
+		int bit=(val & (1<<i))?1:0, desiredbit=bit, next_b, next_e;
+		BinarySearch(n,desiredbit,i,b,e,&next_b,&next_e);
+		if(next_b!=-1) {
+			b=next_b; e=next_e;
+		}
+		if(b==e) break;
+	}
+	*num = n->a[b]; *freq = n->f[b];
+}
+
+class SegmentTree
+{
+	private:
+		Node *root;
+	public:
+		void init(int *Array,int N)
+		{
+			if(N<=0) return;
+			root=buildNode(1,N,Array);
+		}
+		Node* buildNode(int L,int R,int *Array)
+		{
+			Node *n=getNode();
+			n->l=L; n->r=R;
+			if(L==R)		// Leaf node
+			{
+				n->size = 1;
+				n->a[0] = Array[L-1];
+				n->f[0] = 1;
+				return n;
+			}
+			Node *nl = n->left = buildNode(L,(L+R)>>1,Array);
+			Node *nr = n->right = buildNode(((L+R)>>1)+1,R,Array);
+			while(n->space < (nl->size + nr->size)) n->space<<=1;
+			n->a = (int*) realloc(n->a,n->space*sizeof(int));
+			n->f = (int*) realloc(n->f,n->space*sizeof(int));
+			int i=0,j=0,k=0;
+			while( i< nl->size && j< nr->size )
+			{
+				if(nl->a[i] < nr->a[j])
+				{
+					n->a[k]=nl->a[i]; n->f[k]=nl->f[i];
+					k++; i++;
+				}
+				else if(nl->a[i] > nr->a[j])
+				{
+					n->a[k]=nr->a[j]; n->f[k]=nr->f[j];
+					k++; j++;
+				}
+				else
+				{
+					n->a[k]=nl->a[i]; n->f[k] = nl->f[i] + nr->f[j];
+					k++; i++; j++;
+				}
+			}
+			while(i<nl->size)
+			{
+				n->a[k]=nl->a[i]; n->f[k]=nl->f[i];
+				k++; i++;
+			}
+			while(j<nr->size)
+			{
+				n->a[k]=nr->a[j]; n->f[k]=nr->f[j];
+				k++; j++;
+			}
+			n->size=k;
+			//PrintNode(n);
+			return n;
+		}
+		void query(int X,int L,int R,int *num,int *freq) {
+			Query(root,X,L,R,num,freq);
+		}
+		void Query(Node *n,int val,int X,int Y,int *num,int *freq)
+		{
+			if(n->l==X && n->r==Y)
+			{
+				Match(n,val,num,freq);
+				return;
+			}
+			int mid=(n->l + n->r)>>1;
+			if(Y<=mid) { Query(n->left,val,X,Y,num,freq); return; }
+			if(X>=mid+1) { Query(n->right,val,X,Y,num,freq); return; }
+			int num1,freq1,num2,freq2;
+			Query(n->left,val,X,mid,&num1,&freq1);
+			Query(n->right,val,mid+1,Y,&num2,&freq2);
+			if(num1==num2) { *num=num1; *freq=freq1+freq2; if(*num==-1) *freq=-1; }
+			else if( (val^num1) < (val^num2) ) { *num=num1; *freq=freq1; }
+			else { *num=num2; *freq=freq2; }
+		}
+};
+
+int A[1000006],N;
+
+int main()
+{
+	N=getInt();
+	int i; for(i=0;i<N;i++) A[i]=getInt();
+	SegmentTree s; s.init(A,N);
+	int x,l,r,num,freq,Q; Q=getInt();
+	while(Q--)
+	{
+		l=getInt(); r=getInt(); x=getInt();
+		s.query(x,l,r,&num,&freq);
+		printf("%d %d\n",num,freq);
+	}
+	return 0;
+}

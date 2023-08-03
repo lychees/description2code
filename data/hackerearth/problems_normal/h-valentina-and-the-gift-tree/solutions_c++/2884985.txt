@@ -1,0 +1,114 @@
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+#include <ctime>
+using namespace std;
+
+const int N = 100007;
+int n, q;
+vector <int> G[N];
+int g[N];
+int par[N][19];
+int pre[N];
+int post[N];
+int prenr = 0;
+int postnr = 0;
+
+struct info {
+	long long s, w, l, r;
+};
+
+info tab[N][19];
+
+inline info merge(info A, info B) {
+	info res;
+	res.l = max(A.l, A.s + B.l);
+	res.r = max(B.r, B.s + A.r);
+	res.s = A.s + B.s;
+	res.w = max(A.w, B.w);
+	res.w = max(res.w, A.r + B.l);
+	return res;
+}
+
+void DFS(int v, int p = 0) {
+	pre[v] = prenr++;
+	par[v][0] = p;
+	tab[v][0].w = tab[v][0].l = tab[v][0].r = tab[v][0].s = g[v];
+	for(int i = 0; i < G[v].size(); ++i) {
+		if(G[v][i] != p) DFS(G[v][i], v);
+	}
+	post[v] = postnr++;
+}
+
+inline bool vojcemu(int v, int u) {
+	return (pre[v] <= pre[u] && post[v] >= post[u]);
+}
+
+inline int lca(int a, int b) {
+	if(vojcemu(a, b)) return a;
+	if(vojcemu(b, a)) return b;
+	int h = 18;
+	while(h >= 0) {
+		if(vojcemu(par[a][h], b)) h--;
+		else a = par[a][h];
+	}
+	return par[a][0];
+}
+
+inline info licz(int a, int c) {
+	info wyn;
+	wyn.l = wyn.r = wyn.w = -1e18;
+	wyn.s = 0;
+	int h = 18;
+	while(h >= 0) {
+		if(vojcemu(par[a][h], c)) h--;
+		else {
+			wyn = merge(wyn, tab[a][h]);
+			a = par[a][h];
+		}
+	}
+
+	wyn = merge(wyn, tab[a][0]);
+	return wyn;
+}
+
+int main() {
+	scanf("%d", &n);
+	pre[0] = -1;
+	post[0] = 1e9;
+	for(int i = 1; i < n; ++i) {
+		int a, b;
+		scanf("%d %d", &a, &b);
+		G[a].push_back(b);
+		G[b].push_back(a);
+	}
+	for(int i = 1; i <= n; ++i) scanf("%d", &g[i]);
+
+	DFS(1);
+
+	for(int i = 1; i < 19; ++i) {
+		for(int j = 1; j <= n; ++j) {
+			par[j][i] = par[par[j][i - 1]][i - 1];
+			tab[j][i] = merge(tab[j][i - 1], tab[par[j][i - 1]][i - 1]);
+		}
+	}
+
+	scanf("%d", &q);
+	while(q--) {
+		int a, b;
+		scanf("%d %d", &a, &b);
+		if(a == b) printf("%d\n", g[a]);
+		else {
+			int c = lca(a, b);
+			info wyna = licz(a, c);
+			info wynb = licz(b, c);
+			if(c != a && c != b) wyna = merge(wyna, tab[c][0]);
+			swap(wynb.l, wynb.r);
+			wyna = merge(wyna, wynb);
+			printf("%lld\n", wyna.w);
+		}
+	}
+
+	return 0;
+}

@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct st
+{
+    long long int v,fv,lv,f,l,fs,ls;
+    st()
+    {
+        v=fv=lv=f=l=0;
+        fs=ls=0;
+    }
+
+} tr[400040];
+int ar[100010];
+st check(st a,st b)
+{
+    st tt;
+    tt.v=max(a.v,b.v);
+    if(a.lv<b.fv) tt.v=max(tt.v,a.l+b.f);
+    tt.fv=a.fv;
+    tt.lv=b.lv;
+    tt.f=a.f;
+    tt.l=b.l;
+    tt.fs=a.fs;
+    tt.ls=b.ls;
+    if(a.f==(a.ls-a.fs+1) && a.lv<b.fv) tt.f+=b.f;
+    if(b.l==(b.ls-b.fs+1) && a.lv<b.fv) tt.l+=a.l;
+    return tt;
+}
+void build(int p,int s,int t)
+{
+    if(s==t)
+    {
+        tr[p].v=1;
+        tr[p].f=1;
+        tr[p].l=1;
+        tr[p].lv=tr[p].fv=ar[s];
+        tr[p].fs=tr[p].ls=s;
+        return ;
+    }
+    int md=(s+t)/2;
+    build(p*2,s,md);
+    build(p*2+1,md+1,t);
+    tr[p]=check(tr[p*2],tr[p*2+1]);
+}
+void update(int p,int s,int t,int x,int y)
+{
+    if(s==t)
+    {
+        tr[p].lv+=y;
+        tr[p].fv+=y;
+        return ;
+    }
+    int md=(s+t)/2;
+    if(x<=md) update(p*2,s,md,x,y);
+    else update(p*2+1,md+1,t,x,y);
+    tr[p]=check(tr[p*2],tr[p*2+1]);
+}
+st query(int p,int s,int t,int x,int y)
+{
+    if(x<=s && t<=y)
+    {
+        return tr[p];
+    }
+    int md=(s+t)/2;
+    if(y<=md) return query(p*2,s,md,x,y);
+    else if(x>md) return query(p*2+1,md+1,t,x,y);
+    st tt=query(p*2,s,md,x,y);
+    return check(tt,query(p*2+1,md+1,t,x,y));
+}
+int main()
+{
+	ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int ts,n,q,x,y,t;
+    cin>>ts;
+    while(ts--)
+    {
+        cin>>n>>q;
+        for(int i=1; i<=n; i++) cin>>ar[i];
+        build(1,1,n);
+        while(q--)
+        {
+            cin>>t>>x>>y;
+            if(t==0)
+            {
+                st tt=query(1,1,n,x,y);
+                cout<<tt.v<<endl;
+            }
+            else
+            {
+                update(1,1,n,x,y);
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,147 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define sd(x) scanf ("%d",&x)
+#define pd(x) printf("%d\n",x)
+#define ll long long
+#define sl(x) scanf ("%lld",&x)
+#define pl(x) printf("%lld\n",x);
+#define fr(i,n) for(i=0;i<n;i++)
+#define fro(i,n) for(i=1;i<=n;i++)
+#define vi vector<int>
+#define vl vector<long long >
+#define vii vector<pair<int,int> >
+#define vll vector<pair<long long,long long > >
+#define mp make_pair
+#define pb push_back
+#define mod 1000000007
+long long int pow1(long long int a,long long int b)
+{
+    if(b==0)
+        return 1;
+    
+    if (b==1)
+        return a;
+        long long temp;
+    if (b%2==0)
+    {
+        temp=pow1(a,b/2);
+        temp=temp%mod;
+        temp=temp*temp;
+        temp=temp%mod;
+        return temp;
+    }
+    else
+    {
+        temp=pow1(a,b/2);
+        temp=temp%mod;
+        temp=temp*temp;
+        temp=temp%mod;
+        temp=temp*a;
+        temp=temp%mod;
+        return temp;
+    }
+}
+ll source,sink;
+ll ans = 0;
+ll flow[5050][5050],n,m;
+ll INF = 100000000000000000;
+bool visited[5050];
+ll father[5050];
+void in() {
+	ll i,j;
+	fr(i,5002) {
+		fr(j,5002) {
+			flow[i][j] = 0;
+		}
+	}
+	//sl(n); 
+	n = 20;
+	sl(m);
+	fr(i,m) {
+		ll a,b,c;
+		string a1,b1;
+
+	//	sl(a);sl(b);
+		cin>>a1;cin>>b1;
+		sl(c);
+		a--;b--;
+		flow[a1[0]-65][b1[0]-65] += c;
+	}
+}
+void pre() {
+	ll i;
+	fr(i,5001) {
+		visited[i] = false;
+		father[i] = -1;
+	}
+}
+ll min1(ll a,ll b){
+	if(a<b)
+		return a;
+	return b;
+}
+ll possibleFlow(ll source) {
+	pre();
+	queue<int> q;
+	q.push(source);
+	visited[source] = true;
+	while(!q.empty()) {
+		ll cur = q.front();
+		if(cur==sink) {
+			break;
+		}
+		q.pop();
+		ll i;
+		fr(i,n) {
+			if(i!=cur) {
+				if(flow[cur][i]>0 && !visited[i]) {
+					father[i] = cur;
+					visited[i] = true;
+					q.push(i);
+				}
+			}
+		}
+	}
+	if(father[sink]==-1)
+		return INF;
+	ll cur = sink;
+	ll ret = INF;
+	while(father[cur]!=-1) {
+		ret = min1(ret,flow[father[cur]][cur]);
+		cur = father[cur];
+	}
+	cur = sink;
+	while(father[cur]!=-1) {
+		flow[father[cur]][cur]-=ret;
+		flow[cur][father[cur]]+=ret;
+		cur = father[cur];
+	}
+	return ret;
+}
+void printFlows() {
+	ll i,j;	
+	fr(i,n) {
+		printf("\n");
+		fr(j,n) {
+			printf("%lld ",flow[i][j] );
+		}
+	}
+}
+void findFlow() {
+	ll currentFlow = possibleFlow(source);
+	while(currentFlow!=INF) {
+//		printf("here for flow = %lld\n",currentFlow);
+//		printFlows();
+		ans = ans + currentFlow;
+		currentFlow = possibleFlow(source);
+	}
+}
+int main()
+{
+	source = 18;
+	sink = 19;
+	in();
+	findFlow();
+	pl(ans);
+	return 0;
+}

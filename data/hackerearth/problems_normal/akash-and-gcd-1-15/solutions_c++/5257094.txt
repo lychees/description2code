@@ -1,0 +1,183 @@
+#include<bits/stdc++.h>
+#define fast ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+#define FOR(i,a,b) for(i=a;i<b;++i)
+#define FORD(i,a,b) for(i=a;i>=b;--i)
+#define FORIT(it,a,b) for(it=a;it!=b;it++)
+#define tpI(i,a,b,v) for(i=a;i<b;i++) { p(v[i]);} pn();
+#define tpL(i,a,b,v) for(i=a;i<b;i++) { pl(v[i]);} pn();
+#define ll long long
+#define mp make_pair
+#define pb push_back
+#define MOD 1000000007
+#define infi 1000000007
+#define ss(x) scanf("%s",x)
+#define s(x) scanf("%d", &x)
+#define sl(x) scanf("%lld", &x)
+#define sd(x) scanf("%lf", &x)
+#define fi first
+#define se second
+#define p(x) printf("%d ",x)
+#define pl(x) printf("%lld ", x)
+#define pd(x) printf("%lf ", x)
+#define pn() printf("\n")
+#define pc() printf("test \n")
+#define pm(m) printf("%s\n",m)
+#define pmv(m,x) printf("%s  -->  %d\n",m,x)
+using namespace std;
+
+ll int phi[1000001]={0};
+ll int result[1000001]={0};
+ll int data[1000005]={0};
+
+ll int segTree[4000005]={0};
+
+void seive()
+{
+   ll int p,i,j,n=1000000;
+    phi[1]=1;
+    for (p=2; p<=n; p++)
+    {
+        // If phi[p] is not computed already,
+        // then number p is prime
+        if (phi[p] == p)
+        {
+            // Phi of a prime number p is
+            // always equal to p-1.
+            phi[p] = p-1;
+
+            // Update phi values of all
+            // multiples of p
+            for (i = 2*p; i<=n; i += p)
+            {
+               // Add contribution of p to its
+               // multiple i by multiplying with
+               // (1 - 1/p)
+               phi[i] = (phi[i]/p) * (p-1);
+            }
+        }
+    }
+
+//    for(i=1;i<=20;i++)
+//        p(phi[i]);
+}
+
+void seive1()
+{
+    ll int i,j,n=1000000;
+    result[1]=1;
+    for(i=2;i<=n;i++)
+    {
+        for(j=i;j<=n;j+=i)
+        {
+            result[j]=(result[j]+(phi[i]*(j/i)));
+        }
+    }
+
+    /*for(i=2;i<n;i++)
+    {
+        result[i]=((result[i]/2)+1)%MOD;
+    }*/
+//   for(i=1;i<=20;i++)
+//        p(result[i]);
+//    pn();
+}
+
+void constructTree(ll int low,ll int high,ll int pos)
+{
+    if(low>high)
+        return;
+    if(low==high)
+    {
+        segTree[pos]=result[data[low]];
+        return;
+    }
+
+    ll int mid=(low+high)/2;
+    constructTree(low,mid,2*pos+1);
+    constructTree(mid+1,high,2*pos+2);
+    segTree[pos]=(segTree[2*pos+1]+segTree[2*pos+2])%MOD;
+}
+
+ll int query(ll qlow,ll qhigh,ll low, ll high, ll pos)
+{
+    //no interval
+    if(qlow>high || qhigh<low)
+        return 0;
+
+    //total overlap
+    if(low>=qlow && high<=qhigh)
+        return segTree[pos];
+
+    //partia overlap
+    int mid=(low+high)/2;
+    return (query(qlow,qhigh,low,mid,2*pos+1)+query(qlow,qhigh,mid+1,high,2*pos+2))%MOD;
+}
+
+void update(ll qlow,ll qhigh,ll low, ll high,ll pos)
+{
+    //no overlap
+    if(qlow>high || qhigh<low)
+        return;
+
+    //total overlap
+    if(low==high)
+    {
+        segTree[pos]=(result[data[qlow]])%MOD;
+        return;
+    }
+
+    //partial overlap
+    int mid=(low+high)/2;
+    update(qlow,qhigh,low,mid,2*pos+1);
+    update(qlow,qhigh,mid+1,high,2*pos+2);
+    segTree[pos]=(segTree[2*pos+1]+segTree[2*pos+2])%MOD;
+    return;
+}
+
+int main()
+{
+    for(int i=1;i<=1000000;i++)
+    {
+        phi[i]=i;
+        result[i]=i;
+    }
+    seive();
+    seive1();
+
+    ll int n,i,q;
+    sl(n);
+
+    FOR(i,0,n)
+    {
+        sl(data[i]);
+//        pl(result[data[i]]);
+    }
+
+    constructTree(0,n-1,0);
+
+    sl(q);
+    while(q--)
+    {
+        char c;
+        ll int x,y;
+        scanf(" %c%lld%lld",&c,&x,&y);
+
+        if(c=='C')
+        {
+            pl(query(x-1,y-1,0,n-1,0));
+            pn();
+        }
+        else
+        {
+            data[x-1]=y;
+            update(x-1,x-1,0,n-1,0);
+        }
+    }
+
+    return 0;
+}
+
+
+
+
+

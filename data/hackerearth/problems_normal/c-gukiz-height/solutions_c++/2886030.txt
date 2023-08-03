@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+#define REP(i, a, b) for(int i = a; i < b; i++)
+#define FOR(i, a, b) for(int i = a; i <= b; i++)
+#define FORD(i, a, b) for(int i = a; i >= b; i--)
+
+using namespace std;
+
+typedef __int128_t ll;
+const int maxn = 123456;
+
+ll n, h, a[maxn];
+ll sumpref[maxn], maxpref, maxid;
+
+bool ok(ll day) {
+    ll d = day/n;
+    ll ch = sumpref[n] * d + sumpref[day%n];
+    ll hl = h - day*(day+1)/2 ;
+    //cerr << day << " " << d << " " << ch << " " << hl << endl;
+    return ch >= hl;
+}
+
+int main() {
+    ios_base::sync_with_stdio(0);
+
+    long long a1, b1;
+    cin >> a1 >> b1;
+    n = a1; h = b1;
+
+    FOR(i, 1, n) {
+        cin >> a1;
+        a[i] = a1;
+    }
+    FOR(i, 1, n) {
+        sumpref[i] = sumpref[i-1] + a[i];
+        if(sumpref[i] > maxpref) {
+            maxpref = sumpref[i];
+            maxid = i;
+        }
+    }
+
+    ll le = 0, ri = 3000000000;
+    while(le < ri) {
+        ll mi = (le+ri)/2;
+        ll c = sumpref[n]*mi + maxpref;
+        //cerr << (long long)mi << " " << (long long)c << endl;
+        ll cday = mi*n + maxid;
+        if((cday > (1LL<<62)) || c >= h - cday*(cday+1)/2) ri = mi;
+        else le = mi+1;
+    }
+
+    ll cday = le*n + maxid;
+    ll sday = le*n + maxid;
+       // cerr << cday << endl;
+    ll zero = 1;
+
+    for(ll i = cday+2*n; i >= max(zero, sday-5*n); i--) {
+        if(ok(i)) cday =i;
+    }
+    for(ll i = 1 ; i<=2*n;i++) if(ok(i)) {cday =i;break;}
+    cout << (long long)cday << endl;
+}

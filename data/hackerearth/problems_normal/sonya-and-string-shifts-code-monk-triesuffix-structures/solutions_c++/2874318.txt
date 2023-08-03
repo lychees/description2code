@@ -1,0 +1,146 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int maxn = 2e6;
+
+int len[maxn], link[maxn], cnt[maxn];
+map<char, int> to[maxn];
+int sz = 1, last;
+
+void add_letter(char c, int cst)
+{
+	int p = last;
+	last = sz++;
+	len[last] = len[p] + 1;
+	cnt[last] = cst;
+	for(; to[p][c] == 0; p = link[p])
+		to[p][c] = last;
+	if(to[p][c] == last)
+		return;
+	int q = to[p][c];
+	if(len[q] == len[p] + 1)
+	{
+		link[last] = q;
+		return;
+	}
+	int cl = sz++;
+	to[cl] = to[q];
+	link[cl] = link[q];
+	len[cl] = len[p] + 1;
+	link[last] = link[q] = cl;
+	for(; to[p][c] == q; p = link[p])
+		to[p][c] = cl;
+}
+vector<int> g[maxn];
+
+int cnT[maxn];
+
+void add_str(string s)
+{
+	int v = 0;
+	cnt[v]++;
+	for(auto c: s)
+	{
+		if(!to[v][c])
+			to[v][c] = sz++;
+		len[to[v][c]] = len[v] + 1;
+		v = to[v][c];
+		cnt[v]++;
+	}
+	cnT[v]++;
+}
+
+int64_t ans[maxn];
+
+void dfs(int v = 0)
+{
+	int sm = cnT[v];
+	ans[len[v]] += 1LL * cnT[v] * (cnT[v] - 1) / 2;
+	for(auto it: to[v])
+	{
+		int u = it.second;
+		dfs(u);
+		ans[len[v]] += 1LL * cnt[u] * sm;
+		sm += cnt[u];
+	}
+}
+
+vector<int> suffix_array(string s)
+{
+    int n = s.size(), N = n + 256;
+    vector<int> sa(n), ra(n);
+    for(int i = 0; i < n; i++) sa[i] = i, ra[i] = s[i];
+    for(int k = 0; k < n; k ? k *= 2 : k++)
+    {
+        vector<int> nsa(sa), nra(n), cnt(N);
+        for(int i = 0; i < n; i++) nsa[i] = (nsa[i] - k + n) % n;
+        for(int i = 0; i < n; i++) cnt[ra[i]]++;
+        for(int i = 1; i < N; i++) cnt[i] += cnt[i - 1];
+        for(int i = n - 1; i >= 0; i--) sa[--cnt[ra[nsa[i]]]] = nsa[i];
+ 
+        int r = 0;
+        for(int i = 1; i < n; i++)
+        {
+            if(ra[sa[i]] != ra[sa[i - 1]]) r++;
+            else if(ra[(sa[i] + k) % n] != ra[(sa[i - 1] + k) % n]) r++;
+            nra[sa[i]] = r;
+        }
+        ra = nra;
+    }
+    return sa;
+}
+ 
+vector<int> kasai(string s, vector<int> sa)
+{
+    int n = s.size(), k = 0;
+    vector<int> ra(n), lcp(n);
+    for(int i = 0; i < n; i++) ra[sa[i]] = i;
+    for(int i = 0; i < n; i++)
+    {
+        if(k) k--;
+        if(ra[i] == n - 1) {k = 0; continue;}
+        int j = sa[ra[i] + 1];
+        while(k < n && s[(i + k) % n] == s[(j + k) % n]) k++;
+        lcp[ra[i]] = k;
+        if(ra[(sa[ra[i]] + 1) % n] > ra[(sa[ra[j]] + 1) % n]) k = 0;
+    }
+    return lcp;
+}
+
+
+signed main()
+{
+	//freopen("input.txt", "r", stdin);
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    int n;
+    cin >> n;
+    string s;
+    cin >> s;
+    int q;
+    cin >> q;
+    vector<int> sa = suffix_array(s);
+    int rev[n];
+    for(int i = 0; i < n; i++)
+		rev[sa[i]] = i;
+	int mn = rev[0], cr = 0;
+	int ans[n];
+	ans[0] = 0;
+	for(int i = 1; i < n; i++)
+		if(rev[i] < mn)
+		{
+			mn = rev[i];
+			ans[i] = cr = i;
+		}
+		else
+			ans[i] = cr;
+	while(q--)
+	{
+		int k;
+		cin >> k;
+		cout << ans[k] << "\n";
+	}
+	
+    return 0;
+}

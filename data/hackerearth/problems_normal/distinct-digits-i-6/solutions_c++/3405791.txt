@@ -1,0 +1,128 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+long long arr [100000 + 10];
+long long tree [500000 + 10][10 + 1];  // size = N * 4 = 200000 * 4
+
+long long calculate(long long num){
+
+    bool vis[10];
+    for(int i = 0; i < 10; i++) vis[i] = false;
+
+    long long ans = 0;
+    long long digit;
+
+    while(num != 0){
+
+        digit = num % 10;
+
+        if(!vis[digit]){
+
+            ans++;
+            vis[digit] = true;
+        }
+
+        num /= 10;
+    }
+
+    return ans;
+}
+
+void initilize(long long num, long long index){
+
+    num = calculate(num);
+
+    for(int i = 1; i <= 10; i++){
+
+        if(i == num) tree[index][i] = 1;
+        else tree[index][i] = 0;
+    }
+}
+
+void sum(long long index){
+
+    for(int i = 1; i <= 10; i++){
+
+        tree[index][i] = tree[index * 2 + 1][i] + tree[index * 2 + 2][i];
+    }
+}
+
+void build (long long index , long long le , long long ri){
+
+    if(le == ri){
+
+        initilize(arr[le], index);
+        return;
+    }
+
+    build(index * 2 + 1 , le , (le + ri) / 2);
+    build(index * 2 + 2,  (le + ri) / 2 + 1, ri );
+    sum(index);
+
+    return;
+}
+
+void update (long long index , long long le , long long ri , long long target , long long value){
+
+    if(le == ri){
+
+        arr[le] = value;
+        initilize( arr[le], index ) ;
+        return ;
+    }
+
+    if(target <= (le + ri) / 2 ){
+        update(index * 2 + 1, le , (le + ri) / 2, target, value);
+    } else {
+        update(index * 2 + 2, (le + ri) / 2 + 1 , ri , target, value);
+    }
+      sum(index);
+      return;
+}
+
+ long long query (long long index , long long le , long long ri , long long a , long long b, long long c){
+
+    if(le >= a && ri <= b){
+        return tree[index][c];
+    }
+
+    if(le > b || ri < a) return 0;
+
+    return query(index * 2 + 1, le , (le + ri) / 2 , a  , b, c) + query(index * 2 + 2, (le + ri) / 2 + 1, ri , a  , b, c);
+
+    sum(index);
+}
+
+int main()
+{
+
+    //ios::sync_with_stdio(false);cin.tie(0);
+
+    long long n , q, tem1, tem2, tem3, tem4;
+
+    cin >> n;
+
+    for(int i = 0; i < n; i++) cin >> arr[i];
+
+    build(0 , 0 , n - 1);
+
+    cin >> q;
+
+    for(int i = 0; i < q; i++){
+
+        cin >> tem1 >> tem2 >> tem3;
+        tem2--;
+
+        if(tem1 == 0) update(0, 0 , n - 1, tem2, tem3 + arr[tem2]);
+        else if (tem1 == 1) update(0, 0 , n - 1, tem2, tem3);
+        else {
+
+            cin >> tem4;
+            tem3--;
+            cout << query(0, 0 , n - 1, tem2, tem3, tem4) << "\n";
+        }
+    }
+
+    return 0;
+}

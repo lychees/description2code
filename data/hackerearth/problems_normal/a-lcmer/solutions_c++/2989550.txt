@@ -1,0 +1,109 @@
+/*
+  Beautiful Codes are MUCH better than 'Shorter' ones !
+user  : triveni
+date  : 07/12/2015
+time  : 03:04:53
+*/
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define      pii               std::pair<int,int>
+#define      vi                std::vector<int>
+#define      mp(a,b)           make_pair(a,b)
+#define      pb(a)             push_back(a)
+#define      each(it,s)        for(auto it = s.begin(); it != s.end(); ++it)
+#define      rep(i, n)         for(int i = 0; i < (n); ++i)
+#define      fill(a)           memset(a, 0, sizeof (a))
+#define      sortA(v)          sort(v.begin(), v.end())
+#define      sortD(v)          sort(v.begin(), v.end(), greater<auto>())
+#define      X                 first
+#define      Y                 second
+
+typedef long long LL;
+LL MOD = 1000000007;
+int L, R, N, M;
+
+LL get(LL val){
+	return R / val - (L-1) / val;
+}
+
+void add(LL & a, LL b){
+	a += b;
+	if(a >= MOD) a -= MOD;
+	if(a < 0) a += MOD;
+}
+
+LL pow_(LL a, LL b){
+	LL ans = 1;
+	while(b > 0){
+		if(b & 1) ans = ans * a % MOD;
+		b >>= 1;
+		a = a * a % MOD;
+	}
+	return ans;
+}
+
+LL ncr(LL n, LL r){
+	if(r < 0 || r > n) return 0;
+	if(r > n-r) r = n - r;
+	LL num = 1, den = 1;
+	for(LL t = 0; t < r; ++t){
+		num = num * (n - t) % MOD;
+		den = den * (t + 1) % MOD;
+	}
+	den = pow_(den, MOD-2);
+	return num * den % MOD;
+}
+
+int main()
+{
+	int T;
+	cin >> T;
+	while(T--){
+		cin >> N >> L >> R >> M;
+		vector<LL> v;
+		for(LL f = 2; f * f <= M; ++f){
+			if(M % f == 0){
+				v.push_back(1);
+				while(M % f == 0){
+					M /= f;
+					v.back() *= f;
+				}
+			}
+		}
+		if(M > 1){
+			v.push_back(M);
+		}
+		int sz = v.size();
+		LL ans = ncr(get(1) + N - 1, N);
+		for(int mask = 1; mask < (1<<sz); ++mask){
+			int flag = 1;
+			vector<LL> vv;
+			LL pp = 1;
+			for(int i = 0; i < sz; ++i){
+				if(mask & (1<<i)){
+					flag *= -1;
+					pp *= v[i];
+					vv.push_back(v[i]);
+				}
+			}
+			int sz1 = vv.size();
+			LL val1 = get(1);
+			for(int msk = 1; msk < (1<<sz1); ++msk){
+				int f = 1; LL num = 1;
+				for(int i = 0; i < sz1; ++i){
+					if(msk & (1<<i)){
+						f *= -1;
+						num *= vv[i];
+					}
+				}
+				val1 += f * get(num);
+			}
+			// cerr << pp << " " << val1 << "\n";
+			add(ans, ncr(val1 + N - 1, N) * flag);
+		}
+		printf("%lld\n",ans);
+	}
+	return 0;
+}

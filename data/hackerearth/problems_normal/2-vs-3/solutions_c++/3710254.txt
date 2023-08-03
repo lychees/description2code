@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int P[1000000] = {0};
+class seTree {
+	public :
+	vector<int > tree;
+	int nodes;
+
+	seTree(int n) {
+	//	int x = (int)(ceil(log2(n))); 
+	//	nodes = n + 2*(int)pow(2, x) - 1;
+	//	tree.resize(nodes + 1, 0);
+	    tree.resize(1e6, 0);
+	}
+
+	void build(int node, int start, int end, vector<int > &a) {
+		if(start == end) {					//Leaf Node
+			tree[node] = a[start];
+			return;
+		}
+
+		int mid = start + (end - start) / 2;
+		build(2 * node, start, mid, a);				//left child
+		build(2 * node + 1, mid + 1, end, a);		//right child
+		
+		tree[node] = (((tree[2*node] * P[end - mid]) % 3) + tree[2*node + 1]) % 3; 	//sum of both childs
+	}
+
+	void update(int node, int start, int end, vector<int > &a, int value, int idx) {
+		if(start == end) {
+			tree[node] = value;			//Will be called only once
+			a[idx] = value;
+			return;
+		}
+		
+		int mid = start + (end - start) / 2;
+		if(start <= idx && idx <= mid) {
+			update(2 * node, start, mid, a, value, idx);
+		} else {
+			update(2 * node + 1, mid + 1, end, a, value, idx);
+		}
+
+		tree[node] = (((tree[2*node] * P[end - mid]) % 3) + tree[2*node + 1]) % 3; 	//sum of both childs
+	}
+
+	int query(int node, int start, int end, vector<int > &a, int l, int r) {
+		if(start == l && end == r) return tree[node];
+
+		int mid = start + (end - start) / 2;
+		
+		if(l > mid) return query(2 * node + 1, mid + 1, end, a, l, r);
+		if(r < mid + 1) return query(2 * node, start, mid, a, l, r);
+
+		int p1 = query(2 * node, start, mid, a, l, mid);				//left child
+		int p2 = query(2 * node + 1, mid+1, end, a, mid+1, r);		//right child
+		return (p1 * P[r - mid] + p2) % 3;
+	}
+
+	void print() {
+		for(int i = 0; i < nodes; ++i) cout << tree[i] << " "; cout << endl;
+	}
+
+	void build(vector<int > &a, int n) {
+		build(1, 0, n - 1, a);
+	}
+
+	void update(vector<int > &a, int n, int val, int idx) {
+		if(a[idx] != 0) return;
+
+		update(1, 0, n - 1, a, 1, idx);
+	}
+
+	int query(vector<int > &a, int n, int l, int r) {
+		return query(1, 0, n - 1, a, l, r);
+	}
+};
+
+void init() {
+	P[0] = 1;
+	P[1] = 2;
+
+	for(int i = 2; i < 1e6; ++i) 
+		P[i] = (P[i - 1] * 2) % 3;
+}
+
+int main() {
+	init();
+	int n;
+	cin >> n;
+
+	vector<int > a(n);
+	for(int i = 0; i < n; ++i) {
+		char c;
+		cin >> c;
+		a[i] = (c == '0') ? 0 : 1;
+	}
+
+	seTree segT(n);
+	segT.build(a, n);
+//	segT.print();
+
+	int Q;
+	cin >> Q;
+	while(Q--) {
+		int qtype; cin >> qtype;
+		if(qtype == 1) {
+			int idx;
+			cin >> idx;
+			segT.update(a, n, 1, idx);
+		} else {
+			int a1, b;
+			cin >> a1 >> b;
+			int temp = segT.query(a, n, a1, b);
+			cout << temp << endl;
+		}
+	}
+	return 0;
+}
+

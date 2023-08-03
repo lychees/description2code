@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+typedef vector < LL > VI;
+typedef pair < LL,LL > II;
+typedef vector < II > VII;
+#define MOD 1000000007
+#define EPS 1e-12
+#define N 100100
+#define LOGN 21
+#define PB push_back
+#define MP make_pair
+#define F first 
+#define S second
+#define ALL(v) v.begin(),v.end()
+#define SZ(a) (LL)a.size()
+#define FILL(a,b) memset(a,b,sizeof(a))
+#define SI(n) scanf("%d",&n)
+#define SLL(n) scanf("%lld",&n)
+#define PLLN(n) printf("%lld\n",n)
+#define PIN(n) printf("%d\n",n)
+#define REP(i,j,n) for(LL i=j;i<n;i++)
+#define TR1(x) cerr<<#x<<" : "<<x<<endl;
+#define TR2(x,y) cerr<<#x<<" : "<<x<<" | "<<#y<<" : "<<y<<endl;
+#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL)
+LL n , q , TIME , IN[5*N] , OUT[N*5] , level[N*5] , P[LOGN][N*5] , BIT[10*N];
+VI g[5*N];
+
+void update(LL x , LL val){
+	for(;x <= 2*n ; x += x&(-x))
+		BIT[x] += val;
+} 
+
+LL query(LL x){
+	LL ret = 0;
+	for(;x > 0; x -= x&(-x))
+		ret += BIT[x];
+	return ret;
+}
+
+LL query(LL l , LL r){
+	return query(r) - query(l-1);
+}
+
+void dfs(LL u , LL p){
+	IN[u] = TIME++; 
+	P[0][u] = p;
+	for(LL i = 0 ; i < g[u].size();i++)
+		if(g[u][i] != p){
+			level[g[u][i]] = level[u] + 1;
+			dfs(g[u][i],u);
+		}
+	OUT[u] = TIME++;
+}
+
+LL LCA(LL x , LL y){
+	if(level[x] < level[y])swap(x , y);
+	LL lg = 1; for(;(1<<lg) <= level[x] ; lg ++);lg--;
+	for(LL i = lg ; i >= 0 ; i--)
+		if(level[x] - (1<<i) >= level[y])
+			x = P[i][x];
+	if(x == y)return x;
+	for(int i = lg ; i >= 0 ; i--)
+		if(P[i][x] != -1 && P[i][x] != P[i][y]){
+			x = P[i][x];
+			y = P[i][y];
+		}
+	return P[0][x];
+}
+
+int main(){
+	TIME = 1;
+	SLL(n); SLL(q);
+	REP(i,0,LOGN)REP(j,0,N)P[i][j] = -1;
+	REP(i,0,n-1){
+		LL u , v;
+		SLL(u); SLL(v);
+		g[u].PB(v);
+		g[v].PB(u);
+	}
+	P[0][1] = 1;
+	dfs(1,1);
+	for(LL i = 1 ; i < LOGN ; i ++)
+		for(LL j = 1 ; j <= n ; j++)
+			if(P[i-1][j] != -1)
+				P[i][j] = P[i-1][P[i-1][j]];
+	while(q --){
+		LL t; SLL(t);
+		if(t == 1){
+			LL u , v , l; SLL(u); SLL(v); l = LCA(u,v);
+			//TR2(u,v); TR1(l);
+			update(IN[u],1); update(IN[v],1); update(IN[l],-1); if(l != P[0][l])update(IN[P[0][l]],-1);
+		}
+		else {
+			LL v; SLL(v); PLLN(query(IN[v],OUT[v]));
+		}
+	}
+	return 0;
+}

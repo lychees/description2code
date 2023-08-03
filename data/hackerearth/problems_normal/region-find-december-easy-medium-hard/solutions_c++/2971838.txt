@@ -1,0 +1,135 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define PB push_back
+#define LL long long 
+const int MOD = 1e9 + 7;
+
+int n; 
+int w[1505];
+vector<int> G[1505];
+int m;
+set<int> st;
+int allw[1505];
+
+LL pre[1505][1505];
+LL dp[1505][1505];
+
+void dfs(int node,int par)
+{
+	for(int i=0;i<G[node].size();i++)
+	{
+		int u = G[node][i];
+		if(u != par)
+			dfs(u,node);
+	}
+
+	for(int i=0;i<G[node].size();i++)
+	{
+		int u = G[node][i];
+		if(u == par) continue;
+		for(int j=0;j<m;j++)
+			pre[u][j] = 0;
+	}
+	for(int i=0;i<G[node].size();i++)
+	{
+		int u = G[node][i];
+		if(u == par) continue;
+		pre[u][m-1] = dp[u][m-1];
+		for(int j=m-2;j>=0;j--)
+			pre[u][j] = pre[u][j+1] + dp[u][j];
+	}
+	for(int i=0;i<m;i++)
+	{
+		int cw = allw[i];
+		if(w[node] < cw)
+			dp[node][i] = 0;
+		else if(w[node] == cw)
+		{
+			dp[node][i] = 1;
+			for(int j=0;j<G[node].size();j++)
+			{
+				int u = G[node][j];
+				if(u == par) continue;
+				dp[node][i] = ( dp[node][i] * ((1 + pre[u][i])%MOD) )%MOD;
+			}
+		}
+		else if(w[node] > cw)
+		{
+			LL val1,val2;
+			val1 = val2 = 1;
+			for(int j=0;j<G[node].size();j++)
+			{
+				int u = G[node][j];
+				if(u == par) continue;
+				val1 = ( val1 * ((1 + pre[u][i])%MOD) )%MOD;
+				val2 = ( val2 * ((1 + pre[u][i+1])%MOD) )%MOD;
+			}
+			dp[node][i] = (val1 - val2 + MOD)%MOD;
+		}
+	}
+	/*
+	cout << "node: " << node << endl;
+	for(int j=0;j<n;j++)
+		cout << dp[node][j] << " ";
+	cout << endl;
+	*/
+}
+
+int main()
+{
+	scanf("%d",&n);
+	for(int i=0;i<n;i++) 
+	{
+		scanf("%d",&w[i]);
+		st.insert(w[i]);
+		//allw[i] = w[i];
+	}
+	int ct = 0;
+	set<int>::iterator it;
+	for(it=st.begin();it!=st.end();it++)
+		allw[ct++] = *it;
+	m = (int)st.size();
+	//sort(allw,allw+n);
+	int x,y;
+	for(int i=0;i<n-1;i++)
+	{
+		scanf("%d %d",&x,&y);
+		x--;y--;
+		G[x].PB(y);
+		G[y].PB(x);
+	}
+
+	dfs(0,-1);
+
+	int q,k;
+	scanf("%d",&q);
+	while(q--)
+	{
+		scanf("%d",&k);
+		int id;
+		int f = 0;
+		for(int i=0;i<m;i++)
+		{
+			if(allw[i] == k)
+			{
+				f = 1;
+				id = i;
+				break;
+			}
+		}
+		if(f == 0)
+		{
+			printf("0\n");
+		}
+		else
+		{
+			LL ans = 0;
+			for(int i=0;i<n;i++)
+				ans = (ans + dp[i][id])%MOD;
+			printf("%lld\n",ans);
+		}
+	}
+
+	return 0;
+}

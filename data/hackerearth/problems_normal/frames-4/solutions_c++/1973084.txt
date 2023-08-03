@@ -1,0 +1,106 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+ 
+ 
+struct FenwickTree {
+	typedef int T;
+	vector<T> v;
+	void init(int n) { v.assign(n, 0); }
+	void add(int i, T x) {
+		for(; i < (int)v.size(); i |= i+1) v[i] += x;
+	}
+	T sum(int i) const {	//[0, i)
+		T r = 0;
+		for(-- i; i >= 0; i = (i & (i+1)) - 1) r += v[i];
+		return r;
+	}
+	T sum(int left, int right) const {	//[left, right)
+		return sum(right) - sum(left);
+	}
+};
+ 
+int main() {
+	int N, M;
+	scanf("%d%d", &N, &M);
+	vector<char*> s(N);
+	rep(i, N) s[i] = new char[M+1];
+	rep(i, N) scanf("%s", s[i]);
+	vector<vi> R(N, vi(M, 0)), D = R, L = R, U = R;
+#define repF(i,n) rep(i,n)
+#define repB(i,n) for(int (i)=(int)(n)-1;(i)>=0;--(i))
+	repF(i, N) repB(j, M) R[i][j] = s[i][j] == '1' ? 0 : 1 + (j == M-1 ? 0 : R[i][j+1]);
+	repB(i, N) repF(j, M) D[i][j] = s[i][j] == '1' ? 0 : 1 + (i == N-1 ? 0 : D[i+1][j]);
+	repF(i, N) repF(j, M) L[i][j] = s[i][j] == '1' ? 0 : 1 + (j ==   0 ? 0 : L[i][j-1]);
+	repF(i, N) repF(j, M) U[i][j] = s[i][j] == '1' ? 0 : 1 + (i ==   0 ? 0 : U[i-1][j]);
+	long long ans = 0;
+	vector<int> points;
+	vector<pair<pii,int> > queries;
+	FenwickTree ft;
+	rep(s, N + M - 1) {
+		int si, sj;
+		if(s < N) si = s, sj = 0;
+		else si = 0, sj = s - N + 1;
+		points.clear();
+		queries.clear();
+		int K = 0;
+		for(int i = si, j = sj, k = 0; i < N && j < M; ++ i, ++ j, ++ k, ++ K) {
+			int x = min(R[i][j], D[i][j]);
+			points.push_back(k + x - 1);
+			int y = min(L[i][j], U[i][j]);
+			if(y != 0) {
+				queries.push_back(mp(mp(k+1, k), +1));
+				queries.push_back(mp(mp(k+1-y, k), -1));
+			}
+		}
+		sort(all(queries));
+		ft.init(K+1);
+		int num = 0;
+		for(int k = 0, l = 0; ; ++ k) {
+			for(; l < (int)queries.size() && queries[l].first.first == k; ++ l) {
+				int t = num - ft.sum(queries[l].first.second);
+				ans += t * queries[l].second;
+			}
+			if(k == K) break;
+			if(k <= points[k]) {
+				ft.add(points[k], 1);
+				++ num;
+			}
+		}
+	}
+	printf("%lld\n", ans);
+	return 0;
+}

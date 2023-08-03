@@ -1,0 +1,191 @@
+#include <bits/stdc++.h>
+#define sz(a) int((a).size()) 
+#define all(c) (c).begin(),(c).end() 
+#define tr(c,i) for(typeof((c).begin() i = (c).begin(); i != (c).end(); i++) 
+#define REP(i,a,b) for(i=a;i<b;i++)
+#define rep(i,n) REP(i,0,n)
+#define mp make_pair
+#define pb push_back 
+#define SET(a,b) memset(a,b,sizeof(a))
+#define LET(x,a) __typeof(a) x(a)
+#define sd(n) scanf("%d",&n)
+#define sl(n) scanf("%lld",&n)
+#define sortv(a) sort(a.begin(),a.end())
+#define test()  int t; cin>>t; while(t--)
+#define fi first
+#define se second
+#define el "\n"
+#define ll long long
+#define ull unsigned ll
+#define TRACE
+using namespace std;
+
+//FILE *fin = freopen("input.txt","r",stdin);
+//FILE *fout = freopen("output.txt","w",stdout);
+
+#ifdef TRACE
+#define trace1(x)                cerr << #x << ": " << x << endl;
+#define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define trace4(a, b, c, d)       cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+#define trace5(a, b, c, d, e)    cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << endl;
+#define trace6(a, b, c, d, e, f) cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << " | " << #f << ": " << f << endl;
+
+#else
+
+#define trace1(x)
+#define trace2(x, y)
+#define trace3(x, y, z)
+#define trace4(a, b, c, d)
+#define trace5(a, b, c, d, e)
+#define trace6(a, b, c, d, e, f)
+
+#endif
+
+typedef pair<int,int> PII;
+typedef vector<int> VI;
+typedef vector< PII > VPII;
+
+#define MAXN 20010
+
+int arr[MAXN],tree[4*MAXN],lazy[4*MAXN][5];
+int pizza[]={16,9,26,26,1};
+void build_tree(int node ,int a, int b)
+{
+	if(a>b)
+		return;
+	if(a==b)
+	{
+		tree[node]=arr[a];
+		return;
+	}
+	build_tree(node*2,a,(a+b)/2);
+	build_tree(node*2+1,(a+b)/2+1,b);
+	tree[node]=(tree[node*2]+tree[node*2+1]);
+}
+void update_tree(int node,int a,int b,int i,int j)
+{
+	
+	int flag=0,k;
+	int temp=0,ran=(a+b)/2-a+1;
+	for(int k=0;k<5;k++)
+	{
+		if( lazy[node][k] != 0 )
+		{
+			flag = 1;
+		}
+		temp+=lazy[node][k];
+	}
+	if(flag)	//	This nodes need to be updated
+	{
+		tree[node]+=((b-a+1)/5)*temp;
+		for(k=0;k<(b-a+1)%5;k++)
+			tree[node]+=lazy[node][k];
+		if(a!=b)
+		{
+			// Mark child as lazy
+			rep(k,5)
+			{
+				lazy[node*2][k]+=lazy[node][k];	
+				lazy[node*2+1][k]+=lazy[node][(ran+k)%5];	
+			}
+		}
+		rep(k,5)
+			lazy[node][k]=0;	//	Reset it
+	}
+	if(a>b || a>j || b<i)	//	Current segment is not in range
+		return;
+	if(a>=i && b<=j)
+	{
+		int ch = a - i ;
+		tree[node]+=((b-a+1)/5)*(78);
+		for(k=0;k<(b-a+1)%5;k++)
+			tree[node]+= pizza[(k+ch)%5];
+		if(a!=b)
+		{
+			for( k = 0 ; k < 5 ; k++)
+			{
+				lazy[node*2][k] += pizza[ (k+ch) % 5 ];
+				lazy[node*2+1][k] += pizza[ (k+ch+ran) % 5 ];
+			}
+		}
+		return;
+	}
+	update_tree(node*2,a,(a+b)/2,i,j);
+	update_tree(node*2+1,(a+b)/2+1,b,i,j);
+	tree[node]=(tree[node*2]+tree[node*2+1]);
+}
+int query_tree(int node,int a,int b,int i,int j)
+{
+	if(a>b || a>j || b<i)
+		return 0;
+	int flag=0,k;
+	int temp=0,ran=(a+b)/2-a+1;
+	for(int k=0;k<5;k++)
+	{
+		if(lazy[node][k]==0)
+		{
+			flag=1;
+			//temp+=lazy[node][k];
+		}	
+		temp+=lazy[node][k];
+	}
+	if(!flag)	//	This nodes need to be updated
+	{
+		tree[node]+=((b-a+1)/5)*temp;
+		for(k=0;k<(b-a+1)%5;k++)
+			tree[node]+=lazy[node][k];
+		if(a!=b)
+		{
+			// Mark child as lazy
+			rep(k,5)
+			{
+				lazy[node*2][k]+=lazy[node][k];	
+				lazy[node*2+1][k]+=lazy[node][(ran+k)%5];	
+			}
+		}
+		rep(k,5)
+			lazy[node][k]=0;	//	Reset it
+	}
+	if(a>=i && b<=j)
+	{
+		return tree[node];
+	}
+	int left=query_tree(node*2,a,(a+b)/2,i,j);
+	int right=query_tree(node*2+1,(a+b)/2+1,b,i,j);
+	int res=(left+right);
+	return res;
+}
+int main()
+{
+	int n,i,ch,l,r,val,q;
+	
+	cin>>n>>q;
+	rep(i,n)
+		cin>>arr[i];
+	build_tree(1,0,n-1);
+	while(q--)
+	{
+		cin>>ch;
+		if(ch==0)	// Update
+		{
+			cin>>l>>r;
+			--l;
+			--r;
+			update_tree(1,0,n-1,l,r);	
+		}
+		else if(ch==1)	//Query
+		{
+			cin>>l>>r;
+			--l;
+			--r;
+			int ans=query_tree(1,0,n-1,l,r);
+			int den=r-l+1;
+			int g=__gcd(ans,den);
+			//ans/=g;
+			//den/=g;
+			cout<<ans<<"/"<<den<<endl;
+		}
+	}
+	return 0;
+}

@@ -1,0 +1,106 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+typedef vector<vector<int> > VVI;
+typedef vector<vector<vector<int> > > VVVI;
+typedef vector<int> VI;
+
+const int KMAX=105;
+const int OBS=-1000000000;
+
+void preprocess(VVI &mat,VVVI &dp){
+
+    int m=(int)mat.size(),n=(int)mat[0].size();
+
+    dp[0][0][1]=mat[0][0];
+
+    for(int i=1;i<m;i++)
+        if(mat[i][0]!=OBS && dp[i-1][0][1]!=OBS){
+            dp[i][0][1]=dp[i-1][0][1]+mat[i][0];
+        }else{
+            dp[i][0][1]=OBS;
+        }
+
+    for(int i=1;i<n;i++)
+        if(mat[0][i]!=OBS && dp[0][i-1][1]!=OBS){
+            dp[0][i][1]=dp[0][i-1][1]+mat[0][i];
+        }else{
+            dp[0][i][1]=OBS;
+        }
+
+    for(int i=1;i<m;i++){
+
+        for(int j=1;j<n;j++){
+
+            if(mat[i][j]==OBS) continue;
+
+            int lpos=1,upos=1;
+
+            for(int k=1;k<KMAX;k++){
+
+                if(dp[i-1][j][upos]==OBS && dp[i][j-1][lpos]==OBS) break;
+
+                if(dp[i-1][j][upos]==OBS){dp[i][j][k]=dp[i][j-1][lpos];lpos++;}
+                else if(dp[i][j-1][lpos]==OBS){dp[i][j][k]=dp[i-1][j][upos];upos++;}
+                else if(dp[i][j-1][lpos]<dp[i-1][j][upos]){
+                    dp[i][j][k]=dp[i][j-1][lpos];lpos++;
+                }else{
+                    dp[i][j][k]=dp[i-1][j][upos];upos++;
+                }
+
+                dp[i][j][k]+=mat[i][j];
+
+            }
+
+        }
+
+    }
+
+}
+
+int main(){
+
+    int test_cases;
+    scanf("%d",&test_cases);
+
+    while(test_cases--){
+
+        int m,n;
+        scanf("%d %d",&m,&n);
+
+        VVI mat(m,VI(n,0));
+        VVVI dp(m,VVI(n,VI(KMAX,OBS)));
+
+        for(int i=0;i<m;i++)
+            for(int j=0;j<n;j++){
+
+                mat[i][j]=OBS;
+                scanf("%d",&mat[i][j]);
+
+                if(mat[i][j]==OBS){
+                    scanf("##");
+                }
+
+            }
+
+        preprocess(mat,dp);
+
+        int q;
+        scanf("%d",&q);
+
+        while(q--){
+
+            int tx,ty,k;
+            scanf("%d %d %d",&tx,&ty,&k);
+
+            if(mat[tx][ty]==OBS) printf("Obstacle\n");
+            else if(dp[tx][ty][k]==OBS) printf("Not so many paths\n");
+            else printf("%d\n",dp[tx][ty][k]);
+
+        }
+
+
+    }
+
+}

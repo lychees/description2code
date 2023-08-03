@@ -1,0 +1,277 @@
+#include <set>
+#include <vector>
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+using namespace std ;
+
+typedef long long LL ;
+
+#define rep( i , a , b ) for ( int i = ( a ) ; i <  ( b ) ; ++ i )
+#define For( i , a , b ) for ( int i = ( a ) ; i <= ( b ) ; ++ i )
+#define rev( i , a , b ) for ( int i = ( a ) ; i >= ( b ) ; -- i )
+#define clr( a , x ) memset ( a , x , sizeof a )
+#define ls ( o << 1 )
+#define rs ( o << 1 | 1 )
+#define lson ls , l , m
+#define rson rs , m + 1 , r
+#define root 1 , 1 , G.bcc_cnt
+#define mid ( ( l + r ) >> 1 )
+
+const int MAXN = 200005 ;
+const int MAXE = 400005 ;
+const int INF = 0x3f3f3f3f ;
+
+struct Edge {
+    int v , f , n ;
+    Edge () {}
+    Edge ( int v , int f , int n ) : v ( v ) , f ( f ) , n ( n ) {}
+} ;
+
+struct BCC {
+    Edge E[MAXE] ;
+    int H[MAXN] , cntE ;
+    int dfn[MAXN] , low[MAXN] , dfs_clock ;
+    int bcc[MAXN] , bcc_cnt ;
+    int is[MAXN] ;
+    int block[MAXN] ;
+    int ncnt ;
+    int S[MAXN] , top ;
+
+    void clear () {
+        top = 0 ;
+        cntE = 0 ;
+        bcc_cnt = 0 ;
+        dfs_clock = 0 ;
+        clr ( H , -1 ) ;
+        clr ( dfn , 0 ) ;
+        clr ( is , 0 ) ;
+    }
+
+    void addedge ( int u , int v ) {
+        E[cntE] = Edge ( v , 0 , H[u] ) ;
+        H[u] = cntE ++ ;
+    }
+
+    void tarjan ( int u , int fa = 0 ) {
+        dfn[u] = low[u] = ++ dfs_clock ;
+        for ( int i = H[u] ; ~i ; i = E[i].n ) {
+            int v = E[i].v ;
+            if ( E[i].f ) continue ;
+            E[i].f = E[i ^ 1].f = 1 ;
+            S[top ++] = ( i >> 1 ) ;
+            if ( !dfn[v] ) {
+                tarjan ( v , u ) ;
+                low[u] = min ( low[v] , low[u] ) ;
+                if ( low[v] >= dfn[u] ) {
+                    ++ is[u] ;
+                    ++ bcc_cnt ;
+                    while ( 1 ) {
+                        int x = S[-- top] ;
+                        bcc[x] = bcc_cnt ;
+                        if ( x == ( i >> 1 ) ) break ;
+                    }
+                }
+            } else low[u] = min ( low[u] , dfn[v] ) ;
+        }
+        if ( fa == 0 ) -- is[u] ;
+    }
+
+    void find_bcc ( int n ) {
+        For ( i , 1 , n ) if ( !dfn[i] ) tarjan ( i ) ;
+        ncnt = bcc_cnt ;
+        For ( i , 1 , n ) if ( is[i] ) block[i] = ++ bcc_cnt ;
+        For ( i , 1 , n ) {
+            int u = i ;
+            for ( int i = H[u] ; ~i ; i = E[i].n ) {
+                int v = E[i].v ;
+                if ( !is[u] ) block[u] = bcc[( i >> 1 )] ;
+                if ( !is[v] ) block[v] = bcc[( i >> 1 )] ;
+            }
+        }
+    }
+} ;
+
+struct Heavy_Light_Decompose {
+    Edge E[MAXE] ;
+    int H[MAXN] , cntE ;
+    int pos[MAXN] ;
+    int pre[MAXN] ;
+    int top[MAXN] ;
+    int son[MAXN] ;
+    int dep[MAXN] ;
+    int siz[MAXN] ;
+    int idx[MAXN] ;
+    int tree_idx ;
+
+    void clear () {
+        cntE = 0 ;
+        tree_idx = 0 ;
+        clr ( H , -1 ) ;
+        siz[0] = 0 ;
+        dep[1] = 0 ;
+        pre[1] = 0 ;
+    }
+
+    void addedge ( int u , int v ) {
+        E[cntE] = Edge ( v , 0 , H[u] ) ;
+        H[u] = cntE ++ ;
+    }
+
+    void dfs ( int u ) {
+        siz[u] = 1 ;
+        son[u] = 0 ;
+        for ( int i = H[u] ; ~i ; i = E[i].n ) {
+            int v = E[i].v ;
+            if ( v == pre[u] ) continue ;
+            pre[v] = u ;
+            dep[v] = dep[u] + 1 ;
+            dfs ( v ) ;
+            siz[u] += siz[v] ;
+            if ( siz[v] > siz[son[u]] ) son[u] = v ;
+        }
+    }
+
+    void rebuild ( int u , int top_element ) {
+        top[u] = top_element ;
+        pos[u] = ++ tree_idx ;
+        idx[tree_idx] = u ;
+        if ( son[u] ) rebuild ( son[u] , top_element ) ;
+        for ( int i = H[u] ; ~i ; i = E[i].n ) {
+            int v = E[i].v ;
+            if ( v != pre[u] && v != son[u] ) {
+                rebuild ( v , v ) ;
+            }
+        }
+    }
+} ;
+
+BCC G ;
+Heavy_Light_Decompose T ;
+set < int > st[MAXN] ;
+int n , m , q ;
+int val[MAXN] ;
+int vis[MAXN] ;
+int minv[MAXN << 2] ;
+
+inline void push_up ( int o ) {
+    minv[o] = min ( minv[ls] , minv[rs] ) ;
+}
+
+void build ( int o , int l , int r ) {
+    if ( l == r ) {
+        minv[o] = *( st[T.idx[l]].begin () ) ;
+        return ;
+    }
+    int m = mid ;
+    build ( lson ) ;
+    build ( rson ) ;
+    push_up ( o ) ;
+}
+
+void update ( int x , int v , int o , int l , int r ) {
+    if ( l == r ) {
+        minv[o] = v ;
+        return ;
+    }
+    int m = mid ;
+    if ( x <= m ) update ( x , v , lson ) ;
+    else update ( x , v , rson ) ;
+    push_up ( o ) ;
+}
+
+int query ( int L , int R , int o , int l , int r ) {
+    if ( L <= l && r <= R ) {
+        return minv[o] ;
+    }
+    int m = mid ;
+    if ( R <= m ) return query ( L , R , lson ) ;
+    if ( m <  L ) return query ( L , R , rson ) ;
+    return min ( query ( L , R , lson ) , query ( L , R , rson ) ) ;
+}
+
+int Query ( int x , int y ) {
+    int ans = INF ;
+    //printf ( "%d %d\n" , x , y ) ;
+    while ( T.top[x] != T.top[y] ) {
+        if ( T.dep[T.top[x]] < T.dep[T.top[y]] ) swap ( x , y ) ;
+        //printf ( "--%d %d\n" , T.pos[T.top[x]] , T.pos[x] ) ;
+        ans = min ( ans , query ( T.pos[T.top[x]] , T.pos[x] , root ) ) ;
+        x = T.pre[T.top[x]] ;
+    }
+    if ( T.dep[x] > T.dep[y] ) swap ( x , y ) ;
+    ans = min ( ans , query ( T.pos[x] , T.pos[y] , root ) ) ;
+    //printf ( "%d\n" , ans ) ;
+    if ( x <= G.ncnt && T.pre[x] > 0 ) {
+        //printf ( "%233\n" ) ;
+        ans = min ( ans , *( st[T.pre[x]].begin () ) ) ;
+    }
+    return ans ;
+}
+
+void solve () {
+    char op[5] ;
+    int u , v ;
+    G.clear () ;
+    T.clear () ;
+    For ( i , 1 , n ) scanf ( "%d" , &val[i] ) ;
+    rep ( i , 0 , m ) {
+        scanf ( "%d%d" , &u , &v ) ;
+        G.addedge ( u , v ) ;
+        G.addedge ( v , u ) ;
+    }
+    G.find_bcc ( n ) ;
+    //printf ( "%d %d\n" , G.bcc_cnt , G.ncnt ) ;
+    clr ( vis , 0 ) ;
+    For ( u , 1 , n ) {
+        for ( int i = G.H[u] ; ~i ; i = G.E[i].n ) {
+            if ( G.block[u] != G.bcc[i >> 1] && !vis[G.bcc[i >> 1]] ) {
+                //printf ( "%d->%d\n" , G.block[u] , G.bcc[i >> 1] ) ;
+                T.addedge ( G.block[u] , G.bcc[i >> 1] ) ;
+                T.addedge ( G.bcc[i >> 1] , G.block[u] ) ;
+                vis[G.bcc[i >> 1]] = 1 ;
+            }
+        }
+        for ( int i = G.H[u] ; ~i ; i = G.E[i].n ) vis[G.bcc[i >> 1]] = 0 ;
+    }
+    T.dfs ( 1 ) ;
+    T.rebuild ( 1 , 1 ) ;
+    //printf ( "---_____%d\n" , T.tree_idx ) ;
+    For ( i , 1 , G.bcc_cnt ) st[i].clear () ;
+    For ( i , 1 , n ) {
+        st[G.block[i]].insert ( val[i] ) ;
+        if ( G.block[i] > G.ncnt && T.pre[G.block[i]] > 0 ) {
+            st[T.pre[G.block[i]]].insert ( val[i] ) ;
+        }
+    }
+    build ( root ) ;
+    //printf ( "%d\n" , T.pre[G.block[2]] ) ;
+    //printf ( "ok\n" ) ;
+    //printf ( "%d %d\n" , T.pre[2] , T.pre[6] ) ;
+    while ( q -- ) {
+        scanf ( "%s%d%d" , op , &u , &v ) ;
+        if ( op[0] == 'C' ) {
+            //printf ( "ok\n" ) ;
+            st[G.block[u]].erase ( val[u] ) ;
+            st[G.block[u]].insert ( v ) ;
+            if ( G.block[u] > G.ncnt && T.pre[G.block[u]] > 0 ) {
+                st[T.pre[G.block[u]]].erase ( val[u] ) ;
+                st[T.pre[G.block[u]]].insert ( v ) ;
+                int x = *( st[T.pre[G.block[u]]].begin () ) ;
+                update ( T.pos[T.pre[G.block[u]]] , x , root ) ;
+            }
+            val[u] = v ;
+            int x = *( st[G.block[u]].begin () ) ;
+        //  printf ( "%d %d %d\n" , G.block[u] , x , val[G.blocku] ) ;
+            update ( T.pos[G.block[u]] , x , root ) ;
+        } else {
+            if ( u == v ) printf ( "%d\n" , val[u] ) ;
+            else printf ( "%d\n" , Query ( G.block[u] , G.block[v] ) ) ;
+        }
+    }
+}
+
+int main () {
+    while ( ~scanf ( "%d%d%d" , &n , &m , &q ) ) solve () ;
+    return 0 ;
+}

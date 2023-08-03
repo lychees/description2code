@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MOD=1000000007;
+int N;
+int A[200001];
+struct node
+{
+    int sum0, sum1, sum2, lazy;
+} seg[524288];
+void init(int idx, int begin, int end)
+{
+    if(begin==end)
+        seg[idx].sum0=1, seg[idx].sum1=seg[idx].sum2=0;
+    else
+    {
+        int mid=(begin+end)/2;
+        init(idx*2, begin, mid);
+        init(idx*2+1, mid+1, end);
+        seg[idx].sum0=seg[idx*2].sum0+seg[idx*2+1].sum0;
+    }
+}
+void modify(int idx, int v)
+{
+    seg[idx].sum2=(seg[idx].sum2+2LL*seg[idx].sum1*v+1LL*seg[idx].sum0*v*v)%MOD;
+    seg[idx].sum1=(seg[idx].sum1+1LL*seg[idx].sum0*v)%MOD;
+    seg[idx].lazy+=v;
+}
+void down(int idx)
+{
+    if(seg[idx].lazy)
+    {
+        modify(idx*2, seg[idx].lazy);
+        modify(idx*2+1, seg[idx].lazy);
+        seg[idx].lazy=0;
+    }
+}
+void update(int idx, int begin, int end, int l, int r)
+{
+    if(r<begin || end<l)
+        return;
+    if(l<=begin && end<=r)
+        modify(idx, 1);
+    else
+    {
+        down(idx);
+        int mid=(begin+end)/2;
+        update(idx*2, begin, mid, l, r);
+        update(idx*2+1, mid+1, end, l, r);
+        seg[idx].sum1=(seg[idx*2].sum1+seg[idx*2+1].sum1)%MOD;
+        seg[idx].sum2=(seg[idx*2].sum2+seg[idx*2+1].sum2)%MOD;
+    }
+}
+int query(int idx, int begin, int end, int l, int r)
+{
+    if(r<begin || end<l)
+        return 0;
+    if(l<=begin && end<=r)
+        return seg[idx].sum2;
+    down(idx);
+    int mid=(begin+end)/2;
+    return (query(idx*2, begin, mid, l, r)+
+            query(idx*2+1, mid+1, end, l, r))%MOD;
+}
+int main()
+{
+    scanf("%d", &N);
+    init(1, 1, N);
+    int a, ans=0;
+    for(int i=1; i<=N; i++)
+    {
+        scanf("%d", &a);
+        update(1, 1, N, A[a]+1, i);
+        ans=(ans+query(1, 1, N, 1, i))%MOD;
+        A[a]=i;
+    }
+    printf("%d\n", ans);
+    return 0;
+}

@@ -1,0 +1,141 @@
+/*
+	****  Header file is generated using a skeleton file.  ****
+	****  Change the skeleton file from ~/.vim/skeleton.cpp****
+
+	* * Purpose : fun :)
+	* * Creation Date : 23-05-2015
+	* * Last Modified : Sun May 24 00:26:41 2015
+	* * Created By : chang
+*/
+
+#include <cstdio>
+#include <iostream>
+#include <cassert>
+#include <cctype>
+#include <cfloat>
+#include <climits>
+#include <cstring>
+#include <bitset>
+#include <deque>
+#include <map>
+#include <set>
+#include <stack>
+#include <queue>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <climits>
+#include <cmath>
+
+#define  each(v,c)  for(typeof((c).begin()) v = (c).begin(); v != (c).end(); ++v)
+#define  sync(x)    ios_base::sync_with_stdio(x)
+#define  sz(a)      ((int)(a.size()))
+#define  all(a)     (a).begin(), (a).end()
+#define  pb         push_back
+#define  mp         make_pair
+#define  fi         first
+#define  se         second
+using namespace std;
+
+#define debug(a,n)    cerr << "["; for(int i = 0; i < n; ++i) cerr << a[i] << " ";cerr << "\b]\n";
+#define dbg(args...)  {debug1,args; cerr<<endl;}
+#define pause()       cin.get();cin.get();
+
+struct debugger {
+    template<typename T> debugger& operator , (const T& v) {
+        cerr<<v<<" "; return *this;
+    }
+} debug1;
+
+template <typename T1, typename T2>
+inline ostream& operator << (ostream& os, const pair<T1, T2>& p) {
+    return os << "(" << p.first << ", " << p.second << ")";
+}
+
+template<typename T>
+inline ostream &operator << (ostream & os,const vector<T>& v) {
+    bool first = true; os << "[";
+    for (typename vector<T>::const_iterator ii = v.begin(); ii != v.end(); ++ii) {
+        if(!first) os << ", ";
+        os << *ii; first = false;
+    }
+    return os << "]";
+}
+
+typedef long long LL;
+typedef pair<int,int> pii;
+typedef pair<int,pii> piii;
+typedef vector<int> vi;
+
+const int NN = 512;
+
+long long dp[NN][NN], inp[NN];
+long long sum[NN];
+bool vis[NN][NN];
+int n,blocks;
+
+long long f(int x,int k){
+	if (x == n and k == 0)
+		return 0;
+	if (vis[x][k]) 
+		return dp[x][k];
+	
+	vis[x][k] = true;
+	long long ans,cost = 0;
+	ans = numeric_limits<long long> :: max();
+	
+	if (k > 1){
+		for(int i = x; i < n and n-i-1 >= k-1; ++i){
+			cost += inp[i];
+			long long res = f(i+1,k-1);
+			res += cost*cost*(LL)(blocks-1);
+			res -= 2LL*sum[i+1]*cost;
+			ans = min(ans,res);
+		}
+	} else 
+		ans = sum[x]*sum[x]*(LL)(blocks-1);
+	dp[x][k] = ans;
+	return ans;
+}
+
+void go(int x,int k){
+	if (x == n) return;
+	long long num = dp[x][k];
+	long long cost = 0;
+	if (k > 1){
+		for(int i = x; i < n and n-i-1 >= k-1; ++i){
+			cost += inp[i];
+			long long res = f(i+1,k-1);
+			long long temp = res;
+
+			res += cost*cost*(LL)(blocks-1);
+			res -= 2LL*sum[i+1]*cost;
+			dbg("values obtained at",x,k,i,temp,res,cost,sum[i+1]);
+			if (res == num){
+				dbg("(",x,",",i,")");
+				go(i+1,k-1);
+				return;
+			}
+		}
+	} else 
+		dbg("(",x,",",n-1,")");
+}
+
+void solve(){
+	cin >> n >> blocks;
+	for(int i = 0; i < n; ++i)
+		cin >> inp[i];
+	sum[n] = 0;
+	for(int i = n-1; i >= 0; --i)
+		sum[i] = inp[i] + sum[i+1];
+	long long ans = f(0,blocks);
+	//go(0,blocks);
+	cout << ans << "\n";
+}
+
+int main()
+{
+	solve();
+	return 0;
+}
+

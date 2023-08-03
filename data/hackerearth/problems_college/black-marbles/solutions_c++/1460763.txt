@@ -1,0 +1,120 @@
+#include <algorithm>
+#include <cstdio>
+#include <vector>
+ 
+using namespace std;
+ 
+const int MAXN = 700;
+const int dr[] = { 2, -2, 2, -2 }, dc[] = { 2, 2, -2, -2 };
+ 
+int M, N;
+char F[MAXN][MAXN+1];
+bool good[MAXN][MAXN];
+ 
+int N1, N2;
+vector<int> G[MAXN*MAXN];
+int which[MAXN][MAXN];
+ 
+void BuildGraph(int r, int c, int side)
+{
+  if (good[r][c]) {
+    if (side == 0) { G[N1].clear(); which[r][c] = N1++; } else which[r][c] = N2++;
+  } else {
+    which[r][c] = -2;
+  }
+ 
+  for (int i = 0; i < 4; ++i) {
+    if (r+dr[i]<0 || r+dr[i]>=M || c+dc[i]<0 || c+dc[i] >= N) continue;
+    if (which[r+dr[i]][c+dc[i]] == -1) BuildGraph(r+dr[i], c+dc[i], 1-side);
+ 
+    if (good[r][c] && good[r+dr[i]][c+dc[i]] && side == 0)
+      if (F[r+dr[i]/2][c+dc[i]/2] != 'P') G[which[r][c]].push_back(which[r+dr[i]][c+dc[i]]);
+  }
+}
+ 
+int matching[MAXN*MAXN], dist[MAXN*MAXN], Q[MAXN*MAXN];
+bool used[MAXN*MAXN], vis[MAXN*MAXN];
+ 
+void bfs() {
+  fill(dist, dist + N1, -1);
+  int sizeQ = 0;
+  for (int u = 0; u < N1; ++u) {
+    if (!used[u]) {
+      Q[sizeQ++] = u;
+      dist[u] = 0;
+    }
+  }
+  for (int i = 0; i < sizeQ; i++) {
+    int u1 = Q[i];
+    for (int e = 0; e < G[u1].size(); ++e) {
+      int u2 = matching[G[u1][e]];
+      if (u2 >= 0 && dist[u2] < 0) {
+        dist[u2] = dist[u1] + 1;
+        Q[sizeQ++] = u2;
+      }
+    }
+  }
+}
+ 
+bool dfs(int u1) {
+  vis[u1] = true;
+  for (int e = 0; e < G[u1].size(); ++e) {
+    int v = G[u1][e];
+    int u2 = matching[v];
+    if (u2 < 0 || !vis[u2] && dist[u2] == dist[u1] + 1 && dfs(u2)) {
+      matching[v] = u1;
+      used[u1] = true;
+      return true;
+    }
+  }
+  return false;
+}
+ 
+int maxMatching() {
+  fill(used, used + N1, false);
+  fill(matching, matching + N2, -1);
+  for (int res = 0;;) {
+    bfs();
+    fill(vis, vis + N1, false);
+    int f = 0;
+    for (int u = 0; u < N1; ++u)
+      if (!used[u] && dfs(u))
+        ++f;
+    if (!f)
+      return res;
+    res += f;
+  }
+}
+ 
+int main ()
+{
+  while (true) {
+    scanf("%d%d", &M, &N); if (M == 0) break;
+ 
+    for (int i = 0; i < M; ++i) scanf("%s", &F[i][0]);
+ 
+    for (int r = 0; r < M; ++r)
+      for (int c = 0; c < N; ++c) {
+        good[r][c] = (F[r][c] == 'F');
+        which[r][c] = -1;
+ 
+        for (int i = 0; i < 4; ++i) {
+          if (r+dr[i]<0 || r+dr[i]>=M || c+dc[i]<0 || c+dc[i] >= N) continue;
+          if (F[r+dr[i]][c+dc[i]]=='G' && F[r+dr[i]/2][c+dc[i]/2]!='P') good[r][c] = false;
+        }
+      }
+ 
+    int answer = 0;
+ 
+    for (int i = 0; i < M; ++i)
+      for (int j = 0; j < N; ++j) {
+        if (which[i][j] != -1) continue;
+ 
+        N1 = N2 = 0; BuildGraph(i, j, 0);
+        answer += N1+N2 - maxMatching();
+      }
+ 
+    printf("%d\n", answer);
+  }
+}
+ 

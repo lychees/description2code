@@ -1,0 +1,101 @@
+/*input
+5 4
+5 4 3 2 1
+1 4
+1 6
+0 3 7
+1 6
+*/
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <functional>
+#include <math.h>
+#include <string.h>
+#include <utility>
+#include <algorithm>
+#include <iomanip>
+#include <stack>
+#include <queue>
+#include <set>
+#include <map>
+#include <stdlib.h>
+#include <list>
+#include <assert.h>
+#include <time.h>
+using namespace std;
+#define sp ' '
+#define endl '\n'
+#define fi first
+#define se second
+#define mp make_pair
+#define dbg(x) { cout<< #x << ": " << (x) << endl; }
+#define dbg2(x,y) { cout<< #x << ": " << (x) << " , " << #y << ": " << (y) << endl; }
+#define tick() {cout << "HERE" << endl; }
+int a[100005];
+int f[100005 * 4];
+int n, m;
+int lim, ans;
+
+void init(int k , int l, int r) {
+	if (l == r) {
+		f[k] = a[l];
+		return;
+	}
+	int y = (l + r) / 2;
+	init(k * 2, l, y);
+	init(k * 2 + 1, y + 1, r);
+	f[k] = max(f[k * 2], f[k * 2 + 1]);
+}
+
+void update(int k, int l, int r, int pos, int val) {
+	if (pos < l || r < pos) return;
+	if (pos == l && r == l) {
+		f[k] = val;
+		return;
+	}
+	int y = (l + r) / 2;
+	update(k * 2, l, y, pos, val);
+	update(k * 2 + 1, y + 1, r, pos, val);
+	f[k] = max(f[k * 2], f[k * 2 + 1]);
+}
+
+int get(int k, int l, int r, int L, int R) {
+	if (R < l || r < L) return -2e9;
+	if (L <= l && r <= R) return f[k];
+	int y = (l + r) / 2;
+	return max(get(k * 2, l, y, L, R), get(k * 2 + 1, y + 1, r, L, R));
+}
+
+void back(int l, int r) {
+	if (l == r) {
+		ans = l;
+		return;
+	}
+	int y = (l + r) / 2;
+	if (get(1, 1, n, l, y) >= lim) back(l, y);
+	else back(y + 1, r);
+}
+int main() {
+	ios_base::sync_with_stdio(false); cin.tie(0);
+	cin >> n >> m;
+	for (int i = 1; i <= n; i++) {
+		cin >> a[i];
+	}
+	init(1, 1, n);
+	while (m--) {
+		int type; cin >> type;
+		if (type == 0) {
+			int pos, val; cin >> pos >> val;
+			update(1, 1, n, pos, val);
+		}
+		else {
+			cin >> lim;
+			if (get(1, 1, n, 1, n) < lim) cout << -1 << endl;
+			else {
+				back(1, n);
+				cout << ans << endl;
+			}
+		}
+	}
+}

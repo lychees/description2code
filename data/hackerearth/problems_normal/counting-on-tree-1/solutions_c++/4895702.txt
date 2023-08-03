@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+typedef vector<int> vi;
+typedef vector<ll> vll;
+ 
+#define X first
+#define Y second
+#define sz(c) (int)c.size()
+#define rep(i,n) for(ll i = 0, _n = (n); i < _n; i++)
+#define rep1(i,a,b) for(ll i = a, _b = (b); i <= _b; i++)
+#define rep2(i,b,a) for(ll i = b, _a = (a); i >= _a; i--)
+#define mem(a,val) memset(a, (val), sizeof a)
+#define mp make_pair
+#define eb emplace_back // tie, ignore, get<i>(a)
+#define all(c) (c).begin(), (c).end()
+#define uni(c) c.resize(distance(c.begin(), unique(all(c))))
+#define case(ans) "Case #" << _t << ": " << ans << "\n"
+#define cout(d) cout << fixed << setprecision(d)
+#define err(x) cerr << #x << " = " << x << '\n'
+const int mod = 1e9 + 7, lim = 5e4 + 10;
+
+vi t[lim];
+int par[lim], a[lim], n, k;
+ll memo[lim][110];
+inline void root(int v) {
+    vi temp;    
+    for(int ch: t[v]) if(ch != par[v]) par[ch] = v, root(ch), temp.eb(ch);
+    t[v] = temp;
+}
+inline ll bfs(int v) {
+    rep1(i,0,k) memo[v][i] = 0;
+    memo[v][a[v]] = 1;
+    ll temp[110], ext;
+    for(int ch: t[v]) {
+        bfs(ch);
+        mem(temp, 0);
+        rep1(i,0,k) {
+            ext = memo[v][i];
+            rep1(j,0,i) ext += memo[v][j] * memo[ch][i-j] % mod;
+            temp[i] = ext % mod;
+        }
+        rep1(i,0,k) memo[v][i] = temp[i];
+    }
+}
+
+inline void MAIN() {
+    cin >> n >> k;
+    rep(i,n) cin >> a[i];
+    rep(i,n) t[i].clear();
+    int x, y; rep(i,n-1) cin >> x >> y, t[x-1].eb(y-1), t[y-1].eb(x-1);
+    root(0);
+    bfs(0);
+    
+    ll ans(0);
+    rep(v,n) ans += memo[v][k];
+    cout << ans % mod << '\n';
+}
+int main() {
+    int t; cin >> t;
+    while(t--) MAIN();
+    return 0;
+}

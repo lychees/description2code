@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct node {
+  int we;
+  char c;
+  struct node *child[26]; 
+};
+
+node *create(char c) {
+  node *tmp = new node;
+  tmp->c = c;
+  tmp->we = -1;
+  for(int i = 0; i < 26; i++)
+    tmp->child[i] = NULL;
+
+  return tmp;
+}
+void insert(node **root , char  *str,int ind, int we) {
+  if(str[ind] == '\0') return;
+  if((*root) == NULL) {
+    (*root) = create(str[ind]);
+    if(str[ind+1] == '\0') {
+      (*root)->we = we;
+      return;
+    }
+    ind = ind+1;
+  }
+  if((*root)->child[str[ind]-'a'] != NULL) {
+    if(str[ind+1] == '\0')
+      (*root)->child[str[ind]-'a']->we = we;
+    else insert(&(*root)->child[str[ind]-'a'] , str, ind+1, we);
+  }else insert(&(*root)->child[str[ind]-'a'] , str, ind, we);
+
+}
+int foo(node *root) {
+  if(root == NULL) return -1;
+
+  int ans = root->we;
+  for(int i = 0; i < 26; i++)
+    ans = max(ans , foo(root->child[i]));
+  return ans;
+}
+int find(node *root, char *str, int ind) {
+  if(root->child[str[ind]-'a'] != NULL) {
+    if(str[ind+1] == '\0'){
+      return foo(root->child[str[ind]-'a']);
+    }
+    return find(root->child[str[ind]-'a'], str, ind+1);
+  }
+  else  {
+    int ans = -1;
+    // for(int i = 0; i < 26; i++)
+    //   if(root->child[i] != NULL)
+    //     ans = max(ans , find(root->child[i], str, ind));
+
+    return ans;
+  }
+}
+int main()
+{
+  node *root = NULL;
+  root = new node;
+  int n,q,we;
+  scanf("%d%d", &n,&q);
+  char str[1000000];
+  map <string, int> m;
+  for(int i = 0; i < n; i++) {
+    scanf("%s", str);
+    scanf("%d", &we);
+    insert(&root, str,0, we);
+  }
+  while(q--) {
+    scanf("%s", str);
+    if(m.find(str) == m.end()) 
+      m[str] = find(root , str , 0);
+    
+    printf("%d\n", m[str]);
+  }
+return 0;
+}

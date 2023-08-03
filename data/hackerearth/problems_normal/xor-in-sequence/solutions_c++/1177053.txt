@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN = 100000 + 10;
+const int MAXQ = 100 + 10;
+int a[MAXN];
+int n, q;
+vector<int> bits[2 * MAXQ];
+struct trie {
+    int c;
+    trie* next[2];
+    trie(int _c) {
+        c = _c;
+        next[0] = next[1] = NULL;
+    }
+};
+trie* root;
+int get_bit(int j, int i) {
+    return (i >> (j - 1)) & 1;
+}
+vector<int> analys(int x) {
+    vector<int> res(30);
+    for(int i = 1; i <= 30; i++) res[30 - i] = get_bit(i, x);
+    return res;
+}
+int calc(vector<int> &a, vector<int> &b) {
+    trie* curr = root;
+    int res = 0;
+    for(int i = 0; i < 30; i++) {
+        int j = a[i] ^ b[i], k = a[i] ^ (1 - j);
+        if ((k < b[i]) && (curr->next[1 - j] != NULL)) res += curr->next[1 - j]->c;
+        if (curr->next[j] == NULL) break;
+        curr = curr->next[j];
+    }
+    return res;
+}
+void push(vector<int> &a) {
+    trie* curr = root;
+    for(int i = 0; i < 30; i++) {
+        if (curr->next[a[i]] == NULL) curr->next[a[i]] = new trie(1);
+        else curr->next[a[i]]->c++;
+        curr = curr->next[a[i]];
+    }
+}
+int main()
+{
+    int test;
+    cin >> test;
+    assert((1 <= test) && (test <= 10));
+    while (test --) {
+        cin >> n;
+        assert((1 <= n) && (n <= 100000));
+        for(int i = 1; i <= n; i++) {
+            scanf("%d", &a[i]);
+            assert((1 <= a[i]) && (a[i] <= 1000000000));
+        }
+        cin >> q;
+        assert((1 <= q) && (q <= 10));
+        vector<int> b;
+        for(int i = 0; i < q; i++) {
+            int l, r;
+            cin >> l >> r;
+            assert((0 <= l) && (l <= r) && (r <= 1000000000));
+            b.push_back(l); b.push_back(r + 1);
+        }
+        for(int i = 0; i < b.size(); i++) bits[i] = analys(b[i]);
+        vector<long long> S(b.size());
+        root = new trie(0);
+        vector<int> c = analys(0);
+        push(c);
+        int sum_xor = 0;
+        for(int i = 1; i <= n; i++) {
+            sum_xor ^= a[i];
+            c = analys(sum_xor);
+            for(int i = 0; i < b.size(); i++) S[i] += calc(c, bits[i]);
+            push(c);
+        }
+        for(int i = 0; i < q; i++) printf("%lld\n", S[i * 2 + 1] - S[i * 2]); //cout << S[i * 2 + 1] - S[i * 2] << endl;
+    }
+}

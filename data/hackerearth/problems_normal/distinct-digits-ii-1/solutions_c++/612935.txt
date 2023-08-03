@@ -1,0 +1,173 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define MAX 100005
+#define mod 1000000007
+#define INF 1e15
+pair<ll, ll> t[4 * MAX];
+pair<ll, ll> t_1[4 * MAX];
+
+ll node[MAX];
+ll node2[MAX];
+ll seg[4 * MAX];
+ll digs[MAX];
+
+pair<ll,ll> joint1 (pair<ll,ll> a, pair<ll,ll> b) {
+	if (a.first < b.first)
+		return a;
+	if (b.first < a.first)
+		return b;
+	return make_pair (a.first, a.second + b.second);
+}
+
+ll number_of_bits(ll x)
+{
+	ll ret = 0;
+	while(x > 0)
+	{
+		ret |= (1 << (x%10));
+		x /= 10;
+	}
+	return ret;
+}
+void build_seg1 (ll v, ll tl, ll tr) {
+	if (tl == tr)
+		t_1[v] = make_pair (node2[tl], 1);
+	else {
+		ll tm = (tl + tr) / 2;
+		build_seg1 (v*2, tl, tm);
+		build_seg1 (v*2+1, tm+1, tr);
+		t_1[v] = joint1(t_1[v*2], t_1[v*2+1]);
+	}
+}
+
+void update_seg1 (ll v, ll tl, ll tr, ll pos, ll new_val) {
+	if (tl == tr) {
+		t_1[v] = make_pair (new_val, 1);
+	}
+	else {
+		ll tm = (tl + tr) / 2;
+		if (pos <= tm)
+			update_seg1 (v*2, tl, tm, pos, new_val);
+		else
+			update_seg1 (v*2+1, tm+1, tr, pos, new_val);
+		t_1[v] = joint1 (t_1[v*2], t_1[v*2+1]);
+	}
+}
+pair<ll,ll> query_get_min (ll v, ll tl, ll tr, ll l, ll r) {
+	if (l > r)
+		return make_pair (INF, 0);
+	if (l == tl && r == tr)
+		return t_1[v];
+	ll tm = (tl + tr) / 2;
+	return joint1 (
+		query_get_min (v*2, tl, tm, l, min(r,tm)),
+		query_get_min (v*2+1, tm+1, tr, max(l,tm+1), r)
+	);
+}
+
+pair<ll,ll> joint (pair<ll,ll> a, pair<ll,ll> b) {
+	if (a.first > b.first)
+		return a;
+	if (b.first > a.first)
+		return b;
+	return make_pair (a.first, a.second + b.second);
+}
+
+void build_seg (ll v, ll tl, ll tr) {
+	if (tl == tr)
+		t[v] = make_pair (node2[tl], 1);
+	else {
+		ll tm = (tl + tr) / 2;
+		build_seg (v*2, tl, tm);
+		build_seg (v*2+1, tm+1, tr);
+		t[v] = joint (t[v*2], t[v*2+1]);
+	}
+}
+
+void update_seg (ll v, ll tl, ll tr, ll pos, ll new_val) {
+	if (tl == tr)
+		t[v] = make_pair (new_val, 1);
+	else {
+		ll tm = (tl + tr) / 2;
+		if (pos <= tm)
+			update_seg (v*2, tl, tm, pos, new_val);
+		else
+			update_seg (v*2+1, tm+1, tr, pos, new_val);
+		t[v] = joint (t[v*2], t[v*2+1]);
+	}
+}
+pair<ll,ll> query_get_max (ll v, ll tl, ll tr, ll l, ll r) {
+	if (l > r)
+		return make_pair (-INF, 0);
+	if (l == tl && r == tr)
+		return t[v];
+	ll tm = (tl + tr) / 2;
+	return joint (
+		query_get_max (v*2, tl, tm, l, min(r,tm)),
+		query_get_max (v*2+1, tm+1, tr, max(l,tm+1), r)
+	);
+}
+
+int main()
+{
+    ll n;
+    scanf("%lld", &n);
+    for(ll i = 1; i <= n; i++) {
+        scanf("%lld", &node[i]);
+    }
+
+    for(ll i = 1; i <= n; i++) {
+        digs[i] = number_of_bits(node[i]);
+    }
+
+    for(ll i = 1; i <= n; i++) {
+        node2[i] =  __builtin_popcount(digs[i]);
+    }
+
+    /*for(lli = 1; i <= n; i++) {
+        cout << node2[i] << " ";
+    }*/
+    build_seg(1, 1, n);
+    ll value;
+    build_seg1(1, 1, n);
+    ll q;
+    scanf("%lld", &q);
+    pair<ll , ll> ans;
+    while(q--) {
+        string oper;
+        ll u, v;
+        cin >> oper;
+        scanf("%lld%lld", &u, &v);
+        if(oper == "MAX") {
+            ans = query_get_max(1, 1, n, u , v);
+            cout << ans.first <<" "<< ans.second << endl;
+        }
+        else if(oper == "MIN") {
+            ans = query_get_min(1, 1, n, u, v);
+            cout << ans.first <<" "<< ans.second << endl;
+        }
+        else if(oper == "ADD") {
+            node[u] = ((node[u] % mod) + (v % mod)) % mod;
+            digs[u] = number_of_bits(node[u]);
+             value = __builtin_popcount(digs[u]);
+            update_seg(1, 1, n, u, value);
+            update_seg1(1, 1, n, u, value);
+        }
+        else if(oper == "MUL") {
+            node[u] = ((node[u] % mod) * (v % mod)) % mod;
+            digs[u] = number_of_bits(node[u]);
+             value = __builtin_popcount(digs[u]);
+            update_seg(1, 1, n, u, value);
+            update_seg1(1, 1, n, u, value);
+        }
+        else if(oper == "REP") {
+            node[u] = (v % mod);
+            digs[u] = number_of_bits(node[u]);
+             value = __builtin_popcount(digs[u]);
+            update_seg(1, 1, n, u, value);
+            update_seg1(1, 1, n, u, value);
+        }
+    }
+    return 0;
+}

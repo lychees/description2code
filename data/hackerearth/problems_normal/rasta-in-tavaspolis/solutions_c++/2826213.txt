@@ -1,0 +1,255 @@
+/* https://www.hackerearth.com/problem/algorithm/rasta-in-tavaspolis/description/ */
+#include <bits/stdc++.h>
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define all(X) (X).begin(),(X).end()
+#define clr(X,a) memset((X), (a), sizeof((X)))
+#define s(a) scanf("%d", &a)
+#define ps(a) printf("%d ", a)
+#define pn(a) printf("%d\n", a)
+#define rep(i,n) for(i = 0; i < (n); i++)
+#define repr(i,a,b) for(i = (a); i <= (b); i++)
+#define MAXN 100111
+
+struct hasher
+{
+    size_t operator()(const pair<int,int> &a) const
+    {
+        return hash<int>()(a.first) ^ hash<int>()(a.second);
+    }
+};
+
+struct SegTree
+{
+    int N;
+    vector<pair<long long,int>> t;
+    vector<long long> lazy, brute;
+    vector<int> inv;
+    long long *dist;
+    
+    void init(int n, long long d[], int invp[])
+    {
+        N = n;
+        t.resize(4 * n + 1);
+        lazy.resize(4 * n + 1);
+//        brute.resize(n + 1);
+//        for(int i = 1; i <= n; i++) brute[i] = d[i];
+        inv.resize(n + 1);
+        for(int i = 1; i <= n; i++)
+            inv[i] = invp[i];
+        dist = d;
+        build(1, 1, N);
+    }
+    
+    void build(int v, int l, int r)
+    {
+        if(l == r) { t[v] = {dist[l], l}; return; }
+        int mid = (l + r) / 2;
+        build(2*v, l, mid);
+        build(2*v+1, mid+1, r);
+        t[v] = max(t[2*v], t[2*v+1]);
+    }
+    
+    void update(int l, int r, int w) 
+    {
+        update(1, 1, N, l, r, w);
+//        for(int i = l; i <= r; i++) brute[i] += w;
+    }
+    
+    void update(int v, int l, int r, int s, int e, int w)
+    {
+        if(l == s && r == e)
+        {
+            lazy[v] += w;
+            t[v].first += w;
+            return;
+        }
+        push(v);
+        int mid = (l + r) / 2;
+        if(s <= mid)   update(2*v, l, mid, s, min(e,mid), w);
+        if(mid+1 <= e) update(2*v+1, mid+1, r, max(mid+1,s), e, w);
+        t[v] = max(t[2*v], t[2*v+1]);
+    }
+    
+    void push(int v)
+    {
+        lazy[2*v] += lazy[v];
+        lazy[2*v+1] += lazy[v];
+        t[2*v].first += lazy[v];
+        t[2*v+1].first += lazy[v];
+        lazy[v] = 0;
+    }
+    
+    long long query(int l, int r)
+    {
+        if(!(1 <= l && l <= r && r <= N)) return 0;
+        long long ret = query(1, 1, N, l, r);
+//        long long c = 0;
+//        for(int i = l; i <= r; i++) c = max(c, brute[i]);
+//        if(ret != c) cout << "wrong " << l << " - " << r << endl;
+        return ret;
+    }
+    
+    long long query(int v, int l, int r, int s, int e)
+    {
+        if(l == s && r == e) return t[v].first;
+        push(v);
+        int mid = (l + r) / 2;
+        long long ans = 0;
+        if(s <= mid)   ans = max(ans, query(2*v, l, mid, s, min(mid,e)));
+        if(mid+1 <= e) ans = max(ans, query(2*v+1, mid+1, r, max(mid+1,s), e));
+        return ans;
+    }
+    
+    long long getDist(int v) { return getDist(1, 1, N, v); }
+    
+    long long getDist(int v, int l, int r, int p)
+    {
+        if(l == r && l == p) return t[v].first;
+        push(v);
+        int mid = (l + r) / 2;
+        if(p <= mid) return getDist(2*v, l, mid, p);
+        else         return getDist(2*v+1, mid+1, r, p);
+    }
+
+} tree[MAXN];
+
+int N,i,j,T,centroid[MAXN][20],subtree[MAXN],M,tin[MAXN][20],tout[MAXN][20];
+int mxlevel[MAXN],nextInPath[MAXN][20],lastInPath[MAXN][20],tim,inv[MAXN];
+bool vis[MAXN];
+long long dist[MAXN];
+unordered_map<pair<int,int>,int,hasher> edges;
+vector<vector<pair<int,int>>> G;
+
+void dfs(int v, int p)
+{
+    subtree[v] = 1;
+    for(auto n : G[v]) if(!vis[n.first] && n.first != p)
+    {
+        dfs(n.first, v);
+        subtree[v] += subtree[n.first];
+    }
+}
+
+int find_centroid(int v, int sz)
+{
+    int branch = v;
+    for(auto n : G[v]) if(!vis[n.first])
+    {
+        if(subtree[n.first] > sz/2)
+        { branch = n.first; break; }
+    }
+    if(branch == v) return v;
+    subtree[v] -= subtree[branch];
+    subtree[branch] += subtree[v];
+    return find_centroid(branch, sz);
+}
+
+void dfs2(int v, int p, long long d, int nc, int level, int x)
+{
+    tin        [v][level] = ++tim;
+    centroid   [v][level] = nc;
+    nextInPath [v][level] = p;
+    lastInPath [v][level] = x;
+    inv[tim] = v;
+    dist[tim] = d;
+    mxlevel[v] = level;
+    
+    for(auto n : G[v]) if(!vis[n.first] && n.first != p)
+        dfs2(n.first, v, d + n.second, nc, level, x);
+        
+    tout[v][level] = tim;
+}
+
+void decompose(int s, int level)
+{
+    int nc = find_centroid(s, subtree[s]); 
+    tim = 1;
+    tin[nc][level] = 1;
+    centroid[nc][level] = nc;
+    mxlevel[nc] = level;
+    inv[1] = nc;
+    
+    for(auto n : G[nc]) if(!vis[n.first])   
+        dfs2(n.first, nc, n.second, nc, level, n.first);
+    
+    tout[nc][level] = tim;
+    tree[nc].init(subtree[nc], dist, inv);
+    vis[nc] = true;
+    for(auto n : G[nc]) if(!vis[n.first])
+    {
+        decompose(n.first, level + 1);        
+    }
+    vis[nc] = false;
+}
+
+int main()
+{
+    int Q;
+    s(N); s(Q);
+    G.resize(N + 1);
+    rep(i, N-1)
+    {
+        int a, b, c; s(a); s(b); s(c);
+        if(a > b) swap(a, b);
+        G[a].pb({b, c});
+        G[b].pb({a, c});
+        edges[{a, b}] = c;
+    }
+    dfs(1, -1);
+    decompose(1, 1);    
+    while(Q--)
+    {
+        int ch; s(ch);
+        if(ch == 1)
+        {
+            int u, v, w, a, b; s(u); s(v); s(w);
+            if(u > v) swap(u, v);
+            int mn = min(mxlevel[u], mxlevel[v]);
+            int prevw = edges[{u, v}];
+            repr(i, 1, mn)
+            {
+                int away = u, closer = v; // closer to current centroid
+                if(nextInPath[v][i] == u) swap(away, closer);
+                tree[ centroid[away][i] ].update(tin[away][i], tout[away][i], w - prevw);
+            }            
+            edges[{u, v}] = w;
+        }
+        else
+        {
+            int v; s(v);
+            long long ans = 0;
+            auto f = tree[v].t[1];
+            int l = mxlevel[v];
+            int splitIdx = lastInPath[ tree[v].inv[f.second] ][ l ];
+//            assert(subtree[v] == tout[v][l]);
+            long long two = max(tree[v].query(1, tin[splitIdx][l] - 1), tree[v].query(tout[splitIdx][l] + 1, subtree[v]));
+            ans = max(ans, f.first + two);
+//            printf("%d: l=%d inv=%d f.f=%d f.s=%d split=%d ans=%lld\n", v, l, tree[v].inv[f.second], f.first, f.second, splitIdx, ans);
+            repr(i, 1, l - 1)
+            {
+                int c = centroid[v][i];
+                
+//                assert(subtree[v] == tout[v][l]);
+//                splitIdx = nextInPath[v][i];
+//                long long one = max(tree[v].query(1, tin[splitIdx][l] - 1), tree[v].query(tout[splitIdx][l] + 1, subtree[v]));
+
+                long long one = tree[c].query(tin[v][i], tout[v][i]);
+                long long two = 0; // tree[c].getDist(tin[v][i]);
+                
+                splitIdx = lastInPath[v][i];                
+//                assert(subtree[c] == tout[c][i]);
+                long long three = max(tree[c].query(1, tin[splitIdx][i] - 1), tree[c].query(tout[splitIdx][i] + 1, subtree[c]));
+                ans = max(ans, one + two + three);
+                
+//                ps(one); ps(three); pn(ans);
+            }
+            
+            printf("%lld\n", ans);
+        }
+    }
+    
+    return 0;
+}

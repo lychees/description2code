@@ -1,0 +1,95 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+
+int A[1000010];
+vector< pair<int, int> > tree(4000010);
+
+void build(int node, int start, int end){
+    if(start == end)
+    {
+        // Leaf node will have a single element
+        tree[node].first = A[start]; tree[node].second = A[start];
+    }
+    else
+    {
+        int mid = (start + end) / 2;
+        // Recurse on the left child
+        build(2*node, start, mid);
+        // Recurse on the right child
+        build(2*node+1, mid+1, end);
+        // Internal node will have the sum of both of its children
+        tree[node].first = max(tree[2*node].first, tree[2*node+1].first);
+        tree[node].second = max(tree[2*node].second, max(tree[2*node+1].second, tree[2*node].first + tree[2*node+1].first));
+    }
+}
+
+void update(int node, int start, int end, int idx, int val){
+    if(start == end)
+    {
+        // Leaf node
+        A[idx] += val;
+        tree[node].first += val;tree[node].second += val;
+    }
+    else
+    {
+        int mid = (start + end) / 2;
+        if(start <= idx and idx <= mid)
+        {
+            // If idx is in the left child, recurse on the left child
+            update(2*node, start, mid, idx, val);
+        }
+        else
+        {
+            // if idx is in the right child, recurse on the right child
+            update(2*node+1, mid+1, end, idx, val);
+        }
+        // Internal node will have the sum of both of its children
+        tree[node].first = max(tree[2*node].first, tree[2*node+1].first);
+        tree[node].second = max(tree[2*node].second, max(tree[2*node+1].second, tree[2*node].first + tree[2*node+1].first));
+    }
+}
+pair<int, int> query(int node, int start, int end, int l, int r){
+    if(r < start or end < l)
+    {
+        // range represented by a node is completely outside the given range
+        return {0, 0};
+    }
+    if(l <= start and end <= r)
+    {
+        // range represented by a node is completely inside the given range
+        return tree[node];
+    }
+    // range represented by a node is partially inside and partially outside the given range
+    int mid = (start + end) / 2;
+    pair<int, int> p1 = query(2*node, start, mid, l, r);
+    pair<int, int> p2 = query(2*node+1, mid+1, end, l, r);
+    pair<int, int> p;
+    p.first = max(p1.first, p2.first);
+    p.second = max(p1.second, max(p2.second, p1.first + p2.first));
+    return p;
+}
+
+int main(){
+	int n;
+	scanf("%d", &n);
+
+	for(int i = 1; i <= n; i++)
+		scanf("%d", &A[i]);
+
+	build(1, 1, n);
+	int count1;
+	scanf("%d", &count1);
+	char a;
+	int l, r;
+	for(int i = 0; i < count1; i++){
+        cin >> a >> l >> r;
+		if( a == 'Q'){
+			printf("%d\n", query(1, 1, n, l, r).second);
+		}
+		else if( a == 'U')
+			update(1, 1, n, l, r - A[l]);
+	}
+	return 0;
+}
+

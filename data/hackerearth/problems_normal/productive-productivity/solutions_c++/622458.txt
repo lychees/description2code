@@ -1,0 +1,170 @@
+#ifdef ONLINE_JUDGE
+#include <bits/stdc++.h>
+using namespace std;
+#else
+#include "header.h"
+#include "debug.h"
+#endif
+#define sz(s) int((s).size())
+#define clr(a) memset(a,0,sizeof(a))
+#define all(x) (x).begin(),(x).end()
+#define rep(i,n) for(int(i)=0; (i)<(n);++(i))
+#define ru(i,a,b) for(int(i)=a;(i)<=(b);++(i))
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+typedef pair <int,int> pii;
+template <class T> inline T gcd(T a,T b){return (!b? a : gcd(b,a%b));}
+template <class T> inline T ABS(T x){return ((x)>0?(x):(-(x)));}
+const int N = 105;
+#define prev pv1
+
+int TOTAL,cost[N][N];
+int lx[N],ly[N];
+int maxmatch,xy[N],yx[N],prev[N];
+bool S[N],T[N];
+int slack[N],slackx[N];
+int mat [105][105];
+
+void init (){
+  memset(lx,0,sizeof(lx));
+  memset(ly,0,sizeof(ly));
+  for(int x = 0;x<TOTAL;++x) {
+    for(int y = 0;y<TOTAL;++y) {
+      lx[x] = max(lx[x],cost[x][y]);
+    }
+  }
+}
+
+void update (){
+  int delta = (1 << 30);
+  for (int y = 0; y < TOTAL; ++y) {
+    if (!T [y]) {
+      delta = min (delta, slack [y]);
+    }
+  }
+  for (int x = 0; x < TOTAL; ++x) {
+    if (S[x]) {
+      lx[x] -= delta;
+    }
+  }
+  for (int y = 0; y < TOTAL;++y) {
+    if (T[y]) {
+      ly[y] += delta;
+    }
+  }
+  for (int y = 0;y<TOTAL;++y) {
+    if (!T[y]) {
+      slack[y] -= delta;
+    }
+  }
+}
+
+void add_to_tree (int x, int prevx){
+  S [x] = true;
+  prev [x] = prevx;
+  for (int y = 0; y < TOTAL; ++y){
+    if (lx [x] + ly [y] - cost [x][y] < slack [y]) {
+      slack [y] = lx [x] + ly [y] - cost [x][y];
+      slackx [y] = x;
+    }
+  }
+}
+
+int q[N],head,tail;
+void augment (){
+  int x,y,root;
+  head = tail = 0;
+  memset (S, false, sizeof (S));
+  memset (T, false, sizeof (T));
+  memset (prev, -1, sizeof (prev));
+  for (x = 0; x < TOTAL; ++x){
+    if (xy [x] == -1){
+      q [tail++] = root = x;
+      prev [root] = -2;
+      S [root] = true;
+      break;
+    }
+  }
+  for (y = 0; y < TOTAL; ++y){
+    slack [y] = lx [root] + ly [y] - cost [root][y];
+    slackx [y] = root;
+  }
+  while (true){
+    while (head<tail){
+      x = q[head++];
+      for (y = 0;y<TOTAL;++y){
+        if (cost[x][y]==lx[x]+ly[y] && !T[y]){
+          if (yx[y]==-1) break;
+
+          T[y] = true;
+          q[tail++] = yx[y];
+          add_to_tree (yx[y],x);
+        }
+      }
+      if(y < TOTAL) break;
+    }
+    if(y < TOTAL) break;
+    update();
+    head = tail = 0;
+    for (y = 0; y < TOTAL; ++y){
+      if (!T [y] && slack [y]==0){
+        if (yx[y]==-1){
+          x = slackx[y];
+          break;
+        }
+        T [y] = true;
+        if (!S[yx[y]]){
+          q [tail++] = yx [y];
+          add_to_tree (yx [y],slackx [y]);
+        }
+      }
+    }
+    if(y<TOTAL) break;
+  }
+  ++maxmatch;
+  for(int cx = x,cy = y,ty;cx!=-2;cx = prev[cx],cy = ty){
+    ty = xy[cx];
+    yx[cy] = cx;
+    xy[cx] = cy;
+  }
+}
+
+int solve (){
+  int ret = 0;
+  maxmatch = 0;
+  memset(xy,-1,sizeof(xy));
+  memset(yx,-1,sizeof(yx));
+  init();
+  for(int i = 0;i<TOTAL;++i) {
+    augment();
+  }
+  for(int x = 0;x<TOTAL;++x) {
+    if (cost [x][xy[x]] > 0) {
+      ret += cost [x][xy [x]];
+    }
+  }
+  return ret;
+}
+
+int main(){
+  #ifndef ONLINE_JUDGE
+    freopen ("in.txt","r",stdin);
+  #endif
+  cin.sync_with_stdio(0); cin.tie(0);
+  int tt;
+  cin >> tt;
+  for(int tc = 0; tc < tt; ++tc) {
+    int n;
+    cin >> n;
+    TOTAL = n;
+    for(int i = 0;i < n; ++i) {
+      for(int j = 0;j < n; ++j) {
+        cin >> mat [i][j];
+        cost [i][j] = mat[i][j];
+      }
+    }
+    cout << solve () << '\n';
+  }
+}

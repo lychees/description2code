@@ -1,0 +1,155 @@
+#include<iostream>
+#include<vector>
+#include<cstdio>
+#include<cmath>
+#include<algorithm>
+#include<cstdlib>
+#include<climits>
+
+#define p_b push_back    
+//#define getchar_unlocked getchar
+//#define putchar_unlocked putchar
+#define SIZE 5
+#define lld long long int
+#define ulld lld
+#define modulo(x) ((x)<MOD ? (x) : (x)%MOD)
+#define modulo2(x) ((x)<MOD ? (x) : ((x)-MOD))
+#define MOD 1000000007
+#define INF 1000000000
+    
+
+using namespace std;
+void scanStr(char *str)
+{
+ lld i=1;
+ char ch;
+ for(ch=getchar_unlocked();ch!='\n' && ch!=' ';ch=getchar_unlocked())
+    str[i++]=ch;
+ str[i]='\0';
+ return ; 
+}
+
+inline void fastOut(lld n)
+{
+ if(n<10){putchar_unlocked(n+'0');return;}
+     fastOut(n/10);
+ putchar_unlocked(n%10 + '0');
+ return ;
+}
+    
+lld powerFast(lld a,lld b)
+{
+ lld i=a,j=1,k=1;
+ while(b)
+ {
+  if(b&1){k=modulo(k*i);}
+  i=modulo(i*i);
+  b=b>>1;
+ }
+ return k;
+}
+
+inline lld scan( )
+{
+ lld n = 0;
+ char c;
+ for( c = getchar_unlocked(); c==' ' || c=='\n' || c == '\t'; c = getchar_unlocked());
+ for( ; c > 0x2f && c < 0x3a; c = getchar_unlocked())
+ n = (n * 10) + (c & 0x0f);
+ return n;
+}
+
+lld nCr(lld n,lld r)
+{
+
+  if(r==0){
+      return 1;
+  }
+  if(r>n){
+  	return 0;
+  }
+  
+  lld num=1,den=1,i;
+  for(i=1;i<=r;i++){
+      num=(num*(n-i+1))%MOD;
+      den=(den*i)%MOD;
+  }
+  lld MMI=powerFast(den,MOD-2);
+  return (num*MMI)%MOD;
+}
+
+void matrixMultiply(lld ans[][SIZE],lld A[][SIZE],lld B[][SIZE],lld rA,lld cA,lld rB,lld cB)
+{
+ lld i,j,k;
+ lld temp[SIZE][SIZE];
+ for(i=0;i<rA;i++){
+    for(j=0;j<cB;j++){
+       ulld ans=0;
+       for(k=0;k<cA;k++)
+          ans=modulo2((ans+modulo((A[i][k]*B[k][j]))));
+       temp[i][j]=ans;
+    }
+ }
+ for(i=0;i<rA;i++){
+ 	for(j=0;j<cB;j++){
+ 		ans[i][j]=temp[i][j];
+	 }
+ }
+ return ;
+}
+
+lld A[40][5][5];
+lld F[10],G[10],H[10],T[10];
+
+int main()
+{
+	lld a,b,c,d,e,f;
+	//ios_base::sync_with_stdio(false);
+	cin>>a>>b>>c>>d>>e>>f>>F[0]>>F[1]>>G[0]>>G[1];
+	H[0]=(e*F[0]+f*G[0])%MOD;
+	H[1]=(e*F[1]+f*G[1])%MOD;
+	T[0]=H[0];T[1]=(T[0]+H[1])%MOD;
+	
+	A[0][0][0]=a;A[0][0][3]=b;
+	A[0][1][0]=1;A[0][2][1]=d;A[0][2][2]=c;
+	A[0][3][2]=1;
+	A[0][4][0]=(e*a)%MOD; A[0][4][1]=(d*f)%MOD; A[0][4][2]=(c*f)%MOD; A[0][4][3]=(e*b)%MOD; A[0][4][4]=1;
+	
+	
+	
+	for(lld i=1;i<=30;i++){
+		matrixMultiply(A[i],A[i-1],A[i-1],5,5,5,5);
+	}
+	
+	lld Q,n;
+	cin>>Q;
+	lld initM[5];
+	while(Q--){
+		n=scan();
+		if(n>=2){
+			n--;
+			initM[0]=F[1];initM[1]=F[0];initM[2]=G[1];initM[3]=G[0];initM[4]=T[1];
+			lld temp[5];
+			for(lld i=0;i<=30;i++){
+				if(n&(1LL<<i)){
+					for(lld j=0;j<5;j++){
+						temp[j]=0;
+						for(lld k=0;k<5;k++){
+							temp[j]+=A[i][j][k]*initM[k];
+						}
+						temp[j]%=MOD;
+					}
+					for(lld j=0;j<5;j++){
+						initM[j]=temp[j];
+					}
+				}
+			}
+			fastOut(initM[4]);
+		}
+		else{
+			fastOut(T[n]);
+		}
+		putchar_unlocked('\n');
+	}
+	return 0;
+}

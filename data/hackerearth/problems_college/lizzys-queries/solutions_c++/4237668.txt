@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+#define MAXN 100001
+#define deb(i) cerr << ">> " << #i << " = " << i << '\n';
+struct segTree {
+  vector<int> tree;
+  int sz;
+  LL pr, mod;
+  
+  LL clamp(LL v) {
+    v %= mod;
+    if (v < 0) v += mod;
+    return v;
+  }
+  LL fastpow(LL a, LL n) {
+    LL ret = 1;
+    if (n < 0) {
+      a = fastpow(a, mod - 2);
+      n = -n;
+    }
+    while (n > 0) {
+      if (n & 1) ret = (ret * a) % mod;
+      a = (a * a) % mod;
+      n >>= 1;
+    }
+    return ret;
+  }
+
+  void update(int i, int v) {
+    LL val = (v * fastpow(pr, i)) % mod;
+    int node = sz + i;
+    tree[node] = val;
+    while (node > 1) {
+      node /= 2;
+      tree[node] = (tree[2 * node] + tree[2 * node + 1]) % mod;
+    }
+  }
+
+  LL query_aux(int l, int r, int node = 1, int x = 0, int y = -1) {
+    if (y == -1) y = sz;
+    l = max(l, x), r = min(r, y);
+    if (l >= r) return 0;
+    if (l == x && r == y) return tree[node];
+    return (query_aux(l, r, node * 2, x, (x + y) / 2) +
+	    query_aux(l, r, node * 2 + 1, (x + y) / 2, y)) % mod;
+  }
+
+  segTree(string str, LL p, LL m) {
+    sz = 1;
+    pr = p;
+    mod = m;
+    while (sz <= str.length()) sz <<= 1;
+    tree.resize(2 * sz, 0);
+    
+    for (int i = 1; i <= str.length(); i++) {
+      update(i, str[i - 1] - 'a' + 1);
+    }
+  }
+
+  LL query(int l, int r) {
+    LL ret = clamp(query_aux(l, r));
+    ret = (ret * fastpow(pr, 1-l)) % mod;
+    return clamp(ret);
+  }
+};
+
+struct treePair {
+  segTree *orig, *rev;
+  int sz;
+  LL pr, mod;
+  
+  treePair(string str, LL p, LL m) {
+    orig = new segTree(str, p, m);
+
+    reverse(str.begin(), str.end());
+    rev = new segTree(str, p, m);
+
+    sz = str.length();
+    pr = p, mod = m;
+  }
+  
+  void update(int i, int v) {
+    orig->update(i, v);
+    rev->update(sz - i + 1, v);
+  }
+  bool is_palin(int l, int r) {
+    LL v1 = orig->query(l, r + 1);
+    LL v2 = rev->query(sz - r + 1, sz - l + 2);
+    LL v3 = (v1 - v2) % mod;
+    return v3 == 0;
+  }
+};
+
+int LEN = 1;
+pair<LL, LL> prime_mods[] = {{23, 1e9 + 7},
+			     {29, 1e9 + 7},
+			     {37, 1e9 + 7},
+			     {23, 1e9 + 9},
+			     {29, 1e9 + 9}};
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(NULL); 
+
+  int n, m;
+  string str;
+  cin >> n >> m >> str;
+
+  treePair* tp[LEN];
+  for (int i = 0; i < LEN; i++)
+    tp[i] = new treePair(str, prime_mods[i].first, prime_mods[i].second);
+
+  int ty, l, r;
+  char ch;
+  while (m--) {
+    cin >> ty >> l;
+    if (ty == 0) {
+      cin >> ch;
+      r = ch - 'a' + 1;
+      for (int i = 0; i < LEN; i++)
+	tp[i]->update(l, r);
+    } else {
+      cin >> r;
+      bool palin = true;
+      for (int i = 0; i < LEN; i++) {
+	palin = palin && tp[i]->is_palin(l, r);
+      }
+      cout << (palin ? "Yes" : "No") << '\n';
+    }
+  }
+  
+  return 0;
+}

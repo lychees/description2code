@@ -1,0 +1,79 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef long long int lli;
+const lli UNDEF = -1;
+
+lli dp[2][11][2001]; // item, prime, weight
+vector<lli> primes = {2,3,5,7,11,13,17,19,23,29};
+
+
+void reset_dp(int item, int max_weight)
+{
+	for(int prime = 0; prime <= 10; prime++)
+		for(int w = 0; w <= max_weight; w++)
+			dp[item][prime][w] = UNDEF;
+}
+
+// [item][primes][weight][0/1][0/1] == current item used, current prime used
+
+lli solve(const vector<pair<lli,lli>> & items, int max_weight)
+{
+	dp[0][0][0] = 0;
+	dp[0][0][items[0].second] = items[0].first;
+	for(int prime = 1; prime <= 10; prime++)
+	{
+		dp[0][prime][0] = 0;
+		dp[0][prime][items[0].second] = primes[prime-1] * items[0].first;
+	}
+
+	for(int item = 1; item < (int)items.size(); item++)
+	{
+		int i = item % 2;
+		int other = 1-i;
+		lli cur_price = items[item].first,
+			 cur_weight = items[item].second;
+		for(int prime = 0; prime <= 10; prime++)
+		{
+			for(int w = 0; w <= max_weight; w++)
+			{
+				dp[i][prime][w] = dp[other][prime][w];
+				if( prime > 0 )
+					dp[i][prime][w] = max(dp[i][prime][w], dp[i][prime-1][w]);
+				if( w-cur_weight >= 0 )
+				{
+					if( dp[other][prime][w-cur_weight] >= 0 )
+						dp[i][prime][w] = max(dp[i][prime][w], dp[other][prime][w-cur_weight] + cur_price);
+					if( prime > 0 && dp[other][prime-1][w-cur_weight] >= 0 )
+						dp[i][prime][w] = max(dp[i][prime][w], dp[other][prime-1][w-cur_weight] + primes[prime-1] * cur_price);
+				}
+			}
+		}
+	}
+	lli best = 0;
+	for(int item = 0; item < 2; item++)
+		for(int prime = 0; prime <= 10; prime++)
+			for(int w = 0; w <= max_weight; w++)
+				best = max(best, dp[item][prime][w]);
+	return best;
+}
+
+int main()
+{
+	int num_items, max_weight;
+	cin >> num_items >> max_weight;
+	vector<pair<lli,lli>> items(num_items); // profit, weight
+
+	for(int n = 0; n < num_items; n++)
+		cin >> items[n].first >> items[n].second;
+
+	sort(items.begin(), items.end());
+	for(int n = 0; n < 2; n++)
+		reset_dp(n, max_weight);
+
+	cout << solve(items, max_weight) << endl;
+
+	return 0;
+}

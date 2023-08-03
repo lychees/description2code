@@ -1,0 +1,101 @@
+//mishraiiit
+#include<bits/stdc++.h>
+#define ll long long int
+#define fastScan ios_base::sync_with_stdio(0); cin.tie(NULL);
+#define MaxVal 100000
+using namespace std;
+
+int arr[100001], SQRT;
+
+ll stored[100001];
+ll ans = 0;
+
+int tree[100001];
+
+int n, q, l, r, k;
+
+struct query {
+  int l, r, index;
+  void set(int lxl, int rr, int ii) {
+    l = lxl; r = rr; index = ii;
+  }
+};
+
+int read(int idx){
+    int sum = 0;
+    while (idx > 0){
+        sum += tree[idx];
+        idx -= (idx & -idx);
+    }
+    return sum;
+}
+
+void update(int idx ,int val){
+    while (idx <= MaxVal){
+        tree[idx] += val;
+        idx += (idx & -idx);
+    }
+}
+
+ll rangesum(ll l, ll r) {
+  r = min(r, 100000LL);
+  l = max(0LL, l);
+  return read(r) - read(l - 1);
+}
+
+query Q[100001];
+
+bool comp(query a, query b) {
+  if(a.l / SQRT == b.l / SQRT)
+    return a.r < b.r;
+  else
+    return a.l < b.l;
+}
+
+void remove(int a) {
+  update(arr[a], -1);
+  ans = ans - rangesum(arr[a] - k, arr[a] + k);
+}
+
+void add(int a) {
+  //cout << arr[a] << " " << rangesum(arr[a] - k, arr[a] + k) << endl;
+  ans = ans + rangesum(arr[a] - k, arr[a] + k);
+  update(arr[a], 1);
+}
+
+int main() {
+
+  scanf("%d%d%d", &n, &q, &k);
+  SQRT = sqrt(n);
+
+  for(int i = 1; i <= n; i++) {
+    scanf("%d", arr + i);
+  }
+
+  for(int i = 1; i <= q; i++) {
+    cin >> l >> r;
+    Q[i].set(l, r, i);
+  }
+
+  sort(Q + 1, Q + q + 1, comp);
+
+  l = 1, r = 1;
+  update(arr[1], 1);
+
+  for(int i = 1; i <= q; i++) {
+    while(l < Q[i].l)
+      remove(l++);
+    while(l > Q[i].l)
+      add(--l);
+    while(r < Q[i].r)
+      add(++r);
+    while(r > Q[i].r)
+      remove(r--);
+    stored[Q[i].index] = ans + Q[i].r - Q[i].l + 1;
+  }
+
+  for(int i = 1; i <= q; i++)
+    printf("%lld\n", stored[i]);
+
+  return 0;
+}

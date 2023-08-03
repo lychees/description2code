@@ -1,0 +1,142 @@
+//satyaki3794
+#include <bits/stdc++.h>
+#define ff first
+#define ss second
+#define pb push_back
+#define MOD (1000000007LL)
+#define LEFT(n) (2*(n))
+#define RIGHT(n) (2*(n)+1)
+ 
+using namespace std;
+typedef long long ll;
+typedef pair<int, int> ii;
+typedef pair<int, ii> iii;
+ 
+ll pwr(ll base, ll p, ll mod = MOD){
+ll ans = 1;while(p){if(p&1)ans=(ans*base)%mod;base=(base*base)%mod;p/=2;}return ans;
+}
+ 
+ll gcd(ll a, ll b){
+    if(b == 0)  return a;
+    return gcd(b, a%b);
+}
+    
+ll invMod(ll n){
+    return pwr(n, MOD-2);
+}
+
+
+int n;
+ll k, dist[100005], subsize[100005], curr;
+vector<int> adj[100005];
+vector<iii> edgeList;
+bool done[100005];
+
+void dfs1(int v, int par){
+    done[v] = true;
+    subsize[v] = 1;
+    dist[v] = 0;
+    for(auto vv : adj[v]){
+        if(vv == par)   continue;
+        dfs1(vv, v);
+        subsize[v] += subsize[vv];
+        dist[v] += dist[vv] + subsize[vv];
+    }
+}
+
+
+void dfs2(int v, int par, ll now, int root){
+
+    curr = min(curr, now+dist[v]);
+    for(auto vv : adj[v]){
+        if(vv != par){
+            ll temp = now;
+            temp += dist[v];
+            temp -= dist[vv] + subsize[vv];
+            temp += subsize[root] - subsize[vv];
+            dfs2(vv, v, temp, root);
+        }
+    }
+}
+
+void construct(int mid){
+
+    for(int i=1;i<=n;i++){
+        adj[i].clear();
+        done[i] = false;
+    }
+
+    for(auto e : edgeList){
+        int c = e.ff, a = e.ss.ff, b = e.ss.ss;
+        if(c > mid) continue;
+        adj[a].pb(b);
+        adj[b].pb(a);
+    }
+}
+
+
+
+bool ok(){
+
+    ll ans = 0;
+    for(int i=1;i<=n;i++)
+        if(!done[i]){
+            dfs1(i, -1);
+            curr = (ll)1e15;
+            dfs2(i, -1, 0, i);
+            ans += curr;
+        }
+    return (ans <= k);
+}
+
+
+int main(){
+
+    ios_base::sync_with_stdio(0);
+
+    cin>>n>>k;
+    int e = n-1, mini = MOD, maxi = 0;
+
+    while(e--){
+    	int a, b, c;
+    	cin>>a>>b>>c;
+    	edgeList.pb({c, {a, b}});
+    	mini = min(mini, c);
+    	maxi = max(maxi, c);
+    }
+
+    // if(k < mini){
+    // 	cout<<(mini-1);
+    // 	return 0;
+    // }
+
+// construct(6);
+// cout<<"adj:\n";
+// for(int i=1;i<=n;i++){
+//     cout<<i<<": ";for(auto j : adj[i])  cout<<j<<" ";cout<<endl;
+// }cout<<endl;
+
+// cout<<ok();
+
+    int lo = 1, hi = (int)1e9, ans = 0;
+    while(lo <= hi){
+
+    	int mid = (lo+hi)/2;
+    	construct(mid);
+// cout<<mid<<endl;
+
+        if(ok()){
+            ans = max(ans, mid);
+            lo = mid+1;
+        }
+        else
+            hi = mid-1;
+    }
+
+    cout<<ans;
+    return 0;
+}
+
+
+
+

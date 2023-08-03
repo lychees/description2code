@@ -1,0 +1,163 @@
+//say no to BIT
+#include <set>
+#include <queue>
+#include <stack>
+#include <algorithm>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <fstream>
+#include <cassert>
+#include <numeric>
+
+using namespace std;
+
+#define sz(a) (int)(a.size())
+#define len(a) (int)(a.length())
+#define pb push_back
+#define mp make_pair
+static struct IO {
+	char tmp[1 << 10];
+
+	// fast input routines
+	char cur;
+
+//#define nextChar() (cur = getc_unlocked(stdin))
+//#define peekChar() (cur)
+	inline char nextChar() { return cur = getc(stdin); }
+	inline char peekChar() { return cur; }
+
+	inline operator bool() { return peekChar(); }
+	inline static bool isBlank(char c) { return (c < '-' && c); }
+	inline bool skipBlanks() { while (isBlank(nextChar())); return peekChar() != 0; }
+
+	inline IO& operator >> (char & c) { c = nextChar(); return *this; }
+
+	inline IO& operator >> (char * buf) {
+		if (skipBlanks()) {
+			if (peekChar()) {
+				*(buf++) = peekChar();
+				while (!isBlank(nextChar())) *(buf++) = peekChar();
+			} *(buf++) = 0; } return *this; }
+
+	inline IO& operator >> (string & s) {
+		if (skipBlanks()) {	s.clear(); s += peekChar();
+			while (!isBlank(nextChar())) s += peekChar(); }
+		return *this; }
+
+	inline IO& operator >> (double & d) { if ((*this) >> tmp) sscanf(tmp, "%lf", &d); return *this;	}
+
+#define defineInFor(intType) \
+	inline IO& operator >>(intType & n) { \
+		if (skipBlanks()) { \
+			int sign = +1; \
+			if (peekChar() == '-') { \
+				sign = -1; \
+				n = nextChar() - '0'; \
+			} else \
+				n = peekChar() - '0'; \
+			while (!isBlank(nextChar())) { \
+				n += n + (n << 3) + peekChar() - 48; \
+			} \
+			n *= sign; \
+		} \
+		return *this; \
+	}
+
+defineInFor(int)
+defineInFor(unsigned int)
+defineInFor(long long)
+
+	// fast output routines
+
+//#define putChar(c) putc_unlocked((c), stdout)
+	inline void putChar(char c) { putc(c, stdout); }
+	inline IO& operator << (char c) { putChar(c); return *this; }
+	inline IO& operator << (const char * s) { while (*s) putChar(*s++); return *this; }
+
+	inline IO& operator << (const string & s) { for (int i = 0; i < (int)s.size(); ++i) putChar(s[i]); return *this; }
+
+	char * toString(double d) { sprintf(tmp, "%lf%c", d, '\0'); return tmp; }
+	inline IO& operator << (double d) { return (*this) << toString(d); }
+
+
+#define defineOutFor(intType) \
+	inline char * toString(intType n) { \
+		char * p = (tmp + 30); \
+		if (n) { \
+			bool isNeg = 0; \
+			if (n < 0) isNeg = 1, n = -n; \
+			while (n) \
+				*--p = (n % 10) + '0', n /= 10; \
+			if (isNeg) *--p = '-'; \
+		} else *--p = '0'; \
+		return p; \
+	} \
+	inline IO& operator << (intType n) { return (*this) << toString(n); }
+
+defineOutFor(int)
+defineOutFor(long long)
+
+#define endl ('\n')
+#define cout __io__
+#define cin __io__
+} __io__;
+
+vector <pair <int, int> > Lst, Rst;
+vector <int> pts;
+
+bool cmpL(const pair <int, int> &lhs, const pair <int, int> &rhs) {
+	return lhs.first < rhs.first;
+}
+bool cmpR(const pair <int, int> &lhs, const pair <int, int> &rhs) {
+	return lhs.second < rhs.second;
+}
+
+int main() {
+	int t; cin >> t;
+	while(t--) {
+		Lst.clear();
+		Rst.clear();
+		pts.clear();
+		int n, a, b, c; cin >> n >> a >> b >> c;
+		for(int i = 0; i < n; i++) {
+			int L, R; cin >> L >> R;
+			Lst.pb(mp(L, R));
+			Rst.pb(mp(L, R));
+			pts.pb(L);
+			pts.pb(R);
+		}
+		sort(Lst.begin(), Lst.end(), cmpL);
+		sort(Rst.begin(), Rst.end(), cmpR);
+		sort(pts.begin(), pts.end());
+		pts.resize(unique(pts.begin(), pts.end()) - pts.begin());
+		int lo, hi, res;
+		long long max_value = 0;
+		for(int i = 0; i < sz(pts); i++) {
+			int v = pts[i];
+			lo = 0, hi = n - 1, res = n;
+			while(lo <= hi) {
+				int mid = (lo + hi) >> 1;
+				if(Lst[mid].first > v) res = mid, hi = mid - 1;
+				else lo = mid + 1;
+			}
+			int nA = n - res;
+			lo = 0, hi = n - 1, res = -1;
+			while(lo <= hi) {
+				int mid = (lo + hi) >> 1;
+				if(Rst[mid].second < v) res = mid, lo = mid + 1;
+				else hi = mid - 1;
+			}
+			int nC = res + 1;
+			int nB = n - nA - nC;
+			max_value = max(max_value, nA * (long long)a + nB * (long long)b + nC * (long long)c);
+		}
+		cout << max_value << '\n';
+	}
+	return 0;
+}

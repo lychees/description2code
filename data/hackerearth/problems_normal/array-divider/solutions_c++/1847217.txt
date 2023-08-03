@@ -1,0 +1,52 @@
+#include <iostream>
+#define LL long long
+using namespace std;
+
+int arr[510];
+LL cumulative[510];
+LL dp[510][310][3];
+bool check[510][310];
+int n,k;
+LL func(int i,int j)
+{
+	if(check[i][j]) return dp[i][j][0];
+	if(j==1)
+	{
+		dp[i][j][0]=0;
+		dp[i][j][1]=cumulative[i]*cumulative[i];
+		dp[i][j][2]=cumulative[i];
+		check[i][j]=1;
+		return 0;
+	}
+	LL last=0;
+	for(int l1=i;l1>=j-1;--l1)
+	{
+		last+=arr[l1];
+		func(l1-1,j-1);
+		LL x = dp[l1-1][j-1][0] + (dp[l1-1][j-1][1]+(j-1)*last*last) -2*dp[l1-1][j-1][2]*last;
+		if(!check[i][j] || x<dp[i][j][0])
+		{
+			dp[i][j][0]=x;
+			dp[i][j][1]=dp[l1-1][j-1][1]+last*last;
+			dp[i][j][2]=dp[l1-1][j-1][2]+last;
+		}
+		check[i][j]=1;
+	}
+	//printf("%d %d %lld\n",i,j,dp[i][j][0]);
+	return dp[i][j][0];
+}
+int main()
+{
+    scanf("%d %d",&n,&k);
+    for(int i=0;i<n;++i)
+    {
+    	scanf("%d",&arr[i]);
+    	cumulative[i]=(i==0?0:cumulative[i-1])+arr[i];
+    }
+    printf("%lld\n",func(n-1,k));
+    /*for(int i=0;i<n;++i)
+    {
+    	for(int j=1;j<=k;++j) printf("%lld ",dp[i][j][]);
+    }*/
+    return 0;
+}

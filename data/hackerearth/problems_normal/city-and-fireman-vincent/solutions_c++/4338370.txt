@@ -1,0 +1,78 @@
+#include <cstdio>
+#include <algorithm>
+
+typedef long long ll;
+
+const int NMAX = 1003;
+const ll MOD = (int)1e9 + 7;
+
+int e[NMAX];
+int arr[NMAX];
+int size[NMAX];
+
+int arr_min[NMAX];
+int size_min[NMAX];
+
+int root(int s)
+{
+	int i = s;
+	while(arr[i] != i) {
+		arr[i] = arr[arr[i]];
+		i = arr[i];
+	}
+	return i;
+}
+
+void unite(int a, int b)
+{
+	int root_a = root(a);
+	int root_b = root(b);
+
+	if(size[root_a] < size[root_b]) {
+		arr[root_a] = root_b;
+		size[root_b] += size[root_a];
+		arr_min[root_b] = std::min(arr_min[root_b], 
+										arr_min[root_a]);
+	}
+	else {
+		arr[root_b] = root_a;
+		size[root_a] += size[root_b];
+		arr_min[root_a] = std::min(arr_min[root_a],
+										arr_min[root_b]);
+	}
+}
+
+int main()
+{
+	int n,k,s1,s2;
+	ll res = 1;
+	scanf("%d", &n);
+	for(int i = 1; i <= n; i++) {
+		scanf("%d", &e[i]);
+		arr[i] = i;
+		size[i] = 1;
+		arr_min[i] = e[i];
+		size_min[i] = 0;
+	}
+
+	scanf("%d", &k);
+	for(int i = 0; i < k; i++) {
+		scanf("%d %d", &s1, &s2);
+		unite(s1, s2);
+	}
+
+	for(int i = 1; i <= n; i++) {
+		int s = root(i);
+		if(e[i] == arr_min[s])
+			size_min[s]++;
+	}
+
+	for(int i = 1; i <= n; i++) {
+		if(i == arr[i]){
+			res = (res * size_min[i]) % MOD;
+		}
+	}
+
+	printf("%lld\n", res);
+
+}

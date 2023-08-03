@@ -1,0 +1,117 @@
+#include<bits/stdc++.h>
+
+#define ll long long
+#define mp make_pair
+#define pi pair<int,int>
+#define pli pair<ll,ll>
+#define pb push_back
+
+const double EPS = 1e-24;
+const ll MOD = 1000000007ll;
+const double PI = 3.14159265359;
+int INF = 2147483645;
+
+template <class T>T Max2(T a,T b){return a<b?b:a;}
+template <class T>T Min2(T a,T b){return a<b?a:b;}
+template <class T>T Max3(T a,T b,T c){return Max2(Max2(a,b),c);}
+template <class T>T Min3(T a,T b,T c){return Min2(Min2(a,b),c);}
+template <class T>T Max4(T a,T b,T c,T d){return Max2(Max2(a,b),Max2(c,d));}
+template <class T>T Min4(T a,T b,T c,T d){return Min2(Min2(a,b),Max2(c,d));}
+
+using namespace std;
+
+char snum[105], str[105];
+ 
+string line;
+ 
+ 
+ 
+int Digits , Digit[11];
+pair<int , int> par[1024][1000]; 
+int edge[1024][1000];
+bool vis[1024][1000];
+int n ;
+string bfs(void){
+ 
+    queue<pair<int, int> > Q ;
+ 
+    for(int i = 0;i < (1<<Digits);i++){
+         for(int j = 0;j < n;j++){
+            vis[i][j] = false;
+        }
+    }
+ 
+    Q.push(make_pair(0,0));
+    vis[0][0] = true;
+    int smod, smask , tmask, tmod;
+    int total = (1 << Digits ) - 1;
+ 
+    pair<int, int> p ;
+    while(!Q.empty()){
+        p = Q.front();
+        smask = p.first ,smod = p.second;
+        if(smask == total && smod == 0) break;
+        Q.pop();
+        for(int i = 0;i < Digits;i++){
+            if(smask == 0 && Digit[i] == 0) continue;
+            tmask = smask | (1 << i);
+            tmod = (smod*10 + Digit[i])%n;
+            if(vis[tmask][tmod]) continue;
+            vis[tmask][tmod] = true;
+            par[tmask][tmod] = p;
+            edge[tmask][tmod] = Digit[i];
+            Q.push(make_pair(tmask,tmod));
+        }
+    }
+ 
+    if(!vis[total][0]) return "0";
+    smask = total , smod = 0 ;
+    string ans  ;
+ 
+    while(smask){
+        ans += (edge[smask][smod] + '0');
+        tmask = par[smask][smod].first;
+        tmod = par[smask][smod].second;
+        smask = tmask , smod = tmod ;
+    }
+    reverse(ans.begin(),ans.end());
+    return ans;
+}
+ 
+int main(){
+ 
+    int t, tnum ;
+    gets(snum);
+    t= atoi(snum);
+    while(t--){
+        gets(str);
+        line = string(str);
+        stringstream ss ;
+        ss << str;
+        Digits = 0;
+        while(ss >> tnum) Digit[Digits++] = tnum;
+        gets(snum);
+        n = atoi(snum);
+        sort(Digit,Digit+Digits);
+        string ret = bfs();
+        if(ret[0] == '0') puts("Impossible");
+        else{
+            int curr = 0 , l = ret.size();
+            string ans = "";
+            int s  = 0;
+            for(int i = 0;i < l;i++){
+                curr = curr*10 + ret[i] - '0';
+                if(curr < n) ans += '0';
+                else{
+                    ans += ('0' + (curr/n));
+                    curr %= n ;
+                }
+            }
+            for(int i = 0;i < ans.length()  && ans[i] == '0';i++)  s++;
+            cout << ret << " = " << n << " * " << ans.substr(s) << endl;
+        }
+    }
+    return 0;
+}
+ 
+ 

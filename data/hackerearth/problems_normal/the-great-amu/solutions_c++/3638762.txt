@@ -1,0 +1,123 @@
+#include<stdio.h>
+#include<iostream>
+#include<vector>
+#include<cmath>
+#include<algorithm>
+#include<memory.h>
+#include<map>
+#include<set>
+#include<queue>
+#include<list>
+#include<sstream>
+#include<cstring>
+#define mp make_pair
+#define pb push_back      
+#define F first
+#define S second
+#define SS stringstream
+#define sqr(x) ((x)*(x))
+#define m0(x) memset(x,0,sizeof(x))
+#define m1(x) memset(x,63,sizeof(x))
+#define CC(x) cout << (x) << endl
+#define pw(x) (1ll<<(x))
+#define buli(x) __builtin_popcountll(x)
+#define forn(i, n) for(int i = 0 ; (i) < (n) ; ++i)
+#define N 333
+
+#define TASK "1"
+
+using namespace std;
+typedef pair<int,int> pt;
+
+int n, q;
+
+int a[N][N], w[N][N], y[N];
+
+int b[N][N];
+
+
+int A[3][N][N];
+int R[3][N][N];
+
+int mods[3] = {2,5,719};
+
+int pv(int a, int b, int mod) {
+	if (b == 0) return 1;
+	long long r = pv(a, b / 2, mod);
+	r = r * r % mod;
+	if (b % 2) r = r * a % mod;
+	return r;
+}
+
+void prep(int id) {
+	int mod = mods[id];
+//	for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) a[i][j] = w[j][i] % mod;
+	for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) a[i][j] = w[i][j] % mod;
+	for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) b[i][j] = 0;
+	for (int i = 0; i < n; i++) b[i][i] = 1;	
+
+	int bs = 0;
+	for (int i = 0; i < n; i++) {
+		int x = -1;
+		for (int j = bs; j < n; j++) if (a[j][i] != 0) {
+			x = j;
+			break;
+		}			
+		if (x == -1) continue;
+
+		for (int j = 0; j < n; j++) swap(a[x][j], a[bs][j]);
+		for (int j = 0; j < n; j++) swap(b[x][j], b[bs][j]);
+
+		int rev = pv(a[bs][i], mod - 2, mod);
+
+		for (int j = 0; j < n; j++) if (j != bs) {
+			int coef = a[j][i] * rev % mod;
+
+			for (int k = 0; k < n; k++) a[j][k] = (a[j][k] - a[bs][k] * coef % mod + mod * mod) % mod;
+
+			for (int k = 0; k < n; k++) b[j][k] = (b[j][k] - b[bs][k] * coef % mod + mod * mod) % mod;
+		}
+		bs++;
+	}
+	for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) A[id][i][j] = a[i][j];
+	for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) R[id][i][j] = b[i][j];
+}
+
+int main(){
+	#ifdef home
+		freopen(TASK".in","r",stdin);	
+		freopen(TASK".out","w",stdout);
+	#endif		
+	ios::sync_with_stdio(false);
+	cin >> n >> q;
+
+	for (int i = 0; i < n; i++) for (int j = 0; j < n; j++) cin >> w[i][j];
+
+	prep(0);
+	prep(1);
+	prep(2);
+
+	while (q--) {
+		for (int i = 0; i < n; i++) cin >> y[i];
+
+		int ok = 1;
+
+		for (int id = 0; id < 3; id++) {
+			if (ok) for (int i = 0; i < n; i++) {
+				int bb = 0;
+				for (int j = 0; j < n; j++) bb = (bb + y[j] * R[id][i][j]) % mods[id];
+				if (bb != 0) {
+					int em = 1;
+					for (int j = 0; j < n; j++) if (A[id][i][j] % mods[id] != 0) em = 0;
+					if (em) {
+						ok = 0;
+						break;
+					}
+				}
+			}
+		}
+		if (ok) cout << "Yes\n"; else cout << "No\n";
+	}
+
+	return 0;
+}

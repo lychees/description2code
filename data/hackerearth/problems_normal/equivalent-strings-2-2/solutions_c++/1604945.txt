@@ -1,0 +1,153 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define mem(a, x) memset(a, x, sizeof(a))
+#define all(a) a.begin(), a.end()
+#define uni(a) a.erase(unique(all(a)), a.end())
+#define count_bits(x) __builtin_popcount(x)
+#define count_bitsll(x) __builtin_popcountll(x)
+#define least_bits(x) __builtin_ffs(x)
+#define least_bitsll(x) __builtin_ffsll(x)
+#define most_bits(x) 32 - __builtin_clz(x)
+#define most_bitsll(x) 64 - __builtin_clz(x)
+
+vector<string> split(const string &s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c)) v.push_back(x);
+	return v;
+}
+
+#define error(args...) { vector<string> _v = split(#args, ','); err(_v.begin(), args); }
+
+void err(vector<string>::iterator it) {}
+
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << '\n';
+	err(++it, args...);
+}
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {while (b != 0) {T c = a; a = b; b = c % b;} return a;}
+
+const int N = 100001;
+char A[N], B[N];
+ll dp[N];
+
+char pb[20];
+
+template<class T> inline void readNum(T &n) {
+    n = 0;
+    int c = getchar_unlocked(), f = 1;
+    while (c != '-' && (c < '0' || c > '9'))
+        c = getchar_unlocked();
+    if (c == '-') {
+        f = -1; c = getchar_unlocked();
+    }
+    while (c >= '0' && c <= '9') {
+        n = (n<<3) + (n<<1) + c - '0';
+        c = getchar_unlocked();
+    }
+    n *= f;
+}
+
+struct Fenwick {
+    vector<ll> bit;
+    int fw_size;
+    
+    Fenwick() {}
+    Fenwick(int _n) {
+        fw_size = _n;
+        bit.assign(_n + 1, 0);
+    }
+    
+    void add(int ind, ll val) {
+        for (int i = ind; i <= fw_size; i += i & -i) {
+            bit[i] += val;
+            if (bit[i] > MOD) bit[i] -= MOD;
+        }
+    }
+    
+    ll get(int ind) {
+        ll ans = 0;
+        for (int i = ind; i > 0; i -= i & -i) {
+            ans += bit[i];
+            if (ans >= MOD) ans -= MOD;
+        }
+        return ans;
+    }
+};
+
+Fenwick fwA[26], fwB[26];
+
+ll mod_pow(ll x, ll y) {
+    ll res = 1;
+    ll a = x;
+    while (y > 0) {
+        if (y & 1) {
+            res = (res * a) % MOD;
+        }
+        a = (a * a) % MOD;
+        y >>= 1;
+    }
+    return res;
+}
+
+int main(int argc, char *argv[]) {
+    //ios_base::sync_with_stdio(false);
+    int ntest, q, x, y, z;
+    
+    dp[0] = 1;
+    repu(i, 1, N) dp[i] = (29 * dp[i - 1]) % MOD;
+
+    readNum(ntest);
+    while (ntest--) {
+    	scanf("%s", A);
+    	scanf("%s", B);
+    	int n = strlen(A);
+    	repu(i, 0, 26) {
+    		fwA[i] = Fenwick(n);
+    		fwB[i] = Fenwick(n);
+    	}
+    	repu(i, 0, n) fwA[A[i] - 'a'].add(i + 1, dp[i]);
+    	repu(i, 0, n) fwB[B[i] - 'a'].add(i + 1, dp[i]);
+    	readNum(q);
+    	repu(t, 0, q) {
+    		readNum(x); readNum(y); readNum(z);
+    		--x, --y;
+    		ll addA = 0, addB = 0;
+    		if (x < y) addA = mod_pow(29, y - x);
+    		if (x > y) addB = mod_pow(29, x - y);
+    		vector<ll> tmpA, tmpB;
+    		repu(i, 0, 26) {
+    			ll tmp = fwA[i].get(x + z) - fwA[i].get(x);
+    			if (tmp < 0) tmp += MOD;
+    			if (addA) tmp = (tmp * addA) % MOD;
+    			tmpA.push_back(tmp);
+    			
+    			tmp = fwB[i].get(y + z) - fwB[i].get(y);
+    			if (tmp < 0) tmp += MOD;
+    			if (addB) tmp = (tmp * addB) % MOD;
+    			tmpB.push_back(tmp);
+    		}
+    		bool good = 1;
+    		sort(all(tmpA)); sort(all(tmpB));
+    		repu(i, 0, 26) if (tmpA[i] != tmpB[i]) {
+    			good = 0; break;
+    		}
+    		puts((good ? "yes" : "no"));
+    	}
+    }
+    return 0;
+}

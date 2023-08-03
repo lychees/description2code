@@ -1,0 +1,168 @@
+//Abhishek Bansal
+#include<bits/stdc++.h>
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+#define SZ(a) (int)(a.size())
+#define SET(a,b) memset(a,b,sizeof(a))
+#define LET(x,a) __typeof(a) x(a)
+#define TR(v,it) for( LET(it,v.begin()) ; it != v.end() ; it++)
+#define loop(i,a,b) for(int i=a;i<b;i++)
+#define si(n) scanf("%d",&n)
+#define sll(n) scanf("%lld",&n)
+#define sortv(a) sort(a.begin(),a.end())
+#define all(a) a.begin(),a.end()
+#define DRT()  int t; cin>>t; while(t--)
+#define TRACE
+#ifdef TRACE
+#define trace1(x)                cerr << #x << ": " << x << endl;
+#define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define trace4(a, b, c, d)       cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+#define trace5(a, b, c, d, e)    cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << endl;
+#define trace6(a, b, c, d, e, f) cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << " | " << #f << ": " << f << endl;
+#else
+#define trace1(x)
+#define trace2(x, y)
+#define trace3(x, y, z)
+#define trace4(a, b, c, d)
+#define trace5(a, b, c, d, e)
+#define trace6(a, b, c, d, e, f)
+#endif
+using namespace std;
+typedef long long int lli;
+typedef pair<int,int> ii;
+typedef vector<int> vi;
+typedef vector< vi > vvi;
+typedef vector< ii > vii;
+lli modpow(lli a,lli n,lli temp){lli res=1,y=a;while(n>0){if(n&1)res=(res*y)%temp;y=(y*y)%temp;n/=2;}return res%temp;}
+const int MAX = 500005;
+typedef struct BIT{
+	int sz;
+	lli tree[MAX];
+	void init(int n){
+		sz=n;
+		SET(tree,0);
+	}
+	void update(int i,lli v){
+		while(i<=sz){
+			tree[i]+=v;
+			i+=(i&(-i));
+		}
+		return;
+	}
+	void rangeupdate(int l,int r,int v){
+		update(l,v);
+		update(r+1,-1*v);
+	}
+	lli query(int i){
+		lli sum=0;
+		while(i>0){
+			sum+=tree[i];
+			if(sum>1e18)
+				return sum = 2e18;
+			i-=(i&(-i));
+		}
+		return sum;
+	}
+}BIT;
+//***********************************END OF TEMPLATE*********************************************************************
+const int SIZE = 500002;
+int h[SIZE],st[SIZE],fi[SIZE],F[SIZE],ti;
+lli th[SIZE],X[SIZE],D[SIZE];
+vvi graph,factory;
+BIT A,B;
+ii r[SIZE];
+void predfs(int u,int p){
+	h[u]=h[p]+1;
+	st[u]=++ti;
+	for(auto ch:graph[u]){
+		if(ch == p)
+			continue;
+		predfs(ch,u);
+	}
+	fi[u]=ti;
+}
+void update(int q){
+	//Update by performing q'th query
+	int node = F[q];
+	A.rangeupdate(st[node],fi[node],X[q]-h[node]*D[q]);
+	B.rangeupdate(st[node],fi[node],D[q]);
+}
+
+lli query(int node){
+	lli a = A.query(st[node]);
+	lli b = B.query(st[node]);
+	return a + b*h[node];
+}
+
+int main(){
+	int n,m,q,x;
+	int ans[SIZE];
+	si(n);si(m);
+	graph = vvi(n+1);
+	factory = vvi(m+1);
+	loop(i,1,n){
+		si(x);
+		graph[i+1].PB(x);
+		graph[x].PB(i+1);
+	}
+	predfs(1,0);
+	loop(i,1,n+1){
+		si(x);
+		factory[x].PB(i);
+	}
+	loop(i,1,m+1)
+		sll(th[i]);
+	si(q);
+	loop(i,1,q+1){
+		si(F[i]);
+		sll(X[i]);
+		sll(D[i]);
+	}
+	F[q+1] = 1;
+	X[q+1] = lli(1e18);
+	D[q+1] = 0;
+	loop(i,1,m+1){
+		r[i].F=1;
+		r[i].S=q+1;
+	}
+	vvi check;
+	while(true){
+		bool done = true;
+		check = vvi(q+2);
+		loop(i,1,m+1){
+			if(r[i].F == r[i].S)
+				ans[i] = r[i].F;
+			else{
+				int mid = (r[i].F + r[i].S)>>1;
+				check[mid].PB(i);
+				done = false;
+			}
+		}
+		if(done)
+			break;
+		A.init(n+2);
+		B.init(n+2);
+		loop(i,1,q+2){
+			update(i);
+			for(auto j:check[i]){
+				lli tot = 0;
+				for(auto f:factory[j]){
+					lli rev = query(f);
+					tot+=rev;
+				}
+				if(tot<th[j]) r[j].F = i+1;
+				else if(tot>=th[j]) {
+					r[j].S=i;
+				}
+			}
+		}
+	}
+	loop(i,1,m+1){
+		if(ans[i] == q+1) printf("rekt\n");
+		else printf("%d\n",ans[i]);
+	}
+	return 0;
+}

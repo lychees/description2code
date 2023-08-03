@@ -1,0 +1,116 @@
+#include<bits/stdc++.h>
+using namespace std;
+vector<int>v[100005];
+int prime[100005];
+vector<int>pr;
+void pre()
+{
+	int i,j;
+	prime[0]=prime[1]=1;
+	for(i=2;i<=100000;i++)
+	{
+		if(!prime[i])
+		{
+			pr.push_back(i);
+			v[i].push_back(i);
+			for(j=2*i;j<=100000;j+=i)
+			{
+				prime[j]=1;
+				v[j].push_back(i);
+			}
+		}
+	}
+}
+int N=1E5+5;
+int BIT[100005];
+void update(int ind)
+{
+	while(ind<=N)
+	{
+		BIT[ind]+=1;
+		ind+=(ind&(-ind));
+	}
+}
+int query(int ind)
+{
+	int s=0;
+	while(ind>0)
+	{
+		s+=BIT[ind];
+		ind-=(ind&(-ind));
+	}
+	return s;
+}
+int arr[100005];
+vector<int>tree[100005];
+void update1(int idx,int num)
+{
+	while(num<tree[idx].size())
+	{
+		tree[idx][num]+=1;
+		num+=(num&(-num));
+	}
+}
+int query1(int idx,int num)
+{
+	int s=0;
+	while(num>0)
+	{
+		s+=tree[idx][num];
+		num-=(num&(-num));
+	}
+	return s;
+}
+int main()
+{
+	pre();
+	int n;
+	scanf("%d",&n);
+	int i,j;
+	for(i=1;i<=n;i++)
+	scanf("%lld",&arr[i]);
+	int maxi=-1;
+	for(i=1;i<=n;i++)
+	maxi=max(maxi,arr[i]);
+	for(i=1;i<=maxi;i++)
+	{
+		int xx=maxi/i+5;
+		for(j=0;j<xx;j++)
+		tree[i].push_back(0);
+	}
+	long long answ=0;
+	for(i=n;i>=1;i--)
+	{
+		int yy=0;
+		update(arr[i]);
+		if(arr[i]==1)
+		continue;
+		for(j=0;j<(1<<v[arr[i]].size());j++)
+		{
+			if(__builtin_popcount(j)==0)
+			continue;
+			int pro=1;
+			int co=0;
+			for(int k=0;k<v[arr[i]].size();k++)
+			{
+				if(j&(1<<k))
+				{
+					pro=pro*v[arr[i]][k];
+					co+=1;
+				}
+			}
+			if(co%2==0)
+			{
+				yy=yy-query1(pro,arr[i]/pro);
+			}
+			else
+			{
+				yy=yy+query1(pro,arr[i]/pro);
+			}
+			update1(pro,arr[i]/pro);	
+		}
+		yy=query(arr[i])-yy-1;
+		answ+=yy;
+	}
+	printf("%lld\n",answ);
+}

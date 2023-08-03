@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+typedef long long ll;
+typedef pair<int, int> pii;
+const int MAXN = 305;
+const ll INF = 0x0101010101010101;
+
+#define fi first
+#define se second
+
+struct edge {
+	int u, v;
+	bool t;
+	ll w;
+	edge (int _u, int _v, bool _t, ll _w) : u(_u), v(_v), w(_w), t(_t) {}
+};
+
+bool operator < (edge e1, edge e2) {
+	//actually, e1 > e2. but just for priority_queue
+	return e1.w > e2.w;
+}
+
+int N, M;
+vector<pii> adj[MAXN], radj[MAXN];
+bool type[MAXN][MAXN];	//what type is this edge
+ll dist[MAXN][MAXN][2];
+bool vis[MAXN][MAXN][2];
+
+int main() {
+	scanf("%d %d", &N, &M);
+	for (int i = 0; i < M; i++) {
+		int u, v, w;
+		char c;
+		scanf("%d %d %d %c", &u, &v, &w, &c);
+		type[u][v] = (c == ')');
+		adj[u].push_back(pii(v, w));
+		radj[v].push_back(pii(u, w));
+	}
+	
+	priority_queue<edge> pq;
+	memset(dist, 1, sizeof(dist));
+
+	for (int i = 1; i <= N; i++) {
+		dist[i][i][0] = 0;
+		pq.push(edge(i, i, 0, 0));
+	}
+
+	while (!pq.empty()) {
+		edge tp = pq.top();
+		pq.pop();
+		if (vis[tp.u][tp.v][tp.t]) {
+			continue;
+		}
+		vis[tp.u][tp.v][tp.t] = true;
+		if (tp.t) {
+			for (pii t : adj[tp.v]) {
+				if (type[tp.v][t.fi]) {
+					ll nw = tp.w + t.se;
+					if (nw < dist[tp.u][t.fi][0]) {
+						dist[tp.u][t.fi][0] = nw;
+						pq.push(edge(tp.u, t.fi, 0, nw));
+					}
+				}
+			}
+		} else {
+			for (pii t : radj[tp.u]) {
+				if (!type[t.fi][tp.u]) {
+					ll nw = tp.w + t.se;
+					if (nw < dist[t.fi][tp.v][1]) {
+						dist[t.fi][tp.v][1] = nw;
+						pq.push(edge(t.fi, tp.v, 1, nw));
+					}
+				}
+			}
+
+			for (int i = 1; i <= N; i++) {
+				ll nw = dist[i][tp.u][0] + tp.w;
+				if (nw < dist[i][tp.v][0]) {
+					dist[i][tp.v][0] = nw;
+					pq.push(edge(i, tp.v, 0, nw));
+				}
+			}
+
+			for (int i = 1; i <= N; i++) {
+				ll nw = tp.w + dist[tp.v][i][0];
+				if (nw < dist[tp.u][i][0]) {
+					dist[tp.u][i][0] = nw;
+					pq.push(edge(tp.u, i, 0, nw));
+				}
+			}
+		}
+	}
+
+	for (int i = 1; i <= N; i++) {
+		for (int j = 1; j <= N; j++) {
+			ll x = dist[i][j][0];
+			if (x == INF) {
+				x = -1;
+			}
+			printf("%lld ", x);
+		}
+		puts("");
+	}
+}

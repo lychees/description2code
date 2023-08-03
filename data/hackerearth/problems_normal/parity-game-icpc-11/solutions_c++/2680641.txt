@@ -1,0 +1,134 @@
+// karanaggarwal
+//#include <bits/stdc++.h>
+#include <cstring>
+#include <queue>
+#include <stack>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstdio>
+#include <unordered_map>
+#include <unordered_set>
+#include <map>
+#include <set>
+
+using namespace std;
+
+#define TRACE
+#ifdef TRACE
+#define trace(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+      cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+      const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define trace(...)
+#endif
+
+#define si(x) scanf("%d",&x)
+#define F first
+#define S second
+#define PB push_back
+#define MP make_pair
+
+
+typedef long long LL;
+typedef pair<int,int> PII;
+typedef vector<int> VI;
+typedef vector<PII> VPII;
+
+/**
+ *  //////////////////////////////
+ *  // Stoer-Wagner Minimum Cut //
+ *  //////////////////////////////
+ *
+ * MAIN FUNCTION: minCut( n )
+ *      Takes an undirected, weighted graph and returns the weight
+ *      of the minimum cut in it. A cut is a set of edges that,
+ *      when removed, disconnects the graph. A minimum cut is a
+ *      cut of minimum total weight.
+ * ALGORITHM:
+ *      This is a O(n^3) implementation of the Stoer-Wagner
+ *      deterministic algorithm (no randomization is required).
+ **/
+
+// Maximum number of vertices in the graph
+#define NN 401
+
+// Maximum edge weight (MAXW * NN * NN must fit into an int)
+#define MAXW 1
+
+// Adjacency matrix and some internal arrays
+int g[NN][NN], v[NN], w[NN], na[NN];
+bool a[NN];
+
+int minCut( int n )
+{
+    // init the remaining vertex set
+    for( int i = 0; i < n; i++ ) v[i] = i;
+
+    // run Stoer-Wagner
+    int best = MAXW * n * n;
+    while( n > 1 )
+    {
+        // initialize the set A and vertex weights
+        a[v[0]] = true;
+        for( int i = 1; i < n; i++ )
+        {
+            a[v[i]] = false;
+            na[i - 1] = i;
+            w[i] = g[v[0]][v[i]];
+        }
+
+        // add the other vertices
+        int prev = v[0];
+        for( int i = 1; i < n; i++ )
+        {
+            // find the most tightly connected non-A vertex
+            int zj = -1;
+            for( int j = 1; j < n; j++ )
+                if( !a[v[j]] && ( zj < 0 || w[j] > w[zj] ) )
+                    zj = j;
+
+            // add it to A
+            a[v[zj]] = true;
+
+            // last vertex?
+            if( i == n - 1 )
+            {
+                // remember the cut weight
+                best = min(best,w[zj]);
+
+                // merge prev and v[zj]
+                for( int j = 0; j < n; j++ )
+                    g[v[j]][prev] = g[prev][v[j]] += g[v[zj]][v[j]];
+                v[zj] = v[--n];
+                break;
+            }
+            prev = v[zj];
+
+            // update the weights of its neighbours
+            for( int j = 1; j < n; j++ ) if( !a[v[j]] )
+                w[j] += g[v[zj]][v[j]];
+        }
+    }
+    return best;
+}
+
+int main()
+{
+    int n; si(n); n++;
+    int m; si(m); 
+    while(m--){
+        int x,y; si(x); si(y); x--; 
+        g[x][y] = 1;
+        g[y][x] = 1;
+    }
+    int answer = minCut(n);
+    cout<<answer<<endl;
+    return 0;
+}

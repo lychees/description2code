@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define mem(a, x) memset(a, x, sizeof(a))
+#define all(a) a.begin(), a.end()
+#define uni(a) a.erase(unique(all(a)), a.end())
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {while (b != 0) {T c = a; a = b; b = c % b;} return a;}
+
+const int N = 100005, INF = 1000;
+int cur[150], save[N];
+vector<int> G[150];
+
+int main(int argc, char *argv[]) {
+	ios_base::sync_with_stdio(false);
+	
+	int n, K;
+	string s, t;
+	vector<int> pos;
+	
+	cin >> n >> K >> s;
+	
+	if (K == 1) {
+		printf("%s\n", s.c_str()); return 0;
+	}
+	
+	repu(i, 0, n) G[s[i]].push_back(i);
+	
+	int cost = 0; string rev = "";
+	
+	repu(i, 0, n) {
+		cur[s[i]]++;
+		int ind_save = INF, ind_have = INF;
+		for (char x = s[i] - 1; x >= 'a'; --x) {
+			if (save[x] > 0) ind_save = x;
+			if (cur[x] < G[x].size()) ind_have = x;
+		}
+		if (G[s[i]].size() < cur[s[i]]) {
+			if (cost < K && ind_have != INF && ind_have < ind_save) {
+				cost++; cur[ind_have]++;
+			}
+			else {
+				int alter, post = INF;
+				for (char x = 'a'; x <= 'z'; ++x) {
+					if (save[x] > 0) {
+						alter = x; break;
+					}
+				}
+				for (char x = alter - 1; x >= 'a'; --x) {
+					if (cur[x] < G[x].size()) post = x;
+				}
+				if (post != INF && cost < K) {
+					cost++; cur[post]++;
+				}
+				else save[alter]--;
+			}
+			pos.push_back(i); rev += s[i];
+		}
+		else {
+			if (cost + 2 <= K && ind_have < ind_save) {
+				cost += 2; save[s[i]]++; cur[ind_have]++;
+				pos.push_back(i);
+				rev += s[i];
+			}
+			else if (cost < K && ind_save != INF) {
+				cost++; save[ind_save]--; save[s[i]]++;
+				pos.push_back(i);
+				rev += s[i];
+			}
+		}
+	}
+	
+	//printf("%d\n", cost);
+	
+	sort(all(rev));
+	repu(i, 0, pos.size()) {
+		s[pos[i]] = rev[i];
+	}
+	
+	printf("%s\n", s.c_str());
+	
+	return 0;
+}

@@ -1,0 +1,94 @@
+#include<cstdio>
+#include<cstdlib>
+#include<cstring>
+#include<algorithm>
+#include<cmath>
+#include<ctime>
+#include<vector>
+#include<queue>
+#include<stack>
+#include<map>
+using namespace std;
+#define FOR(i,s,e) for (int i=s;i<e;i++)
+#define FOE(i,s,e) for (int i=s;i<=e;i++)
+#define FOD(i,s,e) for (int i=s;i>=e;i--)
+#define SET(a,e) memset(a,e,sizeof(a))
+#define LL long long
+#define LD long double
+#define pb push_back
+#define x first
+#define y second
+#define PII pair<int,int>
+#define MAX 1000037
+
+int n,a[505],nxt[1000055];
+bool x[1000055];
+int mem[505][505];
+vector<int> pr;
+
+int cost(int x,int y) {
+	int px = nxt[x];
+	int py = nxt[y];
+	
+//	printf("nxt[%d] = %d\n",x,px);
+//	printf("nxt[%d] = %d\n",y,py);
+	
+	int a,b;
+	if (px < py) {
+		a = py - 1;
+		b = py;
+	}
+	else {
+		a = px;
+		b = px + 1;
+	}
+	
+	if (pr[a] < x || pr[b] < y) { a++; b++; }
+	
+	return pr[a] + pr[b] - x - y + 1;
+}
+
+int dp(int x,int y) {
+	if (mem[x][y] != -1) return mem[x][y];
+	if (x + 1 == y) mem[x][y] = cost(a[x],a[y]);
+	else {
+		mem[x][y] = dp(x+1,y-1) + cost(a[x],a[y]);
+		FOE(i,x+1,y-1) if ((i - x) % 2 == 1)
+			mem[x][y] = min(mem[x][y],dp(x,i) + dp(i+1,y));
+	}
+//	printf("dp(%d,%d) = %d\n",x,y,mem[x][y]);
+	return mem[x][y];
+}
+
+int main () {
+	
+	FOR(i,0,505) FOR(j,0,505) mem[i][j] = -1;
+	
+	scanf("%d",&n);
+	
+	if (n == 0) {
+		printf("0\n");
+		return 0;
+	}
+	
+	FOE(i,1,n) scanf("%d",a+i);
+	
+	FOE(i,2,MAX) if (!x[i]) {
+		pr.pb(i);
+		int p = i + i;
+		while (p <= MAX) {
+			x[p] = 1;
+			p += i;
+		}
+	}
+	
+	int p = 0;
+	FOE(i,1,MAX) {
+		if (i > pr[p]) p++;
+		nxt[i] = p;
+	}
+	
+	printf("%d\n",dp(1,n));
+	
+	return 0;
+}

@@ -1,0 +1,126 @@
+#include<iostream>
+#include<stdio.h>
+#include<list>
+#include<vector>
+using namespace std;
+int arr[23];
+int number(vector<int> temp,int n,int sum)
+{
+    int subset[sum+1][n+1];
+
+    // If sum is 0, then answer is true
+    for (int i = 0; i <= n; i++)
+      subset[0][i] =1;
+
+    // If sum is not 0 and set is empty, then answer is false
+    for (int i = 1; i <= sum; i++)
+      subset[i][0] =0;
+
+     // Fill the subset table in botton up manner
+     for (int i = 1; i <= sum; i++)
+     {
+       for (int j = 1; j <= n; j++)
+       {
+         subset[i][j] = subset[i][j-1];
+         if (i >=temp[j-1])
+           subset[i][j] = subset[i][j]+subset[i -temp[j-1]][j-1];
+       }
+     }
+
+    /* // uncomment this code to print table
+     for (int i = 0; i <= sum; i++)
+     {
+       for (int j = 0; j <= n; j++)
+          printf ("%4d", subset[i][j]);
+       printf("\n");
+     } */
+
+
+
+     return subset[sum][n];
+}
+class Graph
+{
+    int V;    // No. of vertices
+    list<int> *adj;    // Pointer to an array containing adjacency lists
+    void DFSUtil(vector<int> &temp,int v, bool visited[]);  // A function used by DFS
+public:
+    Graph(int V);   // Constructor
+    void addEdge(int v, int w);   // function to add an edge to graph
+    void DFS(int v,int w);    // DFS traversal of the vertices reachable from v
+};
+
+Graph::Graph(int V)
+{
+    this->V = V;
+    adj = new list<int>[V];
+}
+
+void Graph::addEdge(int v, int w)
+{
+    adj[v].push_back(w);
+    adj[w].push_back(v);// Add w to v?s list.
+}
+
+void Graph::DFSUtil(vector<int> &temp,int v, bool visited[])
+{
+    // Mark the current node as visited and print it
+    visited[v] = true;
+    //cout << v << " ";
+    temp.push_back(arr[v]);
+    //cout<<"here";
+
+    // Recur for all the vertices adjacent to this vertex
+    list<int>::iterator i;
+    for(i = adj[v].begin(); i != adj[v].end(); ++i)
+        if(!visited[*i])
+            DFSUtil(temp,*i, visited);
+}
+
+// DFS traversal of the vertices reachable from v. It uses recursive DFSUtil()
+void Graph::DFS(int v,int w)
+{
+    // Mark all the vertices as not visited
+    bool *visited = new bool[V];
+    for(int i = 0; i < V; i++)
+        visited[i] = false;
+        vector<int> temp;
+
+    // Call the recursive helper function to print DFS traversal
+    int ans=0;
+    for(int i=0;i<V;i++)
+    {
+        if(!visited[i])
+        DFSUtil(temp,i, visited);
+
+        ans+=number(temp,temp.size(),w);
+        temp.clear();
+        //cout<<"\n";
+    }
+
+    printf("%d\n",ans);
+
+}
+
+main()
+{
+    int tc,n,w,m,a,b,i;
+    scanf("%d",&tc);
+    while(tc--)
+    {
+        scanf("%d%d%d",&n,&w,&m);
+        for(i=0;i<n;i++)
+        scanf("%d",&arr[i]);
+
+        Graph g(n);
+        for(i=0;i<m;i++)
+        {
+            scanf("%d%d",&a,&b);
+            g.addEdge(a-1,b-1);
+
+
+        }
+        g.DFS(n,w);
+    }
+}
+

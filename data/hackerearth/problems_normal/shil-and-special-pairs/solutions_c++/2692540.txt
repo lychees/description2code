@@ -1,0 +1,125 @@
+#include <bits/stdc++.h>
+#define _ ios_base::sync_with_stdio(false);cin.tie(0);
+using namespace std;
+#define pb push_back
+#define pob pop_back
+#define pf push_front
+#define pof pop_front
+#define mp make_pair
+#define all(a) a.begin(),a.end()
+#define bitcnt(x) __builtin_popcountll(x)
+#define MOD 1000000007
+#define MAXN 131075
+#define BASE 31
+#define BLOCK 600
+typedef unsigned long long int uint64;
+typedef long long int int64;
+ 
+int64 BIT[100005];
+int a[100005];
+
+struct Query{
+	int l,r,id;
+};
+
+vector<Query>v;
+int64 ans[100005];
+int64 cur=0;
+
+bool cmp(Query a,Query b){
+	if(((a.l)/BLOCK)!=((b.l)/BLOCK))
+	return (a.l/BLOCK)<(b.l/BLOCK);
+	return a.r<b.r;
+}
+
+void upd(int idx,int val){	
+	for(int i=idx;i<=100002;i+=i&(-i))
+	BIT[i]+=val;
+}
+
+int64 query(int val){
+	val=max(0,val);
+	val=min(100002,val);
+	int64 ret=0;
+	while(val){
+		ret+=BIT[val];
+		val-=val&(-val);
+	}
+	return ret;
+}
+
+void del(int idx,int diff){
+	int ele=a[idx];
+	
+	int64 ret;
+	ret=0;
+	for(int i=ele-1;i>=max(1,ele-diff);i--){
+		ret+=BIT[i];
+	}
+	cur-=ret;
+	ret=0;
+	for(int i=ele+1;i<=min(100000,ele+diff);i++){
+		ret+=BIT[i];
+	}
+	cur-=ret;
+	BIT[ele]--;
+}
+
+void add(int idx,int diff){
+	int ele=a[idx];
+	int64 ret=0;
+	for(int i=ele-1;i>=max(1,ele-diff);i--){
+		ret+=BIT[i];
+	}
+	cur+=ret;
+	ret=0;
+	for(int i=ele+1;i<=min(ele+diff,100000);i++){
+		ret+=BIT[i];
+	}
+	cur+=ret;
+	BIT[ele]++;
+}
+
+
+int main(){
+	int n,q,d,i;
+	cin>>n>>q>>d;
+	for(i=1;i<=n;i++){
+		scanf("%d",&a[i]);
+	}
+	Query tmp;
+	for(i=0;i<q;i++){
+		scanf("%d%d",&tmp.l,&tmp.r);
+		tmp.id=i;
+		v.pb(tmp);
+	}
+	sort(all(v),cmp);
+	int l,r;
+	l=1,r=0;
+	
+	for(i=0;i<q;i++){
+		tmp=v[i];
+		while(l<tmp.l){
+			del(l,d);
+			l++;
+		}
+		while(l>tmp.l){
+			l--;
+			add(l,d);
+		}
+		while(r<tmp.r){
+			r++;
+			add(r,d);
+		}
+		while(r>tmp.r){
+			del(r,d);
+			r--;
+		}
+		ans[tmp.id]=cur+(tmp.r-tmp.l+1);
+	}
+	
+	for(i=0;i<q;i++)
+	printf("%lld\n",ans[i]);
+	
+	return 0;
+}

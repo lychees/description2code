@@ -1,0 +1,98 @@
+#include <stdio.h>
+
+// max interns
+#define MAX 10001
+#define INT_MAX 0x7FFFFFFF
+/* 1. if chocos >= 5, chocos/5, chocos%5
+ * 2. if chocos >= 2 && < 5, chocos/2, chocos%2
+ * 3. if chocos == 1, Ans = 1
+ * Example: 2 interns, chococs = 1 9
+ * 9 falls in [1], initially Ans=0; min operations to bring 9 to 1,
+ *   Ans += 9/5, rem = 9%5 = 4;
+ *   Ans = 1;
+ *   Ans += rem/2; 
+ *   Ans += 2;
+ *   Ans = 3;  // 6 (1+5) 9, 8 (6+2) 9, 9 (8+1) 9 
+ *   
+ * Approach: identify minimum and substract 0 to 5,
+ * try with each and every intern
+ */
+#define MAX_OPERATIONS 6
+
+int data[MAX];
+// current choco options which can give and take it
+int options[3] = {1, 2, 5};
+/*
+ * store min operations in DP for 0-5 chocos 
+ * 0 - 0, 1 - 1, 2 - 1, 3 - 2,1, 4 - 2,2, 5-1
+ */
+int mem[6] = {0, 1, 1, 2, 2, 1};
+int Ans, N, choco_min;
+
+int abs (int x)
+{
+  return x < 0 ? -x : x;
+}
+
+int cshare(int rem)
+{
+  int index = 0, cnt = 0;
+
+  if (rem < MAX_OPERATIONS)
+	return mem[rem];
+
+  for (int j = 0; j <= 2; j++)
+  {
+	if (options[j] <= rem)
+		index = j;
+  }	
+
+  cnt += rem/options[index];
+  rem %= options[index];
+  cnt += mem[rem];
+
+  return cnt;
+}
+
+void solution()
+{
+  Ans = INT_MAX, choco_min = INT_MAX;
+
+  for (int i = 1; i <= N; i++)
+	if (data[i] < choco_min)
+		choco_min = data[i];
+
+  for (int j = 0; j < MAX_OPERATIONS; j++)
+  {
+	
+	int tcnt = 0;
+  	for (int i = 1; i <= N; i++)	
+		tcnt += cshare(abs(data[i]-(choco_min-j)));
+
+	if (tcnt < Ans)
+		Ans = tcnt;
+  }
+}
+
+int main(void)
+{
+
+  int T, i_chocos;
+
+  scanf("%d", &T);
+ 
+  for (int tcase = 1; tcase <= T; tcase++)
+  {
+	scanf("%d", &N);  
+  	for (int i = 1; i<= N; i++)
+	{
+		scanf("%d", &i_chocos);
+   		data[i] = i_chocos;
+	}
+
+  	solution();
+  	printf("%d\n", Ans);
+  } 
+
+  return 0;
+}

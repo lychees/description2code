@@ -1,0 +1,120 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+#define num 1000000007
+
+using namespace std;
+
+typedef long long ll;
+
+ll fpow(ll a , ll b)
+{
+	if(b == 0)
+		return 1;
+	else if(b == 1)
+		return a;
+	else if(b%2)
+	{
+		return (a * fpow(a,b-1)) % num;
+	}
+	else
+	{
+		ll ans = fpow(a,b/2);
+		return ((ans %num) * (ans%num)) % num;
+	}
+}
+
+ll n, l , t , k ;
+
+ll dp[3335][3335] = {0} , csum[3335][3335] = {0} , ssum[3335][3335] = {0};
+
+int main()
+{
+	cin>> n>>l>>t>>k;
+	dp[0][0] = 0;
+	csum[0][0] = 0;
+	ssum[0][0] = 0;
+    for(int i = 1 ; i < l ; i++)
+    {
+    	dp[i][0]= (fpow(k,i)) % num;
+    	ssum[i][0] = dp[i][0];
+    	if(i == 0)
+    		csum[i][0] = dp[i][0];
+    	else
+    		csum[i][0] = (csum[i-1][0] + dp[i][0]) % num ;
+    }
+    
+    for(int i = l ; i <= n ; i++)
+	{
+		for(int j = i-1 ; j >= i-l+1 ; j--)
+		{
+			dp[i][0] = (dp[i][0] + dp[j][0]) % num ;
+		}
+		
+		dp[i][0] = ((k-1)*(dp[i][0])) % num;
+		
+		csum[i][0] = (csum[i-1][0] + dp[i][0]) % num ;
+		
+		ssum[i][0] = dp[i][0];
+	}
+	
+    
+    for(int i = 1 ; i <= n ; i++)
+    {
+    	for(int j = 1 ; j <= t ; j++)
+    	{
+    		if(i < l)
+    		{
+    			dp[i][j] = (csum[i-1][j] * (k-1)) % num;
+    			if(j == i-l+1)
+    				dp[i][j] = (dp[i][j] + k) % num;
+    			csum[i][j] = (csum[i-1][j] + dp[i][j])%num;
+    			ssum[i][j] = (dp[i][j] + ssum[i-1][j-1]) % num ; 
+    		}
+    		
+    		else
+    		{
+    			dp[i][j] = ((k-1) * (csum[i-1][j] - csum[i-l][j]) )%num;
+    			if(j == i-l + 1)
+    				dp[i][j] = (dp[i][j] + (k)) % num ;
+    			dp[i][j] = (dp[i][j] + ssum[i-l][j-1] * (k-1) ) % num;
+    			csum[i][j] = (csum[i-1][j] + dp[i][j]) % num;
+    			ssum[i][j] = (ssum[i-1][j-1] + dp[i][j])%num ; 
+    		}
+    	}
+    }
+    
+    /*
+   cout<<"printing dp \n";
+    for(int i = 0 ; i<=n ; i++)
+    {
+    	for(int j = 0 ; j <= t ; j++)
+    		cout<<dp[i][j]<<"  ";
+    	cout<<"\n";
+    }
+    
+    
+    cout<<"printing col sum \n";
+    for(int i = 0 ; i<=n ; i++)
+    {
+    	for(int j = 0 ; j <= t ; j++)
+    		cout<<csum[i][j]<<"  ";
+    	cout<<"\n";
+    }
+    
+    
+    cout<<"printing slope sum \n";
+    for(int i = 0 ; i<=n ; i++)
+    {
+    	for(int j = 0 ; j <= t ; j++)
+    		cout<<ssum[i][j]<<"  ";
+    	cout<<"\n";
+    }
+    */
+    
+    cout<<dp[n][t];
+    
+    return 0;
+}

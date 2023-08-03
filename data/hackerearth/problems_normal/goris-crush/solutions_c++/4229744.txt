@@ -1,0 +1,92 @@
+#include<bits/stdc++.h>
+using namespace std;
+int bit[1000005],arr[100005];
+vector<int>v,q;
+struct qry
+{
+	bool type;
+	int x,y,a,b,c,d;
+};
+void update(int index,int n,int val)
+{
+	while(index<=n)
+	{
+		bit[index]+=val;
+		index+=index&(-index);
+	}
+}
+int query(int index)
+{
+	int ans=0;
+	while(index)
+	{
+		ans+=bit[index];
+		index-=index&(-index);
+	}
+	return ans;
+}
+int main()
+{
+	int n,q,k,i;
+	scanf("%d%d%d",&n,&q,&k);
+	for(i=1;i<=n;i++)
+	{
+		scanf("%d",&arr[i]);
+		v.push_back(arr[i]);
+	}
+	qry q1;
+	vector<qry>vqry;
+	while(q--)
+	{
+		int type;
+		scanf("%d",&type);
+		q1.type=type;
+		if(type)
+		{
+			scanf("%d%d%d%d",&q1.a,&q1.b,&q1.c,&q1.d);
+			vqry.push_back(q1);
+			v.push_back(q1.a);v.push_back(q1.b);v.push_back(q1.c);v.push_back(q1.d);
+		}
+		else
+		{
+			scanf("%d%d",&q1.x,&q1.y);
+			vqry.push_back(q1);
+			v.push_back(q1.y);
+		}
+	}
+	sort(v.begin(),v.end());
+	map<int,int>val;
+	val[v[0]]=1;int cnt=2;
+	for(i=1;i<v.size();i++)
+	{
+		if(v[i-1]!=v[i])
+		{
+			val[v[i]]=cnt;
+			cnt++;
+		}
+	}
+	for(i=1;i<=n;i++)
+	{
+		update(val[arr[i]],cnt,1);
+	}
+	for(i=0;i<vqry.size();i++)
+	{
+		if(vqry[i].type)
+		{
+			int l=max(vqry[i].a,vqry[i].c);
+			int r=min(vqry[i].b,vqry[i].d);
+			int ans;
+			if(l>r)ans=0;
+			else ans=query(val[r])-query(val[l]-1);
+			if(ans>=k)printf("Propose\n");
+			else printf("Do not propose\n");
+		}
+		else
+		{
+			update(val[arr[vqry[i].x]],cnt,-1);
+			update(val[vqry[i].y],cnt,1);
+			arr[vqry[i].x]=vqry[i].y;
+		}
+	}
+	return 0;
+}

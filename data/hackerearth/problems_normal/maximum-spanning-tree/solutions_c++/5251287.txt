@@ -1,0 +1,79 @@
+#include <algorithm>
+#include <cstdio>
+#include <queue>
+#include <vector>
+#include <utility>
+
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int, int> ii;
+typedef pair<int, ii> edge;
+typedef vector<edge> graph;
+
+struct UnionFind {
+    vi parent;
+
+    UnionFind() {}
+
+    UnionFind(int N) {
+        parent.resize(N + 1);
+        for (int i = 0; i <= N; ++i)
+            parent[i] = i;
+    }
+
+    int find(int x) {
+        if (x == parent[x])
+            return x;
+        else
+            return parent[x] = find(parent[x]);
+    }
+
+    bool are_connected(int x, int y) { return find(x) == find(y); }
+
+    void merge(int x, int y) { parent[find(x)] = find(y); }
+};
+
+int kruskal(int V, int E, graph G) {
+    int mst = 0;
+    int u, v, w;
+
+    UnionFind UF(V);
+
+    for (int i = 0; i < E; ++i) {
+        w = G[i].first;
+        u = G[i].second.first;
+        v = G[i].second.second;
+
+        if (!UF.are_connected(u, v)) {
+            mst += w;
+            UF.merge(u, v);
+        }
+    }
+
+    return mst;
+}
+
+int compare_edges(const edge &a, const edge &b) { return a.first > b.first; }
+
+int main() {
+    int T, V, E, u, v, w;
+
+    scanf("%d", &T);
+
+    while (T--) {
+        scanf("%d %d", &V, &E);
+
+        graph G;
+        for (int i = 0; i < E; ++i) {
+            scanf("%d %d %d", &u, &v, &w);
+            G.push_back(make_pair(w, ii(u, v)));
+        }
+
+        sort(G.begin(), G.end(), compare_edges);
+
+        printf("%d\n", kruskal(V, E, G));
+    }
+
+    return 0;
+}

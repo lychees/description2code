@@ -1,0 +1,142 @@
+#include <bits/stdc++.h>
+#define si(n) scanf("%d",&n);
+#define sl(n) scanf("%lld",&n);
+#define ss(n) scanf("%s",n);
+#define fr(i, n) for(i = 0; i < n; i++)
+#define ms(i, n) memset(i, n, sizeof(i))
+#define INF 1002000000
+#define MAX 4000000
+typedef long long LL; 
+using namespace std;
+int lazy[MAX];
+struct direction {
+	int dir[4];
+}tree[MAX];
+struct direction combine (struct direction t1, struct direction t2) {
+	struct direction t3;
+	int i;
+	fr(i, 4)
+		t3.dir[i] = t2.dir[i] + t1.dir[i];
+	return t3;
+};
+
+struct direction make_data (struct direction t1, int val) {
+	struct direction t3;
+	int i;
+	fr(i, 4)
+		t3.dir[(i + val) % 4] = t1.dir[i];
+	return t3;
+}
+void build_tree(int node, int a, int b) {
+  	if(a > b) return; 
+  	
+  	if(a == b) {
+  			tree[node].dir[0] = 1;
+  			tree[node].dir[1] = 0;
+  			tree[node].dir[2] = 0;
+  			tree[node].dir[3] = 0;
+    		//tree[node] = arr[a];
+		return;
+	}
+	
+	build_tree(node*2, a, (a+b)/2);
+	build_tree(node*2+1, 1+(a+b)/2, b);
+	
+	tree[node] = combine(tree[node*2], tree[node*2+1]);
+}
+
+void update_tree(int node, int a, int b, int i, int j, int value) {
+  
+  	if(lazy[node] != 0) { // This node needs to be updated
+   		tree[node] = make_data(tree[node], lazy[node]);
+
+		if(a != b) {
+			lazy[node*2] = (lazy[node*2] + lazy[node]) % 4; // Mark child as lazy
+			lazy[node*2 + 1] = (lazy[node*2 + 1] + lazy[node]) % 4; // Mark child as lazy
+		}
+
+   		lazy[node] = 0; // Reset it
+  	}
+  
+	if(a > b || a > j || b < i) // Current segment is not within range [i, j]
+		return;
+    
+  	if(a >= i && b <= j) { // Segment is fully within range
+    		tree[node] = make_data(tree[node], value);
+
+		if(a != b) {
+			lazy[node*2] = (lazy[node*2] + value) % 4; // Mark child as lazy
+			lazy[node*2 + 1] = (lazy[node*2 + 1] + value) % 4; // Mark child as lazy
+		}
+
+    		return;
+	}
+
+	update_tree(node*2, a, (a+b)/2, i, j, value); // Updating left child
+	update_tree(1+node*2, 1+(a+b)/2, b, i, j, value); // Updating right child
+
+	tree[node] = combine(tree[node*2], tree[node*2+1]); // Updating root with max value
+}
+
+struct direction query_tree(int node, int a, int b, int i, int j) {
+	if(a > b || a > j || b < i) {
+		struct direction t1;
+		fr(i, 4)
+			t1.dir[i] = 0;
+		return t1; // Out of range
+	}
+
+	if(lazy[node] != 0) { // This node needs to be updated
+		tree[node] = make_data(tree[node], lazy[node]); // Update it
+
+		if(a != b) {
+			lazy[node*2] = (lazy[node*2] + lazy[node]) % 4; // Mark child as lazy
+			lazy[node*2 + 1] = (lazy[node*2 + 1] + lazy[node]) % 4; // Mark child as lazy
+		}
+
+		lazy[node] = 0; // Reset it
+	}
+
+	if(a >= i && b <= j) // Current segment is totally within range [i, j]
+		return tree[node];
+
+	struct direction q1 = query_tree(node*2, a, (a+b)/2, i, j); // Query left child
+	struct direction q2 = query_tree(1+node*2, 1+(a+b)/2, b, i, j); // Query right child
+
+	struct direction res = combine(q1, q2); // Return final result
+	
+	return res;
+}
+int main () {
+	//freopen ("input.txt","r",stdin);
+	//freopen ("output.txt","w",stdout);
+	int n, m, i, l, r, maxi, k;
+	char ch;
+	si(n);si(m);
+	build_tree(1, 0, n-1);
+	fr(i, m) {
+		ch = getchar();
+		//scanf("%c", &ch);
+		if(ch == 'C') {
+			si(l);si(r);si(k);
+			--l;--r;k%=4;
+			update_tree(1, 0, n-1, l, r, k);
+		} else if(ch == 'A') {
+			si(l);si(r);si(k);
+			--l;--r;k%=4;
+			if(k == 1)
+				k = 3;
+			else if(k == 3)
+				k = 1;
+			update_tree(1, 0, n-1, l, r, k);
+		} else if(ch == 'Q') {
+			si(l);si(r);
+			struct direction t1 = query_tree(1, 0, n-1, --l, --r);
+			maxi = 0;
+			fr(i, 4)
+				maxi = max(maxi, t1.dir[i]);
+			printf("%d\n", maxi);
+		}
+	}
+	return 0;
+}

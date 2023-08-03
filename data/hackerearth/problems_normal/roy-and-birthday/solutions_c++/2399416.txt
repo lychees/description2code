@@ -1,0 +1,99 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <cstring>
+#include <cstdio>
+using namespace std;
+
+int const MOD = 1e9 + 7;
+int const N = 1e6 + 41;
+
+int n, m, test, ans, f[N], invF[N], cnt[26], cntV, vowel[26];
+char s[N];
+
+int bp(int x, int d){
+	if(!d){
+		return 1;
+	}	
+	if(d&1){
+		return x * 1LL * bp(x, d-1) % MOD;
+	}
+	int r = bp(x, d/2);
+	return r * 1LL * r % MOD;
+}
+
+void prepare(){
+	f[1] = f[0] = invF[1] = invF[0] = 1;
+	for(int i=2;i<N;++i){
+		f[i] = f[i-1] * 1LL * i % MOD;
+		invF[i] = bp(f[i], MOD-2);
+	}
+	//[a,e,i,o,u]
+	vowel['a' - 'a'] = 1;
+	vowel['e' - 'a'] = 1;
+	vowel['i' - 'a'] = 1;
+	vowel['o' - 'a'] = 1;
+	vowel['u' - 'a'] = 1;
+}
+
+int getC(int n, int k){
+	k = min(k, n-k);
+	if(k == 0){
+		return 1;
+	}
+	if(k == 1){
+		return n;
+	}
+	return f[n] * 1LL * invF[k] % MOD * invF[n-k] % MOD;
+}
+
+int solve(){
+	for(int i=0;i<26;++i){
+		cnt[i] = 0;
+	}
+	for(int i=0;i<n;++i){
+		++cnt[s[i]-'a'];
+	}
+	
+	cntV = 0;
+	for(int i=0;i<26;++i){
+		cntV += vowel[i] * cnt[i];
+	}
+	
+	n -= cntV;
+	//0
+	if(n < cntV - 1){
+		return -1;
+	}
+	//1
+	int ret = f[cntV];
+	for(int i=0;i<26;++i){
+		if(vowel[i]){
+			ret = ret * 1LL * invF[cnt[i]] % MOD;
+		}
+	}
+	//2
+	ret = ret * 1LL * f[n] % MOD;
+	for(int i=0;i<26;++i){
+		if(!vowel[i]){
+			ret = ret * 1LL * invF[cnt[i]] % MOD;
+		}
+	}
+	n -= (cntV - 1);
+	ret = ret * 1LL * getC(n + cntV, cntV) % MOD;
+	return ret;
+}
+
+int main()
+{
+    prepare();
+    scanf("%d",&test);
+    for(int t=0;t<test;++t){
+   		scanf("%s",&s);
+   		n = strlen(s);
+   		printf("%d\n",solve());
+    }
+    
+    
+    return 0;
+}

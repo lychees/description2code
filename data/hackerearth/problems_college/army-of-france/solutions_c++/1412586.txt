@@ -1,0 +1,131 @@
+#include <algorithm>
+#include <bitset>
+#include <cassert>
+#include <cctype>
+#include <cmath>
+#include <complex>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <map>
+#include <queue>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+using namespace std;
+
+#define pb push_back
+#define fi first
+#define se second
+#define all(x) (x).begin(), (x).end()
+#define sz(x) (int((x).size()))
+#define bit(x) (1 << (x))
+
+#ifdef _WIN32
+#define LLD "%I64d"
+#else
+#define LLD "%lld"
+#endif
+
+template<class T>
+inline void chkmax(T& x, T y) {
+	if (x < y) x = y;
+}
+
+template<class T>
+inline void chkmin(T& x, T y) {
+	if (y < x) x = y;
+}
+
+typedef long long LL;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+const int MX = 1005;
+int an, bn;
+int adj[MX][MX], dg[MX];
+int ab[MX], ba[MX];
+int q[MX], hd, tl;
+int dis[MX], vis[MX], T;
+
+void BFS() {
+	int i, u, v, u1;
+	
+	hd = tl = 0;
+	for (u = 0; u < an; u++) {
+		if (ab[u] == -1) {
+			dis[u] = 0;
+			q[tl++] = u;
+		}
+		else dis[u] = -1;
+	}
+	while (hd < tl) {
+		u = q[hd++];
+		for (i = dg[u] - 1; i >= 0; i--) {
+			v = adj[u][i];
+			u1 = ba[v];
+			if (u1 != -1 && dis[u1] == -1) {
+				dis[u1] = dis[u] + 1;
+				q[tl++] = u1;
+			}
+		}
+	}
+}
+
+int DFS(int u) {
+	int i, v, u1;
+	
+	vis[u] = T;
+	for (i = dg[u] - 1; i >= 0; i--) {
+		v = adj[u][i];
+		u1 = ba[v];
+		if (u1 == -1 || vis[u1] != T && dis[u1] == dis[u] + 1 && DFS(u1)) {
+			ba[v] = u;
+			ab[u] = v;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+int Hopcroft_Karp() {
+	int u, k, mat;
+	
+	fill_n(ab, an, -1);
+	fill_n(ba, bn, -1);
+	mat = 0;
+	while (1) {
+		BFS();
+		T++;
+		for (k = u = 0; u < an; u++) {
+			if (ab[u] == -1 && DFS(u)) k++;
+		}
+		if (!k) break;
+		mat += k;
+	}
+	return mat;
+}
+
+int main() {
+	#ifndef ONLINE_JUDGE
+		freopen("in.txt", "r", stdin);
+		freopen("out.txt", "w", stdout);
+	#endif
+	
+	int tc, i, j, k;
+	
+	for (scanf("%d", &tc); tc--; ) {
+		scanf("%d%d", &an, &bn);
+		for (i = 0; i < an; i++) {
+			scanf("%d", &dg[i]);
+			for (k = 0; k < dg[i]; k++) {
+				scanf("%d", &j);
+				adj[i][k] = j - 1;
+			}
+		}
+		printf("%d\n", Hopcroft_Karp());
+	}
+	return 0;
+}

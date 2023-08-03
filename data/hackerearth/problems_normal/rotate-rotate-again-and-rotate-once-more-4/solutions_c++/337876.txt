@@ -1,0 +1,166 @@
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<map>
+#include<stack>
+#include<queue>
+#include<cmath>
+#include<climits>
+#include<algorithm>
+#include<cstdlib>
+#include<cstring>
+#include<queue>
+using namespace std;
+struct node
+{
+int a[4];
+int flag;
+} tree[2300000];
+void unflag(int cur, int l ,int r)
+{
+	int L = cur << 1, R = L + 1,m = ((l+r)>>1);
+	if(tree[cur].flag){
+		tree[L].flag = (tree[L].flag + tree[cur].flag)%4;
+		tree[R].flag = (tree[R].flag + tree[cur].flag)%4;
+		for(int k=0;k<tree[cur].flag;k++)
+			{
+				int x=tree[L].a[0];
+				int y=tree[R].a[0];
+				for(int i=0;i<3;i++)
+				{
+				tree[L].a[i]=tree[L].a[i+1];
+				tree[R].a[i]=tree[R].a[i+1];
+				}
+				tree[L].a[3]=x;
+				tree[R].a[3]=y;
+			}
+		tree[cur].flag=0;
+//		tree[R].flag ^= 1;
+//		tree[R].val = r-m - tree[R].val;
+//		tree[cur].flag ^= 1;
+		}
+}
+ 
+void update(int cur, int l, int r, int x, int y,int amount)
+{
+//printf("%d %d %d %d\n",l,r,x,y);
+int L = cur << 1, R = L + 1;
+if(l == x && r == y){
+//tree[cur].val = r - l + 1 - tree[cur].val;
+		for(int k=0;k<amount;k++)
+			{
+			int p=tree[cur].a[0];
+				for(int i=0;i<3;i++)
+				{
+				tree[cur].a[i]=tree[cur].a[i+1];
+				}
+			tree[cur].a[3]=p;
+			}
+tree[cur].flag = (tree[cur].flag + amount)%4;
+return ;
+}
+unflag(cur,l,r);
+int m = ((l+r) >> 1);
+if(y <= m) update(L, l, m, x, y,amount);
+else{
+if(x > m) update(R, m+1, r, x, y,amount);
+else{
+update(L, l, m, x, m,amount);
+update(R, m+1, r, m+1, y,amount);
+}
+}
+for(int i=0;i<4;i++)
+	{
+	tree[cur].a[i] = tree[L].a[i] + tree[R].a[i];
+	}
+//tree[cur].val = tree[L].val + tree[R].val;
+}
+ 
+void query(int cur, int l, int r, int x, int y,int *aa)
+{
+int aab[4],aaa[4];
+if(l == x && r == y) 
+	{
+	for(int i=0;i<4;i++)
+		aa[i]=tree[cur].a[i];
+	return;
+	}
+unflag(cur,l,r);
+int m = (l+r) >> 1;
+	if(y <= m)
+		{
+		query(2*cur, l, m, x, y,aa);
+		return;
+		}
+	else{
+		if(x > m)
+			{
+			query(2*cur+1, m+1, r, x, y,aa);
+			return ;
+			}
+		else 
+			{
+			query(2*cur, l, m, x, m,aaa);
+			query(2*cur+1, m+1, r, m+1, y,aab);
+			for(int i=0;i<4;i++)
+				aa[i]=aaa[i]+aab[i];
+			}
+		}
+}
+int	build(int idx,int s,int e){
+	if(s>e)
+		return 0;
+	tree[idx].flag=0;
+	if(s==e)
+		{
+		for(int i=0;i<3;i++)
+			tree[idx].a[i]=0;
+		tree[idx].a[3]=1;
+		return 1;
+		}
+	int m = (s+e) >> 1;
+	for(int i=0;i<3;i++)
+		tree[idx].a[i]=0;
+	return (tree[idx].a[3]=build(idx*2,s,m)+build(idx*2+1,m+1,e));
+	}
+int main()
+{
+int N;
+int M;
+//scanf("%d %d",&N,&M);
+cin>>N>>M;
+build(1,1,N);
+char x;
+int q,w,e;
+int a[4];
+while(M--)
+	{
+	cin>>x;
+	if(x=='Q')
+		{
+		cin>>q>>w;
+		query(1,1,N,q,w,a);
+		int m=0;
+		for(int i=0;i<4;i++)
+			m=max(m,a[i]);
+		printf("%d\n",m);
+		}
+	else if(x=='C')
+		{
+		cin>>q>>w>>e;
+		e=e%4;
+//		query(1,1,N,q,w,e);
+		if(e)
+		update(1,1,N,q,w,e);
+		}
+	else if(x=='A')
+		{
+		cin>>q>>w>>e;
+		e=e%4;
+		e=4-e;
+		e=e%4;
+		if(e)
+		update(1,1,N,q,w,e);
+		}
+	}
+}

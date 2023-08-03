@@ -1,0 +1,140 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef struct  
+{
+	long long left;
+	long long right;
+	long long bacche;
+}node;
+long long get_mid(long long a,long long b)
+{
+	return a+(b-a)/2;
+}
+node create_util(long long arr[],node seg[],long long start,long long end,long long index)
+{
+	if(start==end)
+	{
+		seg[index].left=0;
+		seg[index].right=0;
+		seg[index].bacche=arr[start];	
+		return seg[index];
+	}	
+	long long mid =get_mid(start,end);
+	node foo1 =create_util(arr,seg,start,mid,(2*index)+1);
+	node foo2 =create_util(arr,seg,mid+1,end,(2*index)+2);
+	
+	seg[index].bacche = foo1.bacche + foo2.bacche;
+	seg[index].left = foo2.left + foo1.left+ (foo2.bacche * (mid-start+1));
+	seg[index].right = foo1.right + foo2.right +(foo1.bacche * (end-mid));
+	return seg[index];
+}
+void create_tree(long long arr[],node seg[],long long n)
+{
+	create_util(arr,seg,0,n-1,0);
+}
+node query_util(node seg[],long long start,long long end,long long index,long long ss,long long se)
+{	
+	if(ss<=start && se>=end)
+	{
+		return seg[index];
+	}
+	long long mid=get_mid(start,end);
+	if(ss>mid)
+	{
+		return query_util(seg,mid+1,end,(2*index)+2,max(ss,start),min(end,se));	
+	}
+	if(se<=mid)
+	{
+		return query_util(seg,start,mid,(2*index)+1,max(ss,start),min(end,se));
+	}
+	
+	node foo1 =query_util(seg,start,mid,(2*index)+1,max(ss,start),min(end,se));
+	node foo2 =query_util(seg,mid+1,end,(2*index)+2,max(ss,start),min(end,se));
+	
+	node mynode;
+	mynode.bacche = foo1.bacche + foo2.bacche;
+	mynode.left = foo2.left + foo1.left + (foo2.bacche * (mid+1-max(start,ss)));
+	mynode.right = foo1.right + foo2.right + (foo1.bacche * (min(end,se)-mid));
+	return mynode;
+}
+long long query(node seg[],long long n,long long a,long long b,long long c)
+{
+	if(a>b && a<c)
+	{
+		node val1 = query_util(seg,0,n-1,0,b,a);
+		node val2 = query_util(seg,0,n-1,0,a,c);
+		return val1.right + val2.left;
+	}
+	else if(a<=b)
+	{
+		node val = query_util(seg,0,n-1,0,b,c);
+		return val.left + ((b-a)*val.bacche);
+	}
+	else
+	{
+		node val = query_util(seg,0,n-1,0,b,c);
+		return val.right + ((a-c)*val.bacche);
+	}
+}
+node update_util(node seg[],long long start,long long end,long long index,long long a,long long val)
+{
+	if(a>end || a<start)
+	return seg[index];
+	
+	if(a==start && start==end)
+	{
+		seg[index].bacche+=val;
+		return seg[index];
+	}
+	long long mid = get_mid(start,end);
+	node foo1 = update_util(seg,start,mid,(2*index)+1,a,val);
+	node foo2 = update_util(seg,mid+1,end,(2*index)+2,a,val);
+	
+	seg[index].bacche = foo1.bacche + foo2.bacche;
+	seg[index].left = foo2.left + foo1.left+ (foo2.bacche * (mid-start+1));
+	seg[index].right = foo1.right + foo2.right +(foo1.bacche * (end-mid));
+	return seg[index];
+	
+}
+void update(node seg[],long long n,long long a,long long val)
+{
+	update_util(seg,0,n-1,0,a,val);
+}
+int main()
+{
+	//freopen("a.txt","r",stdin);
+	//freopen("b.txt","w",stdout);
+	long long n;
+	long long q;
+	cin>>n;
+	cin>>q;
+	long long arr[100001];
+	for(int i=0;i<n;i++)
+	{
+		cin>>arr[i];	
+	}
+	
+	int max_size=(2*(int)pow(2,(int)ceil(log2(n))))-1;
+	node *seg = new node[max_size];
+	create_tree(arr,seg,n);
+	
+	while(q--)
+	{
+		int p;
+		cin>>p;
+		if(p==1)
+		{
+			long long a,b,c;
+			cin>>a>>b>>c;
+			long long answer = query(seg,n,a-1,b-1,c-1);
+			cout<<answer<<endl;
+		}
+		else
+		{
+			long long a,b;
+			cin>>a>>b;
+			update(seg,n,a-1,b);
+		}
+	}
+	return 0;
+}

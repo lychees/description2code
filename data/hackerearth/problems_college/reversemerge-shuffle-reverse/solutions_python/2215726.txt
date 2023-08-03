@@ -1,0 +1,36 @@
+from bisect import bisect_left
+
+S = raw_input()
+
+pos = [[] for i in range(27)]
+cts = [0 for i in range(27)]
+
+for i in range(len(S)):
+	pos[ord(S[i])-ord('a')].append(i)
+
+chosen = [False for i in range(len(S))]
+
+inds = [len(pos[i])-1 for i in range(27)]
+
+while sum(cts) < len(S)/2:
+	for i in range(27):
+		if inds[i] == -1 or cts[i] == len(pos[i])/2:
+			continue
+		good = True
+		for j in range(27):
+			if i==j or inds[j] == -1:
+				continue
+			if bisect_left(pos[j], pos[i][inds[i]], 0, inds[j]+1) + cts[j] < len(pos[j])/2:
+				good = False
+				break
+		if good:
+			chosen[pos[i][inds[i]]] = True
+			cts[i] += 1
+			for j in range(27):
+				if i == j or inds[j] == -1:
+					continue
+				inds[j] = bisect_left(pos[j], pos[i][inds[i]], 0, inds[j]+1) - 1
+			inds[i] -= 1
+			break
+		
+print ''.join([S[i] for i in range(len(S)) if chosen[i]])[::-1]

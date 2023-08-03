@@ -1,0 +1,90 @@
+#include <stdio.h>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
+#define NMAX 131072
+
+int segtree_lmax[2][2 * NMAX], H[NMAX], N;
+
+void ReadInput() {
+    scanf("%d", &N);
+    for (int i = 1; i <= N; i++) scanf("%d", &H[i]);
+}
+
+vector<pair<int, int> > v;
+int idx[NMAX];
+
+void PreprocessInput() {
+    v.clear();
+    int i, j;
+    for (i = 1; i <= N; i++)
+        v.push_back(make_pair(H[i], i));
+    sort(v.begin(), v.end());
+    idx[v[0].second] = j = 1;
+    for (i = 1; i < N; i++) {
+        if (v[i].first > v[i - 1].first) j++;
+        idx[v[i].second] = j;
+    }
+}
+
+void UpdateSegTree(int sidx, int poz, int v) {
+    poz += NMAX - 1;
+    while (poz >= 1) {
+        if (v > segtree_lmax[sidx][poz]) segtree_lmax[sidx][poz] = v;
+        poz >>= 1;
+    }
+}
+
+int QuerySegtreeLarger(int sidx, int poz) {
+    poz += NMAX - 1;
+    int qans = segtree_lmax[sidx][poz];
+    while (poz > 1) {
+        if ((poz & 1) == 0 && segtree_lmax[sidx][poz | 1] > qans)
+            qans = segtree_lmax[sidx][poz | 1];
+        poz >>= 1;
+    }
+    return qans;
+}
+
+int QuerySegtreeSmaller(int sidx, int poz) {
+    poz += NMAX - 1;
+    int qans = segtree_lmax[sidx][poz];
+    while (poz > 1) {
+        if ((poz & 1) == 1 && segtree_lmax[sidx][poz ^ 1] > qans)
+            qans = segtree_lmax[sidx][poz ^ 1];
+        poz >>= 1;
+    }
+    return qans;
+}
+
+int ans, lmax[NMAX][2];
+
+void Solve() {
+    int i, j;
+    ans = 0;
+    memset(segtree_lmax, 0, sizeof(segtree_lmax));
+    for (i = 1; i <= N; i++) {
+        lmax[i][0] = QuerySegtreeLarger(1, idx[i]) + 1;
+        if (lmax[i][0] > ans) ans = lmax[i][0];
+        lmax[i][1] = QuerySegtreeSmaller(0, idx[i]) + 1;
+        if (lmax[i][1] > ans) ans = lmax[i][1];
+        UpdateSegTree(0, idx[i], lmax[i][0]);
+        UpdateSegTree(1, idx[i], lmax[i][1]);
+    }
+}
+
+int main() {
+//    freopen("walls.in", "r", stdin);
+    int T;
+    scanf("%d", &T);
+    while (T--) {
+        ReadInput();
+        PreprocessInput();
+        Solve();
+        printf("%d\n", ans);
+    }
+    return 0;
+}

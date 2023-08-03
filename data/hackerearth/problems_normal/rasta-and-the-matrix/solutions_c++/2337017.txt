@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+using namespace std;
+#define Foreach(i, c) for(__typeof((c).begin()) i = (c).begin(); i != (c).end(); ++i)
+#define For(i,a,b) for(int (i)=(a);(i) < (b); ++(i))
+#define rof(i,a,b) for(int (i)=(a);(i) > (b); --(i))
+#define rep(i, c) for(auto &(i) : (c))
+#define x first
+#define y second
+#define pb push_back
+#define PB pop_back()
+#define iOS ios_base::sync_with_stdio(false)
+#define sqr(a) (((a) * (a)))
+#define all(a) a.begin() , a.end()
+#define error(x) cerr << #x << " = " << (x) <<endl
+#define Error(a,b) cerr<<"( "<<#a<<" , "<<#b<<" ) = ( "<<(a)<<" , "<<(b)<<" )\n";
+#define errop(a) cerr<<#a<<" = ( "<<((a).x)<<" , "<<((a).y)<<" )\n";
+#define coud(a,b) cout<<fixed << setprecision((b)) << (a)
+#define L(x) ((x)<<1)
+#define R(x) (((x)<<1)+1)
+#define umap unordered_map
+#define double long double
+typedef long long ll;
+#define int ll
+typedef pair<int,int>pii;
+typedef vector<int> vi;
+typedef complex<double> point;
+template <typename T> using os =  tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
+template <class T>  inline void smax(T &x,T y){ x = max((x), (y));}
+template <class T>  inline void smin(T &x,T y){ x = min((x), (y));}
+struct seg{
+	int b, l, r;
+	bool lz;
+	seg * L, * R;
+	seg(){b = l = r = lz = 0; L = R = NULL;}
+	seg(int x, int y){l = x, r = y, b = 0, lz = 0; L = R = NULL;}
+	inline void le(){
+		if(r - l < 2 or L != NULL)	return ;
+		int mid = (l+r)/2;
+		L = new seg(l, mid);
+	}
+	inline void ri(){
+		if(r - l < 2 or R != NULL)	return ;
+		int mid = (l+r)/2;
+		R = new seg(mid, r);
+	}
+	inline void color(bool h){
+		if(!h)
+			return ;
+		lz = !lz;
+		b = r - l - b;
+	}
+	inline void shift(){
+		le();ri();
+		L -> color(lz);
+		R -> color(lz);
+		lz = false;
+	}
+	inline void upd(int x, int y){
+		if(x >= r or l >= y)	return ;
+		if(x <= l && r <= y){
+			color(true);
+			return ;
+		}
+		shift();
+		L -> upd(x, y);
+		R -> upd(x, y);
+		b = L -> b + R -> b;
+	}
+	inline int cnt(int x, int y){
+		if(x >= r or l >= y)	return 0;
+		if(x <= l && r <= y)	return b;
+		shift();
+		return L -> cnt(x, y) +
+			   R -> cnt(x, y) ;
+	}
+};
+int n;
+const ll INF = 1e18 + 20;
+const int mod = 1e9 + 7;
+main(){
+	iOS;
+	cin >> n;
+	int l, r, t, x, y;
+	int last_ans = 0;
+	seg s[2];
+	For(i,0,2)
+		s[i] = seg(0LL, INF);
+	while(n--){
+		cin >> t;
+		if(t == 1){
+			cin >> x >> l >> r;
+			l ^= last_ans;
+			r ^= last_ans;
+			-- l;
+			s[x].upd(l, r);
+		}
+		else{
+			cin >> l >> r >> x >> y;
+			x ^= last_ans;
+			y ^= last_ans;
+			l ^= last_ans;
+			r ^= last_ans;
+			-- l, -- x;
+			int t1 = r - l, t2 = y - x;
+			int b1 = s[0].cnt(l, r), b2 = s[1].cnt(x, y);
+			int w1 = t1 - b1, w2 = t2 - b2;
+			b1 %= mod;
+			b2 %= mod;
+			w1 %= mod;
+			w2 %= mod;
+			int g = (1LL * b1 * w2)%mod,
+				f = (1LL * b2 * w1)%mod;
+			last_ans = (g + f)%mod;
+			cout << last_ans << '\n';
+		}
+	}
+	return 0;
+}

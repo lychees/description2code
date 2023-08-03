@@ -1,0 +1,264 @@
+/*
+
+Paras Kumar Meena
+~~~ Never Show Your Arrogance.Keep In Mind,You Were Born From A Drop Of Impure Liquid ~~~
+
+*/
+
+#include <bits/stdc++.h>
+#define _ ios_base::sync_with_stdio(0);cin.tie(0);
+
+using namespace std;
+
+
+#define ll long long
+#define ff first
+#define ss second
+#define mpa make_pair
+#define MOD 1000000007
+#define pb push_back
+#define lld I64d
+#define MXN 100000
+
+int bitcnt(int mask){return __builtin_popcount(mask);}
+int SET(int N,int pos){ return N=N | (1<<pos);}
+int RESET(int N,int pos){   return N= N & ~(1<<pos);}
+int check(int N,int pos){   return (N & (1<<pos));}
+int toggle(int N,int pos){if(check(N,pos))return N=RESET(N,pos);return N=SET(N,pos);}
+void PRINTBIT(int N){   printf("("); for(int i=6;i>=1;i--)  {bool x=check(N,i);cout<<x;}    puts(")");}
+int mod(int a, int b) { return a - a/b * b;}
+void Print(vector<int> Vec) { for(int i = 0; i < Vec.size(); ++i) cout<<Vec[i] << " ";puts("");}void Print(vector<ll> Vec) {for(int i = 0; i < Vec.size(); ++i) cout<< Vec[i] << "  "; puts("");}
+void Print(vector<string> Vec) {for(int i = 0; i < Vec.size(); ++i) cout<< Vec[i] << " ";puts("");}
+void Print(vector<double> Vec) {for(int i = 0; i < Vec.size(); ++i) cout<< Vec[i] << " ";puts("");}
+
+int N;
+int IDX;
+int Arr[600000];
+vector<pair<int, int> > Gra[MXN + 10];
+
+int P[MXN + 10][20];
+int L[MXN];
+
+
+int LCA(int u, int v)
+{
+    if(u == v)
+        return u;
+   
+    if(L[u] < L[v])
+        swap(u, v);
+   
+    int log;
+    for(log = 1; 1 << log <= L[u]; ++log);
+    --log;
+   
+    for(int i = log; i >= 0; --i) {
+        if(L[u] - (1 << i) >= L[v]) {
+            u = P[u][i];
+        }
+    }
+   
+    if(u == v)
+        return u;
+   
+    for(int i = log; i >= 0; --i) {
+        if(P[u][i] != P[v][i]) {
+            u = P[u][i];
+            v = P[v][i];
+        }
+    }
+   
+    return P[u][0];
+}
+
+struct trie {
+	trie * arr[2];
+	int va;
+	
+};
+ 
+void insert (trie * t, int n, int index, int idx) {
+	if (index < 0) {
+		t -> va = min(t ->va, idx);
+		return;
+	}
+	int val = (n >> index) & 1;
+	
+	if (t->arr[val] == NULL) {
+		
+		t->arr[val] = new trie();
+		t -> arr[val] -> va = 1e9;
+		
+		insert (t->arr[val], n, index - 1, idx);
+	} else {
+		insert (t->arr[val], n, index - 1, idx);
+	}
+}
+ 
+int V; 
+ 
+int search (trie * t, int n, int index) {
+	if (index < 0)
+		return t -> va;
+	int val = (n >> index) & 1;
+ 
+	if (t->arr[val ^ 1] != NULL) {
+		
+		return search (t->arr[val ^ 1], n, index - 1);
+	} else {
+		
+		return search (t->arr[val], n, index - 1);
+	}
+}
+
+int LOGN;
+
+void dfs(int idx, int prev, int xr, int depth = 0)
+{
+	
+	P[idx][0] = prev;
+    L[idx] = depth;
+   
+    for(int i = 1; i <= LOGN; ++i) {
+        P[idx][i] = P[P[idx][i - 1]][i - 1];
+    }
+	
+	int size = Gra[idx].size();
+	for(int i = 0; i < size; ++i) {
+		pair<int, int> pp = Gra[idx][i];
+		
+		
+		int v = pp.ff;
+		int w = pp.ss;
+		
+		if(v == prev)
+			continue;
+		
+		int nwxr = xr ^ w;
+		Arr[v] = nwxr;
+		dfs(v, idx, nwxr, depth + 1);
+	}
+}
+
+int main()
+{
+	//int T:
+	//scanf("%d", &T);
+	
+	//while(T--) {
+		
+		scanf("%d", &N);
+		
+		
+	//	init();
+		
+		
+		for(int i = 0; i < N - 1; ++i) {
+			int u;
+			int v;
+			int w;
+			scanf("%d%d%d", &u, &v, &w);
+			u--;
+			v--;
+			Gra[u].pb(mpa(v, w));
+			Gra[v].pb(mpa(u, w));
+		}
+		
+	//	memset(Vertex, 63, sizeof Vertex);
+		LOGN = 0;
+		for(int i = 0; 1 << i <= N; ++i)
+			LOGN++;
+		
+		dfs(0, 0, 0);
+		
+			
+		trie* head = new trie();
+		
+		for(int i = 0; i < N; ++i) {
+			insert(head, Arr[i], 31, i);	
+		}
+		
+		ll ans = -1e18;
+		
+		int start = 1e9;
+		int end = 1e9;
+		
+		for(int i = 1; i < N; ++i) {
+			V = search(head, Arr[i], 31);
+			
+			int u = i;
+			int v = V;
+			
+			int temp = Arr[u] ^ Arr[v];
+			
+		//	cout<<"u => " << u  << " v => " << v << " xr => " << temp << "\n";
+			
+			if(u > v)
+				swap(u, v);
+				
+			
+			if(temp > ans) {
+				ans = temp;
+				end = v;
+				start = u;
+			} else if(temp == ans) {
+				if(start > u) {
+					start = u;
+					end = v;
+				} else if (start == u) {
+					end = min(end, v);
+				} 
+			}
+			
+			if(start > end)
+					swap(start, end);
+				
+		}
+		
+		if(start > end)
+			swap(start, end);
+		
+	//	cout<<"start => " << start << " end => " << end <<"\n";
+		
+		int lca = LCA(start, end);
+		vector<int> vec;
+		while(start != lca){
+			vec.pb(start);
+			start = P[start][0];
+		}
+		vec.pb(lca);
+		
+		vector<int> newvec;
+		while(lca != end) {
+			newvec.pb(end);
+			end = P[end][0];
+		}
+		
+		
+		
+		int size = vec.size();
+		int nwsz = newvec.size();
+		printf("%d\n", ans);
+		
+		for(int i = 0; i < size; ++i) {
+			printf("%d ", vec[i] + 1);
+		}
+		
+		for(int i = 0; i < nwsz; ++i) {
+			printf("%d ", newvec[nwsz - 1 - i] + 1);
+		}
+	//}
+	
+	return 0;
+}
+
+/*
+
+6
+1 2 2
+2 5 2
+5 6 1
+1 3 2
+3 4 1
+
+*/

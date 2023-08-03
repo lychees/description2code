@@ -1,0 +1,160 @@
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <sstream>
+#include <queue>
+
+typedef long long int li;
+typedef long long int lli;
+
+#define F(i, n) for(i = 0;i < n; ++i)
+#define FI(i, st, ft) for(i = st;i <= ft; ++i)
+#define pb(a, b) a.push_back(b)
+#define inf 100000007
+#define MAXN 1000005
+#define mp make_pair
+#define fi first
+#define se second
+
+using namespace std;
+
+struct node
+{
+	li t[4];
+};	
+
+li M[4 * MAXN][4];
+li lazy[4 * MAXN];
+
+class STLazy{
+	public:
+     
+        
+        STLazy(li n){
+        	memset(lazy, 0, sizeof(lazy));
+       		memset(M, 0, sizeof(M));
+       		initialise(1, 0, n - 1);
+        }
+     
+        void initialise(li node, li st, li ft)
+        {
+            if(st == ft) M[node][0] = 1;
+            else{
+                initialise(2 * node, st, (st + ft) / 2);
+                initialise(2 * node + 1, (st + ft) / 2 + 1, ft);
+                M[node][0] = M[2 * node][0] + M[2 * node + 1][0];
+            }
+        }  
+   
+	void update(li node, li st, li ft, li i, li j, li val)
+	{
+		
+//		M[node] += (ft - st + 1) * lazy[node];
+		
+		li temp1 = M[node][0], temp2 = M[node][1], temp3 = M[node][2], temp4 = M[node][3];
+		M[node][(0 + lazy[node]) % 4] = temp1;
+		M[node][(1 + lazy[node]) % 4] = temp2;
+		M[node][(2 + lazy[node]) % 4] = temp3;
+		M[node][(3 + lazy[node]) % 4] = temp4;
+		
+            	if(st != ft) lazy[2 * node] += lazy[node];
+            	if(st != ft) lazy[2 * node + 1] += lazy[node];
+            	lazy[node] = 0;
+            	
+		if(i > ft || j < st);
+		else if(i <= st && ft <= j){
+//			M[node] += (ft - st + 1) * val;
+			
+			li temp1 = M[node][0], temp2 = M[node][1], temp3 = M[node][2], temp4 = M[node][3];
+			M[node][(0 + val) % 4] = temp1;
+			M[node][(1 + val) % 4] = temp2;
+			M[node][(2 + val) % 4] = temp3;
+			M[node][(3 + val) % 4] = temp4;			
+			
+			if(st != ft) lazy[2 * node] += val;
+			if(st != ft) lazy[2 * node + 1] += val;
+		}	
+		else{
+			li mid = (st + ft) / 2;
+			update(2 * node, st, mid, i, j, val);
+        		update(2 * node + 1, mid + 1, ft, i, j, val);
+//			M[node] = M[2 * node] + M[2 * node + 1];
+
+			li k;
+			F(k, 4) M[node][k] = M[2 * node][k] + M[2 * node + 1][k];
+			
+		}
+	}
+
+        struct node query(li node, li st, li ft, li i, li j)
+        {
+            if(st > ft){
+            	struct node temp;
+            	li k;
+            	F(k, 4) temp.t[k] = 0;
+            	return temp;
+            }
+//          M[node] += (ft - st + 1) * lazy[node];
+            
+            li temp1 = M[node][0], temp2 = M[node][1], temp3 = M[node][2], temp4 = M[node][3];
+            M[node][(0 + lazy[node]) % 4] = temp1;
+	    M[node][(1 + lazy[node]) % 4] = temp2;
+            M[node][(2 + lazy[node]) % 4] = temp3;
+            M[node][(3 + lazy[node]) % 4] = temp4;
+            
+            if(st != ft) lazy[2 * node] += lazy[node];
+            if(st != ft) lazy[2 * node + 1] += lazy[node];
+            lazy[node] = 0;
+            
+            if(i > ft || j < st){
+            	struct node temp;
+            	li k;
+            	F(k, 4) temp.t[k] = 0;
+            	return temp;
+            }
+            if(i <= st && ft <= j){
+            	struct node temp;
+            	li k;
+            	F(k, 4) temp.t[k] = M[node][k];
+            	return temp;
+            }
+            struct node p1, p2;
+            p1 = query(2 * node, st, (st + ft) / 2, i, j);
+            p2 = query(2 * node + 1, (st + ft) / 2 + 1, ft, i, j);
+            struct node p;
+            li k;
+            F(k, 4) p.t[k] = p1.t[k] + p2.t[k];
+            return p;
+	}
+
+};
+
+
+int main()
+{
+//	freopen( "input.txt", "r", stdin);
+
+	li n, m, st, ft, k, i, p;
+	char ch;
+	cin >> n >> m;
+	STLazy stl(n);
+	F(i, m){
+		cin >> ch >> st >> ft;
+		if(ch == 'A' || ch == 'C'){
+			cin >> k;
+			if(ch == 'A') k = k * -1;
+			k = ((k % 4) + 4) % 4;
+			stl.update(1, 0, n - 1, st - 1, ft - 1, k);
+		}
+		else{
+			li maxq = 0;
+			struct node q = stl.query(1, 0, n - 1, st - 1, ft - 1);
+			F(k, 4) maxq = max(maxq, q.t[k]);
+			cout << maxq << "\n";
+		}
+	}
+	return 0;
+}

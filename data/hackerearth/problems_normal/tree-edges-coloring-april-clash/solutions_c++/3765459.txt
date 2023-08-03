@@ -1,0 +1,167 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+#include <queue>
+using namespace std;
+
+#define INF  0x3f3f3f3f
+#define MAXN 250
+#define MAXM 30000
+
+#define mp make_pair
+#define fi first
+#define se second
+
+typedef pair<int, int> pii;
+
+namespace mcmf {
+
+struct Edge {
+    int u, v, cap, flow, cost, next;
+    Edge() {}
+    Edge(int u, int v, int cap, int flow, int cost, int next)
+        : u(u), v(v), cap(cap), flow(flow), cost(cost), next(next) {}
+};
+
+int n, m, head[MAXN], src, snk;
+Edge e[MAXM];
+int pi[MAXN], dist[MAXN], path[MAXN], mincap[MAXN], vis[MAXN];
+
+void init(int _n, int _src, int _snk) {
+    n = _n;
+    m = 0;
+    src = _src;
+    snk = _snk;
+    memset(head, -1, sizeof(head));
+}
+
+void addEdge(int u, int v, int cap, int cost) {
+    e[m] = Edge(u, v, cap, 0, cost, head[u]);
+    head[u] = m++;
+    e[m] = Edge(v, u, 0, 0, -cost, head[v]);
+    head[v] = m++;
+}
+
+int bellman_ford() {
+    memset(pi, INF, n * sizeof(int));
+    pi[src] = 0;
+    int flag = 1;
+    for (int i = 0; flag && i < n; i++) {
+        flag = 0;
+        for (int j = 0; j < m; j++) {
+            if (e[j].cap == e[j].flow)
+                continue;
+            if (pi[e[j].u] + e[j].cost < pi[e[j].v]) {
+                pi[e[j].v] = pi[e[j].u] + e[j].cost;
+                flag = 1;
+            }
+        }
+    }
+    return flag;
+}
+
+int dijkstra() {
+    priority_queue<pii, vector<pii>, greater<pii> > heap;
+    memset(dist, INF, n * sizeof(int));
+    memset(vis, 0, n * sizeof(int));
+    dist[src] = 0;
+    mincap[src] = INF;
+    heap.push(mp(0, src));
+    while (!heap.empty()) {
+        int u = heap.top().se;
+        heap.pop();
+        if (vis[u])
+            continue;
+        vis[u] = 1;
+        for (int i = head[u]; i != -1; i = e[i].next) {
+            int v = e[i].v;
+            if (vis[v] || e[i].flow == e[i].cap)
+                continue;
+            int w = dist[u] + e[i].cost + pi[u] - pi[v];
+            if (w < dist[v]) {
+                dist[v] = w;
+                path[v] = i;
+                mincap[v] = min(mincap[u], e[i].cap - e[i].flow);
+                heap.push(mp(dist[v], v));
+            }
+        }
+    }
+    // update potencials
+    for (int i = 0; i < n; i++)
+        pi[i] += dist[i];
+    return dist[snk] < INF;
+}
+
+pii mcmf() {
+    // set potencials
+    if (bellman_ford())
+        return mp(-1, -1);
+    int cost = 0, flow = 0;
+    while (dijkstra()) {
+        // augment path and update cost
+        int f = mincap[snk];
+        for (int v = snk; v != src; ) {
+            int idx = path[v];
+            e[idx].flow += f;
+            e[idx^1].flow -= f;
+            cost += e[idx].cost * f;
+            v = e[idx].u;
+        }
+        flow += f;
+    }
+    return mp(cost, flow);
+}
+
+};
+
+int n, cost[MAXN];
+vector<int> g[MAXN];
+
+int dp[MAXN][MAXN];
+int go(int u, int p, int pc) {
+    if (dp[u][pc] != -1)
+        return dp[u][pc];
+    int deg = g[u].size();
+    for (int i = 0; i < g[u].size(); i++) {
+        if (g[u][i] == p) continue;
+        for (int j = 0; j < n-1; j++) {
+            if (j == pc) continue;
+            go(g[u][i], u, j);
+        }
+    }
+    mcmf::init(deg + n + 2, deg + n, deg + n + 1);
+    for (int i = 0; i < g[u].size(); i++)
+        mcmf::addEdge(mcmf::src, i, 1, 0);
+    for (int i = 0; i < g[u].size(); i++) {
+        if (g[u][i] == p) continue;
+        for (int j = 0; j < n-1; j++) {
+            if (j == pc) continue;
+            mcmf::addEdge(i, deg + j, 1, dp[g[u][i]][j] + cost[j]);
+        }
+    }
+    for (int j = 0; j < n-1; j++)
+        mcmf::addEdge(deg + j, mcmf::snk, 1, 0);
+    return dp[u][pc] = mcmf::mcmf().fi;
+}
+
+int main() {
+    int T;
+    scanf("%d", &T);
+    while (T--) {
+        scanf("%d", &n);
+        for (int i = 0; i < n-1; i++)
+            scanf("%d", &cost[i]);
+        sort(cost, cost+n-1);
+        for (int i = 1; i <= n; i++)
+            g[i].clear();
+        for (int i = 0; i < n-1; i++) {
+            int u, v;
+            scanf("%d %d", &u, &v);
+            g[u].push_back(v);
+            g[v].push_back(u);
+        }
+        memset(dp, -1, sizeof(dp));
+        printf("%d\n", go(1, 0, n-1));
+    }
+}

@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long sets[10][16];
+long long mod = 1e9 + 7;
+
+long long xx(long long b, long long e)
+{
+    long long r = 1;
+    while(e) {
+        if(e&1)
+            r = (r*b) % mod;
+        b = (b*b)%mod;
+        e = e/2;
+    }
+    return r;
+}
+
+long long invmod(long long a) {
+    return xx(a, mod-2);
+}
+
+int main()
+{
+    int t,n,k;
+    cin>>t;
+    while(t--) {
+        cin>>n>>k;
+        for(int i=0;i<k;i++) {
+            for(int j=0;j<n;j++)
+                cin>>sets[i][j];
+        }
+
+        int subsets = (1<<n);
+        long long max_p = -1, min_p = -1, lmax = -1, lmin = -1;
+
+        for(int j=1; j<subsets; j++) {
+            long long sums[16] = {0};
+
+            for(int i=0;i<k;i++) {
+                for(int x=0; x<n; x++) {
+                    if((1<<x) & j) {
+                        sums[x] += sets[i][x];
+                    }
+                }
+            }
+
+            int count = 0;
+
+            long long prod = 1;
+            for(int i=0; i<n; i++) {
+                if(sums[i] > 0) {
+                    prod = (prod * sums[i])%mod;
+                    count++;
+                }
+            }
+
+            prod = (prod * invmod(count))%mod;
+
+            if(max_p == -1) {
+                max_p = prod;
+                lmax = count;
+            } else {
+                if(prod > max_p) {
+                    max_p = prod;
+                    lmax = count;
+                }
+            }
+
+            if(min_p == -1) {
+                min_p = prod;
+                lmin = count;
+            } else {
+                if(prod < min_p) {
+                    min_p = prod;
+                    lmin = count;
+                }
+            }
+        }
+
+        cout<<(max_p ^ min_p)<<" "<<(lmin ^ lmax)<<endl;
+    }
+    return 0;
+}

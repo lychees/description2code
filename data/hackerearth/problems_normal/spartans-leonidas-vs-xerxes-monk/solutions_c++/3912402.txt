@@ -1,0 +1,133 @@
+///==================================================///
+///                HELLO WORLD !!                    ///
+///                  IT'S ME                         ///
+///               BISHAL GAUTAM                      ///
+///         [ bsal.gautam16@gmail.com ]              ///
+///==================================================///
+#include<bits/stdc++.h>
+#define X first
+#define Y second
+#define mpp make_pair
+#define nl printf("\n")
+#define SZ(x) (int)(x.size())
+#define pb(x) push_back(x)
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+///---------------------
+#define S(a) scanf("%d",&a)
+#define P(a) printf("%d",a)
+#define SL(a) scanf("%lld",&a)
+#define S2(a,b) scanf("%d%d",&a,&b)
+#define SL2(a,b) scanf("%lld%lld",&a,&b)
+///------------------------------------
+#define all(v) v.begin(),v.end()
+#define CLR(a) memset(a,0,sizeof(a))
+#define SET(a) memset(a,-1,sizeof(a))
+#define fr(i,a,n) for(int i=a;i<=n;i++)
+using namespace std;
+typedef long long ll;
+///==========CONSTANTS=============///
+///  Digit     0123456789012345678 ///
+#define MX     100005
+#define inf    2000000000
+#define MD     3
+#define eps    1e-9
+///===============================///
+
+struct data {
+    int pl,sl,mx;///Prefix len,Suff len, Max len,
+    ll a,b;/// Leftmost val, Rgtmost val
+    data() {};
+    data(int aa,int bb,int cc,ll aaa,ll bbb) {
+        pl=aa,sl=bb,mx=cc;
+        a=aaa,b=bbb;
+    }
+};
+
+data nd[(4*MX)+2];
+ll ar[MX+2];
+
+void Build(int id,int l,int r) {
+    if(l==r) {
+        nd[id]=data(1,1,1,ar[l],ar[l]);
+        return;
+    }
+    int md=(l+r)>>1,lft=(id<<1),rgt=lft+1;
+    Build(lft,l,md);
+    Build(rgt,md+1,r);
+    ///Merge lft & rgt subtree here;
+    nd[id].a=nd[lft].a,nd[id].b=nd[rgt].b;
+    nd[id].pl=nd[lft].pl,nd[id].sl=nd[rgt].sl;
+    nd[id].mx=max(nd[lft].mx,nd[rgt].mx);
+    if( nd[rgt].a>nd[lft].b ) {
+        nd[id].mx=max( nd[id].mx,nd[lft].sl+nd[rgt].pl );
+        if( nd[lft].pl==(md-l+1) )nd[id].pl+=nd[rgt].pl;
+        if( nd[rgt].sl==(r-md) )nd[id].sl+=nd[lft].sl;
+    }
+}
+
+void Ins(int id,int l,int r,int p,int v) {
+    if(l==r) {
+        ar[l]+=v;
+        nd[id]=data(1,1,1,ar[l],ar[l]);
+        return;
+    }
+    int md=(l+r)>>1,lft=(id<<1),rgt=lft+1;
+    if(p<=md)Ins(lft,l,md,p,v);
+    else Ins(rgt,md+1,r,p,v);
+    ///Merge lft & rgt subtree here;
+    nd[id].a=nd[lft].a,nd[id].b=nd[rgt].b;
+    nd[id].pl=nd[lft].pl,nd[id].sl=nd[rgt].sl;
+    nd[id].mx=max(nd[lft].mx,nd[rgt].mx);
+    if( nd[rgt].a>nd[lft].b ) {
+        nd[id].mx=max( nd[id].mx,nd[lft].sl+nd[rgt].pl );
+        if( nd[lft].pl==(md-l+1) )nd[id].pl+=nd[rgt].pl;
+        if( nd[rgt].sl==(r-md) )nd[id].sl+=nd[lft].sl;
+    }
+}
+
+data Qry(int id,int l,int r,int q1,int q2) {
+    if(l==q1 && r==q2) return nd[id];
+    int md=(l+r)>>1,lft=(id<<1),rgt=lft+1;
+    if(q2<=md) return Qry(lft,l,md,q1,q2);
+    else if( q1>md ) return Qry(rgt,md+1,r,q1,q2);
+    else {
+        data x=Qry(lft,l,md,q1,md);
+        data y=Qry(rgt,md+1,r,md+1,q2);
+        data z;
+        z.a=x.a,z.b=y.b;
+        z.pl=x.pl,z.sl=y.sl;
+        z.mx=max(x.mx,y.mx);
+        if( y.a>x.b ) {
+            z.mx=max( z.mx,x.sl+y.pl );
+            if( x.pl==(md-q1+1) )z.pl+=y.pl;
+            if( y.sl==(q2-md) )z.sl+=x.sl;
+        }
+        return z;
+    }
+}
+
+
+int main() {
+    int tc,m,n,q,i,j,k,x,y,op;
+    S(tc);
+    while(tc--) {
+        S2(n,q);
+        CLR(nd);
+        fr(i,1,n)SL(ar[i]);
+        Build(1,1,n);
+        while(q--) {
+            S(op);
+            S2(x,y);
+            if(op==1) {
+                ///Increase the power of xth soldier by 'y'
+                Ins(1,1,n,x,y);
+            } else {
+                /// len of longest continuous increasing chain of soldiers in range [x,y]
+                int ans=Qry(1,1,n,x,y).mx;
+                printf("%d\n",ans);
+            }
+        }
+    }
+    return 0;
+}

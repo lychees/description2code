@@ -1,0 +1,98 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define ll long long int 
+ll tree[300000];
+ll arr[100005];
+ll p[100005];
+
+void get_pow()
+{
+	p[0]=1;
+	for(int i=1;i<=100000;i++)
+		p[i]=(p[i-1]*2)%3;
+}
+
+
+
+void build(ll i,ll st,ll en)
+{
+	if(st==en)
+		tree[i]=arr[st];
+	else
+	{
+		ll mid=(st+en)/2;
+		build(2*i,st,mid);
+		build(2*i+1,mid+1,en);
+		tree[i]=(tree[2*i]*p[en-mid]+tree[2*i+1])%3;
+	}
+}
+
+ll query(ll i,ll st,ll en,ll l,ll r)
+{
+	if(l >en || r < st)
+		return 0;
+	if(l<=st && r>=en)
+		return (tree[i]*p[r-en])%3;
+	ll mid=(st+en)/2;
+	return ((query(2*i,st,mid,l,r)+query(2*i+1,mid+1,en,l,r))%3);
+	
+}
+
+void update(ll i,ll st,ll en,ll indx)
+{
+	if(st==en)
+	{
+		tree[i]=1;
+		arr[indx]=1;
+	}
+	else
+	{
+		ll mid=(st+en)/2;
+		if(st<=indx && mid>=indx)
+			update(2*i,st,mid,indx);
+		else
+			update(2*i+1,mid+1,en,indx);
+		tree[i]=((tree[2*i]*p[en-mid]%3)+tree[2*i+1]%3);
+	}
+}
+
+int main()
+{
+	ll n,t;
+	cin>>n;
+	string s;
+	cin>>s;
+	get_pow();
+	for(ll i=1;i<=n;i++)
+	{
+		arr[i]=s[i-1]-48;
+	}
+	build(1,1,n);
+
+	cin>>t;
+	while(t--)
+	{
+		ll chk;
+		cin>>chk;
+		ll l;
+		cin>>l;
+		if(chk==0)
+		{
+			ll r;
+			cin>>r;
+			cout<<query(1,1,n,l+1,r+1)<<endl;
+		}
+		else
+		{
+			if(s[l]=='0')
+			{
+				s[l]='1';
+				arr[l+1]=1;
+				update(1,1,n,l+1);
+			}
+		}
+	}
+	return 0;
+
+}

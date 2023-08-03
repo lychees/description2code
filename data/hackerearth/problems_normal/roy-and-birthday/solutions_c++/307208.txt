@@ -1,0 +1,133 @@
+# include <iostream>
+# include <fstream>
+# include <sstream>
+# include <algorithm>
+# include <numeric>
+# include <cstdio>
+# include <cmath>
+# include <cstdlib>
+# include <cstring>
+# include <vector>
+# include <list>
+# include <set>
+# include <map>
+# include <stack>
+# include <queue>
+# include <cctype>
+# include <climits>
+
+using namespace std;
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef pair<int,int> pii;
+typedef vector<int> vi;
+typedef vector<vector<int> > vvi;
+
+#define GI ({int t;scanf("%d",&t);t;})
+#define REP(i,a,b) for(int i=a;i<b;i++)
+#define ALL(v) (v).begin(),(v).end()
+#define TR(i,x) for(typeof(x.begin()) i=x.begin();i!=x.end();i++)
+#define pb push_back
+#define mp make_pair
+#define INF (int)1e9
+#define EPS (double)(1e-9)
+#define PI (double)(3.141592653589793)
+#define MOD 1000000007
+
+int freqMatrix[26];
+LL modinv(LL a)
+{
+    LL b=MOD;
+	LL b0 = b, t, q;
+	LL x0 = 0, x1 = 1;
+	if (b == 1) return 1;
+	while (a > 1) {
+		q = a / b;
+		t = b, b = a % b, a = t;
+		t = x0, x0 = x1 - q * x0, x1 = t;
+	}
+	if (x1 < 0) x1 += b0;
+	return x1;
+}
+LL factorialMod(LL n)
+{
+    LL p=MOD;
+    LL ans=1;
+    if(n<=(p/2))
+    {
+        for(LL i=1;i<=n;i++)
+        {
+            ans=(ans*i)%p;
+        }
+    }
+    else //Fancypants method for large n
+    {
+        for(LL i=n+1;i<p;i++)
+        {
+            ans=(ans*i)%p;
+        }
+        ans=modinv(ans);
+        ans = -1*ans + p;
+    }
+    return (ans%p);
+}
+int main()
+{
+
+    int T;
+    cin>>T;
+    int vowels,consonants;
+    while(T--)
+    {
+        memset(freqMatrix,0,sizeof(freqMatrix));
+        string input;
+        cin>>input;
+        REP(i,0,input.length())
+        {
+            freqMatrix[input[i]-'a']++;
+        }
+        vowels=freqMatrix[0]+freqMatrix[4]+freqMatrix[8]+freqMatrix[14]+freqMatrix[20];
+        consonants=input.length()-vowels;
+        if(vowels>consonants+1)
+        {
+            cout<<"-1\n";
+            continue;
+        }
+        else
+        {
+            LL numConsonents=factorialMod(consonants);
+            //cout<<numConsonents<<" ";
+            LL arrangeConsonents=numConsonents;
+            REP(i,1,26)
+            {
+                if(i==4||i==8||i==14||i==20)
+                    continue;
+                else
+                {
+                    LL demomin=factorialMod(freqMatrix[i]);
+                    arrangeConsonents=((arrangeConsonents)*(modinv(demomin)))%MOD;
+                }
+            }
+            //cout<<arrangeConsonents<<" ";
+            LL numVowels=((factorialMod(consonants+1))*modinv( factorialMod(consonants-vowels+1)))%MOD;
+            //cout<<numVowels<<" ";
+            LL arrangeVowels=numVowels;
+            LL dem=factorialMod(freqMatrix[0]);
+            arrangeVowels=((arrangeVowels)*(modinv(dem)))%MOD;
+            dem=factorialMod(freqMatrix[4]);
+            arrangeVowels=((arrangeVowels)*(modinv(dem)))%MOD;
+            dem=factorialMod(freqMatrix[8]);
+            arrangeVowels=((arrangeVowels)*(modinv(dem)))%MOD;
+            dem=factorialMod(freqMatrix[14]);
+            arrangeVowels=((arrangeVowels)*(modinv(dem)))%MOD;
+            dem=factorialMod(freqMatrix[20]);
+            arrangeVowels=((arrangeVowels)*(modinv(dem)))%MOD;
+            // cout<<arrangeVowels<<" ";
+            LL ans=(arrangeConsonents*arrangeVowels)%MOD;
+            cout<<ans<<"\n";
+        }
+
+    }
+    return 0;
+}

@@ -1,0 +1,114 @@
+#define NDEBUG
+#include <bits/stdc++.h>
+//#include <tr1/unordered_map>
+//#include <tr1/unordered_set>
+using namespace std;
+//using namespace tr1;
+#define map unordered_map
+#define set unordered_set
+int N, M;
+namespace std { //namespace tr1 {
+	template<>
+	struct hash<pair<int, int> > {
+		int operator()(const pair<int, int> &p) const {
+			return (p.first * 31) ^ p.second;
+		}
+	};
+	//}
+};
+map<pair<int, int>, vector<int> > g;
+set<pair<int, int> > s;
+void add_edge(pair<int, int> p, int x) {
+	s.insert(p);
+	g[p].push_back(x);
+}
+bool lt(const vector<int> &x, const vector<int> &y) {
+	if (x.size() != y.size()) {
+		return x.size() < y.size();
+	}
+	for (int i = 0; i < x.size(); ++i) {
+		assert(x[i] != y[i]);
+		return x[i] < y[i];
+	}
+	assert(false);
+}
+bool gt(const pair<int, int> &x, const pair<int, int> &y) {
+	assert(g.count(x));
+	assert(g.count(y));
+	//return lt(g[y], g[x]);
+	const vector<int> &vx = g[x], &vy = g[y];
+	if (vx.size() != vy.size()) return vx.size() > vy.size();
+	return vx[0] > vy[0];
+}
+int par[111111], Rank[111111];
+void make_dj() {
+	for (int i = 0; i < N; ++i) {
+		par[i] = i;
+		Rank[i] = 0;
+	}
+}
+int Find(int i) {
+	if (par[i] == i) return i;
+	return par[i] = Find(par[i]);
+}
+int Union(int i, int j) {
+	i = Find(i);
+	j = Find(j);
+	if (Rank[i] > Rank[j]) swap(i, j);
+	par[i] = j;
+	if (Rank[i] == Rank[j]) ++Rank[j];
+}
+void find_mst() {
+	vector<pair<int, int> > v(s.begin(), s.end()), w;
+	vector<int> out;
+	sort(v.begin(), v.end(), gt);
+	for (int i = 0; i < v.size(); ++i) {
+		pair<int, int> p = v[i];
+		//cerr << p.first << ", " << p.second << ":\n";
+		vector<int> &v = g[p];
+		reverse(v.begin(), v.end());
+		while (v.size() > 1) {
+			out.push_back(v.back());
+			v.pop_back();
+		}
+		if (v.size() == 1) {
+			w.push_back(p);
+		}
+	}
+	sort(w.begin(), w.end(), gt);
+	for (int i = 0; i < w.size(); ++i) {
+		pair<int, int> p = w[i];
+		if (Find(p.first) != Find(p.second)) {
+			Union(p.first, p.second);
+			assert(g[p].size() == 1);
+			g[p].pop_back();
+		}
+	}
+	reverse(w.begin(), w.end());
+	for (int i = 0; i < w.size(); ++i) {
+		pair<int, int> p = w[i];
+		if (g[p].size() == 1) {
+			out.push_back(g[p].back());
+			//g[p].pop_back();
+		}
+	}
+	assert(out.size() == M - (N - 1));
+	cout << out.size() << endl;
+	sort(out.begin(), out.end());
+	for (int i = 0; i < out.size(); ++i) {
+		cout << out[i] << endl;
+	}
+}
+int main() {
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	cin >> N >> M;
+	for (int i = 0; i < M; ++i) {
+		int u, v;
+		cin >> u >> v;
+		--u; --v;
+		if (u > v) swap(u, v);
+		add_edge(make_pair(u, v), i + 1);
+	}
+	make_dj();
+	find_mst();
+}

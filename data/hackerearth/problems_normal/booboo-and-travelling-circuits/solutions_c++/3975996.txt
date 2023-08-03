@@ -1,0 +1,176 @@
+/*
+* @problem: xx
+*/
+#include <iostream>
+#include <algorithm>
+#include <utility>
+#include <cstring>
+#include <string.h>
+#include <queue>
+#include <set>
+#include <map>
+#include <math.h>
+#include <stdio.h>
+#include <vector>
+#include <functional>
+#include <bitset>
+#include <iomanip>
+#define ll long long
+#define pi acos(-1.0)
+#define pb push_back
+#define MS0(ar) memset(ar,0,sizeof ar)
+#define MS1(ar) memset(ar,-1,sizeof ar)
+#define ff first
+#define ss second
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define ind(a) scanf("%d",&a)
+#define inf(a) scanf("%lf",&a)
+#define inl(a) scanf("%lld",&a)
+#define ins(a) scanf("%s",a)
+#define pd(a) printf("%d\n",a)
+#define pl(a) printf("%lld\n",a);
+#define bitcnt(x) __builtin_popcountll(x)
+#define mod 1000000000000000007
+const int MAX = 1e5 + 10;
+using namespace std;
+int pr[10005];
+ll A[2][10005];
+ll B[2][10005];
+pll dp[2][10005];
+ll dp1[2][10005];
+pll dp2[2][10005];
+ll N, M, P, Q, R, X, Y, Z;
+void sieve()
+{
+	pr[0] = pr[1] = 1;
+	for (int i = 2; i <= 10000; ++i)
+	{
+		if (!pr[i])
+		{
+			pr[i] = i;
+			for (int j = i * i; j <= 10000; j += i)
+			{
+				if (!pr[j])
+					pr[j] = i;
+			}
+		}
+	}
+}
+int main()
+{
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+#ifndef ONLINE_JUDGE
+	freopen("../input.txt", "r", stdin);
+	//freopen("../output.txt","w",stdout);
+#endif
+	sieve();
+	ll x, y;
+	cin >> N >> M;
+	cin >> x >> P >> Q >> R;
+	cin >> y >> X >> Y >> Z;
+	// for (int i = 0; i < (N * M); i++)
+	// {
+	// 	x = ((P * (x * x % 1000000003)) % 1000000003 + (Q * x) % 1000000003 + R) % 1000000003;
+	// 	A[(i / M) + 1][(i % M) + 1] = x % 1000000003;
+	// 	x %= 1000000003 ;
+	// }
+	// for (int i = 0; i < (N * M); i++) {
+	// 	y = ((X * (y * y % 1000000003)) % 1000000003 + (Y * y) % 1000000003 + Z) % 1000000003;
+	// 	B[(i / M) + 1][(i % M) + 1] = y % 1000000003;
+	// 	y %= 1000000003;
+	// }
+	int cur = 0, prev = 1;
+	for (int i = 1; i <= N; i++)
+	{
+		cur = 1 - cur;
+		prev = 1 - prev;
+		//cout << cur << " %%% " << prev << endl;
+		for (int j = 1; j <= M; j++)
+		{
+			x = ((P * (x * x % 1000000003)) % 1000000003 + (Q * x) % 1000000003 + R) % 1000000003;
+			A[cur][j] = x % 1000000003;
+			//cout << A[cur][j] << " ";
+			x %= 1000000003 ;
+		}
+		//cout << endl;
+		for (int j = 1; j <= M; j++) {
+			y = ((X * (y * y % 1000000003)) % 1000000003 + (Y * y) % 1000000003 + Z) % 1000000003;
+			B[cur][j] = y % 1000000003;
+			//cout << B[cur][j] << " ";
+			y %= 1000000003;
+		}
+		//cout << endl;
+		for (int j = 1; j <= M; j++)
+		{
+			dp[cur][j].ff = mod;
+			dp[cur][j].ss = mod;
+			dp2[cur][j].ff = mod;
+			dp2[cur][j].ss = mod;
+		}
+		for (int j = 1; j <= M; j++)
+		{
+			dp1[cur][j] = dp1[prev][j] + A[prev][j];
+			if (dp[prev][pr[j]].ss != j && dp[prev][pr[j]].ss != mod)
+			{
+				dp1[cur][j] = min(dp1[cur][j], dp[prev][pr[j]].ff);
+			}
+			else if (dp2[prev][pr[j]].ss != j && dp2[prev][pr[j]].ss != mod)
+			{
+				dp1[cur][j] = min(dp1[cur][j], dp2[prev][pr[j]].ff);
+			}
+			if (dp1[cur][j] + B[cur][j] < dp[cur][pr[j]].ff)
+			{
+				dp2[cur][pr[j]].ff = dp[cur][pr[j]].ff;
+				dp2[cur][pr[j]].ss = dp[cur][pr[j]].ss;
+				dp[cur][pr[j]].ff = dp1[cur][j] + B[cur][j];
+				dp[cur][pr[j]].ss = j;
+			}
+			else if (dp1[cur][j] + B[cur][j] < dp2[cur][pr[j]].ff)
+			{
+				dp2[cur][pr[j]].ff = dp1[cur][j] + B[cur][j];
+				dp2[cur][pr[j]].ss = j;
+			}
+			if (dp[cur][1].ff >= dp[cur][pr[j]].ff)
+			{
+				if (dp[cur][1].ff == dp[cur][pr[j]].ff)
+				{
+					if (dp[cur][1].ss == 1)
+						dp[cur][1].ss = j;
+				}
+				else
+				{
+					dp[cur][1].ff = dp[cur][pr[j]].ff;
+					dp[cur][1].ss = j;
+				}
+			}
+			if (dp2[cur][1].ff > dp2[cur][pr[j]].ff)
+			{
+				if (dp2[cur][1].ff == dp2[cur][pr[j]].ff)
+				{
+					if (dp2[cur][1].ss == 1)
+						dp2[cur][1].ss = j;
+				}
+				else
+				{
+					dp2[cur][1].ff = dp2[cur][pr[j]].ff;
+					dp2[cur][1].ss = j;
+				}
+			}
+		}
+		// for (int i = 1; i <= M; i++)
+		// 	cout << dp1[cur][i] << " ";
+		// cout << endl;
+		// for (int i = 1; i <= M; i++)
+		// 	cout << dp[cur][i].ff << " " << dp[cur][i].ss << endl;
+		//cout << endl;
+	}
+	ll ans = dp1[cur][1];
+	for (int i = 2; i <= M; i++)
+	{
+		ans = min(ans, dp1[cur][i]);
+	}
+	cout << ans << endl;
+	return 0;
+}

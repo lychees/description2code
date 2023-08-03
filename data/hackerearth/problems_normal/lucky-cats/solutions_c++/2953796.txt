@@ -1,0 +1,80 @@
+/**/
+#include<bits/stdc++.h>
+using namespace std;
+/***********************************************/
+/*      ____________
+ *     /            \
+ *    /  /\      /\  \
+ *   /  /  \    /  \  \
+ *   \                /
+ *    \     \___/    /
+ *     \____________/
+ */
+const long long mod = 1000000007;
+long long dp[10010][101][101];
+int rem[10010][101][101];
+bool vis[10010][101][101];
+long long pw10[10010];
+int k;
+void bt(int i,int j,int r){
+	if(vis[i][j][r])return;
+	if(j >= k){
+		dp[i][j][r] = pw10[i];
+		rem[i][j][r] = 0;
+		vis[i][j][r] = true;
+		return;
+	}
+	if(i == 0){
+		if(r + j >= k)dp[i][j][r] = 1,rem[i][j][r] = 0;
+		else dp[i][j][r] = 0,rem[i][j][r] = r + j;
+		vis[i][j][r] = true;
+		return;
+	}
+	dp[i][j][r] = 0,rem[i][j][r] = r;
+	for(int z = 0;z <= 9;z++){
+		bt(i-1,j + (z==4||z==7),rem[i][j][r]);
+		dp[i][j][r] = (dp[i][j][r] + dp[i-1][j + (z==4||z==7)][rem[i][j][r]])%mod;
+		rem[i][j][r] = rem[i-1][j+(z==4 || z==7)][rem[i][j][r]];
+	}
+	vis[i][j][r] = true;
+	return;
+}
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(nullptr);
+
+	pw10[0] = 1;
+	for(int i = 1;i < 10010;i++)pw10[i] = pw10[i-1] * 10 % mod;
+	string s;
+	cin>>k>>s;
+	k++;
+	long long res = 0;
+	int rm = 0;
+	int j = 0;
+	for(int i = 0;i < s.size();i++){
+
+		for(int z = 0;z < s[i] - '0'; z++){
+			bt(s.size() - i - 1,j + (z==4 || z==7),rm);
+			res = (res + dp[s.size() - i-1][j + (z==4 || z==7)][rm])%mod;
+			rm = rem[s.size() - i-1][j + (z==4 || z==7)][rm];
+		}
+		if(i+1 == s.size()){
+			int z = s[i] - '0';
+			bt(s.size() - i - 1,j + (z==4 || z==7),rm);
+			res = (res + dp[s.size() - i-1][j + (z==4 || z==7)][rm])%mod;
+			rm = rem[s.size() - i-1][j + (z==4 || z==7)][rm];
+		}else if(s[i] == '4' || s[i] == '7'){
+			j++;
+			if(j >= k){
+				for(int j = i+1;j < s.size();j++){
+					res = (res + (s[j] - '0') * pw10[s.size() - 1 - j])%mod;
+				}
+				res = (res + 1)%mod;
+				break;
+			}
+		}
+	}
+	cout<<res<<'\n';
+	return 0;
+}
+/**/

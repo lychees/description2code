@@ -1,0 +1,170 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define LL long long
+#define ULL unsigned long long
+
+
+#define VI vector < int >
+#define VLL vector < LL >
+#define MAT vector < VLL >
+#define PB push_back
+
+
+#define CLR(a,x) memset(a,x,sizeof(a))
+
+
+#define tr(container , it) for(typeof(container.begin()) it=container.begin() ; it!=container.end() ; it++)
+#define FOR(i,a,b) for(i=a;i<b;i++)
+#define REP(i,a) FOR(i,0,a)
+
+
+#define PII pair < int , int >
+#define MP make_pair
+
+
+
+#define what_is(x) cout << #x << " is " << (x) << endl
+#define s( x )  scanf("%d", &(x) )
+#define sll( x ) scanf("%lld", &(x) )
+
+
+#define BIT(n) (1<<(n))
+#define AND(a,b) ((a) & (b))
+#define OR(a,b) ((a) | (b))
+#define XOR(a,b) ((a) ^ (b))
+#define sqr(x) ((x) * (x))
+
+
+#define clear_buffer(c) while ( (c = getchar()) != '\n' && c != EOF ) { }
+
+#define epsilon 1e-6
+#define INF 100000000000000
+#define MOD 1000000007
+
+int gcd(int a, int b) { return b == 0 ? a : gcd(b, a%b); }
+
+struct node {
+    int mn;
+    int mx;
+};
+
+int inf = 1009009009;
+struct node def;
+struct node tree[4000000];
+int a[200909];
+
+void _merge (int p)
+{
+    int lc, rc;
+    lc = 2*p;
+    rc = lc + 1;
+
+    tree[p].mn = min(tree[lc].mn, tree[rc].mn);
+    tree[p].mx = max(tree[rc].mx, tree[lc].mx);
+
+    return;
+}
+
+void update (int p, int l, int r, int up, int val)
+{
+    if ( (l > r) || (up < l) || (up > r) ) return;
+
+    if ( (l == r) && (up == r) ) {
+        tree[p].mn = tree[p].mx = a[up] = val;
+        return;
+    }
+
+    int mid = (l+r)/2;
+    update(2*p, l, mid, up, val);
+    update(2*p + 1, mid+1, r, up, val);
+
+    _merge(p);
+
+    return;
+}
+
+
+struct node query (int p, int l, int r, int ql, int qr)
+{
+    if ( (l > r) || (ql > r) || (qr < l) ) return def;
+
+    if (l >= ql && r <= qr) return tree[p];
+
+    int mid = (l+r)/2;
+    struct node nl, nr, nret;
+
+    nl = query(2*p, l, mid, ql, qr);
+    nr = query(2*p + 1, mid+1, r, ql, qr);
+
+    nret.mn = min(nl.mn, nr.mn);
+    nret.mx = max(nl.mx, nr.mx);
+
+    return nret;
+
+}
+
+int main()
+{
+    def.mn = inf;
+    def.mx = -1*inf;
+
+    int n, m, x, val, z;
+    s(n);   s(m);
+
+    for (int i = 0; i < n; ++i) {
+        s(val);
+        a[i] = val;
+        update(1, 0, n-1, i, val);
+    }
+
+
+    while (m--) {
+        char c[2];
+        scanf("%s", &c[0]);
+
+
+        if (c[0] == 'U') {
+            s(x);   s(val);
+            x--;
+            update(1, 0, n-1, x, val);
+        }
+
+        if (c[0] == 'Q') {
+            s(x);   s(z);
+            x--;
+            int lo, ro, mid, zmx, tz;
+            struct node st;
+
+            zmx = -1*inf;
+            tz = 0;
+            if (tz <= z) zmx = max(tz, zmx);
+
+            lo = x; ro = n-1;
+            while (lo < ro) {
+                mid = (lo+ro+1)/2;
+
+                st = query(1, 0, n-1, lo, mid);
+                tz = max( max(a[x]-st.mn, st.mn-a[x]), max(a[x]-st.mx, st.mx - a[x]) );
+
+                if (tz <= z) zmx = max(tz, zmx);
+                if (tz <= z) lo = mid;
+                else ro = mid-1;
+            }
+
+
+            //st = query(1, 0, n-1, lo, lo);
+            tz = max(a[x]-a[lo], a[lo]-a[x]);
+            if (tz <= z) zmx = max(tz, zmx);
+
+            if ( (zmx == -1*inf) || (zmx > z) ) {
+                printf("%d %d\n", -1, -1);
+            }else {
+                printf("%d %d\n", (lo-x+1), zmx);
+            }
+
+        }
+    }
+    return 0;
+}

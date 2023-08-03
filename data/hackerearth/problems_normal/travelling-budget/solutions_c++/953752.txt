@@ -1,0 +1,109 @@
+    #include<bits/stdc++.h>
+    using namespace std;
+    #define vi vector < int >
+    #define pii pair < int , int >
+    #define pb push_back
+    #define mp make_pair
+    #define ff first
+    #define ss second
+    #define TR(it,v) for( __typeof((v).begin())it = (v).begin() ; it != (v).end() ; it++ )
+    #define ll long long
+    #define llu unsigned long long
+    #define MOD 1000000007
+    #define INF 1000000000
+    #define dbg(x) { cout<< #x << ": " << (x) << endl; }
+    #define all(x) x.begin(),x.end()
+    vector < pair < int , pii > > adj[501];
+    int dp[501][1001];
+    int vis[501][1001];
+    int f[501][501];
+    int main()
+    {
+    int t,i,j;
+    scanf("%d",&t);
+    assert(1 <= t && t <= 5);
+    while(t--)
+    {
+    int n,m,b,q,B;
+    scanf("%d%d%d",&n,&m,&B);
+    assert(1 <= n && n <= 500);
+    assert(n-1 <= m && m <= min(2000,(n*(n-1))/2));
+    assert(1 <= B && B <= 1000);
+    for(i=1;i<=n;i++)
+    {
+    adj[i].clear();
+    for(j=1;j<=n;j++)
+    {
+    f[i][j] = 0;
+    }
+    }
+    while(m--)
+    {
+    int u,v,c,l;
+    scanf("%d%d%d%d",&u,&v,&c,&l);
+    assert(1 <= u && u <= n);
+    assert(1 <= v && v <= n);
+    assert(0 <= c && c <= 500);
+    assert(1 <= l && l <= 100000);
+    assert(f[u][v] == 0);
+    f[u][v] = 1;
+    adj[u].pb(mp(v,mp(c,l)));
+    }
+    for(i=1;i<=n;i++)
+    {
+    for(j=0;j<=B;j++)
+    {
+    dp[i][j] = INF;
+    vis[i][j] = 0;
+    }
+    }
+    dp[1][0] = 0;
+    priority_queue < pair < int , pii > > pq;
+    pq.push(mp(-dp[1][0],mp(1,0)));
+    while(!pq.empty())
+    {
+    pair < int , pii > cur = pq.top();
+    pq.pop();
+    int dist = -cur.ff;
+    int node = cur.ss.ff;
+    int budget = cur.ss.ss;
+    if(vis[node][budget])
+    continue;
+    vis[node][budget] = 1;
+    for(i=0;i<adj[node].size();i++)
+    {
+    int nxt = adj[node][i].ff;
+    int len = adj[node][i].ss.ss;
+    int cst = adj[node][i].ss.ff;
+    if(budget + cst <= B && dp[node][budget] + len < dp[nxt][budget + cst])
+    {
+    dp[nxt][budget + cst] = dp[node][budget] + len;
+    //cout<<dp[node][budget] + len <<endl;
+    pq.push(mp(-dp[nxt][budget + cst],mp(nxt,budget + cst)));
+    }
+    }
+    }
+    scanf("%d",&q);
+    assert(1 <= q <= 100000);
+    for(i=1;i<=n;i++)
+    {
+    int mn = INF;
+    for(j=0;j<=B;j++)
+    {
+    dp[i][j] = min(dp[i][j],mn);
+    mn = min(mn,dp[i][j]);
+    }
+    }
+    while(q--)
+    {
+    int x,y;
+    scanf("%d%d",&x,&y);
+    assert(1 <= x && x <= n);
+    assert(1 <= y && y <= B);
+    if(dp[x][y] == INF)
+    dp[x][y] = -1;
+    printf("%d\n",dp[x][y]);
+    }
+    }
+    return 0;
+    }

@@ -1,0 +1,110 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<set>
+#define maxn 20000
+using namespace std;
+
+vector<int> lis;
+
+vector<pair<int,int> > graph[maxn];
+pair<long long,int> dist[maxn];                 //first: dist, second:stat(1 means permanent)
+
+
+void djikstra(int s)
+{
+    set<pair<long long,int> > st;               //first: dist from source ,sec: vertex
+    set<pair<long long,int> >::iterator it;
+    pair<long long ,int > emin;                 //min element
+    st.insert(make_pair(0,s));
+    dist[s].first=0;
+
+    while(!st.empty())
+    {
+
+        it=st.begin();
+        emin=*it;
+        st.erase(it);
+
+        dist[emin.second].first=emin.first;
+        dist[emin.second].second=1;
+
+        for(int i=0;i<graph[emin.second].size();i++)
+        {
+
+            int a=graph[emin.second][i].first;
+            long long b=graph[emin.second][i].second;
+
+            if(dist[a].second==1)
+                continue;
+            if(dist[a].first!=-1&&dist[a].first<=emin.first+b)
+                continue;
+                    if(dist[a].first!=-1)
+                {
+
+                    st.erase(make_pair(dist[a].first,a));
+                }
+            st.insert(make_pair(emin.first+b,a));
+            dist[a].first=emin.first+b;
+        }
+    }
+
+}
+
+void init_djik(int n)
+{
+    for(int i=0;i<=n;i++)
+    {
+        dist[i].first=-1;
+        dist[i].second=0;
+    }
+}
+
+int aa;
+void crt_graph()
+{
+    sort(lis.begin(),lis.end());
+
+    int a=lis[0];
+    aa=a;
+
+    for(int i=1;i<lis.size();i++)
+    {
+        for(int j=0;j<a;j++)
+        {
+            graph[j].push_back(make_pair((j+lis[i])%a,lis[i]));
+        }
+    }
+    init_djik(aa);
+    djikstra(0);
+
+}
+
+
+
+int main()
+{
+    int n,q,a;
+    cin>>n>>q;
+
+    for(int i=0;i<n;i++)
+    {
+        cin>>a;
+        lis.push_back(a);
+    }
+
+    crt_graph();
+    /*for(int i=0;i<aa;i++)
+        cout<<dist[i].first<<" ";
+    cout<<endl;*/
+    while(q--)
+    {
+        cin>>a;
+        if(dist[a%aa].first==-1||dist[a%aa].first>a)
+            cout<<"NO\n";
+        else
+            cout<<"YES\n";
+    }
+
+    return 0;
+}

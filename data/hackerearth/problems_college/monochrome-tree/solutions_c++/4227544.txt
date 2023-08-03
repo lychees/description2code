@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int N = 100005 , INF = 1e9;
+vector <int> g[N];
+bool vis[N][2];
+int dp[N][2];
+int a[N] , b[N];
+void dfs(int u , int p , int k) {
+	if(vis[u][k]) return;
+	vis[u][k] = true;
+	int val = a[u];
+	if(k)
+		val = abs(1 - val);
+	int ret1 = 0 , ret2 = 0;
+	int cnt = 0;
+	for(int i = 0 ; i < g[u].size() ; i ++)
+		if(g[u][i] != p) {
+			cnt ++;
+			dfs(g[u][i] , u , 0);
+			dfs(g[u][i] , u , 1);
+			ret1 += dp[g[u][i]][k];
+			ret2 += dp[g[u][i]][abs(1-k)];
+		}
+	int ret = 0;
+	if(cnt == 0 && val != b[u])
+		ret = 1;
+	else {
+		if(val == b[u])
+			ret = min(ret1 , 2 + ret2);
+		else
+			ret = min(ret1 , ret2) + 1;
+	}
+	dp[u][k] = ret;
+}
+
+int main()
+{
+	int n; cin >> n;
+	for(int i = 0 ; i < n-1; i ++) {
+		int u , v; cin >> u >> v;
+		g[u].push_back(v); g[v].push_back(u);
+	}
+	for(int i = 1 ; i <= n ; i ++) cin >> a[i];
+	for(int i = 1 ; i <= n ; i ++) cin >> b[i];
+	dfs(1 , 0 , 0);
+	cout << dp[1][0] << '\n';
+	return 0;
+}

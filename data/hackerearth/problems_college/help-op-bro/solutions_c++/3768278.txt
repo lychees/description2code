@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+
+#define PII       pair<int,int>
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+#define cin(x)    scanf("%d",&x)
+#define MOD		1000000007
+#define EPS		1E-10
+
+LL lmt;
+vector<int> digs;
+
+LL dp[20][30][30][2];
+
+LL solve(int idx, int x, int o, int tight)
+{
+	if(idx == sz(digs)) return (x * o <= lmt)?1:0;
+	else if(dp[idx][x][o][tight] != -1) return dp[idx][x][o][tight];
+	LL ret = 0;
+	if(tight)
+	{
+		for(int i = 0; i < digs[idx]; i++)
+			ret += solve(idx + 1, x^i, o|i, 0);
+		ret += solve(idx + 1, x^digs[idx],o|digs[idx],1);
+	}
+	else
+	{
+		for(int i = 0; i < 10; i++)
+			ret += solve(idx + 1, x^i, o|i, 0);
+	}
+	return (dp[idx][x][o][tight] = ret);
+}
+
+LL F(LL limit, LL k)
+{
+	clr(digs);
+	lmt = k;
+	while(limit)
+	{
+		digs.pb(limit%10);
+		limit /= 10;
+	}
+	reverse(all(digs));
+	memset(dp,-1,sizeof(dp));
+	return solve(0,0,0,1) - 1;
+}
+
+int main()
+{
+	int t;
+	cin >> t;
+	while(t--)
+	{
+		LL A,B,K;
+		cin >> A >> B >> K;
+		LL ans = F(B,K) - F(A-1,K);
+		cout << ans << "\n";
+	}
+	return 0;
+}

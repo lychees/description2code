@@ -1,0 +1,149 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define FOR(i,a,b) for(int i=(a),_b=(b); i<=_b; i++)
+#define FORD(i,a,b) for(int i=(a),_b=(b); i>=_b; i--)
+#define REP(i,a) for(int i=0,_a=(a); i<_a; i++)
+#define EACH(it,a) for(__typeof(a.begin()) it = a.begin(); it != a.end(); ++it)
+#define SZ(S) ((int) ((S).size()))
+
+#define DEBUG(x) { cout << #x << " = " << x << endl; }
+#define PR(a,n) { cout << #a << " = "; FOR(_,1,n) cout << a[_] << ' '; cout << endl; }
+#define PR0(a,n) { cout << #a << " = "; REP(_,n) cout << a[_] << ' '; cout << endl; }
+
+#define TWO(X) (1<<(X))
+#define CONTAIN(S,X) (S & TWO(X))
+
+const int MOD = 1000000007;
+struct Num {
+    int x;
+    Num(int x = 0) : x(x) { assert(x >= 0 && x < MOD); }
+    Num operator + (const Num& a) const { return Num((x+a.x) % MOD); }
+    Num operator - (const Num& a) const { return Num((x-a.x+MOD) % MOD); }
+    Num operator * (const Num& a) const { return Num(x*(long long)a.x % MOD); }
+    friend ostream& operator << (ostream& cout, const Num &a) {
+        cout << a.x;
+        return cout;
+    }
+};
+
+struct Matrix {
+    int m, n;
+    Num x[70][70];
+
+    friend ostream& operator << (ostream& cout, const Matrix &a) {
+        cout << "m = " << a.m << ", n = " << a.n << endl;
+        REP(i,a.m) {
+            REP(j,a.n) cout << a.x[i][j] << ' ';
+            cout << endl;
+        }
+        return cout;
+    }
+} I, p[40];
+
+Matrix operator * (const Matrix& a, const Matrix& b) {
+    Matrix res;
+    res.m = a.m; res.n = b.n;
+    REP(i,res.m) REP(j,res.n) {
+        res.x[i][j] = Num(0);
+        REP(k,a.n)
+            res.x[i][j] = res.x[i][j] + a.x[i][k] * b.x[k][j];
+    }
+    return res;
+}
+
+Matrix eye(int n) {
+    Matrix res;
+    res.m = res.n = n;
+    REP(i,n) REP(j,n)
+        if (i == j) 
+            res.x[i][j] = Num(1);
+        else res.x[i][j] = Num(0);
+    return res;
+}
+
+int n, m;
+
+int main() {
+    ios :: sync_with_stdio(false); cin.tie(NULL);
+    cout << (fixed) << setprecision(6);
+    int ntest; cin >> ntest;
+    while (ntest--) {
+        cin >> n >> m;
+        // Calculate I
+        I = eye(TWO(n));
+        // Calculte transitions: p[0]
+        p[0].m = p[0].n = TWO(n);
+        REP(i,p[0].m) REP(j,p[0].n)
+            p[0].x[i][j] = Num(0);
+
+        REP(cur,TWO(n)) {
+            REP(ngang,TWO(n))
+                if ((ngang & (ngang >> 1)) == 0)
+                REP(doc,TWO(n)) {
+                    int next = 0;
+                    bool ok = true;
+                    REP(i,n)
+                    if (CONTAIN(ngang,i)) {
+                        if (i == 0 || CONTAIN(next,i) || CONTAIN(next,i-1)) {
+                            ok = false;
+                            break;
+                        }
+                        next |= TWO(i);
+                        next |= TWO(i-1);
+                    }
+                    REP(i,n)
+                    if (CONTAIN(doc,i)) {
+                        if (CONTAIN(cur,i) || CONTAIN(next,i)) {
+                            ok = false;
+                            break;
+                        }
+                        next |= TWO(i);
+                    }
+                    if (ok) {
+                        p[0].x[cur][next] = p[0].x[cur][next] + Num(1);
+                    }
+                }
+        }
+//        cout << "Transform matrix: " << endl;
+//        cout << p[0] << endl;
+        // Matrix power
+        FOR(i,1,35)
+            p[i] = p[i-1] * p[i-1];
+
+        // Get initial vector
+        Matrix start;
+        start.n = TWO(n);
+        start.m = 1;
+        memset(start.x, 0, sizeof start.x);
+        REP(ngang,TWO(n))
+            if ((ngang & (ngang >> 1)) == 0) {
+                int next = 0; bool ok = true;
+                REP(i,n) if (CONTAIN(ngang,i)) {
+                    if (i == 0 || CONTAIN(next,i) || CONTAIN(next,i-1)) {
+                        ok = false;
+                        break;
+                    }
+                    next |= TWO(i);
+                    next |= TWO(i-1);
+                }
+                if (ok)
+                    start.x[0][next] = start.x[0][next] + Num(1);
+            }
+//        cout << "Start matrix: " << endl;
+//        cout << start << endl;
+
+        // Transform
+        --m;
+        REP(bit,30)
+            if (CONTAIN(m,bit)) {
+                start = start * p[bit];
+            }
+        Num res(0);
+        REP(i,start.n)
+            res = res + start.x[0][i];
+        cout << res << endl;
+    }
+    return 0;
+}
+

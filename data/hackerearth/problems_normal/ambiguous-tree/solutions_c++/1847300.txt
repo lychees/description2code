@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("draft.inp","r",stdin)
+#define OUTPUT freopen("draft.out","w",stdout)
+#define FOR(i,l,r) for(auto i=l;i<=r;i++)
+#define REP(i,l,r) for(auto i=l;i<r;i++)
+#define FORD(i,l,r) for(auto i=l;i>=r;i--)
+#define REPD(i,l,r) for(auto i=l;i>r;i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+
+const ll inf=1e17;
+const int MOD=1e9+7;
+const int N=1e5+10;
+
+int n,m,x,y,p[N][20],c[N],lv[N];
+ll f[N][20];
+vector <int> a[N];
+queue <int> q;
+int LCA(int x,int y){
+    if (lv[x]<lv[y]) swap(x,y);
+    int tmp=lv[x]-lv[y];
+    for(int i=0;(1<<i)<=tmp;i++) if ((1<<i)&tmp) x=p[x][i];
+    if (x==y) return x;
+    tmp=lv[x];
+    FORD(i,int(log2(lv[x])),0) if (p[x][i]!=p[y][i])
+        x=p[x][i],y=p[y][i];
+    return p[x][0];
+}
+void DFS(int par,int x){
+    c[x]=1;
+    for(auto i:a[x]) if (i!=par){
+        p[i][0]=x;
+        lv[i]=lv[x]+1;
+        DFS(x,i);
+        c[x]+=c[i];
+    }
+}
+ll C2(int x){
+    return 1LL*x*(x-1)/2;
+}
+ll cal(int x,int de){
+    ll ans=C2(c[x]);
+    for(int i=0;(1<<i)<=de;i++) if ((1<<i)&de)
+        ans+=f[x][i],x=p[x][i];
+    return ans;
+}
+int get(int x,int de){
+    for(int i=0;(1<<i)<=de;i++) if ((1<<i)&de) x=p[x][i];
+    return x;
+}
+int main(){
+    //INPUT;
+    scanf("%d",&n);
+    FOR(i,2,n){
+        scanf("%d%d",&x,&y);
+        a[x].push_back(y);
+        a[y].push_back(x);
+    }
+    lv[1]=1;
+    DFS(0,1);
+    FOR(j,1,int(log2(n)))
+        FOR(i,1,n) p[i][j]=p[p[i][j-1]][j-1];
+    FOR(i,1,n) f[i][0]=C2(c[p[i][0]]-c[i]);
+    FOR(j,1,int(log2(n)))
+        FOR(i,1,n) f[i][j]=f[i][j-1]+f[p[i][j-1]][j-1];
+    scanf("%d",&m);
+    while (m--){
+        scanf("%d%d",&x,&y);
+        if (x==y){
+            printf("0\n");
+            continue;
+        }
+        int z=LCA(x,y);
+        if (lv[x]<lv[y]) swap(x,y);
+        ll ans=C2(n);
+        //printf("->%d\n",z);
+        if (z==y){
+            int z1=get(x,lv[x]-lv[z]-1);
+            ans-=cal(x,lv[x]-lv[z]-1)+C2(n-c[z1]);
+        }else{
+            int z1=get(x,lv[x]-lv[z]-1),z2=get(y,lv[y]-lv[z]-1);
+            ans-=cal(x,lv[x]-lv[z]-1)+C2(n-c[z1]-c[z2])+cal(y,lv[y]-lv[z]-1);
+        }
+        printf("%lld\n",ans);
+    }
+}

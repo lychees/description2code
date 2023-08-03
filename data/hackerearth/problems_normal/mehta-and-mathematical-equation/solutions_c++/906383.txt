@@ -1,0 +1,65 @@
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <map>
+#include <cstring>
+using namespace std;
+
+#define MOD 1000000007
+
+string s;
+
+long long dp[101][25][2];
+bool exist[101][25][2];
+
+string tostring(long long n)
+{
+    string s;
+    while (n) {
+        s.push_back(n % 2 + '0');
+        n /= 2;
+    }
+    reverse(s.begin(), s.end());
+    return s;
+}
+
+
+long long solve(int indx, int carry, bool flag)
+{
+    if (indx == 0) {
+        if (flag && carry == 0) return 1;
+        else  return 0;
+    }
+    if (!exist[indx][carry][flag]) {
+        long long ways = 0;
+        for (int i = 0; i <= 1; i++) {
+            for (int j = 0; j <= 1; j++) {
+                for (int k = 0; k <= 1; k++) {
+                    if ((i + j + k + carry) % 2 == s[indx] - '0') {
+                        ways += solve(indx-1, (i + j + k + carry)/2, (i && j && k) | flag);
+                        ways %= MOD;
+                    }
+                }
+            }
+        }
+        dp[indx][carry][flag] = ways;
+        exist[indx][carry][flag] = true;
+    }
+    return dp[indx][carry][flag];
+}
+
+int main()
+{
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        memset(dp, 0, sizeof(dp));
+        memset(exist, 0, sizeof(exist));
+        long long n;
+        scanf("%lld", &n);
+        s = tostring(n);
+        s = "0" + s;
+        //cout << s << endl;
+        printf("%lld\n", solve((int)s.size()-1, 0, false));
+    }
+}

@@ -1,0 +1,115 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n;
+#define MAX 1012
+vector<int> v[MAX];
+int ans[MAX*MAX];
+vector<pair<int, pair<int, pair<int,int> > > > le;
+vector< pair<int, pair<int, pair<int,int> > > > ri;
+int bit[MAX];
+int af[MAX];
+void add(int b, int x) {
+	b++;
+	while (b < MAX) {
+		bit[b] += x;
+		b += b&-b;
+	}
+}
+int sum(int b) {
+	if (b < -1) {
+		return 0;
+	}
+	int r = 0;
+	b++;
+	while (b) {
+		r += bit[b];
+		b -= b&-b;
+	}
+	return r;
+}//
+int main() {
+	scanf("%d", &n);
+	for (int i = 1;i <= n;i++) {
+		int a;
+		scanf("%d", &a);
+		v[a].push_back(i);
+		af[i] = a;
+	}
+	int maxt = min(n,2);
+	int ct = 0;
+	for (int i = 0;i <= 1000;i++) {
+		for (int j = i;j <= 1000;j++) {
+			int lef;
+			int rig;
+			if (v[i].size() && v[j].size()) {
+				lef = min(v[i][0], v[j][0]);
+				rig = max(v[i].back(), v[j].back());
+			}
+			else {
+				if (v[i].size()) {
+					lef = v[i][0];
+					rig = v[i].back();
+				}
+				else {
+					if (v[j].size()) {
+						lef = v[j][0];
+						rig = v[j].back();
+					}
+					else {
+						continue;
+					}
+				}
+			}
+			le.push_back(make_pair(lef - 1, make_pair(i - 1, make_pair(j, ct))));
+			ri.push_back(make_pair(rig + 1, make_pair(i - 1, make_pair(j, ct))));
+			ans[ct] = v[i].size() + v[j].size();
+			if (i == j) {
+				ans[ct] -= v[j].size();
+			}
+			ct++;
+		}
+	}///
+	sort(le.begin(), le.end());
+	sort(ri.begin(), ri.end());
+	reverse(ri.begin(), ri.end());
+	{
+		memset(bit, 0, sizeof(bit));
+		int ind = 0;
+		while (ind < le.size() && le[ind].first < 1) {
+			ind++;
+		}
+		for (int i = 1;i <= n;i++) {
+			add(af[i], 1);
+			while (ind < le.size() && le[ind].first <= i) {
+				int a = le[ind].second.first;
+				int b = le[ind].second.second.first;
+				int c = le[ind].second.second.second;
+				ans[c] +=(int)( (sum(b) - sum(a ))!=0);
+				ind++;
+			}
+		}
+	}
+	//
+	{
+		memset(bit, 0, sizeof(bit));
+		int ind = 0;
+		while (ind<ri.size() && ri[ind].first>n) {
+			ind++;
+		}
+		for (int i = n;i>=1;i--) {
+			add(af[i], 1);
+			while (ind < ri.size() && ri[ind].first >= i) {
+				int a = ri[ind].second.first;
+				int b = ri[ind].second.second.first;
+				int c = ri[ind].second.second.second;
+				ans[c] += (int)((sum(b) - sum(a)) != 0);
+				ind++;
+			}
+		}
+	}
+	for (int i = 0;i < ct;i++) {
+		maxt = max(maxt, ans[i]);
+	}
+	printf("%d\n", maxt);
+	return 0;
+}///

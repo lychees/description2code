@@ -1,0 +1,71 @@
+#include <cstdio>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+const int D = 3, H = 9, S = 50;
+const ll mod = 1000000007, mk = mod * mod;
+ll n, a[H], t[H];
+ll r[S][H][H];
+
+void pre()
+{
+    for (int i = 0; i < D; i++)
+        for (int j = 0; j < D; j++)
+        {
+            int p = i * D + j;
+            for (int x = 0; x < D; x++)
+                for (int y = 0; y < D; y++)
+                {
+                    int q = x * D + y;
+                    r[0][q][p] = abs(i - x) + abs(y - j) + abs(i + j - x - y);
+                }
+        }
+    for (int g = 1; g < S; g++)
+        for (int i = 0; i < H; i++)
+            for (int j = 0; j < H; j++)
+            {
+                for (int k = 0; k < H; k++)
+                {
+                    r[g][i][j] += r[g - 1][i][k] * r[g - 1][k][j];
+                    if (r[g][i][j] > mk) r[g][i][j] -= mk;
+                }
+                r[g][i][j] %= mod;
+            }
+}
+
+void solve()
+{
+    scanf("%lld", &n);
+    for (int i = 0; i < D; i++)
+        for (int j = 0; j < D; j++) scanf("%lld", &a[i * D + j]);
+    for (int g = S - 1; g >= 0; g--) if (1 & (n >> g))
+    {
+        for (int i = 0; i < H; i++)
+        {
+            for (int j = 0; j < H; j++)
+            {
+                t[i] += a[j] * r[g][j][i];
+                if (t[i] > mk) t[i] -= mk;
+            }
+            t[i] %= mod;
+        }
+        for (int i = 0; i < H; i++) a[i] = t[i], t[i] = 0;
+    }
+    for (int i = 0; i < D; i++)
+    {
+        for (int j = 0; j < D; j++) printf("%lld ", a[i * D + j]);
+        printf("\n");
+    }
+}
+
+int main()
+{
+    int t;
+    pre();
+    scanf("%d", &t);
+    while (t--) solve();
+    return 0;
+}

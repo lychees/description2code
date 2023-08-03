@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+long long CRT(const vector<ll int > &r,const vector< ll int > &mods){
+    long long M=1;
+    for(int i=0; i<int(mods.size()); i++) M*=mods[i];
+    vector< ll int > m, s;
+    for(int i=0; i<int(mods.size()); i++){
+        m.push_back(M/mods[i]);
+        ll int temp=m[i]%mods[i];
+        ll  int  k=0;
+
+        while(true){
+            if((k*temp)%mods[i]==1) break;
+            k++;
+        }
+        s.push_back(k);
+    }
+    ll int  ret=0;
+    for(int i=0; i<int(s.size()); i++) {
+        ret+=( (m[i]*s[i])%M *r[i] )%M;
+        if(ret>=M) ret-=M;
+    }
+    return ret;
+}
+long long SmallC(ll int n, ll int r,ll int MOD)
+{
+    vector< vector<long long> > C(2,vector<long long> (r+1,0));
+
+    for (int i=0; i<=n; i++)
+    {
+        for (int k=0; k<=r && k<=i; k++)
+            if (k==0 || k==i)
+                C[i&1][k] = 1;
+            else
+                C[i&1][k] = (C[(i-1)&1][k-1] + C[(i-1)&1][k])%MOD;
+    }
+    return C[n&1][r];
+}
+
+long long Lucas(ll int n,ll int m,ll int p)
+{
+    if (n==0 && m==0) return 1;
+    int ni = n % p;
+    int mi = m % p;
+    if (mi>ni) return 0;
+    return Lucas(n/p, m/p, p) * SmallC(ni, mi, p);
+}
+
+long long C(ll int n, ll int r, int MOD)
+{
+    return Lucas(n, r, MOD);
+}
+
+int main()
+{
+    int t;
+    cin>>t;
+    while(t--)
+    {
+        ll int n1,m,k;
+        cin>>n1>>m>>k;
+        n1=n1-m;
+        if(n1<0)
+        {
+            cout<<"0"<<endl;
+            continue;
+        }
+        else if(n1==0)
+        {
+            cout<<"1"<<endl;
+            continue;
+        }
+        else
+        {
+            vector<ll int> v,v1;
+            ll int n,temp=1;
+            n=k;
+             while (n%2 == 0)
+            {
+                temp*=2;
+                n = n/2;
+            }
+            if(temp>1)
+            {
+                v.push_back(temp);
+
+            }
+
+            for (int i = 3; i <= sqrt(n); i = i+2)
+            {
+                temp=1;
+                while (n%i == 0)
+                {
+                    temp*=i;
+                    n = n/i;
+                }
+                if(temp>1)v.push_back(temp);
+            }
+
+            if (n > 2)
+            v.push_back(n);
+            ll int ans;
+            for(int i=0;i<v.size();i++)
+            {
+                ans=C(n1+m-1,n1,v[i]);
+                v1.push_back(ans);
+            }
+            printf("%lld\n",CRT(v1,v));
+
+
+        }
+
+    }
+    return 0;
+}

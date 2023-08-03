@@ -1,0 +1,193 @@
+//Pranet Verma
+#include <bits/stdc++.h>
+using namespace std;
+#define fpos adla
+const int inf = 1e9;
+const int maxn = 5e5+1e4;
+int s[maxn];
+map<int, int> to[maxn];
+int len[maxn]={inf}, fpos[maxn], link[maxn];
+int node, pos;
+int sz = 1, n = 0;
+ 
+int make_node(int _pos, int _len)
+{
+    fpos[sz] = _pos;
+    len [sz] = _len;
+    return sz++;
+}
+ 
+void go_edge()
+{
+    while(pos > len[to[node][s[n - pos]]])
+    {
+        node = to[node][s[n - pos]];
+        pos -= len[node];
+    }
+}
+ 
+void add_letter(int c)
+{
+    s[n++] = c;
+    pos++;
+    int last = 0;
+    while(pos > 0)
+    {
+        go_edge();
+        int edge = s[n - pos];
+        int &v = to[node][edge];
+        int t = s[fpos[v] + pos - 1];
+        if(v == 0)
+        {
+            v = make_node(n - pos, inf);
+            link[last] = node;
+            last = 0;
+        }
+        else if(t == c)
+        {
+            link[last] = node;
+            return;
+        }
+        else
+        {
+            int u = make_node(fpos[v], pos - 1);
+            to[u][c] = make_node(n - 1, inf);
+            to[u][t] = v;
+            fpos[v] += pos - 1;
+            len [v] -= pos - 1;
+            v = u;
+            link[last] = u;
+            last = u;
+        }
+        if(node == 0)
+            pos--;
+        else
+            node = link[node];
+    }
+} 
+/* meant to be done after use,not prior*/
+void clearSuffixTree()
+{
+    for(int i=0;i<sz;++i)
+        to[i].clear();
+    node=0;
+    pos=0;
+    sz=1;
+    n=0;
+}
+void printTree()
+{
+    string S(n,'1');
+    for(int i=0;i<n;++i)
+        S[i]=s[i]+'a';
+    for(int i=0;i<sz;++i)
+    {
+        for(map<int,int>::iterator it=to[i].begin();it!=to[i].end();++it)
+        {
+            int v=it->second;
+            cout<<i<<" "<<v<<" "<<S.substr(fpos[v],len[v])<<endl;
+        }
+    }
+}
+void plotGraph(string fileName)
+{
+    ofstream cout(fileName.c_str());
+
+    string S(n,'1');
+    for(int i=0;i<n;++i)
+        S[i]=s[i]+'a';
+    cout<<"digraph g {\n";
+    for(int i=0;i<sz;++i)
+    {
+        for(map<int,int>::iterator it=to[i].begin();it!=to[i].end();++it)
+        {
+            int v=it->second;
+            cout<<i<<" -> "<<v<<" [ label=\" "<<S.substr(fpos[v],len[v])<<" \" ];\n";
+        }
+    }   
+    cout<<"}";
+}
+char str[100055];
+int length1,length2,length[500055],slength[500055];
+int dp1[500055],dp2[500055];
+long long ans=0;
+int stringID(int d)
+{
+    if(d==0)
+        return 0;
+    if(d<=length2)
+        return 2;
+    if(d==length2+1)
+        return 0;
+    return 1;
+}
+int stringID2(int d,int n,int m)
+{
+    int idx=lower_bound(slength,slength+n+m+1,d)-slength;
+    if(idx==0 || slength[idx-1]==d-1)
+        return 0;
+    return n+m+1-idx;
+}
+void dfs(int u,int d,int N,int M)
+{
+    if(len[u]>1e7)
+    {
+        int v=stringID(d);
+        if(v==1)
+            dp1[u]=1;
+        else if(v==2)
+            dp2[u]=1;
+    }   
+    for(map<int,int>::iterator i=to[u].begin();i!=to[u].end();++i)
+    {
+        int v=i->second;
+        int w=min(len[v],n-fpos[v]);
+        dfs(v,w+d,N,M);
+        dp1[u]+=dp1[v];
+        dp2[u]+=dp2[v];
+    }
+    int w=len[u];
+    if(w>1e7)
+    {
+        int start=fpos[u];
+        int depth=n-fpos[u];
+        int id=stringID2(depth,N,M);
+        if(id==0)
+            w=0;
+        else
+        {
+            int lastOfMe=slength[id+1]+1;
+            w=lastOfMe-start;
+        }
+    }
+    if(u)
+        ans+=(long long)w*dp1[u]*dp2[u];
+}
+int main()
+{
+    int n,m;
+    scanf("%d",&n);
+    for(int i=1;i<=n;++i)
+    {
+        scanf("%s",str);
+        for(int j=0;str[j]!='\0';++j)
+            add_letter(str[j]-'a');
+        length1+=strlen(str)+1;
+        add_letter(25+i);
+        length[i]=strlen(str)+1;
+    }
+    scanf("%d",&m);
+    for(int i=1;i<=m;++i)
+    {
+        scanf("%s",str);
+        for(int j=0;str[j]!='\0';++j)
+            add_letter(str[j]-'a');
+        length2+=strlen(str)+1;
+        add_letter(25+n+i);
+        length[n+i]=strlen(str)+1;
+    }
+    for(int i=1;i<=m+n;++i)
+        slength[i]=slength[i-1]+length[i];
+    dfs(0,0,n,m);
+    cout<<ans;
+}

@@ -1,0 +1,89 @@
+#include <iostream>
+#include <cstdio>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <sstream>
+#include <cmath>
+
+typedef long long ll;
+
+#define forn(i, n) for (int i = 0; i < (int)(n); i++)
+#define forv(i, v) forn(i, v.size())
+
+using namespace std;
+
+const int MAXN = 3005;
+
+string vowels = "aeiouy";
+
+const int MOD = 1000 * 1000 * 1000 + 7;
+
+int c[MAXN][MAXN];
+int dp[2][MAXN][2][2];
+int n, k;
+string s;
+int a[MAXN];
+
+int main() {
+#ifdef NEREVAR_PROJECT
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    cin >> n >> k;
+    cin >> s;
+    int c0 = 0;
+    forn(i, n) {
+        a[i] = int(vowels.find(s[i]) == -1);
+        if (a[i] == 0) c0++;
+    }
+    forn(j, n + 1) {
+        c[j][j] = c[0][j] = 1;
+        for (int i = 1; i < j; i++) {
+            c[i][j] = (c[i - 1][j - 1] + c[i][j - 1]) % MOD;
+        }
+    }
+    dp[0][0][0][0] = 1;
+    forn(i, n) {
+        int cur = i & 1;
+        int next = cur ^ 1;
+        memset(dp[next], 0, sizeof(dp[next]));
+        
+        for (int j = 0; j <= i && j <= k; j++) {
+            forn(f1, 2) {
+                forn(f2, 2) {
+                    if (dp[cur][j][f1][f2] == 0) continue;
+                    forn(f, 2) {
+                        if (f1 + f2 + f == 3) continue;
+                        if (a[i] == 0 && f == 1) continue;
+                        int nj = j;
+                        if (a[i] != f) nj++;
+                        dp[next][nj][f2][f] += dp[cur][j][f1][f2];
+                        if (dp[next][nj][f2][f] >= MOD) {
+                            dp[next][nj][f2][f] -= MOD;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    ll ans = c[k][n];
+    forn(j, k + 1) {
+        forn(f1, 2) {
+            forn(f2, 2) {
+                if (dp[n & 1][j][f1][f2] == 0) continue;
+                if (2 * (c0 + j) >= n && k - j <= c0) {
+                    ans = (ans + MOD - dp[n & 1][j][f1][f2] * 1ll * c[k - j][c0] % MOD) % MOD;
+                }
+            }
+        }
+    }
+    cout << ans << endl;
+    return 0;
+}

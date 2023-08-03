@@ -1,0 +1,275 @@
+#include <iostream>
+#include <vector>
+#include <cassert>
+#include <map>
+#include <cstring>
+#include <cmath>
+#include <unordered_map>
+#include <algorithm>
+using namespace std;
+typedef long long Long;
+#define MAXF 1000000000000000LL
+
+
+typedef vector<Long> VI;
+typedef vector<VI> VVI;
+
+struct DisjointSet
+{
+	vector<int> R , P;
+	int SZ;
+	DisjointSet(int N)
+	{
+		SZ = N;
+		R = vector<int>(N,0);
+		P = vector<int>(N,0);
+		for(int i = 0; i < N; ++i)
+			P[i] = i;
+	}
+	int find(int x)
+	{
+		return P[x] = (P[x] == x ? x : this->find(P[x]));
+	}
+	bool join(int x,int y)
+	{
+		x = find(x); y = find(y);
+		if(x == y)return false;
+		if(R[x] > R[y]) P[y] = x;
+		else P[x] = y;
+		R[y] += R[x] == R[y];
+		SZ--;
+		return true;
+	}
+	int size(){ return SZ; }
+};
+
+
+template<Long MOD> 
+struct ModInt {
+	Long n;
+	ModInt(Long n = 0){
+		this->n = n;
+		if(this->n < 0 || this->n >= MOD)this->n %= MOD;
+		if(this->n < 0)this->n = (this->n + MOD) % MOD;
+	}
+	ModInt<MOD> operator+(const ModInt<MOD> &M)const{
+		ModInt r = (n + M.n);
+		if(r.n >= MOD)r.n -= MOD;
+		return r;
+	}
+	ModInt<MOD> operator-(const ModInt<MOD> &M)const{
+		ModInt<MOD> r = (n - M.n) % MOD;
+		if(r.n < 0)r.n += MOD;
+		return r;
+	}
+	ModInt<MOD> operator*(const ModInt<MOD> &M)const{
+		return (1LL * n * M.n) % MOD;
+	}
+	ModInt<MOD> operator+=(const ModInt<MOD> &M){
+		return this->n = ((*this)+(M)).n;
+	}
+	ModInt<MOD> operator-=(const ModInt<MOD> &M){
+		return this->n = ((*this)-(M)).n;
+	}
+	ModInt<MOD> operator/(const ModInt<MOD> &B)const
+	{
+		Long a = B.n, b = MOD;
+		Long r = a , o_r = b;
+		Long s = 0 , o_s = 1;
+		Long t = 1 , o_t = 0;
+		while(r != 0)
+		{
+			Long q = o_r / r;
+			Long tem;
+			
+			tem = r;
+			r = o_r - r * q;
+			o_r = tem;
+			
+			tem = o_s;
+			o_s = o_s - s * q;
+			o_s = tem;
+			
+			tem = t;
+			t = o_t - t * q;
+			o_t = tem;
+		}
+		return (*this) * ModInt(o_t);
+	}
+};
+typedef ModInt<1000000007> mint;
+
+struct CountSpanningTree {
+	typedef vector<mint> VM;
+	typedef vector<VM> VVM;
+	VVM mat;
+	int N;
+	CountSpanningTree(int N):N(N){
+		mat = VVM(N, VM(N));
+	}
+	void addEdge(int u, int v){
+		mat[u][u] += 1;
+		mat[v][v] += 1;
+		mat[u][v] -= 1;
+		mat[v][u] -= 1;
+	}
+	mint run(){
+		for(int i = 0; i < N; ++i){
+			for(int j = i+1; j < N; ++j){
+				if(mat[i][i].n == 0)return 0;
+				mint F = mat[j][i] / mat[i][i];
+				for(int k = 0; k < N; ++k){
+					mat[j][k] -= mat[i][k] * F;
+				}
+			}
+		}
+		mint r = 1;
+		for(int i = 0; i < N-1; ++i){
+			r = r * mat[i][i];
+		}
+		if(mat[N-1][N-1].n != 0)assert(false);
+		return r;
+	}
+};
+
+struct CountMST{
+	struct Edge {
+		int u,v,w;
+		bool operator<(const Edge &C)const{
+			return w < C.w;
+		}
+	};
+	int N;
+	vector<Edge> E;
+	CountMST(int N):N(N){ }
+	void addEdge(int u,int v,int w){
+		E.push_back((Edge){u,v,w});
+	}
+	mint countMST(){
+		sort(E.begin(),E.end());
+		// exists MST
+		{
+			DisjointSet DS(N);
+			for(Edge &e : E){
+				DS.join(e.u, e.v);
+			}
+			if(DS.size() > 1){
+				return 0;
+			}
+		}
+		
+		mint r = 1;
+		// count
+		{
+			DisjointSet DS(N);
+			for(int i = 0; i < E.size(); ){
+				vector<Edge> S;
+				{// put equal edges
+					int j = i;
+					while(j < E.size() && E[i].w == E[j].w){
+						S.push_back(E[j]);
+						j++;
+					}
+					i = j;
+				}
+				for(Edge &e : S){
+					e.u = DS.find(e.u);
+					e.v = DS.find(e.v);
+				}
+				for(Edge &e : S){
+					DS.join(e.u, e.v);
+				}
+				vector< pair<int,Edge> > G;
+				for(Edge &e : S){
+					if(e.u != e.v){
+						G.push_back(make_pair(DS.find(e.u), e));
+					}
+				}
+				sort(G.begin(),G.end());
+				for(int j = 0; j < G.size(); ){
+					vector<Edge> ee;
+					{// put all same node
+						int k = j;
+						while(k < G.size() && G[k].first == G[j].first){
+							ee.push_back(G[k].second);
+							k++;
+						}
+						j = k;
+					}
+					vector<int> NODS;
+					for(Edge &e : ee){
+						NODS.push_back(e.u);
+						NODS.push_back(e.v);
+					}
+					sort(NODS.begin(),NODS.end());
+					NODS.resize(unique(NODS.begin(),NODS.end())- NODS.begin());
+					CountSpanningTree CS(NODS.size());
+					for(Edge &e : ee){
+						int u = lower_bound(NODS.begin(),NODS.end(),e.u)-NODS.begin();
+						int v = lower_bound(NODS.begin(),NODS.end(),e.v)-NODS.begin();
+						CS.addEdge(u,v);
+					}
+					r = r * CS.run();
+					
+				}
+				
+			}
+		}
+		return r;
+	}
+};
+
+int main() {
+	
+	int N,Q;
+	cin >> N >> Q;
+	for(int i = 0; i < N-1; ++i){
+		int u,v;
+		cin >> u >> v;
+	}
+	
+	CountMST C(N);
+	for(int i = 0; i < Q; ++i){
+		int u,v,w;
+		cin >> u >> v >> w;
+		u--;v--;
+		C.addEdge(u,v,w);
+	}
+	cout << C.countMST().n << endl;
+}
+
+/*
+
+    5
+    |
+    2  
+    |  
+    1
+  /   \  
+ 3     4
+
+6 15
+2 5
+2 1
+1 3
+1 4
+4 6
+1 2 1
+1 3 1
+1 4 1
+1 5 1
+1 6 2
+2 3 1
+2 4 1
+2 5 1
+2 6 2
+3 4 1
+3 5 1
+3 6 2
+4 5 1
+4 6 2
+5 6 2
+
+
+
+ */

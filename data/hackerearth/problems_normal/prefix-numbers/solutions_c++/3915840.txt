@@ -1,0 +1,109 @@
+#include "bits/stdc++.h"
+using namespace std;
+const int SZ = 4 * 7 * 9;
+int get(int x , int y , int z){
+	return (((x * 7) + y) * 9) + z;
+}
+struct mat{
+	unsigned arr[SZ][SZ];
+	mat(){
+		memset(arr , 0 , sizeof(arr));
+	}
+};
+mat mult(mat a , mat b){
+	mat res;
+	for(int i = 0 ; i < SZ ; ++i){
+		for(int j = 0 ; j < SZ ; ++j){
+			for(int k = 0 ; k < SZ ; ++k){
+				res.arr[i][j] += a.arr[i][k] * b.arr[k][j];
+			}
+		}
+	}
+	return res;
+}
+mat add(mat a , mat b){
+	mat res;
+	for(int i = 0 ; i < SZ ; ++i){
+		for(int j = 0 ; j < SZ ; ++j){
+			res.arr[i][j] = a.arr[i][j] + b.arr[i][j];
+		}
+	}
+}
+mat power(mat base , long long n){
+	mat res;
+	for(int i = 0 ; i < SZ ; ++i){
+		res.arr[i][i] = 1;
+	}
+	while(n){
+		if(n & 1){
+			res = mult(res , base);
+		}
+		base = mult(base , base);
+		n >>= 1;
+	}
+	return res;
+}
+long long n;
+const int nums[3] = {4 , 7 , 9};
+unsigned ways[SZ][SZ];
+void build(){
+	for(int x = 0 ; x < 4 ; ++x){
+		for(int y = 0 ; y < 7 ; ++y){
+			for(int z = 0 ; z < 9 ; ++z){
+				for(int dig = 1 ; dig <= 9 ; ++dig){
+					int oldval = get(x , y , z);
+					int newval = get((x * 10 + dig) % 4 , (y * 10 + dig) % 7 , (z * 10 + dig) % 9);
+					if(dig == 1 || dig == 2 || dig == 5){
+						++ways[oldval][newval];
+					}
+					else if(dig == 3){
+						if(z % 3 == 0){
+							++ways[oldval][newval];
+						}
+					}
+					else if(dig == 4){
+						if(x % 2 == 0){
+							++ways[oldval][newval];
+						}
+					}
+					else if(dig == 6){
+						if(z % 3 == 0){
+							++ways[oldval][newval];
+						}
+					}
+					else if(dig == 7){
+						if(y == 0){
+							++ways[oldval][newval];
+						}
+					}
+					else if(dig == 8){
+						if(x == 0){
+							++ways[oldval][newval];
+						}
+					}
+					else{
+						if(z == 0){
+							++ways[oldval][newval];
+						}
+					}
+				}
+			}
+		}
+	}
+}
+int main(){
+	scanf("%lld" , &n);
+	build();
+	mat base;
+	for(int i = 0 ; i < SZ ; ++i){
+		for(int j = 0 ; j < SZ ; ++j){
+			base.arr[j][i] = ways[j][i];
+		}
+	}
+	mat res = power(base , n);
+	unsigned ans = 0;
+	for(int i = 0 ; i < SZ ; ++i){
+		ans += res.arr[0][i];
+	}
+	printf("%u\n" , ans);
+}

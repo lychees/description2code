@@ -1,0 +1,187 @@
+#include<algorithm>
+#include<cstring>
+#include<cstdio>
+#include<sstream>
+#include<queue>
+#include <functional>
+
+//#define ONLINE_JUDGE
+using namespace std;
+
+#include <vector>
+
+template <typename T, typename Fun = std::less<T>>
+class binary_heap
+{
+public:
+	binary_heap(int size)
+	{
+		data.reserve(size);
+	}
+	~binary_heap(){}
+
+	T top() { return data[0]; }
+	void insert(const T & t)
+	{
+		data.push_back(t);
+		move_up(data.size() - 1);
+	}
+
+	T change_key(const T& t, int index) {
+		
+		T ct = data[index];
+		if (data[index] == t) return ct;
+
+		data[index] = t;
+		if (fun(t, ct)) {
+			move_up(index);
+		}
+		else {
+			move_down(index);
+		}
+		return data[index];
+	}
+	int size() { return data.size(); }
+
+	T pop()
+	{
+		T t = data[0];
+		T lastelem = data[size() - 1];
+		data.pop_back();
+		change_key(lastelem, 0);
+		return t;
+	}
+private:
+	std::vector <T> data;
+	Fun fun;
+	void move_up(int index) {
+		long parent = (index - 1) / 2;
+		bool pexists = (parent >= 0) && (parent != index);
+		if (pexists && !fun(data[parent], data[index]))
+		{
+			std::swap(data[parent], data[index]);
+			move_up(parent);
+		}
+	}
+
+	void move_down(unsigned long node)
+	{
+		unsigned long rchild = 2 * (node + 1);
+		unsigned long lchild = rchild - 1;
+
+		bool rexists = rchild < data.size();
+		bool lexists = lchild < data.size();
+		if (!lexists && !rexists) return;
+
+		bool left_small;
+		if (rexists && !fun(data[lchild], data[rchild]))
+			left_small = false;
+		else
+			left_small = true;
+
+		if (fun(data[lchild], data[node]) && left_small)
+		{
+			std::swap(data[node], data[lchild]);
+			move_down(lchild);
+		}
+		else if (fun(data[rchild], data[node]) && rexists && !left_small)
+		{
+			std::swap(data[node], data[rchild]);
+			move_down(rchild);
+		}
+	}
+
+};
+
+
+#ifndef ONLINE_JUDGE
+
+#define debugprintf printf
+#include <boost/test/unit_test.hpp>
+
+BOOST_AUTO_TEST_CASE(gfreqtest)
+{
+	void girlfriendrequest();
+	if (freopen("../datafiles/gfreq.txt", "r", stdin) == NULL)
+	{
+		printf("Unable to open file\n");
+	}
+
+	girlfriendrequest();
+}
+#else
+#define debugprintf
+int main()
+{
+	void girlfriendrequest();
+	girlfriendrequest();
+	return 0;
+}
+#endif
+
+void girlfriendrequest()
+{
+	int i, num_test_cases, num_array;
+	int array[1415];
+	int **out = NULL;
+
+	scanf("%d", &num_array);
+	i = 0;
+	while (i < num_array){
+		scanf("%d", &array[i]);
+		i++;
+	}
+	out = new int*[num_array];
+
+	for (int i = 0; i < num_array; i++)
+	{
+		out[i] = new int[num_array];
+		out[i][i] = array[i];
+	}
+	for (int j = 0; j < num_array; j++)
+	{
+		binary_heap<int, std::less<int> > min_heap(num_array+1);
+		binary_heap<int, std::greater<int> >  max_heap(num_array+1);
+		max_heap.insert(array[j]);
+		for (int i = j + 1; i < num_array; i++)
+		{
+			
+			if (max_heap.size() > 0 && array[i] < max_heap.top())
+			{
+				max_heap.insert(array[i]);
+			}
+			else
+			{
+				min_heap.insert(array[i]);
+			}
+
+			if (min_heap.size() > max_heap.size())
+			{
+				max_heap.insert(min_heap.pop());
+			}
+			else if (max_heap.size() > min_heap.size() + 1)
+			{
+				min_heap.insert(max_heap.pop());
+			}
+
+			out[j][i] = max_heap.top();
+		}
+	}
+
+
+	scanf("%d", &num_test_cases);
+	while (num_test_cases--)
+	{ 
+		int a, b;
+		scanf("%d %d", &a, &b);
+		a--;
+		b--;
+		printf("%d\n", out[a][b]);
+	}
+
+	for (int i = 0; i < num_array; i++)
+	{
+		delete [] out[i];
+	}
+	delete[] out;
+}

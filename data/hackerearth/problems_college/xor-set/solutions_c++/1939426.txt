@@ -1,0 +1,125 @@
+// Paste me into the FileEdit configuration dialog
+#include <bits/stdc++.h>
+using namespace std;
+
+
+#define FL(i,a,b) for(ll i=a;i<b;i++)
+#define FOR(i,n) for(ll i=0;i<n;i++)
+#define SORTF(x) sort(x.begin(),x.end(),func);
+#define SORT(x) sort(x.begin(),x.end())
+#define pb(x) push_back(x)
+#define SET(v, val) memset(v, val, sizeof(v)) ;
+#define RSORT(v) { SORT(v) ; REVERSE(v) ; }
+#define ALL(v) v.begin(),v.end()
+#define REVERSE(v) { reverse(ALL(v)) ; }
+#define UNIQUE(v) unique((v).begin(), (v).end())
+#define RUNIQUE(v) { SORT(v) ; (v).resize(UNIQUE(v) - (v).begin()) ; }
+#define fill(x,n) memset(x,n,sizeof(x))
+#define S(n) scanf("%lld",&n)
+
+//ll dx[] = {-1,0,1,0}, dy[] = {0,1,0,-1};
+//ll dx[] = {1,1,1,0,0,-1,-1,-1}, dy[] = {1,0,-1,1,-1,1,0,-1};
+//ll gcd(ll a, ll b) {if (a == 0 || b == 0) return maX(a,b); if (b % a == 0) return a; return gcd(b%a, a);}
+//ll small_primes[] = {2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179,181,191,193,197,199,211,223,227,229,233,239,241,251,257,263,269,271,277,281,283,293,307,311,313,317,331,337,347,349};
+//ll toll(const string &s) { stringstream ss; ss << s; ll x; ss >> x; return x; }
+//ll modPow(ll a,ll b) {ll res=1;a%=MOD;for(;b;b>>=1){if(b&1)res=res*a%MOD;a=a*a%MOD;}return res;}
+//ll modInverse(ll a){return modPow(a,MOD-2);}
+//ll nCk(ll n, ll k){if(k<0)return 0;ll numerator = 1;forall(il,0,k)numerator =(numerator*(n-il))%MOD;ll denominator = 1;forall(il,1,k+1)denominator=(denominator*il)%MOD;return (numerator*modInverse(denominator))%MOD;}
+
+typedef long long ll;
+typedef unsigned long long ull;
+const long long MOD = 1e9 + 7;
+long long a[1<<16];
+long long INV2;
+
+long long modpow(long long a, long long b) {
+    if(b == 0) return 1;
+    if(b == 1) return a;
+    if(b&1LL) return (a * modpow(a,b-1LL)) % MOD;
+    long long k = modpow(a,b/2LL);
+    return (k*k)%MOD;
+}
+
+void transform(int x, int y) {
+    if(x == y - 1) {
+        return;
+    }
+    int l2 = (y-x)/2;
+    int z = x + l2;
+    transform(x,z);
+    transform(z,y);
+    for(int i = x;i<z;i++) {
+        int x1 = a[i];
+        int x2 = a[i+l2];
+        a[i] = (x1 - x2 + MOD) % MOD;
+        a[i+l2] = (x1 + x2) % MOD;
+    }
+}
+
+void untransform(int x, int y) {
+    if(x == y - 1) {
+        return;
+    }
+    int l2 = (y-x)/2;
+    int z = x + l2;
+    for(int i = x;i<z;i++) {
+        long long y1 = a[i];
+        long long y2 = a[i+l2];
+        a[i] = (int) (((y1 + y2) * INV2) % MOD);
+        a[i+l2] = (int) (((y2 - y1 + MOD) * INV2) % MOD);
+    }
+    untransform(x,z);
+    untransform(z,y);
+}
+
+int n, v, t;
+
+int arr[100005];
+
+int main() {
+    INV2 = modpow(2, MOD - 2LL);
+    t = 1<<16;
+
+    scanf("%d", &n);
+    assert(n > 0 && n <= 100000);
+
+    for(int i = 1;i<=n;i++) {
+        scanf("%d", &arr[i]);
+        assert(arr[i] >= 0 && arr[i] < 65536);
+
+        arr[i] ^= arr[i-1];
+        ++a[ arr[i] ];
+    }
+
+    transform(0,t);
+
+    for(int i = 0;i<t;i++) {
+        a[i] = (a[i] * a[i]) % MOD;
+    }
+
+    untransform(0,t);
+
+    a[0] -= (long long) n;
+
+    for(int i = 0;i<t;i++) {
+        a[i] /= 2LL;
+    }
+
+    for(int i = 1;i<=n;i++) {
+        ++a[ arr[i] ];
+    }
+
+    int sol = 0;
+    long long maxx = 0;
+
+    for(int i = 0;i<t;i++) {
+        if(a[i] > maxx) {
+            maxx = a[i];
+            sol = i;
+        }
+    }
+
+    printf("%d %lld\n", sol, maxx);
+
+    return 0;
+}

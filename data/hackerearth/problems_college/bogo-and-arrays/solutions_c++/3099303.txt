@@ -1,0 +1,48 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const static int MAXN = 200000;
+int takemax(int a, int b) {return a > b ? a : b;}
+template <int fun(int, int)> struct ST {
+  int mx[MAXN][20], lg[MAXN], n;
+  void build(int a[], int n) {
+    lg[0]=-1; this->n=n;
+    for (int i=1;i<=n;++i) lg[i]=lg[i>>1]+1;
+    for (int i=0;i<n;++i) mx[i][0]=a[i];
+    for (int j=1;(1<<j)<=n;++j) {
+      for (int i=0;i+(1<<j)<=n;++i) {
+        mx[i][j]=fun(mx[i][j-1],mx[i+(1<<(j-1))][j-1]);
+      }
+    }
+  }
+  int ask(int a, int b) {
+    if (a>b) swap(a,b); int k=lg[b-a+1];
+    return fun(mx[a][k],mx[b-(1<<k)+1][k]);
+  }
+};
+
+ST<takemax> st;
+int a[MAXN], n, k;
+
+void sol() {
+  scanf("%d%d", &n, &k);
+  for (int i = 0; i < n; ++ i) scanf("%d", a + i);
+  st.build(a, n);
+  long long ret(0);
+  for (int i = 0; i < n; ++ i) {
+    int l = i, r = n - 1;
+    while (l < r) {
+      int m = (l + r - 1) >> 1;
+      if (st.ask(i, m) > k) r = m;
+      else l = m + 1;
+    }
+    if (st.ask(i, l) > k) ret += n - l;
+  }
+  printf("%lld\n", ret);
+}
+
+int main() {
+  int T; scanf("%d", &T);
+  while (T --) sol();
+  return 0;
+}

@@ -1,0 +1,115 @@
+#define mp make_pair
+#define pb push_back
+
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <cstring>
+#include <algorithm>
+
+using namespace std;
+
+long long N;
+long long u, v, w, wm;
+
+vector<pair<long long, long long>> edges[100000 + 10];
+bool vis[100000 + 10];
+long long xrs[100000 + 10];
+
+long long num[30];
+
+void read(long long n, long long arr[30]) {
+	for(long long i = 29; i; --i) {
+		arr[i] = n % 2;
+		n /= 2;
+	}
+}
+
+struct trnode {
+	trnode *next[2];
+	long long end;
+	
+	trnode() {
+		next[0] = next[1] = NULL;
+		end = 0;
+	}
+} head;
+
+void insert(long long i, long long a[30]) {
+	trnode *h = &head;
+	for(long long i = 0; i < 30; ++i) {
+		if(h->next[a[i]] == NULL)
+			h->next[a[i]] = new trnode;
+		h = h->next[a[i]];
+	}
+	if(h->end == 0)
+		h->end = i;
+}
+
+long long test(long long a[30]) {
+	trnode *h = &head;
+	for(long long i = 0; i < 30; ++i) {
+		if(h->next[1 - a[i]] == NULL)
+			h = h->next[a[i]];
+		else
+			h = h->next[1 - a[i]];
+	}
+	return h->end;
+}
+
+void dfs(long long n, long long v) {
+	if(xrs[n] != -1)
+		return;
+	xrs[n] = v;
+	for(long long i = 0; i < edges[n].size(); ++i)
+		dfs(edges[n][i].first, edges[n][i].second ^ v);
+	return;
+}
+
+bool ppath(long long i, long long j) {
+	if(vis[i])
+		return false;
+	vis[i] = true;
+	if(i == j) {
+		printf("%lld", i);
+		return true;
+	}
+	for(long long k = 0; k < edges[i].size(); ++k) {
+		if(ppath(edges[i][k].first, j)) {
+			printf(" %lld", i);
+			return true;
+		}
+	}
+	return false;
+}
+
+int main() {
+	scanf("%lld", &N);
+	for(long long i = 1; i < N; ++i) {
+		scanf("%lld%lld%lld", &u, &v, &w);
+		edges[u].pb(mp(v, w));
+		edges[v].pb(mp(u, w));
+	}
+	memset(xrs, -1, sizeof(xrs));
+	dfs(1, 0);
+	u = 1;
+	v = 2;
+	wm = xrs[u] ^ xrs[v];
+	read(xrs[1], num);
+	insert(1, num);
+	read(xrs[2], num);
+	insert(2, num);
+	for(long long i = 3; i <= N; ++i) {
+		read(xrs[i], num);
+		long long j = test(num);
+		if((xrs[i] ^ xrs[j]) > wm || (xrs[i] ^ xrs[j])== wm && j < u) {
+			u = j;
+			v = i;
+			wm = xrs[u] ^ xrs[v];
+		}
+		insert(i, num);
+	}
+	printf("%lld\n", wm);
+	ppath(v, u);
+	return 0;
+}

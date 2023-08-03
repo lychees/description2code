@@ -1,0 +1,156 @@
+#include <algorithm>
+#include <bitset>
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <cstdio>
+#include <cstdlib>
+#include <string.h>
+#include <ctime>
+#include <iostream>
+#include <list>
+#include <map>
+#include <numeric>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <vector>
+#include <fstream>
+//#define _LOCAL_
+#ifdef _LOCAL_
+#include "testlib.h"
+/* rnd */
+#endif
+
+using namespace std;
+
+template<class T> inline T cabs(const T &x) { return x > 0 ? x : (-x); }
+template<class T> inline T gcd(const T &x, const T &y) { return (y == 0) ? x : gcd(y, x % y); }
+template<class T> inline T sgn(const T &x) { return (x > 0) - (x < 0); }
+
+#define dbg(x) cout << #x << " = " << (x) << endl
+#define dbg2(x,y) cout << #x << " = " << (x) << ", " << #y << " = " << (y) << endl
+#define dbg3(x,y,z) cout << #x << " = " << (x) << ", " << #y << " = " << (y) << ", " << #z << " = " << (z) << endl
+#define dbg4(x,y,z,w) cout << #x << " = " << (x) << ", " << #y << " = " << (y) << ", " << #z << " = " << (z) << ", " << #w << " = " << w << endl
+
+#define out(x) cout << (x) << endl
+#define out2(x,y) cout << (x) << " " << (y) << endl
+#define out3(x,y,z) cout << (x) << " " << (y) << " " << (z) << endl
+#define out4(x,y,z,w) cout << (x) << " " << (y) << " " << (z) << " " << (w) << endl
+
+const int maxN = 100000 + 10;
+
+int N, M; int C[maxN];
+
+struct node {
+    int l, r, idx, lv, lc, rv, rc, t;
+    long long ans;
+    inline void set_full(const int &_c) {
+        lv = rv = _c;
+        lc = rc = r - l + 1;
+        ans = (long long)(lc - 1) * lc / 2 + lc;
+        t = 1;
+    }
+};
+node tree[maxN * 6];
+
+void build(int l, int r, int idx = 1) {
+    tree[idx].l = l, tree[idx].r = r, tree[idx].idx = idx, tree[idx].t = -1;
+    if( l == r ) {
+        tree[idx].lv = tree[idx].rv = C[l];
+        tree[idx].lc = 1, tree[idx].rc = 1, tree[idx].ans = 1;
+        return ;
+    }
+    int mid = (l + r) >> 1;
+    build(l, mid, idx << 1); build(mid + 1, r, idx << 1 | 1);
+    tree[idx].ans = tree[idx << 1].ans + tree[idx << 1 | 1].ans;
+    if( tree[idx << 1].rv == tree[idx << 1 | 1].lv )
+        tree[idx].ans += (long long)tree[idx << 1].rc * tree[idx << 1 | 1].lc;
+    tree[idx].lv = tree[idx << 1].lv, tree[idx].rv = tree[idx << 1 | 1].rv;
+    tree[idx].lc = tree[idx << 1].lc, tree[idx].rc = tree[idx << 1 | 1].rc;
+    if( (tree[idx].lc == mid - l + 1) && tree[idx << 1 | 1].lv == tree[idx].lv  )
+        tree[idx].lc += tree[idx << 1 | 1].lc;
+    if( (tree[idx].rc == r - (mid + 1) + 1) && tree[idx << 1].rv == tree[idx].rv )
+        tree[idx].rc += tree[idx << 1].rc;
+}
+
+void update(int l, int r, int c, int idx = 1) {
+    if( l <= tree[idx].l && tree[idx].r <= r ) {
+        tree[idx].set_full(c);
+        return ;
+    }
+    if( tree[idx].t == 1 ) {
+        tree[idx << 1].set_full(tree[idx].lv);
+        tree[idx << 1 | 1].set_full(tree[idx].lv);
+        tree[idx].t = -1;
+    }
+    int mid = (tree[idx].l +tree[idx].r) >> 1;
+    if( l <= mid )
+        update(l, r, c, idx << 1);
+    if( r > mid )
+        update(l, r, c, idx << 1 | 1);
+    tree[idx].ans = tree[idx << 1].ans + tree[idx << 1 | 1].ans;
+    if( tree[idx << 1].rv == tree[idx << 1 | 1].lv )
+        tree[idx].ans += (long long)tree[idx << 1].rc * tree[idx << 1 | 1].lc;
+    tree[idx].lv = tree[idx << 1].lv, tree[idx].rv = tree[idx << 1 | 1].rv;
+    tree[idx].lc = tree[idx << 1].lc, tree[idx].rc = tree[idx << 1 | 1].rc;
+    if( (tree[idx].lc == tree[idx << 1].r - tree[idx << 1].l + 1) && tree[idx << 1 | 1].lv == tree[idx].lv  )
+        tree[idx].lc += tree[idx << 1 | 1].lc;
+    if( (tree[idx].rc == tree[idx << 1 | 1].r - tree[idx << 1 | 1].l + 1) && tree[idx << 1].rv == tree[idx].rv )
+        tree[idx].rc += tree[idx << 1].rc;
+}
+
+long long query(int l, int r, int idx = 1) {
+    if( l <= tree[idx].l && tree[idx].r <= r )
+        return tree[idx].ans;
+    if( tree[idx].t == 1 ) {
+        tree[idx << 1].set_full(tree[idx].lv);
+        tree[idx << 1 | 1].set_full(tree[idx].lv);
+        tree[idx].t = -1;
+    }
+    int mid = (tree[idx].l +tree[idx].r) >> 1;
+    if( r <= mid )
+        return query(l, r, idx << 1);
+    else if( l > mid )
+        return query(l, r, idx << 1 | 1);
+    else {
+        long long ans = query(l, r, idx << 1) + query(l, r, idx << 1 | 1);
+
+        tree[idx].ans = tree[idx << 1].ans + tree[idx << 1 | 1].ans;
+        if( tree[idx << 1].rv == tree[idx << 1 | 1].lv )
+            tree[idx].ans += (long long)tree[idx << 1].rc * tree[idx << 1 | 1].lc;
+        tree[idx].lv = tree[idx << 1].lv, tree[idx].rv = tree[idx << 1 | 1].rv;
+        tree[idx].lc = tree[idx << 1].lc, tree[idx].rc = tree[idx << 1 | 1].rc;
+        if( (tree[idx].lc == tree[idx << 1].r - tree[idx << 1].l + 1) && tree[idx << 1 | 1].lv == tree[idx].lv  )
+            tree[idx].lc += tree[idx << 1 | 1].lc;
+        if( (tree[idx].rc == tree[idx << 1 | 1].r - tree[idx << 1 | 1].l + 1) && tree[idx << 1].rv == tree[idx].rv )
+            tree[idx].rc += tree[idx << 1].rc;
+
+        if( tree[idx << 1].rv == tree[idx << 1 | 1].lv )
+            ans += (long long)min(tree[idx << 1].rc, tree[idx << 1].r - l + 1) * min(tree[idx << 1 | 1].lc, r - tree[idx << 1 | 1].l + 1);
+        return ans;
+    }
+}
+
+int main()
+{
+    //freopen("data.in", "r", stdin);
+    scanf("%d %d", &N, &M);
+    for(int i = 1; i <= N; i ++)
+        scanf("%d", &C[i]);
+    build(1, N, 1);
+    int t, l, r, c;
+    for(int i = 1; i <= M; i ++) {
+        scanf("%d", &t);
+        if( t == 0 ) {
+            scanf("%d %d %d", &l, &r, &c);
+            update(l, r, c, 1);
+        } else {
+            scanf("%d %d", &l, &r);
+            printf("%lld\n", query(l, r, 1));
+        }
+    }
+    return 0;
+}

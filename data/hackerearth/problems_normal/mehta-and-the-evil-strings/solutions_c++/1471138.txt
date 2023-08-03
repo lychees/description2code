@@ -1,0 +1,126 @@
+#include <cassert>
+#include <functional>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <iostream>
+namespace lc {
+template <int MOD>
+class ModulusInteger {
+public:
+	typedef ModulusInteger<MOD> self_type;
+private:
+	int m_value;
+	static self_type unsafe_construct(int x){
+		self_type y;
+		y.m_value = x;
+		return y;
+	}
+public:
+	ModulusInteger()
+		: m_value(0)
+	{ }
+	ModulusInteger(int x)
+		: m_value(x % MOD)
+	{
+		if(m_value < 0){ m_value += MOD; }
+	}
+	int operator*() const { return m_value; }
+	self_type &operator=(const self_type &x){
+		m_value = x.m_value;
+		return *this;
+	}
+	self_type operator+(const self_type &x) const {
+		const int y = m_value + x.m_value;
+		return unsafe_construct(y >= MOD ? y - MOD : y);
+	}
+	self_type operator*(const self_type &x) const {
+		return unsafe_construct(
+			static_cast<long long>(m_value) * x.m_value % MOD);
+	}
+	self_type &operator+=(const self_type &x){ return (*this = *this + x); }
+	self_type &operator++(){
+		if(++m_value >= MOD){ m_value = 0; }
+		return *this;
+	}
+};
+template <int MOD>
+std::ostream& operator<<(std::ostream &os, const ModulusInteger<MOD> &x){
+	os << *x;
+    return os;
+}
+}
+namespace lc {
+template <class T>
+class Matrix {
+private:
+	int m_rows;
+	int m_cols;
+	std::vector<T> m_data;
+public:
+	Matrix(int n, int m)
+		: m_rows(n)
+		, m_cols(m)
+		, m_data(n * m)
+	{ }
+	int rows() const { return m_rows; }
+	int cols() const { return m_cols; }
+	const T &operator()(int i, int j) const {
+		return m_data[i * m_cols + j];
+	}
+	T &operator()(int i, int j){
+		return m_data[i * m_cols + j];
+	}
+	Matrix<T> operator*(const Matrix<T> &m) const {
+		assert(m_cols == m.m_rows);
+		Matrix<T> ret(m_rows, m.m_cols);
+		for(int i = 0; i < m_rows; ++i){
+			for(int k = 0; k < m_cols; ++k){
+				for(int j = 0; j < m.m_cols; ++j){
+					ret(i, j) += (*this)(i, k) * m(k, j);
+				}
+			}
+		}
+		return ret;
+	}
+	Matrix<T> &operator*=(const Matrix<T> &m){ return (*this = *this * m); }
+};
+template <class T>
+inline Matrix<T> pow(Matrix<T> x, long long y){
+	assert(x.rows() == x.cols());
+	Matrix<T> z(x.rows(), x.cols());
+	for(int i = 0; i < x.rows(); ++i){ z(i, i) = 1; }
+	while(y > 0){
+		if(y & 1){ z *= x; }
+		x *= x;
+		y >>= 1;
+	}
+	return z;
+}
+}
+using namespace std;
+typedef long long ll;
+typedef lc::ModulusInteger<1000000007> mint;
+int main(){
+	ios_base::sync_with_stdio(false);
+	lc::Matrix<mint> mat(16, 16);
+	for(int i = 1; i < 10; ++i){
+		int mask = 0;
+		for(int x = i; x % 2 == 0; x /= 2){ mask ^= 1; }
+		for(int x = i; x % 3 == 0; x /= 3){ mask ^= 2; }
+		for(int x = i; x % 5 == 0; x /= 5){ mask ^= 4; }
+		for(int x = i; x % 7 == 0; x /= 7){ mask ^= 8; }
+		for(int j = 0; j < 16; ++j){ ++mat(j, j ^ mask); }
+	}
+	int T;
+	cin >> T;
+	while(T--){
+		ll n;
+		cin >> n;
+		const auto m = lc::pow(mat, n);
+		mint answer = 0;
+		for(int i = 1; i < 16; ++i){ answer += m(i, 0); }
+		cout << answer << endl;
+	}
+	return 0;
+}

@@ -1,0 +1,79 @@
+#include <iostream>
+#include<cstdio>
+#include<algorithm>
+#include<cstring>
+#include<string>
+#include<bitset>
+#define mod 1000000007
+using namespace std;
+int n,k;
+char cube[12][6];
+char s[12];
+long long dp[12][1<<11];
+int noofbits(int a)
+{
+    int ct=0;
+    while(a>0)
+    {
+        a=a&(a-1);
+        ct++;
+    }
+    return ct;
+}
+bitset<3> bi;
+long long rec(int cubeno,int strno)
+{
+    bi=strno;
+    //cout<<"cubeno="<<cubeno<<" ss="<<bi.to_string()<<" no of bits="<<noofbits(strno)<<endl;
+    if((noofbits(strno)==k))
+       return 1;
+    else if(cubeno>n-1)
+        return 0;
+    else if(dp[cubeno][strno]!=-1)
+        return dp[cubeno][strno];
+    else
+    {
+        long long ans=0;
+        string str(s);
+        //cout<<"ini cubeno="<<cubeno<<" ss="<<bi.to_string()<<" ans="<<ans<<endl;
+        ans=((ans%mod)+(rec(cubeno+1,strno)%mod))%mod;
+        //cout<<"after 1 ini cubeno="<<cubeno<<" ss="<<bi.to_string()<<" ans="<<ans<<endl;
+        for(int i=0;i<6;i++)
+        {
+            for(int j=0;j<k;j++)
+            {
+                //cout<<"inside 2 ini cubeno="<<cubeno<<" ss="<<bi.to_string()<<" cubeval="<<cube[cubeno][i]<<" char matched="<<s[j]<<" ans="<<ans<<endl;
+                if((cube[cubeno][i]==s[j])&&((strno&(1<<j))==0))
+                {
+                    long long opt;
+                    ans=(ans%mod);
+                    //cout<<"equal"<<endl;
+                    opt=rec(cubeno+1,(strno|(1<<j)))%mod;
+                    ans=(ans+opt)%mod;
+                }
+                //cout<<"after 2 ini cubeno="<<cubeno<<" ss="<<bi.to_string()<<" cubeval="<<cube[cubeno][i]<<" char matched="<<s[j]<<" ans="<<ans<<endl;
+            }
+        }
+        dp[cubeno][strno]=ans%mod;
+        return dp[cubeno][strno];
+    }
+}
+int main()
+{
+    int i,j;
+    long long ans;
+    memset(dp,-1,sizeof(dp));
+    scanf("%d %d",&n,&k);
+    for(i=0;i<n;i++)
+    {
+        for(j=0;j<6;j++)
+        {
+            scanf(" %c",&cube[i][j]);
+        }
+    }
+    for(i=0;i<k;i++)
+        scanf(" %c",&s[i]);
+    ans=rec(0,0)%mod;
+    printf("%lld\n",ans);
+    return 0;
+}

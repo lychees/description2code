@@ -1,0 +1,93 @@
+#include <cstdio>
+#include <cstring>
+
+#define SIZE 11000000
+
+int left[SIZE], right[SIZE], nextInd = 1;
+long long rangeCount[SIZE], rangeSum[SIZE], points[500000], curHash = 0;
+
+long long getSum(long long tree[], int index, long long min, long long max, long long rmin, long long rmax)
+{
+	if (min == rmin && max == rmax)
+	{
+		return tree[index];
+	}
+	if (rmax <= (min+max)/2)
+	{
+		if (left[index] == 0)
+		{
+			return 0;
+		}
+		return getSum(tree, left[index], min, (min+max)/2, rmin, rmax);
+	}
+	if (rmin >= (min+max)/2+1)
+	{
+		if (right[index] == 0)
+		{
+			return 0;
+		}
+		return getSum(tree, right[index], (min+max)/2+1, max, rmin, rmax);
+	}
+	long long temp = 0;
+	if (left[index] != 0)
+	{
+		temp += getSum(tree, left[index], min, (min+max)/2, rmin, (min+max)/2);
+	}
+	if (right[index] != 0)
+	{
+		temp += getSum(tree, right[index], (min+max)/2+1, max, (min+max)/2+1, rmax);
+	}
+	return temp;
+}
+
+void updateSum(long long tree[], int index, long long min, long long max, long long upInd, long long val)
+{
+	tree[index] += val;
+	if (min == max)
+	{
+		return;
+	}
+	if (upInd <= (min+max)/2)
+	{
+		if (left[index] == 0)
+		{
+			left[index] = nextInd;
+			nextInd++;
+		}
+		updateSum(tree, left[index], min, (min+max)/2, upInd, val);
+	}
+	else
+	{
+		if (right[index] == 0)
+		{
+			right[index] = nextInd;
+			nextInd++;
+		}
+		updateSum(tree, right[index], (min+max)/2+1, max, upInd, val);
+	}
+}
+
+int main()
+{
+	memset(rangeSum, 0, sizeof(rangeSum));
+	memset(rangeCount, 0, sizeof(rangeCount));
+	memset(left, 0, sizeof(left));
+	memset(right, 0, sizeof(right));
+	memset(points, 0, sizeof(points));
+	long long n, q, a, b;
+	scanf("%lld %lld", &n, &q);
+	updateSum(rangeCount, 0, 0, 250000000000000000LL, 0, n);
+	while (q--)
+	{
+		scanf("%lld %lld", &a, &b);
+		curHash -= (getSum(rangeCount, 0, 0, 250000000000000000LL, points[a-1]+1, 250000000000000000LL)+1) * points[a-1];
+		updateSum(rangeSum, 0, 0, 250000000000000000LL, points[a-1], -points[a-1]);
+		updateSum(rangeCount, 0, 0, 250000000000000000LL, points[a-1], -1);
+		curHash += getSum(rangeSum, 0, 0, 250000000000000000LL, points[a-1], points[a-1]+b-1);
+		points[a-1] += b;
+		curHash += (getSum(rangeCount, 0, 0, 250000000000000000LL, points[a-1]+1, 250000000000000000LL)+1) * points[a-1];
+		updateSum(rangeSum, 0, 0, 250000000000000000LL, points[a-1], points[a-1]);
+		updateSum(rangeCount, 0, 0, 250000000000000000LL, points[a-1], 1);
+		printf("%lld\n", curHash);
+	}
+}

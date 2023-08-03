@@ -1,0 +1,214 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+#include <map>
+using namespace std;
+
+#ifdef LOCAL
+#define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define eprintf(...) 42
+#endif
+
+
+const int maxn = (int) 2e6 + 100;
+char a[maxn], cur[maxn];
+
+int n;
+
+struct Node
+{
+	int l, r;
+	int par, link, h;
+	map <int, int> go;
+	Node() : l(), r(), par(-1), link(-1), h() {}
+	Node(int _l, int _r) : l(_l), r(_r), par(-1), link(-1), h() {}
+	Node(int _l, int _r, int _par, int _h) : l(_l), r(_r), par(_par), link(-1), h(_h) {}
+	int len()
+	{
+		return r - l;
+	}
+};
+
+Node tree[maxn];
+int sz = 1;
+
+struct Pos
+{
+	int v, up;
+	Pos() : v(), up() {}
+	Pos(int _v, int _up) : v(_v), up(_up) {}
+};
+
+int addChild(int v, int l, int r)
+{
+	tree[v].go[a[l] ] = sz;
+	tree[sz++] = Node(l, r, v, tree[v].h + r - l);
+	return sz - 1;
+}
+
+
+int split(Pos p)
+{
+	int v = p.v;
+	if (p.up == 0)
+		return v;
+	if (p.up == tree[p.v].len() )
+		return tree[p.v].par;
+	int mid = addChild(tree[v].par, tree[v].l, tree[v].r - p.up);	
+	tree[v].l = tree[mid].r;
+	tree[v].par = mid;
+	tree[mid].go[ (int) a[tree[v].l] ] = v;
+	return mid;
+}
+
+bool canGo(Pos p, int c)
+{
+	if (p.up == 0)
+		return tree[p.v].go.count(c);
+	return a[tree[p.v].r - p.up] == c;
+}
+
+Pos go(Pos p, int c)
+{
+	if (p.up == 0)
+	{
+		int nv = tree[p.v].go[c];
+		return Pos(nv, tree[nv].len() - 1);
+	}
+	return Pos(p.v, p.up - 1);
+}
+
+Pos fastGo(int v, int i, int len)
+{
+	while (true)
+	{
+		int nv = tree[v].go[ (int) a[i] ];
+		int curlen = tree[nv].len();
+		if (len <= curlen)
+			return Pos(nv, curlen - len);
+		len -= curlen;
+		i += curlen;
+		v = nv;
+	}
+}
+
+int getSuffLink(int v)
+{
+	if (tree[v].link != -1)
+		return tree[v].link;
+	int ulink = getSuffLink(tree[v].par);
+	//	eprintf("v = %d : %d, %d\n", v, ulink, tree[v].len() );
+	return tree[v].link = split(fastGo(ulink, tree[v].l + (tree[v].par == 0 ? 1 : 0), tree[v].len() - (tree[v].par == 0 ? 1 : 0) ) );
+}
+
+Pos goTree(Pos p, int c)
+{
+	while ( (p.up != 0 || p.v != 0) && !canGo(p, c) )
+	{
+		int par = tree[p.v].par;
+		p = fastGo(getSuffLink(par), tree[p.v].l + (par == 0 ? 1 : 0), tree[p.v].len() - p.up - (par == 0 ? 1 : 0) );
+		if (p.up == tree[p.v].len() )
+		{
+			p.up = 0;
+			p.v = tree[p.v].par;
+		}
+	}
+	if (canGo(p, c) )
+		return go(p, c);
+	return p;
+}
+
+
+Pos addChar(Pos p, int i)
+{
+	while (!canGo(p, a[i] ) )
+	{
+		//		eprintf("v = %d, par = %d, len = %d\n", p.v, tree[p.v].par, tree[p.v].len() );
+		p = Pos(split(p), 0);
+		//		eprintf("------->>>>>>\n");
+		addChild(p.v, i, n);
+		if (p.v == 0)
+			return p;
+		p = Pos(getSuffLink(p.v), 0);
+	}
+	return go(p, a[i] );
+}
+
+int getAns(Pos p)
+{
+	return tree[p.v].h - p.up;
+}
+
+
+void initTree()
+{
+	tree[0] = Node(0, 0, 0, 0);
+	tree[0].link = 0;
+}
+
+void printTree(int v = 0, string s = "")
+{
+	eprintf("%2d -> %2d:%s", v, tree[v].link, s.c_str() );
+	if (s == "")
+		s = " ";
+	for (int i = tree[v].l; i < tree[v].r; i++)
+	{
+		s.push_back(' ');
+		eprintf("%c", a[i] );
+	}
+	eprintf("\n");
+	for (int c = 0; c < 256; c++)
+		if (tree[v].go.count(c) )
+			printTree(tree[v].go[c], s);
+};
+
+
+int main(int,  char **)
+{
+	initTree();
+	
+	int nn;
+	scanf("%d", &nn);
+	int pos = 0;
+	for (int i = 0; i < nn; i++)
+	{
+		scanf("%s", a + pos);
+		pos += strlen(a + pos);
+		a[pos++] = '#';
+	}
+	a[pos++] = '$';
+	n = pos;
+
+	Pos p = Pos(0, 0);
+	for (int i = 0; i < n; i++)
+		p = addChar(p, i);
+
+//	printTree(0);
+
+	int m;
+	scanf("%d", &m);
+	for (int i = 0; i < m; i++)
+	{
+//		eprintf("i = %d\n", i);
+		scanf("%s", cur);
+		int len = strlen(cur);
+		p = Pos(0, 0);
+		int ans = 0;
+		for (int j = 0; j < len; j++)
+		{
+			p = goTree(p, cur[j] );
+//			eprintf("(%d, %d)\n", p.v, p.up);
+			ans = max(ans, getAns(p) );
+		}
+		printf("%d\n", ans);
+	}
+
+	return 0;
+}
+
+

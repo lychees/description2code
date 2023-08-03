@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+#define pii pair<int,int>
+#define N 100001
+#define MAX 3*N
+#define MOD 1000000007
+using namespace std;
+pii positive[3*MAX],negative[3*MAX];
+void merge(pii&a,pii b,pii c)
+{
+	a=max(b,c);
+	if(b.first==c.first)
+	a.second=(b.second+c.second)%MOD;
+}
+pii query(int node,int start,int end,int l,int r,pii*seg)
+{
+	if(l<=start&&r>=end)
+		return seg[node];
+	if(start>end||l>end||r<start)
+		return make_pair(0,0);
+	int mid=start+(end-start)/2;
+	pii left=query(2*node,start,mid,l,r,seg);
+	pii right=query(2*node+1,mid+1,end,l,r,seg);
+	pii res;
+	merge(res,left,right);
+	return res;
+}
+void update(int node,int start,int end,int idx,pii val,pii*seg)
+{
+	if(idx>end||idx<start)
+	return;
+	if(start==end)
+	{
+		if(seg[node].first>val.first)
+		return;
+		else if(seg[node].first==val.first)
+		{
+			seg[node].second+=val.second;
+			seg[node].second%=MOD;
+		}
+		else
+		seg[node]=val;
+		return;
+	}
+	int mid=start+(end-start)/2;
+	update(2*node,start,mid,idx,val,seg);
+	update(2*node+1,mid+1,end,idx,val,seg);
+	merge(seg[node],seg[2*node],seg[2*node+1]);
+}
+int main()
+{
+    int n,i,num,sign;
+    pii queried,ans;
+    cin>>n;
+    sign=0;
+    for(i=0;i<n;i++)
+    {
+    	cin>>num;
+    	sign=(num>0);
+    	if(!sign)
+    	num=-num;
+    	queried=query(1,1,N-1,1,num-1,sign?negative:positive);
+    	if(queried.second==0)queried.second++;
+    	queried.first++;
+    	update(1,1,N-1,num,queried,sign?positive:negative);
+    }
+    merge(ans,positive[1],negative[1]);
+    cout<<ans.first<<" "<<ans.second<<"\n";
+    return 0;
+}

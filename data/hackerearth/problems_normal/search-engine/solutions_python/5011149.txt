@@ -1,0 +1,76 @@
+import fileinput
+
+class Node(object):
+    def __init__(self,data):
+        self.data=data
+        self.children={} # {'data' => Node}
+        self.max_score =0
+        
+    def add_child(self,data,score):
+        if self.children.has_key(data):
+            pass
+        else:
+            self.children[data]=Node(data)
+        self.children[data].max_score= score
+        return self.children[data]
+    
+    def is_leaf(self):
+        return len(self.children) == 0 and self.data != ""
+    
+    def __str__(self, *args, **kwargs):
+        return self.data
+    
+class Trie(object):
+    def __init__(self):
+        self.root= Node("")
+        
+    def add_string(self,string, score):
+        node, end_index = self.find_path(string,score)
+        length= len(string)
+        
+        for i in range(end_index,length):
+            if node.max_score < score:
+                node.max_score = score
+            node= node.add_child(string[i], score)
+        node.add_child(score,score)
+
+    # return node
+    def find_path(self, string, score):
+        node= self.root
+        i= 0
+        for c in string:
+            if node.children.has_key(c):
+                i=i+1
+                if score != -1:
+                    if node.max_score < score:
+                        node.max_score = score   
+                node=node.children[c]              
+            else:
+                break
+        return node, i
+    
+    def max(self,node):
+        pass
+        
+if __name__=="__main__":
+    f= fileinput.input()
+    n,q = map(int,f.readline().split(" "))
+    
+    trie= Trie()
+    
+    while n > 0:
+        n=n-1
+        line, score=f.readline().strip().split(" ")
+        trie.add_string(line, int(score))
+    
+    while q> 0:
+        q=q-1
+        query= f.readline().strip()
+        length = len(query)
+        node, end_index = trie.find_path(query,-1)
+        if end_index==0 or end_index < length:
+            print -1
+        else:
+            print node.max_score
+        
+        

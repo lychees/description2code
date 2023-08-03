@@ -1,0 +1,134 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+typedef long long ll;
+struct Hash {
+  ll a, b;
+
+  Hash operator*(const Hash& h) const {
+    return Hash { a * h.a, b * h.b };
+  }
+
+  Hash operator+(const Hash& h) const {
+    return Hash { a + h.a, b + h.b };
+  }
+
+  Hash operator-(const Hash& h) const {
+    return Hash { a - h.a, b - h.b };
+  }
+
+  bool operator<(const Hash& h) const {
+    return a < h.a || (a == h.a && b < h.b);
+  }
+  bool operator==(const Hash& h) const {
+    return a == h.a && b == h.b;
+  }
+};
+const Hash MOD { int(1e9) + 7, int(1e9) + 9 };
+const int MAX = 777;
+int a[MAX][MAX], b[MAX][MAX];
+Hash pw[MAX], sum1[MAX][MAX], sum2[MAX][MAX], now[MAX], vals[MAX * MAX];
+
+void solve(int test_num) {
+  int N, M, X, Y;
+  cin >> N >> M;
+  for (int i = 1; i <= N; i++) {
+    for (int j = 1; j <= M; j++) {
+      cin >> a[i][j];
+    }
+  }
+  cin >> X >> Y;
+  for (int i = 1; i <= X; i++) {
+    for (int j = 1; j <= Y; j++) {
+      cin >> b[i][j];
+    }
+  }
+  pw[0] = Hash { 1, 1 };
+  for (int i = 1; i <= N; i++) {
+    pw[i] = pw[i - 1] * MOD;
+  }
+  for (int r = 1; r <= N; r++) {
+    sum1[r][0] = Hash { 0, 0 };
+    for (int c = 1; c <= M; c++) {
+      sum1[r][c] = sum1[r][c - 1] * MOD + Hash { a[r][c], a[r][c] };
+    }
+  }
+  for (int r = 1; r <= X; r++) {
+    sum2[r][0] = Hash { 0, 0 };
+    for (int c = 1; c <= Y; c++) {
+      sum2[r][c] = sum2[r][c - 1] * MOD + Hash { b[r][c], b[r][c] };
+    }
+  }
+  int res = 0;
+  for (int low = 0, high = min(min(X, Y), min(N, M)); low <= high;) {
+    const int mid = (low + high) >> 1;
+    bool fnd = false;
+    int L = 0;
+    for (int c = mid; c <= M; c++) {
+      now[N + 1] = Hash { 0, 0 };
+      for (int r = N; r >= 1; r--) {
+        now[r] = now[r + 1] * MOD + sum1[r][c] - sum1[r][c - mid] * pw[mid];
+      }
+      for (int r = N - mid + 1; r >= 1; r--) {
+        vals[L++] = now[r] - now[r + mid] * pw[mid];
+      }
+    }
+    sort(vals, vals + L);
+    L = unique(vals, vals + L) - vals;
+    for (int c = mid; c <= Y && !fnd; c++) {
+      now[X + 1] = Hash { 0, 0 };
+      for (int r = X; r >= 1; r--) {
+        now[r] = now[r + 1] * MOD + sum2[r][c] - sum2[r][c - mid] * pw[mid];
+      }
+      for (int r = X - mid + 1; r >= 1; r--) {
+        const Hash my_val = now[r] - now[r + mid] * pw[mid];
+        if (binary_search(vals, vals + L, my_val)) {
+          fnd = true;
+          break;
+        }
+      }
+    }
+    if (fnd) {
+      res = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  cout << res << endl;
+}
+
+void solve() {
+#ifdef AZN
+//make_case();
+  double start_t = clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr);
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+  int T = 1;
+//scanf("%d", &T);
+  //cin >> T;
+  for (int t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << "Took: " << ((clock() - start_t) / CLOCKS_PER_SEC);
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

@@ -1,0 +1,95 @@
+#include <iostream>
+#include <cmath>
+#include <map>
+#include <iomanip>
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+int n, q;
+map<int, map<int, int> > energy;
+const long long INF = 1e9;
+
+long long a[110][110];
+
+int get()
+{
+    int m = n;
+    // Hungarian algorithm from http://e-maxx.ru/algo/assignment_hungary
+    vector<int> u (n+1), v (m+1), p (m+1), way (m+1);
+    for (int i=1; i<=n; ++i) {
+            p[0] = i;
+            int j0 = 0;
+            vector<int> minv (m+1, INF);
+            vector<char> used (m+1, false);
+            do {
+                    used[j0] = true;
+                    int i0 = p[j0],  delta = INF,  j1;
+                    for (int j=1; j<=m; ++j)
+                            if (!used[j]) {
+                                    int cur = a[i0][j]-u[i0]-v[j];
+                                    if (cur < minv[j])
+                                            minv[j] = cur,  way[j] = j0;
+                                    if (minv[j] < delta)
+                                            delta = minv[j],  j1 = j;
+                            }
+                    for (int j=0; j<=m; ++j)
+                            if (used[j])
+                                    u[p[j]] += delta,  v[j] -= delta;
+                            else
+                                    minv[j] -= delta;
+                    j0 = j1;
+            } while (p[j0] != 0);
+            do {
+                    int j1 = way[j0];
+                    p[j0] = p[j1];
+                    j0 = j1;
+            } while (j0);
+    }
+
+    vector<int> ans (n+1);
+    for (int j=1; j<=m; ++j)
+            ans[p[j]] = j;
+
+    int ret = 0;
+    for(int i = 1; i <= n; i++) {
+        int idx = ans[i];
+        if(a[i][idx] == INF)
+            return -1;
+        ret += a[i][idx];
+    }
+
+    return ret;
+}
+
+
+int main()
+{
+    cin.sync_with_stdio(false);
+    cin >> n;
+    for(int i = 0; i < n; i++) {
+        int m;
+        int v, e;
+        cin >> m;
+        for(int j = 0; j < m; j++) {
+            cin >> v >> e;
+            energy[i][v] = e;
+        }
+    }
+    cin >> q;
+    for(int j = 0; j < q; j++) {
+
+        for(int i = 0; i < n; i++) {
+            int v;
+            cin >> v;
+            for(int r = 0; r < n; r++) {
+                if(energy[r].count(v))
+                    a[i + 1][r + 1] = energy[r][v];
+                else
+                    a[i + 1][r + 1] = INF;
+            }
+        }
+        cout << get() << "\n";
+    }
+    return 0;
+}

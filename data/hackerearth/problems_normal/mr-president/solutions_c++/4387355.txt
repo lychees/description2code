@@ -1,0 +1,142 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int ll;
+typedef pair<ll,ll> ii;
+typedef pair<ll,ii> wii;
+
+void make_set(ll p[],ll rnk[], ll N);
+void union_set(ll A,ll B, ll arr[], ll rnk[]);
+ll find_root(ll x, ll arr[] );
+
+int main()
+{
+    ll N,M,K;
+    cin >> N >> M >> K;
+    vector<wii> G,ans;
+    ll arr[N+1];
+    ll rnk[N+1];
+    make_set(arr,rnk,N);
+
+
+    ll u,v,w;
+    ii  x;
+    wii y;
+
+    for (ll i=0 ;i < M; i++)
+        {
+            cin >> u >> v >> w;
+            x = make_pair(u,v);
+            y = make_pair(w,x);
+            G.push_back(y);
+        }
+
+    sort(G.begin(),G.end());
+
+    for(ll i=0 ;i< G.size();i++)
+    {
+        ii e = G[i].second;
+         u = e.first;
+         v = e.second;
+         ll r1 = find_root(u,arr);
+         ll r2 = find_root(v,arr);
+
+         if (r1 == r2)
+            continue;
+         else
+            {
+            union_set(u,v,arr,rnk);
+            ans.push_back(G[i]);
+            }
+
+        if (ans.size()==N-1)
+            break;
+
+    }
+
+   ll transformations;
+   
+   ll sum = 0;
+   if (K < N-1)
+        transformations = -1;
+   else
+   {
+
+
+   for (ll i = 0 ;i <ans.size();i++ )
+        sum += ans[i].first;
+        
+
+   transformations = 0;
+   for(ll i = ans.size()-1; i>=0 ;i--)
+      {
+        if(sum <= K)
+            break;
+        sum = sum - ans[i].first + 1;
+        transformations++;
+      }
+   }
+   
+   ll r3 = find_root(1,arr);
+   
+   for (ll i = 2 ;i <=N ; i++)
+   {
+        if (find_root(i,arr)!=r3)
+        {
+            transformations = -1;
+            break;
+        }
+   }
+   
+   
+
+
+    cout << transformations;
+}
+
+void make_set(ll p[],ll rnk[], ll N)
+{
+
+    for (ll i=1 ; i<=N ;i++)
+        {
+            p[i]   = i;
+            rnk[i] = 0;
+
+        }
+}
+
+
+void union_set(ll A,ll B, ll arr[], ll rnk[])
+{
+    ll r1 = find_root(A,arr);
+    ll r2 = find_root(B,arr);
+
+    if (r1 == r2)
+        return;
+
+    else if (rnk[r1] > rnk[r2])
+        {
+            arr[r2] = r1;
+        }
+    else if (rnk[r1] < rnk[r2])
+        {
+            arr[r1] = r2;
+        }
+    else
+        {
+        arr[r2] = r1;
+        rnk[r1] = rnk[r1] + 1;
+
+        }
+}
+
+ll find_root(ll i,ll arr[])
+{
+    if (arr[i] == i)
+        return i;
+    else
+    {
+        arr[i] = find_root(arr[i],arr);
+        return arr[i];
+
+    }
+}

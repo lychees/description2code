@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifdef LOCAL
+    #define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#else
+    #define eprintf(...) (void)42;
+#endif
+
+const int INF = (int)1e9;
+const int MAXN = 2020;
+
+char s[MAXN];
+char t[MAXN];
+int dp[MAXN][MAXN];
+int f[MAXN][MAXN];
+int g[MAXN][MAXN];
+int cost[256][256];
+
+int main() {
+#ifdef LOCAL
+    freopen("a.in", "r", stdin);
+#endif
+    int tests;
+    scanf("%d", &tests);
+    for (int test = 1; test <= tests; test++) {
+        int n, x, y, z, tt;
+        scanf("%d%d%d%d%d", &n, &x, &y, &z, &tt);
+        cost['0']['0'] = cost['1']['1'] = 0;
+        cost['0']['1'] = x;
+        cost['1']['0'] = y;
+        cost['?']['0'] = cost['?']['1'] = z;
+        scanf("%s", s);
+        scanf("%s", t);
+        int cnt[2] = {0, 0};
+        for (int i = 0; i < n; i++) {
+            cnt[t[i] - '0']++;
+        }
+        {
+            int ccnt[2] = {0, 0};
+            for (int i = 0; i < n; i++) {
+                ccnt[t[i] - '0']++;
+                if (t[i] == '0') {
+                    for (int j = 0; j <= cnt[1]; j++) {
+                        f[ccnt[0]][j] = max(0, ccnt[1] - j);
+                    }
+                }
+            }
+        }
+        {
+            int ccnt[2] = {0, 0};
+            for (int i = 0; i < n; i++) {
+                ccnt[t[i] - '0']++;
+                if (t[i] == '1') {
+                    for (int j = 0; j <= cnt[0]; j++) {
+                        g[ccnt[1]][j] = max(0, ccnt[0] - j);
+                    }
+                }
+            }
+        }
+        for (int i = 0; i <= cnt[0]; i++) {
+            for (int j = 0; j <= cnt[1]; j++) {
+                dp[i][j] = INF;
+            }
+        }
+        dp[0][0] = 0;
+        for (int i = 0; i <= cnt[0]; i++) {
+            for (int j = 0; j <= cnt[1]; j++) {
+                int val = dp[i][j];
+                if (val == INF) {
+                    continue;
+                }
+                if (i + j == n) {
+                    continue;
+                }
+                eprintf("%d %d %d\n", i, j, val);
+                char c = s[i + j];
+                if (i + 1 <= cnt[0]) {
+                    dp[i + 1][j] = min(dp[i + 1][j], val + tt * f[i + 1][j] + cost[c]['0']);
+                }
+                if (j + 1 <= cnt[1]) {
+                    dp[i][j + 1] = min(dp[i][j + 1], val + tt * g[j + 1][i] + cost[c]['1']);
+                }
+            }
+        }
+        printf("%d\n", dp[cnt[0]][cnt[1]]);
+    }
+    return 0;
+}

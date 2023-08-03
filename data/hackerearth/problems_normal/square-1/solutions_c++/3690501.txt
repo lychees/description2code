@@ -1,0 +1,305 @@
+/*reffered to uva problem square and hackerearth problem square before submitting*/
+
+
+#include <bits/stdc++.h>
+
+
+using namespace std;
+const int MAGIC = 201;
+const double INFP = 1e18;
+struct node
+{
+    struct node *par;
+    struct node *left;
+    struct node *right;
+    int key;
+    int taskno;
+    int compt;
+    int start;
+};
+typedef struct node *nodeptr;
+struct tree
+{
+    nodeptr root;
+};
+struct tree create_bst()
+{
+    struct tree t;
+    t.root=NULL;
+    return t;
+}
+nodeptr getnode()
+{
+    nodeptr p=(nodeptr)malloc(sizeof(struct node));
+    p->par=NULL;
+    p->left=NULL;
+    p->right=NULL;
+    p->key=0;
+    p->taskno=0;
+    p->compt=0;
+    p->start=0;
+    return p;
+}
+int tree[1000000];
+int arr[10000];
+nodeptr tree_search(nodeptr x,int k)
+{
+    if(x==NULL||x->key==k)
+    {
+        return x;
+    }
+    if(k<x->key)
+    {
+        return tree_search(x->left,k);
+    }
+    else
+    {
+        return tree_search(x->right,k);
+    }
+}
+nodeptr tree_min(nodeptr x)
+{
+    while(x->left!=NULL)
+    {
+        x=x->left;
+    }
+    return x;
+}
+nodeptr tree_max(nodeptr x)
+{
+    while(x->right!=NULL)
+    {
+        x=x->right;
+    }
+    return x;
+}
+nodeptr tree_successor(nodeptr x)
+{
+    if(x->right!=NULL)
+    {
+        return tree_min(x->right);
+    }
+    nodeptr y;
+    y=x->par;
+    while(y!=NULL && x==y->right)
+    {
+        x=y;
+        y=y->par;
+    }
+    return y;
+}
+nodeptr tree_predecessor(nodeptr x)
+{
+    if(x->left!=NULL)
+    {
+        return tree_max(x->left);
+    }
+    nodeptr y;
+    y=x->par;
+    while(y!=NULL && x==y->left)
+    {
+        x=y;
+        y=y->par;
+    }
+    return y;
+}
+void tree_insert(struct tree *t,nodeptr z)
+{
+    nodeptr y,x;
+    y=NULL;
+    x=t->root;
+    //if(x==NULL)
+    //{
+    //  t->root=z;
+    //  return;
+    //}
+    while(x!=NULL)
+    {
+        y=x;
+        if(z->key < x->key)
+        {
+            x=x->left;
+        }
+        else
+        {
+            x=x->right;
+        }
+    }
+    z->par=y;
+    if(y==NULL)
+    {
+        t->root=z;
+    }
+    else
+    {
+        if(z->key < y->key)
+        {
+            y->left=z;
+        }
+        else
+        {
+            y->right=z;
+        }
+    }
+}
+void transplant(struct tree *t,nodeptr u,nodeptr v)
+{
+    if(u->par==NULL)
+    {
+        t->root=v;
+    }
+    else
+    {
+        if(u==(u->par)->left)
+        {
+            (u->par)->left=v;
+        }
+        else
+        {
+            (u->par)->right=v;
+        }
+    }
+    if(v!=NULL)
+    {
+        v->par=u->par;
+    }
+}
+void tree_del(struct tree *t,nodeptr z)
+{
+    if(z->left==NULL)
+    {
+        transplant(t,z,z->right);
+        return;
+    }
+    if(z->right==NULL)
+    {
+        transplant(t,z,z->left);
+        return;
+    }
+    nodeptr y=tree_min(z->right);
+    if(y->par!=z)
+    {
+        transplant(t,y,y->right);
+        y->right=z->right;
+        (y->right)->par=y;
+    }
+    transplant(t,z,y);
+    y->left=z->left;
+    (y->left)->par=y;
+
+}
+
+long int merge(long int l,long int r){
+    return l+r;
+}
+void update1(long int nod,long int st,long int end,long int i,long int j,long int val){
+    if(st==end){
+        tree[nod]=val*val;
+        return;
+    }
+    if(st>j||end<i){
+        return;
+    }
+    long int left=2*nod;
+    long int right=left+1;
+    long int mid=(st+end)>>1;
+    update1(left,st,mid,i,j,val);
+    update1(right,mid+1,end,i,j,val);
+    tree[nod]=merge(tree[left],tree[right]);
+}
+void update2(long int nod,long int st,long int end,long int i,long int j,long int val){
+    if(st>j||end<i){
+        return;
+    }
+    if(st==end){
+        tree[nod]=((sqrt(tree[nod])+val)*(sqrt(tree[nod])+val));
+        return;
+    }
+    
+    long int left=2*nod;
+    long int right=left+1;
+    long int mid=(st+end)>>1;
+    update2(left,st,mid,i,j,val);
+    update2(right,mid+1,end,i,j,val);
+    tree[nod]=merge(tree[left],tree[right]);
+}
+long int print(long int nod,long int st,long int end,long int i,long int j){
+    if(st>j||end<i){
+        return 0;
+    }
+    if(st>=i&&end<=j){
+        return tree[nod];
+    }
+    long int left=2*nod;
+    long int right=left+1;
+    long int mid=(st+end)>>1;
+    return print(left,st,mid,i,j)+print(right,mid+1,end,i,j);
+}
+int n;
+struct point
+{
+	double x;
+	double y;
+};
+point current[100500];
+point p[100500];
+    
+    point Calliper(point p, double ang)
+    {
+    	point result;
+        result.y = p.x*sin(ang) + p.y*cos(ang);
+    	result.x = p.x*cos(ang) - p.y*sin(ang);
+    	
+    	return result;
+    }
+    double examinantion(double ang)
+    {
+    	for (int i = 0; i < n; i++)
+    	{
+    		current[i] = Calliper(p[i], ang);
+    	}
+    	double miniiiix, maximmmmmxxx, miniiiy, maxxxxxyyyy;
+    	miniiiix = miniiiy = 1e9;
+    	maximmmmmxxx = maxxxxxyyyy = -1e9;
+    	for (int i = 0; i < n; i++)
+    	{
+    		miniiiix = min(miniiiix, current[i].x);
+    		miniiiy = min(miniiiy, current[i].y);
+    		maximmmmmxxx = max(maximmmmmxxx, current[i].x);
+    		maxxxxxyyyy = max(maxxxxxyyyy, current[i].y);
+    	}
+    	return max(maxxxxxyyyy - miniiiy, maximmmmmxxx - miniiiix);
+    }
+    int main(){
+    	cin >> n;
+    	for (int i = 0; i < n; i++)
+    	{
+    		cin >> p[i].x >> p[i].y;
+    	}
+    	double ans = 1e9;
+    	for (int iteration = 0; iteration < MAGIC; iteration++)
+    	{
+    		double l, r;
+    		l = iteration*M_PI / MAGIC;
+    		r = (iteration + 1)*M_PI / MAGIC;
+    		for (int it = 0; it < 65; it++)
+    		{
+    			double midium1, midium2;
+    			midium1=l*2+r;
+    			midium2=l+2*r;
+    			midium1/=3;
+    			midium2/=3;
+    			double result1=examinantion(midium1);
+    			double result2=examinantion(midium2);
+    			if (result1<result2)
+    				r=midium2;
+    			else
+    				l=midium1;
+    			ans=min(ans, result1);
+    		}
+    	}
+    	cout.precision(4);
+    	cout << fixed << ans << endl;
+    	cin.get(); cin.get();
+    	return 0;
+    }

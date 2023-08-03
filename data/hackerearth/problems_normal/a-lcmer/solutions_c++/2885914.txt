@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define fru(j,n) for(int j=0; j<(n); ++j)
+//#define tr(it,v) for(typeof((v).begin()) it=(v).begin(); it!=(v).end(); ++it)
+#define tr(it,v) for(auto it=(v).begin(); it!=(v).end(); ++it)
+#define x first
+#define y second
+#define pb push_back
+#define ALL(G) (G).begin(),(G).end()
+
+#if 0
+	#define DEB printf
+#else
+	#define DEB(...)
+#endif
+
+typedef long long ll;
+typedef long long LL;
+typedef double D;
+typedef pair<int,int> pii;
+typedef vector<int> vi;
+
+const int inft = 1000000009;
+const int mod = 1000000007;
+const int MAXN = 1000006;
+
+vi X;
+int sil[MAXN];
+int odwrsil[MAXN];
+
+int qp(int a,int b){
+	int ret=1;
+	while(b){
+		if(b%2)ret=1LL*a*ret%mod;
+		a=1LL*a*a%mod;
+		b/=2;
+	}
+	return ret;
+}
+int count(int B, int k) {
+	return B/k;
+}
+int count(int L,int R,int k){
+	return count(R,k) - count(L-1,k);
+}
+int get(int n,int k){
+	DEB("dwu %d %d\n",n,k);
+	int ret=1;
+	for(int w=n+k;w>n;w--)ret=1LL*ret*w%mod;
+	ret=1LL*ret*odwrsil[k]%mod;
+	DEB("= %d\n",ret);
+	return ret;
+}
+ll C[MAXN];
+void solve() {
+	int n,L,R,x;
+	scanf("%d%d%d%d",&n,&L,&R,&x);
+	if(x==1){
+		printf("%d\n",get(R-L,n));
+		return ;
+	}
+	X.clear();
+	for(int i=2;i*i<=x;i++)if(x%i==0){
+		int u=1;
+		while(x%i==0){u*=i;x/=i;}
+		X.pb(u);
+	}
+	if(x>1)X.pb(x);
+	ll ret=0;
+	tr(it,X)DEB("%d ",*it);DEB("\n");
+	fru(mask,1<<X.size())if(mask){
+		C[mask]=0;//?
+		fru(j,mask+1)if(j &&(j&mask)==j){
+			int mn=1;
+			if(__builtin_popcount(j)%2==0)mn=-1;
+			int w=1;
+			fru(h,X.size())if(j&(1<<h))w*=X[h];
+			DEB("try %d\n",w);
+			C[mask]+=mn*count(L,R,w);
+		}
+		DEB("C[%d]=%d\n",mask,C[mask]);
+	}
+	fru(mask,1<<X.size())if(mask){
+		int mn=1;
+		if(__builtin_popcount(mask)%2==0)mn=-1;
+		ll ans=get(R-L,n)-get(R-L-C[mask],n);
+		if(ans<0)ans+=mod;
+		ret+=mn*ans;
+		if(ret<0)ret+=mod;
+		if(ret>=mod)ret-=mod;
+	}
+	printf("%d\n",ret);
+}
+
+int main() {
+	sil[0]=1;
+	fru(i,MAXN)if(i)sil[i]=1LL*sil[i-1]*i%mod;
+	odwrsil[MAXN-1]=qp(sil[MAXN-1],mod-2);
+	for(int i=MAXN-2;i>=0;i--)odwrsil[i]=1LL*odwrsil[i+1]*(i+1)%mod;
+	int te = 1;
+	scanf("%d",&te);
+	fru(ti,te) solve();
+	return 0;
+}

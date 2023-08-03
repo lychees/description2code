@@ -1,0 +1,178 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <list>
+#include <stack>
+
+#define MODULUS_NUM 1000000007
+
+void setCitiesCount(int count);
+
+bool* isExploredCity;
+std::list<int>* connectedCities;
+long long* totalTreesCountWithParent;
+int citiesCount;
+
+long long getTotalNonEmptyTreesCount(int parentCity);
+long long getTotalTreesCountWithParent(int parentCity);
+void convertIntoTree(int parentCity);
+void addRoad(int city1, int city2);
+void removeDataElements();
+long long resultCheckMethodCountTrees(int parentCity);
+
+int main(int argc, char* argv[]){
+
+	int N;
+	scanf("%d",&N);
+	setCitiesCount(N);
+	for(int i=0;i<N-1;i++){
+		int city1, city2;
+		scanf("%d %d",&city1,&city2);
+		addRoad(city1,city2);
+	}
+	int parent=0;
+	convertIntoTree(parent);
+	std::cout << (getTotalNonEmptyTreesCount(parent) + 1)%MODULUS_NUM << std::endl;
+	//resultCheckMethodCountTrees(parent);
+
+	return 0;
+}
+
+void removeDataElements(){
+	delete isExploredCity;
+	delete totalTreesCountWithParent;
+	delete [] connectedCities;
+}
+
+void setCitiesCount(int count){
+	citiesCount=count;
+	isExploredCity= new bool[count];	
+	totalTreesCountWithParent= new long long[count];
+	for(int i=0; i<count; i++){
+		isExploredCity[i]=false;
+		totalTreesCountWithParent[i]=0;
+	}
+	connectedCities = new std::list<int>[count];
+}
+
+void addRoad(int city1, int city2){
+	connectedCities[city1].push_back(city2);
+	connectedCities[city2].push_back(city1);
+}
+
+void convertIntoTree(int parentCity){
+	isExploredCity[parentCity]=true;
+	for (std::list<int>::iterator it = connectedCities[parentCity].begin() ; it != connectedCities[parentCity].end(); ++it){
+			int subTreeParent=*it;
+			if(isExploredCity[subTreeParent]){
+				connectedCities[parentCity].erase(it);
+				it--;
+			} else 
+				convertIntoTree(subTreeParent);
+			
+	}
+}
+
+long long getTotalNonEmptyTreesCount(int parentCity){
+	long long count=0;
+	//std::cout << "Requesting for with parent count @ " << parentCity << std::endl; //Debugging
+	count= (count+getTotalTreesCountWithParent(parentCity))%MODULUS_NUM;
+
+	for (std::list<int>::iterator it = connectedCities[parentCity].begin() ; it != connectedCities[parentCity].end(); ++it){
+			int subTreeParent=*it;
+			//std::cout << "Requesting for total count @" << subTreeParent << std::endl; //Debugging
+			count=(count+getTotalNonEmptyTreesCount(subTreeParent))%MODULUS_NUM;
+	}
+
+
+	//std::cout << "final total count @" << parentCity << " = " << count << std::endl ;
+	return count;
+}
+
+long long getTotalTreesCountWithParent(int parentCity){
+	if(totalTreesCountWithParent[parentCity]!=0)
+		return totalTreesCountWithParent[parentCity];
+	long long count=1;
+	for (std::list<int>::iterator it = connectedCities[parentCity].begin() ; it != connectedCities[parentCity].end(); ++it){
+			int subTreeParent=*it;
+			//std::cout << "Requesting with parent count @ " << subTreeParent << std::endl; //Debugging
+			count=(count*(getTotalTreesCountWithParent(subTreeParent)+1))%MODULUS_NUM;
+	}
+	totalTreesCountWithParent[parentCity] =count;
+	//std::cout << "final with parent count @" << parentCity << " = " << count << std::endl;
+	return totalTreesCountWithParent[parentCity];
+}
+
+
+long long resultCheckMethodCountTrees(int parentCity){
+	long long totalPossibilities=1<<citiesCount;
+
+	long long treeCount=0;
+	for(int i=0;i<totalPossibilities;i++){
+
+		int unionFind[citiesCount];
+		for(int j=0;j<citiesCount;j++){
+			if(i& (1<<j)) {
+				unionFind[j]=j;
+				//printf("%3d ",j);
+			}else
+				unionFind[j]=-1;
+		}
+
+		for(int j=0;j<citiesCount;j++){
+			if( i& (1<<j) ){
+				for (std::list<int>::iterator it = connectedCities[j].begin() ; it != connectedCities[j].end(); ++it){
+					int curCity=*it;
+					if(i& (1<<curCity)){
+						int parent1=unionFind[j];
+						while(parent1!=unionFind[parent1])
+							parent1=unionFind[parent1];
+
+						int parent2=unionFind[curCity];
+						while(parent2!=unionFind[parent2])
+							parent2=unionFind[parent2];
+						unionFind[parent2]=parent1;
+						unionFind[curCity]=parent1;
+					}
+				}
+			}
+		}
+
+		for(int j=0;j<citiesCount;j++){
+			if( i& (1<<j) ){
+				int parent1=unionFind[j];
+				while(parent1!=unionFind[parent1])
+					parent1=unionFind[parent1];
+				unionFind[j]=parent1;
+			}
+		}
+
+		int uniqueGroup=-1;
+		bool hasUniqueGroup=true;
+		//std::cout << "\t[";
+		for(int j=0;j<citiesCount;j++){
+			//if( i& (1<<j))
+			//	std::cout << " " << unionFind[j] ;
+			if( i& (1<<j) && unionFind[j]!=uniqueGroup){
+				if(uniqueGroup==-1)
+					uniqueGroup=unionFind[j];
+				else {
+					hasUniqueGroup=false;
+					break;
+				}
+			}
+		}
+		//std::cout << "]\t";
+		if(hasUniqueGroup){
+			treeCount++;
+			//std::cout << "yes";
+		} else{
+			//std::cout << "no";
+		}
+		//std::cout << std::endl;
+	}
+	std::cout<< "total tree count=" << treeCount << std::endl;
+	return treeCount;
+}
+

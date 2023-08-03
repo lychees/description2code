@@ -1,0 +1,88 @@
+#include <iostream>
+#include <algorithm>
+#include <queue>
+#include <string.h>
+#include <limits.h>
+
+using namespace std;
+
+typedef unsigned int dtype;
+#define DTYPE_MAX UINT_MAX
+
+
+int main() {
+
+	int N, M, **hti;
+	dtype *val, *thr, *ht;
+
+	cin>>N;
+	val = new dtype[N];
+	for(int n=0; n<N; n++) {
+		cin>>val[n];
+	}
+
+	cin>>M;
+	thr = new dtype[M];
+	for(int m=0; m<M; m++){
+		cin>>thr[m];
+	}
+
+	hti = new int*[M+1];
+	for(int m=0; m<=M; m++)
+		hti[m] = new int[m+1];
+	ht = new dtype[M+1];
+
+	dtype *zero_index = min_element(thr, thr+M);
+	ht[0] = *zero_index;
+	ht[1] = ht[0] + 1;
+	hti[1][1] = zero_index- thr;
+
+	int *minima_indices = new int[M];
+	dtype *minima_values = new dtype[M];
+
+	for(int m=2; m<=M; m++) {
+
+		fill_n(minima_values, m, DTYPE_MAX);
+		
+		for(int l=0; l<m; l++) {
+			int lower=0, upper = M;
+			if(l==0)
+				lower = 0, upper =  hti[m-1][l+1];
+			else if (l==m-1)
+				lower =  hti[m-1][l]+1, upper = M;
+			else
+				lower = hti[m-1][l]+1, upper= hti[m-1][l+1];
+
+			if(lower != upper){
+				dtype *index = min_element(thr+lower, thr+upper);
+				minima_indices[l] = index-thr;
+				minima_values[l] = *index + l+1;
+			} else
+				minima_values[l] = DTYPE_MAX;
+		}
+
+		dtype *local_index = min_element(minima_values, minima_values+m);
+		int target_index = minima_indices[local_index-minima_values];
+
+		ht[m] = *local_index;
+		int i;
+		for(i=1; i<m; i++) {
+			if(hti[m-1][i] < target_index)
+				hti[m][i] = hti[m-1][i];
+			else
+				break;
+		}
+		hti[m][i++] = target_index;
+		for(; i<=m; i++)
+			hti[m][i] = hti[m-1][i-1];
+
+	}
+
+	for(int n=0; n<N; n++){
+		dtype *down = upper_bound(ht+1, ht+M+1, val[n]);
+		int decr = down-ht-1;
+		cout<<val[n]-decr<<" ";
+	}
+
+	return 0;
+}

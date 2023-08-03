@@ -1,0 +1,237 @@
+#include <cstdio>
+#include <algorithm>
+#include<iostream>
+#include<vector>
+#include<climits>
+#include <complex>
+#include <iostream>
+#include <valarray>
+#include<cstring>
+#include<queue>
+#include<bitset>
+#include<map>
+#include<set>
+#include<sstream>
+#include<ctime>
+#include <stack>
+#include <iomanip>
+#include <cassert>
+#include<cmath>
+#include <map>
+#include <stack>
+#include <string>
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+
+using namespace std;
+
+
+#define PB push_back
+#define i64 long long
+#define FOR(i,a,b) for(i=(a);i<(b);++i)
+#define FORE(i,a,b) for(i=(a);i<=(b);++i)
+#define REP(i,n) FOR(i,0,n)
+#define REPE(i,n) FORE(i,0,n)
+#define SZ(v) ((v).size())
+#define LD long double
+#define VI vector<int>
+#define VS veszor<string>
+#define VD veszor<double>
+#define VLD veszor<LD>
+#define MSET(x,y) memset((x),(y),sizeof(x))
+#define SZOF(x) sizeof((x))
+#define VVI vector< VI >
+#define PII pair< int,int >
+#define VPII vector< PII >
+#define MP make_pair
+#define PIPII pair<int, PII >
+#define PIPIPII pair< int, PIPII >
+#define u64 unsigned i64
+#define Vi64 vector<i64>
+#define Vu64 vector<u64>
+#define P66 pair<i64,i64>
+#define P6P66 pair<i64,P66 >
+
+
+
+#define DFF first
+#define DSF second.first
+#define DSS second.second
+#define INF 999999999999LL
+#define MAXN 222222
+#define MULL 4
+
+i64 minn[MAXN<<MULL],maxx[MAXN<<MULL],arr[MAXN];
+i64 n,m;
+
+
+i64 MAXXX(i64 a,i64 b)
+{
+    if(a<b)
+    {
+        return b;
+    }
+    return a;
+}
+
+i64 MINNN(i64 a,i64 b)
+{
+    if(a<b)
+    {
+        return a;
+    }
+    return b;
+}
+
+
+void buildd(i64 node,i64 nl,i64 nr)
+{
+    if(nl==nr)
+    {
+        maxx[node]=minn[node]=arr[nl];
+        return;
+    }
+
+    i64 lc=2LL*node +1LL;
+    i64 rc=lc+1;
+    i64 midd=(nl+nr)/2LL;
+
+    buildd(lc,nl,midd);
+    buildd(rc,midd+1LL,nr);
+    minn[node]=MINNN(minn[lc],minn[rc]);
+    maxx[node]=MAXXX(maxx[lc],maxx[rc]);
+}
+
+void updatee(i64 node,i64 nl,i64 nr,i64 pos,i64 v)
+{
+    if(nl>pos || nr<pos)
+    {
+        return;
+    }
+
+    if(nl==nr)
+    {
+        maxx[node]=minn[node]=v;
+        return;
+    }
+
+    i64 lc=2LL*node +1LL;
+    i64 rc=lc+1;
+    i64 midd=(nl+nr)/2LL;
+
+    updatee(lc,nl,midd,pos,v);
+    updatee(rc,midd+1LL,nr,pos,v);
+    minn[node]=MINNN(minn[lc],minn[rc]);
+    maxx[node]=MAXXX(maxx[lc],maxx[rc]);
+}
+
+
+P6P66 query(i64 node,i64 nl,i64 nr,i64 l,i64 r,i64 mn,i64 mx)
+{
+    P6P66 ret;
+    ret.DFF=-1LL;
+    ret.DSF=INF;
+    ret.DSS=-INF;
+    if(l>nr || r<nl)
+    {
+        return ret;
+    }
+    if(nl==nr)
+    {
+        if(minn[node]>=mn && maxx[node]<=mx)
+        {
+            ret.DFF=nr;
+            ret.DSF=minn[node];
+            ret.DSS=maxx[node];
+        }
+
+        return ret;
+    }
+
+
+    if(nl>=l && nr<=r)
+    {
+        if(minn[node]>=mn && maxx[node]<=mx)
+        {
+            ret.DFF=nr;
+            ret.DSF=minn[node];
+            ret.DSS=maxx[node];
+            return ret;
+        }
+    }
+
+
+    i64 lc=2LL*node +1LL;
+    i64 rc=lc+1;
+    i64 midd=(nl+nr)/2LL;
+
+    P6P66 fl=ret;
+    if(midd>=l)
+    {
+        fl=query(lc,nl,midd,l,r,mn,mx);
+    }
+    if(fl.DFF==midd || midd<l)
+    {
+        P6P66 fr=query(rc,midd+1LL,nr,l,r,mn,mx);
+        fl.DFF=MAXXX(fl.DFF,fr.DFF);
+        fl.DSF=MINNN(fl.DSF,fr.DSF);
+        fl.DSS=MAXXX(fl.DSS,fr.DSS);
+    }
+    ret=fl;
+    return ret;
+}
+
+void MAIN()
+{
+    P6P66 ans;
+    char buff[22];
+    //scanf("%lld %lld",&n,&m);
+    cin>>n>>m;
+    i64 i,x,y,c;
+    //printf("%d\t%d\n",n,m);
+
+    for(i=0;i<n;++i)
+    {
+        //scanf("%lld",arr+i);
+        cin>>arr[i];
+    }
+
+    buildd(0,0,n-1);
+    while(m--)
+    {
+        //scanf("%s %lld %lld",buff,&x,&y);
+        cin>>buff>>x>>y;
+        //printf("%s\t%d\t%d\n",buff,x,y);
+        if(buff[0]=='U')
+        {
+            arr[x-1]=y;
+            updatee(0,0,n-1,x-1,y);
+        }
+        else
+        {
+            if(y<0LL)
+            {
+                printf("%d %d\n",-1,-1);
+            }
+            else
+            {
+                ans=query(0,0,n-1,x-1,n-1,arr[x-1]-y,arr[x-1]+y);
+                //printf("SSS\t%lld\t%lld\t%lld\n",ans.DSF,ans.DSS,arr[x-1]);
+                printf("%lld %lld\n",ans.DFF-x+2LL,MAXXX(arr[x-1]-ans.DSF,ans.DSS-arr[x-1]));
+            }
+        }
+    }
+}
+
+int main()
+{
+    //printf("DD\n");
+	//freopen("Text/Update And Query.txt","r",stdin);
+
+
+    MAIN();
+
+	return 0;
+}
+

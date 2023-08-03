@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int N;
+int A[1000];
+int cnt[1001];
+
+int in(int x, int a, int b)
+{
+    if(a>b)
+        swap(a, b);
+    return a<=x && x<=b;
+}
+
+int main()
+{
+    scanf("%d", &N);
+    for(int i=0; i<N; i++)
+        scanf("%d", A+i);
+    int ans=min(N, 2);
+    for(int i=0; i<N; i++)
+    {
+        memset(cnt, 0, sizeof cnt);
+        multiset<pair<int, int>> freq;
+        for(int j=0; j<=1000; j++)
+            freq.insert({0, j});
+        for(int j=i+1; j<N; j++)
+        {
+            auto it=--freq.end();
+            auto pit=it; --pit;
+            if(it->first==pit->first)
+            {
+                pit=freq.lower_bound({pit->first, -1});
+                ans=max(ans, it->first+pit->first+in(A[i], it->second, pit->second)+in(A[j], it->second, pit->second));
+            }
+            else
+            {
+                ans=max(ans, it->first+pit->first+in(A[i], it->second, pit->second)+in(A[j], it->second, pit->second));
+                pit=freq.lower_bound({pit->first, -1});
+                ans=max(ans, it->first+pit->first+in(A[i], it->second, pit->second)+in(A[j], it->second, pit->second));
+            }
+            freq.erase(freq.find({cnt[A[j]], A[j]}));
+            cnt[A[j]]++;
+            freq.insert({cnt[A[j]], A[j]});
+        }
+    }
+    printf("%d\n", ans);
+    return 0;
+}

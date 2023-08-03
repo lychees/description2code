@@ -1,0 +1,92 @@
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<string>
+#include<cstring>
+using namespace std;
+
+typedef long long LL;
+typedef vector<int> VI;
+
+#define REP(i,n) for(int i=0; i<int(n); i++)
+#define EACH(i,c) for(__typeof((c).begin()) i=(c).begin();i!=(c).end();i++)
+
+template<class T> inline T &amin(T &a, T b) { if (a>b) a=b; return a; }
+template<class T> inline T &amax(T &a, T b) { if (a<b) a=b; return a; }
+
+template<class T>
+struct Fenwick : vector<T> {
+    typedef vector<T> S;
+    int n;
+    Fenwick() : S() {}
+    Fenwick(int _n) : S(_n), n(_n) {}
+    void add(int i, T x) {
+	for (; i<n; i|=i+1) S::operator[](i) += x;
+    }
+    T sum(int l, int r) {
+	if (l==0) {
+	    T s = 0;
+	    for (; r; r&=r-1) s += S::operator[](r-1);
+	    return s;
+	} else {
+	    return sum(0, r) - sum(0, l);
+	}
+    }
+};
+
+int N, Q;
+string S;
+int A[5][100011], I[5];
+Fenwick<LL> F[5][5]; 
+
+
+int main() {
+    cin >> N;
+
+    REP (i, 5) {
+	I[i] = i;
+	REP (j, N) {
+	    scanf("%d", A[i]+j);
+	}
+    }
+    REP (i, 5) REP (j, 5) F[i][j] = Fenwick<LL>(N);
+
+    cin >> S;
+    REP (i, S.size()) {
+	REP (j, 5) F[j][S[i]-'A'].add(i, A[j][i]);
+    }
+
+    scanf("%d", &Q);
+    for (;Q--;) {
+	char op[8];
+	scanf("%s", op);
+
+	if (op[1] == 'e') {
+	    char X[8], Y[8];
+	    scanf("%s%s", X, Y);
+	    swap(I[X[0]-'A'], I[Y[0]-'A']);
+
+	} else if (op[1] == 'c') {
+	    int x; char Y[8];
+	    scanf("%d%s", &x, Y);
+	    x--;
+	    REP (i, 5) 
+		F[i][S[x]-'A'].add(x, -A[i][x]);
+
+	    S[x] = Y[0];
+	    REP (i, 5) 
+		F[i][S[x]-'A'].add(x, A[i][x]);
+
+	} else if (op[1] == 's') {
+	    int x, y;
+	    scanf("%d%d", &x, &y);
+	    x--;
+	    LL sum = 0;
+	    REP (i, 5) sum += F[I[i]][i].sum(x, y);
+	    printf("%lld\n", sum);
+	}
+    }
+
+    return 0;
+}

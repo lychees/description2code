@@ -1,0 +1,119 @@
+#include "bits/stdc++.h"
+
+using namespace std;
+
+const int MAXN = 200007;
+int LY;
+int64_t pot[2*MAXN];
+const int PRI = 17;
+const int POD = 61;
+const int64_t MOD = (1LL<<POD)-1;
+
+inline int64_t add_mod(int64_t a, int64_t b){ a += b; if(a>MOD) a -= MOD; return a; }
+inline int64_t sub_mod(int64_t a, int64_t b){ a -= b; if(a<0) a += MOD; return a; }
+inline int64_t mul_mod(int64_t a, int64_t b){
+  __int128_t x = ((__int128_t)a * b);
+  return add_mod(x&MOD, x>>POD);
+}
+
+unordered_set <int> C;
+
+void preprocessing(int n)
+{
+  //cerr << MOD << "\n";
+  pot[0] = 1;
+  for(int i=1; i<=n; i++)
+    pot[i] = mul_mod(pot[i-1], PRI);
+}
+
+unordered_multiset <int64_t> M[MAXN];
+
+bool check(string &x)
+{
+  for(auto v : C)
+  {
+    //cerr << "V" << v << "\n";
+    if(v > (int)x.size())
+      continue;
+    if(M[v].empty())
+      continue;
+    if(true)
+    {
+      //cerr << "HERE\n";
+      __int128_t hasz = 0;
+      for(int i=0; i<v; i++)
+      {
+        hasz = add_mod(mul_mod(hasz,PRI),x[i]);
+        //cerr << (long long)hasz << "\n";
+      }
+      for(int i=v; i<(int)x.size(); i++)
+      {
+        if((M[v]).find(hasz) != M[v].end())
+          return true;
+        hasz = sub_mod(hasz, mul_mod(x[i-v], pot[v-1]));
+        hasz = add_mod(mul_mod(hasz, PRI), x[i]);
+        //cerr << (long long)hasz << "\n";
+
+        //cerr << "H" << hasz1 << " " << hasz2 << "\n";
+      }
+      if((M[v]).find(hasz) != M[v].end())
+        return true;
+    }
+  }
+  return false;
+}
+
+int main()
+{
+  ios_base::sync_with_stdio(0);
+  cin.tie(0); cout.tie(0);
+  preprocessing(200000);
+  int n, q;
+  cin >> n >> q;
+  vector <__int128> H(n);
+  vector <int> SS(n);
+  for(int i=0; i<n; i++)
+  {
+    string S;
+    cin >> S;
+    SS[i] = (int)S.size();
+    __int128 hasz = 0;
+    for(int j=0; j<SS[i]; j++)
+      hasz = add_mod(mul_mod(hasz,PRI),S[j]);
+    H[i] = hasz;
+    C.insert(SS[i]);
+    M[SS[i]].insert(H[i]);
+  }
+  for(int i=0; i<q; i++)
+  {
+    int a;
+    cin >> a;
+    if(a == 1)
+    {
+      string x;
+      cin >> x;
+      for(int j=0; j<(int)x.size(); j++)
+        x[j] = (x[j]-'a'+LY)%26 + 'a';
+      if(check(x))
+      {
+        puts("YES");
+        LY = i;
+      }
+      else
+        puts("NO");
+    }
+    if(a == 2)
+    {
+      int c, d;
+      cin >> c >> d;
+      c = (c + LY) % n;
+      d = (d + LY) % 26;
+      M[SS[c]].erase(H[c]);
+      if(M[SS[c]].empty())
+        C.erase(SS[c]);
+      C.insert(++SS[c]);
+      H[c] = add_mod(mul_mod(H[c],PRI),d+'a');
+      M[SS[c]].insert(H[c]);
+    }
+  }
+}

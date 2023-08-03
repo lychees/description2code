@@ -1,0 +1,224 @@
+#include <iostream>
+#include <vector>
+#include <map>
+#include <set>
+
+using namespace std;
+typedef long long LL;
+
+LL F[1000000];
+LL mod = 1000000007LL;
+
+void mul(LL A[2][2], LL B[2][2], LL C[2][2]) {
+  int i,j,k;
+  LL sum=0;
+  for (int k = 0; k < 2; ++k) {
+    for (int i = 0;i < 2; ++i) {
+      sum = 0;
+      for (int j = 0; j < 2; ++j) {
+        sum = (sum + A[k][j] * B[j][i]) % mod;
+        C[k][i] = sum;
+      }
+    }
+  }
+}
+LL saved, did_save = 0;
+
+int big = 0;
+LL fib(LL n) {
+  if (did_save) { did_save = 0; return saved; }
+  did_save = 0;
+  
+  LL fibo[2][2]={{1,1},{1,0}};
+  LL previous[2][2]={{1,1},{1,0}};
+  LL temp[2][2]={{0,0},{0,0}};
+  if (n == 0) { did_save = 0; return 0; }
+  n--;n--;
+  int i, j;
+  if (n > 1000000000LL) big = 1;
+  else big = 0;
+  while (n) { 
+    if(n%2==1) {
+    mul(fibo,previous,temp);
+    for(i=0;i<2;i++)
+    for(j=0;j<2;j++) previous[i][j]=temp[i][j];
+    }
+    mul(fibo,fibo,temp);
+    for(i=0;i<2;i++)
+    for(j=0;j<2;j++) fibo[i][j]=temp[i][j];
+    n=n/2;
+    }
+    if (big) {
+    did_save = 1; saved = previous[1][0];
+    }
+    return previous[0][0];
+}
+
+//inline LL fib(LL n) {
+//  return F[n];
+//}
+
+inline void mul(vector<LL>& v, LL a) {
+  for (int i = 0; i < v.size(); ++i) v[i] = (v[i] * a) % mod;
+}
+
+vector<LL> resolve(LL i, LL j) {
+  if (i >= 2) {
+    vector<LL> L = resolve(0, j);
+    vector<LL> R = resolve(1, j);
+    mul(L, fib(i-1));
+    mul(R, fib(i));
+    for (int i = 0; i < L.size(); ++i) L[i] = (L[i] + R[i]) % mod; 
+    return L;
+  }
+  if (j >= 2) {
+    vector<LL> L = resolve(i, 0);
+    vector<LL> R = resolve(i, 1);
+    mul(L, fib(j-1));
+    mul(R, fib(j));
+    for (int i = 0; i < L.size(); ++i) L[i] = (L[i] + R[i]) % mod; 
+    return L;
+  }
+  vector<LL> singular(4);
+  singular[i * 2 + j] = 1;
+  return singular;
+}
+
+LL vars[4];
+void simplify(vector<LL>& v) {
+  for (int i = 0; i < 4; ++i) if (v[i] > 0 && vars[i] != -1) {
+    v[4] = (mod + v[4] - ((v[i] * vars[i]) % mod)) % mod;
+    v[i] = 0;
+  }
+}
+int all_zero(vector<LL>& v) {
+  for (int i = 0; i < 4; ++i) if (v[i]) return 0;
+  return 1;
+}
+
+vector<vector<LL> > eq;
+int bad = 0;
+
+LL inv(LL n, LL p = mod - 2) {
+  if (p == 0) return 1;
+  LL ret = inv(n, p / 2);
+  ret *= ret; ret %= mod;
+  if (p % 2) {
+    ret *= n;
+    ret %= mod;
+  }
+  return ret;
+}
+
+void resolve() {
+  restart:
+  if (bad) return;
+  int skipped = false;
+  vector<vector<LL> > neq;
+  for (int i = 0; i < eq.size(); ++i) {
+    simplify(eq[i]);
+    if (all_zero(eq[i])) {
+      bad |= (eq[i][4] != 0);
+      skipped = true;
+    } else {
+      neq.push_back(eq[i]);
+    }
+  }
+  swap(eq, neq);
+  //if (skipped) goto restart;
+  int found = 0;
+  for (int i = 0; i < eq.size(); ++i) {
+    int num = 0, last_k = 0;
+    for (int k = 0; k < 4; ++k) if (eq[i][k] > 0) {
+      ++num; 
+      last_k = k;
+    }
+    if (num == 1) {
+      LL sol = (eq[i][4] * inv(eq[i][last_k])) % mod;
+      if (vars[last_k] == -1) {
+        vars[last_k] = sol;
+        found = 1;
+//        cerr << "NEW INFO: " << last_k << " " << sol << '\n';
+      } else {
+        if (vars[last_k] != sol) bad = 1;
+      }
+    }
+  }
+  if (found) goto restart;
+  vector<vector<LL> > eq_by_mask[1<<4];
+  for (int i = 0; i < eq.size(); ++i) {
+  	int mask = 0;
+  	for (int k = 0; k < 4; ++k) mask |= (1 << k) * (eq[i][k] > 0);
+  	eq_by_mask[mask].push_back(eq[i]);
+  }
+  eq.resize(0);
+  for (int mask = 0; mask < 1 << 4; ++mask) {
+  	for (int i = 0; i < eq_by_mask[mask].size(); ++i)
+  	for (int j = i + 1; j < eq_by_mask[mask].size(); ++j) {
+  		vector<LL>& eq1 = eq_by_mask[mask][i];
+  		vector<LL>& eq2 = eq_by_mask[mask][j];
+  		
+  		int k = 0; while (eq1[k] == 0) ++k;
+  		LL m1 = eq1[k], m2 = eq2[k];
+  		mul(eq1, m2);
+      	mul(eq2, m1);
+      	vector<LL> nou = eq2;
+        for (int l = 0; l < 5; ++l) nou[l] = (eq2[l] - eq1[l] + mod) % mod;
+        if (all_zero(nou)) {
+        	bad |= (nou[4] != 0);
+        } else {
+        	eq.push_back(nou);
+        	found = 1;
+        	//break;
+        }
+  	}
+  	if (eq_by_mask[mask].size())
+  		eq.push_back(eq_by_mask[mask][0]);
+  }
+  if (found) goto restart;
+}
+int equiv(vector<LL>& a, vector<LL>& b) {
+	LL m1 = a[4], m2 = b[4];
+	mul(a, m2); mul(b, m1);
+	for (int i = 0; i < a.size(); ++i) if (a[i] != b[i]) return 0;
+	return 1;
+}
+
+int main() {
+  for (int i = 0; i < 4; ++i) vars[i] = -1;
+  //for (int i = 0; i <= 100; ++i) fib(i);
+  int q; scanf("%d", &q);
+  //cin >> q;
+  while (q--) {
+  	    if (bad) {
+      printf("0");
+      continue;
+    }
+    LL a, b, c;
+    scanf("%lld %lld %lld", &a, &b, &c);
+
+    auto x = resolve(a, b);
+    x.push_back(c);
+/*
+    for (int i = 0; i < x.size(); ++i) {
+      cout << x[i] << " ";
+    }
+*/
+    simplify(x);
+    if (all_zero(x)) {
+      bad |= x[4] != 0;
+    } else {
+    	int found = 0;
+    	//for (int i = 0; i < eq.size(); ++i) if (equiv(eq[i], x)) {found = 1; break; }
+    	if (!found) {
+      eq.push_back(x);
+for (int cnt = 1; cnt <= 1; ++cnt)
+      resolve();
+    	}
+    }
+    printf("%d", !bad);
+  }
+  printf("\n");
+  //cout << '\n';
+  return 0;
+}

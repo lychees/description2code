@@ -1,0 +1,82 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+using ull = unsigned long long;
+constexpr ull mod = 1000000007;
+
+ull powm(ull x, ull n) {
+	ull res = 1;
+	while (n) {
+		if (n % 2) 
+			res = (res * x) % mod;
+		x = (x * x) % mod;
+		n /= 2;
+	}
+	return res;
+}
+
+ull inversem(ull x) {
+	return powm(x, mod - 2);
+}
+
+ull factorial[1000003];
+ull invfactorial[1000003];
+
+void prepare() {
+	ull t = 1;
+	factorial[0] = 1;
+	for (ull i = 1; i < 1000003; ++i)
+		factorial[i] = (t = (t * i) % mod);
+	invfactorial[1000002] = (t = inversem(factorial[1000002]));
+	for (ull i = 1000002; i > 0; --i) 
+		invfactorial[i - 1] = (t = (t * i) % mod);
+}
+
+ull binomial(ull n, ull m) {
+	ull res = (invfactorial[m] * invfactorial[n - m]) % mod;
+	return (res * factorial[n]) % mod;
+}
+
+int main() {
+	ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    prepare();
+    int T;
+    cin >> T;
+    while (T--) {
+    	string s;
+    	cin >> s;
+    	//cout << '=' << s << '\n';
+    	unsigned consonants = 0;
+    	unsigned vowels = 0;
+    	unsigned lett['z' - 'a' + 1] = {};
+    			
+    	for (auto c: s) {
+    		if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u')
+    			++vowels;
+    		else
+    			++consonants;
+    		++lett[c - 'a'];
+    	}
+    	
+		
+		//cout << '=' << s << ' ' << vowels << ' ' << consonants << '\n';
+
+		if (vowels > consonants + 1)
+			cout << "-1\n";
+		else {
+			ull res = (factorial[consonants + 1] * factorial[consonants]) % mod;
+			res = (res * invfactorial[consonants - vowels + 1]) % mod;
+			//cout << res << '\n';
+			for (char a = 'a'; a <= 'z'; ++a) {
+				res = (res * invfactorial[lett[a - 'a']]) % mod;
+				//cout << a << ' : ' << invfactorial[lett[a - 'a']] << '\n';
+			}
+				
+			cout << res << '\n';
+		}
+    }
+    return 0;
+}

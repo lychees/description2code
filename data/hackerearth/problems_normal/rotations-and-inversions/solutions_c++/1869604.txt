@@ -1,0 +1,162 @@
+#include <bits/stdc++.h>
+#define si(n) scanf("%d",&n);
+#define pi(n) printf("%d\n",n);
+#define pl(n) printf("%lld\n",n);
+#define sl(n) scanf("%lld",&n);
+#define pd(n) printf("%lf\n",n);
+#define ss(s) scanf("%s",s);
+#define ps(s) printf("%s\n",s);
+#define ll long long
+#define mod 1000000007
+#define pb(n) push_back(n)
+#define maxn 100005
+int arr[maxn];
+int freq[maxn];
+int temp[maxn];
+using namespace std;
+map <int,int> grt;
+map <int,int> lss;
+ll  _mergeSort(int arr[], int temp[], int left, int right);
+ll merge(int arr[], int temp[], int left, int mid, int right);
+ll mergeSort(int arr[], int array_size)
+{
+    int *temp = (int *)malloc(sizeof(int)*array_size);
+    return _mergeSort(arr, temp, 0, array_size - 1);
+}
+ll _mergeSort(int arr[], int temp[], int left, int right)
+{
+    int mid;
+    ll inv_count = 0;
+    if (right > left)
+    {
+        mid = (right + left)/2;
+        inv_count  = _mergeSort(arr, temp, left, mid);
+        inv_count += _mergeSort(arr, temp, mid+1, right);
+        inv_count += merge(arr, temp, left, mid+1, right);
+    }
+    return inv_count;
+}
+
+/* This funt merges two sorted arrays and returns inversion count in
+   the arrays.*/
+ll merge(int arr[], int temp[], int left, int mid, int right)
+{
+    int i, j, k;
+   ll inv_count = 0LL;
+
+    i = left;
+    j = mid;
+    k = left;
+    while ((i <= mid - 1) && (j <= right))
+    {
+        if (arr[i] <= arr[j])
+        {
+            temp[k++] = arr[i++];
+        }
+        else
+        {
+            temp[k++] = arr[j++];
+
+
+            inv_count = inv_count + (ll)(mid - i);
+        }
+    }
+
+
+    while (i <= mid - 1)
+        temp[k++] = arr[i++];
+
+    while (j <= right)
+        temp[k++] = arr[j++];
+    for (i=left; i <= right; i++)
+        arr[i] = temp[i];
+
+    return inv_count;
+}
+int main()
+{
+    //freopen ("a.txt","r",stdin);
+    int t;
+
+    si(t);
+
+    while(t--)
+    {
+        int n;
+        si(n);
+        for(int i=0; i<n; i++)
+        {
+            si(arr[i]);
+            freq[i]=arr[i];
+
+        }
+        sort(freq,freq+n);
+        int count=0;
+        grt[freq[n-1]]=0;
+        for(int i=n-2; i>=0; i--)
+        {
+            if(freq[i]<freq[i+1])
+            {
+                count++;
+                grt[freq[i]]=count;
+            }
+            else if(freq[i]==freq[i+1])
+                count++;
+
+        }
+        lss[freq[0]]=0;
+        count=0;
+        for(int i=1; i<n; i++)
+        {
+            if(freq[i]>freq[i-1])
+            {
+                count++;
+                lss[freq[i]]=count;
+            }
+            else if(freq[i]==freq[i-1])
+            {
+                count++;
+            }
+
+        }
+        for(int i=0; i<n; i++)
+        {
+            temp[i]=arr[i];
+        }
+
+        ll invcount=mergeSort(temp,n);
+        //pl(invcount);
+
+        ll highinv=invcount;
+        int pos=0;
+        int rot=0;
+        for(int i=0; i<n; i++)
+        {
+            invcount = invcount - (ll)lss[arr[i]] + (ll)grt[arr[i]];
+            if(highinv < invcount)
+            {
+                highinv=invcount;
+                pos=i+1;
+                rot=i+1;
+            }
+            else if(highinv == invcount)
+            {
+                for(int j=0; j<min(n,200); j++)
+                {
+                    if(arr[(i+1+j)%n] >arr[ (pos+j)%n ] )
+                    {
+                        break;
+                    }
+                    else if (arr[(i+1+j)%n] < arr[ (pos+j)%n ])
+                    {
+                        pos=i+1;
+                        rot=i+1;
+                        break;
+                    }
+                }
+            }
+        }
+    printf("%d %lld\n",rot,highinv);
+    }
+    return 0;
+}

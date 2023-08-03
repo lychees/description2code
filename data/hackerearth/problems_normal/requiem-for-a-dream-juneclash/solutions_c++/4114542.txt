@@ -1,0 +1,92 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int uli;
+const int mx=1e5+10;
+const int mxl=20;
+vector<int>g[mx];
+vector<uli>w[mx];
+int h[mx];
+uli up[mx];
+
+struct iv{
+	uli best,sum,pref,suf;
+	int pu;
+};
+iv merge(iv a ,iv b){
+	iv ans={
+		max(max(a.best,b.best),a.suf+b.pref),
+		a.sum+b.sum,
+		max(a.pref,a.sum+b.pref),
+		max(b.suf,b.sum+a.suf),
+		b.pu
+	};
+	return ans;
+}
+iv f[mxl][mx];
+
+void dfs(int u,int pu){
+	for(int i=0;i<int(g[u].size());i++){
+		int v=g[u][i];
+		if(v!=pu){
+			up[v]=w[u][i];
+			uli val=max(0ll,w[u][i]);
+			iv x={val,w[u][i],val,val,u};
+			f[0][v]=x;
+			h[v]=1+h[u];
+			dfs(v,u);
+		}
+	}
+}
+int main()
+{
+    int n,q,u,v;
+    uli wuv;
+    scanf("%d %d",&n,&q);
+    for(int i=0;i<n-1;i++){
+    	scanf("%d %d %lld",&u,&v,&wuv);
+    	g[--u].push_back(--v);
+    	g[v].push_back(u);
+    	w[u].push_back(wuv);
+    	w[v].push_back(wuv);
+    }
+    dfs(0,0);
+    f[0][0]={0,0,0,0,0};
+	for(int l=1;l<mxl;l++){
+		for(int i=0;i<n;i++){
+			f[l][i]=merge(f[l-1][i],f[l-1][f[l-1][i].pu]);
+		}
+	}    
+	while(q--){
+		scanf("%d %d",&u,&v);	
+		--u,--v;
+		if(h[u]>h[v])swap(u,v);
+		iv x={0,0,0,0,0},y={0,0,0,0,0};
+		for(int l=mxl-1;l>=0;l--){
+			if(h[f[l][v].pu]>=h[u]){
+				y=merge(y,f[l][v]);
+				v=f[l][v].pu;
+			}
+		}
+		if(u==v){
+			printf("%lld\n",y.best);
+			continue;
+		}
+		for(int l=mxl-1;l>=0;l--){
+			if(f[l][u].pu!=f[l][v].pu){
+				x=merge(x,f[l][u]);
+				y=merge(y,f[l][v]);
+				u=f[l][u].pu;
+				v=f[l][v].pu;
+			}
+		}
+		int lca=f[0][u].pu;
+		
+		uli ans=max(x.best,y.best);
+		
+		ans=max(ans,up[u]+x.suf);
+		ans=max(ans,up[v]+y.suf);
+		ans=max(ans,up[u]+up[v]+x.suf+y.suf);
+		printf("%lld\n",ans);
+	}
+    return 0;
+}

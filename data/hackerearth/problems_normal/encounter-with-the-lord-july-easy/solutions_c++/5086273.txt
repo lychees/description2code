@@ -1,0 +1,203 @@
+#include<bits/stdc++.h>
+ 
+using namespace std;
+ 
+ 
+int n;
+ 
+int t;
+int m;
+int k;
+ 
+vector<pair<int, int> > v[202];
+ 
+ 
+int belong[202];
+ 
+int root(int b){
+	if (belong[b] == -1){
+		return b;
+ 
+	}
+	belong[b] = root(belong[b]);
+	return belong[b];
+}
+void merge(int a, int b){
+	a = root(a);
+	b = root(b);
+	if (a == b)return;
+	belong[a] = b;
+	return;
+}
+ 
+long long int dist[202][202];
+ 
+void calc(){
+	for (int i = 0; i < n; i++){
+		for (int j = 0; j < n; j++){
+			dist[i][j] = LLONG_MAX;
+			if (i == j)dist[i][j] = 0;
+		}
+	}
+	for (int i = 0; i < n; i++){
+		for (int k = 0; k < v[i].size(); k++){
+			dist[i][v[i][k].first] = min(dist[i][v[i][k].first],(long long int)v[i][k].second);
+		}
+	}
+	for (int k = 0; k < n; k++){
+		for (int i = 0; i < n; i++){
+			for (int j = 0; j < n; j++){
+				if (dist[i][k] != LLONG_MAX&&dist[j][k] != LLONG_MAX){
+					dist[i][j] = min(dist[i][j], dist[i][k] + dist[j][k]);
+					dist[j][i] = dist[i][j];
+				}
+			}
+		}
+	}
+	for (int i = 0; i < n; i++){
+		for (int j = 0; j < n; j++){
+			dist[i][j] = min(dist[i][j], 10000LL);
+		}
+	}
+}
+ 
+class min_cost_flow{
+	struct ed{
+		int rev;
+		int cost;
+		int cap;
+		int to;
+		ed(int rev_, int cost_, int cap_, int to_){
+			rev = rev_;
+			cost = cost_;
+			cap = cap_;
+			to = to_;
+		}
+	};
+	vector<long long int> prevv;
+	vector<long long int> pot;
+	vector<long long int> dist;
+	vector<long long int> preve;  
+	vector<vector<ed> > g;  //graph
+	int sizee = 0;
+public:
+	min_cost_flow(int n2 = 0){
+		if (n2 == 0){
+			return;
+		}
+		sizee = n2;
+		prevv.resize(n2);
+		dist.resize(n2);
+		pot.resize(n2);
+		g.resize(n2);
+		preve.resize(n2);
+	}
+	void resize(int n2){
+		prevv.clear();
+		dist.clear();
+		pot.clear();
+		g.clear();
+		preve.clear();
+		sizee = n2;
+		prevv.resize(n2);
+		dist.resize(n2);
+		pot.resize(n2);
+		g.resize(n2);
+		preve.resize(n2);
+	}
+	void clear(){
+		sizee = 0;
+		prevv.clear();
+		dist.clear();
+		pot.clear();
+		g.clear();
+		preve.clear();
+	}
+	int size(){
+		return sizee;
+	}
+	void add(int from_, int to_, int cap_, int cost_){
+		g[from_].push_back(ed(g[to_].size(), cost_, cap_, to_));
+		g[to_].push_back(ed(g[from_].size() - 1, -cost_, 0, from_));
+	}
+	int min_cost(int s, int t, int f){
+		int res = 0;
+		fill(pot.begin(), pot.end(), 0);
+		while (f > 0){
+			fill(dist.begin(), dist.end(), -1);
+			queue<int> q;
+			q.push(s);
+			dist[s] = 0;
+			while (!q.empty()){
+				int kari = q.front();
+				q.pop();
+				for (int i = 0; i < g[kari].size(); i++){
+					ed &e = g[kari][i];
+					if (e.cap>0 && (dist[e.to] == -1 || dist[e.to] > dist[kari] + e.cost + pot[kari] - pot[e.to])){
+						dist[e.to] = dist[kari] + e.cost + pot[kari] - pot[e.to];
+						prevv[e.to] = kari;
+						preve[e.to] = i;
+						q.push(e.to);
+					}
+				}
+			}
+			if (dist[t] == -1){
+				return -1;  //error
+			}
+			for (int i = 0; i < dist.size(); i++){
+				pot[i] += dist[i];
+			}
+			int mint = f;
+			for (int v = t; v != s; v = prevv[v]){
+				mint = min(mint, g[prevv[v]][preve[v]].cap);
+			}
+			f -= mint;
+			res += mint*pot[t];
+			for (int v = t; v != s; v = prevv[v]){
+				ed &e = g[prevv[v]][preve[v]];
+				e.cap -= mint;
+				g[v][e.rev].cap += mint;
+			}
+		}
+		return res;
+	}
+};
+ 
+ 
+int main(){
+	cin >> t;
+	while (t--){
+		scanf("%d%d%d", &n, &m, &k);
+		for (int i = 0; i < n; i++)v[i].clear();
+		memset(belong, -1, sizeof(belong));
+		for (int i = 0; i < m; i++){
+			int x, y, c;
+			scanf("%d%d%d", &x, &y, &c);
+			x--;
+			y--;
+			v[x].push_back(make_pair(y, c));
+			v[y].push_back(make_pair(x, c));
+			merge(x, y);
+		}
+		calc();
+		min_cost_flow F;
+		F.resize(n + 4);
+		int S = n + 1;
+		int E = n + 2;
+		for (int i = 0; i < k; i++){
+			for (int j = n - k; j < n; j++){
+				F.add(i, j, 1, dist[i][j]);
+			}
+		}
+		for (int i = 0; i < k; i++){
+			F.add(S, i, 1, 0);
+		}
+		for (int i = n - k; i < n; i++){
+			F.add(i, E, 1, 0);
+		}
+		int ans=F.min_cost(S,E,k);
+		if(ans<0)while(1);
+		printf("%d\n", ans);
+	}
+	return 0;
+}

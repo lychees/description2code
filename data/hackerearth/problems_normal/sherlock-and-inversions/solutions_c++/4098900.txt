@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+int n,q,l,r,k,rtn,maxn=1,ar[100005];
+ll outp[100005];
+int fw[100005];
+typedef pair<int,int> ii;
+typedef pair<ii,int> iii;
+vector <iii> v;
+vector <ii> v2;
+void update(int p, int v){
+	for(;p<=100000;p+=(p&(-p))) fw[p]+=v;
+}
+int query(int p){
+	int ans=0;
+	for(;p;p-=(p&(-p))) ans+=fw[p];
+	return ans;
+}
+bool cmp(iii a, iii b){
+	if(a.first.first/rtn==b.first.first/rtn) return a.first.second<b.first.second;
+	return a.first.first/rtn<b.first.first/rtn;
+}
+int main(){
+	scanf("%d %d",&n,&q);
+	rtn=int(sqrt(n));
+	for(int x=0;x<n;x++){
+		scanf("%d",&k);
+		maxn=max(maxn,k);
+		v2.push_back(ii(k,x));
+	}
+	sort(v2.begin(),v2.end());
+	int cnt=1;
+	for(int x=0;x<n;x++){
+		if(x&&v2[x].first>v2[x-1].first) cnt++;
+		ar[v2[x].second]=cnt;
+	}
+	for(int x=0;x<q;x++){
+		scanf("%d %d",&l,&r);
+		v.push_back(iii(ii(l-1,r-1),x));
+	}
+	sort(v.begin(),v.end(),cmp);
+	int curl=0,curr=0;
+	ll tot=0ll;
+	update(ar[0],1);
+	for(int x=0;x<q;x++){
+		while(curr<v[x].first.second){
+			tot+=ll((curr-curl+1)-query(ar[curr+1]));
+			update(ar[curr+1],1);
+			curr++;
+		}
+		while(curr>v[x].first.second){
+			update(ar[curr],-1);
+			tot-=ll((curr-curl)-query(ar[curr]));
+			curr--;
+		}
+		while(curl<v[x].first.first){
+			tot-=ll(query(ar[curl]-1));
+			update(ar[curl],-1);
+			curl++;
+		}
+		while(curl>v[x].first.first){
+			tot+=ll(query(ar[curl-1]-1));
+			update(ar[curl-1],1);
+			curl--;
+		}
+		outp[v[x].second]=tot;
+	}
+	for(int x=0;x<q;x++){
+		printf("%lld\n",outp[x]);
+	}
+	return 0;
+}

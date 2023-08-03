@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define pb push_back
+#define FOR(x,n) for(int x = 0; x < n; x++)
+#define ALL(a) (a).begin(), (a).end()
+#define MAXN 100001
+#define ii pair<ll,int>
+using namespace std;
+
+int N, M, S;
+vector<ll> K(MAXN), dist(MAXN,(1LL<<50));
+vector<ii> edges[MAXN] = {};
+bool vis[MAXN] = {};
+ll sumOfK = 0, sumOftotal = 0;
+void calc(){
+    dist[S] = 0;
+    priority_queue<ii, vector<ii>, greater<ii> > pq; pq.push(ii(0,S));
+    while(!pq.empty()){
+        int u = pq.top().second;
+        ll W = pq.top().first; pq.pop();
+        if(W > dist[u]) continue;
+        for(ii p : edges[u]){
+            int v = p.second;
+            ll w = p.first;
+            if(dist[u] + w < dist[v]){
+                dist[v] = dist[u] + w;
+                pq.push(ii(dist[v], v));
+            }
+        }
+    }
+    FOR(x,N) if(dist[x+1] == (1LL<<50))
+        vis[x+1] = true, K[x+1] = 0;
+    FOR(x,N) if(!vis[x+1]) sumOfK += K[x+1];
+    FOR(x,N) if(!vis[x+1]) sumOftotal += dist[x+1] * K[x+1];
+}
+
+int main(){
+    cin >> N >> M >> S;
+    FOR(x,N) cin >> K[x+1];
+    FOR(x,M){
+        int u,v,w; cin >> u >> v >> w;
+        edges[u].pb({(ll)w,v}); edges[v].pb({(ll)w,u});
+    }
+
+    calc();
+    for(int x = 1; x <= N; x++){
+        if(!vis[x]){
+            cout << (sumOfK - K[x]) * dist[x] + sumOftotal - dist[x] * K[x]<< " \n"[x==N];
+        }else{
+            cout << 0 << " \n"[x==N];
+        }
+    }
+}

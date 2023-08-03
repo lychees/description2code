@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+#define MAXN 110
+using namespace std;
+
+long long N, DP[MAXN][MAXN], mtrx[MAXN][MAXN];
+
+long long yoyo(int idx, int x)
+{
+	if (idx == N + 1)
+		return 0;
+
+	if (DP[idx][x] != -1)
+		return DP[idx][x];
+
+	long long ans = 0;
+
+	ans = yoyo(idx + 1, x) + mtrx[idx][x];
+	int y = x;
+
+	vector<bool> vec(N + 2, false);
+	while (y / 2 >= 1) {
+		ans = max(ans, yoyo(idx + 1, y / 2) + mtrx[idx][y / 2]);
+		y = y / 2;
+
+		int z = y;
+		while (z * 2 <= N) {
+			if (!vec[z * 2]) {
+				ans = max(ans, yoyo(idx + 1, z * 2) + mtrx[idx][z * 2]);
+			}
+			z *= 2;
+			vec[z] = true;
+		}
+		vec[y] = true;
+	}
+
+	y = x;
+	while (y * 2 <= N) {
+		if (!vec[y * 2])
+			ans = max(ans, yoyo(idx + 1, 2 * y) + mtrx[idx][2 * y]);
+		y = y * 2;
+
+		int z = y;
+		while ((z / 2) >= 1) {
+			if (!vec[z / 2])
+				ans = max(ans, yoyo(idx + 1, z / 2) + mtrx[idx][z / 2]);
+			z = z / 2;;
+			vec[z] = true;
+		}
+		vec[y] = true;
+	}
+
+	return DP[idx][x] = ans;
+}
+
+int main()
+{
+	scanf("%lld", &N);
+
+	for (int i = 1; i <= N; ++i) {
+		for (int j = 1; j <= N; ++j) {
+			scanf("%lld", &mtrx[i][j]);
+		}
+	}
+
+	memset(DP, -1, sizeof DP);
+
+	long long ans = 0;
+	for (int i = 1; i <= N; ++i) {
+		ans = max(ans, yoyo(2, i) + mtrx[1][i]);
+	}
+
+	printf("%lld\n", ans);
+}

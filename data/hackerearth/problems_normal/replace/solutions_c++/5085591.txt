@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+ 
+int tt, n;
+char s[20005];
+int cb[20005];
+stack<int> st;
+map<vector<int>, int> ma;
+vector<int> all[10000];
+int mac;
+bool used[10000], vis[10000];
+int cont[10000] = {};
+int pos[10000], le, ri;
+vector<int> g[10000];
+ 
+int go(int from, int to) {
+    vector<int> cur;
+    for (int i = from; i <= to; ) {
+        cur.pb(go(i + 1, cb[i] - 1));
+        i = cb[i] + 1;
+    }
+    if (from == 1 && to == n - 2) {
+        for (int x : cur) ++cont[x];
+        return -1;
+    }
+    sort(cur.begin(), cur.end());
+    auto it = ma.find(cur);
+    if (it == ma.end()) {
+        ma[cur] = mac;
+        for (int x : cur) for (int y : all[x]) if (!used[y]) {
+            all[mac].pb(y);
+            used[y] = true;
+        }
+        all[mac].pb(mac);
+        for (int x : cur) for (int y : all[x]) used[y] = false;
+        return mac++;
+    }
+    return it->second;
+}
+ 
+int mt[10000];
+bool dfs(int v) {
+    if (vis[v]) return false;
+    vis[v] = true;
+    for (int to : g[v]) if (mt[to] == -1 || dfs(mt[to])) {
+        mt[to] = v;
+        return true;
+    }
+    return false;
+}
+ 
+int main() {
+    //freopen("input.txt", "r", stdin);
+    scanf("%d", &tt);
+    REP(test, tt) {
+        mac = le = ri = 0;
+        ma.clear();
+        scanf("%s", s);
+        n = strlen(s);
+        REP(i, n) if (s[i] == '{') {
+            st.push(i);
+        } else {
+            cb[st.top()] = i;
+            st.pop();
+        }
+        REP(i, n) used[i] = false;
+        go(1, n - 2);
+        REP(i, mac) if (cont[i]) {
+            pos[i] = le;
+            le += cont[i];
+        } else {
+            pos[i] = ri++;
+        }
+        REP(i, mac) REP(j, cont[i]) for (int x : all[i]) if (!cont[x]) {
+            g[pos[i] + j].pb(pos[x]);
+        }
+        /*REP(i, le) {
+            printf("%d: ", i);
+            for (int x : g[i]) printf("%d ", x);
+            printf("\n");
+        }*/
+        REP(i, ri) mt[i] = -1;
+        REP(i, le) used[i] = false;
+        int ans = 0;
+        REP(i, le) for (int x : g[i]) if (mt[x] == -1) {
+            mt[x] = i;
+            ++ans;
+            used[i] = true;
+            break;
+        }
+        REP(i, le) if (!used[i]) {
+            REP(j, le) vis[j] = false;
+            if (dfs(i)) ++ans;
+        }
+        printf("%d\n", ans);
+        REP(i, le) g[i].clear();
+        ma.clear();
+        REP(i, mac) all[i].clear();
+        REP(i, mac) cont[i] = 0;
+    }
+    return 0;
+}

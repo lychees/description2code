@@ -1,0 +1,181 @@
+//satyaki3794
+#include <iostream>
+#include <cstdio>
+#include <cmath>
+#include <vector>
+#include <cstring>
+#include <algorithm>
+#include <climits>
+#include <string>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <cctype>
+#include <cassert>
+#include <bitset>
+#include <iomanip>
+#define gc getchar_unlocked
+#define pc putchar_unlocked
+#define PI (3.14159265)
+#define ff first
+#define ss second
+#define pb push_back
+#define MOD (1000000007LL)
+#define INF (100000005)
+#define SIZE (2)
+#define TREESIZE (302144)
+#define LEFT(n) (2*n)
+#define RIGHT(n) (2*n+1)
+#define epsilon 1e-8 //add to double before casting to integer
+ 
+using namespace std;
+ 
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> ii;
+typedef pair<ii, int> iii;
+
+
+#define matrix vector< vector<ll> >
+
+matrix matmul(matrix &a, matrix &b){
+    int i, j, k, n = a.size();
+    matrix ans (n, vector<ll>(n));
+    for(i=0;i<n;i++)
+        for(j=0;j<n;j++){
+            ll temp = 0;
+            for(k=0;k<n;k++)    temp = (temp + a[i][k] * b[k][j]) % MOD;
+            ans[i][j] = temp;
+        }
+
+    return ans;
+}
+
+matrix matpwr(matrix &a, ll p){
+    int n = a.size();
+    matrix ans(n, vector<ll> (n));
+    for(int i=0;i<n;i++)    ans[i][i] = 1;
+
+    while(p){
+        if(p&1) ans = matmul(ans, a);
+
+        a = matmul(a, a);
+        p >>= 1;
+    }
+    return ans;
+}
+
+
+ll pwr(ll base, ll p, ll mod = MOD){
+    ll ans = 1;
+    while(p){
+        if(p & 1)   ans = (ans * base) % mod;
+        base = (base * base) % mod;
+        p /= 2;
+    }
+    return ans;
+}
+
+
+ll gcd(ll a, ll b){
+    if(b == 0)  return a;
+    return gcd(b, a%b);
+}
+
+
+ll lcm(ll a, ll b){
+    return (a*b) / gcd(a, b);
+}
+
+
+ll invMod(ll n){
+    return pwr(n, MOD-2);
+}
+
+
+int n, k;
+ll arr[505], ps[505], DP1[505][305], DP2[505][305];
+
+
+ll dp1(int i, int k){
+
+    if(i > n)  return (ll)1e15;
+    if(k == 1)  return DP1[i][k] = (ps[n] - ps[i-1]) * (ps[n] - ps[i-1]);
+    if(DP1[i][k] != -1)  return DP1[i][k];
+
+    ll ans = (ll)1e15, sum = 0;
+    for(int j=i;j<=n;j++){
+        sum += arr[j];
+        ans = min(ans, sum*sum + dp1(j+1, k-1));
+    }
+
+    return DP1[i][k] = ans;
+}
+
+
+ll dp2(int i, int k){
+
+    if(i > n)   return (ll)1e15;
+    if(k == 1)  return 0;
+    if(DP2[i][k] != -1) return DP2[i][k];
+
+    ll ans = (ll)1e15, sum = 0;
+    for(int j=i;j<=n;j++){
+
+        sum += arr[j];
+        ll remsum = ps[n] - ps[j];
+        ll temp = (k-1) * sum * sum - 2 * sum * remsum + dp1(j+1, k-1) + dp2(j+1, k-1);
+
+// if(k == 3 && i == 2 && j == 2){
+//     cout<<endl<<sum<<" fsdfs "<<remsum<<" "<<dp1(j+1, k-1)<<" "<<temp<<endl;;
+// }
+        ans = min(ans, temp);
+    }
+
+    return DP2[i][k] = ans;
+}
+
+
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    // freopen("input.txt", "r", stdin);
+
+    cin>>n>>k;
+    for(int i=1;i<=n;i++)
+        cin>>arr[i];
+    for(int i=1;i<=n;i++)
+        ps[i] = ps[i-1] + arr[i];
+
+    memset(DP1, -1, sizeof(DP1));
+    memset(DP2, -1, sizeof(DP2));
+
+// for(int i=1;i<=n;i++){
+//     cout<<i<<" : ";
+//     for(int j=1;j<=n;j++)   cout<<dp1(i, j)<<" ";cout<<endl;
+// }cout<<endl;
+
+// for(int i=1;i<=n;i++){
+//     cout<<i<<" : ";
+//     for(int j=1;j<=n;j++)   cout<<dp2(i, j)<<" ";cout<<endl;
+// }cout<<endl;
+
+    ll ans = dp2(1, k);
+    cout<<ans;
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

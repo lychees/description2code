@@ -1,0 +1,132 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <iomanip>
+#include <vector>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <functional>
+#include <utility>
+#include <bitset>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstdio>
+using namespace std;
+
+#define rep(i,n) for(int i=0;i<n;i++)
+#define ll long long int
+#define f first
+#define s second
+#define pi pair<ll, ll>
+#define pii pair<pi,int>
+#define f first
+#define s second
+#define pb push_back
+#define mod 1000000007
+#define mp make_pair
+
+vector<pi>g[100011];
+
+int pa[100011];
+int sz[100011];
+int root=-1;
+int nn=0;
+bool del[100011];
+int n;
+
+void dfs1(int v,int p){
+    nn++;
+    sz[v]=1;
+    for(auto x:g[v]){
+        if( x.f!=p  and !del[x.f]){
+            dfs1(x.f,v);
+            sz[v]+=sz[x.f];
+        }
+    }
+}
+
+int dfs2(int v,int p){
+    for( auto x:g[v] ){
+        if( x.f!=p and !del[x.f] ){
+            if( sz[x.f] > nn/2 ){
+                return dfs2(x.f,v);
+            }
+        }
+    }
+    return v;
+}
+
+map<ll,ll>M[100011];
+map<ll,ll>M1[100011];
+
+void calc(int v,int p,ll cost,int r,ll cost1,ll maxp,ll p1) {
+
+    M[r][v]=maxp;
+    M1[r][v]=p1;
+
+    for(auto x:g[v]) {
+        if(x.f!=p and !del[x.f]){
+            calc(x.f,v,cost+x.s,r, max(max(x.s,cost1+x.s),0LL) ,max(maxp,cost+x.s),max(p1,max(max(x.s,cost1+x.s),0LL)));
+        }
+    }
+    
+}
+
+void decompose(int v,int p){
+    nn=0;
+    dfs1(v,v);
+    int r=dfs2(v,v);
+    del[r]=1;
+    pa[r]=p;
+    calc(r,-1,0,r,0,0,0);
+    for(auto x:g[r]){
+        if(!del[x.f]){
+            decompose(x.f,r);
+        }
+    }
+}
+
+int lca(int u,int v) {
+	set<int>s;
+	while(u!=-1){
+		s.insert(u);
+		u=pa[u];
+	}
+	while(v!=-1){
+		if(s.count(v)) return v;
+		v=pa[v];
+	}
+}
+
+int main() {
+    int n,q;
+    cin >> n >> q;
+    int u,v,w;
+    rep(j, n-1){
+        cin >> u >> v >> w;
+        g[u].pb({v, w});
+        g[v].pb({u, w});
+    }     
+    decompose(1, -1);
+    while(q--) {
+        
+        cin >> u >> v;
+        int C = lca(u,v);
+        
+        ll ans=max(M1[C][u],M1[C][v]);
+        ans=max(ans,M[C][v]+M[C][u]);
+        ans=max(ans,0LL);
+        ans=max(ans,M[C][u]);
+        ans=max(ans,M[C][v]);
+        
+        cout<<ans<<"\n";
+        
+    }
+
+}

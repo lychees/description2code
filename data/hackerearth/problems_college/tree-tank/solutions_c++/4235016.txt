@@ -1,0 +1,133 @@
+//Amit Gupta              
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+typedef pair<int,int> II;
+#define REP(i,i1,n) for(int i=i1;i<n;i++)
+#define REPB(i,i1,n) for(int i=i1;i>=n;i--)
+#define PB push_back
+#define MP make_pair
+#define ALL(c) (c).begin(),(c).end()
+#define F first
+#define S second
+#define SZ(a) (LL)a.size()
+#define EPS 1e-12
+#define MOD 1000000007
+#define TR1(x) cerr<<#x<<" : "<<x<<endl
+#define TR2(x,y) cerr<<#x<<" : "<<x<<" | "<<#y<<" : "<<y<<endl
+#define FAST_IO ios_base::sync_with_stdio(false);cin.tie(NULL)
+#define SI(c) scanf("%d",&c)
+#define SII(c,d) scanf("%d%d",&c,&d)
+#define SLL(c) scanf("%lld",&c)
+#define PIN(c) printf("%d\n",c)
+#define PLLN(c) printf("%lld\n",c)
+#define N 100010
+#define endl '\n'
+#define FILL(ar,vl) for(int i=0;i<N;i++)ar[i]=vl
+#define FILL2(ar,vl) for(int i=0;i<N;i++)for(j=0;j<N;j++)ar[i][j]=vl
+//--------------------------MAIN CODE STARTS HERE----------------
+LL dp[N][2],sub[N],ans[N];
+LL cap,tot,min1,cnt[N],cnt1,KK;
+vector<pair<int,LL> > g[N],h[N];
+int n,flag,vis[N],vis1[N],comp[N];
+
+void dfs(int z,int p) {
+    vis1[z]=1;
+    sub[z]=1LL;
+    REP(i,0,g[z].size()) {
+        if(p!=g[z][i].F&&comp[g[z][i].F]==comp[z]) {
+            dfs(g[z][i].F,z);
+            sub[z]+=sub[g[z][i].F];
+            dp[z][0]+=dp[g[z][i].F][0]+sub[g[z][i].F]*g[z][i].S;
+        }
+    }
+}
+
+void dfs1(int z,int p) {
+    REP(i,0,g[z].size()) {
+        if(p!=g[z][i].F&&comp[z]==comp[g[z][i].F]) {
+            LL pr=1LL;
+            int v=g[z][i].F;
+            dp[v][1]=dp[z][0]-dp[v][0]-pr*sub[v]+dp[z][1]+pr*(cnt[comp[z]]-sub[v]);
+            ans[v]=dp[v][0]+dp[v][1];
+            min1=min(ans[v],min1);
+            dfs1(v,z);
+        }
+    }
+}
+
+void dfs2(int z,int p) {
+    comp[z]=flag;
+    cnt1++;
+    vis[z]=1;
+    REP(i,0,g[z].size()) {
+        if(p!=g[z][i].F&&cap>=h[z][i].S)
+            dfs2(g[z][i].F,z);
+    }
+}
+
+bool check(LL m) {
+    cap=m;
+    REP(i,1,n+1) {
+        if(!vis[i]) {
+            flag++;
+            cnt1=0;
+            dfs2(i,-i);
+            cnt[flag]=cnt1;
+        }
+    }
+    REP(i,1,n+1) {
+        if(!vis1[i]) {
+            min1=1e+18;
+            dfs(i,-i);
+            dfs1(i,-i);
+            tot+=min(dp[i][0],min1);
+        }
+    }
+    if(tot<=KK)
+        return true;
+    return false;
+}
+
+void reset() {
+    flag=0;tot=0;
+    REP(i,1,n+1) {
+        dp[i][0]=0LL;dp[i][1]=0LL;
+        vis[i]=0;vis1[i]=0;
+        comp[i]=0;sub[i]=0LL;cnt[i]=0LL;
+    }
+}
+
+int main() {
+    SI(n);SLL(KK);
+    REP(i,0,n-1) {
+        int x,y;LL z;
+        SII(x,y);SLL(z);
+        g[x].PB(MP(y,1LL));
+        g[y].PB(MP(x,1LL));
+        h[x].PB(MP(y,z));
+        h[y].PB(MP(x,z));
+    }
+    LL l=1,h=1000000001;LL res=0;
+    while(l<h) {
+        LL m=l+(h-l)/2;
+        bool fl=check(m);
+        // TR2(m,tot);
+    /*    if(m==7) {
+            
+            REP(i,1,n+1) {
+                cout<<i<<"  "<<dp[i][0]<<"   "<<dp[i][1]<<"\n";
+                TR2(comp[i],sub[i]);
+            }
+        }
+        */
+        reset();
+       // cout<<fl<<"\n";
+        if(fl)
+            l=m+1,res=m;
+        else
+            h=m;
+    }
+    PLLN(res);
+    return 0;
+}

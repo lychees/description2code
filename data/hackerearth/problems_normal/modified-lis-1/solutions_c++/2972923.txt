@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+#define MAXN 100001
+#define MOD 1000000007
+int N,Q,arr[MAXN],A;
+pair<int,int> positive[MAXN<<3],negative[MAXN<<3];
+
+pair<int,int> merge(pair<int,int> l, pair<int,int> r){
+    pair<int,int> p;
+    p = max(l,r);
+    if (l.first == r.first)p.second = (l.second + r.second)%MOD;
+    return p;
+}
+
+inline void add(int &a, int b) {
+    a += b;
+    if (a >= MOD) a -= MOD;
+}
+
+void update(pair<int,int> *tree,int low,int high,int idx,int val,int len,int pos){
+    if (low == high){
+        if (tree[pos].first > val)return;
+        if (tree[pos].first == val)tree[pos].second = (tree[pos].second+len)%MOD;
+        else tree[pos] = make_pair(val,len);
+        return;
+    }
+    int mid = (low+high)/2;
+    if (idx<=mid)
+        update(tree,low,mid,idx,val,len,pos*2);
+    else if (idx>mid)
+        update(tree,mid+1,high,idx,val,len,pos*2+1);
+    tree[pos] = merge(tree[pos*2],tree[pos*2+1]);
+}
+
+pair<int,int> read(pair<int,int> *tree,int low,int high,int qlow,int qhigh,int pos){
+    if (qlow > qhigh)return make_pair(0,0);
+    if (low>=qlow && high<=qhigh)
+        return tree[pos];
+    int mid = (low+high)/2;
+    if (qhigh <= mid)
+        return read(tree,low,mid,qlow,qhigh,pos*2);
+    else if (qlow > mid)
+        return read(tree,mid+1,high,qlow,qhigh,pos*2+1);
+    return merge(read(tree,low,mid,qlow,qhigh,pos*2),read(tree,mid+1,high,qlow,qhigh,pos*2+1));
+}
+
+int main()
+{
+    bool sign = 1;
+    int n;
+    pair<int,int> res = make_pair(-1,-1);
+    scanf("%d",&n);
+    N = 100001;
+    for (int i=0;i<n;i++){
+        scanf("%d",&A);
+        assert(A != 0);
+        sign = (A > 0);
+        if (!sign) A = -A;
+        pair<int,int> call = read(sign ? negative : positive, 1,N-1,1,A-1,1);
+        if (call.second==0)++call.second;
+        ++call.first;
+        update(sign ? positive : negative, 1,N-1,A,call.first,call.second,1);
+    }
+    res = merge(positive[1],negative[1]);
+    printf("%d %d\n",res.first,res.second);
+}

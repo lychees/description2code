@@ -1,0 +1,108 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+#define sd(x) scanf("%d",&x);
+#define slld(x) scanf("%lld",&x);
+#define LL long long
+#define LD long double
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+#define Fill(a, b) memset(a, b, sizeof(a))
+#define INF 2000000009
+
+typedef pair<int,int> PII;
+typedef vector<int> VI;
+
+#define N 1000010
+
+LL tree1[N],tree2[N],mod = 0;
+
+void update(int idx ,LL val,LL tree[])
+{
+	while (idx < N)
+    {
+		tree[idx] += val;
+		tree[idx] %= mod;
+		idx += (idx & -idx);
+	}
+}
+LL read(int idx,LL tree[])
+{
+	LL sum = 0;
+	while (idx > 0)
+    {
+		sum += tree[idx];
+        sum%=mod;
+		idx -= (idx & -idx);
+	}
+	return sum;
+}
+
+LL fib[N];
+void pre()
+{
+    fib[0] = 0;
+    fib[1] = 1;
+    for(int i=2;i<N;i++)
+    {
+        fib[i] = (fib[i-1]+ fib[i-2])%mod;
+    }
+}
+
+LL ar[N];
+
+void solve()
+{
+    int n,m,l,r,t;
+    sd(n);sd(m);slld(mod);
+    pre();
+    for(int i = 1;i<=n;i++)
+    {
+        slld(ar[i]);
+        //ar[i] = i;
+        ar[i]%=mod;
+        if(ar[i] < 0)ar[i] += mod;
+        update(i,(ar[i]*fib[i])%mod, tree1);
+        update(i,(ar[i]*fib[i+1])%mod, tree2);
+    }
+    LL ans = 0,val,x;
+    for(int i=0;i<m;i++)
+    {
+        sd(t);sd(l);
+        if(t==1)
+        {
+            slld(x);
+            x %= mod;
+            if(x<0)x+=mod;
+            val = x - ar[l];
+            if(val < 0)val += mod;
+            update(l,(val*fib[l])%mod,tree1);
+            update(l,(val*fib[l+1])%mod,tree2);
+            ar[l] = x;
+        }
+        else
+        {
+            sd(r);
+            assert(l<=r);
+            ans = (read(r,tree1) - read(l-1,tree1))*fib[l] - (read(r,tree2) - read(l-1,tree2))*fib[l-1];
+            ans %= mod;
+            if((l%2) == 0)ans = - ans;
+            if(ans < 0)ans+=mod;
+            printf("%lld\n",ans);
+        }
+    }
+}
+
+int main()
+{
+	int t=1;
+	//scanf("%d",&t);
+	for(int i=1;i<=t;i++)
+	{
+		solve();
+	}
+}
+

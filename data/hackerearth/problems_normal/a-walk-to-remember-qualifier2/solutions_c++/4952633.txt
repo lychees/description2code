@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 1e5 + 100;
+
+vector<int> es[N];
+
+int idx[N];
+int low[N];
+int t = 0;
+
+int nr[N];
+int nxt = 0;
+vector<int> sz;
+
+bool onstack[N];
+stack<int> vs;
+
+void SCC(int v) {
+	vs.push(v);
+	onstack[v] = true;
+	++t;
+	idx[v] = t;
+	low[v] = t;
+	for (auto u : es[v]) {
+		if (!idx[u]) {
+			SCC(u);
+			low[v] = min(low[v], low[u]);
+		} else if (onstack[u]) {
+			low[v] = min(low[v], idx[u]);
+		}
+	}
+	
+	if (idx[v] == low[v]) {
+		++nxt;
+		int csz = 0;
+		int u;
+		do {
+			u = vs.top(); vs.pop();
+			nr[u] = nxt;
+			onstack[u] = false;
+			++csz;
+		} while (u != v);
+		sz.push_back(csz);
+	}
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+	int n, m;
+	cin >> n >> m;
+	for (int i = 0; i < m; ++i) {
+		int x, y;
+		cin >> x >> y;
+		es[x].push_back(y);
+	}
+	sz.push_back(0);
+	for (int i = 1; i <= n; ++i) {
+		if (!idx[i]) {
+			SCC(i);
+		}
+	}
+	for (int i = 1; i <= n; ++i) {
+		bool ok = sz[nr[i]] > 1;
+		cout << ok;
+		if (i < n) cout << ' ';
+	}
+	cout << '\n';
+    return 0;
+}

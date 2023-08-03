@@ -1,0 +1,238 @@
+#include <bits/stdc++.h> 
+
+using namespace std;
+ 
+#define pb push_back
+#define mp make_pair
+#define fs first
+#define sc second
+#define sz(x) (int)((x).size()) 
+#define forn(i,n) for (int i = 0; (i) < (n); ++i)
+#define fornr(i,n) for (int i = (n) - 1; (i) >= 0; --i)
+#define forab(i,a,b) for (int i = (a); (i) < (b); ++i)
+#define forba(i,a,b) for (int i = (b) - 1; (i) >= (a); --i)
+#define forit(it,c) for(__typeof((c).begin()) it = (c).begin(); it != (c).end(); ++it)
+#define all(c) (c).begin(),(c).end() 
+
+#ifdef LOCAL
+    #define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#else
+    #define eprintf(...) static_cast<void>(0)   
+#endif
+
+#ifdef _WIN32
+    #define I64 "%I64d"
+#else
+    #define I64 "%lld"
+#endif
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef long double LD;
+typedef unsigned int uint;
+typedef vector <int> vi;
+typedef pair <int, int> pii;
+
+#define FNAME ""
+
+template <class T = LL> inline T readInt();            
+inline int readUInt();           
+inline int readChar();           
+inline bool isEof();
+inline int peekChar();
+inline bool seekEof();
+
+
+static const int buf_size = 4096;
+
+static char __buf[buf_size];
+static int __len = 0, __pos = 0;
+
+inline bool isEof() {
+  if (__pos == __len) {
+    __pos = 0, __len = fread(__buf, 1, buf_size, stdin);
+    if (__pos == __len)
+      return 1;
+  }
+  return 0;
+}
+
+inline int getChar() { 
+  return isEof() ? -1 : __buf[__pos++];
+}
+
+inline int peekChar() { 
+  return isEof() ? -1 : __buf[__pos];
+}
+
+inline bool seekEof() { 
+  int c;
+  while ((c = peekChar()) != -1 && c <= 32)
+    __pos++;
+  return c == -1;
+}
+
+inline int readChar() {
+  int c = getChar();
+  while (c != -1 && c <= 32)
+    c = getChar();
+  return c;
+}
+
+inline int readUInt() {
+  int c = readChar(), x = 0;
+  while ('0' <= c && c <= '9')
+    x = x * 10 + c - '0', c = getChar();
+  return x;
+}
+
+template <class T>
+inline T readInt() {
+  int s = 1, c = readChar();
+  T x = 0;
+  if (c == '-')
+    s = -1, c = getChar();
+  while ('0' <= c && c <= '9')
+    x = x * 10 + c - '0', c = getChar();
+  return s == 1 ? x : -x;
+}
+
+
+const int MOD = 1e9 + 7;
+
+struct Node
+{
+    Node *l, *r;
+    LL sum;
+    bool toPush;    
+    Node(): l(NULL), r(NULL), sum(0), toPush(0) {}
+};
+
+void push(Node *root, LL ll, LL rr)
+{
+    if (root->toPush)
+    {
+        if (!root->l)
+            root->l = new Node();
+        if (!root->r)
+            root->r = new Node();
+        if (ll != rr - 1)
+        {
+            root->l->toPush ^= 1;
+            root->r->toPush ^= 1;
+        } 
+        root->sum = rr - ll - root->sum;
+        root->toPush = 0;
+    }
+}
+
+void update(Node *root, LL ll, LL rr, LL l, LL r)
+{
+    if (ll >= l && rr <= r)
+    {
+        root->toPush ^= 1;
+        push(root, ll, rr);
+        //printf("her %I64d %I64d %I64d\n", ll, rr, root->sum);
+        return;
+    }
+    //printf("%I64d %I64d push %d\n", ll, rr, root->toPush);
+    push(root, ll, rr);
+    if (ll >= r || l >= rr)
+        return;
+    LL mm = (ll + rr) / 2;
+    if (l < mm)
+    {
+        if (!root->l)
+            root->l = new Node();
+        update(root->l, ll, mm, l, r);
+    }
+    if (r > mm)
+    {
+        if (!root->r)
+            root->r = new Node();
+        update(root->r, mm, rr, l, r);
+    }
+    LL sum = 0;
+    if (root->l)
+    {    
+        push(root->l, ll, mm);
+        sum += root->l->sum;
+    }
+    if (root->r)
+    {
+        push(root->r, mm, rr);
+        sum += root->r->sum;
+    }
+    root->sum = sum;
+    //printf("%I64d %I64d %I64d\n", ll, rr, root->sum);
+}
+
+LL get(Node *root, LL ll, LL rr, LL l, LL r)
+{
+    if (ll >= r || l >= rr)
+        return 0;
+    push(root, ll, rr);
+    if (ll >= l && rr <= r)
+        return root->sum;
+    LL mm = (ll + rr) / 2;
+    LL ans = 0;
+    if (l < mm)
+    {
+        if (!root->l)
+            root->l = new Node();
+        ans += get(root->l, ll, mm, l, r);
+    }
+    if (r > mm)
+    {
+        if (!root->r)
+            root->r = new Node();
+        ans += get(root->r, mm, rr, l, r);
+    }
+    return ans;
+}
+
+int main() 
+{
+#ifdef LOCAL    
+    freopen(FNAME".in", "r", stdin);
+    freopen(FNAME".out", "w", stdout); 
+#endif    
+    int q = readInt();
+    int lastAns = 0;
+    Node *rootX = new Node(), *rootY = new Node();
+    LL N = (1ll << 60);
+    forn (qq, q)
+    {
+        int type = readInt();
+        if (type == 1)
+        {
+            int x = readInt();
+            LL l = readInt(), r = readInt();
+            l ^= lastAns;
+            r ^= lastAns;
+            l--;
+            if (x == 0)
+                update(rootX, 0, N, l, r);
+            else
+                update(rootY, 0, N, l, r);
+        }
+        else
+        {
+            LL l = readInt(), r = readInt(), x = readInt(), y = readInt();
+            l ^= lastAns;
+            r ^= lastAns;
+            x ^= lastAns;
+            y ^= lastAns;
+            l--, x--;
+            LL cntX = get(rootX, 0, N, l, r);
+            LL cntY = get(rootY, 0, N, x, y);
+            //printf("%I64d %I64d\n", cntX, cntY);
+            int cntIntX = cntX % MOD, cntIntY = cntY % MOD;
+            lastAns = (cntIntX * ((y - x) % MOD) + cntIntY * ((r - l) % MOD) - 2 * cntIntX * 1ll * cntIntY) % MOD;
+            if (lastAns < 0)
+                lastAns += MOD;
+            printf("%d\n", lastAns);
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,154 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+#include <iostream>
+#include <cassert>
+
+using namespace std;
+
+typedef long long ll;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define REP(i, n) for (int i = 0; i < (n); ++i)
+#define TRACE(x) cout << #x << " = " << x << endl
+#define _  << "_" <<
+
+#define MAXN 50004
+#define K 100
+#define MAXV 50004
+#define MAXB (MAXN / K + 2)
+
+struct Event {
+  int a, b, q, factor;
+};
+
+int niz[MAXN];
+int cnt[MAXB][MAXV];
+ll pre[MAXB][MAXB];
+
+ll QUERY(int A, int B) {
+  static int cookie[MAXV];
+  static int cntv[MAXV];
+  static int tajm;
+  int a = A / K;
+  int b = B / K;
+
+  ++tajm;
+  int result = 0;
+  REP(k, A % K) {
+    int v = niz[a * K + k];
+    result += cnt[b][v];
+    if (cookie[v] == tajm) {
+      ++cntv[v];
+    } else {
+      cookie[v] = tajm;
+      cntv[v] = 1;
+    }
+  }
+
+  REP(k, B % K) {
+    int v = niz[b * K + k];
+    result += cnt[a][v];
+    if (cookie[v] == tajm)
+      result += cntv[v];
+  }
+
+  // printf("A=%d B=%d result=%lld\n", A, B, result);
+  return result + pre[a][b];
+}
+
+int brute(int a, int b, int c, int d) {
+  int result = 0;
+  --a; --b; --c; --d;
+  for (int i = a; i <= b; ++i)
+    for (int j = c; j <= d; ++j)
+      if (niz[i] == niz[j])
+        ++result;
+
+  return result;
+}
+
+int main(void) {
+  int N, Q, B;
+  scanf("%d", &N);
+  REP(i, N)
+    scanf("%d", niz + i);
+
+  // for (;;) {
+  {
+    // N = 50000;
+    // REP(i, N)
+    //   niz[i] = 1 + rand() % 50000;
+
+    B = N / K;
+
+    FOR(i, 1, B + 1) {
+      REP(j, MAXV)
+        cnt[i][j] = cnt[i - 1][j];
+      REP(k, K) {
+        ++cnt[i][niz[(i - 1) * K + k]];
+      }
+    }
+
+    // REP(i, B + 1) {
+    //   printf("b=%d    ", i);
+    //   REP(v, MAXV)
+    //     printf("%d ", cnt[i][v]);
+    //   printf("\n");
+    // }
+
+    REP(i, B + 1)
+      REP(j, i + 1) {
+        ll t = j > 0 ? pre[i][j - 1] : 0;
+        REP(k, K)
+          t += cnt[i][niz[(j - 1) * K + k]];
+        pre[i][j] = t;
+      }
+    REP(i, B + 1)
+      FOR(j, i + 1, B + 1)
+        pre[i][j] = pre[j][i];
+
+    // REP(i, B + 1) {
+    //   REP(j, B + 1)
+    //     printf("%d ", pre[i][j]);
+    //   printf("\n");
+    // }
+    // printf("%lld\n", QUERY(3, 3));
+    // printf("%lld\n", QUERY(3, 4));
+    // printf("%lld\n", QUERY(3, 5));
+
+
+    scanf("%d", &Q);
+    // Q = 50000;
+    REP(i, Q) {
+      int a, b, c, d;
+      scanf("%d%d%d%d", &a, &b, &c, &d);
+      // a = K * (rand() % B) + K - 2;
+      // b = K * (rand() % B) + K - 2;
+      // c = K * (rand() % B) + K - 2;
+      // d = K * (rand() % B) + K - 2;
+      // if (a > b) swap(a, b);
+      // if (c > d) swap(c, d);
+
+      ll result = 0;
+      result += QUERY(b, d);
+      result -= QUERY(a - 1, d);
+      result -= QUERY(b, c - 1);
+      result += QUERY(a - 1, c - 1);
+      // int br = brute(a, b, c, d);
+      // if (result != br) {
+      //   printf("%lld!=%d\n", result, br);
+      //   printf("%d\n", N);
+      //   REP(i, N) printf("%d ", niz[i]);
+      //   printf("\n");
+      //   printf("%d %d %d %d\n", a, b, c, d);
+      //   return 0;
+      // }
+      printf("%lld\n", result);
+    }
+    // printf("."); fflush(stdout);
+  }
+  return 0;
+}
+

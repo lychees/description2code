@@ -1,0 +1,158 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MAXN 1000005
+#define leftindex (index<<1)+1
+#define rightindex (index<<1)+2
+int pindex=0;
+bool aa[MAXN];
+int storeprimes[MAXN];
+
+int a[MAXN];
+int st[1000000];
+void markmultiples(int k)
+{
+    int i=2*k;
+    while(i<MAXN)
+    {
+        aa[i]=true;
+        i+=k;
+    }
+}
+void SieveOfE()
+{
+    //int index=0;
+    int i;
+    markmultiples(2);
+    storeprimes[pindex++]=2;
+    i=3;
+    while(i<MAXN)
+    {
+        if(aa[i]==false)
+        {
+            storeprimes[pindex++]=i;
+            markmultiples(i);
+        }
+        i+=2;
+    }
+
+}
+bool isPrime(int num)
+{
+    int low,high,mid;
+
+    low=0;high=pindex-1;
+    while(low<=high)
+    {
+        mid=low+(high-low)/2;
+        if(storeprimes[mid]==num)
+            return true;
+        else
+        if(storeprimes[mid]<num)
+        {
+            low=mid+1;
+        }
+        else
+            high=mid-1;
+    }
+
+    return false;
+}
+void construct_Util(int starti,int endi,int index)
+{
+    if(starti==endi)
+    {
+        if(isPrime(a[starti]))
+            st[index]=a[starti];
+        else
+            st[index]=-1;
+        return;
+    }
+
+    int mid=starti+(endi-starti)/2;
+    construct_Util(starti,mid,leftindex);
+    construct_Util(mid+1,endi,rightindex);
+
+    if(st[leftindex]>=st[rightindex])
+        st[index]=st[leftindex];
+    else
+        st[index]=st[rightindex];
+
+}
+void update(int starti,int endi,int index,int indexchanged)
+{
+    if(starti==endi)
+    {
+        if(isPrime(a[starti]))
+            st[index]=a[starti];
+        else
+            st[index]=-1;
+        return;
+    }
+
+    int mid=starti+(endi-starti)/2;
+    if(indexchanged<=mid)
+        update(starti,mid,leftindex,indexchanged);
+    else
+        update(mid+1,endi,rightindex,indexchanged);
+
+    st[index]=max(st[leftindex],st[rightindex]);
+
+}
+int queryUtil(int startarrayindex,int endarrayindex,int querystart,int queryend,int index)
+{
+    if(queryend< startarrayindex || querystart>endarrayindex)
+        return -1;
+
+    if(querystart<=startarrayindex && endarrayindex<=queryend)
+    {
+        return st[index];//max
+    }
+
+    int mid=startarrayindex+(endarrayindex-startarrayindex)/2;
+    int ans1,ans2;
+    ans1=queryUtil(startarrayindex,mid,querystart,queryend,leftindex);
+    ans2=queryUtil(mid+1,endarrayindex,querystart,queryend,rightindex);
+
+    return max(ans1,ans2);
+}
+
+void constructST(int n)
+{
+    construct_Util(0,n-1,0);
+}
+int main()
+{
+
+    int n,m,type,l,r,i;
+
+    SieveOfE();
+    scanf("%d %d",&n,&m);
+
+    for(i=0;i<n;i++)
+        scanf("%d",&a[i]);
+
+    constructST(n);
+
+    while(m--)
+    {
+        scanf("%d %d %d",&type,&l,&r);
+        if(type==1)
+        {
+            l--;r--;
+            printf("%d\n",queryUtil(0,n-1,l,r,0));
+        }
+        else
+        {
+            l--;
+            a[l]=r;
+            update(0,n-1,0,l);
+        }
+
+//for(i=0;i<10;i++)
+//    printf("%d ",st[i]);
+//printf("\n");
+
+    }
+
+    return 0;
+}

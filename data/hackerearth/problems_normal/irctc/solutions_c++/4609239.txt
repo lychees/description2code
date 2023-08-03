@@ -1,0 +1,160 @@
+#include <iostream>
+#include <cstdio>
+#include <cmath>
+#include <map>
+#include <vector>
+#include <algorithm>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <string>
+#include <set>
+#include <limits.h>
+
+#define INF 100000000000000000ll
+#define inp(x) scanf("%d",&x)
+#define inp_l(x) scanf("%lld",&x)
+#define inp_d(x) scanf("%lf",&x)
+#define MOD 1000000007
+#define pb push_back
+#define mp make_pair
+
+using namespace std;
+
+typedef long long int ll;
+typedef vector <int> VI;
+typedef vector <long long int> VLL;
+typedef pair<int,int> PI;
+typedef pair<ll,ll> PLL;
+
+int main()
+{
+	ios_base::sync_with_stdio(false); cin.tie(0);
+	int t;
+	cin >> t;
+	while(t--) {
+		int n, k, i, a, b, d, A, B, C, j;
+		cin >> n >> k;
+		vector <PI> adj[n];
+
+		for(i = 0; i < k; i++) {
+			cin >> a >> b >> d;
+			a--;
+			b--;
+			adj[a].pb(mp(b, d));
+			adj[b].pb(mp(a, d));
+		}
+		
+		cin >> A >> B >> C;
+		A--;
+		B--;
+		C--;
+
+		ll dist[n];
+		int prev[n];
+		set <pair <ll, int> > S;
+
+		for(i = 0; i < n; i++) {
+			prev[i] = -1;
+			if(i == A) {
+				dist[i] = 0ll;
+			} else {
+				dist[i] = INF;
+			}
+			S.insert(mp(dist[i], i));
+		}
+
+		for(i = 0; i < n; i++) {
+			pair <ll, int> tempPair = *S.begin();
+			S.erase(S.begin());
+
+			int temp = tempPair.second;
+			ll tempDist = tempPair.first;
+
+			for(j = 0; j < adj[temp].size(); j++) {
+				int temp1 = adj[temp][j].first;
+				int tempDist1 = adj[temp][j].second;
+
+				if(dist[temp1] > tempDist + tempDist1) {
+					S.erase(S.find(mp(dist[temp1], temp1)));
+					dist[temp1] = tempDist + tempDist1;
+
+					S.insert(mp(dist[temp1], temp1));
+
+					prev[temp1] = temp;
+				}
+			}
+		}
+
+		ll dist1[n];
+		int prev1[n];
+		S.clear();
+
+		for(i = 0; i < n; i++) {
+			prev1[i] = -1;
+			if(i == C) {
+				dist1[i] = 0ll;
+			} else {
+				dist1[i] = INF;
+			}
+			S.insert(mp(dist1[i], i));
+		}
+
+		for(i = 0; i < n; i++) {
+			pair <ll, int> tempPair = *S.begin();
+			S.erase(S.begin());
+
+			int temp = tempPair.second;
+			ll tempDist = tempPair.first;
+
+			for(j = 0; j < adj[temp].size(); j++) {
+				int temp1 = adj[temp][j].first;
+				int tempDist1 = adj[temp][j].second;
+
+				if(dist1[temp1] > tempDist + tempDist1) {
+					S.erase(S.find(mp(dist1[temp1], temp1)));
+					dist1[temp1] = tempDist + tempDist1;
+
+					S.insert(mp(dist1[temp1], temp1));
+
+					prev1[temp1] = temp;
+				}
+			}
+		}
+
+		if(dist[B] >= INF || dist1[B] >= INF) {
+			cout << "No Train Found." << endl;
+			continue;
+		}
+
+		deque <int> path;
+
+		int temp = B;
+
+		while(true) {
+			path.push_back(temp);
+			if(temp == C)
+				break;
+			temp = prev1[temp];
+		}
+
+		temp = prev[B];
+
+		while(true) {
+			path.push_front(temp);
+			if(temp == A) 
+				break;
+			temp = prev[temp];
+		}
+
+		cout << dist[B] + dist1[B] << endl;
+
+		while(!path.empty()) {
+			cout << path.front() + 1 << " " ;
+			path.pop_front();
+		}
+		cout << endl;
+	}
+	return 0;
+}
+

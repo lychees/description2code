@@ -1,0 +1,167 @@
+#include<bits/stdc++.h>
+
+#define x first
+#define y second
+#define y0 hi1
+#define y1 hi2
+#define ll long long
+#define mp make_pair
+#define pb push_back
+#define sqr(a) (a)*(a)
+#define ld long double
+#define all(a) (a).begin(), (a).end()
+
+using namespace std;
+
+const int N = 6 * 305;
+
+int f, d, t, n, m, a[N], b[N];
+const int inf = 2000000000;
+
+class edge{
+private:
+    //static int t;
+public:
+    int x, y, num, p, flow;
+    edge(int _x, int _y, int _flow, int &t){
+        num = t++;
+
+        x = _x;
+        y = _y;
+        flow = _flow;
+
+        if(t % 2)p = t;
+            else p = t - 2;
+    }
+    bool operator!=(edge e){
+        return (e.num != num);
+    }
+};
+
+vector<edge> old_E, E;
+vector<int> g[N];
+bool use[N];
+map<pair<int, int>, bool> use1;
+int q[N], dst[N];
+
+bool bfs(int s, int f, int H){
+    memset(dst, -1, sizeof(dst));
+    int l = 0, r = 1;
+    q[r] = s;
+    dst[s] = 0;
+    while(l < r){
+        int v = q[++l];
+        for(int i = 0; i < g[v].size(); i++){
+            edge e1 = E[g[v][i]];
+            if(e1.y > 2 * n && e1.y < f && b[e1.y - 2 * n - 1] > H)continue;
+            if(dst[e1.y] == -1 && e1.flow > 0){
+                q[++r] = e1.y;
+                dst[e1.y] = dst[v] + 1;
+
+            }
+        }
+    }
+    return (dst[f] != -1);
+}
+int getnode(edge *e){
+    return (2 * n + 1 + e -> x - 1 + a[e -> y - n - 1]);
+}
+int dfs(int v, int f, int flow, int H){
+    if(!f)return 0;
+    if(v == f)return flow;
+
+    use[v] = true;
+    for(int i = g[v].size() - 1; i >= 0; i--){
+        edge *e1 = &E[g[v][i]];
+        edge *e2 = &E[e1 -> p];
+
+        int to = e1 -> y;
+
+        if(use[to]){
+            continue;
+        }
+        if(v >= 1 && v <= n && to >= n + 1 && to <= 2 * n && b[v - 1 + a[to - n - 1]] > H){
+            continue;
+        }
+        if(e1 -> flow == 0){
+            continue;
+        }
+        int x = dfs(e1 -> y, f, min(flow, e1 -> flow), H);
+        if(x != 0){
+            e1 -> flow -= x;
+            e2 -> flow += x;
+            return x;
+        }
+    }
+    //cout << "-" << v << " ";
+    return 0;
+}
+
+void add(int q, int w, int e = 1){
+    //cout << q << " " << w << " " << e << "\n";
+    edge e1(q, w, e, t);
+    g[q].pb(e1.num);
+    E.pb(e1);
+    edge e2(w, q, 0, t);
+    g[w].pb(e2.num);
+    E.pb(e2);
+}
+int st(int x){
+    return x;
+}
+int fn(int x){
+    return (x + 2 * n + m);
+}
+void build(){
+    for(int i = 1; i <= n; i++){
+        add(0, i);
+        for(int j = 1; j <= n; j++){
+            add(i, n + j);
+        }
+        add(n + i, f);
+    }
+    old_E = E;
+}
+
+bool check(int H){
+    E = old_E;
+    int flow = 0;
+    bool had = true;
+    while(had){
+        memset(use, false, sizeof(use));
+        use1.clear();
+        had = dfs(0, f, 1, H);
+        flow += had;
+        //cout << "\n";
+    }
+    //cout << H << " " << flow << "\n";
+    return(flow == n);
+}
+
+int main(){
+    cin.tie(0);
+    ios_base::sync_with_stdio(0);
+    //freopen("1.txt", "r", stdin);
+    //freopen("1.out", "w", stdout);
+    cin >> n >> m;
+    f = 2 * n + 1;
+    for(int i = 0; i < n; i++){
+        cin >> a[i];
+        //a[i] = rand() % n;
+    }
+    for(int i = 0; i < n + m - 1; i++){
+        cin >> b[i];
+        //b[i] = rand() % (m + 1);
+        d = max(d, b[i]);
+    }
+    build();
+    int l = 1;
+    int r = d;
+    while(r - l > 1){
+        int mid = (l + r) / 2;
+        if(check(mid))r = mid;
+                 else l = mid + 1;
+    }
+    if(check(l))cout << l; else
+    if(check(r))cout << r;
+}

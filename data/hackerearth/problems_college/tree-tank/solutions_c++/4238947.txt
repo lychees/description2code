@@ -1,0 +1,114 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define PB push_back
+#define MP make_pair
+#define N 100001
+
+vector< vector<int> > adj(N), w(N);
+int n, currn, mid, nodes[N];
+ll dp1[N], dp2[N];
+bool visited[N];
+ll K;
+
+void dfs1(int i){
+	visited[i] = 1;
+
+	for(int j = 0; j < adj[i].size(); j++){
+		int k = adj[i][j];
+
+		if(w[i][j] <= mid && visited[k] == 0){
+			dfs1(k);
+			dp1[i] += (nodes[k] + dp1[k]);
+			nodes[i] += nodes[k];
+		}
+	}
+
+	nodes[i]++;
+}
+
+ll dfs2(int i){
+	visited[i] = 1;
+	ll ans = dp1[i] + dp2[i];
+
+	for(int j = 0; j < adj[i].size(); j++){
+		int k = adj[i][j];
+
+		if(w[i][j] <= mid && visited[k] == 0){
+			dp2[k] = dp2[i] + (dp1[i] - dp1[k] - nodes[k] + currn - nodes[k]);
+			ans = min(ans, dfs2(k));
+		}
+	}
+
+	return ans;
+}
+
+bool check(){
+	ll cost = 0;
+	int i;
+
+	for(i = 1; i <= n; i++)
+		if(visited[i] == 0)
+			dfs1(i);
+
+	for(i = 1; i <= n; i++)
+		visited[i] = 0;
+
+	for(i = 1; i <= n; i++)
+		if(visited[i] == 0){
+			currn = nodes[i];
+			cost += dfs2(i);
+		}
+
+	for(i = 1; i <= n; i++){
+		visited[i] = 0;
+		dp1[i] = dp2[i] = 0;
+		nodes[i] = 0;
+	}
+
+	// printf("%d %lld\n", mid, cost);
+
+	return (cost <= K);
+}
+
+int binarysearch(){
+	int i = 0, j = 1000000000, k = 0;
+
+	while(i <= j){
+		mid = i + (j - i) / 2;
+
+		if(check()){
+			k = mid;
+			i = mid + 1;
+		}
+		else
+			j = mid - 1;
+	}
+
+	return k;
+}
+
+int main(){
+	int m, i, j, k;
+
+	scanf("%d%lld", &n, &K);
+
+	m = n - 1;
+
+	while(m--){
+		scanf("%d%d%d", &i, &j, &k);
+		adj[i].PB(j);
+		adj[j].PB(i);
+		w[i].PB(k);
+		w[j].PB(k);
+	}
+
+	printf("%d\n", binarysearch());
+
+	return 0;
+}

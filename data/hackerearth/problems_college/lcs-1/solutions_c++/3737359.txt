@@ -1,0 +1,122 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long int ll;
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+namespace SuffixArray
+{
+	const int MAXN = 1 << 21;
+	string S;
+	int N, gap;
+	int sa[MAXN], pos[MAXN], tmp[MAXN], lcp[MAXN];
+
+	bool sufCmp(int i, int j)
+	{
+		if (pos[i] != pos[j])
+			return pos[i] < pos[j];
+		i += gap;
+		j += gap;
+		return (i < N && j < N) ? pos[i] < pos[j] : i > j;
+	}
+
+	void buildSA()
+	{
+		N = S.size();
+		REP(i, N) sa[i] = i, pos[i] = S[i];
+		for (gap = 1;; gap *= 2)
+		{
+			sort(sa, sa + N, sufCmp);
+			REP(i, N - 1) tmp[i + 1] = tmp[i] + sufCmp(sa[i], sa[i + 1]);
+			REP(i, N) pos[sa[i]] = tmp[i];
+			if (tmp[N - 1] == N - 1) break;
+		}
+	}
+
+	void buildLCP()
+	{
+		for (int i = 0, k = 0; i < N; ++i) if (pos[i] != N - 1)
+		{
+			for (int j = sa[pos[i] + 1]; S[i + k] == S[j + k];)
+			++k;
+			lcp[pos[i]] = k;
+			if (k)--k;
+		}
+	}
+} 
+
+using namespace SuffixArray;
+char s[200010];
+int rightVal[1000100],leftVal[1000100],sval[1000100];
+int main()
+{
+	int n;
+	cin>>n;
+	int totSize = 0;
+	for(int i=1;i<=n;i++)
+	{
+		scanf("%s",s);
+		int m = strlen(s);
+		for(int j=0;j<m;j++)
+		{
+			S.push_back(s[j]);
+		}
+		S.push_back('A');
+		totSize += (m+1);
+	}
+	vi sz;
+	int q;
+	cin>>q;
+	n = totSize;
+	for(int i=1;i<=q;i++)
+	{
+		scanf("%s",s);
+		int m = strlen(s);
+		for(int j=0;j<m;j++)
+		{
+			S.push_back(s[j]);
+		}
+		S.push_back('B');
+		sz.push_back(m);
+		n+=(m+1);
+	}
+	//cout<<S<<endl;
+	buildSA();
+	buildLCP();
+	int INF = 1e7;
+	if(sa[0]<totSize)
+		leftVal[0]=INF;
+	else leftVal[0]=0;
+	for(int i=1;i<n;i++)
+	{
+		if(sa[i]<totSize)
+			leftVal[i]=INF;
+		else leftVal[i]=min(leftVal[i-1],lcp[i-1]);
+	}
+	if(sa[n-1]<totSize)
+		rightVal[n-1]=INF;
+	else rightVal[n-1]=0;
+	for(int i=n-2;i>=0;i--)
+	{
+		if(sa[i]<totSize)
+			rightVal[i]=INF;
+		else rightVal[i]=min(rightVal[i+1],lcp[i]);
+	}
+	for(int i=0;i<n;i++)
+	{
+		sval[sa[i]]=max(rightVal[i],leftVal[i]);
+	}
+	int cur = totSize;
+	for(int i=1;i<=q;i++)
+	{
+		int szz = sz[i-1];
+		int ans  =0;
+		for(int j=cur;j<(cur+szz);j++)
+		{
+			ans=max(ans,sval[j]);
+		}
+		cout<<ans<<endl;
+		cur += (szz+1);
+	}
+}

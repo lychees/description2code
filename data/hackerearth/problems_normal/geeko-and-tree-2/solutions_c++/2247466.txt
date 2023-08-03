@@ -1,0 +1,219 @@
+#include <iostream>
+#include <algorithm>
+#include <ctime>
+using namespace std;
+
+long long t, k, n;
+
+class bigint {
+
+    public:
+
+    char val[10000] = {0};
+    int msdindex;
+    bool iszero;
+
+    void print() {
+        if( iszero )
+            cout << "0\n";
+        else {
+            for( int i = msdindex; i >= 0; i-- ) {
+                cout << (int)val[i];
+            }
+            cout << endl;
+        }
+    }
+
+    void sum() {
+        int s = 0;
+        for( int i = 0; i <= msdindex; i++ )
+            s += val[i];
+        cout << s << endl;
+    }
+
+    bigint( int i ) {
+        if( i == 0 )
+            iszero = true;
+        else {
+            iszero = false;
+            msdindex = -1;
+            while( i > 0 ) {
+                msdindex++;
+                val[ msdindex ] = i % 10;
+                i /= 10;
+            }
+        }
+    }
+
+    bigint( const bigint& bi ) {
+        msdindex = bi.msdindex;
+        iszero = bi.iszero;
+        for( int i = 0; i <= msdindex; i++ )
+            val[i] = bi.val[i];
+    }
+
+};
+
+bigint one(1);
+bigint zero(0);
+
+bigint operator+( bigint ai, bigint bi ) {
+
+    if( ai.iszero )
+        return bigint(bi);
+    if( bi.iszero )
+        return bigint(ai);
+
+    bigint ci = zero;
+    ci.iszero = false;
+
+    int carry = 0;
+    int i;
+
+    for( i = 0; i <= ai.msdindex || i <= bi.msdindex; i++ ) {
+        ci.val[i] = ai.val[i] + bi.val[i] + carry;
+        carry = ci.val[i] / 10;
+        ci.val[i] %= 10;
+    }
+
+    if( carry == 1 ) {
+        ci.val[i] = 1;
+        i++;
+    }
+
+    ci.msdindex = i-1;
+
+    return ci;
+}
+
+bigint operator-( bigint ai, bigint bi ) {
+
+    if( bi.iszero )
+        return bigint(ai);
+
+    bigint ci = zero;
+    ci.iszero = false;
+
+    int borrow = 0;
+    int i;
+
+    for( i = 0; i <= ai.msdindex; i++ ) {
+        if( ai.val[i] - borrow - bi.val[i] < 0 ) {
+            ci.val[i] = 10 + ai.val[i] - borrow - bi.val[i];
+            borrow = 1;
+        } else {
+            ci.val[i] = ai.val[i] - borrow - bi.val[i];
+        }
+    }
+
+    i--;
+    while( ci.val[i] == 0 )
+        i--;
+
+    ci.msdindex = i;
+
+    return ci;
+}
+
+bigint operator*( bigint ai, bigint bi ) {
+
+    if( ai.iszero )
+        return zero;
+    if( bi.iszero )
+        return zero;
+
+    bigint ci = zero;
+    ci.iszero = false;
+
+    for( int i = 0; i <= ai.msdindex; i++ ) {
+
+        int carry = 0;
+        int j;
+        for( j = 0; j <= bi.msdindex; j++ ) {
+            int temp = ci.val[i+j] + (ai.val[i] * bi.val[j]) + carry;
+            ci.val[i+j] = temp % 10;
+            carry = temp / 10;
+        }
+
+        int k = 0;
+        while( carry > 0 ) {
+            ci.val[ i + j + k ] += carry % 10;
+            carry /= 10;
+        }
+
+    }
+
+    int k = ai.msdindex + bi.msdindex + 1;
+
+    while( ci.val[k] == 0 )
+        k--;
+
+    ci.msdindex = k;
+
+    return ci;
+}
+
+bigint operator^( bigint k, int n ) {
+
+    if( n == 1 )
+        return bigint(k);
+
+    bigint half = k^(n/2);
+
+    if( n % 2 ) {
+        return half * half * k;
+    }
+    else
+        return half * half;
+
+}
+
+
+bigint operator/( bigint ai, int i ) {
+
+    if( i == 1 )
+        return bigint(ai);
+
+    bigint ci = zero;
+    ci.iszero = false;
+
+    int remainder = 0;
+    for( int k = ai.msdindex; k >= 0; k-- ) {
+        int temp = ai.val[k] + 10 * remainder;
+        ci.val[k] = temp / i;
+        remainder = temp % i;
+    }
+
+    int k = ai.msdindex;
+    while( ci.val[k] == 0 )
+        k--;
+
+    ci.msdindex = k;
+
+    return ci;
+
+}
+
+int main()
+{
+    time_t beg = clock();
+
+    cin >> t;
+
+    while ( t-- ) {
+        cin >> k >> n;
+
+        bigint kk(k);
+        bigint kn1 = kk^(n+1);
+
+        kn1 = kn1 - 1;
+
+        kn1 = kn1 / (k-1);
+
+        kn1.sum();
+    }
+
+//    cout << "\nTime " << (clock()-beg) << endl;
+
+    return 0;
+}

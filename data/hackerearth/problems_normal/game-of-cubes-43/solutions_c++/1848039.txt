@@ -1,0 +1,140 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define fr(i,a,b) for (int i = (a), _b = (b); i <= _b; i++)
+#define frr(i,a,b) for (int i = (a), _b = (b); i >= _b; i--)
+#define rep(i,n) for (int i = 0, _n = (n); i < _n; i++)
+#define repr(i,n) for (int i = (n) - 1; i >= 0; i--)
+#define foreach(it, ar) for ( typeof(ar.begin()) it = ar.begin(); it != ar.end(); it++ )
+#define fill(ar, val) memset(ar, val, sizeof(ar))
+
+#define uint64 unsigned long long
+#define int64 long long
+#define all(ar) ar.begin(), ar.end()
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+
+typedef pair<int, int> ii;
+typedef pair<int, ii> iii;
+typedef vector<ii> vii;
+typedef vector<int> vi;
+
+#define PI  3.1415926535897932385
+#define EPS 1e-7
+#define MOD 1000000007
+#define INF 1500111222
+#define MAX 111
+
+const int dx[] = { -1, 1, 0, 0 };
+const int dy[] = { 0, 0, -1, 1 };
+
+int n, m;
+char s[MAX][MAX], tmp[MAX][MAX];
+vii li;
+bool mark[MAX][MAX];
+int bh[MAX];
+
+bool inside(int x, int y) {
+    return 0 <= x && x < n && 0 <= y && y < m;
+}
+
+void dfs(int x, int y) {
+    mark[x][y] = true;
+    li.pb(mp(x, y));
+    rep(i, 4) {
+        int xx = x + dx[i], yy = y + dy[i];
+        if (!inside(xx, yy)) continue;
+        if (mark[xx][yy]) continue;
+        if (s[xx][yy] != 'x') continue;
+        dfs(xx, yy);
+    }
+}
+
+void fillComp(const vii &v, char a[MAX][MAX]) {
+    rep(i, v.size())
+        a[v[i].ff][v[i].ss] = 'x';
+}
+
+bool touchComp(const vii &v) {
+    rep(i, v.size())
+        if (v[i].ff == bh[v[i].ss]) return true;
+    return false;
+}
+
+int getD(char a[MAX][MAX], int x, int y) {
+    int res = 0;
+    while (x > 0) {
+        x--;
+        res++;
+        if (x == 0) break;
+        if (a[x - 1][y] == 'x') break;
+    }
+    return res;
+}
+
+void goDown() {
+    rep(i, n) {
+        rep(j, m) {
+            tmp[i][j] = '.';
+            mark[i][j] = false;
+            bh[j] = 0;
+        }
+    }
+
+    vii comp;
+    rep(i, n) rep(j, m)
+        if (s[i][j] == 'x' && !mark[i][j]) {
+            li.clear();
+            dfs(i, j);
+            if (touchComp(li)) {
+                fillComp(li, tmp);
+                rep(k, li.size())
+                    bh[li[k].ss] = max(bh[li[k].ss], li[k].ff + 1);
+            }
+            else comp = li;
+        }
+    //rep(i, m) printf("%d ", bh[i]); puts("");
+    if (comp.size() > 0) {
+        int k = INF;
+        rep(i, comp.size())
+            k = min(k, getD(tmp, comp[i].ff, comp[i].ss));
+        //printf("%d: %d\n", k, comp.size());
+        rep(i, comp.size())
+            comp[i].ff -= k;
+        fillComp(comp, tmp);
+    }
+    rep(i, n) rep(j, m)
+        s[i][j] = tmp[i][j];
+}
+
+void move(int h, int st, int nd, int k) {
+    for (int i = st; i != nd; i += k)
+        if (s[h][i] == 'x') {
+            s[h][i] = '.';
+            goDown();
+            break;
+        }
+}
+
+int main() {
+    #ifndef ONLINE_JUDGE
+        freopen("test.inp", "r", stdin);
+        //freopen("test.out", "w", stdout);
+    #endif
+    int q, h;
+    scanf("%d %d", &n, &m);
+    repr(i, n) scanf(" %s ", s[i]);
+    scanf("%d", &q);
+    rep(i, q) {
+        scanf("%d", &h);
+        if (i & 1) move(h - 1, m - 1, -1, -1);
+        else move(h - 1, 0, m, 1);
+        //repr(i, n) puts(s[i]); puts("");
+    }
+    repr(i, n) puts(s[i]);
+    return 0;
+}
+
+// Viet P. Lam - lamphanviet@gmail.com - http://blog.lamphanviet.com

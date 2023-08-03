@@ -1,0 +1,64 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
+using namespace std;
+
+const int N = 1000000;
+const int K = 32000;
+
+bool f[N+1];
+int a[K];
+int h[K*4];
+
+void add(int id, int l, int r, int i) {
+	if (l+1 == r) { h[id] = 1; return; }
+	h[id]++;
+	int m = (l+r) / 2;
+	if (i < m) add(id*2, l, m, i); else add(id*2+1, m, r, i);
+}
+
+void sub(int id, int l, int r, int i) {
+	if (l+1 == r) { h[id] = 0; return; }
+	h[id]--;
+	int m = (l+r) / 2;
+	if (i < m) sub(id*2, l, m, i); else sub(id*2+1, m, r, i);
+}
+
+int query(int id, int l, int r, int a, int b) {
+	if (a == l && b == r) return h[id];
+	int m = (l+r) / 2;
+	if (b <= m) return query(id*2, l, m, a, b);
+	if (a >= m) return query(id*2+1, m, r, a, b);
+	return query(id*2, l, m, a, m) + query(id*2+1, m, r, m, b);
+}
+
+int main() {
+	f[0] = f[1] = true;
+	for (int i = 2; i <= N; i++) if (!f[i]) for (int j = i+i; j <= N; j += i) f[j] = true;
+	int t; scanf("%d", &t);
+	while (t--) {
+		int n; scanf("%d", &n);
+		memset(h, 0, sizeof(h));
+		for (int i = 0; i < n; i++) {
+			int x; scanf("%d", &x);
+			if (!f[x]) a[i] = 1, add(1, 0, n, i); else a[i] = 0;
+		}
+		int q; scanf("%d", &q);
+		while (q--) {
+			char ch[2]; scanf("%s", ch);
+			if (ch[0] == 'A') {
+				int a, b; scanf("%d%d", &a, &b); a--;
+				printf("%d\n", query(1, 0, n, a, b));
+			} else {
+				int i, v; scanf("%d%d", &i, &v); i--;
+				if (!f[v] && a[i] == 0)
+					add(1, 0, n, i);
+				else if (f[v] && a[i] == 1)
+					sub(1, 0, n, i);
+				a[i] = (f[v] ? 0 : 1);
+			}
+		}
+	}
+    return 0;
+}

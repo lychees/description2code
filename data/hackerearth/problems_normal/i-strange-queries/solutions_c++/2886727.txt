@@ -1,0 +1,125 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define ll long long int
+#define pi pair<ll,ll>
+#define pii pair<pi,int>
+#define f first
+#define s second
+#define mod 1000000007
+#define pb push_back
+ll f[50011];
+ll pt[50011];
+int N;
+int A[50011];
+ll c[50011];
+struct Qpair{
+    int l1,r1,l2,r2,ind;
+};
+bool func1(Qpair a,Qpair b){
+    return a.l1<b.l1;
+}
+int main(){
+    int Q,l,r,l1,r1;
+    cin >> N;
+    rep(i,N){
+        cin >> A[i];
+    }
+    cin >> Q;
+    vector<Qpair>q;
+    rep(j,Q){
+        cin >> l >> r >> l1 >> r1;
+        l--,r--,l1--,r1--;
+        q.pb({l,r,l1,r1,j});
+    }
+    int sz=200;
+    for(int i=0;i<N;i+=sz){
+           for(int j=i;j<i+sz;j++){
+                f[A[j]]++;
+           }
+           for(int j=0;j<N;j++){
+                c[j]=c[j-1]+f[A[j]];
+           }
+           rep(j,Q){
+                if( q[j].r2>=i+sz-1 and q[j].l2<=i ){
+                    pt[j]+=c[q[j].r1];
+                    if(q[j].l1)
+                        pt[j]-=c[q[j].l1-1];
+                    if(j==2){
+                        //cout<<i<<" "<<i+sz-1<<"\n";
+                    }
+                }
+           }
+           for(int j=i;j<i+sz;j++){
+                f[A[j]]--;
+           }
+    }
+    vector<Qpair>s;
+    for(auto x:q){
+        if(x.l1!=0)
+            s.pb({x.l1-1,-1,x.l2,x.r2,-x.ind-1});
+        s.pb({x.r1,-1,x.l2,x.r2,x.ind+1});
+    }
+    sort(s.begin(),s.end(),func1);
+    int j=0;
+    for(int i=0;i<N;i++){
+        f[A[i]]++;
+        while(j<s.size() and s[j].l1==i){
+
+            int ind=s[j].ind;
+            if(ind<0) ind*=-1;
+            ind--;
+
+            int a=s[j].l2;
+            int b=s[j].r2;
+            if(a/sz==b/sz){
+                if(b-a+1!=sz)
+                for(int k=a;k<=b;k++){
+                    if(s[j].ind<0){
+                        pt[ind]-=f[A[k]];
+                    }
+                    else{
+                        pt[ind]+=f[A[k]];
+                    }
+
+                }
+            }
+            else{
+                if(a%sz!=0){
+                   int cur=a/sz;
+                   cur++;
+                   for(int k=a;k<min(N,cur*sz);k++){
+                        if(s[j].ind<0){
+                            pt[ind]-=f[A[k]];
+                        }
+                        else{
+                            pt[ind]+=f[A[k]];
+                        }
+                        if(ind==2){
+                           // cout<<k<<" ";
+                        }
+                   }
+                }
+                if((b+1)%sz!=0 ){
+                    int cur=b/sz;
+                    for(int k=cur*sz;k<=b;k++){
+                        if(s[j].ind<0){
+                            pt[ind]-=f[A[k]];
+                        }
+                        else{
+                            pt[ind]+=f[A[k]];
+                        }
+                        if(ind==2){
+                           // cout<<k<<" ";
+                        }
+                    }
+                }
+            }
+            j++;
+        }
+    }
+    //cout<<j<<" ";
+    rep(j,Q){
+        cout<<pt[j]<<"\n";
+    }
+}

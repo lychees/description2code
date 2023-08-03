@@ -1,0 +1,188 @@
+#include<bits/stdc++.h>
+#define assn(n,a,b) assert(n<=b and n>=a)
+#define pb push_back
+#define mp make_pair
+#define F first
+#define S second
+#define SZ(a) (int)(a.size())
+#define SET(a,b) memset(a,b,sizeof(a))
+#define LET(x,a) __typeof(a) x(a)
+#define TR(v,it) for( LET(it,v.begin()) ; it != v.end() ; it++)
+#define repi(i,n) for(int i=0; i<(int)n;i++)
+#define sd(n) scanf("%d",&n)
+#define sl(n) scanf("%lld",&n)
+#define sortv(a) sort(a.begin(),a.end())
+#define all(a) a.begin(),a.end()
+#define DRT()  int t; cin>>t; while(t--)
+using namespace std;
+
+//FILE *fin = freopen("in","r",stdin);
+//FILE *fout = freopen("out","w",stdout);
+
+//#define TRACE
+#ifdef TRACE
+#define trace(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+    cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+    const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define trace(...)
+#endif
+
+typedef long long LL;
+typedef pair<int,int> PII;
+typedef vector<int> VI;
+typedef vector< PII > VPII;
+
+
+#define MAXN 100009
+
+#define MOD (LL)(-1e15)
+struct node{
+    LL ans,pre,suf,tot;
+    node(LL ans_, LL pre_, LL suf_, LL tot_): ans(ans_), pre(pre_), suf(suf_), tot(tot_) {}
+    node(){ans=pre=suf=tot=MOD;}
+};
+
+VI adj[MAXN];
+int n,L[MAXN],T[MAXN];
+int G[MAXN];
+node P[MAXN][20];
+int lca[MAXN][20];
+
+void dfs(int node, int p, int h){
+    T[node]=p;
+    L[node]=h;
+    for(auto &j: adj[node]){
+        if(j==p)continue;
+        dfs(j, node, h+1);
+    }
+}
+
+node merge(node a, node b){
+    node ret;
+
+    ret.ans=max(a.ans, b.ans);
+    ret.ans=max(ret.ans, a.suf);
+    ret.ans=max(ret.ans, b.pre);
+    ret.ans=max(ret.ans, a.suf + b.pre);
+
+    ret.pre=a.pre;
+    ret.pre=max(ret.pre, a.tot+b.pre);
+
+    ret.suf=b.suf;
+    ret.suf=max(ret.suf, a.suf+b.tot);
+
+    ret.tot=a.tot+b.tot;
+
+    return ret;
+}
+
+void print(node a){
+    trace(a.ans,a.pre,a.suf,a.tot);
+}
+
+void process(){
+    int i,j;
+    for (i = 0; i < n; i++)
+        for (j = 0; 1 << j < n; j++)
+            lca[i][j] = -1;
+             
+    for (i = 0; i < n; i++){
+        P[i][0] = node(G[i], G[i], G[i], G[i]);
+        lca[i][0] = T[i];
+    }
+
+    for (j = 1; 1 << j < n; j++)
+        for (i = 0; i < n; i++){
+            if (lca[i][j - 1] != -1){
+                lca[i][j] = lca[lca[i][j - 1]][j - 1];
+                P[i][j] = merge(P[i][j-1], P[lca[i][j - 1]][j - 1]);
+            }
+        }
+}
+int getlca(int p, int q)
+{
+    int tmp, log, i;
+
+    if (L[p] < L[q])
+        tmp = p, p = q, q = tmp;
+    for (log = 1; 1 << log <= L[p]; log++);
+    log--;
+    for (i = log; i >= 0; i--)
+        if (L[p] - (1 << i) >= L[q])
+            p = lca[p][i];
+
+    if (p == q)
+        return p;
+
+    for (i = log; i >= 0; i--)
+        if (lca[p][i] != -1 && lca[p][i] != lca[q][i])
+            p = lca[p][i], q = lca[q][i];
+
+    return T[p];
+}
+
+
+
+node query(int p, int q){
+    node ret;
+    int log,i;
+    for (log = 1; 1 << log <= L[p]; log++);
+    log--;
+
+    for (i = log; i >= 0; i--)
+        if (L[p] - (1 << i) >= L[q]){
+            trace("merging in end", p, i);
+            if(ret.ans==MOD)ret=P[p][i];
+            else ret=merge(ret, P[p][i]);
+            p = lca[p][i];
+        }
+    return ret;
+}
+
+int main()
+{
+    sd(n);
+    for(int i=1; i<n; i++){
+        int u,v; sd(u),sd(v); u--,v--;
+        adj[u].pb(v);
+        adj[v].pb(u);
+    }
+    for(int i=0; i<n; i++)
+        sd(G[i]);
+    dfs(0,-1,0);
+    process();
+    /*
+    for(int i=0; i<n; i++)
+        for(int j=0; 1<<j < n; j++){
+            printf("%d %d ",i,j);
+            print(P[i][j]);
+        }
+        */
+    int q;
+    sd(q);
+    while(q--){
+        int u,v; sd(u),sd(v); u--,v--;
+        int llca=getlca(u, v);
+        trace(llca);
+        node ret1=query(u,llca);
+        node ret2=query(v,llca);
+        swap(ret2.suf,ret2.pre);
+        print(ret1);
+        print(ret2);
+        ret1=merge(ret1,node(G[llca], G[llca], G[llca], G[llca] ));
+        print(ret1);
+        ret1=merge(ret1,ret2);
+        print(ret1);
+        printf("%lld\n",ret1.ans);
+    }
+    return 0;
+}
+
+

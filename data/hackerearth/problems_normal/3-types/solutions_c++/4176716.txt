@@ -1,0 +1,102 @@
+#include <iostream>
+#include <vector>
+#include <utility>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+
+int root(int Arr[], int i)
+{
+	while (Arr[i] != i)
+	{
+		Arr[i] = Arr[Arr[i]];
+		i = Arr[i];
+	}
+	return i;
+}
+
+void initialize(int Arr[], int N)
+{
+	for (int i = 0; i<N; i++)
+	{
+		Arr[i] = i;
+	}
+}
+
+void union1(int Arr[], int A, int B)
+{
+	int root_A = root(Arr, A);
+	int root_B = root(Arr, B);
+	Arr[root_A] = root_B;       //setting parent of root(A) as root(B).
+}
+
+
+pair <int, pair<int, int> > p[10005];
+
+int main()
+{
+	int ws, ms, n, m;
+	cin >> n >> m;
+
+	int wv[1001];
+	int mv[1001];
+	initialize(wv, 1001);
+	initialize(mv, 1001);
+
+	int x, y, type, t3 = 0, t1 = 0, t2 = 0;
+	for (int i = 0; i < m; ++i)
+	{
+		cin >> x >> y >> type;
+		p[i] = make_pair(type, make_pair(x, y));
+	}
+	// Sort the edges in the ascending order
+	sort(p, p + m);
+	int lastType = 0;
+	for (int i = m - 1; i >= 0; --i)
+	{
+
+		x = p[i].second.first;
+		y = p[i].second.second;
+		type = p[i].first;
+
+		if (lastType == 3 && type != 3)
+			memcpy(wv, mv, sizeof(int) * 1001);
+		lastType = type;
+		if (type == 3 && root(mv, x) != root(mv, y))
+		{
+				union1(mv, x, y);
+				t3++;
+		}
+		else if (type == 2 && root(mv, x) != root(mv, y))
+		{
+			union1(mv, x, y);
+			t2++;
+		}
+		else if ((type == 1 && root(wv, x) != root(wv, y)))
+		{
+			union1(wv, x, y);
+			t1++;
+		}
+	}
+	if (lastType == 3)
+			memcpy(wv, mv, sizeof(int) * 1001);
+	bool connected=true;
+	int m1=root(mv, 1);
+	int w1=root(wv, 1);
+	for(int i=1;i<=n;i++)
+	{
+		if(w1 != root(wv, i)){
+			connected=false;
+			break;
+		}
+		if(m1 != root(mv, i)){
+			connected=false;
+			break;
+		}
+	}
+	if(connected)
+		cout << m - t1 - t2 - t3 << endl;
+	else
+		cout << -1 <<endl;
+	return 0;
+}

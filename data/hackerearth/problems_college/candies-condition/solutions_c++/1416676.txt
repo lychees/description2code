@@ -1,0 +1,211 @@
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cstring>
+#include <sstream>
+#include <vector>
+#include <iomanip>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue> 
+#include <climits>
+#include <cassert>
+
+using namespace std;
+typedef long long LL;
+typedef pair<int,int> pii;
+typedef pair< int, pii > tri;
+
+typedef vector<int> array;
+typedef vector<LL> array_LL;
+typedef vector<vector<int> > matrix;
+typedef vector<vector<LL> > matrix_LL;
+
+
+#define pb push_back
+#define mp make_pair
+#define sz size()
+#define ln length()
+#define forr(i,a,b)                 for(int i=a;i<b;i++)
+#define rep(i,n)                    forr(i,0,n) 
+#define all(v)                      v.begin(),v.end()    
+#define uniq(v)                     sort(all(v));v.erase(unique(all(v)),v.end())
+#define clr(a)                      memset(a,0,sizeof a)
+    
+#define debug                       if(1)
+#define debugoff                    if(0)    
+
+#define print(x)                 cerr << x << " ";    
+#define pn()                     cerr << endl;
+#define trace1(x)                cerr << #x << ": " << x << endl;
+#define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+
+#define endl '\n'
+#define MAX 100010
+#define MAXX 1010
+#define MOD 1000000007
+int sieve[MAXX],hsh[MAXX];
+int primes[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599, 601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691, 701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797, 809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887, 907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997};
+void factor_sieve(){
+    for(int i=1;i < MAXX;i++)
+        sieve[i] = i;
+    for(int i=2;i*i < MAXX;i++){
+        if(sieve[i] == i){
+            for(int j=i*i;j<MAXX;j+=i)
+                if(sieve[j] == j)
+                    sieve[j] = i;
+        }
+    }
+
+    for(int i=0;i<168;i++){
+        hsh[primes[i]] = i;
+    }
+}
+namespace segmentTree
+{
+    LL input[MAX];
+    struct data
+    {
+        int fact[200];
+    };
+    data tree[3*MAX];
+    data combine_data(data left,data right)
+    {
+        data res;
+        for(int i=0;i<168;i++)
+            res.fact[i] = max(left.fact[i],right.fact[i]);
+        return res;
+    }
+    data make_data(LL n)
+    {
+        data res;
+        //res.Lmax = res.Rmax = res.maxv = max(0,val);//for getting 0 ans
+        //when all numbers are negative
+        //res.sum = val;
+        for(int i=0;i<168;i++)  res.fact[i] = 0;
+        int temp = sieve[n];
+        n /= sieve[n];
+        int cnt = 1;
+        while(sieve[n] != 1){
+            if(temp == sieve[n])
+                cnt++;
+            else{
+                res.fact[hsh[temp]] = cnt;
+                temp = sieve[n];
+                cnt = 1;
+            }
+            n /= sieve[n];
+        }
+
+        if(temp > 1)
+            res.fact[hsh[temp]] = cnt;      
+
+        return res;
+    }
+    void init_tree(int node,int b,int e)
+    {
+        if(b==e) // leaf node
+        {
+            tree[node] = make_data(input[b]);
+            return ;
+        }
+        int mid = (b+e)/2;
+        init_tree(2*node,b,mid);
+        init_tree(2*node+1,mid+1,e);
+        tree[node] = combine_data(tree[2*node],tree[2*node+1]);
+    }
+    void update(int node,int b,int e,int index,int newval)
+    {
+        if(b==e)
+        {
+            tree[node] = make_data(newval);
+            return ;
+        }
+
+        int mid = (b+e)/2;
+        // go to left or right child acc to mid in the search of
+        // indexleafnode
+        if(index<=mid)
+            update(2*node,b,mid,index,newval);
+        else
+            update(2*node+1,mid+1,e,index,newval);
+
+        tree[node] = combine_data(tree[2*node],tree[2*node+1]);
+    }
+    data query(int node,int b,int e,int i,int j)    
+    {
+        if(b>=i &&  e<=j)//in range   
+            return tree[node];
+        
+        //out of range ?? what to return( 0 , INT_MIN  nothing ) ?? 
+        //not sure,  So go to left or right child acc to mid
+        int mid = (b+e)/2;
+        if(j<=mid)
+            return query(2*node,b,mid,i,j);
+        if(i>mid)//not else if ?? can go to both sides
+            return query(2*node+1,mid+1,e,i,j);
+        /***********out of range condition finished**********/
+        data p1 = query(2*node,b,mid,i,j);
+        data p2 = query(2*node+1,mid+1,e,i,j);
+        
+        return combine_data(p1,p2);
+    }
+
+
+}
+using namespace segmentTree;
+LL mod_expo(LL a,LL n)
+{
+    LL result = 1;
+    while(n)
+    {
+        if((n&1))
+            result = (result*a)%MOD;
+        a = (a*a)%MOD;
+        n >>= 1;
+    }
+    return result%MOD;
+}
+
+int main()
+{
+    factor_sieve();
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    int t,n,q,ch,a,b;
+    LL ans;
+    cin>>t;
+    while(t--)
+    {
+        cin>>n;
+        for(int i=1;i<=n;i++){
+            cin>>input[i];
+            assert(input[i] >= 1 && input[i] <= 1000);
+        }
+        init_tree(1,1,n);
+        cin>>q;
+        while(q--){
+            cin>>ch>>a>>b;
+            if(ch == 0){
+                update(1,1,n,a,b);
+            }
+            else{
+                if(a > b)
+                    swap(a,b);
+
+                ans = 1;
+                data ret = query(1,1,n,a,b);
+                for(int i=0;i<168;i++)
+                    if(ret.fact[i] > 0)
+                        ans = (ans * mod_expo(primes[i],ret.fact[i]))%MOD;
+                cout<<ans<<endl;
+            }
+
+        }
+    }
+    return 0; 
+}
+
+

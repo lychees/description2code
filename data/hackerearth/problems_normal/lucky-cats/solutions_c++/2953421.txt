@@ -1,0 +1,122 @@
+#include <bits/stdc++.h>
+#include <assert.h>
+#define PB push_back
+#define MP make_pair
+#define UNDEF -1
+#define MOD 1000000007LL
+using namespace std;
+typedef long long ll;
+typedef long double ld;
+typedef struct {
+	ll s;
+	ll a;
+} st;
+st ***f;
+int main() {
+	ios_base::sync_with_stdio(false);
+	string b; ll k; cin >> k; cin >> b;
+	k++;
+	ll n = b.length();
+	f = new st**[n];
+	for (ll d = 0; d < n; d++) {
+		f[d] = new st*[k+1];
+		for (ll p = 0; p <= k; p++) {
+			f[d][p] = new st[k];
+			for (ll si = 0; si < k; si++) {
+				f[d][p][si].s = 0;
+				f[d][p][si].a = 0;
+			}
+		}
+	}
+	for (ll p = 0; p <= k; p++) {
+		for (ll s = 0; s < k; s++) {
+			ll news = s + p;
+			ll a = 0;
+			if (news >= k) {
+				news = 0;
+				a++;
+			}
+			f[0][p][s].s = news;
+			f[0][p][s].a = a;
+			////printf("d: %d p: %d si: %d, s: %d a: %d\n",0,p,s,news,a);
+		}
+	}
+	for (ll d = 1; d < n; d++) {
+		for (ll p = 0; p <= k; p++) {
+			for (ll si = 0; si < k; si++) {
+				ll s = si; ll a = 0;
+				for (ll i = 0; i < 10; i++) {
+					st x;
+					if (i == 4 || i == 7) {
+						//assert(0 <= d-1 && d-1 < n);
+						//assert(0 <= min(p+1,k));
+						//assert(0 <= s && s < k);
+						x = f[d-1][min(p+1,k)][s];
+						s = x.s;
+						a += x.a;
+						//printf("%d %d %d %d,  s: %d a: %d, %d %d\n",i,d-1,min(p+1,k),s,x.s,x.a, s, a);
+					}
+					else {
+						//assert(0 <= d-1 && d-1 < n);
+						//assert(0 <= p && p <= k);
+						//assert(0 <= s && s < k);
+						x = f[d-1][p][s];
+						s = x.s;
+						a += x.a;
+						//printf("%d %d %d %d,  s: %d a: %d, %d %d\n",i,d-1,p,s,x.s,x.a, s, a);
+					}
+				}
+				a %= MOD;
+				//assert(0 <= d && d < n);
+				//assert(0 <= p && p <= k);
+				//assert(0 <= si && si < k);
+				f[d][p][si].s = s;
+				f[d][p][si].a = a;
+				//printf("d: %d p: %d si: %d, s: %d a: %d\n",d,p,si,s,a);
+			}
+		}
+	}
+	{
+		ll s = 0;
+		ll a = 0;
+		ll p = 0;
+		for (ll d = n-1; d >= 0; d--) {
+			//assert(0 <= n-1-d && n-1-d < n);
+			ll c = b[n-1-d]-'0';
+			//assert(0 <= c && c <= 9);
+			for (ll i = 0; i < c; i++) {
+				if (i==4 || i==7) {
+					//assert(0 <= d && d < n);
+					//assert(0 <= min(p+1,k));
+					//assert(0 <= s && s < k);
+					a += f[d][min(p+1,k)][s].a;
+					s = f[d][min(p+1,k)][s].s;
+				}
+				else {
+					//assert(0 <= d && d < n);
+					//assert(0 <= p && p <= k);
+					//assert(0 <= s && s < k);
+					a += f[d][p][s].a;
+					s = f[d][p][s].s;
+				}
+				////printf("%d %d\n", s,a);
+			}
+			a %= MOD;
+			if (c==4||c==7) p = min(p+1,k);
+			////printf("%d %d: %d %d %d\n", d,c,s,a,p);
+		}
+		ll cnt = 0;
+		for (ll i = 0; i < n; i++) {
+			ll c = b[i]-'0';
+			//assert(0 <= c && c <= 9);
+			if (c==4||c==7) {
+				cnt++;
+			}
+		}
+		if (cnt + s >= k) {
+			a++; s=0;
+		}
+		a %= MOD;
+		cout << a << endl;
+	}
+}

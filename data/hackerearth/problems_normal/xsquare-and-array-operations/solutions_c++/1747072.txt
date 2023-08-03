@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define mem(a, x) memset(a, x, sizeof(a))
+#define all(a) a.begin(), a.end()
+#define uni(a) a.erase(unique(all(a)), a.end())
+#define count_bits(x) __builtin_popcount(x)
+#define count_bitsll(x) __builtin_popcountll(x)
+#define least_bits(x) __builtin_ffs(x)
+#define least_bitsll(x) __builtin_ffsll(x)
+#define most_bits(x) 32 - __builtin_clz(x)
+#define most_bitsll(x) 64 - __builtin_clz(x)
+
+vector<string> split(const string &s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c)) v.push_back(x);
+	return v;
+}
+
+#define error(args...) { vector<string> _v = split(#args, ','); err(_v.begin(), args); }
+
+void err(vector<string>::iterator it) {}
+
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << '\n';
+	err(++it, args...);
+}
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {while (b != 0) {T c = a; a = b; b = c % b;} return a;}
+
+typedef pair<int, int> P;
+const int N = 100005;
+int n, a[N];
+
+struct node {
+    int maxi, id;
+};
+
+struct SegmentTree {
+    vector<node> seg;
+    
+    SegmentTree() {}
+    SegmentTree(int _n) {
+        int nn = 1;
+        while (nn <= _n) nn = nn << 1;
+        seg.resize(nn << 1);
+    }
+
+    void build_tree(int ind, int s, int e) {
+        if (e - s == 1) {
+            seg[ind].maxi = a[s];
+            seg[ind].id = s;
+            return;
+        }
+        int c1 = ind << 1, c2 = c1 | 1, m = (s + e) >> 1;
+        build_tree(c1, s, m);
+        build_tree(c2, m, e);
+        seg[ind].maxi = tmax(seg[c1].maxi, seg[c2].maxi);
+        if (seg[c1].maxi > seg[c2].maxi) seg[ind].id = seg[c1].id;
+        else seg[ind].id = seg[c2].id;
+    }
+    
+    /* interval [s, e) */
+    P query(int ind, int s, int e, int ss, int ee) {
+        if (s >= ee || e <= ss) return P(0, -1);
+        if (s >= ss && e <= ee) return P(seg[ind].maxi, seg[ind].id);
+        int c1 = ind << 1, c2 = c1 | 1, m = (s + e) >> 1;
+        P vl = query(c1, s, m, ss, ee);
+        P vr = query(c2, m, e, ss, ee);
+        if (vl.first > vr.first) return vl;
+        return vr;
+    }
+};
+
+SegmentTree st;
+
+ll solve(int lb, int rb) {
+	if (lb + 1 >= rb) return 0;
+	P p = st.query(1, 0, n, lb, rb);
+	int ind = p.second;
+	ll ans = a[ind];
+	if (ind < rb - 1 && ind > lb) ans += a[ind];
+	ans += solve(lb, ind) + solve(ind + 1, rb);
+	return ans;
+}
+
+int main(int argc, char *argv[]) {
+    ios_base::sync_with_stdio(false);
+    int ntest;
+    
+    cin >> ntest;
+    while (ntest--) {
+    	cin >> n;
+    	repu(i, 0, n) cin >> a[i];
+    	st = SegmentTree(n);
+    	st.build_tree(1, 0, n);
+    	printf("%lld\n", solve(0, n));
+    }
+    return 0;
+}

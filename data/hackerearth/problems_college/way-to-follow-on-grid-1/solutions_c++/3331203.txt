@@ -1,0 +1,132 @@
+
+
+    #include <stdio.h>
+    #include <stdlib.h>
+     
+    typedef long long int64;
+     
+    #define MAXD 10
+    #define MAXDIM 128 /* 100 + elbow room */
+    #define MAXLEN 300
+     
+    /* All math done modulo MOD. */
+    #define MOD 1000000007LL
+     
+    /* n choose k  */
+    int64 choose[MAXLEN+1][MAXLEN+1];
+     
+    void initbinomial(int maxn) {
+      int n, k;
+     
+      choose[0][0] = 1;
+      for (n = 1; n <= maxn; n++) {
+        choose[n][0] = choose[n][n] = 1;
+        for (k = 1; k <= n-1; k++)
+          choose[n][k] = (choose[n-1][k] + choose[n-1][k-1]) % MOD;
+      }
+    }
+     
+    int ndim;         /* N = number of dimensions */
+    int walklen;      /* M = total length of walk */
+    int initx[MAXD];  /* initial position */
+    int dim[MAXD];    /* dimension size */
+     
+    /* walks[i][n] = # of one-dimensional random walks of length n */
+    int64 walks[MAXD][MAXLEN+1];
+     
+    /* Compute all one-dimensional walks. */
+    void computewalks() {
+      int i, d, len;
+      int64 prev[MAXDIM], cur[MAXDIM];
+     
+      for (d = 0; d < ndim; d++) {
+        /* Initially, only one zero-length walk. */
+        for (i = 1; i <= dim[d]; i++)
+          cur[i] = 1;
+        walks[d][0] = 1;
+     
+        for (len = 1; len <= walklen; len++) {
+          /* Only need state from n-1 walks to compute n walks. */
+          for (i = 1; i <= dim[d]; i++)
+    	prev[i] = cur[i];
+          prev[0] = prev[dim[d]+1] = 0;
+          
+          /* 
+           * Two possibilities, left or right.
+           * Sentinels handle edge cases.
+           */
+          for (i = 1; i <= dim[d]; i++)
+    	cur[i] = (prev[i-1] + prev[i+1]) % MOD;
+     
+          /* We only care about walks leaving from the initial point */
+          walks[d][len] = cur[initx[d]];
+        }
+      }
+    }
+     
+    /* Compute # of n-dimensional walks of length walklen. */
+    int64 ndwalks() {
+      int d, m, k;
+      int64 prev[MAXLEN+1], cur[MAXLEN+1];
+      int64 paths;
+     
+      /* Initial value. */
+      cur[0] = 1;
+      for (m = 1; m <= walklen; m++)
+        cur[m] = 0;
+     
+      for (d = ndim-1; d >= 0; d--) {
+        for (m = 0; m <= walklen; m++)
+          prev[m] = cur[m];
+     
+        /* Subproblem: K out of M legs of the random walk occur in this
+         * dimension.  We know how many one-dimensional walks of length K
+         * there are in this dimension.  What do the with the remaining
+         * M-K legs is the other subproblem.
+         */
+        for (m = 0; m <= walklen; m++) {
+          cur[m] = 0;
+          for (k = 0; k <= m; k++) {
+    	paths = (choose[m][k] * walks[d][k]) % MOD;
+    	cur[m] += (paths * prev[m-k]) % MOD;
+    	cur[m] %= MOD;
+          }
+        }
+      }
+     
+      /* We care about full-length walks using all dimensions. */
+      return cur[walklen];
+    }
+     
+    void getinput() {
+      int i;
+     
+      if (scanf(" %d %d", &ndim, &walklen) != 2)
+        exit(1);
+      
+      for (i = 0; i < ndim; i++)
+        if (scanf(" %d", &initx[i]) != 1)
+          exit(1);
+      
+      for (i = 0; i < ndim; i++)
+        if (scanf(" %d", &dim[i]) != 1)
+          exit(1);
+    }
+     
+    int main() {
+      int ncases;
+     
+      initbinomial(MAXLEN);
+     
+      if (scanf(" %d", &ncases) != 1)
+        return 1;
+     
+      while (ncases-- > 0) {
+        getinput();
+        computewalks();
+        printf("%lld\n", ndwalks());
+      }
+     
+      return 0;
+    }
+

@@ -1,0 +1,99 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const long long mod = (int)1e9 + 7;
+const int N = (int)2e5 + 6;
+long long seg[4 * N], lazy[4 * N], p2[N];
+int b[4 * N], e[4 * N];
+
+inline void add(long long& a, long long b) { a += b; if (a >= mod) a -= mod; }
+
+void init(int n, int l, int r)
+{
+	b[n] = l, e[n] = r, seg[n] = lazy[n] = 0;
+	if (l == r) return;
+	int m = (l + r) / 2;
+	init(2 * n, l, m), init(2 * n + 1, m + 1, r);
+}
+
+void neut(int n)
+{
+	if (b[n] != e[n])
+	{
+		add(lazy[2*n], lazy[n]);
+		add(lazy[2*n+1], lazy[n] * p2[e[2*n]-b[2*n]+1] % mod);
+	}
+	add(seg[n], (p2[e[n]-b[n]+1] - 1) * lazy[n] % mod);
+	lazy[n] = 0;
+}
+
+void upd(int n, int l, int r, long long v)
+{
+	neut(n);
+	if (l > e[n] or r < b[n]) return;
+	if (l <= b[n] and e[n] <= r)
+	{
+		add(lazy[n], v * p2[b[n]-l] % mod);
+		return;
+	}
+	upd(2*n, l, r, v), upd(2*n+1, l, r, v);
+	int fst = max(l, b[n]), lst = min(r, e[n]);
+	add(seg[n], (p2[lst-l+1]-p2[fst-l]+mod) * v % mod);
+}
+
+long long que(int n, int l, int r)
+{
+	neut(n);
+	if (l > e[n] or r < b[n]) return 0;
+	if (l <= b[n] and e[n] <= r) return seg[n];
+	long long ret = que(2*n, l, r);
+	add(ret, que(2*n+1, l, r));
+	return ret;
+}
+
+int main()
+{
+	p2[0] = 1;
+	for (int i = 1; i < N; i++)
+	{
+		p2[i] = p2[i-1];
+		add(p2[i], p2[i-1]);
+	}
+
+	int n; scanf("%d", &n);
+	init (1, 0, n-1);
+	for (int i = 0; i < n; i++)
+	{
+		int x; scanf("%d", &x);
+		upd(1, i, i, x);
+	}
+
+	int m; scanf("%d", &m);
+	while (m--)
+	{
+		int ch, l, r; scanf("%d%d%d", &ch, &l, &r);
+		l--, r--;
+		if (ch == 0) upd(1, l, r, 2);
+		else printf("%lld\n", que(1, l, r));
+	}
+	return 0;
+}

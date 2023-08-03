@@ -1,0 +1,70 @@
+#include<cstdio>
+#include<iostream>
+
+int m[300010], n;
+bool f[300010];
+
+inline void flip(int parent,int start,int finish, int i, int j) {
+    int p1, p2;
+	
+    if(start>j||finish<i)
+        return;
+	
+    if(start==finish) {
+        m[parent] = !m[parent];
+        return;
+    }
+    
+    if(start>=i&&finish<=j) {
+        f[parent] = !f[parent];
+        return;
+    }
+    
+	int mid = (start+finish)/2;
+    flip(parent*2,start,mid,i,j);
+    flip(parent*2+1,mid+1,finish,i,j);
+	
+	p1 = f[parent*2]?(mid-start+1-m[parent*2]):(m[parent*2]);
+	p2 = f[parent*2+1]?(finish-mid-m[parent*2+1]):(m[parent*2+1]);
+    m[parent] = p1+p2;
+    return;
+}
+ 
+
+inline int query(int parent,int start,int finish, int i, int j, int flip) {
+    int p1, p2;
+	
+    if(start>j||finish<i)
+        return 0;
+	
+	flip ^= f[parent];
+
+    if(start>=i&&finish<=j)
+        return flip?(finish-start+1-m[parent]):(m[parent]);
+	
+	int mid = (start+finish)/2;
+    p1 = query(parent*2,start,mid,i,j,flip);
+    p2 = query(parent*2+1,mid+1,finish,i,j,flip);
+	
+    return p1+p2;
+}
+ 
+int main() {
+    int q, a, b, c, i;
+    scanf("%d%d",&n,&q);
+    
+  
+    for(i=0;i<=(3*n);i++)
+        m[i] = f[i] = 0;
+    
+
+    for(i=0;i<q;i++) {
+ 
+        scanf("%d%d%d",&a,&b,&c);
+        if(a)
+            printf("%d\n",query(1,1,n,b+1,c+1,0));		
+        else
+            flip(1,1,n,b+1,c+1);			
+    }
+    return 0;
+}

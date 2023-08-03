@@ -1,0 +1,146 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<vi> vvi; 
+typedef pair<int,int> ii;
+typedef pair<ll,ll> pll;
+typedef pair<double,double> pdd;
+
+#define fill(a,x) memset(a,x,sizeof(a)) 
+#define all(x) x.begin(), x.end()
+#define tr(x,it) for( auto it = x.begin(); it!=x.end(); ++it)
+#define rtr(x,it) for( auto it = x.rbegin(); it!=x.rend(); ++it)
+#define sz(a) int((a).size()) 
+#define pb push_back 
+#define F first
+#define S second
+#define FOR(i,a,b) for(int i = a; i<=b; ++i)
+#define NFOR(i,a,b) for(int i = a; i>=b; --i)
+#define fast ios_base::sync_with_stdio(false),cin.tie(0),cout.tie(0);
+const ll INF = 1e18 +10;
+const int mod = 1e9+7;
+const int N = 5e5 + 10; 
+const int M = 1e4 + 10;
+const double eps = 1e-6;
+int n,m,q;
+vi G[N],V[N],d;
+int l[N],r[N],depth[N],size[N],pos[N];
+pair<ll,vi > B[N];
+pair<ii,int> Q[N];
+
+void dfs(int node,int prev){
+	size[node] = 1;
+	if(prev != -1) depth[node] = depth[prev] + 1;
+	d.pb(node);
+	pos[node] = sz(d) -1;
+	tr(G[node],it){
+		dfs(*it,node);
+		size[node] += size[*it];
+	}
+}
+struct FEN{
+  vector<ll> T;
+  int _n;
+  FEN(){_n=0;T.clear();}
+  FEN(int sz){_n=sz;T.clear();T.resize(sz+1);}
+  void clear(int sz){_n=sz;T.clear();T.resize(sz+1);}
+  void update(int i, ll val){
+    while(i<=_n){
+      T[i]+=val;
+      i+=i&-i;
+    }
+  }
+  ll query(int i){
+    ll ans=0;
+    while(i>0){
+      ans+=T[i];
+      i-=i&-i;
+    }
+    return ans;
+  }
+}b1(N),b2(N);
+
+void apply(int x){ // apply the xth query
+	int X = Q[x].F.S; // X = const 
+	int F = Q[x].S;// F = mul
+	x = Q[x].F.F; // x = node
+	b1.update(pos[x]+1, X - depth[x]*F);
+    b1.update(pos[x] + size[x]+1, -X + depth[x]*F);
+    b2.update(pos[x]+1,F);
+    b2.update(pos[x] + size[x] +1,-F); 
+}
+
+ll read(int x){
+	return b1.query(pos[x]+1) + depth[x]*b2.query(pos[x]+1);
+}
+
+int main(){
+  clock_t tm = clock();
+  fast;
+  int t = 1;
+  //cout << t << " ";
+  FOR(_t,1,t){
+    cin >> n >> m;
+    FOR(i,1,n-1){
+    	int a;
+    	cin >> a;
+    	a--;
+    	G[a].pb(i);
+    }
+    FOR(i,0,n-1){
+    	int a;
+    	cin >> a;
+    	a--;
+    	B[a].S.pb(i);
+    }
+    FOR(i,0,m-1){
+    	cin >> B[i].F;
+    }
+    cin >> q;
+    FOR(i,0,q-1){
+    	cin >> Q[i].F.F >> Q[i].F.S >> Q[i].S;
+    	Q[i].F.F--;
+    }
+    depth[0] = 0;
+    dfs(0,-1);
+    FOR(i,0,m-1){
+    	l[i] = 0;
+    	r[i] = q;
+    	V[(l[i]+r[i])/2].pb(i);
+    }
+    bool change = 1;
+    while(change){
+    	b1.clear(N);
+        b2.clear(N);
+    	change = 0;
+    	FOR(i,0,q-1){
+    		apply(i);
+    		tr(V[i],it){
+    			ll sum = 0;
+    			tr(B[*it].S,itt){
+    				sum += read(*itt);
+    				sum = min(sum, INF);
+    				if(sum < 0) sum = INF;
+    				if(sum >= B[*it].F)break;// must solve overflow,i guess
+    			}
+    			if(sum >= B[*it].F)r[*it] = i;
+    			else l[*it] = i + 1; 
+    			if(l[*it] < r[*it]){
+    				V[(l[*it]+r[*it])/2].pb(*it);
+    				change =1;
+    			}
+    		}
+    		V[i].clear();
+    	}
+    }
+    FOR(i,0,m-1){
+    	if(r[i] == q)cout << "rekt\n";
+    	else cout << r[i] + 1 << "\n";
+    }
+  } 
+  tm = clock()-tm ;
+  cerr << (float)(tm)/CLOCKS_PER_SEC << "\n";
+  return 0;
+} 

@@ -1,0 +1,154 @@
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+#include <cctype>
+#include <utility>
+#include <queue>
+#include <cmath>
+#include <complex>
+using namespace std;
+
+typedef long long LL;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+typedef vector<PII> VPII;
+typedef pair<LL, LL> PLL;
+typedef pair<int, LL> PIL;
+typedef pair<LL, int> PLI;
+typedef double DB;
+
+#define pb push_back
+#define mset(a, b) memset(a, b, sizeof a)
+#define all(x) (x).begin(), (x).end()
+#define bit(x) (1 << (x))
+#define bitl(x) (1LL << (x))
+#define sqr(x) ((x) * (x))
+#define sz(x) ((int)(x.size()))
+#define counti(x) (__builtin_popcount(x))
+#define countl(x) (__builtin_popcountll(x))
+#define clz(x) (__builtin_clz(x))
+#define clzl(x) (__builtin_clzll(x))
+#define ctz(x) (__builtin_ctz(x))
+#define ctzl(x) (__builtin_ctzll(x))
+
+#define rep(i, n) for (int (i) = 0; (i) < (int)(n); ++(i))
+
+#define X first
+#define Y second
+
+#define Error(x) cout << #x << " = " << x << endl
+
+template <typename T, typename U> 
+inline void chkmax(T& x, U y) {
+	if (x < y) x = y;
+}
+
+template <typename T, typename U>
+inline void chkmin(T& x, U y) {
+	if (y < x) x = y;
+}
+
+#define N 111111
+
+int n, m, T;
+
+VI adj[N];
+int sz[N],ans[N], vis[N], chk[N], dp[N], d[N], a[N];
+VPII V[N];
+
+void dfs(int u, int p) {
+  sz[u] = 1;
+	for (int i = 0; i < sz(adj[u]); i++) if (adj[u][i] != p && !chk[adj[u][i]]) {
+	  int v = adj[u][i]; dfs(v, u), sz[u] += sz[v];
+  }
+}
+
+int centroid(int u) {
+	int n = sz[u];
+	while (1) {
+		int w = 0;
+		for (int i = 0; i < sz(adj[u]); i++) {
+			int v = adj[u][i];
+			if (chk[v]) continue;
+			if (sz[v] < sz[u] && sz[v] * 2 >= n) {
+				w = v;
+				break;
+			}
+		}
+		if (w == 0) return u;
+		u = w;
+	}
+}
+
+void go(int u, int p, int c) {
+	dp[u] = dp[p] + 1;
+
+	if (c) V[c].push_back(make_pair(a[u], dp[u]));
+	for (int i = 0; i < sz(adj[u]); i++) {
+		int v = adj[u][i];
+		if (v == p || chk[v]) continue;
+		go(v, u, (c == 0) ? v : c);
+	}
+}
+
+void process(int u) {
+	for (int i = 0; i < sz(adj[u]); i++) {
+		int v = adj[u][i];
+		if (chk[v]) continue;
+		V[v].clear();
+	}
+	T++; dp[0] = -1;
+	go(u, 0, 0);
+	for (int i = 0; i < sz(adj[u]); i++) {
+		int v = adj[u][i];
+		if (chk[v]) continue;
+		for (int j = 0; j < sz(V[v]); j++) {
+			int x = V[v][j].first, y = V[v][j].second;
+			if (x == a[u]) chkmax(ans[x], y);
+			if (vis[x] != T) continue;
+			chkmax(ans[x], d[x] + y);
+		}
+		for (int j = 0; j < sz(V[v]); j++) {
+			int x = V[v][j].first, y = V[v][j].second;
+			if (vis[x] != T) {
+				vis[x] = T, d[x] = y;
+			} else {
+				chkmax(d[x], y);
+			}
+		}
+	}
+}
+
+void solve(int u) {
+	dfs(u, 0);
+	u = centroid(u);
+	chk[u] = 1, process(u);
+	for (int i = 0; i < sz(adj[u]); i++) {
+		int v = adj[u][i];
+		if (!chk[v]) solve(v);
+	}
+}
+
+int main() {
+
+	int n, m;
+	scanf("%d%d", &n, &m);
+	for (int i = 1; i <= n; i++) scanf("%d", &a[i]);
+	for (int i = 1; i <= n; i++) adj[i].clear();
+	for (int i = 1; i < n; i++) {
+		int u, v; scanf("%d%d", &u, &v);
+		adj[u].pb(v), adj[v].pb(u);
+	}
+
+	solve(1);
+	for (int i = 1; i <= m; i++) printf("%d%c", ans[i], i<m ? ' ' : '\n');
+
+	return 0;
+}

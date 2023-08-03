@@ -1,0 +1,133 @@
+#include <iostream>
+#include <functional>
+#include <vector>
+#include <queue>
+#include <utility>
+#define MOD 1000000007
+using namespace std;
+bool marked[1000000];
+vector<vector<pair<long long int, long long int> > > adjList(1000000);
+void multiply(long long F[][2], long long M[][2])
+{
+	long long int x = ((F[0][0] * M[0][0]) % MOD + (F[0][1] * M[1][0]) % MOD) % MOD;
+	long long int y = ((F[0][0] * M[0][1]) % MOD + (F[0][1] * M[1][1]) % MOD) % MOD;
+	long long int z = ((F[1][0] * M[0][0]) % MOD + (F[1][1] * M[1][0]) % MOD) % MOD;
+	long long int m = ((F[1][0] * M[0][1]) % MOD + (F[1][1] * M[1][1]) % MOD) % MOD;
+	F[0][0] = x;
+	F[0][1] = y;
+	F[1][0] = z;
+	F[1][1] = m;
+}
+
+void power(long long F[][2], long long int p, long long int M[][2])
+{
+	if (p == 0 || p == 1)
+		return;
+	power(F, p / 2, M);
+	multiply(F, F);
+	if (p % 2 != 0)
+		multiply(F, M);
+
+}
+
+long long fib(long long int n)
+{
+	if (n == 0)
+		return 0;
+	long long F[2][2] = { { 1, 1 }, { 1, 0 } };
+	long long M[2][2] = { { 1, 1 }, { 1, 0 } };
+	power(F, n - 1, M);
+	return F[0][0];
+}
+long long findMST(vector<vector<pair<long long int, long long int> > > adjList,long long int source)
+{
+	priority_queue<pair<long long int, long long int>,
+		vector<pair<long long int,long long int> >, greater< pair<long long int,long long int> > > pr;
+	pr.push(make_pair(0, source));
+	pair<long long int,long long int> temp;
+	long long node;
+	int sz;
+	long long cost=0;
+	while (!pr.empty())
+	{
+		temp = pr.top();
+		pr.pop();
+		node = temp.second;
+		if (marked[node])
+			continue;
+		marked[node] = true;
+		cost += temp.first;
+		//cout << "node " << node << " cost updated " << cost<<endl;
+		sz = adjList[node].size();
+		for (int i = 0; i < sz; i++)
+		{
+			if (!marked[adjList[node][i].first])
+			{
+				pr.push(make_pair(adjList[node][i].second, adjList[node][i].first));
+				//cout << "pushing cost" << adjList[node][i].second << " node " << adjList[node][i].first << endl;
+			}
+		}
+	}
+	return cost;
+}
+int main()
+{
+	long long n, k1, k2, k3, k4, temp, temp1;
+	cin >> n >> k1 >> k2 >> k3 >> k4;
+	long long fb11, fb12, fb21, fb22, fb31, fb32, fb41, fb42;
+	if (n > 1)
+	{
+		fb11 = fib(k1 - 1);
+		fb12 = fib(k1);
+		fb21 = fib(k2 - 1);
+		fb22 = fib(k2);
+		fb31 = fib(k3 - 1);
+		fb32 = fib(k3);
+		fb41 = fib(k4 - 1);
+		fb42 = fib(k4);
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < n - 1; j++)
+			{
+				temp1 = (fb12 + fb22) % MOD;
+				adjList[n* i + j].push_back(make_pair(n * i + j + 1, temp1));
+				adjList[n * i + j + 1].push_back(make_pair(n * i + j, temp1));
+				temp = fb12;
+				fb12 = (fb12 + fb11) % MOD;
+				fb11 = temp;
+
+				temp = fb22;
+				fb22 = (fb22 + fb21) % MOD;
+				fb21 = temp;
+
+
+
+				temp1 = (fb32 + fb42) % MOD;
+				adjList[n * j + i].push_back(make_pair(n * (j + 1) + i, temp1));
+				adjList[n * (j + 1) + i].push_back(make_pair(n * j + i, temp1));
+				temp = fb32;
+				fb32 = (fb32 + fb31) % MOD;
+				fb31 = temp;
+
+				temp = fb42;
+				fb42 = (fb42 + fb41) % MOD;
+				fb41 = temp;
+			}
+		}
+		/*
+		int sz = 0;
+		for (int i = 0; i<n*n; i++)
+		{
+			sz = adjList[i].size();
+			cout << "from " << i << " : ";
+			for (int j = 0; j<sz; j++)
+				cout << adjList[i][j].first << " " << adjList[i][j].second << "     ";
+			cout << endl;
+		}
+		*/
+		cout << findMST(adjList, 0) << endl;
+	}
+	else
+		cout << "0" << endl;
+	return 0;
+}

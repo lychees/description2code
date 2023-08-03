@@ -1,0 +1,79 @@
+
+n, m = raw_input().split()
+people = raw_input().split() # don't need to convert to int
+CONST = 10**9 + 7
+
+# each element equals a connected component
+# and each element of component is people
+groups = []
+# and each element of component is group_index
+groups_i = []
+
+group_index = -1
+
+# each element corresponds to the group its index is in.
+group_nums = [group_index]*int(n)
+
+for _ in xrange(int(m)):
+	uv = raw_input().split()
+	u = int(uv[0]) - 1
+	v = int(uv[1]) - 1
+
+	# if none of them are in a group, create a new group
+	# and let them in
+	if group_nums[u] == -1 and group_nums[v] == -1:
+		group_index += 1
+		# to avoid counting self loops
+		if u == v:
+			groups.append([people[u]])
+			groups_i.append([u])
+			group_nums[u] = group_index
+		else:
+			group_nums[u] = group_index
+			group_nums[v] = group_index
+			groups.append([people[u], people[v]])
+			groups_i.append([u, v])
+	elif group_nums[u] != -1 and group_nums[v] != -1:
+		# to avoid counting duplicate relations or 2-node loops
+		if group_nums[u] != group_nums[v]:
+			if len(groups[group_nums[u]]) >= len(groups[group_nums[v]]):
+				tv = v
+				tu = u
+			else:
+				tv = u
+				tu = v
+			temp = group_nums[tv]
+			for index in groups_i[temp]:
+				group_nums[index] = group_nums[tu]
+			groups[group_nums[tu]].extend(groups[temp])
+			groups_i[group_nums[tu]].extend(groups_i[temp])
+			del groups[temp][:]
+			del groups_i[temp][:]
+			
+	# if one of them is in a group, put the other in the same group
+	elif group_nums[u] != -1:
+		# to avoid counting self loops
+		if u != v:
+			group_nums[v] = group_nums[u]
+			groups[group_nums[u]].append(people[v])
+			groups_i[group_nums[u]].append(v)
+	elif group_nums[v] != -1:
+		# to avoid counting self loops
+		if u != v:
+			group_nums[u] = group_nums[v]
+			groups[group_nums[v]].append(people[u])
+			groups_i[group_nums[v]].append(u)
+
+del group_nums[:]
+del people[:]
+del groups_i[:]
+
+
+
+prod = 1
+for group in groups:
+	if not group:
+		continue
+	m = max(group)
+	prod = ((prod % CONST) * (group.count(m) % CONST) ) % CONST
+print prod

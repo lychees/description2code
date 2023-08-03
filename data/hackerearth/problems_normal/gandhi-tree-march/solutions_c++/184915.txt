@@ -1,0 +1,113 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+class node
+{
+  public :
+    int data;
+    node *left;
+    node *right;
+    node *parent;
+    char temp;
+    node()
+    {
+        this->left = NULL;
+        this->right = NULL;
+        this->parent = NULL;
+    }
+    
+    node ( node *parent)
+    {
+        this->left = NULL;
+        this->right = NULL;
+        this->parent = parent;
+    }
+};
+
+//  -1 a(c(f(.h(..))b(g(..).))e(.d(..)))
+node *buildTree(string str)
+{
+    node *root = new node();
+    node *currNode = root;
+    int len = str.size();
+    for(int i = 0; i <  len ; i++)
+    {
+        if(str[i] == '(')
+        {
+            if(str[i+1] != '.')
+            {
+                currNode->left = new node(currNode);
+                currNode = currNode->left;
+            }
+        }
+        
+        else if(str[i] == ')')
+        {
+            currNode = currNode->parent;
+            if(i+1 < len && str[i+1]>='a' && str[i+1]<='z')
+            {
+                currNode->right = new node(currNode);
+                currNode = currNode->right;
+            }
+        }
+        
+        else if(str[i] == '.')
+        {
+            if(str[i+1]>='a' && str[i+1]<='z')
+            {
+                currNode->right = new node(currNode);
+                currNode = currNode->right;
+            }
+        }
+        
+        else
+            currNode->temp = str[i];
+        
+    }
+    return root;
+}
+
+void preOrderTraversal(node *root, int col, int target, vector<char> *val)
+{
+    if(root == NULL)
+        return ;
+    
+    if(col == target)
+        val->push_back(root->temp);
+    
+    preOrderTraversal(root->left, col-1, target, val);
+    preOrderTraversal(root->right, col+1, target, val);
+}
+
+int main()
+{
+    int t;
+    cin>>t;
+    while(t--)
+    {
+        string str;
+        int n;
+        cin>>n>>str;
+        node *root = buildTree(str);
+        vector<char> ans;
+        preOrderTraversal(root, 0, n, &ans);
+        
+        if(ans.size()==0)
+        {
+            cout<<"Common Gandhijee!"<<endl;
+        }
+        else
+        {
+            sort(ans.begin(),ans.end());
+            
+            for(int i=0;i<ans.size();i++)
+            {
+                cout<<ans[i];
+            }
+            cout<<endl;
+        }
+    }
+    return 0;
+}

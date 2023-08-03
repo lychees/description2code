@@ -1,0 +1,229 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <map>
+#include <cmath>
+#include <cstring>
+#include <ctime>
+#include <sstream>
+#include <stack>
+#include <queue>
+
+#define PB push_back
+#define MP make_pair
+#define all(v) v.begin(), v.end()
+#define For(i, a, b) for (int i = a; i < b; i++)
+#define Rfor(i, b, a) for (int i = b; i > a; i--)
+#define Si(a) scanf("%d", &(a))
+#define Sl(a) scanf("%lld", &(a))
+#define SZ size()
+#define F first
+#define S second
+#define B begin()
+#define E end()
+
+#define MOD 1000000007
+
+using namespace std;
+
+typedef unsigned long long int ull;
+typedef long long int lli;
+typedef vector<int> VI;
+typedef pair<int, int> pii;
+
+template <typename T>
+T power(T a, int n, int mod)
+{
+	T res = 1;
+	while (n) {
+		if (n % 2 == 1) res = (res * a) % mod;
+		n /= 2;
+		a = (a * a) % mod;
+	}
+	return res;
+}
+
+lli p10[17];
+lli sumNS[20][150] = {0};
+void check();
+
+lli fn(lli n, int d, int s)
+{
+	if (s < 0 || s > n) return 0;
+	if (s == 0) return 1;
+	if (d == 1) {
+		if (s >= 10) return 0;
+		else return 1; // S will be smaller than N
+	}
+	
+	int m = n / p10[d-1];
+	lli ans = 0;
+
+	ans = fn(n%p10[d-1], d - 1, s - m);
+	
+	for (int i = 0; i < m; i++) {
+		ans += ((d >= 1 && s >= i) ? sumNS[d-1][s-i] : 0);
+	}
+
+	return ans;
+}
+
+int sumDig(int n)
+{
+	int c = 0;
+	while (n) {
+		c += n % 10;
+		n /= 10;
+	}
+	return c;
+}
+
+int numOfDig(lli n)
+{
+	int c = 0;
+	while (n) {
+		c++;
+		n /= 10;
+	}
+	return c;
+}
+
+lli findMin(int d, int s)
+{
+	lli a = 0;
+	int c = 0;
+	while (s > 0) {
+		if (s > 9) {
+			a = 9ll*p10[c] + a;
+			s -= 9;
+			c++;
+		}
+		else {
+			a = s*p10[c] + a;
+			s -= s;
+			c++;
+		}
+	}
+	if (c > d) return -1;
+	return a;
+}
+			
+lli findNext(lli a, int d, int s)
+{
+	bool flag = 1;
+	int m;
+	lli k;
+	// cout << "called for " << a << " dig: " << d << "  @ sum = " << s << endl;
+	if (s == 0) return 0;
+	if (d == 1) {
+		lli c = 0;
+		lli r = s;
+		int t = 0;
+		while (r > 0) {
+			c = p10[t]*(r > 9 ? 9 : r) + c;
+			r -= 9;
+			t++;
+		}
+		if (c < a) {
+			c = a;
+			while (sumDig(c) != s) c++;
+		}
+		return c;
+	}
+
+	m = a / p10[d-1];
+	
+	if (s - m >= 0) {
+		k = findNext(a % p10[d-1], d - 1, s - m);
+		if (k < p10[d-1]) {
+			return (p10[d-1]*m + k); // Next number starting with same number
+		}
+	}
+
+	for (lli t = m + 1; t <= 9 && (s - t) >= 0; t++) {
+		k = findMin(d - 1, s - t);
+		if (k != -1) {
+			return p10[d-1]*t + k;
+		}
+	}
+	d++; // Now length of digit must increase
+
+	while (d*9 < s) d++;
+
+	while (flag) {
+		for (lli t = 1; t <= 9 && (s - t) >= 0; t++) {
+			k = findMin(d - 1, s - t);
+			if (k != -1) {
+				return p10[d-1]*t + k;
+			}
+		}
+		// cout << "while " << d << endl;
+		d++;
+	}
+
+	return -1;
+}
+
+int main()
+{
+	lli a, b;
+	int s;
+	int ad, bd;
+	lli cnt;
+
+	p10[0] = 1;
+	for (int i = 1; i < 17; i++) p10[i] = 10ll * p10[i-1];
+
+	for (int j = 0; j <= 135; j++) {
+		sumNS[1][j] = (j <= 9 ? 1 : 0);
+	}
+
+	for (int i = 2; i <= 16; i++) {
+		sumNS[i][0] = 1;
+		for (int j = 1; j <= 135; j++) {
+			a = 0;
+			for (int k = 0; k < 10; k++) {
+				a += (j >= k ? sumNS[i-1][j-k] : 0);
+			}
+			sumNS[i][j] = a;
+		}
+	}
+	/*
+	while (1) {
+		cin >> a >> s;
+		cout << a << " s = " << s << " : " << findNext(a, numOfDig(a), s) << endl;
+	}
+	*/
+	cin >> a >> b >> s;
+	ad = numOfDig(a - 1);
+	bd = numOfDig(b);
+	
+	cnt = fn(b, bd, s) - fn(a - 1, ad, s);
+	
+	cout << cnt << endl;
+	
+	a = findNext(a, numOfDig(a), s);
+	//while (sumDig(a) != s) a++;
+	cout << a << endl;
+	
+	return 0;
+}
+
+void check()
+{	lli a, b, s, cnt;
+
+	while (1) {
+		cin >> s;
+		cin >> cnt;
+		b = 0;
+		for (a = 0; a <= cnt; a++) {
+			if (sumDig(a) == s) b++;
+		}
+		// cout << b << " numbers with sum " << s << " upto " << cnt << endl;
+		//cout << " ************* " << endl;
+		cout << b << " =?= " << fn(cnt, numOfDig(cnt), s) << endl;
+	}
+}

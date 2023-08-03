@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define M 333
+
+int p;
+int n, m;
+int A[M][M], B[M][M];
+int a[M][M], b[M][M];
+int answer[M];
+int inv[1010];
+
+void print(int a[][M], int n, int m) {
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            printf("%d ", a[i][j]);
+        }
+        puts("");
+    }
+}
+
+void solve() {
+    for (int k, i = 1; i <= n; i++) {
+        //print(a, n, n); puts("");
+        for (k = 1; k <= n; k++) if (a[k][i] && (k >= i || !a[k][k])) {
+            break;
+        }
+        //printf("k = %d, i = %d\n", k, i);
+        if (k > n) {
+            continue;
+        }
+        if (k != i) {
+            for (int j = i; j <= n; j++) {
+                swap(a[k][j], a[i][j]);
+            }
+            for (int j = 1; j <= m; j++) {
+                swap(b[k][j], b[i][j]);
+            }
+        }
+        int v = inv[a[i][i]];
+        for (int j = 1; j <= n; j++) {
+            a[i][j] = a[i][j] * v % p;
+        }
+        for (int j = 1; j <= m; j++) {
+            b[i][j] = b[i][j] * v % p;
+        }
+
+        for (int k = 1; k <= n; k++) if (a[k][i] && k != i) {
+            int v = a[k][i];
+            for (int j = i; j <= n; j++) {
+                a[k][j] = ((a[k][j] - v * a[i][j]) % p + p) % p;
+            }
+            for (int j = 1; j <= m; j++) {
+                b[k][j] = ((b[k][j] - v * b[i][j]) % p + p) % p;
+            }
+        }
+    }
+    //print(a, n, n);
+    //print(b, n, m);
+    for (int i = 1; i <= n; i++) if (!a[i][i]) {
+        for (int j = 1; j <= m; j++) if (b[i][j]) {
+            answer[j] = 0;
+        }
+    }
+}
+
+int main() {
+    //freopen("Amu.in", "r", stdin);
+    scanf("%d %d", &n, &m);
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            scanf("%d", &A[i][j]);
+        }
+    }
+
+    for (int j = 1; j <= m; j++) {
+        for (int i = 1; i <= n; i++) {
+            scanf("%d", &B[i][j]);
+        }
+        //swap(B[1][j], B[2][j]);
+        answer[j] = 1;
+    }
+
+    for (int r = 0; r < 3; r++) {
+        r == 0 ? p = 2 : r == 1 ? p = 5 : p = 719;
+
+        for (int i = 1; i < p; i++) {
+            for (int j = 1; j < p; j++) if ((i * j % p) == 1) {
+                inv[i] = j;
+                break;
+            }
+            assert(inv[i]);
+        }
+
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+                a[i][j] = A[i][j] % p;
+            }
+        }
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= m; j++) {
+                b[i][j] = B[i][j] % p;
+            }
+        }
+        solve();
+    }
+    for (int j = 1; j <= m; j++) {
+        puts(answer[j] ? "Yes" : "No");
+    }
+    return 0;
+}
+
+
+

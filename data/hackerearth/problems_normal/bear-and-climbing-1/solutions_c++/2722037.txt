@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN = 1000006;
+int n,xmin[MAXN],dq[2][MAXN];
+long long int xs[MAXN], ys[MAXN];
+bool vis[MAXN];
+long long int square_distance(int i, int j)
+{
+	return ((xs[j]-xs[i])*(xs[j]-xs[i]) + (ys[j]-ys[i])*(ys[j]-ys[i]));
+}
+bool is_possible(long long int len)
+{
+	int max_pt = 0;
+	int q_start = 0, q_end = 1;
+	dq[0][q_start] = 0;
+	dq[1][q_start] = xmin[0];
+	bool ans = false;
+	for (int i = 0; i < n; ++i)
+	{
+		while(q_start < q_end && dq[0][q_start] < i)
+			q_start++;
+		if(q_start < q_end && dq[0][q_start] >= i && dq[1][q_start] <= xmin[i])
+		{
+			vis[i] = true;
+			while(max_pt < n && square_distance(i,max_pt) <= len)
+				max_pt++;
+			while(q_start < q_end && dq[1][q_end-1] >= xmin[i]+1)
+				q_end--;
+			dq[0][q_end] = max_pt-1;
+			dq[1][q_end] = xmin[i]+1;
+			q_end++;
+		}
+		ans = (ans || vis[n-1]);
+		vis[i] =false;
+	}
+	return ans;
+}
+int main()
+{
+	// freopen("input.txt", "r", stdin);
+	// ios_base::sync_with_stdio(0);
+	scanf("%d", &n);
+	for (int i = 0; i < n; ++i)
+	{
+		scanf("%lld %lld", &xs[i], &ys[i]);
+		xmin[i] = xs[i]-ys[i];
+	}
+	if(xs[n-1]-ys[n-1] <= xs[0]-ys[0])
+	{
+		printf("-1\n");
+		return 0;
+	}
+	long long int lo = 0, hi = square_distance(0,n-1), mid;
+	while(lo < hi)
+	{
+		mid = (lo+hi)/2;
+		if(is_possible(mid))
+			hi = mid;
+		else
+			lo = mid+1;
+	}
+	printf("%lld\n", lo);
+	return 0;
+}

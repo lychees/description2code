@@ -1,0 +1,180 @@
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+#include <fstream>
+#include <cstring>
+#include <string>
+#include <cmath>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <map>
+#include <iomanip>
+#define INF 1000000007
+
+int scan()
+{ int noRead=0;
+    char p= getchar();
+    for(;p<33;)
+    { p=getchar(); }
+    while(p>32)
+        {
+            noRead = (noRead << 3) + (noRead << 1) + (p - '0');
+            p=getchar();
+        }
+    return noRead;
+}
+
+long long int lscan()
+{ long long int noRead=0;
+    char p= getchar();
+    for(;p<33;)
+    { p=getchar(); }
+    while(p>32)
+        {
+            noRead = (noRead << 3) + (noRead << 1) + (p - '0');
+            p=getchar();
+        }
+    return noRead;
+}
+
+using namespace std;
+
+long long int bit1[100010];
+long long int bit2[100010];
+long long int bit3[100010];
+int n;
+
+long long int getsum1(int ind) {
+    long long int sum = 0;
+    //ind++;
+    while(ind > 0) {
+        sum += bit1[ind];
+        ind -= ind & (-ind);
+    }
+    return sum;
+}
+
+long long int getsum2(int ind) {
+    long long int sum = 0;
+    //ind++;
+    while(ind > 0) {
+        //cout<<"jo "<<"ind "<<ind<<" "<<bit2[ind]<<endl;
+        sum += bit2[ind];
+        ind -= ind & (-ind);
+    }
+    //cout<<endl;
+    return sum;
+}
+
+long long int getsum3(int ind) {
+    long long int sum = 0;
+    //ind++;
+    while(ind > 0) {
+        sum += bit3[ind];
+        ind -= ind & (-ind);
+    }
+    return sum;
+}
+
+void update1(int ind, long long int val) {
+    //ind++;
+    while(ind <= n) {
+        bit1[ind] += val;
+        ind += ind & (-ind);
+    }
+}
+
+void update2(int ind, long long int val) {
+    //ind++;
+    while(ind <= n) {
+        //cout<<"ind "<<ind<<endl;
+        bit2[ind] += val;
+//        if(ind == 1)
+//        cout<<"added "<<val<<endl;
+        ind += ind & (-ind);
+    }
+}
+
+void update3(int ind, long long int val) {
+    //ind++;
+    while(ind <= n) {
+        bit3[ind] += val;
+        ind += ind & (-ind);
+    }
+}
+
+int main(void){
+    ios_base::sync_with_stdio(false);
+    memset(bit1, 0, sizeof(bit1));
+    memset(bit2, 0, sizeof(bit2));
+    memset(bit3, 0, sizeof(bit3));
+    int q;
+    cin>>n>>q;
+    for(int i = 1; i <= n; ++i) {
+        long long int s;
+        cin>>s;
+        update1(i, i*s);
+        update2(i, (n-i+1)*s);
+        update3(i, s);
+    }
+
+    while(q--) {
+        int type;
+        cin>>type;
+        if(type == 1) {
+            int k;
+            long long int a, b;
+            cin>>k>>a>>b;
+            //--k, --a, --b;
+            long long int prev = 0;
+            if(a <= k && b <= k) {
+                //cout<<"k a b "<<k<<" "<<a<<" "<<b<<endl;
+                prev = getsum2(b) - getsum2(a-1);
+                //cout<<getsum2(b) << " "<<getsum2(a-1)<<endl;
+                //cout<<prev<<endl;
+                prev -= ((n-k+1) * (getsum3(b) - getsum3(a-1)));
+            }
+            else
+            if(a <= k && b >= k) {
+                prev = getsum2(k) - getsum2(a-1);
+                prev += getsum1(b) - getsum1(k-1);
+                prev -= ((n-k+1) * (getsum3(k) - getsum3(a-1)));
+                prev -= (k * (getsum3(b) - getsum3(k-1)));
+            }
+            else
+            if(a >= k && b >= k) {
+                prev = getsum1(b) - getsum1(a-1);
+                prev -= (k * (getsum3(b) - getsum3(a-1)));
+            }
+
+            cout<<prev<<"\n";
+        }
+        else {
+            long long int k, s;
+            cin>>k>>s;
+            //--k;
+            //int prev = getsum3(k) - getsum3(k-1);
+            //s += prev;
+            update3(k, s);
+            //s -= prev;
+
+            //prev = getsum1(k) - getsum1(k-1);
+            //s += prev;
+            update1(k, k*s);
+            //s -= prev;
+
+            //prev = getsum2(k) - getsum2(k-1);
+            //s += prev;
+            update2(k, (n-k+1)*s);
+
+        }
+    }
+
+
+    return 0;
+
+}
+

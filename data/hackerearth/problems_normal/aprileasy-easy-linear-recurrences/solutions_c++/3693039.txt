@@ -1,0 +1,170 @@
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <math.h>
+#include <limits.h>
+#include <algorithm>
+#include <vector>
+#include <list>
+#include <stack>
+#include <queue>
+#include <set>
+#include <map>
+#include <bitset>
+#include <string>
+#include <string.h>
+#include <sstream>
+#include <ctime>
+
+using namespace std;
+
+#define eps 1e-12
+#define pi 3.14159265358979323846
+#define pb push_back
+#define mp make_pair
+
+typedef pair<int,int> ii;
+typedef long long ll;
+typedef long double ld;
+typedef unsigned long long ull;
+
+
+const int M=1e9+7,N=1e6+10;
+ll a,b,c,d,e,f,arr[7][7],tmp[7][7],arr2[7][7][100010];
+int res[N],F2[5],G2[5],n2[N],idx[N],lst,n,q,F[5],G[5],arr0[7][7],T;
+
+
+void pw(int p,ll arr[][7],ll tmp[][7])
+{
+	if(p==0)
+	{
+		for(char i=1;i<=5;i++)for(char j=1;j<=5;j++)arr[i][j]=0;
+		for(char i=1;i<=5;i++)arr[i][i]=1;
+		return;
+	}
+	pw(p>>1,arr,tmp);
+	for(char i=1;i<=5;i++)
+	{
+		for(char j=1;j<=5;j++)
+		{
+			tmp[i][j]=0;
+			for(char k=1;k<=5;k++)
+			{
+				tmp[i][j]=tmp[i][j]+arr[i][k]*arr[k][j];
+			}
+			tmp[i][j]%=M;
+		}
+	}
+	if(p&1)
+	{
+		for(char i=1;i<=5;i++)
+		{
+			for(char j=1;j<=5;j++)
+			{
+				arr[i][j]=0;
+				for(char k=1;k<=5;k++)
+				{
+					arr[i][j]=arr[i][j]+tmp[i][k]*arr0[k][j];
+				}
+				arr[i][j]%=M;
+			}
+		}
+		return;
+	}
+	for(char i=1;i<=5;i++)for(char j=1;j<=5;j++)arr[i][j]=tmp[i][j];
+}
+
+
+bool cmp(int i,int j)
+{
+	return n2[i]<n2[j];
+}
+
+
+void fun()
+{
+	for(char i=1;i<=5;i++)for(char j=1;j<=5;j++)arr2[i][j][0]=0;
+	for(char i=1;i<=5;i++)arr2[i][i][0]=1;
+	for(int x=1;x<=100000;x++)
+	{
+		for(char i=1;i<=5;i++)
+		{
+			for(char j=1;j<=5;j++)
+			{
+				arr2[i][j][x]=0;
+				for(char k=1;k<=5;k++)
+				{
+					arr2[i][j][x]=arr2[i][j][x]+arr2[i][k][x-1]*arr0[k][j];
+				}
+				arr2[i][j][x]%=M;
+			}
+		}
+	}
+}
+
+
+
+int main()
+{
+	//freopen("in.txt","r",stdin);
+	//freopen("out.txt","w",stdout);
+	//std::ios::sync_with_stdio(0);
+	//cin.tie(0);
+	//cin>>a>>b>>c>>d>>e>>f>>F[1]>>F[2]>>G[1]>>G[2];
+	scanf("%d%d%d%d%d%d%d%d%d%d",&a,&b,&c,&d,&e,&f,F+1,F+2,G+1,G+2);
+	T=(e*(F[1]+F[2])+f*(G[1]+G[2]))%M;
+	for(char i=1;i<=5;i++)for(char j=1;j<=5;j++)arr0[i][j]=0;
+	arr0[1][1]=a;arr0[1][4]=b;
+	arr0[3][2]=d;arr0[3][3]=c;
+	arr0[5][1]=(e*a)%M;arr0[5][2]=(f*d)%M;arr0[5][3]=(f*c)%M;arr0[5][4]=(e*b)%M;
+	arr0[2][1]=1;
+	arr0[4][3]=1;
+	arr0[5][5]=1;
+	fun();
+	//cin>>q;
+	scanf("%d",&q);
+	for(int i=1;i<=q;i++)
+	{
+		//cin>>n2[i];
+		scanf("%d",n2+i);
+		n2[i]++;
+		idx[i]=i;
+	}
+	sort(idx+1,idx+q+1,cmp);
+	lst=2;
+	for(int j=1,i;j<=q;j++)
+	{
+		i=idx[j];
+		n=n2[i]-lst;
+		if(n==0)
+		{
+			res[i]=T;
+			if(res[i]<0)res[i]+=M;
+			continue;
+		}
+		else if(n<0)
+		{
+			res[i]=(e*F[1]+f*G[1])%M;
+			if(res[i]<0)res[i]+=M;
+			continue;
+		}
+		if(n<=100000)
+		{
+			for(char i=1;i<=5;i++)for(char j=1;j<=5;j++)arr[i][j]=arr2[i][j][n];
+		}
+		else pw(n,arr,tmp);
+		for(char k=1;k<=2;k++)F2[3-k]=(F[2]*arr[k][1]+F[1]*arr[k][2]+G[2]*arr[k][3]+G[1]*arr[k][4]+T*arr[k][5])%M;
+		for(char k=3;k<=4;k++)G2[5-k]=(F[2]*arr[k][1]+F[1]*arr[k][2]+G[2]*arr[k][3]+G[1]*arr[k][4]+T*arr[k][5])%M;
+		for(char k=5;k<=5;k++)T=(F[2]*arr[k][1]+F[1]*arr[k][2]+G[2]*arr[k][3]+G[1]*arr[k][4]+T*arr[k][5])%M;
+		for(char k=1;k<=2;k++){F[k]=F2[k];G[k]=G2[k];}
+		res[i]=T;
+		if(res[i]<0)res[i]+=M;
+		lst=n2[i];
+	}
+	for(int i=1;i<=q;i++)
+	{
+		//cout<<res[i]<<"\n";
+		printf("%d\n",res[i]);
+	}
+	return 0;
+}

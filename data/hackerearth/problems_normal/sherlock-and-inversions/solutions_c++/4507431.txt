@@ -1,0 +1,142 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef struct
+{
+    int l,r,id;
+}query;
+
+int arr[100005],bit[100005];
+long long ans[100005];
+int n,q,block;
+long long answer;
+query Q[100005];
+
+
+struct sorter
+{
+    bool operator()(query a,query b)
+    {
+        if(a.l/block!=b.l/block)
+            return  a.l/block<b.l/block;
+        return a.r<b.r;
+    }
+
+}compare;
+
+void update(int bit[],int i,int v)
+{
+    if(i==0) return;
+    while(i<=100001)
+    {
+        bit[i]+=v;
+        i+=i&-i;
+    }
+}
+
+int sum(int bit[],int i)
+{
+    int ans=0;
+    while(i>0)
+    {
+        ans+=bit[i];
+        i-=i&-i;
+    }
+    return ans;
+}
+
+void convert()
+{
+    int temp[100005];
+    for(int i=0;i<n;i++)
+        temp[i]=arr[i+1];
+    sort(temp,temp+n);
+    for(int i=0;i<n;i++)
+        arr[i+1]=lower_bound(temp,temp+n,arr[i+1])-temp+1;
+}
+
+
+
+void Add_left(int e)
+{
+    e=arr[e];
+    //add elements smaller than e in cur array
+    answer+=1ll*sum(bit,e-1);
+    update(bit,e,1);
+}
+
+void Add_right(int e)
+{
+    e=arr[e];
+    //add elements greater than e in cur array
+    answer+=1ll*sum(bit,100001)-1ll*sum(bit,e);
+    update(bit,e,1);
+}
+
+void Remove_left(int e)
+{
+    e=arr[e];
+    //remove elements smaller than e in cur array
+    answer-=1ll*sum(bit,e-1);
+    update(bit,e,-1);
+}
+
+void Remove_right(int e)
+{
+    e=arr[e];
+    //remove elements greater than e in cur array
+    answer=answer-1ll*sum(bit,100001)+1ll*sum(bit,e);
+    update(bit,e,-1);
+}
+
+int main(void)
+{
+    cin>>n>>q;
+    block=(int) sqrt(n);
+    int l,r,curL,curR;
+    for(int i=1;i<=n;i++)
+        cin>>arr[i];
+    convert();
+    for(int i=0;i<q;i++)
+    {
+        cin>>l>>r;
+        Q[i].l=l;
+        Q[i].r=r;
+        Q[i].id=i;
+    }
+    sort(Q,Q+q,compare);
+    curL=0;
+    curR=0;
+    for(int i=0;i<q;i++)
+    {
+        l=Q[i].l;
+        r=Q[i].r;
+        while(l<curL)
+        {
+            //cout<<"done 2";
+            curL--;
+            Add_left(curL);
+        }
+        while(l>curL)
+        {
+           // cout<<"done 1";
+            Remove_left(curL);
+            curL++;
+        }
+        while(r<curR)
+        {
+         //   cout<<"done 3";
+            Remove_right(curR);
+            curR--;
+        }
+        while(r>curR)
+        {
+            curR++;
+            Add_right(curR);
+        }
+        ans[Q[i].id]=answer;
+    }
+    for(int i=0;i<q;i++)
+        cout<<ans[i]<<endl;
+    return 0;
+}

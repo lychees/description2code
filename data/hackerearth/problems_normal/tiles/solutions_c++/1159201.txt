@@ -1,0 +1,141 @@
+/* Written by Filip Hlasek 2012 */
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <string>
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+
+#define FOR(i, a, b) for(int i=(a);i<=(b);i++)
+#define FORD(i, a, b) for(int i=(a);i>=(b);i--)
+#define REP(i, b) for(int i=0;i<(b);i++)
+
+using namespace std;
+
+#define MOD 1000000007
+
+template <class Element>
+class Matrix{
+  private:
+    void alloc() {
+      m = (Element**)malloc(sizeof(Element*) * N);
+      REP(i, N) m[i] = (Element*)malloc(sizeof(Element) * M);
+      REP(i, N) REP(j, M) m[i][j] = (i == j) && (N == M);
+    }
+    void dealloc() {
+      REP(i, N) free(m[i]);
+      free(m);
+    }
+  public:
+    int N, M;
+    Element **m;
+    Matrix(int _N, int _M): N(_N), M(_M) {
+      alloc();
+    }
+
+    void  set(int x, int y, Element val) { m[x][y] = val; }
+    Element get(int x, int y) const { return m[x][y]; }
+
+    void print() {
+      int *w;
+      w = (int*)malloc(sizeof(int) * M);
+      REP(i, M) w[i] = 0;
+      REP(i, N) REP(j, M) {
+        int _m = m[i][j], _w = 2;
+        while( _m /= 10 ) _w++;
+        w[j] = max(w[j], _w);
+      }
+      fprintf(stderr, "\nPrinting Matrix: N = %d, M = %d\n", N, M);
+      REP(i, N) {
+        REP(j, M) fprintf(stderr, "%*d", w[j], m[i][j]);
+        fprintf(stderr, "\n");
+      }
+      free(w);
+    }
+
+    void operator +(const Matrix & a) {
+      Matrix<Element> ans(N, M);
+      if(N != a.N || M != a.M) {
+        fprintf(stderr, "ERROR: Incompatible types for matrix sumation!!!\n");
+        return ans;
+      }
+      REP(i, N) REP(j, M) ans.m[i][j] = (m[i][j] + a.m[i][j]) % MOD; // CHANGE
+      return ans;
+    }
+
+    Matrix operator *(Element x) {
+      Matrix<Element> ans(N, M);
+      REP(i, N) REP(j, M) ans.m[i][j] = ((long long)m[i][j] * x) % MOD; // CHANGE
+      return ans;
+    }
+
+    Matrix operator *(const Matrix & a) {
+      Matrix<Element> ans(N, a.M);
+      if(M != a.N) {
+        fprintf(stderr, "ERROR: Incompatible types for matrix mutliplication!!!\n");
+        return ans;
+      }
+      REP(i, N) REP(j, a.M) {
+        ans.m[i][j] = 0;
+        // the most important part of mutliplication follows
+        REP(k, M) ans.m[i][j] = (ans.m[i][j] + (long long)m[i][k] * a.m[k][j]) % MOD; // CHANGE
+      }
+      return ans;
+    }
+
+    Matrix operator ^(long long exponent) {
+      Matrix<Element> ans(N, N), tmp(N, N);
+      if(N != M) {
+        fprintf(stderr, "ERROR: Only square matrix can be powered!!!\n");
+        return ans;
+      }
+      REP(i, N) REP(j, N) tmp.m[i][j] = m[i][j];
+      while(exponent) {
+        if(exponent & 1) ans = ans * tmp;
+        tmp = tmp * tmp;
+        exponent >>= 1;
+      }
+      return ans;
+    }
+
+    Matrix power(long long exponent) { return this ^ exponent; }
+};
+
+map<int, int> masks;
+void gen_masks(int mask1, int mask2, int M, int start) {
+  // if (masks.count(mask2)) return;
+  masks[mask2]++;
+  REP(i, M) if (!(mask1 & (1 << i)) && !(mask2 & (1 << i))) {
+    if (i > start) gen_masks(mask1, (mask2 | (1 << i)), M, i);
+  }
+  REP(i, M - 1) if (!(mask2 & (1 << i)) && !(mask2 & (1 << (i + 1)))) {
+    if (i + M > start)
+      gen_masks(mask1, (mask2 | (1 << i) | (1 << (i + 1))), M, M + i);
+  }
+}
+
+int main(int argc, char *argv[]) {
+  int T;
+  scanf("%d", &T);
+  while (T--) {
+    int N, M;
+    scanf("%d%d", &M, &N);
+    Matrix<int> m(1 << M, 1 << M);
+    REP(mask1, 1 << M) {
+      masks.clear();
+      gen_masks(mask1, 0, M, -1);
+      REP(mask2, 1 << M) m.m[mask1][mask2] = masks[mask2];
+    }
+    // m.print();
+    m = m ^ N;
+    int ans = 0;
+    REP(i, 1 << M) ans = (ans + m.m[(1 << M) - 1][i]) % MOD;
+    printf("%d\n", ans);
+  }
+  return 0;
+}

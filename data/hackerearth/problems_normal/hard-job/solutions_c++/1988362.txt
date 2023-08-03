@@ -1,0 +1,128 @@
+#include <algorithm>
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <cmath>
+#include <ctime>
+#include <queue>
+#include <set>
+#include <bitset>
+#include <map>
+
+using namespace std;
+
+typedef long long ll;
+typedef long double ld;
+typedef unsigned long long ull;
+typedef unsigned long ul;
+
+template <class T> T nextInt() {
+    T x = 0, p = 1;
+    char c;
+    do {
+        c = getchar();
+    } while (c <= 32);
+    if (c == '-') {
+        p = -1;
+        c = getchar();
+    }
+    while (c >= '0' && c <= '9') {
+        x = x * 10 + c - '0';
+        c = getchar();
+    }
+    return x * p;
+}
+
+char nextC() {
+    char c;
+    do {
+        c = getchar();
+    } while (c <= 32);
+    return c;
+}
+
+const double PI = acos(-1);
+const ld EPS = 1e-6;
+
+const int maxR = (int)2e6;
+const int maxN = 500500;
+
+int ft[maxR];
+
+void addFT(int r, int val) {
+    while (r < maxR) {
+        ft[r] += val;
+        r |= r + 1;
+    }
+}
+
+int sumFT(int r) {
+    int res = 0;
+    while (r >= 0) {
+        res += ft[r];
+        r = (r & (r + 1)) - 1;
+    }
+    return res;
+}
+
+int n, q, L, R;
+int posOf[maxN];
+
+void add(int l, int r, int val) {
+    addFT(l, val);
+    addFT(r + 1, -val);
+}
+
+int get(int pos) {
+    return sumFT(pos);
+}
+
+void assign(int pos, int val) {
+    add(pos, pos, val - get(pos));
+}
+
+ll query(int x, char c) {
+    int pos = posOf[x];
+    int res = get(pos);
+    res = min(res - 1, n - res);
+    if (c == 'l') {
+        add(0, pos, 1);
+        --L;
+        posOf[x] = L;
+        assign(L, 1);
+    }
+    else {
+        add(pos, maxR - 1, -1);
+        ++R;
+        posOf[x] = R;
+        assign(R, n);
+    }
+    return res;
+}
+
+int main () {
+    srand(time(0));
+    //freopen("input.txt", "r", stdin);
+
+    n = nextInt<int>();
+    q = nextInt<int>();
+
+    L = maxN, R = maxN + n - 1;
+
+    for (int i = 1; i <= n; i++) {
+        int x = nextInt<int>();
+        posOf[x] = maxN + i - 1;
+        add(posOf[x], posOf[x], i);
+    }
+
+    ll result = 0;
+
+    while (q--) {
+        int x = nextInt<int>();
+        char c = nextC();
+        result += query(x, c);
+    }
+
+    cout << result << "\n";
+}

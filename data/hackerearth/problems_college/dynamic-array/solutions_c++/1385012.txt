@@ -1,0 +1,205 @@
+#include <iostream>
+#include <vector>
+#include <cstdio>
+#include <sstream>
+#include <map>
+#include <string>
+#include <algorithm>
+#include <queue>
+#include <cmath>
+#include <set>
+using namespace std;
+
+long long gcd(long long a, long long b){
+	if(a<0 || b<0){
+		return max(a,b);
+	}
+	if(b==0) return a;
+	return gcd(b, a%b);
+}
+
+class SegmentTree{
+	int n;
+	vector<int> GCD;
+	vector<int> cnt;
+
+public:
+	SegmentTree(int size){
+		n=1;
+		while(n<size) n <<= 1;
+		GCD = vector<int>(2*n-1, -1);
+		cnt = vector<int>(2*n-1, 0);
+	}
+
+	//array[k] <- val
+	void insert(int k){
+		//array[0] <=> T[n-1]
+		k += n-1;
+		GCD[k] = k-(n-1);
+		cnt[k] += 1;
+
+		while(k>0){
+			k = (k-1)/2;
+			cnt[k] += 1;
+			GCD[k] = gcd(GCD[k*2 + 1], GCD[k*2 + 2]);
+		}
+	}
+
+	void delete_(int k){
+		k += n-1;
+		if(cnt[k] == 1){
+			GCD[k] = -1;
+		}
+		cnt[k] -= 1;
+
+		while(k>0){
+			k = (k-1)/2;
+			cnt[k] -= 1;
+
+			GCD[k] = gcd(GCD[k*2 + 1], GCD[k*2 + 2]);
+		}
+	}
+
+	//return minimum value [a,b)
+	//T[k] covers [l,r)
+	int gcd__(int a, int b, int k, int l, int r){
+		//out of range
+		if(r <= a || b <= l) return -1;
+
+		//covered
+		if(a <= l && r <= b){
+			return GCD[k];
+		} 
+		//partially covered
+		else{
+			int val_left = gcd__(a,b, k*2+1, l, (l+r)/2);
+			int val_right = gcd__(a,b, k*2+2, (l+r)/2, r);
+			return gcd(val_left, val_right);
+		}
+	}
+
+	//[l,r)
+	int gcd_(int l, int r){
+		return gcd__(l, r, 0, 0, n);
+	}
+};
+
+template<class T>
+class BinaryIndexedTree_1_indexed{
+	void init(const vector<T> &A){
+		for(int i=0; i<N; i++){
+			add(i+1, A[i]);
+		}
+	}
+	
+public:
+	vector<T> tree;
+	int N;
+	
+	BinaryIndexedTree_1_indexed(const int n) : tree(n+1,0), N(n){
+		
+	}
+	
+	BinaryIndexedTree_1_indexed(const vector<T> &A) : tree(A.size()+1,0), N(A.size()){
+		init(A);
+	}
+
+	//caution : position "i" must be 1-indexed
+	void add(int i, const T x){
+		while(i <= N){
+			tree[i] += x;
+			i += i & -i;
+		}
+	}
+
+	//get sums [0,i]
+	T get_sum(int i){
+		T ret=0;
+		while(i>0){
+			ret += tree[i];
+			i -= i & -i;
+		}
+		return ret;
+	}
+
+	//get sums [from,to]
+	T get_sums_range(const int from, const int to){
+		return get_sum(to) - get_sum(from-1);
+	}
+
+	//get at [i]
+	T get_at(const int i){
+		return get_sum(i) - get_sum(i-1);
+	}
+
+	int lower_bound(T val){
+		if(val<=0) return 0;
+		int x = 0;
+		int k = 1;
+		while((k<<1) <= N) k<<=1;
+		
+		for( ; k>0; k>>=1){
+			if( x+k <= N && tree[x+k] < val ){
+				val -= tree[x+k];
+				x += k;
+			}
+		}
+		return x+1;
+	}
+
+	void print(){
+		for(int i=0; i<=N; i++){
+			cerr << tree[i] << " ";
+		}
+		cerr << endl;
+	}
+};
+
+
+int main(){
+	int Q;
+	scanf("%d", &Q);
+
+	BinaryIndexedTree_1_indexed<int> BIT(1000000+10);
+	SegmentTree ST(1000000+10);
+
+	while(Q--){
+		int k;
+		scanf("%d", &k);
+
+		if(k==1){
+			int x;
+			scanf("%d", &x);
+			BIT.add(x, 1);
+			ST.insert(x);
+
+		}else if(k==2){
+			int x;
+			scanf("%d", &x);
+			BIT.add(x, -1);
+			ST.delete_(x);
+
+
+		}else if(k==3){
+			int x;
+			scanf("%d", &x);
+
+			int ret = BIT.lower_bound(x);
+			printf("%d\n", ret);
+
+
+		}else if(k==4){
+			int l,r;
+			scanf("%d%d", &l, &r);
+
+			int ret = ST.gcd_(l, r+1);
+			printf("%d\n", ret);
+
+
+		}
+
+	}
+
+
+	return 0;
+}

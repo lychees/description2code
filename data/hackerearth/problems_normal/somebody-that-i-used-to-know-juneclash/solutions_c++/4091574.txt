@@ -1,0 +1,203 @@
+#include <iostream>
+#include <stdio.h>
+#include <stdint.h>
+#include <vector>
+#include <set>
+#include <utility>
+
+using namespace::std;
+
+int main()
+{
+	int N, M;
+	scanf("%d", &N);
+	scanf("%d", &M);
+
+	vector<vector<pair<int, int> > > in(N, vector<pair<int, int> >());
+	vector<vector<pair<int, int> > > out(N, vector<pair<int, int> >());
+
+	for (int i = 0; i < M; i++)
+	{
+		int u, v, w;
+		scanf("%d", &u);
+		scanf("%d", &v);
+		scanf("%d", &w);
+
+		u--;
+		v--;
+
+		char ch;
+		while (true)
+		{
+			scanf("%c", &ch);
+			if (ch == '(' || ch == ')')
+				break;
+		}
+
+		if (ch == '(')
+			in[v].push_back(make_pair(u, w));
+		else
+			out[u].push_back(make_pair(v, w));
+	}
+
+	vector<vector<int64_t> > D(N, vector<int64_t>(N, -1));
+	vector<vector<int64_t> > DL(N, vector<int64_t>(N, -1));
+	vector<vector<int64_t> > DR(N, vector<int64_t>(N, -1));
+
+	vector<bool> updated(N * N, false);
+	vector<bool> l_updated(N * N, false);
+	vector<bool> r_updated(N * N, false);
+
+	for (int i = 0; i < N; i++)
+	{
+		D[i][i] = 0;
+		updated[i * (N + 1)] = true;
+	}
+
+	vector<pair<int, int> > tmp;
+	vector<pair<int, int> > l_tmp;
+	vector<pair<int, int> > r_tmp;
+
+	while (true)
+	{
+		tmp.clear();
+		for (int i = 0; i < updated.size(); i++)
+		{
+			if (updated[i])
+			{
+				tmp.push_back(make_pair(i/N, i % N));
+				updated[i] = false;
+			}
+		}
+
+		l_tmp.clear();
+		for (int i = 0; i < l_updated.size(); i++)
+		{
+			if (l_updated[i])
+			{
+				l_tmp.push_back(make_pair(i/N, i % N));
+				l_updated[i] = false;
+			}
+		}
+
+		r_tmp.clear();
+		for (int i = 0; i < r_updated.size(); i++)
+		{
+			if (r_updated[i])
+			{
+				r_tmp.push_back(make_pair(i/N, i % N));
+				r_updated[i] = false;
+			}
+		}
+
+		if (tmp.empty() && l_tmp.empty() && r_tmp.empty())
+			break;
+
+		for (int n = 0; n < tmp.size(); n++)
+		{
+			int x = tmp[n].first;
+			int y = tmp[n].second;
+
+			int64_t w = D[x][y];
+
+			for (int i = 0; i < in[x].size(); i++)
+			{
+				int x1 = in[x][i].first;
+				int64_t w1 = (int64_t) in[x][i].second + w;
+
+				if (DL[x1][y] == -1 || DL[x1][y] > w1)
+				{
+					DL[x1][y] = w1;
+					l_updated[x1 * N + y] = true;
+				}
+			}
+
+			for (int i = 0; i < out[y].size(); i++)
+			{
+				int y1 = out[y][i].first;
+				int64_t w1 = w + (int64_t) out[y][i].second;
+
+				if (DR[x][y1] == -1 || DR[x][y1] > w1)
+				{
+					DR[x][y1] = w1;
+					r_updated[x * N + y1] = true;
+				}
+			}
+
+			for (int x1 = 0; x1 < N; x1++)
+			{
+				if (D[x1][x] == -1)
+					continue;
+
+				int64_t w1 = D[x1][x] + w;
+				if (D[x1][y] == -1 || D[x1][y] > w1)
+				{
+					D[x1][y] = w1;
+					updated[x1 * N + y] = true;
+				}
+			}
+
+			for (int y1 = 0; y1 < N; y1++)
+			{
+				if (D[y][y1] == -1)
+					continue;
+
+				int64_t w1 = w + D[y][y1];
+				if (D[x][y1] == -1 || D[x][y1] > w1)
+				{
+					D[x][y1] = w1;
+					updated[x * N + y1] = true;
+				}
+			}
+		}
+
+		for (int n = 0; n < l_tmp.size(); n++)
+		{
+			int x = l_tmp[n].first;
+			int y = l_tmp[n].second;
+
+			int64_t w = DL[x][y];
+
+			for (int i = 0; i < out[y].size(); i++)
+			{
+				int y1 = out[y][i].first;
+				int64_t w1 = w + (int64_t) out[y][i].second;
+
+				if (D[x][y1] == -1 || D[x][y1] > w1)
+				{
+					D[x][y1] = w1;
+					updated[x * N + y1] = true;
+				}
+			}
+		}
+
+		for (int n = 0; n < r_tmp.size(); n++)
+		{
+			int x = r_tmp[n].first;
+			int y = r_tmp[n].second;
+
+			int64_t w = DR[x][y];
+
+			for (int i = 0; i < in[x].size(); i++)
+			{
+				int x1 = in[x][i].first;
+				int64_t w1 = w + (int64_t) in[x][i].second;
+
+				if (D[x1][y] == -1 || D[x1][y] > w1)
+				{
+					D[x1][y] = w1;
+					updated[x1 * N + y] = true;
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < N; i++)
+	{
+		for (int j = 0; j < N; j++)
+			printf("%lld ", D[i][j]);
+		printf("\n");
+	}
+
+	return 0;
+}

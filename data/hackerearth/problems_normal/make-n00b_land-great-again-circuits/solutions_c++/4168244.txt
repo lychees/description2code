@@ -1,0 +1,182 @@
+
+#include<bits/stdc++.h>
+using namespace std;
+#define D(x)        cout<<#x " = "<<(x)<<endl
+#define un(x)       x.erase(unique(x.begin(),x.end()), x.end())
+#define sf(n)       scanf("%d", &n)
+#define sff(a,b)    scanf("%d %d", &a, &b)
+#define sfff(a,b,c) scanf("%d %d %d", &a, &b, &c)
+#define pb          push_back
+#define mp          make_pair
+#define xx          first
+#define yy          second
+#define hp          (LL) 999983
+#define MAX         500000
+typedef long long int LL;
+typedef pair<int,int> pii;
+
+
+vector<int> edge[MAX+5];
+vector<int> cntrl[MAX+5];
+LL goal[MAX+5], encm[MAX+5];
+int res[MAX+5];
+vector<int> par_sq;
+int dpt[MAX+5];
+pii rng[MAX+5];
+int _tm, n;
+
+struct Query{
+    int F, X, D;
+}Qarr[MAX+5];
+
+int soFar;
+
+const int mxval = MAX+1;
+LL BIT[MAX+5], ext[MAX+5];
+
+void update(LL *arr, int idx, LL val)
+{
+    if(!idx) while(1);
+    while(idx <= mxval)
+        arr[idx] += val, idx += idx&-idx;
+}
+
+LL query(LL *arr, int idx)
+{
+    LL ret = 0;
+    while(idx)
+        ret += arr[idx], idx -= idx&-idx;
+    return ret;
+}
+
+
+void add_update(int idx)
+{
+    int F = Qarr[idx].F;
+    int X = Qarr[idx].X;
+    LL D = Qarr[idx].D;
+
+    assert(1 <= F && F <= n);
+    update(BIT, rng[F].xx, X - dpt[F] * D);
+    update(BIT, rng[F].yy, dpt[F] * D - X);
+
+    update(ext, rng[F].xx, D);
+    update(ext, rng[F].yy, -D);
+}
+
+void rmv_update(int idx)
+{
+    int F = Qarr[idx].F;
+    int X = Qarr[idx].X;
+    LL D = Qarr[idx].D;
+
+    assert(1 <= F && F <= n);
+    update(BIT, rng[F].xx, dpt[F] * D - X);
+    update(BIT, rng[F].yy, X - dpt[F] * D);
+
+    update(ext, rng[F].xx, -D);
+    update(ext, rng[F].yy, D);
+}
+
+LL get_query(int F)
+{
+    LL ret = query(BIT, rng[F].xx);
+    ret += query(ext, rng[F].xx) * dpt[F];
+
+    return ret;
+}
+
+void recurse(int st, int ed, vector<int> &p_sq)
+{
+    vector<int> onLeft, onRight;
+    int mid = (st+ed)/2;
+
+    while(soFar < mid)
+    {
+        soFar++;
+        add_update(soFar);
+    }
+
+    while(soFar > mid)
+    {
+        rmv_update(soFar);
+        soFar--;
+    }
+
+    for(auto x : p_sq)
+    {
+        encm[x] = 0;
+        for(auto y : cntrl[x])
+            encm[x] += get_query(y);
+
+        if(encm[x] >= goal[x]) onLeft.pb(x);
+        else onRight.pb(x);
+    }
+
+    if(st == ed){
+        for(auto x : onLeft) res[x] = st;
+        for(auto x : onRight) res[x] = -1;
+        return;
+    }
+
+    par_sq.clear();
+
+    recurse(st, mid, onLeft);
+    recurse(mid+1, ed, onRight);
+}
+
+void dfs(int idx, int l = 1)
+{
+    rng[idx].xx = ++_tm;
+
+    dpt[idx] = l;
+    for(auto x : edge[idx])
+        dfs(x, l+1);
+
+    rng[idx].yy = _tm + 1;
+}
+
+int main()
+{
+    //freopen("in.txt", "r", stdin);
+    //freopen("c:\\Users\\User\\Desktop\\in.txt", "w", stdout);
+
+    int i, j, k, m, v;
+    int q;
+
+    sff(n, m);
+    for(i = 2; i <= n; i++)
+    {
+        sf(v);
+        edge[v].pb(i);
+    }
+    dfs(1);
+    if(_tm != n) while(1);
+
+    for(i = 1; i <= n; i++)
+    {
+        sf(v);
+        cntrl[v].pb(i);
+    }
+
+    for(i = 1; i <= m; i++)
+    {
+        scanf("%lld", &goal[i]);
+        par_sq.pb(i);
+    }
+
+    sf(q);
+    for(i = 1; i <= q; i++) sfff(Qarr[i].F, Qarr[i].X, Qarr[i].D);
+
+    recurse(1, q, par_sq);
+
+    for(i = 1; i <= m; i++)
+        if(res[i] == -1) puts("rekt");
+        else printf("%d\n", res[i]);
+
+    return 0;
+}
+
+
+
+

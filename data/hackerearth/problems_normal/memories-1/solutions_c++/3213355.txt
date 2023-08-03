@@ -1,0 +1,60 @@
+/* This is my default c++ template for learning projects. */
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+
+using namespace std;
+
+int countsets(int i, int rmask, vector<int>& emask)
+{
+    static vector<vector<int> > ret(16, vector<int>(1<<16, -1));
+    if (i == emask.size())
+        return 1;
+
+    if (ret[i][rmask] == -1) {
+        ret[i][rmask] = countsets(i + 1, rmask, emask);
+        if (rmask & (1<<i)) {
+            int nmask = rmask ^ (1<<i);
+            nmask &= ~emask[i];
+            ret[i][rmask] += countsets(i + 1, nmask, emask);
+        }
+    }
+
+    return ret[i][rmask];
+}
+
+int main(int argc, char **argv)
+{
+    int T;
+    cin >> T;
+    
+    while (T--) {
+        int n, p;
+        cin >> n >> p;
+        vector<pair<int, int > > pairs;
+        while (p--) {
+            int a, b;
+            cin >> a >> b;
+            a--;b--;
+            pairs.push_back(make_pair(a, b));
+        }
+        
+        int ret = 0;
+        for (int mask = 1;mask < 1<<n;mask++) {
+            bool valid = true;
+            for (auto pr: pairs) {
+                int a = pr.first, b = pr.second;
+                if ((mask & (1<<a)) && (mask & (1<<b))) {
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid)
+                ret++;
+        }
+        cout << ret << endl;
+    }
+
+    return 0;
+}

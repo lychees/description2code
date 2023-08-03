@@ -1,0 +1,153 @@
+#include <iostream>
+using namespace std;
+
+struct data{
+	long long int prefix;
+	long long int suffix;
+	long long int ans;
+};
+
+void build(data tree[], long long int arr[], long long int node, long long int start, long long int end){
+	if(start == end)
+		tree[node] = {1L, 1L, 1L};
+	else{
+		long long int mid = start + (end - start) / 2L;
+		build(tree, arr, 2 * node, start, mid);
+		build(tree, arr, 2 * node + 1L, mid + 1L, end);
+		long long int count = 0L;
+		if(arr[mid] < arr[mid + 1]){
+			count = tree[2 * node].suffix + tree[2 * node + 1L].prefix;
+		}
+		if(count > tree[2 * node].ans && count > tree[2 * node + 1L].ans){
+			tree[node].ans = count;
+			if(tree[2 * node].prefix == (mid - start + 1L))
+				tree[node].prefix = tree[2 * node].prefix + tree[2 * node + 1L].prefix;
+			else
+				tree[node].prefix = tree[2 * node]. prefix;
+			if(tree[2 * node + 1L].suffix == (end - mid))
+				tree[node].suffix = tree[2 * node].suffix + tree[2 * node + 1L].suffix;
+			else
+				tree[node].suffix = tree[2 * node + 1L].suffix;
+		}
+		else if(tree[2 * node].ans > tree[2 * node + 1L].ans){
+			tree[node] = {tree[2 * node].prefix, tree[2 * node + 1L].suffix,tree[2 * node].ans};
+		}
+		else{
+			tree[node] = {tree[2 * node].prefix, tree[2 * node + 1L].suffix,tree[2 * node + 1L].ans};
+		}
+	}
+}
+
+void update(data tree[], long long int arr[], long long int node, long long int start, long long int end, long long int idx, long long int val){
+	if(start == end)
+		arr[idx] = val;
+	else{
+		long long int mid = start + (end - start) / 2L;
+		if(start <= idx && idx <= mid)
+			update(tree, arr, 2 * node, start, mid, idx, val);
+		else
+			update(tree, arr, 2 * node + 1L, mid + 1L, end, idx, val);
+		long long int count = 0L;
+		if(arr[mid] < arr[mid + 1]){
+			count = tree[2 * node].suffix + tree[2 * node + 1L].prefix;
+		}
+		if(count > tree[2 * node].ans && count > tree[2 * node + 1L].ans){
+			tree[node].ans = count;
+			if(tree[2 * node].prefix == (mid - start + 1L))
+				tree[node].prefix = tree[2 * node].prefix + tree[2 * node + 1L].prefix;
+			else
+				tree[node].prefix = tree[2 * node]. prefix;
+			if(tree[2 * node + 1L].suffix == (end - mid))
+				tree[node].suffix = tree[2 * node].suffix + tree[2 * node + 1L].suffix;
+			else
+				tree[node].suffix = tree[2 * node + 1L].suffix;
+		}
+		else if(tree[2 * node].ans > tree[2 * node + 1L].ans){
+			tree[node] = {tree[2 * node].prefix, tree[2 * node + 1L].suffix,tree[2 * node].ans};
+		}
+		else{
+			tree[node] = {tree[2 * node].prefix, tree[2 * node + 1L].suffix,tree[2 * node + 1L].ans};
+		}
+	}
+}
+
+data query(data tree[], long long int arr[], long long int node, long long int start, long long int end, long long int l, long long int r){
+	if(start > r || end < l)
+		return { tree[node].prefix, tree[node].suffix, 0L};
+	else if(l <= start && end <= r){
+		return tree[node];
+	}
+	else{
+		long long int mid = start + (end - start) / 2L;
+		if(r <= mid)
+			return query(tree, arr, 2 * node, start, mid, l, r);
+		if(l > mid)
+			return query(tree, arr, 2 * node + 1L, mid + 1L, end, l, r);
+		data q1 = query(tree, arr, 2 * node, start, mid, l, r);
+		data q2 = query(tree, arr, 2 * node + 1L, mid + 1L, end, l, r);
+		if(q1.ans == 0L)
+			return {q1.prefix, q2.suffix, q2.ans};
+		if(q2.ans == 0L)
+			return {q1.prefix, q2.suffix, q1.ans};
+		long long int count = 0L;
+		if(arr[mid] < arr[mid + 1L]){
+			count += (mid - l + 1L) > q1.suffix ? q1.suffix : (mid - l +1L);
+			count += (r - mid) > q2.prefix ? q2.prefix : (r - mid);
+		}
+		if(count > q1.ans && count > q2.ans){
+			if(q1.prefix == (mid - start + 1L))
+				q1.prefix = q1.prefix + q2.prefix;
+			if(q2.suffix == (end - mid))
+				q2.suffix = q1.suffix + q2.suffix;
+			return {q1.prefix, q2.suffix, count};
+		}
+		if(q1.ans > q2.ans)
+			return {q1.prefix, q2.suffix, q1.ans};
+		else
+			return {q1.prefix, q2.suffix, q2.ans};
+		
+	}
+}
+
+void print(data tree[], long long int n){
+	long long int j = 4L;
+	cout << tree[1].ans << endl;
+	for(long long int i = 2L; i < n ; i ++){
+		cout << tree[i].ans << '\t';
+		if(i == j - 1L){
+			cout << endl;
+			j *= 2L;
+		}
+	}
+}
+
+int main()
+{
+    data tree[300005];
+    long long int arr[100005];
+    long long int t, n, q, p, type, x, y;
+    cin >> t;
+    while(t--){
+    	cin >> n >> q;
+    	for(long long int i = 0L; i < n; i++)
+    		cin >> arr[i];
+    	/*for(long long int i = 0L; i < n; i++)
+    		cout << arr[i] << ' ';
+    	cout << endl;*/
+    	build(tree, arr, 1L, 0L, n - 1L);
+    	//print(tree, 2 * n);
+    	//cout << endl;
+    	while(q--){
+    		cin >> type;
+    		if(type == 1L){
+    			cin >> x >> y;
+    			update(tree, arr, 1L, 0L, n - 1L, x - 1L, arr[x - 1L] + y);
+    		}
+    		else{
+    			cin >> x >> y;
+    			cout << query(tree, arr, 1L, 0L, n - 1L, x - 1L, y -1L).ans << endl;
+    		}
+    	}
+    }
+    return 0;
+}

@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+
+struct node {
+	pii front, back;
+	ll sum;
+	node () {}
+	node(pii front, pii back, ll sum) : front(front), back(back), sum(sum) {}
+};
+
+vi lazy, arr;
+vector<node> st;
+
+ll f(int x){
+	return (ll) x * (x + 1) / 2;
+}
+
+node merge(node &p1, node &p2){
+	if (p1.front.first == 0) return p2;
+	if (p2.front.first == 0) return p1;
+	node ans;
+	ans.sum = p1.sum + p2.sum;
+	ans.front = p1.front;
+	ans.back = p2.back;
+	if (p1.back.first == p2.front.first) {	
+		ans.sum -= f(p1.back.second);
+		ans.sum -= f(p2.front.second);
+		ans.sum += f(p1.back.second + p2.front.second);
+		if (f(p1.front.second) == p1.sum){
+			ans.front = pii(p1.back.first, p1.back.second + p2.front.second);
+		}
+		if (f(p2.back.second) == p2.sum){
+			ans.back = pii(p1.back.first, p1.back.second + p2.front.second);
+		}
+	} 
+	return ans;
+}
+
+void build(int p, int L, int R){
+	if (L == R) {
+		st[p] = node(pii(arr[L], 1), pii(arr[L], 1), 1);
+		return;
+	}
+	int mid = (L + R) / 2;
+	build(p * 2, L, mid);
+	build(p * 2 + 1, mid + 1, R);
+	st[p] = merge(st[p * 2] , st[p * 2 + 1]);
+}
+
+void prop(int p, int L, int R){
+	if (lazy[p]){
+		int len = R - L + 1;
+		st[p] = node(pii(lazy[p], len), pii(lazy[p], len), f(len));
+		if (L != R){
+			lazy[p * 2] = lazy[p * 2 + 1] = lazy[p];
+		}
+	}
+	lazy[p] = 0;
+}
+
+void update(int p, int L, int R, int i, int j, int d){
+	prop(p, L, R);
+	if (i > R || j < L) return;
+	if (i <= L && j >= R){
+		lazy[p] = d;
+		prop(p, L, R);
+		return;
+	}
+	int mid = (L + R) / 2;
+	update(p * 2, L, mid, i, j, d);
+	update(p * 2 + 1, mid + 1, R, i, j, d);
+	st[p] = merge(st[p * 2], st[p * 2 + 1]);
+}
+
+node query(int p, int L, int R, int i, int j){
+	prop(p, L, R);
+	if (i > R || j < L) return node(pii(0, 0), pii(0, 0), 0);
+	if (i <= L && j >= R) return st[p];
+	int mid = (L + R) / 2;
+	node p1 = query(p * 2, L, mid, i, j);
+	node p2 = query(p * 2 + 1, mid + 1, R, i, j);
+	return merge(p1, p2);
+}
+
+int main(){
+	std::ios_base::sync_with_stdio(false);
+	cin.tie(0); cout.tie(0);
+
+	int n, q; cin >> n >> q;
+	arr.resize(n);
+	for (int i = 0; i < n; i++) cin >> arr[i];
+	st.resize(4 * n);
+	lazy.assign(4 * n, 0);
+	build(1, 0, n-1);
+
+	while (q--){
+		int type, L, R; cin >> type >> L >> R;
+		L--; R--;
+		if (type == 1){
+			ll res = query(1, 0, n-1, L, R).sum;
+			cout << res << "\n";
+		} else {
+			int d; cin >> d;
+			update(1, 0, n-1, L, R, d);
+		}
+	}
+
+	return 0;
+}

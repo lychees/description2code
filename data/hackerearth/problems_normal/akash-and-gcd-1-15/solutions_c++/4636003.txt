@@ -1,0 +1,80 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define mp make_pair
+#define pb push_back
+#define mod 1000000007
+#define MX 1000001
+using namespace std;
+int phi[500001];
+ll dp[500001];
+ll tree[MX<<3];
+int arr[MX];
+void pre(){
+    phi[1]=1;
+    for(int i=2;i<500001;i++) phi[i]=i;
+    for(int i=2;i<500001;i++){
+        if(phi[i]==i){
+            for(int j=i;j<500001;j+=i){
+                phi[j] = phi[j] - phi[j]/i;
+            }
+        }
+    }
+    for(int i=1;i<500001;i++){
+        for(int j = i;j<500001;j+=i){
+            ll temp = 1ll*(j/i)*phi[i];
+            dp[j] = (dp[j] + temp)%mod;
+        }
+    }
+}
+ll merg(ll a,ll b){
+    return (a+b)%mod;
+}
+void build(int idx,int l,int r){
+    if(l==r){
+        tree[idx] = dp[arr[l]];
+        return;
+    }
+    int mid = (l+r)/2;
+    build(idx<<1,l,mid);
+    build(idx<<1|1,mid+1,r);
+    tree[idx]=merg(tree[idx<<1],tree[idx<<1|1]);
+}
+ll query(int idx,int ql,int qr,int l,int r){
+    if(l>=ql && r<=qr) return tree[idx];
+    int mid = (l+r)/2;
+    if(qr<=mid) return query(idx<<1,ql,qr,l,mid);
+    if(ql>mid) return query(idx<<1|1,ql,qr,mid+1,r);
+    return merg(query(idx<<1,ql,qr,l,mid),query(idx<<1|1,ql,qr,mid+1,r));
+}
+void update(int idx,int i,int v,int l, int r){
+    if(l==r){
+        if(l==i) tree[idx] = dp[v]%mod;
+        return;
+    }
+    if(i<l || i>r) return ;
+    int mid = (l+r)/2;
+    update(idx<<1,i,v,l,mid);
+    update(idx<<1|1,i,v,mid+1,r);
+    tree[idx] = merg(tree[idx<<1],tree[idx<<1|1]);
+}
+int main()
+{
+    pre();
+    int n;
+    scanf("%d",&n);
+    for(int i=1;i<=n;i++) scanf("%d",&arr[i]);
+    build(1,1,n);
+    int q;
+    scanf("%d",&q);
+    while(q--){
+        string s;
+        int x,y;
+        cin>>s>>x>>y;
+        if(s=="C"){
+            printf("%lld\n",query(1,x,y,1,n));
+        }else{
+            update(1,x,y,1,n);
+        }
+    }
+return 0;
+}

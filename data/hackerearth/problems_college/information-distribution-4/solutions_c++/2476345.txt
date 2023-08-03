@@ -1,0 +1,147 @@
+#include<iostream>
+#include<algorithm>
+#include<cstdio>
+#include<cmath>
+#include<string>
+#include<cstring>
+#include<vector>
+#include<set>
+#include<iomanip>
+#include<queue>
+#include<map>
+#include<list>
+#include<stack>
+#define fl(i,s,n) for(i=s;i<n;i++)
+#define flr(i,s,n) for(i=s;i>n;i--)
+#define ls(i,s) for(i=0;s[i]!='\0';i++)
+#define gi(x) fastscan(x)
+#define pi(x) printf("%d",x)
+#define checkline(x) while(x!='\0' && x!='\n')
+#define pt(s) printf(s)
+#define PI acos(-1)
+#define f_in freopen("input.txt","r",stdin)
+#define f_out freopen("output.txt","w",stdout)
+#define in(i,j,k) ((j<=i) && (i<k))
+#define ull unsigned long long int
+#define lli long long int
+#define sd(x) scanf("%d",&x)
+#define sd2(x,y) scanf("%d%d",&x,&y)
+#define sd3(x,y,z) scanf("%d%d%d",&x,&y,&z)
+#define fi first
+#define se second
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair(x,y)
+#define r0 return 0
+#define mod 1000000007
+using namespace std;
+lli mul_inv(lli a, lli b)
+{
+	lli b0 = b, t, q;
+	lli x0 = 0, x1 = 1;
+	if (b == 1) return 1;
+	while (a > 1) {
+		q = a / b;
+		t = b, b = a % b, a = t;
+		t = x0, x0 = x1 - q * x0, x1 = t;
+	}
+	if (x1 < 0) x1 += b0;
+	return x1;
+}
+lli chinese_remainder(vector<lli> n, vector<lli> a, lli len)
+{
+	lli p, i, prod = 1, sum = 0;
+
+	for (i = 0; i < len; i++) prod *= n[i];
+
+	for (i = 0; i < len; i++) {
+		p = prod / n[i];
+		sum += a[i] * mul_inv(p, n[i]) * p;
+	}
+
+	return sum % prod;
+}
+long long SmallC(lli n, lli r, lli MOD)
+{
+    vector< vector<long long> > C(2,vector<long long> (r+1,0));
+
+    for (lli i=0; i<=n; i++)
+    {
+        for (lli k=0; k<=r && k<=i; k++)
+            if (k==0 || k==i)
+                C[i&1][k] = 1;
+            else
+                C[i&1][k] = (C[(i-1)&1][k-1] + C[(i-1)&1][k])%MOD;
+    }
+    return C[n&1][r];
+}
+
+long long Lucas(lli n, lli m, lli p)
+{
+    if (n==0 && m==0) return 1;
+    lli ni = n % p;
+    lli mi = m % p;
+    if (mi>ni) return 0;
+    return Lucas(n/p, m/p, p) * SmallC(ni, mi, p);
+}
+
+long long C(lli n, lli r, lli MOD)
+{
+    return Lucas(n, r, MOD);
+}
+vector<lli> all_prim;
+bool is_prime(lli n)
+{
+    if(n==2)
+        return true;
+    lli j = sqrt(n);
+    for(lli i=2;i<=(j+1);i++)
+        if(n%i==0)
+            return false;
+    return true;
+}
+void init()
+{
+    all_prim.resize(0);
+    lli i,j,k;
+    fl(i,2,101)
+        if(is_prime(i))
+            all_prim.pb(i);
+}
+lli prog()
+{
+    lli i,j,k,x,y,z,n,r,m;
+    cin>>x>>y>>m;
+    vector<lli> pf;
+    vector<lli> ans;
+    x -= y;
+    n = (x+y-1);
+    r = (y-1);
+    y = m;
+    fl(i,0,all_prim.size())
+        {
+            x = all_prim[i];
+            if(y%x==0)
+            {
+                pf.pb(x);
+                while(y%x==0)
+                    y/=x;
+            }
+        }
+    fl(i,0,pf.size())
+    {
+        y = C(n,r,pf[i]);
+        ans.pb(y);
+    }
+    x = chinese_remainder(pf,ans,ans.size());
+    printf("%lld\n",x);
+    r0;
+}
+int main()
+{
+    //f_in;
+    init();
+    lli i,j,k,x,y,z,t;
+    cin>>t;
+    while(t--)
+        prog();
+}

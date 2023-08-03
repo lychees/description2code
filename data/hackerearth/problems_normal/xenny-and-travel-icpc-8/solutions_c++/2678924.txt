@@ -1,0 +1,89 @@
+// Does not support negative cycle .
+#include <stdio.h>
+#include <queue>
+#include <vector>
+#include <iostream>
+using namespace std;
+int N ;
+struct node
+{
+    int u , c , t , w ; // u is the road number and w is the total cost needed to reach u from source
+};
+class cmp
+{
+    public :
+    bool operator () (node &a,node &b)
+    {
+        if(a.w>b.w) return true; else return false; // Sorted in ascending order according to cost
+    }
+};
+
+int road[2000][2000] , rail[2000][2000] ;
+bool visit[2000+10][3][3] ;
+
+int Dijkstra(int source,int destination)
+{
+    priority_queue <node,vector<node>,cmp> Q;
+
+    node n;
+    n.u=source;n.w=0;n.t = 0 ; n.c = 0 ;
+    Q.push(n);
+
+    n.u=source;n.w=0;n.t = 1 ; n.c = 0 ;
+    Q.push(n);
+
+    while(Q.size()!=0)
+    {
+        n = Q.top(); Q.pop();
+        int u = n.u , w = n.w , c=n.c , t=n.t;
+        if(visit[u][c][t]) continue;
+        visit[u][c][t]=true;
+        if(u==destination&&c==1) return w;
+
+        for(int i=1;i<=N;i++)
+        {
+            if(i==u) continue;
+            int v = i;
+
+            if(t==0)
+            {
+                n.u = v ; n.w = w + road[u][v] ; n.c = c ; n.t = t ;
+                Q.push(n);
+            }
+            else if(t==1)
+            {
+                n.u = v ; n.w = w + rail[u][v] ; n.c = c ; n.t = t ;
+                Q.push(n);
+            }
+            if(c==0)
+            {
+                if(t==0)
+                {
+                    n.u = v ; n.w = w + rail[u][v] ; if(u!=source)n.c = 1 ; else n.c = 0 ; n.t = 1 ;
+                    Q.push(n);
+                }
+                else if(t==1)
+                {
+                    n.u = v ; n.w = w + road[u][v] ; if(u!=source)n.c = 1 ; else n.c = 0 ; n.t = 0 ;
+                    Q.push(n);
+                }
+            }
+        }
+    }
+    return -1; //Not found any path between source and destination
+}
+int main()
+{
+    //freopen("input.txt","r",stdin);
+
+    scanf("%d",&N);
+    for(int i=1;i<=N;i++) for(int j=1;j<=N;j++) scanf("%d",&road[i][j]);
+    for(int i=1;i<=N;i++) for(int j=1;j<=N;j++) scanf("%d",&rail[i][j]);
+
+    int x , y ; // Find the minimum distance from x to y
+    scanf("%d%d",&x,&y);
+
+    printf("%d\n",Dijkstra(x,y));
+
+    return 0;
+}

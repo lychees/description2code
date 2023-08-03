@@ -1,0 +1,80 @@
+#include <iostream>
+using namespace std;
+
+long int U = static_cast<long int>(1e9) + 7L;
+
+long int powModulo(long int a, long int p){
+	long int ans = 1L;
+	while(p){
+		if(p & 1){
+			ans = ( (ans % U) * (a % U)) % U;
+		}
+		p >>= 1;
+		a = (a * a) % U;
+	}
+	return ans;
+}
+
+long int factModulo(int n){
+	long int ans = 1L;
+	while(n){
+		ans = ( (ans % U) * (n % U) ) % U;
+		n--;
+	}
+	return ans;
+}
+
+long int CModulo(int n, int k){
+	long int ans = 1L;
+	ans = (ans * factModulo(n)) % U;
+	ans = (ans * powModulo(factModulo(k), U - 2)) % U;
+	ans = (ans * powModulo(factModulo(n-k), U - 2)) % U;
+	return ans;
+}
+
+int main()
+{
+    int n, k;
+    
+    cin >> n >> k;
+    
+  	long int N[1001];
+  	long int C[1001][1001];
+  	long int F[1001];
+  	
+  	F[0] = F[1] = 1L;
+  	
+  	for(int i = 2; i <= n; i++)
+  		F[i] = (i * F[i - 1]) % U;
+  	
+  	for(int i = 0; i < n + 1; i++){
+  		for(int j = 0; j <= i; j++){
+  			if(i == 0 || j == 0 || j == i)
+  				C[i][j] = 1L;
+  			else
+  				C[i][j] = ((C[i - 1][j - 1] % U) + (C[i - 1][j] % U)) % U;
+  		}
+  	}
+  	
+  	for(int i = 0; i <= n; i++)
+  		N[i] = 0L;
+  	
+  	N[1] = 1L;
+  	N[0] = 1L;
+  	
+  	for(int i = 2; i <= n; i++){
+  		for(int j = 0; j < i; j++){
+  			N[i] = (N[i] + (((C[i - 1][j] * F[j + 1]) % U) * N[i - j - 1]) % U) % U;
+  		}
+  		//cout << N[i] << endl;
+  	}
+    
+    long int ans = (N[n] * C[n][k]) % U;
+    
+    if(ans < 0L)
+    	ans = U - ans;
+    
+    cout << ans << endl;
+    
+    return 0;
+}

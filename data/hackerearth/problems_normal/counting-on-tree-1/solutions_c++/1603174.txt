@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int BASE = int(1e9) + 7;
+
+int n, k, v[50500];
+long long ans, f[50500][111];
+vector <int> a[50050];
+
+void visit(int x, int par)
+{
+  long long g[111];
+  memset(f[x], 0, sizeof f[x]);
+  f[x][0] = 1;
+  for (auto y : a[x])
+  {
+    if (y == par) continue;
+    visit(y, x);
+    memset(g, 0, sizeof g);
+    for (int j = 0; j <= k; j++)
+      for (int jj = 0; jj + j <= k; jj++)
+        g[j + jj] = (g[j + jj] + f[x][j] * f[y][jj]) % BASE;
+    for (int j = 0; j <= k; j++)
+      f[x][j] = g[j];
+  }
+  f[x][0] = (f[x][0] + 1) % BASE;
+  if (v[x])
+  {
+    for (int j = k; j; j--)
+      f[x][j] = f[x][j - 1];
+    f[x][0] = 1;
+    f[x][1] = (f[x][1] + BASE - 1) % BASE;
+  }
+  ans = (ans + f[x][k] + BASE - (!k)) % BASE;
+}
+
+int main()
+{
+  ios::sync_with_stdio(0);
+  int test, x, y;
+  cin >> test;
+  while (test--)
+  {
+    cin >> n >> k;
+    for (int i = 1; i <= n; i++) 
+    {
+      cin >> v[i];
+      a[i].clear();
+    }
+    for (int i = 1; i < n; i++)
+    {
+      cin >> x >> y; 
+      a[x].push_back(y);
+      a[y].push_back(x);
+    }
+    
+    ans = 0;
+    visit(1, 0);
+    cout << ans << '\n';
+  }
+}

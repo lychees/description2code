@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+
+#define pb push_back
+#define fi first
+#define se second
+#define all(v) v.begin(), v.end()
+
+using namespace std;
+using ll = int64_t;
+
+constexpr int kModulo = 1000000000 + 9;
+
+inline void add(int& a, int b) {
+  a += b;
+  if (a >= kModulo)
+    a -= kModulo;
+}
+
+inline bool good(int bits, int before, int after) {
+  assert(after != 0);
+  int first = -1, last = -1;
+  for (int i = 0; i < bits; i++) {
+    if ((after >> i) & 1) {
+      if (first == -1)
+        first = i;
+      last = i;
+    }
+  }
+  for (int i = first + 1; i < last; i++) {
+    if ((before >> i) & 1) {
+      return false;
+    }
+  }
+  return true;
+}
+
+int mult(int a, int b) {
+  return ll(a) * b % kModulo;
+}
+
+void solve() {
+  constexpr int kMaxValue = 5000;
+  int n, k;
+  cin >> k >> n;
+  vector<int> coins(n);
+  for (int i = 0; i < n; i++)
+    cin >> coins[i];
+  vector<vector<int>> ways(kMaxValue + 1, vector<int>(1 << n, 0));
+  ways[0][0] = 1;
+  for (int i = 0; i < n; i++) {
+    for (int sum = 0; sum <= kMaxValue - coins[i]; sum++) {
+      for (int mask = 0; mask < (1 << n); mask++) {
+        if (ways[sum][mask]) {
+          add(ways[sum + coins[i]][mask | (1 << i)], ways[sum][mask]);
+        }
+      }
+    }
+  }
+  vector<vector<int>> cache(1 << n);
+  for (int before = 0; before < (1 << n); before++) {
+    cache[before].reserve(1 << n);
+    for (int after = 1; after < (1 << n); after++) {
+      if (good(n, before, after)) {
+        cache[before].pb(after);
+      }
+    }
+  }
+  vector<vector<int>> res(k + 1, vector<int>(1 << n, 0));
+  res[0][0] = 1;
+  for (int i = 0; i < k; i++) {
+    int value;
+    cin >> value;
+    for (int before = 0; before < (1 << n); before++) {
+      if (res[i][before]) {
+        for (int after : cache[before]) {
+          if (ways[value][after]) {
+            add(res[i + 1][before | after], mult(res[i][before], ways[value][after]));
+          }
+        }
+      }
+    }
+  }
+  int ans = 0;
+  for (int i = 0; i < (1 << n); i++)
+    add(ans, res[k][i]);
+  cout << ans << endl;
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int ts;
+  cin >> ts;
+
+  for (int t = 0; t < ts; t++)
+    solve();
+
+  cerr << clock() << endl;
+  
+  return 0;
+}

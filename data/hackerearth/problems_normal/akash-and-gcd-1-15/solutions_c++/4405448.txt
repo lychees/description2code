@@ -1,0 +1,84 @@
+#include<iostream>
+using namespace std;
+#include<math.h>
+int phi[500001],prime[500001],arr[1000001];
+long long fun[500001];
+long long bits[1000001];
+#define mod 1000000007
+void claculatesmallestprime()
+{   prime[1]=1;
+    prime[2]=2;
+    for(int i=4;i<500001;i+=2)
+        prime[i]=2;
+    for(int i=3;i<500001;i+=2)
+        if(!prime[i])
+            for(int j=i;j<500001;j+=i)
+                if(!prime[j])
+                prime[j]=i;
+}
+
+void calculateeulartotient()
+{
+    phi[1]=1;
+    for(int i=2;i<=500000;i++)
+    {
+        if(prime[i]==prime[i/prime[i]])
+            phi[i]=phi[i/prime[i]]*prime[i];
+        else
+            phi[i]=phi[i/prime[i]]*(prime[i]-1);
+    }
+}
+
+void calculatefun()
+{
+    for(int i=1;i<=500000;i++)
+        for(int j=i;j<500001;j+=i)
+            fun[j]+=phi[j/i]*i,fun[j]%=mod;
+}
+
+int main()
+{
+    claculatesmallestprime();
+    calculateeulartotient();
+    calculatefun();
+    long long no,que,val,x,y,ans1,ans2;
+    cin>>no;
+    char ty;
+
+     for(int i=1;i<=no;i++)
+        {
+            cin>>arr[i];
+            val=i;
+            while(val<=no)
+                bits[val]+=fun[arr[i]],val+=val&(-val);
+        }
+        cin>>que;
+        while(que--)
+        {
+            cin>>ty>>x>>y;
+            if(ty=='U')
+            {
+                val=x;
+            while(val<=no)
+                bits[val]-=fun[arr[x]],val+=val&(-val);
+                arr[x]=y;
+                val=x;
+             while(val<=no)
+                bits[val]+=fun[arr[x]],val+=val&(-val);
+            }
+            else
+            {
+                ans2=ans1=0;
+               val=x-1;
+               if(val)
+               while(val)
+                ans1+=bits[val],val-=val&(-val);
+
+               val=y;
+               while(val)
+                ans2+=bits[val],val-=val&(-val);
+                cout<<(ans2-ans1)%mod<<endl;
+            }
+        }
+
+}

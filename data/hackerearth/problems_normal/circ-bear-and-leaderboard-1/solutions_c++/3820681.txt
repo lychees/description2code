@@ -1,0 +1,130 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN = 5e5 + 5;
+const int MAXA = MAXN;
+const int MAXB = 1e6 + 6;
+typedef long long ll;
+
+struct RBST{
+    ll val, sumv;
+    int size;
+    RBST *lc, *rc;
+    RBST( ll _v = -1 ) : val( _v ), sumv( _v ), size( 1 ), lc( NULL ), rc( NULL ){}
+    void pull(){
+        sumv = ( lc ? lc->sumv : 0 ) + val + ( rc ? rc->sumv : 0 );
+        size = ( lc ? lc->size : 0 ) + 1 + ( rc ? rc->size : 0 );
+    }
+};
+
+int getSize( RBST *t ){
+    return t ? t->size : 0;
+}
+
+void split( RBST *t, int k, RBST *&a, RBST *&b ){
+    if( !t ) return ( void )( a = b = NULL );
+    if( k <= getSize( t->lc ) ){
+        b = t;
+        split( t->lc, k, a, b->lc );
+        b->pull();
+    } else{
+        a = t;
+        split( t->rc, k - getSize( t->lc ) - 1, a->rc, b );
+        a->pull();
+    }
+}
+
+RBST* merge( RBST *a, RBST *b ){
+    if( !a || !b ) return a ? a : b;
+    if( rand() % ( a->size + b->size ) < a->size ){
+        a->rc = merge( a->rc, b );
+        a->pull();
+        return a;
+    } else{
+        b->lc = merge( a, b->lc );
+        b->pull();
+        return b;
+    }
+}
+
+int lower_bound( RBST *t, ll v ){ // might have trouble when no valid k exists
+    if( !t ) return 0;
+    // cout << t->val << " " << v << " " << endl;
+    if( t->val >= v ) return lower_bound( t->lc, v );
+    if( t->val <  v ) return getSize( t->lc ) + 1 + lower_bound( t->rc, v );
+}
+
+int getRank( RBST *t, ll v ){ // how many elements strictly greater than v in t
+    return getSize( t ) - lower_bound( t, v + 1 );
+}
+
+ll getVal( RBST *t, int k ){ // 0 indexed, everything is 0 indexed
+    if( getSize( t->lc ) == k ) return t->val;
+    if( getSize( t->lc ) >  k ) return getVal( t->lc, k );
+    if( getSize( t->lc ) <  k ) return getVal( t->rc, k - getSize( t->lc ) - 1 );
+}
+
+ll getSum( RBST *&t, int ql, int qr ){ // [ ql, qr ], where both shows how many elements before
+    RBST *tl, *tm, *tr;
+    split( t, qr + 1, tm, tr );
+    split( tm, ql, tl, tm );
+    ll res = tm->sumv;
+    t = merge( tl, merge( tm, tr ) );
+    return res;
+}
+
+void remove( RBST *&t, ll v ){
+    int pv = lower_bound( t, v );
+    RBST *tl, *tm, *tr;
+    split( t, pv, tl, tm );
+    split( tm, 1, tm, tr );
+    t = merge( tl, tr );
+}
+
+void insert( RBST *&t, ll v ){
+    int pv = lower_bound( t, v );
+    RBST *tl, *tr;
+    split( t, pv, tl, tr );
+    t = merge( tl, merge( new RBST( v ), tr ) );
+}
+
+void print( RBST *&t ){ // for debug, prints everything
+    if( !getSize( t ) ) return ( void )( cout << "NOTHING!" );
+    for( int i = 0; i < t->size; ++i ){
+        RBST *tl, *tm, *tx, *tr;
+        split( t, i, tl, tm );
+        split( tm, 1, tx, tr );
+        cout << "t[ " << i << " ] = " << tx->val << endl;
+        t = merge( tl, merge( tx, tr ) );
+    }
+}
+
+int n, q;
+
+ll score[ MAXN ];
+
+int main(){
+    ios::sync_with_stdio( false );
+    cin >> n >> q;
+
+    ll ans = 0;
+    RBST *root = NULL;
+    for( int i = 0; i < n; ++i )
+        root = merge( root, new RBST( 0 ) );
+
+    for( int i = 0; i < q; ++i ){
+        int a, b; cin >> a >> b;
+        --a;
+        int prank = getRank( root, score[ a ] );
+        int pidx = lower_bound( root, score[ a ] );
+        ans -= score[ a ] * ( getRank( root, score[ a ] ) + 1 );
+        remove( root, score[ a ] );
+        score[ a ] += b;
+        insert( root, score[ a ] );
+        ans += score[ a ] * ( getRank( root, score[ a ] ) + 1 );
+        int nidx = lower_bound( root, score[ a ] );
+        if( pidx <= nidx - 1 )
+            ans += getSum( root, pidx, nidx - 1 ); // [ pidx + 1, nidx ], where idx indicates how many items before = greater or equal to it
+        cout << ans << "\n";
+    }
+    return 0;
+}

@@ -1,0 +1,128 @@
+// Hackerearth - Make Paths
+// Graphs & Trees
+// Euclidean MST - Simple Version.
+
+#include <iostream>
+#include <queue>
+#include <vector>
+#include <algorithm>
+#define MAX 100005
+
+using namespace std;
+typedef long long LL;
+
+// Structure for xy coordinates.
+struct Point
+{
+  int id;
+  LL x, y;
+};
+//
+
+// Sort by x coordinates.
+int compareX(struct Point a, struct Point b)
+{
+  if(a.x == b.x) return a.y < b.y;
+  else return a.x < b.x;
+}
+//
+
+// Sort by y coordinates.
+int compareY(struct Point a, struct Point b)
+{
+  if(a.y == b.y) return a.x < b.x;
+  else return a.y < b.y;
+}
+//
+
+int n;
+struct Point points[MAX];
+
+// Prim's Algorithm.
+typedef class X
+{ 
+  public:
+  LL c, v;
+
+  X(LL v1, LL c1)
+  {
+    c = c1; v = v1;
+  }
+}node;
+
+struct compare
+{
+  bool operator () (class X a, class X b)
+  {
+    return a.c > b.c;
+  }
+};
+
+vector<node> al[MAX + 5];
+int visited[MAX + 5] = {0};
+
+void findMST()
+{
+  LL totalCost = 0;
+  priority_queue<class X, vector<class X>, compare> q; 
+
+  q.push(node(1,0));
+  while(!q.empty())
+  {
+    class X n1 = q.top();
+    q.pop();
+    if(visited[n1.v])
+     continue;
+
+    visited[n1.v] = 1;
+    totalCost += n1.c;
+    vector<node> &v = al[n1.v];
+    LL size0 = v.size();
+    for(LL i = 0; i < size0; i++)
+     if(visited[v[i].v] == 0)
+      q.push(node(v[i].v , v[i].c));
+  }
+
+  printf("%lld\n", totalCost);
+}
+//
+
+int main()
+{
+  int node1, node2;
+  LL d;
+
+  scanf("%d", &n);
+  for(int i = 0; i < n; i++)
+  {
+    scanf("%lld %lld", &points[i].x, &points[i].y);
+    points[i].id = i + 1; // nodes are 1-indexed.
+  }
+
+  // Build the graph.
+  sort(points, points + n, compareX);
+  for(int i = 0; i < n - 1; ++i)
+  {
+    d = min(abs(points[i].x - points[i + 1].x), abs(points[i].y - points[i + 1].y));
+    node1 = points[i].id;
+    node2 = points[i + 1].id;
+    al[node1].push_back(node(node2, d));
+    al[node2].push_back(node(node1, d));
+  }
+  //
+
+  // Build the graph.
+  sort(points, points + n, compareY);
+  for(int i = 0; i < n - 1; ++i)
+  {
+    d = min(abs(points[i].x - points[i + 1].x), abs(points[i].y - points[i + 1].y));
+    node1 = points[i].id;
+    node2 = points[i + 1].id;
+    al[node1].push_back(node(node2, d));
+    al[node2].push_back(node(node1, d));
+  }
+  //
+
+  findMST();
+  return 0;
+}

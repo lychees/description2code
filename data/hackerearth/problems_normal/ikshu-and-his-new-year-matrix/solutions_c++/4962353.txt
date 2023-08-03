@@ -1,0 +1,111 @@
+// hackerearth file
+#include<bits/stdc++.h>
+#include<math.h>
+#include<cmath>
+#include<string>
+using namespace std;
+#define pb push_back
+#define mp make_pair
+#define sz(_vvv) (int)(_vvv.size())
+#define all(_v) (_v).begin(),(_v).end()
+#define gi(x) scanf("%d",&x)
+#define gl(x) scanf("%ld",&x)
+#define gll(x) scanf("%64d",&x)
+#define pii pair<int,int>
+typedef long long ll;
+const ll MOD = 1e9+7;
+//const int INF = 0x7f7f7f7f;
+const int INF = 111111;
+const double eps = 1e-6;
+//const long long INF = 1e18;
+
+const int MAXN = 1111;
+int arr[MAXN][MAXN];
+bool pr[11111];
+int n,k;
+vector < int > primes;
+int dist[11111][6];
+
+void seive() {
+	pr[0] = pr[1] = true;
+	for (ll i = 2; i <= 10010; i ++) {
+		if(!pr[i]) {
+			for (ll j = i * i; j <= 10010; j += i)
+				pr[j] = true;
+		}
+	}
+	
+	for (int i = 2; i <= 10010; i ++) if(!pr[i]) primes.pb(i);
+
+	memset(dist,INF,sizeof dist);
+
+	for (int kk = 1; kk <= 5; kk ++) {
+		for (int i = 0; i < sz(primes); i ++) {
+			int p = primes[i];
+			int cnt;
+			cnt = dist[p][kk] = 0;
+			
+			while (p - kk >= 0) {
+				p -= kk;
+				cnt ++;
+				dist[p][kk] = min(dist[p][kk],cnt);
+			}
+		}
+	}
+}
+
+bool isvalid(int x,int y) {
+	bool flag = x >= 1 and x <= n;
+	flag &= y >= 1 and y <= n;
+	flag &= x - 1 >= 1 and x - 1 <= n;
+	flag &= x + 1 >= 1 and x + 1 <= n;
+	flag &= y - 1 >= 1 and y - 1 <= n;
+	flag &= y + 1 >= 1 and y + 1 <= n;
+	return flag;
+}
+
+int chk(int x,int y) {
+	vector < int > v;
+	v.pb(arr[x][y]);
+	v.pb(arr[x - 1][y - 1]); v.pb(arr[x - 1][y + 1]);
+	v.pb(arr[x + 1][y - 1]); v.pb(arr[x + 1][y + 1]);
+	
+	ll turns = 0;
+	for (int i = 0; i < 5; i ++) turns += dist[v[i]][k];
+
+	return turns;
+}
+
+int main() {
+	ios_base::sync_with_stdio(false);
+
+	seive();
+    cin >> n >> k;
+	for (int i = 1; i <= n; i ++)
+		for (int j = 1; j <= n; j ++)
+			cin >> arr[i][j];
+
+	ll ans = INF;
+	pair < int,int > pt;
+	pt.first = pt.second = 11111;
+	
+	for (int i = 1; i <= n; i ++) {
+		for (int j = 1; j <= n; j ++) {
+			if(!isvalid(i,j)) continue;
+			ll nw_ans = chk(i,j);
+			if(ans == nw_ans) {
+				if(pt.first == i) pt.second = min(pt.second,j);
+				if(pt.first > i) pt.first = i, pt.second = j;
+			}
+			if(ans > nw_ans) ans = nw_ans, pt.first = i, pt.second = j;
+		}
+	}
+
+	if(ans >= INF) puts("no");
+	else {
+		cout << "yes\n";
+		cout << ans << '\n' << pt.first << ' ' << pt.second << '\n';
+	}
+	
+	return 0;
+}

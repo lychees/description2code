@@ -1,0 +1,109 @@
+#include<bits/stdc++.h>
+
+#define MOD 100000000000007ll
+#define MODSET(d) if ((d) >= MOD) d %= MOD;
+#define int long long int
+
+using namespace std;
+
+int K[100005];
+vector< pair<int, int> > graph[100005];
+int distanceArr[100005];
+int componentID[100005];
+int componentNumber;
+
+int n, m, s;
+int sumPeople, sumDistance;
+
+void dfs(int u, int id)
+{
+    componentID[u] = id;
+    sumPeople += K[u];
+    sumDistance += K[u]*distanceArr[u];
+
+    for (auto v: graph[u])
+    {
+        if (componentID[v.first] == 0)
+        {
+            dfs(v.first, id);
+        }
+    }
+}
+
+void djkstra(int source)
+{
+    priority_queue< pair<int, int>, vector< pair<int, int> >, greater< pair<int, int> > > q;
+
+    fill(distanceArr + 1, distanceArr + 1 + n, MOD);
+
+    distanceArr[source] = 0;
+    q.push({0, source});
+
+    int u, v, w;
+
+    while (!q.empty())
+    {
+        auto front = q.top();
+        q.pop();
+
+        w = front.first;
+        u = front.second;
+
+        if (distanceArr[u] == w)
+        {
+            for (auto v: graph[u])
+            {
+                if (w + v.second < distanceArr[v.first])
+                {
+                    distanceArr[v.first] = w + v.second;
+                    q.push({distanceArr[v.first], v.first});
+                }
+            }
+        }
+    }
+}
+
+#undef int
+int main()
+{
+    #ifdef VSP4
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    #endif // VSP4
+
+    int i, j, u, v, w;
+    bool possible;
+
+    scanf("%d %d %d", &n, &m, &s);
+
+    for (i = 1; i <= n; i++)
+    {
+        scanf("%d", &K[i]);
+    }
+
+    while (m--)
+    {
+        scanf("%d %d %d", &u, &v, &w);
+        graph[u].push_back({v, w});
+        graph[v].push_back({u, w});
+    }
+
+    djkstra(s);
+
+    componentNumber = 1;
+    dfs(s, componentNumber);
+
+    for (i = 1; i <= n; i++)
+    {
+        if (distanceArr[i] == MOD) //unreachable from s
+        {
+            cout << "0 ";
+        }
+        else
+        {
+            cout << ((sumPeople - K[i])*distanceArr[i] + (sumDistance - K[i]*distanceArr[i])) << " ";
+        }
+    }
+
+    return 0;
+}

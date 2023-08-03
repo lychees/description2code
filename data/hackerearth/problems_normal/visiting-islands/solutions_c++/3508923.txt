@@ -1,0 +1,111 @@
+#include <cstdio>
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+#include <string.h>
+#include <stack>
+#include <vector>
+#define f first
+#define s second
+using namespace std;
+vector<int>v[1000005] ;
+vector<int>u[1000005] ;
+vector<int>vv[1000005] ;
+bool vis[1000005] ;
+stack<int>st ;
+int dp[1000005] ;
+int group ;
+vector<int>gr[1000005] ;
+int parent[1000005] ;
+void dfs1(int x){
+    vis[x] = true ;
+    for(int i = 0 ;i < v[x].size() ; i++){
+        if(!vis[v[x][i]])dfs1(v[x][i]) ;
+    }
+    st.push(x) ;
+}
+void dfs2(int x){
+    vis[x] = true ;
+    for(int i = 0 ; i < u[x].size() ; i++){
+        if(!vis[u[x][i]])dfs2(u[x][i]) ;
+    }
+    gr[group].push_back(x) ;
+    parent[x] = group ;
+}
+void dfs3(int x){
+    vis[x] = true ;
+    for(int i = 0 ;i < v[x].size() ; i++){
+        int y = v[x][i] ;
+        int l = parent[x], r = parent[y] ;
+        if(l == r)continue ;
+        vv[l].push_back(r) ;
+        if(!vis[y])dfs3(y) ;
+    }
+}
+int solve(int x){
+    if(dp[x] != -1)return dp[x] ;
+    int ret = (int)gr[x].size() ;
+    for(int i = 0 ;i < vv[x].size() ; i++){
+        ret = max(ret,(int)gr[x].size() + solve(vv[x][i])) ;
+    }
+    return dp[x] = ret ;
+}
+int main(){
+    int t ;
+    scanf("%d",&t) ;
+    while(t--){
+        int n ;
+        scanf("%d",&n) ;
+        group = 0 ;
+        for(int i = 0 ;i < n ; i++){
+            v[i].clear() ;
+            vv[i].clear() ;
+            u[i].clear() ;
+            parent[i] = 0 ;
+            gr[i].clear() ;
+            dp[i] = -1 ;
+        }
+        memset(vis,false,sizeof(vis)) ;
+        for(int i = 0 ; i < n ; i++){
+            int x ;
+            scanf("%d",&x) ;
+            v[i].push_back(x) ;
+            u[x].push_back(i) ;
+        }
+        for(int i = 0 ; i < n ; i++){
+            if(!vis[i]){
+                dfs1(i) ;
+            }
+        }
+        memset(vis,false,sizeof(vis)) ;
+        while(!st.empty()){
+            int x = st.top() ;st.pop() ;
+            if(!vis[x]){
+                dfs2(x) ;
+                sort(gr[group].begin(),gr[group].end()) ;
+                group++ ;
+            }
+        }
+        memset(vis,false,sizeof(vis)) ;
+        for(int i = 0 ; i < n ; i++){
+            if(!vis[i]){
+                dfs3(i) ;
+            }
+        }
+        memset(dp,-1,sizeof(dp)) ;
+        int ans = 0 ;
+        int x ;
+        for(int i = 0 ; i < group ; i++){
+            int xx = solve(i) ;
+            if(xx > ans){
+                x = gr[i][0] ;
+                ans = xx ;
+            }
+            else if(xx == ans && gr[i][0] < x){
+                x = gr[i][0] ;
+            }
+        }
+        printf("%d\n",x) ;
+    }
+    return 0 ;
+}

@@ -1,0 +1,109 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define rep(i,j,n) for(ll i=j;i<=n;++i)
+#define vi vector<int>
+#define pii pair<int,int>
+#define vpii vector<pii>
+#define pb push_back
+#define mp make_pair
+#define mod 1000000007
+#define MAX 100005
+ll tree[MAX][12];
+ll arr[MAX];
+ll n;
+ll digit(ll n)
+{
+    set<ll> s;
+    while(n>0)
+    {
+        s.insert(n%10);
+        n/=10;
+    }
+    return s.size();
+}
+void update(ll idx,ll val,ll cnt)
+{
+    for(;idx<=n;idx+=(idx&-idx))
+        {
+            tree[idx][val]+=cnt;
+            //cout<<idx<<" "<<val<<" "<<tree[idx][val]<<endl;
+        }
+}
+ll query(ll idx,ll val)
+{
+    ll cn=0;
+    for(;idx>0;idx-=(idx&-idx))
+        cn+=tree[idx][val];
+    return cn;
+}
+int main()
+{
+    ios::sync_with_stdio(false);
+   // ll n;
+    cin>>n;
+    memset(arr,0,sizeof(arr));
+    for(ll i=1;i<=n;++i)
+    {
+        for(ll j=0;j<=12;++j)
+            tree[i][j]=0;
+    }
+    rep(i,1,n)
+    {
+      cin>>arr[i];
+      update(i,digit(arr[i]),1);
+    }
+    ll q;
+    cin>>q;
+    while(q--)
+    {
+        string op;
+        ll idx,val;
+        cin>>op>>idx>>val;
+        if(op=="ADD")
+        {
+            update(idx,digit(arr[idx]),-1);
+            arr[idx]+=val;
+            arr[idx]%=mod;
+            update(idx,digit(arr[idx]),1);
+        }
+        else if(op=="MUL")
+        {
+            update(idx,digit(arr[idx]),-1);
+            arr[idx]*=val;
+            arr[idx]%=mod;
+            update(idx,digit(arr[idx]),1);
+        }
+        else if(op=="REP")
+        {
+            update(idx,digit(arr[idx]),-1);
+            arr[idx]=val;
+            arr[idx]%=mod;
+            update(idx,digit(arr[idx]),1);
+        }
+        else if(op=="MAX")
+        {
+            ll ans=0,i;
+            for( i=12;i>=1;--i)
+            {
+                ans= query(val,i)-query(idx-1,i);
+                if(ans>0) break;
+            }
+            cout<<i<<" "<<ans<<endl;
+        }
+        else if(op=="MIN")
+        {
+            ll ans=0,i;
+            for(i=1;i<=12;++i)
+            {
+                ans=query(val,i) - query(idx-1,i);
+                if(ans>0) break;
+            }
+            cout<<i<<" "<<ans<<endl;
+        }
+
+    }
+    //rep(i,1,n)cout<<arr[i]<<" ";
+   //{ rep(j,1,12) cout<<tree[i][j]<<" ";cout<<endl;}
+    return 0;
+}

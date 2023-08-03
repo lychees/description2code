@@ -1,0 +1,109 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+class my_pair 
+{
+public:
+	long long int cost;
+	long long int recharge;
+	my_pair()
+	{
+		cost = 0;
+		recharge = 0;
+	}
+	my_pair(long long int cost_par, long long int recharge_par)
+	{
+		cost = cost_par;
+		recharge = recharge_par;
+	}
+};
+
+long long int partition(my_pair arr[], long long int n);
+void swap(my_pair arr[], long long int i, long long int j, long long int n);
+bool compare_by_cost(my_pair p1, my_pair p2);
+bool compare_by_recharge_desc(my_pair p1, my_pair p2);
+bool compare_by_profit(my_pair p1, my_pair p2);
+
+int main(int argc, char const *argv[])
+{
+	long long int n;
+	cin >> n;
+	my_pair arr[n];
+	for (long long int i = 0; i < n; ++i)
+	{
+		cin >> arr[i].cost >> arr[i].recharge;
+	}
+	long long int pivot_index = partition(arr, n);
+	sort(arr, arr + pivot_index, compare_by_cost);
+	sort(arr + pivot_index, arr + n, compare_by_recharge_desc);
+	long long int cur_cost = 0, min = 0;
+	for (long long int i = 0; i < n; ++i)
+	{
+		cur_cost = cur_cost - arr[i].cost;
+		if (cur_cost < min)
+		{
+			min = cur_cost;
+		}
+		cur_cost = cur_cost + arr[i].recharge;
+	}
+	cout << (-1 * min) << "\n";
+	return 0;
+}
+
+long long int partition(my_pair arr[], long long int n)
+{
+	my_pair pivot(0, 0);
+	long long int i = -1;
+	for (long long int j = 0; j < n; ++j)
+	{
+		if (compare_by_profit(arr[j], pivot))
+		{
+			i++;
+			swap(arr, i, j, n);
+		}
+	}
+	return i + 1;
+}
+
+void swap(my_pair arr[], long long int i, long long int j, long long int n)
+{
+	if (i >= n || j >= n)
+	{
+		return;
+	}
+	else
+	{
+		my_pair temp = arr[i];
+		arr[i] = arr[j];
+		arr[j] = temp;
+	}
+}
+
+bool compare_by_cost(my_pair p1, my_pair p2)
+{
+	if (p1.cost == p2.cost)
+	{
+		return (p1.recharge <= p2.recharge);
+	}
+	else
+	{
+		return (p1.cost <= p2.cost);
+	}
+}
+bool compare_by_recharge_desc(my_pair p1, my_pair p2)
+{
+	if (p1.recharge == p2.recharge)
+	{
+		return (p1.cost >= p2.cost);
+	}
+	else
+	{
+		return (p1.recharge >= p2.recharge);
+	}
+}
+
+bool compare_by_profit(my_pair p1, my_pair p2)
+{
+	return ((p1.cost - p1.recharge) <=  (p2.cost - p2.recharge));
+}

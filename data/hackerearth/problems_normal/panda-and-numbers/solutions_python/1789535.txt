@@ -1,0 +1,115 @@
+def readNextWord():
+    data = []
+    cur = 0
+    while True:
+        if len(data) == cur:
+            st = raw_input()
+            data = st.split()
+            cur = 0
+        yield data[cur]
+        cur += 1
+def getNextInt(reader):
+    return int(float(next(reader)))
+
+memcache = {}
+
+def isValid(num, digits, diff, i = 0):
+    global memcache
+    tp = (num, diff, i)
+    if tp in memcache:
+        return memcache[tp]
+    if i >= len(digits):
+        return False
+    d = digits[i]
+    if diff%d == 0:
+        return True
+    l = diff / d
+    diff = diff%d
+    while l >= 0:
+        p = isValid(num, digits, diff, i+1)
+        if p:
+            memcache[tp] = True
+            return True
+        l -= 1
+        diff += d
+    memcache[tp] = False
+    return False
+
+def isValidNumber(num):
+    #pandotic={1 : 1 , 4 : 2 , 27 : 3 , 256 : 4 , 3125 : 5 , 46656 : 6 , 823543 : 7}
+    pandotic=[1, 4, 27, 256, 3125, 46656, 823543]
+    if num in pandotic:
+        return True
+    digits = []
+    nn = num
+    while nn > 0:
+        d = nn % 10
+        nn /= 10
+        if d not in digits and d != 0:
+            digits += [d]
+    digits = [x*x for x in digits]
+    #divisibilty test
+    digits.sort()
+    for pand in reversed(pandotic):
+        if pand > num:
+            continue
+        diff = num - pand
+        for d in digits:
+            if diff % d == 0:
+                return True
+    #Test vastly with all the combination
+    digits.sort(reverse=True)
+    stack = []
+    for pand in reversed(pandotic):
+        if pand > num:
+            continue
+        diff = num - pand
+        if isValid(num, digits, diff, 0):
+            return True
+    return False        
+mem = {}
+def isValidNumber2(num): 
+    global mem
+    pandotic=[1, 4, 27, 256, 3125, 46656, 823543]
+    if num in pandotic:
+        return True
+    if num in mem:
+        return mem[num]
+    nn = num
+    digits = []
+    while nn > 0:
+        d = nn % 10
+        nn /= 10
+        if d not in digits and d != 0:
+            digits += [d]
+    digits = [x*x for x in digits]
+    for d in digits:
+        n = num - d
+        if n > 0 and isValidNumber2(n):
+            if num not in mem:
+                mem[num] = True
+            return True
+    mem[num] = False
+    return False
+    pass
+def printIfValid(num):
+    if isValidNumber2(num):
+        print "Yes"
+    else:
+        print "No"
+    
+
+def main():
+    #printIfValid(2)
+    #return
+    reader = readNextWord()
+    T = getNextInt(reader)
+    for i in xrange(1, 1000001):
+        isValidNumber2(i)
+    while T > 0:
+        N = getNextInt(reader)
+        printIfValid(N)
+        T -= 1
+
+if __name__ == "__main__":
+    main()

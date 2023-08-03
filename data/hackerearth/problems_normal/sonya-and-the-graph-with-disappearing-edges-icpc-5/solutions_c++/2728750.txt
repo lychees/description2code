@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <queue>
+
+using namespace std;
+
+#define ten26 10000000
+#define mod 1000000007
+
+const int MAXN = (int)1e5+5;
+
+vector<vector<pair<int, int> > > g(MAXN);
+vector<pair<int, int> > events;
+int n, m, k;
+
+int bfs() {
+    queue<int> q;
+    vector<int> d(MAXN, MAXN);
+    vector<bool> open(MAXN, true);
+    q.push(1);
+    d[1] = 0;
+    int ptr = 0;
+    while (!q.empty()) {
+        int v = q.front(); q.pop();
+        for (int i = 0; i < g[v].size(); i++) {
+            int to = g[v][i].first;
+            int edge_id = g[v][i].second;
+            int cur_time = d[v] + 1;
+            if (open[edge_id] && cur_time < d[to]) {
+                d[to] = cur_time;
+                q.push(to);
+                while (ptr < events.size() && events[ptr].first <= cur_time) {
+                    open[events[ptr++].second] = false;
+                }
+            }
+        }
+    }
+    return (d[n] == MAXN ? -1 : d[n]);
+}
+
+int main()
+{
+    cin >> n >> m >> k;
+    for (int i = 0; i < m; i++) {
+        int a, b;
+        cin >> a >> b;
+        g[a].push_back(make_pair(b, i));
+        g[b].push_back(make_pair(a, i));
+    }
+
+    events.resize(k);
+
+    for (int i = 0; i < k; i++) {
+        int t, id;
+        cin >> t >> id;
+        events[i] = make_pair(t, id - 1);
+    }
+    sort(events.begin(), events.end());
+    int res = bfs();
+    cout << res;
+    return 0;
+}

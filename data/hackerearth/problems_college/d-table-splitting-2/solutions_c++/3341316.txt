@@ -1,0 +1,268 @@
+#include <iostream>
+
+#include <vector>
+#include <string>
+#include <queue>
+#include <set>
+#include <algorithm>
+#include <cassert>
+#include <cstdlib>
+
+using namespace std;
+
+#define SZ(a) int((a).size())
+
+#define REP(i,n) for(int i=0,_n=(n);i<_n;++i)
+#define FOR(i,a,b) for(int i=(a),_b=(b);i<=_b;++i)
+
+typedef vector<string> VS;
+typedef vector<int> VI;
+typedef vector<VI> VVI;
+typedef pair<int,int> II;
+
+
+class DisjointSet {
+   size_t _n;
+   size_t _size;
+public:
+   vector<int>    parent;
+   vector<size_t> rank;
+
+   DisjointSet(size_t n);
+   int find_rep(int u);
+   bool union_rep(int u, int v);
+};
+
+DisjointSet::DisjointSet(size_t n)
+   : _n(n), _size(n), parent(n, -1), rank(n, 0) {}
+
+int DisjointSet::find_rep(int u) {
+// path compression
+   vector<int> s;
+   while (parent[u] >= 0) {
+      s.push_back(u);
+      u = parent[u];
+   }
+   for (int i = 0; i < (int) s.size(); ++i)
+      parent[s[i]] = u;
+   return u;
+
+}
+
+bool DisjointSet::union_rep(int u, int v) {
+   int u_root = find_rep(u);
+   int v_root = find_rep(v);
+   if (u_root == v_root)
+      return false;
+   if (rank[u_root] > rank[v_root])
+      parent[v_root] = u_root;
+   else {
+      parent[u_root] = v_root;
+      if (rank[u_root] == rank[v_root])
+         rank[v_root] = rank[u_root] + 1;
+   }
+   --_size;
+   return true;
+}
+
+bool trace;
+
+int R, C;
+VS B;
+
+struct Pos {
+   int row, col;
+   Pos(int _r = -1, int _c = -1) : row(_r), col(_c) {}
+};
+
+int dr[] = {-1, 0, 0, +1};
+int dc[] = {0, -1, +1, 0};
+
+template<typename T>
+class FixedQueue {
+   int max_cap;
+   T* arr;
+   int head, tail;
+public:
+   FixedQueue(int _max_cap)
+     : max_cap(_max_cap), arr(new T[_max_cap]), head(0), tail(0) {}
+   ~FixedQueue() { delete[] arr; }
+   void reset() {
+      head = tail = 0;
+   }
+   bool empty() {
+      return head >= tail;
+   }
+   void push(T item) {
+   // assert(tail < max_cap);
+      arr[tail++] = item;
+   }
+   T pop() {
+      return arr[head++];
+   }
+};
+
+FixedQueue<Pos> qpos( 1000000+4 );
+void bfs1(Pos src, int comp, VVI& which_comp) {
+   qpos.reset();
+   qpos.push(src);
+   which_comp[src.row][src.col] = comp;
+   char id = B[src.row][src.col];
+   while (!qpos.empty()) {
+      Pos cur = qpos.pop();
+      REP(k, 4) {
+         Pos nxt(cur.row + dr[k], cur.col + dc[k]);
+         if (nxt.row < 0 || nxt.row >= R || nxt.col < 0 || nxt.col >= C ||
+             B[nxt.row][nxt.col] != id)
+            continue;
+         if (which_comp[nxt.row][nxt.col] < 0) {
+            which_comp[nxt.row][nxt.col] = comp;
+            qpos.push(nxt);
+         }
+      }
+   }
+}
+
+const int INF = 1000000000;
+
+FixedQueue<int> q2(1000000+4);
+void bfs2(const VVI& G, int src, VI& D) {
+   D = VI(G.size(), INF);
+   D[src] = 0;
+   q2.reset();
+   q2.push(src);
+   while (!q2.empty()) {
+      int u = q2.pop();
+      for (int j = 0; j < (int) G[u].size(); ++j) {
+         int v = G[u][j];
+         if (D[v] > D[u] + 1) {
+            D[v] = D[u] + 1;
+            q2.push(v);
+         }
+      }
+   }
+}
+
+int dr2[] = {-1, -1, -1, 0, 0, +1, +1, +1};
+int dc2[] = {-1, 0, +1, -1, +1, -1, 0, +1};
+void build_connected_comp_graph(int ncomp, VVI& which_comp, VVI& G) {
+   G = VVI(ncomp + 1);
+   int nedges = 0;
+   REP(r, R) {
+      REP(c, C) {
+         int u = which_comp[r][c];
+         REP(k, 8) {
+            Pos nxt(r + dr2[k], c + dc2[k]);
+            if (nxt.row < 0 || nxt.row >= R || nxt.col < 0 || nxt.col >= C) {
+               G[0].push_back(u);
+               if (trace)
+                  cerr << "add edge " << 0 << " - " << u << endl;
+               ++nedges;
+               continue;
+            }
+            int v = which_comp[nxt.row][nxt.col];
+            if (u != v) {
+               G[u].push_back(v);
+               G[v].push_back(u);
+               if (trace)
+                  cerr << "add edge " << u << " - " << v << endl;
+               nedges += 2;
+            }
+         }
+      }
+   }
+   if (trace)
+      cerr << G.size() << ' ' << nedges << endl;
+}
+
+bool solve() {
+   int ncomp = 0;
+   VVI which_comp(R, VI(C, -1));
+   REP(r, R) REP(c, C) {
+      if (which_comp[r][c] == -1)
+         bfs1(Pos(r, c), ++ncomp, which_comp);
+   }
+   //cerr << "BFS1" << endl;
+
+   if (trace) {
+      REP(r, R) {
+         REP(c, C)
+            cerr << which_comp[r][c] << ' ';
+         cerr << endl;
+      }
+   }
+
+   VVI G;
+   build_connected_comp_graph(ncomp, which_comp, G);
+   //cerr << "BuildConnectedCompGraph" << endl;
+
+   VI D;
+   bfs2(G, 0, D);
+   //cerr << "BFS2" << endl;
+
+   if (trace) {
+      for (int u = 0; u < (int) G.size(); ++u)
+         cerr << u << ": " << D[u] << endl;
+   }
+
+   DisjointSet dset(G.size());
+   for (int u = 0; u < (int) G.size(); ++u) {
+      for (int j = 0; j < (int) G[u].size(); ++j) {
+         int v = G[u][j];
+      //   assert( abs(D[u] - D[v]) <= 1 );
+         if (D[u] == D[v])
+            dset.union_rep(u, v);
+      }
+   }
+
+   VVI G2(G.size());
+   for (int u = 1; u < (int) G.size(); ++u) {
+      int root_u = dset.find_rep(u);
+      if (SZ(G2[root_u]) >= 2)
+         continue;
+      for (int j = 0; j < (int) G[u].size(); ++j) {
+         int v = G[u][j];
+         //assert( abs(D[root_u] - D[v]) <= 1 );
+         if (D[root_u] > D[v]) {
+            if (find(G2[root_u].begin(), G2[root_u].end(), v) != G2[root_u].end())
+               continue;
+            G2[root_u].push_back(v);
+            if (SZ(G2[root_u]) >= 2)
+               break;
+         }
+      }
+   }
+
+   for (int u = 1; u < (int) G.size(); ++u) {
+      if (SZ(G2[u]) == 1) {
+         if (trace)
+            cerr << u << " has one parent: " << *G2[u].begin() << endl;
+         return false;
+      }
+   }
+
+   return true;
+}
+
+int main(int argc, char* argv[]) {
+   ios_base::sync_with_stdio(false); 
+   cin.tie(NULL);
+
+   int trace_tc = -1;
+   if (argc >= 2)
+      trace_tc = atoi(argv[1]);
+
+   int TC;
+   cin >> TC;
+   FOR(tc, 1, TC) {
+      cin >> R >> C;
+      B = VS(R);
+      REP(r, R)
+         cin >> B[r];
+      trace = tc == trace_tc;
+      bool res = solve();
+      cout << (res ? "YES" : "NO") << '\n';
+   }
+
+   return 0;
+}

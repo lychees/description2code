@@ -1,0 +1,135 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define CUT 1000000007
+using namespace std;
+vector< int > DfsOrder;
+vector< int > OWL_CITY[100001];
+int Sub_Count[100001];
+ll Diamonds[100001];
+ll COOL[100001];
+int hashing[100001];
+ll segment[ 400001 ];
+ll lazy[ 400001 ];
+ll fast( ll base , ll exp ){
+ ll res = 1;
+ while(exp){
+   if(exp & 1)
+ res = (res * base)%CUT;
+ exp = exp >> 1;
+ base = (base * base)%CUT;
+ }
+ return res;
+}
+void Dfs(int u,int p ){
+     DfsOrder.push_back(u);
+    for( int i = 0 ; i < OWL_CITY[u].size() ; ++i ){
+          if(OWL_CITY[u][i] != p ){
+          Dfs(OWL_CITY[u][i] , u );
+          Sub_Count[u] += Sub_Count[OWL_CITY[u][i]];
+         }
+    }
+}
+void dfs(int u,int p , ll value ){
+     Diamonds[ hashing[u] ] = value;
+    for( int i = 0 ; i < OWL_CITY[u].size() ; ++i ){
+          if(OWL_CITY[u][i] != p ){
+          dfs(OWL_CITY[u][i] , u , (value * COOL[ u ])%CUT );
+         }
+    }
+}
+ll query( int node , int i , int j , int l , int r  ){
+      if( lazy[node] != 1 ){
+         segment[ node ] = (segment[node] * lazy[node])%CUT;
+         if( i != j ){
+         lazy[2*node] = (lazy[2*node] * lazy[node])%CUT;
+         lazy[2*node+1] = (lazy[2*node+1] * lazy[node])%CUT;
+         }
+         lazy[node] = 1;
+     }
+  if( i > j || l > j || i > r )
+   return 0;
+    if( i >= l && j <= r )
+    return segment[node];
+    return ( query(2*node,i,(i+j)/2,l,r) + query(2*node+1,(i+j)/2+1,j,l,r) )%CUT;
+}
+void update( int node ,int i , int j , int l , int r , ll value){
+      if( lazy[node] != 1  ){
+         segment[ node ] = (segment[node] * lazy[node])%CUT;
+         if( i != j ){
+         lazy[2*node] = (lazy[2*node] * lazy[node])%CUT;
+         lazy[2*node+1] = (lazy[2*node+1] * lazy[node])%CUT;
+         }
+         lazy[node] = 1;
+     }
+  if( i > j || l > j || i > r )
+   return ;
+    if( i >= l && j <= r ){
+      segment[node] = (segment[node] * value )%CUT;
+       if( i != j ){
+       lazy[2*node] = (lazy[2*node] * value)%CUT;
+         lazy[2*node+1] = (lazy[2*node+1] * value)%CUT;
+         }
+    }
+    else {
+    update( 2 * node , i , ( i + j )/2 , l , r , value   );
+    update( 2 * node + 1 , ( i + j )/2 + 1 , j , l , r , value );
+    segment[ node ] = ( segment[ 2 * node ] + segment[ 2 * node + 1])%CUT;
+    }
+}
+void build( int node , int i , int j ){
+  if( i > j )
+  return;
+   if( i == j )
+   segment[ node ] = Diamonds[ i ];
+   else {
+    build( 2 * node , i , ( i + j )/2 );
+    build( 2 * node + 1 , ( i + j )/2 + 1 , j );
+    segment[ node ] = ( segment[ 2 * node ] + segment[ 2 * node + 1])%CUT;
+   }
+}
+int main(){
+  cin.sync_with_stdio(false);
+      int  N , Q;
+      cin >> N >> Q;
+      int E = N - 1;
+      while( E-- ){
+         int U , V;
+         cin >> U >> V;
+         OWL_CITY[U].push_back(V);
+         OWL_CITY[V].push_back(U);
+      }
+      for( int i = 1 ; i <= N ; ++i ){
+       Sub_Count[ i ] = 1;
+       cin >> COOL[ i ];
+       }
+          Dfs( 1 , - 1);
+         for( int i = 1 ; i <= DfsOrder.size() ; ++i )
+              hashing[ DfsOrder[ i - 1 ] ] =  i;
+             dfs(1,-1,1);
+             for(int i = 1 ; i <= 4 * N ; ++i )
+            lazy[i] =  1;
+           build( 1 , 1 , N );
+           while(Q--){
+             int choice;
+             cin >> choice;
+             if(choice == 1 ){
+                int node;
+                ll value;
+                cin >> node >> value;
+                int left = hashing[ node ];
+                int right = left + Sub_Count[node] - 1;
+                 left++;
+                 if(left <= right )
+                 update(1 , 1 , N , left , right , (value * fast(COOL[node],CUT-2))%CUT );
+                 COOL[node] = value;
+             }
+             else {
+               int node;
+               cin >> node;
+                int left = hashing[ node ];
+                int right = left + Sub_Count[node] - 1;
+                cout << query(1 , 1 , N , left , right ) << endl;
+             }
+    }
+ return 0;
+}

@@ -1,0 +1,150 @@
+// Author : Abhisar Singhal
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+#include <queue>
+#include <algorithm>
+#include <vector>
+#include <cstring>
+#include <stack>
+#include <cctype>
+#include <utility>   
+#include <map>
+#include <string>  
+#include <climits> 
+#include <set>
+#include <string>    
+#include <sstream>
+#include <utility>   
+#include <ctime>
+#include <cassert>
+#include <fstream>
+using namespace std;
+
+typedef long long LL;
+typedef vector<int> VI;
+typedef pair<int, int> II;
+typedef vector<long long> VLL;
+typedef vector<bool> VB;
+
+#define SZ(A) ((int)A.size())
+#define LEN(A) ((int)A.length())
+#define MS(A) memset(A, 0, sizeof(A))
+#define MSV(A,a) memset(A, a, sizeof(A))
+#define MAX(a,b) ((a >= b) ? (a) : (b))
+#define MIN(a,b) ((a >= b) ? (b) : (a))
+#define ABS(a) (((a) > 0) ? (a) : (-a))
+#define MP make_pair
+#define X first
+#define Y second
+#define PB push_back
+#define FOUND(A, x) (A.find(x) != A.end())
+#define getcx getchar_unlocked
+#define INF (int(1e9))
+#define INFL (LL(1e18))
+#define EPS 1e-12
+
+#define chkbit(s, b) (s & (1<<b))
+#define setbit(s, b) (s |= (1<<b))
+#define clrbit(s, b) (s &= ~(1<<b))
+
+#define REP(i, n) for(int i = 0; i < (n); i++)
+#define FOR(i, a, n) for(int i = a; i < n; i++)
+#define REV(i, a, n) for(int i = a; i > n; i--)
+#define FORALL(itr, c) for(itr = (c).begin(); itr != (c).end(); itr++)
+#define ALL(A) A.begin(), A.end()
+#define LLA(A) A.rbegin(), A.rend()
+//int dx[] = {-1, 0, 1, 0}, dy[] = {0, 1, 0, -1};
+//int dx[] = {1, 1, 1, 0, 0, -1, -1, -1}, dy[] = {1, 0, -1, 1, -1, 1, 0, -1};
+inline void inp( int &n ) {
+        n=0; int ch = getcx(); int sign = 1;
+        while(ch < '0' || ch > '9') { if(ch == '-') sign=-1; ch = getcx(); }
+        while(ch >= '0' && ch <= '9') { n = (n << 3) + (n << 1) + ch - '0', ch = getcx(); }
+		n = n * sign;
+}
+
+const int MAXN = 100009;
+int _rank[MAXN], P[MAXN];
+
+inline void makeSet(int &x) {
+	P[x] = x;
+	_rank[x] = 1;
+}
+
+inline void init(int n) {
+	for(int i=0; i<=n; i++){
+		makeSet(i);
+	}
+}
+
+int findSet(int x) {
+	if (x == P[x]) {
+		return x;
+	} else {
+		return (P[x] = findSet(P[x]));
+	}
+}
+
+void Union(int x, int y) {
+	x = findSet(x);
+	y = findSet(y);
+	if (_rank[x] > _rank[y]) {
+		P[y] = x;
+	} else {
+		P[x] = y;
+		if (_rank[x] == _rank[y]) {
+			_rank[y] += 1;
+		}
+	}
+}
+
+int main() {
+	std::ios_base::sync_with_stdio(false);
+	int n;
+	cin >> n;
+	vector <II> A;
+	vector < II >xs, ys;
+	vector < pair<II, int> >::iterator itr1, itr2;
+	vector < pair <int, II> > edges;
+	REP(i, n){
+		int x, y;
+		cin >> x >> y;
+		A.PB(II(x, y));
+		xs.PB(MP(x, i));
+		ys.PB(MP(y, i));
+	}
+	sort(ALL(xs));
+	sort(ALL(ys));
+	REP(i, n){
+		int pos = lower_bound(ALL(xs), MP(A[i].X, 0)) - xs.begin();
+		REP(j, min(5, n-pos)){
+			edges.PB(MP(abs(A[i].X - xs[pos+j].X), MP(i, xs[pos+j].Y)));
+		}
+		REP(j, min(5, pos+1)){
+			edges.PB(MP(abs(A[i].X - xs[pos-j].X), MP(i, xs[pos-j].Y)));
+		}
+		pos = lower_bound(ALL(ys), MP(A[i].Y, 0)) - ys.begin();
+		REP(j, min(5, n-pos)){
+			edges.PB(MP(abs(A[i].Y - ys[pos+j].X), MP(i, ys[pos+j].Y)));
+		}
+		REP(j, min(5, pos+1)){
+			edges.PB(MP(abs(A[i].Y - ys[pos-j].X), MP(i, ys[pos-j].Y)));
+		}
+	}
+	sort(ALL(edges));
+	LL ans = 0;
+	init(n+5);
+	REP(i, SZ(edges)){
+		int cc = edges[i].X;
+		int cx = edges[i].Y.X;
+		int cy = edges[i].Y.Y;
+		if(findSet(cx) != findSet(cy)){
+			ans += cc;
+			Union(cx, cy);
+		}
+	}
+	cout << ans << endl;
+	return 0;
+}
+

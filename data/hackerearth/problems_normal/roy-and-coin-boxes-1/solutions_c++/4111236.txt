@@ -1,0 +1,134 @@
+// By Dipankar Jain
+#include<bits/stdc++.h>
+using namespace std;
+
+#define rep(x, n) for(int x=0; x<n; x++)
+#define srep(x, start, end) for(int x=start; x<=end; x++)
+#define check cout<<"----/n"
+
+void swap(int *a, int *b)
+{
+  int temp = *a;
+  *a = *b;
+  *b = temp;
+}
+
+const int MAX = 10e6 + 7;
+
+int minsegtree[2*MAX];
+int maxsegtree[2*MAX];
+int lazy[2*MAX];
+
+
+// update the number of coins
+void updaterange(int node_index, int start, int end, int l, int r);
+int queryrange(int node_index, int start, int end, int x);
+
+int main()
+{
+  // ios::sync_with_stdio(false);
+  // memset(segtree, 0, 2*MAX*sizeof(int));
+  // memset(lazy, 0, 2*MAX*sizeof(int));
+  int n,m;
+  scanf("%d %d", &n, &m);
+  int x,y;
+  rep(i,m)
+  {
+    scanf("%d %d", &x, &y);
+    updaterange(1, 1, n, x, y);
+    /* srep(i, 1, 2*n)
+      cout << lazy[i] << " ";
+    cout << endl;*/
+  }
+  int q;
+  scanf("%d", &q);
+  rep(i, q)
+  {
+    scanf("%d", &x);
+    printf("%d \n",queryrange(1, 1, n, x));
+  }
+  return 0;
+}
+
+// we will be storing the minimum value of the coin in any interval
+void updaterange(int node, int start, int end, int l, int r)
+{
+  // check if any update is left in the node
+  if(lazy[node])
+  {
+    minsegtree[node] += lazy[node];
+    maxsegtree[node] += lazy[node];
+    // check if the node has any children, if yes update their lazy values
+    if(start != end)
+    {
+      lazy[2*node] += lazy[node];         // update the children
+      lazy[2*node + 1] += lazy[node];
+    }
+    lazy[node] = 0;       // this means that their are no remaining updates on this node
+  }
+  if( l>end || r<start)
+    return ;
+  if(start == end)
+  {
+    minsegtree[node]++;
+    maxsegtree[node]++;
+    return ;
+  }
+  if(l<=start && r>=end)
+  {
+    // check;
+    // this means that the range fully covers the interval range
+    minsegtree[node]++;
+    maxsegtree[node]++;
+    if(start!=end)
+    {
+      // update the lazy values of the children
+      lazy[2*node]++;             
+      lazy[2*node + 1]++;
+    }
+    return ;
+  }
+  // this means that the interval overlaps the update range
+  int mid = (start + end)/2;
+  updaterange(2*node, start, mid, l, r);
+  updaterange(2*node + 1, mid+1, end, l, r);
+  // parent gets the minimum value of both its children
+  minsegtree[node] = min(minsegtree[2*node], minsegtree[2*node + 1]);
+  maxsegtree[node] = max(maxsegtree[2*node], maxsegtree[2*node + 1]);
+  return ;
+}
+
+// in the query we will be returning the nodes which have minimum value greater than x
+int queryrange(int node, int start, int end, int x)
+{
+  if(lazy[node])
+  {
+    minsegtree[node] += lazy[node];
+    maxsegtree[node] += lazy[node];
+    if(start != end)
+    {
+      lazy[2*node] += lazy[node];
+      lazy[2*node + 1] += lazy[node];
+    }
+    lazy[node] = 0;
+  }
+  if(minsegtree[node] >= x)
+  {
+    int count = (end - start + 1);
+    return count;
+  }
+  else if(maxsegtree[node] < x)
+  {
+    return 0;
+  }
+  if(start == end)
+  {
+    if(minsegtree[node] >= x)
+      return 1;
+    else
+      return 0;
+  }
+  int mid = (start + end)/2;
+  int count = queryrange(2*node, start, mid, x) + queryrange(2*node + 1, mid + 1, end, x);
+  return count;
+}

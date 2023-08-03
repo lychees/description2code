@@ -1,0 +1,105 @@
+#include<bits/stdc++.h>
+#define mp make_pair
+#define PII pair<int,int>
+#define fi first
+#define se second
+using namespace std;
+
+struct cell
+{
+    vector<int>v;
+    cell *s[27];
+    cell()
+    {
+        for (int i=0;i<27;i++) s[i]=0;
+    }
+};
+
+const int NMAX=1000005;
+
+int n,Q,len,which,a[NMAX],deq[NMAX],st[NMAX],dr[NMAX],lc[NMAX];
+long long sol[NMAX];
+string t[NMAX];
+cell *root = new cell();
+
+void Add(cell *p,int x)
+{
+    if (x==len) p->v.push_back(which);
+    if (x==len) return ;
+    if (p->s[t[which][x]-'a'+1]==NULL) p->s[t[which][x]-'a'+1]=new cell();
+    Add(p->s[t[which][x]-'a'+1],x+1);
+}
+
+void Go(cell *p)
+{
+    for (vector<int>::iterator it=p->v.begin();it!=p->v.end();it++)
+        a[++a[0]]=*it;
+    for (int i=1;i<=26;i++)
+        if (p->s[i]!=NULL)
+            Go(p->s[i]);
+}
+
+int main()
+{
+    int i,j,len1,len2,to,mx=0,top,kkt;
+    long long aux,sum;
+
+    cin.sync_with_stdio(false);
+    cin>>n;
+    for (i=1;i<=n;i++)
+    {
+        cin>>t[i];which=i;
+        len=t[i].size();
+        mx=max(mx,len);
+        Add(root,0);
+    }
+    Go(root);
+
+    //vector de lcp brut maxim O(2*length)
+    for (i=1;i<n;i++)
+    {
+        len1=t[a[i]].size();
+        len2=t[a[i+1]].size();
+        j=kkt=0;
+        while (j<len1 && j<len2)
+        {
+            if (t[a[i]][j]==t[a[i+1]][j]) {j++;kkt++;}
+            else j=NMAX;
+        }
+        lc[i]=kkt;
+    }
+
+    //deque smen
+    top=0;
+    for (i=1;i<n;i++)
+    {
+        while (top && lc[deq[top]]>lc[i]) top--;
+        if (top) st[i]=deq[top];
+        deq[++top]=i;
+    }
+
+    top=0;
+    for (i=n-1;i>=1;i--)
+    {
+        while (top && lc[deq[top]]>=lc[i]) top--;
+        if (top) dr[i]=deq[top];
+        else dr[i]=n;
+        deq[++top]=i;
+    }
+
+    for (i=1;i<n;i++)
+    {
+        aux=1LL*(i-st[i])*(dr[i]-i);
+        sol[lc[i]]+=aux;
+    }
+
+    aux=(1LL*n*(n-1))/2;
+    sum=0;
+    for (i=1;i<=mx;i++) sum+=sol[i];
+    sol[0]=aux-sum;
+
+    for (i=0;i<=mx;i++) cout<<sol[i]<<" ";
+    cout<<"\n";
+    return 0;
+}
+

@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+#define MAXN 100005
+struct node{
+    long long prefix,suffix,best,i,j;
+};
+long long T,N,Q,L,R,t,arr[MAXN];
+node tree[4*MAXN];
+ 
+void setLeaf(node &leaf){
+    leaf.prefix = leaf.suffix = leaf.best = 1;
+}
+ 
+node merge(node &l,node &r){
+    node ans;
+    ans.best = max(l.best,r.best);
+    if (arr[l.j]<arr[r.i]){
+        ans.best = max(ans.best,l.suffix+r.prefix);
+    }
+ 
+    if (l.prefix==l.j-l.i+1 && arr[l.j]<arr[r.i])ans.prefix = l.prefix+r.prefix;
+    else ans.prefix = l.prefix;
+ 
+    if (r.suffix==r.j-r.i+1 && arr[l.j]<arr[r.i])ans.suffix = r.suffix+l.suffix;
+    else ans.suffix = r.suffix;
+ 
+    return ans;
+}
+ 
+node dummy;
+ 
+void build(int low,int high,int pos){
+    if (low==high){
+        setLeaf(tree[pos]);
+        tree[pos].i=tree[pos].j=low;
+        return;
+    }
+    int mid = (low+high)/2;
+ 
+    build(low,mid,pos*2);
+    tree[pos*2].i=low; tree[pos*2].j=mid;
+ 
+    build(mid+1,high,pos*2+1);
+    tree[pos*2+1].i=mid+1; tree[pos*2+1].j=high;
+ 
+    tree[pos] = merge(tree[pos*2],tree[pos*2+1]);
+}
+ 
+void update(int low,int high,int idx,int val,int pos){
+   // if (low>high)return;
+  //  cout << low << " " << high << " " << pos << endl;
+    if (low==high && low==idx){
+        arr[low]+=val;
+        setLeaf(tree[pos]);
+        tree[pos].i=tree[pos].j=low;
+       // cout << "dosaaaoooo" << endl;
+        return;
+      //  cout << 111 << endl;
+    }
+    int mid = (low+high)/2;
+    if (idx<=mid){
+        update(low,mid,idx,val,pos*2);
+        tree[pos*2].i=low; tree[pos*2].j=mid;
+    }
+    else {
+        update(mid+1,high,idx,val,pos*2+1);
+        tree[pos*2+1].i=mid+1; tree[pos*2+1].j=high;
+    }
+ 
+    tree[pos] = merge(tree[pos*2],tree[pos*2+1]);
+}
+ 
+void query(node &ans,int low,int high,int qlow,int qhigh,int pos){
+    if (low==qlow && high==qhigh){
+        ans = tree[pos];
+        return;
+    }
+    else {
+        int mid = (low+high)/2;
+        if (qhigh<=mid)
+            query(ans,low,mid,qlow,qhigh,pos*2);
+        else if (qlow>mid)
+            query(ans,mid+1,high,qlow,qhigh,pos*2+1);
+        else {
+            node l,r;
+            query(l,low,mid,qlow,mid,pos*2);
+            query(r,mid+1,high,mid+1,qhigh,pos*2+1);
+            r.i=mid+1; r.j=high;
+            l.i=low; l.j=mid;
+ 
+            ans = merge(l,r);
+        }
+    }
+ 
+}
+ 
+int main()
+{
+    scanf("%lld",&T);
+    dummy.best=dummy.prefix=dummy.suffix=0;
+    while (T--){
+        scanf("%lld%lld",&N,&Q);
+        for (int i=0;i<N;i++)scanf("%lld",&arr[i]);
+        build(0,N-1,1);
+        for (int i=0;i<Q;i++){
+            scanf("%lld%lld%lld",&t,&L,&R);
+            if (!t){
+                node ans;
+                query(ans,0,N-1,L-1,R-1,1);
+                printf("%lld\n",ans.best);
+            }
+            else {
+                update(0,N-1,L-1,R,1);
+            }
+        }
+    }
+}

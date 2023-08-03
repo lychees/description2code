@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 5e5 + 10;
+const long long INF = -1e12;
+struct DATA{
+	long long smax, sleft, sright, sum;
+	bool all;
+	DATA(){
+		smax = sleft = sright = INF;
+		sum = 0;
+		all = 0;
+	}
+	DATA operator + (const DATA &op)const{
+		DATA ans = DATA();
+		ans.smax = max(smax, op.smax);
+		if (sright != INF&&op.sleft != INF){
+			ans.smax = max(ans.smax, sright + op.sleft);
+		}
+		ans.sleft = sleft;
+		if (all){
+			if (op.sleft != INF) ans.sleft = max(ans.sleft, sum + op.sleft);
+		}
+		ans.sright = op.sright;
+		if (op.all){
+			if (sright != INF) ans.sright = max(ans.sright, sright + op.sum);
+		}
+		if (op.all&&all) ans.all = 1;
+		ans.sum = sum + op.sum;
+		return ans;
+	}
+} f[4 * maxn];
+void update(int l, int r, int u, int x, int k){
+	if (r<u || u<l) return;
+	if (l == r){
+		f[k].sleft = f[k].sright = f[k].smax = f[k].sum = x;
+		f[k].all = 1;
+		return;
+	}
+	update(l, (l + r) >> 1, u, x, k << 1);
+	update(((l + r) >> 1) + 1, r, u, x, (k << 1) | 1);
+	f[k] = f[k << 1] + f[(k << 1) | 1];
+}
+int n, q, now;
+long long ans[maxn];
+pair<int, int> tmp[maxn], Query[maxn];
+int main(){
+	scanf("%d%d", &n, &q);
+	for (int i = 1; i <= n; i++) scanf("%d", &tmp[i].first), tmp[i].second = i;
+	sort(tmp + 1, tmp + n + 1);
+	for (int i = 1; i <= q; i++) scanf("%d", &Query[i].first), Query[i].second = i;
+	sort(Query + 1, Query + q + 1);
+	now = 1;
+	for (int i = 1; i <= q; i++){
+		while (now <= n&&tmp[now].first <= Query[i].first){
+			update(1, n, tmp[now].second, tmp[now].first, 1);
+			now++;
+		}
+		ans[Query[i].second] = f[1].smax;
+	}
+	for (int i = 1; i <= q; i++){
+		if (ans[i] == INF) printf("No Solution\n"); else printf("%lld\n", ans[i]);
+	}
+}

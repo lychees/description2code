@@ -1,0 +1,139 @@
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <bits/stdc++.h>
+using namespace std;
+#define vi vector<int>
+#define pii pair<int,int>
+#define pb push_back
+#define mp make_pair
+#define all(x) x.begin(),x.end()
+#define inf 1000000007
+#define mod 1000000007
+#define x first
+#define y second
+#define pi acos(-1.0)
+#define DBG(x) cerr<<(#x)<<"="<<x<<"\n";
+//#define debug(...) fprintf(stderr,__VA_ARGS__)
+#define debug(...)
+#define FOREACH(it,x) for(__typeof(x.begin()) it=x.begin();it!=x.end();it++)
+#define ull unsigned long long
+#define ll long long
+#define N 200005
+
+template <class T,class U>inline void Max(T &a,U b){if(a<b)a=b;}
+template <class T,class U>inline void Min(T &a,U b){if(a>b)a=b;}
+
+inline void add(int &a,int b){a+=b;if(a>=mod)a-=mod;}
+
+char s[N];
+struct node{
+    int ch[27],fail,dep;
+    ll v;
+    char w;
+    void init(){
+        memset(ch,0,sizeof(ch));
+        fail=dep=0;
+        v=1;w='?';
+    }
+}t[N<<2];
+int sz=0;
+int get(char c){if(c=='#')return 26;return c-'a';}
+void build(char s[]){
+    int n=strlen(s),i,j,ed=0;
+    t[0].init();t[0].fail=-1;t[0].v=0;
+    for(i=0;i<n;i++){
+        j=get(s[i]);
+        int p=++sz;t[p].init();t[p].dep=t[ed].dep+1;t[p].w=s[i];
+        while(ed>=0&&t[ed].ch[j]==0)t[ed].ch[j]=p,ed=t[ed].fail;
+        if(ed==-1){ed=p;continue;}
+        int q=t[ed].ch[j];
+        if(t[q].dep==t[ed].dep+1)t[p].fail=q;
+        else{
+            int r=++sz;t[r]=t[q],t[r].dep=t[ed].dep+1;t[r].v=0;
+            t[p].fail=t[q].fail=r;
+            while(ed>=0&&t[ed].ch[j]==q)t[ed].ch[j]=r,ed=t[ed].fail;
+        }
+        ed=p;
+    }
+}
+int id[N<<2];
+vi g[N<<2];
+bool cmp(int i,int j){return t[i].dep<t[j].dep;}
+void run(){
+    for(int i=0;i<=sz;i++)id[i]=i;
+    sort(id,id+sz+1,cmp);
+    for(int it=sz;it>=0;it--){
+        int i=id[it];
+        if(t[i].w=='#')continue;
+        int j=t[i].fail;
+        if(j==-1)continue;
+        t[j].v+=t[i].v;
+        g[j].pb(i);
+    }
+}
+ll dp[N<<2];
+void dfs(int u){
+    for(int i=0;i<g[u].size();i++){
+        int j=g[u][i];
+        dp[j]=dp[u]+(t[j].dep-t[u].dep)*t[j].v;
+        dfs(j);
+    }
+}
+int main(){
+    //ios_base::sync_with_stdio(0);
+    //cout<<fixed<<setprecision(18);
+    int T,i,j,k,m,n;
+    scanf("%d",&n);
+    int last=0;sz=0;
+    for(i=0;i<n;i++){
+        scanf("%s",s+last);
+        int len=strlen(s+last);
+        last+=len;
+        s[last]='#';
+        last++;
+    }
+    last--;
+    s[last]=0;
+    //puts(s);
+    build(s);
+    run();
+    dp[0]=0;
+    dfs(0);
+    /*
+    for(i=0;i<=sz;i++){
+        //if(s[i]=='#')continue;
+        printf("%d %c %lld %d %lld\n",i,t[i].w,t[i].v,t[i].fail,dp[i]);
+    }
+    //*/
+    //DBG("??")
+    scanf("%d",&m);
+    ll ans=0;
+    while(m--){
+        scanf("%s",s);
+        int p=0,len=0;
+        for(i=0;s[i];i++){
+            j=s[i]-'a';
+            if(!t[p].ch[j]){
+                while(p>=0&&!t[p].ch[j])p=t[p].fail;
+                len=t[p].dep;
+            }
+            if(p==-1){p=0;len=0;continue;}
+            len++;
+            p=t[p].ch[j];
+            //cerr<<p<<" "<<dp[p]<<"\n";
+            int x=p,z=len;
+            while(x!=0){
+                int y=t[x].fail;
+                //cerr<<y<<" "<<x<<" "<<len<<"\n";
+                if(z==t[x].dep){
+                    ans+=dp[x];break;
+                }
+                ans+=(z-t[y].dep)*t[x].v;
+                //DBG(ans)
+                x=y;z=min(z,t[x].dep);
+            }
+            //DBG(ans)
+        }
+    }
+    printf("%lld\n",ans);
+    return 0;
+}

@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+#define MAXN 100005
+using namespace std;
+
+int components=0;
+vector<int> edges[MAXN];
+int cnt1[MAXN][26],cnt2[MAXN][26];
+int visited[MAXN];
+void dfs(int n)
+{
+	visited[n]=components;
+	for(int i=0;i<edges[n].size();++i)
+	{
+		if(!visited[edges[n][i]]) dfs(edges[n][i]);
+	}
+}
+int main()
+{
+    int t,n,m,a,b;
+    string s1,s2;
+    scanf("%d",&t);
+    while(t--)
+    {
+    	components=0;
+    	scanf("%d %d",&n,&m);
+    	for(int i=1;i<=n;++i){ edges[i].clear();
+    		visited[i]=0;
+    		for(int j=0;j<26;++j) cnt1[i][j]=cnt2[i][j]=0;
+    	}
+    	cin>>s1>>s2;
+    	
+    	for(int i=0;i<m;++i)
+    	{
+    		scanf("%d %d",&a,&b);
+    		edges[a].push_back(b);
+    		edges[b].push_back(a);
+    	}
+    	for(int i=1;i<=n;++i)
+    	{
+    		if(!visited[i])
+    		{
+    			components++;
+    			dfs(i);
+    		}
+    	}
+    	for(int i=1;i<=n;++i)
+    	{
+    		cnt1[visited[i]][s1[i-1]-'a']++;
+    		cnt2[visited[i]][s2[i-1]-'a']++;
+    	}
+    	int ans=0;
+    	for(int i=1;i<=components;++i)
+    	{
+    		for(int j=0;j<26;++j){
+    			//cout<<cnt1[i][j]<<" "<<cnt2[i][j]<<endl;
+    			ans+=min(cnt1[i][j],cnt2[i][j]);
+    		}
+    	}
+    	
+    	for(int i=0;i<n;++i)
+    	{
+    		if(cnt1[visited[i+1]][s2[i]-'a']>=cnt2[visited[i+1]][s2[i]-'a'] && cnt2[visited[i+1]][s2[i]-'a']!=0)
+    		{
+    			s1[i]=s2[i];
+    			cnt1[visited[i+1]][s2[i]-'a']--;
+    			cnt2[visited[i+1]][s2[i]-'a']--;
+    			continue;
+    		}
+    		for(int j=0;j<26;++j)
+    		{
+    			if(cnt1[visited[i+1]][j]==0) continue;
+    			if(j==s2[i]-'a')
+    			{
+    				s1[i]=s2[i];
+    				cnt1[visited[i+1]][j]--;
+    				cnt2[visited[i+1]][j]--;
+    				break;
+    			}
+    			if(cnt1[visited[i+1]][j]>cnt2[visited[i+1]][j])
+    			{
+    				s1[i]=j+'a';
+    				cnt1[visited[i+1]][j]--;
+    				cnt2[visited[i+1]][s2[i]-'a']--;
+    				break;
+    			}
+    		}
+    	}
+    	cout<<ans<<endl<<s1<<endl;
+    }
+    return 0;
+}

@@ -1,0 +1,107 @@
+#include <string>
+#include <vector>
+#include<iostream>
+#include<cstdio>
+#include<cstdlib>
+#include<stack>
+#include<queue>
+#include<cmath>
+#include<algorithm>
+#include<functional>
+#include<list>
+#include<deque>
+#include<bitset>
+#include<set>
+#include<map>
+#include<unordered_map>
+#include<cstring>
+#include<sstream>
+#include<complex>
+#include<iomanip>
+#include<numeric>
+#define X first
+#define Y second
+#define pb push_back
+#define rep(X,Y) for (int (X) = 0;(X) < (Y);++(X))
+#define rrep(X,Y) for (int (X) = (Y)-1;(X) >=0;--(X))
+#define repe(X,Y) for ((X) = 0;(X) < (Y);++(X))
+#define peat(X,Y) for (;(X) < (Y);++(X))
+#define all(X) (X).begin(),(X).end()
+#define rall(X) (X).rbegin(),(X).rend()
+#define eb emplace_back
+#define UNIQUE(X) (X).erase(unique(all(X)),(X).end())
+
+using namespace std;
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+template<class T> using vv=vector<vector<T>>;
+template<class T> ostream& operator<<(ostream &os, const vector<T> &t) {
+os<<"{"; rep(i,t.size()) {os<<t[i]<<",";} os<<"}"<<endl; return os;}
+template<class S, class T> ostream& operator<<(ostream &os, const pair<S,T> &t) { return os<<"("<<t.first<<","<<t.second<<")";}
+const ll MOD=1e9+7;
+typedef int Weight;
+struct Edge {
+  int src, dst;
+  Edge(int src, int dst) :
+    src(src), dst(dst){ }
+};
+ostream& operator<<(ostream &os,const Edge &e){
+  return os<<"("<<e.src<<","<<e.dst<<")";}
+typedef vector<Edge> Edges;
+typedef vector<Edges> Graph;
+
+typedef vector<Weight> Array;
+typedef vector<Array> Matrix;
+bool augment(const Graph& g, int u,
+    vector<int>& matchTo, vector<bool>& visited) {
+  if (u < 0) return true;
+  for(auto e:g[u]) if (!visited[e.dst]) {
+    visited[e.dst] = true;
+    if (augment(g, matchTo[e.dst], matchTo, visited)) {
+      matchTo[e.src] = e.dst;
+      matchTo[e.dst] = e.src;
+      return true;
+    }
+  }
+  return false;
+}
+int bipartiteMatching(const Graph& g, int L){
+  Edges matching;
+  const int n = g.size();
+  vector<int> matchTo(n, -1);
+  int match = 0;
+  rep(u, L) {
+    vector<bool> visited(n);
+    if (augment(g, u, matchTo, visited)) ++match;
+  }
+  rep(u, L) if (matchTo[u] >= 0) // make explicit matching
+    matching.push_back( Edge(u, matchTo[u]) );
+  return match;
+}
+int main(){
+  ios_base::sync_with_stdio(false);
+  cout<<fixed<<setprecision(0);
+  int n,m;
+  cin>>n>>m;
+  vector<int> a(n);
+  rep(i,n) cin>>a[i];
+  vector<ll> f(n+m-1);
+  rep(i,n+m-1) cin>>f[i];
+  int l=*min_element(all(f)),r=1+*max_element(all(f)),med;
+  while(r-l>1){
+    med=(l+r)/2;
+    //cout<<med<<endl;
+    Graph g(n+n);
+    rep(i,n) rep(j,n) if(f[a[i]+j]<med){
+      g[i].pb(Edge(i,j+n));
+      //g[j+n].eb(j+n,i);
+    }
+    //cout<<g;
+    //cout<<bipartiteMatching(g,n)<<endl;
+    if(bipartiteMatching(g,n)==n) r=med;
+    else l=med;
+  }
+  cout<<l<<endl;
+  return 0;
+}

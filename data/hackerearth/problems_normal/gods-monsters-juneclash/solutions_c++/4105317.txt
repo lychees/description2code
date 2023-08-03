@@ -1,0 +1,148 @@
+#include <cstdio>
+#include <cmath>
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <cassert>
+#include <string>
+#include <cstring>
+#include <queue>
+
+using namespace std;
+
+#define rep(i,a,b) for(int i = a; i < b; i++)
+#define S(x) scanf("%d",&x)
+#define S2(x,y) scanf("%d%d",&x,&y)
+#define P(x) printf("%d\n",x)
+#define all(v) v.begin(),v.end()
+#define FF first
+#define SS second
+
+typedef long long int LL;
+typedef pair<int, int > pii;
+typedef vector<int > vi;
+
+const int mod = 1000000007;
+
+LL A[2][2];
+LL B[2][2] = {{1,1},{1,0}};
+
+map<pair<LL, LL>, int > M;
+map<pair<LL, LL>, int >::iterator it;
+
+LL _pow(LL a, LL b) {
+  if(!b) return 1;
+  if(b == 1) return a;
+  if(b == 2) return a * a % mod;
+  if(b & 1) {
+    return a * _pow(a,b-1) % mod;
+  }
+  return _pow(_pow(a,b/2),2);
+}
+
+void solve(LL n) {
+  if(n == 0) {
+    A[0][0] = A[1][1] = 1;
+    A[1][0] = A[0][1] = 0;
+    return;
+  }
+  solve(n/2);
+  LL C[2][2];
+  memset(C, 0, sizeof(C));
+  rep(i,0,2) rep(j,0,2) {
+    rep(k,0,2) {
+      C[i][j] += A[i][k] * A[k][j];
+    }
+    C[i][j] %= mod;
+  }
+  memcpy(A, C, sizeof(A));
+  if(n & 1) {
+    memset(C, 0, sizeof(C));
+    rep(i,0,2) rep(j,0,2) {
+      rep(k,0,2) {
+        C[i][j] += A[i][k] * B[k][j];
+      }
+      C[i][j] %= mod;
+    }
+    memcpy(A, C, sizeof(A));
+  }
+}
+
+LL fibo(LL n) {
+  if(n == -1) return 1;
+  if(n <= 1) return n;
+  solve(n-1);
+  return A[0][0];
+}
+
+LL X[4][4], Y[4];
+void calcStarters() {
+  int n = 0;
+  for(it = M.begin(); it != M.end(); it++) {
+    pair<LL, LL > p = it->FF;
+    Y[n] = it->SS;
+    X[n][0] = fibo(p.FF) * fibo(p.SS) % mod;
+    X[n][1] = fibo(p.FF) * fibo(p.SS - 1) % mod;
+    X[n][2] = fibo(p.FF - 1) * fibo(p.SS) % mod;
+    X[n][3] = fibo(p.FF - 1) * fibo(p.SS - 1) % mod;
+    n++;
+    if(n == 4) break;
+  }
+
+  rep(i,0,n) {
+    assert(X[i][i]);
+    LL inv = _pow(X[i][i], mod - 2);
+    Y[i] = Y[i] * inv % mod;
+    rep(j,i+1,n) {
+      X[i][j] = X[i][j] * inv % mod;
+    }
+
+    rep(j,i+1,n) {
+      rep(k,i+1,n) {
+        X[j][k] -= X[i][k] * X[j][i] % mod;
+        if(X[j][k] < 0) X[j][k] += mod;
+      }
+      Y[j] -= Y[i] * X[j][i] % mod;
+      if(Y[j] < 0) Y[j] += mod;
+      X[j][i] = 0;
+    }
+  }
+  for(int i = n - 1; i > 0; i--) {
+    for(int j = i - 1; j >= 0; j--) {
+      Y[j] -= Y[i] * X[j][i] % mod;
+      if(Y[j] < 0) Y[j] += mod;
+    }
+  }
+}
+
+bool check(LL r, LL c, int x) {
+  LL val = Y[0] * (fibo(r) * fibo(c) % mod) + Y[1] * (fibo(r) * fibo(c-1) % mod) +
+      Y[2] * (fibo(r-1) * fibo(c) % mod) + Y[3] * (fibo(r-1) * fibo(c-1) % mod);
+  val %= mod;
+  return val == x;
+}
+
+int main() {
+  int n;
+  S(n);
+  bool ans = true;
+  rep(i,0,n) {
+    LL r,c,x;
+    scanf("%lld%lld%lld",&r,&c,&x);
+    M[make_pair(r,c)] = x;
+    if(M.size() < 3) {
+    } else if(M.size() == 3) {
+      // TODO(add this special check for same row or column)
+    } else if(M.size() == 4) {
+      calcStarters();
+    } else {
+      ans &= check(r,c,x);
+    }
+    if(ans) printf("1");
+    else printf("0");
+  }
+  printf("\n");
+  return 0;
+}

@@ -1,0 +1,107 @@
+//Use BIT+coordinate compression
+#include <bits/stdc++.h>
+
+#define mod 1000000007
+#define inf 1000000000000
+#define root2 1.41421
+#define root3 1.73205
+#define pi 3.14159
+#define MAX 500005
+#define ll long long int
+#define PII pair<int, int>
+#define f first
+#define s second
+#define ss(n) scanf("%lld", &n)
+#define ssf(n) scanf("%lf", &n)
+#define mk make_pair
+#define PLL pair<ll, ll>
+
+using namespace std;
+
+ll M[MAX];//sorted array without duplicates
+ll temp[MAX];//sorted temporary array
+ll score[MAX];//stores total score of participant
+PLL part[MAX];//To store participant indices and points of ith query
+ll n, q, j;
+ll BIT[2][MAX];
+
+void update(ll b, ll idx, ll val)
+{
+    while(idx<=j)
+    {
+        BIT[b][idx]+=val;
+        idx+=idx&(-idx);
+    }
+}
+ll query(ll b, ll idx)
+{
+    ll sum=0;
+    while(idx)
+    {
+        sum+=BIT[b][idx];
+        idx-=idx&(-idx);
+    }
+    return sum;
+}
+ll b_search(ll x)
+{
+    ll lo=1, hi=j-1, mid;
+    while(lo<=hi)
+    {
+        mid=(lo+hi)>>1;
+        if(M[mid]==x)
+            return mid;
+        else if(M[mid]<x)
+            lo=mid+1;
+        else
+            hi=mid-1;
+    }
+    return mid;
+}
+int main()
+{
+    ll i, x, y, r1, r2, ps, cs, sum=0, z;
+    ss(n);ss(q);
+    temp[1]=0;
+    for(i=2;i<=q+1;i++)
+    {
+        ss(part[i].f);
+        ss(part[i].s);
+        score[part[i].f]+=part[i].s;
+        temp[i]=score[part[i].f];
+    }
+    sort(temp+1, temp+q+2);
+    j=2;
+    M[1]=temp[1];
+    for(i=2;i<=q+1;i++)
+    {
+        if(temp[i]!=temp[i-1])
+            M[j++]=temp[i];
+    }
+    for(i=1;i<=n;i++)
+        score[i]=0;
+    for(i=2;i<=q+1;i++)
+    {
+        x=part[i].f;
+        y=part[i].s;
+        //BIT[0] for rank
+        //BIT[1] for actual scores
+        ps=score[part[i].f];//previous score
+        y=b_search(ps);//Find previous score mapping
+        r1=query(0, j)-query(0, y)+1;//previous rank
+
+        score[part[i].f]+=part[i].s;
+        cs=score[part[i].f];//current score
+        z=b_search(cs);//Find current score mapping
+        r2=query(0, j)-query(0, z)+1;//current rank
+        //Update rank in BIT
+        update(0, y, -1);//Number of scores with score y decreases by 1
+        update(0, z, 1);//Number of scores with score z increases by 1
+        //update actual scores
+        update(1, y, -ps);
+        update(1, z, cs);
+        //Find sum
+        sum+=cs*r2-ps*r1+query(1, z-1)-query(1, y-1);
+        printf("%lld\n", sum);
+    }
+}

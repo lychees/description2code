@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define MOD 1000000007
+#define MAXN 100
+
+
+int gcd(int a,int b)
+{
+	if(b==0)
+		return a;
+	return gcd(b,a%b);
+}
+void check_using_dp(int adj[][MAXN], int n)
+{
+	int p=n+100;
+        bool dp[n+9][1<<p];
+        memset(dp,false,sizeof dp);
+        for(int i=0; i<n; i++)
+            dp[i][1<<i]=true;
+        for(int i=0; i<(1<<n); i++)
+        {
+            for(int j=0; j<n; j++)
+                if(i&(1<<j))
+                {
+                    for(int k=0; k<n; k++)
+                        if(i&(1<<k) && adj[k][j] && k!=j && dp[k][i^(1<<j)])
+                        {
+                            dp[j][i]=true;
+                            break;
+                        }
+                }
+        }
+        int maxn=-1,mxsum[n],sum=0,mxsm=-1,mnsm=1000000009,f;
+        for(int i=0; i<n; i++)
+        {
+        	maxn=-1;
+        	mxsum[i]=-1;
+        	f=0;
+            for(int j=0; j<(1<<n); j++)
+            {
+            	sum=0;
+            	if(dp[i][j])
+            	{
+            		f=1;
+            		if(__builtin_popcount(j)>=maxn)
+            		{
+            			maxn = __builtin_popcount(j);
+            			for(int k=0;k<n;k++)
+            			{
+            				if(j&(1<<k))
+            					sum+=k+1;
+            			}
+            			if(sum>mxsum[i])
+            				mxsum[i] = sum;
+            		}
+            	}
+            }
+            if(!f)
+            {
+            	mxsum[i] = i+1;
+            }
+        }
+        for(int i=0;i<n;i++)
+        {
+        	if(mxsum[i]>mxsm)
+        		mxsm = mxsum[i];
+        	if(mxsum[i]<mnsm)
+        		mnsm = mxsum[i];
+        }
+        int g = gcd(mxsm,mnsm);
+        cout<<mxsm/g<<" "<<mnsm/g<<endl;
+}
+
+int main()
+{
+    //freopen("file1.txt","r",stdin);
+    int T,n,m,x,y;
+    cin>>T;
+    while(T--)
+    {
+    	cin>>n>>m;
+    	int adj[MAXN][MAXN];
+    	memset(adj,0,sizeof adj);
+    	for(int i=0;i<m;i++)
+    	{
+    		cin>>x>>y;
+    		adj[x-1][y-1]=adj[y-1][x-1] = 1;
+    	}
+    	check_using_dp(adj,n);
+    }
+}

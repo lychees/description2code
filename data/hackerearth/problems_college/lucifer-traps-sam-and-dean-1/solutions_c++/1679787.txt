@@ -1,0 +1,137 @@
+#include <bits/stdc++.h>
+#define Int long long int
+#define mp make_pair
+using namespace std;
+struct node {
+	struct node *arr[2];
+};
+Int a[100005];
+vector<Int> vec;
+void insert(struct node *p,Int index){
+	if(index==40){
+		return;
+	}
+	if(p->arr[vec[index]]==NULL){
+		struct node *temp;
+		temp = new struct node;
+		temp->arr[0] = NULL;
+		temp->arr[1] = NULL;
+		p->arr[vec[index]] = temp;
+		p = p->arr[vec[index]];
+	}
+	else{
+		p = p->arr[vec[index]];
+	}
+	insert(p,index+1);
+}
+Int ans = 0;
+void query(struct node *p,Int index){
+	if(index==40){
+		return;
+	}
+	if(p->arr[1-vec[index]]!=NULL){
+		ans = ans*2+(1-vec[index]);
+		p = p->arr[1-vec[index]];
+	}
+	else{
+		ans = ans*2+(vec[index]);
+		p = p->arr[vec[index]];	
+	}
+	query(p,index+1);
+}
+vector<pair<Int,Int> > adj[100005];
+Int vis[100005];
+void dfs(Int index,Int x){
+	//cout<<index<<" "<<x<<"\n";
+	vis[index] = 1;
+	a[index] = x;
+	Int i;
+	for(i=0;i<adj[index].size();i++){
+		if(vis[adj[index][i].first]==0){
+			dfs(adj[index][i].first,x^adj[index][i].second);
+		}
+	}
+}
+map<Int,Int> mapp;
+Int vist[100005];
+vector<Int> path;
+int dfs1(Int u, Int tgt)
+{
+	//cout << u << endl;
+	if (u == tgt) {
+		path.push_back(u);
+	    		
+		return 1;
+	}
+	vist[u] = 1;
+	for (Int i = 0; i < adj[u].size(); ++i)  {
+	    if (!vist[adj[u][i].first]) {
+	    	if (dfs1(adj[u][i].first, tgt)) {
+	    		path.push_back(u);
+	    		return 1;
+	    	}
+	    }
+	}
+	return 0;
+}
+int main()
+{
+	Int n;
+	scanf("%lld",&n);
+	Int i,k;
+	struct node *root;
+	root = new struct node;
+	root->arr[0] = NULL;
+	root->arr[1] = NULL;
+	for(i=0;i<(n-1);i++){
+		Int a,b,c;
+		scanf("%lld%lld%lld",&a,&b,&c);
+		adj[a].push_back(mp(b,c));
+		adj[b].push_back(mp(a,c));
+	}
+	dfs(1LL,0LL);
+	for(i=n;i>=1;i--){
+		//printf("%lld ",a[i]);
+		mapp[a[i]] = i;
+	}
+	//cout<<"\n";
+	for(i=1;i<=n;i++){
+		vec.clear();
+		Int val;
+		val = a[i];
+		for(k=0;k<40;k++){
+			vec.push_back(val%2);
+			val/=2;
+		}
+		reverse(vec.begin(),vec.end());
+		insert(root,0);
+	}
+	Int ga = -1;
+	pair<Int,Int> p1;
+	for(i=1;i<=n;i++){
+		ans = 0;
+		vec.clear();
+		Int val;
+		val = a[i];
+		for(k=0;k<40;k++){
+			vec.push_back(val%2);
+			val/=2;
+		}
+		reverse(vec.begin(),vec.end());
+		query(root,0);
+		if((a[i]^ans)>ga){
+			ga = a[i]^ans;
+			p1.first = i;
+			p1.second = mapp[ans];
+		}
+	}
+	cout<<ga<<"\n";
+	//cout << p1.first << " " << p1.second << endl;
+	//path.push_back(p1.first);
+	dfs1(p1.first, p1.second);
+	for (Int i = path.size()-1;i>=0; i--) {
+	    printf("%lld ", path[i]);
+	}
+	cout<<"\n";
+    return 0;
+}

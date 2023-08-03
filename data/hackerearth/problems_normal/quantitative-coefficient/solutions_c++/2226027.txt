@@ -1,0 +1,134 @@
+//#include<bits/stdc++.h>
+#include <iostream>
+#include <numeric>
+#include <vector>
+#include <utility>
+#include <map>
+#include <set>
+#include <functional>
+
+#define PII pair<int,int>
+#define pb push_back
+#define mp make_pair
+using namespace std;
+
+template<typename T, typename U>
+inline ostream& operator<<(ostream& os, const pair<T,U> &p){
+	os<<"("<<p.first<<","<<p.second<<")";
+	return os;
+}
+
+template<typename T, typename U>
+inline ostream& operator<<(ostream& os, const map<T,U> &m){
+	os<<"{";
+	for(auto it = m.begin() ; it != m.end() ; it++){
+		if(it != m.begin())
+			os<<",";
+		os<<it->first<<":"<<it->second;
+	}
+	os<<"}";
+	return os;
+}
+
+
+template<typename T>
+inline ostream& operator<<(ostream& os, const vector<T> &v){
+	os<<"[";
+	for(auto it = v.begin() ; it != v.end() ; it++){
+		if(it != v.begin())
+			os<<",";
+		os<<*it;
+	}
+	os<<"]";
+	return os;
+}
+
+template<typename T>
+inline ostream& operator<<(ostream& os, const set<T> &s){
+	os<<"{";
+	for(auto it = s.begin() ; it != s.end() ; it++){
+		if(it != s.begin())
+			os<<",";
+		os<<*it;
+	}
+	os<<"}";
+	return os;
+}
+
+set<pair<int,PII>> edge_list;
+vector<pair<int,PII>> result;
+vector<int> parent;
+vector<int> size;
+
+int root(int n){
+	while(n != parent[n]){
+		parent[n] = parent[parent[n]];
+		n = parent[n];
+	}
+	return n;
+}
+void uni(int a, int b){
+	if(size[a] < size[b]){
+		parent[a] = b;
+		size[b] += size[a];
+	}
+	else{
+		parent[b] = a;
+		size[a] += size[b];
+	}
+}
+
+long long kruskal(){
+	long long totalW = 1;
+	int numVertices = parent.size();
+	int verticesPicked = 1;
+	// while we haven't picked N-1 edges
+	while(verticesPicked != numVertices){
+		 // pick smallest edge
+		 auto it = edge_list.begin();
+		 auto e = *it;
+		 edge_list.erase(it);
+		 //cout<<"edge_list becomes : "<<edge_list<<endl;
+		 // see if its two vertices have same root, if not, join them and add this edge to result
+		 int roota = root(e.second.first);
+		 int rootb = root(e.second.second);
+		 if(roota != rootb){
+			 uni(roota,rootb);
+			 //result.pb(e);
+			 totalW = (totalW*e.first)%1000000007;
+			 verticesPicked++;
+			 //cout<<"result becomes : "<<result<<endl;
+		 }
+	 }
+	 return totalW;
+ }
+	
+int main(){
+	//freopen("in.txt","r",stdin);
+	int t;
+	scanf("%d",&t);
+	for(;t>0;t--){
+		int V,E;
+		scanf("%d%d",&V,&E);
+		edge_list.clear();
+		result.clear();
+		parent.clear();
+		size.clear();
+		for(int i = 0 ; i < V ; i++){
+			parent.pb(i);
+			size.pb(1);
+		}
+		for(int i = 0 ; i < E ; i++){
+			int a,b;
+			long long w;
+			scanf("%d%d%lld",&a,&b,&w);
+			a--,b--;
+			edge_list.insert(make_pair(w,PII(a,b)));
+		}
+		//cout<<"Initial edge list : "<<edge_list<<endl;
+		cout<<kruskal()<<endl;
+		//cout<<result<<endl;
+		//cout<<-accumulate(result.begin(),result.end(),0,[](int &a, pair<int,PII> &b){return a + b.first;})<<endl;
+	}
+	return 0;
+}

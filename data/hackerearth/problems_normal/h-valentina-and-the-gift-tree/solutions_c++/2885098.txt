@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+
+#define pb push_back
+#define mp make_pair
+#define ll long long
+#define ld long double
+#define ull unsigned long long
+
+using namespace std;
+
+const int nm = 100010;
+const ll inf = 1000000000000000ll;
+
+int n;
+vector<int> adj[nm];
+int d[nm];
+int cha[nm][20];
+ll f[nm][20], sum[nm][20];
+ll a[nm];
+ll tren[nm][20], duoi[nm][20];
+int m;
+
+void dfs(int i, int p) {
+	for (int j = 1; d[i] - (1 << j) + 1 >= 1; ++j) {
+		cha[i][j] = cha[cha[i][j - 1]][j - 1];
+		sum[i][j] = sum[i][j - 1] + sum[cha[i][j - 1]][j - 1];
+		tren[i][j] = max(tren[i][j - 1], sum[i][j - 1] + tren[cha[i][j - 1]][j - 1]);
+		duoi[i][j] = max(duoi[cha[i][j - 1]][j - 1], sum[cha[i][j - 1]][j - 1] + duoi[i][j - 1]);
+		f[i][j] = max(f[i][j - 1], f[cha[i][j - 1]][j - 1]);
+		f[i][j] = max(f[i][j], tren[cha[i][j - 1]][j - 1] + duoi[i][j - 1]);
+	}
+	for (int k = 0; k < adj[i].size(); ++k) {
+		int j = adj[i][k];
+		if (j != p) {
+			d[j] = d[i] + 1;
+			cha[j][0] = i;
+			sum[j][0] = a[j];
+			tren[j][0] = a[j];
+			duoi[j][0] = a[j];
+			f[j][0] = a[j];
+			dfs(j, i);
+		}
+	}
+}
+
+int jump(int u, int n) {
+	for (int i = 0; n; ++i)
+		if ((n >> i) & 1) {
+			u = cha[u][i];
+			n = (~(1 << i)) & n;
+		}
+	return u;
+}
+
+int lca(int u, int v) {
+	if (d[u] > d[v])
+		u = jump(u, d[u] - d[v]);
+	else
+		v = jump(v, d[v] - d[u]);
+	if (u == v)
+		return u;
+	int i = log(d[u]) / log(2);
+	while (cha[u][0] != cha[v][0]) {
+		for (; ; --i)
+			if (cha[u][i] != cha[v][i])
+				break;
+		u = cha[u][i];
+		v = cha[v][i];
+	}
+	return cha[u][0];
+}
+
+ll tinh(int u, int v) {
+	int x = lca(u, v);
+	ll r1, r2, r3, r4;
+	r1 = r2 = -inf;
+	for (int i = log(d[u]) / log(2); i >= 0; --i) {
+		if (d[u] - (1 << i) + 1 >= d[x]) {
+			r1 = max(r1, f[u][i]);
+			r1 = max(r1, r2 + tren[u][i]);
+			r2 = max(duoi[u][i], sum[u][i] + r2);
+			u = cha[u][i];
+		}
+	}
+	r3 = r4 = -inf;
+	for (int i = log(d[v]) / log(2); i >= 0; --i) {
+		if (d[v] - (1 << i) + 1 >= d[x]) {
+			r3 = max(r3, f[v][i]);
+			r3 = max(r3, r4 + tren[v][i]);
+			r4 = max(duoi[v][i], sum[v][i] + r4);
+			v = cha[v][i];
+		}
+	}
+	ll res = max(r1, r3);
+	res = max(res, r2 + r4 - a[x]);
+//	cout << r1 << " " << r2 << " " << r3 << " " << r4 << "\n";
+	return res;
+}
+
+int main() {
+#ifdef LOCAL
+	freopen("input.txt", "r", stdin);
+#endif
+	scanf("%d", &n);
+	for (int i = 1; i < n; ++i) {
+		int u, v;
+		scanf("%d%d", &u, &v);
+		adj[u].pb(v);
+		adj[v].pb(u);
+	}
+	for (int i = 1; i <= n; ++i) {
+		scanf("%lld", &a[i]);
+	}
+	d[1] = 1;
+	sum[1][0] = a[1];
+	tren[1][0] = a[1];
+	duoi[1][0] = a[1];
+	f[1][0] = a[1];
+	dfs(1, -1);
+	scanf("%d", &m);
+	while (m--) {
+		int u, v;
+		scanf("%d%d", &u, &v);
+		printf("%lld\n", tinh(u, v));
+	}
+}

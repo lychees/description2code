@@ -1,0 +1,65 @@
+#include <cstdio>
+#include <map>
+#include <set>
+#include <queue>
+
+using namespace std;
+
+using pi = pair<int, int>;
+
+pi operator+(const pi& a, const pi& b){
+  return {a.first + b.first, a.second + b.second};
+}
+constexpr unsigned long long MOD = 1000000000 + 7;
+unsigned long long facMod(unsigned long long a){
+  unsigned long long ans = 1;
+  while(a){
+    ans = (ans*a)%MOD;
+    --a;
+  }
+  return ans;
+}
+
+int main()
+{
+  int T; scanf("%d", &T);
+  set<pi> lst = {{1, 2}, {1, -2}, {2, 1}, {2, -1}, {-1, -2}, {-1, 2}, {-2, -1}, {-2, 1}};
+  while(T-->0){
+    map < pi, set<pi> > adj;
+    set < pi > left;
+    queue < pi > Q;
+    int n, m, q;
+    scanf("%d %d %d", &n, &m, &q);
+    for(int i = 0; i < q; ++i){
+      int a, b; scanf("%d %d", &a, &b);
+      pi p = {a, b}; adj[p] = {}; left.insert(p);
+      for (const pi& ng: lst){
+        pi q = p + ng;
+        if (adj.find(q) != adj.end()){
+          adj[p].insert(q);
+          adj[q].insert(p);
+        }
+      }
+    } 
+    unsigned long long ans = 1;
+    unsigned long long cur = 0;
+    while(!left.empty()){
+      auto it = left.begin();
+      Q.push(*it); cur = 1;
+      left.erase(it);
+      while(!Q.empty()){
+        pi node = Q.front(); Q.pop();
+        for (const auto& ng: adj[node]){
+          auto jt = left.find(ng);
+          if(jt != left.end()){
+          	left.erase(jt);
+            Q.push(ng); ++cur;
+          }
+        }
+      }
+      ans = (ans*facMod(cur))%MOD;
+    }
+    printf("%llu\n", ans);
+  }
+  return 0;
+}

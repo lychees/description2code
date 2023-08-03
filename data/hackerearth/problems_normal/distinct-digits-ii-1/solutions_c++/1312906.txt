@@ -1,0 +1,112 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+const int N=1e5+10;
+const int md=1e9+7;
+
+ll a[N];
+int tree[12][N];
+
+int dis_cou(int x) {
+    int arr[10]={0};
+    while(x) {
+        arr[x%10]++;
+        x/=10;
+    }
+    int res=0;
+    for(int i=0;i<10;i++) {
+        if(arr[i]) {
+            res++;
+        }
+    }
+    return res;
+}
+void update(int dig,int idx,int val) {
+    while(idx<N) {
+        tree[dig][idx]+=val;
+        idx+=(idx&-idx);
+    }
+    return;
+}
+int query(int dig,int idx) {
+    int res=0;
+    while(idx>0) {
+        res+=tree[dig][idx];
+        idx-=(idx&-idx);
+    }
+    return res;
+}
+int main() {
+    int n;
+    scanf("%d",&n);
+    for(int i=1;i<=n;i++) {
+        scanf("%d",a+i);
+        int x=dis_cou(a[i]);
+        update(x,i,1);
+    }
+    int queries;
+    scanf("%d",&queries);
+    while(queries--) {
+        string str;
+        cin>>str;
+        if(str=="ADD") {
+            int u,v;
+            scanf("%d%d",&u,&v);
+            int x=dis_cou(a[u]);
+            a[u]+=v;
+            a[u]%=md;
+            int x1=dis_cou(a[u]);
+            if(x==x1) {
+                continue;
+            }
+            update(x,u,-1);
+            update(x1,u,1);
+        } else if(str=="MUL") {
+            int u,v;
+            scanf("%d%d",&u,&v);
+            int x=dis_cou(a[u]);
+            a[u]*=v;
+            a[u]%=md;
+            int x1=dis_cou(a[u]);
+            if(x==x1) {
+                continue;
+            }
+            update(x,u,-1);
+            update(x1,u,1);
+        } else if(str=="REP") {
+            int u,v;
+            scanf("%d%d",&u,&v);
+            int x=dis_cou(a[u]);
+            a[u]=v;
+            a[u]%=md;
+            int x1=dis_cou(a[u]);
+            if(x==x1) {
+                continue;
+            }
+            update(x,u,-1);
+            update(x1,u,1);
+        } else if(str=="MAX") {
+            int u,v;
+            scanf("%d%d",&u,&v);
+            for(int i=9;i>=1;i--) {
+                int ans=query(i,v)-query(i,u-1);
+                if(ans>0) {
+                    printf("%d %d\012",i,ans);
+                    break;
+                }
+            }
+        } else if(str=="MIN") {
+            int u,v;
+            scanf("%d%d",&u,&v);
+            for(int i=1;i<10;i++) {
+                int ans=query(i,v)-query(i,u-1);
+                if(ans>0) {
+                    printf("%d %d\012",i,ans);
+                    break;
+                }
+            }
+        }
+    }
+    return 0;
+}

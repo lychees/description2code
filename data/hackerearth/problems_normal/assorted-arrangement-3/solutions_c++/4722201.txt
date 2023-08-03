@@ -1,0 +1,67 @@
+#include <iostream>
+#include <set>
+#include <unordered_set>
+#include <unordered_map>
+#include <vector>
+using namespace std;
+
+int retrieveSet(vector<int> c, vector<int> num_list);
+
+int main()
+{
+	int n, m;
+	cin >> n >> m;
+	vector<int> c(m);
+	//elements are in strictly increasing order
+	for(int i=0; i<m; i++) {
+		cin >> c[i];
+	}
+	vector<int> num_list(n);
+	for(int j=0; j<n; j++) {
+		cin >> num_list[j];
+	}
+	int answer = retrieveSet(c, num_list);
+	cout << answer << endl;
+    return 0;
+}
+
+int retrieveSet(vector<int> c, vector<int> num_list) {
+	unordered_set<int> original_set;
+	unordered_map<int, int> last_seen;
+	int last_chosen = 0;
+	int pending, first_guess, offset;
+	bool chosen;
+	//go through each color value and guess the value
+	int size = num_list.size();
+	for(int i=0; i<size; i++) {
+		if(last_seen.count(num_list[i]) > 0) {
+			offset = last_seen[num_list[i]];
+		} else {
+			offset = 1;
+		}
+		first_guess = c[num_list[i]-1];
+		pending = first_guess;
+		chosen = false;
+		while(!chosen) {
+			chosen = true;
+			pending = first_guess * offset;
+			if(pending <= last_chosen) {
+				chosen = false;
+				offset++;
+				continue;
+			}
+			for(int j=num_list[i]; j<c.size(); j++) {
+				if(pending % c[j] == 0) {
+					chosen = false;
+					offset++;
+					break;
+				} 
+			}
+		}
+		last_chosen = pending;
+		last_seen[num_list[i]] = offset;
+		original_set.insert(pending);
+	}
+	return last_chosen;
+}
+

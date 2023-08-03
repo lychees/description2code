@@ -1,0 +1,289 @@
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <assert.h>
+#include <cstring>
+#include <stack>
+#include <set>
+#include <vector>
+using namespace std;
+#ifdef debug
+#define ep(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define ep(...) assert(true)
+#endif
+template <class t>
+void tension(t &a, const t &b) {
+	if (b < a) {
+		a = b;
+	}
+}
+template <class t>
+void relax(t &a, const t &b) {
+	if (b > a) {
+		a = b;
+	}
+}
+const int INF = 0x3f3f3f3f;
+const int MAXN = (int) 1e5 + 3;
+const int MAXM = (int) 1e5 + 3;
+const int MAXSIZE = 1 << 19;
+int n, m, Q, A[MAXN];
+struct Edge {
+	int to;
+	Edge *next;
+};
+struct BCC {
+	multiset<int> s;
+	void insert(int);
+	int maxval;
+	BCC() {
+		maxval = INF;
+	}
+	void change(int a, int b) {
+		ep("!size %d!", s.size());
+		s.erase(s.find(a));
+		s.insert(b);
+		maxval = *s.begin();
+	}
+};
+int cntBcc;
+BCC bcc[MAXN * 2];
+int idxNew[MAXN];
+void BCC::insert(int x) {
+	s.insert(A[x]);
+	maxval = *s.begin();
+}
+namespace zkwSegmentTree {
+	int depth;
+	int A[MAXSIZE + 1];
+	void init(int size) {
+		while ((1 << depth) - 2 < size) {
+			depth ++;
+		}
+	}
+	void initModify(int x, int v) {
+		A[(1 << depth) + x] = v;
+	}
+	void upgrade() {
+		for (int i = (1 << depth) - 1; i; i --)
+			A[i] = min(A[i << 1], A[i << 1 ^ 1]);
+	}
+	int query(int a, int b) {
+		a = (1 << depth) + a - 1;
+		b = (1 << depth) + b + 1;
+		int ans = INF;
+		for (; a ^ b ^ 1; a >>= 1, b >>= 1) {
+			if (~a & 1) tension(ans, A[a ^ 1]);
+			if ( b & 1) tension(ans, A[b ^ 1]);
+		}
+		return ans;
+	}
+	void modify(int a, int v)
+	{
+		a = (1 << depth) + a;
+		A[a] = v;
+		for (a >>= 1; a; a >>= 1)
+			A[a] = min(A[a << 1], A[a << 1 ^ 1]);
+	}
+}
+namespace newGraph {
+	const int MAXNODE = MAXN * 2;
+	int root;
+	Edge *info[MAXNODE], mem[MAXNODE], *cur_mem = mem;
+	int fa[MAXNODE];
+	void insert(int f, int s) {
+		cur_mem->to = s;
+		cur_mem->next = info[f];
+		info[f] = cur_mem ++;
+	}
+	int cntPath;
+	int top[MAXNODE], heavySon[MAXNODE];
+	int dep[MAXNODE], size[MAXNODE], belong[MAXNODE];
+	int idxMap[MAXNODE];
+	int cutVertex[MAXNODE];
+	void cutLightHeavy() {
+		static int que[MAXNODE];
+		int low = 0, high = 0;
+		que[high ++] = root;
+		fa[root] = -1;
+		while (low < high) {
+			int v = que[low ++];
+			for (Edge *pt = info[v]; pt; pt = pt->next) {
+				int u = pt->to;
+				que[high ++] = u;
+				dep[u] = dep[v] + 1;
+				fa[u] = v;
+			}
+		}
+		for (int i = high - 1; i >= 0; i --) {
+			int v = que[i];
+			size[v] = 1;
+			heavySon[v] = -1;
+			for (Edge *pt = info[v]; pt; pt = pt->next) {
+				int u = pt->to;
+				size[v] += size[u];
+				if (heavySon[v] == -1 || size[u] > size[heavySon[v]]) {
+					heavySon[v] = u;
+				}
+			}
+		}
+		zkwSegmentTree::init(cntBcc);
+		int cntIdx = 1;
+		for (int i = 0; i < high; i ++) {
+			int v = que[i];
+			if (idxMap[v] == 0) {
+				top[cntPath] = v;
+				for (; v != -1; v = heavySon[v]) {
+					idxMap[v] = cntIdx ++;
+					zkwSegmentTree::initModify(idxMap[v], bcc[v].maxval);
+					belong[v] = cntPath;
+				}
+				cntPath ++;
+			}
+		}
+		zkwSegmentTree::upgrade();
+	}
+	int query(int a, int b) {
+		int ret = INF;
+		a = idxNew[a], b = idxNew[b];
+		while (belong[a] != belong[b]) {
+			if (dep[top[belong[a]]] < dep[top[belong[b]]]) {
+				swap(a, b);
+			}
+			tension(ret, zkwSegmentTree::query(idxMap[top[belong[a]]], idxMap[a]));
+			a = fa[top[belong[a]]];
+		}
+		if (dep[a] < dep[b]) swap(a, b);
+		tension(ret, zkwSegmentTree::query(idxMap[b], idxMap[a]));
+		tension(ret, A[cutVertex[b]]);
+		return ret;
+	}
+}
+namespace srcGraph {
+	Edge *info[MAXN], mem[MAXM * 2], *cur_mem = mem;
+	void insert2(int a, int b) {
+		cur_mem->to = b;
+		cur_mem->next = info[a];
+		info[a] = cur_mem ++;
+		cur_mem->to = a;
+		cur_mem->next = info[b];
+		info[b] = cur_mem ++;
+	}
+	void init() {
+		for (int i = 0; i < m; i ++) {
+			int a, b;
+			scanf("%d%d\n", &a, &b);
+			insert2(a, b);
+		}
+	}
+	int dfn[MAXN], low[MAXN], bccFa[MAXN];
+	void make() {
+		stack< pair<int, Edge*> > stk;
+		stk.push(make_pair(1, (Edge*) NULL) );
+		stack<int> contain;
+		memset(dfn, -1, sizeof(dfn));
+		memset(low, -1, sizeof(low));
+		memset(bccFa, -1, sizeof(bccFa));
+		int cntDfn = 0;
+		while (! stk.empty()) {
+			int v = stk.top().first;
+			Edge *&pt = stk.top().second;
+			if (! pt) {
+				dfn[v] = low[v] = cntDfn ++;
+				pt = info[v];
+				contain.push(v);
+			}
+			else {
+				int u = pt->to;
+				tension(low[v], low[u]);
+				if (low[u] == dfn[v]) {
+					int newBcc = cntBcc ++;
+					while (true) {
+						int t = contain.top();
+						if (bccFa[t]) {
+							newGraph::insert(newBcc, bccFa[t]);
+						}
+						bcc[newBcc].insert(t);
+						if (bccFa[t] == -1) idxNew[t] = newBcc;
+						contain.pop();
+						if (t == u) break;
+					}
+					if (bccFa[v] == -1) {
+						idxNew[v] = cntBcc;
+						bccFa[v] = cntBcc ++;
+						newGraph::cutVertex[bccFa[v]] = v;
+					}
+					newGraph::cutVertex[newBcc] = v;
+					newGraph::insert(bccFa[v], newBcc);
+				}
+			}
+			for (; pt; pt = pt->next) {
+				int u = pt->to;
+				if (dfn[u] != -1) tension(low[v], dfn[u]);
+				else {
+					stk.push(make_pair(u, (Edge*) NULL));
+					break;
+				}
+			}
+			if (! pt) stk.pop();
+		}
+		newGraph::root = bccFa[1];
+		idxNew[1] = bccFa[1];
+	}
+}
+int main() {
+#ifdef debug
+	freopen("a.in", "r", stdin);
+	freopen("a.out", "w", stdout);
+#endif
+	scanf("%d%d%d\n", &n, &m, &Q);
+	for (int i = 1; i <= n; i ++) {
+		scanf("%d\n", A + i);
+	}
+	srcGraph::init();
+	srcGraph::make();
+	newGraph::cutLightHeavy();
+	ep("idxNew & fa:\n");
+	for (int i = 1; i <= n; i ++) 
+		ep("%d %d %d\n", i, idxNew[i], srcGraph::bccFa[i]);
+	ep("\n");
+	ep("new graph & val\n");
+	for (int i = 0; i < cntBcc; i ++)
+		ep("%d %d %d\n", i, newGraph::fa[i], bcc[i].maxval);
+	ep("\n");
+	ep("idx map\n");
+	for (int i = 0; i < cntBcc; i ++)
+		ep("%d %d\n", i, newGraph::idxMap[i]);
+	ep("\n");
+	for (int i = 0; i < Q; i ++) {
+		char opt;
+		int a, b;
+		scanf("%c%d%d\n", &opt, &a, &b);
+		if (opt == 'A') {
+			ep("try ask...");
+			int ans = a == b ? A[a] : newGraph::query(a, b);
+			printf("%d\n", ans);
+			ep("answer is %d\n", ans);
+		}
+		else {
+			ep("try modify %d...", i);
+			int t = idxNew[a];
+			if (t == newGraph::root) {
+				A[a] = b;
+				ep("\n");
+				continue;
+			}
+			if (srcGraph::bccFa[a] != -1) {
+				t = newGraph::fa[t];
+			}
+			ep("change %d", a);
+			bcc[t].change(A[a], b);
+			A[a] = b;
+			ep("zkw");
+			zkwSegmentTree::modify(newGraph::idxMap[t], bcc[t].maxval);
+			ep("modify %d\n", t);
+		}
+	}
+	return 0;
+}

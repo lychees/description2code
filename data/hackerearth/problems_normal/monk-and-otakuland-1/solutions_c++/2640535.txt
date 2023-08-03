@@ -1,0 +1,213 @@
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <vector>
+#include <string>
+#include <set>
+#include <unordered_set>
+#include <map>
+#include <unordered_map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <algorithm>
+#include <functional>
+#include <iterator>
+#include <limits>
+#include <numeric>
+#include <utility>
+#include <cmath>
+#include <cassert>
+#include <cstdio>
+
+using namespace std; using namespace placeholders;
+
+using LL = long long;
+using ULL = unsigned long long;
+using VI = vector< int >;
+using VVI = vector< vector< int > >;
+using VS = vector< string >;
+using SS = stringstream;
+using PII = pair< int, int >;
+using VPII = vector< pair< int, int > >;
+template < typename T = int > using VT = vector< T >;
+template < typename T = int > using VVT = vector< vector< T > >;
+template < typename T = int > using LIM = numeric_limits< T >;
+
+template < typename T > inline istream& operator>>( istream &s, vector< T > &v ){ for ( T &t : v ) { s >> t; } return s; }
+template < typename T > inline ostream& operator<<( ostream &s, const vector< T > &v ){ for ( int i = 0; i < int( v.size() ); ++i ){ s << ( " " + !i ) << v[i]; } return s; }
+template < typename T > inline T fromString( const string &s ) { T res; istringstream iss( s ); iss >> res; return res; };
+template < typename T > inline string toString( const T &a ) { ostringstream oss; oss << a; return oss.str(); };
+
+#define REP2( i, n ) REP3( i, 0, n )
+#define REP3( i, m, n ) for ( int i = ( int )( m ); i < ( int )( n ); ++i )
+#define GET_REP( a, b, c, F, ... ) F
+#define REP( ... ) GET_REP( __VA_ARGS__, REP3, REP2 )( __VA_ARGS__ )
+#define FOR( e, c ) for ( auto &e : c )
+#define ALL( c ) begin( c ), end( c )
+#define AALL( a, t ) ( t* )a, ( t* )a + sizeof( a ) / sizeof( t )
+#define DRANGE( c, p ) ( c ).begin(), ( c ).begin() + ( p ), ( c ).end()
+
+#define SZ( v ) ( (int)( v ).size() )
+#define PB push_back
+#define EM emplace
+#define EB emplace_back
+#define BI back_inserter
+
+#define EXIST( c, e ) ( ( c ).find( e ) != ( c ).end() )
+
+#define MP make_pair
+#define fst first
+#define snd second
+
+#define DUMP( x ) cerr << #x << " = " << ( x ) << endl
+
+// �Z�O�����g�؂̃��[�e�B���e�B
+inline int chl( const int k )
+{
+	return k * 2 + 1;
+}
+
+inline int chr( const int k )
+{
+	return k * 2 + 2;
+}
+
+inline int mid( const int l, const int r )
+{
+	return ( l + r ) / 2;
+}
+
+#define LEFT( k, l, r ) chl( k ), l, mid( l, r )
+#define RIGHT( k, l, r ) chr( k ), mid( l, r ), r
+
+struct SegTree
+{
+	const int N;
+	VI sum_, flip_, lazy_;
+
+	SegTree( const int n ) :
+		N( n ), sum_( 4 * N ), flip_( 4 * N ), lazy_( 4 * N )
+	{
+		return;
+	}
+
+	void flip( const int a, const int b )
+	{
+		return flip( a, b, 0, 0, N );
+	}
+	void flip( const int a, const int b, const int k, const int l, const int r )
+	{
+		eval( k, l, r );
+
+		if ( a <= l && r <= b )
+		{
+			lazy_[k] ^= 1;
+			eval( k, l, r );
+			return;
+		}
+		else if ( r <= a || b <= l )
+		{
+			return;
+		}
+
+		flip( a, b, LEFT( k, l, r ) );
+		flip( a, b, RIGHT( k, l, r ) );
+
+		sum_[k] = sum_[ chl( k ) ] + sum_[ chr( k ) ];
+
+		return;
+	}
+
+	int sum( const int a, const int b )
+	{
+		return sum( a, b, 0, 0, N );
+	}
+	int sum( const int a, const int b, const int k, const int l, const int r )
+	{
+		eval( k, l, r );
+
+		if ( a <= l && r <= b )
+		{
+			return sum_[k];
+		}
+		else if ( r <= a || b <= l )
+		{
+			return 0;
+		}
+
+		return sum( a, b, LEFT( k, l, r ) ) + sum( a, b, RIGHT( k, l, r ) );
+	}
+
+	void eval( const int k, const int l, const int r )
+	{
+		if ( lazy_[k] )
+		{
+			sum_[k] = ( r - l ) - sum_[k];
+		}
+
+		if ( l + 1 < r )
+		{
+			lazy_[ chl( k ) ] ^= lazy_[k];
+			lazy_[ chr( k ) ] ^= lazy_[k];
+		}
+
+		lazy_[k] = 0;
+
+		return;
+	}
+};
+
+
+char S[ 1 << 18 ];
+
+int main()
+{
+	cin.tie( 0 );
+	ios::sync_with_stdio( false );
+
+	int N, M;
+	scanf( "%d%d ", &N, &M );
+
+	gets( S );
+
+	SegTree segtree( N - 1 );
+	REP( i, N - 1 )
+	{
+		if ( S[i] == '>' )
+		{
+			segtree.flip( i, i + 1 );
+		}
+	}
+
+	REP( iteration, M )
+	{
+		int T;
+		scanf( "%d", &T );
+
+		if ( T == 1 )
+		{
+			int l, r;
+			scanf( "%d%d", &l, &r );
+			segtree.flip( l - 1, r - 1 );
+		}
+		else
+		{
+			int f, t;
+			scanf( "%d%d", &f, &t );
+
+			if ( f < t )
+			{
+				printf( "%d\n", ( t - f ) - segtree.sum( f - 1, t - 1 ) );
+			}
+			else
+			{
+				printf( "%d\n", segtree.sum( t - 1, f - 1 ) );
+			}
+		}
+	}
+
+	fflush( stdout );
+
+	return 0;
+}

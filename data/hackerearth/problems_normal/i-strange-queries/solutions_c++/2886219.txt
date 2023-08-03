@@ -1,0 +1,127 @@
+#include <iostream>
+#include <map>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+
+int n;
+int arr[50500];
+map<int,int> rep;
+map<int,int>::iterator ii;
+int K=100;
+const int gg=300;
+int ind[50500];
+unsigned short int sum[50050][gg+5];
+vector<int> adj[50500];
+
+long long sol[50500];
+
+int sgt[200200];
+void update(int nd,int l,int r,int ind){
+	if(l==r){
+		sgt[nd]++;
+		return;
+	}
+	int mid=(r+l)/2;
+	if(ind<=mid){
+		update(2*nd,l,mid,ind);
+	} else {
+		update(2*nd+1,mid+1,r,ind);
+	}
+	sgt[nd]=sgt[2*nd]+sgt[2*nd+1];
+}
+
+int qry(int nd,int l,int r,int s,int e){
+	if(s<=l && r<=e){
+		return sgt[nd];
+	}
+	int mid=(r+l)/2;
+	int ret=0;
+	if(s<=mid){
+		ret+=qry(2*nd,l,mid,s,e);
+	}
+	if(mid+1<=e){
+		ret+=qry(2*nd+1,mid+1,r,s,e);
+	}
+	return ret;
+}
+
+struct query{
+	int i;
+	int l;
+	int r;
+	int ind;
+	int mult;
+};
+bool operator<(query a,query b){
+	return a.i<b.i;
+}
+query q[200200];
+int main(){
+	scanf("%d",&n);
+	for(int i=1;i<=n;i++){
+		scanf("%d",&arr[i]);
+		rep[arr[i]]++;
+	}
+	int i=0;
+	for(int i=1;i<=n;i++){
+		ind[i]=-1;
+	}
+	for(ii=rep.begin();ii!=rep.end();ii++){
+		if(ii->second>=K)
+			ind[ii->first]=i++;
+
+	}
+	for(int i=1;i<=n;i++){
+		if(ind[arr[i]]!=-1)
+			sum[i][ind[arr[i]]]=1;
+		else 
+			adj[arr[i]].push_back(i);
+	}
+	for(int j=0;j<=gg;j++){
+		for(int i=1;i<=n;i++){
+			sum[i][j]+=sum[i-1][j];
+		}
+	}
+	int qu;
+	//cin>>qu;
+	scanf("%d",&qu);
+	int cc=0;
+	int a,b,c,d;
+	for(int i=0;i<qu;i++){
+		//cin>>a>>b>>c>>d;
+		scanf("%d %d %d %d",&a,&b,&c,&d);
+		for(int j=0;j<=gg;j++){
+			sol[i]+=(sum[b][j]-sum[a-1][j]+0ll)*(sum[d][j]-sum[c-1][j]+0ll);
+		}
+		q[cc].i=d;
+		q[cc].l=a;
+		q[cc].r=b;
+		q[cc].ind=i;
+		q[cc].mult=1;
+		cc++;
+		q[cc].i=c-1;
+		q[cc].l=a;
+		q[cc].r=b;
+		q[cc].ind=i;
+		q[cc].mult=-1;
+		cc++;
+	}
+	sort(q,q+cc);
+	int curr=1;
+	for(int i=0;i<cc;i++){
+		while(curr<=q[i].i){
+			int s=adj[arr[curr]].size();
+			for(int j=0;j<s;j++){
+				update(1,1,n,adj[arr[curr]][j]);
+			}
+			curr++;
+		}
+		sol[q[i].ind]+=q[i].mult * qry(1,1,n,q[i].l,q[i].r);
+	}
+	for(int i=0;i<qu;i++){
+		//cout<<sol[i]<<endl;
+		printf("%lld\n",sol[i]);
+	}
+}

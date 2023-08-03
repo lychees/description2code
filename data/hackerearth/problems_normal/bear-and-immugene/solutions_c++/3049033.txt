@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int mod = 1e9 + 7;
+const int MAXN = (1<<20) + 5;  
+int A [5][5] = {{1, 1, 1, 1, 1}, {0, 1, 0, 0, 0}, {0, 0, 1, 0, 0}, {0, 0, 0, 1, 0}, {0, 0, 0, 0, 1}};
+int C [5][5] = {{1, 0, 0, 0, 0}, {1, 1, 1, 1, 1}, {0, 0, 1, 0, 0}, {0, 0, 0, 1, 0}, {0, 0, 0, 0, 1}};
+int G [5][5]= {{1, 0, 0, 0, 0}, {0, 1, 0, 0, 0}, {1, 1, 1, 1, 1}, {0, 0, 0, 1, 0}, {0, 0, 0, 0, 1}};
+int T [5][5] = {{1, 0, 0, 0, 0}, {0, 1, 0, 0, 0}, {0, 0, 1, 0, 0}, {1, 1, 1, 1, 1}, {0, 0, 0, 0, 1}};
+int MULT [5][1] = {{0}, {0}, {0}, {0}, {1}};
+int oror;
+int ge [205][5][5]; 
+int n, q;  
+char x [MAXN];
+void mul (int a [][5], int b [][5], int c [][5]){
+    for (int g=0; g<5; g++){
+        for (int y=0; y<5; y++){
+            int cnt = 0;
+            for (int z=0; z<5; z++){
+                cnt = (cnt + 1LL*b[z][y]*a[g][z])%mod;
+            }
+            c[g][y] = cnt; 
+        }
+    }
+}
+void mul2 (int a [][5], int b [][1], int c [][1]){
+    for (int g=0; g<5; g++){
+        for (int y=0; y<1; y++){
+            int cnt = 0;
+            for (int z=0; z<5; z++){
+                cnt = (cnt + 1LL*b[z][y]*a[g][z])%mod;
+            }
+            c[g][y] = cnt; 
+        }
+    }
+}
+int seg [2 * MAXN][5][5];
+int gn [MAXN];
+void build (int start, int end, int node){
+    if (start == end){gn[start] = node;
+    	for (int g=0;g<5;g++)for(int y=0;y<5;y++)seg[node][g][y]=ge[x[start]][g][y];
+        return;
+    }
+    build (start, (start+end)/2, 2*node);
+    build ((start+end)/2+1, end, 2*node+1);
+    mul(seg[2*node], seg[2*node+1], seg[node]);
+}
+int main(){
+	ios_base::sync_with_stdio(0); 
+    cin >> n >> q; 
+    for (int g=0; g<n; g++) cin >> x[g]; oror = n;
+    memcpy (&ge['A'], &A, sizeof(A));
+    memcpy (&ge['C'], &C, sizeof(C));
+    memcpy (&ge['G'], &G, sizeof(G));
+    memcpy (&ge['T'], &T, sizeof(T));
+    build (0, n-1, 1); 
+    for (int g=0; g<q; g++){
+        int p; char z; cin >> p >> z; 
+        p--;x[p]=z;  
+        int t = gn[p];
+        memcpy(&seg[t], &ge[x[p]], sizeof(seg[t]));
+        t>>=1;
+        for (int g=t; g!=0; g>>=1){
+            mul(seg[2*g],seg[2*g+1], seg[g]);
+        }
+        static int f[5][1]; mul2(seg[1], MULT, f);
+        int acc = 0;
+        for (int y=0; y<5; y++){
+            acc = (acc + f[y][0]) % mod;
+        }
+        cout << acc << '\n';
+    }
+    return 0;
+}

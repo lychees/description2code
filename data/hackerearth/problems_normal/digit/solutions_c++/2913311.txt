@@ -1,0 +1,130 @@
+#include <bits/stdc++.h>
+
+#define rep(i,n) for(i=0; i<n; i++)
+#define repl(i,n) for(i=1; i<=n; i++)
+#define foreach(i,n) for(__typeof((n).begin())i =(n).begin(); i!=(n).end(); i++)
+
+#define sz(x) (int) x.size()
+#define pb(x) push_back(x)
+#define all(x) x.begin(),x.end()
+#define uu first
+#define vv second
+#define mem(x, y) memset(x, y, sizeof(x));
+
+#define sdi(x) scanf("%d", &x)
+#define sdii(x, y) scanf("%d %d", &x, &y)
+#define sdiii(x, y, z) scanf("%d %d %d", &x, &y, &z)
+#define sdl(x) scanf("%lld", &x)
+#define sdll(x, y) scanf("%lld %lld", &x, &y)
+#define sdlll(x, y, z) scanf("%lld %lld %lld", &x, &y, &z)
+#define sds(x) scanf("%s", x)
+#define pfi(x) printf("%d\n", x)
+#define pfii(x, y) printf("%d %d\n", x, y)
+#define pfiii(x, y, z) printf("%d %d %d\n", x, y, z)
+#define pfl(x) printf("%lld\n", x)
+#define pfll(x, y) printf("%lld %lld\n", x, y)
+#define pflll(x, y, z) printf("%lld %lld %lld\n", x, y, z)
+
+#define eps 1e-9
+#define OK printf("ok\n")
+#define DB(x) cout << #x << " = " << x << endl;
+
+using namespace std;
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef pair <int, int> pii;
+
+inline int setBit(int N, int pos) { return N=N | (1<<pos); }
+inline int resetBit(int N, int pos) { return N= N & ~(1<<pos); }
+inline bool checkBit(int N, int pos) { return (bool)(N & (1<<pos)); }
+
+//int kx[] = {+2, +1, -1, -2, -2, -1, +1, +2};
+//int ky[] = {+1, +2, +2, +1, -1, -2, -2, -1}; //Knight Direction
+//int fx[] = {+0, +0, +1, -1, -1, +1, -1, +1};
+//int fy[] = {-1, +1, +0, +0, +1, +1, -1, -1}; //Four & Eight Direction
+
+
+const LL block=10000;
+LL x, y, k, n, dp[14][125][block+1][2];
+int TC, visit[14][125][block+1][2];
+string s;
+
+inline LL dig(LL x) {
+    LL sum=0;
+    while(x) {
+        sum += x%10;
+        x /= 10;
+    }
+    return sum;
+}
+
+LL brute(LL a, LL b) {
+    LL cnt=0;
+    LL i=(a/k)*k;
+    if(i<a) i+=k;
+    for(; i<=b; i+=k) {
+        LL d = dig(i);
+        if(d>=x && d<=y) cnt++;
+    }
+    return cnt;
+}
+
+void toString(LL x) {
+    s = "";
+    while(x) {
+        s += (x%10) + '0';
+        x /= 10;
+    }
+    reverse(all(s));
+    n = sz(s);
+}
+
+LL DP(LL idx, LL d, LL mod, LL f) {
+    if(idx >= n) {
+        if(d>=x && d<=y && mod==0) return 1;
+        else return 0;
+    }
+    if(d > y) return 0;
+
+    if(visit[idx][d][mod][f] == TC) return dp[idx][d][mod][f];
+    visit[idx][d][mod][f] = TC;
+
+    LL ret=0, i;
+    if(!f) {
+        rep(i, 10) {
+            ret += DP(idx+1, d+i, (mod*10+i)%k, 0);
+        }
+    }
+    else {
+        rep(i, s[idx]-'0') {
+            ret += DP(idx+1, d+i, (mod*10+i)%k, 0);
+        }
+        ret += DP(idx+1, d+s[idx]-'0', (mod*10+s[idx]-'0')%k, 1);
+    }
+    return dp[idx][d][mod][f] = ret;
+}
+
+int main() {
+//    freopen("in.txt","r",stdin);
+//    freopen("out.txt","w",stdout);
+
+    LL a, b, l=0, r=0;
+
+    scanf("%lld %lld %lld %lld %lld", &a, &b, &x, &y, &k);
+
+    if(k >= block) pfl(brute(a, b));
+    else {
+        toString(b);
+        TC++;
+        r = DP(0, 0, 0, 1);
+
+        toString(a-1);
+        TC++;
+        l = DP(0, 0, 0, 1);
+
+        pfl(r-l);
+    }
+
+    return 0;
+}

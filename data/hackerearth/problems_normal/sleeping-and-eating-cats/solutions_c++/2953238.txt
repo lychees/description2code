@@ -1,0 +1,138 @@
+#include <bits/stdc++.h>
+typedef long long ll;
+#define lc (n*2+1)
+#define rc (n*2+2)
+#define nm ((nl+nr)/2)
+
+const int MaxN = 100005, Max = (1<<17), MaxNodes = (1<<18);
+
+int N, M, c[MaxN];
+
+struct rangesetpointget {
+    int v[MaxNodes], lazy[MaxNodes];
+    rangesetpointget() {
+        std::fill(lazy, lazy+MaxNodes, -1);
+    }
+    void unlazy(int n, int nl, int nr) {
+        if (lazy[n] != -1) {
+            v[n] = lazy[n];
+            if (nl+1 < nr) lazy[lc] = lazy[rc] = lazy[n];
+            lazy[n] = -1;
+        }
+    }
+    void set(int ql, int qr, int qc, int n = 0, int nl = 0, int nr = Max) {
+        unlazy(n, nl, nr);
+        if (ql <= nl && nr <= qr) lazy[n] = qc;
+        else {
+            if (ql < nm) set(ql, qr, qc, lc, nl, nm);
+            if (nm < qr) set(ql, qr, qc, rc, nm, nr);
+        }
+    }
+    int get(int qi, int n = 0, int nl = 0, int nr = Max) {
+        unlazy(n, nl, nr);
+        if (nl+1 == nr) return v[n];
+        else if (qi < nm) return get(qi, lc, nl, nm);
+        else return get(qi, rc, nm, nr);
+    }
+} colour, left, right;
+
+struct rangezeropointsetsumget {
+    ll sum[MaxNodes]; bool lazy[MaxNodes];
+    void unlazy(int n, int nl, int nr) {
+        if (lazy[n]) {
+            sum[n] = 0;
+            if (nl+1 < nr) lazy[lc] = lazy[rc] = true;
+            lazy[n] = false;
+        }
+    }
+    void zero(int ql, int qr, int n = 0, int nl = 0, int nr = Max) {
+        unlazy(n, nl, nr);
+        if (ql <= nl && nr <= qr) lazy[n] = true;
+        else {
+            if (ql < nm) zero(ql, qr, lc, nl, nm);
+            if (nm < qr) zero(ql, qr, rc, nm, nr);
+            unlazy(lc, nl, nm);
+            unlazy(rc, nm, nr);
+            sum[n] = sum[lc] + sum[rc];
+        }
+    }
+    void set(int qi, ll qv, int n = 0, int nl = 0, int nr = Max) {
+        unlazy(n, nl, nr);
+        if (nl+1 == nr) sum[n] = qv;
+        else {
+            if (qi < nm) set(qi, qv, lc, nl, nm);
+            else set(qi, qv, rc, nm, nr);
+            unlazy(lc, nl, nm);
+            unlazy(rc, nm, nr);
+            sum[n] = sum[lc] + sum[rc];
+        }
+    }
+    ll get(int ql, int qr, int n = 0, int nl = 0, int nr = Max) {
+        unlazy(n, nl, nr);
+        if (ql <= nl && nr <= qr) return sum[n];
+        else {
+            ll s = 0;
+            if (ql < nm) s += get(ql, qr, lc, nl, nm);
+            if (nm < qr) s += get(ql, qr, rc, nm, nr);
+            return s;
+        }
+    }
+} sum;
+
+ll f(ll n) {
+    return (n*(n+1))/2;
+}
+void go(int op, int l, int r, int c = 0) {
+    if (op == 0) {
+        colour.set(l, r, c);
+        int newl = l, newr = r;
+        if (l-1 >= 0 && colour.get(l-1) == c) newl = left.get(l-1);
+        if (r < N && colour.get(r) == c) newr = right.get(r);
+        left.set(newl, newr, newl);
+        right.set(newl, newr, newr);
+        sum.zero(newl, newr);
+        sum.set(newl, f(newr - newl));
+        if (newl-1 >= 0) {
+            int newnewl = left.get(newl-1);
+            right.set(newnewl, newl, newl);
+            sum.zero(newnewl, newl);
+            sum.set(newnewl, f(newl-newnewl));
+        }
+        if (newr < N) {
+            int newnewr = right.get(newr);
+            left.set(newr, newnewr, newr);
+            sum.zero(newr, newnewr);
+            sum.set(newr, f(newnewr-newr));
+        }
+    } else {
+        if (right.get(l) >= r) printf("%lld\n", f(r-l));
+        else {
+            int m1 = right.get(l), m2 = left.get(r-1);
+            printf("%lld\n", f(m1-l) + f(r-m2) + (m2-m1 ? sum.get(m1, m2) : 0ll));
+        }
+    }
+}
+
+int main()
+{
+    scanf("%d%d", &N, &M);
+    for (int i = 0; i < N; i++) {
+        left.set(i, i+1, i);
+        right.set(i, i+1, i+1);
+    }
+    for (int i = 0; i < N; i++) {
+        int c; scanf("%d", &c);
+        go(0, i, i+1, c);
+    }
+    for (int i = 0; i < M; i++) {
+        int t; scanf("%d", &t);
+        if (t == 0) {
+            int l, r, c; scanf("%d%d%d", &l, &r, &c); l--;
+            go(0, l, r, c);
+        } else {
+            int l, r; scanf("%d%d", &l, &r); l--;
+            go(1, l, r);
+        }
+    }
+}
+

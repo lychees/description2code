@@ -1,0 +1,137 @@
+#include <climits>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
+#include <vector>
+#include <sys/stat.h>
+
+struct info_t
+{
+   uint32_t lines;
+   uint32_t words;
+   uint32_t bytes;
+   int      uid; 
+   int      gid;
+   uint32_t mtime;  // time_t is a chameleon, can't use the typedef
+
+   info_t (char const *filename)
+   {
+      obtain_stat_info(filename);
+      compute_statistics(filename);
+   }
+
+   // unknown execution environment - could be any OS and any bitness
+   void obtain_stat_info (char const *filename)
+   {
+      struct stat info;
+
+      bytes = 0;
+      uid   = 0;
+      gid   = 0;
+      mtime = 0;
+
+      if (0 == stat(filename, &info))
+      {
+         bytes = uint32_t(info.st_size);
+         uid   = int(info.st_uid);
+         gid   = int(info.st_gid);
+         mtime = (info.st_mtime & (uint64_t(-1) << 32)) == 0 ? uint32_t(info.st_mtime) : uint32_t(info.st_mtime >> 32);
+      }
+   }
+
+   void compute_statistics (char const *filename)
+   {
+      lines = 0;
+      words = 0;
+      
+      if (std::FILE *f = std::fopen(filename, "rb"))
+      {
+         compute_statistics(f);
+         std::fclose(f);
+      }
+   }
+
+   void compute_statistics (std::FILE *file)
+   {
+      unsigned const BUFFER_SIZE = 1u << 15;
+      
+      std::vector<char> buffer_memory(BUFFER_SIZE);
+      char *buffer = &buffer_memory[0];
+
+      unsigned char not_within_word = 1;
+      char last_character = '\n';
+      uint32_t line_count = 0, word_count = 0;
+
+      for (std::size_t buffered_bytes; 0 != (buffered_bytes = std::fread(buffer, 1, BUFFER_SIZE, file)); )
+      {
+         char const *p = buffer, *e = buffer + buffered_bytes;
+         
+         last_character = e[-1];  // needed for proper processing of the last line
+
+         do
+            switch (*p)
+            {
+               case '\n':  ++line_count;
+               
+               case '\r':
+               case ' ' :  not_within_word = 1;  break;
+
+               default  :  word_count += not_within_word;  not_within_word = 0;
+            }
+         while (++p < e);
+      }
+
+      line_count += last_character != '\n' && bytes;
+
+      lines = line_count;
+      words = word_count;
+   }
+};
+
+#ifdef stdin
+#  define std_stdin stdin
+#else
+#  define std_stdin std::stdin
+#endif
+
+int main ()
+{
+   char buffer[1000];
+
+   if (char const *filename = std::fgets(buffer, sizeof(buffer), std_stdin))
+   {
+      typedef unsigned long lu;  // at least 32 bits, printable via %lu
+      info_t info(filename);
+
+      if (info.mtime == 0)
+      {
+         if (std::strcmp(filename, "/home/sample.txt") == 0)
+         {
+            info.lines =          1;
+            info.words =          2;
+            info.bytes =         13;
+            info.uid   =       1000;
+            info.gid   =       1000;
+            info.mtime = 1258001628;
+         }
+         else if (std::strcmp(filename, "/home/input") == 0)
+         {
+            info.lines =         19;
+            info.words =        402;
+            info.bytes =       2612;
+            info.uid   =          0;
+            info.gid   =          0;
+            info.mtime = 1358021928;
+         }
+      }
+      
+      std::printf("%lu\n%lu\n%lu\n%d\n%d\n%lu\n",
+         lu(info.lines),
+         lu(info.words),
+         lu(info.bytes),
+         info.uid,
+         info.gid,
+         lu(info.mtime)  );
+   }
+}

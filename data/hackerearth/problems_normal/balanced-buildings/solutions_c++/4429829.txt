@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+//0 1->codeforces
+#define LL "%lld"
+#define fi first
+#define se second
+#define pb push_back
+#define mp make_pair
+#define PN printf("\n")
+#define MODV 1000000007
+
+typedef long long ll;
+typedef double dbl;
+typedef vector<ll> vi;
+typedef pair<int, int> pi;
+typedef priority_queue<ll> pql;
+typedef priority_queue<ll,vector<ll>,greater<ll>> pqd;
+void addmod(int &a, ll b){a=(a+b); if(a>=MODV)a-=MODV;}
+void mulmod(int &a, ll b){a=(a*b)%MODV;}
+int gi(){int a;scanf("%d",&a);return a;}
+ll gll(){ll a;scanf(LL,&a);return a;}
+
+
+void mvup(pql &ls, pqd &mr,ll &lssum, ll &mrsum){
+  if(ls.size()==0)return;
+  mr.push(ls.top());
+  mrsum+=ls.top();
+  lssum-=ls.top();
+  ls.pop();
+}
+
+int main() {
+  int n=gi();
+  ll s=gi(), m=gi(), p=gi();
+  vi a(n+1), b(n+1,0);
+  for(auto i=1;i<=n;i++){ a[i]=gi(); }
+  for(int i=1;i<=n;i++){
+    ll lssum=0, mrsum=0;
+    priority_queue<ll> ls;
+    priority_queue<ll,vector<ll>,greater<ll>> mr;
+
+    for(int len=1;len<=i;len++){
+      ll calc=s*(len-1);
+      int nix=i-len+1;
+      if(ls.size() && a[nix]>ls.top()){
+        mr.push(a[nix]);
+        mrsum+=a[nix];
+      }else{
+        mvup(ls,mr,lssum,mrsum);
+        ls.push(a[nix]);
+        lssum+=a[nix];
+      }
+      while(ls.size()*p>mr.size()*m){
+        mvup(ls,mr,lssum,mrsum);
+      }
+      while(ls.size()*p<mr.size()*m){
+        ls.push(mr.top());
+        lssum+=mr.top();
+        mrsum-=mr.top();
+        mr.pop();
+      }
+      assert(!ls.empty());
+      ll bval=ls.top();
+      //cerr<<"0: "<<lssum<<" "<<mrsum<<endl;
+      ll sp=(bval*ls.size()-lssum)*p + (mrsum-bval*mr.size())*m;
+      //cerr<<"1: "<<i<<" "<<len<<" "<<bval<<" "<<sp<<" "<<b[nix-1]<<endl;
+      b[i]=max(b[i],b[nix-1]+calc-sp);
+      //bval=mr.top();
+      //sp=(bval*ls.size()-lssum)*p + (mrsum-bval*mr.size())*m;
+      //cerr<<"2: "<<i<<" "<<len<<" "<<bval<<" "<<sp<<" "<<b[nix-1]<<endl;
+      //b[i]=max(b[i],b[nix-1]+calc-sp);
+    }
+  }
+  cout<<b[n]<<endl;
+  return 0;
+}

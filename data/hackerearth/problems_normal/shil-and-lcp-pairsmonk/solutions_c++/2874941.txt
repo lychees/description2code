@@ -1,0 +1,112 @@
+#include <iostream>
+#include <cmath>
+#include <math.h>
+#include <vector>
+#include <algorithm>
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <set>
+#include <map>
+#include <stack>
+#include <queue>
+#include <tuple>
+
+using namespace std;
+
+#define vec vector
+#define ALL(x) (x).begin(), (x).end()
+#define mp make_pair
+#define mt make_tuple 
+
+typedef long long ll;
+typedef double LD;
+typedef unsigned long long ull;
+
+const ll inf = 1000000000ll;
+const ll inf64 = inf * inf;
+const ll base = inf + 7;
+
+const int N = 1001000;
+char buffer[N];
+
+inline void read(string & s) {
+	scanf("%s", &buffer);
+	s = buffer;
+}
+
+int n, dp[N], sz = 1, val[N];
+map< int, int > nxt[N];
+string s;
+ll ans[N];
+
+void init() {
+	for(int i = 0;i < N;i++) {
+		dp[i] = 0;
+		ans[i] = 0;
+		val[i] = 0; 
+	}
+}
+
+void dfs(int v, int par = -1) {
+	for(auto i : nxt[v]) {
+		if(i.second != par) dfs(i.second, v);
+		dp[v] += dp[i.second];
+	}
+}
+
+void go(int v, int len = 0, int par = -1) {
+	for(auto i : nxt[v]) {
+		if(i.second != par) go(i.second, len + 1, v);
+	}
+
+	if(val[v] > 0) ans[len] += 1ll * val[v] * (val[v] - 1);
+
+	ll sum = val[v];
+	for(auto i : nxt[v]) if(i.second != par) sum += dp[i.second];
+
+	ans[len] += 1ll * val[v] * (sum - val[v]);
+
+	for(auto i : nxt[v]) {
+		if(i.second == par) continue;
+		ans[len] += 1ll * dp[i.second] * (sum - dp[i.second]);
+	}
+
+}
+
+bool solve()
+{
+	init();
+
+	scanf("%d", &n);
+
+	int L = 0;
+
+	for(int i = 0;i < n;i++) {
+		read(s);
+		L = max(L, (int)s.size());
+		int v = 0;
+		for(int j = 0;j < (int)s.size();j++) {
+			if(!nxt[v].count(s[j])) nxt[v][s[j]] = sz++;
+			v = nxt[v][s[j]];
+		}
+		dp[v]++;
+		val[v]++;
+	}
+
+	dfs(0);
+	go(0);
+
+	for(int i = 0;i <= L;i++) printf("%lld ", ans[i] / 2);
+	puts("");
+
+	return true;
+} 
+
+int main() {
+
+	//while(solve());
+	solve();	
+
+	return 0;
+}

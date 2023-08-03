@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+#define sz(s) (int)(s.size())
+#define rep(i,n) for(int i=0;i<n;++i)
+ 
+const int N=int(1e5)+5;
+  
+struct edg{
+    int u,v,w;
+    edg(int u=0,int v=0) : u(u),v(v){}
+};
+
+int n,m,u,v,w,no=0,nc=0;
+int din[N],dout[N],par[N],dep[N],dmax[N],way[N],kq[N];
+char cmt;
+vector< vector<int> > g,inw;
+ 
+void dfs(const int &u){
+    din[u]=dout[u]=++no;
+    dmax[u]=0;
+    int best=-1;
+    for(vector<int>::iterator it=g[u].begin();it!=g[u].end();++it)
+    if (*it!=par[u]){
+        par[*it]=u;
+        dep[*it]=dep[u]+1;
+        dfs(*it);
+        if (best==-1 || dmax[best]<dmax[*it]) best=*it;
+        if (dmax[u]<dmax[*it]+1) dmax[u]=dmax[*it]+1;
+    }
+    dout[u]=no;
+    if (best==-1){
+        way[u]=nc++;
+        inw.push_back(vector<int>(1,u));
+    }else{
+        way[u]=way[best];
+        inw[ way[u] ].push_back(u);
+    }
+}
+int lca(int u,int v){
+    while (way[u]!=way[v]){
+        if (dep[inw[way[u]].back()]<dep[inw[way[v]].back()]) v=par[inw[way[v]].back()];
+        else u=par[ inw[way[u]].back() ];
+    }
+    if (dep[u]<dep[v]) return u;
+    return v;
+}
+
+int getDis(int u, int v) {
+	return dep[u] + dep[v] - 2 * dep[lca(u, v)];
+}
+
+vector<int> col[100100];
+ 
+int main(){
+    cin >> n >> m;
+    for(int i = 0; i < n; ++i) {
+    	int x;
+    	scanf("%d", &x);
+    	col[x].push_back(i + 1);
+    }
+    g.resize(n+1);
+    for(int i=1;i<n;++i){
+        cin>>u>>v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+     
+    dep[1] = 0;
+    dfs(1);
+    for(int x = 1; x <= m; ++x)
+    	if ((int)col[x].size() <= 1) printf("0 ");
+    	else {
+    		int u = col[x][0];
+    		int v = col[x][1];
+    		int dis = getDis(u, v);
+    		for(int i = 2; i < (int)col[x].size(); ++i) {
+    			int tmp = col[x][i];
+    			int curDis = getDis(u, tmp);
+    			if (curDis > dis) {
+    				dis = curDis;
+    				v = tmp;
+    			}
+    		}
+    		u = v;
+    		v = col[x][0];
+    		dis = getDis(u, v);
+    		for(int i = 0; i < (int)col[x].size(); ++i) {
+    			int tmp = col[x][i];
+    			int curDis = getDis(u, tmp);
+    			if (curDis > dis) {
+    				dis = curDis;
+    				v = tmp;
+    			}
+    		}
+    		printf("%d ", dis);
+    	}
+    return 0;
+}

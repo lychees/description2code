@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+  
+#define foru(i,a,b) for(i=a;i<=b;i++)
+#define ford(i,a,b) for(i=a;i>=b;i--)
+#define N 100000
+#define MOD 1000000007
+#define sc(n) scanf("%d", &n)
+#define sl(n) scanf("%lld", &n)
+#define sf(n) scanf("%lf", &n);
+#define endl "\n"
+#define speedup std::ios_base::sync_with_stdio(false)
+#define debug(n) cout<<n<<endl
+typedef pair<int, int> pp;
+typedef map<int, int> mm;
+typedef long long int ll;
+int arr[N];
+vector<int> adj[N];
+vector<int> child[N];
+int dp[N][110];
+int parent[N];
+int k;
+void dfs(int root){
+	int i, j;
+	int len = adj[root].size();
+	foru(i,0,len-1){
+		int node = adj[root][i];
+		if(parent[root] != node){
+			parent[node] = root;
+			child[root].push_back(node);
+			dfs(node);
+		}
+	}	
+	len = child[root].size();
+	if(len == 0){
+		dp[root][arr[root]] = 1;
+		return;
+	}
+	int val = child[root][0];
+	for(j = 0; j <= k - arr[root]; j++)
+		dp[root][j + arr[root]] = dp[val][j];
+	dp[root][arr[root]] = (dp[root][arr[root]] + 1) % MOD;
+	int arr[110];
+	foru(i,1,len-1){
+		int val = child[root][i];
+		int temp[110] = {0};
+		foru(j,0,k){
+			for(int l = 0; j + l <= k; l++){
+				temp[j + l] = (temp[j + l] + (1LL*dp[root][j] * dp[val][l]) % MOD) % MOD;
+			}	
+		}
+		foru(j,0,k){
+			dp[root][j] = (dp[root][j] + temp[j]) % MOD;
+		}
+	}
+}
+
+int main(){
+	speedup;
+	int i,j;
+	int t,n;
+	cin >> t;
+	while(t--){
+		cin >> n >> k;
+		foru(i,1,n)
+			cin >> arr[i];
+		foru(i,1,n-1){
+			int a, b;
+			cin >> a >> b;
+			adj[a].push_back(b);
+			adj[b].push_back(a);
+		}		
+		dfs(1);
+		int sum = 0;
+		for(i = 1; i <= n; i++){
+			sum = (sum + dp[i][k]) % MOD;
+		}
+		cout << sum << endl;
+		foru(i,1,n){
+			foru(j,0,k)
+				dp[i][j] = 0;
+			adj[i].clear();
+			child[i].clear();
+		}
+	}
+	return 0;
+}
+

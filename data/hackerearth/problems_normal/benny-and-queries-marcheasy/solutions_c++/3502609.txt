@@ -1,0 +1,69 @@
+// მემარჯვენე
+
+# include <bits/stdc++.h>
+
+using namespace std;
+
+const int Maxn = 1e5 + 2;
+
+struct node
+{
+    node* c[2];
+    vector <int> occ;
+    node ()
+    {
+        c[0] = c[1] = 0;
+    }
+} *root;
+
+
+int n, Q, x, l, r;
+
+void add(node *t, int ind, int bit = 1 << 20)
+{
+    t->occ.push_back(ind);
+
+    if (!bit) return;
+
+    bool F = (x & bit);
+
+    if (t->c[F] == 0) t->c[F] = new node;
+
+    add(t->c[F], ind, bit >> 1);
+}
+
+int query(node *t, int x, int bit = 1 << 20)
+{
+    if (bit == 0) return 0;
+
+    bool F = x & bit; F = !F;
+
+    if (t->c[F] == 0) return query(t->c[!F], x, bit >> 1);
+
+    vector <int> :: iterator it = lower_bound(t->c[F]->occ.begin(), t->c[F]->occ.end(), l);
+
+    if (it == t->c[F]->occ.end() || *it > r) return query(t->c[!F], x, bit >> 1);
+
+    return query(t->c[F], x, bit >> 1) | bit;
+
+}
+
+int main() {
+
+    scanf ("%d %d", &n, &Q);
+
+    root = new node;
+
+    for (int i = 1; i <= n; i++)
+    {
+        scanf ("%d", &x);
+        add(root, i);
+    }
+
+    while (Q--)
+    {
+        scanf ("%d %d %d", &l, &r, &x);
+        printf("%d\n", query(root, x));
+
+    }
+}

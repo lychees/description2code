@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+#define ll long long
+#define mp make_pair
+#define pb push_back
+#define pii pair <double, double>
+#define piii pair<int, pii>
+#define vi vector<ll>
+#define vpii vector<pii>
+
+#define read1(a) int a; scanf("%d", &a)
+#define read2(a, b) int a, b; scanf("%d %d", &a, &b)
+#define read3(a, b, c) int a, b, c; scanf("%d %d %d", &a, &b, &c)
+
+#define FOR(i, a, b) for (int i=a; i<b; i++)
+#define F0R(i, a) for (int i=0; i<a; i++)
+
+#define readgi(n) F0R(i, n) { scanf("%d", &arr[i]); }
+#define readgs(n) F0R(i, n) { scanf(" %c", &arr[i]); }
+
+#define f first
+#define s second
+
+#define usaco(in, out) freopen(in, "r", stdin); freopen(out, "w", stdout);
+
+#define println1(a) printf("%d\n", a);
+#define println2(a, b) printf("%d %d\n", a, b);
+#define println3(a, b, c) printf("%d %d %d\n", a, b, c);
+#define pv(v) for (int i : v) { printf("%d ", i); } printf("\n");
+
+const int MOD = 1000000007;
+const int MAX = 2505;
+
+
+int h[MAX]; int n, s, m, p;
+int cost[MAX][MAX];
+int dp[MAX];
+
+int calc(int ht, int x, int y) {
+    int down = 0;
+    int up = 0;
+    FOR(i, x, y+1) {
+        if (h[i] < ht) { up += ht - h[i]; }
+        else { down += h[i] - ht; }
+    }
+    return up * p + down * m;
+}
+
+int findcost(int i, int j) {
+    int lo = 0;
+    int hi = 1000000;
+    while (lo < hi) {
+        int mid = (lo + hi + 1) / 2;
+        int diff = calc(mid, i, j) - calc(mid-1, i, j);
+        if (diff >= 0) { hi = mid-1; }
+        if (diff < 0) { lo = mid; }
+    }
+    int a = calc(lo, i, j);
+    int b = calc(lo+1, i, j);
+    return min(a, b);
+}
+
+
+int bffindcost(int i, int j) {
+    int lo = 0;
+    int hi = 1000000;
+    int minn = 1000000000;
+    F0R(k, 1001) {
+        minn = min(minn, calc(k, i, j));
+    }
+    return minn;
+}
+
+void fcost(int ind) {
+    priority_queue<int> lo;
+    priority_queue<int, vector<int>, greater<int> > hi;
+    /* need min in hi */
+    /* need max in lo */
+
+    FOR(i, ind, n) {
+        if (p*lo.size() <= m*hi.size()) {
+            if (lo.empty()) { lo.push(h[i]); }
+            else {
+                if (h[i] < hi.top()) { lo.push(h[i]); }
+                else { lo.push(hi.top()); hi.pop(); hi.push(h[i]); }
+            }
+        }
+        else {
+            if (hi.empty()) {
+                if (h[i] < lo.top()) { hi.push(lo.top()); lo.pop(); lo.push(h[i]); }
+                else { hi.push(h[i]); }
+            }
+            else {
+                if (h[i] > lo.top()) { hi.push(h[i]); }
+                else { hi.push(lo.top()); lo.pop(); lo.push(h[i]); }
+            }
+        }
+        if (p*lo.size() < m*hi.size()) { cost[ind+1][i+1] = calc(hi.top(), ind, i); }
+        else { cost[ind+1][i+1] = calc(lo.top(), ind, i); }
+    }
+}
+
+main() {
+    scanf("%I64d %I64d %I64d %I64d", &n, &s, &m, &p);
+    /* m is height to go down */
+    /* p is height to go up */
+    F0R(i, n) { scanf("%I64d", &h[i]); }
+    F0R(i, n) { fcost(i); }
+    //F0R(i, n) { F0R(j, n) { cout << cost[i+1][j+1] << " "; }cout<<endl; }
+    // F0R(i, n) { FOR(j, i+1, n) { cost[i+1][j+1] = findcost(i, j); } }
+    // F0R(h, 10) { cout << h << " " << calc(h) << endl; }
+    FOR(i, 1, n+1) {
+        FOR(j, 1, i+1) {
+            dp[i] = max(dp[i], dp[j-1]+(i-j)*s-cost[j][i]);
+        }
+    }
+    cout << dp[n] << endl;
+}

@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+typedef long long ll;
+typedef pair<ll,ll> pii;
+#define MAXN 100005
+#define MOD 1000000007
+ll N,Q,l,r,i,x,arr[MAXN];
+ll val;
+pii treeMin[4*MAXN],treeMax[4*MAXN];
+string s;
+
+int distinctDigits(ll x){
+    int ret = 0;
+    while (x > 0){
+        ret |= (1 << (x%10));
+        x /= 10;
+    }
+    return __builtin_popcount(ret);
+}
+
+pii merge(pii l, pii r,bool cmp){
+    if (cmp){
+        if (l.first > r.first)
+            return l;
+        if (r.first > l.first)
+            return r;
+        return make_pair(l.first,l.second + r.second);
+    }
+    else {
+        if (l.first < r.first)
+            return l;
+        if (r.first < l.first)
+            return r;
+        return make_pair(l.first,l.second + r.second);
+    }
+}
+
+void build(pii *tree,int low,int high,int pos,bool cmp){
+    if (low == high){
+        tree[pos].first = distinctDigits(arr[low]);
+        tree[pos].second = 1;
+        return;
+    }
+    int mid = (low + high) / 2;
+    build(tree,low,mid,pos*2,cmp);
+    build(tree,mid+1,high,pos*2+1,cmp);
+    tree[pos] = merge(tree[pos*2],tree[pos*2+1],cmp);
+}
+
+void update(pii *tree,int low,int high,int idx,ll val,bool cmp,int pos){
+    if (low == high){
+        tree[pos].first = val;
+        tree[pos].second = 1;
+        return;
+    }
+    int mid = (low + high) / 2;
+    if (idx <= mid)
+        update(tree,low,mid,idx,val,cmp,pos*2);
+    else
+        update(tree,mid+1,high,idx,val,cmp,pos*2+1);
+    tree[pos] = merge(tree[pos*2],tree[pos*2+1],cmp);
+}
+
+pii query(pii *tree,int low,int high,int qlow,int qhigh,bool cmp,int pos){
+    if (low >= qlow && high <= qhigh){
+        return tree[pos];
+    }
+    int mid = (low + high) / 2;
+    if (qhigh <= mid)
+        return query(tree,low,mid,qlow,qhigh,cmp,pos*2);
+    else if (qlow > mid)
+        return query(tree,mid+1,high,qlow,qhigh,cmp,pos*2+1);
+    else
+        return merge(query(tree,low,mid,qlow,qhigh,cmp,pos*2), query(tree,mid+1,high,qlow,qhigh,cmp,pos*2+1), cmp);
+}
+
+int main()
+{
+ //  freopen("test.txt","r",stdin);
+ //  freopen("test.out","w",stdout);
+    cin >> N;
+
+    for (int i=1;i<=N;i++){
+        cin >> arr[i];
+    }
+    build(treeMax,1,N,1,1);
+    build(treeMin,1,N,1,0);
+    cin >> Q;
+    int cnt = 0;
+    while (Q--){
+        cin >> s;
+        if (s == "MAX"){
+            cin >> l >> r;
+            pii res = query(treeMax,1,N,l,r,1,1);
+            cout << res.first << " " << res.second << endl;
+        }
+        if (s == "MIN"){
+            cin >> l >> r;
+            pii res = query(treeMin,1,N,l,r,0,1);
+            cout << res.first << " " << res.second << endl;
+        }
+        if (s == "MUL"){
+            cin >> i >> val;
+            arr[i] = ( (arr[i]%MOD) * (val%MOD) ) % MOD;
+            int v = distinctDigits(arr[i]);
+            update(treeMax,1,N,i,v,1,1);
+            update(treeMin,1,N,i,v,0,1);
+        }
+        if (s == "ADD"){
+            cin >> i >> val;
+            arr[i] = ( (arr[i]%MOD) + (val%MOD) ) % MOD;
+            int v = distinctDigits(arr[i]);
+            update(treeMax,1,N,i,v,1,1);
+            update(treeMin,1,N,i,v,0,1);
+        }
+        if (s == "REP"){
+            cin >> i >> val;
+            arr[i] = (val % MOD);
+            int v = distinctDigits(arr[i]);
+            update(treeMax,1,N,i,v,1,1);
+            update(treeMin,1,N,i,v,0,1);
+        }
+    }
+   // cout << cnt << endl;
+}

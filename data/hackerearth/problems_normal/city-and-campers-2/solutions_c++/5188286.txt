@@ -1,0 +1,90 @@
+#include <cstdio>
+#include <map>
+#include <vector>
+#include <set>
+#include <utility>
+
+using namespace std;
+
+struct union_find {
+    int N;
+    vector<int> parent;
+    vector<int> sz;
+    vector<int> group_sz;
+    set<int> st;
+
+    union_find() {}
+
+    union_find(int _N) {
+        N = _N;
+        parent.resize(N);
+        sz.resize(N);
+        group_sz.resize(N + 1);
+
+        for (int i = 0; i < N; ++i) {
+            parent[i] = i;
+            sz[i] = 1;
+            group_sz[i] = 0;
+        }
+        group_sz[1] = N;
+        st.insert(1);
+    }
+
+    int find(int x) {
+        if (x == parent[x])
+            return x;
+        else
+            return parent[x] = find(parent[x]);
+    }
+
+    int unite(int x, int y) {
+        int parent_x = find(x);
+        int parent_y = find(y);
+
+        if (parent_x != parent_y) {
+            int sz_x = sz[parent_x];
+            int sz_y = sz[parent_y];
+            group_sz[sz_x]--;
+            if (group_sz[sz_x] == 0)
+                st.erase(sz_x);
+            group_sz[sz_y]--;
+            if (group_sz[sz_y] == 0)
+                st.erase(sz_y);
+
+            parent[parent_x] = parent_y;
+            sz[parent_y] += sz[parent_x];
+            sz_y = sz[parent_y];
+            group_sz[sz_y]++;
+            if (group_sz[sz_y] == 1)
+                st.insert(sz_y);
+        }
+
+        int prev = -1;
+        int min_diff = N + 1;
+        set<int>::iterator it;
+        for (it = st.begin(); it != st.end(); ++it) {
+            int curr = (*it);
+            if (group_sz[curr] > 1 || group_sz[N] > 0) {
+                min_diff = 0;
+                break;
+            }
+            if (prev != -1)
+                min_diff = min(min_diff, curr - prev);
+            prev = curr;
+        }
+        return min_diff;
+    }
+};
+
+int main() {
+    int N, Q, x, y;
+
+    scanf("%d %d", &N, &Q);
+    union_find UF(N);
+    for (int i = 0; i < Q; ++i) {
+        scanf("%d %d", &x, &y);
+        printf("%d\n", UF.unite(x - 1, y - 1));
+    }
+
+    return 0;
+}

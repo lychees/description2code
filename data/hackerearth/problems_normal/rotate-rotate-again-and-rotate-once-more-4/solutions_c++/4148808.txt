@@ -1,0 +1,169 @@
+/*    SHUBHAM SINHA    */
+ 
+ 
+ 
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <string.h>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <list>
+#include <math.h>
+ 
+#define ll long long int
+#define maxN 1000000
+#define maxVal 100000000
+#define minVal -100000000
+#define mod 1000000007LL
+ 
+#define gcd(a,b) __gcd(a,b)
+ 
+using namespace std;
+
+struct data
+{
+	int n,s,e,w;
+};
+
+int n;
+data tree[5*maxN+5];
+int lazy[5*maxN+5]={0};
+data makeNode(int n,int e,int s,int w)
+{
+	data r;
+	r.n=n;
+	r.e=e;
+	r.s=s;
+	r.w=w;
+	return r;
+}
+
+data combine(data l,data r)
+{
+	data a;
+	a.n=l.n+r.n;
+	a.e=l.e+r.e;
+	a.s=l.s+r.s;
+	a.w=l.w+r.w;
+	return a;
+}
+
+void build(int node,int start,int end)
+{
+	if(start==end)
+	{
+		tree[node]=makeNode(0,1,0,0);
+		return;
+	}
+	int mid=start+(end-start)/2;
+	build(2*node+1,start,mid);
+	build(2*node+2,mid+1,end);
+	tree[node]=combine(tree[2*node+1],tree[2*node+2]);
+}
+
+void updateThis(int node,int k)
+{
+	int n,e,s,w;
+	n=tree[node].n;
+	e=tree[node].e;
+	s=tree[node].s;
+	w=tree[node].w;
+	if(k==1)
+		tree[node]=makeNode(w,n,e,s);
+	else if(k==2)
+		tree[node]=makeNode(s,w,n,e);
+	else if(k==3)
+		tree[node]=makeNode(e,s,w,n);
+}
+
+void update(int node,int start,int end,int l,int r,int k)
+{
+	if(lazy[node]!=0)
+	{
+		updateThis(node,lazy[node]);
+		if(start!=end)
+		{
+			lazy[2*node+1]=(lazy[2*node+1]+lazy[node])%4;
+			lazy[2*node+2]=(lazy[2*node+2]+lazy[node])%4;
+		}
+		lazy[node]=0;
+	}
+	if(start>end||r<start||l>end)
+		return;
+	if(start>=l&&end<=r)
+	{
+		updateThis(node,k);
+		if(start!=end)
+		{
+			lazy[2*node+1]=(lazy[2*node+1]+k)%4;
+			lazy[2*node+2]=(lazy[2*node+2]+k)%4;
+		}
+		return;
+	}
+	int mid=start+(end-start)/2;
+	update(2*node+1,start,mid,l,r,k);
+	update(2*node+2,mid+1,end,l,r,k);
+	tree[node]=combine(tree[2*node+1],tree[2*node+2]);
+}
+
+data query(int node,int start,int end,int l,int r)
+{
+	if(lazy[node]!=0)
+	{
+		updateThis(node,lazy[node]);
+		if(start!=end)
+		{
+			lazy[2*node+1]=(lazy[2*node+1]+lazy[node])%4;
+			lazy[2*node+2]=(lazy[2*node+2]+lazy[node])%4;
+		}
+		lazy[node]=0;
+	}
+	if(start>end||r<start||l>end)
+		return makeNode(0,0,0,0);
+	if(start>=l&&end<=r)
+		return tree[node];
+	int mid=start+(end-start)/2;
+	return combine(query(2*node+1,start,mid,l,r),query(2*node+2,mid+1,end,l,r));
+}
+ 
+int main()
+{
+    #ifndef ONLINE_JUDGE
+    	//freopen("in.txt","r",stdin);
+    	//freopen("out.txt","w",stdout);
+    #endif
+    int q,l,r,k;
+    char o[5];
+    data x;
+	scanf("%d%d",&n,&q);
+	build(0,0,n-1);
+	while(q--)
+	{
+		scanf("%s",o);
+		if(o[0]=='C')
+		{
+			scanf("%d%d%d",&l,&r,&k);
+			k=k%4;
+			update(0,0,n-1,l-1,r-1,k);
+		}
+		else if(o[0]=='A')
+		{
+			scanf("%d%d%d",&l,&r,&k);	
+			k=-1*k;
+			k=(k%4);
+			if(k<0)
+				k=k+4;
+			update(0,0,n-1,l-1,r-1,k);
+		}
+		else
+		{
+			scanf("%d%d",&l,&r);
+			x=query(0,0,n-1,l-1,r-1);
+			printf("%d\n",max(x.n,max(x.e,max(x.s,x.w))));
+		}
+	}
+    return 0;
+}

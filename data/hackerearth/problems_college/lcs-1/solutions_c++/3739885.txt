@@ -1,0 +1,139 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+template <size_t MAXLEN, size_t ALPHABET> struct SuffixAutomaton {
+
+  struct Node {
+    Node * child[ALPHABET], *suff, *next;
+    int len, pos, cnt;
+  };
+  Node pool[2 * MAXLEN], *root, *nextnode, *last, *first[MAXLEN + 1];
+
+  Node * makenode(int length) {
+    memset(nextnode, 0, sizeof(Node));
+    nextnode->len = length;
+    return nextnode++;
+  }
+
+  void init() {
+    nextnode = pool;
+    last = root = makenode(0);
+    root->pos = -1;
+    memset(first, 0, sizeof(first));
+  }
+
+  void extend(int ch) {
+    Node* p = last, *cur = makenode(p->len + 1);
+    cur->cnt = 1;
+    cur->pos = cur->len - 1;
+    for (; p != NULL && p->child[ch] == NULL; p = p->suff)
+      p->child[ch] = cur;
+    if (p == NULL)
+      cur->suff = root;
+    else {
+      Node* q = p->child[ch];
+      if (p->len + 1 == q->len)
+        cur->suff = q;
+      else {
+        Node* copy = makenode(p->len + 1);
+        copy->pos = q->pos;
+        memcpy(copy->child, q->child, sizeof(q->child));
+        copy->suff = q->suff;
+        q->suff = cur->suff = copy;
+        for (; p != NULL && p->child[ch] == q; p = p->suff)
+          p->child[ch] = copy;
+      }
+    }
+    last = cur;
+  }
+
+  void go() {
+    for (Node* i = pool; i < nextnode; i++) {
+      i->next = first[i->len];
+      first[i->len] = i;
+    }
+    for (int len = MAXLEN; len > 0; len--)
+      for (Node* i = first[len]; i != NULL; i = i->next)
+        i->suff->cnt += i->cnt;
+  }
+};
+typedef long long ll;
+const ll MOD = ll(1e9) + 7;
+const ll MAX = 222000;
+SuffixAutomaton<MAX, 27> sa;
+
+void solve(ll test_num) {
+  (void) test_num;
+  ll N;
+  cin >> N;
+  string all;
+  for (ll i = 0; i < N; ++i) {
+    string str;
+    cin >> str;
+    all += str + char('z' + 1);
+  }
+  sa.init();
+  for (char c : all) {
+    sa.extend(c - 'a');
+  }
+  ll Q;
+  cin >> Q;
+  while (Q-- > 0) {
+    string str;
+    cin >> str;
+    ll res = 0, len = 0;
+    auto at = sa.root;
+    for (char c : str) {
+      while (at && !at->child[c - 'a']) {
+        at = at->suff;
+        if (at) {
+          len = at->len;
+        }
+      }
+      if (!at) {
+        at = sa.root;
+        len = 0;
+      } else {
+        at = at->child[c - 'a'];
+        ++len;
+        res = max(res, len);
+      }
+    }
+    cout << res << endl;
+  }
+}
+
+void solve() {
+#ifdef AZN
+//make_case();
+  double start_t = (double) clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr  );
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  ll T = 1;
+//  cin >> T;
+  for (ll t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << fixed << setprecision(3) << "Took: " << (((double) clock() - start_t) / CLOCKS_PER_SEC)
+      << endl;
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

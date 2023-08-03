@@ -1,0 +1,164 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define rep(i,a,b) for(int i = int(a); i < int(b); ++i)
+#define trav(it, v) for(auto& it : v)
+#define sz(v) (int)(v).size()
+#define all(v) (v).begin(), (v).end()
+
+typedef long long ll;
+typedef vector<ll> vi;
+typedef pair<int,int> pii;
+
+typedef pair<ll, ll> pl;
+
+int JMP = 22;
+
+struct Jmp {
+	int v;
+	int prv;
+	ll sqrs;
+
+	Jmp(int v=-1, int prv=-1, ll sqrs=0) : v(v), prv(prv), sqrs(sqrs) {}
+};
+
+vector<vector<Jmp>> jmp;
+vi p, tree, ord, d;
+
+int dfs(vector<vi>& adj, int at, int par, int dpt){
+	ord.push_back(at);
+	p[at] = par;
+	d[at] = dpt;
+	int len = 1;
+	trav(v, adj[at]){
+		if(v != par){
+			len += dfs(adj, v, at, dpt + 1);
+		}
+	}
+	return tree[at] = len;
+}
+
+int main(){
+	int n;
+	scanf("%d", &n);
+	jmp.assign(n, vector<Jmp>(JMP));
+	p.resize(n);
+	d.resize(n);
+	tree.resize(n);
+	vector<vi> adj(n);
+	rep(i,0,n-1){
+		int f, t;
+		scanf("%d%d", &f, &t);
+		f--; t--;
+		adj[f].push_back(t);
+		adj[t].push_back(f);
+	}		
+	dfs(adj, 0, -1, 0);
+	trav(v, ord){
+		int par = p[v];
+		jmp[v][0] = Jmp(par, v, 0);
+		rep(i,1,JMP){
+			Jmp cur = jmp[v][i - 1];
+			if(cur.v == -1) break;
+			ll midChilds = tree[cur.v] - tree[cur.prv];
+			Jmp nx = jmp[cur.v][i - 1];
+			if(nx.v == -1) break;
+			jmp[v][i] = Jmp(nx.v, nx.prv, cur.sqrs + nx.sqrs + midChilds*midChilds);
+		}
+	}
+	int q;
+	scanf("%d", &q);
+	rep(i,0,q){
+		int a, b;
+		scanf("%d%d", &a, &b);
+		a--; b--;
+		if(a == b){
+			puts("0");
+			continue;
+		}
+
+		if(d[a] < d[b]) swap(a, b);
+
+		ll sum = ll(n)*n, sqrs = 0;
+		int aa = a, bb = b;
+
+		Jmp jaa, jbb;
+		for(int i = JMP - 1; i >= 0; --i){
+			if(d[aa] - (1 << i) >= d[bb]){
+				if(jaa.v != -1){
+					ll mid = tree[jaa.v] - tree[jaa.prv];
+					sqrs += mid*mid;
+				}
+
+				jaa = jmp[aa][i];
+				sqrs += jaa.sqrs;
+				aa = jaa.v;
+
+			}
+		}
+		assert(d[aa] == d[bb]);
+		for(int i = JMP - 1; i >= 0; --i){
+			if(jmp[aa][i].v != jmp[bb][i].v){
+				if(jaa.v != -1){
+					ll mid = tree[jaa.v] - tree[jaa.prv];
+					sqrs += mid*mid;
+				}
+
+				jaa = jmp[aa][i];
+				sqrs += jaa.sqrs;
+				aa = jaa.v;
+
+				if(jbb.v != -1){
+					ll mid = tree[jbb.v] - tree[jbb.prv];
+					sqrs += mid*mid;
+				}
+
+				jbb = jmp[bb][i];
+				sqrs += jbb.sqrs;
+				bb = jbb.v;
+			}
+		}
+		assert(d[aa] == d[bb]);
+
+		
+		if(aa != bb){
+			if(jaa.v != -1){
+				ll mid = tree[jaa.v] - tree[jaa.prv];
+				sqrs += mid * mid;
+			}
+			jaa = jmp[aa][0];
+			aa = jaa.v;
+			if(jbb.v != -1){
+				ll mid = tree[jbb.v] - tree[jbb.prv];
+				sqrs += mid * mid;
+			}
+			jbb = jmp[bb][0];
+			bb = jbb.v;
+		}
+
+		assert(aa == bb);
+		int lca = aa;
+
+		//printf("lca: %d sum: %lld sqrs: %lld\n", lca, sum, sqrs);
+		if(lca == b){
+			assert(jbb.v == -1);
+			sqrs += tree[a] * tree[a];
+			ll above = n;
+			if(jaa.v != -1) above -= tree[jaa.prv];
+			//printf("above: %lld %lld - %lld\n", sum, sqrs, above);
+			sqrs += above * above;
+			printf("%lld\n", (sum - sqrs)/2);
+		} else {
+			sqrs += tree[a] * tree[a];
+			sqrs += tree[b] * tree[b];
+			ll above = n;
+			if(jaa.v != -1) above -= tree[jaa.prv];
+			if(jbb.v != -1) above -= tree[jbb.prv];
+
+			sqrs += above * above;
+			//printf("status %lld %lld %lld\n", sum, sqrs, above);
+			printf("%lld\n", (sum - sqrs)/2);
+		}
+	}
+}

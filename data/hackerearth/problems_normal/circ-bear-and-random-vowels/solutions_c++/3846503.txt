@@ -1,0 +1,85 @@
+#include <cstdio>
+
+#include <string>
+#include <cstring>
+
+using namespace std;
+
+typedef long long llong;
+
+#define MAXN 3003
+const int MOD = 1e9 + 7;
+
+int PT[MAXN][MAXN+1];
+
+void build_pascal_triangle() {
+   PT[0][0] = 1;
+   for (int n = 1; n < MAXN; ++n) {
+      PT[n][0] = 1;
+      for (int k = 1; k < n; ++k) {
+         PT[n][k] = (PT[n-1][k-1] + PT[n-1][k]) % MOD;
+      }
+      PT[n][n] = 1;
+   }
+}
+
+int Choose(int n, int k) {
+   if (n < 0 || k < 0 || k > n)  // invalid n or k
+      return 0;
+   return PT[n][k];
+}
+
+string vowels = "aeiouy";
+bool isvowel(char c) {
+   return vowels.find(c) != string::npos;
+}
+
+int N, K;
+char S[MAXN];
+int num_vowels, num_consonants;
+int num_required_changes;
+
+int memo[MAXN][MAXN][3];
+int go(int n, int k, int cons_run) {
+   if (cons_run >= 3 || k < 0) return 0;
+   if (n >= N)
+      return K-k >= num_required_changes ? Choose(num_vowels, k) : 0;
+   int& res = memo[n][k][cons_run];
+   if (res < 0) {
+      bool isv = isvowel(S[n]);
+      res = go(n+1, k, isv ? 0 : cons_run+1);  // do not change
+      if (!isv) {
+         // change
+         res += go(n+1, k-1, 0);
+         if (res >= MOD) res -= MOD;
+      }
+   }
+   return res;
+}
+
+int solve() {
+   build_pascal_triangle();
+
+   num_vowels = 0;
+   for (int i = 0; i < N; ++i) {
+      if (isvowel(S[i]))
+         ++num_vowels;
+   }
+   num_consonants = N - num_vowels;
+   num_required_changes = max(num_consonants - N/2, 0);
+   //fprintf(stderr, "num_vowels = %d  num_consonants = %d  num_required_changes = %d\n",
+   //        num_vowels, num_consonants, num_required_changes);
+
+   memset(memo, -1, sizeof(memo));
+   int all = Choose(N, K);
+   int good = go(0, K, 0);
+   return (all - good + MOD) % MOD;
+}
+
+int main(int argc, char* argv[]) {
+   scanf("%d %d", &N, &K);
+   scanf("%s", S);
+   int res = solve();
+   printf("%d\n", res);
+   return 0;
+}

@@ -1,0 +1,202 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int maxn=200;
+
+#define MAX_N 710
+#define inf 2000000000
+#define pb push_back
+
+int n, m, e, dest, sol, nr, improve;
+int Q[MAX_N * MAX_N], tata[MAX_N], dist[MAX_N], use[MAX_N];
+int C[MAX_N][MAX_N], F[MAX_N][MAX_N], edge[MAX_N][MAX_N];
+
+vector <int> v[MAX_N], cost[MAX_N];
+vector <tuple<int, int,int>>edges;
+int nm1, nm2;
+
+void cit() {
+    n = nm1;
+    m = nm2;
+    for(int i = 0; i<edges.size();i++){
+        int p, q, val;
+        p=get<0>(edges[i]);
+        q=get<1>(edges[i]);
+        val=get<2>(edges[i]);
+        p++; q += n + 1;
+
+        v[p].pb(q); cost[p].pb(val);
+        v[q].pb(p); cost[q].pb(-val);
+
+        edge[p][q] = i;
+        C[p][q] = 1;
+    }
+}
+
+void build_graph() {
+    //sursa este nodul 1, destinatia n + m + 2
+    dest = n + m + 2;
+    for (int i = 2; i <= n + 1; i++) {
+        v[1].pb(i); cost[1].pb(0);
+        v[i].pb(1); cost[i].pb(0);
+
+        C[1][i] = 1;
+    }
+    for (int i = n + 2; i <= n + m + 1; i++) {
+        v[i].pb(dest); cost[i].pb(0);
+        v[dest].pb(i); cost[dest].pb(0);
+
+        C[i][dest] = 1;
+    }
+}
+
+int bellman_ford() {
+    for (int i = 1; i <= dest; i++) {
+        dist[i] = inf;
+        tata[i] = -1;
+        use[i] = 0;
+    }
+    dist[1] = 0; use[1] = 1;
+
+    int st = 0, dr = 1; Q[1] = 1;
+    while (st < dr) {
+        st++;
+
+        int len = v[Q[st]].size();
+        for (int i = 0; i < len; i++) {
+            if (C[Q[st]][v[Q[st]][i]] > F[Q[st]][v[Q[st]][i]] && dist[v[Q[st]][i]] > dist[Q[st]] + cost[Q[st]][i]) {
+                dist[v[Q[st]][i]] = dist[Q[st]] + cost[Q[st]][i];
+                tata[v[Q[st]][i]] = Q[st];
+
+                if (!use[v[Q[st]][i]]) {
+                    Q[++dr] = v[Q[st]][i];
+                    use[v[Q[st]][i]] = 1;
+                }
+            }
+        }
+
+        use[Q[st]] = 0;
+    }
+
+    if (dist[dest] < inf) {
+        int flux = inf;
+        for (int i = dest; i != 1; i = tata[i])
+            flux = min(flux, C[tata[i]][i] - F[tata[i]][i]);
+
+        for (int i = dest; i != 1; i = tata[i]) {
+            F[tata[i]][i] += flux;
+            F[i][tata[i]] -= flux;
+        }
+
+        return flux * dist[dest];
+    }
+    return 0;
+}
+
+void solve() {
+    //construiesc graful de flux
+    build_graph();
+
+    improve = 1;
+    while (improve) {
+        improve = bellman_ford();
+        sol += improve;
+    }
+}
+
+void write() {
+    cout<<sol<<'\n';
+}
+
+
+int t, nn, mm, k,vaz[maxn+2];
+vector<pair<int, int>>ve[maxn+2];
+vector<int>di[maxn+2];
+
+vector<int>gra[maxn+2];
+
+void bf(int nod)
+{
+    memset(vaz,0,sizeof vaz);
+    di[nod]=vector<int>(nn+3,1e4);
+    queue<int>q; q.push(nod);
+    di[nod][nod]=0;
+    while(!q.empty())
+    {
+        int cur=q.front();q.pop();
+        vaz[cur]=0;
+        for(auto it:ve[cur])
+        {
+            int to=it.first,coste=it.second;
+            if(di[nod][cur]+coste<di[nod][to])
+            {
+                di[nod][to]=di[nod][cur]+coste;
+                if(vaz[to])continue;
+                vaz[to]=1;q.push(to);
+            }
+        }
+    }
+}
+
+
+void reset()
+{
+    n = m = e = dest = sol = nr = improve = 0;
+    memset(Q, 0, sizeof(Q)); memset(tata, 0, sizeof tata); memset(dist ,0, sizeof dist);
+    memset(use, 0, sizeof use);
+    memset(C, 0, sizeof C);
+    memset(F, 0, sizeof F);
+    memset(edge, 0, sizeof edge);
+    for(int i=1;i<=nn;i++)ve[i]=vector<pair<int, int>>(),v[i].clear(),cost[i].clear();
+    edges.clear();
+    for(int i=1;i<=nn;++i)di[i]=vector<int>(),gra[i]=vector<int>();
+    nn=mm=0;
+}
+
+void read()
+{
+    cin>>nn>>mm>>k;
+    nm1=k;
+    nm2=0;
+    for(int i=1;i<=mm;++i)
+    {
+        int x,y,c;
+        cin>>x>>y>>c;
+        ve[x].emplace_back(y,c);
+        ve[y].emplace_back(x,c);
+    }
+
+    for(int i=1;i<=k;++i){
+        bf(i);
+        for(int j=nn-k+1,cont=1;j<=nn;j++){
+           tuple<int, int,int>tnow(i,cont,di[i][j]);
+           edges.push_back(tnow);
+           cont++;
+           nm2=max(nm2,cont);
+        }
+    }
+}
+
+void rezolv()
+{
+    cit();
+    solve();
+    write();
+}
+int main()
+{
+    #ifndef ONLINE_JUDGE
+    freopen("FIN", "r", stdin);
+    freopen("FOUT", "w", stdout);
+    #endif
+
+    cin>>t;
+    while(t--)
+    {
+        read();
+        rezolv();
+        reset();
+    }
+  return 0;
+}

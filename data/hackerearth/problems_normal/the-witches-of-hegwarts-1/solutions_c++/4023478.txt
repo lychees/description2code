@@ -1,0 +1,119 @@
+#include <iostream>
+#include <cstdio>
+#include <climits>
+
+#define INF INT_MAX
+#define MAX 33333333
+
+#define min(a, b) (a < b ? a : b)
+
+typedef struct node
+{
+	int x, steps;
+	struct node *next;
+
+	node(int i, int j)
+	{
+		x = i;
+		steps = j;
+		next = NULL;
+	}
+
+}node;
+
+class Queue
+{
+private:
+	node *f, *r;
+
+public:
+	Queue()
+	{
+		f = r = NULL;
+	}
+
+	void push(int x, int y)
+	{
+		node *n = new node(x, y);
+		if (!f) f = n;
+		else r->next = n;
+		r = n;
+	}
+
+	node* pop()
+	{
+		node *n = new node(f->x, f->steps);
+		node *t = f;
+		f = f->next;
+		if (!f) r = NULL;
+		delete t;
+		return n;
+	}
+
+	bool isEmpty()
+	{
+		return f == NULL;
+	}
+};
+
+
+Queue q;
+
+int dp[MAX + 1];
+
+int main()
+{
+
+	dp[1] = 0;
+	dp[2] = 1;
+	dp[3] = 1;
+	for (int i = 4; i <= MAX; i++)
+	{
+		dp[i] = 1 + dp[i - 1];
+		if (i % 2 == 0) dp[i] = min(dp[i], 1 + dp[i / 2]);
+		if (i % 3 == 0) dp[i] = min(dp[i], 1 + dp[i / 3]);
+	}
+
+	int t, n;
+
+	scanf("%d", &t);
+	while (t--)
+	{
+		scanf("%d", &n);
+		int ans = INF;
+
+		q.push(n, 0);
+		while (!q.isEmpty())
+		{
+			node *temp = q.pop();
+			int x = temp->x, steps = temp->steps;
+			delete temp;
+
+			if (x == 1)
+			{
+				if (steps < ans) ans = steps;
+				continue;
+			}
+
+			if (x <= MAX)
+			{
+				steps += dp[x];
+				if (steps < ans) ans = steps;
+				continue;
+			}
+
+			if (ans > steps + 1) q.push(x - 1, steps + 1);
+			if (x % 2 == 0 && ans > steps + 1)
+				q.push(x / 2, steps + 1);
+			if (x % 3 == 0 && ans > steps + 1)
+				q.push(x / 3, steps + 1);
+		}
+
+		
+		printf("%d\n", ans);
+
+	}
+
+	return 0;
+}
+

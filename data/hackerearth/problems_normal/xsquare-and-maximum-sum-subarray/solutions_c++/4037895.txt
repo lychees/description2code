@@ -1,0 +1,113 @@
+#include <cstdio>
+#include <bits/stdc++.h>
+using namespace std;
+#define pb push_back
+#define m_p make_pair
+#define F first
+#define S second
+#define For(i,a,b) for(int i=a;i<b;i++)
+#define Fore(i,a,b) for(int i=a;i<=b;i++)
+#define rFor(i,a,b) for(int i=a;i>b;i--)
+#define rFore(i,a,b) for(int i=a;i>=b;i--)
+#define tr(it,a) for(__typeof((a).begin()) it=(a).begin();it!=(a).end();it++)
+#define all(a) a.begin(),a.end()
+#define mem(a,b) memset(a,b,sizeof(a))
+typedef long long int lli;
+typedef pair<int,int> pii;
+typedef pair<int,pii> pi3;
+typedef pair<pii,pii> pi4;
+typedef vector<int> vi;
+typedef vector<pii> vpii;
+void sc(int& a){scanf("%d",&a);}
+void sc(lli& a){scanf("%lld",&a);}
+void sc(int& a,int& b){sc(a);sc(b);}
+void sc(lli& a,lli& b){sc(a);sc(b);}
+void sc(int& a,int& b,int& c){sc(a,b);sc(c);}
+void sc(lli& a,lli& b,lli& c){sc(a,b);sc(c);}
+void prl(int a){printf("%d\n",a);}
+void prl(lli a){printf("%lld\n",a);}
+void prl(){printf("\n");}
+void prs(int a){printf("%d ",a);}
+void prs(lli a){printf("%lld ",a);}
+void prl(lli a, lli b){cout<<a<<" "<<b<<" "<<endl;}
+void prl(lli a, lli b, lli c){cout<<a<<" "<<b<<" "<<c<<" "<<endl;}
+void prl(lli a, lli b, lli c, lli d){cout<<a<<" "<<b<<" "<<c<<" "<<d<<endl;}
+void prl(lli a, lli b, lli c, lli d, lli e){cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<e<<endl;}
+void prl(lli a, lli b, lli c, lli d, lli e, lli f){cout<<a<<" "<<b<<" "<<c<<" "<<d<<" "<<e<<" "<<f<<endl;}
+int mod=1000000007;
+lli modpow(lli a, lli b, lli mod){lli res=1;while(b>0){if(b&1)res=(res*a)%mod;a=(a*a)%mod;b=b/2;}return res%mod;}
+lli pow(lli a, lli b){lli res=1;while(b>0){if(b&1)res=(res*a);a=(a*a);b=b/2;}return res;}
+//#define inf INT_MAX
+#define inf 1000000000000LL
+#define N 500000+5
+pii a[N],query[N];
+lli ans[N];
+typedef struct segtree{
+	lli sum,ans,pre,suf;
+}segtree;
+segtree tree[4*N];
+segtree combine(segtree p1, segtree p2)
+{
+	segtree ret;
+	ret.sum=max(-inf,p1.sum+p2.sum);
+	ret.pre=max(-inf,max(p1.pre,p1.sum+p2.pre));
+	ret.suf=max(-inf,max(p2.suf,p2.sum+p1.suf));
+	ret.ans=max(-inf,max(p1.ans,p2.ans));
+	ret.ans=max(ret.ans,p1.suf+p2.pre);
+	return ret;
+}
+void update(int node, int start, int end, int idx, int val)
+{
+	if ( start > end || start > idx || end < idx ) return;
+    if(start==end){
+		tree[node].sum=tree[node].ans=tree[node].pre=tree[node].suf=val;
+    }
+    else{
+        int mid=(start+end)/2;
+        if(start<=idx and idx<=mid)
+            update(2*node, start, mid, idx, val);
+        else update(2*node+1, mid+1, end, idx, val);
+        tree[node]=combine(tree[2*node],tree[2*node+1]);
+    }
+}
+ 
+void build(int node, int start, int end)
+{
+    if(start==end){
+        tree[node].sum=tree[node].ans=tree[node].pre=tree[node].suf=-inf;
+    }
+    else{
+        int mid=(start+end)/2;
+        build(2*node,start,mid);
+        build(2*node+1,mid+1,end);
+		tree[node]=combine(tree[2*node],tree[2*node+1]);
+    }
+}
+ 
+int main()
+{
+	int n,q;
+	sc(n,q);
+	Fore(i,1,q) ans[i]=-inf;
+	Fore(i,1,n){
+		sc(a[i].F); a[i].S=i;
+	}
+	sort(a+1,a+n+1);
+	Fore(i,1,q){
+		sc(query[i].F); query[i].S=i;
+	}
+	sort(query+1,query+q+1);
+	build(1,1,n);
+	int j=1;
+	Fore(i,1,q){
+		while(j<=n and a[j].F<=query[i].F){
+			update(1,1,n,a[j].S,a[j].F);
+			j++;
+		}
+		ans[query[i].S]=tree[1].ans;
+	}
+	Fore(i,1,q){
+		if(ans[i]==-inf) printf("No Solution\n");
+		else prl(ans[i]);
+	}
+}

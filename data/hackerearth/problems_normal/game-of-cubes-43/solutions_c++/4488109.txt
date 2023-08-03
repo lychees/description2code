@@ -1,0 +1,74 @@
+#include<bits/stdc++.h>
+#define mp make_pair
+#define ff first
+#define ss second
+using namespace std;
+typedef pair<int,int> ii;
+int L,B;
+char g[1001][1001];
+bool v[1001][1001];
+vector<ii>comps;
+void dfs(int x,int y)
+{
+    if(x<0 or x>=L or y<0 or y>=B or g[x][y]=='.' or v[x][y])return ;
+    v[x][y]=true;
+    g[x][y]='.';
+    comps.push_back(mp(x,y));
+    dfs(x+1,y);dfs(x-1,y);dfs(x,y+1);dfs(x,y-1);
+}
+void stabilize()
+{
+    for(int i=0;i<L;i++)for(int j=0;j<B;j++)v[i][j]=false;
+    for(int i=0;i<L;i++)
+        for(int j=0;j<B;j++)
+        {
+            if(v[i][j] or g[i][j]=='.')continue;
+            comps.clear();
+            dfs(i,j);
+            int shf=L;
+            for(int i=0;i<comps.size();i++)
+            {
+                int j=0;
+                for(j=comps[i].ff+1;j<L and g[j][comps[i].ss]=='.';j++);
+                shf=min(shf,j-comps[i].ff-1);
+            }
+            for(int i=0;i<comps.size();i++)
+            {
+                g[comps[i].ff+shf][comps[i].ss]='x';
+                v[comps[i].ff+shf][comps[i].ss]=true;
+            }
+        }
+}
+int main()
+{
+    scanf("%d%d",&L,&B);
+    for(int i=0;i<L;i++)
+            scanf("%s",g[i]);
+    int n;
+    scanf("%d",&n);
+    for(int i=1;i<=n;i++)
+    {
+        int h;scanf("%d",&h);
+        if(i&1)//from l
+        {
+            for(int i=0;i<B;i++)
+                if(g[L-h][i]=='x')
+                    {
+                        g[L-h][i]='.';
+                        break;
+                    }
+        }
+        else//from r
+        {
+            for(int i=B-1;i>=0;i--)
+                if(g[L-h][i]=='x')
+                {
+                    g[L-h][i]='.';
+                    break;
+                }
+        }
+        stabilize();
+    }
+    for(int i=0;i<L;i++)cout<<g[i]<<"\n";
+    return 0;
+}

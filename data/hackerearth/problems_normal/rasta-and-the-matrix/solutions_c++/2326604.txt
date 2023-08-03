@@ -1,0 +1,126 @@
+//ITNOG
+#include<bits/stdc++.h>
+ 
+using namespace std;
+ 
+#define scan(x) do{while((x=getchar_unlocked())<'0'); for(x-='0'; '0'<=(_=getchar_unlocked()); x=(x<<3)+(x<<1)+_-'0');}while(0)
+char _;
+
+//#define int long long 
+#define rep(i, s, e) for(int i = s; i < e; i ++)
+typedef double ld;
+
+const int maxN = 100*1000 + 5;
+const int mod = 1000*1000*1000+7;
+const int base = 701;
+const int maxL = 14;
+typedef long long ll;
+#define X first
+#define Y second
+
+int seg[220*maxN], l[220*maxN], r[220*maxN];
+bitset<220*maxN> ad;
+int cnt = 3;
+
+void change(int ind)
+{
+    if(ad[ind]) ad[ind] = 0;
+    else ad[ind] = 1;
+}
+void check(int ind)
+{
+    if(l[ind] == -1) l[ind] = cnt ++;
+    if(r[ind] == -1) r[ind] = cnt ++;
+}
+
+void fix(int &t) 
+{
+    t %= mod; t += mod; t %= mod;
+}
+void shift(int ind, ll s, ll e)
+{
+    ll mid = (s+e) >> 1;
+    if(ad[ind])
+    {
+	  int L = l[ind], R = r[ind];
+	  change(L); seg[L] = (mid-s) % mod - seg[L]; fix(seg[L]);
+	  change(R); seg[R] = (e-mid) % mod - seg[R]; fix(seg[R]);
+	  ad[ind] = 0;
+    }
+}
+void update(int ind)
+{
+    seg[ind] = (seg[l[ind]] + seg[r[ind]]) % mod;
+}
+void cng(ll ql, ll qr, ll s, ll e, int ind)
+{
+    if(ql >= e || qr <= s) return;
+    if(ql <= s && e <= qr)
+    {
+	  change(ind); 
+	  seg[ind] = (e-s) % mod - seg[ind]; fix(seg[ind]);
+	  return;
+    }
+
+    check(ind);
+    shift(ind, s, e);
+    ll mid = (s+e) >> 1;
+    cng(ql,qr,s,mid,l[ind]);
+    cng(ql,qr,mid,e,r[ind]);
+    update(ind);
+} 
+
+int get(ll ql, ll qr, ll s, ll e, int ind)
+{
+    if(ql >= e || qr <= s) return 0;
+    if(ql <= s && e <= qr) return seg[ind];
+    ll mid = (s+e) >> 1;
+    if(l[ind] == -1)
+    {
+	  ll tmpl = max(ql,s), tmpr = min(qr, e);
+	  if(ad[ind] == 0) return 0;
+	  return (tmpr-tmpl) % mod;
+    }
+
+    shift(ind,s,e);
+    int x = get(ql,qr,s,mid,l[ind]);
+    int y = get(ql,qr,mid,e,r[ind]);
+    update(ind);
+    return (x+y) % mod;
+}
+
+
+main()
+{
+    ios::sync_with_stdio(0); cin.tie(0);
+    memset(l,-1,sizeof l);
+    memset(r,-1,sizeof r);
+    int n; cin >> n;
+    ll N = 1000*1000*1000;
+    N = N*N;
+    ll las = 0;
+    rep(i,0,n)
+    {
+	  int t; cin >> t;
+	  if(t == 1)
+	  {
+		ll x, l, r; cin >> x >> l >> r; 
+		l ^= las; r ^= las; l --;
+		cng(l,r,0,N,x+1);
+	  }
+	  else
+	  {
+		ll l, r, x, y; cin >> l >> r >> x >> y; 
+		l ^= las; r ^= las; x ^= las; y ^= las; l --; x --;
+		
+		int txb = get(l,r,0,N,1), txw = (r-l) % mod -txb; fix(txw);
+		int tyb = get(x,y,0,N,2), tyw = (y-x) % mod -tyb; fix(tyw);
+		txb %= mod; txw %= mod;
+		tyb %= mod; tyw %= mod;
+		
+		las = (1LL)*txb*tyw + (1LL)*tyb*txw; las %= mod;
+		cout << las << endl;
+	  }
+    }
+    return 0;
+}

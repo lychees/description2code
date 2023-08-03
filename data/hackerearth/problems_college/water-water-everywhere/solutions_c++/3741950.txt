@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define sd(x) scanf("%d", &x)
+#define boost ios_base::sync_with_stdio(false);
+#define mp make_pair
+#define pb push_back
+#define all(a) a.begin(), a.end()
+#define f first
+#define s second
+
+typedef pair<int, int> pii;
+typedef long long ll;
+
+const int mod = 1000000007;
+const int inf = 50000000;
+const int maxn = 100010;
+
+vector<pair<int, pii> > edges;
+set<pii> mset[maxn];
+int parent[maxn];
+ll ans[maxn];
+
+int find(int x)
+{
+	if(x==parent[x])
+		return x;
+	return parent[x] = find(parent[x]);
+}
+
+int main()
+{
+	//freopen("i.txt", "r", stdin);
+	//freopen("o.txt", "w", stdout);
+	int n, q, u, v, w, c, i, px, py;
+	scanf("%d", &n);
+	edges.resize(n-1);
+	for(i=0; i<n-1; i++)
+		scanf("%d%d%d", &edges[i].s.f, &edges[i].s.s, &edges[i].f);
+	sort(all(edges));
+	for(i=1; i<=n; i++)
+		parent[i] = i;
+	scanf("%d", &q);
+	for(i=0; i<q; i++){
+		scanf("%d", &c);
+		while(c--){
+			scanf("%d", &u);
+			mset[u].insert(mp(i, 1));
+		}
+	}
+	for(i=n-2; i>=0; i--){
+		u = edges[i].s.f, v = edges[i].s.s, w = edges[i].f;
+		px = find(u);
+		py = find(v);
+		if(mset[px].size()>mset[py].size())
+			swap(px, py);
+		for(auto it:mset[px]){
+			auto jt = mset[py].lower_bound(mp(it.f, 0));
+			if(jt==mset[py].end()){
+				mset[py].insert(it);
+				continue;
+			}
+			if((*jt).f!=it.f){
+				mset[py].insert(it);
+				continue;
+			}
+			ans[it.f] = (ans[it.f] + ((((it.s)*((*jt).s))%mod)*w)%mod);
+			mset[py].erase(jt);
+			mset[py].insert(mp(it.f, it.s + (*jt).s));
+		}
+		parent[px] = py;
+		mset[px].clear();
+	}
+	for(i=0; i<q; i++)
+		printf("%lld\n", ans[i]);
+	return 0;
+}

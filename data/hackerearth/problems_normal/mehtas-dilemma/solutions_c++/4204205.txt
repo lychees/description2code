@@ -1,0 +1,71 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+using ull = unsigned long long;
+constexpr ull mod = 1000000007ull;
+
+void mul(const vector<ull>& a, const vector<ull>& b, vector<ull>& c) {
+	
+	for (int i = 0; i < 16; ++i) {
+		c[i] = 0;
+		c[16 | i] = (b[i] + b[16 | i]) % mod;
+	}
+	c[32] = b[32];
+	
+	for (int i = 0; i < 16; ++i) 
+		for (int j = 0; j < 16; ++j) {
+			c[i ^ j] = (c[i ^ j] + a[i] * b[j]) % mod;
+			c[16 | (i ^ j)] = (c[16 | (i ^ j)] + a[16 | i] * b[j]) % mod;
+			c[32] = (c[32] + (a[i] + a[16 | i]) * b[16 | j]) % mod; 
+		}
+		
+	for (int i = 0; i < 16; ++i)
+		c[32] = (c[32] + (a[i] + a[16 | i]) * (b[32] + 1) + a[32] * (b[i] + b[16 | i])) % mod;
+		
+	c[32] = (c[32] + a[32] * (b[32] + 1)) % mod;
+			
+}
+
+ull count(ull n) {
+	vector<ull> res(33, 0);
+	vector<ull> delta(33, 0);
+	delta[0] = 3;
+	delta[1] = 2;
+	delta[2] = 1;
+	delta[3] = 1;
+	delta[4] = 1;
+	delta[8] = 1;
+	vector<ull> m(33, 0);
+	ull nc = n;
+	bool f = false;
+	
+	while (n) {
+		if (n % 2) {
+			if (f) {
+				mul(delta, res, m);
+				res.swap(m);
+			} else {
+				res = delta;
+				f = true;
+			}
+		}
+		mul(delta, delta, m);
+		delta.swap(m);
+		
+		n /= 2;
+	}
+	
+	return (res[0] + res[16] + res[32] + 1) % mod;
+}
+
+int main() {
+	int t;
+	cin >> t;
+	while (t--) {
+		ull n;
+		cin >> n;
+		cout << count(n) << '\n';
+	}
+    return 0;
+}

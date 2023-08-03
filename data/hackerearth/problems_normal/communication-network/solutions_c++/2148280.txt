@@ -1,0 +1,63 @@
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <set>
+#include <list>
+#include <queue>
+#include <stack>
+#include <vector>
+#include <cassert>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+LL d[100000], nd[100000];
+int n, k;
+LL a[100000];
+const LL INF = 1e18;
+
+void solve(int from, int to, int lo, int hi) {
+    int mid = (from + to) >> 1;
+    int upto = min(mid, hi);
+    int bestk = -1;
+    LL res = INF;
+    for (int k = lo; k <= upto; ++k) {
+        LL cur = d[k] + (LL)(mid - k) * (mid - k);
+        if (cur < res) {
+            res = cur;
+            bestk = k;
+        }
+    }
+    nd[mid] = res + a[mid];
+    if (from < mid) solve(from, mid - 1, lo, bestk);
+    if (to > mid) solve(mid + 1, to, bestk, hi);
+}
+
+int main() {
+    scanf("%d%d", &n, &k);
+    LL mul = (LL)k * k;
+    REP(i, n) scanf("%lld", a + i), a[i] *= mul;
+    REP(i, n) d[i] = INF;
+    d[0] = a[0];
+    LL ans = INF;
+    REP(i, k - 1) {
+        memset(nd, 0, sizeof nd);
+        solve(i + 1, n - 1, i, n - 1);
+        if (nd[n - 1] >= ans) break;
+        ans = nd[n - 1];
+        memcpy(d, nd, sizeof d);
+    }
+    printf("%lld\n", ans);
+	return 0;
+}

@@ -1,0 +1,250 @@
+#include <iostream>
+#include<ctype.h>
+#include<cstdio>
+#include<cstdlib>
+#include<algorithm>
+#include<vector>
+#include<set>
+#include<map>
+#include<string>
+#include<string.h>
+#include<cstring>
+#include<stack>
+#include<queue>
+#include<cassert>
+#include<iterator>
+#include<cmath>
+#include<sstream>
+#include<bitset>
+
+using namespace std ;
+
+#define FOR(i,a,b) for(int i= (int)a; i< (int)b; ++i)
+#define REP(i,n) FOR(i,0,n)
+
+#define LL long long int 
+#define PII pair<int,LL> 
+#define PB push_back
+#define MP make_pair
+#define INF 1000000000
+
+typedef struct node {
+   bitset<10>b;
+   int m;
+}node;
+
+typedef struct node2 {
+   int dig;
+   int parent;
+}node2;
+
+bool operator <(const node2 &A ,const node2 &B)
+{
+   if(A.parent==B.parent)
+      return A.dig<B.dig;
+   else
+      return A.parent<B.parent;
+}
+
+int un=0;
+int dp[1001][1030];
+bool dpp[1001][1030];
+
+node2 my[1024002];
+
+int gl=0;
+string arr[11];
+
+string convert(int x) {
+   char ch[10001];
+   sprintf(ch,"%d",x);
+   return string(ch);
+}
+
+string division(string s,int n)
+{
+   string ans = "";
+   if(n==0 || n==1)
+      return 0;
+   int t=0;
+   int u=0;
+   int num = 0;
+   int div;
+   int flag=0;
+   REP(i,s.size())
+   {
+      u = s[i] - '0';
+      num = t*10 + u;
+      div = num/n;
+      if(div!=0)
+         flag=1;
+      if(flag==1)
+         ans += convert(div);
+      t = num % n;
+   }
+   return ans;
+}
+
+int bfs(node start,vector<int> digit,int x) 
+{
+   queue<node>q;
+   q.push(start);
+   while (q.empty() == false) 
+   {
+      node top = q.front();
+      if(top.m==0)
+      {
+         if(top.b.count()==digit.size())
+         {
+            gl=1;
+            return 1;
+         }
+      }
+      q.pop();
+      REP(i,digit.size())
+      {
+         if(top.m==-1)
+         {
+            if(digit[i]==0)
+               continue;
+         }
+         int mo=0;
+         if(top.m==-1)
+            mo = digit[i]%x;
+         else
+            mo = (top.m*10 + digit[i])%x;
+         node A;
+         A.m = mo;
+         A.b = top.b;
+         A.b[digit[i]]=1;
+         node2 B;
+         B.dig = digit[i];
+         int xx = A.b.to_ulong();
+         int xxx = top.b.to_ulong();
+         //it = my.find(A);
+         if(dpp[A.m][xx]==0)
+         {
+            un++;
+            if(top.m==-1)
+            {
+               dp[A.m][xx] = un;
+               B.parent = 0;
+               my[un] = B;
+               dpp[A.m][xx] = 1;
+            }
+            else
+            {
+               B.parent = dp[top.m][xxx];
+               my[un] = B;
+               dp[A.m][xx] = un;
+               dpp[A.m][xx] = 1;
+            }
+            q.push(A);
+         }
+      }
+   }
+   return 0;
+}
+void precompute(int x)
+{
+   un=0;
+   int k=0;
+   REP(i,x)
+   {
+      REP(j,1025)
+      {
+         dp[i][j]=0;
+         dpp[i][j] = 0;
+      }
+   }
+}
+string generate(int un)
+{
+   int x = un;
+   char tmp[100001];
+   char ret[100001];
+   int j=0;
+   while(x!=0)
+   {
+      tmp[j] = my[x].dig + '0';
+      x = my[x].parent;
+      j++;
+   }
+   REP(i,j)
+   {
+      ret[i] = tmp[j-1-i];
+   }
+   ret[j] = '\0';
+   return string(ret);
+}
+
+int ans(int x,int check[11])
+{
+   precompute(x);
+   node shud;
+   shud.m=0;
+   shud.b.reset();
+   vector<int> v;
+   REP(i,10)
+   {
+      if(check[i]==1)
+      {
+         v.PB(i);
+         shud.b[i]=1;
+      }
+   }
+   node start;
+   start.m = -1;
+   start.b.reset();
+
+   int bf = bfs(start,v,x);
+   if(bf!=0)
+   {
+      gl=1;
+      return dp[0][shud.b.to_ulong()];
+   }
+   return -1;
+} 
+
+
+int main()
+{
+   string imp = "Impossible";
+   REP(i,10)
+      arr[i] = convert(i);
+   int test;
+   scanf("%d",&test);
+   while(test--)
+   {
+      gl=0;
+      int check[11];
+      REP(i,10)
+         check[i]=0;
+      int x;
+      char str[100],dum;
+      scanf(" %[^\n]",str);
+      scanf("%d",&x);
+      REP(i,strlen(str))
+      {
+         if(i%2==0)
+         {
+            int j = str[i] - '0';
+            check[j]=1;
+         }
+      }
+      int ress = ans(x,check);
+      if(gl==0)
+      {
+         //printf("%s\n",result);
+         cout  << imp << endl;
+      }
+      else
+      {
+         string result = generate(ress);
+         cout << result << " = " << x << " * " << division(result,x) << endl; 
+         //printf("%s = %d * %s",result,x,division(result,x));
+      }
+
+   }
+   return 0;
+}

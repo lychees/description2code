@@ -1,0 +1,81 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<string>
+#include<deque>
+using namespace std;
+
+int const N = 1e6 + 41;
+
+int n, x[N], h[N], a[N], c[N];
+deque<int> q;
+
+bool en(long long L, int l, int r){
+	return ( (x[r] - x[l]) * 1LL * (x[r] - x[l]) + (h[r] - h[l]) * 1LL * (h[r] - h[l]) <= L);
+}
+
+bool can(long long L){
+	for(int i=0;i<N;++i){
+		c[i] = 0;
+	}
+	q.clear();
+	int l = 0;
+	int r = 1;
+	c[0] = 1;
+	q.push_back(a[l]);
+	while(r < n){
+		while(l < r && !en(L, l, r)){
+			if(q.size() && q.front() == a[l]){
+				q.pop_front();
+			}
+			++l;
+		}
+		if(l == r || q.size() == 0){
+			break;
+		}
+		int p = q.front();
+		if(p < a[r]){
+			c[r] = 1;
+			while(q.size() && q.back() > a[r]){
+				q.pop_back();
+			}
+			q.push_back(a[r]);
+		}
+		++r;
+	}
+	return c[n-1];
+}
+
+long long solve(){
+	long long l = -1;
+	long long r = 1e9 * 1LL * 1e9;
+	while(r-l>1){
+		long long m = (r+l)/2;
+		if(can(m)){
+			r = m;
+		}else{
+			l = m;
+		}
+	}
+	if(can(r)){
+		return r;
+	}
+	return -1LL;
+}
+
+int main(){
+#ifdef _DEBUG
+	freopen("input.txt","r",stdin);
+	freopen("output.txt","w",stdout);
+#endif
+
+	scanf("%d",&n);
+	for(int i=0;i<n;++i){
+		scanf("%d%d",&x[i],&h[i]);
+		a[i] = x[i] - h[i];
+	}
+
+	printf("%lld\n",solve());
+
+	return 0;
+}

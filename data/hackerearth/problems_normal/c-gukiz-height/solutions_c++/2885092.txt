@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define int long long
+
+const int MX = 100007;
+#define REP(i, n) for(int i = 0; i < (n); i++)
+
+int n, h, sum, mx, whmx;
+int arr[MX];
+int prf[MX];
+
+int getGoal(int days) {
+	if(days < 0)
+		return h;
+	return h - (days*(days+1))/2;
+}
+
+int getHeight(int days) {
+	if(days < 0)
+		return 0;
+	return (days/n) * sum + (days%n != 0 ? prf[days%n-1] : 0);
+}
+
+bool ok(int day) {
+	int gg = getGoal(day);
+	int hh = getHeight(day);
+	return gg <= hh;
+}
+
+
+int findSegment(int rem) {
+	int p = -1, q = 3000LL * 1000 * 1000;
+	q /= n;
+	q = max(q, 1000LL);
+	//int p = -1, q = 10;
+	assert(ok(q*n+rem));
+	while(p+1 < q) {
+		int mid = (p+q)/2;
+		if(ok(mid*n+rem))
+			q = mid;
+		else
+			p = mid;
+	}
+	return q*n+rem;
+}
+
+int findFirstOkDay(int first_day, int timeout) {
+	while(timeout > 0 && getGoal(first_day) > getHeight(first_day)) {
+		first_day++;
+		timeout--;
+	}
+	if(timeout == 0)
+		return 3000LL * 1000 * 1000;
+	return first_day;
+}
+
+main() {
+	scanf("%lld %lld", &n, &h);
+	REP(i, n) {
+		scanf("%lld", &arr[i]);
+		sum += arr[i];
+		if(sum >= mx) {
+			mx = sum;
+			whmx = i;
+		}
+	}
+	partial_sum(arr, arr+n, prf);
+	int res = findSegment(0);
+	for(int i = 1; i < n; i++)
+		res = min(res, findSegment(i));
+	res = min(res, findFirstOkDay(0, 5*n));
+	printf("%lld\n", res);
+}

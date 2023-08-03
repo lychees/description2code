@@ -1,0 +1,137 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN = 100007;
+const int LOG = 20;
+const long long INF = 1e18;
+vector<int> g[MAXN],cost[MAXN];
+long long s[MAXN],opt[MAXN][LOG],mn[MAXN][LOG],mx[MAXN][LOG];
+int tin[MAXN],tout[MAXN],up[MAXN][LOG],timer;
+
+void dfs(int v,int parent,long long sum)
+{
+    int to;
+    s[v] = sum;
+    timer++;
+    tin[v] = timer;
+    up[v][0] = parent;
+    opt[v][0] = 0;
+    mn[v][0] = sum;
+    mx[v][0] = sum;
+    for (int i=1;i<LOG;i++)
+    {
+        up[v][i] = up[up[v][i-1]][i-1];
+        mn[v][i] = min(mn[v][i-1],mn[up[v][i-1]][i-1]);
+        mx[v][i] = max(mx[v][i-1],mx[up[v][i-1]][i-1]);
+        opt[v][i] = 0;
+        opt[v][i] = max(opt[v][i],opt[v][i-1]);
+        opt[v][i] = max(opt[v][i],opt[up[v][i-1]][i-1]);
+        opt[v][i] = max(opt[v][i],mx[v][i-1]-mn[up[v][i-1]][i-1]);
+    }
+    for (int i=0;i<g[v].size();i++)
+    {
+        to = g[v][i];
+        if (to==parent) continue;
+        dfs(to,v,sum+cost[v][i]);
+    }
+    timer++;
+    tout[v] = timer;
+}
+
+bool isAncestor(int a,int b)
+{
+    return ((tin[a]<=tin[b])&&(tout[a]>=tout[b]));
+}
+
+int LCA(int a,int b)
+{
+    if (isAncestor(a,b)) return a;
+    if (isAncestor(b,a)) return b;
+    for (int i=LOG-1;i>=0;i--)
+    {
+        if (!isAncestor(up[a][i],b)) a = up[a][i];
+    }
+    return up[a][0];
+}
+
+long long getMax(int a,int b)
+{
+    long long res;
+    res = -INF;
+    for (int i=LOG-1;i>=0;i--)
+    {
+        if (isAncestor(b,up[a][i]))
+        {
+            res = max(res,mx[a][i]);
+            a = up[a][i];
+        }
+    }
+    res = max(res,s[b]);
+    return res;
+}
+
+long long getMin(int a,int b)
+{
+    long long res;
+    res = INF;
+    for (int i=LOG-1;i>=0;i--)
+    {
+        if (isAncestor(b,up[a][i]))
+        {
+            res = min(res,mn[a][i]);
+            a = up[a][i];
+        }
+    }
+    res = min(res,s[b]);
+    return res;
+}
+
+long long getOpt(int a,int b)
+{
+    long long res;
+    res = 0;
+    for (int i=LOG-1;i>=0;i--)
+    {
+        if (isAncestor(b,up[a][i]))
+        {
+            res = max(res,opt[a][i]);
+            res = max(res,mx[a][i]-getMin(up[a][i],b));
+            a = up[a][i];
+        }
+    }
+    return res;
+}
+
+long long solve(int a,int b)
+{
+    int lc;
+    long long res;
+    if (a==b) return 0;
+    lc = LCA(a,b);
+    if (lc==a) return getOpt(b,a);
+    if (lc==b) return getOpt(a,b);
+    res = max(getOpt(a,lc),getOpt(b,lc));
+    res = max(res,getMax(a,lc)+getMax(b,lc)-2*s[lc]);
+    return res;
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    int n,q,u,v,w;
+    cin>>n>>q;
+    for (int i=0;i<n-1;i++)
+    {
+        cin>>v>>u>>w;
+        g[v].push_back(u);
+        g[u].push_back(v);
+        cost[v].push_back(w);
+        cost[u].push_back(w);
+    }
+    dfs(1,1,0);
+    for (int i=0;i<q;i++)
+    {
+        cin>>v>>u;
+        cout<<solve(v,u)<<endl;
+    }
+    return 0;
+}

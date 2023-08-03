@@ -1,0 +1,144 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAX_N = 100000;
+
+int n;
+int h[MAX_N];
+ 
+int p[MAX_N];
+int tree1[1<<18];
+int tree2[1<<18];
+
+int base;
+int m;
+
+void read() 
+{
+    scanf("%d", &n);
+    for (int i = 0; i < n; ++i)
+        scanf("%d", h+i);
+}
+
+void scaling()
+{
+    for (int i = 0; i < n; ++i)
+        p[i] = h[i];
+    sort(p, p+n);
+    m = 1;
+    for (int i = 0; i < n; ++i)
+        if (p[m-1] < p[i])
+            p[m++] = p[i];
+    for (int i = 0; i < n; ++i)
+    {
+        int le = 0;
+        int ri = m-1;
+        int el = h[i];
+        while (le < ri)
+        {
+            int mid = (le+ri+1)>>1;
+            if (p[mid] <= el)
+                le = mid;
+            else
+                ri = mid-1;
+        }
+        h[i] = le;
+    }
+}
+
+int extract_max1(int up_to)
+{
+    int right_bound = base+up_to;
+    int ans = tree1[right_bound];
+    while (right_bound > 1)
+    {
+        if ((right_bound&1) != 0)
+            ans = max(ans, tree1[right_bound-1]);
+        right_bound >>= 1;
+    }
+    return ans;
+}
+
+int extract_max2(int down_to)
+{
+    int left_bound = base+down_to;
+    int ans = tree2[left_bound];
+    while (left_bound > 1)
+    {
+        if ((left_bound&1) == 0)
+            ans = max(ans, tree2[left_bound+1]);
+        left_bound >>= 1;
+    }
+    return ans;
+}
+
+void update1(int position, int value)
+{
+    position += base;
+    if (tree1[position] < value)
+    {
+        tree1[position] = value;
+        position >>= 1;
+        while (position)
+        {
+            tree1[position] = max(tree1[position<<1], tree1[position<<1|1]);
+            position >>= 1;
+        }
+    }
+}
+
+void update2(int position, int value)
+{
+    position += base;
+    if (tree2[position] < value)
+    {
+        tree2[position] = value;
+        position >>= 1;
+        while (position)
+        {
+            tree2[position] = max(tree2[position<<1], tree2[position<<1|1]);
+            position >>= 1;
+        }
+    }
+}
+
+int ret;
+
+void add(int h)
+{
+    int v2 = extract_max1(h);
+    ret = max(v2+1, ret);
+    int v1 = extract_max2(h);
+    ret = max(v1+1, ret);
+    update2(h, v2+1);
+    update1(h, v1+1);
+}
+
+void solve() 
+{
+    scaling(); 
+    base = 1;
+    while (base < m)
+        base <<= 1;
+    for (int i = 0; i < base<<1; ++i)
+        tree1[i] = tree2[i] = 0;
+    ret = 0;
+    for (int i = 0; i < n; ++i)
+        add(h[i]);
+    printf("%d\n", ret);
+}
+
+int main()
+{
+    //freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w", stdout);
+    int nt; 
+    scanf("%d", &nt);
+    for (int it = 0; it < nt; ++it) 
+    {
+        read();
+        solve();
+    }
+    return 0;
+}

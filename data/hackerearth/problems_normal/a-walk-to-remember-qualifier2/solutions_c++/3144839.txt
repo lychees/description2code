@@ -1,0 +1,103 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+#define MOD 1000000007ULL
+#define INF 1000000000
+#define eps 1e-8
+#define ll long long
+#define F first
+#define S second
+#define pb push_back
+#define mp make_pair
+#define debug(X) cerr << " --> " << #X << " = " << X << endl
+typedef vector< vector<int> > vvi;
+typedef vector< vector<ll> > vvl;
+typedef pair<int, int> pii;
+typedef pair<long long, long long> pll;
+#define MAXV 100005
+/*Kosaraju Algorithm Taken From https://github.com/kartikkukreja/blog-codes/blob/master/src/Kosaraju-Sharir%20Algorithm%20for%20SCC.cpp*/
+
+typedef vector <int> vi;
+
+// Assuming vertices are labeled 0...V-1
+vi G[MAXV], Grev[MAXV];
+bool explored[MAXV];
+int leader[MAXV], finish[MAXV], order[MAXV], t = -1, parent = 0, V, E;
+int countCC;
+
+// running DFS on the reverse graph
+void dfs_reverse(int i) {
+    explored[i] = true;
+    for(vi::iterator it = Grev[i].begin(); it != Grev[i].end(); it++)
+        if(!explored[*it])
+            dfs_reverse(*it);
+    t++;
+    finish[i] = t;
+}
+
+// running DFS on the actual graph
+void dfs(int i) {
+    explored[i] = true;
+    leader[i] = parent;
+    for(vi::iterator it = G[i].begin(); it != G[i].end(); it++)
+        if(!explored[*it])
+            dfs(*it);
+}
+
+// check if u & v are in the same connected component
+bool stronglyConnected(int u, int v)    {
+    return leader[u] == leader[v];
+}
+/*SCC ENDS*/
+int counter[100005];
+bool ans[100005];
+
+int main()
+{
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+	int V,E,n,m;
+	cin >> V >> E;
+	n=V;m=E;
+	
+	int u,v;
+	for(int i = 0;i < m;i++)
+	{
+		cin >> u >> v;
+		G[u].pb(v);
+		Grev[v].pb(u);
+	}
+	
+	memset(explored, false, sizeof explored);
+    for(int i=1; i<=V; i++)  {
+        if(!explored[i])
+            dfs_reverse(i);
+        order[finish[i]] = i;
+    }
+
+    // run dfs on the actual graph in reverse postorder
+    memset(explored, false, sizeof explored);
+    countCC = 0;
+    for(int i=V; i>0; i--)
+        if(!explored[order[i]]) {
+            parent = order[i];
+            dfs(order[i]);
+            countCC++;
+        }
+			
+	for(int i = 1;i <= n;i++)
+		counter[leader[i]]++;
+		
+	for(int i = 1;i <= n;i++)
+	{
+		if(counter[leader[i]] > 1)
+			ans[i] = true;
+	}
+	
+	cout << ans[1];
+	for(int i = 2;i<=n;i++)
+		cout << " " << ans[i];
+	cout << endl;
+
+	return 0;
+}

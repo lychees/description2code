@@ -1,0 +1,164 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+
+//   too long  :(    segment rocks 
+
+
+
+ll ar[500001];
+ll mark[2000001];
+ll seg[2000001][2];
+ll lazy[2000001];
+vector< pair < ll , ll > > q;
+vector< ll > v;
+map< ll , ll > my;
+vector< ll > v1[500001] , v2[500001];
+ll Count(ll node,ll i,ll j,ll l,ll r){
+  if( i > j || r < i || l > j )
+   return 0;
+   if( i >= l && j <= r)
+   return mark[node];
+   return Count(2*node,i,(i+j)/2,l,r) + Count(2*node+1,(i+j)/2+1,j,l,r);
+}
+void update_Count(ll node,ll i,ll j,ll idx,ll value){
+  if( i > j || idx > j || idx < i )
+   return;
+   if( i == j )
+   mark[node] += value;
+   else{
+    update_Count(2*node,i,(i+j)/2,idx,value);
+    update_Count(2*node+1,(i+j)/2+1,j,idx,value);
+     mark[node] = mark[2*node] + mark[2*node+1];
+   }
+}
+void set_zero(ll node,ll i,ll j,ll idx){
+    if(lazy[node]){
+    seg[node][1] = seg[node][1] + seg[node][0] * lazy[node];
+      if( i != j ){
+       lazy[2*node] += lazy[node];
+       lazy[2*node+1] += lazy[node];
+      }
+      lazy[node] = 0;
+    }
+  if( i > j || idx > j || idx < i )
+   return;
+   if( i == j){
+   seg[node][0] = 0;
+   seg[node][1] = 0;
+   }
+   else {
+    set_zero(2*node,i,(i+j)/2,idx);
+    set_zero(2*node+1,(i+j)/2+1,j,idx);
+    seg[node][0] = seg[2*node][0] + seg[2*node+1][0];
+    seg[node][1] = seg[2*node][1] + seg[2*node+1][1];
+   }
+}
+void point_update(ll node,ll i,ll j,ll idx,ll times , ll value){
+  if( lazy[node] ){
+        seg[node][1] = seg[node][1] + seg[node][0]*lazy[node];
+        if( i != j ){
+          lazy[2*node] += lazy[node];
+          lazy[2*node+1] += lazy[node];
+        }
+        lazy[node] = 0;
+     }
+  if( i > j || idx > j || idx < i )
+   return;
+   if( i == j ){
+   seg[node][1] += times * value;
+   seg[node][0] += value;
+   }
+   else {
+   point_update(2*node,i,(i+j)/2,idx,times,value);
+   point_update(2*node+1,(i+j)/2+1,j,idx,times,value);
+    seg[node][0] = seg[2*node][0] + seg[2*node+1][0];
+    seg[node][1] = seg[2*node][1] + seg[2*node+1][1];
+   }
+}
+void range_update(ll node, ll i , ll j , ll l , ll r , ll value ){
+     if( lazy[node] ){
+        seg[node][1] = seg[node][1] + seg[node][0]*lazy[node];
+        if( i != j ){
+          lazy[2*node] += lazy[node];
+          lazy[2*node+1] += lazy[node];
+        }
+        lazy[node] = 0;
+     }
+     if( i  > j || r < i || l > j )
+        return;
+     if( i >= l &&  j <= r ){
+       seg[node][1] = seg[node][1] + value * seg[node][0];
+        if( i != j  &&  seg[node][0] ){
+         lazy[2*node] += value;
+         lazy[2*node+1] += value;
+        }
+        return;
+     }
+       range_update(2*node,i,(i+j)/2,l,r,value);
+       range_update(2*node+1,(i+j)/2+1,j,l,r,value);
+         seg[node][0] = seg[2*node][0] + seg[2*node+1][0];
+         seg[node][1] = seg[2*node][1] + seg[2*node+1][1];
+}
+int main(){
+    cin.sync_with_stdio(false);
+   ll n , Q;
+   cin >> n >> Q;
+     for( int i = 1 ; i <= Q ; ++i ){
+      ll id , val;
+      cin >> id >> val;
+         q.push_back(make_pair(id,val));
+         ar[id] += val;
+         v.push_back(ar[id]);
+     }
+       sort( v.begin() , v.end() , greater< ll >());
+         for( int i = 1 ; i <= v.size() ; ++i ){
+             ll value = v[i - 1];
+              if( !my[value ] )
+                 my[value] = i;
+                if(! v1[ my[value] ].size() )
+                    v1[ my[value] ].push_back(1);
+                    v1[ my[value] ].push_back(i);
+                if(! v2[ my[value] ].size() )
+                    v2[ my[value] ].push_back(1);
+                    v2[ my[value] ].push_back(i);
+         }
+
+         for( int i = 0 ; i <= n ; ++i )
+            ar[ i ] = 0;
+
+          for( int i = 1 ; i <= Q ; ++i ){
+              ll id =  q[i - 1].first;
+              ll val = q[i - 1].second;
+              ll pre = ar[ id ];
+              ar[ id ] += val;
+              ll curr = ar[ id ];
+                if( pre ){
+                   ll idx = my[ pre ];
+                   idx = v1[idx][v1[idx][0]++];
+                     update_Count(1,1,Q,idx,-1);
+                     set_zero(1,1,Q,idx);
+                     ll sz = v1[my[pre]].size()-1;
+                     ll next = v1[my[pre]][sz] + 1;
+                     if(next <= Q)
+                     range_update(1,1,Q,next,Q,-1);
+                }
+              ll idx = my[curr];
+             idx = v2[idx][v2[idx][0]++];
+              ll ct = 1;
+              ll left = v2[my[curr]][1] - 1;
+              if( left >= 1 )
+              ct = Count(1,1,Q,1,left)+1;
+              point_update(1,1,Q,idx,ct,curr);
+              update_Count(1,1,Q,idx,1);
+              ll sz = v2[my[curr]].size() - 1;
+              ll next = v2[my[curr]][sz] + 1;
+               if(next <= Q)
+               range_update(1,1,Q,next,Q,1);
+               cout << seg[1][1] << endl;
+          }
+
+
+
+}

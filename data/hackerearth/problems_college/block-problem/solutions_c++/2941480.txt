@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int RANGE = 1001;
+int MOD = 1000000007;
+
+vector<ll> optRow(RANGE);
+vector<ll> optBlock(RANGE);
+vector<ll> optFinal(RANGE);
+
+ll mypow(ll a, ll b){
+    ll x = 1, y = a;
+    while(b > 0){
+        if(b % 2 == 1){
+            x *= y;
+            if(x >= MOD)
+                x %= MOD;
+        }
+        y *= y;
+        if(y >= MOD)
+            y %= MOD;
+        b /= 2;
+    }
+    return x;
+}
+
+void computerRow(){
+    optRow[0] = 1;  // This value is not used anywhere
+    optRow[1] = 1;
+    optRow[2] = 2;
+    optRow[3] = 4;
+    optRow[4] = 8;
+    
+    for(int i=5; i<RANGE; i++){
+        optRow[i] = optRow[i-1] + optRow[i-2] + optRow[i-3] + optRow[i-4];
+        if(optRow[i] >= MOD)
+            optRow[i] %= MOD;
+    }
+}
+
+void computeBlock(ll H){
+    optBlock[0] = 1;
+    
+    for(int i=1; i<RANGE; i++)
+        optBlock[i] = mypow(optRow[i], H);
+}
+
+void computeFinal(ll W){
+    optFinal[0] = 1;    //  This value is not used anywhere
+    
+    for(int i=1; i<=W; i++){
+        optFinal[i] = optBlock[i];
+        for(int j=1; j<i; j++){
+            ll temp = optFinal[j];
+            temp *= optBlock[i-j];
+            if(temp >= MOD)
+                temp %= MOD;
+            temp = (MOD - temp) % MOD;
+            optFinal[i] = (optFinal[i] + temp) % MOD;
+        }
+    }
+}
+
+int main(){
+
+    int T;
+    ll H, W;
+    
+    scanf("%d", &T);
+    computerRow();
+    
+    while(T--){
+        scanf("%lld %lld", &H, &W);
+        computeBlock(H);
+        computeFinal(W);
+        printf("%lld\n", optFinal[W]);
+    }
+    
+    return 0;
+}

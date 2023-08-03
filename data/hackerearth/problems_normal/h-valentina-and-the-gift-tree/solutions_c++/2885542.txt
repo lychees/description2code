@@ -1,0 +1,102 @@
+#include <algorithm>
+#include <cassert>
+#include <cstring>
+#include <iostream>
+
+using namespace std;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define REP(i, n) FOR(i, 0, n)
+#define TRACE(x) cout << #x << " = " << x << endl
+#define _ << " _ " <<
+
+typedef long long llint;
+
+struct data {
+  llint l, r, s, m;
+};
+
+data operator+(const data& a, const data& b) {
+  return {max(a.l, a.s + b.l), max(b.r, a.r + b.s), a.s + b.s, max(a.m, max(b.m, a.r + b.l))};
+}
+
+const int MAX = 100100;
+const int LG = 20;
+const llint inf = 1e18;
+
+data hu[MAX][LG];
+data hd[MAX][LG];
+int L[MAX][LG];
+int dad[MAX], dep[MAX];
+int g[MAX];
+
+vector<int> E[MAX];
+
+void dfs(int x, int d) {
+  dad[x] = d;
+  for (int y: E[x]) {
+    if (d == y) continue;
+
+    dep[y] = dep[x] + 1;
+    dfs(y, x);
+  }
+}
+
+int lca(int u, int v) {
+  if (dep[u] < dep[v]) swap(u, v);
+  for (int j = LG-1; j >= 0; --j)
+    if (dep[u] - (1<<j) >= dep[v]) u = L[u][j];
+  if (u == v) return u;
+  for (int j = LG-1; j >= 0; --j)
+    if (L[u][j] != L[v][j]) u = L[u][j], v = L[v][j];
+  return L[u][0];
+}
+
+int main(void) {
+  int n;
+  scanf("%d", &n);
+  REP(i, n-1) {
+    int a, b;
+    scanf("%d %d", &a, &b); --a, --b;
+    E[a].push_back(b);
+    E[b].push_back(a);
+  }
+  REP(i, n) scanf("%d", &g[i]);
+
+  dfs(0, 0);
+
+  REP(i, n) hu[i][0] = hd[i][0] = {g[i], g[i], g[i], g[i]}, L[i][0] = dad[i];
+  
+  FOR(j, 1, LG) REP(i, n) {
+    L[i][j] = L[ L[i][j-1] ][j - 1];
+    hu[i][j] = hu[i][j-1] + hu[ L[i][j-1] ][j-1];
+    hd[i][j] = hd[ L[i][j-1] ][j-1] + hd[i][j-1];
+  }
+
+  int q;
+  scanf("%d", &q);
+  while (q--) {
+    int a, b;
+    scanf("%d %d", &a, &b); --a, --b;
+    
+    int l = lca(a, b);
+    data cura = {0, 0, 0, -inf};
+    for (int j = LG-1; j >= 0; --j)
+      if (dep[a] - (1<<j) >= dep[l]) {
+        cura = cura + hu[a][j];
+        a = L[a][j];
+      }
+    
+    data curb = {0, 0, 0, -inf};
+    for (int j = LG-1; j >= 0; --j)
+      if (dep[b] - (1<<j) >= dep[l]) {
+        curb = hd[b][j] + curb;
+        b = L[b][j];
+      }
+
+    cura = cura + hu[l][0];
+    cura = cura + curb;
+    printf("%lld\n", cura.m);
+  }
+  return 0;
+}

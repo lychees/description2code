@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+using namespace std;
+long long mod;
+long long mat[2][2], mati[2][2];
+int a[200010];
+void mul(long long a[][2], long long b[][2], long long c[][2]) {
+	for (int i = 0; i < 2; i++) for (int j = 0; j < 2; j++) c[i][j] = 0;
+	for (int i = 0; i < 2; i++) for (int j = 0; j < 2; j++) for (int k = 0; k < 2; k++) {
+		c[i][j] += a[i][k] * b[k][j];
+		c[i][j] %= mod;
+	}
+}
+void add(long long a[][2], long long b[][2], long long c[][2]) {
+	for (int i = 0; i < 2; i++) for (int j = 0; j < 2; j++) c[i][j] = a[i][j] + b[i][j], c[i][j] %= mod;
+}
+void power(long long p, long long a[][2]) {
+	if(p == 0) {
+		for (int i = 0; i < 2; i++) for (int j = 0; j < 2; j++) {
+			if(i == j) a[i][j] = 1;
+			else a[i][j] = 0;
+		}
+		return;
+	}
+	long long b[2][2];
+	power(p / 2, b);
+	if(p % 2 == 0) mul(b, b, a);
+	else {
+		long long c[2][2];
+		mul(b, b, c);
+		mul(c, mat, a);
+	}
+}
+const int N = 2e5 + 10;
+class node{
+public:
+	long long val[2][2];
+}tree[4 * N];
+int pos[N];
+node merge(node l, node r){
+	node ret;
+	add(l.val, r.val, ret.val);
+	return ret;
+}
+void build(int root, int start, int end){
+	if(start == end){
+		pos[start] = root;
+		power(start, tree[root].val);
+		for (int i = 0; i < 2; i++) for (int j = 0; j < 2; j++) tree[root].val[i][j] *= a[start], tree[root].val[i][j] %= mod;
+		return;
+	}
+	int mid = (start + end) >> 1;
+	build(2 * root, start, mid);
+	build(2 * root + 1, mid + 1, end);
+	tree[root] = merge(tree[2 * root], tree[2 * root + 1]);
+}
+node query(int root, int i, int j, int start, int end){
+	if(i <= start && j >= end) return tree[root];
+	int mid = (start + end) >> 1;
+	if(j <= mid) return query(2 * root, i, j, start, mid);
+	else if(i > mid) return query(2 * root + 1, i, j, mid + 1, end);
+	else return merge(query(2 * root, i, j, start, mid), query(2 * root + 1, i, j, mid + 1, end));
+}
+void update(int ad, int x){
+	int root = pos[ad];
+	power(ad, tree[root].val);
+	for (int i = 0; i < 2; i++) for (int j = 0; j < 2; j++) tree[root].val[i][j] *= x, tree[root].val[i][j] %= mod;
+	root >>= 1;
+	while(root > 0){
+		tree[root] = merge(tree[2 * root], tree[2 * root + 1]);
+		root >>= 1;
+	}
+}
+void assign(long long a[][2], long long b[][2]) {
+	for (int i = 0; i < 2; i++) for (int j = 0; j < 2; j++) a[i][j] = b[i][j];
+}
+int main(){
+	mat[0][0] = mat[0][1] = mat[1][0] = 1;
+	mat[1][1] = 0;
+	int n, q;
+	cin>>n>>q>>mod;
+	for (int i = 1; i <= n; i++) scanf("%d", a + i);
+	build(1, 1, n);
+	int qt;
+	int x, y;
+	long long tmp1[2][2], tmp2[2][2], tmp3[2][2];
+	for (int i = 0; i < q; i++) {
+		 scanf("%d %d %d", &qt, &x, &y);
+		 if(qt == 2) {
+		 	assign(tmp1, query(1, x, y, 1, n).val);
+		 	power(x, tmp2);
+		 	swap(tmp2[0][0], tmp2[1][1]);
+		 	if(x % 2 == 1) tmp2[0][0] *= -1, tmp2[1][1] *= -1;
+		 	else tmp2[0][1] *= -1, tmp2[1][0] *= -1;
+		 	mul(tmp1, tmp2, tmp3);
+		 	printf("%lld\n", ((tmp3[0][0] % mod ) + mod)%mod);
+		 }
+		 else update(x, y);	 
+	} 
+}

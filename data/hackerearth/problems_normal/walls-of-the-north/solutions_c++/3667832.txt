@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+ll int a[100010];
+ll int tree1[400040],tree2[400040];
+pair<ll int,ll int> p[100010];
+void build_tree(ll int *tree,ll int node,ll int low, ll int high);
+void update_tree(ll int * tree,ll int node,ll int x,ll int y,ll int low,ll int high,ll int val);
+ll int query_tree(ll int *tree,ll int node,ll int x,ll int y,ll int low,ll int high);
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	ll int test;
+	cin>>test;
+	while(test--)
+	{
+		ll int n;
+		cin>>n;
+		ll int i,t,t1,t2,ans;
+		for(i=0;i<4*n;i++)
+		{
+			//~ lazy[i]=0;
+			tree1[i]=0;
+			tree2[i]=0;
+		}
+		for(i=0;i<n;i++)
+		{
+			cin>>p[i].first;
+			p[i].second=i;
+		}
+		sort(p,p+n);
+		for(i=0;i<n;i++)
+		{
+			if(i==0)
+			{
+				t=0;
+				a[p[i].second]=t;
+			}
+			else
+			{
+				if(p[i].first>p[i-1].first)
+				t++;
+				a[p[i].second]=t;
+			}
+		}
+		for(i=0;i<n;i++)
+		{
+			t1=query_tree(tree2,0,0,a[i],0,n-1);
+			t2=query_tree(tree1,0,a[i],n-1,0,n-1);
+			update_tree(tree1,0,a[i],a[i],0,n-1,t1+1);
+			update_tree(tree2,0,a[i],a[i],0,n-1,t2+1);
+		}
+		t1=query_tree(tree2,0,0,n-1,0,n-1);
+		t2=query_tree(tree1,0,0,n-1,0,n-1);
+		ans=max(t1,t2);
+		cout<<ans<<endl;
+	}
+	return 0;
+}
+void update_tree(ll int *tree,ll int node,ll int x,ll int y,ll int low,ll int high,ll int val)//update tree in the range x-y with value val
+{
+	if(x>y||y<low||x>high)
+	return;
+	if(low==high)
+	{
+		tree[node]=val;
+	}
+	else
+	{
+		ll int mid;
+		mid=((high-low)>>1)+low;
+		update_tree(tree,node*2 +1,x,y,low,mid,val);
+		update_tree(tree,node*2 +2,x,y,mid+1,high,val);
+		tree[node]=max(tree[node*2 +1],tree[node*2 +2]);
+	}
+}  
+ll int query_tree(ll int *tree,ll int node,ll int x,ll int y,ll int low,ll int high)// query tree in the range x-y
+{
+	if(x>y||y<low||x>high)
+	return INT_MIN;
+	else if(low>=x && high<=y)//Complete overlap
+	{
+		return tree[node];
+	}
+	else
+	{
+		ll int mid;
+		mid=((high-low)>>1)+low;
+		ll int t1=query_tree(tree,node*2+1,x,y,low,mid);
+		ll int t2=query_tree(tree,node*2+2,x,y,mid+1,high);
+		return max(t1,t2);
+	}
+}

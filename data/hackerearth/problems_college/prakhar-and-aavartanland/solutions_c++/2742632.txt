@@ -1,0 +1,130 @@
+#include<bits/stdc++.h>
+using namespace std;
+namespace test{
+	void end_test(){
+		int val;
+		if (cin >> val){
+			exit(1);
+		}
+	}
+	void range_test(int t, int l, int r){
+		if (t < l || r < t){
+			exit(1);
+		}
+	}
+}
+struct st{
+	int countt;
+	int countt1;
+	int rev;
+	st(){
+		countt = countt1 = 0;
+		rev = 0;
+	}
+};
+#define MAX 200000
+st seg[MAX * 4];
+void update(int b){
+	seg[b].rev %= 2;
+	if (seg[b].rev){
+		swap(seg[b].countt, seg[b].countt1);
+	}
+	if (b * 2 + 2 < MAX * 4){
+		seg[b * 2 + 1].rev += seg[b].rev;
+		seg[b * 2 + 2].rev += seg[b].rev;
+	}
+	seg[b].rev = 0;
+}
+st merge(st a, st b){
+	st r;
+	r.countt = a.countt + b.countt;
+	r.countt1 = a.countt1 + b.countt1;
+	return r;
+}
+st emp;
+inline st q(int  b, int l, int r, int ll, int rr){
+	update(b);
+	if (ll <= l&&r <= rr){
+		return seg[b];
+	}
+	if (r <= ll || rr <= l){
+		return emp;
+	}
+	return merge(q(b * 2 + 1, l, (l + r) >> 1, ll, rr), q(b * 2 + 2, (l + r) >> 1, r, ll, rr));
+}
+inline void add(int b, int l, int r, int ll, int rr){
+	update(b);
+	if (ll <= l&&r <= rr){
+		seg[b].rev++;
+		update(b);
+		return;
+	}
+	if (rr <= l || r <= ll){
+		return;
+	}
+	add(b * 2 + 1, l, (l + r) >> 1, ll, rr);
+	add(b * 2 + 2, (l + r) >> 1, r, ll, rr);
+	seg[b] = merge(seg[b * 2 + 1], seg[b * 2 + 2]);
+}
+char a[MAX];
+inline void init(int b, int l, int r){
+	if (l + 1 == r){
+		if (a[l] == '<'){
+			seg[b].countt++;
+		}
+		else{
+			seg[b].countt1++;
+		}
+		return;
+	}
+	init(b * 2 + 1, l, (l + r) >> 1);
+	init(b * 2 + 2, (l + r) >> 1, r);
+	seg[b] = merge(seg[b * 2 + 1], seg[b * 2 + 2]);
+}
+int main(){
+	int n;
+	int m;
+	scanf("%d%d", &n, &m);
+	test::range_test(n, 2, 200000);
+	test::range_test(m, 1, 200000);
+	scanf("%s", a);
+	init(0, 0, n - 1);
+	long long int T=0;
+	while (m--){
+		int ty;
+		scanf("%d", &ty);
+		test::range_test(ty, 1, 2);
+		if (ty == 1){
+			int l, r;
+			scanf("%d%d", &l, &r);
+			test::range_test(l, 1, n);
+			test::range_test(r, 1, n);
+			l--;
+			r--;
+			add(0, 0, n - 1, l, r);
+			continue;
+		}
+		int f, t;
+		scanf("%d%d", &f, &t);
+		T+=(long long int)(abs(f-t));
+		test::range_test(1, 1, n);
+		test::range_test(1, 1, n);
+		f--;
+		t--;
+		if (f == t){
+			puts("0");
+			continue;
+		}
+		int l = min(f, t);
+		int r = max(f, t);
+		st ans = q(0, 0, n - 1, l, r);
+		if (f > t){
+			printf("%d\n", ans.countt1);
+		}
+		else{
+			printf("%d\n", ans.countt);
+		}
+	}
+	test::end_test();
+	return 0;
+}

@@ -1,0 +1,121 @@
+#include <stdio.h>
+#include <iostream>
+
+using namespace std;
+int p[100005];
+void fastpow()
+{
+    p[0]=1;
+    for(int i=1;i<=100000;++i)
+        p[i]=(p[i-1]*2)%3;
+}
+int seg[1000001];
+void segment_tree(char a[],int low,int high,int pos)
+{
+	if(low==high)
+	{
+		seg[pos]=a[low]-48;
+		return;
+	}
+	int mid=(low+high)/2;
+	segment_tree(a,low,mid,2*pos+1);
+	segment_tree(a,mid+1,high,2*pos+2);
+	seg[pos]=(seg[2*pos+1]*p[high-mid]+seg[pos*2+2])%3;
+/*	int temp=high-mid;
+	seg[pos]=seg[2*pos+1];
+	while(temp!=0)
+	{
+		seg[pos]*=2;
+		seg[pos]%=3;
+		temp--;
+	}
+	seg[pos]+=seg[2*pos+2];
+	seg[pos]%=3;
+	*/
+}
+int query(int low,int high,int l,int r,int pos)
+{
+	if(l>high||r<low)
+		return -1;
+	if(l<=low&&r>=high)
+	{
+	//	shf+=high-low;
+		return seg[pos]*p[r-high];
+	}
+	int v1,v2,mid,m;
+	mid=(low+high)/2;
+	v1=query(low,mid,l,r,2*pos+1);
+	v2=query(mid+1,high,l,r,2*pos+2);
+	if(v1==-1)
+		m=v2;
+	else  if(v2==-1)
+		m=v1;
+	else
+		m=(v1+v2)%3;
+		//cout<<m<<" ";
+/*	{
+		int temp=r-mid;
+		m=v1;
+		while(temp!=0)
+		{
+			m*=2;
+			m%=3;
+			temp--;
+		}
+		m+=v2;
+		m%=3;
+	}*/
+	return m;
+}
+void update(int ind,int low,int high,int pos)
+{
+	if(low==high&&low==ind)
+	{
+		seg[pos]=1;
+		return;
+	}
+	int mid=(low+high)/2;
+	if(ind<=mid)
+		update(ind,low,mid,2*pos+1);
+	else
+		update(ind,mid+1,high,2*pos+2);
+	seg[pos]=(seg[2*pos+1]*p[high-mid]+seg[pos*2+2])%3;
+/*	int temp=high-mid;
+	seg[pos]=seg[2*pos+1];
+	while(temp!=0)
+	{
+		seg[pos]*=2;
+		seg[pos]%=3;
+		temp--;
+	}
+	seg[pos]+=seg[2*pos+2];
+	seg[pos]%=3;
+*/
+}
+
+int main() 
+{
+	int n,i,l,r,q,ans,t;
+	char a[100005];
+	fastpow();
+	scanf("%d%s",&n,a);
+	segment_tree(a,0,n-1,0);
+	scanf("%d",&q);
+	while(q--)
+	{
+		scanf("%d",&t);
+		if(t==0)
+		{
+			scanf("%d%d",&l,&r);
+			ans=query(0,n-1,l,r,0)%3;
+			printf("%d\n",ans);
+		}
+		else
+		{
+			scanf("%d",&l);
+			if(a[l]=='0')
+				update(l,0,n-1,0);
+		}
+	}
+	return 0;
+}

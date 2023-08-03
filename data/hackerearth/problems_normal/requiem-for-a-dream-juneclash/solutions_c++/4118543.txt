@@ -1,0 +1,193 @@
+#include <bits/stdc++.h>
+using namespace std;
+struct pnt{
+  long long x, v;
+};
+bool operator <(pnt x,  pnt y){
+  return x.v>y.v;
+}
+long long num_nodes[100010]={0};
+vector <long long> a[100010];
+map <long long, long long> mp[100010];
+long long pre_dfs(long long x, long long par){
+  long long cnt=1;
+  for(long long i=0; i<a[x].size(); ++i){
+    if(a[x][i]==par)
+      continue;
+    cnt+=pre_dfs(a[x][i], x);
+  }
+  num_nodes[x]=cnt;
+  return cnt;
+}
+long long euler_tour[100010], count_on_tree_array=0;
+long long par[100010][20], depth[100010];
+long long dfs(long long x, long long papa, long long dep){
+  par[x][0]=papa;
+  depth[x]=dep;
+  euler_tour[count_on_tree_array]=x;
+  ++count_on_tree_array;
+  vector <pnt> v;
+  pnt tmp;
+  for(long long i=0; i<a[x].size(); ++i){
+    tmp.x=i;
+    tmp.v=num_nodes[a[x][i]];
+    v.push_back(tmp);
+  }
+  sort(v.begin(), v.end());
+  for(long long i=0; i<v.size(); ++i){
+    long long nxt=a[x][v[i].x];
+    if(nxt==papa)
+      continue;
+    dfs(nxt, x, dep+1);
+  }
+}
+long long what_tree_this_nod[100010], what_the_start_of_this_tree[100010], what_the_end_of_this_tree[100010];
+vector <long long> trees_vectors[100010];
+struct tree_node{
+  long long prfx, sufx, mx, sum;
+  tree_node(){
+    prfx=sufx=mx=sum=0;
+  }
+  tree_node(long long x, long long y, long long z, long long c){
+    prfx=x;
+    sufx=y;
+    mx=z;
+    sum=c;
+  }
+} * seg_trees[100010];
+tree_node make_tree_node(long long x, long long y, long long z, long long c){
+  tree_node tmp(x,y,z,c);
+  return tmp;
+}
+tree_node merg(tree_node x, tree_node y){
+  return make_tree_node(max(x.prfx, x.sum+y.prfx),max(y.sufx, y.sum+x.sufx),max(max(x.mx, y.mx), x.sufx+y.prfx) ,x.sum+y.sum);
+}
+long long lft, rgt, current_tree;
+void init(long long x, long long st, long long nd){
+  if(st==nd){
+    seg_trees[current_tree][x] = make_tree_node(max(0ll,trees_vectors[current_tree][st]),max(0ll,trees_vectors[current_tree][st]),max(0ll,trees_vectors[current_tree][st]), trees_vectors[current_tree][st]);
+    return;
+  }
+  long long mid=(st+nd)/2;
+  init(x*2, st, mid);
+  init(x*2+1, mid+1, nd);
+  seg_trees[current_tree][x]=merg(seg_trees[current_tree][x*2] , seg_trees[current_tree][x*2+1]);
+}
+tree_node qry(long long x, long long st, long long nd){
+  if(lft>nd||rgt<st||lft>rgt)
+    return make_tree_node(0,0,0,0);
+  if(st>=lft&&nd<=rgt){
+    return seg_trees[current_tree][x];
+  }
+  long long mid=(st+nd)/2;
+  return merg(qry(x*2, st, mid), qry(x*2+1, mid+1, nd));
+}
+long long what_order_of_this_node[100010], num_trees;
+void pre_making_SegTrees(){
+  num_trees=0;
+  bool l=1;
+  long long cnt=0;
+  for(long long i=0; i<count_on_tree_array; ++i){
+    ++cnt;
+    if(l){
+      what_the_start_of_this_tree[num_trees]=euler_tour[i];
+      l=0;
+      cnt=0;
+    }
+    trees_vectors[num_trees].push_back(mp[euler_tour[i]][par[euler_tour[i]][0]]);
+    what_tree_this_nod[euler_tour[i]]=num_trees;
+    what_order_of_this_node[euler_tour[i]]=cnt;
+    if((long long)(a[euler_tour[i]].size())==1){
+      what_the_end_of_this_tree[num_trees]=euler_tour[i];
+      l=1;
+      ++num_trees;
+    }
+  }
+  for(long long i=0; i<num_trees; ++i){
+    seg_trees[i]=new tree_node [10*(long long)(trees_vectors[i].size())];
+  }
+}
+long long n;
+void pre_LCA(){
+  for(long long i=1; i<=17; ++i){
+    for(long long j=1; j<=n; ++j){
+      par[j][i]=par[par[j][i-1]][i-1];
+    }
+  }
+}
+long long ancestor;
+void LCA(long long x, long long y){
+  if(depth[x]>depth[y]){
+    long long tmp=depth[x]-depth[y];
+    for(long long i=0; i<=17; ++i){
+      if((1ll<<i)&tmp)
+        x=par[x][i];
+    }
+  }
+  else{
+    long long tmp=depth[y]-depth[x];
+    for(long long i=0; i<=17; ++i){
+      if((1ll<<i)&tmp)
+        y=par[y][i];
+    }
+  }
+  if(x==y){
+    ancestor=x;
+  }
+  else{
+    for(long long i=17; i>=0; --i){
+      if(par[x][i]!=par[y][i]){
+        x=par[x][i];
+        y=par[y][i];
+      }
+    }
+    ancestor=par[x][0];
+  }
+}
+tree_node get_max_node(long long x, long long y){
+  if(what_tree_this_nod[x]==what_tree_this_nod[y]){
+    current_tree=what_tree_this_nod[x];
+    lft=what_order_of_this_node[x];
+    rgt=what_order_of_this_node[y];
+    if(x==ancestor){
+      ++lft;
+    }
+    return qry(1, 0, (long long)(trees_vectors[current_tree].size())-1);
+  }
+  tree_node tmp1=get_max_node(what_the_start_of_this_tree[what_tree_this_nod[y]], y);
+  tree_node tmp2=get_max_node(x, par[what_the_start_of_this_tree[what_tree_this_nod[y]]][0]);
+  return merg(tmp2, tmp1);
+}
+int main(){
+  long long q, x, y, z;
+  cin>>n>>q;
+  for(long long i=0; i<n-1; ++i){
+    scanf("%lld%lld%lld",&x,&y,&z);
+    a[x].push_back(y);
+    a[y].push_back(x);
+    mp[x][y]=z;
+    mp[y][x]=z;
+  }
+  mp[1][1]=0;
+  pre_dfs(1,1);
+  dfs(1,1,0);
+  pre_LCA();
+  pre_making_SegTrees();
+  for(long long i=0; i<num_trees; ++i){
+    current_tree=i;
+    init(1, 0, (long long)(trees_vectors[current_tree].size())-1);
+    for(long long j=0; j<trees_vectors[current_tree].size(); ++j){
+    }
+  }
+  tree_node tmp1, tmp2;
+  for(long long i=0; i<q; ++i){
+    scanf("%lld%lld",&x,&y);
+    LCA(x,y);
+    tmp1=get_max_node(ancestor, x);
+    tmp2=get_max_node(ancestor, y);
+    swap(tmp2.prfx, tmp2.sufx);
+    tmp1=merg(tmp2, tmp1);
+    cout<<tmp1.mx<<endl;
+  }
+  return 0;
+}

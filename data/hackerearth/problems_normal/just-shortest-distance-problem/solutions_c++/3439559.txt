@@ -1,0 +1,107 @@
+#include <functional>
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <cstdio>
+#include <bitset>
+#include <vector>
+#include <ctime>
+#include <queue>
+#include <set>
+#include <map>
+using namespace std;
+#define forn(i, n) for (int i = 0; i < (int)(n); ++i)
+#define fore(i, b, e) for (int i = (int)(b); i <= (int)(e); ++i)
+#define ford(i, n) for (int i = (int)(n) - 1; i >= 0; --i)
+#define mp make_pair
+#define pb push_back
+#define fi first
+#define se second
+#define all(x) (x).begin(), (x).end()
+typedef vector<int> vi;
+typedef pair<int, int> pii;
+typedef long long i64;
+typedef unsigned long long u64;
+const int inf = 1e9+100500;
+
+const int maxn = 1050;
+
+typedef bitset<maxn> B;
+
+int n;
+int d[maxn];
+B e[maxn];
+B used;
+int q[maxn];
+
+void bfs(int v) {
+    used.reset();
+    used.set(v);
+    int lq = 0, rq = 0;
+    q[rq++] = v;
+
+    while (lq != rq) {
+        int v = q[lq++];
+        const unsigned* pw = reinterpret_cast<const unsigned*>(&e[v]);
+        unsigned* pu = reinterpret_cast<unsigned*>(&used);
+        forn(i, n/32+1) {
+            if ((*pw & *pu) != *pw) {
+                unsigned diff = *pw & ~*pu;
+                while (diff) {
+                    int to = i * 32 + __builtin_ctz(diff);
+//                     cerr << "to = " << to << endl;
+                    if (d[to] > d[v] + 1) {
+                        d[to] = d[v] + 1;
+                        q[rq++] = to;
+                    }
+                    diff &= diff - 1;
+                }
+                *pu |= *pw;
+            }
+            ++pu; ++pw;
+        }
+    }
+}
+
+void addEdge(int s, int t) {
+    e[s].set(t);
+    if (d[s] != inf && d[t] > d[s] + 1) {
+        d[t] = d[s] + 1;
+        bfs(t);
+    }
+}
+
+int main() {
+#ifdef HOME
+    freopen("input.txt", "r", stdin);
+#endif
+
+    int q;
+    scanf("%d%d", &n, &q);
+    forn(i, n) {
+        d[i] = inf;
+    }
+    d[0] = 0;
+    forn(i, q) {
+        int t;
+        scanf("%d", &t);
+        if (t == 1) {
+            int x;
+            scanf("%d", &x);
+            printf("%d\n", d[x-1] == inf ? -1 : d[x-1]);
+        } else {
+            int x, y;
+            scanf("%d%d", &x, &y);
+            addEdge(x-1, y-1);
+        }
+    }
+
+#ifdef HOME
+    cerr << "Time elapsed: " << clock() / 1000 << " ms" << endl;
+#endif
+    return 0;
+}

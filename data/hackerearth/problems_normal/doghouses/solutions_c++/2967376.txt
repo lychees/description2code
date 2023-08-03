@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+
+#define pb push_back
+#define pp pop_back
+#define f first
+#define s second
+#define mp make_pair
+#define sz(a) int((a).size())
+#ifdef _WIN32
+#  define I64 "%I64d"
+#else
+#  define I64 "%lld"
+#endif
+#define fname "."
+
+typedef long long ll;
+typedef unsigned long long ull;
+
+const int MAX_N = (int)1e3 + 123;
+const double eps = 1e-6;
+const int inf = (int)1e9 + 123;
+
+using namespace std;
+
+int n;
+int sum[MAX_N][MAX_N];
+vector < int > l[MAX_N];
+int ans;
+vector < int > q;
+int a[MAX_N];
+
+int pref[MAX_N], suf[MAX_N];
+
+int main() {
+	#ifdef Nick
+	freopen(fname"in","r",stdin);
+	freopen(fname"out","w",stdout);
+	#endif
+	cin >> n;
+	for (int i = 1; i <= n; i++) {
+		cin >> a[i];
+		l[a[i]].pb(i);
+		sum[a[i]][i]++;
+	}
+	for (int i = 0; i <= 1000; i++)
+		for (int j = 2; j <= n; j++)
+			sum[i][j] += sum[i][j - 1];
+	for (int i = 0; i <= 1000; i++)
+		if (!l[i].empty()) {
+			for (int j = 1; j <= n; j++) {
+			    pref[j] = inf;
+				if (a[j] >= i)
+					pref[j] = a[j];
+				if (j > 1)
+					pref[j] = min(pref[j], pref[j - 1]);
+			}
+			for (int j = n; j > 0; j--) {
+				suf[j] = inf;
+				if (a[j] >= i)
+					suf[j] = a[j];
+				if (j < n)
+					suf[j] = min(suf[j], suf[j + 1]);						
+			}
+			for (int j = i; j <= 1000; j++)
+				if (!l[j].empty()) {
+					int L = min(l[i][0], l[j][0]);
+					int R = max(l[i].back(), l[j].back());
+					int now = sum[i][R] - sum[i][L - 1];
+					if (i != j)
+						now += sum[j][R] - sum[j][L - 1];
+					if (L > 1 && pref[L - 1] <= j)
+						now++;
+					if (R < n && suf[R + 1] <= j)
+						now++;
+					ans = max(ans, now);
+				}
+		}
+	cout << ans;
+	return 0;
+}

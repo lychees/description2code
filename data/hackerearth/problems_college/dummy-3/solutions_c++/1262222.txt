@@ -1,0 +1,179 @@
+
+#include<iostream>
+#include <cstdio>
+using namespace std;
+#include<math.h>
+
+#define MAX 9
+
+int ans = 0;
+
+int takeInput(int sudoku[MAX][MAX])
+{
+	int size = 0;
+	do
+	{
+		size = 1;
+		switch(size)
+		{
+			case 1:
+				size = 9;
+				break;
+			case 2:
+				size = 16;
+				break;
+			case 3:
+				size = 25;
+				break;
+			default:
+				cout<<"Invalid Selection"<<endl;
+				break;
+		}
+	}while(!size); //until valid board size is selected
+
+    char temp_sud[10][10];
+
+    for(int i=0; i<9; i++)
+        cin>>temp_sud[i];
+
+	for(int i=0;i<size;i++)
+		for(int j=0;j<size; j++)
+			sudoku[i][j] = temp_sud[i][j] - 48;
+
+	return size;
+}
+
+
+void displaySolution(int sudoku[MAX][MAX], int size)
+{
+    for(int i=0; i<9; i++)
+        ans += sudoku[i][i];
+}
+
+
+bool isFull(int sudoku[MAX][MAX], int size)
+{
+	int i,j;
+	for(i=0;i<size;i++)
+		for(j=0;j<size;j++)
+			if(!sudoku[i][j])
+				return false;
+	return true;
+}
+
+int findPossibleValues(int sudoku[MAX][MAX], int size, int a[], int r, int c)
+{
+	int n=0;
+	int i,j;
+	int s=(int)(sqrt(size));
+	int b[MAX+1]={0};
+
+	//Note no.s appeared in current row
+	for(i=0; i<size; i++)
+		b[sudoku[r][i]]=1;
+
+	//Note no.s appeared in current column
+	for(i=0; i<size; i++)
+		b[sudoku[i][c]]=1;
+
+
+	//Note no.s appeared in current block
+	r=(r/s)*s, c=(c/s)*s;
+	for(i=r; i<r+s; i++)
+		for(j=c; j<c+s;j++)
+			b[sudoku[i][j]]=1;
+
+	//Fill array a[] with no.s unappeared in current row, column and block
+	for(i=1;i<=size; i++)
+		if(!b[i])
+			a[n++]=i;
+
+	return n;
+}
+
+void SolveSudoku(int sudoku[MAX][MAX], int size, int &solution_num, bool &solved_flag, bool &enough)
+{
+	int i,j, a[MAX+1]={0}, n=0;
+
+
+	if(enough) //true if user does not want more solutions
+		return;
+
+
+	if(isFull(sudoku, size))	//true if now sudoku board is solved completely
+	{
+
+		if(!solved_flag)
+			//cout<<"Sudoku Solved Successfully!"<<endl;
+		solved_flag = 1;
+
+		//show the solution
+		//cout<<"\n\nSolution no. "<<(solution_num++)<<endl;
+		displaySolution(sudoku, size);
+
+        char more = '0';
+
+		if(more != '1')
+			enough = true;
+		return;
+	}
+
+
+	//Find first vacant place/position
+	int break_flag = 0;
+	for(i=0;i<size;i++)
+	{
+		for(j=0;j<size;j++)
+			if(!sudoku[i][j])
+			{
+				break_flag = 1;
+				break;
+			}
+		if(break_flag)
+			break;
+	}
+
+	//check possibilities at that vacant place
+	n = findPossibleValues(sudoku, size, a, i, j);
+	for(int l=0;l<n;l++)
+	{
+		//put value vacant place
+		sudoku[i][j]=a[l];
+		//now solve the new board
+		SolveSudoku(sudoku, size, solution_num, solved_flag, enough);
+	}
+
+	//backtracking step
+	sudoku[i][j]=0;
+}
+
+
+
+//Starting point
+int main()
+{
+	//Input
+	int tests;
+	cin>>tests;
+	while(tests--)
+	{
+        int sudoku[MAX][MAX] = {0}, size;
+        size = takeInput(sudoku);
+
+        int solution_num = 1;
+        bool solved_flag = 0;
+        bool enough = false;
+
+        //Processing
+        //cout<<"Finding Solutions!\n\n"<<endl;
+        SolveSudoku(sudoku, size, solution_num, solved_flag, enough);
+
+
+        //Exit
+
+
+        //cout<<"Exiting!\n\n"<<endl;
+	}
+	cout<<ans<<endl;
+	return 0;
+}

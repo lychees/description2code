@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+#include <assert.h>
+using namespace std;
+typedef long long ll;
+#define COST 0
+#define FREE 1
+int main() {
+	ll n,k; cin >> n; cin >> k;
+	string s; cin >> s;
+	ll *a = new ll[n];
+	for (ll i = 0; i < n; i++) {
+		a[i] = s[i] - 'a';
+	}
+	set<ll, greater<ll> > h[2][26];
+	for (ll i = 0; i < n; i++) {
+		h[COST][a[i]].insert(i);
+	}
+	bool *f = new bool[n];
+	for (ll i = 0; i < n; i++) f[i] = false;
+	ll m[2];
+	for (ll x = 0; x < n-1; x++) {
+		for (ll i = 0; i < 2; i++) {
+			h[i][a[x]].erase(x);
+		}
+		m[0] = 26;
+		m[1] = 26;
+		for (ll t = 0; t < 2; t++) {
+			for (ll k = 0; k < 26; k++) {
+				if (h[t][k].size() > 0) {
+					m[t] = k;
+					break;
+				}
+			}
+		}
+		ll bestm = min(m[0],m[1]);
+		if (a[x] <= bestm) {
+			continue;
+		}
+		ll need = 0;
+		if (f[x] == false) need++;
+		if (k < need) continue;
+		ll y = -1;
+		if (m[COST] < m[FREE] && k >= need+1 && m[COST] < a[x]) {
+			// Trade with COST if better and we have coins
+			need++;
+			k -= need;
+			y = *(h[COST][m[COST]].begin());
+			f[x] = true;
+		}
+		else if (m[FREE] < a[x]) {
+			// Trade with FREE
+			k -= need;
+			y = *(h[FREE][m[FREE]].begin());
+			f[x] = true;
+		}
+		if (y != -1) {
+			f[y] = true;
+			// Trade x and y
+			for (ll i = 0; i < 2; i++) {
+				h[i][a[y]].erase(y);
+			}
+			ll temp = a[x];
+			a[x] = a[y];
+			a[y] = temp;
+			f[y] = true;
+			h[FREE][a[y]].insert(y);
+		}
+	}
+	for (ll i = 0; i < n; i++) {
+		s[i] = 'a' + a[i];
+	}
+	cout << s << endl;
+}

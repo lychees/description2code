@@ -1,0 +1,98 @@
+#include <iostream>
+#include <algorithm>
+#include <climits>
+#include <vector>
+#include <cmath>
+#include <unordered_set>
+#define M 1000000007
+using namespace std;
+
+typedef long long ll;
+
+ll t, a, b;
+ll stree[40000];
+ll mw[10002];
+
+void getfactors( ll x, unordered_set<ll>& factors ) {
+	
+	for( ll i = 1; i <= ceil((sqrt(x))); i++ ) {
+
+		if( !(x%i) ) {
+			factors.insert(i);
+			factors.insert(x/i);
+		}
+
+	}
+	
+}
+
+ll fpow( ll n, ll k ) {
+	if( k == 0 )
+		return 1;
+	if( k == 1 )
+		return n;
+		
+	ll mid = fpow( n, k/2);
+	
+	if( k%2 )
+		return (((mid*mid) % M)*n) % M;
+	else
+		return (mid*mid) % M;
+}
+
+ll getmw( ll i ) {
+	unordered_set<ll> factors;
+	getfactors( i, factors);
+	
+	ll sum = 0;
+	
+	for( ll x : factors )
+		sum = (sum + fpow(x,i)) % M;
+	
+	return sum % M;
+	
+}
+
+ll build(ll l, ll r, ll id) {
+	
+	ll mid = (l+r) / 2;
+	
+	if( l == r )
+		stree[id] = mw[l];
+	else
+		stree[id] = (build(l,mid,id*2+1) + build(mid+1,r,id*2+2)) % M;
+	
+	return stree[id];
+	
+}
+
+ll get(ll ql, ll qr, ll l, ll r, ll id) {
+	
+	if( ql <= l && qr >= r )
+		return stree[id];
+	
+	if( ql > r || qr < l )
+		return 0;
+		
+	ll m = (l+r) / 2;
+		
+	return (get( ql, qr, l, m, id*2+1) + get( ql, qr, m+1, r, id*2+2)) % M;
+	
+}
+
+int main()
+{
+	cin >> t;
+	
+	for( int i = 1; i <= 10000; i++ )
+		mw[i] = getmw(i);
+	
+	build(1,10000,0);
+	
+	while( t-- ) {
+		cin >> a >> b;
+		cout << get(a,b,1,10000,0) << endl;
+	}
+
+	return 0;
+}

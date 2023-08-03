@@ -1,0 +1,60 @@
+#include <cstdio>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+const int MX=14;
+const int inf=(1<<MX)+9;
+int po[MX];
+int low[inf];
+int num[MX];
+int tim[MX];
+int dp[inf][MX][MX];
+int n;
+int calc(int mask,int p,int lp)
+{
+	if (mask==0)
+		return 0;
+	if (dp[mask][p][lp]!=-1)
+		return dp[mask][p][lp];
+	int np=0,t=mask,k;
+	while(t)
+	{
+		np++;
+		t-=t&-t;
+	}
+	np=n-np;
+	int u=np;
+	t=mask;
+	int best=9999999;
+	while(t)
+	{
+		k=t&-t;
+		int f=calc(mask^k,low[k],p);
+		int cost=(num[low[k]]^num[p]^num[lp])*tim[u];
+		best=min(best,f+(np<2?0:cost));
+		t-=k;
+	}
+	dp[mask][p][lp]=best;
+	return best;
+}
+int main()
+{
+	po[0]=1;
+	for (int i=1;i<MX;++i)
+	{
+		po[i]=po[i-1]<<1;
+		low[po[i]]=i;
+	}
+	int t;
+	scanf("%d",&t);
+	while(t--)
+	{
+		scanf("%d",&n);
+		memset(dp,-1,sizeof(dp));
+		for (int i=0;i<n;++i)
+			scanf("%d",&num[i]);
+		for (int i=0;i<n;++i)
+			scanf("%d",&tim[i]);
+		printf("%d\n",calc((1<<n)-1,0,0));
+	}
+}

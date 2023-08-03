@@ -1,0 +1,139 @@
+/*
+Bismillahir Rahmanir Rahim
+Coder: Ahmad Faiyaz
+*/
+
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <vector>
+#include <fstream>
+#include <ctime>
+
+
+# define FOR(i, a, b) for (int i=a; i<b; i++)
+# define REP(i, a) FOR(i,0,a)
+
+#define EPS 1e-11
+#define inf 1234567891
+#define LL long long
+
+#define abs(x) (((x)< 0) ? (-(x)) : (x))
+#define all(x) (x).begin(), (x).end()
+#define ms(x, a) memset((x), (a), sizeof(x))
+
+#define pb push_back
+#define FORIT(i,m) for(__typeof((m).begin()) i=(m).begin();i!=(m).end();i++)
+#define pii pair<int,int>
+#define UNIQUE(c) (c).resize( unique( all(c) ) - (c).begin() )
+
+#define READ(f) {ifstream infile(f) ;if(infile.good()) freopen(f, "r", stdin);}
+#define WRITE(f) freopen(f, "w", stdout)
+#define CIN ios_base::sync_with_stdio(0);
+///int rrr[]={1,0,-1,0};int ccc[]={0,1,0,-1}; //4 Direction
+///int rrr[]={1,1,0,-1,-1,-1,0,1};int ccc[]={0,1,1,1,0,-1,-1,-1};//8 direction
+///int rrr[]={2,1,-1,-2,-2,-1,1,2};int ccc[]={1,2,2,1,-1,-2,-2,-1};//Knight Direction
+///int rrr[]={2,1,-1,-2,-1,1};int ccc[]={0,1,1,0,-1,-1}; //Hexagonal Direction
+///int month[]={31,28,31,30,31,30,31,31,30,31,30,31}; //month
+
+using namespace std;
+
+
+struct RollingHash {
+	static const LL mo0=1000000007,mo1=1000000009;
+	static const LL mul0=10009,mul1=10007;
+	static const LL add0=1000010007, add1=1003333331;
+	string s; int l;
+	vector<LL> hash_[2],pmo_[2],pmor_[2];
+	void init() {
+	    for(int i=0;i<2;i++){
+            hash_[i].clear();
+            pmo_[i].clear();
+            pmor_[i].clear();
+	    }
+		l=s.size(); int i,j;
+		hash_[0].push_back(0); pmo_[0].push_back(1);
+		hash_[1].push_back(0); pmo_[1].push_back(1);
+		for(int i=0;i<l;i++) pmo_[0].push_back(pmo_[0].back()*mul0%mo0);
+		for(int i=0;i<l;i++) pmo_[1].push_back(pmo_[1].back()*mul1%mo1);
+		for(int i=0;i<l;i++) hash_[0].push_back((hash_[0].back()*mul0+add0+s[i])%mo0);
+		for(int i=0;i<l;i++) hash_[1].push_back((hash_[1].back()*mul1+add1+s[i])%mo1);
+	}
+	pair<LL,LL> getHash(int l,int r) { // s[l..r]
+		pair<LL,LL> p=make_pair(hash_[0][r+1]+(mo0-hash_[0][l]*pmo_[0][r+1-l]%mo0),
+							    hash_[1][r+1]+(mo1-hash_[1][l]*pmo_[1][r+1-l]%mo1));
+		if(p.first>=mo0) p.first-=mo0;
+		if(p.second>=mo1) p.second-=mo1;
+		return p;
+	}
+};
+
+
+RollingHash rh;
+
+vector < pair<LL,LL> > v;
+int main(){
+    #if defined( faiyaz_pc )
+        READ("in.txt");
+    #endif
+
+    int k, n;
+
+    CIN;
+
+    cin>>k>>n;
+
+    cin>>rh.s;
+
+    rh.init();
+
+
+    int lo = 1, hi = rh.l;
+    int mid;
+
+    int res = 0;
+    while(lo <= hi){
+        mid = (lo + hi)>>1;
+
+        v.clear();
+        for(int i = 0 ; i < rh.l ; i++){
+            if(i + mid - 1 >= rh.l) break;
+            v.pb(rh.getHash(i, i + mid - 1));
+        }
+
+        sort(all(v));
+
+        int mxCnt = 1;
+        int cnt = 1;
+        for(int i=1;i<v.size();i++){
+            if(v[i] != v[i-1]){
+                cnt = 0;
+            }
+            cnt++;
+
+            mxCnt = max(mxCnt, cnt);
+        }
+
+        if(mxCnt < k){
+            hi = mid - 1;
+        }else{
+            res = max(res, mid);
+            lo = mid + 1;
+        }
+    }
+
+    cout<<res<<"\n";
+
+
+    return 0;
+}

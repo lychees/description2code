@@ -1,0 +1,60 @@
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+const size_t SIZE = 10001;
+const size_t MAXK = 10;
+const unsigned int MOD = 1000000007;
+
+struct cpair {
+    int cats;
+    int has;
+    cpair(int cats = 0, int has = 0) : cats(cats), has(has) {}
+} dp[SIZE+1][MAXK+2][MAXK+1][2];
+
+int main(void) {
+    ios::sync_with_stdio(false);
+    string str;
+    int k;
+    cin >> k >> str;
+
+    for (int pn = 0; pn <= k + 1; ++pn) {
+        for (int has = 0; has <= k; ++has) {
+            cpair tmp;
+            if (has + pn > k) {
+                tmp = cpair(1, 0);
+            } else {
+                tmp = cpair(0, has + pn);
+            }
+            dp[str.size()][pn][has][0] = dp[str.size()][pn][has][1] = tmp;
+        }
+    }
+
+    for (int n = str.size() - 1; n >= 0; --n) {
+        for (int pn = 0; pn <= k + 1; ++pn) {
+            for (int has = 0; has <= k; ++has) {
+                for (int last = 0; last < 2; ++last) {
+                    int end = last ? str[n] - '0' : 9;
+                    int ttl = 0;
+                    int chas = has;
+                    cpair tmp;
+                    for (int i = 0; i <= end; ++i) {
+                        if (i == 4 || i == 7) {
+                            tmp = dp[n+1][min(k+1,pn+1)][chas][i==end && last];
+                        } else {
+                            tmp = dp[n+1][pn][chas][i==end && last];
+                        }
+                        ttl = (ttl + tmp.cats) % MOD;
+                        chas = tmp.has;
+                    }
+                    dp[n][pn][has][last] = cpair(ttl, chas);
+                }
+            }
+        }
+    }
+
+    cout << dp[0][0][0][1].cats << endl;
+    return  0;
+}
+

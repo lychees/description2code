@@ -1,0 +1,155 @@
+// Make Paths
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+using namespace std;
+typedef struct subset{
+    int parent;
+    int rank;
+}subset;
+subset set[1000001];
+#define gc getchar_unlocked
+#define rd readInt()
+#define PUTCHAR putchar_unlocked
+typedef struct point{
+    int node;
+    int val;
+}point;
+typedef struct diff{
+    int x;
+    int y;
+    int v;
+}diff;
+inline void writeInt(int x)
+{
+    int i = 20;
+    char buf[21];
+    buf[20] = '\n';
+    
+    do
+    {
+        buf[--i] = x % 10 + '0';
+        x/= 10;
+    }while(x);
+    
+    do
+    {
+        PUTCHAR(buf[i]);
+    } while (buf[i++] != '\n');
+}
+inline int readInt(){
+    int n = 0, c = gc(), f = 1;
+    while(c != '-' && (c < '0' || c > '9')) c = gc();
+    if(c == '-') f = -1, c = gc();
+    while(c >= '0' && c <= '9')
+        n = (n<<3) + (n<<1) + c - '0', c = gc();
+    return n * f;
+}
+int comp(const void *a,const void *b)
+{
+    point *p = (point *)a, *q = (point *)b;
+    return p->val - q->val;
+}
+int comp1(const void *a,const void *b)
+{
+    diff *d1 = (diff *)a, *d2 = (diff *)b;
+    return d1->v - d2->v;
+}
+int find(int i)
+{
+    if(set[i].parent != i)
+        set[i].parent = find(set[i].parent);
+    return set[i].parent;
+}
+void unin(int x,int y)
+{
+    int xroot = find(x);
+    int yroot = find(y);
+    if(set[xroot].rank < set[yroot].rank)
+    {
+        set[xroot].parent = yroot;
+    }
+    else if(set[xroot].rank > set[yroot].rank)
+    {
+        set[yroot].parent = xroot;
+    }
+    else
+    {
+        set[yroot].parent = xroot;
+        set[xroot].rank++;
+    }
+}
+int abso(int x)
+{
+    return x<0?(-x):x;
+}
+int main()
+{
+    int i,n;
+    point *xx;
+    point *yy;
+    n  =rd;
+    xx = new point[n];
+    yy = new point[n];
+    for(i=0;i<n;++i)
+    {
+        xx[i].val = rd; yy[i].val = rd;
+        xx[i].node = i; yy[i].node = i;
+    }
+    for(i=0;i<n;++i){ set[i].parent = i; set[i].rank = 0;}
+    qsort(xx, n, sizeof(point), comp);
+    qsort(yy, n, sizeof(point), comp);
+    
+    diff *dx,*dy;
+    dx = new diff[n-1];
+    dy = new diff[n-1];
+    for(i=0;i<(n-1);++i)
+    {
+        dx[i].x = xx[i].node;
+        dx[i].y = xx[i+1].node;
+        dx[i].v = abso(xx[i+1].val - xx[i].val);
+    }
+    for(i=0;i<(n-1);++i)
+    {
+        dy[i].x = yy[i].node;
+        dy[i].y = yy[i+1].node;
+        dy[i].v = abso(yy[i+1].val - yy[i].val);
+    }
+    
+    qsort(dx, n-1, sizeof(diff), comp1);
+    qsort(dy, n-1, sizeof(diff), comp1);
+    int count = 0,j=0;
+    long long sum  =0;
+    i=0;
+    while(count < (n-1))
+    {
+        if(dx[i].v < dy[j].v)
+        {
+            int x1 = dx[i].x; int x2 = dx[i].y;
+            int p1 = find(x1); int p2 = find(x2);
+            if(p1 != p2)
+            {
+                sum += dx[i].v;
+                unin(x1, x2);
+                count++;
+            }
+            i++;
+        }
+        else
+        {
+            int y1 = dy[j].x; int y2 = dy[j].y;
+            int p1 = find(y1); int p2 = find(y2);
+
+            if(p1 != p2)
+            {
+                sum += dy[j].v;
+                unin(y1,y2);
+                count++;
+            }
+            j++;
+        }
+        
+    }
+    printf("%lld\n",sum);
+    return 0;
+}

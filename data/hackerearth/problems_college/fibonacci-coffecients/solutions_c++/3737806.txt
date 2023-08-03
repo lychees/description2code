@@ -1,0 +1,82 @@
+#include <algorithm>
+#include <cassert>
+#include <cstring>
+#include <iostream>
+
+using namespace std;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define REP(i, n) FOR(i, 0, n)
+#define TRACE(x) cout << #x << " = " << x << endl
+#define _ << " _ " <<
+
+typedef long long llint;
+
+const int MAX = 1<<21;
+const int off = 1<<18;
+
+struct data {
+  int x, y, len;
+};
+
+int n, m, mod;
+data T[2*off];
+int F[MAX][2];
+
+inline int add(int a, int b) {
+  return a+b >= mod ? a+b-mod : a+b;
+}
+
+inline int sub(int a, int b) {
+  return a >= b ? a-b : a-b+mod;
+}
+
+inline int mul(int a, int b) {
+  return llint(a)*b % mod;
+}
+
+data operator + (const data& a, const data& b) {
+  int x = add(a.x, add(mul(b.x, F[a.len][0]), mul(b.y, F[a.len + 1][0])));
+  int y = add(a.y, add(mul(b.x, F[a.len][1]), mul(b.y, F[a.len + 1][1])));
+  return {x, y, a.len + b.len};
+}
+
+data query(int i, int lo, int hi, int a, int b) {
+  if (lo >= b || hi <= a) return {0, 0, 0};
+  if (lo >= a && hi <= b) return T[i];
+  return query(i*2, lo, (lo+hi)/2, a, b) + query(i*2+1, (lo+hi)/2, hi, a, b);
+}
+
+int main(void) {
+  scanf("%d %d %d", &n, &m, &mod);
+  REP(i, n) {
+    scanf("%d", &T[off + i].x);
+    T[off + i].x %= mod;
+    T[off + i].len = 1;
+  }
+
+  F[0][0] = 1;
+  F[1][1] = 1;
+  FOR(i, 2, MAX) REP(j, 2) F[i][j] = add(F[i-1][j], F[i-2][j]);
+  
+  for (int i = off - 1; i > 0; --i)
+    T[i] = T[i*2] + T[i*2+1];
+
+  REP(i, m) {
+    int tip, l, x;
+    scanf("%d %d %d", &tip, &l, &x);
+    
+    if (tip == 1) {
+      --l;
+      
+      T[off + l].x = x % mod;
+      for (int x = (off + l) / 2; x; x /= 2)
+        T[x] = T[x*2] + T[x*2+1];
+    } else {
+      --l, --x;
+      data ans = query(1, 0, off, l, x + 1);
+      printf("%d\n", add(ans.x, ans.y));
+    }
+  }
+  return 0;
+}

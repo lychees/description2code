@@ -1,0 +1,138 @@
+#include <iostream>
+#include <cstdio>
+
+using namespace std;
+
+typedef pair <int, int> PII;
+const int MAX = 800005;
+string s;
+PII tree[MAX];
+int lazy[MAX];
+
+PII combine(PII p1, PII p2)
+{
+    PII p;
+    p.first = p1.first + p2.first;
+    p.second = p1.second + p2.second;
+    return p;
+}
+
+void build(int node, int start, int end)
+{
+    if(start == end)
+    {
+        tree[node].first = tree[node].second = 0;
+        if(s[start] == '>')
+            tree[node].first = 1;
+        else
+            tree[node].second = 1;
+    }
+    else
+    {
+        int mid = (start + end) >> 1;
+        int left = node << 1;
+        int right = left + 1;
+        build(left, start, mid);
+        build(right, mid+1, end);
+        tree[node] = combine(tree[left], tree[right]);
+    }
+}
+
+
+void update(int node, int start, int end, int l, int r)
+{
+    if(lazy[node])
+    {
+        if(lazy[node] & 1) swap(tree[node].first, tree[node].second);
+        if(start != end)
+        {
+            lazy[node << 1] += lazy[node];
+            lazy[(node << 1) + 1] += lazy[node];
+        }
+        lazy[node] = 0;
+    }
+    if(r < start or end < l)
+        return;
+    if(l <= start and end <= r)
+    {
+        swap(tree[node].first, tree[node].second);
+        if(start != end)
+        {
+            lazy[node << 1]++;
+            lazy[(node << 1) + 1]++;
+        }
+        return;
+    }
+    int mid = (start + end) >> 1;
+    int left = node << 1;
+    int right = left + 1;
+    update(left, start, mid, l, r);
+    update(right, mid+1, end, l, r);
+    tree[node] = combine(tree[left], tree[right]);
+}
+
+
+PII query(int node, int start, int end, int l, int r)
+{
+    if(r < start or end < l)
+        return make_pair(0, 0);
+
+    if(lazy[node])
+    {
+        if(lazy[node] & 1) swap(tree[node].first, tree[node].second);
+        if(start != end)
+        {
+            lazy[node << 1] += lazy[node];
+            lazy[(node << 1) + 1] += lazy[node];
+        }
+        lazy[node] = 0;
+    }
+
+    if(l <= start and end <= r)
+        return tree[node];
+
+    int mid = (start + end) >> 1;
+    int left = node << 1;
+    int right = left + 1;
+    PII p1 = query(left, start, mid, l, r);
+    PII p2 = query(right, mid+1, end, l, r);
+    return combine(p1, p2);
+}
+
+int main()
+{
+    int n, q, c, l, r;
+    PII ans;
+    scanf("%d %d", &n, &q);
+    n--;
+    cin >> s;
+    build(1, 0, n-1);
+    while(q--)
+    {
+        scanf("%d %d %d", &c, &l, &r);
+        if(c == 1)
+        {
+            l--, r -= 2;
+            update(1, 0, n-1, l, r);
+        }
+        else
+        {
+            if(l == r)
+                printf("0\n");
+            else if(l < r)
+            {
+                l--, r -= 2;
+                ans = query(1, 0, n-1, l, r);
+                printf("%d\n", ans.second);
+            }
+            else
+            {
+                swap(l, r);
+                l--, r -= 2;
+                ans = query(1, 0, n-1, l, r);
+                printf("%d\n", ans.first);
+            }
+        }
+    }
+    return 0;
+}

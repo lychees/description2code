@@ -1,0 +1,135 @@
+//HackerEarth--New Orders
+#include<bits/stdc++.h>
+#define MAX 26
+
+using namespace std;
+
+typedef pair<int,int> pii;
+
+vector<string> names;
+vector<int> graph[MAX];
+int level[MAX];
+
+///first represents rank and second represents the actual character
+bool comp(const pii &lhs,const pii &rhs){
+	
+	if(rhs.first>lhs.first||(lhs.first==rhs.first&&lhs.second<rhs.second))
+	  return true;
+	  	
+	else return false;
+	
+}
+
+int main(void){
+	
+	int totalElements,ok[MAX],i,in_deg[MAX],order[MAX],taken[MAX],j,len;
+	string str;
+	
+	memset(in_deg,0,sizeof in_deg);
+	memset(ok,0,sizeof ok);
+	memset(taken,0,sizeof taken);
+	
+	cin>>totalElements;
+	
+	for(i=0;i<totalElements;i++){
+		
+		cin>>str;
+		names.push_back(str);
+		
+		for(j=0;j<str.size();j++) ok[names[i][j]-'a']=1;
+		
+	}
+		
+	string previous=names[0],current;
+	
+	for(i=1;i<totalElements;i++){
+		
+		current=names[i];
+		len=min(current.size(),previous.size());
+		for(j=0;j<len;j++){
+			
+			if(current[j]==previous[j]){ ok[current[j]-'a']=1;continue;}
+			
+			in_deg[current[j]-'a']++;
+			
+			ok[current[j]-'a']=1;
+			ok[previous[j]-'a']=1;
+			
+			graph[previous[j]-'a'].push_back(current[j]-'a');
+			
+			break;
+			
+		}   
+		
+		previous=current;
+		
+	}	
+	
+	queue<int> Q;
+	
+	for(i=0;i<26;i++)
+	  if(in_deg[i]==0){ 
+	     
+		 Q.push(i);
+	     level[i]=1;
+	     
+	  }
+	  
+	int ans[MAX],count=0;
+	  
+	while(Q.size()){
+		
+		int front=Q.front();
+		
+		if(taken[front]==0){
+			
+			ans[count++]=front;
+			taken[front]=1;
+			
+		}
+		
+		Q.pop();
+		for(i=0;i<graph[front].size();i++){
+			
+			int v=graph[front][i];
+			in_deg[v]--;
+			
+			if(in_deg[v]==0){ 
+			   
+			   level[v]=level[front]+1;
+			   Q.push(v); 
+			
+			}
+			
+		}
+		
+	}   
+		
+	vector<pii> final;
+	
+	for(i=0;i<count;i++)
+	  if(ok[ans[i]]){  
+	 
+	    final.push_back(pii(level[ans[i]],ans[i]));
+         
+	  }
+	sort(final.begin(),final.end(),comp);
+	
+	int previousLevel=final[0].first;
+	
+	printf("%c",final[0].second+'a');
+	
+	for(i=1;i<final.size();i++){
+		
+		if(previousLevel!=final[i].first)
+	      printf("\n");
+		
+		printf("%c",final[i].second+'a');
+		
+		previousLevel=final[i].first;
+		
+	}
+			
+	return 0;
+	
+}

@@ -1,0 +1,143 @@
+// C++ program to print connected components in
+// an undirected graph
+#include<iostream>
+#include <list>
+#include<sys/resource.h>
+using namespace std;
+
+int n, m;
+ 
+// Graph class represents a undirected graph
+// using adjacency list representation
+class Graph
+{
+    int V;    // No. of vertices
+ 
+    
+ 
+    // A function used by DFS
+    bool DFSUtil(int v, bool visited[]);
+public:
+// Pointer to an array containing adjacency lists
+    list<int> *adj;
+    Graph(int V);   // Constructor
+    ~Graph()      { delete [] adj;  }
+    void addEdge(int v, int w);
+    bool connectedComponents();
+};
+ 
+// Method to print connected components in an
+// undirected graph
+bool Graph::connectedComponents()
+{
+    // Mark all the vertices as not visited
+    bool *visited = new bool[V];
+    for(int v = 0; v < V; v++)
+        visited[v] = false;
+ 
+    for (int v=0; v<V; v++)
+    {
+        if (visited[v] == false)
+        {
+            // print all reachable vertices
+            // from v
+            if(DFSUtil(v, visited))
+            	return true;
+ 
+            //cout << "\n";
+        }
+    }
+    return false;
+}
+ 
+bool Graph::DFSUtil(int v, bool visited[])
+{
+    // Mark the current node as visited and print it
+    visited[v] = true;
+    //cout << v << " ";
+    
+    bool inside = true;
+    if(adj[v].size() == 0)
+    	return false;
+    int y = v%(m+1);
+    if(y == 0 || y == m)
+    	inside = false;
+    int x = (v-y)/(m+1);
+    if(x == 0 || x == n)
+    	inside = false;
+    
+   // cout<<x<<" "<<y<<", ";
+ 
+    // Recur for all the vertices
+    // adjacent to this vertex
+    list<int>::iterator i;
+    for(i = adj[v].begin(); i != adj[v].end(); ++i)
+        if(!visited[*i]) {
+            inside = DFSUtil(*i, visited) && inside;
+        }
+    
+    return inside;
+}
+ 
+Graph::Graph(int V)
+{
+    this->V = V;
+    adj = new list<int>[V];
+}
+ 
+// method to add an undirected edge
+void Graph::addEdge(int v, int w)
+{
+    adj[v].push_back(w);
+    adj[w].push_back(v);
+}
+
+int ver(int x, int y) { return (y + x*(m+1)); };
+
+int main()
+{
+	struct rlimit lim;
+	lim.rlim_cur = lim.rlim_max = 200 << 20; // 200MB
+	setrlimit(RLIMIT_STACK, &lim);
+	
+	int t, i, j;
+	cin>>t;
+	while(t--) {
+		cin>>n>>m;
+		char A[n][m+1];
+		for(i=0; i<n; i++)
+			cin>>A[i];
+		
+		Graph g((n+1)*(m+1));
+		
+		for(i=0; i<n-1; i++) {
+			for(j=0; j<m-1; j++) {
+				if(A[i][j] != A[i][j+1]){
+					g.addEdge(ver(i,j+1), ver(i+1, j+1));
+					//cout<<i<<" "<<j<<", ";
+				}
+				if(A[i][j] != A[i+1][j]){
+					g.addEdge(ver(i+1,j), ver(i+1, j+1));
+					//cout<<i<<" "<<j<<", ";
+				}
+			}
+			if(A[i][j] != A[i+1][j]){
+				g.addEdge(ver(i+1,j), ver(i+1, j+1));
+					//cout<<i<<" "<<j<<", ";
+			}
+		}
+		for(j=0; j<m-1; j++) {
+			if(A[i][j] != A[i][j+1]){
+				g.addEdge(ver(i,j+1), ver(i+1, j+1));
+					//cout<<i<<" "<<j<<", ";
+			}
+		}
+		
+		if(g.connectedComponents())
+			cout<<"NO"<<endl;
+		else
+			cout<<"YES"<<endl;
+	}
+ 
+    return 0;
+}

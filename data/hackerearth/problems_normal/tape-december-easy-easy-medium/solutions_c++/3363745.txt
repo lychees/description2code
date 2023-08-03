@@ -1,0 +1,89 @@
+#include <iostream>
+#define MAX_D 100009
+typedef long long int int64;
+typedef long int int32;
+using namespace std;
+
+int main()
+{
+	ios_base::sync_with_stdio(false);
+    int32 n, k, d, iStart, iEnd, b, augCount = 0;
+    int32 * a;
+    int64 * sum;
+    cin >> n >> k >> d;
+    a = new int32[n];
+    sum = new int64[n];
+    for(int32 i = 0; i < n; i++) cin >> a[i];
+    if(n == 1){
+    	if(a[0] == 0) cout << "-1\n";
+    	else if(a[0] >= d) cout << "0\n";
+    	else cout << "1\n";
+    	delete(sum);
+    	delete(a);	
+    	return 0;
+    }
+    if(k == 1){
+    	for(int32 i = 0; i < n; i++){
+    		if(a[i] == 0){
+    			cout << "-1\n";
+    			delete(sum);
+    			delete(a);
+    			return 0;
+    		}
+    		
+    		if(a[i] < d) augCount++;
+    	}
+    	cout << augCount << endl;
+    	delete(sum);
+    	delete(a);
+    	return 0;
+    }
+    sum[0] = a[0];
+    iStart = 0;
+    iEnd = 1;
+    while(iEnd < n){
+    	sum[iEnd] = sum[iEnd - 1] + a[iEnd];
+    	if(iStart > 0) sum[iEnd] -= sum[iStart - 1];
+    	if(iEnd - iStart + 1 == k){
+    		if(sum[iEnd] >= d){
+    			iEnd++;
+    			iStart++;
+    		}
+    		else{
+    			augCount++;
+    			while(iEnd >= iStart){
+    				if(a[iEnd]){
+    					// perform augment starting from here
+    					// we can assume the next substring starting from iEnd
+    					// is fine - if there are still enough elements after
+    					// that to form a substring of length k, start calculating
+    					// the sum from there
+    					iStart = iEnd + k;
+						iEnd = iStart + 1;
+    					if(iStart + k - 1 < n){
+    						sum[iStart - 1] = 0;
+    						sum[iStart] = a[iStart];
+    					}
+    					else{
+    						iEnd = iStart = n; // trigger end
+    					}
+    					break;
+    				}
+    				else iEnd--;
+    			}
+    			if(iEnd < iStart){
+    				cout << "-1\n";
+    				delete(sum);
+    				delete(a);
+    				return 0;
+    			}
+    		}
+    	}
+    	else iEnd++;
+    }
+    cout << augCount << endl;
+    
+    delete(sum);
+    delete(a);
+    return 0;
+}

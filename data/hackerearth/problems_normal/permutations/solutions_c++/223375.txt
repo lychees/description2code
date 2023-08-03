@@ -1,0 +1,99 @@
+#include <iostream>
+#include <algorithm>
+#include <set>
+#include <queue>
+#include <strings.h>
+
+
+using namespace std;
+
+void sccSetInsertions (set<int>& indexSet, set<int>& valSet, const int& i, const int& val)
+{
+    indexSet.insert (i);
+    valSet.insert(val);
+}
+
+void checkSCCMembers(const int& i, const int& k, int *arr, int *swaps, queue<int>& bfsQ,
+                     set<int>& sccVals, set<int>& sccIndices, int *considered)
+{
+    for (int j = 0; j < k; j++)
+    {
+        if (swaps[j] == 1)
+        {
+            if (considered[j] == 0)
+            {
+                bfsQ.push(j);
+                sccSetInsertions(sccIndices, sccVals, j, arr[j]);
+                considered[j] = 1;
+            }
+        }
+    }
+}
+
+int main (void)
+{
+    int k, i, j;
+    cin >> k;
+    int arr[k];
+    int swaps[k][k];
+
+    for(i = 0; i < k; i++)
+    {
+        cin >> arr[i];
+    }
+
+    char c;
+    for(i = 0; i < k; i++)
+    {
+        for (j = 0; j < k; j++)
+        {
+            cin >> c;
+            swaps[i][j] = (c == 'Y');
+        }
+    }
+
+
+    set<int> sccIndices, sccVals;
+    queue<int> bfsQ;
+    int considered[k], tmp;
+
+    //bzero (considered, sizeof(int) * k);
+    for(int asd=0;asd<k;asd++) considered[asd]=0;
+
+    for (i = 0; i < k; i++)
+    {
+        if (considered[i] == 1)
+            continue;
+        else
+        {
+
+            sccSetInsertions(sccIndices, sccVals, i, arr[i]);
+            considered[i] = 1;
+        }
+        checkSCCMembers (i, k, arr, swaps[i], bfsQ, sccVals, sccIndices, considered);
+        while (bfsQ.size() > 0)
+        {
+            tmp = bfsQ.front();
+            bfsQ.pop();
+            checkSCCMembers(tmp, k, arr, swaps[tmp], bfsQ, sccVals, sccIndices, considered);
+        }
+
+        set<int>::iterator itVal = sccVals.begin(), itIndex = sccIndices.begin();
+        for(; itIndex != sccIndices.end(); itIndex++, itVal++)
+        {
+            arr[*itIndex] = *itVal;
+        }
+        sccIndices.clear();
+        sccVals.clear();
+    }
+
+    for (i = 0; i < k; i++)
+    {
+        cout << arr[i];
+        if (i != k - 1)
+            cout << " ";
+    }
+    cout << endl;
+
+    return 0;
+}

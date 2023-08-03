@@ -1,0 +1,165 @@
+#pragma comment(linker, "/STACK:60777216")  
+
+#include <cassert>
+#include<iostream>
+#include<algorithm>
+#include<cstdio>
+#include<complex>
+#include<vector>
+#include<set>
+#include<map>
+#include<cmath>
+#include<queue>
+#include<string>
+#include<cstdlib>
+#include<memory.h>
+#include<ctime>
+#include<bitset>
+#include<fstream>
+#include<queue>
+#include<stack>
+
+using namespace std;
+
+typedef long double ld;
+
+typedef long long ll;
+typedef pair<int,int>	pii;
+typedef pair<ld,ld>	pdd;
+typedef vector<int> vi;
+typedef vector<ld> vd;
+typedef pair<ll,ll> pl;
+
+#define FOR(i,a,b)		for(int i=(a);i<(b);i++)
+#define REP(i,n)		FOR(i,0,n)
+#define SORT(v)			sort((v).begin(),(v).end())
+#define UN(v)			SORT(v),(v).erase(unique((v).begin(),(v).end()),(v).end())
+#define CL(a,b)			memset(a,b,sizeof a)
+#define pb				push_back
+
+int n;
+
+vi v[555555];
+int   d[1<<20];
+int lca[20][1<<20];
+
+int porder;
+int order[1<<20];
+int L[1<<20];
+int R[1<<20];
+int s[1<<20];
+
+void add(int pos,int val){
+	pos+=(1<<19);
+	while(pos){
+		s[pos]+=val;
+		pos>>=1;
+	}
+}
+
+int getSum(int p1,int p2){
+	p1+=(1<<19);
+	p2+=(1<<19);
+	int sum = 0;
+	while(p1<=p2){
+		if(p1&1) sum += s[p1];
+		if(!(p2&1)) sum += s[p2];
+		p1=(p1+1)>>1;
+		p2=(p2-1)>>1;
+	}
+	return sum;
+}
+
+void dfs(int ver,int par=-1,int depth=0){
+	L[ver] = porder;
+	order[ver] = porder;
+	porder++;
+	d[ver]=depth;
+	lca[0][ver]=par;
+	REP(i,v[ver].size())if(v[ver][i]!=par){
+		dfs(v[ver][i],ver,depth+1);
+	}
+	R[ver] = porder - 1;
+}
+
+int getlca(int a,int b){
+	for(int i=19;i>=0;i--)if(d[a]-(1<<i)>=d[b])a=lca[i][a];
+	if(a==b)return a;
+	for(int i=19;i>=0;i--)if(lca[i][a]!=lca[i][b])a=lca[i][a],b=lca[i][b];
+	return lca[0][a];
+}
+
+int stupid_sum[1<<20];
+bool stupid(int from, int to,int prev=-1){
+	if(from==to){
+		stupid_sum[from]++;
+		return true;
+	}
+	REP(i,v[from].size())if(v[from][i]!=prev){
+		if(stupid(v[from][i],to,from)){
+			stupid_sum[from]++;
+			return true;
+		}
+	}
+	return false;
+}
+
+int main(){	
+#ifdef LocalHost
+	freopen("input.txt","r",stdin);
+	//freopen("output.txt","w",stdout);
+#endif
+
+	int q;
+	cin>>n>>q;
+	REP(i,n-1){
+		int x,y;
+		scanf("%d %d",&x,&y);
+		x--,y--;
+		v[x].pb(y);
+		v[y].pb(x);
+	}
+	dfs(0);
+	FOR(st,1,20){
+		REP(i,n){
+			lca[st][i]=lca[st-1][i];
+			if(lca[st][i]!=-1)lca[st][i]=lca[st-1][lca[st][i]];
+		}
+	}
+	REP(i,q){
+		//c/out<<"it "<<i<<": ";
+		int t;
+		scanf("%d",&t);
+		if(t==1){
+			int x,y;
+			scanf("%d %d",&x,&y);
+			x--,y--;
+			if(d[x]<d[y]) swap(x,y);
+			int pr = getlca(x,y);
+			add(order[x],1);
+			if(lca[0][pr]!=-1)
+			add(order[lca[0][pr]],-1);
+			add(order[y],1);
+			add(order[pr],-1);
+
+		//	cout<<x<<' '<<lca[0][pr]<<' '<<y<<' '<<pr<<endl;
+			//cout<<order[x]<<' '<<order[lca[0][pr]]<<' '<<order[y]<<' '<<order[pr]<<endl;
+			//cout<<L[1]<<' '<<R[1]<<endl;
+			//stupid(x,y);
+
+			//puts("");
+
+		}else if(t==2){
+			int x;
+			scanf("%d",&x);
+			x--;
+			printf("%d\n",getSum(L[x],R[x]));
+		}
+		//REP(x,n)if(getSum(L[x],R[x])!=stupid_sum[x]) {puts("FUCK!");cout<<x<<' '<<stupid_sum[x]<<' '<<getSum(L[x],R[x])<<endl;return 0;}
+	}
+
+#ifdef LocalHost
+	printf("TIME: %.3lf\n",ld(clock())/CLOCKS_PER_SEC);
+#endif
+	return 0;
+}

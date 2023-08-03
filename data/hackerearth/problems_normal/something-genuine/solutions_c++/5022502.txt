@@ -1,0 +1,68 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=200005, mod=1e9 +7;
+int last[N],n,lazy[3*N];
+struct node
+{
+    int sum0,sum1,sum2;
+}tree[3*N];
+void build(int id=1,int l=0,int r=n)
+{
+    if(r-l<2)
+    {
+        tree[id].sum0=1;return ;
+    }
+    int mid=(l+r)/2;
+    build(id<<1,l,mid);build(id<<1 |1,mid,r);
+    tree[id].sum0=tree[id<<1].sum0+tree[id<<1 |1].sum0;
+}
+inline void modify(int id,int val)
+{
+    tree[id].sum2=(tree[id].sum2+ 2ll*tree[id].sum1*val + 1ll*tree[id].sum0*1ll*val*val)%mod;
+    tree[id].sum1=(tree[id].sum1 +1ll*tree[id].sum0*val)%mod;
+    lazy[id]=(lazy[id]+val)%mod;
+}
+inline void flush(int id)
+{
+    if(lazy[id])
+    {
+        modify(id<<1,lazy[id]);
+        modify(id<<1 |1,lazy[id]);
+        lazy[id]=0;
+    }
+}
+int qry(int x,int y,int id=1,int l=0,int r=n)
+{
+    if(x>=r or y<=l)return 0;
+    if(x<=l and r<= y)return tree[id].sum2;
+    flush(id);
+    int mid=(l+r)/2;
+    return (qry(x,y,id<<1,l,mid)+qry(x,y,id<<1 |1,mid,r))%mod;
+}
+void upd(int x,int y,int id=1,int l=0,int r=n)
+{
+    if(y<=l or x>=r)return ;
+    if(x<=l and r<=y ){modify(id,1);return ;}
+    int mid=(l+r)/2;
+    flush(id);
+    upd(x,y,id<<1,l,mid);
+    upd(x,y,id<<1 |1,mid,r);
+    tree[id].sum1=(tree[id<<1].sum1 +tree[id<<1 |1].sum1)%mod;
+    tree[id].sum2=(tree[id<<1].sum2 +tree[id<<1 |1].sum2)%mod;
+}
+int main()
+{
+    scanf("%d",&n);
+    build();
+    int res=0;
+    memset(last,-1,sizeof(last));
+    for(int i=0,x;i<n;i++)
+    {
+        scanf("%d",&x);
+        upd(last[x]+1,i+1);
+        res=(res+qry(0,i+1))%mod;
+        last[x]=i;
+    }
+    cout<<res;
+    return 0;
+}

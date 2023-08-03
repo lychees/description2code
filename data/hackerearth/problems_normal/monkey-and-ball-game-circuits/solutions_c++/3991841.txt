@@ -1,0 +1,154 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+struct ArtBridge {
+    const int n;
+    const vector<vi> &adj;
+    ArtBridge ( const vector<vi> &_adj ) :n ( _adj.size() ),adj ( _adj ),low ( n ),num ( n,-1 ),art ( n ) {
+        rep ( r,n ) {
+            if ( num[r]<0 ) {
+                rChilds=0;
+                dfs ( r,-1 );
+                art[r]=rChilds >1;
+            }
+        }
+
+    }
+    vi low,num;
+    vector<bool> art;
+    vpii bridges;
+    int cnt=0;
+    int rChilds;
+    void dfs ( int u, int par ) {
+        low[u]=num[u]=cnt++;
+        for ( int j:adj[u] ) {
+            if ( num[j]<0 ) {
+                if ( par<0 ) rChilds++;
+                dfs ( j,u );
+                if ( low[j]>=num[u] )
+                    art[u]=1;
+                if ( low[j]>num[u] ) bridges.push_back ( mp ( u,j ) );
+                low[u]=min ( low[u],low[j] );
+            } else if ( j!=par ) {
+                low[u]=min ( low[u],num[j] );
+
+            }
+        }
+    }
+};
+
+int main() {
+    ios_base::sync_with_stdio ( false );
+//     int n,m;
+//     cin>>n>>m;
+//     vector<vi> adj ( n );
+//     rep ( i,n ) {
+//         int u,v;
+//         cin>>u>>v;
+//         adj[u].push_back ( v );
+//         adj[v].push_back ( u );
+//     }
+//     ArtBridge art(adj);
+//     cout<<art.art<<art.bridges;
+    int n,qv,qf;
+    cin>>n>>qv>>qf;
+    int m= ( n+1 );
+    vector<vi> adj ( m*m );
+    rep ( i,qv ) {
+        int b,w,db,dw;
+        cin>>b>>w>>db>>dw;
+        int u=b*m+w;
+        int v= ( db+b ) *m+dw+w;
+        adj[u].push_back ( v );
+        adj[v].push_back ( u );
+    }
+    set<pii> forb;
+    rep ( i,qf ) {
+        int b,w;
+        string c;
+        cin>>b>>w>>c;
+        int u=b*m+w;
+        int v=u;
+        if ( c[0]=='B' ) v+=m;
+        else v+=1;
+        forb.insert ( mp ( u,v ) );
+        forb.insert ( mp ( v,u ) );
+    }
+    rep ( b,m ) rep ( w,m ) {
+        int u=b*m+w;
+        if ( b<n ) {
+            int v=u+m;
+            if ( !forb.count ( mp ( u,v ) ) ) {
+                adj[u].push_back ( v );
+                adj[v].push_back ( u );
+            }
+        }
+        if ( w<n ) {
+            int v=u+1;
+            if ( !forb.count ( mp ( u,v ) ) ) {
+                adj[u].push_back ( v );
+                adj[v].push_back ( u );
+            }
+        }
+    }
+    int u=0;
+    int v=n*m+n;
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+    
+    ArtBridge ab(adj);
+    int mval=-1;
+    for(pii p: ab.bridges){
+        int w1=p.first%m;int b1=p.first/m;
+        int w2=p.second%m; int b2=p.second/m;
+        if(w1*b1+w2*b2>mval)mval=w1*b1+w2*b2;
+    }
+cout<<mval<<endl;
+
+}

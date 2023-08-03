@@ -1,0 +1,129 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <queue>
+using namespace std;
+const int MAX = 1e3 + 1;
+const int MAX2 = 1e4 + 1;
+int vertices, edges;
+vector<pair<int, pair<int, int> > > edgeList(MAX2);
+bool used[MAX2];
+bool marked[MAX];
+int par[MAX];
+void initT()
+{
+	for (int i = 1; i <= vertices; i++)
+		par[i] = i;
+}
+
+int root(int x)
+{
+	while (par[x] != x)
+	{
+		par[x] = par[par[x]];
+		x = par[x];
+	}
+	return x;
+}
+
+void unionT(int x, int y)
+{
+	int p = root(x);
+	int q = root(y);
+	par[p] = par[q];
+}
+
+bool applyMST(int pref)
+{
+	//cout<<"pref "<<pref;
+	int u, v, type;
+	for (int i = 1; i <= vertices; i++)
+		marked[i] = false;
+	initT();
+	for (int i = 0; i < edges; i++)
+	{
+		u = edgeList[i].second.first;
+		v = edgeList[i].second.second;
+		type = edgeList[i].first;
+		if (type == pref || type == -3)
+		{
+			if (root(u) != root(v))
+			{
+				used[i] = true;
+				unionT(u, v);
+				marked[u] = true;
+				marked[v] = true;
+			}
+		}
+	}
+	bool flag = true;
+	for (int i = 1; i <= vertices; i++)
+	{
+		//cout<<marked[i]<<endl;
+		flag = flag&&marked[i];
+	}
+	return flag;
+}
+
+int count_UN()
+{
+	int count = 0;
+	for (int i = 0; i < edges; i++)
+	{
+		if (!used[i])
+			count++;
+	}
+	return count;
+}
+
+void printUsed()
+{
+	for (int i = 0; i < edges; i++)
+	{
+		cout << "edge " << i << " ";
+		if (used[i])
+			cout << "used";
+		else
+			cout << "not used";
+		cout << endl;
+	}
+}
+int main()
+{
+	cin >> vertices >> edges;
+	int u, v, type;
+	for (int i = 0; i <edges; i++)
+	{
+		cin >> u >> v >> type;
+		edgeList[i] = make_pair(-1 * type, make_pair(u, v));
+		used[i] = false;
+	}
+	sort(edgeList.begin(), edgeList.end());
+	/*
+	for (int i = 0; i <edges; i++)
+	{
+		u = edgeList[i].second.first;
+		v = edgeList[i].second.second;
+		type = edgeList[i].first;
+		//cout << "edge " << i << " type " << type << " " << u << " " << v << endl;
+	}
+	*/
+	if (applyMST(-1))
+	{
+		//printUsed();
+		if (applyMST(-2))
+		{
+			//printUsed();
+			cout << count_UN() << endl;
+		}
+		else
+		{
+			cout << "-1";
+		}
+	}
+	else
+	{
+		cout << "-1";
+	}
+
+}

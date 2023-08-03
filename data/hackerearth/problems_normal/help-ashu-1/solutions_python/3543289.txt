@@ -1,0 +1,50 @@
+
+import math
+n = int(raw_input())
+a = [0] + map(int, raw_input().split())
+temp = 2**(int(math.log(2*n-1,2))+1)-1
+tree = [0]*(temp) #denoting odd numbers
+lazy = [0]*(temp)
+
+def build (node, start, end):
+	#print node, start, end
+	if (start == end):
+		tree[node] = a[start]%2
+	else:
+		mid = (start+end)/2
+		build(2*node, start, mid)
+		build(2*node+1, mid+1, end)
+		tree[node] = tree[2*node]+tree[2*node+1]
+
+def update(node, start, end, idx, val):
+	if (start == end):
+		a[idx] = val
+		tree[node] = val%2
+	else:
+		mid = (start+end)/2
+		if (start <= idx and idx <=mid):
+			update (2*node, start, mid, idx, val)
+		else:
+			update (2*node+1, mid+1, end, idx, val)
+		tree[node] = tree[2*node] + tree[2*node+1]
+		
+def query(node, start, end, l, r):
+	if (r<start or end<l):
+		return 0
+	elif (l <= start and end <= r):
+		return tree[node]
+	else:
+		mid = (start+end)/2
+		return query(2*node, start, mid, l, r)+query(2*node+1, mid+1, end, l, r)
+
+build(1,1,n)
+
+for q in range(int(raw_input())):
+	c,l,r = map(int,raw_input().split())
+	if (c==0):
+		update(1,1,n,l,r)
+	elif (c==1):
+		print (r-l+1)-query(1,1,n,l,r)
+	elif (c==2):
+		print query(1,1,n,l,r)
+	

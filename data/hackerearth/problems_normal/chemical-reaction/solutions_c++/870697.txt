@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define infinity (1000000007)
+#define pii pair<int,int>
+#define ppi pair<pii,int>
+#define ppp pair<pii,pii>
+#define pip pair<int,pii>
+#define ll long long
+
+const int mod=1000000007;
+
+int n,N,base;
+
+int tree[2000000];
+int merge(int l,int r)
+{
+
+    return tree[l]+tree[r]; 
+}
+void makeTree(int index,int l,int r)
+{
+  if(l==r)
+  {
+    /* add code here */
+    if(l<n)
+    {
+      tree[index]=1;
+    }
+    else
+    {
+      tree[index]=0;
+    }
+
+
+
+    return;
+  }
+  int mid=(l+r)/2;
+  makeTree(2*index+1,l,mid);
+  makeTree(2*index+2,mid+1,r);
+  tree[index]=merge(2*index+1,2*index+2);
+}
+
+void mergeUp(int index)
+{
+  int parent;
+  while(index)
+  {
+    parent=(index-1)/2;
+    if(index%2==0)
+      tree[parent]=merge(index-1,index);
+    else
+      tree[parent]=merge(index,index+1);
+
+    index=parent;
+  }
+} 
+
+int query(int index,int l,int r,int val)
+{
+ 
+
+  if(l==r)
+  {
+    return l;
+  }
+  
+  int mid=(l+r)/2;
+  if(tree[2*index+1]>=val)
+    return query(2*index+1,l,mid,val);
+  return query(2*index+2,mid+1,r,val-tree[2*index+1]);
+}
+
+
+
+char name[500001][12];
+int cost[500001];
+int main()
+{
+  int t;
+  scanf("%d",&t);
+  while(t--)
+  {
+    scanf("%d",&n);
+    for(int i=0;i<n;++i)
+    {
+      scanf("%s",name[i]);
+    }
+    for(int i=0;i<n;++i)
+    {
+      scanf("%d",&cost[i]);
+    }
+
+    N=ceil(log2(n));
+    base=(1<<N)-1;
+    makeTree(0,0,base);
+
+
+    int best=-1;
+    int index;
+    for(int i=0;i<n-1;++i)
+    {
+      int x;
+      scanf("%d",&x);
+
+      index=query(0,0,base,x);
+      best=max(best,cost[index]);
+      printf("%s %d\n",name[index],best);
+      tree[base+index]=0;
+      mergeUp(base+index);
+    }
+      
+      index=query(0,0,base,1);
+      best=max(best,cost[index]);
+      printf("%s %d\n",name[index],best);
+
+
+  }
+  
+
+
+
+
+
+  
+}

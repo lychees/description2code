@@ -1,0 +1,63 @@
+#include<bits/stdc++.h>
+#define bs 1000000007
+const int N = 10050;
+using namespace std;
+pair<int, int> memo[N][12][12][2];
+int was[N][12][12][2];
+int n,k;
+int bound[N];
+int SZ;
+pair<int, int> solve(int rem_len,int pref_luck,int has,int les_flag)
+{
+	int old_has=has;
+	if (was[rem_len][pref_luck][has][les_flag])
+	{
+		return memo[rem_len][pref_luck][has][les_flag];
+	}
+	was[rem_len][pref_luck][has][les_flag]=1;
+	if (rem_len==0)
+	{
+		int now_has=has+pref_luck;
+		if (now_has>=k)
+		{
+			memo[rem_len][pref_luck][has][les_flag]=make_pair(1,0);
+			return make_pair(1,0);
+		}
+		else
+		{
+			memo[rem_len][pref_luck][has][les_flag]=make_pair(0,now_has);
+			return make_pair(0,now_has);
+		}
+	}
+	int res=0;
+	for (int ad_dig=0;ad_dig<=9;ad_dig++)
+	{
+		if (ad_dig>bound[rem_len]&&les_flag==0)
+				break;
+		int new_len=rem_len-1;
+		int new_luck=pref_luck+(ad_dig==4||ad_dig==7);
+		if (new_luck>k)
+				new_luck=k;
+		int new_has=has;
+		int new_les=(les_flag|(ad_dig<bound[rem_len]));
+		pair<int, int> P=solve(new_len,new_luck,new_has,new_les);
+		res+=P.first;
+		res%=bs;
+		has=P.second;
+	}
+	memo[rem_len][pref_luck][old_has][les_flag]=make_pair(res,has);
+	return make_pair(res,has);
+}
+int main(){
+ios_base::sync_with_stdio(0);
+//cin.tie(0);
+cin>>k;
+string st;
+cin>>st;
+SZ=st.size();
+++k;
+for (int i=SZ;i;--i)
+		bound[i]=st[SZ-i]-48;
+cout<<solve(SZ,0,0,0).first<<endl;
+cin.get();cin.get();
+return 0;}

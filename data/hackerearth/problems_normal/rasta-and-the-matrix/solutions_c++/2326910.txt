@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int mod = 1e9 + 7; 
+struct node{
+	node * l;
+	node * r;
+	int sume; 
+	int lazy; 
+	node (){
+		l = NULL; 
+		r = NULL; 
+		sume = 0; 
+		lazy = 0; 
+	}
+	node (node * aa, node * b, int s, int ll){
+		l = aa;
+		r = b;
+		sume = s;
+		lazy = ll; 
+	}
+}; 
+node * rows = NULL;
+node * cols = NULL;  
+void push (int start, int end, node *& t){
+	 if (t->lazy){
+	 	t->lazy = 0; 
+	 	if (start!=end){
+		 	if (t->l) t->l->lazy = !t->l->lazy; 
+		 	else t->l = new node (NULL, NULL, 0, 1); 
+		 	if (t->r) t->r->lazy = !t->r->lazy;
+		 	else t->r = new node (NULL, NULL, 0, 1);
+	 	}
+	 	t->sume = (end - start + 1) - t->sume; 
+	 	t->sume%=mod; 
+	 }
+}
+void update (node *& t, int start, int end, int i, int j){
+	if ((start > j || end < i) && t==NULL) return; 
+	if (t==NULL) t = new node (NULL, NULL, 0, 0);
+	push(start, end, t); 
+	if (start > j || end < i) return; 
+	if (start>=i && end<=j){
+		t->lazy = 1; 
+		push(start, end, t); 
+		return; 
+	}
+	if (start!=end){
+		update (t->l, start, (start+end)/2, i, j); 
+		update (t->r, (start+end)/2+1, end, i, j); 
+		t->sume = ((t->l)?(t->l->sume):(0)) + ((t->r)?(t->r->sume):(0));
+		t->sume%=mod; 
+	}
+}
+int query (node *& t, int start, int end, int i, int j){
+	if (t==NULL) return 0;
+	if (start > j || end < i) return 0; 
+	push(start,end,t); 
+	if (start>=i && end<=j) return t->sume%mod; 
+	return (query (t->l, start, (start+end)/2, i, j) + query(t->r, (start+end)/2+1, end, i, j))%mod;
+}
+main(){
+	ios_base::sync_with_stdio(0);
+	int Q; cin >> Q;
+	int la = 0; 
+	for (int g=0; g<Q; g++){
+		int T; cin >> T; 
+		if (T==1){
+			int x, l, r; cin >> x >> l >> r; 
+			l^=la; r^=la; 
+			if (x==0) update (rows, 1, 1e18, l, r); 
+			else update (cols, 1, 1e18, l, r); 
+		}
+		else{
+			int l, r, x, y; cin >> l >> r >> x >> y;
+			l^=la; r^=la;x^=la;y^=la;
+			int F = query (rows, 1, 1e18, l, r); 
+			int S = query (cols, 1, 1e18, x, y); 
+			F%=mod;
+			S%=mod;
+			int R = F * ((y-x+1)%mod) + S * ((r-l+1)%mod) - 2*F*S; R%=mod;R+=mod;R%=mod; 
+			cout << R << '\n';
+			la = R;
+		}
+	}
+	return 0;
+}

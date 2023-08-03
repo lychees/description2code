@@ -1,0 +1,123 @@
+#include<stdio.h>
+#include<iostream>
+#include<vector>
+#include<string.h>
+#include<algorithm>
+#include<deque>
+#include<map>
+#include<set>
+#include<stdlib.h>
+#include<math.h>
+using namespace std;
+#define ll long long
+#define si(x) scanf("%d",&x)
+#define sl(x) scanf("%lld",&x)
+#define sc(c) scanf("%c",&x)
+#define vl vector<ll>
+#define vi vector<int>
+#define vvl vector< vl >
+#define vvi vector< vi >
+#define pb push_back
+#define mod 1000000007
+#define mem(x,y) memset(x,y,sizeof(x))
+#define f(i,a,b) for(int i=(a);i<(b);i++)
+#define max_int_value 2147483647
+#define max_long_value 9223372036854775807
+//qsort(ww,cc,sizeof(tp),compare);
+/*int compare(const void *a,const void *b){
+    ll y=((((tp*)a)->w)-(((tp*)b)->w));
+    if(y>0)return 1;
+    else if(y==0)return 0;
+    else return -1;
+}*/
+#define maxn 1029
+ll tree[1030][1030],arr[1030][1030];
+void update_y(int x,int y,ll val){
+    while(y<maxn){
+        tree[x][y]+=val;
+        if(tree[x][y] >= mod) tree[x][y] -= mod;
+        y+=(y&(-y));
+    }
+}
+void update(int x,int y,ll val){
+    while(x<maxn){
+        update_y(x,y,val);
+        x+=(x&(-x));
+    }
+}
+ll read_y(int x,int y){
+    ll sum=0;
+    while(y>0){
+        sum+=tree[x][y];
+        if(sum >= mod) sum -= mod;
+        y-=(y&(-y));
+    }
+    return sum;
+}
+ll read(int x,int y){
+    ll sum=0;
+    while(x>0){
+        sum+=read_y(x,y);
+        if(sum >= mod) sum -= mod;
+        x-=(x&(-x));
+    }
+    return sum;
+}
+ll read_rect(int a,int b,int x,int y){
+    ll sum=read(x,y);
+    sum-=read(x,b-1);
+    if(sum < 0) sum += mod;
+    sum-=read(a-1,y);
+    if(sum < 0) sum += mod;
+    sum+=read(a-1,b-1);
+    if(sum >= mod) sum -= mod;
+    return sum;
+}
+#define gc getchar_unlocked
+void scanint(int &x)
+{
+    register int c = gc();
+    x = 0;
+    int neg = 0;
+    for(;((c<48 || c>57) && c != '-');c = gc());
+    if(c=='-') {neg=1;c=gc();}
+    for(;c>47 && c<58;c = gc()) {x = (x<<1) + (x<<3) + c - 48;}
+    if(neg) x=-x;
+}
+int main()
+{
+    int t; scanint(t);
+    while(t--){
+        int n; scanint(n);
+        ll K; sl(K);
+        for(int i=0;i<=maxn;i++){
+            for(int j=0;j<=maxn;j++){
+                arr[i][j] = K;
+                tree[i][j] = 0;
+            }
+        }
+
+        for(int i=1;i<=n;i++){
+            for(int j=1;j<=n;j++){
+                update(i, j, K);
+            }
+        }
+        int te; si(te);
+        while(te--){
+            char str[5]; scanf("%s",str);
+            if(str[0]=='m'){
+                int a,b,x,y; scanint(a); scanint(b); scanint(x); scanint(y);
+                printf("%lld\n",read_rect(a,b,x,y));
+            }else{
+                int a,b,x; scanint(a); scanint(b); scanint(x);
+                ll sy = (arr[a][b] * x) % mod;
+                ll cc = sy;
+                sy -= arr[a][b];
+                if(sy < 0) sy += mod;
+                update(a,b,sy);
+                arr[a][b]=cc;
+            }
+        }
+    }
+    return 0;
+}

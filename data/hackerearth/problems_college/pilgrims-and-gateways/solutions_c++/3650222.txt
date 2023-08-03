@@ -1,0 +1,142 @@
+#include <bits/stdc++.h>
+#define pli pair<ll,int>
+#define pii pair<int,int>
+#define pid pair<int,double>
+#define pdi pair<double,int>
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair(x,y)
+ 
+#define f first
+#define s second
+#define ll long long
+#define mod 1000000007
+ 
+ 
+using namespace std;
+int read()
+{
+    int x;
+    scanf("%d",&x);
+    return x;
+}
+ 
+typedef struct node
+{
+    int first;
+    int second;
+    int w;
+ 
+ 
+};
+bool cmp(node a, node b)
+{
+    return a.w < b.w;
+}
+int parent[100002];
+int rk[100002];
+int anc(int a)
+{
+    if(a==parent[a]) return parent[a];
+    return parent[a] = anc(parent[a]);
+}
+ 
+bool Merge(int a, int b)
+{
+    a = anc(a);
+    b=anc(b);
+    //if(a==b) return false;
+    if(rk[a] > rk[b])
+    {
+    	parent[b]=a, rk[a]+=rk[b];
+    	
+    }
+    else if(rk[b] > rk[a])
+    {
+    	parent[a]=b; rk[b]+=rk[a];
+    	
+    }
+    else rk[a]++,parent[a]=b;
+    return true;
+}
+ll kruskal(vector<node> &edges, int n)
+{
+    sort(edges.begin(),edges.end(),cmp);
+    
+     //for(int i=0;i<edges.size();i++) cout << edges[i].f << ' ' << edges[i].s << ' ' << edges[i].w<< endl;
+    for(int i=1;i<=n;i++) parent[i]=i,rk[i]=0;
+    int cnt=0;
+    ll ans =0;
+    
+    for(int i=0;i<edges.size() && cnt != n-1 ;i++)
+    {
+        int u = edges[i].f;
+        int v = edges[i].s;
+        ll w = (ll)edges[i].w;
+        int pu = anc(u);
+        int pv=anc(v);
+ 
+        if(!(pu==pv))
+        {
+            Merge(u,v);
+            cnt++;
+            ans+=w;
+            
+            //cout << u << ' ' << v << endl;
+        }
+    }
+    return ans;
+ 
+}
+ 
+int d[102][102];
+int main()
+{
+    int t = read();
+    while(t--)
+    {
+        int n = read(),m=read(),k=read();
+        vector<node> edges(m);
+        for(int i=0;i<m;i++)
+        {
+        	edges[i].f = read();
+        	edges[i].s=read();
+        	edges[i].w=read();
+        }
+ 
+        for(int i=1;i<=n;i++)
+        {
+            for(int j=1;j<=n;j++)
+            {
+                if(i==j) d[i][j]=0;
+                else d[i][j] = 1000000007;
+            }
+        }
+ 
+        for(int i=0;i<m;i++)
+        {
+        	d[edges[i].f][edges[i].s] = edges[i].w;
+        	d[edges[i].s][edges[i].f] = edges[i].w;
+        	
+        }
+ 
+        for(int k=1;k<=n;k++) for(int i=1;i<=n;i++) for(int j=1;j<=n;j++)
+        {
+ 
+            d[i][j] = min(d[i][j] , d[i][k]+d[k][j]);
+        }
+edges.clear();
+        for(int i=1;i<=k;i++) for(int j=i+1;j<=k;j++)
+        {
+            node temp;
+            temp.f = i;
+            temp.s=j;
+            temp.w=d[i][j];
+            edges.pb(temp);
+ 
+        }
+        
+       
+ 
+        cout << kruskal(edges,k) << endl;
+    }
+}

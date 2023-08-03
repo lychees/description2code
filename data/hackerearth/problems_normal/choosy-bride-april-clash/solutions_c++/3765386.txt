@@ -1,0 +1,136 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+
+map<ll, ll> m;
+
+void calc(map<ll,ll> & edges, vector<ll> & A, int i){
+    m[A[i]]++;
+    if(edges.count(i)){
+        int nxt = edges[i];
+        calc(edges, A, nxt);
+        if(A[nxt] > A[i]) m[A[i]] += m[A[nxt]];
+    }
+}
+
+//generate map for [i, j]
+map<ll, ll> generate(vector<ll> & A, int i, int j){
+    map<ll, ll> edges;
+    m.clear();
+    if(i <= j){
+        int last = i;
+        for(int x = i+1; x <= j; x++)
+            if(A[x] >= A[last])
+                edges[last] = x, last = x;
+        
+    }else{
+        int last = i;
+        for(int x = i-1; x >= j; x--)
+            if(A[x] >= A[last])
+                edges[last] = x, last = x;
+    }
+    
+    calc(edges, A, i);
+    return m;
+}
+
+int main(){
+    int T; cin >> T;
+    
+    while(T--){
+        int N, Q, bucketCNT = 0; cin >> N >> Q;
+        vector<ll> L(501), A(N);
+        vector<int> bucket(N);
+        
+        for(int x = 0; x < N; x++){
+            cin >> A[x];
+            if(x && x % 500 == 0) bucketCNT++;
+            bucket[x] = bucketCNT;
+        }
+        
+        bucketCNT++;
+        vector< map<ll,ll> > B(bucketCNT), Br(bucketCNT);
+        vector<int> bucketLast(bucketCNT), bucketFirst(bucketCNT,-1);
+        
+        for(int x = 0; x < N; x++){
+            if(bucketFirst[bucket[x]] == -1) 
+                bucketFirst[bucket[x]] = x;
+            bucketLast[bucket[x]] = x;
+        }
+        
+        for(int x = 0; x < bucketCNT; x++){
+            B[x] = generate(A, bucketFirst[x], bucketLast[x]);
+            Br[x] = generate(A, bucketLast[x], bucketFirst[x]);
+        }
+        
+        while(Q--){
+            int type, l, r, X; cin >> type >> l >> r; l--; r--;
+            int bL = bucket[l], bR = bucket[r];
+            if(type == 1){
+                ll ans = 0, last = -(1LL<<60);
+                if(l <= r){
+                    if(bL != bR){
+                        map<ll, ll> tmp = generate(A, l, bucketLast[bL]);
+                        ans += tmp.begin()->second;
+                        last = tmp.rbegin()->first + L[bL];
+                        
+                        for(int x = bL+1; x < bR; x++){
+                            auto it = B[x].lower_bound(last - L[x]);
+                            if(it != B[x].end()){
+                                ans += it->second;
+                                last = B[x].rbegin()->first + L[x];
+                            }
+                        }
+                        
+                        tmp = generate(A, bucketFirst[bR], r);
+                        auto it = tmp.lower_bound(last - L[bR]);
+                        if(it != tmp.end()) ans += it->second;
+                    }else{
+                        map<ll, ll> tmp = generate(A, l, r);
+                        ans += tmp.begin()->second;
+                    }
+                }else{
+                    if(bL != bR){
+                        map<ll, ll> tmp = generate(A, l, bucketFirst[bL]);
+                        ans += tmp.begin()->second;
+                        last = tmp.rbegin()->first + L[bL];
+                        
+                        for(int x = bL-1; x > bR; x--){
+                            auto it = Br[x].lower_bound(last - L[x]);
+                            if(it != Br[x].end()){
+                                ans += it->second;
+                                last = Br[x].rbegin()->first + L[x];
+                            }
+                        }
+                        
+                        tmp = generate(A, bucketLast[bR], r);
+                        auto it = tmp.lower_bound(last - L[bR]);
+                        if(it != tmp.end()) ans += it->second;
+                    }else{
+                        map<ll, ll> tmp = generate(A, l, r);
+                        ans += tmp.begin()->second;
+                    }
+                }
+                cout << ans << '\n';
+            }else{
+                cin >> X;
+                
+                if(bL != bR){
+                    for(int x = l; x <= bucketLast[bL]; x++) A[x] += X;
+                    B[bL] = generate(A, bucketFirst[bL], bucketLast[bL]);
+                    Br[bL] = generate(A, bucketLast[bL], bucketFirst[bL]);
+                    
+                    for(int x = bL+1; x < bR; x++) L[x] += X;
+                    
+                    for(int x = bucketFirst[bR]; x <= r; x++) A[x] += X;
+                    B[bR] = generate(A, bucketFirst[bR], bucketLast[bR]);
+                    Br[bR] = generate(A, bucketLast[bR], bucketFirst[bR]);
+                }else{
+                    for(int x = l; x <= r; x++) A[x] += X;
+                    B[bL] = generate(A, bucketFirst[bL], bucketLast[bL]);
+                    Br[bL] = generate(A, bucketLast[bL], bucketFirst[bL]);
+                }
+            }
+        }
+    }
+}

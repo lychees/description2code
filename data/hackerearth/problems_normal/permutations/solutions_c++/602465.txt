@@ -1,0 +1,128 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#define gc getchar_unlocked
+using namespace std;
+
+inline void scanint(int* x)
+{
+	register char c = getchar_unlocked();
+	*x = 0;
+	for(; (c<48)||(c>57);c = getchar_unlocked());
+	for(; (c>47)&&(c<58);c = getchar_unlocked())
+		*x = (int)((((*x)<<1) + ((*x)<<3)) + c - 48);
+}
+
+class UF    {
+    int *id, cnt, *sz;
+public:
+ 
+
+    UF(int N)   {
+        cnt = N;
+	id = new int[N];
+	sz = new int[N];
+	
+        for(int i=0; i<N; i++)	{
+            id[i] = i;
+	    sz[i] = 1;
+	}
+    }
+    ~UF()	{
+	delete [] id;
+	delete [] sz;
+    }
+    int find(int p)	{
+        int root = p;
+        while (root != id[root])
+            root = id[root];
+        while (p != root) {
+            int newp = id[p];
+            id[p] = root;
+            p = newp;
+        }
+        return root;
+    }
+    
+    
+   
+    void merge(int x, int y)	{
+        int i = find(x);
+        int j = find(y);
+        if (i == j) return;
+		
+      
+		id[j] = i;
+		sz[i] += sz[j]; 
+	
+        cnt--;
+    }
+    
+    bool connected(int x, int y)    {
+        return find(x) == find(y);
+    }
+
+    int count() {
+        return cnt;
+    }
+};
+
+int P[102];
+
+vector<int> str;
+vector<int> pos;
+bool marked[102];
+
+int main() {
+	int k,i,j,l,tt;char ch;bool reached; scanint(&k);
+	
+	for(i=0;i<k;i++)scanint(&P[i]);
+	
+
+	
+UF u(k);	
+	
+	for(i=0;i<k;i++)
+	{
+		for(j=0;j<k;j++)
+		{
+			ch=gc(); if(ch=='Y' && i!=j){if(!u.connected(i,j))u.merge(i,j);}
+		}
+		gc();
+	}
+	
+	for(i=0;i<u.count();i++)
+	{
+		reached=false;
+	  for(j=0;j<k;j++)
+	  {
+	  	if(marked[j]==false)
+	  	{
+	  		
+	  		if(reached==false)
+	  		{
+	  			tt=u.find(j); reached=true;
+	  		}
+	  	   
+	  	   if(u.find(j)==tt)
+	  	   {
+	  	   	marked[j]=true;
+	  	   	str.push_back(P[j]);
+	  	   	pos.push_back(j);
+	  	   }
+	  		
+	  	}
+	  }
+	  sort(str.begin(),str.end()); sort(pos.begin(),pos.end());
+	  
+	  for(l=0;l<pos.size();l++)
+	  {
+	  	P[pos[l]]=str[l];
+	  }
+	  pos.clear(); str.clear();
+	}
+	
+	for(i=0;i<k;i++)printf("%d ",P[i]);
+	
+	return 0;
+}

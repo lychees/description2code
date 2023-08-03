@@ -1,0 +1,186 @@
+#include <iostream>
+#include <cmath>
+#include <math.h>
+#include <vector>
+#include <algorithm>
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <set>
+#include <map>
+#include <stack>
+#include <queue>
+
+using namespace std;
+
+#define vec vector
+#define ALL(x) (x).begin(), (x).end()
+#define mp make_pair
+
+typedef long long ll;
+typedef unsigned long long ull;
+
+const ll inf = 1000000000ll;
+const ll inf64 = inf * inf;
+const ll base = inf + 7;
+
+const ull p = inf + 7;
+const ll mod1 = inf + 9;
+const ll mod2 = inf + 21;
+const int NMAX = 700 * 700 + 10;
+const int N = 770;
+
+ull w[NMAX];
+
+struct Hash {
+	int len;
+	ull value;
+	Hash() {
+		len = value = 0;
+	}
+	
+	Hash operator + (const Hash & b)  {
+		Hash ans;
+		ans.len = b.len + len;
+		ans.value = (b.value + w[b.len] * value);
+		return ans;
+	}
+
+	Hash operator - (const Hash & b) {
+		Hash ans;
+		ans.len = len - b.len;
+		ans.value = value - w[len - b.len] * b.value;
+		return ans;
+	}
+
+	bool operator < (const Hash & b) const {
+		return mp(value, len) < mp(b.value, b.len);
+	}
+
+	bool operator > (const Hash & b) const {
+		return mp(value, len) > mp(b.value, b.len);	
+	}
+
+	bool operator == (const Hash & b) const {
+		return mp(value, len) == mp(b.value, b.len);
+	}
+};
+
+ll a[N][N], b[N][N];
+Hash ha[N][N], hb[N][N], c[N][N];
+int n, m, x, y;
+
+Hash make_hash(ull v, int ll = 1) {
+	Hash ans;
+	ans.len = ll;
+	ans.value = v;
+	return ans;
+}
+
+void init() {
+	w[0] = 1ll;
+	for(int i = 1;i < NMAX;i++) {
+		w[i] = (w[i - 1] * p);
+	}
+	for(int k1 = 0;k1 < N;k1++) {
+		for(int k2 = 0;k2 < N;k2++) { 
+			a[k1][k2] = b[k1][k2] = 0;
+			ha[k1][k2] = hb[k1][k2] = make_hash(0, 0);
+		}
+	}
+
+	for(int i = 0;i < N;i++) for(int j = 0;j < N;j++) c[i][j] = make_hash(0, 0);
+}
+
+void read() {
+	scanf("%d %d", &n, &m);
+
+	for(int i = 1;i <= n;i++) {
+		for(int j = 1;j <= m;j++) {
+			int value;
+			scanf("%d", &value);
+			a[i][j] = value;
+		}
+	}
+
+	scanf("%d %d", &x, &y);
+
+	for(int i = 1;i <= x;i++) {
+		for(int j = 1;j <= y;j++) {
+			int value;
+			scanf("%d", &value);
+			b[i][j] = value;
+		}
+	}
+
+	for(int i = 1;i <= n;i++) 
+		for(int j = 1;j <= m;j++) 
+			ha[i][j] = ha[i][j - 1] + make_hash(a[i][j]);
+
+	for(int i = 1;i <= x;i++) 
+		for(int j = 1;j <= y;j++) 
+			hb[i][j] = hb[i][j - 1] + make_hash(b[i][j]);
+}
+
+bool check(int l) {
+	vec< Hash > ma, mb;
+
+	for(int i = 1;i <= n;i++) 
+		for(int j = 1;j + l - 1 <= m;j++) 
+			c[i][j] = c[i - 1][j] + (ha[i][j + l - 1] - ha[i][j - 1]);
+	for(int i = 1;i + l - 1 <= n;i++) 
+		for(int j = 1;j + l - 1 <= m;j++) 
+			ma.push_back(c[i + l - 1][j] - c[i - 1][j]);
+	for(int i = 1;i <= x;i++) 
+		for(int j = 1;j + l - 1 <= y;j++) 
+			c[i][j] = c[i - 1][j] + (hb[i][j + l - 1] - hb[i][j - 1]);
+	for(int i = 1;i + l - 1 <= x;i++) 
+		for(int j = 1;j + l - 1 <= y;j++) 
+			mb.push_back(c[i + l - 1][j] - c[i - 1][j]);
+	
+	sort(ALL(ma));
+	sort(ALL(mb));
+
+	int ia = 0, ib = 0;
+
+	/*for(auto i : ma) cout << "[" << i.value << ' ' << i.len << "] ";
+	cout << '\n';
+
+	for(auto i : mb) cout << "[" << i.value << ' ' << i.len << "] ";
+	cout << '\n';*/
+
+
+	while(ia < (int)ma.size() && ib < (int)mb.size()) {
+		if(ma[ia] < mb[ib]) ia++;
+		else if(ma[ia] > mb[ib]) ib++;
+		else return 1;
+	}
+
+	return 0;
+}
+
+bool solve() 
+{
+	init();
+	read();
+
+	int l = 0, r = min(min(n, m), min(x, y)), mid;
+
+	while(r - l > 1) {
+		mid = (l + r) >> 1;
+		if(check(mid)) l = mid;
+		else r = mid - 1;
+	}
+
+	cout << (check(r)?r : l) << '\n';
+
+	return true;
+}
+
+int main() {
+
+	//while(solve());
+	solve();    
+
+	return 0;
+}

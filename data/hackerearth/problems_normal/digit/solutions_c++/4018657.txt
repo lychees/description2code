@@ -1,0 +1,73 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+using i64 = long long;
+ 
+template<typename T>
+class Range{private:struct I{T x;T operator*(){return x;}bool operator!=(I& lhs){return x<lhs.x;}void operator++(){++x;}};I i,n;
+public:Range(T n):i({0}),n({n}){}Range(T i,T n):i({i}),n({n}){}I& begin(){return i;}I& end(){return n;}};
+using range = Range<i64>;
+ 
+i64 a, b, k;
+int x, y;
+ 
+i64 f(i64 p) {
+  string s = to_string(p);
+  int n = s.size();
+  vector<vector<vector<vector<i64>>>> dp(2, vector<vector<vector<i64>>>(2, vector<vector<i64>>(1010, vector<i64>(k+1, 0)))); // dp[n+1][2][1010][k+1]
+  dp[0][0][0][0] = 1;
+  for(auto&& i : range(n)) {
+    dp[(i+1)&1].assign(2, vector<vector<i64>>(1010, vector<i64>(k+1, 0)));
+    for(auto&& j : range(2)) {
+      for(auto&& acc : range(1005)) {
+        for(auto&& rem : range(k)) {
+          if(!dp[i&1][j][acc][rem]) { continue; }
+          for(auto&& d : range(j?10:s[i]-'0'+1)) {
+            int flag = j || d < s[i] - '0',
+                nacc = acc + d,
+                nrem = (rem * 10 + d) % k;
+            dp[(i+1)&1][flag][nacc][nrem] += dp[i&1][j][acc][rem];
+          }
+        }
+      }
+    }
+  }
+  i64 res = 0;
+  for(auto&& j : range(2)) {
+    for(auto&& acc : range(x, y+1)) {
+      res += dp[n&1][j][acc][0];
+    }
+  }
+  return res;
+}
+ 
+i64 calc(i64 x) {
+  int res = 0;
+  while(x > 0) {
+    res += x % 10;
+    x /= 10;
+  }
+  return res;
+}
+ 
+i64 g() {
+  i64 m = a % k;
+  i64 res = 0;
+  for(i64 v=a+(k-m); v<=b; v+=k) {
+    i64 dsum = calc(v);
+    if(x <= dsum && dsum <= y) { ++res; }
+  }
+  return res;
+}
+ 
+int main(void) {
+  scanf("%lld%lld%d%d%lld", &a, &b, &x, &y, &k);
+  i64 res = 0;
+  if(k <= int(1e4)) {
+    res = f(b) - f(a-1);
+  } else {
+    res = g();
+  }
+  printf("%lld\n", res);
+  return 0;
+}

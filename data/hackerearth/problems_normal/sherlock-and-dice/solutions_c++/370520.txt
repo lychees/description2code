@@ -1,0 +1,79 @@
+#include <iostream>
+#include <math.h>
+#include <assert.h>
+using namespace std;
+
+double returnProbabilities(int m, int n, int k)
+{
+    double dice[n+1][k+10];
+
+    for (int x = 0; x < n; x++) {
+        for (int y = 0; y < k+9; y++) {
+            dice[x][y] = 0;
+        }
+    }
+
+    if ((k > (m * n)) or (k < n)) {
+        return 0;
+    }
+
+    for (int x = 1; ((x <= m) and (x <= k)); x++) {
+        dice[1][x] = (double) 1/m;
+    }
+
+    for (int x = 2; x <= n; x++) {
+        for (int y = 1; y <= k; y++) {
+            for (int w = 1; ((w <= m) and (w < y)); w++) {
+                dice[x][y] = (dice[x][y] + dice[x-1][y-w]);
+            }
+
+            dice[x][y] /= m;
+        }
+    }
+
+    return dice[n][k];
+}
+
+int main()
+{
+	int loops, m, n, k;
+    double probability;
+
+    fscanf(stdin, "%i\n", &loops);
+
+    assert(loops > 0 and loops <= 10);
+
+    for (int i = 1; i <= loops; i++) {
+        fscanf(stdin, "%i %i %i\n", &m, &n, &k);
+
+        assert((m > 0 and m < 51) or (n > 0 and n < 51) or (k > 1 and k <= 10000));
+
+        probability = returnProbabilities(n, m, k);
+
+        if (0 == probability) {
+            cout << "0.000 0" << endl;
+            continue;
+        }
+
+        int decimalPositions = 0;
+        string stringValue = to_string(probability);
+        int eSNPosition = (int) stringValue.find("e");
+
+        if (eSNPosition > 0) {
+            probability = stod(stringValue.substr(0, eSNPosition));
+            decimalPositions = stod(stringValue.substr(eSNPosition+2, stringValue.length()));
+        }
+
+        while (probability < 1) {
+            decimalPositions++;
+
+            probability *= 10;
+        }
+
+        cout.precision(3);
+
+        cout << fixed << probability << " " << decimalPositions << endl;
+    }
+    
+    exit(0);
+}

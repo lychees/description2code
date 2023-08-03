@@ -1,0 +1,92 @@
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<string>
+#include<cstring>
+using namespace std;
+
+typedef long long LL;
+typedef vector<int> VI;
+
+#define REP(i,n) for(int i=0, i##_len=(n); i<i##_len; ++i)
+#define EACH(i,c) for(__typeof((c).begin()) i=(c).begin(),i##_end=(c).end();i!=i##_end;++i)
+#define eprintf(s...) fprintf(stderr, s)
+
+template<class T> inline void amin(T &a, const T &b) { if (b<a) a=b; }
+template<class T> inline void amax(T &a, const T &b) { if (a<b) a=b; }
+LL powMod(LL x, LL y, LL m){
+    LL r = 1;
+    for (; y; y>>=1) {
+        if (y&1) r = r * x % m;
+        x = x * x % m;
+    }
+    return r;
+}
+
+// MOD == 3*5*(1<<27)+1; ROOT has order (1<<27);
+const LL MOD = 2013265921LL, ROOT = 440564289, LEN = 27;
+
+void ntt(vector<int> &a, bool inv=false){
+    static vector<LL> e, er;
+    int n = a.size(); // n == 1<<k && k < LEN
+    if(n != (int)e.size()) {
+        e.resize(n); er.resize(n);
+        e[0] = 1; e[1] = powMod(ROOT, (1<<LEN)/n, MOD);
+        er[0] = 1; er[1] = powMod(e[1], MOD-2, MOD);
+        for (int i=2; i<n; i++) e[i] = e[i-1] * e[1] % MOD;
+        for (int i=2; i<n; i++) er[i] = er[i-1] * er[1] % MOD;
+    }
+    if (inv) swap(e, er);
+    for (int m=n, th=1; m>=2; m>>=1, th*=2) {
+        int mh = m>>1;
+        for (int i=0; i<mh; i++) {
+            for (int j=i; j<n; j+=m) {
+                int k = j + mh;
+                LL x = (LL)a[j] + a[k], y = a[j] - a[k];
+                a[j] = (x>=MOD?x-MOD:x);
+                a[k] = e[i*th] * (y<0?y+MOD:y) % MOD;
+            }
+        }
+    }
+    for (int i=0, j=1; j<n-1; j++) {
+        for (int k=n/2; k>(i^=k); k/=2) ;
+        if (j<i) swap(a[i], a[j]);
+    }
+    if(inv) {
+        swap(e, er);
+        LL d = powMod(n, MOD-2, MOD);
+        for (int i=0; i<n; i++) a[i] = a[i] * d % MOD;
+    }
+}
+void mulPolynomial(VI &p, VI &q, VI &r) {
+    ntt(p); ntt(q);
+    for (int i=0; i<(int)p.size(); i++) r[i]=(LL)p[i]*q[i]%MOD;
+    ntt(r, true);
+};
+
+int N;
+
+int main() {
+    scanf("%d", &N);
+    VI p(1<<18), q(1<<18), r(1<<18);
+    int ans = 0;
+    REP (i, N) {
+	int x;
+	scanf("%d", &x);
+
+	if (p[x]) ans = 1;
+	p[x] = 1;
+	q[(1<<17) - x] = 1;
+    }
+
+    mulPolynomial(p, q, r);
+    
+    for (int i=1; i<(1<<17); i++) {
+	if (r[(1<<17)+i] || r[(1<<17)-i]) ans++;
+    }
+
+    printf("%d\n", ans);
+    
+    return 0;
+}

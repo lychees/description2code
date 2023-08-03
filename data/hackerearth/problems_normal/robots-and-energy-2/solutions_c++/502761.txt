@@ -1,0 +1,162 @@
+#include <algorithm>
+#include <bitset>
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <list>
+#include <map>
+#include <numeric>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+#define dbg(x) cout << #x << " = " << x << endl
+#define dbg2(x,y) cout << #x << " = " << x << ", " << #y << " = " << y << endl
+#define dbg3(x,y,z) cout << #x << " = " << x << ", " << #y << " = " << y << ", " << #z << " = " << z << endl
+#define out(x) cout << (x) << endl
+#define out2(x,y) cout << (x) << " " << (y) << endl
+
+const long long Mod = 1000000007LL;
+
+const int maxN = 100;
+
+char str[maxN], cpy[maxN];
+map<string, bool> mp;
+inline int get_number()
+{
+    mp.clear();
+    strcpy(cpy, str);
+    static int i, j, l, r;
+    static char ch;
+    for(i = 0; str[i]; i ++) {
+        for(j = i; str[j]; j ++) {
+            for(l = i, r = j; l < r; l ++, r --)
+                if( str[l] != str[r] )
+                    break;
+            if( l >= r ) {
+                ch = cpy[j + 1];
+                cpy[j + 1] = 0;
+                mp[cpy + i] = 1;
+                cpy[j + 1] = ch;
+            }
+        }
+    }
+    return (int)mp.size();
+}
+
+int n, m, T, D;
+int v[maxN * maxN];
+int c, sx, sy, tx, ty;
+
+long long based[maxN][maxN];
+long long Mat[30][maxN][maxN];
+
+void gao()
+{
+    int i, j, k, a, b, c;
+    for(i = 1; i < 30; i ++) {
+        if( (1LL << i) > D ) break;
+        for(j = 0; j < T; j ++)
+            for(k = j; k < T; k ++)
+                Mat[i][j][k] = Mat[i][k][j] = 0;
+        for(c = 0; c < T; c ++) {
+            for(a = 0; a < T; a ++) {
+                if( !Mat[i - 1][a][c] ) continue;
+                for(b = 0; b < T; b ++) {
+                    if( !Mat[i - 1][c][b] ) continue;
+                    Mat[i][a][b] += (Mat[i - 1][a][c] * Mat[i - 1][c][b]) % Mod;
+                    Mat[i][a][b] %= Mod;
+                }
+            }
+        }
+    }
+}
+
+void mul(long long a[][maxN], long long b[][maxN], long long c[][maxN])
+{
+    static int i, j, k;
+    for(i = 0; i < T; i ++)
+        for(j = i; j < T; j ++)
+            c[i][j] = c[j][i] = 0;
+    for(k = 0; k < T; k ++) {
+        for(i = 0; i < T; i ++) {
+            if( !a[i][k] ) continue;
+            for(j = 0; j < T; j ++) {
+                if( !b[k][j] ) continue;
+                c[i][j] += (a[i][k] * b[k][j]) % Mod;
+                c[i][j] %= Mod;
+            }
+        }
+    }
+}
+
+long long A[maxN][maxN], B[maxN][maxN], C[maxN][maxN];
+
+void display(long long p[][maxN])
+{
+    cout << endl;
+    int i, j;
+    for(i = 0; i < T; i ++)
+        for(j = 0; j < T; j ++)
+            printf("%lld%c", p[i][j], (j + 1 == T) ? '\n' : ' ');
+    cout << endl;
+}
+
+int main()
+{
+    for(; scanf("%d %d", &n, &m) == 2; ) {
+        int i, j, k = 0;
+        for(i = 0; i < n; i ++) {
+            for(j = 0; j < m; j ++) {
+                scanf("%s", str);
+                v[k ++] = get_number();
+            }
+        }
+        memset(based, 0, sizeof(based));
+        scanf("%d", &c);
+        for(; c > 0; c --) {
+            scanf("%d %d %d %d", &sx, &sy, &tx, &ty);
+            based[sx * m + sy][tx * m + ty] ++;
+            based[tx * m + ty][sx * m + sy] ++;
+        }
+        T = n * m;
+        for(i = 0; i < T; i ++) based[i][i] ++;
+        scanf("%d", &D);
+        for(i = 0; i < T; i ++)
+            for(j = i; j < T; j ++)
+                Mat[0][i][j] = Mat[0][j][i] = based[i][j];
+        gao();
+        memset(B, 0, sizeof(B));
+        for(i = 0; i < T; i ++) B[i][i] = 1;
+        for(i = 0; i < 30; i ++) {
+            if( D & (1 << i) ) {
+                mul(Mat[i], B, C);
+                for(j = 0; j < T; j ++)
+                    for(k = 0; k < T; k ++)
+                        B[j][k] = C[j][k];
+            }
+        }
+        //memset(A, 0, sizeof(A));
+        for(i = 0; i < T; i ++)
+            for(j = 0; j < T; j ++)
+                A[i][j] = v[j];
+        //display(A);
+        //display(B);
+        mul(A, B, C);
+        k = 0;
+        for(i = 0; i < n; i ++)
+            for(j = 0; j < m; j ++, k ++)
+                printf("%lld%c", C[k][k] % Mod, (j + 1 == m) ? '\n' : ' ');
+    }
+    return 0;
+}

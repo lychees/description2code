@@ -1,0 +1,86 @@
+	#include <bits/stdc++.h>
+	#define ll long long
+	#define l long
+	#define mod 1000000007
+	#define MAX 500000
+	#define Limit 1000002
+	using namespace std;
+	ll tree[Limit*2+1],brr[MAX+1],crr[MAX+1];
+	int arr[Limit+1];
+
+	void update(int a,ll val,int n)
+	{
+		int i=a;
+		while(i<=n)
+		{	
+			tree[i]=(tree[i]+val)%mod;
+			i+=(i & (-i));
+		}
+	}
+	ll query(int i)
+	{
+		ll total=0;
+		while(i>0)
+		{
+			total=(total+tree[i])%mod;
+			i-=(i & (-i));
+		}
+		return total;
+	}
+	void Precompute()
+	{
+		for(int i=0;i<=MAX;i++){
+			crr[i]=0;
+			brr[i]=i;
+		}
+		for(int i=2;i<=MAX;i++)
+		{
+			if(brr[i]==i)
+			{
+				brr[i]=i-1;
+				for(int j=2;j*i<=MAX;j++)
+				{
+					brr[j*i]-=(brr[j*i]/i);
+				}
+			}
+		}
+		// for(int i=1;i<=13;i++)
+		// 	cout<<brr[i]<<endl;
+		for(int i=1;i<=MAX;i++)
+		{
+			for(int j=i,k=1 ; j<=MAX ; j+=i,k++)
+			{
+				crr[j]+=(i*brr[k]);
+			}
+		}
+	}
+	int main()
+	{
+		int n;
+		cin>>n;
+		for(int i=1;i<=n;i++)
+			cin>>arr[i];
+		int q,x,y;
+		char c;
+		Precompute();
+		for(int i=1;i<=n;i++)
+		{
+		//	cout<<crr[arr[i]]<<endl;
+			update(i,crr[arr[i]],n);
+		}
+		cin>>q;
+		while(q--)
+		{
+			cin>>c>>x>>y;
+			if(c=='C')
+			{
+			//	cout<<"query"<<endl;
+				cout<<(query(y)-query(x-1)+mod)%mod<<endl;
+			}
+			else
+			{
+				update(x,(crr[y]-crr[arr[x]]+mod)%mod,n);
+				arr[x]=y;
+			}
+		}
+	}

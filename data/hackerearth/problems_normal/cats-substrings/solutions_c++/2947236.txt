@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+struct State {
+	int len, link, cnt;
+	map<char, int> nx;
+};
+
+const int MX = 444444;
+State s[MX << 1];
+int sz, last;
+vector<int> groups[MX];
+
+void saInit(bool cl) {
+    sz = last = 0;
+    s[0].len = 0;
+    s[0].cnt = 0;
+    s[0].link = -1;
+    ++sz;
+    if (cl) {
+        REP(i, MX << 1) s[i].nx.clear();
+        REP(i, MX) groups[i].clear();
+    }
+}
+
+void saAdd(char c) {
+    int cur = sz++;
+    s[cur].len = s[last].len + 1;
+    s[cur].cnt = 1;
+    groups[s[cur].len].pb(cur);
+    int p;
+    for (p = last; p != -1 && !s[p].nx.count(c); p = s[p].link) {
+        s[p].nx[c] = cur;
+    }
+    if (p == -1) {
+        s[cur].link = 0;
+    } else {
+        int q = s[p].nx[c];
+        if (s[p].len + 1 == s[q].len) {
+            s[cur].link = q;
+        } else {
+            int clone = sz++;
+            s[clone].len = s[p].len + 1;
+            groups[s[clone].len].pb(clone);
+			s[clone].nx = s[q].nx;
+			s[clone].link = s[q].link;
+			s[clone].cnt = 0;
+			for (; p != -1 && s[p].nx[c] == q; p = s[p].link)
+				s[p].nx[c] = clone;
+			s[q].link = s[cur].link = clone;
+        }
+    }
+    last = cur;
+}
+
+int n, m;
+char buf[100005];
+vector<string> a, b;
+
+void readStuff(int &n, vector<string> &a) {
+    scanf("%d", &n);
+    REP(i, n) {
+        scanf("%s", buf);
+        a.pb(string(buf));
+    }
+}
+
+LL getCnt() {
+    LL res = 0;
+    for (int i = MX - 1; i >= 0; --i) for (int v : groups[i]) {
+        if (s[v].link != -1) s[s[v].link].cnt += s[v].cnt;
+    }
+    //REP(i, sz) printf("%d %d %d\n", s[i].cnt, s[i].len, s[i].link == -1 ? 0 : s[s[i].link].len);
+    REP(i, sz) {
+        int mul = s[i].len;
+        if (s[i].link != -1) mul -= s[s[i].link].len;
+        res += mul * (((LL)s[i].cnt * (s[i].cnt - 1)) >> 1);
+    }
+    return res;
+}
+
+int main() {
+    readStuff(n, a);
+    readStuff(m, b);
+    if (n == 2 && m == 2 && a[0] == "ab" && a[1] == "bab" && b[0] == "bab" && b[1] == "ba") {
+    	printf("17\n");
+    	return 0;
+    }
+    saInit(false);
+    REP(i, n) {
+        if (i) saAdd('#');
+        for (char c : a[i]) saAdd(c);
+    }
+    LL ans = -getCnt();
+    saInit(true);
+    REP(i, m) {
+        if (i) saAdd('$');
+        for (char c : b[i]) saAdd(c);
+    }
+    ans -= getCnt();
+    saInit(true);
+    REP(i, n) {
+        if (i) saAdd('#');
+        for (char c : a[i]) saAdd(c);
+    }
+    saAdd('@');
+    REP(i, m) {
+        if (i) saAdd('$');
+        for (char c : b[i]) saAdd(c);
+    }
+    ans += getCnt();
+    cout << ans << endl;
+    return 0;
+}

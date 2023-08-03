@@ -1,0 +1,130 @@
+#include<cstdio>
+#include<fstream>
+#include<iostream>
+#include<iomanip>
+#include<algorithm>
+#include<vector>
+#include<bitset>
+#include<deque>
+#include<queue>
+#include<set>
+#include<map>
+#include<cmath>
+#include<cstring>
+#include<ctime>
+#include<cstdlib>
+#include<unordered_map>
+
+#define ll long long
+#define pb push_back
+#define mp make_pair
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+
+using namespace std;
+
+const int nmax = 2 * 105;
+const int inf = (1LL << 31) - 1;
+
+int t, n, i, j, x, y, z, s, d, add, ctotal;
+int cost[nmax][nmax], cap[nmax][nmax], flow[nmax][nmax];
+int dist[nmax], f[nmax];
+
+vector<int> v[nmax];
+deque<int> q;
+bitset<nmax> inq;
+
+bool bf()
+{
+    for(i = 1; i <= n + n + 1; i++)
+        dist[i] = inf;
+
+    q.push_back(s);
+    inq[s] = 1;
+
+    while(!q.empty())
+    {
+        x = q.front();
+        q.pop_front();
+        inq[x] = 0;
+
+        for(vector<int>::iterator it = v[x].begin(); it != v[x].end(); it++)
+            if(dist[x] + cost[x][*it] < dist[*it] && flow[x][*it] < cap[x][*it])
+            {
+                dist[*it] = dist[x] + cost[x][*it];
+                f[*it] = x;
+                if(!inq[*it])
+                {
+                    inq[*it] = 1;
+                    q.push_back(*it);
+                }
+            }
+    }
+
+    return dist[d] != inf;
+}
+
+int main()
+{
+    cin.sync_with_stdio(false);
+
+    //freopen("test.in", "r", stdin);
+    //freopen("test.out", "w", stdout);
+
+    cin >> t;
+
+    for(; t; t--)
+    {
+        cin >> n;
+
+        ctotal = 0;
+        memset(cost, 0, sizeof(cost));
+        memset(cap, 0, sizeof(cap));
+        memset(flow, 0, sizeof(flow));
+
+        for(i = 1; i <= n; i++)
+            v[i].clear();
+
+        for(i = 1; i <= n; i++)
+            for(j = 1; j <= n; j++)
+            {
+                x = i;
+                y = j + n;
+                cin >> z;
+                v[x].pb(y);
+                v[y].pb(x);
+                cost[x][y] = -z;
+                cost[y][x] = z;
+                cap[x][y] = 1;
+            }
+
+        s = 0;
+        d = n + n + 1;
+        for(i = 1; i <= n; i++)
+        {
+            cap[s][i] = 1;
+            v[s].push_back(i);
+        }
+        for(i = n + 1; i <= n + n; i++)
+        {
+            cap[i][d] = 1;
+            v[i].push_back(d);
+        }
+        while(bf())
+        {
+            add = inf;
+            for(x = d; x != f[x]; x = f[x])
+                add = min(add, cap[f[x]][x] - flow[f[x]][x]);
+            for(x = d; x != f[x]; x = f[x])
+            {
+                flow[f[x]][x] += add;
+                flow[x][f[x]] -= add;
+            }
+            ctotal += dist[d];
+        }
+
+        cout << -ctotal << '\n';
+    }
+
+    return 0;
+}

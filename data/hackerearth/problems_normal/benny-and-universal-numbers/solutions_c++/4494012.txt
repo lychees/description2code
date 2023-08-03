@@ -1,0 +1,123 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("circuit.inp","r",stdin)
+#define OUTPUT freopen("circuit.out","w",stdout)
+#define FOR(i,l,r) for(auto i=(l);i<=(r);i++)
+#define REP(i,l,r) for(auto i=(l);i<(r);i++)
+#define FORD(i,l,r) for(auto i=(l);i>=(r);i--)
+#define REPD(i,l,r) for(auto i=(l);i>(r);i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+
+const int inf=1e9;
+const int MOD=1e9+7;
+const int N=1e5+10,alp=10,M=15;
+
+
+vector <ll> f[M][alp][2];
+
+int rem[M],knap[20];
+int tpri[105];
+
+int test;
+ll ans[N];
+
+struct query{
+    int len,mod,last,type,idx;
+    query (int _len=0,int _last=0,int _type=0,int _mod=0,int _idx=0){
+        len=_len;last=_last;type=_type;mod=_mod;idx=_idx;
+    }
+};
+query concat(query cur,int val,int n1){
+    cur.len++;
+    cur.type|=!tpri[cur.last*10+val];
+    cur.mod=(cur.mod*10+val)%knap[n1];
+    cur.last=val;
+    return cur;
+}
+vector <query> imp[20];
+vector <int> imps[20];
+int tmp[20];
+ll g[20];
+void decomp(ll R,int idx){
+    int n1=0;
+    R=min(R,999999999999999LL);
+    while (R){
+        tmp[n1++]=R%10;
+        R/=10;
+    }
+    query ans(0,0,0,0,idx);
+    imps[n1].push_back(idx);
+    FORD(i,n1-1,0){
+        REP(j,0,tmp[i]){
+            if (i==n1-1&&j==0) continue;
+            query cur=concat(ans,j,n1);
+            if (i==n1-1) cur.type=0;
+            imp[n1].push_back(cur);
+        }
+        ans=concat(ans,tmp[i],n1);
+        if (i==n1-1) ans.type=0;
+        if (ans.mod%(n1-i)!=rem[n1-i-1]) break;
+    }
+}
+
+void prepare(){
+    knap[0]=1;
+    FOR(i,1,M) knap[i]=knap[i-1]*i/__gcd(knap[i-1],i);
+//    FOR(i,1,M) cout<<knap[i]<<'\n';
+    REP(i,2,105) if (!tpri[i])
+        for(int j=i+i;j<105;j+=i) tpri[j]=1;
+    tpri[1]=tpri[0]=1;
+    ///
+    REP(i,0,M) scanf("%d",rem+i);
+    scanf("%d",&test);
+    FOR(i,1,test){
+        ll L,R;
+        scanf("%lld%lld",&L,&R);
+        decomp(L,-i);
+        decomp(R+1,i);
+    }
+}
+ll DP(int pos,int ldig,int type,int mod,int len){
+    if (mod%pos!=rem[pos-1]) return 0;
+    if (pos>=len) return type;
+    ///
+    int idx=mod/pos;
+    ll &val=f[pos-1][ldig][type][idx];
+    if (val!=-1) return val;
+    val=0;
+    REP(i,0,alp) val+=DP(pos+1,i,type|!tpri[ldig*10+i],(mod*10+i)%knap[len],len);
+    return val;
+}
+void solve(){
+    FOR(lay,1,M){
+        REP(i,0,lay)
+            REP(j,0,alp)
+                FOR(type,0,1) f[i][j][type].assign(knap[lay]/(i+1),-1LL);
+        for(auto cur:imp[lay]){
+            ll val=DP(cur.len,cur.last,cur.type,cur.mod,lay);
+            if (cur.idx>0) ans[cur.idx]+=val;
+            else ans[-cur.idx]-=val;
+        }
+        for(auto cur:imps[lay]){
+            if (cur>0) ans[cur]+=g[lay-1];
+            else ans[-cur]-=g[lay-1];
+        }
+        g[lay]=g[lay-1];
+        REP(i,1,alp) g[lay]+=DP(1,i,0,i%knap[lay],lay);
+    }
+    FOR(i,1,test) printf("%lld\n",ans[i]);
+}
+
+int main(){
+//    freopen("input.inp","r",stdin);
+    prepare();
+    solve();
+}

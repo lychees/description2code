@@ -1,0 +1,102 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define bitmax 1073741824
+#define MAX 100001
+
+struct node{
+
+	int data;
+	node *child[2];
+	node(){
+		data = 0;
+		child[0] = child[1] = NULL;
+	}
+};
+
+inline void sc(int &a)
+{
+    register int c;
+    a = 0;
+	do c = getchar_unlocked(); while(c < '0');
+	do{
+		a = (a << 1) + (a << 3) + c - '0';
+		c = getchar_unlocked();
+	}while(c >= '0');
+}
+
+int t,n,arr[MAX],q,l,r,Q[10][2];
+long long int ans[10];
+inline void insert(node *root,int num,int bit){
+
+	if(bit==0)
+		return ;
+	if(!root->child[bool(bit&num)]){
+		root->child[bool(bit&num)] = new node();
+	}
+	root->child[bool(bit&num)]->data += 1;	
+	insert(root->child[bool(bit&num)],num,bit/2);
+}
+
+
+inline void deallocate(node *root){
+
+	if(!root)
+		return ;
+	deallocate(root->child[0]);
+	deallocate(root->child[1]);
+	free(root);
+}
+
+inline int countK(node *root,int num,int K,int bit){
+
+
+	if(!root)
+		return 0;
+	if(bit == 0)
+		return root->data;
+	if(K&bit){
+		if(num&bit){
+			return ((root->child[1] ? root->child[1]->data : 0) + countK(root->child[0],num,K,bit/2));
+		}else{
+			return ((root->child[0] ? root->child[0]->data : 0) + countK(root->child[1],num,K,bit/2));
+		}
+	}else{
+		if(num&bit){
+			return countK(root->child[1],num,K,bit/2);
+		}else{
+			return countK(root->child[0],num,K,bit/2);
+		}
+	}
+}
+
+int main(){
+
+	sc(t);
+	while(t--){
+		sc(n);
+		for(int i=1;i<=n;i++){
+			sc(arr[i]);
+			arr[i] = (arr[i] xor arr[i-1]);	
+		}
+		sc(q);			
+		for(int i=0;i<q;i++){
+			sc(l),sc(r);
+			Q[i][0] = l;
+			Q[i][1] = r;
+			ans[i] = 0;
+		}
+		node *root = new node();
+		insert(root,0,bitmax);
+		for(int i=1;i<=n;i++){
+			for(int j=0;j<q;j++){
+				l = Q[j][0];
+				r = Q[j][1];
+				ans[j] = ans[j] + (countK(root,arr[i],r,bitmax) - ( l==0 ? 0 : countK(root,arr[i],l-1,bitmax) ) );
+			}					
+			insert(root,arr[i],bitmax);
+		}
+		for(int i=0;i<q;i++)
+			printf("%lld\n",ans[i]);
+	}
+	return 0;
+}

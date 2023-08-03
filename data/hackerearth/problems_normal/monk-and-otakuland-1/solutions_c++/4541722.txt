@@ -1,0 +1,143 @@
+//#include <bits/stdc++.h>
+#include <iostream>
+#include <iomanip>
+#include <vector>
+#include <iterator>
+#include <algorithm>
+#include <string>
+#include <cmath>
+#include <map>
+#include <set>
+#include <queue>
+#include <stack>
+#include <fstream>
+
+#define gc getchar_unlocked
+
+using namespace std;
+
+typedef long long        ll;
+typedef pair<int, int>   pii;
+typedef pair<int, pii>   piii;
+typedef vector<int>      vi;
+typedef set<int>         si;
+typedef vector<pii>      vii;
+typedef vector<piii>     viii;
+
+#define rep(i,n)     for (int (i)=0; (i)<(n); (i)++)
+#define repn(i,n)    for (int (i)=1; (i)<=(n); (i)++)
+#define repd(i,n)    for (int (i)=(n)-1; (i)>=0; (i)--)
+#define foreach(i,X) for(__typeof((X).begin()) i = (X).begin(); i != (X).end(); i++)
+#define all(a)       a.begin(),a.end()
+
+const int inf = numeric_limits<int>::max();
+const ll linf = numeric_limits<ll>::max();
+
+#define fi           first
+#define se           second
+#define pb           push_back
+#define mp           make_pair
+
+void fs(int &x)
+{
+    register int c = gc();
+    x = 0;
+    int neg = 0;
+    for(;((c<48 || c>57) && c != '-');c = gc());
+    if(c=='-') {neg=1;c=gc();}
+    for(;c>47 && c<58;c = gc()) {x = (x<<1) + (x<<3) + c - 48;}
+    if(neg) x=-x;
+}
+
+int n;
+int a[200000];
+int tree[800000];
+int lazy[800000];
+
+void build(int node, int start, int last)
+{
+    if(start==last)
+    {
+        tree[node]=a[start];
+        return;
+    }
+    build(node*2, start, (start+last)/2);
+    build(node*2+1, (start+last)/2+1, last);
+    tree[node]=tree[node*2]+tree[node*2+1];
+}
+
+void update(int node, int start, int last, int l, int r)
+{
+    if(lazy[node]!=0)
+    {
+        if(start!=last)
+        {
+            lazy[node*2]=!lazy[node*2];
+            lazy[node*2+1]=!lazy[node*2+1];
+        }
+        tree[node]=(last-start+1)-tree[node];
+        lazy[node]=0;
+    }
+    if(l>last || r<start) return;
+    if(l<=start && last<=r)
+    {
+        tree[node]=(last-start+1)-tree[node];
+        if(start!=last)
+        {
+            lazy[node*2]=!lazy[node*2];
+            lazy[node*2+1]=!lazy[node*2+1];
+        }
+        return;
+    }
+    int mid=(start+last)/2;
+    update(node*2, start, mid, l, r);
+    update(node*2+1, mid+1, last, l, r);
+    tree[node]=tree[node*2]+tree[node*2+1];
+}
+
+int query(int node, int start, int last, int l, int r)
+{
+    if(lazy[node]!=0)
+    {
+        if(start!=last)
+        {
+            lazy[node*2]=!lazy[node*2];
+            lazy[node*2+1]=!lazy[node*2+1];
+        }
+        tree[node]=(last-start+1)-tree[node];
+        lazy[node]=0;
+    }
+    if(l>last || r<start) return 0;
+    if(start>=l && last<=r) return tree[node];
+    int r1=query(node*2, start, (start+last)/2, l, r);
+    int r2=query(node*2+1, (start+last)/2+1, last, l, r);
+    return r1+r2;
+}
+
+int main()
+{
+    int m;
+    cin>>n>>m;
+    string s; cin>>s;
+    repn(i,n-1) if(s[i-1]=='>') a[i]=1;
+    build(1, 1, n-1);
+    while(m--)
+    {
+        int x,y,z; cin>>x>>y>>z;
+        if(x==1) update(1, 1, n-1, y, z-1);
+        else
+        {
+            int ans;
+            int rev=(z<y);
+            if(y==z) ans=0;
+            else
+            {
+                if(z<y) swap(y,z);
+                ans=query(1,1, n-1, y, z-1);
+                if(!rev) ans=z-y-ans;
+                cout<<ans<<endl;
+            }
+        }
+    }
+    return 0;
+}

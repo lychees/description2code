@@ -1,0 +1,82 @@
+#include<bits/stdc++.h>
+#define bs 1000000007
+using namespace std;
+long long n, tests;
+bool not_square(long long x)
+{
+	long long val = sqrt(x + .5);
+	return (val*val != x);
+}
+long long mult(long long a, long long b, long long mod)
+{
+	__int128 res = a;
+	res *= b;
+	res %= mod;
+	a = res;
+	return a;
+}
+long long modulo(long long a, long long b, long long c){
+	long long x = 1, y = a; 
+	while (b > 0){
+		if (b % 2 == 1){
+			x = mult(x, y, c);
+		}
+		y = mult(y, y, c);
+		b /= 2;
+	}
+	return x%c;
+}
+bool Miller(long long p, int iteration){
+	if (p<2){
+		return false;
+	}
+	if (p != 2 && p % 2 == 0){
+		return false;
+	}
+	long long s = p - 1;
+	while (s % 2 == 0){
+		s /= 2;
+	}
+	for (int i = 0; i<iteration; i++){
+		long long a = rand() % (p - 1) + 1, temp = s;
+		long long mod = modulo(a, temp, p);
+		while (temp != p - 1 && mod != 1 && mod != p - 1){
+			mod = mult(mod, mod, p);
+			temp *= 2;
+		}
+		if (mod != p - 1 && temp % 2 == 0){
+			return false;
+		}
+	}
+	return true;
+}
+bool not_prime(long long x)
+{
+	return !Miller(x, 15);
+}
+long long ans, inside;
+int main(){
+	ios_base::sync_with_stdio(0);
+	//cin.tie(0);
+	long long cur = 1;
+	cin >> n >> tests;
+	for (; tests; --tests)
+	{
+		int tp;
+		cin >> tp;
+		long long a, b;
+		cin >> a >> b;
+		if (tp == 2 && (not_square(a + b)))
+			continue;
+		if (tp == 1 && not_prime(a + b))
+			continue;
+		if (tp == 1)
+			inside += b;
+		else
+			inside -= b;
+		ans += abs(a - cur);
+		cur = a;
+	}
+	cout << ans%bs << " " << inside << endl;
+	return 0;
+}

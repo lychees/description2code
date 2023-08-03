@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define MAXN 550
+#define MAXV 1000050
+#define INF 1000000000
+ll DP[MAXN][MAXN],A[MAXN];
+bool p[MAXV];
+int nextPrime[MAXV],prevPrime[MAXV],n;
+
+int cost(int a,int b)
+{
+	if(!p[b] and prevPrime[b]!=-1 and a<=prevPrime[b])
+		return prevPrime[b]-a;
+	int c = 0;
+	while(true)
+	{
+		c += nextPrime[max(a,b)]-b;
+		b = nextPrime[max(a,b)];
+		if(a<=prevPrime[b])
+		{
+			c += prevPrime[b]-a;
+			break;
+		}
+	}
+	return c;
+}
+
+ll solve(int i,int j)
+{
+//	cout << i << " " << j << endl;
+	if(i>j)
+		return 0;
+	if(DP[i][j]!=-1)
+		return DP[i][j];
+	if(i+1==j)
+		return DP[i][j] = cost(A[i],A[j]);
+	DP[i][j] = INF;
+	for(int k=i+1;k<=j;k+=2)
+		DP[i][j] = min(DP[i][j],cost(A[i],A[k])+solve(i+1,k-1)+solve(k+1,j));
+	return DP[i][j]; 
+}
+
+int main()
+{
+	p[0] = p[1] = true;
+	for(int i=2;i*i<MAXV;++i)
+		if(!p[i])
+			if(1LL*i*i<MAXV)
+				for(int j=i*i;j<MAXV;j+=i)
+					p[j] = true;
+	int cur = -1;
+	for(int i=0;i<MAXV;++i)
+	{
+		prevPrime[i] = cur;
+		if(!p[i])
+			cur = i;
+	}
+	cur = -1;
+	for(int i=MAXV-1;i>=0;--i)
+	{
+		nextPrime[i] = cur;
+		if(!p[i])
+			cur = i;
+	}
+	for(int i=0;i<MAXN;++i)
+		for(int j=0;j<MAXN;++j)
+			DP[i][j] = -1;
+	cin >> n;
+	for(int i=0;i<n;++i)
+		cin >> A[i];
+	cout << solve(0,n-1)+n/2 << endl;
+	return 0;
+}

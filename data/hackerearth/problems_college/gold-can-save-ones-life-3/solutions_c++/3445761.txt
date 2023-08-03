@@ -1,0 +1,91 @@
+#include<bits/stdc++.h>
+//#undef LOCAL
+#ifdef LOCAL
+    #include<debug.h>
+#endif
+using namespace std;
+typedef long long LL;
+inline LL MAX(const LL&a,const LL&b){
+    if(b>a){return b;}
+    return a;
+}
+// for asserts
+#define N_LIMIT 1000000
+#define NUM_LIMIT 1000000
+#define T_LIMIT 10000
+#define SIZE 1000005
+int N,K;
+int arr[SIZE];
+LL ans[SIZE];
+/********* BruteForce solution ****************/
+/*
+Brute Force is exponential search, so very very very slow, actually IE slow ;)
+*/
+LL best;//best so far
+void brute(int i, int last, LL curr){//i: curr index, last: last index that we took, curr: current sum
+    if(i>N){
+        if(curr>best){
+           best =curr;
+        }
+        return ;
+    }
+    if(i-last>K){//if we can take this, then we have 2 option take it or leave it
+        brute(i+1,last,curr);//leaving it
+        if(curr+(LL)arr[i]>0){//if its +ve atleast
+            brute(i+1,i,curr+(LL)arr[i]);//taking it
+        }
+    }else{//we cannot take it, so leave it :P
+        brute(i+1,last, curr);
+    }
+}
+void bruteForce(int cx){
+    best = 0;
+    brute(1,-(N+5),0LL);
+    cout<<"Brute Force("<<cx<<"): "<<best;
+    assert(best==ans[N]);
+}
+/*********** End BruteForce Solution *******************************/
+void solve(int cx){
+    cin>>N>>K;
+    assert(N<=N_LIMIT);
+    assert(K>=0&&K<=N-1);
+    bool allNegative = true;
+    for(int i=1;i<=N;i++){
+        cin>>arr[i];
+        assert(arr[i]<=NUM_LIMIT);
+        if(allNegative&&arr[i]>0){
+            allNegative=false;
+        }
+    }
+    if(allNegative){
+        //all numbers are <= 0, better is not to pick any number
+        cout<<0<<endl;
+        return;
+    }
+    /****** Dynamic Programming Solution O(N) ************/
+    memset(ans,0,sizeof(ans));
+    ans[1]= MAX(0,arr[1]);//may be the first number is -ve
+    //pick the maximum number till K indexes
+    for(int i=2;i<=K+1;i++){
+        ans[i]=MAX(ans[i-1], (LL)arr[i]);
+    }
+    //now, check if there is better value, that is atleast K apart
+    for(int i=K+2;i<=N;i++){
+        ans[i]=MAX(ans[i-1],ans[i-K-1]+(LL)arr[i]);
+    }
+    cout<<ans[N]<<endl;
+    #ifdef LOCAL
+        //bruteForce(cx);
+    #endif
+}
+int main(){
+#ifdef LOCAL
+    _IN(in);_OUT(out);TT t("main");//_ERR(err);
+#endif
+ios_base::sync_with_stdio(false);
+int T = 1;
+cin>>T;
+assert(T<=T_LIMIT);
+for(int i=1;i<=T;i++){solve(i);}
+return 0;
+}

@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define LL long long
+#define MAXSUM 1001
+#define MAXLEN 14
+#define MAXK 4002
+
+LL A, B, X, Y, K;
+
+LL dp[MAXLEN][MAXK][MAXSUM];
+
+LL rec(int digit, LL mod, int sum) {
+	if (digit == 0)
+		return (sum >= X && sum <= Y && mod == 0);
+
+	if (dp[digit][mod][sum] != -1)
+		return dp[digit][mod][sum];
+
+	if (sum > Y) return 0;
+
+	LL ret = 0;
+	for (int i = 0; i < 10; i++)
+		ret += rec(digit - 1, (mod * 10 + i) % K, sum + i);
+
+	return dp[digit][mod][sum] = ret;
+}
+
+LL solve(LL N)
+{
+	int len, remain, sum = 0;
+	LL mod = 0, ret = 0;
+
+	char num[MAXLEN];
+
+	sprintf(num, "%lld", N);
+	remain = len = strlen(num);
+
+	for (int i = 0; i < len; i++) {
+		remain--;
+		int d = num[i] - '0';
+		for (int j = 0; j < d; j++)
+			ret += rec(remain, (mod * 10 + j) % K, sum + j);
+		sum += d;
+		mod = (mod * 10 + d) % K;
+	}
+
+	return ret;
+}
+
+int digitSum(LL N)
+{
+	int sum = 0;
+	while(N) {
+		sum += (N % 10);
+		N /= 10;
+	}
+	
+	return sum;
+}
+
+void solveNaive()
+{
+	int ans = 0;
+	for (LL i = K; i <= B; i += K) {
+		if(i >= A) {
+			int sum = digitSum(i);
+			if (sum >= X && sum <= Y)
+				ans++;
+		}
+	}
+	
+	printf("%lld\n", ans);
+}
+
+int main()
+{
+	scanf("%lld %lld %lld %lld %lld", &A, &B, &X, &Y, &K);
+
+	if (K > B) {
+		printf("0\n");
+		return 0;
+	} else if (K > MAXK) {
+		solveNaive();
+		return 0;
+	}
+
+	memset(dp, -1, sizeof dp);
+	LL ans = solve(B + 1);
+	ans -= solve(A);
+
+	printf("%lld\n", ans);
+
+	return 0;
+}

@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+#define SZ(X) ((int)(X).size())
+#define ALL(X) (X).begin(), (X).end()
+#define REP(I, N) for (int I = 0; I < (N); ++I)
+#define REPP(I, A, B) for (int I = (A); I < (B); ++I)
+#define PER(I, N) for (int I = (N); I >= 0; --I)
+#define PERR(I, A, B) for (int I = (A); I >= B; --I)
+#define ITR(I, A) for (__typeof((A).begin()) I=(A).begin(), _##i=(A).end(); I!=_##i; ++I)
+#define RI(X) scanf("%d", &(X))
+#define RII(X, Y) scanf("%d%d", &(X), &(Y))
+#define RIII(X, Y, Z) scanf("%d%d%d", &(X), &(Y), &(Z))
+#define DRI(X) int (X); scanf("%d", &X)
+#define DRII(X, Y) int X, Y; scanf("%d%d", &X, &Y)
+#define DRIII(X, Y, Z) int X, Y, Z; scanf("%d%d%d", &X, &Y, &Z)
+#define RS(X) scanf("%s", (X))
+#define CASET int ___T, case_n = 1; scanf("%d ", &___T); while (___T-- > 0)
+#define MP make_pair
+#define PB push_back
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define LEN(X) strlen(X)
+#define PII pair<int,int>
+#define VPII vector<pair<int,int> >
+#define PLL pair<long long,long long>
+#define F first
+#define S second
+#define LB(X) __builtin_ctz((X))
+#define ONES(X) __builtin_popcount((X))
+typedef long long LL;
+using namespace std;
+template <class T>  inline void smax(T &x,T y){ x = max((x), (y));}
+template <class T>  inline void smin(T &x,T y){ x = min((x), (y));}
+const int MOD = 1e9+7;
+const int SIZE = 1e5+10;
+#define LOCALTEST 0 // change this to 1 to perform localtest on "in.txt"
+int n;
+PII pos[4*SIZE], neg[4*SIZE];
+PII best(PII &a, PII &b) {
+    PII r = max(a, b);
+    if (a.F == b.F) r.S = (a.S + b.S) % MOD;
+    return r;
+}
+void update(PII *tree, int a, PII val, int I = 1, int L = 0, int R = SIZE-1) {
+    if (a < L || a > R) return;
+    if (L == R) {
+        if (tree[I].F == val.F) {
+            tree[I].S = (tree[I].S + val.S) % MOD;
+        } else if (tree[I].F < val.F) {
+            tree[I] = val;
+        }
+        return;
+    }
+
+    int lc = 2*I, rc = lc + 1;
+    int M = L + (R-L)/2;
+    update(tree, a, val, lc, L, M);
+    update(tree, a, val, rc, M+1, R);
+
+    PII x = tree[lc], y = tree[rc];
+    tree[I] = best(x, y);
+}
+PII read(PII *tree, int a, int b, int I = 1, int L = 0, int R = SIZE-1) {
+    if (b < a || b < L || a > R) return MP(0, 0);
+    if (a <= L && R <= b) {
+        return tree[I];
+    }
+
+    int lc = 2*I, rc = lc + 1;
+    int M = L + (R-L)/2;
+    PII x = read(tree, a, b, lc, L, M);
+    PII y = read(tree, a, b, rc, M+1, R);
+    PII r = best(x, y);
+    return r;
+}
+int main(){
+    if (LOCALTEST) {
+        freopen("in.txt", "r", stdin);
+        freopen("out.txt", "w", stdout);
+    }
+    while (RI(n) == 1) {
+        REP(i, 4*SIZE) pos[i] = neg[i] = MP(0,0);
+        REP(i,n) {
+            DRI(x);
+            int sign = x > 0;
+            if (x < 0) x *= -1;
+            PII tmp = read(sign ? neg : pos, 1, x-1);
+            if (tmp.F == 0) tmp.S = 1;
+            tmp.F++;
+            update(sign ? pos : neg, x, tmp);
+            //printf("processed until %d, tmp = %d,%d\n", i, tmp.F, tmp.S);
+        }
+        PII ans = best(pos[1], neg[1]);
+        printf("%d %d\n", ans.F, ans.S);
+    }
+    return 0;
+}

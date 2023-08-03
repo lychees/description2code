@@ -1,0 +1,187 @@
+/*===============*\
+|  ID: adurysk    |
+|    LANG: C++    |
+\*===============*/
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <deque>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <queue>
+#include <set>
+#include <stack>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+#define sd(x) x = GetNextInt()
+
+#define LL long long
+#define LD long double
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+
+#define INF 2000000009
+
+#if 0
+#define get getchar_unlocked
+#else
+#define get getchar
+#endif
+
+LL next_int;
+char in_char;
+
+inline LL GetNextInt(){
+    in_char = ' ';
+    while((in_char < '0') | (in_char > '9')){
+        in_char = get();
+    }
+    next_int = 0;
+    while((in_char >= '0') && (in_char <= '9')){
+        next_int *= 10;
+        next_int += in_char - 48;
+        in_char = get();
+    }
+    return next_int;
+}
+
+
+typedef pair<int,int> PII;
+typedef vector<int> VI;
+
+#define MAXR 1000100
+#define MAXK 10
+#define MOD 1000000007
+
+struct node{
+    int l, r;
+    int mi;
+};
+
+struct SegTree
+{
+    node seg[MAXR * 4];
+    void Create(int root, int l, int r);
+    int Query(int root, int l, int r);
+    void Update(int root, int i, int v);
+} segtree;
+
+VI d;
+LL a[MAXR], c[MAXK], b[MAXR];
+
+inline void Solve(){
+    LL q, i, j, k, l, r, mi;
+    cin>>q>>k;
+    d.clear();
+    a[0] = MOD;
+    for(i = 1; i <= k; i++){
+        sd(a[i]);
+        b[i] = a[i];
+    }
+    for(i = 1; i <= k; i++){
+        sd(c[i]);
+    }
+    for(i = k + 1; i < MAXR; i++){
+        a[i] = 0;
+        for(j = 1; j <= k; j++){
+            a[i] += a[i - j] * c[j];
+            a[i] %= MOD;
+            //cout<<i<<" "<<j<<" "<<a[i]<<endl;
+            //system("pause");
+        }
+        b[i] = a[i];
+    }
+    segtree.Create(1, 1, MAXR);
+    VI change;
+    while(q--){
+        sd(l); sd(r);
+        k = min(100LL, r - l + 1);
+        change.clear();
+        while(k--){
+            mi = segtree.Query(1, l, r);
+            printf("%d", a[mi]);
+            printf(k == 0 ? "\n" : " ");
+            segtree.Update(1, mi, MOD);
+            change.PB(mi);
+        }
+        k = min(100LL, r - l + 1);
+        while(k--){
+            segtree.Update(1, change[k], b[change[k]]);
+        }
+    }
+}
+
+int main(){
+    int t;
+    cin>>t;
+    while(t--){
+        Solve();
+    }
+    return 0;
+}
+
+void SegTree::Create(int root, int l, int r){
+    seg[root].l = l;
+    seg[root].r = r;
+    if(l == r){
+        seg[root].mi = l;
+        return;
+    }
+    Create(root + root, l, (l + r) / 2);
+    Create(root + root + 1, (l + r) / 2 + 1, r);
+    seg[root].mi = (a[seg[root + root].mi] < a[seg[root + root + 1].mi] ? seg[root + root].mi : seg[root + root + 1].mi);
+}
+
+int SegTree::Query(int root, int l, int r){
+    if(l > seg[root].r || r < seg[root].l){
+        return 0;
+    }
+    if(l == seg[root].l && r == seg[root].r){
+        return seg[root].mi;
+    }
+    if(l == r){
+        return l;
+    }
+    int m = seg[root + root].r;
+    if(l > m){
+        return Query(root + root + 1, l, r);
+    }
+    else if(r <= m){
+        return Query(root + root, l, r);
+    }
+    int li = Query(root + root, l, m);
+    int ri = Query(root + root + 1, m + 1, r);
+    if(a[li] < a[ri]){
+        return li;
+    }
+    else{
+        return ri;
+    }
+}
+
+void SegTree::Update(int root, int i, int v){
+    if(i > seg[root].r || i < seg[root].l){
+        return;
+    }
+    if(seg[root].l == seg[root].r){
+        a[seg[root].l] = v;
+        return;
+    }
+    if(i > seg[root + root].r){
+        Update(root + root + 1, i, v);
+    }
+    else{
+        Update(root + root, i, v);
+    }
+    seg[root].mi = (a[seg[root + root].mi] < a[seg[root + root + 1].mi] ? seg[root + root].mi : seg[root + root + 1].mi);
+    return;
+}

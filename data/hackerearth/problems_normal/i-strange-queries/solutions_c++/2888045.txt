@@ -1,0 +1,214 @@
+#include<bits/stdc++.h>
+#define assn(n,a,b) assert(n<=b and n>=a)
+#define pb push_back
+#define mp make_pair
+#define F first
+#define S second
+#define SZ(a) (int)(a.size())
+#define SET(a,b) memset(a,b,sizeof(a))
+#define LET(x,a) __typeof(a) x(a)
+#define TR(v,it) for( LET(it,v.begin()) ; it != v.end() ; it++)
+#define repi(i,n) for(int i=0; i<(int)n;i++)
+#define sd(n) scanf("%d",&n)
+#define sl(n) scanf("%lld",&n)
+#define sortv(a) sort(a.begin(),a.end())
+#define all(a) a.begin(),a.end()
+#define DRT()  int t; cin>>t; while(t--)
+using namespace std;
+
+//FILE *fin = freopen("in","r",stdin);
+//FILE *fout = freopen("out","w",stdout);
+
+#define TRACE
+#ifdef TRACE
+#define trace(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+    cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+    const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define trace(...)
+#endif
+
+typedef long long LL;
+typedef pair<int,int> PII;
+typedef vector<int> VI;
+typedef vector< PII > VPII;
+
+#define MOD 1000000007ll
+LL mpow(LL a, LL n) 
+{LL ret=1;LL b=a;while(n) {if(n&1) 
+    ret=(ret*b)%MOD;b=(b*b)%MOD;n>>=1;}
+return (LL)ret;}
+
+#define BLOCK 224
+#define N 50000
+
+struct node {
+    int l, r;
+    node(int _l, int _r): l(_l), r(_r) {}
+};
+
+bool cmp(node a, node b) {
+    return ( (a.l/BLOCK < b.l/BLOCK) || ((a.l/BLOCK == b.l/BLOCK) && a.r < b.r) );
+}
+
+class Mos{
+    public:
+        int a[N],cnt[N+1],n;
+        vector< node > q;
+        map < PII , LL > ans;
+        map < PII, int > fl;
+        LL answer = 0;
+
+        void add(int i) {
+            int x = a[i];
+            answer += 2*cnt[x] + 1;
+            cnt[x]++;
+        }
+
+        void remove(int i) {
+            int x = a[i];
+            answer--;
+            cnt[x]--;
+            answer -= 2*cnt[x];
+        }
+
+        void calc(){
+            memset(cnt,0,sizeof(cnt));
+            sort(all(q), cmp);
+            int curL = 0, curR = 0, siz=q.size();
+            answer = 0;
+            for(int qq=0; qq<siz; qq++) {
+                int l = q[qq].l;
+                int r = q[qq].r;
+                while(curL > l) {
+                    add(--curL);
+                }
+                while(curR <= r) {
+                    add(curR++);
+                }
+                while(curL < l) {
+                    remove(curL++);
+                }
+                while(curR > r+1) {
+                    remove(--curR);
+                }
+                ans[{q[qq].l,q[qq].r}]=answer;
+            }
+        }
+
+        void push(int a, int b){
+            if(a>b)return;
+            if(not fl.count({a,b}))q.pb(node(a,b));
+            fl[{a,b}]=1;
+        }
+
+        LL get(int a, int b){
+            if(a>b)return 0;
+            return ans[{a,b}];
+        }
+};
+Mos obj;
+int query[50009][4];
+
+void f(int l1, int r1, int l2, int r2){
+    obj.push(l1, r2);
+    obj.push(l1, r1);
+    obj.push(l2, r2);
+}
+
+void g(int l1, int r1, int l2, int r2, int l3, int r3){
+    obj.push(l1, r3);
+    obj.push(l1, r1);
+    obj.push(l2, r2);
+    obj.push(l3, r3);
+    f(l1, r1, l2, r2);
+    f(l2, r2, l3, r3);
+}
+
+LL getf(int l1, int r1, int l2, int r2){
+    return ((obj.get(l1, r2) - obj.get(l1, r1) - obj.get(l2, r2)))/2;
+}
+
+LL getg(int l1, int r1, int l2, int r2, int l3, int r3){
+    if(l3==r1+1)return getf(l1, r1, l3, r3);
+    return (obj.get(l1, r3)-obj.get(l1, r1)-obj.get(l2, r2)-obj.get(l3, r3)-2*getf(l1, r1, l2, r2)-2*getf(l2, r2, l3, r3))/2;
+}
+
+int main(){
+    int q;
+    sd(obj.n);
+    for(int i=0; i<obj.n; i++)
+        sd(obj.a[i]);
+    sd(q);
+    for(int i=0; i<q; i++){
+        for(int j=0; j<4; j++){
+            sd(query[i][j]);
+            query[i][j]--;
+        }
+
+        int &l1=query[i][0];
+        int &r1=query[i][1];
+        int &l2=query[i][2];
+        int &r2=query[i][3];
+
+        if(l1>l2){
+            swap(l1, l2);
+            swap(r1, r2);
+        }
+
+        else if(l1==l2){
+            if(r1<r2){
+                swap(l1, l2);
+                swap(r1, r2);
+            }
+        }
+
+        if(l2>r1)
+            g(l1, r1, r1+1, l2-1, l2, r2);
+
+        else{
+            if(r2 < r1){
+                obj.push(l2, r2);
+                f(l1, l2-1, l2, r2);
+                f(l2, r2, r2+1, r1);
+            }
+            else{
+                obj.push(l2, r1);
+                f(l1, l2-1, l2, r1);
+                f(l1, r1, r1+1, r2);
+            }
+        }
+    }
+    obj.calc();
+    for(int i=0; i<q; i++){
+        int &l1=query[i][0];
+        int &r1=query[i][1];
+        int &l2=query[i][2];
+        int &r2=query[i][3];
+
+        if(l2>r1)
+            printf("%lld\n",getg(l1, r1, r1+1, l2-1, l2, r2));
+
+        else{
+            if(r2 < r1){
+                printf("%lld\n",
+                obj.get(l2, r2)+
+                getf(l1, l2-1, l2, r2)+
+                getf(l2, r2, r2+1, r1));
+            }
+            else{
+                printf("%lld\n",
+                obj.get(l2, r1)+
+                getf(l1, l2-1, l2, r1) +
+                getf(l1, r1, r1+1, r2));
+            }
+        }
+    }
+    return 0;
+}

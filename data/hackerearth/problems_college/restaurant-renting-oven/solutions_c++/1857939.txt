@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define MAXN 175
+int cap[MAXN][MAXN], flow[MAXN][MAXN], cost[MAXN][MAXN];
+int s[MAXN], e[MAXN], v[MAXN], w[MAXN];
+int n, sink, source, total_cost;
+
+
+inline int cf(int i, int j)
+{
+   return cap[i][j];
+}
+
+inline int costf(int i, int j)
+{
+    return cost[i][j];
+}
+
+inline void pushf(int i, int j, int x)
+{
+    total_cost += costf(i, j) * x;
+    cap[i][j] -= x; cap[j][i] += x;
+}
+
+int augment(void)
+{
+    int dist[MAXN], prev[MAXN];
+    bool reach[MAXN];
+    bool changed;
+    int i, j;
+    memset(reach,0,sizeof reach);
+    reach[source] = changed = true;
+    dist[source] = 0;
+    while (changed)
+    {
+        changed = false;
+        for(int i=0;i<n;i++)
+            if(reach[i])
+                for(int j=0;j<n;j++)
+                    if(cf(i,j))
+                        if(!reach[j] || dist[i] + costf(i, j) < dist[j])
+                        {
+                            reach[j] = changed = true;
+                            dist[j] = dist[i] + costf(i, j);
+                            prev[j] = i;
+                        }
+    }
+    if(!reach[sink]) return 0;
+    int ret = 2000;
+    for (i = sink; i != source; i = prev[i]) ret = min(ret, cap[prev[i]][i]);
+    for (i = sink; i != source; i = prev[i]) pushf(prev[i], i, ret);
+    return ret;
+}
+
+int mcmf(void)
+{
+    int ret, x;
+    memset(flow,0,sizeof flow);
+    ret = total_cost = 0;
+    while (x = augment()) ret += x;
+    return ret;
+}
+
+int main()
+{
+    int t, N, M;
+    cin>>t;
+    while(t--)
+    {
+        scanf("%d%d",&N,&M);
+        for(int i=0;i<N;i++)
+        {
+            scanf("%d%d%d",s+i,e+i,v+i);
+        }
+        for(int i=0;i<M;i++) scanf("%d",w+i);
+
+        int nodes = 0;
+        source = nodes++;
+
+        memset(cap,0,sizeof cap);
+        memset(cost,0,sizeof cost);
+        for(int i=0;i<M;i++)
+        {
+            cap[nodes][nodes+1] = w[i];
+            ++nodes;
+        }
+        ++nodes;
+        for(int i=0;i<N;i++)
+        {
+            cap[source][nodes] = 1;
+            cap[nodes][s[i]+1] = 1;
+            cost[nodes][s[i]+1] = -v[i];
+            cost[s[i]+1][nodes] = v[i];
+            cap[nodes][e[i]+1] = 2000;
+            ++nodes;
+        }
+        sink = nodes++; n = nodes;
+        for(int i=0;i<M;i++)
+        {
+            int total = 0;
+            for(int j=0;j<nodes;j++)
+                if(cap[j][i+2] == 2000)
+                    ++total;
+            cap[i+2][sink] = total;
+        }
+        mcmf();
+        cout<<-total_cost<<endl;
+    }
+    return 0;
+}

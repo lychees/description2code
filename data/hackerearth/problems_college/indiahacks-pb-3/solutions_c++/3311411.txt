@@ -1,0 +1,106 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <string.h>
+#include <algorithm>
+#include <math.h>
+#include <vector>
+#include <queue>
+#include <set>
+#include <stack>
+#include <map>
+#define INF_MAX 2147483647
+#define INF_MIN -2147483647
+#define INF_LL 9223372036854775807LL
+#define INF 2000000000
+#define PI acos(-1.0)
+#define inf INT_MAX
+using namespace std;
+typedef long long int LL;
+int N , K;
+LL arr[100010] , dp[100010];
+
+LL tree[4000000];
+
+
+void update_tree(int node, int a, int b, int i, int j, LL value) {
+    
+	if(a > b || a > j || b < i) // Current segment is not within range [i, j]
+		return;
+    
+  	if(a == b) { // Leaf node
+    		tree[node] = value;
+    		return;
+	}
+
+	update_tree(node*2, a, (a+b)/2, i, j, value); // Updating left child
+	update_tree(1+node*2, 1+(a+b)/2, b, i, j, value); // Updating right child
+
+	tree[node] = max(tree[node*2], tree[node*2+1]); // Updating root with max value
+}
+
+
+/**
+ * Query tree to get max element value within range [i, j]
+ */
+int query_tree(int node, int a, int b, int i, int j) {
+	
+	if(a > b || a > j || b < i) return 0; // Out of range
+
+	if(a >= i && b <= j) // Current segment is totally within range [i, j]
+		return tree[node];
+
+	LL q1 = query_tree(node*2, a, (a+b)/2, i, j); // Query left child
+	LL q2 = query_tree(1+node*2, 1+(a+b)/2, b, i, j); // Query right child
+
+	int res = max(q1, q2); // Return final result
+	
+	return res;
+}
+
+
+
+LL recur(int index)
+{
+	if(dp[index]!=-1)
+		return dp[index];
+	if(index>N)
+		return 0;
+	LL ans = 0;
+	ans = arr[index];
+	ans = max(ans , recur(index+1));
+	ans = max(ans , arr[index] + query_tree(1 , 1 , N , index+K+1 , N));
+	dp[index] = ans;
+	update_tree(1 , 1 , N , index , index , ans);
+	dp[index] = ans;
+	return ans;
+}
+
+int main(){
+int test;
+scanf("%d",&test);
+
+while(test--)
+{
+scanf("%d %d",&N,&K);
+for(int i=0;i<2000000;i++)
+	tree[i] = 0;
+
+dp[0] = -1;
+for(int i=1;i<=N;i++)
+{
+	dp[i] = -1;
+	scanf("%lld",&arr[i]);
+}
+dp[N+1] = -1;
+
+LL ans = 0;
+cout << recur(1) << endl;
+}
+return 0;
+}
+
+
+
+
+

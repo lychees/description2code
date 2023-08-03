@@ -1,0 +1,150 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<unordered_map>
+#include<unordered_set>
+//#include<quadmath.h>
+using namespace std;
+namespace test{
+	void end_test(){
+		int val;
+		if (cin >> val){
+			exit(1);
+		}
+	}
+	void range_test(int t, int l, int r){
+		if (t < l || r < t){
+			exit(1);
+		}
+	}
+}
+#define MOD 1000000007LL
+struct st{
+	long long int way;
+	long long int maxt;
+	st(){
+		way = maxt = 0;
+		way = 0;
+	}
+};
+st merge(st a, st b){
+	st r;
+	
+	r.maxt = max(a.maxt, b.maxt);
+	if (r.maxt == a.maxt){
+		r.way += a.way;
+	}
+	if (r.maxt == b.maxt){
+		r.way += b.way;
+	}
+	r.way %= MOD;
+	return r;
+}
+class S{
+	
+	vector<st> seg;
+	int N;
+	st emp;
+	inline st qq(int b, int l, int r, int ll, int rr){
+		if (ll <= l&&r <= rr){
+			return seg[b];
+		}
+		if (rr <= l || r <= ll){
+			return emp;
+		}
+		st R = merge(qq(b * 2 + 1, l, (l + r) >> 1, ll, rr), qq(b * 2 + 2, (l + r) >> 1, r, ll, rr));
+		return R;
+	}
+	inline void ADD(int b, int l, int r, int ll, st k){
+		if (l <= ll&&ll < r){
+			if (l + 1 == r){
+				seg[b] = merge(seg[b], k);
+				return;
+			}
+			ADD(b * 2 + 1, l, (l + r) >> 1, ll, k);
+			ADD(b * 2 + 2, (l + r) >> 1, r, ll, k);
+			seg[b] = merge(seg[b * 2 + 1], seg[b * 2 + 2]);
+		}
+	}
+public:
+	void resize(int n){
+		seg.assign(n * 4, emp);
+		N = n;
+	}
+	st sum(int l, int r){
+		return qq(0, 0, N, l, r + 1);
+	}
+	void add(int val, long long int way, long long int maxt){
+		st k;
+		k.way = way;
+		k.maxt = maxt;
+		ADD(0, 0, N, val, k);
+	}
+};
+#define MAX 100002
+int n;
+int a[MAX];
+S pos;
+S neg;
+int main(){
+	pos.resize(MAX);
+	neg.resize(MAX);
+	scanf("%d", &n);
+	test::range_test(n, 1, 100000);
+	for (int i = 0; i < n; i++){
+		scanf("%d", &a[i]);
+		test::range_test(abs(a[i]),0,1000000);
+	}
+	for (int i = 0; i < n; i++){
+		if (a[i] == 0){
+			continue;
+		}
+		if (a[i] < 0){
+			st k = pos.sum(0,abs(a[i])-1);
+			if (k.maxt == 0){
+				k.maxt = 1;
+				k.way = 1;
+			}
+			else{
+				k.maxt++;
+			}
+			neg.add(abs(a[i]), k.way, k.maxt);
+		}
+		else{
+			st k = neg.sum(0,abs(a[i]) - 1);
+			if (k.maxt == 0){
+				k.maxt = 1;
+				k.way = 1;
+			}
+			else{
+				k.maxt++;
+			}
+			pos.add(a[i], k.way, k.maxt);
+		}
+	}
+	st ans = merge(pos.sum(0, MAX - 1) , neg.sum(0, MAX - 1));
+	printf("%lld %lld\n", ans.maxt, ans.way);
+	return 0;
+}

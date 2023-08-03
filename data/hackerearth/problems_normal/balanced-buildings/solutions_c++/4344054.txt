@@ -1,0 +1,184 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+
+template <class T> struct Treap {
+
+  struct Node {
+    T key;
+    int pri, cnt;
+    unsigned sum;
+    Node* left, *right;
+
+    void update() {
+      cnt = leftcnt() + 1 + rightcnt();
+      sum = key + (left ? left->sum : 0) + (right ? right->sum : 0);
+    }
+
+    int leftcnt() {
+      return left ? left->cnt : 0;
+    }
+
+    int rightcnt() {
+      return right ? right->cnt : 0;
+    }
+  };
+  typedef Node* pNode;
+  pNode root = nullptr;
+  Node pool[2500];
+  pNode ptr = pool;
+
+  pNode make(T val) {
+    ptr->key = val;
+    ptr->sum = val;
+    ptr->cnt = 1;
+    ptr->pri = rand();
+    ptr->left = ptr->right = NULL;
+    return ptr++;
+  }
+
+  static pNode rotateRight(pNode node) {
+    static pNode temp;
+    temp = node->left;
+    node->left = temp->right;
+    temp->right = node;
+    node->update();
+    return temp;
+  }
+
+  static pNode rotateLeft(pNode node) {
+    static pNode temp;
+    temp = node->right;
+    node->right = temp->left;
+    temp->left = node;
+    node->update();
+    return temp;
+  }
+
+  pNode insert(pNode at, T val) {
+    if (!at)
+      return make(val);
+    else if (val < at->key) {
+      at->left = insert(at->left, val);
+      if (at->left->pri < at->pri)
+        at = rotateRight(at);
+    } else {
+      at->right = insert(at->right, val);
+      if (at->right->pri < at->pri)
+        at = rotateLeft(at);
+    }
+    at->update();
+    return at;
+  }
+
+  void insert(T val) {
+    root = insert(root, val);
+  }
+
+  pair<int,unsigned> get_lesseq(T val) {
+    pair<int,ll> res;
+    for (pNode at = root; at;) {
+      if (at->key <= val) {
+        res.first += at->leftcnt() + 1;
+        res.second += (at->left ? at->left->sum : 0) + at->key;
+        at = at->right;
+      } else
+        at = at->left;
+    }
+    return res;
+  }
+};
+
+const int MAX = 2520;
+ll UP, DW;
+Treap<int> tree;
+pair<int,unsigned> bit[MAX];
+
+void add(int pos, int hei) { 
+//  tree.insert(hei);
+for(int i = pos; i < MAX; i += i &-i) {
+  ++bit[i].first;
+  bit[i].second += hei;
+}
+}
+
+inline pair<int,unsigned> ask(int hei, int idx) {
+/*
+  if (was[idx] == cur_time) 
+    return memo[idx];
+  was[idx] = cur_time;
+  return memo[idx] = tree.get_lesseq(hei);
+  */
+  pair<int,unsigned> res;
+  for(int i = idx; i > 0; i -= i &-i) {
+    res.first += bit[i].first;
+    res.second += bit[i].second;
+  }
+  return res;
+}
+
+inline ll calc(ll h, int idx, ll sum_h, int sum_cnt) {
+  const auto lef = ask(h, idx);
+  return (lef.first * h - lef.second) * UP + (sum_h - lef.second - (sum_cnt - lef.first) * h) * DW;
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  srand(1223);
+  int N, REV;
+  cin >> N >> REV >> DW >> UP;
+  vector<int> hei(N);
+  for(int& h : hei)
+    cin >> h;
+  vector<ll> dp(N+1,0);
+  vector<int> vals = hei;
+  vals.push_back(0);
+  sort(vals.begin(), vals.end());
+  vals.erase(unique(vals.begin(), vals.end()), vals.end());
+  vector<int> idx(N);
+  for(int i=0;i<N;++i)
+    idx[i] = lower_bound(vals.begin(), vals.end(), hei[i]) - vals.begin();
+  for(int j=0;j<N;++j) {
+    memset(bit, 0, sizeof(bit));
+    //tree.root = nullptr;
+    //tree.ptr = tree.pool;
+    ll sum_h = 0;
+    dp[j+1] = dp[j];
+    int mn = idx[j], mx = idx[j];
+    for(int i=j;i>=0;--i) {
+      add(idx[i], hei[i]);
+      sum_h += hei[i];
+      if (j == i) {
+        continue;
+      }
+      mn = min(mn, idx[i]);
+      mx = max(mx, idx[i]);
+      int low = mn, high = mx;
+      //cerr << low << " " << high << endl;
+      ll now = ll(1e18);
+      while (low <= high) {
+        const int m1 = (2*low+high)/3;
+        const int m2 = (low+2*high+2)/3;
+        const ll r1 = calc(vals[m1],m1,sum_h, j-i+1);
+        const ll r2 = calc(vals[m2],m2,sum_h, j-i+1);
+        now = min(now, min(r1, r2)); 
+        if (r1 > r2) {
+          low = m1 + 1;
+        } else {
+          high = m2 - 1;
+        }
+      }
+      //for(ll x = low; x <= high; ++x) {
+      //  now = min(now, calc(vals[x], x,sum_h, j-i+1));
+      //}
+      //cerr << i << " " << j << " " << now << endl;
+      dp[j+1] = max(dp[j+1], ll(j-i)*REV - now + dp[i]);
+    }
+  }
+  cout << dp[N] << endl;
+  return 0;
+}

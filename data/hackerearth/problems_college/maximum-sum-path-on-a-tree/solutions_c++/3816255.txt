@@ -1,0 +1,80 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define pii pair< int, int >
+#define pb push_back
+#define ft first
+#define sd second
+#define ll long long
+
+vector<ll> C(50005);
+int n;
+vector<ll> f(50005,0),g(50005,0);
+ll max_cost;
+
+void dfs( int V, int pV , vector< vector<int> > &gr ) {
+    vector<ll> fvalues;
+
+    for ( auto v:gr[V] ) {
+        if ( v==pV ) continue;
+        dfs(v,V,gr);
+        fvalues.pb(f[v]);
+    }
+    f[V]=C[V];
+
+	ll largest=0,sec_largest=0;
+
+    if ( !fvalues.empty() ) {
+        largest=fvalues[0];
+        int sz=fvalues.size();
+        for ( int i=1;i<sz;i++ ) {
+            if ( fvalues[i]>largest ) {
+				sec_largest=largest;
+				largest=fvalues[i];
+            }
+            else {
+                sec_largest=max(sec_largest,fvalues[i]);
+            }
+        }
+        if ( largest>0 ) f[V]+=largest;
+    }
+
+    if ( fvalues.size()>=2 ) {
+		g[V] = C[V] + largest + sec_largest;
+    }
+    max_cost=max(max_cost, max(f[V],g[V]) );
+
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	int t;
+	cin>>t;
+	while ( t-- ) {
+		for ( int i=0;i<50005;i++ ) {
+			C[i]=0;
+			f[i]=0;
+			g[i]=0;
+		}
+        cin>>n;
+        max_cost=0;
+        for ( int i=1;i<=n;i++ ) {
+            cin>>C[i];
+            if ( i==0 ) {
+				max_cost=C[i];
+            }
+            max_cost=max(max_cost,C[i]);
+		}
+		vector< vector<int> > gr(50005);
+		for ( int i=1;i<n;i++ ) {
+            int u,v;
+            cin>>u>>v;
+            gr[u].pb(v);
+            gr[v].pb(u);
+		}
+        dfs(1,0,gr);
+        cout<<max_cost<<"\n";
+
+	}
+	return 0;
+}
+

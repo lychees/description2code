@@ -1,0 +1,190 @@
+
+#include <bits/stdc++.h>
+
+#define FOR(i,b,e) for(int i=(b); i <= (e); ++i)
+#define FORD(i,b,e) for(int i=(b); i >= (e); --i)
+#define SIZE(c) (int) (c).size()
+#define FORE(i,c) FOR(i,0,SIZE(c)-1)
+#define FORDE(i,c) FORD(i,SIZE(c)-1,0)
+#define PB push_back
+#define MP make_pair
+#define ST first
+#define ND second
+
+using namespace std;
+
+typedef long long int LLI;
+typedef pair < int , int > PII;
+typedef pair < LLI , LLI > PLL;
+
+typedef vector < int > VI;
+typedef vector < bool > VB;
+typedef vector < PII > VP;
+typedef vector < LLI > VL;
+typedef vector < PLL > VPL;
+
+typedef vector < VI > VVI;
+typedef vector < VL > VVL;
+typedef vector < VB > VVB;
+typedef vector < VP > VVP;
+
+const int MOD = 1000000007;
+const int INF = 1000000001;
+const LLI LLINF = 1000000000000000001LL;
+
+struct info
+    { LLI pref, suff, best, sum; };
+
+info worst = { -LLINF, -LLINF, -LLINF, 0 };
+
+void join(info& a, const info& b)
+{
+	a.best = max(a.best, max(b.best, a.suff + b.pref));
+	
+	LLI oldPref = a.pref;
+	LLI oldSuff = a.suff;
+	
+	a.pref = max(oldPref, a.sum + b.pref);
+	a.suff = max(b.suff, b.sum + oldSuff);
+	a.sum += b.sum;
+}
+
+info rev(const info& a)
+    { return { a.suff, a.pref, a.best, a.sum }; }
+
+int n, lg;
+VVI G; VI val;
+
+VVI jump;
+vector < vector < info > > I;
+
+VI in, out; int t = 0;
+
+void dfs(int v, int par)
+{
+    in[v] = t++;
+
+    jump[v][0] = par;
+    I[v][0] = {val[v], val[v], val[v], val[v]};
+
+    FOR(i,1,lg-1)
+    {
+        if (jump[v][i-1] != -1)
+        {
+            jump[v][i] = jump[ jump[v][i-1] ][i-1];
+
+            if (jump[v][i] != -1)
+            {
+            	I[v][i] = I[v][i-1];
+                join(I[v][i], I[ jump[v][i-1] ][i-1]);
+            }
+        }
+        else
+            break;
+    }
+
+    for (int u : G[v]) if (u != par)
+        dfs(u, v);
+
+    out[v] = t++;
+}
+
+bool isAnc(int u, int v)
+    { return in[u] <= in[v] && out[u] >= out[v]; }
+
+info query(int u, int v)
+{
+    info ansUp = worst,
+         ansDown = worst;
+
+    if (!isAnc(u,v))
+    {
+        FORD(i,lg-1,0)
+            if (jump[u][i] != -1 && !isAnc(jump[u][i], v))
+            {
+                join(ansUp,I[u][i]);
+                u = jump[u][i];
+            }
+
+        join(ansUp,I[u][0]);
+        u = jump[u][0];
+    }
+
+    if (!isAnc(v,u))
+    {
+        FORD(i,lg-1,0)
+            if (jump[v][i] != -1 && !isAnc(jump[v][i], u))
+            {
+                join(ansDown,I[v][i]);
+                v = jump[v][i];
+            }
+
+        join(ansDown,I[v][0]);
+    }
+
+    ansDown = rev(ansDown);
+
+    info rt = I[u][0];
+
+    info ans = ansUp;
+    join(ans, rt);
+    join(ans, ansDown);
+
+    return ans;
+}
+
+/*************************************************************************/
+
+int main()
+{
+    scanf("%d", &n);
+
+    G.resize(n);
+    I.resize(n);
+    jump.resize(n);
+
+    in.resize(n);
+    out.resize(n);
+
+    lg = 1;
+    while ((1 << lg) < n) lg++;
+
+    lg++;
+
+    FOR(i,0,n-1)
+    {
+        I[i].resize(lg,worst);
+        jump[i].resize(lg,-1);
+    }
+
+    FOR(i,1,n-1)
+    {
+        int u, v;
+        scanf("%d", &u);
+        scanf("%d", &v);
+         u--; v--;
+
+        G[u].PB(v);
+        G[v].PB(u);
+    }
+
+    val.resize(n);
+    FORE(i,val) cin >> val[i];
+
+    dfs(0, -1);
+
+    int q;
+    scanf("%d", &q);
+
+    while (q--)
+    {
+        int u, v;
+        scanf("%d", &u); scanf("%d", &v); u--; v--;
+        printf("%lld\n",query(u, v).best);
+    }
+
+    return 0;
+}
+
+/*************************************************************************/
+

@@ -1,0 +1,100 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MAX 100009
+long long int bit_dist[MAX];
+long long int bit_ppl[MAX];
+long long a[MAX];
+long long int n;
+void build(long long int i)
+{
+	int j=i;
+	while(i<=n) {
+		//cout<<i<<" ";
+		bit_ppl[i]+=a[j];
+		bit_dist[i]+=(a[j]*(j-1));
+		i=i+(i&(-i));
+	}
+	//cout<<endl;
+	return;
+}
+void update(long long int ind, long long int val)
+{
+	int i=ind;
+	while(i<=n) {
+		bit_ppl[i]+=val;
+		bit_dist[i]+=(val*(ind-1));
+		i=i+(i&(-i));
+	}
+	return;
+}
+long long query(long long int k, long long int ind)
+{
+	int i=ind;
+	long long ans=0;
+	if(k==1) {
+		while(i > 0) {
+			ans+=bit_ppl[i];
+			i=i - (i&(-i));
+		}
+	}
+	else {
+		while(i > 0) {
+			ans+=bit_dist[i];
+			i=i - (i&(-i));
+		}
+	}
+	return ans;
+}
+long long query1(long long int l,long long int r)
+{
+	return query(1,r) - query(1,l-1);
+}
+long long query2(int l, int r)
+{
+	return query(2,r) - query(2,l-1);
+}
+int main()
+{
+	long long int i,q;
+	scanf("%lld%lld",&n,&q);
+	for(i=1;i<=n;i++) {
+		scanf("%lld",&a[i]);
+		build(i);
+	}
+	//for(i=1;i<=n;i++)
+	//	printf("%d ",bit_ppl[i]);
+	//printf("\n");
+	//for(i=1;i<=n;i++)
+	//	printf("%d ",bit_dist[i]);
+	while(q--) {
+		long long int qtyp;
+		scanf("%lld",&qtyp);
+		if(qtyp == 2) {
+			long long int k,s;
+			scanf("%lld%lld",&k,&s);
+			update(k,s);
+		}
+		else {
+			long long int k,l,r;
+			scanf("%lld%lld%lld",&k,&l,&r);
+			if(k<=l) {
+				long long int ppl=query1(l,r);
+				long long int dist=query2(l,r);
+				printf("%lld\n",dist-ppl*(k-1));
+			}
+			else if(k>=r) {
+				long long int ppl=query1(l,r);
+				long long int dist=query2(l,r);
+				printf("%lld\n",ppl*(k-1)-dist);
+			}
+			else {
+				long long int ppl1=query1(l,k);
+				long long int dist1=query2(l,k);
+				long long int ppl2=query1(k,r);
+				long long int a,b,dist2=query2(k,r);
+				a=ppl1*(k-1)-dist1+dist2-ppl2*(k-1);
+				printf("%lld\n",a);
+			}
+		}
+	}
+}

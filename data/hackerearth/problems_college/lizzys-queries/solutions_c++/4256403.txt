@@ -1,0 +1,214 @@
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#if !ONLINE_JUDGE
+#include "debug.h"
+#else
+#endif
+
+typedef long long int LL;
+typedef unsigned long long LLU;
+typedef long double LD;
+
+#define INF 1500000000000000000LL
+#define MOD 1000000007
+#define F first
+#define S second
+#define PB push_back
+#define MK make_pair
+#define LEN(vale) strlen(vale)
+#define SZ(vale) (int)vale.size()
+#define SQ(A) ((A)*(A))
+#define FI(i,fa,fb) for(int i=fa;i<fb;++i)
+#define FD(i,fa,fb) for(int i=fa;i>fb;--i)
+#define FT(it,S) for(it = (S).begin(); it != (S).end(); ++it) 
+#define bits(vale) __builtin_popcount(vale)
+#define VT vector
+
+#define SET1(array,val,sz) for(int i=0;i<sz;i++)array[i]=val;
+#define SET2(array,val,sz1,sz2) for(int i=0;i<sz1;i++)for(int j=0;j<sz2;j++)array[i][j]=val;
+
+#define ALL(a) a.begin(),a.end()
+#define LB (lower_bound)
+#define UB (upper_bound)
+
+#define SI(vale) scanf("%d",&vale)
+#define PI(vale) printf("%d\n",vale)
+#define PIS(vale) printf("%d ",vale)
+#define SL(vale) scanf("%lld",&vale)
+#define PL(vale) printf("%lld\n",vale)
+#define PLS(vale) printf("%lld ",vale)
+#define SS(vale) scanf("%s",vale)
+#define PS(vale) printf("%s\n",vale)
+#define SLD(vale) scanf("%Lf",&vale)
+#define PLD(vale) printf("%0.12Lf\n",vale)
+#define NL printf("\n")
+#define TCS() int testcase; SI(testcase);while(testcase--) 
+
+typedef pair<int,int> PR;
+bool deb = false;
+const int N = 100011;
+int n;
+#define L(in) (in<<1)                                           
+#define R(in) ((in<<1)+1)
+LL Seg[4*N][3];
+char a[N],b[N];
+const int MOD1 = 999999929 , MOD2 = 999999937;
+const int x1 = 31 , x2 = 37;
+LL p1[N],p2[N];
+unordered_set<LL> hash_Table;
+
+void AddFront(LL &Hash,char c) {
+     LL val1 = (Hash<<32LL)>>32LL;
+     LL val2 = Hash>>32LL;
+     val1 = (p1[1] * val1 + (LL)(c - 'a' + 1) * p1[0]) % MOD1;
+     val2 = (p2[1] * val2 + (LL)(c - 'a' + 1) * p2[0]) % MOD2;
+     Hash = val1 + (val2 << 32LL);
+}                                                               
+
+void AddBack(LL &Hash,char c,int pos) {
+     LL val1 = (Hash<<32LL)>>32LL;
+     LL val2 = Hash>>32LL;
+     val1 = (val1 + (LL)(c - 'a' + 1) * p1[pos]) % MOD1;
+     val2 = (val2 + (LL)(c - 'a' + 1) * p2[pos]) % MOD2;
+     Hash = val1 + (val2 << 32LL);
+}
+
+LL MergeHash(LL Hashf,LL Hashs,int lenf) {
+     LL val1 = (Hashf<<32LL)>>32LL;
+     LL val2 = (Hashf>>32LL);
+     LL val3 = (Hashs<<32LL)>>32LL;
+     LL val4 = (Hashs>>32LL);
+     val1 = (val1 + val3 * p1[lenf]) % MOD1;
+     val2 = (val2 + val4 * p2[lenf]) % MOD2;
+     LL ret = val1 + (val2 << 32LL);
+     return ret;
+}
+
+inline void Replace(LL &Hash , char prev , char cur , int pos) {
+     LL val1 = (Hash<<32LL)>>32LL;
+     LL val2 = Hash>>32LL;
+     LL plus = (p1[pos] * LL(cur - 'a' + 1)) % MOD1;
+     LL minus = (p1[pos] * LL(prev - 'a' + 1)) % MOD1;
+     val1 = (val1 + plus - minus + MOD1) % MOD1;
+     plus = (p2[pos] * LL(cur - 'a' + 1)) % MOD2;
+     minus = (p2[pos] * LL(prev - 'a' + 1)) % MOD2;
+     val2 = (val2 + plus - minus + MOD2) % MOD2;
+     Hash = val1 + (val2 << 32LL);
+}
+
+inline void init() {
+     p1[0] = p2[0] = 1;
+     for(int i=1;i < N; i++)
+          p1[i] = ( p1[i-1] * x1 ) % MOD1 ,p2[i] = ( p2[i-1] * x2 ) % MOD2;
+}
+
+
+inline void merge(int in) {
+     Seg[in][0] = MergeHash(Seg[L(in)][0] , Seg[R(in)][0] , Seg[L(in)][2]);
+     Seg[in][1] = MergeHash(Seg[L(in)][1] , Seg[R(in)][1] , Seg[L(in)][2]);
+     Seg[in][2] = (Seg[L(in)][2] + Seg[R(in)][2]);
+}
+
+inline void build_seg(int in,int st,int ed) { 
+     if(st > ed)
+          return;
+     if(st == ed) {
+          AddBack(Seg[in][0],a[st],0);
+          AddBack(Seg[in][1],b[st],0);
+          Seg[in][2] = 1;
+          return;
+     }
+     build_seg(L(in),st,(st+ed)>>1);
+     build_seg(R(in),1+((st+ed)>>1),ed);
+     merge(in);
+}
+
+PR range_queryf(int in,int st,int ed,int lf,int rt) {
+     if(st > ed || st > rt || ed < lf)
+          return MK(0,0);
+     if(st >= lf && ed <= rt) {
+          return MK(Seg[in][0],Seg[in][2]);
+     }
+     PR lVal = range_queryf(L(in),st,(st + ed)>>1,lf,rt);
+     PR rVal = range_queryf(R(in),1+((st + ed)>>1),ed,lf,rt);
+     return MK(MergeHash(lVal.F , rVal.F ,lVal.S),lVal.S + rVal.S);
+}
+
+PR range_queryb(int in,int st,int ed,int lf,int rt) {
+     if(st > ed || st > rt || ed < lf)
+          return MK(0,0);
+     if(st >= lf && ed <= rt) {
+          return MK(Seg[in][1],Seg[in][2]);
+     }
+     PR lVal = range_queryb(L(in),st,(st + ed)>>1,lf,rt);
+     PR rVal = range_queryb(R(in),1+((st + ed)>>1),ed,lf,rt);
+     return MK(MergeHash(lVal.F , rVal.F ,lVal.S),lVal.S + rVal.S);
+}
+
+inline void point_updatef(int in,int st,int ed,int pos,int val) {
+     if(st > ed || st > pos || ed < pos)
+          return;
+     if(st == ed) {
+          Seg[in][0] = 0;
+          AddBack(Seg[in][0],val,0); 
+          return;    
+     }
+     point_updatef(L(in),st,(st+ed)>>1,pos,val);
+     point_updatef(R(in),1+((st+ed)>>1),ed,pos,val);
+     merge(in);
+}
+
+inline void point_updateb(int in,int st,int ed,int pos,int val) {
+     if(st > ed || st > pos || ed < pos)
+          return;
+     if(st == ed) {
+          Seg[in][1] = 0;
+          AddBack(Seg[in][1],val,0); 
+          return;    
+     }
+     point_updateb(L(in),st,(st+ed)>>1,pos,val);
+     point_updateb(R(in),1+((st+ed)>>1),ed,pos,val);
+     merge(in);
+}
+
+void init2(int n) {
+     //for(int i=0;i<4*n+4;i++)Seg[i] = 0;
+     build_seg(1,1,n);
+}
+
+
+int main(){
+     //clock_t tStart = clock();
+     int t,q;
+     //TCS(){
+     init();
+     SI(n),SI(q);
+     SS(b+1);
+     b[0] = '-';
+     strcpy(a,b);
+     reverse(b+1,b+n+1);
+     init2(n);
+     while(q--) {
+          int t; SI(t);
+          if(t == 1) {
+               int l,r;SI(l),SI(r);
+               if(range_queryf(1,1,n,l,r).F == range_queryb(1,1,n,n-r+1,n-l+1).F)
+                    puts("Yes");
+               else
+                    puts("No");
+          }
+          else {
+               int l;char c;
+               scanf("%d %c",&l,&c);
+               point_updatef(1,1,n,l,c);
+               point_updateb(1,1,n,n-l+1,c);
+          }
+     }
+
+     //exectime();
+     return 0;        
+}
+
+

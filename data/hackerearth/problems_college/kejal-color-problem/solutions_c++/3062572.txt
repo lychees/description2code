@@ -1,0 +1,113 @@
+#include<cmath>
+#include<cstdio>
+#include<vector>
+#include<cstring>
+#include<algorithm>
+ 
+using namespace std;
+ 
+#define pb push_back
+ 
+typedef long long ll;
+typedef vector<int> vi;
+const int mod=1000000007;
+const int N=100000;
+const int M=N;
+const int P=400;
+ 
+int a[N+10],b[N+10],c[N+10],d[N+10],f[N+10];
+vi e[N+10];
+ 
+inline int lowbit(int x) {return x&(-x);}
+ 
+void change(int x,int n)
+{
+	while (x<=n)
+	{
+		f[x]++;x+=lowbit(x);
+	}
+}
+ 
+int query(int x)
+{
+	int s=0;
+	while (x)
+	{
+		s+=f[x];x-=lowbit(x);
+	}
+	return s;
+}
+ 
+int power(int x,int y)
+{
+	if (!y) return 1;
+	int tmp=power(x,y>>1);
+	tmp=ll(tmp)*tmp%mod;
+	if (y&1) tmp=ll(tmp)*x%mod;
+	return tmp;
+}
+ 
+int main()
+{
+	#ifdef waltz
+		freopen("input.txt","r",stdin);
+		freopen("output.txt","w",stdout);
+	#endif
+	int n;scanf("%d",&n);
+	memset(b,0,sizeof(b));
+	for (int i=1;i<=n;i++) {scanf("%d",&a[i]);e[a[i]].pb(i);b[a[i]]++;}
+	int ans=0,s=0;
+	for (int i=1;i<=M;i++)
+	{
+		ans=(ll(s)*(ll(b[i])*(b[i]-1)/2%mod)+ans)%mod;
+		s=(ll(b[i])*(b[i]-1)/2+s)%mod;
+	}
+	memset(c,0,sizeof(c)); 
+	memset(d,0,sizeof(d));
+	s=0;
+	for (int i=1;i<=n;i++)
+	{
+		ans=(ans-d[a[i]]+mod)%mod;
+		d[a[i]]=(d[a[i]]+s)%mod;
+		s=(s+c[a[i]])%mod;
+		c[a[i]]++;
+	}
+	for (int i=1;i<=M;i++)
+		if (b[i]>P)
+		{
+			c[0]=0;
+			for (int j=1;j<=n;j++)
+			{
+				c[j]=c[j-1];
+				if (a[j]==i) c[j]++;
+			}
+			for (int j=1;j<=M;j++)
+			{
+				int s=0,ss=0,sss=0,cnt=0;
+				for (vi::iterator p=e[j].begin();p!=e[j].end();p++)
+				{
+					ans=(-ll(s)*(c[n]-c[*p])+ans)%mod;
+					if (b[j]<=P)
+					{
+						ans=(ll(ans)-ll(c[*p])*ll(c[*p]-1)/2%mod*cnt+ss+ll(c[*p])*s-sss)%mod;
+						cnt++;
+						ss=(ll(ss)+ll(c[*p])*(c[*p]-1)/2)%mod;
+						sss=(ll(sss)+ll(c[*p])*(c[*p]))%mod;
+					}
+					s=(s+c[(*p)-1])%mod;		
+				}
+			}
+		}
+	memset(f,0,sizeof(f));
+	for (int i=1;i<=n;i++)
+		if (b[a[i]]<=P)
+		{
+			for (vi::iterator p=e[a[i]].begin();p!=e[a[i]].end();p++)
+				if ((*p)>i) ans=(ans-query(n-(*p)))%mod;
+			for (vi::iterator p=e[a[i]].begin();p!=e[a[i]].end();p++)
+				if ((*p)>i) change(n-(*p)+1,n);
+		}
+	for (int i=1;i<=M;i++) ans=(ll(ans)+ll(b[i])*(b[i]-1)%mod*(b[i]-2)%mod*(b[i]-3)%mod*power(24,mod-2)*2)%mod;
+	printf("%d\n",(ans+mod)%mod);
+	return 0;
+}

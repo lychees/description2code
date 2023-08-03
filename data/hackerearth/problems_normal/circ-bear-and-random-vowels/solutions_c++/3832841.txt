@@ -1,0 +1,71 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int mod = 1e9 + 7;
+const int nax = 3005;
+const int M = 3; // forbidden number of consecutive consonants
+char sl[nax];
+bool isBad[nax];
+int ways[nax][nax][M], C[nax][nax];
+
+void add(int & a, int b) {
+	a += b;
+	if(a >= mod) a -= mod;
+}
+
+int main() {
+	int n, k;
+	scanf("%d%d", &n, &k);
+	scanf("%s", sl);
+	for(int i = 0; i < n; ++i) {
+		isBad[i] = true; // consonant
+		string vowels = "aeiouy";
+		for(char vowel : vowels)
+			if(vowel == sl[i])
+				isBad[i] = false;
+	}
+	ways[0][0][0] = 1;
+	for(int i = 0; i < n; ++i)
+		for(int changed = 0; changed <= i; ++changed)
+			for(int suffix = 0; suffix < M; ++suffix) {
+				int my_value = ways[i][changed][suffix];
+				// 1) maybe it's already a vowel
+				if(!isBad[i])
+					add(ways[i+1][changed][0], my_value);
+				// 2) maybe it's a consonant and we don't change it
+				if(isBad[i] && suffix + 1 < M)
+					add(ways[i+1][changed][suffix+1], my_value);
+				// 3) maybe it's a consonant but we change it to a vowel
+				if(isBad[i])
+					add(ways[i+1][changed+1][0], my_value);
+			}
+	
+	// calculate binom values
+	for(int i = 0; i <= n; ++i) {
+		C[i][0] = C[i][i] = 1;
+		for(int j = 1; j < i; ++j)
+			C[i][j] = (C[i-1][j-1] + C[i-1][j]) % mod;
+	}
+	
+	int countVowels = 0;
+	for(int i = 0; i < n; ++i)
+		if(!isBad[i])
+			++countVowels;
+	
+	int answer = 0; // first, let's count easy words
+	
+	for(int changed = 0; changed <= k; ++changed) {
+		int conso = n - countVowels - changed;
+		if(conso > n - conso) continue;
+		
+		// we don't care what suffix we get at the end
+		int total = 0;
+		for(int suffix = 0; suffix < M; ++suffix)
+			add(total, ways[n][changed][suffix]);
+		int remaining = k - changed; // how many more we should change
+		if(remaining < 0 || remaining > countVowels) continue;
+		answer = (answer + (long long) total * C[countVowels][remaining]) % mod;
+	}
+	
+	printf("%d\n", (C[n][k] - answer + mod) % mod);
+	return 0;
+}

@@ -1,0 +1,104 @@
+#include <iostream>
+#include <cstring>
+using namespace std;
+#define MOD 1000000007
+int n,q;
+long long dig[10][100001];
+long long a[100001];
+void update(int d, int u, long long v){
+	for(int i = u; i<=n;i += i&-i) {
+		dig[d][i] += v;
+		dig[d][i] %= MOD;
+	}
+}
+long long query(int d, int u){
+	long long res = 0;
+	for(int i = u; i;i -= i&-i) {
+		res += dig[d][i];
+		res %= MOD;
+	}
+	return res;
+}
+int dig_count(long long x){
+	int ad[10] = {0};
+	while (x>0){
+		ad[x%10] += 1;
+		x /= 10;
+	}
+	int res = 0;
+	for (int i=0;i<10;i++){
+		if (ad[i]) res += 1;
+	}
+	return res;
+}
+int main()
+{
+    cin >> n;
+    for (int i=1;i<=n;i++) cin >> a[i];
+    for (int i=1;i<=n;i++){
+    	int d = dig_count(a[i]);
+    	update(d,i,1);
+    }
+    cin >> q;
+    string ch;
+    while (q--){
+    	cin >> ch;
+    	if (ch=="ADD"){
+    		long long u,v;
+    		cin >> u >> v;
+    		long long c1 = dig_count(a[u]);
+    		a[u] += v;
+    		a[u] %= MOD;
+    		long long c2 = dig_count(a[u]);
+    		if (c1==c2) continue;
+    		update(c1,u,-1);
+    		update(c2,u,1);
+    	}
+    	else if (ch=="MUL"){
+    		long long u,v;
+    		cin >> u >> v;
+    		long long c1 = dig_count(a[u]);
+    		a[u] *= v;
+    		a[u] %= MOD;
+    		long long c2 = dig_count(a[u]);
+    		if (c1==c2) continue;
+    		update(c1,u,-1);
+    		update(c2,u,1);
+    	}
+    	else if (ch == "REP"){
+    		long long u,v;
+    		cin >> u >> v;
+    		long long c1 = dig_count(a[u]);
+    		a[u] = v;
+    		a[u] %= MOD;
+    		long long c2 = dig_count(a[u]);
+    		if (c1==c2) continue;
+    		update(c1,u,-1);
+    		update(c2,u,1);
+    	}
+    	else if (ch == "MAX"){
+    		long long ans,id;
+    		long long l,r;
+    		cin >> l >> r;
+    		for (int i=9;i>=1;i--){
+    			ans = query(i,r) - query(i,l-1);
+    			id = i;
+    			if (ans>0) break;
+    		}
+    		cout << id << " " << ans << endl;
+    	}
+    	else{
+    		long long ans,id;
+    		long long l,r;
+    		cin >> l >> r;
+    		for (int i=1;i<=9;i++){
+    			ans = query(i,r) - query(i,l-1);
+    			id = i;
+    			if (ans>0) break;
+    		}
+    		cout << id << " " << ans << endl;
+    	}
+    	
+    }
+    return 0;
+}

@@ -1,0 +1,86 @@
+#include <cstdio>
+
+#include <vector>
+
+using namespace std;
+
+typedef vector<int> VI;
+
+#define MAXN 1004
+int N;
+VI adj[MAXN];
+
+namespace MyQueue {
+   int head, tail;
+   int arr[MAXN];
+   void reset() { head = tail = 0; }
+   bool is_empty() { return head == tail; }
+   void enqueue(int v) { arr[tail++] = v; }
+   int dequeue() { return arr[head++]; }
+};
+
+const int INF = 1000000000;
+int D[MAXN];
+void bfs(int src, bool restart = true, bool removeEdges = false) {
+   if (restart) {
+      for (int u = 1; u <= N; ++u)
+         D[u] = INF;
+      D[src] = 0;
+   }
+
+   MyQueue::reset();
+   MyQueue::enqueue(src);
+   while (!MyQueue::is_empty()) {
+      int u = MyQueue::dequeue();
+      for (int v : adj[u]) {
+         if (D[v] > D[u] + 1) {
+            D[v] = D[u] + 1;
+            MyQueue::enqueue(v);
+         }
+      }
+
+      // remove irrelevant edges
+      if (removeEdges) {
+         int k = 0;
+         for (int j = 0; j < int(adj[u].size()); ++j) {
+            int v = adj[u][j];
+            if (D[v] == D[u] + 1)
+               adj[u][k++] = adj[u][j];
+         }
+         adj[u].erase( adj[u].begin()+k, adj[u].end() );
+      }
+   }
+}
+
+int main(int argc, char* argv[]) {
+   int Q;
+   scanf("%d %d", &N, &Q);
+
+   for (int u = 1; u <= N; ++u)
+      D[u] = INF;
+   D[1] = 0;
+
+   for (int q = 0; q < Q; ++q) {
+      int cmd;
+      scanf("%d", &cmd);
+      if (cmd == 1) {
+         int u;
+         scanf("%d", &u);
+         printf("%d\n", D[u] < INF ? D[u] : -1);
+      }
+      else {
+         int u, v;
+         scanf("%d %d", &u, &v);
+         //if (D[v] >= D[u] + 1 || D[u] >= INF)
+            adj[u].push_back(v);
+
+         if (D[v] > D[u] + 1) {
+            D[v] = D[u] + 1;
+            bfs(v, false, false);
+         }
+
+      //   bfs(1, true, false);
+      }
+   }
+   return 0;
+}

@@ -1,0 +1,75 @@
+#include <iostream>
+#include <string>
+using namespace std;
+#define MAX 100005 
+#define MOD 1000000007
+
+int n,bit[11][MAX];
+void update(int i,int val,int cnt){
+	while(i<=n){
+		bit[cnt][i]+=val;
+		i+=i&-i;
+	}
+}
+int distinct(long long x){
+	int temp[10]={0},c=0;
+	while(x!=0){
+		temp[x%10]=1;
+		x/=10;
+	}
+	for(int i=0;i<10;i++){
+		if(temp[i])
+			c++;
+	}
+	return c;
+}
+int get(int d,int in){
+	int sum=0;
+	while(in>0){
+		sum+=bit[d][in];
+		in-=in&-in;
+	}
+	return sum;
+}
+int main()
+{
+    cin>>n;
+    long long a[n+1],i,c[n+1];
+    for(i=1;i<=n;i++){
+    	cin>>a[i];
+    	c[i]=distinct(a[i]);
+    	update(i,1,c[i]);
+    }	
+    int q;cin>>q;
+    while(q--){
+    	string s;cin>>s;
+    	long long u,v,ans;cin>>u>>v;
+    	if(s=="ADD"){
+    		update(u,-1,c[u]);
+    		a[u]=(a[u]%MOD+v%MOD)%MOD;
+    		c[u]=distinct(a[u]);
+    		update(u,1,c[u]);
+    	}else if(s=="MUL"){
+    		update(u,-1,c[u]);
+    		a[u]=(a[u]%MOD*v%MOD)%MOD;
+    		c[u]=distinct(a[u]);
+    		update(u,1,c[u]);
+    	}else if(s=="REP"){
+    		update(u,-1,c[u]);
+    		a[u]=v%MOD;
+    		c[u]=distinct(a[u]);
+    		update(u,1,c[u]);
+    	}else if(s=="MAX"){
+    		for(i=10;i>=1;i--){
+    			if(ans=get(i,v)-get(i,u-1))	break;
+    		}
+    		cout<<i<<" "<<ans<<endl;
+    	}else if(s=="MIN"){
+    		for(i=1;i<=10;i++){
+    			if(ans=get(i,v)-get(i,u-1))	break;
+    		}
+    		cout<<i<<" "<<ans<<endl;
+    	}
+    }
+    return 0;
+}

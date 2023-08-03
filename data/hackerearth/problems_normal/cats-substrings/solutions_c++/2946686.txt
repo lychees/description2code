@@ -1,0 +1,292 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+ll g_cached_findEdges, g_all_findEdges;
+class SuffixTree {
+public:
+	typedef char Alpha;
+	typedef int Index;
+	enum { NUL_ALPHABET = 0 };
+
+private:
+	struct Node {
+		const Alpha *begin, *end;
+		Node *next;
+		Node *head;
+		Node *suffix;
+
+		Index length() const { return end - begin; }
+		bool isLeaf() const { return head == NULL; }
+	};
+	typedef Node Edge;
+
+public:
+	class BuildingState {
+		friend SuffixTree;
+		//i <- [0,proceededPos): S[i,currentPos) の、葉までのパスがある
+		const Alpha *proceededPos;
+		//i <- [proceededPos,currentPos): S[i,currentPos) の、葉でない(暗黙も含む)ノードまでのパスがある
+		const Alpha *currentPos;
+		//activeParentにはsuffix linkがついている
+		Node *activeParent;
+		Index activeLen;
+		//endがNULLとなってる葉ノードの開始位置
+		Node *unfinalizedLeafPos;
+		//
+		Edge **cachedActiveEdgeRef;
+	};
+
+private:
+	Index bufferSize;
+	Alpha *stringBuffer;
+	Index currentLength;
+	Node *nodeBuffer;
+	Index nNodes;
+	vector<Index> preOrder, parentNode;
+
+public:
+	SuffixTree(): bufferSize(0), stringBuffer(), currentLength(0), nodeBuffer(), nNodes(0) { }
+	~SuffixTree() { clean(); }
+
+	void clean() {
+		delete[] stringBuffer;
+		delete[] nodeBuffer;
+		stringBuffer = NULL;
+		nodeBuffer = NULL;
+	}
+
+	void init(Index bufferSize_) {
+		assert(bufferSize_ > 0);
+		clean();
+		bufferSize = bufferSize_;
+		stringBuffer = new Alpha[bufferSize + 1];
+		stringBuffer[bufferSize] = 0;
+		currentLength = 0;
+		nodeBuffer = new Node[bufferSize * 2];
+		nNodes = 0;
+		makeNewNode(NULL, NULL);
+	}
+
+private:
+	Node *getRoot() const { return &nodeBuffer[0]; }
+
+	Node *makeNewNode(const Alpha *begin, const Alpha *end, Edge *next = NULL, Edge *head = NULL, Node *suffix = NULL) {
+		Node *p = &nodeBuffer[nNodes ++];
+		p->begin = begin; p->end = end;
+		p->next = next; p->head = head;
+		p->suffix = suffix;
+		return p;
+	}
+
+	int comparePos(const Alpha *a, const Alpha *b) const {
+		if(*a != NUL_ALPHABET || *b != NUL_ALPHABET)
+			return *a > *b ? 1 : *a < *b ? -1 : 0;
+		else
+			return a > b ? 1 : a < b ? -1 : 0;
+	}
+
+	Edge **findEdgeRef(Node *node, const Alpha *pos, bool match) const {
+		Edge **ref = &node->head;
+		while(*ref != NULL) {
+			Edge *edge = *ref;
+			int c = comparePos(edge->begin, pos);
+			if(c == 0) return ref;
+			if(c < 0) break;
+			ref = &(*ref)->next;
+		}
+		return match ? NULL : ref;
+	}
+
+	Edge **insertEdge(Node *node, const Alpha *beginPos, const Alpha *endPos) {
+		Edge **ref = findEdgeRef(node, beginPos, false);
+		if(*ref != NULL && comparePos((*ref)->begin, beginPos) == 0)
+			return ref;
+		Edge *newEdge = makeNewNode(beginPos, endPos, *ref);
+		*ref = newEdge;
+		return ref;
+	}
+
+	BuildingState getInitBuildingState() const {
+		BuildingState s;
+		s.currentPos = s.proceededPos = stringBuffer + currentLength;
+		s.activeParent = getRoot();
+		s.activeLen = 0;
+		s.unfinalizedLeafPos = nodeBuffer + nNodes;
+		s.cachedActiveEdgeRef = NULL;
+		return s;
+	}
+
+	void processAnAlphabet(BuildingState &s) {
+		//この時点で、active pointは根からの [proceeded,currentPos) パスの先を指してる
+		Node *prevNode = NULL;
+		while(s.proceededPos <= s.currentPos) {
+			if(s.cachedActiveEdgeRef == NULL)
+				s.cachedActiveEdgeRef = findEdgeRef(s.activeParent, s.currentPos - s.activeLen, true);
+			else
+				++ g_cached_findEdges;
+			++ g_all_findEdges;
+			Edge **activeEdgeRef = s.cachedActiveEdgeRef;
+			Edge *activeEdge = activeEdgeRef == NULL ? NULL : *activeEdgeRef;
+			Node *newActiveNode = s.activeParent;
+			if(activeEdge != NULL) {
+				if(activeEdge->end != NULL && activeEdge->length() <= s.activeLen) {
+					s.activeParent = activeEdge;
+					s.activeLen -= activeEdge->length();
+					s.cachedActiveEdgeRef = NULL;
+					continue;
+				}else if(comparePos(activeEdge->begin + s.activeLen, s.currentPos) == 0) {
+					if(prevNode != NULL)
+						prevNode->suffix = s.activeParent;
+					++ s.activeLen;
+					break;
+				}else {
+					const Alpha *midPos = activeEdge->begin + s.activeLen;
+					assert(activeEdge->begin < midPos && (activeEdge->end == NULL || midPos < activeEdge->end));
+					Edge *splittedEdge = makeNewNode(activeEdge->begin, midPos, activeEdge->next, activeEdge);
+					activeEdge->begin = midPos;
+					activeEdge->next = NULL;
+					activeEdge = *activeEdgeRef = splittedEdge;
+					newActiveNode = splittedEdge;
+				}
+			}
+
+			Edge **insertedEdgeRef = insertEdge(newActiveNode, s.currentPos, NULL);
+
+			if(prevNode != NULL)
+				prevNode->suffix = newActiveNode;
+			prevNode = newActiveNode;
+
+			++ s.proceededPos;
+			if(s.activeParent == getRoot()) {
+				if(s.activeLen > 0)
+					-- s.activeLen;
+			}else {
+				Node *suffixLink = s.activeParent->suffix;
+				s.activeParent = suffixLink != NULL ? suffixLink : getRoot();
+			}
+			s.cachedActiveEdgeRef = NULL;
+		}
+		if(*s.currentPos == NUL_ALPHABET) {
+			Node *currentLeafPos = nodeBuffer + nNodes;
+			for(Node *p = s.unfinalizedLeafPos; p != currentLeafPos; ++ p) {
+				if(p->isLeaf()) {
+					assert(p->end == NULL);
+					p->end = s.currentPos + 1;
+				}
+			}
+			s.unfinalizedLeafPos = currentLeafPos;
+		}
+		++ s.currentPos;
+	}
+
+public:
+	//len1はNUL文字分を含む
+	void addString(const Alpha *str, Index len1) {
+		if(currentLength + len1 > bufferSize || len1 <= 0 || str[len1-1] != NUL_ALPHABET)
+			abort();
+		BuildingState s = getInitBuildingState();
+		for(Index i = 0; i < len1; ++ i) {
+			stringBuffer[currentLength ++] = str[i];
+			processAnAlphabet(s);
+		}
+		assert(s.proceededPos == s.currentPos);
+	}
+
+	void traverse() {
+		preOrder.clear(); preOrder.reserve(nNodes);
+		parentNode.assign(nNodes, (Index)-1);
+		vector<Index> stk;
+		stk.push_back((Index)(getRoot() - nodeBuffer));
+		while(!stk.empty()) {
+			Index i = stk.back(); stk.pop_back();
+			Node *node = &nodeBuffer[i];
+			preOrder.push_back(i);
+			for(const Edge *edge = node->head; edge != NULL; edge = edge->next) {
+				Index child = (Index)(edge - nodeBuffer);
+				parentNode[child] = i;
+				stk.push_back(child);
+			}
+		}
+	}
+
+public:
+	long long solve(Index mid);
+};
+
+long long SuffixTree::solve(Index mid) {
+	vector<int> cnt1(nNodes, 0), cnt2(nNodes, 0);
+	for(Index ix = nNodes - 1; ix > 0; -- ix) {
+		Index i = preOrder[ix], p = parentNode[i];
+		const Node *node = nodeBuffer + i;
+		if(node->isLeaf())
+			(node->end <= stringBuffer + mid ? cnt1 : cnt2)[i] += 1;
+		cnt1[p] += cnt1[i];
+		cnt2[p] += cnt2[i];
+	}
+	long long res = 0;
+	for(Index i = 0; i < nNodes; ++ i) {
+		const Node *node = nodeBuffer + i;
+		Index multiplier = node->length() - (node->isLeaf() ? 1 : 0);
+		res += (long long)multiplier * cnt1[i] * cnt2[i];
+	}
+	return res;
+}
+
+int main() {
+	char *buf = new char[100001];
+	int N;
+	while(~scanf("%d", &N)) {
+		SuffixTree st;
+		st.init(400000);
+		int mid = 0;
+		rep(i, N) {
+			scanf("%s", buf);
+			st.addString(buf, strlen(buf) + 1);
+			mid += strlen(buf) + 1;
+		}
+		int M;
+		scanf("%d", &M);
+		rep(i, M) {
+			scanf("%s", buf);
+			st.addString(buf, strlen(buf) + 1);
+		}
+		st.traverse();
+		long long ans = st.solve(mid);
+		printf("%lld\n", ans);
+	}
+	return 0;
+}

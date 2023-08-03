@@ -1,0 +1,68 @@
+#include <stdio.h>
+#include <vector>
+
+using namespace std;
+
+#define DEBUG 0
+#define NMAX 50500
+#define KMAX 101
+#define MOD 1000000007
+
+vector<int> vec[NMAX];
+char visited[NMAX];
+int a[NMAX], cnt[NMAX][2][KMAX], c[NMAX];
+int N, K, i, j, k, p, ans;
+
+void DFS(int x) {
+	visited[x] = 1;
+	for (c[x] = i = 0; i <= K; i++)
+		cnt[x][c[x]][i] = 0;
+	cnt[x][c[x]][a[x]] = 1;
+	for (int z = 0; z < vec[x].size(); z++) {
+		int y = vec[x][z];
+		if (visited[y]) continue;
+		DFS(y);
+		p = c[x];
+		c[x] = 1 - c[x];
+		for (i = 0; i <= K; i++) cnt[x][c[x]][i] = 0;
+		for (i = 0; i <= K; i++)
+			//if (cnt[x][p][i] > 0)
+				for (j = 0; i + j <= K; j++)
+					cnt[x][c[x]][i + j] = ((long long) cnt[x][c[x]][i + j] + (long long) cnt[x][p][i] * (long long) cnt[y][c[y]][j]) % MOD;
+	}
+	ans += cnt[x][c[x]][K];
+	if (ans >= MOD) ans -= MOD;
+	cnt[x][c[x]][0]++;
+	if (cnt[x][c[x]][0] >= MOD) cnt[x][c[x]][0] -= MOD;
+	if (DEBUG) {
+		fprintf(stderr, "x=%d (%d):", x, a[x]);
+		for (i = 0; i <= K; i++)
+			fprintf(stderr, " %d", cnt[x][c[x]][i]);
+		fprintf(stderr, "\n");
+	}
+}
+
+int main() {
+	int T;
+//	freopen("y.txt", "r", stdin);
+	scanf("%d", &T);
+	while (T--) {
+		scanf("%d %d", &N, &K);
+		for (i = 1; i <= N; i++) {
+			vec[i].clear();
+			visited[i] = false;
+		}
+		for (i = 1; i <= N; i++)
+			scanf("%d", &a[i]);
+		for (k = 1; k < N; k++) {
+			scanf("%d %d", &i, &j);
+			vec[i].push_back(j);
+			vec[j].push_back(i);
+		}
+		ans = 0;
+		DFS(1);
+		printf("%d\n", ans);
+	}
+
+	return 0;
+}

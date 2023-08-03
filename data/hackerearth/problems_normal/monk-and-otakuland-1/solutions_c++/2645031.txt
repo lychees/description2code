@@ -1,0 +1,210 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define gc getchar
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define ll long long
+#define MOD 1000000007
+#define inf 2000000000
+#define oo (ll)1e18
+#define TRACE
+#define _ ios_base::sync_with_stdio(0);cin.tie(0); 
+ 
+#ifdef TRACE
+ #define trace(x)            cerr<<x<<endl;
+    #define trace1(x)           cerr<<__FUNCTION__<<":"<<__LINE__<<": "#x" = "<<x<<endl;
+    #define trace2(x,y)         cerr<<__FUNCTION__<<":"<<__LINE__<<": "#x" = "<<x<<" | "#y" = "<<y<<endl;
+    #define trace3(x,y,z)       cerr<<__FUNCTION__<<":"<<__LINE__<<": "#x" = "<<x<<" | "#y" = "<<y<<" | "#z" = "<<z<<endl;
+    #define trace4(a,b,c,d)     cerr<<__FUNCTION__<<":"<<__LINE__<<": "#a" = "<<a<<" | "#b" = "<<b<<" | "#c" = "<<c<<" | "#d" = "<<d<<endl;
+    #define trace5(a,b,c,d,e)   cerr<<__FUNCTION__<<":"<<__LINE__<<": "#a" = "<<a<<" | "#b" = "<<b<<" | "#c" = "<<c<<" | "#d" = "<<d<<" | "#e" = "<<e<<endl;
+    #define trace6(a,b,c,d,e,f) cerr<<__FUNCTION__<<":"<<__LINE__<<": "#a" = "<<a<<" | "#b" = "<<b<<" | "#c" = "<<c<<" | "#d" = "<<d<<" | "#e" = "<<e<<" | "#f" = "<<f<<endl;
+ 
+#else
+ 
+#define trace1(x)
+#define trace2(x, y)
+#define trace3(x, y, z)
+#define trace4(a, b, c, d)
+#define trace5(a, b, c, d, e)
+#define trace6(a, b, c, d, e, f)
+ 
+#endif
+  
+typedef pair<ll,ll> pll;
+typedef pair<int,int> pii;
+
+void scan(int &x)
+{
+    register int c = gc();
+    x = 0;
+    int neg = 0;
+    for(;((c<48 || c>57) && c != '-');c = gc());
+    if(c=='-') {neg=1;c=gc();}
+    for(;c>47 && c<58;c = gc()) {x = (x<<1) + (x<<3) + c - 48;}
+    if(neg) x=-x;
+}
+const int M=200000;
+string s;
+struct node
+{
+	int swap_count,forward,backward;
+	void merge(node &l,node &r)
+	{
+		forward=l.forward+r.forward;
+		backward=l.backward+r.backward;
+		swap_count=0;
+	}
+	
+	void split(node &l,node &r)
+	{
+		l.swap_count+=swap_count;
+		r.swap_count+=swap_count;
+		
+		if(swap_count%2==1)
+		swap(l.forward,l.backward);
+		if(swap_count%2==1)
+		swap(r.forward,r.backward);
+		
+		swap_count=0;
+		
+	}
+}
+tree [ 4*M];
+
+
+node range_query(int root,int l,int r,int i,int j)
+{
+	if(l==i && r==j)
+	{
+		//trace5(root,tree[root].swap_count,tree[root].forward,tree[root].backward,'\n');
+		return tree[root];
+	} 
+	
+	int m=(l+r)/2;
+	
+	node res,left,right;
+    tree[root].split(tree[2*root],tree[2*root+1]);
+
+	if(j<=m)
+	res=range_query(2*root,l,m,i,j);
+	
+	else if(i>m)
+	res=range_query(2*root+1,m+1,r,i,j);
+	
+	else
+	{
+		left=range_query(2*root,l,m,i,m);
+		right=range_query(2*root+1,m+1,r,m+1,j);
+		
+		res.merge(left,right);
+		//trace4(res.swap_count,res.forward,res.backward,'\n');
+	}
+	
+	tree[root].merge(tree[2*root],tree[2*root+1]);
+	//trace5(root,tree[root].swap_count,tree[root].forward,tree[root].backward,'\n');
+	
+	return res;	
+}
+
+void pointupdate(int root,int i,int j,int idx,int f,int b)
+{
+	if(i==j && j==idx)
+	{
+		tree[root].swap_count=0;
+		tree[root].forward=f;
+		tree[root].backward=b;
+		
+		//trace4(root,tree[root].swap_count,tree[root].forward,tree[root].backward);
+        return;
+    }
+        
+    int m=(i+j)/2,l=2*root,r=2*root+1;
+    
+    if(idx<=m)
+    pointupdate(l,i,m,idx,f,b);
+    else
+    pointupdate(r,m+1,j,idx,f,b);
+    
+    tree[root].merge(tree[l],tree[r]);
+    //trace4(root,tree[root].swap_count,tree[root].forward,tree[root].backward);
+}
+
+
+void range_update(int root,int l,int r,int i,int j)
+{
+	if(l==i && r==j)
+	{	
+		swap(tree[root].forward,tree[root].backward);
+		tree[root].swap_count++;	
+
+		//trace5(root,tree[root].swap_count,tree[root].forward,tree[root].backward,'\n');
+
+		return;
+	} 
+	
+	int m=(l+r)/2;
+	tree[root].split(tree[2*root],tree[2*root+1]);
+
+    if(j<=m)
+	range_update(2*root,l,m,i,j);
+	
+	else if(i>m)
+	range_update(2*root+1,m+1,r,i,j);
+	
+	else
+	{
+		range_update(2*root,l,m,i,m);
+		range_update(2*root+1,m+1,r,m+1,j);
+			
+	}
+		
+	tree[root].merge(tree[2*root],tree[2*root+1]);
+   // trace5(root,tree[root].swap_count,tree[root].forward,tree[root].backward,'\n');
+     
+}
+
+int main()
+{
+	int t=1;
+	while(t--)
+	{
+		int x,y,ch,n,m;
+		scanf("%d%d",&n,&m);
+		n--;
+		cin>>s;
+		for(int i=0;i<(int)s.length();i++){
+			if(s[i]=='>')
+			pointupdate(1,0,n-1,i,1,0);
+			else if(s[i]=='<')
+			pointupdate(1,0,n-1,i,0,1);
+		}
+		
+		while(m--)
+		{
+		    scanf("%d%d%d",&ch,&x,&y);
+			if(ch==1)
+			{
+				range_update(1,0,n-1,x-1,y-2);
+			}	
+			else
+			{
+				if(x==y){
+					puts("0");
+					continue;
+				}
+				if(x<y){
+					node res=range_query(1,0,n-1,--x,y-2);
+					printf("%d\n",res.backward);
+				}
+				else if(x>y){
+					node res=range_query(1,0,n-1,--y,x-2);
+					printf("%d\n",res.forward);
+				}
+			}
+		}
+    }
+	return 0;
+}			

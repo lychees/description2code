@@ -1,0 +1,97 @@
+#include <iostream>
+#include <cstdio>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <sstream>
+#include <cmath>
+
+typedef long long ll;
+
+#define forn(i, n) for (int i = 0; i < (int)(n); i++)
+#define forv(i, v) forn(i, v.size())
+
+using namespace std;
+
+int n, q;
+
+struct Edge {
+    int u, v, w;
+};
+
+inline bool operator<(const Edge& e1, const Edge& e2) {
+    return e1.w > e2.w;
+}
+
+vector<Edge> e;
+vector< map<int, int> > inq;
+vector<int> p;
+vector<ll> ans;
+
+int up(int x) {
+    if (p[x] != x) p[x] = up(p[x]);
+    return p[x];
+}
+
+void merge(map<int, int>& m1, map<int, int>& m2, ll w) {
+    for (const auto& p : m1) {
+        if (m2.count(p.first) != 0) {
+            ans[p.first] += w * p.second * m2[p.first];
+        }
+        m2[p.first] += p.second;
+    }
+}
+
+void join(int x, int y, int w) {
+    x = up(x);
+    y = up(y);
+    if (x == y) return;
+    if (inq[x].size() < inq[y].size()) {
+        p[x] = y;
+        merge(inq[x], inq[y], w);
+    } else {
+        p[y] = x;
+        merge(inq[y], inq[x], w);
+    }
+}
+
+int main() {
+#ifdef NEREVAR_PROJECT
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    cin >> n;
+    e = vector<Edge>(n - 1);
+    forn(i, n - 1) {
+        scanf("%d %d %d", &e[i].u, &e[i].v, &e[i].w);
+        e[i].u--, e[i].v--;
+    }
+    sort(e.begin(), e.end());
+    inq = vector< map<int, int> >(n);
+    cin >> q;
+    forn(it, q) {
+        int k;
+        scanf("%d", &k);
+        forn(i, k) {
+            int v;
+            scanf("%d", &v);
+            v--;
+            inq[v][it] = 1;
+        }
+    }
+    ans = vector<ll>(q);
+    p = vector<int>(n);
+    forn(i, n) p[i] = i;
+    forn(i, n - 1) {
+        join(e[i].u, e[i].v, e[i].w);
+    }
+    forn(i, q) {
+        printf("%lld\n", ans[i]);
+    }
+    return 0;
+}

@@ -1,0 +1,116 @@
+// iostream is too mainstream
+#include <cstdio>
+// bitch please
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <list>
+#include <cmath>
+#include <iomanip>
+#define dibs reserve
+#define OVER9000 1234567890
+#define ALL_THE(CAKE,LIE) for(auto LIE =CAKE.begin(); LIE != CAKE.end(); LIE++)
+#define tisic 47
+#define soclose 1e-5
+#define chocolate win
+// so much chocolate
+#define patkan 9
+#define ff first
+#define ss second
+#define abs(x) ((x < 0)?-(x):x)
+#define uint unsigned int
+#define dbl long double
+using namespace std;
+// mylittledoge
+
+void DFS(int R, vector<int> &S, vector< vector<int> > &par, vector< vector<int> > &G, vector<int> &dep) {
+	ALL_THE(G[R],it) if(par[0][*it] == -1) {
+		par[0][*it] =R;
+		dep[*it] =dep[R]+1;
+		DFS(*it,S,par,G,dep);
+		S[R] +=S[*it];}
+	}
+
+int main() {
+	cin.sync_with_stdio(0);
+	cin.tie(0);
+	int N,Q;
+	cin >> N;
+	vector< vector<int> > G(N);
+	for(int i =0; i < N-1; i++) {
+		int a,b;
+		cin >> a >> b;
+		G[--a].push_back(--b);
+		G[b].push_back(a);}
+
+	vector<int> S(N,1);
+	vector< vector<int> > par(20,vector<int>(N+1,-1));
+	vector< vector<long long> > X(20,vector<long long>(N+1,0));
+	par[0][0] =0;
+	vector<int> dep(N,0);
+	DFS(0,S,par,G,dep);
+
+	for(int i =1; i < 20; i++) for(int j =0; j < N; j++)
+		par[i][j] =par[i-1][par[i-1][j]];
+
+	for(int i =1; i < N; i++) 
+		X[0][i] =1LL*(S[par[0][i]]-S[i])*(S[par[0][i]]-S[i]-1)/2;
+	for(int i =1; i < 20; i++) for(int j =0; j < N; j++)
+		X[i][j] =X[i-1][j]+X[i-1][par[i-1][j]];
+
+	cin >> Q;
+	for(int q =0; q < Q; q++) {
+		int u,v;
+		cin >> u >> v;
+		u--, v--;
+		if(u == v) {cout << "0\n"; continue;}
+		if(dep[u] > dep[v]) swap(u,v);
+		int x =u, y =v, k =19;
+		while(dep[y] > dep[x]) {
+			if(dep[par[k][y]] < dep[x]) {k--; continue;}
+			y =par[k][y];}
+		k =19;
+		while(x != y && k >= 0) {
+			if(par[k][x] == par[k][y]) {k--; continue;}
+			x =par[k][x];
+			y =par[k][y];}
+
+		long long ans =0;
+		if(x != y) {
+			int s =N-S[x]-S[y];
+			ans +=1LL*s*(s-1)/2;
+			x =par[0][x]; 
+			y =par[0][y];}
+		else {
+			y =v, k =19;
+			while(dep[y] > dep[x]+1) {
+				if(dep[par[k][y]] <= dep[x]) {k--; continue;}
+				y =par[k][y];}
+			int s =N-S[y];
+			ans +=1LL*s*(s-1)/2;
+			y =par[0][y];}
+
+		if(x != u) ans +=1LL*S[u]*(S[u]-1)/2;
+		if(x != v) ans +=1LL*S[v]*(S[v]-1)/2;
+
+		k =19;
+		while(dep[u] > dep[x]+1) {
+			if(dep[par[k][u]] <= dep[x]) {k--; continue;}
+			ans +=X[k][u];
+			u =par[k][u];}
+		k =19;
+		while(dep[v] > dep[x]+1) {
+			if(dep[par[k][v]] <= dep[x]) {k--; continue;}
+			ans +=X[k][v];
+			v =par[k][v];}
+		
+		cout << 1LL*N*(N-1)/2-ans << "\n";}
+	return 0;}
+
+// look at my code
+// my code is amazing

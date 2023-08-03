@@ -1,0 +1,75 @@
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+
+using namespace std;
+
+unordered_map<int, int> parents;
+
+struct Edges {
+	int a;
+	int b;
+	int weight;
+	
+	Edges(int a, int b, int weight) : a(a), b(b), weight(weight) {}
+};
+
+int cmp (const Edges& a, const Edges& b) {
+	return a.weight > b.weight;
+}
+
+int findParent(int x) {
+	int origin = x;
+	while (parents[x] != x) {
+		x = parents[x];
+	}
+	
+	int parent = x;
+	x = origin;
+	
+	while (x != parent) {
+		int m = parents[x];
+		parents[x] = parent;
+		x = m;
+	}
+	
+	return parent;
+	
+}
+
+
+int main()
+{
+	int T, N, M;
+	cin>>T;
+	while(T--) {
+		int count = 0;
+		cin>>N>>M;
+		vector<Edges> edges;
+		for (int i = 0; i < M; i++) {
+			int a, b, w;
+			cin>>a>>b>>w;
+			edges.emplace_back(a, b, w);
+		}
+		
+		sort(edges.begin(), edges.end(), cmp);
+		
+		for (int i = 1; i <= N; i++) {
+			parents[i] = i;
+		}
+		
+		for (auto temp : edges) {
+			int fa = findParent(temp.a);
+			int fb = findParent(temp.b);
+			if (fa != fb) {
+				count += temp.weight;
+				
+				parents[fa] = fb;
+			}
+		}
+		
+		cout <<count<< endl;
+	}
+    return 0;
+}

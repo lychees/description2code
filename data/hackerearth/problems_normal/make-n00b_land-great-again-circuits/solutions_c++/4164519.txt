@@ -1,0 +1,197 @@
+/*
+* @problem: make-n00b_land-great-again-circuits
+*/
+
+#include <iostream>
+#include <cstring>
+#include <cstdio>
+#include <cmath>
+#include <limits.h>
+#include <vector>
+#include <map>
+#include <bitset>
+#include <string>
+#include <iterator>
+#include <set>
+#include <utility>
+#include <queue>
+#include <numeric>
+#include <functional>
+#include <ctype.h>
+#include <stack>
+#include <algorithm>
+#include <cstdlib>
+#define MAX 500100
+#define mod 1000000007LL
+#define bitcnt(x) __builtin_popcountll(x)
+#define MS0(x) memset(x, 0, sizeof(x))
+#define MS1(x) memset(x, -1, sizeof(x))
+#define ll long long int
+#define mp(x, y) make_pair(x, y)
+#define pii pair<int, int>
+#define pll pair<ll, ll>
+#define in(x) scanf("%lld", &x)
+#define ind(x) scanf("%d", &x)
+#define ins(x) scanf("%s", x)
+#define pr(x) printf("%lld\n", x)
+#define prd(x) printf("%d\n", x)
+#define prs(x) printf("%s\n", x)
+#define pi acos(-1.0)
+#define ff first
+#define ss second
+
+using namespace std;
+int n, m, ans[MAX], F[MAX], X[MAX], D[MAX], lev[MAX], tin[MAX], tout[MAX], timer = 0;
+int L[MAX], R[MAX], q;
+ll need[MAX], tree[MAX], tree1[MAX], tmp;
+vector<int> v[MAX], bman[MAX], check[MAX];
+
+void dfs(int src)
+{
+	tin[src] = ++timer;
+	for(int i : v[src])
+	{
+		lev[i] = lev[src] + 1;
+		dfs(i);
+	}
+	tout[src] = timer;
+}
+
+void update(int l, int r, ll val, int val1)
+{
+	for(int i = l; i <= timer; i += (i & -i))
+	{
+		tree[i] += val;
+		tree1[i] += val1;
+	}
+	for(int i = r + 1; i <= timer; i += (i & -i))
+	{
+		tree[i] -= val;
+		tree1[i] -= val1;
+	}
+}
+
+void tree_add(int i)
+{
+	ll value = X[i];
+	value = value - ((ll)lev[F[i]] * D[i]);
+	update(tin[F[i]], tout[F[i]], value, D[i]);
+}
+
+ll tree_get(int id)
+{
+	ll ans = 0, ans1 = 0;
+	for(int i = tin[id]; i > 0; i -= (i & -i))
+	{
+		ans += tree[i];
+		ans1 += tree1[i];
+	}
+	ans = ans + (ans1 * lev[id]);
+	return ans;
+}
+
+void clean()
+{
+	memset(tree, 0, sizeof(tmp) * (timer + 1));
+	memset(tree1, 0, sizeof(tmp) * (timer + 1));
+	for(int i = 0; i <= q; i++)
+		check[i].clear();
+	int mid;
+	for(int i = 1; i <= m; i++)
+	{
+		if(L[i] == R[i])
+			continue;
+		mid = (L[i] + R[i]) >> 1;
+		check[mid].push_back(i);
+	}
+}
+
+int main()
+{
+#ifndef ONLINE_JUDGE
+	freopen("../input.txt", "r", stdin);
+	// freopen("../output.txt", "w", stdout);
+#endif
+	// ios_base::sync_with_stdio(0);
+	// cin.tie(0);
+	int par, who;
+	ind(n);
+	ind(m);
+	for (int i = 2; i <= n; i++)
+	{
+		ind(par);
+		v[par].push_back(i);
+	}
+	lev[1] = 1;
+	dfs(1);
+
+	for (int i = 1; i <= n; i++)
+	{
+		ind(who);
+		bman[who].push_back(i);
+	}
+	ll mx = -1;
+	for (int i = 1; i <= m; i++)
+	{
+		in(need[i]);
+		if(need[i] > mx)
+			mx = need[i];
+	}
+
+	ind(q);
+
+	for (int i = 1; i <= q; i++)
+	{
+		ind(F[i]);
+		ind(X[i]);
+		ind(D[i]);
+	}
+	q++;
+	F[q] = 1;
+	X[q] = mx;
+	D[q] = 0;
+	for(int i = 1; i <= m; i++)
+	{
+		L[i] = 1;
+		R[i] = q;
+	}
+
+	int t = 25;
+	ll his_value;
+	bool flag;
+	while(t--)
+	{
+		clean();
+		flag = 0;
+		for(int i = 1; i <= q; i++)
+		{
+			tree_add(i);
+			for(int j : check[i])
+			{
+				flag = 1;
+				his_value = 0;
+				for(int k : bman[j])
+				{
+					his_value += tree_get(k);
+					if(his_value >= need[j])
+						break;
+				}
+				if(his_value >= need[j])
+					R[j] = i;
+				else
+					L[j] = i + 1;
+			}
+		}
+		if(!flag)
+			break;
+	}
+
+	for(int i = 1; i <= m; i++)
+	{
+		if(L[i] < q)
+			prd(L[i]);
+		else
+			printf("rekt\n");
+	}
+	return 0;
+}

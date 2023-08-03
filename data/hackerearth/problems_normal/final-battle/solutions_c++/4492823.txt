@@ -1,0 +1,160 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+typedef long long ll;
+const ll MOD = ll(1e9) + 7;
+
+struct DSU {
+  vector<int> dsu;
+  
+  void init(int N) {
+    dsu.resize(N,-1);
+  }
+  
+  int findset(int x) {
+    return dsu[x] < 0 ? x : dsu[x] = findset(dsu[x]);
+  }
+  
+  void unite(int a, int b) {
+    a = findset(a);
+    b = findset(b);
+    if (a != b) {
+      dsu[a] = b;
+    }
+  }
+};
+
+struct Edge {
+  int a,b,cost;
+  
+  bool operator<(const Edge& e) const {
+    return cost < e.cost;
+  }
+};
+
+ll inv(ll x) {
+  ll res = 1;
+  for(ll e = MOD - 2; e > 0; e >>= 1) {
+    if (e & 1) res = res * x % MOD;
+    x = x * x % MOD;
+  }
+  return res;
+}
+
+ll det(vector<vector<ll>> mat) {
+  mat.erase(--mat.end());
+  for(auto& row : mat)
+    row.erase(--row.end());
+  const int N = mat.size();
+  for(auto& row : mat)
+    for(auto& v : row)
+      if (v < 0)
+        v += MOD;
+  ll res = 1;
+  for(int k=0;k<N;++k) {
+    int piv=k;
+    while(mat[piv][k]==0)
+      ++piv;
+    if (piv != k) {
+      swap(mat[piv], mat[k]);
+      res = MOD - res;
+    }
+    res = res * mat[k][k] % MOD;
+    for(int r=k+1;r<N;++r) {  
+      const ll val = mat[r][k] * inv(mat[k][k]) % MOD;
+      for(int c=k;c<N;++c) {
+        mat[r][c] -= val * mat[k][c];
+        mat[r][c] %= MOD;
+        if (mat[r][c] < 0)
+          mat[r][c] += MOD;
+      }
+    }
+  }
+  return res;
+}
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  srand(1223);
+  int N, Q;
+  cin >> N >> Q;
+  for(int i=0,u,v;i<N-1;++i){
+    cin>>u>>v;
+  }
+  vector<Edge> edges(Q);
+  for(auto& e : edges) {
+    cin >> e.a >> e.b >> e.cost;
+    --e.a;
+    --e.b;
+  }
+  DSU dsu;
+  dsu.init(N);
+  sort(edges.begin(), edges.end());
+  auto it = edges.begin();
+  ll res = 1;
+  int cnt = 0;
+  while (it != edges.end()) {
+    auto same = it;
+    while (same != edges.end() && it->cost == same->cost)
+      ++same;
+    unordered_map<int,int> vert_to_id;
+    int V = 0;
+    for(auto j = it; j != same; ++j) {
+      j->a = dsu.findset(j->a);
+      j->b = dsu.findset(j->b);
+      if (j->a == j->b) continue;
+      if (!vert_to_id.count(j->a))
+        vert_to_id[j->a] = V++;
+      if (!vert_to_id.count(j->b))
+        vert_to_id[j->b] = V++;  
+    }
+    if (V == 0) {
+      it = same;
+      continue;
+    }
+    DSU cur;
+    cur.init(V);
+    for(auto j = it; j != same; ++j) {
+      const int a = vert_to_id[j->a];
+      const int b = vert_to_id[j->b];
+      if (a == b) continue;
+      cur.unite(a,b);
+    }
+    for(int v=0;v<V;++v) {
+      if(cur.findset(v) != v) continue;
+      //if (v>0) break;
+      static unordered_map<int,int> id_map;
+      id_map.clear();
+      int L = 0;
+      for(int k=0;k<V;++k)
+        if(cur.findset(k) == v)
+          id_map[k] = L++;
+      vector<vector<ll>> mat(L,vector<ll>(L));
+      for(auto j = it; j != same; ++j) {
+        const int a = vert_to_id[j->a];
+        const int b = vert_to_id[j->b];
+        if (a == b || !id_map.count(a) || !id_map.count(b)) continue;
+        const int x = id_map[a], y = id_map[b];
+        ++mat[x][x];
+        ++mat[y][y];
+        --mat[x][y];
+        --mat[y][x];
+      }
+      res = res * det(mat) % MOD; 
+    }
+    while (it != same) {
+      if (dsu.findset(it->a) != dsu.findset(it->b)) {
+        ++cnt;
+        dsu.unite(it->a,it->b);
+      }
+      ++it;
+    }
+  }
+  //cerr << cnt << endl;
+  if (cnt != N - 1) 
+    res = 0;
+  cout << res << endl;
+  return 0;
+}

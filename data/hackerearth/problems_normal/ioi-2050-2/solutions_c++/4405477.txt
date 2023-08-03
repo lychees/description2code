@@ -1,0 +1,122 @@
+#include <bits/stdc++.h>
+using namespace std;
+int T,N,M,a,b,c;
+int parent[100009];
+bool comp(pair<int,pair<int,int> > a,pair<int,pair<int,int> > b);
+long long kruskals(pair<int ,pair<int,int> > gr[]);
+void pr_union(int x,int y);
+int root(int x);
+vector<pair<long,int> > ngr[10009];
+long long sum;
+
+
+
+int root(int x)
+{
+	if(x==parent[x])
+		return x;
+	parent[x] = root(parent[x]);
+	return parent[x];
+
+}
+void pr_union(int x,int y)
+{
+	int p = root(x);
+	int q = root(y);
+	parent[p] = parent[q];
+}
+bool comp(pair<int,pair<int,int> > a,pair<int,pair<int,int> > b)
+{
+	return a.first<b.first;
+}
+long long kruskals(pair<int ,pair<int,int> > gr[])
+{
+	sum = 0;
+	for(int i=0;i<M;i++)
+	{
+		a = gr[i].second.first;
+		b = gr[i].second.second;
+		c = gr[i].first;
+		if(root(a)!=root(b))
+		{
+			sum+=c;
+			pr_union(a,b);
+			ngr[a].push_back(make_pair(c,b));
+			ngr[b].push_back(make_pair(c,a));
+		}
+	}
+	return sum;
+}
+int main()
+{
+
+
+    //freopen("file1.txt","r",stdin);
+    cin>>T;
+    int p=1,q;
+    while(p<=T)
+    {
+
+    	scanf("%d%d%d",&N,&M,&q);
+    	long long vis[N+1];
+    	sum = 0;
+    	for(int i=1;i<=N;i++)
+    	{
+    	    parent[i] = i;
+    	    vis[i]=0;
+    	    ngr[i].clear();
+    	}
+    	pair<int,pair<int,int> > gr[M];
+
+    	for(int i=0;i<M;i++)
+    	{
+    		scanf("%d%d%d",&a,&b,&c);
+    		gr[i] = make_pair(c,make_pair(a,b));
+    	}
+
+    	sort(gr,gr+M,comp);
+    	sum = kruskals(gr);
+    	//cout<<sum<<" ";
+    	printf("Case: %d\n",p);
+        int l,m;
+        long long res[N+1][N+1];
+    	for(int i=1;i<=N;i++)
+        {
+            // sum=0;
+            // scanf("%d%d",&l,&m);
+           
+            memset(vis, -1, sizeof vis);
+            //vis[] = {-1};
+
+            queue<int> q;
+            q.push(i);
+            vis[i]=0;
+            while(!q.empty())
+            {
+                a = q.front();
+                q.pop();
+                //vis[a] = 1;
+              for(vector<pair<long,int> >::iterator it=ngr[a].begin();it!=ngr[a].end();it++)
+                {
+                    if(vis[it->second]==-1)
+                    {
+                        vis[it->second] = vis[a]+it->first;
+                        q.push(it->second);
+                    }
+                }
+            }
+			for(int j=1;j<=N;j++)
+			{
+				res[i][j] = vis[j];
+			}
+        }
+        
+        for(int i=1;i<=q;i++)
+        {
+        	scanf("%d%d",&l,&m);
+        	cout<<res[l][m]<<endl;
+        }
+        p++;
+    }
+}
+

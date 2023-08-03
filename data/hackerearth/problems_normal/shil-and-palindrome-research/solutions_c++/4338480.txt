@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef vector<int> vi;
+#define LSOne(S) (S & (-S))
+
+class FenwickTree {
+private:
+  vi ft;
+
+public:
+  FenwickTree() { ft.assign((int)1e5 + 1, 0); }
+  // initialization: n + 1 zeroes, ignore index 0
+  FenwickTree(int n) { ft.assign(n + 1, 0); }
+
+  int rsq(int b) {                                     // returns RSQ(1, b)
+    int sum = 0; for (; b; b -= LSOne(b)) sum += ft[b];
+    return sum; }
+
+  int rsq(int a, int b) {                              // returns RSQ(a, b)
+    return rsq(b) - (a == 1 ? 0 : rsq(a - 1)); }
+
+  // adjusts value of the k-th element by v (v can be +ve/inc or -ve/dec)
+  void adjust(int k, int v) {                    // note: n = ft.size() - 1
+    for (; k < (int)ft.size(); k += LSOne(k)) ft[k] += v; }
+};
+
+FenwickTree ft[26];
+
+int main() {
+    ios::sync_with_stdio(false);
+
+    int n, q;
+    cin >> n >> q;
+
+    string s;
+    cin >> s;
+    for(int i = 1; i <= n; i++) {
+        ft[s[i - 1] - 'a'].adjust(i, 1);
+    }
+
+    while(q--) {
+        int sw;
+        cin >> sw;
+        if(sw == 1) {
+            int x;
+            char c;
+            cin >> x >> c;
+            if(s[x - 1] != c) {
+                char old = s[x - 1];
+                s[x - 1] = c;
+                ft[c - 'a'].adjust(x, 1);
+                ft[old - 'a'].adjust(x, -1);
+            }
+        }
+        else {
+            int a, b;
+            cin >> a >> b;
+            int odd = 0;
+            for(int i = 0; i < 26 && odd < 2; i++) {
+                if(ft[i].rsq(a, b) % 2 == 1) odd++;
+            }
+            if(odd >= 2) cout << "no" << endl;
+            else cout << "yes" << endl;
+        }
+    }
+
+    return 0;
+}

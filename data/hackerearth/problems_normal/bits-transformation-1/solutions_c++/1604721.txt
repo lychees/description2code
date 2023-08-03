@@ -1,0 +1,193 @@
+#include <stdio.h>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
+#define NMAX 2015
+#define QMOD 4095
+#define INF 1000000000
+#define DMAX 10
+
+char SA[NMAX], SB[NMAX];
+int M, N, x, y, z, tr;
+int cost[2 * NMAX][2 * NMAX];
+int smin[2 * NMAX];
+int q[QMOD + 1], p[2 * NMAX];
+int flow[2 * NMAX][2 * NMAX], cap[2 * NMAX][2 * NMAX], t[2 * NMAX], inq[2 * NMAX];
+
+int MinCostMaxFlow() {
+	int i, j, li, ls, min_cost = 0, max_flow = 0;
+	M = N;
+
+	for (i = 0; i <= M + N + 1; i++) {
+		p[i] = 0;
+		for (j = 0; j <= M + N + 1; j++)
+			flow[i][j] = cap[i][j] = cost[i][j] = 0;
+	}
+	
+	for (i = 1; i <= M; i++)
+		cap[0][i] = 1;
+
+	for (i = M + 1; i <= M + N; i++)
+		cap[i][M + N + 1] = 1;
+
+	for (i = 1; i <= M; i++)
+		for (j = M + 1; j <= M + N; j++) {
+			cap[i][j] = 1;
+			int ij = j - M;
+			cost[i][j] = 0;
+			if (SA[i] != SB[ij]) {
+				if (SA[i] == '0') cost[i][j] = x;
+				else if (SA[i] == '1') cost[i][j] = y;
+				else cost[i][j] = z;
+			}
+			if (i < ij)
+				cost[i][j] += (ij - i) * tr;
+			if (i - ij > DMAX || ij - i > DMAX) cost[i][j] = INF;
+			//if (SB[ij] == '0' && cost[i][j] > y) cost[i][j] = INF;
+			//if (SB[ij] == '1' && cost[i][j] > x) cost[i][j] = INF;
+			if (i == ij && SA[i] == '?') {
+				flow[0][i] = flow[i][j] = flow[j][M + N + 1] = 1;
+				min_cost += z;
+				max_flow++;
+			}
+		}
+
+	// Do the flow.
+	while (1) {
+		if (max_flow == M) break;
+
+		li = ls = 0;
+ 
+		for (i = 1; i <= M; i++) {
+			if (flow[0][i] == cap[0][i]) {
+				smin[i] = INF;
+				inq[i] = 0;
+			} else {
+				smin[i] = 0;
+				if (ls == 0) {
+					inq[i] = 1;
+					q[ls] = i;
+					ls = (ls + 1) & QMOD;
+					t[i] = 1;
+				} else inq[i] = 0;
+			}
+			p[i] = 0;
+		}
+
+		for (i = M + 1; i <= M + N; i++) {
+			smin[i] = INF;
+			inq[i] = 0;
+			p[i] = 0;
+		}
+
+		int done = 0;
+		while (li != ls && !done) {
+			i = q[li];
+			inq[i] = 0;
+			li = (li + 1) & QMOD;
+
+			if (p[i] > 0 && inq[p[i]]) continue;
+			if (p[p[i]] > 0 && inq[p[p[i]]]) continue;
+			if (p[p[p[i]]] > 0 && inq[p[p[p[i]]]]) continue;
+			if (p[p[p[p[i]]]] > 0 && inq[p[p[p[p[i]]]]]) continue;
+    
+			if (i <= M) {
+				//for (j = M + 1; j <= M + N; j++) {
+				for (int jj = i - DMAX; jj <= i + DMAX; jj++) {
+					if (jj < 0 || jj > N) continue;
+					j = M + jj;
+					if (flow[i][j] < cap[i][j]) {
+						if (smin[i] + cost[i][j] < smin[j]) {
+							smin[j] = smin[i] + cost[i][j];
+							p[j] = i;
+							t[j] = 1;
+							if (!inq[j]) {
+								inq[j] = 1;
+								q[ls] = j;
+								ls = (ls + 1) & QMOD;
+								//if (flow[j][M + N + 1] < cap[j][M + N + 1]) {
+								//	done = 1;
+								//	break;
+								//}
+							}
+						}
+					}
+				}
+			} else {
+				int ij = i - M;
+				for (j = ij - DMAX; j <= ij + DMAX; j++) {
+					if (j < 0 || j > M) continue;
+				//for (j = 1; j <= M; j++) {
+					if (flow[j][i] > 0) {
+						if (smin[i] - cost[j][i] < smin[j]) {
+							smin[j] = smin[i] - cost[j][i];
+							p[j] = i;
+							t[j] = 2;
+							if (!inq[j]) {
+								inq[j] = 1;
+								q[ls] = j;
+								ls = (ls + 1) & QMOD;
+							}
+						}
+					}
+				}
+			}			
+		}
+
+		vector<pair<int, int> > dest;
+		for (j = M + 1; j <= M + N; j++)
+			if (smin[j] < INF && flow[j][M + N + 1] < cap[j][M + N + 1]) {
+				dest.push_back(make_pair(smin[j], j));
+			}
+	
+		sort(dest.begin(), dest.end());
+	
+		memset(inq, 0, sizeof(inq));
+		//for (int did = dest.size() - 1; did >= 0; did--) {
+		for (int did = 0; did < dest.size(); did++) {
+			int node = dest[did].second;
+	
+			// Retrace the path back from node to 0.
+			while (node > 0) {
+				if (inq[node]) break;
+				node = p[node];
+			}
+	
+			if (node == 0) {
+				node = dest[did].second;   
+	
+				max_flow++;
+				min_cost += smin[node];
+				flow[node][M + N + 1]++;
+	
+				while (node > 0) {
+					inq[node] = 1;
+
+					if (t[node] == 1) {
+						flow[p[node]][node]++;
+					} else {
+						flow[node][p[node]]--;
+					}
+					node = p[node];
+				}
+				//break;
+			}
+		}
+	}
+
+	return min_cost;
+}
+
+int main() {
+	int T;
+//	freopen("y.txt", "r", stdin);
+	scanf("%d", &T);
+	while (T--) {
+		scanf("%d %d %d %d %d %s %s", &N, &x, &y, &z, &tr, SA + 1, SB + 1);
+		printf("%d\n", MinCostMaxFlow());
+	}
+	return 0;
+}

@@ -1,0 +1,91 @@
+#include <stdio.h>
+#include <math.h>
+#include <complex>
+#include <vector>
+#define MAXN 300005
+#define PI acos(-1)
+using namespace std;
+
+typedef complex<double> cd;
+
+int n, v1[MAXN], x, v2[MAXN], v[MAXN], sol, cnt[MAXN];
+
+int revBit(int x, int lg) {
+    int ans = 0;
+    for(int i = 0; i < lg; i++)
+        if(x & (1 << i))
+            ans |= (1 << (lg - i - 1));
+    return ans;
+}
+
+void FFT(vector<cd> &A, bool invert) {
+    int n = A.size();
+
+    for(int i = 0; i < n; i++) {
+        int x = revBit(i, 18);
+        if(i < x)
+            swap(A[i], A[x]);
+    }
+
+    for(int len = 2; len <= n; len <<= 1) {
+        cd wu = exp(cd(2 * PI / len * ((invert)?(-1):1), 0) * cd(0, 1));
+        for(int i = 0; i < n; i += len) {
+            cd w(1, 0);
+            for(int j = 0; j < (len >> 1); j++) {
+                cd u = A[i + j], v = A[i + j + (len >> 1)] * w;
+                A[i + j] = u + v;
+                A[i + j + (len >> 1)] = u - v;
+                w *= wu;
+            }
+        }
+    }
+
+    if(invert) {
+        for(int i = 0; i < n; i++)
+            A[i] /= n;
+    }
+}
+
+void multiply(int a[], int b[], int res[]) {
+    int n = 1 << 18;
+    vector<cd> A(a, a + 100005), B(b, b + 100005);
+    A.resize(n), B.resize(n);
+
+    FFT(A, 0); FFT(B, 0);
+    for(int i = 0; i < n; i++)
+        A[i] *= B[i];
+    FFT(A, 1);
+
+    for(int i = 0; i < n; i++)
+        res[i] = (int) (A[i].real() + 0.5);
+}
+
+int main()
+{
+    //freopen("in", "r", stdin);
+
+    scanf("%d", &n);
+    for(int i = 1; i <= n; i++) {
+        scanf("%d", &x);
+        cnt[x]++;
+        v1[x] = 1;
+    }
+    for(int i = 0; i <= 100000; i++)
+        v2[i] = v1[100000 - i];
+
+    multiply(v1, v2, v);
+
+    for(int i = 100001; i <= 200000; i++)
+        if(v[i] > 0)
+            ++sol;
+
+    for(int i = 0; i <= 100000; i++)
+        if(cnt[i] >= 2) {
+            sol++;
+            break;
+        }
+
+    printf("%d\n", sol);
+
+    return 0;
+}

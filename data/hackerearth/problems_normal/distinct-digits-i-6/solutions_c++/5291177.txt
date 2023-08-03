@@ -1,0 +1,69 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1e5 + 3;
+int BIT[11][MAXN];
+int D[MAXN];
+long long A[MAXN];
+int n, Q;
+bool mark[10];
+
+void update(int k, int digit, int val) {
+	while (k <= n) {
+		BIT[digit][k] += val;
+		k += k & -k;
+	}
+}
+
+int getSum(int k, int digit) {
+	int ret = 0;
+	while (k) {
+		ret += BIT[digit][k];
+		k -= k & -k;
+	}
+	return ret;
+}
+
+inline int countDigit(long long val) {
+	memset(mark, 0, sizeof(mark));
+	while (val) {
+		mark[val % 10] = 1;
+		val /= 10;
+	}
+	int digit = 0;
+	for (int i = 0; i < 10; ++i) digit += mark[i];
+	return digit;
+}
+
+int main() {
+	//freopen("input.txt", "rt", stdin);
+	scanf("%d", &n);
+	int q, u, digit, l, r;
+	long long v;
+	for (int i = 1; i <= n; ++i) {
+		scanf("%lld", &A[i]);
+		digit = countDigit(A[i]);
+		D[i] = digit;
+		update(i, D[i], 1);
+	}
+	scanf("%d", &Q);
+	while (Q--) {
+		scanf("%d", &q);
+		if (q == 2) {
+			scanf("%d %d %d", &l, &r, &digit);
+			printf("%d\n", getSum(r, digit) - getSum(l - 1, digit));
+		}
+		else {
+			scanf("%d %lld", &u, &v);
+			if (q == 0) A[u] += v;
+			else A[u] = v;
+			digit = countDigit(A[u]);
+			if (digit != D[u]) {
+				update(u, D[u], -1);
+				D[u] = digit;
+				update(u, D[u], 1);
+			}
+		}
+	}
+	return 0;
+}

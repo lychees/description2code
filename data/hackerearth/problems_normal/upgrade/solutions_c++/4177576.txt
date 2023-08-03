@@ -1,0 +1,377 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
+const int MAXN = 200005;
+const int LOG  = 17;
+
+int N, Q, val[MAXN], from[MAXN], to[MAXN];
+char op[MAXN][3];
+vector<int> adj[MAXN];
+
+void input()
+{
+  scanf("%d %d", &N, &Q);
+  
+  for(int i=1; i<=N; ++i) 
+    scanf("%d", val+i);
+  
+  for(int i=1; i<N; ++i) {
+    int u, v;
+    scanf("%d %d", &u, &v);
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+  }
+  
+  for(int i=1; i<=Q; ++i)
+    scanf("%s %d %d", op[i], from+i, to+i);
+}
+
+/* TREAP */
+
+struct nd
+{
+  nd *l, *r;
+  int key, sum, rnd, cnt, lazy;
+  
+  nd(int key) : l(0), r(0), key(key), sum(key), rnd(rand()), cnt(1), lazy(0) { }
+};
+
+typedef nd* node;
+
+void push(node x)
+{
+  if(x && x->lazy) {
+    swap(x->l, x->r);
+    if(x->l) x->l->lazy ^= 1;
+    if(x->r) x->r->lazy ^= 1;
+    x->lazy = 0;
+  }
+}
+
+int sum(node x)
+{ 
+  return x ? x->sum : 0; 
+}
+
+int cnt(node x)
+{
+  return x ? x->cnt : 0;
+}
+
+void upd(node x)
+{
+  if(x) {
+    x->cnt = 1 + cnt(x->l) + cnt(x->r);
+    x->sum = x->key + sum(x->l) + sum(x->r);
+  }
+}
+
+void join(node &t, node l, node r)
+{
+  push(l);
+  push(r);
+  if(!l || !r) t = l ? l : r;
+  else {
+    if(l->rnd > r->rnd) { join(l->r, l->r, r); t = l; }
+    else                { join(r->l, l, r->l); t = r; }
+  }
+  upd(t);
+}
+
+// strictly less than pos go left
+// greater than or equal to pos go right
+
+void split(node t, node &l, node &r, int pos)
+{
+  push(t);
+  if(!t) l = r = 0;
+  else {
+    int i = cnt(t->l) + 1;
+    if(i >= pos) { split(t->l, l, t->l, pos); r = t; }
+    else         { split(t->r, t->r, r, pos-i); l = t; }
+  }
+  upd(l);
+  upd(r);
+}
+
+// TODO: debug this
+
+void add(node &t, node it, int pos)
+{
+  push(t);
+  if(!t) t = it;
+  else if(t->rnd > it->rnd) {
+    int i = cnt(t->l) + 1;
+    if(i >= pos) add(t->l, it, pos);
+    else         add(t->r, it, pos-i);
+  } else {
+    split(t, it->l, it->r, pos);
+    t = it;
+  }
+  upd(t);
+}
+
+void inorder(node t, bool pri)
+{
+#ifdef DEBUG
+  push(t);
+  if(t) {
+    inorder(t->l, false);
+    printf("%d ", t->key);
+    inorder(t->r, false);
+  }
+  if(pri) puts("");
+#endif
+}
+
+/* HEAVY LIGHT DECOMPOSITION + LCA */
+
+int depth[MAXN], size[MAXN], dp[MAXN][LOG], pref[MAXN];
+
+void dfs(int u, int p)
+{
+  depth[u] = depth[p]+1;
+  size[u] = 1;
+  dp[u][0] = p;
+  
+  for(int i=1; i<LOG; ++i)
+    dp[u][i] = dp[dp[u][i-1]][i-1];
+    
+  for(int v : adj[u]) {
+    if(v != p) {
+      dfs(v, u);
+      size[u] += size[v];
+      if(size[v] > size[pref[u]]) pref[u] = v;
+    }
+  }
+}
+
+pair<int, int> lca(int u, int v)
+{
+  for(int i=LOG-1; i>=0; --i) {
+    if(depth[u] - (1<<i) >= depth[v])
+      u = dp[u][i];
+  }
+  
+  if(u == v) return make_pair(-1, -1);
+  
+  for(int i=LOG-1; i>=0; --i) {
+    if(dp[u][i] != dp[v][i]) {
+      u = dp[u][i];
+      v = dp[v][i];
+    }
+  }
+  
+  return make_pair(u, v);
+}
+
+int id[MAXN], pos[MAXN], skip[MAXN], hlen[MAXN], hcnt;
+node heavy[MAXN];
+
+void hld(int u, int p)
+{
+  for(int v : adj[u]) {
+    if(v != p) {
+      if(pref[u] == v) {
+        if(id[u]) {
+          id[v] = id[u];
+          pos[v] = pos[u]+1;
+          skip[v] = skip[u];
+          hlen[id[u]]++;
+        } else {
+          id[u] = id[v] = ++hcnt;
+          pos[u] = 1;
+          pos[v] = 2;
+          skip[u] = skip[v] = u;
+          hlen[id[u]] = 2;
+        }
+      }
+      hld(v, u);
+    }
+  }
+  
+  if(!id[u]) {
+    id[u] = ++hcnt;
+    pos[u] = 1;
+    skip[u] = u;
+    hlen[id[u]] = 1;
+  }
+  //join(heavy[id[u]], new nd(val[u]), heavy[id[u]]); OR
+  add(heavy[id[u]], new nd(val[u]), 1);
+}
+
+node upart[MAXN], dpart[MAXN];
+
+void reverse(int u, int v, int l)
+{
+  node temp = 0, sec = 0;
+  
+  for(int i=u; depth[i] >= depth[l];) {
+    int f = skip[i];
+    if(depth[f] < depth[l]) f = l;
+    node t = 0;
+    upart[id[i]] = dpart[id[i]] = 0;
+    split(heavy[id[i]], upart[id[i]], dpart[id[i]], pos[f]);
+    split(dpart[id[i]], t, dpart[id[i]], pos[i]-pos[f]+2);
+    join(temp, t, temp);
+    i = dp[f][0];
+  }
+  
+  temp->lazy ^= 1;
+  
+  for(int i=v; depth[i] > depth[l];) {
+    int f = skip[i];
+    node t = 0;
+    upart[id[i]] = dpart[id[i]] = 0;
+    split(heavy[id[i]], upart[id[i]], dpart[id[i]], pos[f]); // probably not necessary
+    split(dpart[id[i]], t, dpart[id[i]], pos[i]-pos[f]+2);
+    join(sec, t, sec);
+    i = dp[f][0];
+  }
+  
+  join(temp, temp, sec);
+  temp->lazy ^= 1;
+  
+  for(int i=u; depth[i] >= depth[l];) {
+    int f = skip[i];
+    if(depth[f] < depth[l]) f = l;
+    node t = 0;
+    split(temp, t, temp, pos[i]-pos[f]+2);
+    t->lazy ^= 1;
+    join(upart[id[i]], upart[id[i]], t);
+    join(heavy[id[i]], upart[id[i]], dpart[id[i]]);
+    i = dp[f][0];
+  }
+  
+  for(int i=v; depth[i] > depth[l];) {
+    int f = skip[i];
+    node t = 0;
+    split(temp, temp, t, cnt(temp)-pos[i]+pos[f]);
+    join(upart[id[i]], upart[id[i]], t);
+    join(heavy[id[i]], upart[id[i]], dpart[id[i]]);
+    i = dp[f][0];
+  }
+}
+
+int query(int u, int v, int l)
+{
+  int pathsum = 0;
+  
+  for(int i=u; depth[i] >= depth[l];) {
+    int f = skip[i];
+    if(depth[f] < depth[l]) f = l;
+    node t = 0, upa = 0, dpa = 0;
+    split(heavy[id[i]], upa, dpa, pos[f]);
+    split(dpa, t, dpa, pos[i]-pos[f]+2);
+    pathsum += sum(t);
+    join(upa, upa, t);
+    join(heavy[id[i]], upa, dpa);
+    i = dp[f][0];
+  }
+  
+  for(int i=v; depth[i] > depth[l];) {
+    int f = skip[i];
+    node t = 0, upa = 0, dpa = 0;
+    split(heavy[id[i]], upa, dpa, pos[f]);
+    split(dpa, t, dpa, pos[i]-pos[f]+2);
+    pathsum += sum(t);
+    join(upa, upa, t);
+    join(heavy[id[i]], upa, dpa);
+    i = dp[f][0];
+  }
+  
+  return pathsum;
+}
+
+void reverse(int u, int l)
+{
+  node temp = 0;
+  
+  for(int i=u; depth[i] >= depth[l];) {
+    int f = skip[i];
+    if(depth[f] < depth[l]) f = l;
+    node t = 0;
+    upart[id[i]] = dpart[id[i]] = 0;
+    split(heavy[id[i]], upart[id[i]], dpart[id[i]], pos[f]);
+    split(dpart[id[i]], t, dpart[id[i]], pos[i]-pos[f]+2);
+    join(temp, t, temp);
+    i = dp[f][0];
+  }
+  
+  for(int i=u; depth[i] >= depth[l];) {
+    int f = skip[i];
+    if(depth[f] < depth[l]) f = l;
+    node t = 0;
+    split(temp, t, temp, pos[i]-pos[f]+2);
+    t->lazy ^= 1;
+    join(upart[id[i]], upart[id[i]], t);
+    join(heavy[id[i]], upart[id[i]], dpart[id[i]]);
+    i = dp[f][0];
+  }
+}
+
+int query(int u, int l)
+{
+  int pathsum = 0;
+  
+  for(int i=u; depth[i] >= depth[l];) {
+    int f = skip[i];
+    if(depth[f] < depth[l]) f = l;
+    node t = 0, upa = 0, dpa = 0;
+    split(heavy[id[i]], upa, dpa, pos[f]);
+    split(dpa, t, dpa, pos[i]-pos[f]+2);
+    pathsum += sum(t);
+    join(upa, upa, t);
+    join(heavy[id[i]], upa, dpa);
+    i = dp[f][0];
+  }
+  
+  return pathsum;
+}
+
+void debug()
+{
+#ifdef DEBUG
+  for(int i=1; i<=N; ++i) 
+    printf("%d -> id: %d, pos: %d\n", i, id[i], pos[i]);
+
+  for(int i=1; i<=hcnt; ++i)
+    inorder(heavy[i], true);
+#endif
+}
+
+void answerQueries()
+{
+  for(int i=1; i<=Q; ++i) {
+    if(depth[from[i]] < depth[to[i]]) swap(from[i], to[i]);
+    pair<int, int> pp = lca(from[i], to[i]);
+    if(pp.first == -1) {
+      if(op[i][0] == 'R') reverse(from[i], to[i]);
+      else printf("%d\n", query(from[i], to[i]));
+    } else {
+      int l = dp[pp.first][0];
+      if(pref[l] == pp.second) swap(from[i], to[i]);
+      if(op[i][0] == 'R') reverse(from[i], to[i], l);
+      else printf("%d\n", query(from[i], to[i], l));
+    }
+  }
+}
+
+int main()
+{
+#ifdef DEBUG
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+#endif
+  srand(time(0));
+  input();
+  dfs(1, 0);
+  hld(1, 0);
+  answerQueries();
+  return 0;
+}

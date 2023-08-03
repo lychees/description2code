@@ -1,0 +1,157 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+#define MAXN 500005
+int n, q;
+vector<int> E[MAXN];
+// BIT
+int ftMul[MAXN], ftAdd[MAXN], m = 1, ftPos[MAXN];
+// DFS
+int depth[MAXN], subSize[MAXN], par[MAXN];
+// HLD
+int chainNo = 0, chainHead[MAXN], chain[MAXN], chainPos[MAXN], chainSize[MAXN];
+// LCA
+int P[MAXN][30];
+
+void internalUpdate(int idx, int mul, int add){
+    for (int i = idx; i < m; i += i & -i){
+        ftMul[i] += mul;
+        ftAdd[i] += add;
+    }
+}
+
+void update(int l, int r, int val){
+    internalUpdate(l, val, -val * (l - 1));
+    internalUpdate(r, -val, val * r);
+}
+
+int query(int idx){
+    int mul = 0, add = 0;
+    for (int i = idx; i > 0; i -= i & -i){
+        mul += ftMul[i];
+        add += ftAdd[i];
+    }
+    return mul * idx + add;
+}
+
+void dfs(int cur, int prev, int d){
+    depth[cur] = d;
+    par[cur] = prev;
+    subSize[cur] = 1;
+    for (int i = 0; i < E[cur].size(); i++){
+        int nxt = E[cur][i];
+        if (nxt != prev){
+            dfs(nxt, cur, d + 1);
+            subSize[cur] += subSize[nxt];
+        }
+    }
+}
+
+void HLD(int cur){
+    if (chainHead[chainNo] == -1) chainHead[chainNo] = cur;
+    chain[cur] = chainNo;
+    chainPos[cur] = chainSize[chainNo];
+    chainSize[chainNo]++;
+    ftPos[cur] = m++;
+
+    int spcl = -1, maxi = -1;
+    for (int i = 0; i < E[cur].size(); i++){
+        int nxt = E[cur][i];
+        if (nxt != par[cur] && subSize[nxt] > maxi){
+            maxi = subSize[nxt];
+            spcl = nxt;
+        }
+    }
+
+    if (spcl >= 0) HLD(spcl);
+
+    for (int i = 0; i < E[cur].size(); i++){
+        int nxt = E[cur][i];
+        if (nxt != par[cur] && nxt != spcl){
+            chainNo++;
+            HLD(nxt);
+        }
+    }
+}
+
+void precompute(){
+    memset(P, -1, sizeof P);
+
+    for (int i = 1; i <= n; i++)
+        P[i][0] = par[i];
+
+    for (int j = 1; 1 << j <= n; j++)
+        for (int i = 1; i <= n; i++)
+            if (P[i][j-1] != -1)
+                P[i][j] = P[P[i][j-1]][j-1];
+}
+
+int LCA(int u, int v){
+    if (depth[u] < depth[v])swap(u, v);
+    int log;
+    for (log = 1; 1 << log <= n; log++);
+    log--;
+
+    for (int i = log; i >= 0; i--)
+        if (depth[u] - (1 << i) >= depth[v])
+            u = P[u][i];
+    if (u == v) return u;
+
+    for (int i = log; i >= 0; i--)
+        if (P[u][i] != -1 && P[u][i] != P[v][i])
+            u = P[u][i], v = P[v][i];
+
+    return par[u];
+}
+
+void crawlUpdate(int u, int v){
+    while (true){
+        if (chain[u] == chain[v]){
+            update(ftPos[v], ftPos[u], 1);
+            break;
+        }
+        else {
+            update(ftPos[chainHead[chain[u]]], ftPos[u], 1);
+            u = par[chainHead[chain[u]]];
+        }
+    }
+}
+
+void mainUpdate(int u, int v){
+    int lca = LCA(u, v);
+    crawlUpdate(u, lca);
+    crawlUpdate(v, lca);
+    update(ftPos[lca], ftPos[lca], -1);
+}
+
+int mainQuery(int u){
+    return query(ftPos[u]) - query(ftPos[u] - 1);
+}
+
+int main()
+{
+    scanf("%d %d", &n, &q);
+    for (int i = 1; i < n; i++){
+        int u, v;
+        scanf("%d %d", &u, &v);
+        E[u].push_back(v);
+        E[v].push_back(u);
+    }
+    dfs(1, 0, 0);
+    memset(chainHead, -1, sizeof chainHead);
+    HLD(1);
+    precompute();
+    while (q--){
+        int type, u, v;
+        scanf("%d", &type);
+        if (type == 1){
+            scanf("%d %d", &u, &v);
+            mainUpdate(u, v);
+        }
+        else {
+            // query
+            scanf("%d", &u);
+            printf("%d\n", mainQuery(u));
+        }
+    }
+}

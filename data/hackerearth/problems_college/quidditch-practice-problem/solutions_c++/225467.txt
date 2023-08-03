@@ -1,0 +1,145 @@
+#include<cstdio>
+#include<cmath>
+#include<iostream>
+#include<vector>
+#include<map>
+#include<stack>
+#include<queue>
+using namespace std;
+
+long long mod=1000000007LL;
+long long big_mult(long long a,long long b)
+{
+long double ans;
+long long c;
+a=a%mod;
+b=b%mod;
+ans=(long double)a*b;
+a=a*b;
+c=(long long)(ans/mod);
+a=a-c*mod;
+a=a%mod;
+if(a<0)
+a=a+mod;
+return a;
+}
+long long power(long long base,long long exp)
+{
+long long ans=1;
+base=base%mod;
+while(exp>0)
+	{
+	if(exp%2==1)
+		{
+		ans=big_mult(ans,base);
+		}
+		base=big_mult(base,base);
+		exp=exp>>1;
+	}
+return ans%mod;
+}
+vector<int> l[10001];
+queue<int> q;
+bool finish[10001];
+int mark[10001];
+int flag;
+void dfs(int cur,int stat)
+	{
+	if(flag==1)
+		return;
+	if(mark[cur]!=0)
+		{
+		if(mark[cur]!=stat)
+			{
+			flag=1;
+			return;
+			}
+		}
+	int i;
+	for(i=0;i<l[cur].size();i++)
+		{
+		if(finish[cur]==false)
+		dfs(l[cur][i],(stat+1)%2);
+		}
+	mark[cur]=1;
+	finish[cur]=true;
+	return;
+	}
+
+int main()
+{
+int T;
+int N,M;
+scanf("%d",&T);
+while(T--)
+	{
+	scanf("%d %d",&N,&M);
+	int i,j,k;
+	for(i=0;i<N;i++)
+		{
+		finish[i]=false;
+		mark[i]=-1;
+		l[i].clear();
+		}
+	for(i=0;i<M;i++)
+		{
+		scanf("%d %d",&j,&k);
+		l[k].push_back(j);
+		l[j].push_back(k);	
+		}
+	flag=0;
+	int c=0;
+	for(i=0;i<N;i++)
+		{
+		if(mark[i]==-1)
+			{
+			//printf("-%d",i);
+			c++;
+			while(!q.empty())
+				q.pop();
+			q.push(i);
+			mark[i]=0;
+			int tog=1;
+			while(!q.empty())
+				{
+				//mark[i]=(tog+1)%2;
+				int cur=q.front();
+				tog=(mark[cur]+1)%2;
+				
+				q.pop();
+				for(j=0;j<l[cur].size();j++)
+					{
+					if(mark[l[cur][j]]==-1)
+						{
+						mark[l[cur][j]]=tog;
+						q.push(l[cur][j]);
+						}
+					else
+						{
+						if(mark[l[cur][j]]!=tog)
+							{
+							flag=1;
+							i=N+1;
+							while(!q.empty())
+								q.pop();
+							break;
+							}
+						}
+					}
+				}
+			}
+		}
+	if(flag==1)
+	printf("NOT POSSIBLE\n");
+	else
+		{
+		if(M==0)
+			{
+			printf("%lld\n",power(2,c-1)-1);
+			}
+		else
+			printf("%lld\n",power(2,c-1));
+		}
+	}
+return 0;
+}

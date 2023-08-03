@@ -1,0 +1,94 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+bool sieve[10000007];
+int primes[664600];
+int sz;
+
+long long cost[505][505];
+int nums[505];
+int N;
+vector<int>V;
+long long dp[505][505];
+
+long long calc(int a,int b)
+{
+    int nxta,nxtb;
+    nxta=lower_bound(V.begin(),V.end(),a)-V.begin();
+    //printf("%d %d\n",nxta,primes[nxta]);
+    nxtb=lower_bound(V.begin(),V.end(),b)-V.begin();
+    //printf("%d %d\n",nxtb,primes[nxtb]);
+    long long ret;
+
+    if(nxtb>nxta){
+       ret=(primes[nxtb]-b)+(primes[nxtb-1]-a);
+       return ret;
+    }
+
+    else{
+        ret=primes[nxta]+primes[nxta+1]-a-b;
+        return ret;
+    }
+}
+int main()
+{
+    int i,j,len,st,en,k;
+    for(i=2; i<=10000000; i++)  sieve[i]=1;
+    for(i=2; i<=3163; i++)
+    {
+        if(sieve[i])
+        {
+            for(j=i*i; j<=10000000; j+=i)  sieve[j]=0;
+        }
+    }
+
+    int sz=0;
+    V.clear();
+    for(i=2; i<=10000000; i++)
+        if(sieve[i])
+            primes[sz++]=i,V.push_back(i);
+
+    //for(i=0; i<50; i++)  printf("%d\n",primes[i]);
+    //printf("%d\n",sz);
+
+//    while(1)
+//    {
+//        scanf("%d%d",&i,&j);
+//        long long x=calc(i,j);
+//        cout<<x<<endl;
+//    }
+
+    while(scanf("%d",&N)!=EOF)
+    {
+        for(i=0; i<N; i++)  scanf("%d",&nums[i]);
+
+        for(i=0; i<N; i++)
+        {
+            for(j=i+1; j<N; j++)
+            {
+                cost[i][j]=calc(nums[i],nums[j]);
+            }
+        }
+
+        long long tmp;
+        for(len=2; len<=N; len+=2)
+        {
+            for(st=0; st<N; st++)
+            {
+                en=st+len-1;
+                dp[st][en]=-1;
+                for(k=st+1; k<=en; k+=2)
+                {
+                    tmp=cost[st][k];
+                    if(st+1<k-1)  tmp+=dp[st+1][k-1];
+                    if(k+1<en)    tmp+=dp[k+1][en];
+                    if(dp[st][en]==-1||dp[st][en]>tmp)  dp[st][en]=tmp;
+                }
+            }
+        }
+
+        cout<<dp[0][N-1]+(N/2)<<endl;
+    }
+    return 0;
+}
+

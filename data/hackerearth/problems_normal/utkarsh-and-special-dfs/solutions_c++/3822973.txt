@@ -1,0 +1,174 @@
+#include <iostream>
+#include <cstdio>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <sstream>
+#include <cmath>
+
+typedef long long ll;
+
+#define forn(i, n) for (int i = 0; i < (int)(n); i++)
+#define forv(i, v) forn(i, v.size())
+
+using namespace std;
+
+const ll MOD = 1000 * 1000 * 1000 + 7;
+
+#define lf(v) ((v << 1) + 1)
+#define rg(v) ((v + 1) << 1)
+
+struct Node {
+    ll sum;
+    ll w;
+    bool f;
+    Node() {
+        sum = 0;
+        w = 1;
+        f = false;
+    }
+};
+
+int n, q;
+vector<int> a;
+vector< vector<int> > g;
+vector<int> tin, tout;
+vector<Node> t;
+int curTime;
+vector<ll> pr;
+
+void dfs(int v, int p, ll prod) {
+    tin[v] = curTime++;
+    pr[tin[v]] = prod;
+    
+    forv(i, g[v]) {
+        int u = g[v][i];
+        if (u != p) {
+            dfs(u, v, prod * a[v] % MOD);
+        }
+    }
+    
+    tout[v] = curTime;
+}
+
+ll modPow(ll a, ll b, ll m) {
+    ll d = 1;
+    for (int i = 30; i >= 0; i--) {
+        d = (d * d) % m;
+        if (b & (1ll << i)) {
+            d = (d * a) % m;
+        }
+    }
+    return d;
+}
+
+ll getInv(ll a) {
+    return modPow(a, MOD - 2, MOD);
+}
+
+void build(int v, int l, int r) {
+    if (l + 1 == r) {
+        t[v].sum = pr[l];
+        return;
+    }
+    int mid = (l + r) / 2;
+    build(lf(v), l, mid);
+    build(rg(v), mid, r);
+    t[v].sum = (t[lf(v)].sum + t[rg(v)].sum) % MOD;
+}
+
+void relax(int v, int l, int r) {
+    if (!t[v].f) return;
+    t[v].sum = t[v].sum * t[v].w % MOD;
+    t[v].f = false;
+    if (r - l > 1) {
+        t[lf(v)].f = true;
+        t[rg(v)].f = true;
+        t[lf(v)].w = t[lf(v)].w * t[v].w % MOD;
+        t[rg(v)].w = t[rg(v)].w * t[v].w % MOD;
+    }
+    t[v].w = 1;
+}
+
+void update(int v, int l, int r, int x, int y, ll val) {
+    if (x >= y) return;
+    relax(v, l, r);
+    if (l == x && r == y) {
+        t[v].w = val;
+        t[v].f = true;
+        return;
+    }
+    int mid = (l + r) / 2;
+    if (x < mid) {
+        update(lf(v), l, mid, x, min(mid, y), val);
+    }
+    if (y > mid) {
+        update(rg(v), mid, r, max(x, mid), y, val);
+    }
+    relax(lf(v), l, mid);
+    relax(rg(v), mid, r);
+    t[v].sum = (t[lf(v)].sum + t[rg(v)].sum) % MOD;
+}
+
+ll sum(int v, int l, int r, int x, int y) {
+    if (x >= y) return 0;
+    relax(v, l, r);
+    if (l == x && r == y) {
+        return t[v].sum;
+    }
+    int mid = (l + r) / 2;
+    ll res = 0;
+    if (x < mid) {
+        res = (res + sum(lf(v), l, mid, x, min(mid, y))) % MOD;
+    }
+    if (y > mid) {
+        res = (res + sum(rg(v), mid, r, max(x, mid), y)) % MOD;
+    }
+    return res;
+}
+
+int main() {
+#ifdef NEREVAR_PROJECT
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    cin >> n >> q;
+    g = vector< vector<int> >(n);
+    forn(i, n - 1) {
+        int x, y;
+        scanf("%d %d", &x, &y);
+        x--, y--;
+        g[x].push_back(y);
+        g[y].push_back(x);
+    }
+    tin = tout = vector<int>(n);
+    a = vector<int>(n);
+    forn(i, n) scanf("%d", &a[i]);
+    pr = vector<ll>(n);
+    dfs(0, -1, 1);
+    t = vector<Node>(n * 6);
+    build(0, 0, n);
+    forn(i, q) {
+        int ty;
+        scanf("%d", &ty);
+        if (ty == 1) {
+            int v, x;
+            scanf("%d %d", &v, &x);
+            --v;
+            update(0, 0, n, tin[v] + 1, tout[v], getInv(a[v]));
+            a[v] = x;
+            update(0, 0, n, tin[v] + 1, tout[v], a[v]);
+        } else {
+            int v;
+            scanf("%d", &v);
+            --v;
+            printf("%d\n", int(sum(0, 0, n, tin[v], tout[v])));
+        }
+    }
+    return 0;
+}

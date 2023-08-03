@@ -1,0 +1,100 @@
+#include <iostream>
+#include <set>
+using namespace std;
+#define PII pair <int, int>
+#define mp make_pair
+int arr[1000005]={0}, size[1000005]={0}, ans=0, total[1000005]={0}, ma=1, mi=1, n;
+set <PII> s;
+set <PII> qw;
+int find(int i)
+{
+        if (arr[i] != i)
+                arr[i] = find(arr[i]);
+        return arr[i];
+}
+void update(int fa, int fb)
+{
+        arr[fa] = fb;
+        set <PII> :: iterator it = s.find(PII(total[fa], fa)), jt = --s.find(PII(total[fa], fa));
+        if(it!=s.begin())
+                qw.erase(PII(it->first-jt->first, it->second));
+        jt=++s.find(PII(total[fa], fa));
+        if(jt!=s.end())
+                qw.erase(PII(jt->first-it->first, jt->second));
+        if(it!=s.begin() && jt!=s.end())
+        {
+                it = --s.find(PII(total[fa], fa));
+                qw.insert(PII(jt->first-it->first, jt->second));
+        }
+        s.erase(PII(total[fa], fa));
+        it=s.find(PII(total[fb], fb));
+        jt=--s.find(PII(total[fb], fb));
+        if(it!=s.begin())
+                qw.erase(PII(it->first-jt->first, it->second));
+        jt=++s.find(PII(total[fb], fb));
+        if(jt!=s.end())
+                qw.erase(PII(jt->first-it->first, jt->second));
+        if(it!=s.begin() && jt!=s.end())
+        {
+                it = --s.find(PII(total[fb], fb));
+                qw.insert(PII(jt->first-it->first, jt->second));
+        }
+        s.erase(PII(total[fb], fb));
+        total[fb]+=total[fa];
+        s.insert(PII(total[fb], fb));
+        it=s.find(PII(total[fb], fb));
+        jt=--s.find(PII(total[fb], fb));
+        if(it!=s.begin())
+                qw.insert(PII(it->first-jt->first, it->second));
+        jt=++s.find(PII(total[fb], fb));
+        if(jt!=s.end())
+                qw.insert(PII(jt->first-it->first, jt->second));
+        if(it!=s.begin() && jt!=s.end())
+        {
+                it = --s.find(PII(total[fb], fb));
+                qw.erase(PII(jt->first-it->first, jt->second));
+        }
+        if(qw.size()==0)
+                cout << "0\n";
+        else
+                cout << qw.begin()->first << endl;
+}
+void dsu(int A, int B)
+{
+        int fa = find(A);
+        int fb = find(B);
+        if(fa==fb)
+        {
+                cout << qw.begin()->first << endl;
+                return;
+        }
+        if (size[fa] < size[fb])
+                update(fa, fb);
+        else if (size[fa] > size[fb])
+                update(fb, fa);
+        else
+        {
+                update(fb, fa);
+                size[fa]++;
+        }
+}
+int main()
+{
+        int q, i, j, a;
+        cin >> n >> q;
+        for(int i=1; i<=n; i++)
+        {
+                total[i]=1;
+                s.insert(PII(1, i));
+                if(i!=1)
+                        qw.insert(PII(0, i));
+                arr[i] = i;
+                size[i] = 1;
+        }
+        for(a=0; a<q; a++)
+        {
+                cin >> i >> j;
+                dsu(i, j);
+        }
+        return 0;
+}

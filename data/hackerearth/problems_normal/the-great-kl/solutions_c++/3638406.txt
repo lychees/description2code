@@ -1,0 +1,153 @@
+#include <cstdio>
+#include <cstring>
+#include <cassert>
+#include <algorithm>
+#include <iostream>
+#include <vector>
+#include <set>
+
+using namespace std;
+
+#define TRACE(x) cerr << #x << " = " << x << endl
+
+typedef long long ll;
+typedef pair<int, int> P;
+#define X first
+#define Y second
+
+const int MAX = 1<<17, LOG = 17, INF = 0x3f3f3f3f;
+
+vector <P> Vec[MAX];
+vector <int> V[MAX];
+vector <int> Boj[MAX];
+int dist[MAX];
+int disc[MAX], fin[MAX], vr;
+int lca[MAX][LOG], dub[MAX];
+
+void DfsPoc(int node, int prosli)
+{
+  disc[node] = vr++;
+  dub[node] = dub[prosli] + 1;
+  lca[node][0] = prosli;
+  for (int i=1; i<LOG; i++)
+    lca[node][i] = lca[lca[node][i-1]][i-1];
+
+  for (auto it : V[node])
+    if (it != prosli)
+      DfsPoc(it, node);
+
+  fin[node] = vr;
+}
+
+int Lca(int a, int b)
+{
+  if (dub[a] > dub[b])
+    swap(a, b);
+
+  for (int raz=dub[b]-dub[a], i=0; raz; raz/=2, i++)
+    if (raz & 1)
+      b = lca[b][i];
+
+  if (a == b)
+    return a;
+
+  for (int i=LOG-1; i>=0; i--) {
+    if (lca[a][i] != lca[b][i]) {
+      a = lca[a][i];
+      b = lca[b][i];
+    }
+  }
+
+  return lca[a][0];
+}
+
+void RekDist(int node, int prosli, int len)
+{
+  dist[node] = len;
+
+  for (auto it : Vec[node])
+    if (it.X != prosli)
+      RekDist(it.X, node, len + it.Y);
+}
+
+int MDist(set <P> &S)
+{
+  int poc = S.begin()->Y, naj = poc;
+  RekDist(poc, -1, 0);
+
+  for (auto it : S)
+    if (dist[it.Y] > dist[naj])
+      naj = it.Y;
+
+  RekDist(naj, -1, 0);
+  for (auto it : S)
+    if (dist[it.Y] > dist[naj])
+      naj = it.Y;
+
+  return dist[naj];
+}
+
+int Rijesi(vector <int> &T)
+{
+  vector <P> Sor;
+  set <P> Dub, S;
+
+  for (auto it : T) {
+    Sor.push_back(P(disc[it], it));
+    Dub.insert(P(-dub[it], it));
+    S.insert(P(disc[it], it));
+  }
+
+  sort(Sor.begin(), Sor.end());
+
+  for (int i=0; i<(int) Sor.size()-1; i++) {
+    int lc = Lca(Sor[i].Y, Sor[i+1].Y);
+    Dub.insert(P(-dub[lc], lc));
+    S.insert(P(disc[lc], lc));
+  }
+
+  for (auto it : Dub) {
+    auto ch = S.lower_bound(P(disc[it.Y], INF));
+    for (; ch != S.end() && ch->X < fin[it.Y]; ) {
+      Vec[it.Y].push_back(P(ch->Y, dub[ch->Y] - dub[it.Y]));
+      Vec[ch->Y].push_back(P(it.Y, dub[ch->Y] - dub[it.Y]));
+      auto tmp = ch++;
+      S.erase(tmp);
+    }
+  }
+
+  int ret = MDist(Dub);
+  for (auto it : Dub)
+    Vec[it.Y].clear();
+
+  return ret;
+}
+
+int main()
+{
+  int n, m;
+
+  scanf("%d%d", &n, &m);
+
+  for (int i=0; i<n; i++) {
+    int tmp;
+    scanf("%d", &tmp); tmp--;
+    Boj[tmp].push_back(i);
+  }
+
+  for (int i=0; i<n-1; i++) {
+    int a, b;
+    scanf("%d%d", &a, &b); a--; b--;
+    V[a].push_back(b);
+    V[b].push_back(a);
+  }
+
+  DfsPoc(0, 0);
+
+  for (int i=0; i<m; i++)
+    printf("%d ", Rijesi(Boj[i]));
+  printf("\n");
+
+  return 0;
+}
+

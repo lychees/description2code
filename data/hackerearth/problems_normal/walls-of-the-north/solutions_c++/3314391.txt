@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int N = (int)1e5 + 7;
+int a[N];
+int b[N];
+int c[N];
+int d[N];
+int sg[2][N<<2];
+int t,n,m;
+void update(int x,int l,int r,int p,int v,int id){
+	if(l == r){
+		sg[id][x] = v;
+		return;
+	}
+	int m = (l+r)>>1;
+	if(p <= m) update(2*x,l,m,p,v,id);
+	else update(2*x+1,m+1,r,p,v,id);
+	sg[id][x] = max(sg[id][2*x],sg[id][2*x+1]);
+}
+int query(int x,int l,int r,int ll,int rr,int id){
+	if(l > rr || r < ll) return 0;
+	if(l >= ll && r <= rr) return sg[id][x];
+	int m = (l+r)>>1;
+	return max(query(2*x,l,m,ll,rr,id),query(2*x+1,m+1,r,ll,rr,id));
+}
+int main()
+{
+    cin>>t;
+    while(t--){
+    	scanf("%d",&n);
+    	for(int i=0;i<4*n;i++) sg[0][i] = sg[1][i] = 0;
+    	for(int i=0;i<n;i++) scanf("%d",&a[i]),b[i] = a[i];
+    	sort(b,b+n);
+    	for(int i=0;i<n;i++) a[i] = lower_bound(b,b+n,a[i])-b;
+    	for(int i=0;i<n;i++){
+    		int pp = query(1,0,n-1,0,a[i],0) + 1;
+    		int qq = query(1,0,n-1,a[i],n-1,1) + 1;
+    		update(1,0,n-1,a[i],pp,1);
+    		update(1,0,n-1,a[i],qq,0);
+    	}
+    	cout<<max(query(1,0,n-1,0,n-1,0),query(1,0,n-1,0,n-1,1))<<"\n";
+    }
+    return 0;
+}

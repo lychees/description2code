@@ -1,0 +1,140 @@
+#include <cstdio>
+
+#define eprintf(...) fprintf(stderr, __VA_ARGS__)
+
+using namespace std;
+
+struct T {
+	long long s1;
+	long long s2;
+	long long add;
+	long long val;
+	T() {
+		s1 = s2 = add = 0;
+		val = -1;
+	}
+};
+
+const int maxn = (int)4e5 + 123;
+
+T t[maxn];
+
+void up(int root) {
+	t[root].s1 = t[2 * root].s1 + t[2 * root + 1].s1;
+	t[root].s2 = t[2 * root].s2 + t[2 * root + 1].s2;
+	t[root].val = -1;
+}
+
+void add_val(long long, int, int, int, int, int);
+void set_val(long long, int, int, int, int, int);
+void push(int root, int l, int r) {
+	int ave = (l + r) >> 1;
+	if (t[root].val != -1) {
+		set_val(t[root].val, l, ave, 2 * root, l, ave);
+		set_val(t[root].val, ave, r, 2 * root + 1, ave, r);
+		t[root].val = -1;
+	}
+	if (t[root].add != 0) {
+		add_val(t[root].add, l, ave, 2 * root, l, ave);
+		add_val(t[root].add, ave, r, 2 * root + 1, ave, r);
+		t[root].add = 0;
+	}
+}
+void set_val(long long x, int l0, int r0, int root, int l, int r) {
+	if (l0 == l && r0 == r) {
+		t[root].val = x;
+		t[root].s1 = x * (r - l);
+		t[root].s2 = x * x * (r - l);
+		t[root].add = 0;
+		return;
+	}
+	push(root, l, r);
+	int ave = (l + r) >> 1;
+	if (r0 <= ave) {
+		set_val(x, l0, r0, 2 * root, l, ave);
+		return up(root);
+	}
+	if (l0 >= ave) {
+		set_val(x, l0, r0, 2 * root + 1, ave, r);
+		return up(root);
+	}
+	set_val(x, l0, ave, 2 * root, l, ave);
+	set_val(x, ave, r0, 2 * root + 1, ave, r);
+	return up(root);
+}
+
+void add_val(long long x, int l0, int r0, int root, int l, int r) {
+	if (l0 == l && r0 == r) {
+		t[root].s2 = t[root].s2 + 2 * t[root].s1 * x + x * x * (r - l);
+		t[root].s1 = t[root].s1 + x * (r - l);
+		t[root].add += x;
+		return;
+	}
+	push(root, l, r);
+	int ave = (l + r) >> 1;
+	if (r0 <= ave) {
+		add_val(x, l0, r0, 2 * root, l, ave);
+		return up(root);
+	}
+	if (l0 >= ave) {
+		add_val(x, l0, r0, 2 * root + 1, ave, r);
+		return up(root);
+	}
+	add_val(x, l0, ave, 2 * root, l, ave);
+	add_val(x, ave, r0, 2 * root + 1, ave, r);
+	return up(root);
+}
+
+long long get1(int l0, int r0, int root, int l, int r) {
+	if (l0 == l && r0 == r) return t[root].s1;
+	int ave = (l + r) >> 1;
+	push(root, l, r);
+	up(root);
+	if (r0 <= ave) {
+		return get1(l0, r0, 2 * root, l, ave);
+	}
+	if (l0 >= ave) {
+		return get1(l0, r0, 2 * root + 1, ave, r);
+	}
+	return get1(l0, ave, 2 * root, l, ave) + get1(ave, r0, 2 * root + 1, ave, r);
+}
+
+long long get2(int l0, int r0, int root, int l, int r) {
+	if (l0 == l && r0 == r) return t[root].s2;
+	int ave = (l + r) >> 1;
+	push(root, l, r);
+	up(root);
+	if (r0 <= ave) {
+		return get2(l0, r0, 2 * root, l, ave);
+	}
+	if (l0 >= ave) {
+		return get2(l0, r0, 2 * root + 1, ave, r);
+	}
+	return get2(l0, ave, 2 * root, l, ave) + get2(ave, r0, 2 * root + 1, ave, r);
+}
+int main() {
+	int n;
+	scanf("%d", &n);
+	int q;
+	scanf("%d", &q);
+	for (int i = 0; i < n; i++) {
+		int x; scanf("%d", &x);
+		set_val(x, i, i + 1, 1, 0, n);
+	}
+	for (int i = 0; i < q; i++) {
+		int t;
+		scanf("%d", &t);
+		if (t <= 3) {
+	 		int l, r, x;
+			scanf("%d%d%d", &l, &r, &x);
+			if (t == 1) add_val(x, l - 1, r, 1, 0, n);
+			if (t == 2) add_val(-x, l - 1, r, 1, 0, n);
+			if (t == 3) set_val(x, l - 1, r, 1, 0, n);
+		} else {
+			int l, r;
+			scanf("%d%d", &l, &r);
+			if (t == 4) printf("%lld\n", get2(l - 1, r, 1, 0, n));
+			if (t == 5) printf("%lld\n", get1(l -1, r, 1, 0, n));
+		}
+	}
+}

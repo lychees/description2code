@@ -1,0 +1,61 @@
+ //You are weak? Why? Because You lack Hatred. - Itachi
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <list>
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <queue>
+#include <set>
+using namespace std;
+
+#define MAX 505
+#define INF 1e18
+
+long long a[MAX];
+long long prefix[MAX] = {};
+
+long long dp[MAX][MAX] = {};
+bool exist[MAX][MAX] = {};
+
+int n, K;
+
+long long solve(int i, int k)
+{
+    if (k == 0)
+        return (i == 0)? 0: INF;
+    if (i == 0)
+        return INF;
+    if (!exist[i][k]) {
+        long long sum = 0;
+        long long minAnswer = INF;
+        for (int j = i; j >= 1; j--) {
+            sum += a[j];
+            long long subProbSol = solve(j-1, k-1);
+            if (subProbSol != INF) {
+                long long currentAnswer = subProbSol + ((K-1)*sum*sum) - (2*sum*prefix[j-1]);
+                if (currentAnswer < minAnswer) {
+                    minAnswer = currentAnswer;
+                }
+            }
+        }
+        exist[i][k] = true;
+        dp[i][k] = minAnswer;
+    }
+    return dp[i][k];
+}
+
+int main()
+{
+        scanf("%d%d", &n, &K);
+        prefix[0] = 0;
+        for (int i = 1; i <= n; i++) {
+            scanf("%lld", &a[i]);
+            prefix[i] = a[i] + prefix[i-1];
+        }
+        long long answer = solve(n, K);
+        printf("%lld\n", answer);
+}
+

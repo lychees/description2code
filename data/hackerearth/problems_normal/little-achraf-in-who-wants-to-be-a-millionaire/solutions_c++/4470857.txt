@@ -1,0 +1,73 @@
+#include <assert.h>
+#include <stdio.h>
+
+#define CMAX 10000
+#define NMAX 1000000000000000LL
+#define EMAX 1000
+#define LMAX 101
+#define MOD 1000000007
+
+int L, C, nlen;
+long long n[CMAX], x[CMAX], len[EMAX];
+char c[CMAX], cneeded[LMAX];
+
+void ReadInput() {
+	scanf("%d %d", &L, &C);
+	for (int i = 0; i < C; i++) scanf("%lld %lld %c", &n[i], &x[i], &c[i]);
+}
+
+void Precompute() {
+	for (int i = 1; i <= L; i++) len[i] = 1;
+	long long sumlen = L;
+	nlen = L;
+	for (nlen = L + 1; 1; nlen++) {
+		len[nlen] = sumlen;
+		if (len[nlen] > NMAX) break;
+		sumlen += len[nlen];
+		sumlen -= len[nlen - L];
+	}
+	//fprintf(stderr, "nlen=%d\n", nlen);
+}
+
+void HandleConstraints() {
+	for (int i = 1; i <= L; i++) cneeded[i] = 0;
+	for (int i = 0; i < C; i++) {
+		long long cx = x[i], cn = n[i];
+		while (cx > L) {
+			if (cx > nlen + L) {
+				cx %= L;
+				while (cx <= nlen) cx += L;
+			} else {
+				long long cxnew;
+				for (cxnew = cx - L; cxnew < cx; cxnew++) {
+					if (cn <= len[cxnew]) break;
+					cn -= len[cxnew];
+				}
+				assert(cxnew < cx);
+				cx = cxnew;
+				assert(cx > 0);
+			}
+		}
+		if (cneeded[cx] == 0) cneeded[cx] = c[i];
+		if (cneeded[cx] != c[i]) cneeded[cx] = -1;
+	}
+}
+
+int ComputeAnswer() {
+	for (int i = 1; i <= L; i++)
+		if (cneeded[i] < 0) return 0;
+	int ans = 1;
+	for (int i = 1; i <= L; i++)
+		if (cneeded[i] == 0)
+			ans = ((long long) ans * (long long) 62) % MOD;
+	return ans;
+}
+
+int main() {
+	//freopen("x.txt", "r", stdin);
+	ReadInput();
+	Precompute();
+	HandleConstraints();
+	printf("%d\n", ComputeAnswer());
+	return 0;
+}

@@ -1,0 +1,115 @@
+#include<iostream>
+#include<vector>
+using namespace std;
+const int MAXN = 1e5 + 5 , MAXL = 20;
+struct node
+{
+    int par[MAXL];
+    long long pairs[MAXL];
+    long long sz[MAXL];
+    int subt;
+    int h;
+} V[MAXN];
+vector<int> adj[MAXN];
+void dfs(int v , int fat)
+{
+    V[v].subt = 1;
+    for(int i = 0;i < (int)adj[v].size();i ++)
+    {
+        int u = adj[v][i];
+        if(u == fat) continue;
+        V[u].h = V[v].h + 1;
+        dfs(u , v);
+        V[v].subt += V[u].subt;
+    }
+}
+void init(int v , int fat)
+{
+    V[v].par[0] = fat;
+    if(fat != 0)
+    {
+        V[v].pairs[0] = 0;
+        V[v].sz[0] = V[fat].subt - V[v].subt;
+    }
+    for(int i = 1;i < MAXL;i ++)
+    {
+        V[v].par[i] = V[V[v].par[i - 1]].par[i - 1];
+        V[v].sz[i] = V[v].sz[i - 1] + V[V[v].par[i - 1]].sz[i - 1];
+        V[v].pairs[i] = V[v].sz[i - 1] * V[V[v].par[i - 1]].sz[i - 1] + V[v].pairs[i - 1] + V[V[v].par[i - 1]].pairs[i - 1];
+    }
+    for(int i = 0;i < (int)adj[v].size();i ++)
+    {
+        int u = adj[v][i];
+        if(u == fat) continue;
+        init(u , v);
+    }
+}
+int getpar(int a , int x)
+{
+    for(int i = MAXL - 1;i >= 0;i --)
+        if((x >> i) & 1)
+            a = V[a].par[i];
+    return a;
+}
+int LCA(int a ,int b)
+{
+    if(V[a].h < V[b].h)
+        swap(a , b);
+    a = getpar(a , V[a].h - V[b].h);
+    if(a == b)
+        return a;
+    for(int i = MAXL - 1;i >= 0;i --)
+        if(V[a].par[i] != V[b].par[i])
+        {
+            a = V[a].par[i];
+            b = V[b].par[i];
+        }
+    return V[a].par[0];
+}
+long long pairs = 0 , sz = 0;
+int goup(int a , int lca)
+{
+    if(a == lca) return 0;
+    pairs += sz * V[a].subt;
+    sz += V[a].subt;
+    for(int i = MAXL - 1;i >= 0;i --)
+    {
+        if(V[V[a].par[i]].h > V[lca].h)
+        {
+            pairs = pairs + V[a].pairs[i] + V[a].sz[i] * sz;
+            sz += V[a].sz[i];
+            a = V[a].par[i];
+        }
+    }
+    return V[a].subt;
+}
+int main()
+{
+    int n;
+    cin >> n;
+    for(int i = 0;i < n - 1;i ++)
+    {
+        int a , b;
+        cin >> a >> b;
+        adj[a].push_back(b);
+        adj[b].push_back(a);
+    }
+    dfs(1 , 0);
+    init(1 , 0);
+    int Q;
+    cin >> Q;
+    for(int i = 0;i < Q;i ++)
+    {
+        int a , b;
+        cin >> a >> b;
+        pairs = sz = 0;
+        int l = LCA(a , b);
+        int t1 = goup(a , l);
+        int t2 = goup(b , l);
+        long long t3 = n - t1 - t2;
+        pairs += (t3 * sz);
+        sz += t3;
+        cout << pairs << endl;
+    }
+    return 0;
+}

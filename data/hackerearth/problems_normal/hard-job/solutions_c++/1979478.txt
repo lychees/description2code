@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+#define vec vector
+#define sz(c) int(c.size())
+#define FOR(i, a, b) for (int i = a; i < (b); ++i)
+#define DOWN(i, a, b) for(int i = (a) - 1; i >= (b); --i)
+using namespace std;
+const char eol = '\n';
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef vec<int> vi;
+
+int n, m;
+vi a;
+vi f;
+
+void add(int pos, int val) {
+  for (int i = pos; i < sz(f); i |= i + 1) {
+    f[i] += val;
+  }
+}
+
+void add(int l, int r, int x) {
+  add(l, x);
+  add(r + 1, -x);
+}
+
+int get(int pos) {
+  int res = 0;
+  for (int i = pos; i >= 0; i &= i + 1, --i) {
+    res += f[i];
+  }
+  return res;
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(0);
+  cout << fixed << setprecision(10);
+
+  cin >> n >> m;
+  a = vi(n);
+  FOR(i, 0, n) cin >> a[i];
+
+  int l = m;
+  int r = l + n - 1;
+  vi pos(n);
+  f = vi(n + 2 * m);
+  FOR(i, 0, n) {
+    pos[a[i]-1] = l + i;
+    add(l + i, l + i, i);
+  }
+
+  ll res = 0;
+  FOR(i, 0, m) {
+    int X;
+    string s;
+    cin >> X >> s;
+    X -= 1;
+    int t = get(pos[X]);
+    //cerr << t << endl;
+    res += min(t, n - 1 - t);
+    if (s == "l") {
+      add(l, pos[X] - 1, 1);
+      pos[X] = l - 1;
+      l -= 1;
+    }
+    else {
+      add(pos[X] + 1, r, -1);
+      pos[X] = r + 1;
+      add(pos[X], pos[X], n - 1);
+      r += 1;
+    }
+  }
+
+  cout << res << eol;
+
+  return 0;
+}

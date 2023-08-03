@@ -1,0 +1,117 @@
+#include<stdio.h>
+#include<string.h>
+#define MODBY 1000000007
+#define MAX 1010
+typedef long long int lld;
+lld dp[MAX][MAX];//dp[i][j] contains number of numbers having digits <=i and lucky digits =j
+int islucky(const char *s)
+{
+   int lucky=0,last;
+   while(*s){
+      if((*s=='4')||(*s=='7'))
+         lucky++;
+      s++;
+   }
+   if(lucky==0) return 0;
+   while(lucky){
+      last=lucky%10;
+      if((last!=4)&&(last!=7)) break;
+      lucky/=10;
+   }
+   return (lucky==0);
+}
+void compute()
+{
+   int digits,lucky;
+   memset(dp[0],0,sizeof(dp[0]));
+   dp[1][0]=7;
+   dp[1][1]=2;
+   for(digits=2;   digits<MAX;     ++digits){
+      dp[digits][0]=(8*dp[digits-1][0])%MODBY;
+ 
+      for(lucky=1;lucky<=digits;++lucky)
+         dp[digits][lucky]=(dp[digits-1][lucky-1]*2+dp[digits-1][lucky]*8)%MODBY;
+ 
+      dp[digits][0]+=dp[1][0];
+      dp[digits][0]%=MODBY;
+      dp[digits][1]+=dp[1][1];
+      dp[digits][1]%=MODBY;
+   }
+}
+void printdp(const int lim)
+{
+   int i,j;
+   for(i=0;i<=lim;i++){
+      for(j=0;j<=lim;j++)
+         printf("\t%lld",dp[i][j]);
+      printf("\n");
+   }
+   printf("\n");
+}
+ 
+lld cntlucky(const char *s)//returns special numbers <=s
+{
+   int luckyones[14]={4,7,44,47,74,77,444,447,474,477,744,747,774,777};
+   int is_lucky[5000]={};
+   int len=strlen(s),lucky=0,i,factor;
+   lld ans=0,nonlucky,extra,local;
+ 
+   for(i=0;i<14;i++) is_lucky[luckyones[i]]=1;
+   while(*s){
+ 
+      nonlucky=0;
+      for(i=0;i<14;++i)
+         if(luckyones[i]>=lucky) nonlucky+=dp[len-1][luckyones[i]-lucky];
+ 
+ 
+      factor=*s-'0';
+      if(factor<=4) local=factor*nonlucky;//because then we don't count the numbers beginning with 4 in this iteration, except the big round number
+      else{
+         extra=0;
+         for(i=0;i<14;++i)
+            if(luckyones[i]>=lucky+1) extra+=dp[len-1][luckyones[i]-1-lucky];
+ 
+ 
+         if(factor<=7)
+            local=(factor-1)*nonlucky+extra;
+         else
+            local=(factor-2)*nonlucky+extra*2;
+ 
+      }
+      if(is_lucky[lucky]){//means we have had , say, 4 lucky digits till now; therefore 444450000000000 is valid
+         if(factor<4) ans+=factor;
+         else if(factor< 7) ans+=factor-1;
+         else  ans+=factor-2;
+      }
+      if(lucky&&is_lucky[lucky+1]){
+         if(factor>=4) ans++;
+         if(factor>=7) ans++;
+      }
+ 
+      if((factor==4)||(factor==7))
+         lucky++;
+      s++;
+      ans+=local;
+      len--;
+   }
+   //printf("returning %lld\n",ans);
+ 
+   return ans%MODBY;
+}
+int main()
+{
+   int cases;
+   lld ans;
+   char low[MAX],high[MAX];
+   compute();
+ 
+   for(scanf("%d",&cases);cases;--cases){
+      scanf("%s",low);
+      ans=0;
+      ans=islucky(low);
+ 		
+      if(ans)printf("YES\n");
+      else printf("NO\n");
+   }
+   return 0;
+}

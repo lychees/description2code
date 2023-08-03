@@ -1,0 +1,129 @@
+#include<bits/stdc++.h>
+using namespace std;
+//custom
+#define endl ('\n')
+#define space (" ")
+#define __ ios_base::sync_with_stdio(false);cin.tie(0);
+//utils
+#define SET(a,b) (memset(a,b,sizeof(a)))
+//for vectors
+#define pb push_back
+#define mp make_pair
+typedef vector<int> vi; 
+typedef pair<int,int> ii;
+typedef vector<ii> vii;
+//data types
+typedef long long ll;
+//loops
+#define REP(i,a,b) \
+    for(int i = int(a);i <= int(b);i++)
+#define MEMSET_INF 127 //2bill
+#define MEMSET_HALF_INF 63 //1bill
+
+#ifdef DEBUG
+    #define debug(args...) {dbg,args; cerr<<endl;}
+    #define _
+#else
+    #define debug(args...)  // Just strip off all debug tokens
+    #define _ ios_base::sync_with_stdio(false);cin.tie(0);
+#endif 
+struct debugger
+{
+    template<typename T> debugger& operator , (const T& v)
+    {    
+        cerr<<v<<" ";    
+        return *this;    
+    }
+} dbg;
+
+int A[101][101];
+bool obs[101][101];
+vector<int> dp[101][101];
+
+int main(){
+    _
+    int t,m,n,q,x,y,k;
+    cin>>t;
+    while(t--){
+        cin>>m>>n;
+        SET(obs, 0);
+        REP(i, 0, m){
+            REP(j, 0, n)
+                dp[i][j].clear();
+        }
+
+        // Input
+        REP(i, 1, m){
+            REP(j, 1, n){
+                string s;
+                cin>>s;
+                if(s == "##"){
+                    obs[i][j] = 1;
+                }
+                else{
+                    A[i][j] = stoi(s);
+                    debug(A[i][j]);
+                }
+            }
+        }
+
+        // Preprocess
+        if(!obs[1][1])dp[1][1].pb(A[1][1]);
+        // Fill first column
+        REP(i, 2, m){
+            if(!obs[i][1] && dp[i-1][1].size())
+                dp[i][1].pb(A[i][1] + dp[i-1][1][0]);
+        }
+        // Fill first row
+        REP(j, 2, n){
+            if(!obs[1][j] && dp[1][j-1].size())
+                dp[1][j].pb(A[1][j] + dp[1][j-1][0]);
+        }
+
+        REP(i, 2, m){
+            REP(j, 2, m){
+                if(obs[i][j])continue;
+                int s1, s2;
+                s1 = dp[i-1][j].size();
+                s2 = dp[i][j-1].size();
+                int it1 = 0, it2 = 0, val;
+                while((it1 < s1 || it2 < s2) && (it1 + it2 <= 101)){
+                    if(it1 == s1){
+                        val = A[i][j] + dp[i][j-1][it2]; 
+                        it2++;
+                    }
+                    else if(it2 == s2){
+                        val = A[i][j] + dp[i-1][j][it1];
+                        it1++;
+                    }
+                    else{
+                        if(dp[i-1][j][it1] < dp[i][j-1][it2]){
+                            val = A[i][j] + dp[i-1][j][it1];
+                            it1++;
+                        }
+                        else{
+                            val = A[i][j] + dp[i][j-1][it2];
+                            it2++;
+                        }
+                    }
+                    dp[i][j].pb(val);
+                }
+            }
+        }
+
+        cin>>q;
+        while(q--){
+            cin>>x>>y>>k;
+            x++,y++;
+
+            if(obs[x][y])
+                cout<<"Obstacle"<<endl;
+            else if(k > dp[x][y].size())
+                cout<<"Not so many paths"<<endl;
+            else
+                cout<<dp[x][y][k-1]<<endl;
+        }
+
+    }
+    return 0;
+}

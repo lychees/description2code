@@ -1,0 +1,93 @@
+#include <cstdio>
+#include <cmath>
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <cassert>
+#include <string>
+#include <cstring>
+#include <queue>
+
+using namespace std;
+
+#define rep(i,a,b) for(int i = a; i < b; i++)
+#define S(x) scanf("%d",&x)
+#define S2(x,y) scanf("%d%d",&x,&y)
+#define P(x) printf("%d\n",x)
+#define all(v) v.begin(),v.end()
+#define FF first
+#define SS second
+
+typedef long long int LL;
+typedef pair<int, int > pii;
+typedef vector<int > vi;
+
+const int MAXK = 4000;
+
+LL A,B,K;
+int X,Y;
+LL PW[15];
+LL dp[15][MAXK][118][2];
+
+void pre() {
+  PW[0] = 1;
+  rep(i,1,15) {
+    PW[i] = PW[i-1] * 10;
+  }
+}
+
+int digs(LL x) {
+  return x ? 1+digs(x/10):0;
+}
+
+LL solve(LL N, int d, int r, int sum, bool flag) {
+  if(sum > Y) return 0;
+  if(!d) {
+    if(r) return 0;
+    return (sum >= X && sum <= Y);
+  }
+
+  LL &res = dp[d][r][sum][flag];
+  if(res != -1) return res;
+  res = 0;
+  int mxd = 9;
+  if(!flag) {
+    mxd = (N / PW[d-1]) % 10;
+  }
+  rep(i,0,mxd+1) {
+    res += solve(N, d-1, (r+i*PW[d-1])%K, sum+i, flag | (i < mxd));
+  }
+  return res;
+}
+
+int SM(LL x) {
+  return x ? (x%10 + SM(x/10)) : 0;
+}
+
+int main() {
+  scanf("%lld%lld%d%d%lld",&A,&B,&X,&Y,&K);
+
+  if(K >= MAXK) {
+
+    LL x = (A+K-1) / K;
+    LL ans = 0;
+    for(LL i = x; i*K <= B; i++) {
+      int s = SM(i*K);
+      ans += (s >= X && s <= Y);
+    }
+    printf("%lld\n",ans);
+
+  } else {
+    pre();
+    memset(dp, -1, sizeof(dp));
+    LL ans = solve(B,digs(B),0,0,false);
+    memset(dp, -1, sizeof(dp));
+    ans -= solve(A-1,digs(A-1),0,0,false);
+
+    printf("%lld\n",ans);
+  }
+
+  return 0;
+}

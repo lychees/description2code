@@ -1,0 +1,141 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long LL;
+
+const int MAXN = (int) 1e5 + 10;
+const int mod = (int) 1e9 + 7;
+
+string s, t;
+int visited[MAXN];
+vector<int> g[MAXN];
+
+int N, M, comp;
+
+void dfs(int from) {
+    visited[from] = comp;
+    for (int i = 0; i < g[from].size(); i++) {
+        int to = g[from][i];
+        if (!visited[to]) {
+            dfs(to);
+        }
+    }
+}
+
+int main() {
+    //freopen("in.txt", "r", stdin);
+
+    int T;
+    scanf("%d", &T);
+    while (T--) {
+        cin >> N >> M;
+        cin >> s >> t;
+
+        for (int i = 0; i < M; i++) {
+            int from, to;
+            scanf("%d %d", &from, &to);
+            from --, to --;
+            g[from].push_back(to);
+            g[to].push_back(from);
+        }
+
+        for (int i = 0; i < N; i++) {
+            visited[i] = false;
+        }
+        comp = 1;
+        for (int i = 0; i < N; i++) {
+            if (!visited[i]) {
+                dfs(i);
+                comp++;
+            }
+        }
+
+        vector<int> values[comp];
+        for (int i = 0; i < N; i++) {
+            values[visited[i]].push_back(i);
+        }
+
+        string ans = s;
+        int common = 0;
+        for (int c = 1; c < comp; c++) {
+            vector<int> cnt1(26), cnt2(26);
+            for (int i = 0; i < values[c].size(); i++) {
+                int id = values[c][i];
+                cnt1[s[id] - 'a']++;
+                cnt2[t[id] - 'a']++;
+            }
+
+            int total = 0;
+            for (int i = 0; i < 26; i++) {
+                total += min(cnt1[i], cnt2[i]);
+            }
+            common += total;
+
+            int curCommon = 0;
+            for (int i = 0; i < values[c].size(); i++) {
+                int id = values[c][i];
+                for (int ch = 0; ch < 26; ch++) {
+                    if (cnt1[ch] > 0) {
+                        int curTotal = 0;
+                        for (int j = 0; j < 26; j++) {
+                            int t1 = cnt1[j];
+                            if (j == ch) {
+                                t1--;
+                            }
+                            int t2 = cnt2[j];
+                            if (j == t[id] - 'a') {
+                                t2--;
+                            }
+                            curTotal += min(t1, t2);
+                        }
+
+                        if ((char) ('a' + ch) == t[id]) {
+                            curCommon++;
+                        }
+
+                        if (curTotal + curCommon >= total) {
+                            ans[id] = (char) ('a' + ch);
+
+                            cnt1[ch] --;
+                            cnt2[t[id] - 'a']--;
+                            break;
+                        } else {
+                            if ((char) ('a' + ch) == t[id]) {
+                                curCommon--;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        int total = 0;
+        for (int i = 0; i < ans.size(); i++) {
+            if (ans[i] == t[i]) {
+                total++;
+            }
+        }
+
+        /*
+
+        cout << common << " " << total << endl;
+        cout << ans << endl;
+
+
+        sort(ans.begin(), ans.end());
+        sort(s.begin(), s.end());
+        assert(s == ans);
+
+        assert(total == common);
+        */
+
+        printf("%d\n%s\n", common, ans.c_str());
+
+        for (int i = 0; i < N; i++) {
+            g[i].clear();
+        }
+    }
+
+    return 0;
+}

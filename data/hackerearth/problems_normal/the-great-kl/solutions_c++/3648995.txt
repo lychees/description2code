@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+const int max_l = 18;
+const int max_n = 1e5 + 10;
+ 
+int tim=0;
+ 
+int tin[max_n], tout[max_n], parent[max_n][max_l], depth[max_n], c[max_n];
+ 
+std::vector<int> v[max_n], color[max_n];
+ 
+void dfs(int node, int par)
+{
+	int i, siz;
+ 
+	tin[node] = tim;
+	++tim;
+ 
+	parent[node][0] = par;
+	for(i=1;i<max_l;++i)
+	{
+		parent[node][i] = parent[parent[node][i-1]][i-1];
+	}
+ 
+	siz = v[node].size();
+ 
+	for(i=0;i<siz;++i)
+	{
+		if(v[node][i]!=par)
+		{
+			depth[v[node][i]] = depth[node] + 1;
+			dfs(v[node][i], node);
+		}
+	}
+ 
+	tout[node] = tim;
+	++tim;
+}
+ 
+bool isupper(int a, int b)
+{
+	return (tin[a]<=tin[b] && tout[a]>=tout[b]);
+}
+ 
+int lcaof(int a, int b)
+{
+	int i;
+ 
+	if(isupper(a, b))
+		return a;
+	if(isupper(b, a))
+		return b;
+ 
+	for(i=max_l-1;i>=0;--i)
+	{
+		if(!isupper(parent[a][i], b))
+			a = parent[a][i];
+	}
+ 
+	return parent[a][0];
+}
+ 
+int distance(int a, int b)
+{
+	int lca = lcaof(a, b);
+ 
+	return (depth[a] + depth[b] - 2*depth[lca]);
+}
+ 
+int main()
+{
+	int n, m, i, a, b, max_dis, max_dis_vtx, start_vtx, siz, j, dis;
+ 
+	scanf("%d %d", &n, &m);
+ 
+	for(i=1;i<=n;++i)
+	{
+		scanf("%d", &c[i]);
+		color[c[i]].push_back(i);
+	}
+ 
+	for(i=1;i<n;++i)
+	{
+		scanf("%d %d", &a, &b);
+		v[a].push_back(b);
+		v[b].push_back(a);
+	}
+ 
+	dfs(1, 1);
+ 
+	//cout<<"same upper "<<isupper(1, 1)<<endl;
+ 
+	for(i=1;i<=m;++i)
+	{
+		max_dis = max_dis_vtx = -1;
+		start_vtx = color[i][0];
+		siz = color[i].size();
+		for(j=0;j<siz;++j)
+		{
+			dis = distance(start_vtx, color[i][j]);
+			if(dis>max_dis)
+			{
+				max_dis = dis;
+				max_dis_vtx = color[i][j];
+			}
+		}
+		
+		max_dis = -1;
+		start_vtx = max_dis_vtx;
+		siz = color[i].size();
+		
+		//printf("i= %d   start vtx = %d\n", i, start_vtx);
+		for(j=0;j<siz;++j)
+		{
+			dis = distance(start_vtx, color[i][j]);
+			//cout<<"vtx = "<<color[i][j]<<"    dis = "<<dis<<endl;
+			if(dis>max_dis)
+			{
+				max_dis = dis;
+			}
+		}
+		
+		if(i<m)
+		printf("%d ", max_dis);
+		else
+		printf("%d\n", max_dis);
+	}
+ 
+	return 0;
+}

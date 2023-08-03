@@ -1,0 +1,79 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define mod 1000000007
+using  namespace std;
+ll seg[4000001];
+ll ar[1000001];
+ll calc[500001];
+int Ar[500001];
+ll query(int node,int i,int j,int s,int e){
+ if( i > j || j < s || e  <  i )
+    return 0;
+  if( i >= s  && e >= j )
+   return seg[node];
+   return (query(2*node,i,(i+j)/2,s,e)  + query(2*node+1,(i+j)/2+1,j,s,e))%mod;
+}
+void update(int node,int i,int j,int idx,ll val){
+ if( i > j || idx < i || idx > j )
+  return;
+  if( i ==j )
+  seg[node] = val;
+  else {
+    update(2*node,i,(i+j)/2,idx,val);
+    update(2*node+1,(i+j)/2+1,j,idx,val);
+    seg[node] = (seg[2*node]+seg[2*node+1])%mod;
+  }
+}
+void build(int node,int i,int j){
+  if(i > j)
+  return;
+  if(i == j)
+  seg[node] = ar[i];
+  else {
+  build(2*node,i,(i+j)/2);
+  build(2*node+1,(i+j)/2+1,j);
+  seg[node] = (seg[2*node] + seg[2*node+1])%mod;
+  }
+}
+int phi(int n){
+ int res = n;
+ for( int i = 2 ; i*i <= n ; ++i ){
+   if( n % i == 0){
+   res = res - res/i;
+   while(n%i==0)
+   n/=i;
+   }
+ }
+ if( n > 1 )
+ res = res - res/n;
+ return res;
+}
+int main(){
+cin.sync_with_stdio(false);
+    for(int i = 1 ; i <= 5e5 ; ++i )
+    Ar[i] = phi(i);
+   for(int d = 1 ; d <= 5e5 ; ++d ){
+     for(int n = d  ; n <= 5e5;  n += d )
+      calc[n] = (calc[n] + (1LL * d * Ar[n/d])%mod)%mod;
+   }
+    int N ;
+   cin  >> N;
+    for( int i = 1 ; i <= N ; ++i ){
+      int x;
+      cin >> x;
+      ar[i] = calc[x];
+    }
+    build(1,1,N);
+      int Q;
+      cin >> Q;
+      while(Q--){
+        char c;
+        int l , r;
+        cin >> c >> l >> r;
+        if(c == 'C')
+        cout << query(1,1,N,l,r) << endl;
+        else
+        update(1,1,N,l,calc[r]);
+      }
+  return 0;
+}

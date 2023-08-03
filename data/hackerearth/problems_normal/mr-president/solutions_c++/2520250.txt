@@ -1,0 +1,140 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define MAX 1000009
+using namespace std;
+
+
+typedef vector<int> vi;
+
+// Union-Find Disjoint Sets Library written in OOP manner, using both path compression and union by rank heuristics
+class UnionFind {                                              // OOP style
+private:
+  vi p, rank, setSize;                       // remember: vi is vector<int>
+  int numSets;
+public:
+  UnionFind(int N) {
+    setSize.assign(N, 1); numSets = N; rank.assign(N, 0);
+    p.assign(N, 0); for (int i = 0; i < N; i++) p[i] = i; }
+  int findSet(int i) { return (p[i] == i) ? i : (p[i] = findSet(p[i])); }
+  bool isSameSet(int i, int j) { return findSet(i) == findSet(j); }
+  void unionSet(int i, int j) {
+    if (!isSameSet(i, j)) { numSets--;
+    int x = findSet(i), y = findSet(j);
+    // rank is used to keep the tree short
+    if (rank[x] > rank[y]) { p[y] = x; setSize[x] += setSize[y]; }
+    else                   { p[x] = y; setSize[y] += setSize[x];
+                             if (rank[x] == rank[y]) rank[y]++; } } }
+  int numDisjointSets() { return numSets; }
+  int sizeOfSet(int i) { return setSize[findSet(i)]; }
+};
+
+
+
+
+struct Triple{
+        int u;
+        int v;
+        ll w;
+        Triple(int uu,int vv, ll ww) {
+                u = uu;
+                v = vv;
+                w = ww;
+        }
+        bool operator<(const Triple &a)const{
+        return (w>a.w);
+    }
+};
+
+
+
+
+
+
+
+
+
+class Des
+{
+public:
+   bool operator () (const int &lhs, const int &rhs)
+   {
+      if(lhs > rhs)
+         return false;
+      return true;
+   }
+};
+
+
+priority_queue < int, vector < int >, Des> lis;
+vector<int> graph[MAX];
+priority_queue<Triple> edgeList;
+int N;
+int M;
+ll K;
+
+
+void CLEAR(){
+    for(int c = 0;c<MAX;c++){
+        graph[c].clear();
+    }
+
+    while(!lis.empty()){
+        lis.pop();
+    }
+}
+
+
+
+int main() {
+    //freopen("a.txt","r",stdin);
+    while(scanf("%d %d %lld",&N,&M,&K) == 3){
+        CLEAR();
+        while(M-->0){
+            int u;
+            int v;
+            ll w;
+            scanf("%d %d %lld",&u,&v,&w);
+            u--;
+            v--;
+            graph[u].push_back(v);
+            graph[v].push_back(u);
+            edgeList.push(Triple(u,v,w));
+        }
+
+        UnionFind uni(N);
+        ll totalWeight = 0;
+        while(!edgeList.empty()){
+            int u = edgeList.top().u;
+            int v = edgeList.top().v;
+            ll w = edgeList.top().w;
+            edgeList.pop();
+            if(!uni.isSameSet(u,v)){
+                uni.unionSet(u,v);
+                totalWeight += w;
+                lis.push(w);
+            }
+        }
+        if(uni.numDisjointSets() == 1){
+            int counter = 0;
+            while(!lis.empty() && totalWeight>K){
+                totalWeight -= lis.top();
+                lis.pop();
+                totalWeight++;
+                counter++;
+            }
+
+            if(totalWeight>K){
+               printf("-1\n");
+            }
+            else{
+                printf("%d\n",counter);
+            }
+        }
+        else{
+            printf("-1\n");
+        }
+
+
+    }
+	return 0;
+}

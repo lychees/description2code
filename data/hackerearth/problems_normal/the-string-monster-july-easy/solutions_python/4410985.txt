@@ -1,0 +1,193 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# https://www.hackerearth.com/july-easy-16/algorithm/the-string-monster-july-easy/
+
+import copy
+import pprint
+
+
+pp = pprint.PrettyPrinter()
+
+
+alphabet_size = ord('z') - ord('a') + 1
+alphabet = []
+for i in xrange(0, alphabet_size):
+    alphabet.append(0)
+
+
+def process_case():
+    N = int(raw_input())
+
+    total = {
+        'len': 0,
+        'chars': copy.deepcopy(alphabet),
+        # 'mask': 0,
+    }
+    pieces = []
+    for n in xrange(0, N):
+        s = [ord(x) - ord('a') for x in sorted(raw_input())]
+        piece = {
+            'len': len(s),
+            'chars': [],
+            # 'mask': 0,
+        }
+        prev_ch = None
+        count = 0
+        for ch in s:
+            if prev_ch is None:
+                prev_ch = ch
+                count = 1
+            elif prev_ch == ch:
+                count += 1
+            else:
+                piece['chars'].append((prev_ch, count))
+                prev_ch = ch
+                count = 1
+            total['chars'][ch] += 1
+            # piece['mask'] |= 1 << ch
+        if count > 0:
+            piece['chars'].append((prev_ch, count))
+        pieces.append(piece)
+        total['len'] += piece['len']
+        # total['mask'] |= piece['mask']
+
+    s = raw_input()
+    piece = {
+        'len': len(s),
+        'chars': copy.deepcopy(alphabet),
+        # 'mask': 0,
+    }
+    for ch in s:
+        pos = ord(ch) - ord('a')
+        piece['chars'][pos] += 1
+        # piece['mask'] |= 1 << pos
+    s = piece
+    s_len = s['len']
+    s_chars = s['chars']
+    # s_mask = s['mask']
+    # s_not_mask = ~s_mask
+
+    state = {
+        'cur': {
+            'len': 0,
+            'chars': copy.deepcopy(alphabet),
+            # 'mask': 0,
+        },
+        'last_piece_idx': len(pieces) - 1,
+        'total': total,
+    }
+    states = [state]
+
+    while len(states) > 0:
+        new_states = []
+
+        for state in states:
+            piece = pieces[state['last_piece_idx']]
+            state['last_piece_idx'] -= 1
+            piece_len = piece['len']
+            piece_chars = piece['chars']
+            # piece_mask = piece['mask']
+
+            new_state_without = state
+            new_state_without_total = new_state_without['total']
+            new_state_without_total_chars = new_state_without_total['chars']
+            for idx, count in piece_chars:
+                new_state_without_total_chars[idx] -= count
+                # if new_state_without_total_chars[idx] == 0:
+                #     new_state_without_total['mask'] &= ~(1 << idx)
+            new_state_without_cur = new_state_without['cur']
+            new_state_without_cur_chars = new_state_without_cur['chars']
+            new_state_without_total['len'] -= piece_len
+
+            # new_state_with = copy.deepcopy(new_state_without)
+            new_state_with = {
+                'cur': {
+                    'len': new_state_without_cur['len'],
+                    'chars': new_state_without_cur_chars[:],
+                    # 'mask': new_state_without_cur['mask'],
+                },
+                'last_piece_idx': new_state_without['last_piece_idx'],
+                'total': {
+                    'len': new_state_without_total['len'],
+                    'chars': new_state_without_total_chars[:],
+                    # 'mask': new_state_without_total['mask'],
+                },
+            }
+
+            # new_state_with_total = new_state_with['total']
+            new_state_with_cur = new_state_with['cur']
+            new_state_with_cur_chars = new_state_with_cur['chars']
+            new_state_with_cur['len'] += piece_len
+            # new_state_with_cur['mask'] |= piece_mask
+
+            if new_state_with['last_piece_idx'] >= 0:
+                # matched = new_state_with_cur['len'] == s_len and \
+                #     new_state_with_cur['mask'] == s_mask
+                matched = new_state_with_cur['len'] == s_len
+                # new_state_with_valid = new_state_with_cur['len'] <= s_len and \
+                #     (new_state_with_cur['mask'] & s_not_mask) == 0
+                new_state_with_valid = new_state_with_cur['len'] <= s_len
+                if new_state_with_valid:
+                    for idx, count in piece_chars:
+                        new_state_with_cur_chars[idx] += count
+                        if new_state_with_cur_chars[idx] != s_chars[idx]:
+                            matched = False
+                            if new_state_with_cur_chars[idx] > s_chars[idx]:
+                                new_state_with_valid = False
+                                break
+
+                if matched:
+                    for i in xrange(0, alphabet_size):
+                        if new_state_with_cur_chars[i] != s_chars[i]:
+                            matched = False
+                            break
+                    if matched:
+                        return True
+
+                if new_state_with_valid:
+                    new_states.append(new_state_with)
+            else:
+                # matched = new_state_with_cur['len'] == s_len and \
+                #     new_state_with_cur['mask'] == s_mask
+                matched = new_state_with_cur['len'] == s_len
+                if matched:
+                    for idx, count in piece_chars:
+                        new_state_with_cur_chars[idx] += count
+                        if new_state_with_cur_chars[idx] != s_chars[idx]:
+                            matched = False
+                            break
+
+                if matched:
+                    for i in xrange(0, alphabet_size):
+                        if new_state_with_cur_chars[i] != s_chars[i]:
+                            matched = False
+                            break
+                    if matched:
+                        return True
+
+            if new_state_without['last_piece_idx'] >= 0:
+                # new_state_without_valid = \
+                #     s_len - new_state_without_cur['len'] <= new_state_without_total['len'] and \
+                #     (new_state_without_total['mask'] | new_state_without_cur['mask']) & s_mask == s_mask
+                new_state_without_valid = \
+                    s_len - new_state_without_cur[
+                        'len'] <= new_state_without_total['len']
+                if new_state_without_valid:
+                    for idx, _ in piece_chars:
+                        if (s_chars[idx] - new_state_without_cur_chars[idx] >
+                                new_state_without_total_chars[idx]):
+                            new_state_without_valid = False
+                            break
+                if new_state_without_valid:
+                    new_states.append(new_state_without)
+
+        states = new_states
+    return False
+
+T = int(raw_input())
+for t in xrange(0, T):
+    if process_case():
+        print "YES"
+    else:
+        print "NO"

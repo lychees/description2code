@@ -1,0 +1,217 @@
+#include<iostream>
+#include<vector>
+#include<string>
+#include<algorithm>
+#include<cstdio>
+#include<numeric>
+#include<cstring>
+#include<ctime>
+#include<cstdlib>
+#include<set>
+#include<map>
+#include<unordered_map>
+#include<unordered_set>
+#include<list>
+#include<cmath>
+#include<bitset>
+#include<cassert>
+#include<queue>
+#include<stack>
+#include<deque>
+#include<cassert>
+using namespace std;
+typedef long long ll;
+typedef long double ld;
+const int MAXN = 500 * 1000 + 7;
+vector<int>g[MAXN];
+bool used[MAXN];
+vector<int>euler;
+vector<int>haveFactories[MAXN];
+ll want[MAXN];
+int firstPos[MAXN], lastPos[MAXN];
+int height[MAXN];
+void dfs(int v, int h = 1)
+{
+	used[v] = true;
+	height[v] = h;
+	for (int i = 0; i < (int)g[v].size(); i++)
+	{
+		int to = g[v][i];
+		if (!used[to])
+		{
+			euler.push_back(v);
+			dfs(to, h + 1);
+		}
+	}
+	euler.push_back(v);
+}
+struct node
+{
+	node* l;
+	node* r;
+	ll k, b;
+	node()
+	{
+		l = NULL;
+		r = NULL;
+		k = 0;
+		b = 0;
+	}
+	node(node* x)
+	{
+		l = x->l;
+		r = x->r;
+		k = x->k;
+		b = x->b;
+	}
+};
+node* build(int tl, int tr)
+{
+	if (tl == tr)
+	{
+		return new node();
+	}
+	else
+	{
+		node* res = new node();
+		int tm = (tl + tr) / 2;
+		res->l = build(tl, tm);
+		res->r = build(tm + 1, tr);
+		return res;
+	}
+}
+node* change(node* v, int tl, int tr, int l, int r, ll k, ll b)
+{
+	node* res = new node(v);
+	if (r < tl || l > tr) return res;
+	if (tl >= l && tr <= r)
+	{
+		res->k += k;
+		res->b += b;
+	}
+	else
+	{			
+		int tm = (tl + tr) / 2;
+		if (v->l != NULL)
+		{
+			res->l = change(v->l, tl, tm, l, r, k, b);
+		}
+		if (v->r != NULL)
+		{
+			res->r = change(v->r, tm + 1, tr, l, r, k, b);
+		}
+	}
+	return res;
+}
+pair<ll, ll> get(node* v, int tl, int tr, int pos)
+{
+	if (tl == tr)
+	{
+		return make_pair(v->k, v->b);
+	}
+	else
+	{
+		int tm = (tl + tr) / 2;
+		pair<ll, ll>res;
+		if (pos <= tm)
+		{
+			res = get(v->l, tl, tm, pos);
+		}
+		else
+		{
+			res = get(v->r, tm + 1, tr, pos);
+		}
+		res.first += v->k;
+		res.second += v->b;
+		return res;
+	}
+}
+const ll INF = (ll)1e18 + 1;
+node* roots[MAXN];
+int sz;
+ll calcVerticle(int v, int time)
+{
+	pair<ll, ll> go = get(roots[time], 1, sz, firstPos[v]);
+	return 1LL * height[v] * go.first + go.second;
+}
+ll calcMan(int id, int time)
+{
+	ll res = 0;
+	for (int i = 0; i < (int)haveFactories[id].size(); i++)
+	{
+		int v = haveFactories[id][i];
+		res += calcVerticle(v, time);
+		if (res > INF) res = INF;
+	}
+	return res;
+}
+int main()
+{
+	//freopen("input.txt", "r", stdin);
+	//freopen("output.txt", "w", stdout);
+	int n, m;
+	scanf("%d %d", &n, &m);
+	for (int i = 2; i <= n; i++)
+	{
+		int p;
+		scanf("%d", &p);
+		g[p].push_back(i);
+		g[i].push_back(p);
+	}
+	for (int i = 1; i <= n; i++)
+	{
+		int id;
+		scanf("%d", &id);
+		haveFactories[id].push_back(i);
+	}
+	for (int i = 1; i <= m; i++)
+	{
+		scanf("%lld", &want[i]);
+	}
+	dfs(1);
+	for (int i = 0; i < (int)euler.size(); i++)
+	{
+		lastPos[euler[i]] = i + 1;
+	}
+	for (int i = (int)euler.size() - 1; i >= 0; i--)
+	{
+		firstPos[euler[i]] = i + 1;
+	}
+	sz = (int)euler.size();
+	roots[0] = build(1, sz);
+	int q;
+	scanf("%d", &q);
+	for (int i = 1; i <= q; i++)
+	{
+		int f;
+		ll x, d;
+		scanf("%d %lld %lld", &f, &x, &d);
+		roots[i] = roots[i - 1];
+		roots[i] = change(roots[i], 1, sz, firstPos[f], lastPos[f], d, x - d * height[f]);
+	}
+	for (int i = 1; i <= m; i++)
+	{
+		if (calcMan(i, q) < want[i])
+		{
+			printf("rekt\n");
+		}
+		else
+		{
+			int l = 0, r = q;
+			while (r - l>1)
+			{
+				int bm = (l + r) / 2;
+				if (calcMan(i, bm) >= want[i])
+				{
+					r = bm;
+				}
+				else
+				{
+					l = bm;
+				}
+			}
+			printf("%d\n", r);
+		}
+	}
+	return 0;
+}

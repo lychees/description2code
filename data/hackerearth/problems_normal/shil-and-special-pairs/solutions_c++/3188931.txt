@@ -1,0 +1,116 @@
+#include<bits/stdc++.h>
+#define lli long long int
+#define pii pair<lli,lli>
+#define mp(x,y) make_pair(x,y)
+using namespace std;
+
+lli arr[100009]; lli index_of[100009]; lli bit[100009]; lli ans[100009];// ans[i]=> answer for R=i;
+pair < pii ,lli> ranges[100009];
+lli n,q,d,l,r,tmp1,tmp2,j,i ,index_of_range,sum,i2=0;
+
+inline void update(lli index)
+{
+	while (index<=n+1)
+	{
+		bit[index]++;
+		index+=index&-index;
+	}
+
+}
+
+inline lli query(lli index)
+{
+	sum=0;
+	
+	while (index>0)
+	{
+		sum+=bit[index];
+		index-=index&-index;
+	}
+	return sum;
+}
+
+void merge_sorted_parts(pair < pii ,lli> arr[],lli start,lli mid,lli end)
+{
+	lli p=start , q=mid+1;   			 //p,q represent indices of those 2 sorted arrays
+	pair < pii ,lli> Aux[end-start+1];lli j=0;
+	
+	for(lli i=start;i<=end;i++)
+	{
+		if(p>mid)
+		Aux[j++]=arr[q++];
+		
+	    else if(q>end)
+		Aux[j++]=arr[p++];
+		
+		else if(arr[p]>arr[q])
+		Aux[j++]=arr[q++];
+		
+		else
+		Aux[j++]=arr[p++];
+		
+	}
+	
+	j=0;
+	for(lli i=start;i<=end;i++)
+	arr[i]=Aux[j++];
+	
+}
+
+void merge_sort(pair < pii ,lli> arr[],lli start,lli end)
+{
+	if(start<end)
+	{
+		lli mid=(start+end)/2;
+		merge_sort(arr,start,mid);
+		merge_sort(arr,mid+1,end);
+		
+		merge_sorted_parts(arr,start,mid,end);
+	}
+}
+
+int main()
+{
+		ios::sync_with_stdio(false);
+		cin>>n>>q>>d;
+
+
+		for (i=1 ; i<=n ; i++)
+		{
+			cin >> arr[i];
+			index_of[arr[i]] = i;
+		}
+
+		for (i=0 ; i<q ; i++)
+		{
+			cin>>l>>r;
+			ranges[i]=mp( mp(r,l), i );
+		}
+
+		merge_sort(ranges,0,q-1);
+	    i=1,i2=0;
+	    
+		for ( ; i<=n and i2<q ; i++)
+		{
+			 tmp1=max(1LL,arr[i]-d);
+			 tmp2=min(arr[i]+d,n);
+			
+			for (j=tmp1; j<= tmp2 ; j++)
+			{
+				if(index_of[j]<=i)
+				update(index_of[j]);
+			}
+
+			while(i==ranges[i2].first.first)
+			{
+				index_of_range=ranges[i2].second;
+				ans[index_of_range] = query(ranges[i2].first.first)-query(ranges[i2].first.second-1);
+				i2++;
+			}
+
+		}
+		
+		for (i=0 ; i<q ; i++)
+		cout<<ans[i]<<"\n";
+		
+}

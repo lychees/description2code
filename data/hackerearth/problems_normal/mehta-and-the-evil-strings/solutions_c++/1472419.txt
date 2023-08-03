@@ -1,0 +1,156 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define DBG(x) cout << #x << " = " << x << endl;
+/*
+Compile:
+    -Wall -Wextra -pedantic -std=c++11 -O2 -Wshadow -Wformat=2 -Wfloat-equal -Wconversion -Wlogical-op -Wcast-qual -Wcast-align -fwhole-program -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -lmcheck -fsanitize=address 
+
+Check for memory usage:
+    valgrind --tool=massif
+ */
+
+const int MOD = 1e9 + 7;
+const long long MOD2 = static_cast<long long>(MOD) * MOD;
+const int N = 32;
+
+int pos[10];
+int numbers[4] = {2, 3, 5, 7};
+int res[N][N], a[N][N], tmp[N][N];
+
+void mul(int x[N][N], int y[N][N])
+{
+    for(int i = 0; i < N; i++)
+        for(int j = 0; j < N; j++) {
+            long long ttt = 0;
+            for(int k = 0; k < N; k++) {
+                ttt += static_cast<long long>(x[i][k]) * y[k][j];
+                while(ttt >= MOD2)
+                    ttt -= MOD2;
+            }
+            tmp[i][j] = ttt % MOD;
+        }
+
+    memcpy(res, tmp, sizeof(res));
+}
+
+void get_pow(long long n)
+{
+    if(n == 0) {
+        for(int i = 0; i < N; i++)
+            for(int j = 0; j < N; j++)
+                res[i][j] = i == j;
+        return;
+    } 
+    if(n == 1) {
+        for(int i = 0; i < N; i++)
+            for(int j = 0; j < N; j++)
+                res[i][j] = a[i][j];
+        return;
+    }
+
+    get_pow(n / 2);
+    mul(res, res);
+    if(n % 2)
+        mul(res, a);
+}
+
+int stupid(int n, int mask) 
+{
+    int lim = 1;
+    for(int i = 0; i < n; i++)
+        lim *= 10;
+    int ret = 0;
+    for(int i = 0; i < lim; i++) {
+        int cmask = 0;
+        int k = i;
+        while(k) {
+            int t = k % 10;
+            k /= 10;
+            if(pos[t] != -1)
+                cmask ^= 1 << pos[t];
+        }
+        if(cmask == mask)
+            ret++;
+    }
+
+    return ret;
+}
+
+int solve()
+{
+    long long n;
+    cin >> n;
+
+    for(int i = 0; i < N; i++)
+        for(int j = 0; j < N; j++)
+            a[i][j] = 0;
+
+    for(int i = 0; i < (1 << 4); i++) {
+        for(int k = 1; k < 10; k++) {
+            int new_mask = i;
+            int r = k;
+
+            for(int m = 0; m < 4; m++) {
+                int cnt = 0;
+                while(r % numbers[m] == 0) {
+                    cnt = 1 - cnt;
+                    r /= numbers[m];
+                }
+                new_mask ^= (1 << pos[numbers[m]]) * cnt;
+            }
+
+            a[i][new_mask]++;
+        }
+    }
+
+    int base[N];
+
+    fill(base, base + N, 0);
+    for(int j = 1; j < 10; j++) {
+        int new_mask = 0;
+        int r = j;
+
+        for(int m = 0; m < 4; m++) {
+            int cnt = 0;
+            while(r % numbers[m] == 0) {
+                cnt = 1 - cnt;
+                r /= numbers[m];
+            }
+            new_mask ^= (1 << pos[numbers[m]]) * cnt;
+        }
+
+        base[new_mask]++;
+    }
+
+    get_pow(n - 1);
+
+    int nx[N];
+    fill(nx, nx + N, 0);
+
+    for(int i = 0; i < N; i++)
+        for(int j = 0; j < N; j++)
+            nx[i] = (nx[i] + static_cast<long long>(base[j]) * res[j][i]) % MOD;
+
+    int ret = 0;
+    for(int mask = 1; mask < 16; mask++) {
+        ret = (ret + nx[mask]) % MOD;
+    }
+    return ret;
+}
+
+
+int main()
+{
+    for(int i = 0; i < 10; i++)
+        pos[i] = -1;
+    pos[2] = 0;
+    pos[3] = 1;
+    pos[5] = 2;
+    pos[7] = 3;
+
+    int t;
+    cin >> t;
+    for(int i = 0; i < t; i++)
+        cout << solve() << "\n";
+    return 0;
+}

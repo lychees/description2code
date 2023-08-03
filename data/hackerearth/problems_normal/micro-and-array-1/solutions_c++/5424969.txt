@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long int ll;
+typedef pair<int, int> pii;
+typedef vector<pii> vii;
+typedef vector<int> vi;
+
+#define rep(i, a, b) for (int i = a; i < b; i++)
+#define repeq(i, a, b) for (int i = a; i <= b; i++)
+
+#define S(x) scanf("%d", &x)
+#define S2(x, y) scanf("%d%d", &x, &y)
+#define S3(x, y, z) scanf("%d%d%d", &x, &y, &z)
+#define Ss(x) scanf("%s", x)
+#define Sf(x) scanf("%lf", &x)
+#define all(v) v.begin(), v.end()
+#define mod 1000000007
+#define MAX 1000000
+#define INF 1000000000
+#define INFLL (ll)10e18
+#define pb push_back
+#define mp make_pair
+#define FF first 
+#define SS second
+#define testcases scanf("%d",&t);while(t--)
+#define PI 3.1415926535897932
+int segtree[1000005];
+int arr[100005];
+void buildTree(int low,int high,int pos)
+{
+    if(low>high)
+    return;
+    if(low==high)
+    {
+        segtree[pos]=arr[low];
+        return;
+    }
+    int mid=(low+high)>>1;
+    buildTree(low,mid,2*pos+1);
+    buildTree(mid+1,high,2*pos+2);
+    segtree[pos]=max(segtree[2*pos+1],segtree[2*pos+2]);
+}
+void update(int low,int high,int index,int val,int pos)
+{
+    if(low>high)
+    return;
+    if(low==high&&low==index)
+    {
+        arr[index]=val;
+        segtree[pos]=arr[low];
+        return;
+    }
+    if(low==high)
+    return;
+    int mid=(low+high)>>1;
+    if(index<=mid)
+    update(low,mid,index,val,2*pos+1);
+    else
+    {
+        update(mid+1,high,index,val,2*pos+2);
+    }
+    segtree[pos]=max(segtree[2*pos+1],segtree[2*pos+2]);
+}
+int query(int low,int high,int val,int pos)
+{
+    if(low>high)
+    return INT_MIN;
+    if(low==high)
+    {
+        if(segtree[pos]>=val)
+        return low;
+        return -2;
+    }
+    int mid=(low+high)>>1;
+    if(segtree[pos]>=val)
+    {
+        if(segtree[2*pos+1]>=val)
+        return query(low,mid,val,2*pos+1);
+        else
+        {
+            return query(mid+1,high,val,2*pos+2);
+        }
+    }
+    else
+    {
+        return -2;
+    }
+}
+int main()
+{
+    int n,q,index,val,type;
+    cin>>n>>q;
+    rep(i,0,n)
+    scanf("%d",&arr[i]);
+    buildTree(0,n-1,0);
+    while(q--)
+    {
+        cin>>type;
+        if(type==1)
+        {
+            cin>>val;
+           // printf("hello");
+            printf("%d\n",query(0,n-1,val,0)+1);
+        }
+        else 
+        {
+            cin>>index>>val;
+            update(0,n-1,index-1,val,0);
+        }
+    }
+    return 0;
+}

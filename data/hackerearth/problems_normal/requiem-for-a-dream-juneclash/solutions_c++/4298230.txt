@@ -1,0 +1,169 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define DEBUG(x)    cerr << #x << " = " << x << endl
+#define INPUT       freopen("Data.inp", "r", stdin)
+#define OUTPUT      freopen("Data.out", "w", stdout)
+
+typedef long long LL;
+typedef pair<int, int> II;
+typedef vector<int> VI;
+
+string Next() {
+    string S; cin >> S;
+    return S;
+}
+int NextInt() {
+    int n; scanf("%d", &n);
+    return n;
+}
+LL NextLong() {
+    LL n;
+    #ifdef _WIN32
+        scanf("%I64d", &n);
+    #else
+        scanf("%lld", &n);
+    #endif
+    return n;
+}
+
+const int N = (int) 1e5 + 10;
+int n, q, p[N][21], h[N], c[N], w[N];
+vector<II> adj[N];
+bool fre[N];
+
+int nchain, ps;
+int chain[N], head[N], pos[N], rv[N];
+
+void DFS(int u) {
+    fre[u] = false; c[u] = 1;
+    for (int i = 0; i < (int) adj[u].size(); ++i) {
+        int v = adj[u][i].first, l = adj[u][i].second;
+        if (fre[v]) {
+            p[v][0] = u;
+            h[v] = h[u] + 1;
+            w[v] = l;
+            DFS(v);
+            c[u] += c[v];
+        }
+    }
+}
+
+void HLD(int u) {
+    if (head[nchain] == 0) head[nchain] = u;
+    chain[u] = nchain; pos[u] = ++ps; rv[ps] = u;
+    int heavy = -1;
+    for (int i = 0; i < (int) adj[u].size(); ++i) {
+        int v = adj[u][i].first; if (v == p[u][0]) continue;
+        if (heavy == -1 || c[v] > c[heavy]) heavy = v;
+    }
+    if (heavy != -1) HLD(heavy);
+    for (int i = 0; i < (int) adj[u].size(); ++i) {
+        int v = adj[u][i].first; if (v == p[u][0] || v == heavy) continue;
+        nchain++; HLD(v);
+    }
+}
+
+void InitLCA() {
+    for (int j = 1; 1 << j <= n; ++j)
+        for (int i = 1; i <= n; ++i)
+            p[i][j] = p[p[i][j - 1]][j - 1];
+}
+
+int LCA(int u, int v) {
+    if (h[u] < h[v]) swap(u, v);
+    for (int i = 20; i >= 0; --i) if (h[u] - (1 << i) >= h[v]) u = p[u][i];
+    if (u == v) return u;
+    for (int i = 20; i >= 0; --i) if (p[u][i] != p[v][i]) u = p[u][i], v = p[v][i];
+    return p[u][0];
+}
+
+struct Node {
+    LL L, R, S, M;
+    Node() {};
+    Node(LL L, LL R, LL S, LL M): L(L), R(R), S(S), M(M) {};
+    friend Node Merge(Node a, Node b) {
+        Node c;
+        c.L = max(a.L, a.S + b.L);
+        c.R = max(a.R + b.S, b.R);
+        c.S = a.S + b.S;
+        c.M = max(a.M, b.M);
+        c.M = max(c.M, a.R + b.L);
+        return c;
+    }
+};
+
+#define m ((l + r) >> 1)
+#define l L[k]
+#define r R[k]
+struct ST {
+    int L[N * 5], R[N * 5];
+    Node st[N * 5];
+    void Build(int k, int x, int y) {
+        l = x; r = y;
+        if (l == r) return void(st[k] = Node(w[rv[l]], w[rv[l]], w[rv[l]], w[rv[l]]));
+        Build(k << 1, l, m); Build(k << 1 | 1, m + 1, r);
+        st[k] = Merge(st[k << 1], st[k << 1 | 1]);
+    }
+    Node Query(int k, int i, int j) {
+        if (l == i && j == r) return st[k];
+        if (j <= m) return Query(k << 1, i, j);
+        if (i  > m) return Query(k << 1 | 1, i, j);
+        return Merge(Query(k << 1, i, m), Query(k << 1 | 1, m + 1, j));
+    }
+} T;
+#undef m
+#undef l
+#undef r
+
+Node Query(int u, int t) {
+    vector<Node> seg;
+    while (1) {
+        if (chain[u] == chain[t]) {
+            if (pos[u] != pos[t]) seg.push_back(T.Query(1, pos[t] + 1, pos[u]));
+            break;
+        }
+        seg.push_back(T.Query(1, pos[head[chain[u]]], pos[u]));
+        u = p[head[chain[u]]][0];
+    }
+    for (int i = 0; i < (int) seg.size() - 1; ++i) seg[i + 1] = Merge(seg[i + 1], seg[i]);
+    return seg.back();
+}
+
+int main() {
+    #ifdef LOCAL
+        INPUT;
+        OUTPUT;
+    #endif
+
+    n = NextInt(); q = NextInt();
+    for (int i = 1; i <= n - 1; ++i) {
+        int u = NextInt(), v = NextInt(), w = NextInt();
+        adj[u].push_back(II(v, w));
+        adj[v].push_back(II(u, w));
+    }
+
+    memset(fre, true, sizeof fre);
+    DFS(1); HLD(1); InitLCA();
+
+    T.Build(1, 1, n);
+    while (q--) {
+        int u = NextInt(), v = NextInt();
+        if (u == v) {
+            puts("0");
+            continue;
+        }
+        int w = LCA(u, v);
+        if (w != u && w != v) {
+            Node a = Query(u, w); swap(a.L, a.R);
+            Node b = Query(v, w);
+            printf("%lld\n", max(0ll, Merge(a, b).M));
+        }
+        else {
+            if (w == u) swap(u, v);
+            printf("%lld\n", max(0ll, Query(u, w).M));
+        }
+    }
+
+    return 0;
+}

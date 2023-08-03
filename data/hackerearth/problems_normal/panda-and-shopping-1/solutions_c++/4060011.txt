@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int seg[800000],h[100010],l[100010];
+pair < int ,int > arr[100010];
+
+int build(int idx,int l,int r)
+{
+    //cout<<"build at"<<idx<<endl;
+    if(l==r)
+        {seg[idx]=arr[idx].first;return 0;}
+
+    int mid=(l+r)<<1;
+
+    build(2*idx+1,l,mid);
+    build(2*idx+2,mid+1,r);
+    return seg[idx]=max(0,max(seg[mid],seg[mid+1]));
+}
+
+int query (int idx,int ql,int qr,int l,int r)
+{
+    //cout<<"query at"<<idx<<endl;
+    if(ql > r || qr<l ) return 0;
+    if(ql<=l && qr >=r ) return seg[idx];
+    int mid=(l+r)/2;
+    return max(query(2*idx +1 ,ql,qr,l,mid),query(2*idx+2,ql,qr,mid+1,r));
+}
+
+int upd(int idx,int ql,int qr,int l,int r,int val)
+{
+    //cout<<"upd at"<<idx<<endl;
+    if(ql>r || qr<l) return 0;
+    if(ql<=l && qr>=r) return seg[idx]=max(seg[idx],val);
+    int  mid=(l+r)/2;
+    return seg[idx]=max(seg[idx],max(upd(2*idx+1,ql,qr,l,mid,val),upd(2*idx+2,ql,qr,mid+1,r,val)));
+}
+int main()
+{
+    int n,i,j,idx,val;
+    //freopen("input.txt","r",stdin);
+
+    cin>>n;
+
+    for(i=0;i<n;i++)
+        cin>>h[i]>>l[i];
+
+    for(i=0;i<n;i++)
+        arr[i].first=l[i],arr[i].second=i;
+
+    sort(arr,arr+n);
+
+    for(i=1;i<n;i++)
+    {
+        idx=arr[i].second;
+        val = query(0,0,idx-1,0,n-1);
+        upd(0,idx,idx,0,n-1,val+h[idx]);
+    }
+
+    cout<<seg[0]<<endl;
+
+}

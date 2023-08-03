@@ -1,0 +1,142 @@
+//Amit Kumar Gupta              
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+typedef pair<int,int> II;
+#define REP(i,i1,n) for(int i=i1;i<n;i++)
+#define REPB(i,i1,n) for(int i=i1;i>=n;i--)
+#define PB push_back
+#define MP make_pair
+#define ALL(c) (c).begin(),(c).end()
+#define F first
+#define S second
+#define SZ(a) (LL)a.size()
+#define EPS 1e-12
+#define MOD 1000000007
+#define MOD1 1000000006
+#define TR1(x) cerr<<#x<<" : "<<x<<endl
+#define TR2(x,y) cerr<<#x<<" : "<<x<<" | "<<#y<<" : "<<y<<endl
+#define FAST_IO ios_base::sync_with_stdio(false);cin.tie(NULL)
+#define SI(c) scanf("%d",&c)
+#define SII(c,d) scanf("%d%d",&c,&d)
+#define SLL(c) scanf("%lld",&c)
+#define PIN(c) printf("%d\n",c)
+#define PLLN(c) printf("%lld\n",c)
+#define N 100010
+#define LOGN 21
+#define INIT1(array,ST,END,val) for(int i=ST;i<END;i++)array[i]=val
+#define INIT2(array,nn,mm,val) for(int i=0;i<nn;i++)for(j=0;j<mm;j++)array[i][j]=val
+//------------------------------------------------------MAIN CODE STARTS HERE---------------------------------------
+LL a[N],arr[N],arr1[N];
+int n,q;char s[N];
+typedef struct node {
+    LL f,s,ff,ss;
+}nd;
+nd st[6*N],null;
+void cal() {
+    arr[0]=1LL;arr1[0]=1LL;
+    REP(i,1,N) {
+        arr[i]=(arr[i-1]*26)%MOD;
+        arr1[i]=(arr1[i-1]*31)%MOD1;
+    }
+}
+nd merge(nd n1,nd n2) {
+    nd ret;
+    ret.f=(n1.f+n2.f)%MOD;
+    ret.s=(n1.s+n2.s)%MOD1;
+    ret.ff=(n1.ff+n2.ff)%MOD;
+    ret.ss=(n1.ss+n2.ss)%MOD1;
+    return ret;
+}
+
+void build(int node,int l,int r) {
+    if(l==r) {
+        st[node].f=(a[l]*arr[l])%MOD;
+        st[node].s=(a[l]*arr1[l])%MOD1;
+        st[node].ff=(a[l]*arr[n-l+1])%MOD;
+        st[node].ss=(a[l]*arr1[n-l+1])%MOD1;
+        return;
+    }
+    int mid=l+(r-l)/2;
+    build(2*node,l,mid);
+    build(2*node+1,mid+1,r);
+    st[node]=merge(st[node*2],st[node*2+1]);
+}
+
+void update(int node,int l,int r,int ql) {
+    if(l>ql||r<ql)
+        return;
+    if(l==ql&&l==r) {
+        st[node].f=(a[l]*arr[l])%MOD;
+        st[node].s=(a[l]*arr1[l])%MOD1;
+        st[node].ff=(a[l]*arr[n-l+1])%MOD;
+        st[node].ss=(a[l]*arr1[n-l+1])%MOD1;
+        return ;
+    }
+    int mid=l+(r-l)/2;
+    update(2*node,l,mid,ql);
+    update(2*node+1,mid+1,r,ql);
+    st[node]=merge(st[node*2],st[node*2+1]);
+}
+
+nd query(int node,int l,int r,int ql,int qr) {
+    if(l>qr||r<ql)
+        return null;
+    if(l>=ql&&r<=qr)
+        return st[node];
+    int mid=l+(r-l)/2;
+    nd r1=query(node*2,l,mid,ql,qr);
+    nd r2=query(node*2+1,mid+1,r,ql,qr);
+    return merge(r1,r2);
+}
+
+int main() {
+    SII(n,q);
+    scanf("%s",s);
+    REP(i,1,n+1) {
+        int nm=s[i-1]-'a';
+        a[i]=1LL*nm+1LL;
+    }
+    cal();
+    null.f=0LL,null.s=0LL,null.ff=0LL,null.ss=0LL;
+    build(1,1,n);
+    while(q--) {
+        int t,x,y;char c[3];
+        SI(t);
+        if(t) {
+            SII(x,y);
+            nd ret=query(1,1,n,x,y);
+            int nm1=n-y+1,nm2=x;
+            if(nm1>=x) {
+                LL vl1=ret.f;LL vl2=ret.s;LL vl3=ret.ff;LL vl4=ret.ss;
+                vl1=(vl1*arr[nm1-x])%MOD;
+                vl2=(vl2*arr1[nm1-x])%MOD1;
+             //   TR2(vl1,vl3);TR2(vl2,vl4);
+           //     cout<<"first\n";
+                if(vl1==vl3&&vl2==vl4)
+                    printf("Yes\n");
+                else
+                    printf("No\n");
+            }
+            else {
+                LL vl1=ret.f;LL vl2=ret.s;LL vl3=ret.ff;LL vl4=ret.ss;
+                vl3=(vl3*arr[x-nm1])%MOD;
+                vl4=(vl4*arr1[x-nm1])%MOD1;
+               // TR2(vl1,vl3);
+               // TR2(vl2,vl4);
+                if(vl1==vl3&&vl2==vl4)
+                    printf("Yes\n");
+                else
+                    printf("No\n");
+            }
+        }
+        else {
+            SI(x);
+            scanf("%s",c);
+            int nm=c[0]-'a';
+            a[x]=1LL*nm+1LL;
+            update(1,1,n,x);
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,161 @@
+#include <algorithm>
+#include <iostream>
+#include <sstream>
+#include <complex>
+#include <numeric>
+#include <cstring>
+#include <bitset>
+#include <vector>
+#include <string>
+#include <cstdio>
+#include <queue>
+#include <cmath>
+#include <map>
+#include <set>
+ 
+using namespace std;
+ 
+#define all(a)			(a).begin(), (a).end()
+#define sz(a)			int((a).size())
+#define FOR(i, a, b)	for (int i(a); i < b; ++i)
+#define REP(i, n)		FOR(i, 0, n)
+#define UN(v)			sort(all(v)), (v).erase(unique((v).begin(), (v).end()), (v).end())
+#define CL(a, b)		memset(a, b, sizeof a)
+#define pb				push_back
+#define X				first
+#define Y				second
+ 
+typedef long long ll;
+typedef vector <int> vi;
+typedef pair <int, int> pii;
+ 
+const int mod = 1000000007;
+ 
+inline int mul(int x, int y) { return (ll)x * y % mod; }
+inline int sum(int x, int y) { return (x += y) < mod ? x : x - mod; }
+inline int sub(int x, int y) { return (x -= y) < 0 ? x + mod : x; }
+ 
+inline int sqr(int x) { return mul(x, x); }
+ 
+ll p;
+bitset<(1 << 20)> b;
+int pr[80000], *pre = pr;
+ 
+int inv(int x) {
+	int y = mod, a = 1, b = 0, c;
+	for (; y; swap(x, y), swap(a, b)) {
+		c = x / y;
+		x %= y;
+		a -= b * c;
+	}
+	return a < 0 ? a + mod : a;
+}
+ 
+int pw(int x, int k) {
+	int r = 1;
+	for (; k > 0; --k) r = mul(r, x);
+	return r;
+}
+ 
+int pw2(int x, int k) {
+	return sub(pw(x, k), pw(x, k - 1));
+}
+ 
+int f(ll q, int k) {
+/*	if (k > 1) {
+		int res = f(q, 1);
+		return pw(res, k);
+	}*/
+	int x = q % mod;
+	vector <int> r(k + 1);
+	r[k] = sub(mul(2, pw(x, k)), 1);
+//	cout << r[k] << endl;
+	for (int i = 0; i < k; ++i)
+		for (int j = 0; j < k; ++j) {
+			int l = min(i + j, k);
+			int X = pw2(x, k - i), Y = pw2(x, k - j);
+			r[l] = sum(r[l], mul(X, Y));
+		}
+	//REP (i, k + 1) cout << i << ' ' << r[i] << endl;
+	int h = (q - 1) % mod;
+	int res = sqr(r[k]);	
+	for (int i = k - 1; i >= 0; --i) {
+		res = sum(res, mul(inv(h), sqr(r[i])));
+		h = mul(x, h);
+	}
+	/*ll z = 1;
+	REP (i, k) z *= q;
+	if (k > 1) {
+		cout << k << endl;
+		cout << z << endl;
+	}
+	int tt = 0;
+	for (int i = 0; i < z; ++i)
+		for (int j = 0; j < z; ++j)
+			if (ll(i) * j % z == 0) {
+				tt = sum(tt, 1);
+			}
+	res = sum(res, sqr(tt));
+	for (int l = k; l > 0; --l) {
+		res = sum(res, pw(mul(l, h), 3));
+		h = mul(h, x);
+	}*/
+	return res;
+}
+ 
+int qpow(int x, int n, int p) {
+	if (x == 0) return 0;
+	int r = 1;
+	for (; n; n /= 2, x = ll(x) * x % p) 
+		if (n & 1) r = ll(r) * x % p;
+	return r;
+}
+ 
+int stupid2(int p) {
+	int res = 0;
+	FOR (x, 0, (p - 1) * p) 
+		FOR (y, 0, (p - 1) * p) {
+			if (qpow(x % p, x % (p - 1), p) == qpow(y % p, y % (p - 1), p))
+				++res;
+		}
+	return res;
+}
+ 
+int stupid(int p) {
+	int res = 0;
+	REP (x, p - 1) REP (y, p - 1) REP (a, p) REP (b, p) {
+		if (qpow(a, x, p) == qpow(b, y, p))
+			++res;
+	}
+	return res;
+}
+ 
+int main(){
+	#ifdef LocalHost
+	freopen("x.in", "r", stdin);
+	freopen("x.out", "w", stdout);
+	#endif
+	for (int x = 3; x < 1024; x += 2) if (!b[x])
+		for (int y = x * x; y < (1 << 20); y += x) 
+			b.set(y);
+	*pre++ = 2;
+	for (int x = 3; x < 1000000; x += 2)
+		if (!b[x]) *pre++ = x; 
+	int T;
+	for (cin >> T; T > 0; --T) {
+		cin >> p;
+		int res = 1;
+		ll n = p - 1;
+		for (int *x = pr; x != pre && *x <= n; ++x)
+			if (n % (*x) == 0) {
+				int k = 0;
+				do ++k, n /= *x;
+				while (n % (*x) == 0);
+				res = mul(res, f(*x, k));
+			}
+		if (n > 1) res = mul(res, f(n, 1));
+		res = sum(res, sqr((p - 1) % mod));
+		cout << res << endl;
+	}
+	return 0;
+}

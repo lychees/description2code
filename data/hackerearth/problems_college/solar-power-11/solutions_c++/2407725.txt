@@ -1,0 +1,146 @@
+#include <stdio.h>
+#include <iostream>
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define Max 1001
+#define MOD 1000000007
+#define INF (1 << 30)
+long long P[Max][Max];
+
+struct Point {
+    long long x, y, mx;
+    Point() {}
+    Point(long long x, long long y, long long mx) : x(x), y(y), mx(mx) {}
+
+    Point operator + (const Point& other) const {
+		Point a;
+        a.mx = this->mx + other.mx;
+        a.mx %= MOD;
+        return a;
+    }
+    bool operator < (const Point& other) const {
+        return mx < other.mx;
+    }
+};
+
+struct Segtree2d {
+    Point T[2 * Max * Max];
+    long long n, m;
+
+    void init(long long n, long long m) {
+        this -> n = n;
+        this -> m = m;
+        build(1, 1, 1, n, m);
+    }
+
+    Point build(long long node, long long a1, long long b1, long long a2, long long b2) {
+        if (a1 > a2 or b1 > b2)
+            return def();
+
+        if (a1 == a2 and b1 == b2)
+            return T[node] = Point(a1, b1, P[a1][b1]);
+
+        T[node] = def();
+        T[node] = maxNode(T[node], build(4 * node - 2, a1, b1, (a1 + a2) / 2, (b1 + b2) / 2 ) );
+        T[node] = maxNode(T[node], build(4 * node - 1, (a1 + a2) / 2 + 1, b1, a2, (b1 + b2) / 2 ));
+        T[node] = maxNode(T[node], build(4 * node + 0, a1, (b1 + b2) / 2 + 1, (a1 + a2) / 2, b2) );
+        T[node] = maxNode(T[node], build(4 * node + 1, (a1 + a2) / 2 + 1, (b1 + b2) / 2 + 1, a2, b2) );
+        return T[node];
+    }
+
+    Point query(long long node, long long a1, long long b1, long long a2, long long b2, long long x1, long long y1, long long x2, long long y2) {
+        
+        if (x1 > a2 or y1 > b2 or x2 < a1 or y2 < b1 or a1 > a2 or b1 > b2)
+            return def();
+
+        if (x1 <= a1 and y1 <= b1 and a2 <= x2 and b2 <= y2)
+            return T[node];
+
+        Point mx = def();
+        mx = maxNode(mx, query(4 * node - 2, a1, b1, (a1 + a2) / 2, (b1 + b2) / 2, x1, y1, x2, y2) );
+        mx = maxNode(mx, query(4 * node - 1, (a1 + a2) / 2 + 1, b1, a2, (b1 + b2) / 2, x1, y1, x2, y2) );
+        mx = maxNode(mx, query(4 * node + 0, a1, (b1 + b2) / 2 + 1, (a1 + a2) / 2, b2, x1, y1, x2, y2) );
+        mx = maxNode(mx, query(4 * node + 1, (a1 + a2) / 2 + 1, (b1 + b2) / 2 + 1, a2, b2, x1, y1, x2, y2));
+
+        return mx;
+    }
+
+    Point query(long long x1, long long y1, long long x2, long long y2) {
+        return query(1, 1, 1, n, m, x1, y1, x2, y2);
+    }
+
+    Point update(long long node, long long a1, long long b1, long long a2, long long b2, long long x, long long y, long long value) {
+        if (a1 > a2 or b1 > b2)
+            return def();
+
+        if (x > a2 or y > b2 or x < a1 or y < b1)
+            return T[node];
+
+        if (x == a1 and y == b1 and x == a2 and y == b2)
+            return T[node] = Point(x, y, value);
+
+        Point mx = def();
+        mx = maxNode(mx, update(4 * node - 2, a1, b1, (a1 + a2) / 2, (b1 + b2) / 2, x, y, value) );
+        mx = maxNode(mx, update(4 * node - 1, (a1 + a2) / 2 + 1, b1, a2, (b1 + b2) / 2, x, y, value));
+        mx = maxNode(mx, update(4 * node + 0, a1, (b1 + b2) / 2 + 1, (a1 + a2) / 2, b2, x, y, value));
+        mx = maxNode(mx, update(4 * node + 1, (a1 + a2) / 2 + 1, (b1 + b2) / 2 + 1, a2, b2, x, y, value) );
+        return T[node] = mx;
+    }
+
+    Point update(long long x, long long y, long long value) {
+        return update(1, 1, 1, n, m, x, y, value);
+    }
+
+    virtual Point maxNode(Point a, Point b) {
+        return a + b;
+    }
+
+    virtual Point def() {
+        return Point(0, 0, 0);
+    }
+};
+
+Segtree2d SUM;
+
+
+int main(void) {
+	
+	long long tc;
+	cin >> tc;
+	while(tc--)
+	{
+		long long n, k;
+		scanf("%d %d", &n, &k);
+		for(long long i = 1; i <= n; i++)
+			for(long long j = 1; j <= n; j++)
+				P[i][j] = k;
+		assert(n!=1);
+		SUM.init(n, n);
+
+		long long a;
+		cin >> a;
+		while(a--)
+		{
+			string q;
+			cin >> q;
+			if(q=="m")
+			{
+				long long x1, y1, x2, y2;
+				scanf("%lld %lld %lld %lld", &x1, &y1, &x2, &y2);
+				cout << SUM.query(x1, y1, x2, y2).mx << endl;
+			}
+			else
+			{
+				long long x, y, v;
+				scanf("%lld %lld %lld", &x, &y, &v);
+				P[x][y] = v*P[x][y];
+				P[x][y] %= MOD;
+				SUM.update(x, y, P[x][y]);
+			}
+		}
+	}
+
+    return 0;
+}

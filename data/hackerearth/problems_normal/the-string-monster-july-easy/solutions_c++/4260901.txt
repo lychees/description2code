@@ -1,0 +1,83 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<utility>
+#include<cstring>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MAXN = 30 + 2;
+const ll C = 15;
+const ll MOD = 1e9 + 7;
+const ll BASE = 701;
+const ll XX = 1e5;
+
+ll n, cnt[MAXN][MAXN], c[MAXN], g[MAXN], vec[XX], sz;
+string s[MAXN], t;
+
+ll hs(bool t = 0){
+	ll ret = 0;
+	for (ll i = 0; i < 26; i++){
+		if (!t)
+			ret = (ret * BASE + ll(c[i])) % MOD;
+		else{
+			if (c[i] > g[i])	return -1;
+			ret = (ret * BASE + ll(g[i] - c[i])) % MOD;
+		}
+	}
+	return ret;
+}	
+
+int main(){
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+	ll te;	cin >> te;
+	while (te--){
+		sz = 0;
+		cin >> n;	
+		memset(cnt, 0, sizeof(cnt));
+		for (ll i = 0; i < n; i++){
+			cin >> s[i];
+			for (char ch:s[i])
+				cnt[i][ch - 'a']++;
+		}
+		cin >> t;
+		memset(g, 0, sizeof(g));
+		for (char ch:t)
+			g[ch - 'a']++;
+		
+		for (ll i = 0; i < (1<<(min(n, C))); i++){
+			memset(c, 0, sizeof(c));
+			ll sm = 0;
+			for (ll j = 0; sm <= t.size() && j < min(n, C); j++)
+				if ((i >> j) & 1)
+					for (ll w = 0; w < 26; w++)
+						c[w] += cnt[j][w], sm += cnt[j][w];
+			if (sm <= t.size())
+				vec[sz++] = hs();
+		}
+
+		sort(vec, vec + sz);
+		bool found = 0;
+		for (ll i = 0; !found && i < (1<<max(n - C, 0LL)); i++){
+			memset(c, 0, sizeof(c));
+			ll sm = 0;
+			for (ll j = 0; sm <= t.size() && j < max(n - C, 0LL); j++)
+				if ((i >> j) & 1)
+					for (ll w = 0; w < 26; w++)
+						c[w] += cnt[j+C][w], sm += cnt[j + C][w];
+
+			if (sm <= t.size()){
+				ll temp = hs(1);
+				if (lower_bound(vec, vec + sz, temp) != upper_bound(vec, vec + sz, temp))	found = 1;
+			}
+		}
+		if (found)
+			cout << "YES\n";
+		else
+			cout << "NO\n";
+	}
+	return 0;
+}

@@ -1,0 +1,74 @@
+#include <stdio.h>
+#include <memory.h>
+
+const int mod = 1000000007;
+
+int cnk[1005][1005];
+int d[1005][105];
+int dsum[1005];
+int D[105][1005];
+
+int x[105];
+int X[105];
+
+int main()
+{
+    for (int i = 0; i < 1005; ++ i)
+    {
+        for (int j = 0; j <= i; ++ j)
+        {
+            if (!j) cnk[i][j] = 1;
+            else cnk[i][j] = cnk[i - 1][j] + cnk[i - 1][j - 1];
+            cnk[i][j] %= mod;
+        }
+    }
+
+    int t;
+    for (scanf("%d", &t); t; -- t)
+    {
+        memset(D, 0, sizeof(D));
+        D[0][0] = 1;
+        int n, m;
+        scanf("%d %d", &n, &m);
+        for (int i = 0; i < n; ++ i) scanf("%d", &x[i]);
+        for (int i = 0; i < n; ++ i) scanf("%d", &X[i]);
+
+        for (int i = 0; i < n; ++ i)
+        {
+            memset(d, 0, sizeof(d));
+            memset(dsum, 0, sizeof(dsum));
+            d[0][x[i] - 1] = 1;
+            dsum[0] = 1;
+            for (int j = 0; j < m; ++ j)
+            {
+                d[j + 1][0] = d[j][1];
+                for (int k = 1; k < X[i]; ++ k)
+                {
+                    d[j + 1][k] = d[j][k - 1] + d[j][k + 1];
+                    d[j + 1][k] %= mod;
+                }
+                dsum[j + 1] = 0;
+                for (int k = 0; k < X[i]; ++ k)
+                {
+                    dsum[j + 1] += d[j + 1][k];
+                    dsum[j + 1] %= mod;
+                }
+            }
+
+            for (int j = 0; j <= m; ++ j)
+            {
+                for (int k = 0; k <= j; ++ k)
+                {
+                    long long add = (long long)D[i][k] * (long long)dsum[j - k];
+                    add %= (long long)mod;
+                    add *= cnk[j][j - k];
+                    add %= (long long)mod;
+                    D[i + 1][j] += add;
+                    D[i + 1][j] %= mod;
+                }
+            }
+        }
+
+        printf("%d\n", D[n][m]);
+    }
+}

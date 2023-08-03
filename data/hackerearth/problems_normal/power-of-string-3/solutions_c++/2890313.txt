@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define LL long long
+const int MOD1 = (int)1e9 + 7;
+const int MOD2 = (int)1e9 + 9;
+const int N = (int)1e6 + 9;
+char s[N];
+struct Hash {
+	int x, y;
+
+	Hash() {}
+
+	Hash(int _x, int _y) {
+		x = _x;
+		y = _y;
+	}
+
+	const bool operator<(Hash other) const {
+		if (x == other.x) {
+			return y < other.y;
+		}
+		return x < other.x;
+	}
+
+	const bool operator==(Hash other) const {
+		return x == other.x && y == other.y;
+	}
+};
+Hash add(Hash a, Hash b) {
+	Hash res;
+	res.x = (a.x + b.x) % MOD1;
+	res.y = (a.y + b.y) % MOD2;
+	return res;
+}
+Hash subtract(Hash a, Hash b) {
+	Hash res;
+	res.x = (a.x - b.x + MOD1) % MOD1;
+	res.y = (a.y - b.y + MOD2) % MOD2;
+	return res;
+}
+Hash multiply(Hash a, Hash b) {
+	Hash res;
+	res.x = ((LL)a.x * b.x) % MOD1;
+	res.y = ((LL)a.y * b.y) % MOD2;
+	return res;
+}
+Hash multiply(Hash a, int v) {
+	Hash res;
+	res.x = ((LL)a.x * v) % MOD1;
+	res.y = ((LL)a.y * v) % MOD2;
+	return res;
+}
+Hash hashes[N];
+Hash p[N];
+Hash tmp[N];
+int main() {
+    /* This solves the problem: https://www.hackerearth.com/problem/algorithm/power-of-string-3/ */
+    /*
+        Problem Description:
+        A string S given, find the longest substring size which occurs >= K times on S.
+    */
+	int k, n;
+	scanf("%d %d\n", &k, &n);
+
+	gets(s + 1);
+
+	p[0] = Hash(1, 1);
+	hashes[0] = Hash(0, 0);
+	for (int i = 1; i <= n; ++i) { // hashing string in 1 indexed base
+		p[i] = multiply(p[i - 1], 31); // our power is based on 31
+		hashes[i] = add(hashes[i - 1], multiply(p[i], (s[i] - 'a' + 1))); // adding hash
+	}
+
+
+	int l = 1;
+	int r = n;
+	int res = 0;
+	while (l <= r) {
+		int m = (l + r) / 2;
+		int sz = 0;
+		for (int i = m; i <= n; ++i) {
+			tmp[sz++] = multiply(subtract(hashes[i], hashes[i - m]), p[n - i]); // getting Hash and making power equivalent
+		}
+		sort(tmp, tmp + sz);
+		int curCnt = 1;
+		int maxCnt = 1;
+		for (int i = 1; i < sz; ++i) {
+			if (tmp[i] == tmp[i - 1]) {
+				++curCnt;
+			} else {
+				maxCnt = max(curCnt, maxCnt);
+				curCnt = 1;
+			}
+		}
+		maxCnt = max(curCnt, maxCnt);
+		if (maxCnt >= k) {
+			res = m;
+			l = m + 1;
+		} else {
+			r = m - 1;
+		}
+	}
+	printf("%d\n", res);
+	return 0;
+}

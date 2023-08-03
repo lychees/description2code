@@ -1,0 +1,89 @@
+#include <iostream>
+#include <cstring>
+using namespace std;
+#define MOD 1000000009
+string op,symb;
+long long F[301][301], T[301][301];
+//http://www.geeksforgeeks.org/dynamic-programming-set-37-boolean-parenthesization-problem/
+void countParenth(int n)
+{
+    
+ 
+    // Fill diaginal entries first
+    // All diagonal entries in T[i][i] are 1 if symbol[i]
+    // is T (true).  Similarly, all F[i][i] entries are 1 if
+    // symbol[i] is F (False)
+    for (int i = 0; i < n; i++)
+    {
+        F[i][i] = (symb[i] == '0')? 1: 0;
+        T[i][i] = (symb[i] == '1')? 1: 0;
+    }
+ 
+    // Now fill T[i][i+1], T[i][i+2], T[i][i+3]... in order
+    // And F[i][i+1], F[i][i+2], F[i][i+3]... in order
+    for (int gap=1; gap<n; ++gap)
+    {
+        for (int i=0, j=gap; j<n; ++i, ++j)
+        {
+            T[i][j] = F[i][j] = 0;
+            for (int g=0; g<gap; g++)
+            {
+                // Find place of parenthesization using current value
+                // of gap
+                int k = i + g;
+ 
+                // Store Total[i][k] and Total[k+1][j]
+                long long tik = T[i][k] + F[i][k];
+                long long tkj = T[k+1][j] + F[k+1][j];
+                tik %= MOD;
+                tkj %= MOD;
+ 
+                // Follow the recursive formulas according to the current
+                // operator
+                if (op[k] == 'a')
+                {
+                    T[i][j] += (T[i][k]*T[k+1][j])%MOD;
+                    F[i][j] += (tik*tkj)%MOD - (T[i][k]*T[k+1][j])%MOD;
+                    
+                }
+                if (op[k] == 'o')
+                {
+                    F[i][j] += (F[i][k]*F[k+1][j])%MOD;
+                    T[i][j] += (tik*tkj)%MOD - (F[i][k]*F[k+1][j])%MOD;
+                }
+                if (op[k] == 'x')
+                {
+                    T[i][j] += (F[i][k]*T[k+1][j])%MOD + (T[i][k]*F[k+1][j])%MOD;
+                    F[i][j] += (T[i][k]*T[k+1][j])%MOD + (F[i][k]*F[k+1][j])%MOD;
+                }
+                T[i][j] = (T[i][j]+MOD)%MOD;
+                F[i][j] = (F[i][j]+MOD)%MOD;
+            }
+        }
+    }
+    
+}
+int main()
+{
+    ios::sync_with_stdio(0);
+    string s;
+    cin>>s>>op;
+    int q,l,r;
+    string value;
+    cin>>q;
+    symb = s;
+    int n = symb.length();
+    countParenth(n);
+    while(q--)
+    {
+    	cin>>l>>r>>value;
+    	l--,r--;
+    	
+    	if (value=="true")	
+    		cout << (T[l][r]%MOD) << "\n";
+    	else
+    		cout << (F[l][r]%MOD) << "\n";
+    
+    }
+    return 0;
+}

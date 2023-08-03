@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define check(x) do{if(!(x))volatile int _zzz=1/0;}while(0)
+
+int N, M, B, Q;
+long long dist[501][1001];
+long long dp[501][1001];
+vector<pair<int, pair<int, long long>>> adj[501];
+struct node
+{
+    int u, m;
+    long long d;
+    bool operator< (const node& other) const
+    {
+        return d>other.d;
+    }
+};
+priority_queue<node> pq;
+
+int main()
+{
+    int T;
+    scanf("%d", &T);
+    //check(1<=T && T<=5);
+    while(T--)
+    {
+        pq=priority_queue<node>();
+        scanf("%d%d%d", &N, &M, &B);
+        //check(1<=N && N<=500);
+        //check(N-1<=M && M<=min(2000, N*(N-1)/2));
+        //check(1<=B && B<=1000);
+        for(int i=1; i<=N; i++)
+            for(int j=0; j<=B; j++)
+                dist[i][j]=0x3f3f3f3f3f3f3f3f;
+        int a, b, c, d;
+        for(int i=0; i<=N; i++)
+            adj[i].clear();
+        for(int i=0; i<M; i++)
+        {
+            scanf("%d%d%d%d", &a, &b, &c, &d);
+            //check(1<=a && a<=N);
+            //check(1<=b && b<=N);
+            //check(c<=500);
+            //check(d<=10000);
+            adj[a].push_back(make_pair(b, make_pair(c, d)));
+        }
+        dist[1][0]=0;
+        pq.push((node){1, 0, 0LL});
+        while(!pq.empty())
+        {
+            int u=pq.top().u;
+            int m=pq.top().m;
+            long long d=pq.top().d;
+            pq.pop();
+            if(d!=dist[u][m])
+                continue;
+            for(auto& it: adj[u])
+            {
+                int v=it.first;
+                int x=it.second.first;
+                long long y=it.second.second;
+                if(m+x<=B && d+y<dist[v][m+x])
+                {
+                    dist[v][m+x]=d+y;
+                    pq.push((node){v, m+x, d+y});
+                }
+            }
+        }
+        for(int i=1; i<=N; i++)
+        {
+            dp[i][0]=dist[i][0];
+            for(int j=1; j<=B; j++)
+                dp[i][j]=min(dp[i][j-1], dist[i][j]);
+        }
+        scanf("%d", &Q);
+        //check(1<=Q && Q<=100000);
+        while(Q--)
+        {
+            scanf("%d%d", &a, &b);
+            //check(1<=a && a<=N);
+            //check(1<=b && b<=B);
+            printf("%lld\n", dp[a][b]==0x3f3f3f3f3f3f3f3f?-1:dp[a][b]);
+        }
+    }
+    return 0;
+}

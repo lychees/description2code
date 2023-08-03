@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+int r, c;
+
+const int MX = 1010;
+int initial[MX][MX];
+int flipped[MX][MX];
+int rowFlipped[MX];
+int colFlipped[MX];
+int colAllFlip[MX];
+int cache[MX][MX];
+char buf[MX];
+
+void flip(int x, int y)
+{
+	//printf("flip %d %d\n", x, y);
+	flipped[x][y] ^= 1;
+	rowFlipped[x] ^= 1;
+	colFlipped[y] ^= 1;
+}
+
+int color(int x, int y)
+{
+	return initial[x][y] ^ flipped[x][y] ^ rowFlipped[x] ^ colFlipped[y];
+}
+
+void flipLocal(int row, int x1, int x2)
+{
+	colAllFlip[x1] ^= 1;
+	colAllFlip[x2] ^= 1;
+	flip(row, x1);
+	flip(row, x2);
+	//printf("%d %d %d\n", row, x1, x2);
+}
+
+int main()
+{
+	scanf("%d%d", &r, &c);
+	for (int i = 0; i < r; i++)
+	{
+		scanf("%s", buf);
+		for (int j = 0; j < c; j++)
+			initial[i][j] = buf[j] == 'B';
+	}
+	int cnt = 0;
+	for (int i = 0; i < r; i++)
+		for (int j = 0; j < c; j++)
+			cnt += color(i, j);
+	if (cnt % 2)
+		flip(0, 0);
+	for (int i = 0; i < r; i++)
+	{
+		cnt = 0;
+		for (int j = 0; j < c; j++)
+			cnt += color(i, j);
+		if (cnt % 2)
+		{
+			assert(i+1 != r);
+			flip(i, 0);
+			flip(i+1, 0);
+		}
+	}
+	for (int i = 0; i < r; i++)
+		for (int j = 0; j < c; j++)
+			cache[i][j] = color(i, j);
+	for (int i = 0; i < r; i++)
+	{
+		vector<int> v;
+		for (int j = 0; j < c; j++)
+			if (cache[i][j])
+				v.push_back(j);
+		for (int q = 0; q < v.size(); q += 2)
+			flipLocal(i, v[q], v[q+1]);
+	}
+	for (int i = 0; i < r; i++)
+		for (int j = 0; j < c; j++)
+			if (colAllFlip[j])
+				flip(i, j);
+	for (int i = 0; i < r; i++)
+		for (int j = 0; j < c; j++)
+			assert(color(i, j) == 0);
+	int ans = 0;
+	for (int i = 0; i < r; i++)
+		for (int j = 0; j < c; j++)
+			ans += flipped[i][j];
+	printf("%d\n", ans);
+}

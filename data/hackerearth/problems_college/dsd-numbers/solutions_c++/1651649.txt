@@ -1,0 +1,92 @@
+#include <iostream>
+using namespace std;
+
+int arr[10][90][90][90];
+void init()
+{
+	for(int i=0;i<=9;++i)
+	{
+		for(int j=1;j<=81;++j)
+		{
+			arr[1][i][j][i%j]++;
+		}
+	}
+	int mul=1;
+	for(int i=2;i<=9;++i)
+	{
+		mul*=10;
+		for(int j=0;j<=9;++j)
+		{
+			int num=j*mul;
+			for(int s=0;s<=(i-1)*9;++s)
+			{
+				int ss=s+j;
+				for(int k=1;k<=81;++k)
+				{
+					for(int l=0;l<k;++l)
+					{
+						arr[i][ss][k][(l+num%k)%k]+=arr[i-1][s][k][l];
+					}
+				}
+			}
+		}
+	}
+}
+
+int func(int n)
+{
+	if(n<=9) return n;
+	int mul=1;
+	int cp=n,cnt=0;
+	while(cp>0)
+	{
+		cp/=10;
+		mul*=10;
+		cnt++;
+	}
+	mul/=10;cnt--;
+	//printf("mul: %d cnt: %d\n",mul,cnt);
+	int ans=0,sum=0;
+	while(cnt>=0)
+	{
+		int l=n/mul;
+		int d=l%10,m=l/10;
+		for(int i=0;i<d;++i)
+		{
+			int num=(m*10+i)*mul;
+			//printf("%d %d\n",d,num);
+			int s=sum+i;
+			//printf("%d\n",s);
+			if(cnt==0)
+			{
+				if(num%s==0) ans++;
+				continue;
+			}
+			for(int j=0;j<=cnt*9;++j){
+				int ss=j+s;
+				if(ss==0) continue;
+				if(num%ss==0) ans+=arr[cnt][j][ss][0];
+				else ans+=arr[cnt][j][ss][ss-(num%ss)];
+				//printf("j: %d ans: %d\n",j,ans);
+			}
+		}
+		sum+=d;
+		if(cnt==0 && n%sum==0) ans++;
+		mul/=10;
+		cnt--;
+	}
+	return ans;
+}
+int main()
+{
+	init();
+	//printf("finished init\n");
+    int t,l,r;
+    scanf("%d",&t);
+    while(t--)
+    {
+    	scanf("%d %d",&l,&r);
+    	printf("%d\n",func(r)-func(l-1));
+    }
+    return 0;
+}

@@ -1,0 +1,118 @@
+#include <stdio.h>
+#include <cmath>
+#include <iostream>
+#include <string.h>
+#include <stdlib.h>
+#include <algorithm>
+#include <list>
+#include <utility>
+#include <set>
+#include <ctime>
+#include <vector>
+#include <map>
+#include <stack>
+#include <queue>
+#include <iomanip>
+
+using namespace std;
+
+typedef unsigned long long UInt64;
+
+const int N = 100009;
+const UInt64 Mod = ( UInt64 )( 1e9 + 7 );
+
+UInt64 y[N];
+int n;
+
+struct seg{
+	int ans[11];
+	seg(){	for( int i = 0; i < 11; ++i )	ans[i] = 0;	}
+}tree[4*N];
+
+void buildTree( int root, int a, int b ){
+	if( a == b ){
+		UInt64 x = y[a];
+		int cnt[10] = {0};
+		while( x ){
+			cnt[ x % 10 ]++;
+			x = x / 10;
+		}
+		int ct = 0;
+		for( int i = 0; i < 10; ++i )	if( cnt[i] )	ct++;
+		for( int i = 0; i < 11; ++i ){
+			if( ct == i )	tree[root].ans[i] = 1;
+		}
+	}
+	else{
+		int mid = ( a + b ) / 2;
+		buildTree( 2 * root, a, mid );
+		buildTree( 2 * root + 1, mid + 1, b );
+		for( int i = 0; i < 11; ++i ){
+			tree[root].ans[i] = tree[ 2 * root].ans[i] + tree[2 * root + 1].ans[i];
+		}
+	}
+}
+
+void updateTree( int root, int a, int b, int l){
+	if( a == b ){
+		UInt64 x = y[l];
+		int cnt[10] = {0};
+		while( x ){
+			cnt[x%10]++;
+			x = x / 10;
+		}
+		int ct = 0;
+		for( int i = 0; i < 10; ++i )	if( cnt[i] )	ct++;
+		for( int i = 0; i < 11; ++i ){
+			if( ct == i )	tree[root].ans[i] = 1;
+			else	tree[root].ans[i] = 0;
+		}
+	}
+	else{
+		int mid = ( a + b ) / 2;
+		if( mid >= l )	updateTree( 2 * root, a, mid, l );
+		else	updateTree( 2 * root + 1, mid + 1, b, l );
+		for( int i = 0; i < 11; ++i )	tree[root].ans[i] = tree[ 2 * root ].ans[i] + tree[ 2 * root + 1].ans[i];
+	}
+}
+
+int getRes( int root, int a, int b,int l, int r, int c ){
+	if( a > b || l > b || a > r )	return 0;
+	if( a >= l && b <= r )	return tree[root].ans[c];
+	int mid = ( a + b ) / 2;
+	return ( getRes( 2 * root, a , mid, l, r, c ) + getRes( 2 * root + 1, mid + 1, b, l, r, c ) );
+}
+
+int main()
+{
+	cin >> n;
+	for( int i = 1; i <= n; ++i )	cin >> y[i];
+	buildTree( 1, 1, n );
+	int q;
+	cin >> q;
+	while( q-- ){
+		int type;
+		cin >> type;
+		if( type == 0 ){
+			int u;
+			UInt64 v;
+			cin >> u >> v;
+			y[u] += v;
+			updateTree( 1, 1, n, u );
+		}
+		else if( type == 1 ){
+			int u;
+			UInt64 v;
+			cin >> u >> v;
+			y[u] = v;
+			updateTree( 1, 1, n, u );
+		}
+		else{
+			int l, r, c;
+			cin >> l >> r >> c;
+			if( c > 10 )	cout << "0\n";
+			else	cout << getRes( 1, 1, n, l, r, c ) << endl;
+		}
+	}
+	return 0;
+}

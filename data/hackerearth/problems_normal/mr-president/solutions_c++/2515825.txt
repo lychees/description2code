@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+/**
+ *
+ * @author Bassem
+ */
+int pt[1000001];
+int sz[1000001];
+int maxi = 1;
+void QUF(int n) {
+    for (int i = 1; i <= n; ++i) {
+        pt[i] = i;
+        sz[i] = 1;
+    }
+}
+
+int root(int i) {
+    while (i != pt[i])pt[i]=pt[pt[pt[i]]],i = pt[i];
+    return i;
+}
+
+void qk_un(int p, int q) {
+    int x = root(p);
+    int y = root(q);
+    if (x == y)return;
+    if (sz[x] > sz[y]) {
+        pt[x] = y;
+        sz[y] += sz[x];
+    } else {
+        pt[y] = x;
+        sz[x] += sz[y];
+    }
+    maxi++;
+}
+
+bool uf(int p, int q) {
+    return root(q) == root(p);
+}
+
+int main(void) {
+    int n, m; long long lim;
+    scanf("%d %d %lld", &n, &m,&lim);
+    QUF(n);
+    vector<pair<int,pair<int,int>>> edges (m,make_pair(0,make_pair(0,0)));
+    for (int i = 0; i < m; ++i) {
+        int x, y,co;
+        scanf("%d %d %d", &x, &y, &co);
+        edges[i]=(make_pair(co,make_pair(x,y)));
+    }
+    sort(edges.begin(),edges.end());
+    vector<int>ans;long long sum = 0;
+    for (int j = 0; j < edges.size(); ++j) {
+        if(!uf(edges[j].second.first,edges[j].second.second)){
+            ans.push_back(edges[j].first);
+            sum+=edges[j].first;
+            qk_un(edges[j].second.first,edges[j].second.second);
+        }
+    }
+    int del = 0;
+    for (int k = ans.size()-1; k > -1; --k) {
+        if(sum<=lim){
+            break;
+        }else{
+            long long xx = min((long long)ans[k]-1,sum-lim);
+            ans[k]-=xx;
+            sum-=xx;
+            del++;
+        }
+    }
+    if(sum>lim || maxi!=n)puts("-1");
+    else printf("%d\n",del);
+}

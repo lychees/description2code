@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <algorithm>
+
+using namespace std;
+
+#define NMAX 1111
+#define DEBUG 0
+
+vector<pair<pair<int, int>, int>> vlrh;
+int N;
+
+void ReadInput() {
+	scanf("%d", &N);
+	vlrh.resize(N);
+	for (int i = 0; i < N; i++)
+		scanf("%d %d %d", &vlrh[i].first.first, &vlrh[i].first.second, &vlrh[i].second);
+	sort(vlrh.begin(), vlrh.end());
+}
+
+void ComputeABC(int xa, int ya, int xb, int yb, int&a, int& b, int& c) {
+	a = ya - yb;
+	b = xb - xa;
+	c = xa * yb - xb * ya;
+}
+
+int elems[2 * NMAX][2 * NMAX], nelems[2 * NMAX], belongs_to[2 * NMAX][2 * NMAX], num_belongs_to[2 * NMAX];
+int nrelems[2 * NMAX];
+char covered[2 * NMAX];
+
+int Solve() {
+	int i, j, k, a, b, c;
+	for (i = 0; i < 2 * N; i++) num_belongs_to[i] = nelems[i] = 0;
+	for (i = 0; i < N; i++) {
+		// Consider the left side of building i.
+		elems[2 * i][nelems[2 * i]++] = 2 * i;
+		belongs_to[2 * i][num_belongs_to[2 * i]++] = 2 * i;
+		if (i > 0) {
+			// Find all the right sides from which the left side of building i is visible.
+			ComputeABC(vlrh[i - 1].first.second, vlrh[i - 1].second, vlrh[i].first.first, 0, a, b, c);
+			elems[2 * (i - 1) + 1][nelems[2 * (i - 1) + 1]++] = 2 * i;
+			belongs_to[2 * i][num_belongs_to[2 * i]++] = 2 * (i - 1) + 1;
+			if (DEBUG) fprintf(stderr, "left side of %d is visible from the right side of %d\n", i, i - 1);
+			for (j = i - 2; j >= 0; j--) {
+				int sgn = a * vlrh[j].first.second + b * vlrh[j].second + c;
+				if (sgn >= 0) {
+					ComputeABC(vlrh[j].first.second, vlrh[j].second, vlrh[i].first.first, 0, a, b, c);
+					elems[2 * j + 1][nelems[2 * j + 1]++] = 2 * i;
+					belongs_to[2 * i][num_belongs_to[2 * i]++] = 2 * j + 1;
+					if (DEBUG) fprintf(stderr, "left side of %d is visible from the right side of %d (%d)\n", i, j, nelems[2 * j + 1]);
+				}
+			}
+		}
+		// Consider the right side of building i.
+		elems[2 * i + 1][nelems[2 * i + 1]++] = 2 * i + 1;;
+		belongs_to[2 * i + 1][num_belongs_to[2 * i + 1]++] = 2 * i + 1;
+		if (i + 1 < N) {
+			// Find all the left sides from which the right side of building i is visible.
+			ComputeABC(vlrh[i].first.second, 0, vlrh[i + 1].first.first, vlrh[i + 1].second, a, b, c);
+			elems[2 * (i + 1)][nelems[2 * (i + 1)]++] = 2 * i + 1;
+			belongs_to[2 * i + 1][num_belongs_to[2 * i + 1]++] = 2 * (i + 1);
+			if (DEBUG) fprintf(stderr, "right side of %d is visible from the left side of %d\n", i, i + 1);
+			for (j = i + 2; j < N; j++) {
+				int sgn = a * vlrh[j].first.first + b * vlrh[j].second + c;
+				if (sgn >= 0) {
+					ComputeABC(vlrh[i].first.second, 0, vlrh[j].first.first, vlrh[j].second, a, b, c);
+					elems[2 * j][nelems[2 * j]++] = 2 * i + 1;
+					belongs_to[2 * i + 1][num_belongs_to[2 * i + 1]++] = 2 * j;
+					if (DEBUG) fprintf(stderr, "right side of %d is visible from the left side of %d (%d)\n", i, j, nelems[2 * j]);
+				}
+			}
+		}
+	}
+	for (i = 0; i < 2 * N; i++) {
+		covered[i] = 0;
+		nrelems[i] = nelems[i];
+	}
+	int ans = 0;
+	while (1) {
+		int sel_subset = 0;
+		for (i = 1; i < 2 * N; i++)
+			if (nrelems[i] > nrelems[sel_subset]) sel_subset = i;
+		if (nrelems[sel_subset] <= 0) break;
+		ans++;
+		if (DEBUG) fprintf(stderr, "%d: %d %d\n", ans, sel_subset, nrelems[sel_subset]);
+		for (i = 0; i < nelems[sel_subset]; i++) {
+			j = elems[sel_subset][i];
+			if (!covered[j]) {
+				covered[j] = 1;
+				for (k = 0; k < num_belongs_to[j]; k++) {
+					int sid = belongs_to[j][k];
+					nrelems[sid]--;
+				}
+			}
+		}
+	}
+	return ans;
+}
+
+int main() {
+	int T;
+	scanf("%d", &T);
+	while (T--) {
+		ReadInput();
+		printf("%d\n", Solve());
+	}
+	return 0;
+}

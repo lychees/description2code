@@ -1,0 +1,105 @@
+#include<iostream>
+#include<cstdio>
+#include<vector>
+#define M 100000
+#define pb push_back
+using namespace std;
+vector<int> prime;
+void pre_compute(void)
+{
+    prime.pb(2);
+    int i,j;
+    for(i=3;i<M;i++)
+    {
+        for(j=0;j<prime.size();j++)
+        {
+            if(prime[j]*prime[j]>i) j=prime.size()-1;
+            else if(i%prime[j]==0) break;
+        }
+        if(j==prime.size()) prime.pb(i);
+    }
+}
+
+vector<long long> func(long long x)
+{
+    int i,j,k,sz;
+    long long ele,n;
+    n=x;
+    vector<vector<long long> > v;
+    vector<long long> u;
+    for(i=0;i<prime.size();i++)
+    {
+        if(x%prime[i]==0)
+        {
+            ele=1;
+            while(x%prime[i]==0)
+            {
+                ele*=prime[i];
+                u.pb(ele);
+                x/=prime[i];
+            }
+            v.pb(u);
+            u.clear();
+        }
+        if(prime[i]*prime[i]>x)
+        {
+            if(x>prime[i])
+            {
+                u.pb(x);
+                v.pb(u);
+            }
+            break;
+        }
+    }
+    vector<long long> ans;
+    ans.pb(1);
+    for(i=0;i<v.size();i++)
+    {
+        sz=ans.size();
+        for(j=0;j<v[i].size();j++)
+        {
+            for(k=0;k<sz;k++)
+            {
+                ans.pb(ans[k]*v[i][j]);
+            }
+        }
+    }
+    return ans;
+}
+
+int main()
+{
+    pre_compute();
+    int i,j,k,t;
+    cin>>t;
+    while(t--)
+    {
+        long long n,m,a,mx,area,hper,unit;
+        bool solve;
+        vector<long long> ans;
+        cin>>n>>m>>a;
+        mx=m*a*a*a+n-1;
+        solve=false;
+        while(!solve)
+        {
+         mx++;
+         ans=func(mx);
+         for(i=0;i<ans.size()&&!solve;i++)
+            for(j=0;j<ans.size()&&!solve;j++)
+         {
+             if(mx%(ans[i]*ans[j])==0&&ans[i]>=a&&ans[j]>=a)
+             {
+                 area=ans[i]*ans[j];
+                 unit=(ans[i]/a)*(ans[j]/a);
+                 hper=(m+unit-1)/unit;
+                 hper=hper*a;
+                 if(hper<=(mx/area))
+                 {
+                     solve=true;
+                 }
+             }
+         }
+        }
+        cout<<mx<<endl;
+    }
+}

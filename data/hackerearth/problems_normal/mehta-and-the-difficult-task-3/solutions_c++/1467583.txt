@@ -1,0 +1,67 @@
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+struct matrix {
+    int a[16][16];
+} id, base;
+
+matrix operator*(const matrix& x, const matrix& y) {
+    matrix r;
+    for (int i = 0; i < 16; ++i)
+        for (int j = 0; j < 16; ++j) {
+            int v = 0;
+            for (int k = 0; k < 16; ++k) {
+                v = (v + (long long)x.a[i][k] * y.a[k][j]) % MOD;
+            }
+            r.a[i][j] = v;
+        }
+    return r;
+}
+
+matrix operator^(matrix a, long long b) {
+    matrix r = id;
+    while (b) {
+        if (b & 1) r = r * a;
+        b >>= 1;
+        a = a * a;
+    }
+    return r;
+}
+
+int main() {
+//    freopen("in", "r", stdin);
+//    freopen("out", "w", stdout);
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    for (int i = 0; i < 16; ++i) {
+        base.a[i][i] = 6;
+        id.a[i][i] = 1;
+        for (int j = 0; j < 16; ++j)
+            if (i != j) 
+                for (int k = 0; k < 4; ++k)
+                    if ((j ^ (1 << k)) == i) {
+                        base.a[i][j] = 1;
+                        break;
+                    }
+    }
+    int tt;
+    cin >> tt;
+    while (tt--) {
+        long long n;
+        int a, b, c, d;
+        cin >> n >> a >> b >> c >> d;
+        matrix r;
+        memset(r.a, 0, sizeof(r.a));
+        r.a[0][0] = 1;
+        r = (base ^ n) * r;
+        cout << r.a[a | (b << 1) | (c << 2) | (d << 3)][0] << '\n';
+    }
+}

@@ -1,0 +1,95 @@
+    #include <cstdio>
+    #include <cmath>
+    #include <iostream>
+    #include <set>
+    #include <algorithm>
+    #include <vector>
+    #include <map>
+    #include <cassert>
+    #include <string>
+    #include <cstring>
+    using namespace std;
+    #define rep(i,a,b) for(int i = a; i < b; i++)
+    #define S(x) scanf("%d",&x)
+    #define P(x) printf("%d\n",x)
+    typedef long long int LL;
+    const int mod = 1000000007;
+    LL G[100][100], A[100][100];
+    LL X[100];
+    int N;
+    bool check(string &s, int x, int y) {
+    rep(i,x,y+1) {
+    if(s[i] != s[y-(i-x)]) return false;
+    }
+    return true;
+    }
+    int palins(string &s) {
+    int x = s.size();
+    set<string > ss;
+    rep(i,0,x) {
+    rep(j,i,x) {
+    if(check(s,i,j)) ss.insert(s.substr(i,j-i+1));
+    }
+    }
+    return ss.size();
+    }
+    // matrix expo
+    void solve(int n) {
+    if(!n) return;
+    if(n == 1) {
+    memcpy(A, G, sizeof(A));
+    return;
+    }
+    solve(n/2);
+    LL C[100][100];
+    memset(C, 0, sizeof(C));
+    rep(i,0,N) rep(j,0,N) {
+    rep(k,0,N) {
+    C[i][j] += A[i][k]*A[k][j];
+    C[i][j] %= mod;
+    }
+    }
+    memcpy(A, C, sizeof(A));
+    if(n&1) {
+    LL C[100][100];
+    memset(C, 0, sizeof(C));
+    rep(i,0,N) rep(j,0,N) {
+    rep(k,0,N) {
+    C[i][j] += A[i][k]*G[k][j];
+    C[i][j] %= mod;
+    }
+    }
+    memcpy(A, C, sizeof(A));
+    }
+    }
+    int main() {
+    int n,m;
+    scanf("%d%d",&n,&m);
+    N = n*m;
+    rep(i,0,n) rep(j,0,m) {
+    string s;
+    cin >> s;
+    X[i*m+j] = palins(s);
+    }
+    int C;
+    S(C);
+    rep(i,0,C) {
+    int x1,y1,x2,y2;
+    scanf("%d%d%d%d",&x1,&y1,&x2,&y2);
+    G[x1*m+y1][x2*m+y2]++;
+    G[x2*m+y2][x1*m+y1]++;
+    }
+    rep(i,0,N) G[i][i] = 1;
+    int D;
+    S(D);
+    solve(D);
+    rep(i,0,N) {
+    LL res = 0;
+    rep(j,0,N) res += A[i][j] * X[j];
+    res %= mod;
+    printf("%lld",res);
+    if(i%m == m-1) printf(" \n");
+    else printf(" ");
+    }
+    return 0;
+    }

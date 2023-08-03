@@ -1,0 +1,124 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cmath>
+using namespace std;
+struct Stack
+{
+	int s[10000], i;
+	bool values[10000];
+	void Init(int T){
+		i = 0;
+		for (int i = 1; i < T; i++)
+			values[i] = true;
+		values[0] = false;
+		return;
+	}
+
+	int Push(){
+		int v = Top()+1;
+		while(values[v] == false) v++;
+		s[i++] = v;
+		return v;
+	}
+
+	int Pop(){
+		if(Empty())
+			return -1;
+		i--;
+		values[s[i]] = false;
+		return s[i];
+	}
+
+	int Top(){
+		return Empty() ? -1 : s[i-1];
+	}
+
+	bool Empty()
+	{
+		return i==0 ? true : false;
+	}
+
+	void Print()
+	{
+		for (int v = i-1; v > -1; v--)
+		{
+			cout << s[v] << " ";
+		}
+		cout << endl;
+	}
+};
+
+string Solve(string temp, int T)
+{
+	vector<int> nums;
+	int num = 0;
+	string internal;
+	Stack stack;
+	stack.Init(T);
+	int mult = 0;
+	
+	if(temp.length() == 0)
+		return "";
+	
+	for (string::iterator it = temp.end()-1; it > temp.begin(); it--)
+	{
+		if(*it != ' ')
+		{
+			num += ((*it)-48)*pow(10, mult++);
+		}
+		else
+		{
+			if(num > T) return "-1";
+			nums.push_back(num);
+			num = 0;
+			mult = 0;
+		}
+	}
+
+	num += ((temp[0])-48)*pow(10, mult++);
+	if(num > T) return "-1";
+	nums.push_back(num);
+	
+	for (vector<int>::iterator it = nums.end()-1; it >= nums.begin(); it--)
+	{
+		if(stack.Top() < *it)
+		{
+			internal += "C";
+			while(stack.Push() < *it) internal += "C";
+			if(stack.Top() != *it) return "-1";
+			stack.Pop();
+			internal += "K";
+		}else if(stack.Top() > *it)
+		{
+			internal += "K";
+			while(stack.Pop() > *it) internal += "K";
+			if(stack.Top() == -1) return "-1";
+		}else
+		{
+			stack.Pop();
+			internal += "K";
+		}
+	}
+
+	return internal;
+}
+
+int main()
+{
+	int T;
+	
+	string temp;
+	
+	cin >> T;
+	cin.ignore();
+	
+	while(getline(cin, temp))
+	{
+		cout << Solve(temp, T) << endl;
+		cin >> T;
+		cin.ignore();
+	}
+
+    return 0;
+}

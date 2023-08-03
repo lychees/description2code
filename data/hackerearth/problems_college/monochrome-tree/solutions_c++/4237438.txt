@@ -1,0 +1,96 @@
+#include<bits/stdc++.h>
+#define pb push_back
+#define mp make_pair
+#define F first
+#define maxn 101000
+#define S second
+#define ll long long int
+#define inf 1000000014
+#define infl (ll)(1e18+1)
+#define mod 1000000007
+#define sz(x) (int) x.size()
+#define pi pair< int,int >
+#define pii pair< pi,int >
+#define trace1(x)  cerr << #x << ": " << x << endl;
+#define trace2(x, y)  cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+using namespace  std;
+vector< int > v[maxn];
+int arr[maxn],brr[maxn];
+int vis[maxn];
+int dp[2][maxn];
+int ctr=0;
+int dfs(int s,int inv,int par)
+{  
+	vis[s]=1;
+	int s1,s2;
+	s1=s2=0;
+	if(inv==1 && dp[1][s]!=inf)
+		return dp[1][s];
+	if(inv==0 && dp[0][s]!=inf)
+		return dp[0][s];
+	if(arr[s] == brr[s] && inv==1)// someone has already borne the cost of inv
+	{
+		// i get inverted
+		s1++;// cost to correct me 
+		for(int i=0;i<sz(v[s]);i++)
+		{
+			if(v[s][i]!=par)
+			{
+				s1+=min(dfs(v[s][i],1,s),1+dfs(v[s][i],0,s));
+			}
+		}
+		return dp[1][s] = min(dp[1][s],s1);
+	}
+	if(arr[s] != brr[s] && inv==1)
+	{
+		for(int i=0;i<sz(v[s]);i++)
+		{
+			if(v[s][i]!=par)
+			{
+				s1+=min(dfs(v[s][i],1,s),1+dfs(v[s][i],0,s));
+			}
+		}
+		return dp[1][s] = min(dp[1][s],s1);
+	}
+	if(arr[s] == brr[s] && inv==0)
+	{
+		for(int i=0;i<sz(v[s]);i++)
+		{
+			if(v[s][i]!=par)
+			s2+=min(1+dfs(v[s][i],1,s),dfs(v[s][i],0,s));
+		}
+		return dp[0][s] = s2;
+	}
+	if(arr[s] != brr[s] && inv==0)
+	{
+		s2++;// cost to correct me
+		for(int i=0;i<sz(v[s]);i++)
+		{	if(v[s][i]!=par)
+			s2+=min(1+dfs(v[s][i],1,s),dfs(v[s][i],0,s));
+		}
+		return dp[0][s] = s2;
+	}
+}
+int main(int argc, char const *argv[])
+{
+	//freopen("input.txt","r",stdin);
+    //freopen("output.txt","w",stdout);
+    int n;int a,b;
+    cin>>n;
+    for (int i = 0; i < n-1; ++i)
+    {
+    	cin>>a>>b;
+    	v[a].pb(b);
+    	v[b].pb(a);
+    }
+    for (int i = 1; i <=n; ++i)
+    {
+    	cin>>arr[i];
+    }
+    for (int i = 1; i <=n; ++i)
+    {
+    	cin>>brr[i];
+    	dp[0][i] = dp[1][i] = inf;
+    }
+    cout<<min(dfs(1,0,0),1+dfs(1,1,0))<<"\n";
+}

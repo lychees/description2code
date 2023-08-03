@@ -1,0 +1,91 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define pb push_back
+
+typedef long long lol;
+
+vector<int> primes;
+int a[504];
+int n;
+int look[1030006]={0};
+int next_prime[1000005];
+lol inf = 1e17;
+lol dp[505][505];
+
+
+void sieve()
+{
+    for(int i=2;i<1030000;i++)
+    {
+        if(look[i]) continue;
+        primes.pb(i);
+        for(int j=i;j<1030000;j+=i)
+            look[j]=1;
+    }
+}
+
+
+lol foo(int i,int j);
+lol calc(lol a, lol b);
+
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    memset(dp,-1,sizeof(dp));
+    cin>>n;
+    for(int i=0;i<n;i++) cin>>a[i];
+    sieve();
+    int idx=0;
+    for(int i=1;i<1000002;i++)
+    {
+        if(i>primes[idx]) idx++;
+        next_prime[i]=idx;
+    }
+    cout<<foo(0,n-1);
+    return 0;
+}
+
+
+lol foo(int i,int j)
+{
+    if(j<i) return 0;
+    if(j==i) return inf;
+    if(j==i+1)
+    {
+        return 1 + calc(a[i],a[j]);
+    }
+
+    if(dp[i][j]!=-1) return dp[i][j];
+
+    lol val = inf;
+    for(int k=i+1;k<=j;k++)
+    {
+        if((k-i-1)&1 || (j-k)&1) continue;
+        lol x = calc(a[i],a[k]);
+        val = min(val,1+x+foo(i+1,k-1)+foo(k+1,j));
+    }
+    return dp[i][j] = val;
+}
+
+
+lol calc(lol a, lol b)
+{
+    lol idx2 = next_prime[b];
+    lol idx1 = next_prime[a];
+    lol val;
+    if(idx2==idx1+1)
+    {
+        val = primes[idx2]+primes[idx1]-a-b;
+    }
+    else if(idx2>idx1)
+    {
+        val = primes[idx2]+primes[idx2-1]-a-b;
+    }
+    else
+    {
+        val = primes[idx1]+primes[idx1+1]-a-b;
+    }
+    return val;
+}

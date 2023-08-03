@@ -1,0 +1,89 @@
+///Time erodes gratitude more quickly than it does beauty!
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+typedef vector<int> vi;
+
+#define X first
+#define Y second
+#define rep(i,n) for(ll i=0; i<(n); i++)
+#define rep1(i,a,b) for(ll i=a; i<=(b); i++)
+#define rep2(i,b,a) for(ll i=b; i>=(a); i--)
+#define mem(a,val) memset(a, (val), sizeof a)
+#define mp make_pair
+#define pb push_back
+#define all(c) (c).begin(), (c).end()
+#define uni(c) c.resize(distance(c.begin(), unique(all(c))))
+#define fix(c,sz_val...) c.clear();c.resize(sz_val);
+#define tr(c,it,ctype...) for(ctype::iterator it = c.begin(); it != c.end(); ++it)
+#define cases int t;cin>>t;rep1(_t,1,t)
+#define case(ans) cout<<"Case #"<<_t<<": "<<ans<<"\n"
+#define cout(d) cout<<fixed<<setprecision(d)
+#define IO(input_file_name) ifstream cin(input_file_name);ofstream cout("output.txt")
+#define io ios_base::sync_with_stdio(false);cin.tie(NULL);
+const int mod = 1e9 + 7;
+///.............................................................................///
+
+ll arr[200005];
+pll tree[4*200005];
+
+void build_tree(int node, int a, int b) {
+    if(a > b) return;
+  	if(a == b) {tree[node] = mp(arr[a], (ll)a*arr[a]); return;}           /// ###modify###
+	build_tree(node*2, a, (a+b)/2); 
+	build_tree(node*2+1, 1+(a+b)/2, b);
+	tree[node] = mp(tree[node*2].X+tree[node*2+1].X, tree[node*2].Y+tree[node*2+1].Y);     /// ###modify###
+}
+void update_tree(int node, int a, int b, int i, int j, ll value) {
+    if(a > b || a > j || b < i) return;
+  	if(a == b) {tree[node].X += value; tree[node].Y += (ll)a*value; return;}             /// ###modify###
+    update_tree(node*2, a, (a+b)/2, i, j, value);
+	update_tree(node*2+1, 1+(a+b)/2, b, i, j, value);
+    tree[node] = mp(tree[node*2].X+tree[node*2+1].X, tree[node*2].Y+tree[node*2+1].Y);     /// ###modify###
+}
+pll query_tree(int node, int a, int b, int i, int j) {
+	if(a > b || a > j || b < i) return mp(0,0);               /// ###modify###
+    if(a >= i && b <= j) return tree[node];
+    pll q1 = query_tree(node*2, a, (a+b)/2, i, j);
+	pll q2 = query_tree(1+node*2, 1+(a+b)/2, b, i, j);
+	return mp(q1.X+q2.X, q1.Y+q2.Y);                                 /// ###modify###
+}
+
+ll f(pll p, ll k) {
+    return p.Y - k*p.X;
+}
+
+int main()
+{
+    int n,q;cin>>n>>q;
+    rep(i,n)cin>>arr[i];
+    build_tree(1, 0, n-1);
+    int x,k,l,r;rep(i,q)
+    {
+        cin>>x;
+        if(x == 1) {
+            cin>>k>>l>>r; k--,l--,r--;
+            if(l < k && k < r)
+            {
+                ll t1 = f(query_tree(1, 0, n-1, l, k-1), k);
+                ll t2 = f(query_tree(1, 0, n-1, k+1, r), k);
+                cout << t2 - t1 << endl;
+            }
+            else if(l >= k) {
+                ll t = f(query_tree(1, 0, n-1, l, r), k);
+                cout << t << endl;
+            }
+            else {
+                ll t = f(query_tree(1, 0, n-1, l, r), k);
+                cout << -t << endl;
+            }
+        }
+        else {
+            cin>>k>>l; k--;
+            update_tree(1, 0, n-1, k, k, l);
+        }
+    }
+    return 0;
+}

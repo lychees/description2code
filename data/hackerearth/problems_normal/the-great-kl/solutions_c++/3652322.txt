@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1e5 + 9,LG = 19;
+
+int N,M,x;
+vector <int> color[MAXN],g[MAXN];
+int dep[MAXN];
+int par[MAXN][LG];
+int timer = 0, tin[MAXN], tout[MAXN];
+
+inline void dfs(int node,int d,int from){
+	tin[node] = ++timer;
+	dep[node] = d;
+	par[node][0] = from;
+	for(int i = 1;i < LG;++i){
+		par[node][i] = par[par[node][i - 1]][i - 1];
+	}
+	for(int i = 0;i < (int)g[node].size();++i){
+		int next = g[node][i];
+		if(next != from){
+			dfs(next,d + 1,node);
+		}
+	}
+	tout[node] = ++timer;
+}
+
+inline bool isAnc(int u,int v){
+	return (tin[u] <= tin[v] && tout[u] >= tout[v]);
+}
+
+inline int LCA(int u,int v){
+	if(isAnc(u,v))
+		return u;
+	if(isAnc(v,u))
+		return v;
+	for(int lev = LG - 1;lev >= 0;--lev){
+		if((par[u][lev] > 0) && (!isAnc(par[u][lev],v)))
+			u = par[u][lev];
+	}
+	return par[u][0];
+}
+
+inline int dist(int u,int v){
+	return dep[u] + dep[v] - 2 * dep[LCA(u,v)];
+}
+
+int main (){
+	scanf("%d %d",&N,&M);
+	for(int i = 1;i <= N;++i){
+		scanf("%d",&x); color[x].push_back(i);
+	}
+	for(int i = 1;i <= N - 1;++i){
+		int u,v; scanf("%d %d",&u,&v);
+		g[u].push_back(v); g[v].push_back(u);
+	}
+	dfs(1,0,0);
+	for(int i = 1;i <= M;++i){
+		int st = color[i][0];
+		int node = -1, maxDist = -1;
+		int sz = (int)color[i].size();
+		for(int j = 0;j < sz;++j){
+			int en = color[i][j];
+			int curDist = dist(st,en);
+			if(curDist > maxDist){
+				maxDist = curDist;
+				node = en;
+			}
+		}
+		st = node;
+		node = -1, maxDist = -1;
+		for(int j = 0;j < sz;++j){
+			int en = color[i][j];
+			int curDist = dist(st,en);
+			if(curDist > maxDist){
+				maxDist = curDist;
+				node = en;
+			}
+		}
+		if(i > 1)
+			printf(" ");
+		printf("%d",maxDist);
+	}
+	printf("\n");
+	return 0;
+}

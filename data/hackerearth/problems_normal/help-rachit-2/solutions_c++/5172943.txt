@@ -1,0 +1,89 @@
+    #include <bits/stdc++.h>
+     
+    using namespace std;
+     
+    typedef long long ll;
+     
+    long long dp [10000 + 1];
+    double res [10000 + 1];
+     
+    int p[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 43, 101};
+     
+    ll mulmod(ll a, ll b, ll m)                                // Miller�Rabin 
+    {
+      ll res = 0;
+      while(b > 0)
+      {
+        if(b & 1)  res = ((m-res) > a) ? res+a : res+a-m;
+        b >>= 1;
+        if (b) a = ((m-a) > a) ? a+a : a+a-m;
+      }
+      return res;
+    }
+     
+    ll power(ll a, ll b, ll m)
+    {
+      if(b == 0) return 1;
+      if(b & 1) return mulmod(a, power(a, b - 1, m), m);
+      ll tmp = power(a, b / 2, m);
+      return mulmod(tmp, tmp, m);
+    }
+     
+    bool prime(ll n)
+    {
+      for(int i=0 ;i < 10;i++)
+      {
+        ll tmp = (rand() % (n - 1)) + 1;
+        if(power(tmp, n - 1, n) != 1)
+          return false;
+      }
+     
+      for(int i = 0 ;i < 12;i++)
+      {
+        ll tmp = p[i];
+        if(tmp < n && power(tmp, n - 1, n) != 1)
+          return false;
+      }
+     
+      return true;
+    }
+     
+    int main()
+    {
+     
+        srand(0);       // for generating random numbers
+     
+        long long n , t , step = 2, fi = 0 , se, th, forth = 1, sum = 0, tem1;
+        double number = 1;
+     
+        dp[3] = 1;
+     
+        for(int i = 3; i <= 10000; i += 2){
+     
+            fi = forth + step;                      // 4 diagonal numbers
+            se = fi + step;
+            th = se + step;
+            forth = th + step;
+     
+            if(prime(fi))    sum++;              // increase the number of primes in the diagonal
+            if(prime(se))    sum++;
+            if(prime(th))    sum++;
+            if(prime(forth)) sum++;
+     
+            dp[i] = sum;
+     
+            step += 2;                          // for each new increase in the N dimension
+            number += 4;                        // increase the number of diagonal numbers
+            res[i] = dp[i] / number;            // calculate the ratio of diagonal primes over all diagonal numbers
+        }
+     
+        cin >> t;
+     
+        while(t--){
+     
+            cin >> tem1;
+            printf("%.6lf\n", res[tem1] * 100);
+        }
+     
+        return 0;
+    }

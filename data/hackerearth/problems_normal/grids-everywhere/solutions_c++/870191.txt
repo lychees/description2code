@@ -1,0 +1,184 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define REP(i,n) for(int i=0;i<(int)(n);++i)
+#define FOR(i,c) for(__typeof((c).begin())i=(c).begin();i!=(c).end();++i)
+#define ALL(c) (c).begin(), (c).end()
+#define valid(y,x,h,w) (0<=y&&y<h&&0<=x&&x<w)
+#define tpl(...) make_tuple(__VA_ARGS__)
+const int INF = 0x3f3f3f3f;
+const double EPS = 1e-8;
+const double PI = acos(-1);
+typedef long long ll;
+typedef pair<int,int> pii;
+template<class T>bool chmax(T &a, const T &b) { if (a<b) { a=b; return 1; } return 0; }
+template<class T>bool chmin(T &a, const T &b) { if (b<a) { a=b; return 1; } return 0; }
+template<class T>ostream&operator<<(ostream &o,const vector<T>&t){o<<'[';FOR(i,t){if(i!=t.begin())o<<',';o<<*i;}return o<<']';}
+template<class S,class T>ostream&operator<<(ostream &o,const pair<S,T>&t){return o<<'('<<t.first<<','<<t.second<<')';}
+template<int N,class Tp>void output(ostream&,const Tp&){}
+template<int N,class Tp,class,class ...Ts>void output(ostream &o,const Tp&t){if(N)o<<',';o<<get<N>(t);output<N+1,Tp,Ts...>(o,t);}
+template<class ...Ts>ostream&operator<<(ostream&o,const tuple<Ts...>&t){o<<'(';output<0,tuple<Ts...>,Ts...>(o,t);return o<<')';}
+template<class T>void output(T t,char z=10){if(t<0)t=-t,putchar(45);int c[20];
+int k=0;while(t)c[k++]=t%10,t/=10;for(k||(c[k++]=0);k;)putchar(c[--k]^48);putchar(z);}
+template<class T>void outputs(T t){output(t);}
+template<class S,class ...T>void outputs(S a,T...t){output(a,32);outputs(t...);}
+template<class T>void output(T *a,int n){REP(i,n)output(a[i],i!=n-1?',':10);}
+template<class T>void output(T *a,int n,int m){REP(i,n)output(a[i],m);}
+template<class T>bool input(T &t){int n=1,c;for(t=0;!isdigit(c=getchar())&&~c&&c-45;);
+if(!~c)return 0;for(c-45&&(n=0,t=c^48);isdigit(c=getchar());)t=10*t+c-48;t=n?-t:t;return 1;}
+template<class S,class ...T>bool input(S&a,T&...t){input(a);return input(t...);}
+
+typedef int Weight;
+struct Edge {
+  int src, dst;
+  Weight weight;
+  int next;
+  Edge() {}
+  Edge(int src, int dst, Weight weight, int next) :
+    src(src), dst(dst), weight(weight), next(next) { }
+};
+
+
+const int MAXV = 100;
+const int MAXE = 10000;
+
+Edge edge[MAXE*2+10];
+int head[MAXV+10];
+int cnt;
+int N;
+void init(int n) {
+  N = n;
+  cnt = 2;
+  REP(i,n) head[i] = 0;
+}
+void add_edge(int s, int t, int cap) {
+  edge[cnt] = Edge(s,t,cap,head[s]); head[s] = cnt++;
+  edge[cnt] = Edge(t,s,0,head[t]); head[t] = cnt++;
+}
+
+#define RESIDUE(s,t) (cap[s][t]-flow[s][t])
+
+int flow[MAXV][MAXV], cap[MAXV][MAXV];
+
+
+vector<int> augment(int s, int t) {
+  queue<int> Q; Q.push(s);
+  vector<int> prev(N, -1); prev[s] = s;
+  while (!Q.empty() && prev[t] < 0) { // s ?? t ??????BFS??????
+    int u = Q.front(); Q.pop();
+    for (int k=head[u]; k; k=edge[k].next) {
+      const Edge &e = edge[k];
+      if (prev[e.dst] < 0 && RESIDUE(u, e.dst) > 0) {
+        prev[e.dst] = u;
+        Q.push(e.dst);
+      }
+    }
+  }
+  return prev;
+}
+
+int flowflow(int s, int t, int f) {
+  vector<int> prev = augment(s, t);
+  if (prev[t] < 0) return -1;
+  Weight inc = f;
+  for (int j = t; prev[j] != j; j = prev[j])
+    inc = min(inc, RESIDUE(prev[j], j));
+  for (int j = t; prev[j] != j; j = prev[j])
+    flow[prev[j]][j] += inc, flow[j][prev[j]] -= inc;
+  return inc;
+}
+
+Weight maximumFlow(int s, int t, bool init) {
+  int n = N;
+  if (init) {
+    REP(v1,n)REP(v2,n)flow[v1][v2]=cap[v1][v2] = 0;
+    REP(v,n)
+      for (int k=head[v]; k; k=edge[k].next) {
+        const Edge &e = edge[k];
+        cap[e.src][e.dst] += e.weight;
+      }
+  }
+  Weight total = 0;
+  while (1) {
+    int inc = flowflow(s, t , INF);
+    if (inc == -1) break;
+    total += inc;
+  }
+  return total;
+}
+
+int decrease(int s, int t, int u, int v, int k) {
+  cap[u][v] -= k;
+  if (flow[u][v] <= cap[u][v]) {
+    return 0;
+  }
+  int tmp = flow[u][v]-cap[u][v];
+  flow[u][v] -= tmp;
+  flow[v][u] += tmp;
+  k = tmp;
+  // u->v
+  while(k) {
+    int inc = flowflow(u, v, k);
+    if (inc == -1) break;
+    k -= inc;
+  }
+  if (!k) return 0;
+  flowflow(t, v, k);
+  flowflow(u, s, k);
+  return -k;
+}
+
+int h,w;
+int SOURCE() { return h+w; }
+int SINK() { return h+w+1; }
+
+int row[50];
+int col[50];
+int ans[50][50];
+
+int main() {
+  int T;
+  cin >> T;
+  while(T--) {
+    input(h,w);
+    REP(i,h) {
+      input(row[i]);
+      row[i]-=w;
+    }
+    REP(j,w) {
+      input(col[j]);
+      col[j]-=h;
+    }
+    memset(ans,-1,sizeof(ans));
+    init(h+w+2);
+    REP(i,h) {
+      REP(j,w) {
+        add_edge(i, h+j, 4);
+      }
+    }
+    int sum = 0;
+    REP(i,h) {
+      add_edge(SOURCE(), i, row[i]);
+      sum += row[i];
+    }
+    REP(j,w) {
+      add_edge(h+j, SINK(), col[j]);
+    }
+    int flow = maximumFlow(SOURCE(), SINK(), 1);
+    REP(i,h) {
+      REP(j,w) {
+        // i -> h+j : -4
+        flow += decrease(SOURCE(),SINK(),i,h+j,4);
+        REP(k,5) {
+          ans[i][j] = k;
+          if (flow == sum) break;
+          flow += decrease(SOURCE(), SINK(), SOURCE(), i, 1);
+          flow += decrease(SOURCE(), SINK(), h+j, SINK(), 1);
+          sum--;
+        }
+      }
+    }
+    REP(i,h) {
+      REP(j,w) printf("%d%c", ans[i][j]+1, j!=w-1?' ':'\n');
+    }
+  }
+}

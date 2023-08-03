@@ -1,0 +1,85 @@
+#include <iostream>
+#include <cstring>
+using namespace std;
+typedef long long ll;
+
+const int MAXN = 200005;
+const int MOD = 1000000007;
+const int MAXSEG = 1<<19;
+int N;
+int last[MAXN]; //last[A[i]] = previous index of A[i]
+ll sumsq[MAXSEG]; //sumsq[i] = sum of all v^2 in the range of node i
+ll sumocc[MAXSEG]; //sumocc[i] = sum of all v in the range of node i
+ll lazy[MAXSEG]; //lazy updates
+
+void modify(int node, int left, int right, int val)
+{
+	int num = right - left + 1;
+	sumsq[node] = (sumsq[node] + 2*sumocc[node]*val + (ll)num*val*val) % MOD;
+	sumocc[node] = (sumocc[node] + (ll)num*val) % MOD;
+	lazy[node] += val;
+}
+
+void down(int node, int left, int right)
+{
+	if (lazy[node] != 0)
+	{
+		int mid = (left+right)/2;
+		modify(2*node, left, mid, lazy[node]);
+		modify(2*node+1, mid+1, right, lazy[node]);
+		lazy[node] = 0;
+	}
+}
+
+void update(int node, int left, int right, int ql, int qr)
+{
+	if (ql <= left && right <= qr)
+	{
+		modify(node, left, right, 1);
+		return;
+	}
+	
+	down(node, left, right);
+	
+	int mid = (left+right)/2;
+	if (ql <= mid)
+		update(2*node, left, mid, ql, qr);
+	if (mid+1 <= qr)
+		update(2*node+1, mid+1, right, ql, qr);
+	sumsq[node] = (sumsq[2*node] + sumsq[2*node+1]) % MOD;
+	sumocc[node] = (sumocc[2*node] + sumocc[2*node+1]) % MOD;
+}
+
+ll query(int node, int left, int right, int ql, int qr)
+{
+	if (right < ql || qr < left)
+		return 0;
+	
+	if (ql <= left && right <= qr)
+		return sumsq[node];
+	
+	down(node, left, right);
+	
+	int mid = (left+right)/2;
+	return (query(2*node, left, mid, ql, qr) + query(2*node+1, mid+1, right, ql, qr)) % MOD;
+}
+
+int main()
+{
+    ios::sync_with_stdio(0);
+    
+    cin >> N;
+    
+    ll ans = 0;
+    for (int i = 1, ai; i <= N; i++)
+    {
+    	cin >> ai;
+    	update(1, 1, N, last[ai]+1, i);
+    	last[ai] = i;
+    	ans = (ans + query(1, 1, N, 1, i)) % MOD;
+    }
+    
+    cout << ans << "\n";
+    
+    return 0;
+}

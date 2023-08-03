@@ -1,0 +1,95 @@
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <queue>
+#include <deque>
+#include <map>
+#include <set>
+#include <string>
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <functional>
+#include <utility>
+#include <ctime>
+#include <cstdio>
+#include <climits>
+
+using namespace std;
+
+typedef long long LL;
+typedef long double LD;
+typedef vector<int> VI;
+typedef vector<string> VS;
+typedef pair<int, int> PII;
+
+#define REP(i,x,n) for(int (i)=(int)x;(i)<(int)(n);++(i))
+#define endl "\n"
+#define ff first
+#define ss second
+#define MOD 1000000007
+#define MAX 100001
+
+int a;
+
+PII pos[8*MAX],neg[8*MAX];
+
+LL n;
+
+void update(int node,int start,int end,int idx,PII val,PII *tree)
+{
+    if(start>end||idx>end||idx<start)
+        return;
+    if(start==end)
+    {
+        if(tree[node].ff>val.ff) return;
+        if(tree[node].ff==val.ff) tree[node].ss = (val.ss+tree[node].ss)%MOD;
+        else tree[node]=val;
+        return;
+    }
+    int mid=start+(end-start)/2;
+    if(idx>=start&&idx<=mid)
+        update(2*node+1, start, mid, idx, val, tree);
+    else
+        update(2*node+2, mid+1, end, idx, val, tree);
+    tree[node] = max(tree[2*node+1],tree[2*node+2]);
+    if(tree[2*node+1].ff==tree[2*node+2].ff)
+    	tree[node].ss = (tree[2*node+1].ss+tree[2*node+2].ss)%MOD;
+}
+
+PII query(int node,int start,int end,int l,int r,PII *tree)
+{
+    if(start>end||start>r||end<l)
+        return make_pair(0,0);
+    if(start>=l&&end<=r)
+        return tree[node];
+    int mid=start+(end-start)/2;
+    PII left=query(2*node+1, start, mid, l, r, tree),right=query(2*node+2, mid+1, end, l, r, tree);
+    PII res = max(left,right);
+    if(left.ff==right.ff)
+    	res.ss = (left.ss+right.ss)%MOD;
+    return res;
+}
+
+
+int main(int argc, char const *argv[])
+{
+    ios::sync_with_stdio(false); cin.tie(NULL);
+    cin>>n;
+    REP(i,0,n)
+    {
+    	cin>>a;
+    	bool sign = (a>0);
+    	a = sign?a:(-a);
+    	PII p = query(0,0,MAX-1,1,a-1,sign?neg:pos);
+    	if(p.ss==0) ++p.ss;
+    	++p.ff;
+    	update(0,0,MAX-1,a,p,sign?pos:neg);
+    }
+    PII ans = make_pair(-1,-1);
+    ans = max(pos[0],neg[0]);
+    if(pos[0].ff==neg[0].ff)
+    	ans.ss = (pos[0].ss+neg[0].ss)%MOD;
+    cout<<ans.ff<<' '<<ans.ss<<endl;
+    return 0;
+}

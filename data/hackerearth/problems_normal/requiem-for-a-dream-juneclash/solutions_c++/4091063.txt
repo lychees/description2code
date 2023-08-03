@@ -1,0 +1,267 @@
+/********************************************
+*                                           *
+*    Solved By : Bir Bahadur Khatri(B'ru)   *
+*      Be Positive,be Happy.                *
+*                                           *
+*********************************************/
+
+#define ff first
+#define D double
+#define sz size()
+#define ss second
+#define PB push_back
+#define SQR(n) (n*n)
+#define CHR getchar()
+#define NL printf("\n")
+#include<bits/stdc++.h>
+#define LL long long int
+#define S1(a) a=in<int>()
+#define SL1(a) a=in<LL>()
+#define Max(a,b) ((a>b)?a:b)
+#define Min(a,b) ((a<b)?a:b)
+#define all(a) a.begin(),a.end()
+#define _Max(a,b,c) Max(a,Max(b,c))
+#define _Min(a,b,c) Min(a,Min(b,c))
+#define SL2(a,b) a=in<LL>(),b=in<LL>()
+#define F(i,a,b) for(int i=a;i<b; i++)
+#define S2(a,b) a=in<int>(),b=in<int>()
+#define R(i,a,b) for(int i=a-1;i>=b; i--)
+#define MEM(a,val) memset(a,val,sizeof(a))
+#define SL3(a,b,c) a=in<LL>(),b=in<LL>(),c=in<LL>()
+#define S3(a,b,c) a=in<int>(),b=in<int>(),c=in<int>()
+#define cp printf("***** here here here here *****\n");
+#define trace1(x)                cerr << #x << ": " << x << endl;
+#define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define trace4(a, b, c, d)       cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+
+using namespace std;
+template <typename T> T in(){char ch;T n = 0;bool ng = false;while (1){ch = getchar();if (ch == '-'){ng = true;ch = getchar();break;}if (ch>='0' && ch<='9')     break;}while (1){n = n*10 + (ch - '0');ch = getchar();if (ch<'0' || ch>'9')   break;}return (ng?-n:n);}
+
+#define MX  400007
+
+
+struct z {
+    LL sum,lsum,rsum,best;
+    z(){}
+    z(LL a,LL b,LL c,LL d) {
+
+    }
+};
+
+z tree[MX*4];
+
+z Merge(z x,z y) {
+    z res;
+    res.sum=x.sum+y.sum;
+    res.lsum=max(x.lsum,x.sum+y.lsum);
+    res.rsum=max(y.rsum,y.sum+x.rsum);
+    res.best=max(max(x.best,y.best),x.rsum+y.lsum);
+    return res;
+}
+
+void update(int id,int l,int r,int pos,LL val) {
+    if(l==r) {
+        tree[id].sum=tree[id].lsum=tree[id].rsum=tree[id].best=val;
+        return;
+    }
+
+    int mid=(l+r)/2;
+    int lft=2*id;
+    int rgt=lft+1;
+
+    if(pos<=mid) {
+        update(lft,l,mid,pos,val);
+    } else {
+        update(rgt,mid+1,r,pos,val);
+    }
+    tree[id]=Merge(tree[lft],tree[rgt]);
+    return;
+}
+
+z query(int id,int l,int r,int st,int ed) {
+    if(st<=l&&ed>=r) {
+        return tree[id];
+    }
+    int mid=(l+r)/2;
+    int lft=2*id;
+    int rgt=lft+1;
+
+    if(ed<=mid) {
+        return query(lft,l,mid,st,ed);
+    } else if(st>mid) {
+        return query(rgt,mid+1,r,st,ed);
+    } else {
+        z x,y,res;
+        x=query(lft,l,mid,st,ed);
+        y=query(rgt,mid+1,r,st,ed);
+        res=Merge(x,y);
+        return res;
+    }
+}
+
+vector<int>A[MX];
+
+int Tot[MX],ChainNo,now;
+int IdNo[MX],Lev[MX];
+int Pos[MX],St[MX];
+int Pa[MX],a[MX];
+
+void Dfs(int u,int p,int L)
+{
+    Tot[u]=1;
+    Lev[u]=L;
+    Pa[u]=p;
+    for(int i=0;i<A[u].sz;i+=2) {
+        int v=A[u][i];
+        if(p==v) continue;
+        Dfs(v,u,L+1);
+        a[v]=A[u][i+1];
+        Tot[u]+=Tot[v];
+    }
+    return;
+}
+void Hld(int u,int p)
+{
+    if(St[ChainNo]==-1) {
+        St[ChainNo]=u;
+    }
+    Pos[u]=++now;
+    IdNo[u]=ChainNo;
+    int Special,mx=-1;
+    for(int i=0;i<A[u].sz;i+=2) {
+        int v=A[u][i];
+        if(v==p) continue;
+        if(mx<Tot[v]) {
+            mx=Tot[v];
+            Special=v;
+        }
+    }
+    if(mx!=-1) Hld(Special,u);
+    for(int i=0;i<A[u].sz;i+=2) {
+        int v=A[u][i];
+        if(v==p||v==Special) continue;
+        ChainNo++;
+        Hld(v,u);
+    }
+}
+
+int Lca(int u,int v)
+{
+    while(true)
+    {
+        int unom=IdNo[u],vnom=IdNo[v];
+        int ustart=St[unom],vstart=St[vnom];
+
+        if(unom==vnom) return (Lev[u]<Lev[v]?u:v);
+        else if(Lev[ustart]<Lev[vstart]) v=Pa[vstart];
+        else u=Pa[ustart];
+    }
+}
+int N;
+
+z ClimbUp(int u,int v) {
+    int f=0;
+    z ans;
+    while(true) {
+        int uchain=IdNo[u],vchain=IdNo[v];
+        int st=St[uchain];
+
+//        trace3(uchain,vchain,st);
+//        trace2(u,v)
+
+        if(uchain==vchain)
+        {
+            int stt=Pos[v]+1,ed=Pos[u];
+            if(stt>ed) {
+                return ans;
+            }
+            z tp=query(1,1,N,stt,ed);
+            if(!f) {
+                ans=tp;
+            }
+            else {
+                ans=Merge(tp,ans);
+            }
+            return ans;
+        }
+        int stt=Pos[st],ed=Pos[u];
+        z tp=query(1,1,N,stt,ed);
+        if(!f) {
+            ans=tp;
+        }
+        else {
+            ans=Merge(tp,ans);
+        }
+//        trace2(stt,ed)
+        u=Pa[st];
+        f=1;
+    }
+}
+
+void Prnt(z tp) {
+    trace4(tp.lsum,tp.rsum,tp.sum,tp.best);
+}
+
+int main()
+{
+    int n,m;
+    S2(n,m);
+    for(int i=0;i<n-1;i++) {
+        int u,v,w;
+        S3(u,v,w);
+
+        A[u].PB(v);
+        A[u].PB(w);
+
+        A[v].PB(u);
+        A[v].PB(w);
+    }
+
+    ChainNo=1;
+
+    for(int i=1;i<=n;i++) {
+        St[i]=-1;
+    }
+    Dfs(1,0,1);
+    Hld(1,0);
+
+    for(int i=1;i<=n;i++) {
+        update(1,1,n,Pos[i],a[i]);
+    }
+    N=n;
+    while(m--) {
+        int u,v;
+        S2(u,v);
+        int lc=Lca(u,v);
+
+        if(u==v) {
+            printf("0\n");
+            continue;
+        }
+        LL ans;
+        if( lc==u ) {
+            ans=ClimbUp(v,lc).best;
+        }
+        else if(lc==v) {
+            ans=ClimbUp(u,lc).best;
+        }
+        else {
+            z an=ClimbUp(u,lc);
+            z tp=ClimbUp(v,lc);
+
+//            Prnt(tp);
+//            Prnt(an);
+//
+            ans=max(an.best,tp.best);
+            ans=max(ans,tp.lsum+an.lsum);
+            ans=max(ans,tp.lsum+an.sum);
+            ans=max(ans,tp.sum+an.lsum);
+        }
+        ans=max(0LL,ans);
+        printf("%lld\n",ans);
+    }
+
+    return 0;
+}
+///============= Thank You ===================///

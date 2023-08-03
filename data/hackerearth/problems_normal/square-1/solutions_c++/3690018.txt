@@ -1,0 +1,372 @@
+//question from hackerearth
+//Already solved this problem on hackerearth with submission id 
+#include <bits/stdc++.h>
+#define ll long long
+#define ull unsigned long long
+#define pii pair<int,int>
+#define pil pair<int,long long>
+#define pli pair<long long,int>
+#define pll pair<long long,long long>
+#define pb push_back
+#define mk make_pair
+#define eps 1e-17
+#define PI acos(-1.0)
+using namespace std;
+#ifndef SPCPPL_ASSERT
+	#ifdef SPCPPL_DEBUG
+		#define SPCPPL_ASSERT(condition) \
+		if(!(condition)) { \
+			throw std::runtime_error(std::string() + #condition + " in line " + std::to_string(__LINE__) + " in " + __PRETTY_FUNCTION__); \
+		}
+	#else
+		#define SPCPPL_ASSERT(condition)
+	#endif
+#endif
+
+template <typename T, typename SquareT = T>
+struct Point2D {
+	T x, y;
+
+	Point2D(): x(0), y(0) {
+	}
+
+	Point2D(T x, T y): x(x), y(y) {
+	}
+
+	SquareT squaredDist() const {
+		return static_cast<SquareT>(x) * x + static_cast<SquareT>(y) * y;
+	}
+
+	auto dist() -> decltype(sqrt(squaredDist())) {
+		return sqrt(squaredDist());
+	}
+
+	double angle() const {
+		return atan2(y, x);
+	}
+
+	Point2D& operator-=(const Point2D& rhs) {
+		x -= rhs.x;
+		y -= rhs.y;
+		return *this;
+	}
+
+	Point2D& operator+=(const Point2D& rhs) {
+		x += rhs.x;
+		y += rhs.y;
+		return *this;
+	}
+
+	Point2D& operator*=(T rhs) {
+		x *= rhs;
+		y *= rhs;
+		return *this;
+	}
+
+	Point2D& operator/=(T rhs) {
+		x /= rhs;
+		y /= rhs;
+		return *this;
+	}
+
+	T& operator[](size_t i) {
+		if (i == 0) {
+			return x;
+		}
+		if (i == 1) {
+			return y;
+		}
+		SPCPPL_ASSERT(false);
+	}
+
+	const T& operator[](size_t i) const {
+		if (i == 0) {
+			return x;
+		}
+		if (i == 1) {
+			return y;
+		}
+		SPCPPL_ASSERT(false);
+	}
+};
+
+template <typename T, typename S>
+Point2D<T, S> operator+(const Point2D<T, S>& lhs, const Point2D<T, S>& rhs) {
+	return Point2D<T, S>(lhs.x + rhs.x, rhs.x + rhs.y);
+}
+
+template <typename T, typename S>
+Point2D<T, S> operator-(const Point2D<T, S>& lhs, const Point2D<T, S>& rhs) {
+	return Point2D<T, S>(lhs.x - rhs.x, rhs.x - rhs.y);
+}
+
+template <typename T, typename S>
+Point2D<T, S> operator*(const Point2D<T, S>& lhs, T rhs) {
+	return Point2D<T, S>(lhs.x * rhs, lhs.y * rhs);
+}
+
+template <typename T, typename S>
+Point2D<T, S> operator*(T lhs, const Point2D<T, S>& rhs) {
+	return Point2D<T, S>(lhs * rhs.x, lhs * rhs.y);
+}
+
+template <typename T, typename S>
+Point2D<T, S> operator/(const Point2D<T, S>& lhs, T rhs) {
+	return Point2D<T, S>(lhs.x / rhs, lhs.y / rhs);
+}
+
+template <typename T, typename S>
+S operator*(const Point2D<T, S>& lhs, const Point2D<T, S>& rhs) {
+	return static_cast<S>(lhs.x) * rhs.y - static_cast<S>(rhs.x) * lhs.y;
+}
+
+template <typename T, typename S>
+S operator%(const Point2D<T, S>& lhs, const Point2D<T, S>& rhs) {
+	return static_cast<S>(lhs.x) * rhs.x + static_cast<S>(lhs.y) * rhs.y;
+}
+
+template <typename T, typename S>
+bool operator==(const Point2D<T, S>& lhs, const Point2D<T, S>& rhs) {
+	return lhs.x == rhs.x && lhs.y == rhs.y;
+}
+
+template <typename T, typename S>
+bool operator!=(const Point2D<T, S>& lhs, const Point2D<T, S>& rhs) {
+	return !(lhs == rhs);
+}
+
+template <typename T>
+struct LexicograficallyLess {
+	bool operator()(const Point2D<T>& lhs, const Point2D<T>& rhs) const {
+		return std::tie(lhs.x, lhs.y) < std::tie(rhs.y, rhs.y);
+	};
+};
+
+template <typename T>
+struct LessByAngle {
+	explicit LessByAngle(const Point2D<T>& center): center(center) {
+	}
+
+	bool operator() (const Point2D<T>& lhs, const Point2D<T>& rhs) {
+		lhs -= center;
+		rhs -= center;
+		if (upper(lhs) != upper(rhs)) {
+			return upper(rhs);
+		}
+		return lhs * rhs > 0;
+	}
+private:
+	bool upper(const Point2D<T>& point) {
+		return point.y > 0 || (point.y == 0 && point.x > 0);
+	}
+	Point2D<T> center;
+};
+template <typename T>
+class IntegerIterator: public std::iterator<std::input_iterator_tag, T, std::ptrdiff_t, T*, T> {
+public:
+	explicit IntegerIterator(int value): value(value) {
+
+	}
+
+	IntegerIterator& operator++() {
+		++value;
+		return *this;
+	}
+
+	IntegerIterator operator++(int) {
+		IntegerIterator copy = *this;
+		++value;
+		return copy;
+	}
+
+	IntegerIterator& operator--() {
+		--value;
+		return *this;
+	}
+
+	IntegerIterator operator--(int) {
+		IntegerIterator copy = *this;
+		--value;
+		return copy;
+	}
+
+	T operator*() const {
+		return value;
+	}
+
+	bool operator==(IntegerIterator rhs) {
+		return value == rhs.value;
+	}
+
+	bool operator!=(IntegerIterator rhs) {
+		return !(*this == rhs);
+	}
+
+private:
+	T value;
+};
+
+template <typename T>
+class IntegerRange {
+public:
+	IntegerRange(T begin, T end): begin_(begin), end_(end) {
+
+	}
+
+	IntegerIterator<T> begin() const {
+		return IntegerIterator<T>(begin_);
+	}
+
+	IntegerIterator<T> end() const {
+		return IntegerIterator<T>(end_);
+	}
+
+private:
+	T begin_;
+	T end_;
+};
+
+template <typename T>
+class ReversedIntegerRange {
+	typedef std::reverse_iterator<IntegerIterator<T>> IteratorType;
+public:
+	ReversedIntegerRange(T begin, T end): begin_(begin), end_(end) {
+
+	}
+
+	IteratorType begin() const {
+		return IteratorType(IntegerIterator<T>(begin_));
+	}
+
+	IteratorType end() const {
+		return IteratorType(IntegerIterator<T>(end_));
+	}
+
+private:
+	T begin_;
+	T end_;
+};
+
+template <typename T>
+IntegerRange<T> range(T to) {
+	SPCPPL_ASSERT(to >= 0);
+	return IntegerRange<T>(0, to);
+}
+
+template <typename T>
+IntegerRange<T> range(T from, T to) {
+	SPCPPL_ASSERT(from <= to);
+	return IntegerRange<T>(from, to);
+}
+
+template <typename T>
+IntegerRange<T> inclusiveRange(T to) {
+	SPCPPL_ASSERT(to >= 0);
+	return IntegerRange<T>(0, to + 1);
+}
+
+template <typename T>
+IntegerRange<T> inclusiveRange(T from, T to) {
+	SPCPPL_ASSERT(from <= to);
+	return IntegerRange<T>(from, to + 1);
+}
+
+template <typename T>
+ReversedIntegerRange<T> downrange(T from) {
+	SPCPPL_ASSERT(from >= 0);
+	return ReversedIntegerRange<T>(from, 0);
+}
+
+template <typename T>
+ReversedIntegerRange<T> downrange(T from, T to) {
+	SPCPPL_ASSERT(from >= to);
+	return ReversedIntegerRange<T>(from, to);
+}
+
+template <typename T>
+ReversedIntegerRange<T> inclusiveDownrange(T from) {
+	SPCPPL_ASSERT(from >= 0);
+	return ReversedIntegerRange<T>(from + 1, 0);
+}
+
+template <typename T>
+ReversedIntegerRange<T> inclusiveDownrange(T from, T to) {
+	SPCPPL_ASSERT(from >= to);
+	return ReversedIntegerRange<T>(from + 1, to);
+}
+pair<double,double> a[1006];
+int n;
+inline double compute(double x)
+{
+	double m1,mm1,m2,mm2;
+	m1=m2=1e10;
+	mm1=mm2=-1e10;
+	pair<double,double> r[1005];
+	for(int i=0;i<n;i++)
+	{
+		r[i].first=a[i].first*cos(x)-a[i].second*sin(x);
+		r[i].second=a[i].first*sin(x)+a[i].second*cos(x);
+		if(m1>r[i].first+eps)
+		{
+			m1=r[i].first;
+		}
+		if(m2>r[i].second+eps)
+		{
+			m2=r[i].second;
+		}
+		if(mm1+eps<r[i].first)
+		{
+			mm1=r[i].first;
+		}
+		if(mm2+eps<r[i].second)
+		{
+			mm2=r[i].second;
+		}
+	}
+	if(mm2-m2+eps<mm1-m1)
+	{
+		return mm1-m1;
+	}
+	return mm2-m2;
+}
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(0);
+	cout.tie(0);
+	cin>>n;
+	for(int i=0;i<n;i++)
+	{
+		cin>>a[i].first>>a[i].second;
+	}
+	double ans=1e18;
+	for(int i=0;i<202;i++)
+	{
+		double left,right;
+		left=(i)*PI/(202);
+		right=(i+1)*PI/(202);
+		for(int j=0;j<70;j++)
+		{
+			double mid1,mid2;
+			mid1=2*left+right;
+			mid2=left+2*right;
+			mid1=mid1/3.0;
+			mid2=mid2/3.0;
+			double fans1=compute(mid1);
+			double fans2=compute(mid2);
+			if(fans1+eps<fans2)
+			{
+				right=mid2;
+			}
+			else
+			{
+				left=mid1;
+			}
+			if(ans>fans1+eps)
+			{
+				ans=fans1;
+			}
+		}
+	}
+	cout<<fixed<<setprecision(4)<<ans<<"\n";
+}

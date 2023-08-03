@@ -1,0 +1,204 @@
+//Author : Jatin Goyal
+//codecracker4
+#include <sys/time.h>
+
+//int getrlimit(int resource, struct rlimit *rlim);
+//int setrlimit(int resource, const struct rlimit *rlim);
+#include<bits/stdc++.h>
+using namespace std;
+#define MOD 1000000007  //NA
+#define N 1111111
+#define ll long long int
+#define dt int
+#define all(c) c.begin(), c.end()
+#define dcl(a) memset(a,0,sizeof(a))
+#define rep(i,a,b) for(dt i=a;i<=(dt)(b);i++)
+#define tr(container, it) for(vector<dt> ::iterator it= container.begin(); it!=container.end(); it++)
+#define trp(container, it) for(vector<pair<dt,dt> >::iterator it = container.begin(); it!=container.end(); it++)
+#define tra(container, it) for(typeof(container.begin()) it = container.begin(); it!=container.end(); it++)
+#define cc1(a)cout<<#a<<": "<<a<<endl;
+#define cc2(a,b)cout<<#a<<": "<<a<<" , "<<#b<<": "<<b<< endl;
+#define cc3(a,b,c)cout<<#a<<": "<<a<<" , "<<#b<<": "<<b<<" , "<<#c<<": "<<c<<endl;
+#define cc4(a,b,c,d)cout<<#a<<": "<<a<<" , "<<#b<<": "<<b<<" , "<<#c<<": "<<c<<" , "<<#d<<": "<<d<<endl;
+#define pr pair<dt,dt>  //NA
+#define mp(a,b) make_pair(a,b)
+#define pb push_back  //NA
+#define gc getchar  //NA
+#define F first
+#define S second
+string str[N];
+int rst[N],lst[N];
+vector<pr>vec;
+int n,m;
+vector<int>vis[N],rt[N],nebo[N];
+int check(int x,int y)
+{
+    if((x>=0)&&(x<=n-1)&&(y>=0)&&(y<=m-1)&&(vis[x][y]==0)) return 1;
+    else return 0;
+}
+int neb(int x,int y,char ch)
+{
+    if((x>=0)&&(x<=n-1)&&(y>=0)&&(y<=m-1)&&(str[x][y]==ch)) return 1;
+    else return 0;
+}
+int bfs(int x,int y,char ch)
+{
+    queue<pr>q;
+    q.push(mp(x,y));
+    vis[x][y]=1;
+    while(!q.empty())
+    {
+        x=q.front().F;
+        y=q.front().S;
+        q.pop();
+        vec.pb(mp(x,y));
+        if(check(x+1,y)&&(str[x+1][y]==ch))
+        {
+            vis[x+1][y]=1;
+            q.push(mp(x+1,y));
+        }
+        if(check(x-1,y)&&(str[x-1][y]==ch))
+        {
+            vis[x-1][y]=1;
+            q.push(mp(x-1,y));
+        }
+        if(check(x,y+1)&&(str[x][y+1]==ch))
+        {
+            vis[x][y+1]=1;
+            q.push(mp(x,y+1));
+        }
+        if(check(x,y-1)&&(str[x][y-1]==ch))
+        {
+            vis[x][y-1]=1;
+            q.push(mp(x,y-1));
+        }
+    }
+}
+int main()
+{
+	//freopen("##inp.cpp","r",stdin);
+    //freopen("##out.cpp","w",stdout);
+	ios_base::sync_with_stdio(0);
+	int t;
+	cin>>t;
+	while(t--)
+    {
+        int ansfg=0;
+        cin>>n>>m;
+        rep(i,0,n-1)
+        {
+            nebo[i].resize(m);
+            rt[i].resize(m);
+            vis[i].resize(m);
+        }
+        rep(i,0,n-1)
+        {
+            if(vis[i].size()!=m) while(3);
+            if(rt[i].size()!=m) while(3);
+            if(nebo[i].size()!=m) while(3);
+        }
+        rep(i,0,n-1)
+        {
+            cin>>str[i];
+            rep(j,0,m-1)
+            {
+                int cur=str[i][j],ind=j;
+                while((j<m)&&(str[i][j]==cur)) j++;j--;
+                rep(k,ind,j)rt[i][k]=j;
+            }
+          //  cout<<str[i]<<endl;
+        }
+        rep(x,0,n-1)
+        {
+            rep(y,0,m-1)
+            {
+                char ch=str[x][y];
+                nebo[x][y]=neb(x+1,y,ch)+neb(x-1,y,ch)+neb(x,y+1,ch)+neb(x,y-1,ch);
+            }
+        }
+
+        rep(i,0,n-1) {lst[i]=MOD; rst[i]=-1;}
+        rep(i,0,n-1) rep(j,0,m-1)
+        {
+            if(vis[i][j]==0)
+            {
+                vec.clear();
+                bfs(i,j,str[i][j]);
+
+                set<pair<int,pr> >s;
+                rep(i,0,vec.size()-1) s.insert(mp(nebo[vec[i].F][vec[i].S],mp(vec[i].F,vec[i].S)));
+                while(!s.empty())
+                {
+                    char ct=s.begin()->F;
+                    int x=s.begin()->S.F;
+                    int y=s.begin()->S.S;
+                    if(s.begin()->F>=2) break;
+                    s.erase(s.begin());
+                    if(nebo[x][y]==0) continue;
+                    //cc2(x,y)
+                    if(neb(x+1,y,str[x][y]))
+                    {
+                        s.erase(mp(nebo[x+1][y],mp(x+1,y)));
+                        nebo[x+1][y]--;
+                        s.insert(mp(nebo[x+1][y],mp(x+1,y)));
+                    }
+                    if(neb(x-1,y,str[x][y]))
+                    {
+                        s.erase(mp(nebo[x-1][y],mp(x-1,y)));
+                        nebo[x-1][y]--;
+                        s.insert(mp(nebo[x-1][y],mp(x-1,y)));
+                    }
+                    if(neb(x,y+1,str[x][y]))
+                    {
+                        s.erase(mp(nebo[x][y+1],mp(x,y+1)));
+                        nebo[x][y+1]--;
+                        s.insert(mp(nebo[x][y+1],mp(x,y+1)));
+                    }
+                    if(neb(x,y-1,str[x][y]))
+                    {
+                        s.erase(mp(nebo[x][y-1],mp(x,y-1)));
+                        nebo[x][y-1]--;
+                        s.insert(mp(nebo[x][y-1],mp(x,y-1)));
+                    }
+
+                }
+
+                vec.clear();
+                while(!s.empty())
+                {
+                    vec.pb(s.begin()->S);
+                    s.erase(s.begin());
+                }
+
+
+                trp(vec,it)
+                {
+                   // cc2(it->F,it->S)
+                    rst[it->F]=max(rst[it->F],it->S);
+                    lst[it->F]=min(lst[it->F],it->S);
+                }
+                trp(vec,it)
+                {
+                    if(rst[it->F]>rt[it->F][it->S])
+                    {
+                        ansfg=1;
+                    }
+                }
+                trp(vec,it)
+                {
+                    lst[it->F]=MOD;
+                    rst[it->F]=-1;
+                }
+            }
+        }
+        rep(i,0,n-1)
+        {
+            nebo[i].clear();
+            rt[i].clear();
+            vis[i].clear();
+        }
+        if(ansfg==1) cout<<"NO";
+        else cout<<"YES";
+        cout<<endl;
+    }
+}

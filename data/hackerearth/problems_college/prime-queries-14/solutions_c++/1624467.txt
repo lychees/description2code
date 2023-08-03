@@ -1,0 +1,143 @@
+#include<bits/stdc++.h>
+#define N 100000
+using namespace std;
+
+long long prime[78500],prim,arr[1000000];
+// marks all mutiples of 'a' ( greater than 'a' but less than equal to 'n') as 1.
+void markMultiples(long long arr[], long long a, long long n)
+{
+    long long i = 2, num;
+    while ( (num = i*a) <= n )
+    {
+        arr[ num-1 ] = 1; // minus 1 because index starts from 0.
+        ++i;
+    }
+}
+
+// A function to prlong long all prime numbers smaller than n
+void SieveOfEratosthenes(long long n)
+{
+    // There are no prime numbers smaller than 2
+    arr[0]=1;
+    if (n >= 2)
+    {
+        // Create an array of size n and initialize all elements as 0
+
+        long long i;
+        /* Following property is malong longained in the below for loop
+           arr[i] == 0 means i + 1 is prime
+           arr[i] == 1 means i + 1 is not prime */
+        for ( i=1; i<n; ++i)
+        {
+            if ( arr[i] == 0 )
+            {
+                //(i+1) is prime, prlong long it and mark its multiples
+                prime[prim++]=i+1;
+                markMultiples(arr, i+1, n);
+            }
+        }
+    }
+}
+
+struct node{
+    int pnum;
+};
+node tree[4*N+5];
+
+node make_node(int num)
+{
+    node t;
+    if(arr[num-1]==0)
+        t.pnum=num;
+    else
+        t.pnum=-1;
+    return t;
+}
+
+node combine(node a,node b)
+{
+    node t;
+    t.pnum=max(a.pnum,b.pnum);
+    return t;
+}
+
+void build_tree(int a[], int num, int tl, int tr)
+{
+    if(tl>tr)
+        return;
+    if (tl == tr)
+		tree[num] = make_node(a[tl]);
+	else {
+		int tmid = (tl + tr) / 2;
+		build_tree(a, num*2, tl, tmid);
+		build_tree(a, num*2+1, tmid+1, tr);
+		tree[num] = combine(tree[num*2],tree[num*2+1]);
+	}
+}
+
+void update_tree(int num,int tl, int tr,int l,int r, int new_val)
+{
+    if(tl>tr)
+        return;
+    if (tl == tr && tl==l)
+    {
+        tree[num] = make_node(new_val);
+        //cout<<tl<<" "<<tree[num].max1<<" "<<tree[num].max2<<endl;
+    }
+
+	else {
+		    int tmid = (tl + tr) / 2;
+		    if(l<=tmid)
+                update_tree(num*2, tl, tmid,l,r, new_val);
+            else
+                update_tree(num*2+1, tmid+1, tr,l,r, new_val);
+
+		   tree[num] = combine(tree[num*2],tree[num*2+1]);
+		   //cout<<tl<<" "<<tr<<" "<<tree[num].max1<<" "<<tree[num].max2<<endl;
+	}
+
+}
+
+node query_tree(int num, int tl, int tr, int l, int r)
+{
+    if(tl>tr || l>tr || r<tl)
+        return make_node(-1);
+	if (tl>=l && tr<=r)
+		return tree[num];
+	int tmid = (tl + tr) / 2;
+	node q1 = query_tree(num*2, tl, tmid, l, min(r,tmid));
+	node q2 = query_tree(num*2+1, tmid+1, tr, max(l,tmid+1), r);
+
+	node res = combine(q1,q2);
+	return res;
+}
+
+
+int main()
+{
+    long long no = 1000000,j;
+    SieveOfEratosthenes(no);
+    int n,q;
+    cin>>n>>q;
+    int a[n];
+	for(int i = 0; i < n; i++)
+        cin>>a[i];
+
+	build_tree(a,1, 0, n-1);
+    //cout<<arr[1]<<endl;
+	while(q--)
+    {
+        int x,y,type;
+        cin>>type>>x>>y;
+        if(type==0)
+        {
+            update_tree(1,0,n-1,x-1,x-1,y);
+        }
+        else
+        {
+            node z =query_tree(1,0,n-1,x-1,y-1);
+            cout<<z.pnum<<endl;
+        }
+
+    }
+}

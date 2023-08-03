@@ -1,0 +1,141 @@
+///==================================================///
+///                HELLO WORLD !!                    ///
+///                  IT'S ME                         ///
+///               BISHAL GAUTAM                      ///
+///         [ bsal.gautam16@gmail.com ]              ///
+///==================================================///
+#include<bits/stdc++.h>
+#define X first
+#define Y second
+#define mpp make_pair
+#define nl printf("\n")
+#define SZ(x) (int)(x.size())
+#define pb(x) push_back(x)
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+///---------------------
+#define S(a) scanf("%d",&a)
+#define P(a) printf("%d",a)
+#define SL(a) scanf("%lld",&a)
+#define S2(a,b) scanf("%d%d",&a,&b)
+#define SL2(a,b) scanf("%lld%lld",&a,&b)
+///------------------------------------
+#define all(v) v.begin(),v.end()
+#define CLR(a) memset(a,0,sizeof(a))
+#define SET(a) memset(a,-1,sizeof(a))
+#define fr(i,a,n) for(int i=a;i<=n;i++)
+using namespace std;
+typedef long long ll;
+///==========CONSTANTS=============///
+///  Digit     0123456789012345678 ///
+#define MX     500002
+#define Mx     200002
+#define inf    20000000100000LL
+#define MD     1000000003LL
+#define eps    1e-9
+///===============================///
+#define NN 2001
+#define MM 10001
+
+ll dp[2][MM+1];
+int A[NN+1][MM+1];
+int B[NN+1][MM+1];
+int vis[MM+1];
+ll W,S,N,M,P,Q,R,X,Y,Z;
+
+void Precal( ) {
+    int lm=(N*M);
+    for(int i = 0; i < lm; i++) {
+        ll mm=(S * S)%MD;
+        ll SS = ((P * mm)%MD + (Q * S)%MD + R)%MD;
+        A[(i/M) + 1][(i%M) + 1] = SS%MD;
+        S=SS;
+    }
+    for(int i = 0; i <lm ; i++) {
+        ll ww=(W * W)%MD;
+        ll WW = ((X * ww)%MD + (Y * W)%MD + Z)%MD;
+        B[(i/M) + 1][(i%M) + 1] = WW%MD;
+        W=WW;
+    }
+    ///Lowest PF;
+    for(int i=2; i<=M; i++) {
+        for(int j=i; j<=M; j+=i) {
+            if( !vis[j] ) {
+                vis[j]=i;
+            }
+        }
+    }
+    vis[ 1 ]=1;
+}
+
+ll Mn1[MM+1],Mn2[MM+1];
+int Id1[MM+1],Id2[MM+1];
+int main() {
+    int i,j,k;
+    scanf("%lld%lld",&N,&M);
+    scanf("%lld%lld%lld %lld",&S,&P,&Q,&R);
+    scanf("%lld%lld%lld%lld",&W,&X,&Y,&Z);
+    Precal( );
+    fr(i,0,1)fr(j,1,M)dp[i][j]=inf;
+    ll mnb=inf;///Min taking B[i][j] in last row;
+    fr(i,1,M) {
+        dp[1][i]=0;
+        if(i>=2)mnb=min(mnb,(ll)B[1][i]);
+    }
+    int nw=1,pv=0;
+    for(j=1; j<=M; j++)Mn1[j]=Mn2[j]=inf,Id1[j]=Id2[j]=0;
+    i=1;
+    for(j=1; j<=M; j++) {
+        int lp=vis[ j ];
+        ll vl=(dp[nw][j]+B[i][j]);
+        if( Mn1[lp]>vl ) {
+            Mn2[lp]=Mn1[lp];
+            Id2[lp]=Id1[lp];
+            Mn1[lp]=vl;
+            Id1[lp]=j;
+        } else if( Mn2[lp]>vl ) {
+            Mn2[lp]=vl;
+            Id2[lp]=j;
+        }
+    }
+    ll ans=inf;
+    for(i=2; i<=N; i++) {
+        swap(nw,pv);
+        for(j=1; j<=M; j++) {
+            if( j==2 )mnb=inf;
+            int lp=vis[ j ];
+            dp[ nw ][j]=min( dp[ nw ][j], dp[ pv ][ j ]+A[ i-1 ][j] );
+            if(j!=1) {
+                int lp=vis[ j ];
+                int m1=Id1[ lp ];
+                int m2=Id2[ lp ];
+                if( m1 && m1!=j ) {
+                    dp[ nw ][j]=min( dp[ nw ][j], Mn1[ lp ] );
+                } else if( m2 && m2!=j ) {
+                    dp[ nw ][j]=min( dp[ nw ][j], Mn2[ lp ] );
+                }
+            }
+            if(j==1 )dp[ nw ][j]=min( dp[ nw ][j],mnb );
+            if(j>=2 )mnb=min(mnb,dp[ nw ][j]+B[i][j]);
+            if(i==N )ans=min( ans,dp[ nw ][j] );
+        }
+        for(j=1; j<=M; j++)dp[ pv ][ j ]=Mn1[j]=Mn2[j]=inf,Id1[j]=Id2[j]=0;
+        for(j=1; j<=M; j++) {
+            int lp=vis[ j ];
+            ll vl=(dp[nw][j]+B[i][j]);
+            if( Mn1[lp]>vl ) {
+                Mn2[lp]=Mn1[lp];
+                Id2[lp]=Id1[lp];
+                Mn1[lp]=vl;
+                Id1[lp]=j;
+            } else if( Mn2[lp]>vl ) {
+                Mn2[lp]=vl;
+                Id2[lp]=j;
+            }
+        }
+    }
+    if(N==1)ans=0LL;
+    printf("%lld\n",ans);
+
+    return 0;
+}

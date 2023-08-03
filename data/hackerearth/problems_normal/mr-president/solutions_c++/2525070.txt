@@ -1,0 +1,122 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int _root(vector<int> &vertices, int a){            // _root with path compression, first line inside the loop
+    while(vertices[a] != a){
+        vertices[a] = vertices[vertices[a]];
+        a = vertices[a];
+    }
+    return a;
+}
+
+bool _find(vector<int> &vertices, int a, int b){
+    if(_root(vertices, a) == _root(vertices, b))
+        return true;
+    return false;
+}
+
+void _union(vector<int> &vertices, vector<int> &_size, int a, int b){   // weighted union, we compare size of each set first, set larger's root as parent of smaller's root, add up sizes
+    int root_a = _root(vertices, a);
+    int root_b = _root(vertices, b);
+    if(_size[root_a] < _size[root_b]){
+        vertices[root_a] = vertices[root_b];
+        _size[root_b] += _size[root_a];
+    }
+    else{
+        vertices[root_b] = vertices[root_a];
+        _size[root_a] += _size[root_b];
+    }
+}
+
+long long kruskal(vector<int> &vertices, vector<vector<int> > &edges, vector<int> &result){
+
+    int current_weight, current_a, current_b, n = vertices.size();
+    long long sum = 0;
+    vector<int> _size(n, 1);
+
+    sort(edges.begin(), edges.end());
+
+    for(int i=0, j=0; i<n-1 && j<edges.size(); j++){
+        current_weight = edges[j][0];
+        current_a = edges[j][1];
+        current_b = edges[j][2];
+
+        //printf("current weight: %d\n", current_weight);
+
+        if(!_find(vertices, current_a, current_b)){
+            _union(vertices, _size, current_a, current_b);
+            result.push_back(current_weight);
+            sum += current_weight;
+            i++;
+        }
+    }
+    return sum;
+}
+
+int main(){
+
+    int n, m, w, a, b;
+    long long mst_weight, sum = 0, k;
+    bool flag = false;
+
+    scanf("%d %d %lld", &n, &m, &k);
+
+    vector<int> vertices(n);
+    vector<int> result;
+    vector<vector<int> > edges(m, vector<int> (3));
+
+    for(int i=0; i<n; i++){
+        vertices[i] = i;
+    }
+
+    for(int i=0; i<m; i++){
+        scanf("%d %d %d", &a, &b, &w);
+        edges[i][0] = w;
+        edges[i][1] = a-1;
+        edges[i][2] = b-1;
+    }
+
+    // kruskal
+
+    if(k < n-1){
+        printf("-1");
+        return 0;
+    }
+
+    mst_weight = kruskal(vertices, edges, result);
+
+    if(result.size() != n-1){
+        printf("-1");
+        return 0;
+    }
+    
+    
+    int res=0;
+    int i=n-2;
+    while(mst_weight > k)
+    {
+    	res++;
+    	mst_weight-=result[i--];
+    	mst_weight++;
+    }
+    
+    
+   /* if(mst_weight > k){
+    	
+        int i;
+        for(i=0; i<result.size(); i++){
+            if(sum + result[i] + n - i - 2 > k){
+                break;
+            }
+            sum += result[i];
+        }
+        printf("%d", n - i - 1);
+    }
+    else{
+        printf("0");
+    }*/
+    
+    printf("%d",res);
+
+    return 0;
+}

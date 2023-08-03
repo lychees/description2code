@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+string s;
+int n,sum;
+bool vis[16][2][152];
+long long dp[16][2][152];
+
+long long f(int idx, int tight, int add)
+{
+	if ( idx == n ) {
+		if ( add == sum ) return 1;
+		return 0;
+	}
+	if ( vis[idx][tight][add] ) return dp[idx][tight][add];
+	vis[idx][tight][add] = true;
+	long long ans = 0;
+	if ( tight == 0 ) {
+		for ( int i = 0; i <= 9; i++ ) ans += f(idx+1, tight, add+i);
+	}
+	else {
+		for ( int i = 0; i <= s[idx]-49; i++ ) ans += f(idx+1, 0, add+i);
+		ans += f(idx+1, 1, add+s[idx]-48);
+	}
+	dp[idx][tight][add] = ans;
+	return ans;
+}
+
+long long get(long long x)
+{
+	memset(vis, false, sizeof(vis));
+	stringstream ss;
+	ss.clear();
+	ss << x;
+	s = ss.str();
+	n = (int)s.size();
+	long long ans = f(0,1,0);
+	return ans;
+}
+
+int main()
+{
+	long long A,B,L,R,M,val,ans;
+	cin >> A >> B >> sum;
+	cout << get(B) - get(A-1) << endl;
+	L = A, R = B;
+	while ( L <= R ) {
+		M = (L+R)>>1;
+		val = get(M)-get(A-1);
+		if ( val >= 1 ) ans = M, R = M-1;
+		else L = M+1;
+	}
+	cout << ans << endl;
+	return 0;
+}

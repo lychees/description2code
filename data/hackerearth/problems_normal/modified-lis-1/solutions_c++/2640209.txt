@@ -1,0 +1,131 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define ll long long
+
+const int maxn = 1000000;
+const ll mod = 1000000007;
+
+struct node{
+	ll val, cnt;
+};
+
+node st[2][maxn];
+ll arr[maxn];
+//1:+ve
+//2:-ve
+
+
+void update(int s, int e, int q, ll v, ll c, int t, int node_num)
+{
+	if(s>q || s>e || q>e)
+		return;
+	if(s==e){
+		if(st[t][node_num].val==v){
+			st[t][node_num].cnt = (st[t][node_num].cnt+c)%mod;
+		}
+		else if(st[t][node_num].val<v){
+			st[t][node_num].val = v;
+			st[t][node_num].cnt = c;
+		}
+		return;
+	}
+	int mid, lc, rc;
+	mid = (s+e)>>1;
+	lc = 2*node_num+1;
+	rc = lc+1;
+	update(s, mid, q, v, c, t, lc);
+	update(mid+1, e, q, v, c, t, rc);
+	if(st[t][lc].val==st[t][rc].val){
+		st[t][node_num].cnt = (st[t][lc].cnt+st[t][rc].cnt)%mod;
+		st[t][node_num].val = st[t][lc].val;
+	}
+	else if(st[t][lc].val>st[t][rc].val){
+		st[t][node_num].cnt = st[t][lc].cnt;
+		st[t][node_num].val = st[t][lc].val;
+	}
+	else{
+		st[t][node_num].cnt = st[t][rc].cnt;
+		st[t][node_num].val = st[t][rc].val;
+	}
+	return;
+}
+
+node query(int s, int e, int qs, int qe, int t, int node_num)
+{
+	if(s>=qs && qe>=e)
+		return st[t][node_num];
+	int mid, lc, rc;
+	mid = (s+e)>>1;
+	lc = 2*node_num+1;
+	rc = lc+1;
+	if(qe>mid && qs<=mid){
+		node x, y, ret;
+		x = query(s, mid, qs, qe, t, lc);
+		y = query(mid+1, e, qs, qe, t, rc);
+		if(x.val==y.val){
+			ret.cnt = (x.cnt+y.cnt)%mod;
+			ret.val = x.val;
+		}
+		else if(x.val>y.val){
+			ret.cnt = x.cnt;
+			ret.val = x.val;
+		}
+		else{
+			ret.cnt = y.cnt;
+			ret.val = y.val;
+		}
+		return ret;
+	}
+	else if(qe>mid)
+		return query(mid+1, e, qs, qe, t, rc);
+	else
+		return query(s, mid, qs, qe, t, lc);
+}
+
+int main()
+{
+	//freopen("i.txt", "r", stdin);
+	int n, i, j, lim, cur_len, cur_cnt;
+	node ret;
+	ll max_len, max_cnt;
+	scanf("%d", &n);
+	for(i=0; i<n; i++)
+		scanf("%lld", &arr[i]);
+	lim = 100010;
+	max_len = 0;
+	for(i=n-1; i>=0; i--){
+		if(arr[i]>0){
+			ret = query(0, lim, arr[i]+1, lim, 1, 0);
+			if(ret.val==0){
+				ret.val = 1;
+				ret.cnt = 1;
+			}
+			if(max_len<ret.val){
+				max_len = ret.val;
+				max_cnt = ret.cnt;
+			}
+			else if(max_len==ret.val)
+				max_cnt = (max_cnt+ret.cnt)%mod;
+			update(0, lim, arr[i], ret.val+1, ret.cnt, 0, 0);
+		}
+		else{
+			ret = query(0, lim, abs(arr[i])+1, lim, 0, 0);
+			if(ret.val==0){
+				ret.val = 1;
+				ret.cnt = 1;
+			}
+			if(max_len<ret.val){
+				max_len = ret.val;
+				max_cnt = ret.cnt;
+			}
+			else if(max_len==ret.val)
+				max_cnt = (max_cnt+ret.cnt)%mod;
+			update(0, lim, abs(arr[i]), ret.val+1, ret.cnt, 1, 0);
+		}
+		//cout << ret.val << " " << ret.cnt << "\n";
+	}
+	printf("%lld %lld\n", max_len, max_cnt);
+	return 0;
+}

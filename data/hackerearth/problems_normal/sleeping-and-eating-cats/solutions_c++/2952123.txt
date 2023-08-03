@@ -1,0 +1,318 @@
+#include <cstring>
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <memory.h>
+#include <cassert>
+
+#define PB push_back
+#define LL long long
+
+using namespace std;
+const int MAXN = 100005;
+
+struct tree1
+{
+    bool color;
+    LL sum,start,cnt;
+};
+
+struct tree2
+{
+    bool color;
+    int val;
+};
+
+tree1 t1[4*MAXN];
+tree2 t2[4*MAXN],lft[4*MAXN],rgt[4*MAXN];
+
+void build1(int v,int tl,int tr)
+{
+    int tm;
+    if (tl==tr)
+    {
+        t1[v].color = false;
+        t1[v].start = 0;
+        t1[v].cnt = 1;
+        t1[v].sum = 0;
+        return;
+    }
+    tm = (tl+tr)/2;
+    build1(v*2,tl,tm);
+    build1(v*2+1,tm+1,tr);
+    t1[v].cnt = t1[v*2].cnt+t1[v*2+1].cnt;
+    t1[v].color = false;
+    t1[v].start = 0;
+    t1[v].sum = 0;
+}
+
+void push1(int v)
+{
+    if (!t1[v].color) return;
+    t1[v].color = false;
+    t1[v*2].color = t1[v*2+1].color = true;
+    t1[v*2].start = t1[v].start;
+    t1[v*2+1].start = t1[v].start+t1[v*2].cnt;
+    t1[v*2].sum = (t1[v*2].start+t1[v*2].cnt)*(t1[v*2].start+t1[v*2].cnt-1)/2-(t1[v*2].start-1)*t1[v*2].start/2;
+    t1[v*2+1].sum = (t1[v*2+1].start+t1[v*2+1].cnt)*(t1[v*2+1].start+t1[v*2+1].cnt-1)/2-(t1[v*2+1].start-1)*t1[v*2+1].start/2;
+}
+
+void update1(int v,int tl,int tr,int l,int r,int st)
+{
+   int tm;
+   if ((tl==l)&&(tr==r))
+   {
+       t1[v].color = true;
+       t1[v].start = st;
+       t1[v].sum = (t1[v].start+t1[v].cnt)*(t1[v].start+t1[v].cnt-1)/2-(t1[v].start-1)*t1[v].start/2;
+       return;
+   }
+   push1(v);
+   tm = (tl+tr)/2;
+   if (tm>=r)
+   {
+       update1(v*2,tl,tm,l,r,st);
+       t1[v].sum = t1[v*2].sum+t1[v*2+1].sum;
+       return;
+   }
+
+   if (tm<l)
+   {
+       update1(v*2+1,tm+1,tr,l,r,st);
+       t1[v].sum = t1[v*2].sum+t1[v*2+1].sum;
+       return;
+   }
+   update1(v*2,tl,tm,l,tm,st);
+   update1(v*2+1,tm+1,tr,tm+1,r,st+tm-l+1);
+   t1[v].sum = t1[v*2].sum+t1[v*2+1].sum;
+}
+
+LL query1(int v,int tl,int tr,int l,int r)
+{
+    int tm;
+    if ((tl==l)&&(tr==r))  return t1[v].sum;
+    push1(v);
+    tm = (tl+tr)/2;
+    if (tm>=r) return query1(v*2,tl,tm,l,r);
+    if (tm<l) return query1(v*2+1,tm+1,tr,l,r);
+    return query1(v*2,tl,tm,l,tm)+query1(v*2+1,tm+1,tr,tm+1,r);
+}
+
+void push2(int v)
+{
+    if (!t2[v].color) return;
+    t2[v].color = false;
+    t2[v*2].color = t2[v*2+1].color = true;
+    t2[v*2].val = t2[v*2+1].val = t2[v].val;
+}
+
+void update2(int v,int tl,int tr,int l,int r,int c)
+{
+    int tm;
+    if ((tl==l)&&(tr==r))
+    {
+        t2[v].color = true;
+        t2[v].val = c;
+        return;
+    }
+    push2(v);
+    tm = (tl+tr)/2;
+    if (tm>=r)
+    {
+        update2(v*2,tl,tm,l,r,c);
+        return;
+    }
+    if (tm<l)
+    {
+        update2(v*2+1,tm+1,tr,l,r,c);
+        return;
+    }
+    update2(v*2,tl,tm,l,tm,c);
+    update2(v*2+1,tm+1,tr,tm+1,r,c);
+}
+
+int query2(int v,int tl,int tr,int pos)
+{
+    int tm;
+    if (tl==tr) return t2[v].val;
+    push2(v);
+    tm  = (tl+tr)/2;
+    if (tm>=pos) return query2(v*2,tl,tm,pos); else return query2(v*2+1,tm+1,tr,pos);
+}
+
+void push3(int v)
+{
+    if (!lft[v].color) return;
+    lft[v].color = false;
+    lft[v*2].color = lft[v*2+1].color = true;
+    lft[v*2].val = lft[v*2+1].val = lft[v].val;
+}
+
+void update3(int v,int tl,int tr,int l,int r,int c)
+{
+    int tm;
+    if ((tl==l)&&(tr==r))
+    {
+        lft[v].color = true;
+        lft[v].val = c;
+        return;
+    }
+    push3(v);
+    tm = (tl+tr)/2;
+    if (tm>=r)
+    {
+        update3(v*2,tl,tm,l,r,c);
+        return;
+    }
+    if (tm<l)
+    {
+        update3(v*2+1,tm+1,tr,l,r,c);
+        return;
+    }
+    update3(v*2,tl,tm,l,tm,c);
+    update3(v*2+1,tm+1,tr,tm+1,r,c);
+}
+
+int query3(int v,int tl,int tr,int pos)
+{
+    int tm;
+    if (tl==tr) return lft[v].val;
+    push3(v);
+    tm = (tl+tr)/2;
+    if (tm>=pos) return query3(v*2,tl,tm,pos); else return query3(v*2+1,tm+1,tr,pos);
+}
+
+void push4(int v)
+{
+    if (!rgt[v].color) return;
+    rgt[v].color = false;
+    rgt[v*2].color = rgt[v*2+1].color = true;
+    rgt[v*2].val = rgt[v*2+1].val = rgt[v].val;
+}
+
+void update4(int v,int tl,int tr,int l,int r,int c)
+{
+    int tm;
+    if ((tl==l)&&(tr==r))
+    {
+        rgt[v].color = true;
+        rgt[v].val = c;
+        return;
+    }
+    push4(v);
+    tm = (tl+tr)/2;
+    if (tm>=r)
+    {
+        update4(v*2,tl,tm,l,r,c);
+        return;
+    }
+    if (tm<l)
+    {
+        update4(v*2+1,tm+1,tr,l,r,c);
+        return;
+    }
+    update4(v*2,tl,tm,l,tm,c);
+    update4(v*2+1,tm+1,tr,tm+1,r,c);
+}
+
+int query4(int v,int tl,int tr,int pos)
+{
+    int tm;
+    if (tl==tr) return rgt[v].val;
+    push4(v);
+    tm = (tl+tr)/2;
+    if (tm>=pos) return query4(v*2,tl,tm,pos);
+    if (tm<pos) return query4(v*2+1,tm+1,tr,pos);
+}
+
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    int n,i,l,r,type,q,cur,llg,rrg,clr,r2,l2;
+    int a[MAXN],lf[MAXN],rg[MAXN];
+    cin>>n>>q;
+    for (i=2;i<=n+1;i++) cin>>a[i];
+    a[1] = a[n+2] = 0;
+    for (i=0;i<4*MAXN;i++)
+    {
+        t2[i].color = false;
+        lft[i].color = false;
+        rgt[i].color = false;
+    }
+
+    for (i=1;i<=n+2;i++) update2(1,1,n+2,i,i,a[i]);
+    lf[1] = 1;
+    update3(1,1,n+1,1,1,1);
+    for (i=2;i<=n+2;i++)
+    {
+        if (a[i]==a[i-1]) lf[i] = lf[i-1]; else lf[i] = i-1;
+        update3(1,1,n+2,i,i,lf[i]);
+    }
+    rg[n+2] = n+2;
+    update4(1,1,n+2,n+2,n+2,n+2);
+    for (i=n+1;i>=1;i--)
+    {
+        if (a[i]==a[i+1]) rg[i] = rg[i+1]; else rg[i] = i+1;
+        update4(1,1,n+2,i,i,rg[i]);
+    }
+    build1(1,1,n+2);
+    cur = 1;
+    for (i=1;i<=n+2;i++)
+    {
+        if (i==1) update1(1,1,n+2,i,i,cur);
+        else
+        {
+            if (a[i]==a[i-1]) cur++; else cur = 1;
+            update1(1,1,n+2,i,i,cur);
+        }
+    }
+    for (i=0;i<q;i++)
+    {
+        cin>>type>>l>>r;
+        l++;
+        r++;
+        if (type==0)
+        {
+            cin>>clr;
+            update2(1,1,n+2,l,r,clr);
+            if (query2(1,1,n+2,l)==query2(1,1,n+2,l-1)) l =  query3(1,1,n+2,l-1)+1;
+            if (query2(1,1,n+2,r)==query2(1,1,n+2,r+1)) r = query4(1,1,n+2,r+1)-1;
+            update1(1,1,n+2,l,r,1);
+            update3(1,1,n+2,l,r,l-1);
+            update4(1,1,n+2,l,r,r+1);
+            r2 = query4(1,1,n+2,r+1)-1;
+            if (r<r2) update1(1,1,n+2,r+1,r2,1);
+            if (r<r2) update3(1,1,n+2,r+1,r2,r);
+            l2 = query3(1,1,n+2,l-1)+1;
+            if (l>2) update4(1,1,n+2,l2,l-1,l);
+        }
+        else
+        {
+            llg = query3(1,1,n+2,l)+1;
+            rrg = query4(1,1,n+2,l)-1;
+            update1(1,1,n+2,l,rrg,1);
+            cout<<query1(1,1,n+2,l,r)<<endl;
+            update1(1,1,n+2,llg,rrg,1);
+        }
+    }
+
+
+    return 0;
+}

@@ -1,0 +1,153 @@
+#include <assert.h>
+#include <memory.h>
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <iostream>
+#include <map>
+#include <numeric>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+#define pb push_back
+#define INF 1011111111
+#define FOR(i, a, b) for (int _n(b), i(a); i < _n; i++)
+#define rep(i, n) FOR(i, 0, n)
+#define CL(a, v) memset((a), (v), sizeof(a))
+#define mp make_pair
+#define X first
+#define Y second
+#define all(c) (c).begin(), (c).end()
+#define SORT(c) sort(all(c))
+
+typedef long long ll;
+typedef vector<int> VI;
+typedef pair<int, int> pii;
+
+/*** TEMPLATE CODE ENDS HERE */
+
+// F(n) = a * F(n - 1) + b * G(n - 2) for n >= 2
+// G(n) = c * G(n - 1) + d * F(n - 2) for n >= 2
+// H(n) = e * a * F(n - 1) + e * b * G(n - 2) + f * c * G(n - 1) + f * d * F(n -
+// 2) for n >= 0
+
+const ll MOD = 1e9 + 7;
+
+template <int K>
+struct Matrix {
+  ll a[K][K];
+  Matrix() { CL(a, 0); }
+  void MakeIdentityMatrix() {
+    CL(a, 0);
+    rep(i, K) a[i][i] = 1;
+  }
+};
+
+template <int K>
+Matrix<K> mul(const Matrix<K> &x, const Matrix<K> &y) {
+  Matrix<K> r;
+  rep(i, K) rep(j, K) {
+    rep(k, K) r.a[i][j] += x.a[i][k] * y.a[k][j] % MOD;
+    r.a[i][j] %= MOD;
+  }
+  return r;
+}
+
+template <int K>
+void mul(const Matrix<K> &x, const ll in[K], ll out[K]) {
+  rep(i, K) {
+    out[i] = 0;
+    rep(j, K) out[i] += x.a[i][j] * in[j] % MOD;
+    out[i] %= MOD;
+  }
+}
+
+const int K = 5;
+Matrix<K> PW[64];
+
+template <int K>
+void fpow(ll n, ll in[K], ll out[K]) {
+  int i = 0;
+  ll buf[K];
+  rep(j, K) buf[j] = in[j];
+  while (n > 0) {
+    if (n & 1) {
+      mul<K>(PW[i], buf, out);
+      rep(j, K) buf[j] = out[j];
+    }
+    ++i;
+    n >>= 1;
+  }
+}
+
+int main() {
+#ifdef LOCAL_HOST
+  freopen("input.txt", "r", stdin);
+// freopen("output.txt","w",stdout);
+#endif
+
+  //  ios_base::sync_with_stdio(false);
+
+  ll a, b, c, d, e, f, f0, f1, g0, g1;
+  cin >> a >> b >> c >> d >> e >> f >> f0 >> f1 >> g0 >> g1;
+
+  Matrix<K> M;
+  M.a[0][0] = a;
+  M.a[0][3] = b;
+
+  M.a[1][0] = 1;
+
+  M.a[2][1] = d;
+  M.a[2][2] = c;
+
+  M.a[3][2] = 1;
+
+  M.a[4][0] = e;
+  M.a[4][2] = f;
+  M.a[4][4] = 1;
+
+  PW[0] = M;
+  FOR(i, 1, 64) PW[i] = mul(PW[i - 1], PW[i - 1]);
+
+  int q;
+  cin >> q;
+
+  vector<pii> Q(q);
+
+  rep(i, q) {
+    scanf("%d", &Q[i].X);
+    Q[i].Y = i;
+  }
+
+  SORT(Q);
+
+  vector<int> res(q);
+
+  int last = 0;
+
+  ll in[K] = {f1, f0, g1, g0, (e * f0 % MOD + f * g0 % MOD) % MOD};
+  ll out[K];
+  rep(k, K) out[k] = in[k];
+
+  rep(i, q) {
+    int pw = Q[i].X - last;
+    fpow<K>(pw, in, out);
+    rep(k, K) in[k] = out[k];
+    ll ans = out[K - 1];
+    last = Q[i].X;
+    res[Q[i].Y] = (int)ans;
+  }
+
+  rep(i, q) printf("%d\n", res[i]);
+
+#ifdef LOCAL_HOST
+  printf("TIME: %.3lf\n", double(clock()) / CLOCKS_PER_SEC);
+#endif
+
+  return 0;
+}

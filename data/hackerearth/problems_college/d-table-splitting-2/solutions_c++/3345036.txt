@@ -1,0 +1,135 @@
+#include <iostream>
+#include <vector>
+#include <stdio.h>
+#include <string>
+#include <sys/resource.h>
+using namespace std;
+
+int T;
+int n,m;
+//string fld[1010];
+//vector<bool> vis[1010];
+
+char* fld[1010];
+bool* vis[1010];
+char curr[1001001];
+int cnt[26];
+int co=0;
+int dr[8]={1,1,1,0,0,-1,-1,-1};
+int dc[8]={-1,0,1,-1,1,-1,0,1};
+inline bool inside(int r,int c){
+	return r>=0 && r<n && c>=0 && c<m;
+}
+char xx;
+void dfs(int r,int c){
+	vis[r][c]=true;
+	co++;
+	for(int i=0;i<8;i++){
+		int nr=r+dr[i];
+		int nc=c+dc[i];
+		if(nr>=0 && nr<n && nc>=0 && nc<m && !vis[nr][nc] && fld[nr][nc]!=xx){
+			dfs(nr,nc);
+		}
+	}
+}
+bool check(char x){
+	co=0;
+	xx=x;
+	for(int i=0;i<n;i++){
+		for(int j=0;j<m;j++){
+			vis[i][j]=false;
+		}
+	}
+	for(int i=0;i<m-1;i++){
+		if(fld[0][i]!=x && !vis[0][i]){
+			dfs(0,i);
+		}
+	}
+	for(int i=1;i<m;i++){
+		if(fld[n-1][i]!=x && !vis[n-1][i]){
+			dfs(n-1,i);
+		}
+	}
+	for(int i=0;i<n-1;i++){
+		if(fld[i][m-1]!=x && !vis[i][m-1]){
+			dfs(i,m-1);
+		}
+	}
+	for(int i=1;i<n;i++){
+		if(fld[i][0]!=x && !vis[i][0]){
+			dfs(i,0);
+		}
+	}
+	return n*m-cnt[x-'a'] == co;
+}
+
+int main(){
+	struct rlimit lim;
+	lim.rlim_cur = lim.rlim_max = 200 << 20; // 200MB
+	setrlimit(RLIMIT_STACK, &lim);
+	//cin>>T;
+	scanf("%d",&T);
+	while(T--){
+		//cin>>n>>m;
+		scanf("%d %d",&n,&m);
+		for(int i=0;i<n;i++){
+			//cin>>fld[i];
+			fld[i]=new char[m+3];
+			vis[i]=new bool[m+3];
+			scanf("%s",fld[i]);
+			/*fld[i]="";
+			for(int j=0;j<m;j++){
+				
+				fld[i]+=curr[j];
+			}
+			vis[i].clear();
+			vis[i].resize(m,false);*/
+		}
+		for(int i=0;i<26;i++){
+			cnt[i]=0;
+		}
+		for(int i=0;i<n;i++){
+			for(int j=0;j<m;j++){
+				cnt[fld[i][j]-'a']++;
+			}
+		}
+		for(int i=0;i<8;i++){
+			if(!check(i+'a')){
+				cout<<"NO"<<endl;
+				goto endd;
+			}
+		}
+		if(n*m<=100000){
+			for(int i=0;i<26;i++){
+				if(!check(i+'a')){
+					cout<<"NO"<<endl;
+					goto endd;
+				}
+			}
+		} else {
+			for(int i=0;i<5;i++){
+				if(!check(i+'a')){
+					cout<<"NO"<<endl;
+					goto endd;
+				}
+			}
+			for(int i=10;i<20;i++){
+				if(!check(i+'a')){
+					cout<<"NO"<<endl;
+					goto endd;
+				}
+			}
+			for(int i=26-5;i<26;i++){
+				if(!check(i+'a')){
+					cout<<"NO"<<endl;
+					goto endd;
+				}
+			}
+			
+		}
+		
+		cout<<"YES"<<endl;
+endd:
+		;
+	}
+}

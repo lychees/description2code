@@ -1,0 +1,76 @@
+#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
+
+int main()
+{
+	int t;
+	cin>>t;
+	while(t-->0) {
+		int n,k,cell_value,row_sum=0,row_count=0,column_count=0;
+		unsigned long long int answer = ULLONG_MAX;
+		//inputs and initial processing
+		cin>>n>>k;
+		vector < int > sum_row(n,0),sum_column(n,0);
+		for(int i=0;i<n;i++) {
+			row_sum=0;
+			for(int j=0;j<n;j++) {
+				cin>>cell_value;
+				sum_column[j]+=cell_value;
+				row_sum+=cell_value;
+			}
+			sum_row[i]=row_sum;
+		}
+		//sorting
+		int i=1;
+		while(i<n) {
+			int j=i-1;
+			int temp = sum_row[i];
+			while(j>=0 && sum_row[j]>temp) {
+				sum_row[j+1]=sum_row[j];
+				j--;
+			}
+			sum_row[j+1]=temp;
+			j=i-1;
+			temp = sum_column[i];
+			while(j>=0 && sum_column[j]>temp) {
+				sum_column[j+1]=sum_column[j];
+				j--;
+			}
+			sum_column[j+1]=temp;
+			i++;
+		}
+		//calculation
+		vector < int > row_total(k+1,0);
+		vector < int > column_total(k+1,0);
+		for(int i=1;i<=k;i++) {
+			row_total[i]=sum_row[0]+row_total[i-1];
+			column_total[i]=sum_column[0]+column_total[i-1];
+			sum_row[0]+=n;
+			sum_column[0]+=n;
+			int j=1;
+			int temp = sum_row[0];
+			while(temp>sum_row[j] && j<n) {
+				sum_row[j-1]=sum_row[j];
+				j++;
+			}
+			sum_row[j-1]=temp;
+			j=1;
+			temp = sum_column[0];
+			while(temp>sum_column[j] && j<n) {
+				sum_column[j-1]=sum_column[j];	
+				j++;
+			}
+			sum_column[j-1]=temp;
+		}
+		for(int i=0;i<=k;i++) {
+			unsigned long long int current_answer = row_total[i]+column_total[k-i]+1ull*i*(k-i);
+			if(answer>current_answer)
+				answer=current_answer;
+		}
+		//output final answer;
+		cout<<answer<<"\n";
+	}
+    return 0;
+}

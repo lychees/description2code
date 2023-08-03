@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+int SUM;
+long long memo[20][150];
+
+long long F(int dig,int sum){
+    if (dig == 0)
+        return (sum == 0);
+    if (memo[dig][sum] != -1)
+        return memo[dig][sum];
+    long long res = 0ll;
+    for (int i=0;i<10;i++)
+        res += F(dig - 1, sum - i);
+    return memo[dig][sum] = res;
+}
+
+long long solve(long long x){
+    char s[20];
+    sprintf(s,"%lld",x);
+    int len = strlen(s);
+    int curLen = len;
+    int sum = SUM;
+    long long res = 0;
+    for (int i=0;i<len;i++){
+        curLen--;
+        int d = s[i] - '0';
+        for (int j=0;j<d;j++){
+            if (sum - j >= 0){
+                res += F(curLen,sum - j);
+            }
+        }
+        sum -= d;
+    }
+    return res;
+}
+
+int main()
+{
+    memset(memo,-1,sizeof(memo));
+    long long a,b;
+    char s[20];
+    cin >> a >> b >> SUM;
+    string res = "";
+    sprintf(s,"%lld",a);
+    int sum = SUM;
+    int len = strlen(s);
+    while (len * 9 < sum){
+        len++;
+    }
+    if (len == strlen(s)){
+        int curSum = 0;
+        for (int i=0;i<strlen(s);i++){
+            res += s[i];
+            curSum += (s[i] - '0');
+        }
+        for (int i=len-1;i>=0;i--){
+            while (curSum < sum && res[i] < '9'){
+                curSum++;
+                res[i] = (res[i] + 1);
+            }
+        }
+    }
+    else {
+        for (int i=0;i<len;i++)res += "9";
+        int curSum = len * 9;
+        for (int i=0;i<len;i++){
+            while (curSum > sum && res[i] > '1'){
+                curSum--;
+                res[i] = (res[i] - 1);
+            }
+        }
+    }
+
+    cout << solve(b+1) - solve(a) << endl;
+    cout << res << endl;
+}

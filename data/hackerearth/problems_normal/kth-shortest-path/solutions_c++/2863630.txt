@@ -1,0 +1,108 @@
+#include <bits/stdc++.h>
+
+
+const int npos = -10;
+
+const int maxn = 101;
+const int maxm = 101;
+const int maxk = 102;
+
+int a[maxn][maxm];
+std::vector<int> cache[maxn][maxm];
+
+
+void solution () {
+  int n = 0, m = 0;
+  std::cin >> n >> m;
+  std::cin.ignore(1000, '\n');
+
+  for (int i = 0 ; i < n ; i += 1) {
+    for (int j = 0 ; j < m ; j += 1) {
+      cache[i][j].clear();
+
+      std::string v = "";
+      std::cin >> v;
+
+      if (v == "##") {
+        a[i][j] = npos;
+      } else {
+        a[i][j] = stoi(v);
+      }
+    }
+  }
+
+  cache[0][0].push_back(a[0][0]);
+
+  for (int i = 1 ; i < n ; i += 1) {
+    if (a[i][0] != npos) {
+      for (int x: cache[i - 1][0]) {
+        cache[i][0].push_back(x + a[i][0]);
+      }
+    }
+  }
+
+  for (int i = 1 ; i < m ; i += 1) {
+    if (a[0][i] != npos) {
+      for (int x: cache[0][i - 1]) {
+        cache[0][i].push_back(x + a[0][i]);
+      }
+    }
+  }
+
+  for (int i = 1 ; i < n ; i += 1) {
+    for (int j = 1 ; j < m ; j += 1) {
+      if (a[i][j] != npos) {
+        int i1 = 0;
+        int s1 = cache[i - 1][j].size();
+        int i2 = 0;
+        int s2 = cache[i][j - 1].size();
+
+        while (i1 < s1 && i2 < s2 && cache[i][j].size() < maxk) {
+          if (cache[i - 1][j][i1] < cache[i][j - 1][i2]) {
+            cache[i][j].push_back(cache[i - 1][j][i1] + a[i][j]);
+            i1 += 1;
+          } else {
+            cache[i][j].push_back(cache[i][j - 1][i2] + a[i][j]);
+            i2 += 1;
+          }
+        }
+
+        while (i1 < s1 && cache[i][j].size() < maxk) {
+          cache[i][j].push_back(cache[i - 1][j][i1] + a[i][j]);
+          i1 += 1;
+        }
+
+        while (i2 < s2 && cache[i][j].size() < maxk) {
+          cache[i][j].push_back(cache[i][j - 1][i2] + a[i][j]);
+          i2 += 1;
+        }
+      }
+    }
+  }
+
+  int q = 0;
+  std::cin >> q;
+
+  while (q--) {
+    int tx = 0, ty = 0, k = 0;
+    std::cin >> tx >> ty >> k;
+
+    if (a[tx][ty] == npos) {
+      std::cout << "Obstacle" << std::endl;
+    } else if (cache[tx][ty].size() < k) {
+      std::cout << "Not so many paths" << std::endl;
+    } else {
+      std::cout << cache[tx][ty][k - 1] << std::endl;
+    }
+  }
+}
+
+int main () {
+
+  int T = 0;
+  std::cin >> T;
+  while (T--) {
+    solution();
+  }
+  return 0;
+}

@@ -1,0 +1,57 @@
+#include "bits/stdc++.h"
+using namespace std;
+const int N = 305;
+int n , m;
+int a[N];
+int f[N + N];
+vector < int > v[N];
+unsigned visited[N];
+int match[N];
+bool dfs(int node){
+    visited[node >> 5] |= 1u << (node & 31);
+    for(int next : v[node]){
+        if(match[next] == -1 || (!(visited[match[next] >> 5] & 1u << (match[next] & 31)) && dfs(match[next]))){
+            match[next] = node;
+            return 1;
+        }
+    }
+    return 0;
+}
+bool check(int val){
+	for(int i = 0 ; i < n ; ++i){
+		v[i].clear();
+		for(int j = 0 ; j < n ; ++j){
+			if(f[i + a[j]] <= val){
+				v[i].emplace_back(j);
+			}
+		}
+	}
+	memset(match , -1 , sizeof(match));
+	int flow = 0;
+	for(int i = 0 ; i < n ; ++i){
+        memset(visited , 0 , sizeof(visited));
+        flow += dfs(i);
+    }
+    return (flow == n);
+}
+int main(){
+	scanf("%d %d" , &n , &m);
+	for(int i = 0 ; i < n ; ++i){
+		scanf("%d" , a + i);
+	}
+	for(int i = 0 ; i < n + m - 1 ; ++i){
+		scanf("%d" , f + i);
+	}
+	int l = 0;
+	int r = 1e9 + 9;
+	while(l < r){
+		int mid = l + r >> 1;
+		if(check(mid)){
+			r = mid;
+		}
+		else{
+			l = mid + 1;
+		}
+	}
+	printf("%d\n" , l);
+}

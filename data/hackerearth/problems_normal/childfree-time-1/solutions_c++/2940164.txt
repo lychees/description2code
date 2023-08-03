@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int mod = 1e9 + 7;
+const double eps = 1e-18;
+const double PI = 3.14159265359; 
+#define readFile freopen("input","r",stdin);
+#define writeFile freopen("output","w",stdout);
+#define fastIO ios::sync_with_stdio(0);
+typedef unsigned long long ULL;
+typedef pair<int,int> ii;
+const int OO = 1e8;
+vector<vector<ii> > G;
+vector<vector<int> > resid;
+vector<unsigned long long> dist;
+vector<int> deg;
+int n,e;
+queue<int> kahn(){
+    queue<int> q;
+    queue<int> res;
+    for(int i=1;i<=n;i++){
+        if (!deg[i]) q.push(i);
+    }
+    while (!q.empty()){
+        res.push(q.front());
+        int u = q.front();
+        q.pop();
+        for(int i=0;i<resid[u].size();i++){
+            int v = resid[u][i];
+            deg[v]--;
+            if (!deg[v]) q.push(v);
+        }
+    }
+    return res;
+}
+int main(){
+//    readFile; writeFile; 
+    fastIO;
+    cin>>n>>e;
+    vector<ii> t; vector<int> tt;
+    resid.assign(n+1,tt);
+    G.assign(n+1,t);
+    dist.assign(n+1,0);
+    deg.assign(n+1,0);
+    for(int i=0;i<e;i++){
+        int a,b,w; cin>>a>>b>>w;
+        G[a].push_back(make_pair(b,w));
+        resid[b].push_back(a);
+        deg[a]++;
+    }
+    queue<int> q = kahn();
+    vector<int> sorted;
+    while (!q.empty()){
+        sorted.push_back(q.front());
+        q.pop();
+    }
+    reverse(sorted.begin(),sorted.end());
+    dist[sorted[0]] = 0;
+    unsigned long long res=0;
+    for(int i=0;i<sorted.size();i++){
+        int u = sorted[i];
+        for(int j=0;j<G[u].size();j++){
+            int v = G[u][j].first;
+            int distv = G[u][j].second;
+            if (dist[v]<dist[u]+distv+2){
+                dist[v]=dist[u]+distv+2;
+                res = max(res,dist[v]);        
+            }
+        }
+    }
+    cout<<res;
+}

@@ -1,0 +1,44 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MOD=1000000007;
+int N, K;
+char S[10001];
+pair<int, int> dp[10001][2][12][12];
+
+pair<int, int> rec(int pos, int small, int k, int amt)
+{
+    if(pos==N)
+    {
+        if(amt+k>=K)
+            return make_pair(1, 0);
+        return make_pair(0, amt+k);
+    }
+    pair<int, int>& ret=dp[pos][small][k][amt];
+    if(ret.first!=-1)
+        return ret;
+    int limit=small?S[pos]-'0':9;
+    ret.first=0;
+    for(int i=0; i<=limit; i++)
+    {
+        auto res=rec(pos+1, small && i==limit, min(K, k+(i==4 || i==7)), amt);
+        ret.first+=res.first;
+        if(ret.first>=MOD)
+            ret.first-=MOD;
+        amt=res.second;
+    }
+    ret.second=amt;
+    return ret;
+}
+
+int main()
+{
+    memset(dp, -1, sizeof dp);
+    scanf("%d", &K);
+    K++;
+    scanf("%s", S);
+    N=strlen(S);
+    printf("%d\n", rec(0, 1, 0, 0).first);
+    return 0;
+}

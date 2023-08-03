@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define IO ios_base::sync_with_stdio(false); cin.tie(0);
+#define endl "\n"
+#define DBG 666
+#define mp make_pair
+#define revsort(x,y) sort((x),(x+y));reverse((x),(x+y));
+
+typedef long long ll;
+
+struct node{
+
+	int oddNum, evenNum;
+	void merge(node &l, node &r){
+		oddNum = l.oddNum + r.oddNum;
+		evenNum = l.evenNum + r.evenNum;
+	}
+
+	void update(int val){
+
+		if(val == INT_MAX){
+			evenNum = oddNum = 0;
+		} else if(val%2 == 0){
+			evenNum = 1;
+			oddNum = 0;
+		} else {
+			evenNum = 0;
+			oddNum = 1;
+		}
+	}
+};
+
+int n, q, a[100002];
+
+void build(int pos, int l, int r, node tree[]){
+
+	if(l == r){
+		tree[pos].update(a[l]);
+		return;
+	}
+
+	int mid = (l+r)/2;
+	int left = 2*pos+1;
+	int right = left+1;
+	build(left, l, mid, tree);
+	build(right, mid+1, r, tree);
+	tree[pos].merge(tree[left], tree[right]);
+}
+
+void update(int pos, int l, int r, int qx, int val, node tree[]){
+
+	if(l == qx && r == l){
+		a[l] = val;
+		tree[pos].update(val);
+		return;
+	}
+
+	int mid = (l+r)/2;
+	int left = 2*pos+1;
+	int right = left+1;
+	if(qx <= mid){
+		update(left, l, mid, qx, val, tree);
+	} else {
+		update(right, mid+1, r, qx, val, tree);
+	}
+	tree[pos].merge(tree[left], tree[right]);
+}
+
+node rangeQuery(int pos, int l, int r, int ql, int qr, node tree[]){
+
+	if(ql <= l && qr >= r){
+		return tree[pos];
+	}
+
+	int mid = (l+r)/2;
+	int left = 2*pos+1;
+	int right = left+1;
+	node lTree, rTree;
+	lTree.update(INT_MAX);
+	rTree.update(INT_MAX);
+	if(ql <= mid){
+		lTree = rangeQuery(left, l, mid, ql, qr, tree);
+	}
+	if(qr > mid){
+		rTree = rangeQuery(right, mid+1, r, ql, qr, tree);
+	}
+	node N;
+	N.merge(lTree, rTree);
+	return N;
+}
+
+void solve(){
+
+	node tree[1000000];
+
+	build(0, 0, n-1, tree);
+
+	cin >> q;
+	while(q--){
+
+		int t, x, y;
+		cin >> t >> x >> y;
+		if(t == 0){
+			x--;
+			update(0, 0, n-1, x, y, tree);
+		} else {
+
+			x--; y--;
+			node N = rangeQuery(0, 0, n-1, x, y, tree);
+			if(t == 1){
+				cout << N.evenNum << endl;
+			} else {
+				cout << N.oddNum << endl;
+			}
+		}
+	}
+}
+
+int main(){
+
+	IO;
+
+	cin >> n;
+	for(int i = 0; i < n; i++){
+		cin >> a[i];
+	}
+
+	solve();
+
+	return 0;
+}

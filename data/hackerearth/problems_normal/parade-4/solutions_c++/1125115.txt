@@ -1,0 +1,57 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+#define MOD 1000000007
+#define MAX 1005
+
+int n, m;
+int l[MAX], c[MAX];
+int vis[MAX];
+vector<int> order;
+int a[MAX], last[MAX];
+int dp[MAX][MAX];
+
+void dfs(int u) {
+    vis[u] = 1;
+    if (u != 0 && !vis[l[u]])
+        dfs(l[u]);
+    order.push_back(u);
+}
+
+int main() {
+    int T;
+    scanf("%d", &T);
+    while (T--) {
+        scanf("%d %d", &n, &m);
+        for (int i = 1; i <= n; i++)
+            scanf("%d %d", &l[i], &c[i]);
+        memset(vis, 0, sizeof(vis));
+        order.clear();
+        for (int i = 1; i <= n; i++)
+            if (!vis[i])
+                dfs(i);
+        for (int i = 1; i <= n; i++)
+            a[i] = c[order[i]];
+        memset(dp, 0, sizeof(dp));
+        for (int j = 0; j <= n; j++)
+            dp[0][j] = 1;
+        for (int i = 1; i <= m; i++) {
+            memset(last, -1, sizeof(last));
+            for (int j = i; j <= n; j++) {
+                dp[i][j] = (dp[i][j-1] + dp[i-1][j-1]) % MOD;
+                if (last[a[j]] != -1)
+                    dp[i][j] = (dp[i][j] - dp[i-1][last[a[j]]-1]) % MOD;
+                last[a[j]] = j;
+            }
+        }
+        int ans = 0;
+        for (int i = 1; i <= m; i++)
+            ans = (ans + dp[i][n]) % MOD;
+        if (ans < 0)
+            ans += MOD;
+        printf("%d\n", ans);
+    }
+}

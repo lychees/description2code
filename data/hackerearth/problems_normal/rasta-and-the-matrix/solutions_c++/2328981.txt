@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+
+#define FO(i,a,b) for (int i = (a); i < (b); i++)
+#define sz(v) int(v.size())
+
+#define MOD 1000000007ll
+
+using namespace std;
+
+typedef long long ll;
+
+struct node {
+    node *l, *r;
+    ll sum; int flp;
+
+    node() {
+        l = r = 0;
+        sum = 0;
+        flp = 0;
+    }
+};
+
+node *root[2] = {new node, new node};
+
+void uflp(node *nd, ll rs, ll re, ll qs, ll qe) {
+    if (qs == rs && qe == re) {
+        //printf("FLIP [%lld,%lld)\n", rs, re);
+        nd->flp ^= 1;
+        nd->sum = re-rs-nd->sum;
+    } else {
+        if (!nd->l) nd->l = new node;
+        if (!nd->r) nd->r = new node;
+        ll md = (rs+re)/2;
+        if (nd->flp) {
+            nd->l->flp ^= 1;
+            nd->r->flp ^= 1;
+            nd->l->sum = md-rs-nd->l->sum;
+            nd->r->sum = re-md-nd->r->sum;
+            nd->flp = 0;
+        }
+        if (qs < md) uflp(nd->l, rs, md, qs, min(qe,md));
+        if (qe > md) uflp(nd->r, md, re, max(qs,md), qe);
+        nd->sum = nd->l->sum + nd->r->sum;
+    }
+}
+
+ll qsum(node *nd, ll rs, ll re, ll qs, ll qe) {
+    if (qs == rs && qe == re) {
+        return nd->sum;
+    } else {
+        if (!nd->l) nd->l = new node;
+        if (!nd->r) nd->r = new node;
+        ll md = (rs+re)/2;
+        if (nd->flp) {
+            nd->l->flp ^= 1;
+            nd->r->flp ^= 1;
+            nd->l->sum = md-rs-nd->l->sum;
+            nd->r->sum = re-md-nd->r->sum;
+            nd->flp = 0;
+        }
+        ll res = 0;
+        if (qs < md) res += qsum(nd->l, rs, md, qs, min(qe,md));
+        if (qe > md) res += qsum(nd->r, md, re, max(qs,md), qe);
+        return res;
+    }
+}
+
+
+int main() {
+    const ll M = 1e18+10;
+    //uflp(root[1], 0, M, 4, 15);
+    //printf("qsum=%lld\n", qsum(root[1], 0, M, 12, 16));
+    //return 0;
+
+    int n; scanf("%d", &n);
+    
+    ll lastans = 0;
+    FO(i,0,n) {
+        int t; scanf("%d", &t);
+        if (t == 1) {
+            int x; ll l, r; scanf("%d %lld %lld", &x, &l, &r);
+            l ^= lastans; r ^= lastans;
+            //printf("FLIP [%lld,%lld] on %d\n", l, r, x);
+            uflp(root[x], 0, M, l, r+1);
+        } else {
+            ll l, r, x, y;
+            scanf("%lld %lld %lld %lld", &l, &r, &x, &y);
+            l ^= lastans; r ^= lastans;
+            x ^= lastans; y ^= lastans;
+
+            ll a = qsum(root[0], 0, M, l, r+1) % MOD;
+            ll b = qsum(root[1], 0, M, x, y+1) % MOD;
+            ll c = r+1-l+MOD - a;
+            ll d = y+1-x+MOD - b;
+            c %= MOD; d %= MOD;
+
+            //printf("%lld %lld\n", a, b);
+
+            ll res = a * d + b * c;
+            res %= MOD;
+            printf("%lld\n", res);
+            lastans = res;
+        }
+    }
+}
+

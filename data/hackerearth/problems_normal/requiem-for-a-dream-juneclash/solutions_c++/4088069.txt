@@ -1,0 +1,157 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<queue>
+#include<map>
+#include<utility>
+#include<set>
+#include<stack>
+#include<list>
+#include<deque>
+#include<bitset>
+#include<iomanip>
+#include<cstring>
+#include<sstream>
+#include<cstdio>
+#include<cstdlib>
+#include<climits>
+#include<cmath>
+#include<cctype>
+
+
+#define pb push_back
+#define mp make_pair
+#define rep(i,a,b) for(int i=a;i<=b;i++)
+#define ren(i,a,b) for(int i=a;i>=b;i--)
+#define ff first
+#define ss second
+#define pll pair<long long int,long long int>
+#define pii pair<int,int>
+#define vll vector<long long int>
+#define vii vector<int>
+#define gi(n) scanf("%d",&n)
+#define gll(n) scanf("%lld",&n)
+#define gstr(n) scanf("%s",n)
+#define gl(n) cin >> n
+#define oi(n) printf("%d",n)
+#define oll(n) printf("%lld",n)
+#define ostr(n) printf("%s",n)
+#define ol(n) cout << n
+#define os cout<<" "
+#define on cout<<"\n"
+#define o2(a,b) cout<<a<<" "<<b
+#define all(n) n.begin(),n.end()
+#define present(s,x) (s.find(x) != s.end())
+#define cpresent(s,x) (find(all(s),x) != s.end())
+#define tr(container, it) for(__typeof(container.begin()) it = container.begin(); it != container.end(); it++)
+using namespace std;
+
+typedef unsigned long long int ull;
+typedef long long int ll;
+typedef vector<vector<ll> > mat;
+
+int n,q,l[100005];
+vector<pll> v[100005];
+struct node
+{
+	ll l=0,r=0,s=0,an=0;
+	int par=0;
+}dp[25][100005];
+
+node merge(node a,node b)
+{
+	node r;
+	r.par=b.par;
+	r.s=a.s+b.s;
+	r.l=max(a.l,a.s+b.l);
+	r.l=max(0ll,r.l);
+	r.r=max(b.r,a.r+b.s);
+	r.r=max(0ll,r.r);
+	r.an=max(a.an,b.an);
+	r.an=max(r.an,a.r+b.l);
+	r.an=max(0ll,r.an);
+	return r;
+}
+
+void dfs(int at,int p,int h=0,ll ed=0)
+{
+	l[at]=h;
+	dp[0][at].l=dp[0][at].r=max(0ll,ed);
+	dp[0][at].s=ed;
+	dp[0][at].par=p;
+	rep(i,1,24)
+	dp[i][at]=merge(dp[i-1][at],dp[i-1][dp[i-1][at].par]);
+	tr(v[at],it)
+	{
+		int to=it->ff,e=it->ss;
+		if(to!=p)
+		dfs(to,at,h+1,e);
+	}
+}
+
+int lca(int u,int v)
+{
+	if(l[u]<l[v])
+	swap(u,v);
+	int diff=l[u]-l[v];
+	rep(i,0,24)
+	{
+		if((1<<i)&diff)
+		u=dp[i][u].par;
+	}
+	
+	if(u==v)
+	return u;
+	
+	ren(i,24,0)
+	{
+		if(dp[i][u].par!=dp[i][v].par)
+		{
+			u=dp[i][u].par;
+			v=dp[i][v].par;
+		}
+	}
+	return dp[0][u].par;
+}
+
+node query(int a,int b)
+{
+	node r;
+	r.l=r.s=r.r=r.an=0;
+	int diff=l[a]-l[b];
+	ren(i,24,0)
+	{
+		if((1<<i)<=diff)
+		{
+			diff-=(1<<i);
+			r=merge(r,dp[i][a]);
+			a=dp[i][a].par;
+		}
+	}
+	return r;
+}
+
+int main()
+{ios_base::sync_with_stdio(false);
+cin>>n>>q;
+rep(i,1,n-1)
+{
+	int a,b,c;
+	cin>>a>>b>>c;
+	v[a].pb(mp(b,c));
+	v[b].pb(mp(a,c));
+}
+dfs(1,0);
+while(q--)
+{
+	int a,b;
+	cin>>a>>b;
+	int pp=lca(a,b);
+	node aa=query(a,pp),bb=query(b,pp);
+	ll ans=max(aa.an,bb.an);
+	ans=max(ans,aa.r+bb.r);
+	ans=max(0ll,ans);
+	ol(ans);on;
+}
+return 0;
+}

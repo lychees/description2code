@@ -1,0 +1,78 @@
+/*
+ *  MST_Rebuild.cpp
+ *
+ *  Sep 23, 2016
+ */
+
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define f first
+#define s second
+#define pb push_back
+#define mp make_pair
+
+typedef pair<int, int> ii;
+typedef long long ll;
+
+const int MAXN = int(1e5) + 10;
+
+int n, m;
+int lab[MAXN], deg[MAXN];
+vector<pair<int, ii> > v;
+
+void init() {
+    v.clear();
+    for (int i = 0; i < MAXN; i++)
+        lab[i] = -1, deg[i] = 0;
+}
+
+int get(int x) {
+    if (lab[x] < 0) return x;
+    return lab[x] = get(lab[x]);
+}
+
+void unite(int x, int y) {
+    if (lab[x] > lab[y]) swap(x, y);
+    lab[x] += lab[y];
+    lab[y] = x;
+}
+
+bool cmp(pair<int, ii> a, pair<int, ii> b) {
+    return a.f < b.f || (a.f == b.f && ((a.s.f > b.s.f ) || (a.s.f == b.s.f && a.s.s > b.s.s)));
+}
+
+int main() {
+//    freopen("input.inp", "r", stdin);
+
+    int tst; scanf("%d", &tst);
+    for (int t = 1; t <= tst; t++) {
+        init();
+
+        scanf("%d%d", &n, &m);
+        for (int i = 0; i < m; i++) {
+            int x, y, l; scanf("%d%d%d", &x, &y, &l);
+            if (x > y) swap(x, y);
+            v.pb( mp(l, mp(x, y) ) );
+        }
+
+        sort(v.begin(), v.end(), cmp);
+
+        ll res(0);
+        for (int i = 0; i < v.size(); i++) {
+            int x = v[i].s.f, y = v[i].s.s, l = v[i].f;
+
+            int xx = get(x), yy = get(y);
+            if (xx != yy) {
+                unite(xx, yy);
+                deg[x]++, deg[y]++;
+                res += l;
+            }
+        }
+
+        printf("%lld\n", res);
+        for (int i = 1; i <= n; i++) printf("%d ", deg[i]);
+        puts("");
+    }
+}

@@ -1,0 +1,86 @@
+#include <cstdio>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+
+
+#define x first
+#define y second
+
+using namespace std;
+
+
+vector<pair<int,int> > edge[105];
+int pre[105];
+int cost[105];
+int vis[105]={0};
+int min1(int a,int b){
+    if(a<b){
+        return a;
+    }
+    return b;
+}
+void relax(int index){
+    int i;
+    for(i=0;i<edge[index].size();i++){
+        int adj = edge[index][i].x;
+        int dis = edge[index][i].y;
+        if(cost[adj]<min1(cost[index],dis)&&vis[adj]==0){
+            cost[adj] = min1(cost[index],dis);
+            pre[adj] = index;
+        }
+        else if(cost[adj]==min1(cost[index],dis)&&index<pre[index]&&vis[adj]==0){
+            pre[adj] = index;
+        }
+    }
+    return;
+
+}
+int main(){
+    int n,s,d,tour,m,i,f,t,co;
+    scanf("%d%d",&n,&m);
+    for(i=0;i<m;i++){
+        scanf("%d%d%d",&f,&t,&co);
+        pair<int,int> p;
+        p.x = t;
+        p.y = co;
+        edge[f].push_back(p);
+        p.x = f;
+        edge[t].push_back(p);
+    }
+    scanf("%d%d%d",&s,&d,&tour);
+    pre[s] = s;
+    vis[s] = 1;
+    for(i=0;i<edge[s].size();i++){
+        cost[edge[s][i].x] = edge[s][i].y;
+        pre[edge[s][i].x] = s;
+    }
+    while(vis[d]!=1){
+        int nik = d;
+        int val = cost[d];
+        for(i=1;i<=n;i++){
+            if(cost[i]>val&&vis[i]==0){
+                nik = i;
+                val = cost[i];
+            }
+        }
+        vis[nik] = 1;
+        relax(nik);
+    }
+    int cur = d;
+    vector<int> print;
+    while(cur!=s){
+        print.push_back(cur);
+        cur = pre[cur];
+    }
+    print.push_back(s);
+    for(i=print.size()-1;i>=0;i--){
+        cout<<print[i]<<" ";
+    }
+    cout<<"\n";
+    int trips = (tour-1)/(cost[d]-1);
+    trips++;
+    printf("%d\n",trips);
+    return 0;
+}

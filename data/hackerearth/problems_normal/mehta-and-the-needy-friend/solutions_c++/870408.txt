@@ -1,0 +1,128 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+typedef long long int lli;
+const lli INF = 2e18;
+
+vector<int> masks = {0, 0, 1<<0, 1<<1, 0, 1<<2, (1<<0) | (1<<1), 1<<3, 1<<0, 0};
+
+lli len_rec(vector<vector<lli>> & dp, int len, int mask)
+{
+	if( len == 0 )
+	{
+		if( mask == 0 )
+			return 1;
+		else
+			return 0;
+	}
+	lli & ret = dp[len][mask];
+	if( ret >= 0 )
+		return ret;
+	ret = 0;
+	for(int n = 1; n < 10; n++)
+		ret += len_rec(dp, len-1, mask ^ masks[n]);
+	return ret;
+}
+
+// number of special numbers of length len
+lli len_num(int len)
+{
+	vector<vector<lli>> dp(len+1, vector<lli>(1<<4, -1)); // [digit position][used numbers mask]
+	return len_rec(dp, len, 0);
+}
+
+lli specials_rec(vector<vector<vector<lli>>> & dp, const vector<int> & digits, int pos, int mask, bool less)
+{
+	if( pos < 0 )
+	{
+		if( mask == 0 && !less )
+			return 1;
+		else
+			return 0;
+	}
+	lli & ret = dp[pos][mask][less];
+	if( ret >= 0 )
+		return ret;
+	ret = 0;
+	//int pos = digits.size()-len-1;
+	if( less )
+	{
+		for(int n = 1; n < digits[pos]; n++)
+			ret += specials_rec(dp, digits, pos-1, mask ^ masks[n], 0);
+		for(int n = 1; n <= 9; n++)
+			ret += specials_rec(dp, digits, pos-1, mask ^ masks[n], 1);
+	}
+	else if( digits[pos] > 0 )
+		ret += specials_rec(dp, digits, pos-1, mask ^ masks[digits[pos]], 0);
+
+	//cout << pos << " " << mask << " " << less << " " << ret << endl;
+
+	return ret;
+}
+
+lli num_specials(const vector<lli> & len_dp, lli num)
+{
+	if( num == 0 )
+		return 0;
+	vector<int> digits;
+	for(lli n = num; n > 0; n /= 10)
+		digits.push_back(n % 10);
+	reverse(digits.begin(), digits.end());
+	vector<vector<vector<lli>>> dp(digits.size(), vector<vector<lli>>(1<<4, vector<lli>(2, -1))); // [digit position][used numbers mask][strictly less]
+
+	return len_dp[digits.size()-1] +
+			specials_rec(dp, digits, digits.size()-1, 0, 0) +
+			specials_rec(dp, digits, digits.size()-1, 0, 1);
+}
+
+lli bin_search(lli lo, lli hi, const vector<lli> & len_dp, lli target) // hi exclusive!!! TODO
+{
+	lli possible = INF;
+	//cout << "LO HI " << lo << " " << hi << endl;
+	while( lo < hi )
+	{
+		lli mid = (lo+hi)/2;
+		lli cur = num_specials(len_dp, mid);
+		//cout << "MID CUR " << mid << " " << cur << endl;
+		if( cur == target )
+		{
+			possible = min(possible, mid);
+			hi = mid;
+		}
+		else if( cur < target )
+			lo = mid+1;
+		else
+			hi = mid;
+	}
+	return possible;
+}
+
+int main()
+{
+	vector<lli> len_dp(19, 0);
+	for(int n = 1; n < (int)len_dp.size(); n++)
+	{
+		len_dp[n] = len_num(n);
+		len_dp[n] += len_dp[n-1];
+	}
+	int num_cases;
+	cin >> num_cases;
+	for(int c = 0; c < num_cases; c++)
+	{
+		lli b, e, k;
+		cin >> b >> e >> k;
+
+		lli bnums = num_specials(len_dp, b-1), 
+			 enums = num_specials(len_dp, e);
+		if( bnums + k > enums )
+			cout << -1 << endl;
+		else
+		{
+			lli target = bnums+k;
+			//cout << b << " " << e << " " << target << endl;
+			cout << bin_search(b, e+1, len_dp, target) << endl;
+		}
+	}
+	return 0;
+}

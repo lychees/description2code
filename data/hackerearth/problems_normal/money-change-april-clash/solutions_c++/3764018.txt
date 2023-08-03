@@ -1,0 +1,81 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define FOR(i,a,b) for(int i = (a); i <= (b); ++i)
+#define RI(i,n) FOR(i,1,(n))
+#define REP(i,n) FOR(i,0,(n)-1)
+
+const int nax = 5005;
+const int mod = 1e9 + 9;
+int item[nax], coin[nax];
+int dp[nax];
+bool spoko[1024][1024];
+int ways[nax], old[nax];
+
+void add(int & a, int b) {
+	a += b;
+	if(a >= mod) a -= mod;
+}
+
+void te() {
+	int c_items, c_coins;
+	scanf("%d%d", &c_items, &c_coins);
+	vector<pair<int,int>> masks[c_items];
+	REP(i, c_coins) scanf("%d", &coin[i]);
+	REP(i, c_items) scanf("%d", &item[i]);
+	REP(mask, (1 << c_coins)) {
+		REP(i, nax) dp[i] = 0;
+		dp[0] = 1;
+		REP(i, c_coins) if(mask & (1 << i))
+			REP(j, nax - coin[i])
+				add(dp[j+coin[i]], dp[j]);
+		int sum_anyway = 0;
+		REP(i, c_coins) if(mask & (1 << i))
+			sum_anyway += coin[i];
+		REP(i, c_items) {
+			int remaining = item[i] - sum_anyway;
+			if(remaining >= 0 && dp[remaining])
+				masks[i].push_back(make_pair(mask, dp[remaining]));
+		}
+	}
+	REP(i, nax) ways[i] = 0;
+	ways[0] = 1;
+	REP(iii, c_items) {
+		REP(i, nax) {
+			old[i] = ways[i];
+			ways[i] = 0;
+		}
+		for(pair<int,int> poss : masks[iii]) {
+			int new_mask = poss.first;
+			int cnt = poss.second;
+			REP(so_far, (1 << c_coins))
+				if(spoko[new_mask][so_far]) {
+					int & x = ways[new_mask | so_far];
+					x = (x + (old[so_far] * (long long) cnt)) % mod;
+				}
+		}
+					
+	}
+	int s = 0;
+	REP(i, nax) add(s, ways[i]);
+	printf("%d\n", s);
+}
+
+int main() {
+	REP(new_mask, 1024) {
+		int mi = 100000, ma = -1;
+		REP(i, 10) if(new_mask & (1 << i)) {
+			mi = min(mi, i);
+			ma = max(ma, i);
+		}
+		REP(so_far, 1024) {
+			bool & ok = spoko[new_mask][so_far];
+			ok = true;
+			REP(i, 10) if(so_far & (1 << i)) if(mi < i && i < ma)
+				ok = false;
+		}
+	}
+	int z;
+	scanf("%d", &z);
+	while(z--) te();
+	return 0;
+}

@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define MAX 100005
+#define MOD 1000000007
+#define ff first
+#define ss second
+#define mp make_pair
+#define pb push_back
+
+pair<int, int> tree[2][4 * MAX];
+pair<int, int> zero;
+
+pair<int, int> merge(pair<int, int> a, pair<int, int> b){
+    int temp = max(a.ff, b.ff);
+    int cnt = 0;
+
+    if(a.ff == temp)
+        cnt = (cnt + a.ss) % MOD;
+    if(b.ff == temp)
+        cnt = (cnt + b.ss) % MOD;
+
+    return mp(temp, cnt);
+}
+
+void update(int node, int a, int b, int i, int j, int t, pair<int, int> val){
+    if(a>b || a>j || b<i)
+        return;
+    if(a==b){
+        tree[t][node] = merge(tree[t][node], val);
+        return;
+    }
+
+    int left, right;
+    left = 2 * node + 1, right = 2 * node + 2;
+
+    update(left, a, (a+b)/2, i, j, t, val);
+    update(right, (a+b)/2+1, b, i, j, t, val);
+
+    tree[t][node] = merge(tree[t][left], tree[t][right]);
+}
+
+pair<int, int> query(int node, int a, int b, int i, int j, int t){
+    if(a>b || a>j || b<i)
+        return mp(0, 0);
+    if(a>=i && b<=j)
+        return tree[t][node];
+
+    int left, right;
+    left = 2 * node + 1, right = 2 * node + 2;
+
+    pair<int, int> c, d;
+    c = query(left, a, (a+b)/2, i, j, t);
+    d = query(right, (a+b)/2+1, b, i, j, t);
+
+    return merge(c, d);
+}
+
+int main(){
+    int n, a, len, cnt = 0;
+    scanf("%d", &n);
+
+    for(int i=0 ; i<n ; i++){
+        scanf("%d", &a);
+        if(a>0){
+            pair<int, int> temp = query(0, 0, MAX-1, 0, a-1, 1);
+            if(temp.ff == 0)
+                temp.ss++;
+            temp.ff += 1;
+            if(temp.ff>len){
+                len = temp.ff;
+                cnt = temp.ss;
+            } else if(temp.ff == len){
+                cnt = (cnt + temp.ss) % MOD;
+            }
+            update(0, 0, MAX-1, a, a, 0, temp);
+        } else {
+            pair<int, int> temp = query(0, 0, MAX-1, 0, -a-1, 0);
+            if(temp.ff == 0)
+                temp.ss++;
+            temp.ff++;
+            update(0, 0, MAX-1, -a, -a, 1, temp);
+        }
+    }
+
+    pair<int, int> one = merge(query(0, 0, MAX-1, 0, MAX-1, 0), query(0, 0, MAX-1, 0, MAX-1, 1));
+
+    printf("%d %d\n", one.ff, one.ss);
+
+    return 0;
+}

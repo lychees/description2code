@@ -1,0 +1,166 @@
+/* Divanshu Garg */
+
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <queue>
+#include <deque>
+#include <stack>
+#include <bitset>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <climits>
+#include <cctype>
+#include <cassert>
+#include <complex>
+
+using namespace std;
+
+#define ull unsigned long long
+#define ill long long int
+#define pii pair<int,int>
+#define pb(x) push_back(x)
+#define F(i,a,n) for(int i=(a);i<(n);++i)
+#define FF(i,a,n) for(i=(a);i<(n);++i)
+#define REP(i,a,n) for(i=(a);i<(n);++i)
+#define FD(i,a,n) for(int i=(a);i>=(n);--i)
+#define FE(it,x) for(it=x.begin();it!=x.end();++it)
+#define V(x) vector<x>
+#define S(x) scanf("%d",&x)
+#define Sl(x) scanf("%llu",&x)
+#define M(x,i) memset(x,i,sizeof(x))
+#define debug(i,sz,x) F(i,0,sz){cout<<x[i]<<" ";}cout<<endl
+#define MAX(a,b) ((a)>(b)?(a):(b))
+ill ABS(ill a) { if ( a < 0 ) return (-a); return a; }
+#define fr first
+#define se second
+
+/* Relevant code begins here */
+
+/* Input from file or online */
+
+void input() {
+#ifndef ONLINE_JUDGE
+    freopen("input.txt","r",stdin);
+#endif
+}
+
+/* Input opener ends */
+
+#define MOD 1000000007
+
+vector<int> primes;
+int total = 0;
+
+void pre() {
+	F(i,2,1000) {
+		bool isprime = 1;
+		int x = 2;
+		while ( x*x <= i ) {
+			if ( i%x == 0 ) {
+				isprime = 0;
+				break;
+			}
+			++x;
+		}
+		if ( isprime ) primes.pb(i);
+	}
+	total = primes.size();
+}
+
+int a[200][10005], n;
+int tree[200][40005];
+
+int combine(int one, int two) {
+    return max(one,two);
+}
+
+void build(int idx, int where,int left,int right) {
+    if ( left == right ) tree[idx][where] = a[idx][left];
+    else {
+        int mid = ( left + right ) / 2;
+        build(idx,where*2,left,mid);
+        build(idx,where*2+1,mid+1,right);
+        tree[idx][where] = combine(tree[idx][where*2],tree[idx][where*2+1]);
+    }
+}
+
+void update(int idx,int where,int left,int right,int pos,int val) {
+    if ( left == right ) tree[idx][where] = val;
+    else {
+        int mid = ( left + right ) / 2;
+        if ( pos <= mid )
+            update(idx,where*2,left,mid,pos,val);
+        else
+            update(idx,where*2+1,mid+1,right,pos,val);
+        tree[idx][where] = combine(tree[idx][where*2],tree[idx][where*2+1]);
+    }
+} 
+
+int query(int idx,int where,int left,int right, int l, int r) {
+    if ( left == l && right == r ) return tree[idx][where];
+    int mid = ( left + right ) / 2;
+    if ( r <= mid ) return query(idx,where*2,left,mid,l,r);
+    if ( l > mid ) return query(idx,where*2+1,mid+1,right,l,r);
+    return combine (
+        query(idx,where*2,left,mid,l,mid),
+        query(idx,where*2+1,mid+1,right,mid+1,r)
+    );
+}
+
+int main() {
+    // input();
+    pre();
+    S(n);
+    F(i,0,n) {
+    	int x; S(x);
+    	F(j,0,total) {
+    		int p = primes[j], temp = x, c = 0;
+    		while ( temp > 1 && temp%p == 0 ) {
+    			c++; temp /= p;
+    		}
+    		a[j][i] = c;
+    	}
+    }
+    F(j,0,total) build(j,1,0,n-1);
+    int q; S(q);
+    while ( q-- ) {
+    	int type, x, y;
+    	S(type); S(x); S(y);
+    	// cout << type << endl;
+    	x--;
+    	if ( type == 1 ) {
+    		F(j,0,total) {
+	    		int p = primes[j], temp = y, c = 0;
+	    		while ( temp > 1 && temp%p == 0 ) {
+	    			c++; temp /= p;
+	    		}
+	    		update(j,1,0,n-1,x,c);
+	    	}
+    	} else {
+    		ill ans = 1;
+    		y--;
+    		F(j,0,total) {
+	    		int cnt = query(j,1,0,n-1,x,y);
+	    		int p = primes[j];
+	    		while ( cnt-- ) {
+	    			ans = (ans * p) % MOD;
+	    		}
+	    	}
+	    	printf("%lld\n", ans);
+    	}
+    }
+
+    return 0;
+}

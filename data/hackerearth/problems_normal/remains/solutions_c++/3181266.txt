@@ -1,0 +1,59 @@
+#include <algorithm>
+#include <cstdio>
+
+using ull = unsigned long long;
+ull compute(ull x, ull y, ull z, int n);
+
+int main()
+{
+    int t;
+    scanf("%d", &t);
+    while ( t-- )
+    {
+        int x, y, n;
+        scanf("%d %d %d", &x, &y, &n);
+
+        ull result = compute(x, y, std::max(x, y) - std::min(x, y), n);
+        printf("%llu\n", result);
+    }
+
+    return 0;
+}
+
+ull compute(ull x, ull y, ull z, int n)
+{
+    ull result = 0ULL;
+    if ( n == 0 )
+        result = 0ULL;
+    else if ( n == 1)
+        result = x;
+    else if ( n == 2 )
+        result = x + y;
+
+    else if ( x == 0 || y == 0 || z == 0 )
+    {
+        result = (x + y + z)*(n / 3ULL);
+        if ( n % 3 == 1 )
+            result += x;
+        else if ( n % 3 == 2 )
+            result += x + y;
+    }
+
+    else if ( std::max(std::max(x, y), z) == x && std::max(y, z) == y )
+    {
+        ull triples = std::min(n / 3ULL, (x / z) / 2ULL);
+
+        ull last = x - z*(triples*2 - 1);
+        result += triples*z + (x + last)*triples;
+
+        ull xx = std::max(last, z) - std::min(last,z);
+        ull yy = std::max(z, xx)   - std::min(z, xx);
+        ull zz = std::max(xx, yy)  - std::min(xx, yy);
+        result += compute(xx, yy, zz, n - triples*3ULL);
+    }
+
+    else
+        result = x + compute(y, z, std::max(y, z) - std::min(y, z), n - 1);
+
+    return result;
+}

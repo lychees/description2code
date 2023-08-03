@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int dx[] = {-1, 0, 1, 0};
+const int dy[] = {0, 1, 0, -1};
+
+const int ddx[] = {-1, -1, -1, 0, 1, 1,  1,  0};
+const int ddy[] = {-1,  0,  1, 1, 1, 0, -1, -1};
+
+vector<string> a;
+vector<vector<bool> > processed;
+vector<vector<bool> > was;
+vector<vector<bool> > visit;
+
+int n, m;
+
+bool go(pair<int, int> s) {
+    if (visit[s.first][s.second]) return false;
+    queue<pair<int, int> > Q;
+    Q.push(s);
+    visit[s.first][s.second] = true;
+    while (!Q.empty()) {
+        int x = Q.front().first, y = Q.front().second; Q.pop();
+        for (int i = 0; i < 8; ++i) {
+            int vx = x + ddx[i], vy = y + ddy[i];
+            if (vx < 0 || vy < 0 || vx >= a.size() || vy >= a[0].size()) continue;
+            if (!was[vx][vy]) continue;
+            if (visit[vx][vy]) continue;
+            visit[vx][vy] = true;
+            Q.push({vx, vy});
+        }
+    }
+    return true;
+}
+
+bool process(int sx, int sy) {
+    queue<pair<int, int> > Q;
+    Q.push({sx, sy});
+    processed[sx][sy] = true;
+    vector<pair<int, int> > boundary;
+    while (!Q.empty()) {
+        int x = Q.front().first, y = Q.front().second; Q.pop();
+        for (int i = 0; i < 4; ++i) {
+            int vx = x + dx[i], vy = y + dy[i];
+            if (vx < 0 || vy < 0 || vx >= a.size() || vy >= a[0].size()) continue;
+            if (a[vx][vy] == a[x][y]) {
+                if (!processed[vx][vy]) {
+                    processed[vx][vy] = true;
+                    Q.push({vx, vy});
+                }
+            } else if (!was[vx][vy]) {
+                was[vx][vy] = true;
+                boundary.push_back({vx, vy});
+            }
+        }
+    }
+    int cnt = 0;
+    for (auto p : boundary) cnt += go(p);
+    for (auto p : boundary) visit[p.first][p.second] = was[p.first][p.second] = false;
+    return cnt <= 1;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    int ntest; cin >> ntest;
+    while (ntest--) {
+        cin >> m >> n;
+        a = vector<string>(m + 2);
+        for (int i = 0; i <= n + 1; ++i) a[0] += '@', a[m + 1] += '@';
+        for (int i = 1; i <= m; ++i) cin >> a[i], a[i] = "@" + a[i] + "@";
+        //for (int i = 0; i < a.size(); ++i) cout << a[i] << endl;
+        processed = vector<vector<bool> > (a.size(), vector<bool>(a[0].size(), false));
+        was = visit = vector<vector<bool> > (a.size(), vector<bool>(a[0].size(), false));
+        bool YES = true;
+        for (int i = 1; i <= m; ++i) for (int j = 1; j <= n; ++j) if (!processed[i][j]) {
+            if (!YES) break;
+            bool cur = process(i, j);
+            if (!cur) YES = false;
+        }
+        cout << (YES ? "YES" : "NO") << endl;
+    }
+    return 0;
+}

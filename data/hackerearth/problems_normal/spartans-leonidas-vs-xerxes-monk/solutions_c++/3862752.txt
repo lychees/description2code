@@ -1,0 +1,185 @@
+#include <bits/stdc++.h>
+using namespace std;
+struct _ { ios_base::Init i; _() { cin.sync_with_stdio(0); cin.tie(0);cout.tie(0); } } _;
+ 
+#define READ(FILE) freopen(FILE,"r",stdin)
+#define WRITE(FILE) freopen(FILE,"w",stdout)
+ 
+#define ict int t;cin>>t;while(t--)
+#define lct long long int t;cin>>t;while(t--)
+#define in(a) int a; cin>>a;
+#define llin(a) ll a; cin>>a;
+ 
+#define srep(i,a,b) for(ll i=a;i<b;i++)
+#define rep(i,n) for(ll i=0;i<n;i++)
+ 
+#define pb push_back
+ 
+typedef long long int ll; // [9,223,372,036,854,775,807 to -9.....808]
+typedef vector<int> vi;
+typedef vector<ll> vl;
+typedef vector<string> vs;
+typedef pair<int, int> pii;
+typedef pair<ll,ll> pll;
+typedef set<int> si;
+typedef set<ll> sl;
+typedef map<string, ll> mapsl;
+typedef map<string, int> mapsi;
+typedef map<int,int> mapii;
+typedef map<ll, ll> mapll;
+ 
+struct st{
+    ll pref;
+    ll suf;
+    ll len;
+} tree[300000];
+ll arr[100005];
+ll n;
+void build(ll i, ll st, ll en)
+{
+    if(st == en)
+    {
+        tree[i].pref = 1;
+        tree[i].suf = 1;
+        tree[i].len = 1;
+     //   cout<<"Leaf ["<<st<<","<<en<<"] "<<tree[i].pref<<" "<<tree[i].len<<" "<<tree[i].suf<<endl;
+    }
+    else
+    {
+        ll mid = (st + en) / 2;
+        build(2*i, st, mid);
+        build(2*i+1, mid+1, en);
+        if(tree[2*i].pref==mid-st+1 && arr[mid]<arr[mid+1])
+            tree[i].pref=tree[2*i].pref+tree[2*i +1].pref;
+        else
+            tree[i].pref=tree[2*i].pref;
+        if(tree[2*i +1].suf==en-mid  && arr[mid]<arr[mid+1])
+            tree[i].suf=tree[2*i].suf+tree[2*i +1].suf;
+        else
+            tree[i].suf=tree[2*i +1].suf;
+        tree[i].len=max(tree[2*i].len,tree[2*i +1].len);
+        tree[i].len=max(tree[i].len,tree[2*i].suf);
+        tree[i].len=max(tree[i].len,tree[2*i +1].suf);
+        tree[i].len=max(tree[i].len,tree[2*i].pref);
+        tree[i].len=max(tree[i].len,tree[2*i +1].pref);
+        if(arr[mid]<arr[mid+1])
+            tree[i].len=max(tree[i].len,tree[2*i].suf+tree[2*i +1].pref);
+      //  cout<<"["<<st<<","<<en<<"] "<<tree[i].pref<<" "<<tree[i].len<<" "<<tree[i].suf<<endl;
+        
+    }
+}
+
+void update(ll i, ll st, ll en, ll idx)
+{
+    if(st != en)
+    {
+        ll mid = (st + en) / 2;
+        if(idx>=st && idx<=mid)
+        update(2*i, st, mid,idx);
+        else if(idx>=mid+1 && idx<=en)
+        update(2*i+1, mid+1, en,idx);
+        if(tree[2*i].pref==mid-st+1 && arr[mid]<arr[mid+1])
+            tree[i].pref=tree[2*i].pref+tree[2*i +1].pref;
+        else
+            tree[i].pref=tree[2*i].pref;
+        if(tree[2*i +1].suf==en-mid  && arr[mid]<arr[mid+1])
+            tree[i].suf=tree[2*i].suf+tree[2*i +1].suf;
+        else
+            tree[i].suf=tree[2*i +1].suf;
+        tree[i].len=max(tree[2*i].len,tree[2*i +1].len);
+        tree[i].len=max(tree[i].len,tree[2*i].suf);
+        tree[i].len=max(tree[i].len,tree[2*i +1].suf);
+        tree[i].len=max(tree[i].len,tree[2*i].pref);
+        tree[i].len=max(tree[i].len,tree[2*i +1].pref);
+        if(arr[mid]<arr[mid+1])
+            tree[i].len=max(tree[i].len,tree[2*i].suf+tree[2*i +1].pref);
+    }
+}
+
+ll querypref(ll i, ll st, ll en, ll l, ll r)
+{
+    if(r < st or en < l)
+    {
+        return 0;
+    }
+    if(l <= st and en <= r)
+    {
+        return tree[i].pref;
+    }
+    ll mid = (st + en) / 2;
+    ll a= querypref(2*i, st, mid, l, r);
+    if(arr[mid]<arr[mid+1] && a== mid-st+1 && mid+1 >= l && mid+1 <= r)
+        return a+querypref(2*i +1, mid+1, en, l, r);
+    else
+        return a;
+}
+
+ll querysuf(ll i, ll st, ll en, ll l, ll r)
+{
+    if(r < st or en < l)
+    {
+        return 0;
+    }
+    if(l <= st and en <= r)
+    {
+        return tree[i].suf;
+    }
+    ll mid = (st + en) / 2;
+    ll a = querysuf(2*i +1, mid+1, en, l, r);
+    if(arr[mid]<arr[mid+1] && a== en-mid && mid >= l && mid <= r)
+        return a+querysuf(2*i, st, mid, l, r);
+    else
+        return a;
+}
+
+ll query(ll i, ll st, ll en, ll l, ll r)
+{
+    if(r < st or en < l)
+    {
+        return 0;
+    }
+    if(l <= st and en <= r)
+    {
+    //  cout<<"Step: st="<<st<<" en="<<en<<" l="<<l<<" r="<<r<<endl;
+        return tree[i].len;
+    }
+    ll mid = (st + en) / 2;
+ //   cout<<"ans= "<<<<tree[2*i].suf+tree[2*i +1].pref<<" "<<(querysuf(2*i, st, mid, l, r)+querypref(2*i +1, mid+1, en, l, r))<<endl;
+    if(arr[mid]<arr[mid+1] && mid >= l && mid+1 <= r)
+        return max(query(2*i, st, mid, l, r),max(query(2*i +1, mid+1, en, l, r),querysuf(2*i, st, mid, l, r)+querypref(2*i +1, mid+1, en, l, r)));
+    else
+        return max(query(2*i, st, mid, l, r),query(2*i +1, mid+1, en, l, r));
+}
+
+int main()
+{
+    lct
+    {
+    cin>>n;
+    llin(q);
+    for(ll i=1;i<=n;i++)
+    {
+        cin>>arr[i];
+    }
+    build(1,1,n);
+    
+//  for(ll i=0;i<2*n;i++)
+//      cout<<i<<" "<<tree[i].pref<<" "<<tree[i].len<<" "<<tree[i].suf<<endl;
+    
+    while(q--)
+    {
+        llin(chk);
+        llin(l);
+        llin(r);
+        if(chk==0)
+        {
+            cout<<query(1,1,n,l,r)<<endl;
+        }
+        else
+        {
+            arr[l]+=r;
+            update(1,1,n,l);
+        }
+    }
+}
+}

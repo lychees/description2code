@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+#define rf freopen("inp.in","r",stdin)
+
+using namespace std;
+
+const int MAX = 100000;
+const int MOD = (int)(1e9 + 7);
+int A[MAX+MAX],DP[MAX+MAX][2];
+vector<int>V[MAX+MAX+MAX];
+
+struct node{
+	int x , y;
+	node(){ 
+		x = y = 0; 
+	}
+}ST[2][MAX * 4 + MAX];
+
+
+inline node merge( node a, node b){
+	node temp = node();
+	temp.x = max(a.x,b.x);
+	if( a.x == temp.x ) temp.y += a.y;
+	if( b.x == temp.x ) temp.y += b.y;
+	if( temp.y >= MOD ) temp.y -= MOD;
+	return temp;
+}
+
+inline void update( int id , int ll , int rr , int i , int x , int val , int amt){
+		
+	if( ll == rr ){
+		ST[id][i].x = val;
+		ST[id][i].y = amt;
+		return;
+	}
+
+	int m = ( ll + rr ) >> 1 , lc = i * 2 + 1, rc = lc + 1;
+    
+    if( m >= x ) update(id,ll,m,2*i+1,x,val,amt);
+	else         update(id,m+1,rr,2*i+2,x,val,amt);
+
+	ST[id][i] = merge(ST[id][lc],ST[id][rc]);
+}
+
+inline node find( int id , int ll , int rr , int i , int l , int r){
+		
+	if( ll > r or rr < l ) return node();
+
+	if( ll >= l and rr <= r )
+		return ST[id][i];
+
+	int m = ( ll + rr ) >> 1 , lc = i * 2 + 1, rc = lc + 1;
+    
+	return merge(find(id,ll,m,2*i+1,l,r),find(id,m+1,rr,2*i+2,l,r));
+}
+
+int main(){
+	
+	int N;
+	cin.tie(0) , ios::sync_with_stdio(false);
+
+	cin >> N ;
+	for( int i = 0 ; i < N ; i++ )
+		cin >> A[i];
+
+	for( int i = 0 ; i < N ; i++)
+		V[A[i]>=0?A[i]:MAX-A[i]].push_back(i);
+
+	update(0,0,N,0,N,0,1) , update(1,0,N,0,N,0,1);
+
+	for( int i = MAX ; i >= 1 ; i-- ){
+		for( int x : V[i] ){
+			DP[x][0] = find(1,0,N,0,x,N).x , DP[x][1] = find(1,0,N,0,x,N).y;
+			DP[x][0]++;
+		}
+		for( int x : V[i+MAX] ){
+			DP[x][0] = find(0,0,N,0,x,N).x , DP[x][1] = find(0,0,N,0,x,N).y;
+			DP[x][0]++;
+		}
+		for( int x : V[i] )
+			update(0,0,N,0,x,DP[x][0],DP[x][1]);
+		for( int x : V[i+MAX] )
+			update(1,0,N,0,x,DP[x][0],DP[x][1]);
+	}
+
+	int maxm = 0;
+	for( int i = 0 ; i < N ; i++)
+		maxm = max(maxm,DP[i][0]);
+	long long ans = 0;
+	for( int i = 0 ; i < N ; i++)
+		ans += DP[i][0] == maxm?DP[i][1]:0;
+	cout << maxm << " " << ( ans % MOD ) << endl;
+
+	return 0;
+}

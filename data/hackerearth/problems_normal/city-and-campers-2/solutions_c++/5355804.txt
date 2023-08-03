@@ -1,0 +1,115 @@
+#include <bits/stdc++.h>
+#define MAX 100001
+using namespace std;
+
+int ar[100001];
+int size[100001];
+map<int, int> m;
+
+void initialize(int n) 
+{
+	for(int i = 1; i <= n; i++)
+	{
+		ar[i] = i;
+		size[i] = 1;
+	}
+}
+
+int root(int x)
+{
+	while(ar[x] != x)
+	{
+		ar[x] = ar[ar[x]];
+		x = ar[x];
+	}
+	return x;
+}
+
+void weightedunion(int A,int B)
+{
+    int root_A = root(A);
+    int root_B = root(B);
+
+	ar[root_A] = ar[root_B];
+	m[size[root_A]]--;
+	m[size[root_B]]--;
+	if(m[size[root_A]] == 0)
+		m.erase(size[root_A]);
+	if(m[size[root_B]] == 0)
+		m.erase(size[root_B]);
+	
+	size[root_B] += size[root_A];
+	if(m.count(size[root_B]))
+	{
+		m[size[root_B]]++;
+	}
+	else
+	{
+		m.insert(make_pair(size[root_B], 1));
+	}
+}
+
+int main()
+{
+	int n;
+	cin>>n;
+	
+	initialize(n);
+	m.insert(make_pair(1, n));
+	
+	int k;
+	cin>>k;
+	
+	int x, y;
+
+	while(k--)
+	{
+		cin>>x>>y;
+		if(root(x) != root(y))
+			weightedunion(x, y);
+		/*map<int, int> :: iterator mp1, mp2;
+		mp1 = m.begin();
+		mp2 = m.end();
+		mp2--;
+			cout<<( (mp2->first) - (mp1->first) )<<endl;
+		*/
+		map<int, int> :: iterator mp, mp1;
+		int len = m.size();
+		int mindiff = 100001;
+		int flag = 0;
+		for(mp = m.begin(); mp != m.end(); mp++)
+		{
+			if(mp->second >= 2)
+			{
+				flag = 1;
+				break;
+			}
+		}
+		if(flag == 1)
+		{
+			cout<<0<<endl;
+			continue;
+		}
+		else
+		{
+			if(m.size() <= 1)
+				cout<<0<<endl;
+			else
+			{
+				mp = m.begin();
+				mp1 = m.begin();
+				mp1++;
+				int diff;
+				for(; mp1 != m.end(); mp++, mp1++)
+				{
+					diff = mp1->first - mp->first;
+					if(mindiff > diff)
+						mindiff = diff;
+				}
+				cout<<mindiff<<endl;
+			}
+		}
+	}
+
+	return 0;
+}

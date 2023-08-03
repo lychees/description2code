@@ -1,0 +1,142 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int 
+ll sum[400010];
+ll pre[400010];
+ll a[100005];
+void build1(int node,int s,int e)
+{
+	  if(s>e)
+	  return ;
+	   if(s==e)
+	   {
+	   	      sum[node]=a[s];
+	   	      return ;
+	   }
+	   int mid=(s+e)/2;
+	   build1(2*node,s,mid);
+	   build1(2*node+1,mid+1,e);
+	   sum[node]=sum[2*node+1]+sum[2*node];
+}
+void build2(int node,int s,int e)
+{
+	  if(s>e)
+	  return ;
+	   if(s==e)
+	   {
+	   	      pre[node]=(a[s]*(s+1));
+	   	      return ;
+	   }
+	   int mid=(s+e)/2;
+	   build2(2*node,s,mid);
+	   build2(2*node+1,mid+1,e);
+	   pre[node]=pre[2*node+1]+pre[2*node];
+}
+void update(int index,int start,int end,int ups,int upe,ll val)
+{
+ 
+   if(start>end || start>upe || end<ups) return ;// if(range in complitly out of range sooo need not to update ;;;;)
+   if(start>=ups && end<=upe)//     ( means if range (start and end ) is complitle within the update qry )...
+    {
+        sum[index]+=val;// just update the parent  and make its chile lzy so thate will be update latter
+        pre[index]+=(start+1)*val; 
+        return ;
+    }
+    
+     update(2*index,start,(start+end)/2,ups,upe,val);
+     update(2*index+1,((start+end)/2)+1,end,ups,upe,val);
+     
+     sum[index]=sum[2*index]+sum[2*index+1];
+        pre[index]=pre[2*index]+pre[2*index+1];
+ }
+ long long  int query1(int index,int start,int end,int qs,int qe)
+  {
+     
+      
+         if(start>end || end<qs || start>qe)
+       {
+        return 0;
+       }
+        if(start>=qs && end<=qe)
+         {
+          return  sum[index];
+          
+         }
+        long long  int q1=query1(2*index,start,(start+end)/2,qs,qe);
+        long long  int q2=query1(2*index+1,((start+end)/2)+1,end,qs,qe);
+         return q1+q2;
+   
+  }
+long long  int query2(int index,int start,int end,int qs,int qe)
+  {
+     
+      
+         if(start>end || end<qs || start>qe)
+       {
+        return 0;
+       }
+        if(start>=qs && end<=qe)
+         {
+          return  pre[index];
+          
+         }
+        long long  int q1=query2(2*index,start,(start+end)/2,qs,qe);
+        long long  int q2=query2(2*index+1,((start+end)/2)+1,end,qs,qe);
+         return q1+q2;
+   
+  }
+int main()
+{
+           int n;
+           cin>>n;
+           int q;
+           cin>>q;
+           for(int i=0;i<n;i++)
+           {
+           	      cin>>a[i];
+		   }
+		   build1(1,0,n-1);
+		   build2(1,0,n-1);
+		   int t,k,l,r;
+		   
+		   while(q--)
+		   {
+		   	    int tp;
+		   	    cin>>tp;
+		   	    if(tp==1)
+		   	    {
+		   	            cin>>k>>l>>r;
+						   k--;
+						   l--;
+						   r--;
+						   	ll ans1=query1(1,0,n-1,l,r);
+						   	ll ans2=query2(1,0,n-1,l,r);
+						   	
+						   	ll ans=ans2-(ans1*1ll*(k+1));
+						   if(k>=r || k<=l)
+						   {
+						       //cout<<"from here "<<endl;
+						   	cout<<abs(ans)<<endl;}
+						   
+						   	else
+						   	{
+						   		ll ans1=query1(1,0,n-1,l,k);
+						   	     ll ans2=query2(1,0,n-1,l,k);
+						   	     ll ans3=query1(1,0,n-1,k,r);
+						   	     ll ans4=query2(1,0,n-1,k,r);
+						   	     ll ansa=ans2-(ans1*1ll*(k+1));
+						   	     ll ansb=ans4-(ans3*1ll*(k+1));
+						   	     ll fans=abs(ansa)+abs(ansb);
+						   	     cout<<fans<<endl;
+							}
+						   
+				}
+				else 
+				{
+					int x;
+					ll pop;
+					  cin>>x>>pop;
+					  update(1,0,n-1,x-1,x-1,pop);
+				}
+		   }
+}

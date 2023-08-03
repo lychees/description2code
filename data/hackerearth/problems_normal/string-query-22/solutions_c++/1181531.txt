@@ -1,0 +1,113 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <queue>
+#include <algorithm>
+#include <cstdio>
+
+using namespace std;
+
+class BinaryIndexedTree_1_indexed{
+	void init(const vector<int> &A){
+		for(int i=0; i<N; i++){
+			add(i+1, A[i]);
+		}
+	}
+	
+public:
+	vector<int> T;
+	int N;
+	
+	BinaryIndexedTree_1_indexed(const int n) : T(n+1,0), N(n){
+		
+	}
+	
+	BinaryIndexedTree_1_indexed(const vector<int> &A) : T(A.size()+1,0), N(A.size()){
+		init(A);
+	}
+
+	//caution : position "i" must be 1-indexed
+	void add(int i, const int x){
+		while(i <= N){
+			T[i] += x;
+			i += i & -i;
+		}
+	}
+
+	//get sums [0,i]
+	int get_sum(int i){
+		int ret=0;
+		while(i>0){
+			ret += T[i];
+			i -= i & -i;
+		}
+		return ret;
+	}
+
+	//get sums [from,to]
+	int get_sums_range(const int from, const int to){
+		return get_sum(to) - get_sum(from-1);
+	}
+
+	//get at [i]
+	int get_at(const int i){
+		return get_sum(i) - get_sum(i-1);
+	}
+
+	int lower_bound(int val){
+		if(val<=0) return 0;
+		int x = 0;
+		int k = 1;
+		while((k<<1) <= N) k<<=1;
+		
+		for( ; k>0; k>>=1){
+			if( x+k <= N && T[x+k] < val ){
+				val -= T[x+k];
+				x += k;
+			}
+		}
+		return x+1;
+	}
+
+	void print(){
+		for(int i=0; i<=N; i++){
+			cerr << T[i] << " ";
+		}
+		cerr << endl;
+	}
+};
+
+
+
+int main(){
+	string s;
+	cin >> s;
+	vector<BinaryIndexedTree_1_indexed> v(26, BinaryIndexedTree_1_indexed(s.size()) );
+	for(int i=0; i<s.size(); i++){
+		v[ s[i] - 'a' ].add(i+1, 1);
+	}
+
+	int Q;
+	cin >> Q;
+	for(int i=0; i<Q; i++){
+		int k;
+		char x;
+		scanf("%d %c", &k, &x);
+		int idx = x-'a';
+		int pos = v[idx].lower_bound(k);
+		v[idx].add(pos, -1);
+	}
+
+	string ans = "";
+	vector<int> cnt(26, 0);
+	for(int i=0; i<s.size(); i++){
+		int idx = s[i] - 'a';
+		int my_cnt = v[idx].get_sum(i+1);
+		if(my_cnt == cnt[idx]+1){
+			ans += s[i];
+			cnt[idx]++;
+		}
+	}
+	cout << ans << endl;
+	return 0;
+}

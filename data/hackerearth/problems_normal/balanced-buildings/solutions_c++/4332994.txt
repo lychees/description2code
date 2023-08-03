@@ -1,0 +1,82 @@
+/**
+  * task: https://www.hackerearth.com/july-clash-16/algorithm/balanced-buildings/
+  * solution: dynamic programming
+  */
+
+#include <algorithm>
+#include <climits>
+#include <cstdio>
+#include <vector>
+
+using ll = long long;
+
+ll cost(int height, int current, int m, int p);
+void findBests(const std::vector<ll>& a, unsigned& best, unsigned& secondbest);
+
+int main()
+{
+    int n, s, m, p;
+    scanf("%d %d %d %d", &n, &s, &m, &p);
+
+    std::vector<int> a(n);
+    for ( int& x : a )
+        scanf("%d", &x);
+
+    std::vector<int> heights(a);
+    std::sort(heights.begin(), heights.end());
+    heights.erase( std::unique( heights.begin(), heights.end() ), heights.end() );
+
+    std::vector<std::vector<ll>> dp(n, std::vector<ll>(heights.size(), 0));
+    for ( unsigned i = 0; i < dp[0].size(); ++i )
+        dp[0][i] = -cost(heights[i], a[0], m, p);
+
+    for ( int i = 1; i < n; ++i )
+    {
+        unsigned best, secondbest;
+        findBests(dp[i - 1], best, secondbest);
+
+        for ( unsigned j = 0; j < heights.size(); ++j )
+        {
+            dp[i][j] = dp[i - 1][j] + s;
+
+            unsigned ind = (best == j ? secondbest : best);
+            dp[i][j] = std::max(dp[i][j], dp[i - 1][ind]);
+
+            dp[i][j] -= cost(heights[j], a[i], m, p);
+        }
+    }
+
+    ll result = LLONG_MIN;
+    for ( auto x : dp[n - 1] )
+        result = std::max(result, x);
+
+    printf("%lld\n", result);
+
+    return 0;
+}
+
+ll cost(int height, int current, int m, int p)
+{
+    if ( height < current )
+        return 1LL * m * (current - height);
+
+    return 1LL * p * (height - current);
+}
+
+void findBests(const std::vector<ll>& a, unsigned& best, unsigned& secondbest)
+{
+    best = a[0] > a[1] ? 0 : 1;
+    secondbest = 1 - best;
+    for ( unsigned j = 2; j < a.size(); ++j )
+    {
+        if ( a[j] > a[best] )
+        {
+            secondbest = best;
+            best = j;
+        }
+        else if ( a[j] > a[secondbest] )
+        {
+            secondbest = j;
+        }
+    }
+}

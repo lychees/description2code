@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define limt 500010
+ 
+int root[limt], maxm;
+int largestBit;
+ 
+void update(int idx, int val)
+{
+    while (idx <= maxm) {
+        root[idx] += val;
+        idx += idx & -idx;
+    }
+}
+ 
+int read(int idx)
+{
+    int sum = 0;
+    while (idx > 0) {
+        sum += root[idx];
+        idx -= idx & -idx;
+    }
+    return sum;
+}
+ 
+void calcBit()
+{
+    int n = maxm;
+    for(largestBit = 0; n; n >>= 1) largestBit++;
+}
+
+int readSingle(int idx){
+	int sum = root[idx];
+	if (idx > 0){
+		int z = idx - (idx & -idx);
+		idx--;
+		while (idx != z) {
+			sum -= root[idx]; 
+			idx -= (idx & -idx);
+		}
+	}
+	return sum;
+}
+
+int find(int cumFre){
+	int idx = 0, x, y;
+	//cout << cumFre << endl;
+	int bitMask = 1 << (largestBit - 1);
+	while ((bitMask != 0) && (idx < maxm)) {
+		int tIdx = idx + bitMask;
+		if (tIdx < maxm && cumFre > root[tIdx]){ 
+			idx = tIdx;
+			cumFre -= root[tIdx];
+		}
+		bitMask >>= 1;
+	}
+
+	if (cumFre == readSingle(idx + 1)) return idx + 1;
+	else return -1;
+}
+
+int main()
+{
+   // freopen("in.txt", "r", stdin);
+	int t, n, ans, x, chk;
+	char *s[limt];
+	for (int i = 1; i <= limt; i++) s[i] = (char *)malloc(sizeof(char) * 15);
+	scanf("%d", &t);
+
+	while (t--) {
+		chk = INT_MIN;
+		scanf("%d", &n);
+		maxm = n;
+		calcBit();
+		memset(root, 0, sizeof(root));
+		int a[n + 1];
+
+		for (int i = 1; i <= n; i++) {
+			scanf("%s", s[i]);
+			update(i, 1);
+		}
+
+		for (int i = 1; i <= n; i++) {
+			scanf("%d", &a[i]);
+		}
+
+		//for (int i = 1; i <= n; i++) cout << read(i) << endl;
+
+		for (int i = 1; i <= n; i++) {
+			if (i < n) scanf("%d", &x);
+			else if (i == n) x = 1;
+			ans = find(x);
+			update(ans, -1);
+			if (chk < a[ans]) chk = a[ans];
+			printf("%s %d\n", s[ans], chk);
+		}
+	}
+
+    return 0;
+}

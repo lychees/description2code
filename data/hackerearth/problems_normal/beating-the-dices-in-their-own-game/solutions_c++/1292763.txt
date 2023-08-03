@@ -1,0 +1,166 @@
+/*
+*/
+ 
+//#pragma comment(linker, "/STACK:16777216")
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <complex>
+#include <math.h>
+#include <set>
+#include <vector>
+#include <map>
+#include <queue>
+#include <stdio.h>
+#include <stack>
+#include <algorithm>
+#include <list>
+#include <ctime>
+#include <memory.h>
+#include <ctime> 
+ 
+#define y0 sdkfaslhagaklsldk
+#define y1 aasdfasdfasdf
+#define yn askfhwqriuperikldjk
+#define j1 assdgsdgasghsf
+#define tm sdfjahlfasfh
+#define lr asgasgash
+ 
+#define eps 1e-9
+//#define M_PI 3.141592653589793
+#define bs 1000000007
+#define bsize 512
+#define right adsgasgadsg
+#define free adsgasdg
+ 
+using namespace std;
+
+const int INF=1000000000;
+
+long n;
+struct rib
+{
+ long b,u,c,f;
+ long back;
+};
+vector<rib> g[1<<20];
+long sz[1<<20],val,cst;
+set<long> have[1<<10];
+map<long, long> pen[1<<10];
+long tests,tv[1<<10],flow,cost;
+
+void add_rib (int a, int b, int u, int c) {
+	rib r1 = { b, u, c, 0, g[b].size() };
+	rib r2 = { a, 0, -c, 0, g[a].size() };
+	g[a].push_back (r1);
+	g[b].push_back (r2);
+}
+
+
+int main(){
+//freopen("alter.in","r",stdin);
+//freopen("alter.out","w",stdout);
+//freopen("C:/input.txt","r",stdin);
+//freopen("C:/output.txt","w",stdout);
+ios_base::sync_with_stdio(0);
+//cin.tie(0);
+
+cin>>n;
+for (int i=1;i<=n;i++)
+{
+ cin>>sz[i];
+ for (int j=1;j<=sz[i];j++)
+ {
+  cin>>val>>cst;
+  if (have[i].find(val)==have[i].end())
+  {
+   have[i].insert(val);
+   pen[i][val]=cst;
+  }
+  pen[i][val]=min(pen[i][val],cst);
+ }
+}
+
+cin>>tests;
+for (;tests;--tests)
+{
+ for (int i=0;i<=n*2+5;i++)
+  g[i].clear();
+ 
+ for (int i=1;i<=n;i++)
+ {
+  cin>>tv[i];
+ }   
+ for (int i=1;i<=n;i++)
+  add_rib(0,i,1,0);
+ for (int i=1;i<=n;i++)
+  add_rib(n+i,n+n+1,1,0);
+ 
+ for (int i=1;i<=n;i++)
+  for (int j=1;j<=n;j++)
+  {
+   if (have[i].find(tv[j])==have[i].end())continue;
+   cst=pen[i][tv[j]];
+   add_rib(i,j+n,1,cst);
+  }
+ 
+ flow=cost=0;
+ long s,t,k;
+ k=n;
+ s=0;
+ t=n*2+1;
+ while (flow < k) {
+		vector<int> id (t+1, 0);
+		vector<int> d (t+1, INF);
+		vector<int> q (t+1);
+		vector<int> p (t+1);
+		vector<size_t> p_rib (t+1);
+		int qh=0, qt=0;
+		q[qt++] = s;
+		d[s] = 0;
+		while (qh != qt) {
+			int v = q[qh++];
+			id[v] = 2;
+			if (qh == t+1)  qh = 0;
+			for (size_t i=0; i<g[v].size(); ++i) {
+				rib & r = g[v][i];
+				if (r.f < r.u && d[v] + r.c < d[r.b]) {
+					d[r.b] = d[v] + r.c;
+					if (id[r.b] == 0) {
+						q[qt++] = r.b;
+						if (qt == t+1)  qt = 0;
+					}
+					else if (id[r.b] == 2) {
+						if (--qh == -1)  qh = t;
+						q[qh] = r.b;
+					}
+					id[r.b] = 1;
+					p[r.b] = v;
+					p_rib[r.b] = i;
+				}
+			}
+		}
+		 
+		if (d[t] == INF)  break;
+		long addflow = k - flow;
+		
+		for (int v=t; v!=s; v=p[v]) {
+			int pv = p[v];  size_t pr = p_rib[v];
+			addflow = min (addflow, g[pv][pr].u - g[pv][pr].f);
+		}
+		for (int v=t; v!=s; v=p[v]) {
+			int pv = p[v];  size_t pr = p_rib[v],  r = g[pv][pr].back;
+			g[pv][pr].f += addflow;
+			g[v][r].f -= addflow;
+			cost += g[pv][pr].c * addflow;
+		}
+		flow += addflow;
+	}
+// cout<<flow<<" "<<cost<<endl;
+if (flow<k)cout<<-1<<endl;
+else cout<<cost<<endl;
+
+}
+
+cin.get();cin.get();
+return 0;}

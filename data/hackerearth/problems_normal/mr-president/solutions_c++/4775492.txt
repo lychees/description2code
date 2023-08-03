@@ -1,0 +1,103 @@
+#include <iostream>
+#include <vector>
+#include <utility>
+#include <algorithm>
+#include<cstdlib>
+using namespace std;
+const int MAX = 1000002;
+int id[MAX];
+pair <int, pair<int, int> > p[MAX];
+vector<pair<int,pair<int,int>>> v;
+void initialize()
+{
+    for(int i = 0;i < MAX;++i)
+        id[i] = i;
+}
+
+int root(int x)
+{
+    while(id[x] != x)
+    {
+        id[x] = id[id[x]];
+        x = id[x];
+    }
+    return x;
+}
+
+void union1(int x, int y)
+{
+    int p = root(x);
+    int q = root(y);
+    id[p] = id[q];
+}
+
+long long kruskal(pair<int, pair<int, int> > p[],int m)
+{
+    int x, y;
+    long  cost,sum=0;
+    for(int i = 0;i < m;++i)
+    {
+        // Selecting edges one by one in increasing order from the beginning
+        x = p[i].second.first;
+        y = p[i].second.second;
+        cost = p[i].first;
+        // Check if the selected edge is creating a cycle or not
+        if(root(x) != root(y))
+        {
+            sum += cost;
+            union1(x, y);
+            v.push_back(p[i]);
+        }    
+    }
+    //vector<pair<int,pair<int,int>>>::iterator it;
+    //for(it=v.begin();it!=v.end();it++) cout<<(*it).first<<" "<<(*it).second.first<<" "<<(*it).second.second<<"\n";
+    return sum;
+}
+
+int main()
+{
+	int n,m,i,converts=0;
+	long long k,sum;
+	int pos;
+	cin>>n>>m>>k;
+	int cities[n+1];
+	for(i=1;i<=n;i++) cities[i] =0;
+	//cout<<n<<" "<<m<<" "<<k<<"\n";
+	initialize();
+	//cout<<n<<" "<<m<<" "<<k<<"\n";
+	int x,y,cost;
+	for(i=0;i<m;i++)
+	{
+		cin>>x>>y>>cost;
+		cities[x]=1;
+		cities[y]=1;
+		//cout<<x<<" "<<y<<" "<<cost<<"\n";
+		p[i]=make_pair(cost,make_pair(x,y));
+	}
+	sort(p,p+m);
+	//for(i=0;i<m;i++) cout<<p[i].first<<" "<<p[i].second.first<<" "<<p[i].second.second<<"\n";
+	sum=kruskal(p,m);
+	//cout<<sum<<"\n";
+	pos=v.size()-1;
+	//cout<<pos<<"\n";
+	while(sum>k && pos>=0)
+	{
+		converts++;
+		sum-=v[pos].first;
+		sum+=1;
+		pos--;
+	}
+	int rot=root(1);
+	for(i=2;i<=n;i++)
+	{
+		if(root(i)!=rot)
+		{
+			cout<<"-1\n";
+			exit(0);
+		}
+	}
+	if(sum>k) cout<<"-1\n";
+	else
+	cout<<converts<<"\n";
+	return 0;
+}

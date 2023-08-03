@@ -1,0 +1,114 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+
+#define PII       pair<int,int>
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+#define cin(x)    scanf("%d",&x)
+#define MOD		1000000007
+#define EPS		1E-10
+
+LL PHI[200000];
+
+LL BigMod(LL a,LL b,LL mod = MOD)
+{
+      if(!b) return 1;
+      LL x = BigMod(a,b/2,mod);
+      x = (x*x)%mod;
+      if(b&1) return (x*a)%mod;
+      else return x;
+}
+
+LL modinv(LL a,LL mod = MOD)
+{
+      return BigMod(a,mod-2,mod);
+}
+
+LL SUM(LL N, LL i, LL base)
+{
+	LL R = BigMod(base,i);
+	LL Q = (N/i);
+	LL num = BigMod(R,Q) - 1;
+	num = (num * R) % MOD;
+	num = (num * modinv(R - 1)) % MOD;
+	return num;
+}
+
+LL POWER(int n)
+{
+	if(n == 1) return 1;
+	LL ans = 0;
+	int N = n;
+	for(int i = 1; i*i <= N; i++)
+	{
+		if(N%i) continue;
+		ans = (ans + PHI[i] * SUM(N,i,N)) % MOD;
+		if(i*i != N)
+			ans = (ans + PHI[N/i] * SUM(N,N/i,N)) % MOD;
+	}
+	return ans;
+}
+
+LL PHIS(int n)
+{
+	if(n == 1) return 1;
+	LL ans = POWER(n);
+	ans *= PHI[n];
+	ans %= MOD;
+	ans *= modinv(n);
+	ans %= MOD;
+	return ans;
+}
+
+LL EXPS(int n)
+{
+	LL ans = 0;
+	int N = n;
+	for(int i = 1; i*i <= N; i++)
+	{
+		if(N%i) continue;
+		ans = (ans + 1LL * PHI[i] * SUM(N,i,2)) % MOD;
+		if(i*i != N)
+			ans = (ans + 1LL * PHI[N/i] * SUM(N,N/i,2)) % MOD;
+	}
+	ans *= BigMod(2,n);
+	ans %= MOD;
+	return ans;
+}
+
+void calcphi(int lmt = 100000)
+{
+	for(int i = 1; i <= lmt; i++)
+		PHI[i] = i;
+	for(int i = 2; i <= lmt; i++)
+	{
+		if(PHI[i] != i) continue;
+		for(int j = i; j <= lmt; j += i)
+			PHI[j] -= (PHI[j]/i);
+	}
+}
+
+int main()
+{
+	calcphi();
+	int q;
+	cin(q);
+	while(q--)
+	{
+		int t,n;
+		cin(t);
+		cin(n);
+		if(t == 1)
+			cout << POWER(n) <<"\n";
+		else if(t == 3)
+			cout << PHIS(n) << "\n";
+		else
+			cout << EXPS(n) << "\n";
+	}
+	return 0;
+}

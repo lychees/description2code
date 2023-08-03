@@ -1,0 +1,209 @@
+#include<bits/stdc++.h>
+#include<unordered_map>
+const int maxn=50006;
+#define ll long long
+using namespace std;
+ll mp(int a,int b)
+{
+	ll ans=a;
+	ans*=1000000;
+	ans+=b;
+	return ans;
+}
+unordered_map<ll,ll> info;
+struct node
+{
+	int l,r;
+};
+bool operator < (node n1,node n2)
+{
+	if(n1.l/220 != n2.l/220)return n1.l/220 < n2.l/220;
+	return n1.r < n2.r;
+}
+ll ans=0;
+ll cnt[maxn];
+ll ins(int x)
+{
+	ll c=cnt[x];
+	ans-=(c*(c));
+
+	cnt[x]++;
+	c++;
+	ans+=(c*(c));
+	return ans;
+}
+ll del(int x)
+{
+	ll c=cnt[x];
+	ans-=(c*c);
+
+	cnt[x]--;
+	c--;
+	ans+=(c*(c));
+	return ans;
+}
+vector<node> todo;
+void pushback(node x)
+{
+	if(x.l<=x.r)todo.push_back(x);
+}
+ll fans(int l, int r)
+{
+	if(l>r)return 0;
+	return info[mp(l,r)];
+}
+int main()
+{
+	int n,q;
+	for(int i=0;i<maxn;++i)cnt[i]=0;
+	int arr[maxn];
+	scanf("%d",&n);
+	for(int i=1;i<=n;++i)scanf("%d",&arr[i]);
+	int tl1[maxn],tl2[maxn],tr1[maxn],tr2[maxn];
+	scanf("%d",&q);
+	for(int i=0;i<q;++i)
+	{
+		int l1,l2,r1,r2;
+		scanf("%d%d%d%d",&l1,&r1,&l2,&r2);
+		if(l1>l2)
+		{
+			swap(l1,l2);
+			swap(r1,r2);
+		}
+		tl1[i]=l1;
+		tl2[i]=l2;
+		tr1[i]=r1;
+		tr2[i]=r2;
+		if(l2>r1)
+		{
+			node now={l1,r2};
+			pushback(now);
+			now.l=r1+1;
+			now.r=r2;
+			pushback(now);
+			now.l=l1;
+			now.r=l2-1;
+			pushback(now);
+			now.l=r1+1;
+			now.r=l2-1;
+			pushback(now);
+		}
+		else
+		{
+			if(r2>=r1)
+			{
+				node now={l1,r2};
+				pushback(now);
+				now.l=l1;
+				now.r=l2-1;
+				pushback(now);
+				now.l=l2;
+				now.r=r1;
+				pushback(now);
+				now.l=r1+1;
+				now.r=r2;
+				pushback(now);
+			}
+			else
+			{
+				node now={l1,r2};
+				pushback(now);
+				now.l=l2;
+				now.r=r1;
+				pushback(now);
+				now.l=l1;
+				now.r=l2-1;
+				pushback(now);
+				now.l=r2+1;
+				now.r=r1;
+				pushback(now);
+
+			}
+		}
+	}
+	ll now=0;
+	now=ins(arr[1]);
+	int cl=1,cr=1;
+	sort(todo.begin(),todo.end());
+	//cerr<<todo.size()<<endl;
+	for(int t=0;t<todo.size();++t)
+	{
+		if(todo[t].l>cl)
+		{
+			if(cr < todo[t].r)
+			{
+				while(cr<todo[t].r)
+				{
+					now=ins(arr[cr+1]);
+					cr++;
+				}
+			}
+			else
+			{
+				while(cr>todo[t].r)
+				{
+					now=del(arr[cr]);
+					cr--;
+				}
+			}
+			while(cl<todo[t].l)
+			{
+				now=del(arr[cl]);
+				cl++;
+			}
+
+		}
+		else
+		{
+			while(cl>todo[t].l)
+			{
+				now=ins(arr[cl-1]);
+				cl--;
+			}
+			if(cr < todo[t].r)
+			{
+				while(cr<todo[t].r)
+				{
+					now=ins(arr[cr+1]);
+					cr++;
+				}
+			}
+			else
+			{
+				while(cr>todo[t].r)
+				{
+					now=del(arr[cr]);
+					cr--;
+				}
+			}
+		}
+		//cerr<<todo[t].l<<" "<<todo[t].r<<" "<<now<<endl;
+		info[mp(todo[t].l,todo[t].r)]=now;
+	}
+	for(int i=0;i<q;++i)
+	{
+		int l1,l2,r1,r2;
+		l1=tl1[i];
+		l2=tl2[i];
+		r1=tr1[i];
+		r2=tr2[i];
+		ll ans=0;
+		if(l2>r1)
+		{
+			ans=fans(l1,r2)-fans(r1+1,r2)-fans(l1,l2-1)+fans(r1+1,l2-1);
+		}
+		else
+		{
+			if(r2>=r1)
+			{
+				ans=fans(l1,r2) - fans(r1+1,r2) -fans(l1,l2-1) + fans(l2,r1);
+			}
+			else
+			{
+				ans=fans(l2,r1) + fans(l1,r2) -fans(l1,l2-1)-fans(r2+1,r1);
+			}
+		}
+		printf("%lld\n",ans/2);
+	}
+	return 0;
+}

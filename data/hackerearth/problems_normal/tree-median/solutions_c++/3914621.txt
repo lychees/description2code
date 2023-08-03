@@ -1,0 +1,111 @@
+#include "bits/stdc++.h"
+using namespace std;
+const int N = 3e5 + 5;
+int n , x;
+int a , b;
+vector < int > v[N];
+int arr[N];
+bool done[N];
+int subtree[N];
+int sz;
+int cent;
+map < int , int > mp;
+long long ans[N];
+void dfs(int node , int parent){
+	subtree[node] = 1;
+	for(int next : v[node]){
+		if(!done[next] && next != parent){
+			dfs(next , node);
+			subtree[node] += subtree[next];
+		}
+	}
+}
+int find(int node , int parent){
+	for(int next : v[node]){
+		if(next != parent && !done[next] && subtree[next] > sz){
+			return find(next , node);
+		}
+	}
+	return node;
+}
+int ok;
+long long go(int node , int parent , int sum){
+	sum += arr[node];
+	long long tmp = mp[-1 - sum] + mp[-2 - sum];
+	ans[cent] += ok * tmp;
+	for(int next : v[node]){
+		if(next != parent && !done[next]){
+			tmp += go(next , node , sum);
+		}
+	}
+	ans[node] += tmp;
+	return tmp;
+}
+void upd(int node , int parent , int sum){
+	sum += arr[node];
+	++mp[sum];
+	for(int next : v[node]){
+		if(next != parent && !done[next]){
+			upd(next , node , sum);
+		}
+	}
+}
+void getans(int node){
+	mp.clear();
+	++mp[0];
+	ok = 1;
+	for(int next : v[node]){
+		if(done[next]){
+			continue;
+		}
+		go(next , node , arr[node]);
+		upd(next , node , 0);
+	}
+	ok = 0;
+	reverse(v[node].begin() , v[node].end());
+	mp.clear();
+	for(int next : v[node]){
+		if(done[next]){
+			continue;
+		}
+		go(next , node , 0);
+		upd(next , node , arr[node]);
+	}
+}
+void solve(int node){
+	dfs(node , 0);
+	sz = subtree[node] >> 1;
+	cent = find(node , 0);
+	getans(cent);
+	done[cent] = 1;
+	for(int next : v[cent]){
+		if(!done[next]){
+			solve(next);
+		}
+	}
+}
+int main(){
+	scanf("%d %d" , &n , &x);
+	for(int i = 1 ; i <= n ; ++i){
+		v[i].clear();
+		done[i] = 0;
+		ans[i] = 0;
+	}
+	for(int i = 1 ; i < n ; ++i){
+		scanf("%d %d" , &a , &b);
+		v[a].emplace_back(b);
+		v[b].emplace_back(a);
+	}
+	for(int i = 1 ; i <= n ; ++i){
+		scanf("%d" , arr + i);
+		if(arr[i] < x){
+			arr[i] = -1;
+		}
+		else{
+			arr[i] = 1;
+			ans[i] = -1LL << 50;
+		}
+	}
+	solve(1);
+	printf("%lld\n" , max(0LL , *max_element(ans + 1 , ans + 1 + n)));
+}

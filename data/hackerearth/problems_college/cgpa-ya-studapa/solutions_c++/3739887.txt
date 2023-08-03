@@ -1,0 +1,99 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+typedef long long ll;
+const ll MOD = ll(1e9) + 7;
+const ll MAX = 128;
+ll dp[MAX][MAX], res[MAX];
+
+ll get_id(const vector<ll>& vals, ll v) {
+  return lower_bound(vals.begin(), vals.end(), v) - vals.begin();
+}
+
+void solve(ll test_num) {
+  (void) test_num;
+  ll N;
+  cin >> N;
+  vector<ll> x(N), y(N), pts(N);
+  for (ll i = 0; i < N; ++i) {
+    cin >> x[i];
+  }
+  for (ll i = 0; i < N; ++i) {
+    cin >> y[i];
+  }
+  for (ll i = 0; i < N; ++i) {
+    cin >> pts[i];
+  }
+  vector<ll> xvals = x, yvals = y;
+  xvals.push_back(0);
+  yvals.push_back(0);
+  sort(xvals.begin(), xvals.end());
+  sort(yvals.begin(), yvals.end());
+  xvals.erase(unique(xvals.begin(), xvals.end()), xvals.end());
+  yvals.erase(unique(yvals.begin(), yvals.end()), yvals.end());
+  const ll X = xvals.size(), Y = yvals.size();
+  memset(dp, 0x3F, sizeof(dp));
+  memset(res, 0x3F, sizeof(res));
+  dp[0][0] = 0;
+  for (ll i = 0; i < X; ++i) {
+    for (ll j = 0; j < Y; ++j) {
+      ll now = dp[i][j] - xvals[i] - yvals[j];
+      ll cnt = 0;
+      for (ll k = 0; k < N; ++k) {
+        if (x[k] <= xvals[i] || y[k] <= yvals[j]) {
+          ++cnt;
+          now += pts[k];
+        }
+      }
+      res[cnt] = min(res[cnt], dp[i][j]);
+      if (i + 1 < X) {
+        dp[i + 1][j] = min(dp[i + 1][j], dp[i][j] + max(0LL, xvals[i + 1] - xvals[i] - now));
+      }
+      if (j + 1 < Y) {
+        dp[i][j + 1] = min(dp[i][j + 1], dp[i][j] + max(0LL, yvals[j + 1] - yvals[j] - now));
+      }
+    }
+  }
+  for (ll i = N - 1; i >= 0; --i) {
+    res[i] = min(res[i], res[i + 1]);
+  }
+  for (ll i = 1; i <= N; ++i) {
+    cout << res[i] << " ";
+  }
+  cout << endl;
+}
+
+void solve() {
+#ifdef AZN
+//make_case();
+  double start_t = (double) clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr  );
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  ll T = 1;
+  cin >> T;
+  for (ll t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << fixed << setprecision(3) << "Took: " << (((double) clock() - start_t) / CLOCKS_PER_SEC)
+      << endl;
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

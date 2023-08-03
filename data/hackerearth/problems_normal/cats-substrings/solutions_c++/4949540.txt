@@ -1,0 +1,148 @@
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#include<cstdlib>
+#include<cmath>
+#include<algorithm>
+#include<string>
+#include<map>
+#include<set>
+#include<vector>
+#include<queue>
+#include<stack>
+using namespace std;
+#define rep(i, a, b) for (int i = (a); i <= (b); ++i)
+#define red(i, a, b) for (int i = (a); i >= (b); --i)
+#define clr( x , y ) memset(x,y,sizeof(x))
+#define sqr(x) ((x) * (x))
+#define mp make_pair
+#define pb push_back
+typedef long long lint;
+int n, m, k, q[210000], f[210000];
+lint ans;
+
+struct suffix
+{
+#define Suffix 401000
+	int rank[Suffix], sa[Suffix], h[Suffix];
+	int X[Suffix], Y[Suffix], sum[Suffix];
+	char c[Suffix];
+	bool cmp(int *r, int a, int b, int l) {
+		return (r[a] == r[b] && r[a + l] == r[b + l]);
+	}
+	void calc() {
+		int l, p, *x = X, *y = Y, m = 128;
+		rep(i, 0, m) sum[i] = 0;
+		rep(i, 1, n) sum[x[i] = c[i]] ++;
+		rep(i, 1, m) sum[i] += sum[i - 1];
+		red(i, n, 1) sa[sum[x[i]]--] = i;
+		for (l = 1, p = 1; l <= n; m = p, l *= 2) {
+			p = 0;
+			rep(i, n - l + 1, n) y[++p] = i;
+			rep(i, 1, n) if (sa[i] > l) y[++p] = sa[i] - l;
+			rep(i, 0, m) sum[i] = 0;
+			rep(i, 1, n) sum[x[y[i]]] ++;
+			rep(i, 1, m) sum[i] += sum[i - 1];
+			red(i, n, 1) sa[sum[x[y[i]]]--] = y[i];
+			swap(x, y);
+			x[sa[1]] = 1; p = 2;
+			rep(i, 2, n)
+				x[sa[i]] = cmp(y, sa[i - 1], sa[i], l) ? p - 1 : p++;
+		}
+		rep(i, 1, n) rank[sa[i]] = i;
+		p = 0;
+		rep(i, 1, n) {
+			if (rank[i] == 1) continue;
+			while (c[i + p] == c[sa[rank[i] - 1] + p]) p++;
+			h[rank[i]] = p - k + 1;
+			if (p) p--;
+		}
+	}
+	void init() {
+
+		int z;
+		scanf("%d", &z);
+
+		m = 0;
+		int cur = 1;
+		int tot = 0;
+		tot += z;
+		while (z--)
+		{
+			scanf("%s", c + cur);
+			m = strlen(c + cur);
+
+			cur += m;
+			c[cur] = '1';
+			cur++;
+		}
+		m = strlen(c + 1) - 1;
+
+		c[cur - 1] = '2';
+		scanf("%d", &z);
+		//cout<<cur<<"\n";
+		int mm = 0;
+		tot += z;
+		while (z--)
+		{
+			scanf("%s", c + cur);
+			mm = strlen(c + cur);
+			tot += mm;
+			cur += mm;
+			c[cur] = '3';
+			cur++;
+		}
+		c[cur - 1] = 0;
+		n = strlen(c + 1);
+		c[n + 1] = 0;
+		//printf("%s\n",c+1);
+		calc();
+	}
+} sf;
+
+void init()
+{
+	sf.init();
+	ans = 0;
+}
+
+int calc(int t)
+{
+	if (t == m + 1) return 3;
+	return t <= m;
+}
+
+void deal(int t)
+{
+	lint sum = 0;
+	int y = 0, s = 0, x;
+	rep(i, 1, n) {
+		y = 0;
+		x = calc(sf.sa[i]);
+		while (s && q[s] >= sf.h[i]) sum -= (lint)f[s] * q[s], y += f[s--];
+		q[++s] = sf.h[i]; f[s] = y; sum += (lint)q[s] * f[s];
+		if (q[s] <= 0) sum = s = 0;
+		q[++s] = 10000000;
+		f[s] = (x == t);
+		sum += q[s] * f[s];
+		if (x == (1 ^ t)) ans += sum;
+	}
+}
+
+void work()
+{
+	deal(1);
+	deal(0);
+	cout << ans << endl;
+}
+
+int main()
+{
+	int t = 1;
+	while (t--) {
+		k = 1;
+		init();
+		work();
+	}
+	return 0;
+}

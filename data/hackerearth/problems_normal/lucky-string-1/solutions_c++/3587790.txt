@@ -1,0 +1,83 @@
+// https://www.hackerearth.com/problem/algorithm/lucky-string-1
+
+# include <iostream>
+# include <array>
+# include <vector>
+# include <iterator>
+# include <algorithm>
+# include <cassert>
+
+using namespace std;
+using number_t = unsigned long long;
+
+array<number_t, sizeof(number_t) * 8> powers_of_two;
+
+const number_t lim = 1000000000000000;
+
+int main() {
+  // length of numbers -> length of all numbers of that length
+  // 1 -> 2 == 1 * 2 ^ 1
+  // 2 -> 8 == 2 * 2 ^ 2
+  // 3 -> 24 == 3 * 2 ^ 3
+  number_t power = 2;
+  vector<number_t> lengths = { 0 };
+  for (size_t i = 1; i < sizeof(number_t) * 8; ++i) {
+    auto value = i * power + lengths[i - 1];
+    if (value > lim) {
+      break;
+    }
+    lengths.push_back(value);
+    power <<= 1;
+  }
+
+  /*
+copy(begin(lengths), end(lengths), ostream_iterator<number_t>(cout, "\n"));
+cout << endl;
+// exit(0);
+  */
+
+  size_t T;
+  cin >> T;
+  for (size_t t = 0; t < T; ++t) {
+    number_t n;
+    cin >> n; // 1-based
+
+    auto it = lower_bound(begin(lengths), end(lengths), n);
+    auto number_of_digits = distance(begin(lengths), it);
+
+    auto offset_in_sequence = n - 1; // 0-based
+    assert(it != begin(lengths));
+    offset_in_sequence -= *--it;
+
+    // n is offset in a sequence of numbers of number_of_digits
+    auto offset_in_number = offset_in_sequence % number_of_digits; // zero based
+    auto number_in_sequence = offset_in_sequence / number_of_digits; // zero based
+
+/*
+cout << "n == " << n << endl;
+cout << "offset_in_sequence == " << offset_in_sequence << endl;
+cout << "number_of_digits == " << number_of_digits << endl;
+cout << "offset_in_number == " << offset_in_number << endl;
+cout << "number_in_sequence == " << number_in_sequence << endl;
+*/
+
+    if (number_in_sequence & (1ull << (number_of_digits - offset_in_number - 1))) {
+      cout << "Earth" << endl; // 4
+    }
+    else {
+      cout << "Hacker" << endl; // 5
+    }
+// cout << endl;
+    /*
+    string number(number_of_digits, '4');
+    auto s_it = number.rbegin();
+    for (size_t i = 0; number_in_sequence && i < number_of_digits; ++i, ++s_it) {
+      if (number_in_sequence & 1) {
+        *s_it = '5';
+      }
+    }
+    */
+  }
+
+  return 0;
+}

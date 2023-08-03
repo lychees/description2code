@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+#define foru(i, a, b) for(int i = a; i <= b; ++i)
+#define ford(i, a, b) for(int i = a; i >= b; --i)
+using namespace std;
+const int MAXN = 205;
+const int MAXK = 505;
+int n, m, k;
+int dp[MAXN][MAXN][MAXK];
+char s[MAXN], t[MAXN];
+vector<int> x;
+
+inline int Dist(char a, char b) {
+	int x = abs(int(a - b));
+	return min(x, 26 - x);
+}
+
+inline void update(int &u, int v) {
+	u = max(u, v);
+}
+
+int main() {
+	//freopen("input.txt", "r", stdin);
+	//freopen("output.txt", "w", stdout);
+	scanf("%d%d%d\n", &n, &m, &k);
+	scanf("%s\n", s + 1); scanf("%s\n", t + 1);
+
+	ford(i, n - 1, 0) {
+		bool ok = true;
+		foru(j, 1, i) if (s[j] != s[n - i + j]) ok = false;
+		if (ok) x.push_back(i);
+	}	
+
+	foru(i, 0, m) foru(pos, 0, n) foru(j, 0, k) dp[i][pos][j] = -1e9;
+	dp[0][0][0] = 0;
+
+	foru(i, 0, m - 1) foru(pos, 0, n - 1) foru(j, 0, k) {
+		if (dp[i][pos][j] < 0) continue;
+		update(dp[i + 1][0][j], dp[i][pos][j]);
+
+		int cost = j + Dist(s[pos + 1], t[i + 1]);
+		if (cost > k) continue;
+		if (pos < n - 1)
+			update(dp[i + 1][pos + 1][cost], dp[i][pos][j]);
+		else
+			for(int xx = 0; xx < x.size(); ++xx) {
+				int X = x[xx];
+				update(dp[i + 1][X][cost], dp[i][pos][j] + 1);
+			}
+	}
+
+	int ans = 0;
+	foru(pos, 0, n) foru(j, 0, k) update(ans, dp[m][pos][j]);
+	printf("%d\n", ans);
+	return 0;
+}

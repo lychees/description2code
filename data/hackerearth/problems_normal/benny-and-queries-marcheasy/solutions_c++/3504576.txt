@@ -1,0 +1,129 @@
+#include<bits/stdc++.h>
+#define mod 1000000007
+#define ll long long
+#define pb push_back
+#define Max LONG_LONG_MAX
+#define Min LONG_LONG_MIN
+using namespace std;
+
+const int lim=5e5+6;
+const int len=19;
+
+typedef struct node
+{
+	node *child[2];
+	vector<int>contains;
+	
+}node;
+
+node *newnode()
+{
+	node *nn;
+	nn=new node;
+	nn->child[0]=NULL;
+	nn->child[1]=NULL;
+	return nn;
+}
+
+node *root; 
+
+void insert(int val,int idx)
+{
+	node *p=root;
+	
+	for(int i=len;i>=0;i--)
+	{
+		bool b=( (1<<i) & val ); 
+	    
+	    
+		if(p->child[b]==NULL)
+		p->child[b]=newnode();
+		
+		p=p->child[b];
+		p->contains.pb(idx);
+	}
+	
+}
+
+ll query(int l,int r,int x)
+{
+    ll ans=0; 
+    node *p=root;
+    
+   	for(int i=len;i>=0;i--)
+   	{
+   	    bool b=( (1<<i) & x );
+		
+		if(p->child[1-b]!=NULL) //check if there is any index from L to R 
+		{
+		   int low=0,high=p->child[1-b]->contains.size() - 1;
+		   bool isthere=0;
+		  
+		   while(low <= high)
+		   {
+		   	  int mid=(low+high) >> 1;
+		   	  
+		   	  if(p->child[1-b]->contains[mid] < l)
+		   	  low=mid+1;
+		   	  
+		   	  else if(p->child[1-b]->contains[mid] > r)
+		   	  high=mid-1;
+		   	  
+		   	  else
+		   	  {
+		   	    isthere=1;
+				break;	
+			  }
+			  
+		   }
+		   	
+		   if(isthere)  //  can take
+		   {
+		   	  //cout<<"1 "<<i<<endl;
+		      ans+=(1<<i);
+			  p=p->child[1-b];	
+		   }	
+		   
+		   else        // cannot take
+		    {
+		    	//cout<<"2 "<<i<<endl;
+		      
+		    	p=p->child[b];
+		    }
+		}
+		
+		else
+		{
+			p=p->child[b];
+			//cout<<"3 "<<i<<endl;
+		}
+	}
+	
+	return ans;
+}
+
+int main()
+{
+  ios_base::sync_with_stdio(false);cin.tie(NULL);
+  //freopen("input.txt", "r", stdin);
+  
+  root=newnode();
+  ll l,r,x,i,j,t,q,k,m,n,a[lim];
+  cin>>n>>q;
+  
+  for(int i=1;i<=n;i++)
+  {
+    cin>>a[i];
+   
+    insert(a[i],i);
+  }
+  
+ 
+  while(q--)
+  {
+    cin>>l>>r>>x;
+	cout<<query(l,r,x)<<endl;
+  }
+  
+  return 0;
+}

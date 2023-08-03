@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <list>
+#include <set>
+using namespace std;
+// start>>second && end << first
+class segment{
+	public:
+	int first,second;
+	segment(int f,int s){
+		first = f;
+		second = s;
+	}
+	segment(){
+		first = 0;
+		second = 0;
+	}
+};
+bool operator<(const segment &a, const segment &b){
+	return a.second<b.first;
+}
+
+int main()
+{
+    int t;
+    cin>>t;
+    while(t--){
+    	int n;
+    	cin>>n;
+    	int l;
+    	cin>>l;
+    	vector<segment> segs;
+    	segs.reserve(1000000);
+    	set<pair<int,int>> inserted;
+    	for(int i=0;i<n;i++){
+    		int start,end;
+    		cin>>start>>end;
+    		//segs.push_back(make_pair(start,end));
+    		//vector<pair<int,int>>::iterator cur = segs.end();
+    		vector<segment> temp;
+    		temp.reserve(1000000);
+    		temp.push_back(segment(start,end));
+    		inserted.emplace(make_pair(start,end));
+    		vector<segment>::iterator from;
+    		from = lower_bound(segs.begin(),segs.end(),segment(start-1,start-1));
+    		vector<segment>::iterator till;
+    		till = upper_bound(segs.begin(),segs.end(),segment(end+1,end+1));
+    		for(vector<segment>::iterator itr = from;itr!=till;++itr){
+    			if((start-itr->first)*(end-itr->second) > 0){
+    				int s = min(itr->first,start);
+    				int e = max(itr->second,end);
+    				segment p(s,e);
+    				if(inserted.count(make_pair(s,e))==0){
+    					temp.push_back(p);
+    					inserted.emplace(make_pair(s,e));
+    				}
+    			}
+    		}
+    		sort(temp.begin(),temp.end());
+    		vector<segment> t2(segs.size() + temp.size());
+    		merge(segs.begin(),segs.end(),temp.begin(),temp.end(),t2.begin());
+    		segs.clear();
+    		copy(t2.begin(),t2.end(),back_inserter(segs));
+    	}
+    	bool possible = false;
+		for(vector<segment>::iterator itr = segs.begin();itr!=segs.end();++itr){
+			//cout<<itr->first<<' '<<itr->second<<endl;
+			if(itr->second - itr->first == l){
+				possible = true;
+				break;
+			}
+		}
+		cout<<(possible?"Yes":"No")<<endl;
+    }
+    return 0;
+}

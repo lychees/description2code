@@ -1,0 +1,192 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<queue>
+#include<map>
+#include<utility>
+#include<set>
+#include<stack>
+#include<list>
+#include<deque>
+#include<bitset>
+#include<iomanip>
+#include<cstring>
+#include<sstream>
+#include<cstdio>
+#include<cstdlib>
+#include<climits>
+#include<cmath>
+#include<cctype>
+
+
+#define pb push_back
+#define mp make_pair
+#define rep(i,a,b) for(int i=a;i<=b;i++)
+#define ren(i,a,b) for(int i=a;i>=b;i--)
+#define ff first
+#define ss second
+#define pll pair<long long int,long long int>
+#define pii pair<int,int>
+#define vll vector<long long int>
+#define vii vector<int>
+#define gi(n) scanf("%d",&n)
+#define gll(n) scanf("%lld",&n)
+#define gstr(n) scanf("%s",n)
+#define gl(n) cin >> n
+#define oi(n) printf("%d",n)
+#define oll(n) printf("%lld",n)
+#define ostr(n) printf("%s",n)
+#define ol(n) cout << n
+#define os cout<<" "
+#define on cout<<"\n"
+#define o2(a,b) cout<<a<<" "<<b
+#define all(n) n.begin(),n.end()
+#define present(s,x) (s.find(x) != s.end())
+#define cpresent(s,x) (find(all(s),x) != s.end())
+#define tr(container, it) for(__typeof(container.begin()) it = container.begin(); it != container.end(); it++)
+using namespace std;
+
+typedef unsigned long long int ull;
+typedef long long int ll;
+typedef vector<vector<ll> > mat;
+
+ll n,m,tt=0,in[500005],out[500005],l[500005],hh[500005],su[500005];
+ll th[500005];__int128_t res;
+vii v[500005],b[500005];
+
+struct node
+{
+	node *left,*right;
+	__int128_t l1,l2,ls;
+	
+	node(node *l=NULL,node *r=NULL,__int128_t _l1=0,__int128_t _l2=0,__int128_t _ls=0)
+	{
+		left=l,right=r,l1=_l1,l2=_l2;ls=_ls;
+	}
+	
+	node *build(int l,int r)
+	{
+		if(l==r)
+		{
+			return this;
+		}
+		int mid=(l+r)/2;
+		left=new node();
+		right=new node();
+		left=left->build(l,mid);
+		right=right->build(mid+1,r);
+		return this;
+	}
+	
+	
+	node *update(int l,int r,int ql,__int128_t x,__int128_t d,__int128_t y)
+	{
+		
+		if(l==r)
+		{
+			return new node(left,right,l1+d,l2+y,ls+x);
+		}
+		int mid=(l+r)/2;
+		if(ql<=mid)
+		return new node(left -> update(l , mid , ql,x,d,y),right,l1+d,l2+y,ls+x);
+		return new node(left,right -> update(mid + 1 , r , ql,x,d,y),l1+d,l2+y,ls+x);
+	}
+	
+	
+    __int128_t query(int l , int r , int ql , int qr )
+	{
+        if(l > qr || r < ql)
+		{
+            return 0LL;
+        }
+        if(l >= ql && r <= qr)
+		{
+            return ls+hh[qr]*l1-l2;
+        }
+        int mid = (l+r)/2;
+        return left -> query(l , mid , ql , qr) + right -> query(mid + 1 , r , ql , qr);
+    }
+
+
+	
+}*root[500005];
+
+void dfs(int at,int h=0)
+{
+	in[at]=++tt;
+	l[at]=h;
+	hh[in[at]]=h;
+	tr(v[at],it)
+	dfs(*it,h+1);
+	out[at]=tt;
+}
+
+int main()
+{ios_base::sync_with_stdio(false);
+cin>>n>>m;
+rep(i,2,n)
+{
+	int x;
+	cin>>x;
+	v[x].pb(i);
+}
+dfs(1,0);
+rep(i,1,n)
+{
+	int x;
+	cin>>x;
+	b[x].pb(i);
+}
+rep(i,1,m)
+cin>>th[i];
+
+int q;
+cin>>q;
+root[0]=new node();
+root[0]=root[0]->build(1,tt);
+su[0]=0;
+rep(i,1,tt)
+su[i]=su[i-1]+hh[i];
+rep(ii,1,q)
+{
+	root[ii]=root[ii-1];
+	ll f,x,d;
+	cin>>f>>x>>d;
+	//ol(root[ii]->l1);on;
+	root[ii]=root[ii]->update(1,tt,in[f],x,d,l[f]*d);
+	if(out[f]!=tt)
+	root[ii]=root[ii]->update(1,tt,out[f]+1,-x,-d,-l[f]*d);
+	//ol(root[ii]->query(1,tt,2,2,0,0,0));on;
+	//ol(root[ii]->l1);on;
+}
+
+rep(i,1,m)
+{
+	int lo=1,hi=q,mid,ans=-1;
+	__int128_t rr=0;
+	while(lo<hi)
+	{
+		mid=(lo+hi)/2;
+	    res=0;
+		tr(b[i],it)
+		res+=root[mid]->query(1,tt,1,in[*it]);
+		if(res<th[i])
+		lo=mid+1;
+		else
+		hi=mid,rr=res,ans=mid;
+	}
+	rr=0;
+	tr(b[i],it)
+	rr+=root[lo]->query(1,tt,1,in[*it]);
+	if(rr>=th[i])
+	{
+		ol(lo);on;
+	}
+	else
+	{
+		ol("rekt\n");
+	}
+}
+
+return 0;
+}

@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define max 1000000000
+int n;
+
+double DP[110][2];
+double p[110][2];
+double h;
+
+double distance(double x1 , double y1 ,double x2 ,double y2)
+{
+	return sqrt((x1-x2)*(x1-x2) + ( y1-y2) * ( y1-y2));
+}
+
+bool horizontalshift(int l,int r,double height)
+{
+	int i;
+
+	for(i=l;i<=r;i++)
+	{
+		if(height < p[i][1] || height > p[i][1]+h)
+			return false ;
+	}
+
+
+	return true ;
+}
+
+bool nintersect(double x1,double y1,double x2,double y2,int l,int r)
+{
+	double Y;
+	int i;
+
+	for(i=l+1;i<r;i++)
+	{
+		Y=y1+((y2-y1)*(p[i][0]-x1))/(x2-x1);
+
+		if(Y < p[i][1] || Y > p[i][1]+h)
+			return false;
+
+
+	}
+	return true;
+}
+
+
+
+int main()
+{
+	int i , j , k , l;
+	cin >> n;
+	for(i=0;i<=n;i++)
+		cin >> p[i][0] >> p[i][1]; 
+	cin >> h;
+
+	for(i=0;i<=n;i++)
+		for(j=0;j<2;j++)
+			DP[i][j]=max;
+
+	double x1,x2,y1,y2;
+
+
+	DP[0][0]=0;DP[0][1]=0;
+
+
+	for(i=1;i<=n;i++)
+	{
+		if(horizontalshift(0,i-1,p[i][1]))
+			DP[i][0]=min(DP[i][0],(double)(p[i][0]-p[0][0]));
+		if(horizontalshift(0,i-1,p[i][1]+h))
+			DP[i][1]=min(DP[i][1],(double)(p[i][0]-p[0][0]));
+	}
+
+
+	for(i=0;i<=n;i++)
+	{
+		for(j=0;j<2;j++)
+		{
+			for(k=i+1;k<=n;k++)
+				{
+					for(l=0;l<2;l++)
+					{
+						x1=p[i][0]; y1=p[i][1]+h*j;
+						x2=p[k][0]; y2=p[k][1]+h*l;
+						
+						if(nintersect(x1,y1,x2,y2,i,k))
+						{
+							DP[k][l]=min(DP[k][l],(DP[i][j] + distance(x1,y1,x2,y2)));
+
+						}
+					}
+				}
+		}
+	}
+
+
+	double ans=max;
+
+	for(i=0;i<=n;i++)
+	{
+		if(horizontalshift(i+1,n,p[i][1]))
+			ans=min(ans,DP[i][0]+p[n][0]-p[i][0]);
+
+		if(horizontalshift(i+1,n,p[i][1]+h))
+			ans=min(ans,DP[i][1]+p[n][0]-p[i][0]);			
+	}
+
+
+//	for(i=0;i<=n;i++)
+//	{
+//		cout << setprecision(10) << DP[i][0] << " " << DP[i][1] << endl;
+//	}
+
+	cout << setprecision(10) << fixed << ans << endl;
+
+
+	return 0; 
+	
+}
+

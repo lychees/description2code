@@ -1,0 +1,147 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#include<utility>
+#include<set>
+#include<map>
+#include<queue>
+#include<vector>
+#include<string>
+#include<cstring>
+#include<unordered_map>
+#include<cassert>
+#include<cmath>
+
+//code by cl3488
+
+#define ri(X) scanf("%d", &(X))
+#define rii(X, Y) scanf("%d%d", &(X), &(Y))
+#define riii(X, Y, Z) scanf("%d%d%d", &(X), &(Y), &(Z))
+#define dri(X) int (X); scanf("%d", &X)
+#define drii(X, Y) int X, Y; scanf("%d%d", &X, &Y)
+#define driii(X, Y, Z) int X, Y, Z; scanf("%d%d%d", &X, &Y, &Z)
+#define pb push_back
+#define mp make_pair
+#define rep(i, s, t) for ( int i=(s) ; i <(t) ; i++)
+#define fill(x, v) memset (x, v, sizeof(x))
+#define why(d) cerr << (d) << "!\n"
+#define whisp(X, Y) cerr << (X) << " " << (Y) << "#\n"
+#define exclam cerr << "!!\n"
+#define left(p) ch[p][0]
+#define right(p) ch[p][1]
+#define mid ((l+r)>>1)
+typedef long long ll;
+using namespace std;
+typedef pair<int, int> pii;
+const ll inf = (ll)1e9 + 70;
+const ll mod = 1e9 + 7;
+const int maxn = 1e6 + 10;
+
+ll ST[5][5][maxn];
+int ch[maxn][2];
+int type[maxn];
+ll oftype[5][5][5];
+
+ll ans[5][5];
+ll upd[5][5];
+
+void recompute(int p){
+	rep(i, 0, 5) rep(j, 0, 5) ST[i][j][p] = 0;
+	rep(i, 0, 5)rep(j, 0, 5)rep(k, 0, 5) ST[i][j][p] += ST[i][k][left(p)] * ST[k][j][right(p)], ST[i][j][p] %= mod;
+}
+
+void update(int p, int l, int r, int i){
+	if (r < i || l > i) return;
+	if (l == r){
+		rep(i, 0, 5)rep(j, 0, 5)ST[i][j][p] = upd[i][j];
+		return;
+	}
+	if (r == l + 1){
+		rep(i, 0, 5) rep(j, 0, 5) ST[i][j][p] = 0;
+		rep(i, 0, 5)rep(j, 0, 5)rep(k, 0, 5) ST[i][j][p] += oftype[type[l]][i][k] * oftype[type[r]][k][j], ST[i][j][p] %= mod;
+		return;
+	}
+	if (r == l + 2){
+		fill(upd, 0);
+		rep(i, 0, 5) rep(j, 0, 5) ST[i][j][p] = 0;
+		rep(i, 0, 5)rep(j, 0, 5)rep(k, 0, 5) upd[i][j] += oftype[type[l]][i][k] * oftype[type[l+1]][k][j], ST[i][j][p] %= mod;
+		rep(i, 0, 5)rep(j, 0, 5)rep(k, 0, 5) ST[i][j][p] += upd[i][k] * oftype[type[r]][k][j], ST[i][j][p] %= mod;
+		return;
+	}
+	update(left(p), l, mid, i);
+	update(right(p), mid + 1, r, i);
+	recompute(p);
+	return;
+}
+int tt = 0;
+void buildtree(int l, int r){
+	tt++;
+	int p = tt;
+	if (l == r){
+		rep(i, 0, 5)rep(j, 0, 5){
+			ST[i][j][p] = oftype[type[l]][i][j];
+		}
+		return;
+	}
+	if (r == l + 1){
+		rep(i, 0, 5) rep(j, 0, 5) ST[i][j][p] = 0;
+		rep(i, 0, 5)rep(j, 0, 5)rep(k, 0, 5) ST[i][j][p] += oftype[type[l]][i][k] * oftype[type[r]][k][j], ST[i][j][p] %= mod;
+		return;
+	}
+	if (r == l + 2){
+		fill(upd, 0);
+		rep(i, 0, 5) rep(j, 0, 5) ST[i][j][p] = 0;
+		rep(i, 0, 5)rep(j, 0, 5)rep(k, 0, 5) upd[i][j] += oftype[type[l]][i][k] * oftype[type[l + 1]][k][j], ST[i][j][p] %= mod;
+		rep(i, 0, 5)rep(j, 0, 5)rep(k, 0, 5) ST[i][j][p] += upd[i][k] * oftype[type[r]][k][j], ST[i][j][p] %= mod;
+		return;
+	}
+
+	ch[p][0] = tt + 1;
+	buildtree(l, mid);
+	ch[p][1] = tt + 1;
+	buildtree(mid + 1, r);
+	recompute(p);
+}
+
+int main(){
+	rep(k, 1, 5){
+		rep(i, 1, 5){
+			oftype[k][i][i] = 1;
+		}
+		oftype[k][0][0] = 2;
+		oftype[k][0][k] = -1;
+		oftype[k][k][k] = 0;
+		oftype[k][k][0] = 1;
+	}
+	if (fopen("input.txt", "r")) freopen("input.txt", "r", stdin);
+	drii(N, Q);
+	string s; cin >> s;
+	map<char, int> www;
+	www['A'] = 0;
+	www['C'] = 1;
+	www['G'] = 2;
+	www['T'] = 3;
+	rep(j, 1, N + 1){
+		int k = www[s[j - 1]] + 1;
+		type[j] = k;
+	}
+	buildtree(1, N);
+	rep(q, 0, Q){
+		dri(i); char c; cin >> c; int k = www[c] + 1;
+		type[i] = k;
+		fill(upd, 0);
+		rep(i, 1, 5){
+			upd[i][i] = 1;
+		}
+		upd[0][0] = 2;
+		upd[0][k] = -1;
+		upd[k][k] = 0;
+		upd[k][0] = 1;
+		update(1, 1, N, i);
+		cout << (ST[0][0][1] + mod) % mod << "\n";
+	}
+	return 0;
+}

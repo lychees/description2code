@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int HASH_MAXN=700*700+1;
+const int X=1000000007;
+const int MOD1=1000000009;
+const int MOD2=1000000021;
+int P1[HASH_MAXN];
+unsigned long long P2[HASH_MAXN];
+
+struct Hash
+{
+    int len;
+    unsigned long long val1;
+    Hash()
+    {
+        //
+    }
+    Hash(int val):
+        len(1),
+        //val0(val),
+        val1(val)
+    {
+        //
+    }
+    Hash operator+ (const Hash& other) const
+    {
+        Hash ret;
+        ret.len=len+other.len;
+        //ret.val0=(other.val0+1LL*P1[other.len]*val0)%MOD1;
+        ret.val1=(other.val1+1LL*P2[other.len]*val1);
+        return ret;
+    }
+    Hash operator- (const Hash& other) const
+    {
+        Hash ret;
+        ret.len=len-other.len;
+        //ret.val0=val0-1LL*P1[len-other.len]*other.val0%MOD1;
+        //if(ret.val0<0)
+            //ret.val0+=MOD1;
+        ret.val1=val1-1LL*P2[len-other.len]*other.val1;
+        return ret;
+    }
+    bool operator< (const Hash& other) const
+    {
+        if(len!=other.len)
+            return len<other.len;
+        //if(val0!=other.val0)
+            //return val0<other.val0;
+        return val1<other.val1;
+    }
+    bool operator== (const Hash& other) const
+    {
+        return len==other.len && val1==other.val1;
+        //return len==other.len && val0==other.val0 && val1==other.val1;
+    }
+    bool operator!= (const Hash& other) const
+    {
+        return !(*this==other);
+    }
+};
+
+Hash make_hash(int v)
+{
+    Hash ret;
+    ret.val1=v;
+    ret.len=1;
+    return ret;
+}
+
+void init_hash()
+{
+    P1[0]=1;
+    for(int i=1; i<HASH_MAXN; i++)
+        P1[i]=1LL*P1[i-1]*X%MOD1;
+    P2[0]=1;
+    for(int i=1; i<HASH_MAXN; i++)
+        P2[i]=1LL*P2[i-1]*X;
+}
+
+static int _hash_initialized=(init_hash(), 0);
+
+int N0, M0, N1, M1;
+int A[701][701], B[701][701];
+Hash HA[701][701], HB[701][701];
+Hash C[701][701], D[701][701];
+
+int main()
+{
+    scanf("%d%d", &N0, &M0);
+    for(int i=1; i<=N0; i++)
+        for(int j=1; j<=M0; j++)
+            scanf("%d", A[i]+j), HA[i][j]=HA[i][j-1]+make_hash(A[i][j]);
+    scanf("%d%d", &N1, &M1);
+    for(int i=1; i<=N1; i++)
+        for(int j=1; j<=M1; j++)
+            scanf("%d", B[i]+j), HB[i][j]=HB[i][j-1]+make_hash(B[i][j]);
+    int lo=0, mid, hi=min(min(N0, M0), min(N1, M1));
+    vector<pair<Hash, int>> v;
+    v.reserve(700*700*2);
+    while(lo<hi)
+    {
+        mid=(lo+hi+1)/2;
+        v.clear();
+        for(int i=1; i<=N0; i++)
+            for(int j=1; j<=M0-mid+1; j++)
+                C[i][j]=C[i-1][j]+(HA[i][j+mid-1]-HA[i][j-1]);
+        for(int i=1; i<=N0-mid+1; i++)
+            for(int j=1; j<=M0-mid+1; j++)
+                v.push_back({C[i+mid-1][j]-C[i-1][j], 0});
+        for(int i=1; i<=N1; i++)
+            for(int j=1; j<=M1-mid+1; j++)
+                D[i][j]=D[i-1][j]+(HB[i][j+mid-1]-HB[i][j-1]);
+        for(int i=1; i<=N1-mid+1; i++)
+            for(int j=1; j<=M1-mid+1; j++)
+                v.push_back({D[i+mid-1][j]-D[i-1][j], 1});
+        sort(v.begin(), v.end());
+        bool ans=false;
+        for(size_t i=1; i<v.size(); i++)
+            ans|=v[i-1].first==v[i].first && v[i-1].second!=v[i].second;
+        if(ans)
+            lo=mid;
+        else
+            hi=mid-1;
+    }
+    printf("%d\n", lo);
+    return 0;
+}

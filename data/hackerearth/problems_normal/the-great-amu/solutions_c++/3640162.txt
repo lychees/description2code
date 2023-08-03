@@ -1,0 +1,115 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MOD[] = {2, 5, 719};
+const int N = 305, K = 3;
+
+int n, q;
+int w[N][N], u[N][N];
+int gauss[K][N][N], gauss2[K][N][N];
+bool used[K][N];
+bool contradiction[N];
+
+void swapRows(int in, int a, int b) {
+    for (int i = 1; i <= n; i++) {
+        swap(gauss[in][a][i], gauss[in][b][i]);
+    }
+    for (int i = 1; i <= q; i++) {
+        swap(gauss2[in][a][i], gauss2[in][b][i]);
+    }
+}
+
+int power(int a, int k, int M) {
+    if (k == 0) {
+        return 1;
+    }
+    return power(a * a % M, k / 2, M) * (k % 2 == 1 ? a : 1) % M;
+}
+
+int inverse(int a, int m) {
+    return power(a, m - 2, m);
+}
+
+void elimination(int in) {
+    int M = MOD[in];
+
+    for(int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            gauss[in][i][j] = w[i][j] % M;
+        }
+        for (int j = 1; j <= q; j++) {
+            gauss2[in][i][j] = u[i][j] % M;
+        }
+    }
+
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (gauss[in][j][i] > 0 && !used[in][j]) {
+                swapRows(in, i, j);
+                break;
+            }
+        }
+
+        if (gauss[in][i][i] > 0) {
+            used[in][i] = true;
+            int inv = inverse(gauss[in][i][i], M);
+            for (int j = i; j <= n; j++) {
+                (gauss[in][i][j] *= inv) %= M;
+            }
+            for (int j = 1; j <= q; j++) {
+                (gauss2[in][i][j] *= inv) %= M;
+            }
+            for (int j = 1; j <= n; j++) {
+                if (i == j) continue;
+                int mul = gauss[in][j][i];
+                for (int k = i; k <= n; k++) {
+                    ((gauss[in][j][k] -= mul * gauss[in][i][k] % M) += M) %= M;
+                }
+                for (int k = 1; k <= q; k++) {
+                    ((gauss2[in][j][k] -= mul * gauss2[in][i][k] % M) += M) %= M;
+                }
+            }
+        }
+    }
+
+    for (int i = 1; i <= n; i++) {
+        if (gauss[in][i][i] == 0) {
+            for (int j = 1; j <= q; j++) {
+                if (gauss2[in][i][j] > 0) {
+                    contradiction[j] = true;
+                }
+            }
+        }
+    }
+}
+
+int main() {
+
+    scanf("%d %d", &n, &q);
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            scanf("%d", &w[i][j]);
+        }
+    }
+
+    for (int i = 1; i <= q; i++) {
+        for (int j = 1; j <= n; j++) {
+            scanf("%d", &u[j][i]);
+        }
+    }
+
+    for (int i = 0; i < 3; i++) {
+        elimination(i);
+    }
+
+    for (int i = 1; i <= q; i++) {
+        if (contradiction[i] == false) {
+            printf("Yes\n");
+        } else {
+            printf("No\n");
+        }
+    }
+
+    return 0;
+}

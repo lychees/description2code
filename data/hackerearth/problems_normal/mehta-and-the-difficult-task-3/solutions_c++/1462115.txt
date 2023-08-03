@@ -1,0 +1,134 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+using namespace std;
+#define MOD 1000000007
+vector<int> mat[1 << 4];
+int bas[1 << 4][1 << 4];
+long long int dp[20][2];
+set<int> s;
+int en(int a, int b, int c, int d){
+	return a  + b * 2 + c * 4 + d * 8;
+}
+vector<vector<long long int> > mul(vector<vector<long long int> > &vv, vector<vector<long long int> > &vvv){
+	vector<vector<long long int> > r(vv.size(), vector<long long int>(vvv[0].size(), 0));
+	for (int i = 0; i < vv.size(); i++){
+		for (int j = 0; j < vvv.size(); j++){
+			for (int jj = 0; jj < vvv[0].size(); jj++){
+				r[i][j] += vv[i][jj] * vvv[jj][j];
+				r[i][j] %= MOD;
+			}
+		}
+	}
+	return r;
+}
+vector<vector<long long int> > ppow(vector<vector<long long int> > a, long long int n){
+	if (n == 1){
+		return a;
+	}
+	vector<vector<long long int> > r(a.size(), vector<long long int>(a[0].size(), 0));
+	if (n == 0){
+		for (int i = 0; i < a.size(); i++){
+			r[i][i] = 1;
+		}
+		return r;
+	}
+	n--;
+	r = a;
+	while (n){
+		if (n & 1){
+			r = mul(r, a);
+		}
+		a = mul(a, a);
+		n >>= 1LL;
+	}
+	return r;
+}
+int main(){
+	s.insert(2);
+	s.insert(3);
+	s.insert(5);
+	s.insert(7);
+	for (int i = 0; i <= 9; i++){
+		if (s.count(i)){
+			continue;
+		}
+		dp[0][0]++;
+	}
+	dp[0][en(1,0,0,0)] = 1;
+	dp[0][en(0,1,0,0)]= 1;
+	dp[0][en(0, 0, 1, 0)] = 1;
+	dp[0][en(0, 0, 0, 1)] = 1;
+	//for (int i = 0; i < 19; i++){
+		for (int j = 0; j < 2; j++){
+			for (int jj = 0; jj < 2; jj++){
+				for (int k = 0; k < 2; k++){
+					for (int kk = 0; kk < 2; kk++){
+						int dec = en(j, jj, k, kk);
+						for (int i1 = 0; i1 <= 9; i1++){
+							if (s.count(i1)){
+								continue;
+							}
+							bas[dec][dec]++;
+						}
+						int de = en(j ^ 1, jj, k, kk);
+						bas[de][dec]++;
+						de = en(j, jj, k, kk^1);
+						bas[de][dec]++;
+						de = en(j, jj, k^1, kk);
+						bas[de][dec]++;
+						de = en(j, jj^1, k, kk);
+						bas[de][dec]++;
+					}
+				}
+			}
+		}
+	//}
+	vector<vector<long long int> > vv;
+	vv.assign(1 << 4, vector<long long int>(1 << 4, 0));
+	for (int i = 0; i < vv.size(); i++){
+		for (int j = 0; j < vv.size(); j++){
+			vv[i][j] = bas[i][j];
+		}
+	}
+
+	int t;
+	scanf("%d", &t);
+	while (t--){
+		int a, b, c, d;
+		long long int n;
+		scanf("%lld%d%d%d%d",&n, &a, &b, &c, &d);
+		vector<vector<long long int> > vvv=vv;
+		vvv = ppow(vvv, n-1);
+		long long int ans = 0;
+		int want = en(a, b, c, d);
+		for (int i = 0; i < (1 << 4); i++){
+			ans += vvv[want][i] * dp[0][i];
+			ans %= MOD;
+		}
+		printf("%lld\n", ans);
+	}
+	return 0;
+}

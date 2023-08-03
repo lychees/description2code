@@ -1,0 +1,190 @@
+#pragma warning ( disable : 4786)
+#include<cstdio>
+#include<cstring>
+#include<cmath>
+#include<string>
+#include<map>
+#include<vector>
+#include<sstream>
+
+using namespace std;
+
+#define LOWER(X) (X)
+#define UPPER(X) (X+3200)
+
+const int MAXV=210,MAXE=15000,INF=100000000;
+const int CAPINF = 2*INF;
+
+inline int  MIN(int a,int  b)
+{
+    return a<b ? a : b ;
+}
+
+
+int V,src,sink;
+int eind,eadj[MAXE],enext[MAXE],elast[MAXV],start[MAXV];
+int front,back,q[MAXV],dist[MAXV];
+int ecap[MAXE];
+//int P,C,N;
+
+
+
+
+
+inline void init()
+{
+    V=MAXV;
+    eind=0;
+    memset(elast,-1,V*sizeof(int));
+}
+
+
+// the cap will decrease in ecap if a flow goes through this edge
+inline void addedge(int a,int b,int cap1,int cap2)
+{
+    eadj[eind]=b;
+    ecap[eind]=cap1;
+    enext[eind]=elast[a];
+    elast[a]=eind++;
+
+
+    //both of these are necessary you cant cut off this part
+    eadj[eind]=a;
+    ecap[eind]=cap2;
+    enext[eind]=elast[b];
+    elast[b]=eind++;
+}
+
+bool bfs()
+{
+    int i;
+
+    for(i=0; i<V; i++) dist[i]=INF;
+    front=back=0;
+    q[back++]=src;
+    dist[src]=0;
+
+    while(front<back)
+    {
+        int top=q[front++];
+
+        //printf("%d\n",top);
+
+        for(int i=elast[top]; i!=-1; i=enext[i])
+        {
+            //printf("==%d\n",eadj[i]);
+            if(ecap[i]>0 && dist[top]+1<dist[eadj[i]])
+            {
+                dist[eadj[i]]=dist[top]+1;
+                q[back++]=eadj[i];
+            }
+        }
+    }
+
+    return dist[sink]<INF;
+}
+
+int dfs(int num,int pcap)
+{
+    if(sink==num)
+        return pcap;
+
+    int total=0;
+
+    for(int &i=start[num]; i!=-1; i=enext[i])
+        if(ecap[i]>0 && dist[num]+1==dist[eadj[i]])
+        {
+            int p=dfs(eadj[i],MIN(ecap[i],pcap));
+            ecap[i]-=p;
+            ecap[i^1]+=p;
+            pcap-=p;
+            total+=p;
+
+            if(pcap==0) break;
+        }
+
+    return total;
+}
+
+int flow(int _src,int _sink)
+{
+    if(V==0)
+        return -1;
+
+    src=_src;
+    sink=_sink;
+
+    int total=0;
+
+    while(bfs())
+    {
+        memcpy(start,elast,V*sizeof(int));
+        total+=dfs(src,CAPINF);
+    }
+
+    return total;
+}
+
+
+int ins[1000];
+
+int main()
+{
+    int n,m,i,j,k,cs=0;
+
+    //freopen("in.txt","r",stdin);
+    init();
+
+
+
+    //m=experiments
+    //n=instruments
+
+    scanf("%d",&n);
+
+    for(i=1;i<=n;i++)
+      scanf("%d",&ins[i]);
+
+    int res=0,c;
+    scanf("%d",&m);
+
+
+
+    int s=0;
+    int t=(m+n)+1;
+
+
+    for(i=1; i<=n; i++)
+    {
+        addedge(i+m,t,ins[i],0);
+    }
+
+    int q,v;
+
+    for(i=1; i<=m; i++)
+    {
+        scanf("%d",&q);
+        for(j=1; j<=q; j++)
+        {
+            scanf("%d",&v);
+            addedge(i,v+m,INF,0);
+        }
+        scanf("%d",&c);
+        res+=c;
+        addedge(s,i,c,0);
+    }
+
+
+
+    int fl=flow(s,t);
+
+
+    res-=fl;
+    printf("%d\n",res);
+
+
+
+    return 0;
+}
+
+

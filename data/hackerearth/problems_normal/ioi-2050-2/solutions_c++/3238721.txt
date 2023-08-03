@@ -1,0 +1,154 @@
+//O(ElogV)
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long 
+#define pb push_back
+#define mp make_pair
+const ll MAX = 200010;
+ll id[MAX], m,n,p,ans[1002][1002],length[1002][1002];
+bool visited[MAX];
+vector < pair < ll, pair<ll,ll> > > v;
+vector <pair<ll,ll> > vec;
+vector <ll> adj[MAX];
+pair <ll,ll> pi;
+
+void bfs(ll node)
+{
+    queue <pair<ll,ll> > q;
+    q.push(mp(node,0));
+    ll x,i,sum;
+    while(!q.empty())
+    {
+        pi=q.front();
+        q.pop();
+        x=pi.first;
+        sum=pi.second;
+        visited[x]=true;
+        ans[node][x]=sum;
+        ans[x][node]=sum;
+        
+        for(i=0;i<adj[x].size();i++)
+        {
+            if(!visited[adj[x][i]])
+            {
+             q.push(mp(adj[x][i],sum+length[x][adj[x][i]]));   
+            }
+        }
+        
+        
+    }
+}
+
+void initialize()
+{
+    ll i;
+    for(i = 0;i < MAX;++i)
+        id[i] = i,adj[i].clear();
+        
+    v.clear();
+    vec.clear();
+}
+
+ll root(ll x)
+{
+    while(id[x] != x)
+    {
+        id[x] = id[id[x]];
+        x = id[x];
+    }
+    return x;
+}
+
+void union1(ll x, ll y)
+{
+    ll p = root(x);
+    ll q = root(y);
+    id[p] = id[q];
+}
+
+long long kruskal()
+{
+    ll x, y;
+    long long cost, minCost = 0;
+    for(ll i = 0;i <v.size();++i)
+    {
+        // Selecting edges one by one in increasing order from the beginning
+        x = v[i].second.first;
+        y = v[i].second.second;
+        cost = v[i].first;
+        // Check if the selected edge is creating a cycle or not
+        if(root(x) != root(y))
+        {
+            minCost += cost;
+            vec.pb(mp(x,y));
+            union1(x, y);
+        }    
+    }
+    return minCost;
+}
+
+bool comp(const pair< ll, pair < ll,ll > > &a, const pair< ll, pair < ll,ll > > &b)
+{
+    return a.first<b.first;
+}
+
+int main()
+{
+    /*ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+    */
+    ll x, y,t,k,i,j;
+    long long weight,minCost;
+    cin>>t;
+    
+    for(k=1;k<=t;k++){
+    initialize();
+    //cin>>n>>p>>m;
+    scanf("%lld %lld %lld",&n,&p,&m);
+    
+    for(i = 0;i <p;++i)
+    {
+        //cin >> x >> y >> weight;
+        scanf("%lld %lld %lld",&x,&y,&weight);
+        length[x][y]=weight;
+        length[y][x]=weight;
+        v.push_back(make_pair(weight,make_pair(x,y)));
+    
+    }
+    
+    // Sort the edges in the descending order
+    sort(v.begin(),v.end(),comp);
+    minCost = kruskal();
+    
+    for(i=0;i<vec.size();i++)
+    {
+        x=vec[i].first;
+        y=vec[i].second;
+        adj[x].pb(y);
+        adj[y].pb(x);
+    }
+    /*
+    for(i=0;i<vec.size();i++)
+        cout<<vec[i].first<<" "<<vec[i].second<<"\n";*/
+        
+    
+    for(i=1;i<=n;i++)
+    {
+        for(j=1;j<=n;j++)
+            visited[j]=false;
+        bfs(i);
+    }
+    //cout<<"Case: "<<k<<"\n";
+    printf("Case: %lld\n",k);
+    while(m--)
+    {
+        //cin>>x>>y;
+        scanf("%lld %lld",&x,&y);
+        //cout<<ans[x][y]<<"\n";
+        printf("%lld\n",ans[x][y]);
+    }
+    
+    }
+    return 0;
+}

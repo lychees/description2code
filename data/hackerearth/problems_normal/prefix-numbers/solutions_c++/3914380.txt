@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+const int S = 252;
+unsigned mat[S][S] = {}, res[S][S], tmp[S][S];
+LL n;
+
+void matMul(unsigned (&a)[S][S], const unsigned (&b)[S][S]) {
+    REP(i, S) REP(j, S) {
+        unsigned res = 0;
+        REP(k, S) res += a[i][k] * b[k][j];
+        tmp[i][j] = res;
+    }
+    REP(i, S) REP(j, S) {
+        a[i][j] = tmp[i][j];
+    }
+}
+
+void matPow(LL p) {
+    REP(i, S) REP(j, S) res[i][j] = i == j;
+    while (p) {
+        if (p & 1) matMul(res, mat);
+        p >>= 1;
+        if (p) matMul(mat, mat);
+    }
+}
+
+int main() {
+    cin >> n;
+    REP(i, S) for (int dig = 1; dig <= 9; ++dig) {
+        int j = (10 * i + dig) % 252;
+        if (dig == 1 || dig == 2 || dig == 5) {
+            ++mat[i][j];
+            continue;
+        }
+        if (dig == 3 || dig == 6 || dig == 7 || dig == 9) {
+            if (j % dig == 0) {
+                ++mat[i][j];
+            }
+            continue;
+        }
+        if ((dig == 4 && i % 2 == 0) || (dig == 8 && i % 4 == 0)) {
+            ++mat[i][j];
+        }
+    }
+    matPow(n);
+    unsigned sum = 0;
+    REP(i, 252) sum += res[0][i];
+    cout << sum << endl;
+    return 0;
+}

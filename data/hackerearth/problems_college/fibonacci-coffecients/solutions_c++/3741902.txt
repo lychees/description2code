@@ -1,0 +1,119 @@
+#include<iostream>
+#include<vector>
+#include<stdio.h>
+#include<math.h>
+#include<algorithm>
+#include<map>
+#include<string>
+#include <sstream>
+#include<set>
+using namespace std;
+#define f(i,a,b) for(ll i=a;i<b;i++)
+#define fr(i,a,b) for(ll i=a;i>=b;i--)
+#define ff(i,a,b,c) for(int i=a;i<b;i+=c)
+#define w(n) while(n>0)
+#define vi vector<int>
+#define vll vector<long long int>
+typedef pair<pair<int,int> ,int> PII;
+typedef pair<long long int,long long int> PI;
+typedef long long int ll;
+typedef int I;
+typedef string S;
+ll mod_pow(ll a,ll n,ll b){ll res = 1;while(n){if(n&1) {res = (res*a)%b;}a = (a*a)%b;n >>= 1;}return res%b;}
+ll mod_div(ll a,ll b,ll md){ll ans = (a*mod_pow(b,md-2,md))%md; return ans;}
+ll mul(ll a,ll b,ll md){ return (ll)(a*b)%md;}
+ll gcd(ll n,ll m){if(m<=n && n%m==0)return m;if(n<m)return gcd(m,n);else return gcd(m,n%m);}
+ll add(ll a,ll b,ll md){a=((a%md)+(b%md))%md;return a;}
+ll sub(ll a,ll b,ll md){return add(a,md-b,md);}
+ll bC(int n,int r){ll ans=1;if(r>n-r)r=n-r;f(i,1,r+1)ans=(ans*(n-i+1))/(i);return ans;}
+struct node
+    {
+        ll mat[2][2];
+        ll siz=0;
+    };
+node segtree[4*200005+1];
+ll fib[1000009],a[2*100001],mod;
+void init()
+    {
+        fib[0]=0;
+        fib[1]=1;
+        fib[2]=1;
+        f(i,3,1000009)fib[i]=(fib[i-1]+fib[i-2])%mod;
+    }
+void buildtree(ll l,ll r,ll p)
+    {
+    if(l==r)
+        {
+            node temp;
+            temp.siz=1;
+            temp.mat[0][0]=a[l];
+            temp.mat[0][1]=a[l];
+            temp.mat[1][0]=a[l];
+            temp.mat[1][1]=0;
+            segtree[p]=temp;
+            return;
+        }
+    I mid=(l+r)/2;
+    buildtree(l,mid,2*p+1);
+    buildtree(mid+1,r,2*p+2);
+    ll x=segtree[2*p+1].siz;
+    segtree[p].siz=segtree[2*p+1].siz+segtree[2*p+2].siz;
+ segtree[p].mat[0][0]=(segtree[2*p+1].mat[0][0]+segtree[2*p+2].mat[0][0]*fib[x+1]+segtree[2*p+2].mat[0][1]*fib[x])%mod;
+ segtree[p].mat[0][1]=(segtree[2*p+1].mat[0][1]+segtree[2*p+2].mat[0][1]*fib[x-1]+segtree[2*p+2].mat[0][0]*fib[x])%mod;
+ segtree[p].mat[1][0]=segtree[p].mat[1][0];
+    }
+void update(ll l,ll r,ll p,ll val,ll gl,ll gr)
+    {
+    if(gr<l || gl>r)return;
+    if(gl<=l && r<=gr)
+        {
+            segtree[p].mat[0][0]=val;
+            segtree[p].mat[0][1]=val;
+            segtree[p].mat[1][0]=val;
+            segtree[p].mat[1][1]=0;
+            return;
+        }
+    ll mid=(l+r)/2;
+    update(l,mid,2*p+1,val,gl,gr);
+    update(mid+1,r,2*p+2,val,gl,gr);
+       ll x=segtree[2*p+1].siz;
+    segtree[p].siz=segtree[2*p+1].siz+segtree[2*p+2].siz;
+ segtree[p].mat[0][0]=(segtree[2*p+1].mat[0][0]+segtree[2*p+2].mat[0][0]*fib[x+1]+segtree[2*p+2].mat[0][1]*fib[x])%mod;
+ segtree[p].mat[0][1]=(segtree[2*p+1].mat[0][1]+segtree[2*p+2].mat[0][1]*fib[x-1]+segtree[2*p+2].mat[0][0]*fib[x])%mod;
+ segtree[p].mat[1][0]=segtree[p].mat[1][0];
+    }
+node query(ll gl,ll gr,ll p,ll l,ll r)
+    {
+        if(gr<l || gl>r){node t;t.mat[0][0]=0;t.mat[0][1]=0;t.siz=0;return t;}
+        if(gl<=l && r<=gr)
+        {return segtree[p];}
+        ll mid=(l+r)/2;
+        node left=query(gl,gr,2*p+1,l,mid);
+        node right=query(gl,gr,2*p+2,mid+1,r);
+        node temp;
+        ll x=left.siz;
+        if(x==0)return right;
+        temp.mat[0][0]=(left.mat[0][0]+right.mat[0][0]*fib[x+1]+right.mat[0][1]*fib[x])%mod;
+        temp.mat[0][1]=(left.mat[0][1]+right.mat[0][1]*fib[x-1]+right.mat[0][0]*fib[x])%mod;
+        temp.siz=left.siz+right.siz;
+        return temp;
+    }
+I main()
+    {
+        ll n,m;
+        cin>>n>>m>>mod;
+        init();
+        f(i,0,n)cin>>a[i];
+        buildtree(0,n-1,0);
+        w(m)
+        {
+            m--;
+            ll type,l,x;
+            cin>>type>>l>>x;
+            if(type==1)
+             update(0,n-1,0,x,l-1,l-1); 
+            else
+             cout<<query(l-1,x-1,0,0,n-1).mat[0][1]<<endl;
+            // break;
+        }
+    }

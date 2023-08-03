@@ -1,0 +1,76 @@
+#include<iostream>
+#include<algorithm>
+#include<set>
+#include<vector>
+#include<string.h>
+using namespace std;
+
+vector< int >::iterator it; 
+int a[500005];
+
+int pw[30];
+
+void calc_pow() {
+    pw[0]=1;
+    for(int i=1;i<=20;i++) pw[i]=2*pw[i-1];
+}
+
+struct node {
+    node* child[2];
+    vector< int >v;
+}*head;
+
+void init() {
+    head=new node();
+}
+
+void dfs(node* current) {
+    if(current->child[0]!=NULL) dfs(current->child[0]);
+    if(current->child[1]!=NULL) dfs(current->child[1]);
+    sort(current->v.begin(),current->v.end());
+}
+
+void in(int num,int pos) {
+    node* current=head;
+    int temp,i;
+    for(i=20;i>=0;i--) {
+        temp=(num&pw[i])!=0;
+        if(current->child[temp]==NULL) current->child[temp]=new node();
+        current=current->child[temp];
+        current->v.push_back(pos);
+    }
+}
+
+int query(int num,int l,int r) {
+    node* current=head;
+    int temp,sum=0,i;
+    for(i=20;i>=0;i--) {
+        temp=(num&pw[i])!=0;
+        if(current->child[1-temp]==NULL) {
+            current=current->child[temp];
+        } else {
+            it=lower_bound(current->child[1-temp]->v.begin(),current->child[1-temp]->v.end(),l);
+            if(it==current->child[1-temp]->v.end() || (*it)>r) {
+                current=current->child[temp];
+            } else {
+                sum+=pw[i];
+                current=current->child[1-temp];
+            }
+        }
+    }
+    return sum;
+}
+
+int main()
+{
+    init(); calc_pow();
+    int i,j,n,m,temp,l,r,x,q;
+    cin>>n>>q;
+    for(i=1;i<=n;i++) cin>>a[i],in(a[i],i);
+    dfs(head);
+    while(q--) {
+        cin>>l>>r>>x;
+        cout<<query(x,l,r)<<"\n";
+    }
+    return 0;
+}

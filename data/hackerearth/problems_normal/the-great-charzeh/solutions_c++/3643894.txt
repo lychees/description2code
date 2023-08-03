@@ -1,0 +1,138 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+// O(E sqrt(V))
+
+typedef long long LL;
+
+#define PII       pair<int,int>
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+#define cin(x)    scanf("%d",&x)
+#define MOD		1000000007
+#define EPS		1E-10
+
+const int MAXN1 = 1000;
+const int MAXN2 = 1000;
+const int MAXM = 100000;
+
+int n1, n2, edges, last[MAXN1], Prev[MAXM], head[MAXM];
+int matching[MAXN2], dist[MAXN1], Q[MAXN1];
+bool used[MAXN1], vis[MAXN1];
+
+void init(int _n1, int _n2)
+{
+    	n1 = _n1;
+    	n2 = _n2;
+    	edges = 0;
+    	fill(last, last + n1, -1);
+}
+
+void addEdge(int u, int v)
+{
+    	head[edges] = v;
+    	Prev[edges] = last[u];
+    	last[u] = edges++;
+}
+
+void bfs()
+{
+    	fill(dist, dist + n1, -1);
+    	int sizeQ = 0;
+    	for(int u = 0; u < n1; ++u)
+    	{
+        	if (!used[u])
+        	{
+            	Q[sizeQ++] = u;
+            	dist[u] = 0;
+        	}
+    	}
+    	for(int i = 0; i < sizeQ; i++)
+    	{
+        	int u1 = Q[i];
+        	for(int e = last[u1]; e >= 0; e = Prev[e])
+        	{
+            	int u2 = matching[head[e]];
+            	if (u2 >= 0 && dist[u2] < 0)
+            	{
+                		dist[u2] = dist[u1] + 1;
+                		Q[sizeQ++] = u2;
+            	}
+        	}
+    	}
+}
+
+bool dfs(int u1)
+{
+    	vis[u1] = true;
+    	for (int e = last[u1]; e >= 0; e = Prev[e])
+    	{
+        	int v = head[e];
+        	int u2 = matching[v];
+        	if (u2 < 0 || !vis[u2] && dist[u2] == dist[u1] + 1 && dfs(u2))
+        	{
+            	matching[v] = u1;
+            	used[u1] = true;
+            	return true;
+        	}
+    	}
+    	return false;
+}
+
+int maxMatching()
+{
+    	fill(used, used + n1, false);
+    	fill(matching, matching + n2, -1);
+    	for (int res = 0;;)
+    	{
+        	bfs();
+        	fill(vis, vis + n1, false);
+        	int f = 0;
+        	for (int u = 0; u < n1; ++u)
+            	if (!used[u] && dfs(u))
+                		++f;
+        		if (!f)
+            		return res;
+        	res += f;
+    	}
+}
+
+const int maxn = 1000;
+int A[maxn] , F[maxn];
+int n,m;
+
+int poss(int maxLen)
+{
+    init(n , n);
+    for(int pi = 0; pi < n; pi++)
+        for(int ai = 0; ai < n; ai++)
+        {
+            if(F[A[ai] + pi] <= maxLen)
+                addEdge(ai , pi);
+        }
+    return (maxMatching() == n);
+}
+
+int main()
+{
+    cin(n);
+    cin(m);
+    for(int i = 0; i < n; i++)
+        cin(A[i]);
+    for(int i = 0; i < (n + m - 1); i++)
+        cin(F[i]);
+    int lo = 0 , hi = 1000000000;
+    while(lo < hi)
+    {
+        int mid = (lo + hi) >> 1;
+        if(poss(mid))
+            hi = mid;
+        else
+            lo = mid + 1;
+    }
+    printf("%d\n", lo);
+	return 0;
+}

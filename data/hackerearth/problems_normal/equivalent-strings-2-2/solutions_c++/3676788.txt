@@ -1,0 +1,122 @@
+
+
+    #include <bits/stdc++.h>
+    using namespace std;
+    const int MAXN = 100000 + 10;
+    const int MOD = (int)(1e9) + 7;
+    int pow_n[MAXN], d[MAXN];
+    string a, b;
+    int n;
+    struct next_position {
+        int n;
+        int nxt[MAXN][30];
+        void init(string &s) {
+            n = s.length();
+            for(int i = 0; i < 26; i++) nxt[n][i] = n + 1;
+            for(int i = n - 1; i >= 0; i--) {
+                for(int j = 0; j < 26; j++) nxt[i][j] = nxt[i + 1][j];
+                nxt[i][s[i] - 'a'] = i;
+            }
+        }
+        vector<int> get_pos(int l, int r) {
+            vector<int> res;
+            for(int i = 0; i < 26; i++) {
+                if (nxt[l][i] <= r) res.push_back(nxt[l][i]);
+            }
+            sort(res.begin(), res.end());
+            return res;
+        }
+    } na, nb;
+    void fill_next() {
+        na.init(a); nb.init(b);
+    }
+    struct my_hash {
+        int h[MAXN];
+        int n;
+        void init(int _n, int d[]) {
+            n = _n;
+            h[0] = d[0];
+            for(int i = 1; i < n; i++) {
+                h[i] = (1LL * h[i - 1] * n + d[i]) % MOD;
+            }
+        }
+        int get_hash(int l, int r) {
+            if (l == 0) return h[r];
+            int x = (1LL * h[l - 1] * pow_n[r - l + 1]) % MOD;
+            x = (h[r] - x + MOD) % MOD;
+            return x;
+        }
+    } ha, hb;
+    void hash_a() {
+        vector<int> pos(26, 0);
+        for(int i = 1; i <= n; i++) {
+            if (pos[a[i - 1] - 'a'] == 0) d[i - 1] = 0;
+            else d[i - 1] = i - pos[a[i - 1] - 'a'];
+            pos[a[i - 1] - 'a'] = i;
+        }
+        ha.init(n, d);
+    }
+    void hash_b() {
+        vector<int> pos(26, 0);
+        for(int i = 1; i <= n; i++) {
+            if (pos[b[i - 1] - 'a'] == 0) d[i - 1] = 0;
+            else d[i - 1] = i - pos[b[i - 1] - 'a'];
+            pos[b[i - 1] - 'a'] = i;
+        }
+        hb.init(n, d);
+    }
+    void gen_hash() {
+        pow_n[0] = 1;
+        for(int i = 1; i <= n; i++) pow_n[i] = (1LL * pow_n[i - 1] * n) % MOD;
+        hash_a();
+        hash_b();
+    }
+    void pre() {
+        fill_next();
+        gen_hash();
+    }
+    bool cmp(int u, vector<int> &pa, int v, vector<int> &pb) {
+        if (pa.size() != pb.size()) return false;
+        for(int i = 0; i < pa.size(); i++) {
+            if (pa[i] - u != pb[i] - v) return false;
+        }
+        return true;
+    }
+    bool equivalent(int l1, int r1, int l2, int r2) {
+        return (ha.get_hash(l1, r1) == hb.get_hash(l2, r2));
+    }
+    string ans(int u, int v, int k) {
+        u--; v--;
+        vector<int> pa = na.get_pos(u, u + k - 1), pb = nb.get_pos(v, v + k - 1);
+        if (!cmp(u, pa, v, pb)) return "no";
+        pa.push_back(u + k); pb.push_back(v + k);
+        for(int i = 1; i < pa.size(); i++) {
+            if (pa[i] > pa[i - 1] + 1) {
+                if (!equivalent(pa[i - 1] + 1, pa[i] - 1, pb[i - 1] + 1, pb[i] - 1)) return "no";
+            }
+        }
+        return "yes";
+    }
+    void solve() {
+        cin >> a; cin >> b;
+        n = a.length();
+        pre();
+        int q;
+        cin >> q;
+        for(int query = 1; query <= q; query++) {
+            int u, v, k;
+            cin >> u >> v >> k;
+            cout << ans(u, v, k) << endl;
+        }
+    }
+    int main()
+    {
+        //freopen("input.txt", "r", stdin);
+        //freopen("vuong.out", "w", stdout);
+        int test;
+        cin >> test;
+        while (test --) {
+            solve();
+        }
+    }
+

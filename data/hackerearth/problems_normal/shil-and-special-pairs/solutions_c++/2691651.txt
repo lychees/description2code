@@ -1,0 +1,106 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include<sstream>
+#include<iostream>
+#include<cstdio>
+#include<cstdlib>
+#include<cstring>
+#include<climits>
+#include<cmath>
+#include<string>
+#include<vector>
+#include<set>
+#include<map>
+#include<queue>
+#include<numeric>
+#include<functional>
+#include<algorithm>
+#include<bitset>
+#include<tuple>
+#include<unordered_set>
+#include<random>
+using namespace std;
+#define INF (1<<29)
+#define rep(i,n) for(int i=0;i<(int)(n);i++)
+#define all(v) v.begin(),v.end()
+#define uniq(v) v.erase(unique(all(v)),v.end())
+#define indexOf(v,x) (find(all(v),x)-v.begin())
+
+
+
+
+class BIT {
+	int lg;
+	std::vector<int> bit;
+public:
+	BIT() {}
+	BIT(int size) :bit(size + 1, 0) {
+		lg = size;
+		while (lg&lg - 1)lg &= lg - 1;
+	}
+	void add(int i, int x) {
+		i++;
+		while (i<(int)bit.size()) {
+			bit[i] += x;
+			i += i&-i;
+		}
+	}
+	int sum(int a)const {
+		a++;
+		int res = 0;
+		while (0<a) {
+			res += bit[a];
+			a -= a&-a;
+		}
+		return res;
+	}
+	int sum(int a, int b)const {
+		return sum(b) - sum(a - 1);
+	}
+	void resize(int size) { bit.resize(size + 1, 0); }
+};
+
+
+
+int main() {
+	ios::sync_with_stdio(0);
+	cin.tie(0);
+	int n, m, d;
+	cin >> n >> m >> d;
+	vector<int> v(n);
+	vector<int> pos(n + 1,-1);
+	rep(i, n)cin >> v[i];
+	rep(i, n)pos[v[i]] = i;
+	vector<pair<int, int>> seg;
+	vector<tuple<int, int, int>> query;
+	vector<int> ans(n);
+	rep(i,n) {
+		for (int a = v[i]; a <= min(v[i] + d,n);a++) {
+			int x = i, y = pos[a];
+			seg.push_back(make_pair(min(x,y),max(x,y)));
+		}
+	}
+	sort(all(seg));
+	rep(i,m) {
+		int l, r;
+		cin >> l >> r;
+		l--; r--;
+		query.push_back(make_tuple(l,r,i));
+	}
+	sort(all(query));
+	BIT bit(n);
+	rep(i,seg.size()) {
+		bit.add(seg[i].second,1);
+	}
+	int idx = 0;
+	rep(i,m) {
+		while (idx<seg.size() && seg[idx].first<get<0>(query[i])) {
+			idx++;
+			bit.add(seg[idx].second, -1);
+		}
+		int res = bit.sum(get<1>(query[i]));
+		ans[get<2>(query[i])] = res;
+	}
+	rep(i, m)cout << ans[i] << endl;
+
+	return 0;
+}

@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define MOD 1000000003LL
+#define MAXM 10001
+#define MAXN 2001
+#define SET(a) memset((a), -1, sizeof (a))
+#define vi vector<int>
+using namespace std;
+
+int N, M;
+ll P,Q,R,S,X,Y,Z,W;
+ll A[MAXM] = {}, B[MAXM] = {};
+
+int mnFactor[MAXM] = {}, mnFactor_i = 1;
+vector<vi> nxts;
+
+void gen_min_factors(){
+    SET(mnFactor);
+    
+    nxts.push_back(vector<int>());
+    for(int x = 2; x <= M; x+=2) 
+        mnFactor[x] = 0, nxts[0].push_back(x);
+    for(int x = 3; x <= M; x+=2)
+        if(mnFactor[x] == -1){
+            nxts.push_back(vector<int>());
+            for(int y = x; y <= M; y+=x) {
+            	if(mnFactor[y] != -1) continue;
+                mnFactor[y] = mnFactor_i, nxts[mnFactor_i].push_back(y);
+            }
+            mnFactor_i++;
+        }
+}
+
+ll solve(){
+	vector<ll> dp(M+1, 0), dp_old(M+1, 0);
+    vector< pair< pair<ll,int>, pair<ll,int> > > factorsMN(nxts.size());
+    
+    for(int i = 2; i <= N; i++) {
+        //calculate A and B
+        for(int k = 0; k < M; k++){
+            S = ((P * ((S * S)%MOD))%MOD + (Q * S)%MOD + R) % MOD;
+            A[k + 1] = S;
+            W = ((X * ((W * W)%MOD))%MOD + (Y * W)%MOD + Z) % MOD;
+            B[k + 1] = W;
+            
+            if(k+1 != 1){
+                ll tmp = B[k+1] + dp_old[k+1];
+                if(nxts[mnFactor[k+1]][0] == k+1)
+                    factorsMN[mnFactor[k+1]] = { {tmp, k+1}, {tmp, k+1} };
+                else if(factorsMN[mnFactor[k+1]].first.first > tmp){
+                    factorsMN[mnFactor[k+1]].second = factorsMN[mnFactor[k+1]].first;
+                    factorsMN[mnFactor[k+1]].first = {tmp, k+1};
+                }else if(factorsMN[mnFactor[k+1]].second.first > tmp){
+                    factorsMN[mnFactor[k+1]].second = {tmp, k+1};
+                }
+            }
+        }
+        
+        //place = 1
+        dp[1] = A[1] + dp_old[1];
+        for(int k = 0; k < factorsMN.size(); k++) 
+            dp[1] = min(dp[1], factorsMN[k].first.first);
+        
+        //other places
+        for(int j = 2; j <= M; j++){
+            dp[j] = A[j] + dp_old[j];
+            if(factorsMN[mnFactor[j]].first.second != j)
+                dp[j] = min(dp[j], factorsMN[mnFactor[j]].first.first);
+            else if(factorsMN[mnFactor[j]].second.second != j)
+                dp[j] = min(dp[j], factorsMN[mnFactor[j]].second.first);
+        }
+        dp_old = dp;
+    }
+    
+    ll mn = dp[1];
+    for(int x = 2; x <= M; x++) mn = min(mn, dp[x]);
+    
+    return mn;
+}
+
+int main(){
+    //Read Input
+    cin >> N >> M;
+    cin >> S >> P >> Q >> R;
+    cin >> W >> X >> Y >> Z;
+    
+    gen_min_factors();
+    
+    cout << solve() << '\n';
+}

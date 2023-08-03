@@ -1,0 +1,91 @@
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+
+typedef std::vector<int> vi;
+
+void pgen(vi &p, bool *pm, size_t sz) {
+    size_t i, j;
+
+    std::fill_n(pm, sz, true);
+    pm[0] = pm[1] = false;
+
+    for (i = 3; i * i <= sz; i += 2) {
+        if (pm[i]) {
+            for (j = i*i; j < sz; j += i)
+                pm[j] = false;
+        }
+    }
+
+    p.push_back(2);
+    for (i = 3; i < sz; i += 2)
+        if (pm[i]) p.push_back(i);
+}
+
+#define SSZ 32700
+#define _MIN(a,b) ((a) < (b) ? (a) : (b))
+
+void bsieve(const vi &p, vi &pl, bool *pm, size_t sz) {
+    bool seg[SSZ];
+    size_t i, j, il, l = 0, h = SSZ;
+
+    std::vector<size_t> idx;
+    for (i = 0; i < p.size(); ++i)
+        idx.push_back(2 * p[i]);
+
+    std::fill_n(seg, SSZ, true);
+    seg[0] = seg[1] = false;
+
+    while (h <= sz) {
+        for (j = 0; j < p.size(); ++j) {
+            for (i = idx[j]; i < SSZ; i += p[j])
+                seg[i] = false;
+            idx[j] = i - SSZ;
+        }
+
+        il = _MIN(SSZ, sz - l);
+        for (i = 0; i < il; i++) {
+            pm[i+l] = seg[i];
+            if (seg[i])
+                pl.push_back(i+l);
+        }
+
+        std::fill_n(seg, SSZ, true);
+        l += SSZ; h += SSZ;
+    }
+}
+
+#define MAX_P 10000
+#define MAX_N 2000000
+#define MOD 1000000007
+
+int main() {
+    size_t pcount = 0, pt;
+
+    vi p, pp, pl;
+    bool *pm = new bool[MAX_N];
+
+    pgen(p, pm, (size_t)(sqrt(MAX_N)));
+    bsieve(p, pl, pm, MAX_N);
+
+    pt = pl.size();
+    for (size_t i = 0; i < pt; i++) {
+        if (pm[i+1]) {
+            pp.push_back(pl[i]);
+            pcount++;
+        }
+    }
+
+    long t, n, m;
+    scanf("%ld", &t);
+
+    while (t-- > 0) {
+        scanf("%ld", &n);
+        scanf("%ld", &m);
+        printf("%llu\n", (((unsigned long long)pp[n-1]%MOD) * (pp[m-1]%MOD)) % MOD);
+    }
+
+    delete[] pm;
+    return 0;
+}

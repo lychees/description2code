@@ -1,0 +1,111 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int LL;
+#define maxn 100005
+int a[maxn];
+int block_sz;
+struct node
+{
+    int L,R;
+    int idx;
+}query[maxn];
+bool cmp(node x,node y)
+{
+    if(x.L/block_sz==y.L/block_sz)
+        return x.R<y.R;
+    return x.L<y.L;
+}
+LL bit[maxn];
+void update(int idx,int val)
+{
+    while(idx<maxn){
+        bit[idx]+=val;
+        idx+=idx&-idx;
+    }
+}
+LL get(int idx)
+{
+    int ret=0;
+    while(idx>0){
+        ret+=bit[idx];
+        idx-=idx&-idx;
+    }
+    return ret;
+}
+LL ans=0;
+void addR(int id)
+{
+    int val=get(maxn-1)-get(a[id]);
+    update(a[id],1);
+    ans+=val;
+}
+void addL(int id)
+{
+    int val=get(a[id]-1);
+    update(a[id],1);
+    ans+=val;
+}
+void remR(int id)
+{
+    update(a[id],-1);
+    int val=get(maxn-1)-get(a[id]);
+    ans-=val;
+}
+void remL(int id)
+{
+    update(a[id],-1);
+    int val=get(a[id]-1);
+    ans-=val;
+}
+int main()
+{
+    int n,q;
+    scanf("%d %d",&n,&q);
+    block_sz=sqrt(n)+1;
+    map<int,int> M;
+    for(int i=0;i<n;i++){
+        scanf("%d",&a[i]);
+        M[a[i]];
+    }
+    map<int,int> :: iterator it;
+    int cnt=1;
+    for(it=M.begin();it!=M.end();it++){
+        M[it->first]=cnt++;
+    }
+    for(int i=0;i<n;i++) a[i]=M[a[i]];
+    int l,r;
+    for(int i=0;i<q;i++){
+        scanf("%d %d",&l,&r);
+        l--,r--;
+        query[i].L=l;
+        query[i].R=r;
+        query[i].idx=i;
+    }
+    sort(query,query+q,cmp);
+    int curL=0,curR=-1;
+    LL answer[q];
+    for(int i=0;i<q;i++){
+        int L=query[i].L;
+        int R=query[i].R;
+        while(curR<R){
+            curR++;
+            addR(curR);
+        }
+        while(curR>R){
+            remR(curR);
+            curR--;
+        }
+        while(curL<L){
+            remL(curL);
+            curL++;
+        }
+        while(curL>L){
+            curL--;
+            addL(curL);
+        }
+        answer[query[i].idx]=ans;
+    }
+    for(int i=0;i<q;i++)
+        printf("%lld\n",answer[i]);
+    return 0;
+}

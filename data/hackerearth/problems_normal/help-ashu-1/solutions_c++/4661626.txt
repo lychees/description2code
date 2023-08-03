@@ -1,0 +1,90 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+int tree_size = 0;
+void printTree(int *segTree, int size){
+    for(int i=0; i<tree_size; i++)
+        cout<<segTree[i]<<"    ";
+    cout<<endl;
+}
+
+void updateSegTree(int as, int ae, int *segTree, int si, int index, int value){
+    if(index < as || index > ae)
+        return;
+    segTree[si] = segTree[si] + value;
+    if(segTree[si] < 0)
+        segTree[si] = 0;
+    if(as!=ae){
+        int mid = (as + ae)/2;
+        updateSegTree(as, mid, segTree, 2*si+1, index, value);
+        updateSegTree(mid+1, ae, segTree, 2*si+2, index, value);
+    }
+}
+
+int getEvenCount(int as, int ae, int *segTree, int si, int ql, int qr){
+    if(as>=ql && ae<=qr){
+        return segTree[si];
+    }
+    if(as > qr || ae < ql)
+        return 0;
+    int mid = (as + ae)/2;
+    return getEvenCount(as, mid, segTree, 2*si + 1, ql, qr) + getEvenCount(mid+1, ae, segTree, 2*si+2, ql, qr);
+}
+
+int buildEvenSegTree(int *arr, int as, int ae, int *segTree, int si){
+    if(as == ae){
+        segTree[si] = !(arr[as]%2);
+        return segTree[si];
+    }
+    int mid = (as+ae)/2;
+    segTree[si] = buildEvenSegTree(arr, as, mid, segTree, si*2+1) + buildEvenSegTree(arr, mid+1, ae, segTree, si*2+2);
+    return segTree[si];
+}
+
+int* createSegmentTree(int *arr, int size){
+    int height = (int)ceil(log2(size));
+    tree_size = 2 * (int)pow(2, height) - 1;
+    int *segTree = new int[tree_size];
+    buildEvenSegTree(arr, 0, size-1, segTree, 0);
+    return segTree;
+}
+
+int main(){
+    int N = 0;  //Size of array
+    cin>>N;
+    int *arr = new int[N];
+    for(int i=0; i<N; i++)
+        cin>>arr[i];
+    int *segTree = createSegmentTree(arr, N);
+    //printTree(segTree, tree_size);
+    int queries;
+    cin>>queries;
+    while(queries--){
+        int w,x,y;
+        w=x=y=0;
+        cin>>w>>x>>y;
+        if(w == 0){
+            int previous = arr[x-1]%2;
+            arr[x-1] = y;
+            int diff = 0;
+            if(arr[x-1] %2 == 0 && previous){
+                diff = 1;
+            }else if(arr[x-1]%2!= 0 && !previous){
+                diff = -1;
+            }else{
+                continue;
+            }
+            updateSegTree(0, N-1, segTree, 0, x-1, diff);
+            //printTree(segTree, tree_size);
+        }else{
+            int evenCount = getEvenCount(0, N-1, segTree, 0, x-1, y-1);
+            if(w == 1){
+                cout<<evenCount<<endl;
+            }else{
+                cout<<(y-x+1)-evenCount<<endl;
+            }
+        }
+    }
+
+    return 0;
+}

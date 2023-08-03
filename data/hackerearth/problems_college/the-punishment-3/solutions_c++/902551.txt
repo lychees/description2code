@@ -1,0 +1,155 @@
+#include<iostream>
+#include<string.h>
+
+using namespace std;
+
+#define max(a,b) a>b?a:b
+
+class Bignum
+{
+	char *no;
+	int len;
+	public:
+	Bignum()
+	{
+		len=0;
+	}
+	
+	Bignum(int val)
+	{
+		int ten=10;
+		len=0;
+		while(val/ten>0)
+		{
+			ten*=10;
+			len++;
+		}
+		len++;
+		no=new char[len+1];
+		int i;
+		for(i=0;val>0;i++)
+		{
+			no[i]=(val%10)+'0';
+			val/=10;
+		}
+		no[i]=NULL;
+	}
+	Bignum(char *str)
+	{
+		len=strlen(str);
+		no=new char[len+1];
+		for(int i=0;i<len;i++)
+			no[i]=str[len-i-1];
+		no[len]=NULL;
+	}
+	// Bignum for storing 10^k.
+	Bignum(int ten,int k)
+	{
+		len=k+1;
+		no=new char[len+1];
+		for(int i=0;i<len-1;i++)
+			no[i]='0';
+		no[len-1]='1';
+		no[len]=NULL;
+		
+	}
+	int length()
+	{
+		return len;
+	}
+	char* number()
+	{
+		return no;
+	}
+	void add1()
+	{
+		int carry=0;
+		if(no[0]=='9')
+		{
+			no[0]='0';
+			carry=1;
+		}
+		else
+			no[0]++;
+		int i;
+		for(i=1;carry==1&&i<len;i++)
+		{
+			if(no[i]=='9')
+				no[i]='0';
+			else
+			{
+				no[i]++;
+				carry=0;
+			}
+		}
+		if(i==len)
+		{
+			len++;
+			no[len-1]='1';
+			no[len]=NULL;
+		}
+	}
+	void trim()
+	{
+		int i;
+		for(i=len-1;no[i]=='0';i--);
+		len=i+1;
+		no[len]=NULL;
+			
+	}
+	void display()
+	{
+		for(int i=len-1;i>=0;i--)
+			cout<<no[i];
+		cout<<endl;
+	}
+	friend Bignum sub(Bignum,Bignum);
+	
+
+	
+};
+
+Bignum sub(Bignum a,Bignum b)
+	{
+		Bignum result;
+		result.len = a.len;
+		result.no = new char[result.len+1];
+		for(int i=0;i<b.len;i++)
+		{
+			if(a.no[i]<b.no[i])
+			{
+				result.no[i]=10-(b.no[i]-'0')+a.no[i];
+				int j;
+				for(j=i+1;a.no[j]=='0';j++)
+					a.no[j]='9';
+				a.no[j]--;
+			}
+			else
+			{
+				result.no[i]=a.no[i]-b.no[i]+'0';
+			}
+			
+		}
+		for(int i=b.len;i<a.len;i++)
+			result.no[i]=a.no[i];
+		result.no[result.len]=NULL;
+		result.trim();
+		return result;
+	}
+
+int main()
+{
+	int t;
+	cin>>t;
+	while(t--)
+	{
+		int n,k;
+		cin>>n>>k;
+		Bignum a(10,n),b(10,n-k),c(10,k);
+		Bignum d = sub(a,b);
+		Bignum ans = sub(d,c);
+		ans.add1();
+		ans.display();
+	}
+	return 0;
+}

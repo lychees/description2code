@@ -1,0 +1,273 @@
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <utility>
+#include <cstdlib>
+#include <memory>
+#include <queue>
+#include <cassert>
+#include <cmath>
+#include <ctime>
+#include <complex>
+#include <bitset>
+#include <fstream>
+#include <unordered_map>
+#include <unordered_set>
+
+using namespace std;
+
+#define pb push_back
+#define fst first
+#define snd second
+#define mp make_pair 
+#define sz(C) ((int) (C).size())
+#define forn(i, n) for (int i = 0; i < (int) n; ++i)
+#define ford(i, n) for (int i = ((int) n) - 1; i >= 0; --i)
+#define y1 gftxdtrtfhyjfctrxujkvbhyjice
+#define y0 ehfoiuvhefroerferjhfjkehfjke
+#define left sdhfsjkshdjkfsdfgkqqweqweh
+#define right yytrwtretywretwreytwreytwr
+#define next jskdfksdhfjkdsjksdjkgf
+#define prev koeuigrihjdkjdfj
+#define hash kjfdkljkdhgjdkfhgurehg
+#define all(C) begin(C), end(C)
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef unsigned int uint;
+typedef pair <int,int> pii;
+typedef pair <ll, ll> pll;
+typedef vector <ll> vll;
+typedef vector <int> vi;
+typedef vector <vector <int> > vvi;
+typedef vector <pii> vii;
+typedef long double ld;
+typedef complex<double> cd;
+typedef vector<cd> vcd;
+
+#define FILE_NAME "a"
+
+#define was was_____________
+
+const int MAXK = 11;
+const int MOD = 1e9 + 7;
+
+void add(int& x, int y) {
+	((x += y) >= MOD) && (x -= MOD);
+}
+
+int mul(int x, int y) {
+	return x * 1ll * y % MOD;
+}
+
+int mpow(int a, int p, int mod) {
+	int res = 1;
+	// forn(i, p) {
+	// 	res *= a;
+	// 	res %= mod;
+	// }
+	// return res;
+
+	const int MAX = mod * mod * mod * mod;
+	for (; p > 0; p /= 2, a *= a) {
+		if  (a > MAX) {
+			a %= mod;
+		}
+		if  (p & 1) {
+			res *= a;
+		}
+		if  (res > MAX) {
+			res %= mod;
+		}
+	}
+	return res % mod;
+}
+
+int inv(int x, int mod) {
+	return mpow(x, mod - 2, mod);
+}
+
+// x * 10^k == y
+// return 10^k
+int go_to(int x, int y, int mod) {
+	return y * inv(x, mod);
+}
+
+struct Hasher {
+	ll operator()(const pii& p) const {
+		return p.fst * 2000000000LL + p.snd;
+	}
+};
+
+unordered_map<int, int> dp[MAXK][MAXK][MAXK][MAXK]; // mod, rem, rev_rem, 10^len % mod
+unordered_set<pii, Hasher> was;
+
+int calc(int n, int mod, int rem, int rev_rem, int pw10) {
+	if  (n == 0) {
+		return rem == 0 && rev_rem == 0;
+	}
+
+	assert(rem < mod && rev_rem < mod && pw10 < mod);
+	auto C = mp(n, mod);
+	if  (was.count(C)) {
+		return dp[mod][rem][rev_rem][pw10][n];
+	}
+	was.insert(C);
+
+	if  (n == 1) {
+		for (int i = 1; i < 10; ++i) {
+			add(dp[mod][i % mod][i % mod][10 % mod][1], 1);
+		}
+		add(dp[mod][0][0][1][1], 1);
+		return dp[mod][rem][rev_rem][pw10][1];
+	}
+
+	vector<vvi> left(mod, vvi(mod, vi(mod, 0)));
+	vector<vvi> right(mod, vvi(mod, vi(mod, 0)));
+	forn(r, mod) forn(rr, mod) forn(pw, mod) {
+		left[r][rr][pw] = calc(n / 2, mod, r, rr, pw);
+	}
+	forn(r, mod) forn(rr, mod) forn(pw, mod) {
+		right[r][rr][pw] = calc(n - n / 2, mod, r, rr, pw);
+	}
+
+	vector<vvi> res(mod, vvi(mod, vi(mod, 0)));	
+
+	int aux1 = mpow(10, n - n / 2, mod);
+
+	// left_part == 0
+	forn(rem_r, mod) forn(rev_rem_r, mod) forn(pw_r, mod) {
+		add(res[rem_r][rev_rem_r][pw_r], right[rem_r][rev_rem_r][pw_r]);
+	}
+
+	forn(rem_l, mod) forn(rev_rem_l, mod) forn(pw_l, mod) forn(rem_r, mod) forn(rev_rem_r, mod) forn(pw_r, mod) {
+		int L = left[rem_l][rev_rem_l][pw_l];
+		if  (!rem_l && !rev_rem_l && pw_l == 1) {
+			add(L, -1 + MOD);
+		}
+		int R = right[rem_r][rev_rem_r][pw_r];
+		if  (!L || !R) {
+			continue;
+		}
+		int Rem = rem_l * aux1 + rem_r;
+		Rem %= mod;
+		int Rev_Rem = rev_rem_r * pw_l * go_to(pw_r, aux1, mod) + rev_rem_l;
+		Rev_Rem %= mod;
+		int Pw = aux1 * pw_l;
+		Pw %= mod;
+		// if  (n == 3 && Rem == 0 && Rev_Rem == 1 && mod == 7 && Pw == 6) {
+		// 	printf("left[%d]: rem:%d rev:%d pw:%d -> %d, right[%d]: rem:%d rev:%d pw:%d -> %d\n", n / 2, rem_l, rev_rem_l, pw_l, L, n - n / 2, rem_r, rev_rem_r, pw_r, R);
+		// }
+		add(res[Rem][Rev_Rem][Pw], mul(L, R));
+	}
+
+	forn(r, mod) forn(rr, mod) forn(pw, mod) {
+		dp[mod][r][rr][pw][n] = res[r][rr][pw];
+	}
+	return dp[mod][rem][rev_rem][pw10][n];
+}
+
+int len(int n) {
+	int res = 0;
+	while (n) {
+		++res;
+		n /= 10;
+	}
+	return res;
+}
+
+int rev(int n) {
+	int rn = 0;
+	while (n) {
+		int d = n % 10;
+		rn = d + rn * 10;
+		n /= 10;
+	}
+	return rn;
+}
+
+int calc_brut(int n, int mod, int rem, int rev_rem, int pw10) {
+	int ans = 0;
+	for (int i = 0; ; ++i) {
+		int l = len(i);
+		int ri = rev(i);
+		if  (l > n) break;
+		if  (i % mod == rem && ri % mod == rev_rem && mpow(10, l, mod) == pw10) {
+			++ans;
+			if  (n == 3 && mod == 7 && rem == 0 && rev_rem == 1 && pw10 == 6) {
+				int left = i / 100;
+				int right = i % 100;
+				printf("i=%d, left:rem:%d,rev:%d,pw=%d|right:rem:%d,rev:%d,pw=%d\n", i, left % mod, rev(left) % mod, len(left), right % mod, rev(right) % mod, len(right));
+			}
+		}
+	}
+	return ans;
+}
+
+int solve(int n, int k) {
+	int ans = 0;
+	forn(pw10, k) {
+		add(ans, calc(n, k, 0, 0, pw10));
+	}
+	return ans;
+}
+
+int solve_brut(int n, int k) {
+	int ans = 0;
+	for (int i = 0; len(i) <= n; i += k) {
+		if  (rev(i) % k == 0) {
+			++ans;
+		}
+	}
+	return ans;
+}
+
+int main() {
+#ifdef DEBUG
+	freopen(FILE_NAME ".in", "r", stdin);
+	// freopen(FILE_NAME ".out", "w", stdout);
+#endif
+	
+	// for (int n = 1; n <= 4; ++n) {
+	// 	for (int mod = 7; mod <= 7; ++mod) {
+	// 		forn(rem, mod) forn(rev_rem, mod) forn(pw10, mod) {
+	// 			int my = calc(n, mod, rem, rev_rem, pw10);
+	// 			int corr = calc_brut(n, mod, rem, rev_rem, pw10);
+	// 			if  (my != corr) {
+	// 				printf("n=%d, mod=%d, rem=%d, rev_rem=%d, pw10=%d - my=%d, corr=%d\n", n, mod, rem, rev_rem, pw10, my, corr);
+	// 				return 0;
+	// 			} else if  (my) {
+	// 				printf("OK dp n=%d, mod=%d, rem=%d, rev_rem=%d, pw10=%d - my=%d, corr=%d\n", n, mod, rem, rev_rem, pw10, my, corr);
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// for (int n = 1; n <= 5; ++n) {
+	// 	for (int k = 2; k <= 10; ++k) {
+	// 		int my = solve(n, k);
+	// 		int ans = solve_brut(n, k);
+	// 		if  (ans != my) {
+	// 			printf("n=%d, k=%d, corr=%d, my=%d\n", n, k, ans, my);
+	// 			return 0;
+	// 		}
+	// 	}
+	// }
+
+	int T;
+	scanf("%d", &T);
+	while (T --> 0) {
+		int n, k;
+		scanf("%d%d", &n, &k);
+		printf("%d\n", solve(n, k));
+		// printf("my = %d\n", solve(n, k));
+		// printf("brut = %d\n", solve_brut(n, k));
+	}
+
+	return 0;
+}

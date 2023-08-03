@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define REPU(i, a, b) for (int i = (a); i < (b); ++i)
+#define REPD(i, a, b) for (int i = (a); i > (b); --i)
+#define MEM(a, x) memset(a, x, sizeof(a))
+#define ALL(a) a.begin(), a.end()
+#define UNIQUE(a) a.erase(unique(ALL(a)), a.end())
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) { return (a < b) ? a : b; }
+template<class T> inline T tmax(T a, T b) { return (a > b) ? a : b; }
+template<class T> inline void amax(T &a, T b) { if (b > a) a = b; }
+template<class T> inline void amin(T &a, T b) { if (b < a) a = b; }
+template<class T> inline T tabs(T a) { return (a > 0) ? a : -a; }
+template<class T> T gcd(T a, T b) { while (b != 0) { T c = a; a = b; b = c % b; } return a; }
+
+const int N = 1000005;
+typedef pair<int, int> P;
+#define X first
+#define Y second
+P p[2005];
+bool dp[N];
+vector<int> g[N];
+
+int main(int argc, char *argv[]) {
+	ios_base::sync_with_stdio(false);
+	
+	int T, n, L;
+
+	cin >> T;
+	while (T--) {
+		cin >> n >> L;
+		MEM(dp, 0);
+		REPU(i, 0, n) {
+			cin >> p[i].X >> p[i].Y;
+			if (p[i].X == p[i].Y) continue;
+			g[p[i].X].push_back(p[i].Y);
+			dp[p[i].Y] = 1;
+		}
+		sort(p, p + n);
+		bool found = false;
+		queue<int> que;
+		REPU(i, 0, n) {
+			int dst = p[i].X + L;
+			if (dst >= N || !dp[dst] || p[i].Y > dst) continue;
+			que.push(p[i].X);
+			int cur = i + 1;
+			while (que.size()) {
+				int v = que.front(); que.pop();
+				if (v == dst) {
+					found = true;
+				}
+				for (int u : g[v]) {
+					int ind = upper_bound(p, p + n, P(u, N)) - p;
+					REPU(j, cur, ind) if (p[j].Y <= dst) que.push(p[j].X);
+					cur = max(cur, ind);
+					if (u <= dst) que.push(u);
+				}
+			}
+			if (found) break;
+		}
+		REPU(i, 0, n) g[p[i].X].clear();
+		printf("%s\n", found ? "Yes" : "No");
+	}
+	
+	return 0;
+}

@@ -1,0 +1,211 @@
+#include <iostream>
+//#include <utility>
+#define MAX_Q 100001
+#define MAX_VAL 100001
+#define MIN_VAL -1
+using namespace std;
+
+class Course
+{
+public:
+	int nstudents, id;
+	int lastiq1, lastiq2, z_score;
+	Course() { nstudents=0; lastiq1=-1; lastiq2=-1; z_score = 0; id =0; };
+	//Course(int pid) { nstudents=0; lastiq1=-1; lastiq2=-1; z_score = 0; id = pid; };
+	void set_id(int pid) { id = pid; }
+	void add_student(int iq) {  
+		lastiq2 = lastiq1;
+		lastiq1 = iq;
+		nstudents++;
+		update_z_score();
+	};
+	void update_z_score() {
+		if (lastiq1==-1 && lastiq2==-1)
+			z_score = 0;
+		else if (lastiq2==-1)
+			z_score = lastiq1;
+		else
+			z_score = (lastiq1+lastiq2)*nstudents;
+	};
+	bool operator< (Course that) {
+		if (z_score < that.z_score)
+			return true;
+		else if (z_score == that.z_score && id < that.id)
+			return true;
+		else
+			return false;
+	};
+	bool operator== (Course that) {
+		return z_score == that.z_score;
+	};
+	void print() { 
+		cout << id << " # " << nstudents << " $ " << z_score << " : " << lastiq1 << " + " << lastiq2 << endl;
+	};
+	int get_id() { return id;};
+	Course( const Course &obj) { // Copy constructor
+		id = obj.id;
+		nstudents = obj.nstudents;
+		lastiq1 = obj.lastiq1;
+		lastiq2 = obj.lastiq2;
+		z_score = obj.z_score;
+	};
+	Course& operator= (const Course& obj)
+	{
+        new(this) Course(obj);
+		return *this;
+	};
+};
+
+template<class T>
+class PQ
+{
+private:
+	T pq[MAX_Q];
+	int N;
+	int pq_type;
+public:
+	PQ() { N =0; pq_type=0; };
+	PQ(int ptype) { N =0; pq_type =  ptype; };
+	//T get_max() { return MAX_VAL;}
+	//T get_min() { return MIN_VAL;}
+	bool compare(T a, T b) {
+		if (pq_type == 0) // Max PQ
+			return b < a;
+		else			// Min PQ
+			return a < b; 
+	};
+	void swapv(int i, int j) { T tmp = pq[i]; pq[i] = pq[j]; pq[j]=tmp;};
+	void swim(int i)
+	{
+		while(i > 1 && compare(pq[i], pq[i/2]))
+		{
+			swapv(i ,i/2);
+			i = i/2;
+		}
+	};
+	void sink(int i)
+	{
+		while(i<=N/2){
+			int ch = 2*i;
+			if (ch < N && compare(pq[ch+1], pq[ch]))
+				ch++;
+			if (compare(pq[ch], pq[i])) {
+				swapv(i, ch);
+				i = ch;
+			} else
+				break;
+		}
+	};
+	void insert(T elto)
+	{
+		pq[++N] = elto;
+		swim(N);
+	};
+	bool empty(){ return (N==0); };
+	T top() { return pq[1];};
+	T pop() 
+	{
+		T top_val = top();
+		swapv(1, N--);
+		sink(1);
+		return top_val;
+	};
+	void update(int i, T val)
+	{
+		if (val == pq[i])
+		{
+			return;
+		}
+		else if (compare(val, pq[i]))
+		{
+			pq[i] = val;
+			swim(i);
+
+		} else {
+			pq[i] = val;
+			sink(i);
+		}
+
+	};
+	/*
+	bool del_element(T elto)
+	{
+		bool found = false;
+		for(int i=1; i<=N; i++)
+		{
+			if (pq[i] == elto)
+			{
+				if(pq_type == 0)
+					update(i, get_max());
+				else
+					update(i, get_min());
+				pop();
+				found = true;
+				break;
+			}
+		}
+		return found;
+	};
+	*/
+	void print(){
+		cout << "ini" << endl;
+		for(int i=1; i<=N; i++)
+			pq[i].print();
+		//cout << pq[i].get_string() << endl;
+		cout << "end" << endl;
+	};
+};
+
+int main()
+{
+    int C, P, N, numC, iq;
+    cin >> C;
+    cin >> P;
+    cin >> N;
+    numC = 0;
+    PQ<Course> min_pq(1);
+    for(int i=0; i<N; i++)
+    {
+    	cin >> iq;
+    	Course course;
+    	course.set_id(numC+1);
+    	course.add_student(iq);
+    	min_pq.insert(course);
+    	numC++;
+    }
+    //min_pq.print();
+    
+    int count = 0;
+    
+    //while(!cin.eof())
+    for(int i=0; i<P; i++)
+    {
+    	if (!cin.eof())
+    		cin >> iq;
+    	else
+    		iq = 0;
+    	if (numC < C)
+    	{
+    		Course course;
+    		course.set_id(numC+1);
+    		course.add_student(iq);
+    		min_pq.insert(course);
+    		numC++;
+    		cout << numC << " ";
+    		//course.print();
+    	} else {
+    		//min_pq.print();
+    		Course course(min_pq.top());
+    		course.add_student(iq);
+    		min_pq.update(1, course);
+    		cout << course.get_id() << " ";
+    		//course.print();
+    	}
+    	
+    	count ++;
+    }
+    //cout << count << endl;
+	//cout << endl;
+
+    return 0;
+}

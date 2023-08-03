@@ -1,0 +1,165 @@
+#include <cstdio>
+#include <queue>
+#include <algorithm>
+#include <vector>
+ 
+using namespace std;
+ 
+#define pb emplace_back
+#define INLINE   inline __attribute__ ((always_inline))
+ 
+struct BufferedReader {
+	const static int buf_size = 1 << 12;
+	char buf[buf_size];
+	int len, pos;
+	FILE *in;
+ 
+	BufferedReader() {
+		in = stdin;
+		len = pos = 0;
+	}
+	
+	INLINE int getChar() {
+		if (pos == len)
+			pos = 0, len = fread(buf, 1, buf_size, in);
+		if (pos == len)
+			return -1;
+		return buf[pos++];
+	}
+ 
+	INLINE int readChar() {
+		register int c;
+		for(c = getChar(); c != ')' && c != '('; c = getChar());
+		return (c == '(' ? 0 : 1);
+	}
+ 
+	int INLINE readUint() {
+		register int c;
+		for(c = getChar(); c < 48 || c > 57; c = getChar());
+		register int t = c - 48;
+		for(c = getChar(); c > 47 && c < 58; c = getChar())
+			t = (t << 1) + (t << 3) + c - 48;
+		return t;
+	}
+} in;
+ 
+struct BufferedWriter {
+	const static int buf_size = 1 << 12;
+	char buf[buf_size], dig[24];
+	int pos;
+	FILE *out;
+ 
+	BufferedWriter() {
+		out = stdout;
+		pos = 0;
+	}
+ 
+	INLINE void writeChar(int x) {
+		if (pos == buf_size)
+			fwrite(buf, 1, buf_size, out), pos = 0;
+		buf[pos++] = x;
+	}
+ 
+	void writeInt(long long x, int end) {
+		if (x < 0) {writeChar('-'); x = -x;}
+		if (x == 0) {writeChar('0'); writeChar(end); return;}
+		register int n = 0;
+		for(n = 0; x; x /= 10)
+			dig[n++] = '0' + x % 10;
+		for(; --n >= 0; writeChar(dig[n]));
+		writeChar(end);
+	}
+ 
+	INLINE void flush() {
+		if (pos)
+			fwrite(buf, 1, pos, stdout), pos = 0;
+	}
+} out;
+ 
+typedef long long ll;
+const ll oo = ll(1e17);
+const int N = 302;
+ll d[2][N][N];
+ 
+struct Vertex {
+	bool op;
+	int u, v;
+	ll w;
+	Vertex() {}
+	Vertex(bool op, int u, int v, ll w) : op(op), u(u), v(v), w(w){}
+	bool operator < (const Vertex& b) const {
+		return w > b.w;
+	}
+};
+priority_queue<Vertex> q;
+ 
+struct Edge {
+	int v, w;
+	Edge(){}
+	Edge(int v, int w) : v(v), w(w){}
+	bool operator < (const Edge &b) const {
+		return (v != b.v ? v < b.v : w < b.w);
+	}
+	bool operator == (const Edge &b) const {
+		return (v == b.v && w == b.w);
+	}
+};
+   
+vector<Edge> g[N][2], r[N][2];
+ 
+int main() {
+	int n = in.readUint();
+	for(int i = 0; i < n; ++i)
+		for(int j = 0; j < n; ++j)
+			d[0][i][j] = d[1][i][j] = oo;
+	int m = in.readUint();
+	for(int i = 0; i < m; ++i) {
+		int u = in.readUint() - 1;
+		int v = in.readUint() - 1;
+		int w = in.readUint();
+		int t = in.readChar();
+		g[u][t].pb(Edge(v, w));
+		r[v][t].pb(Edge(u, w));
+	}
+	for(int i = 0; i < n; ++i) {
+		q.push(Vertex(0, i, i, 0LL));
+		d[0][i][i] = 0LL;
+	}
+	while (!q.empty()) {
+		Vertex cur = q.top(); q.pop();
+		int u = cur.u, v = cur.v;
+		bool op = cur.op;
+		ll w = cur.w;
+		if (w != d[op][u][v]) continue;
+ 
+		if (op) {
+			for(Edge y : g[v][1])
+				if (d[0][u][y.v] > w + y.w) {
+					d[0][u][y.v] = w + y.w;
+					q.push(Vertex(0, u, y.v, w + y.w));
+				}
+		}
+		else {
+			for(Edge x : r[u][0])
+				if (d[1][x.v][v] > x.w + w) {
+					d[1][x.v][v] = x.w + w;
+					q.push(Vertex(1, x.v, v, w + x.w));
+				}
+			for(int k = 0; k < n; ++k) {
+				if (d[0][k][v] > d[0][k][u] + w) {
+					d[0][k][v] = d[0][k][u] + w;
+					q.push(Vertex(0, k, v, d[0][k][v]));
+				}
+				if (d[0][u][k] > d[0][v][k] + w) {
+					d[0][u][k] = d[0][v][k] + w;
+					q.push(Vertex(0, u, k, d[0][u][k]));
+				}
+			}
+		}
+	}
+	for(int i = 0; i < n; ++i)
+		for(int j = 0; j < n; ++j)
+			out.writeInt((d[0][i][j] == oo) ? -1 : d[0][i][j], (j == n - 1) ? '\n' : ' ');
+	out.flush();
+	return 0;
+}

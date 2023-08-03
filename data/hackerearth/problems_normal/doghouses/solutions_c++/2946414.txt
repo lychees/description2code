@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int n;
+int y[1000];
+int cnt[1001] = {}, le[1001], ri[1001];
+set<int> sle[1001], sri[1001];
+
+int main() {
+    scanf("%d", &n);
+    REP(i, n) scanf("%d", y + i);
+    REP(i, 1001) {
+        le[i] = 2222;
+        ri[i] = -2222;
+    }
+    REP(i, n) {
+        ++cnt[y[i]];
+        le[y[i]] = min(le[y[i]], i);
+        ri[y[i]] = max(ri[y[i]], i);
+    }
+    sle[0].insert(y[0]);
+    for (int i = 1; i < n; ++i) {
+        sle[i] = sle[i - 1];
+        sle[i].insert(y[i]);
+    }
+    sri[n - 1].insert(y[n - 1]);
+    for (int i = n - 2; i >= 0; --i) {
+        sri[i] = sri[i + 1];
+        sri[i].insert(y[i]);
+    }
+    int ans = -1;
+    REP(i, 1001) if (cnt[i]) for (int j = i + 1; j <= 1001; ++j) if (cnt[j]) {
+        int cur = cnt[i] + cnt[j];
+        int lo = min(le[i], le[j]);
+        int hi = max(ri[i], ri[j]);
+        if (lo > 0) {
+            auto it = sle[lo - 1].lower_bound(i);
+            if (it != sle[lo - 1].end() && *it <= j) {
+                ++cur;
+            }
+        }
+        if (hi < n - 1) {
+            auto it = sri[hi + 1].lower_bound(i);
+            if (it != sri[hi + 1].end() && *it <= j) {
+                ++cur;
+            }
+        }
+        ans = max(ans, cur);
+    }
+    if (ans == -1) ans = n;  
+    printf("%d\n", ans);
+    return 0;
+}

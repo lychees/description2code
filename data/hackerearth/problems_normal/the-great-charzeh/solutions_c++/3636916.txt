@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifdef DEBUG
+#define D(x...) fprintf(stderr,x)
+#else
+#define D(x...)
+#endif
+
+struct BM {
+    int T;
+    int A, B;
+    vector<int> seen;
+    vector<vector<int>> edges;
+    vector<int> partner;
+
+    BM(int a, int b) : T(1), A(a), B(b), seen(a), edges(a), partner(b) {
+        fill(partner.begin(), partner.end(), -1);
+    }
+
+    void add(int u, int v) {
+        edges[u].push_back(v);
+    }
+
+    bool dfs(int u) {
+        if(seen[u] != T) {
+            seen[u] = T;
+            for(auto o: edges[u]) {
+                if(partner[o] == -1 || dfs(partner[o])) {
+                    partner[o] = u;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    int mm() {
+        int ans = 0;
+        for(int i=0;i<A;i++) {
+            T++;
+            ans += dfs(i);
+        }
+        return ans;
+    }
+};
+
+const int MAX_N = 605;
+
+int N, M;
+int aa[MAX_N];
+int bb[MAX_N];
+
+bool go(int x) {
+    D("x = %d\n",x);
+    BM bm(N, N);
+    for(int i=0;i<N;i++) {
+        for(int j=0;j<N;j++) {
+            if(bb[aa[i] + j] <= x) {
+                D("adding edge %d [%d] %d [%d:%d]\n",i,aa[i],j,aa[i]+j,bb[aa[i]+j]);
+                bm.add(i, j);
+            }
+        }
+    }
+    return bm.mm() == N;
+}
+
+int main() {
+    scanf("%d %d",&N,&M);
+
+    for(int i=0;i<N;i++) {
+        scanf("%d",&aa[i]);
+    }
+
+    for(int i=0;i<N+M;i++) {
+        scanf("%d",&bb[i]);
+        D("bb[%d] = %d\n",i,bb[i]);
+    }
+
+    int lo = 0;
+    int hi = 1e9+5;
+    int ans = 1e9+5;
+    while(lo <= hi) {
+        int mid = (lo+hi)/2;
+        D("mid = %d\n",mid);
+        if(go(mid)) {
+            ans = mid;
+            hi = mid-1;
+        } else {
+            lo = mid+1;
+        }
+    }
+
+    printf("%d\n",ans);
+
+    return 0;
+}

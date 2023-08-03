@@ -1,0 +1,180 @@
+from collections import defaultdict
+import copy
+class Graph():
+
+    def __init__(self, connections=[], directed=False):
+        self.status_dict      = defaultdict(lambda : 1)
+        self.graph_dict       = defaultdict(list)
+        self.is_directed      = directed
+        self.add_connections(connections)
+
+
+    def add_connections(self,connections):
+        if self.is_directed:         
+           for node1 , node2 in connections:
+                self.graph_dict[node1].append(node2)
+                self.graph_dict[node2]
+                self.status_dict[node1]
+                self.status_dict[node2]
+                
+        else:
+           for node1 ,node2 in connections:
+                self.graph_dict[node1].append(node2)
+                self.graph_dict[node2].append(node1)
+                self.status_dict[node1]
+                self.status_dict[node2]
+        
+    def add_edge(self,node1, node2):
+       
+        self.graph_dict[node1].append(node2)
+            
+        if not self.is_directed:
+            self.graph_dict[node2].append(node1)
+                
+      
+    
+    def add_vertex(self,node):
+        self.graph_dict[node]
+        self.status_dict[node]
+
+def dfs(g,src_node,component_count):
+    global component_dict
+
+    component               = []
+    stack                   = []
+    stack.append(src_node)
+    g.status_dict[src_node] = 2 
+    
+    
+    while len(stack) != 0:
+        node = stack.pop() 
+        component.append(node)
+        g.status_dict[node] = 3;
+        component_dict[node]= component_count
+        #print node,
+    
+        for nbs in g.graph_dict[node]:
+            if g.status_dict[nbs]  == 1:
+                stack.append(nbs)
+                g.status_dict[nbs] = 2
+                
+    return component
+
+
+def recursive_dfs(g,src_node,finish_stack):
+    #print src_node,
+    g.status_dict[src_node] = 3
+    finish_stack.append(src_node)
+    
+    for nbs in g.graph_dict[src_node]:
+        if g.status_dict[nbs] == 1:
+            recursive_dfs(g,nbs,finish_stack)
+    finish_stack.append(src_node)
+
+
+
+def my_dfs(g,src_node,component_id):
+    global component_dict
+    global boolean_component_list
+    #ALL NODES HAVE STATUS = 1 (READY STATE)
+  
+    stack                   = []
+    stack.append(src_node)
+    g.status_dict[src_node] = 2 #NODE IN THE STACK (PROCESSING STATE)
+    
+    
+    while len(stack) != 0:
+        node = stack.pop() #POP A NODE MAKE ITS STATUS = 3
+        g.status_dict[node] = 3;  
+        for nbs in g.graph_dict[node]:#PUSHING THE NEIGHBOURS OF NODE IN THE STACK AND MAKE THEIR STATUS = 2
+            if g.status_dict[nbs]  == 1:
+                if component_dict[nbs] != component_id:
+                    boolean_component_list[component_id] =False
+                    return
+                stack.append(nbs)
+                g.status_dict[nbs] = 2
+                
+                
+ 
+
+
+def strongly_connected(g,gt):
+    finish_stack = []
+    components   = []
+    
+    for node in g.graph_dict.keys():
+        if g.status_dict[node] == 1:
+            recursive_dfs(g,node,finish_stack)
+    
+    component_count = 0
+    for node in finish_stack[::-1]:
+        if gt.status_dict[node] == 1:
+            components.append(dfs(gt,node,component_count))
+            component_count += 1
+    return components
+'''
+connections = [(1,7),(7,4),(4,1),(7,9),(9,6),(6,3),(3,9),(6,8),(8,2),(2,5),(5,8)]
+reverse_connections = map(lambda x:(x[1],x[0]),connections)
+g=Graph(connections,True)
+gt=Graph(reverse_connections,True)
+component_dict=copy.deepcopy(g.status_dict)
+x=strongly_connected(g,gt)
+print x
+print component_dict
+
+g.status_dict=g.status_dict.fromkeys(g.status_dict,1)
+print g.status_dict
+
+boolean_component_list = [True]*len(x)
+for i in range(len(x)):
+    my_dfs(g,x[i][0],i)
+
+print boolean_component_list
+
+'''
+
+N,D = [int(x) for x in raw_input().split()]
+g   = Graph([],True)
+gt  = Graph([],True)#transpose graph
+
+for i in range(1,N+1):
+    g.add_vertex(i)
+    gt.add_vertex(i)
+    
+for i in range(D):
+    node1,node2 = [int(x) for x in raw_input().split()]
+    g.add_edge(node1,node2)
+    gt.add_edge(node2,node1)
+    
+component_dict  =  copy.deepcopy(g.status_dict) 
+components_list =  strongly_connected(g,gt)
+g.status_dict   =  g.status_dict.fromkeys(g.status_dict,1)# reset g.status_dict to apply again dfs
+ans             =  10000000
+boolean_component_list = [True]*len(components_list)
+#print components_list
+
+for i in range(len(components_list)):
+    my_dfs(g,components_list[i][0],i)
+#print boolean_component_list
+for item in range(len(boolean_component_list)):
+    if boolean_component_list[item]:
+        ans = min( ans,len(components_list[item]))
+print ans
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

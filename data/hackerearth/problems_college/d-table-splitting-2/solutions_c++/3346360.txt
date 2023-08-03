@@ -1,0 +1,94 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int uli;
+const int mx=1e6+10;
+char tmp[mx];
+string b[mx];
+int n,m;
+bool vis[mx];
+bool cycle;
+int f[30];
+void nxts(){
+   int c=0;
+   int ch=getchar_unlocked();
+   while(ch<'a' || ch>'z') 
+      ch=getchar_unlocked();
+   while('a'<=ch && ch<='z'){
+      tmp[c++]=ch;
+      ch=getchar_unlocked();
+   }
+}
+void bfs(char ch){
+   queue<pair<int,int> >q;
+   for(int i=0;i<n;i++){
+      if(b[i][0]!=ch){
+         q.push(make_pair(i,0));
+         vis[i*m]=1;
+      }
+      if(m-1!=0 && b[i][m-1]!=ch){
+         q.push(make_pair(i,m-1));
+         vis[i*m+(m-1)]=1;
+      }
+   }
+   for(int i=1;i<m-1;i++){
+      if(b[0][i]!=ch){
+         q.push(make_pair(0,i));
+         vis[i]=1;
+      }
+      if(n-1!=0 && b[n-1][i]!=ch){
+         q.push(make_pair(n-1,i));
+         vis[(n-1)*m+i]=1;
+      }
+   }
+   int cnt=0;
+   while(!q.empty()){
+      int r=q.front().first;
+      int c=q.front().second;
+//      if(ch=='a')cout<<"vis "<<r<<";"<<c<<endl;
+      cnt++;
+      q.pop();
+      for(int dr=-1;dr<=1;dr++){
+         for(int dc=-1;dc<=1;dc++){
+            if(dr==0 && dc==0)continue;
+            int nr=r+dr,nc=c+dc;
+            int idx=nr*m+nc;
+            if(0<=nr && nr<n && 0<=nc && nc<m && b[nr][nc]!=ch && !vis[idx]){
+               vis[idx]=true;
+               q.push(make_pair(nr,nc));
+            }
+         }
+      }
+   }
+//   assert(cnt<=n*m-f[ch-'a']);
+   if(cnt!=n*m-f[ch-'a'])cycle=true;
+}
+int main(){
+//   freopen("data.in","r",stdin);
+   int t;
+   scanf("%d",&t);
+   while(t--){
+      scanf("%d %d",&n,&m);
+      memset(f,0,sizeof f);
+      for(int i=0;i<n;i++){
+         nxts();
+         tmp[m]='\0';
+//         cout<<tmp<<endl;
+//         scanf("%s",tmp);
+         b[i]=string(tmp);
+         for(int j=0;j<m;j++){
+            f[tmp[j]-'a']++;
+         }
+      }
+      cycle=false;
+      for(int ch='a';ch<='z' &&!cycle;ch++){
+         if(f[ch-'a']==0)continue;
+         for(int i=0;i<n*m;i++)
+            vis[i]=false;
+         bfs(ch);
+      }
+      if(cycle)puts("NO");
+      else puts("YES");
+   }
+   return 0;
+}
+

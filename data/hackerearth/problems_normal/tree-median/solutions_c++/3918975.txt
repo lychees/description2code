@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 3e5 + 5, OFFSET = N;
+
+set<int> adj[N];
+int sz[N], h[N];
+int B[N], ways[2*N];
+
+long long lazy[N], tot[N];
+long long ans;
+
+void dfs(int u, int prev){
+    sz[u] = 1;
+    lazy[u] = 0;
+    for(auto v : adj[u]){
+        if(v == prev)   continue;
+        dfs(v, u);
+        sz[u] += sz[v];
+    }
+}
+
+int findCentroid(int u, int prev, int tot){
+    for(auto v : adj[u]){
+        if(v == prev)   continue;
+        if(sz[v] > tot / 2) return findCentroid(v, u, tot);
+    }
+    return u;
+}
+
+void calc_dfs(int u, int prev, int root, int VAL){
+    for(auto v : adj[u]){
+        if(v == prev)   continue;
+        calc_dfs(v, u, root, VAL + B[v]);
+    }
+    lazy[u] = ways[OFFSET -1 - VAL] + ways[OFFSET -2 - VAL];
+}
+
+void include_dfs(int u, int prev, int root, int VAL){
+    for(auto v : adj[u]){
+        if(v == prev)   continue;
+        include_dfs(v, u, root, VAL + B[v]);
+    }
+    ways[OFFSET + VAL - B[root]]++;
+}
+
+void exclude_dfs(int u, int prev, int root, int VAL){
+    for(auto v : adj[u]){
+        if(v == prev)   continue;
+        exclude_dfs(v, u, root, VAL + B[v]);
+    }
+    ways[OFFSET + VAL - B[root]]--;
+}
+
+void lazy_prop_dfs(int u, int prev, int root){
+    for(auto v : adj[u]){
+        if(v == prev)   continue;
+        lazy_prop_dfs(v, u, root);
+        lazy[u] += lazy[v];
+    }
+    if(B[u] == -1){
+        if(u == root)   tot[u] += lazy[u] / 2;
+        else tot[u] += lazy[u];
+    }
+}
+
+void centroid_decomp(int current, int prevCentroid){
+    dfs(current, 0);
+    current = findCentroid(current, 0, sz[current]);
+    //ways.clear();
+    ways[OFFSET + 0]++;
+    for(auto v : adj[current])  include_dfs(v, current, current, B[current] + B[v]);
+    for(auto v : adj[current]){
+        exclude_dfs(v, current, current, B[current] + B[v]);
+        calc_dfs(v, current, current, B[current] + B[v]);
+        include_dfs(v, current, current, B[current] + B[v]);
+    }
+    ways[OFFSET + 0]--;
+    lazy[current] = ways[OFFSET - 1 - B[current]] + ways[OFFSET -2 - B[current]];
+    for(auto v : adj[current])  exclude_dfs(v, current, current, B[current] + B[v]);
+    lazy_prop_dfs(current, 0, current);
+    for(auto v : adj[current]){
+        adj[v].erase(current);
+        centroid_decomp(v, current);
+    }
+    adj[current].clear();
+}
+
+int main(){
+    int n, x, u, v;
+    scanf("%d %d", &n, &x);
+    for(int i = 1; i < n; i++){
+        scanf("%d %d", &u, &v);
+        adj[u].insert(v);
+        adj[v].insert(u);
+    }
+
+    for(int i = 1; i <= n; i++){
+        scanf("%d", &B[i]);
+        if(B[i] >= x)   B[i] = 1;
+        else B[i] = -1;
+    }
+
+    centroid_decomp(1, 0);
+
+    for(int i = 1; i <= n; i++) ans = max(ans, tot[i]);
+
+    cout<<ans;
+}

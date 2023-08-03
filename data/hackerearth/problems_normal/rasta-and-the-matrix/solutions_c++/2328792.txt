@@ -1,0 +1,173 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+typedef long long ll;
+struct Tree {
+  struct Node {
+    ll sum;
+    Node* lch, *rch;
+
+    bool lazy;
+
+    Node()
+        : sum(0), lch(NULL), rch(NULL), lazy(false) {
+    }
+
+  };
+  static const ll MAX = 1LL << 60;
+  typedef Node* pNode;
+  pNode root = NULL;
+  ll L, R, ANS;
+
+  static pNode new_node() {
+    return new Node();
+  }
+
+  void update(ll l, ll r) {
+    L = l;
+    R = r;
+    root = rec_update(root, 1, MAX);
+  }
+
+  void prog(pNode at, const ll sz) {
+    if (at->lazy) {
+      if (!at->lch)
+        at->lch = new_node();
+      if (!at->rch)
+        at->rch = new_node();
+      at->lch->sum = (sz >> 1) - at->lch->sum;
+      at->lch->lazy ^= true;
+      at->rch->sum = (sz >> 1) - at->rch->sum;
+      at->rch->lazy ^= true;
+      at->lazy = false;
+    }
+  }
+
+  pNode rec_update(pNode at, ll l, ll r) {
+    if (L > r || R < l)
+      return at;
+    if (!at)
+      at = new_node();
+    if (L <= l && r <= R) {
+      at->sum = (r - l + 1) - at->sum;
+      at->lazy ^= true;
+    } else {
+      const ll m = (l + r) >> 1;
+      prog(at, r - l + 1);
+      at->lch = rec_update(at->lch, l, m);
+      at->rch = rec_update(at->rch, m + 1, r);
+      at->sum = 0;
+      if (at->lch)
+        at->sum += at->lch->sum;
+      if (at->rch)
+        at->sum += at->rch->sum;
+    }
+    return at;
+  }
+
+  ll get(ll l, ll r) {
+    L = l;
+    R = r;
+    ANS = 0;
+    rec_get(root, 1, MAX);
+    return ANS;
+  }
+
+  void rec_get(pNode at, ll l, ll r) {
+    if (!at)
+      return;
+    if (L > r || R < l)
+      return;
+    if (L <= l && r <= R) {
+      ANS += at->sum;
+    } else {
+      const ll m = (l + r) >> 1;
+      prog(at, r - l + 1);
+      rec_get(at->lch, l, m);
+      rec_get(at->rch, m + 1, r);
+    }
+  }
+};
+
+const int MOD = int(1e9) + 7;
+Tree row_tree, col_tree;
+
+void solve(int test_num) {
+  int Q;
+  cin >> Q;
+  ll last_ans = 0;
+  for (int q = 0; q < Q; q++) {
+    int type;
+    cin >> type;
+    if (type == 1) {
+      int x;
+      ll l, r;
+      cin >> x >> l >> r;
+#ifndef AZN
+      l ^= last_ans;
+      r ^= last_ans;
+#endif
+      if (x == 0) {
+        row_tree.update(l, r);
+      } else {
+        col_tree.update(l, r);
+      }
+//      static int temp[11][11];
+//      for (int r = 1; r <= 10; r++)
+//        for (int c = 1; c <= 10; c++)
+//          temp[r][c] = row_tree.get(r, r) ^ col_tree.get(c, c);
+//      pln();
+//      plnarr(temp, 5, 5);
+    } else {
+      ll r1, r2, c1, c2;
+      cin >> r1 >> r2 >> c1 >> c2;
+#ifndef AZN
+      r1 ^= last_ans;
+      r2 ^= last_ans;
+      c1 ^= last_ans;
+      c2 ^= last_ans;
+#endif
+      const ll row_black = row_tree.get(r1, r2);
+      const ll col_black = col_tree.get(c1, c2);
+      last_ans = (row_black % MOD) * ((c2 - c1 + 1 - col_black) % MOD);
+      last_ans += ((r2 - r1 + 1 - row_black) % MOD) * (col_black % MOD);
+      last_ans %= MOD;
+      cout << last_ans << endl;
+    }
+  }
+}
+
+void solve() {
+#ifdef AZN
+//make_case();
+  double start_t = clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr);
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+  int T = 1;
+//scanf("%d", &T);
+  //cin >> T;
+  for (int t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << "Took: " << ((clock() - start_t) / CLOCKS_PER_SEC);
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

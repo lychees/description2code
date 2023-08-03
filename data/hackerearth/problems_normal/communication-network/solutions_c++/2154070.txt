@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef long double ld;
+
+const ll LINF = (ll)1e18;
+const double EPS = 1e-9;
+const int maxN = 100500;
+const int BIG = 100;
+
+struct line {
+    ll k, b;
+    line() {}
+    line(ll k, ll b) : k(k), b(b) {}
+};
+
+int N, K;
+ll A[maxN];
+ll f[maxN], fn[maxN];
+line v[maxN];
+int vlen;
+
+double interPoint(const line & A, const line & B) {
+    return (double)(A.b - B.b) / (B.k - A.k);
+}
+
+inline void addLine(ll k, ll b) {
+    line x = line(k, b);
+    while (vlen >= 2 && interPoint(v[vlen - 2], v[vlen - 1]) + EPS > interPoint(v[vlen - 1], x)) vlen--;
+    v[vlen++] = x;
+}
+
+inline ll get(int idx, ll x) {
+    return v[idx].k * x + v[idx].b;
+}
+
+inline ll foo(ll x) {
+    int l = -1, r = vlen - 1;
+    while (r - l > 1) {
+        int mid = (l + r) >> 1;
+        if (get(mid, x) >= get(mid + 1, x)) l = mid;
+        else r = mid;
+    }
+    return get(r, x);
+}
+
+int main() {
+    //freopen("input.txt", "r", stdin);
+
+    scanf("%d%d", &N, &K);
+
+    for (int i = 1; i <= N; i++) {
+        int x;
+        scanf("%d", &x);
+        A[i] = 1LL * x * K * K;
+    }
+
+    K = min(K, BIG);
+
+    fill(f + 1, f + N + 1, LINF);
+    f[1] = A[1];
+
+    ll result = LINF;
+
+    for (int it = 2; it <= K; it++) {
+        vlen = 0;
+        for (int i = 1; i <= N; i++) {
+            addLine(-i, 1LL * i * i + f[i]);
+            if (i != 1) {
+                fn[i] = foo(2 * i) + 1LL * i * i + A[i];
+                if (fn[i] > LINF) fn[i] = LINF;
+            }
+            else fn[i] = LINF;
+        }
+        memcpy(f, fn, sizeof(f));
+        result = min(result, f[N]);
+    }
+
+    cout << result << "\n";
+
+    return 0;
+}

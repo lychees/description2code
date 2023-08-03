@@ -1,0 +1,172 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define mem(a, x) memset(a, x, sizeof(a))
+#define all(a) a.begin(), a.end()
+#define uni(a) a.erase(unique(all(a)), a.end())
+#define count_bits(x) __builtin_popcount(x)
+#define count_bitsll(x) __builtin_popcountll(x)
+#define least_bits(x) __builtin_ffs(x)
+#define least_bitsll(x) __builtin_ffsll(x)
+#define most_bits(x) 32 - __builtin_clz(x)
+#define most_bitsll(x) 64 - __builtin_clz(x)
+
+vector<string> split(const string &s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c)) v.push_back(x);
+	return v;
+}
+
+#define error(args...) { vector<string> _v = split(#args, ','); err(_v.begin(), args); }
+
+void err(vector<string>::iterator it) {}
+
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << '\n';
+	err(++it, args...);
+}
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {while (b != 0) {T c = a; a = b; b = c % b;} return a;}
+
+const int N = 100005, D = 18;
+
+vector<int> g[N];
+int n;
+int par[D][N], depth[N], sub[N];
+ll sum[D][N];
+
+inline ll f(ll x) {
+    return x * x;
+}
+
+int dfs(int v, int p, int d) {
+    par[0][v] = p;
+    depth[v] = d;
+	sub[v] = 1;
+    for (int i = 0; i < g[v].size(); ++i) {
+        if (g[v][i] != p) sub[v] += dfs(g[v][i], v, d + 1);
+    }
+	return sub[v];
+}
+
+void init() {
+    dfs(1, -1, 0);
+    for (int k = 0; k + 1 < D; ++k) {
+        for (int v = 1; v <= n; ++v) {
+            if (par[k][v] < 0) par[k + 1][v] = -1;
+            else par[k + 1][v] = par[k][par[k][v]];
+        }
+    }
+    for (int v = 1; v <= n; ++v) {
+        if (par[0][v] < 0) sum[0][v] = 0;
+        else sum[0][v] = f(sub[par[0][v]] - sub[v]);
+    }
+    for (int k = 0; k + 1 < D; ++k) {
+        for (int v = 1; v <= n; ++v) {
+            if (par[k][v] < 0) sum[k + 1][v] = sum[k][v];
+            else sum[k + 1][v] = sum[k][v] + sum[k][par[k][v]];
+        }
+    }
+}
+
+
+int lca(int u, int v) {
+    if (depth[u] > depth[v]) swap(u, v);
+    for (int k = 0; k < D; ++k) {
+        if ((depth[v] - depth[u]) >> k & 1) {
+            v = par[k][v];
+        }
+    }
+    if (u == v) return u;
+    for (int k = D - 1; k >= 0; --k) {
+        if (par[k][u] != par[k][v]) {
+            u = par[k][u];
+            v = par[k][v];
+        }
+    }
+    return par[0][u];
+}
+
+// u -> ... -> v
+inline ll query(int u, int v) {
+    int k = depth[v] - depth[u];
+    ll ret = f(sub[v]);
+    for (int i = 0; i < D; ++i) {
+        if (k & (1 << i)) {
+            ret += sum[i][v];
+            v = par[i][v];
+        }
+    }
+    return ret;
+}
+
+int ancestor_kth(int v, int k) {
+    for (int i = 0; i < D; ++i) {
+        if (k & (1 << i)) v = par[i][v];
+    }
+    return v;
+}
+
+int main(int argc, char *argv[]) {
+    ios_base::sync_with_stdio(false);
+    
+	int u, v, q;
+	
+	cin >> n;
+	repu(i, 1, n) {
+		cin >> u >> v;
+        g[v].push_back(u); g[u].push_back(v);
+	}
+	
+	init();
+	
+	cin >> q;
+	
+	repu(i, 0, q) {
+		cin >> u >> v;
+		if (u == v) {
+			printf("0\n"); continue;
+		}
+		int w = lca(u, v);
+        ll ret = 0;
+        if (w == u) {
+            int dv = depth[v] - depth[w];
+            int pv = ancestor_kth(v, dv - 1);
+            //assert(depth[v] - depth[pv] == dv - 1);
+            ret = n * 1LL * n;
+            ret -= query(pv, v) + f(n - sub[pv]);
+        }
+        else if (w == v) {
+            int du = depth[u] - depth[w];
+            int pu = ancestor_kth(u, du - 1);
+            //assert(depth[u] - depth[pu] == du - 1);
+            ret = n * 1LL * n;
+            ret -= query(pu, u) + f(n - sub[pu]);
+        }
+        else {
+            int dv = depth[v] - depth[w], du = depth[u] - depth[w];
+            int pv = ancestor_kth(v, dv - 1), pu = ancestor_kth(u, du - 1);
+            //assert(depth[v] - depth[pv] == dv - 1);
+            //assert(depth[u] - depth[pu] == du - 1);
+            ret = n * 1LL * n;
+            ret -= query(pv, v) + query(pu, u) + f(n - sub[pv] - sub[pu]);
+        }
+        ret >>= 1;
+        printf("%lld\n", ret);
+	}
+	
+    return 0;
+}

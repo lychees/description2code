@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Trie {
+    char key;
+    int val;
+    struct Trie *next[27];
+};
+
+Trie* createTrie(char K = '.', int V = 0) {
+    Trie* T = new Trie;
+    T->key = K;
+    T->val = V;
+    for(int i = 0; i < 27; ++i) {
+        T->next[i] = NULL;
+    }
+
+    return T;
+}
+
+bool addTrie(Trie *T, string Key, int val = 0) {
+    int len = Key.length();
+    int i = 0;
+
+    Trie *T1 = T, *temp = T;
+
+    while(i < len) {
+        temp = T1->next[Key[i] - 'a'];
+        if(temp == NULL) {
+            Trie* child = createTrie(Key[i], val);
+            T1->next[Key[i] - 'a'] = child;
+        }
+
+        T1->next[Key[i] - 'a']->val = max(val, T1->next[Key[i] - 'a']->val);
+        T1 = T1->next[Key[i] - 'a'];
+        i++;
+    }
+    T1->next[26] = createTrie('@', val);
+    return 1;
+}
+
+int getTrie(Trie *T, string Key) {
+    int len = Key.length();
+    int i = 0;
+    Trie *temp = T, *T1 = T;
+
+    int w = INT_MAX;
+    while(i < len) {
+        temp = T1->next[Key[i] - 'a'];
+        if(temp == NULL) {
+            return -1;
+        }
+
+        w = min(w, T1->next[Key[i] - 'a']->val);
+        T1 = T1->next[Key[i] - 'a'];
+        i++;
+    }
+    return w;
+}
+
+int main() {
+    Trie *T = createTrie();
+    int n, q;
+    cin >> n >> q;
+
+    string s; int w;
+    for(int i = 0; i < n; ++i) {
+        cin >> s >> w;
+        addTrie(T, s, w);
+    }
+
+    for(int i = 0; i < q; ++i) {
+        cin >> s;
+        int v = getTrie(T, s);
+        cout << v << endl;
+    }
+    return 0;
+}
+

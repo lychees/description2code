@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int lim = 20000;
+
+bool primos[lim];
+vector<int>lPrimos;
+void get_primes(){
+	memset( primos, 0, sizeof primos );
+	primos[0]=primos[1] = 1;
+	for(int i=4; i<lim; i+=2){
+		primos[i] = 1;
+	}
+	lPrimos.push_back(2);
+	for( int i=3; i < lim; i+=2 ){
+		if( !primos[i] ){
+			for( int j = i*i; j<lim; j+=i ){
+				primos[j] = 1;
+			}
+			lPrimos.push_back(i);
+		}
+	}
+}
+
+int dist( int num ) {
+	int idx = lower_bound( lPrimos.begin(), lPrimos.end(), num)-lPrimos.begin();
+	if(lPrimos[idx]<num)
+		idx++;
+	//cout<<lPrimos[idx]<<" / "<<num<<"\n";
+	//cout<<lPrimos[idx]-num<<"\n";
+	return lPrimos[idx]-num;
+}
+
+int main()
+{
+	ios::sync_with_stdio( false );
+	cin.tie( false );
+	get_primes();
+    for( int n, k1, rr, rc; cin>>n>>k1; ){
+    	int aux;
+    	vector< vector<int> >mat(n, vector<int>(n) );
+    	vector< vector<int> >ori(n, vector<int>(n) );
+    	vector< vector<int> >pos(n, vector<int>(n, 0) );
+    	for( int i=0; i < n; i++ ) {
+    		for( int j=0; j < n; j++ ) {
+    			cin>>aux;
+    			ori[i][j] = aux;
+    			mat[i][j] = dist(aux);
+    			if( (mat[i][j]%k1)==0 )
+    				pos[i][j] = 1;
+    		}
+    	}
+    	
+    	int posX[] = {-1, -1, 0, 1, 1};
+    	int posY[] = {-1, 1, 0, -1, 1};
+    	int nx, ny, sol, mn=1000000, cost;
+    	rr = rc = -1;
+    	for(int i=1; i<n-1;i++ ) {
+    		for( int j=1; j < n-1; j++ ) {
+    			sol = 1;
+    			cost = 0;
+    			for( int k=0; k < 5; k++ ) {
+    				nx = i+posX[k];
+    				ny = j+posY[k];
+    				if( !pos[nx][ny] ){
+    					sol = 0;
+    					break;
+    				}
+    				cost += mat[nx][ny]/k1;
+    			}
+    			//cout<<cost<<"\n";
+    			if( sol && cost<mn ){
+    				mn = cost;
+    				rr = i;
+    				rc = j;
+    			}
+    		}
+    	}
+    	if( rr==-1 ){
+    		cout<<"no\n";
+    	} else {
+    		cout<<"yes\n"<<mn<<"\n"<<rr+1<<" "<<rc+1<<"\n";
+    	}
+    }
+    
+    return 0;
+}

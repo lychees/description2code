@@ -1,0 +1,86 @@
+#include<bits/stdc++.h>
+#define N 105
+#define ull unsigned long long
+#define reset(a,b) for(int i=0;i<sizeof(a);i++)  a[i]=b;	// "a" needs to be global
+#define mp make_pair
+#define A first
+#define B second
+#define MIN (1<<31)
+#define MAX (1<<29)
+using namespace std;
+
+int AdjMat[N][N];
+
+int h[N],p[N];	//p=parents and h=height
+
+vector<pair<int,pair<int,int> > > V;
+
+int unionFind(int a){
+	if(p[a]==a)	return a;
+	p[a]=unionFind(p[a]);
+	return p[a];
+}
+
+int unionJoin(int a,int b){
+	int x=unionFind(a),y=unionFind(b);
+	if(x==y)	return 0;
+	else{
+		if(h[x]>h[y])	p[y]=p[x];
+		else if(h[x]<h[y])	p[x]=p[y];
+		else{
+			p[y]=p[x];
+			h[x]++;
+		}
+	}
+	return 0;
+}
+
+int main(){ 
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	
+	int n,e,shrines,a,b,c,t;
+	cin>>t;
+	while(t--){
+		cin>>n>>e>>shrines;
+		for(int i=0;i<=n;i++)
+			for(int j=0;j<=n;j++)	AdjMat[i][j]=MAX;
+		for(int i=0;i<=n;i++)	AdjMat[i][i]=0;
+		for(int i=0;i<e;i++){
+			cin>>a>>b>>c;
+			AdjMat[a][b]=c;
+			AdjMat[b][a]=c;	
+		}
+		for(int k=1;k<=n;k++)	//floyd warshall
+			for(int i=1;i<=n;i++)
+				for(int j=1;j<=n;j++)
+					AdjMat[i][j]=min(AdjMat[i][j],AdjMat[i][k]+AdjMat[k][j]);
+		
+		//for(int i=1;i<=n;i++){
+		//	for(int j=1;j<=n;j++)	cout<<AdjMat[i][j]<<" ";
+		//	cout<<endl;
+		//}
+		
+		for(int i=1;i<=n;i++){
+			h[i]=1;
+			p[i]=i;
+		}
+		
+		V.clear();
+		V.erase(V.begin(),V.end());
+		ull tot=0;
+		for(int i=1;i<=shrines;i++){
+			for(int j=i+1;j<=shrines;j++)	V.push_back(mp(AdjMat[i][j],mp(i,j)));
+		}
+		sort(V.begin(),V.end());
+		for(int i=0;i<(int)V.size();i++){
+			if(unionFind(V[i].B.A)!=unionFind(V[i].B.B)){
+				unionJoin(V[i].B.A,V[i].B.B);
+				//cout<<V[i].B.A<<" "<<V[i].B.B<<endl;
+				tot+=V[i].A;
+			}
+		}
+		cout<<tot<<endl;
+	}
+	return 0;
+}

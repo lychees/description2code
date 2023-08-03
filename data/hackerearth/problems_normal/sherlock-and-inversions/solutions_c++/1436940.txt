@@ -1,0 +1,141 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <time.h>
+#include <unistd.h>
+#include <algorithm>
+#include <map>
+#include <queue>
+#include <stack>
+#include <vector>
+#include <set>
+#include <string>
+
+#define pb push_back
+#define mp make_pair
+#define FOR(i, A, N) for(int (i) = (A); (i) < (N); (i)++)
+#define REP(i, N) for(int (i) = 0; (i) < (N); (i)++)
+using namespace std;
+#define gi(x) scanf("%d",&x)
+ 
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef map<int,int> mii;
+typedef vector<int> vi;
+typedef vector< vector<int> > vvi;
+typedef vector<char> vc;
+typedef vector<bool> vb;
+typedef vector<string> vs;
+ 
+ 
+struct BIT
+{
+	ll bn; //bn>0
+	vector<ll> bA;
+	
+	BIT(){ bn=0; }
+	BIT(int bn_){ bn=bn_; bA.resize(bn+1); fill(bA.begin(),bA.end(),0); }
+	
+	ll prefix(int bposn)
+	{
+		if(bposn<=0) return 0;
+		if(bposn>bn) bposn=bn;
+		
+		ll ret=0;
+		for(int i=bposn; i>0; i-=((i)&(-i)))
+			ret+=bA[i];
+		return ret;
+	}
+	
+	void update(int bposn, int bincr)
+	{
+		if(bposn<=0) return;
+		if(bposn>bn) return;
+		
+		for(int i=bposn; i<=bn; i+=((i)&(-i)))
+			bA[i]+=bincr;
+	}
+	
+	ll query(int bl, int br)
+	{
+		if(br<=0 or bl>bn or bl>br) return 0;
+		if(bl<=0) bl=1;
+		if(br>bn) br=bn;
+		return (prefix(br)-prefix(bl-1));
+	}
+};
+ 
+struct query_t {
+	int l,r,ix;
+	query_t(int l_,int r_,int ix_) {
+		l=l_; r=r_; ix=ix_;
+	}
+};
+ 
+bool operator<(query_t q1,query_t q2) {
+	return (q1.r<q2.r);
+}
+ 
+const int max_n=222222;
+const int max_q=222222;
+int n,q,l,r;
+int a[max_n]; int ta[max_n];
+mii M; int cnt;
+vector<query_t> chunks[999];
+ll ans[max_q];
+BIT bit;
+ 
+int main() {
+	gi(n);
+	gi(q);
+	int root=(int)ceil(sqrt(double(n)));
+	REP(i,n) {
+		gi(a[i]);
+		ta[i]=a[i];
+	}
+	REP(i,q) {
+		gi(l); gi(r);
+		l--; r--;
+		chunks[l/root].pb(query_t(l,r,i));
+	}
+ 
+	sort(ta,ta+n);
+	cnt=int(unique(ta,ta+n)-ta);
+	REP(i,n)
+		a[i]=1+int(lower_bound(ta,ta+cnt,a[i])-ta);
+	int sz=(n+root-1)/root;
+	n=cnt;
+	REP(i,sz) {
+		int cl=root*i;
+		int cr=cl-1;
+		ll res=0;
+		bit=BIT(n);
+		sort(chunks[i].begin(),chunks[i].end());
+		REP(j,chunks[i].size()) {
+			l=chunks[i][j].l; r=chunks[i][j].r; int ix=chunks[i][j].ix;
+			while(cr!=r) {
+				++cr;
+				res+=bit.query(a[cr]+1,n);
+				bit.update(a[cr],1);
+			}
+			if(l>=cl) {
+				while(cl!=l) {
+					res-=bit.prefix(a[cl]-1);
+					bit.update(a[cl],-1);
+					++cl;
+				}
+			}
+			else {
+				while(cl!=l) {
+					--cl;
+					res+=bit.prefix(a[cl]-1);
+					bit.update(a[cl],1);
+				}
+			}
+			ans[ix]=res;
+		}
+	}
+	REP(i,q) printf("%lld\n",ans[i]);
+	return 0;
+}

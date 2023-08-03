@@ -1,0 +1,95 @@
+// {{{ Headers
+// vim:filetype=cpp:foldmethod=marker:foldmarker={{{,}}}
+
+#include <cassert>
+#include <cctype>
+#include <cmath>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+
+#include <algorithm>
+#include <deque>
+#include <functional>
+#include <iterator>
+#include <list>
+#include <map>
+#include <numeric>
+#include <queue>
+#include <set>
+#include <stack>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+#include <ext/numeric>
+
+using namespace std;
+using namespace __gnu_cxx;
+// }}}
+
+typedef long long int64;
+const int INF = 0x3f3f3f3f;
+const int MOD = 1000000007;
+template <class T> inline int len (const T &a) { return a.size (); }
+
+struct
+state {
+    int x, y, w;
+    state (const int &x, const int &y, const int &w)
+        :x (x), y (y), w (w) {}
+    bool operator < (const state &v) const {
+        return (x < v.x) || (x == v.x && y < v.y) || (x == v.x && y == v.y && w < v.w);
+    }
+};
+
+int L, K;
+int memo [520][260][260];
+vector <state> dist;
+
+int
+solve (int idx, int start, int end) {
+    /* debug (idx, start, end); */
+    if (idx == K) {
+        if (start == 1 && end == L + 1) return 0;
+        return INF;
+    }
+    if (memo [idx][start][end] != -1) return memo [idx][start][end];
+    int ret = INF;
+    ret = min (ret, solve (idx + 1, start, end));  // Leave it.
+    if ((dist [idx].x <= start && dist [idx].y >= start) || (dist [idx].x <= end && dist [idx].y >= end) || (start == 257 && end == 0))
+        ret = min (ret, dist [idx].w + solve (idx + 1, min (start, dist [idx].x), max (end, dist [idx].y)));  // Take it.
+    /* debug (idx, start, end, ret); */
+    return memo [idx][start][end] = ret;
+}
+
+int
+main () {
+#ifdef LOCALHOST
+    freopen ("test.in", "r", stdin);
+    // freopen ("test.out", "w", stdout);
+#endif
+    int T, a, b, c, x = 257, y = 0;
+    scanf ("%d", &T);
+    while (T--) {
+        scanf ("%d %d", &L, &K);
+        dist.clear (); memset (memo, -1, sizeof (memo));
+        for (int i = 0; i < K; i++) {
+            scanf ("%d %d %d", &a, &b, &c);
+            dist.push_back (state (a + 1, b + 1, c));
+        }
+        sort (dist.begin (), dist.end ());
+        int ret = solve (0, x, y);
+        if (ret >= INF) ret = -1;
+        printf ("%d\n", ret);
+
+    }
+
+    return 0;
+}

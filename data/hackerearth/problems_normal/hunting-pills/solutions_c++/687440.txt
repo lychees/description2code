@@ -1,0 +1,104 @@
+//Algorithm To Find Strongly Connected Components.
+//Complexity: O(E).
+#include<bits/stdc++.h>
+#define CONS 109 // Maximum Estimatd Value Of Number Of Vertices.
+using namespace std;
+typedef struct x
+{
+   int num;
+   int val;
+   int start_tim;
+   int end_tim;
+   int parent;
+   int color;
+}Vertices;
+Vertices vertices[CONS];
+vector<int>vec1[CONS]; // For Adjacency Lists In Original Graph.
+vector<int>vec2[CONS]; // For Adjacency Lists In Reversed Graph.
+stack<int>fin;
+int tim=0;
+int ans;
+int temp;
+void DFS(int v)
+{
+   tim++;
+   vertices[v].start_tim=tim;
+   vertices[v].color=1; // Process Underway.
+   for(int i=0;i<vec1[v].size();i++)
+   {
+            if(vertices[vec1[v][i]].color==0)
+            {
+               vertices[vec1[v][i]].parent=vertices[v].num;
+               DFS(vec1[v][i]);
+            }
+   }
+   vertices[v].color=2; // Process Completed.
+   tim++;
+   vertices[v].end_tim=tim;
+   fin.push(v);
+}
+void DFS1(int v)
+{
+   vertices[v].color=1; // Process Underway.
+   for(int i=0;i<vec2[v].size();i++)
+   {
+      if(vertices[vec2[v][i]].color==0)
+         DFS1(vec2[v][i]);
+   }
+   vertices[v].color=2; // Process Completed.
+   temp+=vertices[v].val;
+}
+int main()
+{
+   int test;
+   scanf("%d",&test);
+   while(test--)
+   {
+      ans=INT_MIN;
+      tim=0;
+      int n; // Number Of Vertices.
+      int m;
+      scanf("%d%d",&n,&m);
+      for(int i=0;i<n;i++)
+      {
+          vertices[i].num=i;
+          vertices[i].start_tim=0;
+          vertices[i].end_tim=0;
+          vertices[i].parent=-1;
+          vertices[i].color=0; // Process Not Started.
+          vec1[i].clear();
+          vec2[i].clear();
+      }
+      for(int i=0;i<n;i++)
+         scanf("%d",&vertices[i].val);
+      // Let Vertices[0] To Be The Starting Vertex.
+      int edges=m;
+      for(int i=0;i<edges;i++)
+      {
+         int u,v; // 0 To n-1.
+         scanf("%d%d",&u,&v);
+         vec1[u].push_back(v);
+         vec2[v].push_back(u);
+      }
+      for(int i=0;i<n;i++)
+      {
+         if(vertices[i].color==0)
+            DFS(i);
+      }
+      for(int i=0;i<n;i++)
+          vertices[i].color=0; // Process Not Started.
+      while(!fin.empty())
+      {
+         int ver=fin.top();
+         fin.pop();
+         if(vertices[ver].color==0)
+         {
+            temp=0;
+            DFS1(ver);
+            ans=max(ans,temp);
+         }
+      }
+      printf("%d\n",ans);
+   }
+   return 0 ;
+}

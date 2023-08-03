@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int n, m;
+int c[100000];
+vector<int> g[100000];
+int ans[100000] = {};
+bool used[100000] = {};
+int sz[100000];
+
+void calcSizes(int v, int p) {
+    sz[v] = 1;
+    for (int to : g[v]) if (to != p && !used[to]) {
+        calcSizes(to, v);
+        sz[v] += sz[to];
+    }
+}
+
+int mx[100000], mx2[100000], cur[100000];
+vector<int> cl, mxcl;
+
+int dist = 0;
+void solve(int v, int p) {
+    ++dist;
+    if (cur[c[v]] == -1) {
+        cl.pb(c[v]);
+    }
+    cur[c[v]] = max(cur[c[v]], dist);
+    for (int to : g[v]) if (to != p && !used[to]) {
+        solve(to, v);
+    }
+    --dist;
+}
+
+void cd(int v) {
+    calcSizes(v, -1);
+    int tot = sz[v], p = -1;
+    while (true) {
+        int nx = -1;
+        for (int to : g[v]) if (to != p && !used[to] && sz[to] * 2 > tot) {
+            nx = to;
+            break;
+        }
+        if (nx == -1) break;
+        p = v;
+        v = nx;
+    }
+    mx[c[v]] = 0;
+    mxcl.pb(c[v]);
+    for (int to : g[v]) if (!used[to]) {
+        solve(to, v);
+        for (int x : cl) {
+            if (mx[x] == -1) {
+                mxcl.pb(x);
+            }
+            if (cur[x] > mx[x]) {
+                mx2[x] = mx[x];
+                mx[x] = cur[x];
+            } else {
+                mx2[x] = max(mx2[x], cur[x]);
+            }
+            cur[x] = -1;
+        }
+        cl.clear();
+    }
+    for (int x : mxcl) {
+        if (mx[x] != -1 && mx2[x] != -1) {
+            ans[x] = max(ans[x], mx[x] + mx2[x]);
+        }
+        mx[x] = mx2[x] = -1;
+    }
+    mxcl.clear();
+    used[v] = true;
+    for (int to : g[v]) if (!used[to]) {
+        cd(to);
+    }
+}
+
+int main() {
+    memset(mx, -1, sizeof mx);
+    memset(mx2, -1, sizeof mx2);
+    memset(cur, -1, sizeof cur);
+    scanf("%d%d", &n, &m);
+    REP(i, n) scanf("%d", c + i), --c[i];
+    REP(i, n - 1) {
+        int from, to;
+        scanf("%d%d", &from, &to), --from, --to;
+        g[from].pb(to);
+        g[to].pb(from);
+    }
+    cd(0);
+    REP(i, m) printf("%d ", ans[i]);
+    printf("\n");
+    return 0;
+}

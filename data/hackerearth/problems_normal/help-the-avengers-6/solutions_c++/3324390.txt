@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+int tree[200000];
+int a[100000];
+bool  isprime[1000005];
+void pre()
+{
+for(int i=1;i<=1000000;i++)
+isprime[i]=true;
+for(int i=2;i<=1000;i++)
+{
+if(isprime[i])
+{
+for(int j=2*i;j<=1000000;j=j+i)
+isprime[j]=false;
+}
+}
+}
+void init(int index,int start,int end)
+{
+if(start>end)
+return;
+if(start==end)
+{
+if(isprime[a[start]])
+tree[index]=1;
+else
+tree[index]=0;
+return;
+}
+int mid=(start+end)/2;
+init(2*index,start,mid);
+init(2*index+1,mid+1,end);
+tree[index]=tree[2*index]+tree[2*index+1];
+}
+int query(int index,int ss,int se,int qs,int qe)
+{
+if(ss>se||qe<ss||qs>se)
+return 0;
+if(qs<=ss&&qe>=se)
+return tree[index];
+int mid=(ss+se)/2;
+int left=query(2*index,ss,mid,qs,qe);
+int right=query(2*index+1,mid+1,se,qs,qe);
+return (left+right);
+}
+void update(int index,int ss,int se,int i,int val)
+{
+if(i>se||i<ss)
+return;
+if(ss==se)
+{
+if(isprime[val]==1)
+tree[index]=1;
+else
+tree[index]=0;
+return;
+}
+int mid=(ss+se)/2;
+update(index*2,ss,mid,i,val);
+update(2*index+1,mid+1,se,i,val);
+tree[index]=tree[index*2]+tree[index*2+1];
+}
+
+int main()
+{
+pre();
+int t;
+cin>>t;
+while(t--)
+{
+int n,q,x,y;
+string ch;
+scanf("%d",&n);
+for(int i=0;i<n;i++)
+scanf("%d",&a[i]);
+init(1,0,n-1);
+scanf("%d",&q);
+while(q--)
+{
+cin>>ch;
+if(ch[0]=='A')
+{
+cin>>x>>y;
+int ans=query(1,0,n-1,x-1,y-1);
+cout<<ans<<"\n";
+}
+else
+{
+cin>>x>>y;
+a[x-1]=y;
+update(1,0,n-1,x-1,y);
+}
+}
+}
+return 0;
+}
+

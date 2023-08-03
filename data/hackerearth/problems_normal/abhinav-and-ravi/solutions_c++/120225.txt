@@ -1,0 +1,145 @@
+
+ #include <iostream>
+#include <string>
+#include <vector>
+#include <stdio.h>
+#include <queue>
+#include <stdlib.h>
+#include <string>
+#include <algorithm>
+#include <math.h>
+ 
+using namespace std;
+ 
+
+
+int b[11][11];
+int m,n;
+
+bool inRange(int x, int y) // Function to check whether the move is in the range of chess board i.e n x m
+{
+        return 0<=x && x<m && 0<=y && y<n;
+}
+
+struct S
+{
+        int x,y,step;
+};
+//Structure used to keep track of number of steps for x,y 
+int bfs(int x, int y, int s, int t)
+{
+
+    queue<S> ss; // Queue of type S 
+    S start = {x,y,0};
+    ss.push(start);
+
+    int memo[20][20];
+
+    for(int i=0 ; i<m ; i++)
+    {
+        for(int j=0 ; j<n ; j++)
+        {
+            memo[i][j] = 0;
+        }
+    }
+
+    while(!ss.empty())
+    {
+        S k = ss.front();
+        ss.pop();
+
+        if(memo[k.x][k.y]==1) 
+                  continue;
+        memo[k.x][k.y] = 1;
+
+        if(k.x==s && k.y==t) 
+                  return k.step;
+
+        int th[8] = {1,1,2,2,-1,-1,-2,-2}; // To determine the next step of ghostrider 
+        int tv[8] = {2,-2,1,-1,2,-2,1,-1}; // To determine the next step of ghostrider 
+        int tx, ty;
+
+        for(int i=0 ; i<8 ; i++)
+        {
+            tx = k.x + th[i];
+            ty = k.y + tv[i];
+            if(inRange(tx,ty))   // Check if the next move is in the range of chess board
+            {
+                S kk = {tx, ty, k.step+1};
+                ss.push(kk);
+            }
+        }
+    }
+
+    return 10000;
+}
+
+
+int minimalMoves(vector <string> board) 
+{
+
+      m = board.size();
+      n = board[0].size();
+
+      for(int i=0 ; i<m ; i++)
+      {
+          for(int j=0 ; j<n ; j++)
+          {
+              if(board[i][j]=='.') 
+                   b[i][j] = -1;
+              else 
+                   b[i][j] = board[i][j]-'0';
+          }
+      }
+
+      int mincnt = 1000000;
+      int cnt, tmp;
+      for(int i=0 ; i<m ; i++)
+      {
+          for(int j=0 ; j<n ; j++)
+          {
+              cnt = 0;
+              for(int k=0 ; k<m ; k++)
+              {
+                  for(int l=0 ; l<n ; l++)
+                  {
+                      if(b[k][l]==-1)  // if there is a dot '.' at the current position continue
+                          continue;
+
+                      tmp = bfs(k,l,i,j);   // For a particular position (i,j) calculate the moves required by the ghostrider present at position (k,l)
+                      if(tmp % b[k][l] == 0 ) 
+                                     tmp /= b[k][l];
+                      else 
+                                     tmp = (tmp/b[k][l])+1;
+                      cnt = cnt + tmp; // Sum all the moves required by all ghost riders to reach i,j
+
+                  }
+              }
+              mincnt = min(mincnt, cnt); //calculate minimum
+          }
+      }
+      
+      if(mincnt > 1000) 
+        return -1;
+      else return mincnt;
+  }
+int main()
+{
+    int test;
+    cin>>test;
+    while(test--)
+    {
+                 int n,m;
+                 cin>>n>>m;
+                 getchar();
+                 vector<string> b;
+                 for(int i = 0;i < n ;i++)
+                         {
+                             string s;
+                             cin>>s;
+                             b.push_back(s);
+                         }
+                 cout<<minimalMoves(b)<<endl;
+    }
+    return 0;
+}

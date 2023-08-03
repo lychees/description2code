@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MOD = 1e9+7;
+int add(int a, int b) { return a+b-(a+b>=MOD)*MOD; }
+int sub(int a, int b) { return a-b+(a-b<0)*MOD; }
+int mult(int a, int b) { return (1LL*a*b)%MOD; }
+
+set<char> vowel = {'a','e','i','o','u','y'};
+
+int n,k;
+char s[3013];
+int dp[3013][3013][3];
+int combo[3013][3013];
+
+int main() {
+	scanf("%d%d %s",&n,&k,s+1);
+	dp[0][0][0] = 1;
+	for (int i=0;i<n;i++) {
+		for (int j=0;j<=k;j++) {
+			for (int d=0;d<3;d++) {
+				if (vowel.count(s[i+1])) {
+					dp[i+1][j][0] = add(dp[i+1][j][0],dp[i][j][d]);
+				} else {
+					if (d!=2) dp[i+1][j][d+1] = add(dp[i+1][j][d+1],dp[i][j][d]);
+					dp[i+1][j+1][0] = add(dp[i+1][j+1][0],dp[i][j][d]);
+				}
+			}
+		}
+	}
+	combo[0][0] = 1;
+	for (int i=1;i<=n;i++) {
+		for (int j=0;j<=i;j++) {
+			combo[i][j] = combo[i-1][j];
+			if (j) combo[i][j] = add(combo[i][j],combo[i-1][j-1]);
+		}
+	}
+	int v = 0;
+	for (int i=1;i<=n;i++) v+=vowel.count(s[i]);
+	int ans = 0;
+	for (int d=0;d<3;d++) {
+		for (int j=0;j<=k;j++) {
+			if (v+j>=n-v-j)	ans = add(ans,mult(combo[v][k-j],dp[n][j][d]));
+		}
+	}
+	printf("%d\n",sub(combo[n][k],ans));
+	
+    return 0;
+}

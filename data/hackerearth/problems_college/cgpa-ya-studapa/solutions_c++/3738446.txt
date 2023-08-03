@@ -1,0 +1,117 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+
+struct Item
+{
+	int id;
+	ll x, y;
+
+	Item() : id(), x(), y() {}
+	Item(int _id, ll _x, ll _y) : id(_id), x(_x), y(_y) {}
+};
+
+const ll INF = (ll)1e15;
+const int N = 111;
+int n;
+Item a[N], b[N];
+ll dp[N][N];
+ll X[N], Y[N], p[N];
+bool used[N];
+ll ans[N];
+
+bool cmpX(const Item &A, const Item &B)
+{
+	return A.x < B.x;
+}
+bool cmpY(const Item &A, const Item &B)
+{
+	return A.y < B.y;
+}
+
+void read()
+{
+	scanf("%d", &n);
+	for (int i = 0; i < n; i++)
+		scanf("%lld", &X[i]);
+	for (int i = 0; i < n; i++)
+		scanf("%lld", &Y[i]);
+	for (int i = 0; i < n; i++)
+		scanf("%lld", &p[i]);
+	for (int i = 0; i < n; i++)
+		a[i] = b[i] = Item(i, X[i], Y[i]);
+	sort(a, a + n, cmpX);
+	sort(b, b + n, cmpY);
+	return;
+}
+
+void solve()
+{
+	read();
+	for (int i = 0; i <= n; i++)
+		for (int j = 0; j <= n; j++)
+			dp[i][j] = INF;
+	dp[0][0] = 0;
+	for (int i = 0; i <= n; i++)
+		for (int j = 0; j <= n; j++)
+		{
+			if (dp[i][j] == INF) continue;
+			for (int k = 0; k < n; k++)
+				used[k] = 0;
+			for (int k = 0; k < i; k++)
+				used[a[k].id] = 1;
+			for (int k = 0; k < j; k++)
+				used[b[k].id] = 1;
+			ll w = dp[i][j];
+			for (int k = 0; k < n; k++)
+				if (used[k])
+					w += p[k];
+			w -= (i == 0 ? 0 : a[i - 1].x);
+			w -= (j == 0 ? 0 : b[j - 1].y);
+			int pos = i;
+			while(pos < n && used[a[pos].id]) pos++;
+			if (pos < n)
+				dp[pos + 1][j] = min(dp[pos + 1][j], dp[i][j] + max(0LL, -w + (a[pos].x - (i == 0 ? 0 : a[i - 1].x))));
+			pos = j;
+			while(pos < n && used[b[pos].id]) pos++;
+			if (pos < n)
+				dp[i][pos + 1] = min(dp[i][pos + 1], dp[i][j] + max(0LL, -w + (b[pos].y - (j == 0 ? 0 : b[j - 1].y))));
+		}
+	for (int i = 1; i <= n; i++)
+		ans[i] = INF;
+	for (int i = 0; i <= n; i++)
+		for (int j = 0; j <= n; j++)
+		{
+			for (int k = 0; k < n; k++)
+				used[k] = 0;
+			for (int k = 0; k < i; k++)
+				used[a[k].id] = 1;
+			for (int k = 0; k < j; k++)
+				used[b[k].id] = 1;
+			int cnt = 0;
+			for (int k = 0; k < n; k++)
+				cnt += (int)used[k];
+			ans[cnt] = min(ans[cnt], dp[i][j]);
+		}
+	for (int i = 1; i <= n; i++)
+		printf("%lld ", ans[i]);
+	printf("\n");
+	return;
+}
+
+int main()
+{
+//	freopen("input.txt", "r", stdin);
+//	freopen("output.txt", "w", stdout);
+
+	int t;
+	scanf("%d", &t);
+	while(t--)
+		solve();
+
+	return 0;
+}

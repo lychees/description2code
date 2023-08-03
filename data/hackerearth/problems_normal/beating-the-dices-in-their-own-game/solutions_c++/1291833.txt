@@ -1,0 +1,209 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<array>
+#include<tuple>
+#include<hash_map>
+#include<hash_set>
+#include<valarray>
+#include<forward_list>
+#include<unordered_map>
+#include<unordered_set>
+using namespace std;
+class min_cost_flow{
+	struct ed{
+		int rev;
+		int cost;
+		int cap;
+		int to;
+		ed(int rev_, int cost_, int cap_, int to_){
+			rev = rev_;
+			cost = cost_;
+			cap = cap_;
+			to = to_;
+		}
+	};
+	vector<int> prevv;
+	vector<int> pot;
+	vector<int> dist;
+	vector<int> preve;  //????
+	vector<vector<ed> > g;  //graph
+	int sizee = 0;
+public:
+	min_cost_flow(int n2 = 0){
+		if (n2 == 0){
+			return;
+		}
+		sizee = n2;
+		prevv.resize(n2);
+		dist.resize(n2);
+		pot.resize(n2);
+		g.resize(n2);
+		preve.resize(n2);
+	}
+	void resize(int n2){
+		sizee = n2;
+		prevv.resize(n2);
+		dist.resize(n2);
+		pot.resize(n2);
+		g.resize(n2);
+		preve.resize(n2);
+	}
+	void clear(){
+		sizee = 0;
+		prevv.clear();
+		dist.clear();
+		pot.clear();
+		g.clear();
+		preve.clear();
+	}
+	int size(){
+		return sizee;
+	}
+	void add(int from_, int to_, int cap_, int cost_){
+		g[from_].push_back(ed(g[to_].size(), cost_, cap_, to_));
+		g[to_].push_back(ed(g[from_].size() - 1, -cost_, 0, from_));
+	}
+	int min_cost(int s, int t, int f){
+		int res = 0;
+		fill(pot.begin(), pot.end(), 0);
+		while (f > 0){
+			fill(dist.begin(), dist.end(), -1);
+			queue<int> q;
+			q.push(s);
+			dist[s] = 0;
+			while (!q.empty()){
+				int kari = q.front();
+				q.pop();
+				for (int i = 0; i < g[kari].size(); i++){
+					ed &e = g[kari][i];
+					if (e.cap>0 && (dist[e.to] == -1 || dist[e.to] > dist[kari] + e.cost + pot[kari] - pot[e.to])){
+						dist[e.to] = dist[kari] + e.cost + pot[kari] - pot[e.to];
+						prevv[e.to] = kari;
+						preve[e.to] = i;
+						q.push(e.to);
+					}
+				}
+			}
+			if (dist[t] == -1){
+				return -1;  //error
+			}
+			for (int i = 0; i < dist.size(); i++){
+				pot[i] += dist[i];
+			}
+			int mint = f;
+			for (int v = t; v != s; v = prevv[v]){
+				mint = min(mint, g[prevv[v]][preve[v]].cap);
+			}
+			f -= mint;
+			res += mint*pot[t];
+			for (int v = t; v != s; v = prevv[v]){
+				ed &e = g[prevv[v]][preve[v]];
+				e.cap -= mint;
+				g[v][e.rev].cap += mint;
+			}
+		}
+		return res;
+	}
+};
+int n;  //??????
+int m;
+int q;
+#define MAX_N 101
+long long int h[MAX_N];  //????????
+vector<pair<long long int,int> > v1[MAX_N];
+map<int, vector<pair<long long int,int> > > v;  //cost id
+vector<int> t;
+long long int mint = -1;
+bool use[MAX_N];
+long long int dfs(int b){
+	if (b == t.size()){
+		return 0LL;
+	}
+	map<int, vector<pair<long long int, int> >>::iterator ite;
+	ite = v.find(t[b]);
+	long long int tmp = -1;
+	long long int ttmp = 0;
+	for (int i = 0; i < (*ite).second.size(); i++){
+		if (use[(*ite).second[i].second]){
+			continue;
+		}
+		use[(*ite).second[i].second] = true;
+		ttmp=dfs(b+1);
+		use[(*ite).second[i].second] = false;
+		if (ttmp == -1){
+			continue;
+		}
+		ttmp += (*ite).second[i].first;
+		if (tmp == -1 || tmp > ttmp){
+			tmp = ttmp;
+		}
+	}
+	return tmp;
+}
+int main(){
+	scanf("%d", &n);
+	for (int i = 0; i < n; i++){
+		scanf("%lld", &h[i]);
+		v1[i].resize(h[i]);
+		for (int j = 0; j < h[i]; j++){
+			scanf("%lld%lld", &v1[i][j].first,&v1[i][j].second);
+			v[v1[i][j].first].push_back(make_pair(v1[i][j].second, i));
+		}
+	}
+	scanf("%d", &q);
+	t.resize(n);
+	while (q--){
+		bool ok = 0;
+		for (int i = 0; i < n; i++){
+			scanf("%d", &t[i]);
+			if (v.count(t[i]) == 0){
+				ok = true;
+			}
+		}
+		if (ok){
+			puts("-1");
+			continue;
+		}
+		min_cost_flow mm(n*n+n+n+2);
+		int star = 0;
+		int gol = n*n + n+n + 1;
+		map<int, vector<pair<long long int, int> > >::iterator ite;
+		int i1;
+		int countt = n;
+		for (int i = 0; i < t.size(); i++){
+			mm.add(star, i + 1, 1, 0);
+			for (ite = v.find(t[i]), i1 = 0; i1 < (*ite).second.size(); i1++){
+				countt++;
+				mm.add(i + 1, countt, 1, (*ite).second[i1].first);
+				mm.add(countt, gol - (*ite).second[i1].second - 1, 1, 0);
+			}
+			mm.add(gol - i - 1, gol, 1, 0);
+		}
+		long long int ans = mm.min_cost(star,gol,t.size());
+		printf("%lld\n", ans);
+	}
+	return 0;
+}

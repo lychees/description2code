@@ -1,0 +1,243 @@
+#include <bits/stdc++.h>
+
+#define pb push_back
+#define fi first
+#define se second
+#define all(v) v.begin(), v.end()
+
+using namespace std;
+using ll = int64_t;
+
+constexpr ll kInf = 1e18;
+
+struct SimpleValue {
+  ll value;
+  int index;
+};
+
+struct ComplexValue {
+  ll value;
+  ll finish;
+  int index;
+  int how_much;
+
+  bool operator<(const ComplexValue& other) const {
+    if (value != other.value)
+      return value < other.value;
+    return index < other.index;
+  }
+};
+
+struct Block {
+  ll global_add;
+  vector<SimpleValue> simple_values;
+  vector<ComplexValue> complex_values;
+  vector<ComplexValue> interesting_values;
+
+  Block() : global_add(0) {}
+
+  void rebuild() {
+    int n = simple_values.size();
+    interesting_values.clear();
+    interesting_values.reserve(n);
+
+    for (const auto& value : complex_values) {
+      if (interesting_values.empty()) {
+        interesting_values.pb(value);
+      } else if (!interesting_values.empty() && value.value >= interesting_values.back().value) {
+        interesting_values.pb(value);
+      }
+    }
+
+    n = interesting_values.size();
+    for (int i = n - 1; i >= 0; i--) {
+      auto& value = interesting_values[i];
+      if (i == n - 1) {
+        value.how_much = 1;
+        value.finish = value.value;
+      } else {
+        const auto& next = interesting_values[i + 1];
+        value.how_much = next.how_much + 1;
+        value.finish = next.finish;
+      }
+    }
+
+
+  }
+
+  void add_all(ll x) {
+    global_add += x;
+  }
+
+  void add_some(int l, int r, ll x) {
+    for (auto& value : simple_values)
+      if (l <= value.index && value.index <= r)
+        value.value += x;
+    for (auto& value : complex_values)
+      if (l <= value.index && value.index <= r)
+        value.value += x;
+    rebuild();
+  }
+
+  ComplexValue get_all(ll x) const {
+    x -= global_add;
+    auto it = lower_bound(all(interesting_values), ComplexValue{x, -1, -1, -1});
+    if (it == interesting_values.end()) {
+      return ComplexValue{x + global_add, x + global_add, 0, 0};
+    } else {
+      auto res = *it;
+      res.finish += global_add;
+      return res;
+    }
+  }
+
+  ComplexValue get_some(int l, int r, ll x) const {
+    //cerr << "get some: " << l << " " << r << endl;
+    x -= global_add;
+    ComplexValue res = {x, x, 0, 0};
+    for (auto& value : simple_values)
+      if (l <= value.index && value.index <= r && value.value >= res.finish) {
+        //cerr << "update: " << value.value + global_add << endl;
+        ++res.how_much;
+        res.finish = value.value;
+      }
+    res.finish += global_add;
+    return res;
+  }
+};
+
+struct Query {
+  int type, l, r;
+  ll x;
+};
+
+vector<int> solve(int n, int q, const vector<ll>& init_values, const vector<Query>& queries) {
+  //cerr << "solve" << endl;
+
+  constexpr int kBuben = 600;
+
+  vector<int> results(q, -1);
+
+  int blocks_cnt = (n + kBuben - 1) / kBuben;
+  vector<Block> blocks(blocks_cnt);
+  for (int i = 0; i < n; i++) {
+    blocks[i / kBuben].simple_values.pb({init_values[i], i});
+    blocks[i / kBuben].complex_values.pb({init_values[i], -1, i, -1});
+  }
+  for (int i = 0; i < blocks_cnt; i++) {
+    blocks[i].rebuild();
+  }
+
+  auto get = [&](int l, int r) {
+    //cerr << "get: " << l << " " << r << endl;
+    ll current = -kInf;
+    int res = 0;
+    while (l <= r) {
+      //cerr << "state: " << l << " " << r << " " << current << " " << res << endl;
+      if (l % kBuben == 0 && l + kBuben - 1 <= r) {
+        auto value = blocks[l / kBuben].get_all(current);
+        if (value.how_much > 0) {
+          res += value.how_much;
+          current = value.finish;
+        }
+        l += kBuben;
+      } else {
+        int next = l + (kBuben - l % kBuben);
+        assert(next > l && next % kBuben == 0);
+        auto value = blocks[l / kBuben].get_some(l, min(r, next - 1), current);
+        if (value.how_much > 0) {
+          res += value.how_much;
+          current = value.finish;
+        }
+        l = next;
+      }
+    }
+    return res;
+  };
+
+  auto add = [&](int l, int r, ll x) {
+    //cerr << "add: " << l << " " << r << " " << x << endl;
+    while (l <= r) {
+      if (l % kBuben == 0 && l + kBuben - 1 <= r) {
+        blocks[l / kBuben].add_all(x);
+        l += kBuben;
+      } else {
+        int next = l + (kBuben - l % kBuben);
+        assert(next > l && next % kBuben == 0);
+        blocks[l / kBuben].add_some(l, min(r, next - 1), x);
+        l = next;
+      }
+    }
+  };
+
+  for (int i = 0; i < q; i++) {
+    const auto& query = queries[i];
+    if (query.type == 1) {
+      if (query.l <= query.r) {
+        results[i] = get(query.l, query.r);
+      }
+    } else {
+      assert(query.l <= query.r);
+      add(query.l, query.r, query.x);
+    }
+  }
+
+  return results;
+}
+
+void solve() {
+
+  int n, q;
+  cin >> n >> q;
+
+  vector<ll> init_values(n);
+  for (int i = 0; i < n; i++)
+    cin >> init_values[i];
+
+  vector<Query> queries(q);
+  for (auto& query : queries) {
+    cin >> query.type;
+    if (query.type == 1) {
+      cin >> query.l >> query.r;
+      --query.l, --query.r;
+    } else {
+      cin >> query.l >> query.r >> query.x;
+      --query.l, --query.r;
+      if (query.l > query.r)
+        swap(query.l, query.r);
+    }
+  }
+
+  vector<int> left_to_right_results = solve(n, q, init_values, queries);
+
+  reverse(all(init_values));
+  for (auto& query : queries) {
+    query.l = n - query.l - 1;
+    query.r = n - query.r - 1;
+    if (query.type == 2) {
+      assert(query.l >= query.r);
+      swap(query.l, query.r);
+    }
+  }
+
+  vector<int> right_to_left_results = solve(n, q, init_values, queries);
+
+  for (int i = 0; i < q; i++) {
+    int result = max(left_to_right_results[i], right_to_left_results[i]);
+    if (result != -1)
+      cout << result << "\n";
+  }
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(nullptr);
+
+  int tests;
+  cin >> tests;
+
+  for (int t = 0; t < tests; t++)
+    solve();
+  
+  return 0;
+}

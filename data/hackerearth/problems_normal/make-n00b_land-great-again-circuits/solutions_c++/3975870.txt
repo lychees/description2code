@@ -1,0 +1,226 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <ctype.h>
+#include <deque>
+#include <queue>
+#include <cstring>
+#include <set>
+#include <list>
+#include <map>
+#include <unordered_map>
+#include <stdio.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef std::vector<int> vi;
+typedef std::vector<bool> vb;
+typedef std::vector<string> vs;
+typedef std::vector<double> vd;
+typedef std::vector<long long> vll;
+typedef std::vector<std::vector<int> > vvi;
+typedef vector<vvi> vvvi;
+typedef vector<vll> vvll;
+typedef std::vector<std::pair<int, int> > vpi;
+typedef vector<vpi> vvpi;
+typedef std::pair<int, int> pi;
+typedef std::pair<ll, ll> pll;
+typedef std::vector<pll> vpll;
+
+const long long mod = 1000000007;
+
+#define all(c) (c).begin(),(c).end()
+#define sz(c) (int)(c).size()
+#define forn(i, a, b) for(int i = a; i < b; i++)
+
+#define pb push_back
+#define mp make_pair
+
+class stree {
+    public:
+    vll t;
+    int s;
+    void build (vll & a, int v, int tl, int tr) {
+        t.resize(a.size() * 4);
+        s = a.size();
+        if (tl == tr)
+        t[v] = a[tl];
+        else {
+            int tm = (tl + tr) / 2;
+            build (a, v*2, tl, tm);
+            build (a, v*2+1, tm+1, tr);
+        }
+    }
+    
+    void update (int v, int tl, int tr, int l, int r, ll add) {
+        if (l > r)
+        return;
+        if (l == tl && tr == r)
+        t[v] += add;
+        else {
+            int tm = (tl + tr) / 2;
+            update (v*2, tl, tm, l, min(r,tm), add);
+            update (v*2+1, tm+1, tr, max(l,tm+1), r, add);
+        }
+    }
+    
+    ll get (int v, int tl, int tr, int pos) {
+        if (tl == tr)
+        return t[v];
+        int tm = (tl + tr) / 2;
+        if (pos <= tm)
+        return t[v] + get (v*2, tl, tm, pos);
+        else
+        return t[v] + get (v*2+1, tm+1, tr, pos);
+    }
+};
+
+vll thresh;
+vi trav;
+vi pos, rpos;
+stree stat, cum;
+std::vector<std::vector<int>> ch;
+void bfs(int v) {
+    pos[v] = trav.size();
+    trav.pb(v);
+    for(auto u : ch[v]) bfs(u);
+    rpos[v] = trav.size()-1;
+}
+
+vll ans;
+vi bis;
+vi f;
+vll x,d;
+int n,m;
+ll cur = 0;
+std::vector<ll> v_lvl;
+vvi fown;
+
+vll money;
+ll count(int bisnum) {
+    ll cnt = 0;
+    for(auto v : fown[bisnum]) {
+        cnt += stat.get(1, 0, n-1, pos[v]) + cum.get(1, 0, n-1, pos[v]) * v_lvl[v];
+    }
+    return cnt;
+}
+
+
+void go(int lbis, int rbis, int l, int r) {
+    if (r<l) return;
+    int k = (l+r)/2;
+    while(cur != k) {
+        if(cur < k) {
+            cur++;
+            int v = f[cur];
+            stat.update(1, 0, n-1, pos[v], rpos[v], x[cur] - d[cur]*v_lvl[v]);
+            cum.update(1, 0, n-1, pos[v], rpos[v], d[cur]);
+//            cout<<"cur: "<<cur<<endl;
+//            cout<<"stat: "; forn(i,0,3) cout<<stat.get(1, 0, n-1, i)<<" "; cout<<endl;
+//            cout<<"cum: "; forn(i,0,3) cout<<cum.get(1, 0, n-1, i)<<" "; cout<<endl;
+        }
+        else {
+            int v = f[cur];
+            stat.update(1, 0, n-1, pos[v], rpos[v], -x[cur] + d[cur]*v_lvl[v]);
+            cum.update(1, 0, n-1, pos[v], rpos[v], -d[cur]);
+            cur--;
+        }
+    }
+    forn(i,lbis,rbis+1) money[bis[i]] = count(bis[i]);
+    int ptl = lbis;
+    int ptr = rbis;
+    while(ptr >= ptl) {
+        if(money[bis[ptl]] >= thresh[bis[ptl]]) {
+            ans[bis[ptl]] = k;
+            ptl++;
+        }
+        else if(money[bis[ptr]] < thresh[bis[ptr]]) ptr--;
+        else swap(bis[ptr], bis[ptl]);
+    }
+    go(ptl, rbis, k+1, r);
+    go(lbis,ptr, l, k-1);
+}
+
+int main()
+{
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "rt", stdin);
+    freopen("output.txt", "wt", stdout);
+#endif
+    
+    scanf("%d %d", &n, &m);
+    ch.resize(n);
+    std::vector<int> par(n);
+    std::vector<std::vector<int>> nb(n);
+    std::vector<std::vector<int>> lvl(n+1);
+    v_lvl = vll(n,0);
+    int mm=1;
+    lvl[1].push_back(0);
+    v_lvl[0]=1;
+    for(int i=1;i<n;i++){
+        int u;
+        scanf("%d", &u);
+        u--;
+        nb[u].push_back(i);
+        nb[i].push_back(u);
+        //xp;
+    }
+    int l=2;
+    
+    while(mm<n){
+        for(int k=0; k<lvl[l-1].size(); k++){
+            int v=lvl[l-1][k];
+            for(int h=0; h<nb[v].size();h++){
+                if(v_lvl[nb[v][h]]==0){
+                    v_lvl[nb[v][h]]=l;
+                    lvl[l].push_back(nb[v][h]);
+                    mm++;
+                    ch[v].push_back(nb[v][h]);
+                    par[nb[v][h]]=v;
+                }
+            }
+        }
+        l++;
+    }
+    l--;
+    std::vector<long long> lsize(l+1);
+    for(int i=1; i<=l;i++) lsize[i]=lvl[i].size();
+
+    fown.resize(m);
+    forn(i,0,n) {
+        int x;
+        scanf("%d",&x);
+        x--;
+        fown[x].pb(i);
+    }
+    thresh.resize(m);
+    forn(i,0,m) scanf("%lld", &thresh[i]);
+    pos.resize(n);
+    rpos.resize(n);
+    bfs(0);
+    int q;
+    scanf("%d", &q);
+    f.resize(q+1);
+    x.resize(q+1);
+    d.resize(q+1);
+    forn(i,1,q+1) {
+        scanf("%d %lld %lld", &f[i], &x[i], &d[i]);
+        f[i]--;
+    }
+    ans = vll(m,q+1);
+    forn(i,0,m) bis.pb(i);
+    money.resize(m);
+    vll sti(n,0);
+    stat.build(sti, 1, 0, n-1);
+    cum.build(sti, 1, 0, n-1);
+    go(0,m-1, 1,q);
+    forn(i,0,m) {
+        if(ans[i] == q+1) printf("rekt\n");
+        else printf("%lld\n", ans[i]);
+    }
+    
+}
+
+

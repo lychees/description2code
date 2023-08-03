@@ -1,0 +1,88 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+
+using namespace std;
+
+vector<long long int> f(100001,1);
+
+vector <long long int> grid[100001];
+
+long long int  pow(long long int a,long long  int b,long long  int MOD)
+{
+    long long int x=1,y=a; 
+    while(b > 0)
+    {
+        if(b%2 == 1)
+        {
+            x=(x*y);
+            if(x>MOD) x%=MOD;
+        }
+        y = (y*y);
+        if(y>MOD) y%=MOD; 
+        b /= 2;
+    }
+    return x;
+}
+
+long long int InverseEuler(long long int n,long long  int MOD)
+{
+    return pow(n,MOD-2,MOD);
+}
+
+long long int com1(long long int  n,long long  int r,long long  int MOD)
+{
+    return (f[n]*((InverseEuler(f[r], MOD) * InverseEuler(f[n-r], MOD)) % MOD)) % MOD;
+}
+
+long long int  Lucas(long long int n,long long int m,long long  int p)
+{
+    if (n==0 && m==0) return 1;
+   long long  int ni = n % p;
+   long long  int mi = m % p;
+    if (mi>ni) return 0;
+    return Lucas(n/p, m/p, p) * com1(ni, mi, p);
+}
+
+long long int com(long long int n,long long int r,long long int MOD)
+{
+    return Lucas(n, r, MOD);
+}
+
+int main(){
+	
+    for ( int i=2; i<=100000;i++)
+        f[i]= (f[i-1]*i) % 1000000007L;
+    int n,t,x;
+    cin >> n;
+    long long sum = 0;
+    long long ans = 1;
+    for(int i = 0 ; i < n ;i++)
+    {
+        cin >> x;
+        sum += x;
+        for(int j = 0 ; j < x ;j++)
+        {
+            cin >> t ;
+            grid[i].push_back(t);
+        }
+        grid[i].push_back(1000000);
+        sort(grid[i].begin(),grid[i].end());
+        int last = 0;
+        for(int j = 1 ; j <= x ;j++)
+        {
+            if(grid[i][j-1] != grid[i][j])
+            {
+                ans = (ans * f[j-last])% 1000000007L;
+                last = j;
+            }
+        }
+    }
+    for(int i = 0 ; i < n ;i++)
+    {
+        ans = (ans * com(sum,grid[i].size()-1,1000000007L))%1000000007L;
+        sum -= (grid[i].size()-1);
+    }
+	cout << ans << endl;
+}

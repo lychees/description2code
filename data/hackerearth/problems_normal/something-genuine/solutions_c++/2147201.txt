@@ -1,0 +1,71 @@
+#include <stdio.h>
+#include <string.h>
+
+#define DEBUG 0
+#define MOD 1000000007
+#define NMAX 262144
+#define add(x, y) {x += y; if (x >= MOD) x -= MOD;}
+#define dec(x, y) {x -= y; if (x < 0) x += MOD;}
+
+int sum[2 * NMAX], cnt[2 * NMAX], poz[NMAX];
+int N, SUM, CNT, i, x, y, sum_pi, sum_pi_i, ans, cans;
+
+void UpdateSegTree(int p, int op) {
+	int node = p + NMAX - 1;
+	while (node >= 1) {
+		if (op > 0) {
+			add(sum[node], p)
+			cnt[node]++;
+		} else {
+			dec(sum[node], p)
+			cnt[node]--;
+		}
+		node >>= 1;
+	}
+}
+
+void QuerySegTree(int p, int& qsum, int &qcnt) {
+	p += NMAX - 1;
+	qsum = qcnt = 0;
+	while (p > 1) {
+		if ((p & 1) == 0) {
+			add(qsum, sum[p + 1]);
+			qcnt += cnt[p + 1];
+		}
+		p >>= 1;
+	}
+}
+
+int main() {
+//	freopen("y.txt", "r", stdin);
+	scanf("%d", &N);
+	memset(sum, 0, sizeof(sum));
+	memset(cnt, 0, sizeof(cnt));
+	memset(poz, 0, sizeof(poz));
+	for (ans = sum_pi = sum_pi_i = 0, i = 1; i <= N; i++) {
+		scanf("%d", &x);
+		if (poz[x] == 0) {
+			add(sum_pi_i, sum_pi)
+		} else {
+			dec(sum_pi, poz[x]);
+			QuerySegTree(poz[x], SUM, CNT);
+			y = ((long long) poz[x] * (long long) (CNT + 1)) % MOD;
+			//fprintf(stderr, "--- %d %d %d\n", SUM, CNT, y);
+			dec(sum_pi_i, y);
+			add(sum_pi_i, SUM);
+			UpdateSegTree(poz[x], -1);
+		}
+		add(sum_pi, i)
+		add(sum_pi_i, i)
+		UpdateSegTree(i, +1);
+		poz[x] = i;
+		// cans = (2 * sum_pi_i - sum_pi)
+		cans = sum_pi_i;
+		add(cans, sum_pi_i)
+		dec(cans, sum_pi)
+		add(ans, cans)
+		if (DEBUG) fprintf(stderr, "i=%d cans=%d ans=%d sum_pi=%d sum_pi_i=%d\n", i, cans, ans, sum_pi, sum_pi_i);
+	}
+	printf("%d\n", ans);
+	return 0;
+}

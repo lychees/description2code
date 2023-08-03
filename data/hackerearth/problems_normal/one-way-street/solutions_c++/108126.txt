@@ -1,0 +1,153 @@
+#include<cstring>
+#include <iostream>
+#include<cstdio>
+#include<vector>
+#define gc getchar_unlocked
+#define REP(i,a) for(int i=0;i<a;i++)
+#define PB push_back
+#define LL long long
+void scanint(int &x)
+{
+	register int c = gc();
+	x = 0;
+	for(;(c<48 || c>57);c = gc());
+	for(;c>47 && c<58;c = gc()) {x = (x<<1) + (x<<3) + c - 48;}
+}
+using namespace std;
+int n,q;
+int df[300000],f[300500],l[500000],tr[2000000];
+bool is[400500];
+int ia,ib,ic;
+int mark[100004];
+int lev[100004];
+void dfs(int node,vector<int > L[],int level)
+{
+	if(mark[node]) return;
+	lev[node]=level;
+	mark[node]=1;
+	df[ia++]=node;
+	l[ib++]=level;
+	f[node]=ia-1;
+	//cout<<level<<endl;
+	for(int i=0;i<L[node].size();i++)
+	{
+		if(!mark[L[node][i]])
+		dfs(L[node][i],L,level+1);
+		//    cout<<level<<endl;
+		df[ia++]=node;
+		l[ib++]=level;
+	}
+}
+void build(int nn, int li, int ri)
+{
+	if(li==ri)
+	{
+		tr[nn]=li;
+		return ;
+	}
+	build(2*nn,li,(li+ri)/2);
+	build(2*nn+1,(li+ri)/2+1,ri);
+	if(l[tr[2*nn]]<l[tr[2*nn+1]])
+		tr[nn]=tr[2*nn];
+	else tr[nn]=tr[2*nn+1];
+}
+int query(int node,int tl,int tri,int ql,int qr)
+{
+	if(ql<=tl&&qr>=tri)
+		return tr[node];
+	if(qr<tl||tri<ql)
+		return -1;
+	int la=query(2*node,tl,(tl+tri)/2,ql,qr);
+	int ra=query(2*node+1,(tl+tri)/2+1,tri,ql,qr);
+	if(la==-1)
+		return ra;
+	if(ra==-1) return la;
+	if(l[la]<l[ra])
+		return la;
+	else return ra;
+}
+
+
+
+int main() {
+	int t;
+	scanf("%d",&t);
+	while(t--)
+	{
+		int n;
+		memset(mark,0,sizeof(mark));
+		scanf("%d",&n);
+
+		ia=ib=ic=0;
+		vector<int> L[n+1];
+		REP(i,n-1)
+		{
+			int a,b;
+			scanf("%d%d",&a,&b);
+			a--;b--;
+			L[a].PB(b);
+			L[b].PB(a);
+
+		}
+		int root=0;
+		dfs(root,L,0);
+		build(1,0,ia-1);
+		/*cout<<"df\n";
+		  for(int i=0;i<ia;i++)
+		  cout<<df[i]<<" ";
+		  cout<<endl;
+		  cout<<"level\n";
+		  for(int i=0;i<ia;i++)
+		  cout<<l[i]<<" ";
+		  cout<<endl;
+		  cout<<"first\n";
+		  for(int i=0;i<n;i++)
+		  cout<<f[i]<<" ";
+		  cout<<endl;*/
+		scanf("%d",&q);
+		for(int i=0;i<q;i++)
+		{
+			int lv,rv;
+			scanf("%d%d",&lv,&rv);
+			int na=lv-1,nb=rv-1;
+			lv=f[lv-1];
+			rv=f[rv-1];
+			if(rv<lv)
+			{
+				lv=rv^lv^(rv=lv);
+			}
+			//cout<<lv<<" "<<rv<<"bbgt\n";
+			//cout<<query(1,0,ia-1,lv,rv )<<endl;
+			int anc=df[query(1,0,ia-1,lv,rv )];
+			LL ans=0;
+			ans+=((lev[na]-lev[anc])*2);
+			int dif=lev[nb]-lev[anc];
+			if(dif>0) {
+				ans++;
+				dif--;
+			}
+			ans+=(dif*2);
+			cout<<ans<<endl;
+		}
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	//getchar();
+	//	getchar();
+	return 0;
+}
+

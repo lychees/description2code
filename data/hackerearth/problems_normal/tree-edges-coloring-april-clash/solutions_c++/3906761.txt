@@ -1,0 +1,304 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+ 
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+ 
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+ 
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+ 
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+ 
+struct edge {
+    int first;
+    int second;
+    int capacity;
+    edge ( int no, int w, int c=1 ) :first ( no ),second ( w ),capacity ( c ) {
+ 
+    }
+};
+struct FFSimple {
+    template < typename V>struct BellmannFord {
+        const int n;
+        const vector<V> & adj;
+        vi dist;
+        vi prec;
+        bool hasCycles;
+        int root;
+        BellmannFord ( const  vector<V> &_adj, int _root=0 ) :n ( _adj.size() ),adj ( _adj ),dist ( n,INF ),prec ( n ),hasCycles ( 0 ),root ( _root ) {
+            run ( root );
+        }
+        vpii traceBack ( int t ) {
+            assert ( dist[t]<INF );
+            vpii res;
+            while ( t!=root ) {
+                res.push_back ( mp ( prec[t],t ) );
+                t=prec[t];
+ 
+            }
+            return res;
+        }
+        void clear() {
+            fill ( all ( dist ),0 );
+            fill ( all ( prec ),0 );
+ 
+        }
+        bool run ( int r ) {
+            root=r;
+            dist[r]=0;
+            bool found=true;
+            int c=0;
+            vector<bool> improved ( n );
+            deque<int> toImprove;
+            toImprove.push_back ( r );
+//             while ( c++<n && found ) {
+            while ( toImprove.size() ) {
+                int i=toImprove.front();
+                toImprove.pop_front();
+                improved[i]=0;
+//                 found=0;
+//                 rep ( i,n ) {
+                for ( const auto &ed: adj[i] ) {
+                    if ( dist[ed.first]>dist[i]+ed.second ) {
+                        dist[ed.first]=dist[i]+ed.second;
+//                         found=1;
+                        prec[ed.first]=i;
+                        if ( !improved[ed.first] ) {
+                            toImprove.push_back ( ed.first );
+                            improved[ed.first]=1;
+ 
+                        }
+ 
+                    }
+ 
+                }
+ 
+            }
+ 
+//             }
+//         cout<<"done BF "<<dist<<prec<<endl;
+//             hasCycles=found;
+//             return !hasCycles;
+return 1;
+        }
+    };
+ 
+    const int n;
+    const vector<vector<edge>> &adj1;
+    vector<map<int,int>> adj;
+    vector<map<int,int>> cap;
+    vi b;
+    vi offers;
+    vi demands;
+    int cost;
+    FFSimple ( const vector<vector<edge>> &_adj, const vi &bi ) :n ( _adj.size() ),adj1 ( _adj ),adj ( n ),cap ( n ),b ( bi ),cost ( 0 ) {
+        rep ( i,n ) {
+            for ( const edge & e: _adj[i] ) {
+                adj[i][e.first]=e.second;
+                cap[i][e.first]=e.capacity;
+            }
+        }
+ 
+    }
+    void augmentPath() {
+        int start=offers.back();
+        int end=demands.back();
+ 
+        BellmannFord<map<int,int>> bf ( adj,offers.back() );
+        assert ( !bf.hasCycles );
+        vpii path=bf.traceBack ( end );
+        int minCap=INF;
+        minCap=min ( b[start],-b[end] );
+        for ( pii e: path ) {
+            minCap=min ( cap[e.first][e.second],minCap );
+        }
+//         cout<<"augmenting "<<minCap<<" along "<<path<<endl;
+ 
+        for ( pii e: path ) {
+            int &c=cap[e.first][e.second];
+            int w=adj[e.first][e.second];
+            cost+=minCap*w;
+            if ( !adj[e.second].count ( e.first ) ) {
+                adj[e.second][e.first]=-w;
+            }
+            cap[e.second][e.first]+=c;
+ 
+            if ( c>minCap ) {
+                c-=minCap;
+            } else {
+                cap[e.first].erase ( e.second );
+                adj[e.first].erase ( e.second );
+ 
+ 
+            }
+        }
+//         cout<<"new cost: "<<cost<<endl;
+        b[start]-=minCap;
+        b[end]+=minCap;
+        if ( b[start]==0 ) offers.pop_back();
+        if ( b[end]==0 ) demands.pop_back();
+    }
+    void solve() {
+        rep ( i,n ) {
+            if ( b[i]<0 ) demands.push_back ( i );
+            else if ( b[i]>0 ) offers.push_back ( i );
+        }
+        while ( demands.size() ) {
+            augmentPath();
+        }
+    }
+    int computeCost() {
+        solve();
+        return cost;
+    }
+ 
+};
+ 
+struct Solve {
+    const int c;
+    const int n;
+    const vi &costs;
+    const vector<vi> &adj;
+    vector<vi> subtreeCosts;
+    int res=0;
+    Solve ( const vi &_c,const  vector<vi> &a ) : c ( _c.size() ),n ( a.size() ),costs ( _c ),adj ( a ), subtreeCosts ( n,vi ( c ) ) {
+        int maxd=0;
+        int root=0;
+        rep ( i,n ) {
+            if ( adj[i].size() >maxd ) {
+                maxd=adj[i].size();
+                root=i;
+            }
+        }
+        vi children;
+        for ( int k: adj[root] ) {
+            fillCosts ( k,root );
+            children.push_back ( k );
+        }
+        int nLoc=children.size();
+        vi b ( nLoc+c+1 );
+        rep ( i,nLoc ) b[i]=1;
+        b.back() =-nLoc;
+ 
+        vector<vector<edge>> mat ( nLoc+c+1 );
+        rep ( i,nLoc ) {
+            rep ( j,c ) {
+                edge e ( nLoc+j,subtreeCosts[children[i]][j]+costs[j],1 );
+                mat[i].push_back ( e );
+            }
+        }
+        rep ( i,c ) {
+            edge e ( nLoc+c,0,1 );
+            mat[nLoc+i].push_back ( e );
+        }
+        FFSimple ff ( mat,b );
+        res=ff.computeCost();
+ 
+ 
+ 
+ 
+    }
+    void fillCosts ( int no, int p ) {
+        vi children;
+        for ( int k: adj[no] ) if ( k!=p ) {
+                fillCosts ( k,no );
+                children.push_back ( k );
+            }
+        int nLoc=children.size();
+        if ( !nLoc ) return;
+        vi b ( nLoc+c+1 );
+        rep ( i,nLoc ) b[i]=1;
+        b.back() =-nLoc;
+        int lastc=INF;
+        rep ( cc,c ) {
+            vector<vector<edge>> mat ( nLoc+c+1 );
+            rep ( i,nLoc ) {
+                rep ( j,c ) {
+                    if ( j==cc ) continue;
+                    edge e ( nLoc+j,subtreeCosts[children[i]][j]+costs[j],1 );
+                    mat[i].push_back ( e );
+                }
+            }
+            rep ( i,c ) {
+                if ( i==cc ) continue;
+                edge e ( nLoc+c,0,1 );
+                mat[nLoc+i].push_back ( e );
+            }
+            FFSimple ff ( mat,b );
+            int nextc=ff.computeCost();
+//             if ( nextc==lastc &&costs[cc]!=costs[cc-1]) {
+//                 reu ( ccc,cc,c ) subtreeCosts[no][ccc]=lastc;
+//                 break;
+//             }
+            lastc=nextc;
+            subtreeCosts[no][cc]=lastc;
+ 
+        }
+    }
+};
+int main() {
+    ios_base::sync_with_stdio ( false );
+    inrep {
+        int n;
+        cin>>n;
+        vi costs ( n-1 );
+        cin>>costs;
+ 
+        costs.push_back ( 1000000000 );
+        vector<vi> adj ( n );
+        rep ( i,n-1 ) {
+            int u,v;
+            cin>>u>>v;
+            u--;
+            v--;
+            adj[u].push_back ( v );
+            adj[v].push_back ( u );
+        }
+        Solve s ( costs,adj );
+//         int minC=INF;
+//         rep ( i,n ) {
+//             minC=min ( minC,s.subtreeCosts[0][i] );
+//         }
+        cout<<s.res<<endl;
+//         cout<<s.subtreeCosts;
+    }
+}

@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+const int N = 101000;
+    using namespace std;
+  const int L = 17;
+  //  int n, m;
+    //int clr[N];
+    vector<int> entries[1000454];
+    int dep[1000454];
+    int tin[1000454], tout[1000454];
+   // int up[101008][L];
+   // int timer;
+   vector<int> g[1000454];
+  //  const int L = 17;
+  //  int tin[1000454], tout[1000454];
+//vector <int> entries[1010004];
+//vector <int> g[1010005];
+//int dep[1000004];
+int up[101008][17];
+int timer;
+void dfs(int v, int p)
+    {   //cout<<timer<<endl;
+    	tin[v] = timer;
+    	++timer;
+    	up[v][0] = p;
+    	for (int i = 1; i <L; i++)
+    	{
+    		up[v][i] = up[up[v][i - 1]][i - 1];
+    	}
+    	for (int i = 0; i < g[v].size(); i++)
+    	{
+    		int to = g[v][i];
+    		if (to == p)
+    			continue;
+    		dep[to] = dep[v] + 1;
+    		dfs(to, v);
+    	}
+    	tout[v] = timer;
+    	++timer;
+    }
+bool upper(int a, int b)
+    {
+    	return (tin[a] <= tin[b] && tout[a] >= tout[b]);
+    }
+   int lca(int a, int b)
+    {
+    	if (upper(a, b))
+    		return a;
+    	if (upper(b, a))
+    		return b;
+    	for (int i = L - 1; i >= 0; --i)
+    	{
+    		if (!upper(up[a][i], b))
+    			a = up[a][i];
+    	}
+    	return up[a][0];
+    }
+    int get_dist(int a, int b)
+    {
+    	int q = lca(a, b);
+    	return dep[a] + dep[b] - 2 * dep[q];
+    }
+int main() {
+		ios_base::sync_with_stdio(0);
+		int n,m;
+		cin>>n>>m;
+		for(int i=0;i<n;i++){
+			int k;
+			cin>>k;
+			entries[k].push_back(i+1);
+		}
+		for(int i=0;i<n-1;i++){
+			int a,b;
+			cin>>a>>b;
+			g[b].push_back(a);
+		    g[a].push_back(b);
+		}
+		dfs(1,1);
+    	for (int i = 1; i <= m; i++)
+    	{
+    		int start = entries[i][0];
+    		int bst = -1;
+    		int bp = -1;
+    		for (int j = 0; j < entries[i].size(); j++)
+    		{
+    			int v2 = entries[i][j];
+    			int dist = get_dist(start, v2);
+    			if (dist>bst)
+    			{
+    				bst = dist;
+    				bp = v2;
+    			}
+    		}
+    		start = bp;
+    		bst = -1;
+    		for (int j = 0; j < entries[i].size(); j++)
+    		{
+    			int v2 = entries[i][j];
+    			int dist = get_dist(start, v2);
+    			if (dist>bst)
+    			{
+    				bst = dist;
+    				bp = v2;
+    			}
+    		}
+    		if (i > 1)
+    			cout << " ";
+    		cout << bst;
+    	}
+    	cout << endl;
+    	return 0;
+	// your code goes here
+	return 0;
+}

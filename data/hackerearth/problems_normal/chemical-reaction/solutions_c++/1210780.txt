@@ -1,0 +1,148 @@
+//HackerEarth--Chemical Reaction
+#include<bits/stdc++.h>
+#define MAX 500005
+
+using namespace std;
+
+struct node{
+	
+	int active;
+	
+	node(){ this->active=0; }
+	
+	void merge(struct node &lhs,struct node &rhs){
+		
+		this->active=lhs.active+rhs.active;
+				
+	}
+	
+}Tree[4*MAX];
+
+char chemical[MAX][12];
+int totalElements,times[MAX];
+
+void makeTree(int ,int ,int );
+int solve(int );
+void update(int ,int ,int ,int ,int );
+
+int main(void){
+	
+	int i,testCases,ans,query;
+	
+	scanf("%d",&testCases);
+	while(testCases--){
+		
+		scanf("%d",&totalElements);
+		
+		for(i=0;i<totalElements;i++)
+		  scanf("%s",chemical[i]);
+		
+		makeTree(0,0,totalElements-1);
+		
+		for(i=0;i<totalElements;i++)
+		  scanf("%d",&times[i]);
+		
+		ans=0;
+		int idx;
+		for(i=0;i<totalElements-1;i++){
+			
+			scanf("%d",&query);
+			idx=solve(query);
+			
+			if(ans<times[idx])
+			  ans=times[idx];
+			
+			printf("%s %d\n",chemical[idx],ans);  
+					
+			update(0,0,totalElements-1,idx,idx);
+			
+			
+			
+		}
+		
+		query=1;
+		idx=solve(query);
+		
+		if(ans<times[idx])
+		  ans=times[idx];
+		  
+		printf("%s %d\n",chemical[idx],ans);  
+			    
+	}
+	
+	
+  return 0;	
+	
+}
+
+void makeTree(int idx,int assStart,int assEnd){
+	
+	if(assStart==assEnd){
+		
+		Tree[idx].active=1;		
+		return;
+		
+	}
+	
+	int mid=(assStart+assEnd)/2;
+	
+	makeTree(2*idx+1,assStart,mid);
+	makeTree(2*idx+2,mid+1,assEnd);
+	
+	Tree[idx].merge(Tree[2*idx+1],Tree[2*idx+2]);
+	
+}
+
+void update(int idx,int assStart,int assEnd,int s,int e){
+	
+	if(assStart>assEnd||assStart>e||s>assEnd)//out of range
+	 return ;
+	
+	if(assStart>=s&&assEnd<=e){
+		
+		Tree[idx].active=0;
+		return;		
+		
+	}
+	
+	int mid=(assStart+assEnd)/2;
+	
+	update(2*idx+1,assStart,mid,s,e);
+	update(2*idx+2,mid+1,assEnd,s,e);
+	
+	Tree[idx].merge(Tree[2*idx+1],Tree[2*idx+2]);	
+
+}
+
+int solve(int k){
+	
+	int assStart=0,assEnd=totalElements-1,inLeft=0;
+	int offset=0,idx=0;
+	
+	while(assStart!=assEnd){
+		
+		inLeft=Tree[2*idx+1].active;
+		
+		
+		int mid=(assStart+assEnd)/2;
+		if(offset+inLeft<k){//move right
+			
+			offset+=inLeft;
+			assStart=mid+1;
+			idx=2*idx+2;
+			
+		}
+		
+		else{//move left
+			
+			idx=2*idx+1;
+			assEnd=mid;
+			
+			
+		}
+			
+	}
+	
+	return assStart;	
+	
+}

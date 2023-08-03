@@ -1,0 +1,77 @@
+#include <cstdio>
+#include <vector>
+
+void push(std::vector<long long>& a, int ind, long long x)
+{
+    while ( (unsigned)ind < a.size() )
+    {
+        a[ind] += x;
+        ind += ind & (-ind);
+    }
+}
+
+long long get(const std::vector<long long>& a, int ind)
+{
+    long long sum = 0;
+    while ( ind > 0 )
+    {
+        sum += a[ind];
+        ind -= ind & (-ind);
+    }
+
+    return sum;
+}
+
+long long abs(long long x) { return x < 0 ? -x : x; }
+
+int main()
+{
+    int n, q;
+    scanf("%d %d", &n, &q);
+
+    std::vector<long long> a(n + 1, 0);
+    std::vector<long long> b(n + 1, 0);
+    std::vector<long long> c(n + 1, 0);
+    for ( int i = 0; i < n; ++i )
+    {
+        int x;
+        scanf("%d", &x);
+
+        push(a, i + 1, x);
+        push(b, i + 1, 1LL*x*i + x);
+        push(c, i + 1, 1LL*(n - i)*x);
+    }
+
+    while ( q-- )
+    {
+        int type;
+        scanf("%d", &type);
+
+        switch (type)
+        {
+        case 1:
+            {
+                int k, l, r;
+                scanf("%d %d %d", &k, &l, &r);
+                long long result = 0;
+                     if ( k <= l ) result  = get(b, r) - get(b, l - 1) - (get(a, r) - get(a, l - 1))*k;
+                else if ( r <= k ) result  = (get(a, r) - get(a, l - 1))*k - get(b, r) + get(b, l - 1);
+                else               result  = get(b, r) - get(b, k - 1) - (get(a, r) - get(a, k - 1))*k
+                                            + (get(a, k - 1) - get(a, l - 1))*k - get(b, k - 1) + get(b, l - 1);
+
+                printf("%lld\n", result);
+            }
+            break;
+        case 2:
+            {
+                int k, s;
+                scanf("%d %d", &k, &s);
+                push(a, k, s);
+                push(b, k, 1LL*k*s);
+            }
+            break;
+        }
+    }
+
+    return 0;
+}

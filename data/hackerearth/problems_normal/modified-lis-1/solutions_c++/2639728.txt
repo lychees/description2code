@@ -1,0 +1,85 @@
+#include  <bits/stdc++.h>
+#define rep(i,n) for(int (i)=0;(i)<(n);(i)++)
+using namespace std;
+
+typedef long long ll;
+typedef pair<int,ll> state;
+typedef pair<int,int> pii;
+
+const ll mod=1000000007;
+
+inline state vmerge(state l,state r){
+	state ret=l;
+	if(r.first==ret.first) ret.second=(ret.second+r.second)%mod;
+	if(r.first>ret.first) ret=r;
+	return ret;
+}
+
+class SegmentTree{
+	public:
+		SegmentTree(int size){
+			for(n=1;n<size;n<<=1);
+			data=vector<state>(2*n,make_pair(0,0LL));
+		}
+
+		void update(int a,int x,ll y){return update(a,a+1,x,y,0,0,n);}
+		state query(int a,int b) {return query(a,b,0,0,n);}
+
+		int n;
+		vector<state> data;
+
+		void update(int a,int b,int x,ll y,int k,int l,int r){
+			if(r<=a||b<=l) return;
+			if(a<=l&&r<=b){
+				data[k]=make_pair(x,y);
+				return;
+			}
+			update(a,b,x,y,k*2+1,l,(l+r)/2);
+			update(a,b,x,y,k*2+2,(l+r)/2,r);
+			data[k]=vmerge(data[k*2+1],data[k*2+2]);
+		}
+
+		state query(int a,int b,int k,int l,int r){
+			if(r<=a||b<=l) return make_pair(0,0);
+			if(a<=l&&r<=b) return data[k];
+			state vl = query(a,b,k*2+1,l,(l+r)/2);
+			state vr = query(a,b,k*2+2,(l+r)/2,r);
+			state ret=vmerge(vl,vr);
+			return ret;
+		}
+};
+
+int a[100010];
+
+int main(void){
+	vector<pii> index;
+	int n;
+	scanf("%d",&n);
+	rep(i,n){
+		scanf("%d",a+i);
+		index.push_back(make_pair(abs(a[i]),-i));
+	}
+
+	sort(index.begin(),index.end());
+
+	SegmentTree pos_seg(n);
+	SegmentTree neg_seg(n);
+
+	rep(i,n){
+		int cur=-index[i].second;
+		if(a[cur]>0){
+			state res=neg_seg.query(0,cur);
+			res.first++;
+			if(res.first==1) res.second=1LL;
+			pos_seg.update(cur,res.first,res.second);
+		}else{
+			state res=pos_seg.query(0,cur);
+			res.first++;
+			if(res.first==1) res.second=1LL;
+			neg_seg.update(cur,res.first,res.second);
+		}
+	}
+	state ans=vmerge(pos_seg.query(0,n),neg_seg.query(0,n));
+	cout << ans.first << " " << ans.second << endl;
+	return 0;
+}

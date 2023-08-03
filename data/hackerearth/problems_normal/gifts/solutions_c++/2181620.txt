@@ -1,0 +1,183 @@
+//https://www.hackerearth.com/problem/algorithm/gifts/
+
+
+
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+
+class SegmentTree {
+    public:
+        const   int n;
+        vll tree;
+        int getDim ( int n ) {
+            int d=1;
+            while ( d<n )
+                d*=2;
+            return d;
+
+        }
+        SegmentTree ( const vll &base ) :n ( getDim ( base.size() ) ),tree ( 2*n,0 ) {
+            rep ( i,base.size() )
+            tree[n+i]=base[i];
+            for ( int i=n-1; i>0; i-- )
+                tree[i]=tree[2*i]+tree[2*i+1];
+//                 cout<<tree;
+        }
+
+        void add ( int pos, ll val ) {
+            int l=0;
+            int r=n;
+            int i=1;
+            while ( l+1<r ) {
+                tree[i]+=val;
+                int split= ( l+r ) /2;
+                if ( pos>=split ) {
+                    i=2*i+1;
+                    l=split;
+                } else {
+                    i=2*i;
+                    r=split;
+                }
+
+            }
+            tree[i]+=val;
+        }
+        ll getRek ( int i,int l, int r, int L, int R ) {
+            if ( l<=L && R<=r )
+                return tree[i];
+            int split= ( L+R ) /2;
+            ll res=0;
+            if ( l<split )
+                res+=getRek ( 2*i,l,r,L,split );
+            if ( r>split )
+                res+=getRek ( 2*i+1,l,r,split,R );
+            return res;
+        }
+        ll get ( int l,int r ) {
+            return getRek ( 1,l,r,0,n );
+
+
+        }
+
+};
+
+
+
+int main() {
+    int N;
+    cin >>N;
+    vll vals[5];
+
+    for ( int j=0; j<5; j++ ) {
+        vals[j]=vll ( N );
+        for ( int i=0; i<N; i++ )
+            cin>>vals[j][i];
+    }
+    string s;
+    cin>>s;
+    vi delta ( N );
+    for ( int i=0; i<N; i++ )
+        delta[i]=s[i]-'A';
+    int Q;
+    cin>>Q;
+
+    vector< vector< SegmentTree > > arr ( 5,vector<SegmentTree> ( ) );
+    for ( int i=0; i<5; i++ )
+        for ( int j=0; j<5; j++ ) {
+            vll base=vll ( N );
+            for ( int k=0; k<N; k++ ) {
+                if ( delta[k]==j )
+                    base[k]=vals[i][k];
+            }
+            arr[i].push_back ( SegmentTree ( base ) );
+        }
+
+    int currentUsed[5];
+    rep ( i,5 ) currentUsed[i]=i;
+
+    for ( int i=0; i<Q; i++ ) {
+        string op;
+        cin>>op;
+        int X,Y,idx;
+        ll res;
+        char c,d;
+        switch ( op[1] ) {
+        case 's':
+            cin>>X>>Y;
+            X--;
+            Y--;
+            res=0;
+            rep ( i,5 ) {
+                ll val=arr[currentUsed[i]][i].get ( X,Y+1 );
+                res+=val;
+//                 cout<<"adding"<<val<<" for "<<i<<endl;
+            }
+            cout<<res<<endl;
+
+            //             cin>>c;
+//             idx=c-'A';
+
+
+
+            break;
+        case 'c':
+            cin>>X>>c;
+            X--;
+            c-='A';
+            d=delta[X];
+            delta[X]=c;
+            rep ( j,5 ) {
+                Y=arr[j][d].get ( X,X+1 );
+                arr[j][d].add ( X,-Y );
+                arr[j][c].add ( X,Y );
+            }
+            break;
+        case 'e':
+            cin>>c>>d;
+            X=c-'A';
+            Y=d-'A';
+            int tmp=currentUsed[X];
+            currentUsed[X]=currentUsed[Y];
+            currentUsed[Y]=tmp;
+            break;
+        }
+    }
+    return 0;
+}

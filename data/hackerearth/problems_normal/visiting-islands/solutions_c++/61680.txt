@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int dfs(vector<int> &destination, int index, vector<bool> &already_visited, vector<int> &num_nodes_can_be_visited, vector<int> &nodes_dfs, vector<bool> &cycle) {
+	if (already_visited[index]) {
+		if (cycle[index] == true) {
+			int count = 1;
+			for (int i = index; destination[i] != index; i = destination[i])
+			  count++;
+			for (int i = index; destination[i] != index; i = destination[i])
+			  num_nodes_can_be_visited[i] = count;
+		}
+		return cycle[index] == false ? num_nodes_can_be_visited[index] : 0;
+	}
+	already_visited[index] = true;
+	cycle[index] = true;
+	nodes_dfs.push_back(index);
+    int result = 1 + dfs(destination, destination[index], already_visited, num_nodes_can_be_visited, nodes_dfs, cycle);
+    cycle[index] = false;
+    if (num_nodes_can_be_visited[index] == 0) {
+	  num_nodes_can_be_visited[index] = result;
+    }
+	return result;
+}
+
+int main()
+{
+    int num_testcases;
+    cin >> num_testcases;
+    while (num_testcases--) {
+    	int n;
+    	scanf("%d", &n);
+    	vector<int> destination(n);
+    	for (int i = 0; i < n; i++) {
+    		scanf("%d", &destination[i]);
+    	}
+    	vector<int> num_nodes_can_be_visited(n, 0);
+    	vector<bool> already_visited(n, 0);
+    	int result = 0; int max_length = 0;
+    	vector<bool> cycle(n, 0);
+    	for (int i = 0; i < n; i++) {
+    	  vector<int> visited_nodes_current;
+    	  if (already_visited[i] == true) {
+    	  	continue;
+    	  }
+    	  int length = dfs(destination, i, already_visited, num_nodes_can_be_visited, visited_nodes_current, cycle);
+    	  if (max_length < length) {
+    	  	max_length = length;
+    	  	result = i;
+    	  }
+    	  visited_nodes_current.clear();
+    	}
+    	cout <<result << endl;
+    	destination.clear();
+    	already_visited.clear();
+    	num_nodes_can_be_visited.clear();
+    }
+    return 0;
+}

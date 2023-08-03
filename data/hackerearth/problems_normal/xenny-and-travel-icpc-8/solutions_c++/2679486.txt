@@ -1,0 +1,87 @@
+#include <iostream>
+
+#include <queue>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef vector<int> VI;
+typedef vector<VI> VVI;
+
+#define MAXN 1256
+
+const int INF = 1000000000;
+
+struct State {
+   int city;
+   int dist;
+   State(int _city, int _dist) : city(_city), dist(_dist) {}
+   bool operator<(const State& s) const {
+      if (dist != s.dist) return dist > s.dist;
+      return city < s.city;
+   }
+};
+
+VI dijkstra(const VVI& W, int src, bool fwd) {
+   int N = W.size();
+   VI D(N, INF);
+   D[src] = 0;
+   priority_queue<State> pq;
+   pq.push(State(src, 0));
+   while (!pq.empty()) {
+      State cur = pq.top();
+      pq.pop();
+      if (cur.dist > D[cur.city]) continue;
+      for (int v = 0; v < N; ++v) {
+         State nxt(v, cur.dist);
+         nxt.dist += fwd ? W[cur.city][v] : W[v][cur.city];
+         if (D[nxt.city] > nxt.dist) {
+            D[nxt.city] = nxt.dist;
+            pq.push(nxt);
+         }
+      }
+   }
+   return D;
+}
+
+int main(int argc, char* argv[]) {
+   ios_base::sync_with_stdio(false); 
+   cin.tie(NULL);
+
+   int N;
+   cin >> N;
+   VVI W_road(N, VI(N));
+   for (int u = 0; u < N; ++u) {
+      for (int v = 0; v < N; ++v)
+         cin >> W_road[u][v];
+   }
+
+   VVI W_rail(N, VI(N));
+   for (int u = 0; u < N; ++u) {
+      for (int v = 0; v < N; ++v)
+         cin >> W_rail[u][v];
+   }
+
+   int src, dst;
+   cin >> src >> dst;
+   --src, --dst;
+
+   VI D_src = dijkstra(W_road, src, true);
+   VI D_dst = dijkstra(W_rail, dst, false);
+
+   int res = INF;
+   for (int z = 0; z < N; ++z)
+      if (z != src && z != dst)
+         res = min(res, D_src[z] + D_dst[z]);
+
+   D_src = dijkstra(W_rail, src, true);
+   D_dst = dijkstra(W_road, dst, false);
+   for (int z = 0; z < N; ++z)
+      if (z != src && z != dst)
+         res = min(res, D_src[z] + D_dst[z]);
+
+   cout << res << endl;
+
+   return 0;
+}

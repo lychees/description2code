@@ -1,0 +1,130 @@
+#include <cstdio>
+#include <vector>
+#include<cmath>
+#include<iostream>
+using namespace std;
+#define ll long long int
+ll a[100008],cnt[100008];
+vector<int> v[100005];
+vector<int> tree[100005];
+int N=100005;
+void update(int idx,int num,int mma) 
+{
+    while(idx<tree[num].size()) 
+    {
+		tree[num][idx]++;
+		idx+=idx&-idx;
+    }
+}
+int query(int idx,int num) {
+    int sm=0;
+//    idx--;
+    while(idx>0) {
+	sm+=tree[num][idx];
+	idx-=idx&-idx;
+    }
+    return sm;
+}
+int tree2[100006];
+void update1(int idx,int val) 
+{
+    while(idx<N) 
+    {
+		tree2[idx]+=val;
+		idx+=idx&-idx;
+    }
+}
+int query1(int idx) {
+    int sm=0;
+    while(idx>0) {
+	sm+=tree2[idx];
+	idx-=idx&-idx;
+    }
+    return sm;
+}
+void func()
+{
+	int temp;
+	for(int i=2;i<=100000;i++)
+	{
+		temp=i;
+		int flag=0;
+		while(temp%2==0)
+		{
+			temp=temp/2;
+			flag=1;
+		}
+		if(flag)
+		{
+			v[i].push_back(2);
+		}
+		int sq=(int)sqrt(temp);
+		for(int j=3;j<=sq;j=j+2)
+		{
+			flag=0;
+			while(temp%j==0)
+			{
+				temp=temp/j;
+				flag=1;
+			}
+			if(flag)v[i].push_back(j);
+		}
+		if(temp>2)
+		{
+			v[i].push_back(temp);
+		}
+	}
+}
+int main () 
+{
+	int n,ma=0;
+	scanf("%d", &n);
+	for(int i=1;i<=n;i++) 
+	{
+		scanf("%d",&a[n-i+1]);
+		if(a[n-i+1]>ma)ma=a[n-i+1];
+	}
+	func();
+	for(int i=1;i<=ma;i++)
+	{
+		int z=ma/i+2;
+		while(z>0)
+		{
+			tree[i].push_back(0);
+			z--;
+		}
+	}
+	long long int ans=0;
+	for(int i=1;i<=n;i++) 
+	{
+		update1(a[i],1);
+//		update(1,a[i]);
+		if(a[i]==1)continue;
+		int p=(1<<(v[a[i]].size()));
+		int muls=0;
+		for(int pk=0;pk<p;pk++)
+		{
+			int temp=1,cc=0;
+			for(int j=0;j<v[a[i]].size();j++)
+			{
+				if(pk&(1<<j))
+				{
+					temp=temp*v[a[i]][j];					
+					cc++;
+				}
+			}
+			if(cc>0)
+			{
+				if(cc&1)
+					muls=muls+query(a[i]/temp,temp);
+				else
+					muls=muls-query(a[i]/temp,temp);
+			}
+			update(a[i]/temp,temp,ma/a[i]);
+		}
+		muls=query1(a[i])-muls-1;
+		ans=ans+muls;
+	}
+	printf("%lld\n",ans);
+    return 0;
+}

@@ -1,0 +1,223 @@
+/**
+ *    author:  enot.1.10, Vladimir Smykalov (enot.1.10@gmail.com)
+ *    created: 15.08.2015 11:38:05       
+**/
+#include <bits/stdc++.h>
+
+#define forn(i, n) for(int i = 0 ; (i) < (n) ; ++i)
+#define eprintf(...) fprintf(stderr, __VA_ARGS__),fflush(stderr)
+
+using namespace std;
+
+typedef long long ll;
+typedef double dbl;
+
+const int inf = (int)1.01e9;
+const dbl eps = 1e-9;
+
+/** --- main part --- **/
+
+#define TASK "a"
+
+#define fs first
+#define sc second
+#define F first
+#define S second
+#define mp make_pair
+typedef pair<int, int> pi;
+
+
+
+const int maxn = (int)2e5 + 10;
+const int mod = (int)1e9 + 7;
+
+struct T
+{
+    ll x;
+    int y, cnt, sum;
+    T *l, *r;
+    T() {}
+    T(ll xx)
+    {
+        x = xx;
+        y = (rand() << 15) + rand();
+        cnt = 1;
+        sum = (mod + xx % mod) % mod;
+        l = NULL;
+        r = NULL;
+    }
+};
+
+T all[maxn];
+int Last = 0;
+
+T* newV(ll x)
+{
+    all[Last] = T(x);
+    return all + Last++;
+}
+
+void upd(T* t)
+{
+    t->cnt = 1;
+    if (t->l) t->cnt += t->l->cnt;
+    if (t->r) t->cnt += t->r->cnt;
+
+    int sgn = 1;
+    t->sum = 0;
+    if (t->l)
+    {
+        t->sum = (t->sum + (sgn + mod) * (ll)t->l->sum) % mod;
+        if (t->l->cnt & 1) sgn = -sgn;
+    }
+    t->sum = (t->sum + (sgn + mod) * (ll)(t->x % mod + mod)) % mod;
+    sgn = -sgn;
+    if (t->r)
+    {
+        t->sum = (t->sum + (sgn + mod) * (ll)t->r->sum) % mod;
+    }
+}
+
+T* merge(T* l, T* r)
+{
+    if (l == NULL || r == NULL) return max(l, r);
+    T* res;
+    if (l->y > r->y)
+    {
+        l->r = merge(l->r, r);
+        res = l;
+    }
+    else
+    {
+        r->l = merge(l, r->l);
+        res = r;
+    }
+    upd(res);
+    return res;
+}
+
+// left contains <= x
+pair<T*, T*> split(T* t, ll x)
+{
+    if (t == NULL)
+    {
+        return mp((T*)NULL, (T*)NULL);
+    }
+    pair<T*, T*> res;
+    if (t->x <= x)
+    {
+        res = split(t->r, x);
+        t->r = res.fs;
+        res.fs = t;
+    }
+    else
+    {
+        res = split(t->l, x);
+        t->l = res.sc;
+        res.sc = t;
+    }
+    upd(t);
+    return res;
+}
+            
+void add(T **t, ll x)
+{
+    pair<T*, T*> p = split(*t, x);
+    T* v = newV(x);
+    p.sc = merge(v, p.sc);
+    *t = merge(p.fs, p.sc);
+}
+
+void out(T *t)
+{
+    if (t == NULL) return;
+    eprintf("({x = %I64d, y = %d, cnt = %d, sum = %d} l = ", t->x, t->y, t->cnt, t->sum);
+    out(t->l);
+    eprintf(", r = ");
+    out(t->r);
+    eprintf(")");
+}
+
+int get(T **t, ll x)
+{
+    pair<T*, T*> p = split(*t, x);
+    int res = 0;
+    //eprintf("get %I64d\n", x);
+    if (p.fs)
+    {
+        //eprintf("sum = %d, cnt = %d\n", p.fs->sum, p.fs->cnt);
+        //out(p.fs);
+        //eprintf("\n");
+        res = (mod - p.fs->sum) % mod;
+        if (p.fs->cnt & 1) res = (res + x) % mod;
+        //eprintf("return = %d\n", res);
+    }
+    *t = merge(p.fs, p.sc);
+    return res;
+}
+
+
+
+        
+
+int main()
+{
+    #ifdef home
+        assert(freopen(TASK".in", "r", stdin));
+        assert(freopen(TASK".out", "w", stdout));
+    #endif
+    int n;
+    scanf("%d", &n);
+    T *t1 = NULL, *t2 = NULL;
+    int lastAns = 0;
+    forn(i, n)
+    {
+        int t;
+        scanf("%d", &t);
+        if (t == 1)
+        {
+            int x;
+            ll l, r;
+            scanf("%d%lld%lld", &x, &l, &r);
+            l ^= lastAns;
+            r ^= lastAns;
+            if (x == 0)
+            {
+                //eprintf("add 1 %I64d %I64d\n", l, r + 1);
+                add(&t1, l);
+                add(&t1, r + 1);
+            }
+            else
+            {
+                //eprintf("add 2 %I64d %I64d\n", l, r + 1);
+                add(&t2, l);
+                add(&t2, r + 1);
+            }
+        }
+        else
+        {
+            ll l1, r1, l2, r2;
+            scanf("%lld%lld%lld%lld", &l1, &r1, &l2, &r2);
+            l1 ^= lastAns;
+            r1 ^= lastAns;
+            l2 ^= lastAns;
+            r2 ^= lastAns;
+            //eprintf("--- GET 1\n");
+            int x = (get(&t1, r1 + 1) - get(&t1, l1) + mod) % mod;
+            int x2 = (r1 + 1 - l1 - x + 2LL * mod) % mod;
+            //eprintf("--- GET 2\n");
+            int y = (get(&t2, r2 + 1) - get(&t2, l2) + mod) % mod;
+            int y2 = (r2 + 1 - l2 - y + 2LL * mod) % mod;
+            //eprintf("x = %d, y = %d\n", x % mod, y % mod);
+            lastAns = (x * (ll)y2 + x2 * (ll)y) % mod;
+            //eprintf("lastAns = %d\n", lastAns);
+            printf("%d\n", lastAns);
+        }
+    }
+
+    #ifdef home
+        eprintf("Time: %d ms\n", (int)(clock() * 1000. / CLOCKS_PER_SEC));
+    #endif
+    return 0;
+}
+ 

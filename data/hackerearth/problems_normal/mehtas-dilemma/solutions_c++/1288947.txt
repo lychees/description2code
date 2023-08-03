@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+typedef LL mat[17][17];
+const int P = 1e9 + 7;
+
+LL pm(LL a, LL n) {
+  LL r = 1;
+  for (; n; n >>= 1) {
+    if (n & 1) r = r * a % P;
+    a = a * a % P;
+  }
+  return r;
+}
+
+void mul(mat A, mat B) {
+  mat C;
+  for (int i = 0; i < 17; ++ i) {
+    for (int j = 0; j < 17; ++ j) {
+      C[i][j] = 0;
+      for (int k = 0; k < 17; ++ k) {
+        C[i][j] = (C[i][j] + A[i][k] * B[k][j]) % P;
+      }
+    }
+  }
+  memcpy(A, C, sizeof(C));
+}
+
+void build(mat A, LL cnt[]) {
+  cnt[0] = 3; cnt[1] = 2; cnt[2] = cnt[4] = cnt[3] = cnt[8] = 1;
+  for (int i = 0; i < 16; ++ i) {
+    for (int j = 0; j < 16; ++ j) {
+      A[i][j] = cnt[i ^ j];
+    }
+  }
+  A[16][0] = A[16][16] = 1;
+}
+
+int main() {
+  int T; scanf("%d", &T);
+  while (T --) {
+    LL n; scanf("%lld", &n);
+    LL ret = pm(10, n);
+    ret -= 9ll * (pm(9, n) - 1 + P) % P * pm(8, P - 2) % P;
+    ret %= P; ret = (ret + P) % P;
+    mat A; LL B[17], C[17];
+    memset(A, 0, sizeof(A)); memset(B, 0, sizeof(B));
+    build(A, B); B[16] = 0;
+    for (; n; n >>= 1) {
+      if (n & 1) {
+        for (int i = 0; i < 17; ++ i) {
+          C[i] = 0;
+          for (int j = 0; j < 17; ++ j) {
+            C[i] = (C[i] + B[j] * A[i][j]) % P;
+          }
+        }
+        memcpy(B, C, sizeof(C));
+      }
+      mul(A, A);
+    }
+    ret = (ret + B[16]) % P;
+    printf("%lld\n", ret);
+  }
+  return 0;
+}

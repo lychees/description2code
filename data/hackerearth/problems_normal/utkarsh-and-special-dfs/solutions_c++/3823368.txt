@@ -1,0 +1,123 @@
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+const long long mod = 1000000007ll;
+
+class tree_data {
+public:
+	int l, r;
+	long long sum, mul;
+	tree_data(int _l = 0, int _r = 0) : l(_l), r(_r), mul(1ll) {}
+};
+
+vector<tree_data> tree;
+vector<int> first, last, euler;
+
+vector< vector<int> > adj;
+vector<int> A;
+int n, q;
+
+long long pw(long long a, long long b) {
+	if(b == 0ll) return 1ll;
+	long long r = pw(a, b/2ll);
+	r = (r * r) % mod;
+	if(b % 2ll) r = (a * r) % mod;
+	return r;
+}
+long long inv(long long x) {
+	return pw(x, mod-2ll);
+}
+void fix(int idx) {
+	if(tree[idx].l >= tree[idx].r) {
+		int u = euler[tree[idx].l];
+		tree[idx].sum = (u > 0);
+		tree[idx].mul = (u > 0 ? A[u] : inv(A[-u])) % mod;
+	}else {
+		tree[idx].sum = (tree[2*idx].sum + tree[2*idx].mul * tree[2*idx+1].sum) % mod; 
+		tree[idx].mul = (tree[2*idx].mul * tree[2*idx+1].mul) % mod;
+	}
+}
+void update(int idx, int id) {
+	if(tree[idx].l >= tree[idx].r) {
+		fix(idx);
+		return;
+	}
+	int mid = (tree[idx].l + tree[idx].r) / 2;
+	update(id <= mid ? (2*idx) : (2*idx+1), id);
+	fix(idx);
+}
+typedef pair<long long, long long> pll;
+pll query(int idx, int a, int b) {
+	if(a <= tree[idx].l and tree[idx].r <= b) {
+		return {tree[idx].sum, tree[idx].mul};
+	}
+	if(b < tree[idx].l or tree[idx].r < a) {
+		return {0ll, tree[idx].r < a ? tree[idx].mul : 1ll};
+	}
+	pll left = query(2*idx, a, b), right = query(2*idx+1, a, b);
+	return {(left.first + left.second * right.first) % mod, (left.second * right.second) % mod};
+}
+void init(int idx, int l, int r) {
+	tree[idx] = tree_data(l, r);
+	if(l < r) {
+		int mid = (l + r) / 2;
+		init(2*idx, l, mid);
+		init(2*idx+1, mid+1, r);
+	}
+	fix(idx);
+}
+void dfsEuler(int u, int p) {
+	euler.push_back(u);
+	first[u] = euler.size() - 1;
+	for(int v : adj[u]) {
+		if(v == p) continue;
+		dfsEuler(v, u);
+	}
+	euler.push_back(-u);
+	last[u] = euler.size() - 1;
+}
+int main() {
+
+	ios::sync_with_stdio(false);
+	cin >> n >> q;
+	
+	A.resize(n+1);
+	adj.resize(n+1);
+	first.resize(n+1);
+	last.resize(n+1);
+	
+	for(int i = 0;i < n-1;i++) {
+		int u, v;
+		cin >> u >> v;
+		adj[u].push_back(v);
+		adj[v].push_back(u);
+	}
+	
+	for(int i = 1;i <= n;i++) {
+		cin >> A[i];
+	}
+	
+	dfsEuler(1, -1);
+	
+	tree.resize(4*euler.size());
+	init(1, 0, euler.size()-1);
+	
+	for(int i = 0;i < q;i++) {
+		int type;
+		cin >> type;
+		if(type == 1) {
+			int u, val;
+			cin >> u >> val;
+			A[u] = val;
+			update(1, first[u]);
+			update(1, last[u]);
+		}else {
+			int u;
+			cin >> u;
+			cout << query(1, first[u], last[u]).first << "\n";
+		}
+	}
+    return 0;
+}

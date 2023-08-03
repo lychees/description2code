@@ -1,0 +1,112 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define F first
+#define S second
+#define LL long long
+#define MP make_pair
+#define PB push_back
+#define FOR(i,a,b) for(int i=a;i<b;i++)
+#define ITER(it,container) for(__typeof(container.begin()) it=container.begin();it!=container.end();it++)
+#define PREC cout << setprecision(15) << fixed;
+#define FI ios_base::sync_with_stdio(0); cin.tie(NULL);
+const int MX = 1e5 + 15;
+const LL MOD = 1e9 + 7;
+const int INF = INT_MAX;
+
+int n,m,d;
+int inp[MX];
+LL ans;
+LL bit[MX];
+
+void update(int p,LL val)
+{
+	for(;p<MX;p+=(p&(-p)))
+		bit[p] += val;
+}
+
+LL query(int p)
+{
+	LL sum = 0;
+	for(;p>0;p-=(p&(-p)))
+		sum += bit[p];
+	return sum;
+}
+
+LL range_query(int st,int en)
+{
+	return query(en) - query(st-1);
+}
+
+typedef struct Query
+{
+	int id,l,r;	
+}Query;
+Query Q[MX];
+LL res[MX];
+
+int blocks;
+
+bool cmp(Query a,Query b)
+{
+	if(a.l/blocks != b.l/blocks)
+		return a.l/blocks < b.l/blocks;
+	else
+		return a.r < b.r;
+}
+
+void add(int pos)
+{
+	update(inp[pos],1);
+	ans += range_query(max(inp[pos]-d,0),inp[pos]+d);
+}
+
+void rem(int pos)
+{
+	ans -= range_query(max(inp[pos]-d,0),inp[pos]+d);
+	update(inp[pos],-1);
+}
+
+int main()
+{
+	scanf("%d %d %d",&n,&m,&d);
+	for(int i=1;i<=n;i++) scanf("%d",&inp[i]);
+	int l,r;
+	for(int i=1;i<=m;i++)
+	{
+		scanf("%d %d",&l,&r);
+		Q[i].id = i;
+		Q[i].l = l;
+		Q[i].r = r;
+	}
+	blocks = sqrt(MX);
+	sort(Q,Q+m,cmp);
+
+	int prevst,preven;
+	prevst = 1;
+	preven = 1;
+	update(inp[1],1);
+	ans = 1;
+	for(int i=1;i<=m;i++)
+	{
+		int id,st,en;
+		id = Q[i].id;
+		st = Q[i].l;
+		en = Q[i].r;
+		while(prevst < st)
+			rem(prevst++);
+		while(prevst > st)
+			add(--prevst);
+		while(preven < en)
+			add(++preven);
+		while(preven > en)
+			rem(preven--);
+		res[id] = ans;
+	}
+	for(int i=1;i<=m;i++)
+	{
+		printf("%lld\n",res[i]);
+	}
+
+	return 0;
+}
+

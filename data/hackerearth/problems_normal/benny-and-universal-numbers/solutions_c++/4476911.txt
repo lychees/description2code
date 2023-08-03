@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+#define FORN(i,n) for (int i = 0; i < n; i++)
+#define FOR(i,a,b) for (int i = a; i <= b; i++)
+#define FORD(i,a,b) for (int i = a; i >= b; i--)
+#define SET(a,v) memset(a, v, sizeof(a))
+#define MP make_pair
+#define WAT(a) cout << #a << " = " << a << endl;
+#define INF (1 << 30)
+#define X first
+#define Y second
+const LL MOD = 1000000007;
+const int DIGITS = 15;
+int rem[DIGITS], n, start;
+int num[DIGITS] = {0};
+// each digits is from 0 to 99
+bitset<101> p;
+
+inline void prime_gen() {
+	p.set();
+	for(int i=2;i*i<=99;i++)if(p[i])for(int j=i*i;j<=99;j+=i)p.reset(j);
+	p.reset(0); p.reset(1);
+}
+unordered_map<int,LL> dp[2][10][16][16];
+
+
+inline int emplace(LL n) {
+	int i = DIGITS - 1;
+	int length = 0;
+	SET(num, 0);
+	while (n) {
+		num[i--] = n % 10;
+		n /= 10;
+		length ++;
+	}
+	return length;
+}
+
+
+LL solve(bool hp, int prev, int pfx_len, int sfx_len, int pfx, bool limit) {
+	int i = DIGITS - sfx_len - 1;
+	if (i == DIGITS) return hp;
+	if (limit == false && dp[hp][prev][pfx_len][sfx_len].find(pfx) != dp[hp][prev][pfx_len][sfx_len].end()) return dp[hp][prev][pfx_len][sfx_len][pfx];
+	LL tot = 0;
+	for (int d = 0; d <= (limit ? num[i] - 1 : 9); d++) {
+		bool new_hp; int new_pfx_len, new_sfx_len,new_pfx;
+		if (pfx_len == 1) {
+			if (d == 0) { new_pfx_len = 1; new_sfx_len = sfx_len - 1; } 
+			if (d >  0) { new_pfx_len = 2; new_sfx_len = sfx_len - 1; }
+			new_hp = false;
+		} else {
+			new_pfx_len = pfx_len + 1; new_sfx_len = sfx_len - 1;
+			new_hp = hp ? hp : p.test(prev * 10 + d);
+		}
+
+		new_pfx = (pfx * 10 % 360360 + d) % 360360;
+		if (new_pfx % pfx_len == rem[pfx_len - 1])
+			tot = tot + solve(new_hp, d, new_pfx_len, new_sfx_len, new_pfx, false);
+	}
+
+	if (limit) {
+		int d = num[i];
+		bool new_hp; int new_pfx_len, new_sfx_len,new_pfx;
+		if (pfx_len == 1) {
+			if (d == 0) { new_pfx_len = 1; new_sfx_len = sfx_len - 1; } 
+			if (d >  0) { new_pfx_len = 2; new_sfx_len = sfx_len - 1; }
+			new_hp = false;
+		} else {
+			new_pfx_len = pfx_len + 1; new_sfx_len = sfx_len - 1;
+			new_hp = hp ? hp : p.test(prev * 10 + d);
+		}
+
+		new_pfx = (pfx * 10 % 360360 + d) % 360360;
+		if (new_pfx % pfx_len == rem[pfx_len - 1])
+			tot = tot + solve(new_hp, d, new_pfx_len, new_sfx_len, new_pfx, true);
+		return tot;
+	} else return dp[hp][prev][pfx_len][sfx_len][pfx] = tot;
+}
+
+int main() {
+	LL a, b;
+	prime_gen();
+	FORN(i,DIGITS) scanf("%d", &rem[i]);
+	scanf("%d", &n);
+	prime_gen();
+
+	while (n--) {
+		scanf("%lld %lld", &a, &b);
+		LL right, left;
+		int sfx_len = emplace(b) - 1; 
+		for (start = 0; num[start] == 0; start++);
+		right = solve(false, 0, 1, sfx_len, 0, true);
+
+		if (a == 1) left = 0;
+		else {
+			int sfx_len = emplace(a - 1) - 1;
+			for (start = 0; num[start] == 0; start++);
+			left = solve(false, 0, 1, sfx_len, 0, true);
+		
+		}			
+		printf("%lld\n", right - left);
+	}
+
+}

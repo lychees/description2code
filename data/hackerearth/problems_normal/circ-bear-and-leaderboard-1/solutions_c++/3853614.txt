@@ -1,0 +1,128 @@
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <math.h>
+#include <limits.h>
+#include <algorithm>
+#include <vector>
+#include <list>
+#include <stack>
+#include <queue>
+#include <set>
+#include <map>
+#include <bitset>
+#include <string>
+#include <string.h>
+#include <sstream>
+#include <ctime>
+
+using namespace std;
+
+#define eps 1e-12
+#define pi 3.14159265358979323846
+#define pb push_back
+#define mp make_pair
+
+
+typedef long long ll;
+typedef long double ld;
+typedef unsigned long long ull;
+typedef pair<ll,ll> ii;
+
+
+
+
+
+
+template<class Ty>class bit
+{
+private : int n;
+private : vector<Ty>tr;
+public : void bldTr(Ty a[],int sz)
+	{
+		n=sz;
+		tr.resize(n+10);
+		for(int i=1;i<=n;i++)tr[i]=a[i];
+		for(int i=2;i<=n;i++)tr[i]=tr[i]+tr[i-1];
+		for(int i=n,len;i>=2;i--)
+		{
+			len=i&(-i);
+			tr[i]=tr[i]-tr[i-len];
+		}
+	}
+public : Ty rd(int i)
+	{
+		Ty sum=0;
+		while(i)
+		{
+			sum=sum+tr[i];
+			i-=i&(-i);
+		}
+		return sum;
+	}
+
+public : void updt(int i,Ty inc)
+	{
+		while(i<=n)
+		{
+			tr[i]=tr[i]+inc;
+			i+=i&(-i);
+		}
+	}
+};
+
+
+
+const int N=1e6+10;
+bit<ll>t,t2;
+ll n,q,a[N],b[N],tmp[N],v[N],s[N],sum,idx,idx2,p,p2,sz;
+set<ll>st;
+set<ll>::iterator it;
+
+
+
+
+int main()
+{
+	std::ios::sync_with_stdio(0);
+	cin.tie(0);
+	cin>>n>>q;
+	fill(s,s+n+1,0);
+	for(int i=1;i<=q;i++)
+	{
+		cin>>a[i]>>b[i];
+		s[a[i]]+=b[i];
+		st.insert(s[a[i]]);
+	}
+	sz=1;
+	v[1]=0;
+	for(it=st.begin();it!=st.end();it++)
+	{
+		sz++;
+		v[sz]=*it;
+	}
+	fill(s,s+n+1,0);
+	fill(tmp,tmp+sz+1,0);
+	t.bldTr(tmp,sz);
+	tmp[1]=n;
+	t2.bldTr(tmp,sz);
+	sum=0;
+	for(int i=1;i<=q;i++)
+	{
+		idx=lower_bound(v+1,v+sz+1,s[a[i]])-v;
+		p=n-t2.rd(idx)+1;
+		sum-=s[a[i]]*p;
+		t.updt(idx,-v[idx]);
+		t2.updt(idx,-1);
+		s[a[i]]+=b[i];
+		idx2=lower_bound(v+1,v+sz+1,s[a[i]])-v;
+		t.updt(idx2,v[idx2]);
+		t2.updt(idx2,1);
+		p2=n-t2.rd(idx2)+1;
+		sum+=s[a[i]]*p2;
+		sum+=t.rd(idx2-1);
+		if(idx>1)sum-=t.rd(idx-1);
+		cout<<sum<<"\n";
+	}
+	return 0;
+}

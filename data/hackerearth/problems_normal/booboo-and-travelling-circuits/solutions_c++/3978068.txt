@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+#define MOD 1000000003LL
+using namespace std;
+typedef long long ll;
+int n,m;
+ll S1,P,Q,R,W1,X,Y,Z,S2,W2;
+int a[2005][10005],b[2005][10005];
+ll dp[2][10005],best[2][10005],sbest[2][10005];
+int group[10005],size[10005],bestv[2][10005];
+int main(){
+	scanf("%d %d",&n,&m);
+	scanf("%lld %lld %lld %lld",&S1,&P,&Q,&R);
+	for(int i = 0; i < (n*m); i++){
+	    S2 = (P * S1 % MOD * S1 % MOD + Q * S1 % MOD + R) % MOD;
+	    a[(i/m) + 1][(i%m) + 1] = int(S2);
+		S1 = S2;
+	}
+	scanf("%lld %lld %lld %lld",&W1,&X,&Y,&Z);
+	for(int i = 0; i < (n*m); i++){
+        W2 = (X * W1 % MOD * W1 % MOD + Y * W1 % MOD + Z) % MOD;
+        b[(i/m) + 1][(i%m) + 1] = int(W2);
+		W1 = W2;
+    }
+	if(m==1){
+		ll ans=0ll;
+		for(int x=1;x<n;x++) ans+=ll(a[x][1]);
+		printf("%lld\n",ans);
+		return 0;
+	}
+	group[1]=1;
+	for(int x=2;x<=m;x++){
+		for(int y=x;y<=m;y+=x){
+			if(!group[y]){
+				group[y]=x;
+				size[x]++;
+			}
+		}
+	}
+	for(int x=1;x<=n;x++){
+		int bi=(x&1);
+		for(int y=1;y<=m;y++){
+			best[bi][y]=(1ll<<62);
+			sbest[bi][y]=(1ll<<62);
+		}
+		for(int y=1;y<=m;y++){
+			if(size[group[y]]==1){
+				dp[bi][y]=dp[!bi][y]+ll(a[x-1][y]);
+				continue;
+			}
+			if(y==bestv[!bi][group[y]]) dp[bi][y]=min(dp[!bi][y]+ll(a[x-1][y]),sbest[!bi][group[y]]);
+			else dp[bi][y]=min(dp[!bi][y]+ll(a[x-1][y]),best[!bi][group[y]]);
+			if(y>1){
+				if(dp[bi][y]+ll(b[x][y])<best[bi][group[y]]){
+					sbest[bi][group[y]]=best[bi][group[y]];
+					best[bi][group[y]]=dp[bi][y]+ll(b[x][y]);
+					bestv[bi][group[y]]=y;
+				}
+				else if(dp[bi][y]+ll(b[x][y])<sbest[bi][group[y]]){
+					sbest[bi][group[y]]=dp[bi][y]+ll(b[x][y]);
+				}
+			}
+			if(dp[bi][y]+ll(b[x][y])<best[bi][1]){
+				sbest[bi][1]=best[bi][1];
+				best[bi][1]=dp[bi][y]+ll(b[x][y]);
+				bestv[bi][1]=y;
+			}
+			else if(dp[bi][y]+ll(b[x][y])<sbest[bi][1]){
+				sbest[bi][1]=dp[bi][y]+ll(b[x][y]);
+			}
+		}
+	}
+	ll ans=(1ll<<62);
+	for(int x=1;x<=m;x++){
+		ans=min(ans,dp[n&1][x]);
+	}
+	printf("%lld\n",ans);
+	return 0;
+}

@@ -1,0 +1,152 @@
+using namespace std;
+#include<bits/stdc++.h>
+
+#define BG begin()
+#define ED end()
+#define st first
+#define nd second
+#define PB push_back
+#define PF push_front
+#define FOR(i,a,b) for (long long i=a;i<b;i++)
+#define FORE(i,a,b) for (long long i=a;i<=b;i++)
+#define FORD(i,a,b) for (long long i=a;i>=b; i--)
+#define TR(c, it) for(typeof((c).begin()) it=(c).begin(); it!=(c).end(); it++)
+#define PI 2 * acos(0)
+#define ri(n)({\
+    int neg=0;\
+    n=0;\
+    char ch;\
+    for(ch=getchar(); ch<'0' || ch>'9'; ch=getchar()) if (ch=='-') neg=1-neg;\
+    n=ch-48;\
+    for(ch=getchar(); ch>='0' && ch<='9'; ch=getchar()) n=(n<<3)+(n<<1)+ch-48;\
+    if (neg) n=-n;\
+})
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int,int> II;
+typedef pair<ll,ll> LL;
+const ll INF=1000000000+7;
+const double esp=1e-13;
+
+struct node{
+    int vt,gt;
+};
+
+struct node2{
+    int l,r,vt;
+};
+
+int n,q,n2,b[100000+10],b2[100000+10],dem,curL,curR,L,R;
+ll ans,res[100000+10],f[100000+10],f2[100000+10];
+node a[100000+10];
+node2 c[100000+10];
+
+bool cmp(node a, node b){
+    return a.gt<b.gt;
+}
+
+bool cmp2(node2 a, node2 b){
+    if (a.l/n2!=b.l/n2) return a.l/n2<b.l/n2;
+    else return a.r<b.r;
+}
+
+void update(int x, int v){
+    while (x<=dem){
+        f[x]+=v;
+        x+=x&(-x);
+    }
+}
+
+void update2(int x, int v){
+    while (x<=dem){
+        f2[x]+=v;
+        x+=x&(-x);
+    }
+}
+
+ll get(int x){
+    ll sum=0;
+    while (x){
+        sum+=f[x];
+        x-=x&(-x);
+    }
+    return sum;
+}
+
+ll get2(int x){
+    ll sum=0;
+    while (x){
+        sum+=f2[x];
+        x-=x&(-x);
+    }
+    return sum;
+}
+
+int main(){
+  //  freopen("sherlock-and-inversions.inp", "r", stdin);
+  //  freopen("sherlock-and-inversions.out", "w", stdout);
+    ri(n); ri(q);
+    FORE(i,1,n){
+        ri(a[i].gt);
+        a[i].vt=i;
+    }
+    sort(a+1,a+n+1,cmp);
+    dem=0;
+    f[dem]=-1;
+    FORE(i,1,n){
+        if (a[i].gt!=f[dem]) dem++;
+        f[dem]=a[i].gt;
+        b[ a[i].vt ]=dem;
+    }
+    FORE(i,1,q){
+        ri(c[i].l);
+        ri(c[i].r);
+        c[i].vt=i;
+    }
+    n2=(int)sqrt(n);
+    sort(c+1,c+q+1,cmp2);
+    memset(f,0,sizeof(f));
+    memset(f2,0,sizeof(f2));
+    curL=curR=1;
+    ans=0;
+    FORE(i,1,n) b2[i]=dem-b[i]+1;
+
+    update(b[1],1);
+    update2(b2[1],1);
+
+    FORE(i,1,q){
+        L=c[i].l;
+        R=c[i].r;
+        while (curL<L){
+            ans-=get(b[curL]-1);
+            update(b[curL],-1);
+            update2(b2[curL],-1);
+            curL++;
+        }
+
+        while (curL>L){
+            curL--;
+            ans+=get(b[curL]-1);
+            update(b[curL],1);
+            update2(b2[curL],1);
+        }
+
+        while (curR<R){
+            curR++;
+            ans+=get2(b2[curR]-1);
+            update(b[curR],1);
+            update2(b2[curR],1);
+        }
+
+        while (curR>R){
+            ans-=get2(b2[curR]-1);
+            update(b[curR],-1);
+            update2(b2[curR],-1);
+            curR--;
+        }
+
+        res[ c[i].vt ]=ans;
+    }
+    FORE(i,1,q) printf("%lld\n", res[i]);
+}

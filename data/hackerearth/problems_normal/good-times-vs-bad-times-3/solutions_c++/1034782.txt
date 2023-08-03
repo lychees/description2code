@@ -1,0 +1,116 @@
+#include<iostream>
+#include <bitset>
+#include<cmath>
+using namespace std;
+bitset<61> primes[61];
+
+int GCD(int a, int b)
+{
+   if (b==0) return a;
+   return GCD(b,a%b);
+}
+void primeFactors(int n)
+{
+    int N = n;
+    while(n%2 == 0)
+    {
+        n=n/2;
+        primes[N].set(2);
+    }
+    for (int i = 3; i <= sqrt(n); i = i+2)
+    {
+        while(n%i == 0)
+        {
+            n=n/i;
+            primes[N].set(i);
+        }
+    }
+    if (n > 2)
+    {
+        primes[N].set(n);
+    }
+}
+int store_good[24][60][60]={0};
+int store_bad[24][60][60]={0};
+int main()
+{
+    int T;
+    cin>>T;
+    for(int i=2;i<=59;i++)
+    {
+        primeFactors(i);
+    }
+    primes[0].set();
+    store_good[23][59][59]=1;
+    bitset<61> temp;
+    for(int i=23;i>=0;i--)
+    {
+        for(int j=59;j>=0;j--)
+        {
+            for(int k=59;k>=0;k--)
+            {
+                if(i==23 && j==59 && k==59)
+                {
+                    continue;
+                }
+                temp = primes[i] & primes[j] & primes[k];
+                if(temp.any())// increase bad
+                {
+                    if(k==59 && j==59)
+                    {
+                        store_bad[i][j][k] = store_bad[i+1][0][0] + 1;
+                        store_good[i][j][k] = store_good[i+1][0][0];
+                    }
+                    else if(k==59)
+                    {
+                        store_bad[i][j][k] = store_bad[i][j+1][0] + 1;
+                        store_good[i][j][k] = store_good[i][j+1][0];
+                    }
+                    else
+                    {
+                        store_bad[i][j][k] = store_bad[i][j][k+1] + 1;
+                        store_good[i][j][k] = store_good[i][j][k+1];
+                    }
+                }
+                else
+                {
+                    if(k==59 && j==59)
+                    {
+                        store_good[i][j][k] = store_good[i+1][0][0] + 1;
+                        store_bad[i][j][k] = store_bad[i+1][0][0];
+                    }
+                    else if(k==59)
+                    {
+                        store_good[i][j][k] = store_good[i][j+1][0] + 1;
+                        store_bad[i][j][k] = store_bad[i][j+1][0];
+                    }
+                    else
+                    {
+                        store_good[i][j][k] = store_good[i][j][k+1] + 1;
+                        store_bad[i][j][k] = store_bad[i][j][k+1] ;
+                    }
+                }
+            }
+        }
+    }
+    while(T--)
+    {
+        int h,m,s;
+        cin>>h>>m>>s;
+        int good = store_good[h][m][s];
+        int bad = store_bad[h][m][s];
+        if(bad == 0 || good == 0)
+        {
+            cout<<bad<<":"<<good<<endl;
+            continue;
+        }
+        int div = GCD(good,bad);
+        if(div>0)
+        {
+            good/=div;
+            bad/=div;
+        }
+       cout<<bad<<":"<<good<<endl;
+    }
+return 0;
+}

@@ -1,0 +1,96 @@
+#include <iostream>
+#include <cstdio>
+#include <iterator>
+#include <algorithm>
+
+using namespace std;
+
+struct ttree {
+    size_t offset;
+    vector<int> data;
+
+    ttree(size_t size) : offset(pow2(size) - 1), data(2*offset + 1) {}
+
+    size_t pow2(size_t size) {
+        size_t p2 = 1;
+        while(p2 < size) p2 *= 2;
+        return p2;
+    }
+
+    void set(size_t pos, int value) {
+        pos += offset;
+        data[pos] = value;
+        while(pos > 0) {
+            pos = (pos - 1) / 2;
+            data[pos] = max(data[2*pos + 1], data[2*pos + 2]);
+        }
+    }
+
+    int get(size_t start, size_t end, size_t node, size_t ns, size_t ne) {
+        if (start <= ns && end >= ne) {
+            return data[node];
+        }
+        size_t mid = (ns + ne) / 2;
+        if (end <= mid) {
+            return get(start, end, 2*node + 1, ns, mid);
+        } else if (start >= mid) {
+            return get(start, end, 2*node + 2, mid, ne);
+        } else {
+            int m1, m2;
+            m1 = get(start, mid, 2*node + 1, ns, mid);
+            m2 = get(mid, end, 2*node + 2, mid, ne);
+            return max(m1, m2);
+        }
+    }
+
+    int get_range(size_t start, size_t end) {
+        return get(start, end, 0, 0, offset+1);
+    }
+
+    int get(size_t pos) {
+        return data[pos + offset];
+    }
+
+    void clear() {
+        fill(data.begin(), data.end(), 0);
+    }
+};
+
+int main() {
+    ios::sync_with_stdio(false);
+    int n;
+    const int N = 1000;
+    //cin >> n;
+    scanf("%d", &n);
+    vector<int> y(n);
+    for (int i = 0; i < n; ++i) {
+        scanf("%d", &y[i]);
+    }
+    //copy_n(istream_iterator<int>(cin), n, y.begin());
+    ttree max_col(N+1);
+    int max_houses = 1;
+
+    for (int i = 0; i < n - 1; ++i) {
+        for (int j = i+1; j < n; ++j) {
+            int lo = min(y[i],  y[j]), hi = max(y[i], y[j]);
+            if (lo == hi) {
+                int m1, m2, m3;
+                m1 = lo > 0 ? max_col.get_range(0, lo) : 0;
+                m2 = max_col.get(lo);
+                m3 = hi < n ? max_col.get_range(hi+1, max_col.offset+1) : 0;
+                max_houses = max(max_houses,
+                                 2 + max(max(m1 + m2, m2 + m3), m1 + m3));
+            } else {
+                max_houses = max(max_houses, 2 + max_col.get_range(0, lo + 1) +
+                                 max_col.get_range(hi, max_col.offset + 1));
+            }
+            max_col.set(y[j], max_col.get(y[j]) + 1);
+        }
+        max_col.clear();
+    }
+
+    //cout << max_houses << endl;
+    printf("%d\n", max_houses);
+    return 0;
+}
+

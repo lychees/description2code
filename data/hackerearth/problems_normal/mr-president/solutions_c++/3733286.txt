@@ -1,0 +1,143 @@
+#include <iostream>
+#include <list>
+using namespace std;
+long int partation(long int l, long int r, long int src[], long int dest[], long int weight[]);
+void quick_sort(long int l, long int r, long int src[], long int dest[],long int weight[]);
+void swap_a_b(long int a, long int b,long int src[], long int dest[], long int weight[]);
+class DisjointSet1
+{
+	long int *rank1;
+	long int *arr;
+	public:
+	DisjointSet1(long int n);
+	void union_node(long int x, long int y);
+	long int find_root(long int x);
+};
+DisjointSet1 :: DisjointSet1(long int n)
+{
+	arr=new long int[n+1];
+	rank1=new long int[n+1];
+	long int i;
+	for(i=1;i<=n;i++)
+	{
+		arr[i]=i;
+		rank1[i]=1;
+	}
+}
+void DisjointSet1 :: union_node(long int x, long int y)
+{
+	long int root_x=find_root(x);
+	long int root_y=find_root(y);
+	if(rank1[root_x]>rank1[root_y])
+	{
+		arr[root_y]=arr[root_x];
+	}
+	else if(rank1[root_x]<rank1[root_y])
+	{
+		arr[root_x]=arr[root_y];
+	}
+	if(rank1[root_x]==rank1[root_y])
+	{
+		arr[root_x]=arr[root_y];
+		rank1[root_y]++;
+	}
+}
+long int DisjointSet1 :: find_root(long int x)
+{
+	if(arr[x]==x)
+	return x;
+	arr[x]=find_root(arr[x]);
+	return arr[x];
+}
+void quick_sort(long int l, long int r, long int src[], long  int dest[], long int weight[])
+{
+    if(r>l)
+    {
+        long int pivot=partation(l,r,src,dest,weight);
+        quick_sort(l,pivot-1,src,dest,weight);
+        quick_sort(pivot+1,r,src,dest,weight);
+    }
+}
+long int partation(long int l,long  int r, long int src[],long  int dest[], long int weight[])
+{
+    long int pivot=weight[r];
+    long int i=l-1;
+    long int j;
+    for(j=l;j<=r-1;j++)
+    {
+        if(weight[j]<=pivot)
+        {
+            i++;
+            swap_a_b(i,j,src,dest,weight);
+        }
+    }
+    swap_a_b(i+1,r,src,dest,weight);
+    return i+1;
+}
+void swap_a_b(long int a, long int b,long int src[], long int dest[], long int weight[])
+{
+    long int temp=weight[a];
+    weight[a]=weight[b];
+    weight[b]=temp;
+    temp=src[a];
+    src[a]=src[b];
+    src[b]=temp;
+    temp=dest[a];
+    dest[a]=dest[b];
+    dest[b]=temp;
+    return;
+}
+int main()
+{
+    long int *src;
+    long int *dest;
+    long int *weight;
+    long int *arr;
+    long int i,v,e;
+    long long int k;
+    cin>>v;
+    DisjointSet1 disset(v);
+    cin>>e;
+    src=new long int[e+1];
+    dest=new long int[e+1];
+    weight=new long int[e+1];
+    arr=new long int[v+2];
+    cin>>k;
+    for(i=1;i<=e;i++)
+    {
+        cin>>src[i];
+        cin>>dest[i];
+        cin>>weight[i];
+    }
+    quick_sort(1,e,src,dest,weight);
+    long int edge=0;
+    i=1;
+    long long int cost=0;
+    long int j=1;
+    while(i<=e)
+    {
+        if(disset.find_root(src[i])!=disset.find_root(dest[i]))
+        {
+           disset.union_node(src[i],dest[i]);
+           cost+=weight[i];
+           arr[j++]=weight[i];
+            edge++;
+        }
+        if(edge==v-1)
+            break;
+        i++;
+    }
+    long int count1=0;;
+    j--;
+    while(j>0 && cost>k)
+    {
+    	cost=cost-arr[j]+1;
+    	count1++;
+    	j--;
+    }
+    if(cost<=k && edge==v-1)
+    cout<<count1<<endl;
+    else
+    cout<<"-1"<<endl;
+    return 0;
+}

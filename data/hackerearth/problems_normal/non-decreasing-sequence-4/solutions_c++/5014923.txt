@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+int tree[4*1000005];
+int aa[1000005],a[1000005];
+void build(int v, int l, int r)
+{
+	if(l==r){
+		tree[v] = a[l];
+		return;
+	}
+	int mid = (l + r)/2;
+	build(2*v, l, mid);
+	build(2*v+1, mid+1, r);
+	tree[v] = max(tree[2*v],tree[2*v+1]);
+}
+int query(int v, int lo, int hi, int l, int r)
+{
+    if(l > r)return 0;
+	if(lo==l && hi==r)return tree[v];
+	int mid = (lo + hi)/2;
+	if(r<=mid)return query(2*v, lo, mid, l,min(r,mid));
+	if(l>mid)return query(2*v+1, mid+1, hi, max(l,mid+1),r);
+	int fir = query(2*v, lo, mid, l, min(r,mid));
+	int sec = query(2*v+1, mid+1, hi, max(l,mid+1), r);
+	return max(fir,sec);
+}
+void update(int v, int lo, int hi, int pos, int val)
+{
+    
+	if(lo==hi){
+		tree[v] = val;
+		return;
+	}
+	int mid = (lo + hi)/2;
+	if(pos<=mid)update(2*v, lo,mid,pos,val);
+	else update(2*v+1, mid+1, hi, pos,val);
+	tree[v] = max(tree[2*v],tree[2*v+1]);
+}
+int main()
+{
+   // printf("Hello World!\n");
+   int t,n,i;
+   scanf("%d",&t);
+   while(t--)
+   {
+   	scanf("%d",&n);
+   	int ma = 0;
+   	for(i=0;i<n;i++)
+   	{
+   		scanf("%d",&aa[i]);
+   		ma = max(ma, aa[i]);
+   	}
+   	for(i=0;i<=ma;i++)a[i] = 0;
+   	build(1,0,ma);
+   	set<int> s;
+   //	s.insert(-1);
+   	int k;
+   	scanf("%d",&k);
+   	for(i=0;i<n;i++)
+   	{
+   		int x = aa[i];
+   		int cur = query(1,0,ma,0,x-1);
+   		//printf("upto %d values are %d\n",x,cur);
+   		cur+=1;
+   		if(cur>=k)s.insert(x);
+   		update(1,0,ma,x,cur);
+   	}
+   	if(s.size())
+   	printf("%d\n",*s.begin());
+   	else printf("-1\n");
+   }
+    return 0;
+}

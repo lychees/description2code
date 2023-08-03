@@ -1,0 +1,139 @@
+#pragma comment(linker, "/STACK:64000000")
+#include <algorithm>
+#include <memory.h>
+#include <cstdio>
+#include <iostream>
+#include <cmath>
+#include <string>
+#include <cassert>
+#include <map>
+#include <set>
+#include <vector>
+#include <queue>
+using namespace std;
+#define prev privet1
+#define next privet2
+#define y1 privet3
+#define rank privet4
+#define left privet5
+#define right privet6
+#define y0 privet7
+
+const double pi = 3.141592653589793238;
+const int MD = 1000000000 + 7;
+const long long SqMD = (long long)MD * MD;
+void ensureLimit(long long n, long long l, long long r) {
+    assert(l <= n && n <= r);
+}
+
+long long energy[111];
+int n, m;
+int getPalindromes(string s) {
+    int res = 0;
+    set<string> h;
+    h.clear();
+    for (int i = 0; i < s.size(); i++) {
+        string t = "";
+        for (int j = i; j < s.size(); j++) {
+            t += s[j];
+            bool ok = true;
+            for (int u = 0; u < t.size() / 2; u++) {
+                if (t[u] != t[t.size() - u - 1]) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (ok) {
+                h.insert(t);
+            }
+        }
+    }
+    return h.size();
+}
+long long res[103][103], a[103][103], b[103][103];
+
+int main() {
+    string s;
+    cin >> n >> m;
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            cin >> s;
+            energy[(i - 1) * m + j] = getPalindromes(s);
+        }
+    }
+    int q;
+    cin >> q;
+    memset(a, 0, sizeof(a));
+    for (int i = 1; i <= q; i++) {
+        int x1, y1, x2, y2;
+        cin >> x1 >> y1 >> x2 >> y2;
+        x1++;
+        y1++;
+        x2++;
+        y2++;
+        int x = (x1 - 1) * m + y1;
+        int y = (x2 - 1) * m + y2;
+        a[x][y]++;
+        a[y][x]++;
+    }
+    n = n * m;
+    int d;
+    cin >> d;
+    memset(res, 0, sizeof(res));
+    memset(b, 0, sizeof(b));
+    for (int i = 1; i <= n; i++) {
+        res[i][i] = 1;
+        a[i][i]++;
+    }
+    for (int u = 29; u >= 0; u--) {
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+                b[i][j] = 0;
+                for (int uu = 1; uu <= n; uu++) {
+                    b[i][j] += res[i][uu] * res[uu][j];
+//                    if (u == 29) cerr << b[i][j] << " " << res[i][uu] << " " << res[uu][j] << endl;
+                    if (b[i][j] >= SqMD) b[i][j] -= SqMD;
+                }
+                b[i][j] %= MD;
+            }
+        }
+
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+                res[i][j] = b[i][j];
+                b[i][j] = 0;
+            }
+        }
+        if (d & (1 << u)) {
+           // cerr << "asf " << endl;
+            for (int i = 1; i <= n; i++) {
+                for (int j = 1; j <= n; j++) {
+                    b[i][j] = 0;
+                    for (int uu = 1; uu <= n; uu++) {
+                        b[i][j] += res[i][uu] * a[uu][j];
+                        if (b[i][j] >= SqMD) b[i][j] -= SqMD;
+                    }
+                    b[i][j] %= MD;
+                }
+            }
+            for (int i = 1; i <= n; i++) {
+                for (int j = 1; j <= n; j++) {
+                    res[i][j] = b[i][j];
+                    b[i][j] = 0;
+                }
+            }
+        }
+    }
+    n /= m;
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            long long ans = 0;
+            for (int u = 1; u <= n * m; u++) {
+                ans = (ans + energy[u] * res[u][(i - 1) * m + j]) % MD;
+            }
+            cout << ans;
+            if (j < m) cout << " ";
+        }
+        cout << endl;
+    }
+}

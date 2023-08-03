@@ -1,0 +1,70 @@
+#include <cstdio>
+#include <map>
+#include <vector>
+
+#define MODULO (1000000007)
+
+using namespace std;
+
+typedef long long ull;
+
+map<ull, ull> memo;
+
+int fexp(ull base, ull exp) {
+  base %= MODULO;
+  if ( !exp ) return 1;
+  if ( exp % 2 )
+    return base * fexp(base, exp-1) % MODULO;
+  return fexp(base*base % MODULO, exp/2);
+}
+
+vector<ull> get_divisors(ull n)
+{
+    vector<ull> res;
+    for(ull i = 2; i * i <= n; ++i)
+    {
+        if(n % i == 0)
+        {
+            ull d = n / i;
+            res.push_back(i);
+            if(d != i)
+            {
+                res.push_back(d);
+            }
+        }
+    }
+    return res;
+}
+
+bool cmp(pair<ull, ull> a, pair<ull, ull> b)
+{
+    return a.second > b.second;
+}
+
+int f(ull n) {
+  vector<ull> v;
+  ull acc;
+  ull i;
+
+  if ( n <= 2 )
+    return 1;
+  map<ull, ull>::iterator it = memo.find(n);
+  if(it != memo.end())
+    return it->second;
+  for ( v=get_divisors(n-1), i=0, acc=1; i < v.size(); ++i ) {
+    ull d = v[i];
+    ull tmp = fexp(f(d), n/d);
+    acc += tmp;
+    acc %= MODULO;
+  }
+  memo.insert(make_pair(n, acc));
+  return acc;
+}
+
+int main() {
+  ull n;
+
+  scanf("%llu", &n);
+  printf("%d\n", f(n));
+  return 0;
+}

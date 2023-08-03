@@ -1,0 +1,58 @@
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+const int N = 1000001;
+const int MAX = 100000001;
+
+bool sieve[N];
+int p[N], a[N * 8], b[N * 8];
+
+int main() {
+//    freopen("in", "r", stdin);
+//    freopen("out", "w", stdout);
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    for (int i = 2; i * i < N; ++i)
+        if (!sieve[i])
+            for (int j = i * i; j < N; j += i)
+                sieve[j] = i;
+    int pn = 0, cnt = 0;
+    for (int i = 2; i < N; ++i)
+        if (!sieve[i]) {
+            for (int j = 0; j < pn && i * p[j] < MAX; ++j) {
+                a[cnt++] = i * p[j];
+            }
+            p[pn++] = i;
+        }
+    const int p = 9;
+    const int mx = 27;
+    const int base = 1 << p;
+    for (int exp = 0; exp < mx; exp += p) {
+        int bucket[base] = { 0 };
+        for (int i = 0; i < cnt; ++i)
+            ++bucket[(a[i] >> exp) & (base - 1)];
+        for (int i = 1; i < base; ++i)
+            bucket[i] += bucket[i - 1];
+        for (int i = cnt - 1; i >= 0; --i)
+            b[--bucket[(a[i] >> exp) & (base - 1)]] = a[i];
+        for (int i = 0; i < cnt; ++i)
+            a[i] = b[i];
+    }
+//    cerr << "pn = " << pn << '\n';
+//    cerr << "cnt = " << cnt << '\n';
+    int tt;
+    cin >> tt;
+    while (tt--) {
+        int f, t;
+        cin >> f >> t;
+        auto pt = upper_bound(a, a + cnt, t);
+        auto pf = upper_bound(a, a + cnt, f - 1);
+        cout << pt - pf << '\n';
+    }
+}

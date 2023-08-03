@@ -1,0 +1,96 @@
+#include<bits/stdc++.h>
+ 
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+
+int MAXINT = 2147483647;
+ 
+int mx[8] = {-1,1,0,0,-1,-1,1,1};
+int my[8] = {0,0,-1,1,-1,1,-1,1};
+ 
+// ------------ //
+ 
+int A[500005];
+int B[500005];
+vector<pair<int,int> > byA;
+vector<pair<int,int> > byB;
+set<int> in;
+multiset<int> dif;
+ 
+void ins(int k)
+{
+	in.insert(k);
+	set<int>::iterator itlow,itup = in.lower_bound(k);
+	itlow = itup;
+	itlow--;
+	itup++;
+	dif.erase(dif.find(*itup-*itlow));
+	dif.insert(k-*itlow);
+	dif.insert(*itup-k);
+}
+ 
+void rem(int k)
+{
+	if (in.find(k)==in.end()) return;
+	set<int>::iterator itlow,itup = in.lower_bound(k);
+	itlow = itup;
+	itlow--;
+	itup++;
+	dif.insert(*itup-*itlow);
+	dif.erase(dif.find(k-*itlow));
+	dif.erase(dif.find(*itup-k));
+	in.erase(k);
+}
+ 
+int maks()
+{
+	return *dif.rbegin();
+}
+ 
+int main()
+{
+	int n,k;
+	cin>>n>>k;
+	
+	for(int a=1; a<=n; a++)
+	{
+		cin>>A[a]>>B[a];
+		byA.pb(mp(A[a],a));
+		byB.pb(mp(B[a],a));
+	}
+	
+	in.insert(0);
+	in.insert(n+1);
+	dif.insert(n+1);
+ 
+	sort(byA.begin(),byA.end());
+	sort(byB.rbegin(),byB.rend());
+	int valB = 0;
+	int mins = MAXINT;
+	
+	for(int valA=32000; valA>=1; valA--)
+	{
+		while((byB).size() && maks() > k)
+		{
+			if (A[byB.back().second] <= valA)
+			{
+				ins(byB.back().second);
+			}
+			valB = byB.back().first;
+			byB.pop_back();
+		}
+		if (maks() <= k) mins = min(mins,valA*valB);
+		while((byA).size() && byA.back().first == valA)
+		{
+			rem(byA.back().second);
+			byA.pop_back();
+		}
+	}
+	
+	cout<<mins;
+	
+	return 0;
+ 
+}

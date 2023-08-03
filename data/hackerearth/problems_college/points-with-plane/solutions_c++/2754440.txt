@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+const int base = 1000000007;
+ 
+int n, x[16], y[16], f[1 << 16], c[10][10], can[1 << 16];
+long long ways[1 << 16];
+ 
+int dp(int mask)
+{
+	if (!mask) return 0;
+	
+	int &res = f[mask];
+	if (res) return res;
+	
+	res = n + 1;
+	ways[mask] = 1;
+ 
+	int firstBit;
+	for (int i = 0; i < n; i++)
+		if (mask >> i & 1) 
+		{
+			firstBit = i;
+			break;
+		}
+ 
+	int mask2 = mask - (1 << firstBit), subMask = mask2;
+	
+	while (1)
+	{
+		if (can[subMask + (1 << firstBit)])
+		{
+			int u = dp(mask - subMask - (1 << firstBit)) + 1;
+			long long combinedWays = ways[mask - subMask - (1 << firstBit)] * u % base;
+			if (res == u) ways[mask] = (ways[mask] + combinedWays) % base; 
+			else
+				if (res > u)
+					res = u, ways[mask] = combinedWays;
+		}
+ 
+		if (!subMask) break;
+		subMask = (subMask - 1) & mask2;
+	}
+	
+	return res;
+}
+ 
+int main()
+{
+	ios_base::sync_with_stdio(0);
+	for (int i = 0; i < 10; i++)
+		for (int j = 0; j <= i; j++)
+			c[i][j] = j ? c[i - 1][j] + c[i - 1][j - 1] : 1;
+	
+	int test;
+	cin >> test;
+	while (test--)
+	{
+		cin >> n;
+		for (int i = 0; i < n; i++) cin >> x[i] >> y[i];
+		
+		can[0] = ways[0] = 1;
+		for (int mask = 1; mask < 1 << n; mask++)
+		{
+			int xx[16], yy[16], C = 0;
+			for (int i = 0; i < n; i++)
+				if (mask >> i & 1) xx[C] = x[i], yy[C++] = y[i];
+				
+			can[mask] = 1;
+			f[mask] = ways[mask] = 0;
+			
+			for (int i = 1; i + 1 < C; i++)
+				if ((yy[i] - yy[i - 1]) * (xx[i + 1] - xx[i]) != (yy[i] - yy[i + 1]) * (xx[i - 1] - xx[i]))
+				{
+					can[mask] = 0;
+					break;
+				}
+		}
+		
+		cout << dp((1 << n) - 1) << ' ';
+		cout << ways[(1 << n) - 1] << endl;
+	}
+}

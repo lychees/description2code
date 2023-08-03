@@ -1,0 +1,337 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef long double ld;
+
+struct node {
+    node * l, * r;
+    int val, sum, cnt, y;
+    bool rev;
+    node() {}
+    node(int val) : l(0), r(0), val(val), sum(val), cnt(1), y(rand()), rev(false) {}
+};
+
+void push(node * v) {
+    if (v->rev) {
+        v->rev = false;
+        if (v->l) v->l->rev ^= true;
+        if (v->r) v->r->rev ^= true;
+        swap(v->l, v->r);
+    }
+}
+
+int getCnt(const node * v) {
+    return (v ? v->cnt : 0);
+}
+
+int getSum(const node * v) {
+    return (v ? v->sum : 0);
+}
+
+void updCnt(node * v) {
+    if (v) {
+        v->cnt = getCnt(v->l) + getCnt(v->r) + 1;
+    }
+}
+
+void updSum(node * v) {
+    if (v) {
+        v->sum = getSum(v->l) + getSum(v->r) + v->val;
+    }
+}
+
+void makeRev(node * v) {
+    if (v) {
+        v->rev ^= true;
+    }
+}
+
+void split(node * t, node * & l, node * & r, int k) {
+    if (!t) {
+        l = r = NULL;
+        return;
+    }
+    push(t);
+    int add = getCnt(t->l);
+    if (k <= add) {
+        split(t->l, l, t->l, k), r = t;
+    }
+    else {
+        split(t->r, t->r, r, k - add - 1), l = t;
+    }
+    updCnt(l); updCnt(r);
+    updSum(l); updSum(r);
+}
+
+void merge(node * & t, node * l, node * r) {
+    if (!l || !r) {
+        t = l ? l : r;
+        return;
+    }
+    push(l); push(r);
+    if (l->y > r->y) {
+        merge(l->r, l->r, r), t = l;
+    }
+    else {
+        merge(r->l, l, r->l), t = r;
+    }
+    updCnt(t);
+    updSum(t);
+}
+
+const int maxN = 100500;
+
+int N, Q, A[maxN];
+vector<int> g[maxN];
+int strIdx[maxN], depth[maxN], sz[maxN], f[maxN][20], tin[maxN], tout[maxN], timer;
+bool heavy[maxN];
+vector<int> starts;
+int lowest[maxN], highest[maxN];
+int cntStrs;
+node * trees[maxN];
+
+bool isAncestor(int x, int y) {
+    return tin[x] <= tin[y] && tout[x] >= tout[y];
+}
+
+int lca(int x, int y) {
+    if (isAncestor(x, y)) return x;
+    if (isAncestor(y, x)) return y;
+    for (int i = 19; i >= 0; i--) {
+        if (!isAncestor(f[x][i], y)) x = f[x][i];
+    }
+    return f[x][0];
+}
+
+void dfs(int v, int p, int d) {
+    tin[v] = ++timer;
+    depth[v] = d;
+    f[v][0] = p;
+    for (int i = 1; i < 20; i++) {
+        f[v][i] = f[f[v][i - 1]][i - 1];
+    }
+    sz[v] = 1;
+    for (size_t i = 0; i < g[v].size(); i++) {
+        int to = g[v][i];
+        if (to == p) continue;
+        dfs(to, v, d - 1);
+        sz[v] += sz[to];
+    }
+    bool fl = false;
+    for (size_t i = 0; i < g[v].size(); i++) {
+        int to = g[v][i];
+        if (to == p) continue;
+        if (sz[to] > sz[v] / 2) {
+            fl = true;
+            heavy[to] = true;
+        }
+    }
+    if (!fl) {
+        starts.push_back(v);
+    }
+    tout[v] = ++timer;
+}
+
+void process(int v) {
+    cntStrs++;
+    trees[cntStrs] = NULL;
+    lowest[cntStrs] = v;
+    while (true) {
+        strIdx[v] = cntStrs;
+        merge(trees[cntStrs], trees[cntStrs], new node(A[v]));
+        if (!heavy[v]) break;
+        v = f[v][0];
+    }
+    highest[cntStrs] = v;
+}
+
+void buildHLD() {
+    dfs(1, 1, 0);
+    for (size_t i = 0; i < starts.size(); i++) {
+        process(starts[i]);
+    }
+}
+
+int treapSum(node * t, int l, int r) {
+    if (l > r) return 0;
+    node * t1, * t2, * t3;
+    split(t, t2, t3, r);
+    split(t2, t1, t2, l - 1);
+    int res = getSum(t2);
+    merge(t, t1, t2);
+    merge(t, t, t3);
+    return res;
+}
+
+int sumPathUp(int v, int p) {
+    int result = 0;
+    while (true) {
+        if (strIdx[v] == strIdx[p]) {
+            result += treapSum(trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                 depth[p] - depth[lowest[strIdx[v]]] + 1);
+            return result;
+        }
+        else {
+            result += treapSum(trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                 depth[highest[strIdx[v]]] - depth[lowest[strIdx[v]]] + 1);
+            v = f[highest[strIdx[v]]][0];
+        }
+    }
+}
+
+int sumPathUp2(int v, int p) {
+    int result = 0;
+    while (true) {
+        if (strIdx[v] == strIdx[p]) {
+            result += treapSum(trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                 depth[p] - depth[lowest[strIdx[v]]]);
+            return result;
+        }
+        else {
+            result += treapSum(trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                 depth[highest[strIdx[v]]] - depth[lowest[strIdx[v]]] + 1);
+            v = f[highest[strIdx[v]]][0];
+        }
+    }
+}
+
+int sumPath(int x, int y) {
+    int z = lca(x, y);
+    return sumPathUp(x, z) + sumPathUp2(y, z);
+}
+
+node * treapSub(node * & t, int l, int r) {
+    if (l > r) return NULL;
+    node * t1, * t2, * t3;
+    split(t, t2, t3, r);
+    split(t2, t1, t2, l - 1);
+    merge(t, t1, t3);
+    return t2;
+}
+
+node * getPathUp(int v, int p) {
+    node * t = NULL;
+    while (true) {
+        if (strIdx[v] == strIdx[p]) {
+            merge(t, t, treapSub(trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                   depth[p] - depth[lowest[strIdx[v]]] + 1));
+            return t;
+        }
+        else {
+            merge(t, t, treapSub(trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                   depth[highest[strIdx[v]]] - depth[lowest[strIdx[v]]] + 1));
+            v = f[highest[strIdx[v]]][0];
+        }
+    }
+}
+
+node * getPathUp2(int v, int p) {
+    node * t = NULL;
+    while (true) {
+        if (strIdx[v] == strIdx[p]) {
+            merge(t, t, treapSub(trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                   depth[p] - depth[lowest[strIdx[v]]]));
+            return t;
+        }
+        else {
+            merge(t, t, treapSub(trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                   depth[highest[strIdx[v]]] - depth[lowest[strIdx[v]]] + 1));
+            v = f[highest[strIdx[v]]][0];
+        }
+    }
+}
+
+void insertPrefToSub(node * & from, node * & to, int l, int r) {
+    if (l > r) return;
+    node * x;
+    split(from, x, from, r - l + 1);
+    node * t1, * t2;
+    split(to, t1, t2, l - 1);
+    merge(to, t1, x);
+    merge(to, to, t2);
+}
+
+void insertPathUp(int v, int p, node * & t) {
+    while (true) {
+        if (strIdx[v] == strIdx[p]) {
+            insertPrefToSub(t, trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                 depth[p] - depth[lowest[strIdx[v]]] + 1);
+            return;
+        }
+        else {
+            insertPrefToSub(t, trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                 depth[highest[strIdx[v]]] - depth[lowest[strIdx[v]]] + 1);
+            v = f[highest[strIdx[v]]][0];
+        }
+    }
+}
+
+void insertPathUp2(int v, int p, node * & t) {
+    while (true) {
+        if (strIdx[v] == strIdx[p]) {
+            insertPrefToSub(t, trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                 depth[p] - depth[lowest[strIdx[v]]]);
+            return;
+        }
+        else {
+            insertPrefToSub(t, trees[strIdx[v]], depth[v] - depth[lowest[strIdx[v]]] + 1,
+                                                 depth[highest[strIdx[v]]] - depth[lowest[strIdx[v]]] + 1);
+            v = f[highest[strIdx[v]]][0];
+        }
+    }
+}
+
+void insertPath(int x, int y, node * t) {
+    int z = lca(x, y);
+    makeRev(t);
+    insertPathUp2(y, z, t);
+    makeRev(t);
+    insertPathUp(x, z, t);
+}
+
+void reversePath(int x, int y) {
+    int z = lca(x, y);
+    node * t, * t1, * t2;
+    t1 = getPathUp(x, z);
+    t2 = getPathUp2(y, z);
+    makeRev(t2);
+    merge(t, t1, t2);
+    makeRev(t);
+    insertPath(x, y, t);
+}
+
+int main() {
+    srand(time(0));
+    //freopen("input.txt", "r", stdin);
+
+    scanf("%d%d", &N, &Q);
+
+    for (int i = 1; i <= N; i++) {
+        scanf("%d", &A[i]);
+    }
+
+    for (int i = 1; i <= N - 1; i++) {
+        int x, y;
+        scanf("%d%d", &x, &y);
+        g[x].push_back(y);
+        g[y].push_back(x);
+    }
+
+    buildHLD();
+
+    while (Q--) {
+        char c;
+        int x, y;
+        scanf(" %c%d%d", &c, &x, &y);
+        if (c == 'R') {
+            reversePath(x, y);
+        }
+        else {
+            printf("%d\n", sumPath(x, y));
+        }
+    }
+
+    return 0;
+}

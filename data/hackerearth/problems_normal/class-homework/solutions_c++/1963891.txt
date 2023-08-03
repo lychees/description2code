@@ -1,0 +1,89 @@
+#include<cstdio>
+#include<algorithm>
+#include<vector>
+#include<string>
+#include<cstring>
+#include<iostream>
+#define MAXLEN 20
+#define MAXCUT 4
+#define MAXVAL 1000000000000LL
+#define inf 1000000000000000LL
+
+typedef long long ll;
+using namespace std;
+
+void calcAllPosVal(ll resBegEnd[MAXLEN][MAXLEN],string str) {
+  ll res;
+  for(int i=0;i<MAXLEN;i++) {
+    for(int j=0;j<MAXLEN;j++)
+      resBegEnd[i][j]=-inf;
+  }
+  for(int i=0;i<str.length();i++) {
+    res=0;
+    int j;
+    int ndig=0;
+    for(j=i;j<str.length();j++) {
+      res=(res*10)+(str[j]-48);
+      ndig++;
+      if(((ndig>1)&&res==0&&(str[j]=='0'))||(ndig>1&&res==(str[j]-48)))
+	break;
+      if(res>MAXVAL)
+	break;
+      resBegEnd[i][j]=res;
+    }
+    for(;j<str.length();j++)
+      resBegEnd[i][j]=-inf;
+  }
+  /*for(int i=0;i<str.length();i++) {
+    for(int j=0;j<str.length();j++) {
+      cout<<resBegEnd[i][j]<<" ";
+    }
+    cout<<endl;
+  }*/
+  
+}
+
+
+ll solve(ll dp[MAXCUT+1][MAXLEN],ll resBegEnd[MAXLEN][MAXLEN],string str) {
+  for(int i=0;i<=MAXCUT;i++)
+    for(int j=0;j<MAXLEN;j++)
+      dp[i][j]=-inf;
+  for(int i=0;i<str.length();i++) {
+    dp[1][i]=resBegEnd[0][i];
+  }
+  for(int k=2;k<=MAXCUT;k++) {
+    for(int i=0;i<str.length();i++) {
+      for(int j=i+1;j<str.length();j++) {
+	if(dp[k-1][i]!=-inf && resBegEnd[i+1][j]!=-inf)
+	  dp[k][j]=max(dp[k][j],dp[k-1][i]+resBegEnd[i+1][j]);
+      }
+    }
+  }
+  /*cout<<"Dp table is "<<endl;
+  for(int i=1;i<=4;i++) {
+    for(int j=0;j<str.length();j++) {
+      cout<<dp[i][j]<<" ";
+    }
+    cout<<endl;
+  }*/
+  return dp[MAXCUT][str.length()-1];
+}
+
+
+int main() {
+  string str;
+  int nTest;
+  ll dp[MAXCUT+1][MAXLEN],resBegEnd[MAXLEN][MAXLEN];
+  ll res;
+  scanf("%d",&nTest);
+  for(int t=1;t<=nTest;t++) {
+    cin>>str;
+    calcAllPosVal(resBegEnd,str);
+    res=solve(dp,resBegEnd,str);
+    if(res==-inf)
+      printf("unlucky\n");
+    else
+      printf("%lld\n",res);
+  }
+  return 0;
+}

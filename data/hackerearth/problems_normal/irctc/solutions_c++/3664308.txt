@@ -1,0 +1,111 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <stack>
+#include <limits.h>
+using namespace std;
+
+typedef pair<int, int> ii;
+typedef vector<int> vi;
+typedef vector<bool> vb;
+typedef vector<ii> vii;
+
+vector<vii> adjlist;
+vi distto;
+vi edgeto;
+vb marked;
+
+void dijkstra(int s)
+{
+	int N = adjlist.size();
+	priority_queue<ii, vector<ii>, greater<ii> > pq;
+	distto.assign(N, INT_MAX);
+	edgeto.assign(N, -1);
+	marked.assign(N, false);
+	distto[s] = 0;
+	pq.push(make_pair(0, s));
+	while(!pq.empty())
+	{
+		ii wu = pq.top();
+		pq.pop();
+		int u = wu.second;
+		if(marked[u]) continue;
+		marked[u] = true;
+		for (int i = 0; i < adjlist[u].size(); ++i)
+		{
+			int v = adjlist[u][i].first;
+			int w = adjlist[u][i].second;
+			if(distto[v] > distto[u]+w)
+			{
+				distto[v] = distto[u]+w;
+				edgeto[v] = u;
+				pq.push(make_pair(distto[v], v));
+			}
+		}
+	}
+}
+
+// IRCTC
+int main()
+{
+	int T, N, K, a, b, d;
+	int A, B, C;
+	cin >> T;
+	while(T--)
+	{
+		cin >> N >> K;
+		adjlist.clear();
+		adjlist.assign(N, vii());
+		for (int i = 0; i < K; ++i)
+		{
+			cin >> a >> b >> d;
+			adjlist[a-1].push_back(make_pair(b-1, d));
+			adjlist[b-1].push_back(make_pair(a-1, d));
+		}
+		cin >> A >> B >> C;
+		bool existpath = false;
+		A--;B--;C--;
+		int distBC = INT_MAX, distAB = INT_MAX;
+		stack<int> path;
+		dijkstra(B);
+		if(distto[C]!=INT_MAX)
+		{
+			distBC = distto[C];
+			int next = C;
+			while(next != B)
+			{
+				path.push(next);
+				next = edgeto[next];
+			}
+
+			dijkstra(A);
+			if(distto[B]!=INT_MAX)
+			{
+				distAB = distto[B];
+				next = B;
+				while(next != A)
+				{
+					path.push(next);
+					next = edgeto[next];
+				}
+				path.push(A);
+				existpath = true;
+			}
+		}
+		if(existpath)
+		{
+			cout << distAB + distBC << endl;
+			int pathsize = path.size();
+			for (int i = 0; i < pathsize; ++i)
+			{
+				cout << path.top()+1;
+				path.pop();
+				if(i<pathsize-1) cout << " ";
+			}
+			cout << endl;
+		}else{
+			cout << "No Train Found." << endl;
+		}
+	}
+
+}

@@ -1,0 +1,91 @@
+#include <cstdio>
+#include <iostream>
+#include <cmath>
+using namespace std;
+long long int arr[1000010],tr[1000010],n;
+string s;
+long long int powee(long long int a, long long int n)
+{
+	if(n==0)
+	return 1;
+	else
+	{
+		long long int x=powee(a,n/2)%3;
+		return ((((n%2)*a)*((x*x)%3))%3)+(((!(n%2))*((x*x)%3))%3);
+	}
+}
+void build(long long int node, long long int start, long long int end)
+{
+	if(start==end)
+	{
+		tr[node]=powee(2,n-start)*arr[start];
+	}
+	else
+	{
+		long long int mid =(start+end)/2;
+		build(2*node,start,mid);
+		build(2*node+1,mid+1,end);
+		tr[node]=tr[2*node]+tr[2*node+1];
+	}
+}
+int query(long long int node,long long int l,long long int r,long long int start,long long int end )
+{
+	if(l>end||r<start)
+	{
+		return 0;
+	}
+	if(l<=start&&r>=end)
+	return tr[node];
+	long long int mid=(start+end)/2;
+	return query(2*node,l,r,start,mid)+query(2*node+1,l,r,mid+1,end);
+}
+void update(long long int node,long long int start,long long int end,long long int idx)
+{
+	if(start==end)
+	{
+		if(tr[node]==0)
+		tr[node]=powee(2,n-start);
+	}
+	else
+	{
+		long long int mid=(start+end)/2;
+		if(idx>=start&&idx<=mid)
+		{
+			update(2*node,start,mid,idx);
+		}
+		else
+		{
+			update(2*node+1,mid+1,end,idx);	
+		}
+		tr[node]=tr[2*node]+tr[2*node+1];
+	}
+}
+int main()
+{
+	long long int i,j,k,p,t;
+	cin>>n;
+	cin>>s;
+	
+	for(i=0;i<n;i++)
+	{
+		arr[i+1]=s[i]-'0';
+	}
+	build(1,1,n);
+	cin>>t;
+	while(t--)
+	{
+		cin>>j;
+		if(j==0)
+		{
+			cin>>k>>p;
+			int ans=query(1,k+1,p+1,1,n)*powee(2,n-p-1);
+			cout<<(ans)%3<<endl;
+		}
+		else if(j==1)
+		{
+			cin>>k;
+			update(1,1,n,k+1);
+		}
+	}
+	return 0;
+}

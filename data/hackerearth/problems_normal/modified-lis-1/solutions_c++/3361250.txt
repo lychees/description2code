@@ -1,0 +1,107 @@
+#include <bits/stdc++.h>
+using namespace std;
+const long long mod = 1e9 + 7;
+const double eps = 1e-15;
+const double PI = atan(1.0);
+#define readFile freopen("input","r",stdin)
+#define writeFile freopen("output","w",stdout)
+#define fastIO ios::sync_with_stdio(0),cin.tie(0),cout.tie(0)
+typedef pair<long long,long long> ii;
+typedef unsigned long long ULL;
+const int N = 100002;
+const int MOD = 1e9+7;
+ii res[N*4];
+ii pos[N*4],neg[N*4];
+
+ii z(0,0);
+
+ii merge(ii a,ii b){
+    if (a.first>b.first) return a;
+    if (a.first<b.first) return b;
+    return make_pair(a.first,(a.second+b.second)%MOD);
+}
+
+ii query(ii tree[],int node,int l,int r,int ll,int rr){
+    if (l>rr || r<ll) return z;
+    if (l>=ll && r<=rr) return tree[node];
+    int mid = (l+r)>>1;
+    return merge(query(tree,node<<1,l,mid,ll,rr),query(tree,node<<1|1,mid+1,r,ll,rr));
+}
+
+ii maxx(ii a,ii b){
+    if (!a.second) return b;
+    if (!b.second) return a;
+    if (a.first>b.first) return a;
+    return b;
+}
+
+void buildRes(int node,int l,int r){
+    if (l==r){
+        res[node] = make_pair(l,0);
+        return;
+    }
+    int mid = (l+r)>>1;
+    buildRes(node<<1,l,mid);
+    buildRes(node<<1|1,mid+1,r);
+    res[node] = res[node<<1|1];
+}
+
+void inc(int node,int l,int r,int idx,int val){
+    if (l==r){
+        res[node].second +=val;
+        res[node].second%=MOD;
+        return;
+    }
+    int mid = (l+r)>>1;
+    if (idx<=mid) inc(node<<1,l,mid,idx,val);
+    else inc(node<<1|1,mid+1,r,idx,val);
+    res[node] = maxx(res[node<<1],res[node<<1|1]);
+}
+
+void insert(ii tree[],int node,int l,int r,int idx,bool is){
+    if (l==r){
+        if (is){
+            ii q = query(neg,1,1,N,1,l-1);
+            ii temp;
+            temp.first = q.first+1;
+            temp.second = q.second;
+            if (!temp.second) temp.second++;
+            inc(1,1,N,temp.first,temp.second);
+            if (temp.first == tree[node].first) tree[node].second+=temp.second,tree[node].second%=MOD;
+            else tree[node] = temp;
+        }
+        else{
+            ii q = query(pos,1,1,N,1,l-1);
+            ii temp;
+            temp.first = q.first+1;
+            temp.second = q.second;
+            if (!temp.second) temp.second++;
+            inc(1,1,N,temp.first,temp.second);
+            if (temp.first == tree[node].first) tree[node].second+=temp.second,tree[node].second%=MOD;
+            else tree[node] = temp;
+        }
+        return;
+    }
+    int mid = (l+r)>>1;
+    if (idx<=mid) insert(tree,node<<1,l,mid,idx,is);
+    else insert(tree,node<<1|1,mid+1,r,idx,is);
+    tree[node] = merge(tree[node<<1],tree[node<<1|1]);
+}
+int n;
+ 
+int main(){
+#ifndef ONLINE_JUDGE
+    readFile; 
+//    writeFile;
+#endif
+    fastIO;
+    cin>>n;
+    buildRes(1,1,N);
+    for(int i=1;i<=n;i++){
+        int num; cin>>num;
+        if (!num) continue;
+        if (num>0) insert(pos,1,1,N,num,1);
+        else insert(neg,1,1,N,-num,0);
+    }
+    cout<<res[1].first<<" "<<res[1].second;
+}

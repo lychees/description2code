@@ -1,0 +1,94 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#define ll long long
+using namespace std;
+
+typedef pair<int, int> ii;
+typedef pair<int, ii> iii;
+typedef vector<int> vi;
+typedef vector<ii> vii;
+typedef vector<bool> vb;
+
+int N, M, A, B, C;
+ll int K;
+vector<vii> adjlist;
+priority_queue<iii, vector<iii>, greater<iii> > pq;
+vector<iii> mst;
+vb marked;
+
+void visit(int s)
+{
+	marked[s] = true;
+	for(int i=0;i<adjlist[s].size();i++)
+	{
+		int v = adjlist[s][i].first;
+		int w = adjlist[s][i].second;
+		if(marked[v]==false)
+		{
+			pq.push(make_pair(w, make_pair(s, v)));
+			//cout << w  << " : " << s << " " << v << endl;
+		}
+	}
+}
+
+void prim(int s)
+{
+	visit(s);
+	while(!pq.empty() && mst.size() < N-1)
+	{
+		iii wedge = pq.top();
+		pq.pop();
+		ii edge = wedge.second;
+		//cout << wedge.first << ": " << edge.first << " " << edge.second << endl;
+		if (marked[edge.first] && marked[edge.second]) continue;
+		mst.push_back(wedge);
+		if (!marked[edge.first]) visit(edge.first);
+		if (!marked[edge.second]) visit(edge.second);
+	}
+}
+
+int main()
+{
+	cin >> N >> M;
+	cin >> K;
+	adjlist.assign(N, vii());
+	marked.assign(N, false);
+	for(int i=0;i<M;i++)
+	{
+		cin >> A >> B >> C;
+		adjlist[A-1].push_back(make_pair(B-1, C));
+		adjlist[B-1].push_back(make_pair(A-1, C));
+		//cout << A-1 <<  " " <<B-1 << endl;
+	}
+	int s = 0;
+	//cout << "before prim" << endl;
+	// prim
+	prim(s);
+	// print
+	int ans;
+	if (mst.size() == N-1 && K>=N-1)
+	{
+		sort(mst.begin(), mst.end(), greater<iii>());
+		int nedges = mst.size();
+		ll int cost = 0;
+		for(int i=0;i<nedges;i++)
+		{
+			cost += mst[i].first;
+		}
+		ans =0;
+		while(cost>K)
+		{
+			cost -= mst[ans].first;
+			cost++;
+			ans++;
+			//i%=nedges;
+		}
+	}else
+	{
+		ans = -1;
+	}
+	cout << ans << endl; 
+    return 0;
+}

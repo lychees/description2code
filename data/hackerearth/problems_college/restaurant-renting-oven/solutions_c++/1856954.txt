@@ -1,0 +1,110 @@
+
+// Source : Codechef November 2010
+
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+ 
+using namespace std;
+ 
+const int maxn=10000+5;
+const int maxm=100000+5;
+const int oo=100000000;
+ 
+int node,nedge,src,dest;
+int head[maxn],point[maxm],next1[maxm],flow[maxm],capa[maxm],cost[maxm];
+int dist[maxn],expand[maxn],prev1[maxn],edge[maxn];
+bool changed[maxn];
+ 
+void init(int _node,int _src,int _dest)
+{
+	node=_node;
+	src=_src;
+	dest=_dest;
+	nedge=0;
+	for (int i=0;i<node;i++) head[i]=-1;
+}
+void addedge(int u,int v,int c,int w)
+{
+	point[nedge]=v,capa[nedge]=c,cost[nedge]=+w,flow[nedge]=0,next1[nedge]=head[u],head[u]=(nedge++);
+	point[nedge]=u,capa[nedge]=0,cost[nedge]=-w,flow[nedge]=0,next1[nedge]=head[v],head[v]=(nedge++);
+}
+void ford(int &mflow,int &mcost)
+{
+	mflow=mcost=0;
+	while (1)
+	{
+		for (int i=0;i<node;i++) dist[i]=oo,prev1[i]=-1,changed[i]=false;
+		dist[src]=0;
+		changed[src]=true;
+		expand[src]=oo;
+		while (1)
+		{
+			bool ok=true;
+			for (int i=0;i<node;i++) if (changed[i])
+			{
+				changed[i]=false;
+				for (int k=head[i];k>=0;k=next1[k])
+					if (flow[k]<capa[k] && dist[i]+cost[k]<dist[point[k]])
+					{
+						dist[point[k]]=dist[i]+cost[k];
+						changed[point[k]]=true;
+						prev1[point[k]]=i;
+						edge[point[k]]=k;
+						expand[point[k]]=min(expand[i],capa[k]-flow[k]);
+						ok=false;
+					}
+			}
+			if (ok) break;
+		}
+		if (prev1[dest]<0) break;
+		int d=expand[dest];
+		mflow+=d;
+		mcost+=d*dist[dest];
+		for (int k=dest;k!=src;k=prev1[k])
+		{
+			flow[edge[k]]+=d;
+			flow[edge[k]^1]-=d;
+		}
+	}
+}
+ 
+int n,m;
+int c[10000],s[10000],e[10000],v[10000];
+int main()
+{
+	int testcase;
+	for (scanf("%d",&testcase);testcase>0;testcase--)
+	{
+		scanf("%d%d",&n,&m);
+		for (int i=0;i<m;i++)
+			c[i]=0;
+		int total=0;
+		for (int i=0;i<n;i++)
+		{
+			scanf("%d%d%d",&s[i],&e[i],&v[i]);
+			for (int j=s[i];j<e[i];j++) c[j]++;
+			total+=v[i];
+		}
+		for (int i=0;i<m;i++)
+		{
+			int d;
+			scanf("%d",&d);
+			c[i]=max(0,c[i]-d);
+		}
+		init(m+3,m+1,m+2);
+		for (int i=0;i<n;i++)
+			addedge(s[i],e[i],1,v[i]);
+		for (int i=0;i<m;i++)
+			addedge(i+1,i,1000,0);
+		for (int i=0;i<m;i++)
+		{
+			addedge(src,i,c[i],0);
+			addedge(i+1,dest,c[i],0);
+		}
+		int cflow,scost;
+		ford(cflow,scost);
+		printf("%d\n",total-scost);
+	}
+	return 0;
+}

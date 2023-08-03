@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, m;
+int a[400], G[400][400], f[1000], vis[400], lk[400];
+vector<pair<int, int> > F;
+
+int dfs(int u)
+{
+	for (int i = 0; i < n; ++i)
+		if (!vis[i] && G[u][i])
+		{
+			vis[i] = true;
+			if (lk[i] == -1 || dfs(lk[i]))
+			{
+				lk[i] = u;
+				return true;
+			}
+		}
+	return false;
+}
+
+int check()
+{
+	for (int i = 0; i < n; ++i)
+		lk[i] = -1;
+	for (int i = 0; i < n; ++i)
+	{
+		memset(vis, 0, sizeof(vis));
+		if (!dfs(i)) return false;
+	}
+	return true;
+}
+
+int Check(int lim)
+{
+	for (int i = 0; i < n; ++i)
+		for (int j = 0; j < n; ++j)
+			G[i][j] = true;	
+	for (int i = 0; i <= lim; ++i)
+	{
+		for (int j = 0; j < n; ++j)
+		{
+			int k = F[i].second - a[j];
+			if (k >= 0 && k < n)
+				G[j][k] = false;
+		}
+	}
+	return check();
+}
+
+int main(int argc, char *argv[])
+{
+	scanf("%d%d", &n, &m);
+	for (int i = 0; i < n; ++i)
+		scanf("%d", &a[i]);
+	for (int i = 0; i < n + m - 1; ++i)
+	{
+		scanf("%d", &f[i]);
+		F.push_back(make_pair(f[i], i));
+	}
+	sort(F.begin(), F.end(), greater<pair<int, int> > ());
+	int l = 0, r = F.size() - 1;
+	while (l + 1 < r)
+	{
+		int m = l + r >> 1;
+		if (Check(m)) l = m;
+		else r = m - 1;
+	}
+	while (l + 1 < F.size() && Check(l + 1)) ++l;
+	printf("%d\n", F[l + 1].first);
+	return 0;
+}

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define MAX 1000001
+bool comp[MAX];
+int dsval[MAX];
+int smith[MAX];
+
+inline int dsum(ulong n){
+	int s = 0;
+	while(n > 0){
+		s += n%10;
+		n /= 10;
+	}
+	return s;
+}
+
+inline void set_dsval(){
+	int cnt = 0;
+	for(ulong i = 2; i < MAX; i++){
+		if(comp[i] == false){ // Prime numbers
+			dsval[i] = dsum(i);
+			cnt++; //definitely Smith Num.
+		}
+		else
+		{
+			if(i%2 == 0) {
+				dsval[i] = 2 + (dsval[i/2]);  // e.g for i=22 as => 22=2*(11) => 2+[1+1] = 4
+			}
+			else
+			{
+			   for(int j = 3; 2*j < i; j=j+2)
+			   	  if(i%j == 0) 
+			   	  {
+			   	  	dsval[i] = dsval[j] + dsval[i/j];
+			   	  	break;
+			   	  }
+			}
+			if(dsval[i] == dsum(i)) cnt++;
+		}
+		smith[i] = cnt;
+	}
+}
+void set_prime(){
+	memset(comp, false, sizeof(comp));
+	int j = 2+2;
+	while(j < MAX){
+		comp[j] = true; 
+		j = j+2;
+	}
+	for(ulong i = 3; i < MAX; i = i+2){
+		if(comp[i] == false){
+			j = i+i;
+			while(j < MAX){
+				comp[j] = true;
+				j = j+i;
+			}
+		}
+	}
+}
+
+int main()
+{
+    //digits_Sum = digit_sums_of_all_its_prime_factors
+    ulong t, ti, l, r, lhs, rhs, ans;
+    set_prime();
+    set_dsval();
+    cin  >>t;
+    while(t--){
+    	scanf("%ld%ld", &l, &r);
+    	printf("%d\n", (smith[r] - smith[l-1]));
+    }
+    return 0;
+}

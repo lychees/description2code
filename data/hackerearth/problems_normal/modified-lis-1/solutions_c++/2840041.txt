@@ -1,0 +1,145 @@
+#include <cstring>
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+typedef long double ld;
+typedef unsigned long long ull;
+typedef pair<ll,ll> ii;
+typedef vector<ll> vi;
+typedef vector< ii > vii;
+
+#define INF 0x3F3F3F3F
+#define LINF 0x3F3F3F3F3F3F3F3FLL
+#define pb push_back
+#define mp make_pair
+#define pq priority_queue
+#define LSONE(s) ((s)&(-s)) //LASTBIT
+#define DEG_to_RAD(X)   (X * PI / 180)
+#define F first
+#define S second
+#define PI 2*acos(0)
+
+#ifdef ONLINE_JUDGE
+#define debug(args...)
+#else
+#define debug(args...) fprintf(stderr,args)
+#endif
+
+//////////////////////
+int dx[] = {1,-1,0,0};
+int dy[] = {0,0,-1,1};
+//////////////////////
+
+void arquivo()
+{
+	freopen("","r",stdin);
+	freopen("","w",stdout);
+}
+
+const int N = 100010;
+const ll mod = 1e9+7;
+
+struct node
+{
+	ll maxi, qtd;
+	node(){};
+	node( ll a, ll b )
+	{
+		maxi = a;
+		qtd = b;
+	}
+};
+
+node merge( node a, node b )
+{
+	if( a.maxi > b.maxi ) return a;
+	else if( a.maxi < b.maxi ) return b;
+	else
+	{
+		a.qtd+=b.qtd;
+		if(a.qtd>=mod)a.qtd-=mod;
+		return a;
+	}
+}
+
+struct segTree
+{
+	node tr[4*N];
+	segTree(){
+		for(int i=0;i<4*N;++i) tr[i] = node(0,0);
+	};
+	void update( int no, int l, int r, int i, node at )
+	{
+		if(l==r)
+		{
+			tr[no] = merge(tr[no],at);
+			return;
+		}
+		int nxt = (no<<1), mid = (l+r)>>1;
+		if(i<=mid) update(nxt,l,mid,i,at);
+		else update(nxt+1,mid+1,r,i,at);
+		tr[no] = merge(tr[nxt],tr[nxt+1]);
+	}
+	node query( int no, int l, int r, int i, int j )
+	{
+		if( r < i || l > j ) return node(0,0);
+		if( l>=i && r<=j ) return tr[no];
+		int nxt = (no<<1), mid = (l+r)>>1;
+		return merge(query(nxt,l,mid,i,j),query(nxt+1,mid+1,r,i,j));
+	}	
+};
+
+segTree pos, neg;
+int n;
+
+int main()
+{
+	//ios::sync_with_stdio(0);
+	scanf("%d",&n);
+	pos = segTree();
+	neg = segTree();
+	ll ans,qtd;
+	ans = -1;
+	qtd = 0;
+	for(int i=0;i<n;++i)
+	{
+		int x; scanf("%d",&x);
+		if( x > 0 )
+		{
+			node foo = neg.query(1,0,100000,0,x-1);
+			if( foo.maxi == 0 ) foo.qtd = 1;
+			foo.maxi++;
+			if( foo.maxi > ans )
+			{
+				ans = foo.maxi;
+				qtd = foo.qtd;
+			}
+			else if( foo.maxi == ans ) qtd+=foo.qtd;
+			if(qtd>=mod) qtd-=mod;
+			pos.update(1,0,100000,x,foo);
+		}
+		else
+		{
+			x*=-1;
+			node foo = pos.query(1,0,100000,0,x-1);
+			if( foo.maxi == 0 ) foo.qtd = 1;
+			foo.maxi++;
+			if( foo.maxi > ans )
+			{
+				ans = foo.maxi;
+				qtd = foo.qtd;
+			}
+			else if( foo.maxi == ans ) qtd+=foo.qtd;
+			if(qtd>=mod) qtd-=mod;
+			neg.update(1,0,100000,x,foo);
+		}
+	}
+	printf("%lld %lld\n",ans,qtd);
+	return 0;
+}

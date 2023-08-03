@@ -1,0 +1,165 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifdef LOCAL
+    #define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#else
+    #define eprintf(...) (void)42;
+#endif
+
+const int X = 239;
+const int Y = 1543;
+const int MOD = (int)1e9 + 9;
+const int MOD2 = (int)1e9 + 7;
+
+inline int mul(int a, int b, int MOD) {
+    return (a * 1LL * b) % MOD;
+}
+
+inline int add(int a, int b, int MOD) {
+    return (a + b) % MOD;
+}
+
+const int MAXN = 100100;
+
+int XP[MAXN];
+int YP[MAXN];
+int XS[MAXN];
+int YS[MAXN];
+
+int qi[MAXN];
+int qj[MAXN];
+int qk[MAXN];
+
+pair <int, int> hs[MAXN];
+pair <int, int> ht[MAXN];
+int nx[MAXN];
+pair <int, int> thash[4 * MAXN];
+
+pair <int, int> merge(const pair <int, int> &lv, const pair <int, int> &rv, int len) {
+    return make_pair(add(mul(lv.first, XP[len], MOD), rv.first, MOD),
+                add(mul(lv.second, YP[len], MOD2), rv.second, MOD2));
+}
+
+void build(int v, int l, int r) {
+    if (r - l == 1) {
+        thash[v] = make_pair(nx[l] - l, nx[l] - l);
+        return;
+    }
+    build(v << 1, l, (l + r) >> 1);
+    build((v << 1) | 1, (l + r) >> 1, r);
+    thash[v] = merge(thash[v << 1], thash[(v << 1) | 1], r - ((r + l) >> 1));
+}
+
+void update(int v, int l, int r, int at, int val) {
+    if (r - l == 1) {
+        thash[v] = make_pair(val, val);
+        return;
+    }
+    int mid = (l + r) >> 1;
+    if (at < mid) {
+        update(v << 1, l, mid, at, val);
+    } else {
+        update((v << 1) | 1, mid, r, at, val);
+    }
+    thash[v] = merge(thash[v << 1], thash[(v << 1) | 1], r - ((r + l) >> 1));
+}
+
+inline int getLen(int l, int r, int ql, int qr) {
+    int ll = max(l, ql);
+    int rr = min(r, qr);
+    return ll <= rr ? rr - ll : 0;
+}
+
+pair <int, int> get(int v, int l, int r, int ql, int qr) {
+    if (ql >= r || l >= qr) {
+        return make_pair(0, 0);
+    }
+    if (ql <= l && r <= qr) {
+        return thash[v];
+    }
+    pair <int, int> lf = get(v << 1, l, (l + r) >> 1, ql, qr);
+    pair <int, int> rg = get((v << 1) | 1, (l + r) >> 1, r, ql, qr);
+    int len = getLen((l + r) >> 1, r, ql, qr);
+    return merge(lf, rg, len);
+}
+
+void solve(char *s, int q, int *st, int *len, pair <int, int> *hs) {
+    eprintf("solve s : %s\n", s);
+    int n = strlen(s);
+    int last[26];
+    for (int i = 0; i < 26; i++) {
+        last[i] = n;
+    }
+    for (int i = n - 1; i >= 0; i--) {
+        nx[i] = last[s[i] - 'a'];
+        last[s[i] - 'a'] = i;
+    }
+    eprintf("nx : ");
+    for (int i = 0; i < n; i++) {
+        eprintf("%d ", nx[i]);
+    }
+    eprintf("\n");
+    build(1, 0, n);
+    vector < pair <int, int> > evs;
+    for (int i = 0; i < n; i++) {
+        evs.push_back(make_pair(-nx[i], (i + 1)));
+    }
+    for (int i = 0; i < q; i++) {
+        evs.push_back(make_pair(-(st[i] + len[i] - 1), -(i + 1)));
+    }
+    sort(evs.begin(), evs.end());
+    for (auto e : evs) {
+        eprintf("event (%d, %d)\n", e.first, e.second);
+        if (e.second < 0) {
+            int id = -e.second - 1;
+            eprintf("getting hash for id = %d at [%d, %d)\n", id, st[id], st[id] + len[id]);
+            hs[id] = get(1, 0, n, st[id], st[id] + len[id]);
+            //hs[id].first = add(hs[id].first, MOD - mul(st[id], XS[len[id] - 1], MOD), MOD);
+            //hs[id].second = add(hs[id].second, MOD2 - mul(st[id], YS[len[id] - 1], MOD2), MOD2);
+            eprintf("hash[%d] = (%d, %d)\n", id, hs[id].first, hs[id].second);
+        } else {
+            int id = e.second - 1;
+            eprintf("updating at id = %d with value %d\n", id, n);
+            update(1, 0, n, id, n);
+        }
+    }
+}
+
+char s[MAXN];
+char t[MAXN];
+
+int main() {
+#ifdef LOCAL
+    freopen("a.in", "r", stdin);
+#endif
+    XP[0] = 1;
+    YP[0] = 1;
+    XS[0] = 1;
+    YS[0] = 1;
+    for (int i = 1; i < MAXN; i++) {
+        XP[i] = mul(XP[i - 1], X, MOD);
+        YP[i] = mul(YP[i - 1], Y, MOD2);
+        XS[i] = add(XS[i - 1], XP[i], MOD);
+        YS[i] = add(YS[i - 1], YP[i], MOD2);
+    }
+    int tests;
+    scanf("%d", &tests);
+    for (int test = 1; test <= tests; test++) {
+        scanf("%s", s);
+        scanf("%s", t);
+        int q;
+        scanf("%d", &q);
+        for (int i = 0; i < q; i++) {
+            scanf("%d%d%d", &qi[i], &qj[i], &qk[i]);
+            --qi[i];
+            --qj[i];
+        }
+        solve(s, q, qi, qk, hs);
+        solve(t, q, qj, qk, ht);
+        for (int i = 0; i < q; i++) {
+            puts(hs[i] == ht[i] ? "yes" : "no");
+        }
+    }
+    return 0;
+}

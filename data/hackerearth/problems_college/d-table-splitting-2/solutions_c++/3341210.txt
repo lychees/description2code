@@ -1,0 +1,127 @@
+#include <cstdio>
+#include <cmath>
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <cassert>
+#include <string>
+#include <cstring>
+#include <queue>
+
+using namespace std;
+
+#define rep(i,a,b) for(int i = a; i < b; i++)
+#define S(x) scanf("%d",&x)
+#define S2(x,y) scanf("%d%d",&x,&y)
+#define P(x) printf("%d\n",x)
+#define all(v) v.begin(),v.end()
+#define FF first
+#define SS second
+
+typedef long long int LL;
+typedef pair<int, int > pii;
+typedef vector<int > vi;
+
+const int N = 1000001;
+string s[N];
+vector<int > vis[N];
+vector<int > node[N];
+int P[N];
+
+int dx[4] = {-1, 0, 0, +1};
+int dy[4] = {0, -1, +1, 0};
+
+queue<pii > q;
+
+vi X[N];
+
+int find(int x) {
+  return (P[x] == x) ? x : (P[x] = find(P[x]));
+}
+
+int main() {
+  int t;
+  S(t);
+  while(t--) {
+    int n,m;
+    S2(n,m);
+    rep(i,0,n) {
+      cin >> s[i];
+      rep(j,0,m) {
+        vis[i].push_back(0);
+        node[i].push_back(0);
+      }
+    }
+
+    rep(i,0,N) P[i] = i;
+
+    bool ans = true;
+    int cnt = 0;
+    rep(i,0,n) if(ans) rep(j,0,m) if(!vis[i][j]) {
+      while(q.size()) q.pop();
+      cnt++;
+      q.push(make_pair(i,j));
+
+      int mn = i, mx = i;
+      while(q.size()) {
+        pii f = q.front();
+        q.pop();
+        rep(k,0,4) {
+          int a = f.FF + dx[k];
+          int b = f.SS + dy[k];
+
+          if(a < 0 || a == n || b < 0 || b >= m || vis[a][b] || s[a][b] != s[i][j])
+            continue;
+          q.push(make_pair(a,b));
+          vis[a][b] = cnt;
+          X[a].push_back(b);
+          mn = min(mn, a);
+          mx = max(mx, a);
+        }
+      }
+
+      int nn = 0;
+      rep(k,mn,mx+1) {
+        sort(all(X[k]));
+        int aa,bb;
+        aa = -1, bb = -1;
+        rep(l,0,X[k].size()) {
+          if(!l || X[k][l] != X[k][l-1] + 1) nn++;
+          node[k][X[k][l]] = nn;
+
+          if(k > mn && vis[k-1][X[k][l]] == vis[k][X[k][l]] && (node[k-1][X[k][l]] != aa || nn != bb)) {
+            aa = node[k-1][X[k][l]];
+            bb = nn;
+            int pa = find(aa);
+            int pb = find(bb);
+            if(pa == pb) {
+              ans = false;
+              break;
+            }
+            P[pa] = pb;
+          }
+        }
+        if(!ans) break;
+      }
+
+      rep(k,mn,mx+1) X[k].clear();
+
+      rep(k,0,nn+1) P[k] = k;
+    }
+
+    if(ans) {
+      printf("YES\n");
+    } else {
+      printf("NO\n");
+    }
+
+
+    rep(i,0,n) {
+      vis[i].clear();
+      node[i].clear();
+    }
+  }
+  return 0;
+}

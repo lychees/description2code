@@ -1,0 +1,166 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <queue>
+#include <algorithm>
+#include <functional>
+
+using namespace std;
+
+class BinaryIndexedTree_1_indexed{
+	void init(const vector<long long> &A){
+		for(int i=0; i<N; i++){
+			add(i+1, A[i]);
+		}
+	}
+	
+public:
+	long long T[100000+100];
+	//vector<long long> T;
+	int N;
+	
+	BinaryIndexedTree_1_indexed(const int n) : N(n){
+		fill(T, T+n+1, 0);
+		
+	}
+	BinaryIndexedTree_1_indexed(const vector<long long> &A) : N(A.size()){
+		fill(T, T+A.size()+1, 0);
+		init(A);
+	}
+
+	//caution : position "i" must be 1-indexed
+	void add(int i, const long long x){
+		while(i <= N+1){
+			T[i] += x;
+			i += i & -i;
+		}
+	}
+
+	//get sums [0,i]
+	long long get_sum(int i){
+		long long ret=0;
+		while(i>0){
+			ret += T[i];
+			i -= i & -i;
+		}
+		return ret;
+	}
+
+	//get sums [from,to]
+	long long get_sums_range(const int from, const int to){
+		return get_sum(to) - get_sum(from-1);
+	}
+
+	//get at [i]
+	long long get_at(const int i){
+		return get_sum(i) - get_sum(i-1);
+	}
+
+	int lower_bound(long long val){
+		if(val<=0) return 0;
+		int x = 0;
+		int k = 1;
+		while((k<<1) <= N) k<<=1;
+		
+		for( ; k>0; k>>=1){
+			if( x+k <= N && T[x+k] < val ){
+				val -= T[x+k];
+				x += k;
+			}
+		}
+		return x+1;
+	}
+
+	void print(){
+		for(int i=0; i<=N; i++){
+			cerr << T[i] << " ";
+		}
+		cerr << endl;
+	}
+};
+int main(){
+	int n;
+	cin >> n;
+	vector<vector<long long> > v(5, vector<long long>(n));
+	
+	for(int i=0; i<5; i++){
+		for(int j=0; j<n; j++){
+			scanf("%lld", &v[i][j]);
+		}
+	}
+
+	string s;
+	cin >> s;
+
+	vector<BinaryIndexedTree_1_indexed> v_bit(25, BinaryIndexedTree_1_indexed(n));
+
+	for(int i=0; i<n; i++){
+		int pos = s[i] - 'A';
+		for(int j=0; j<5; j++){
+			v_bit[j*5+pos].add(i+1, v[j][ i ]);
+		}
+	}
+
+	vector<int> ptr(25);
+	for(int i=0; i<5; i++){
+		for(int j=0; j<5; j++){
+			ptr[i*5+j] = i*5+j;
+		}
+	}
+	
+	
+	int Q;
+	cin >> Q;
+	for(int q=0; q<Q; q++){
+
+		/*
+		cerr << "BIT:" << endl;
+		for(int i=0; i<5; i++){
+			cerr << i << " : " << endl;
+			for(int j=0; j<5; j++){
+				v_bit[ ptr[i*5 + j] ].print();
+			}
+		}
+		*/
+		
+		char c[10];
+		scanf("%s", c);
+		string type(c);
+		if(type == "Qe"){
+			char x,y;
+			scanf(" %c %c", &x, &y);
+			
+			x -= 'A';
+			y -= 'A';
+
+			for(int i=0; i<5; i++){
+				swap( ptr[x*5 + i], ptr[y*5 + i] );
+			}
+			
+		}else if(type == "Qc"){
+			int x;
+			char y;
+			scanf("%d %c", &x, &y);
+			y -= 'A';
+			int z = s[x-1] - 'A';
+
+			for(int i=0; i<5; i++){
+				v_bit[ ptr[i*5 + z] ].add(x, -v[ ptr[i*5]/5 ][x-1]);
+				v_bit[ ptr[i*5 + y] ].add(x, +v[ ptr[i*5]/5 ][x-1]);
+			}
+			
+			s[x-1] = (y + 'A');
+			
+		}else if(type == "Qs"){
+			int x,y;
+			scanf("%d %d", &x, &y);
+			
+			long long ret = 0;
+			for(int i=0; i<5; i++){
+				ret += v_bit[ ptr[i*5 + i] ].get_sums_range(x,y);
+			}
+			printf("%lld\n", ret);
+		}
+	}
+	return 0;
+}

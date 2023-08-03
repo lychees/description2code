@@ -1,0 +1,111 @@
+#include <iostream>
+#include <cmath>
+#define SIZE 1000007
+#define mod 1000000007
+#define ll long long
+using namespace std;
+ 
+ll ar[SIZE],seg[4*SIZE],primes[SIZE],GS[SIZE];
+
+ll phi[SIZE];
+ll prime[SIZE];
+ll mark[SIZE];
+ll sz = 0;
+
+void totient(){
+    phi[1] = 1;
+    int i,j,k,l,xx,mm;
+    for(i=2;i<SIZE;i++){
+    if(!mark[i])
+    {
+        phi[i] = i-1;
+        prime[sz++]=i;
+    }
+    for(j=0;j<sz&&prime[j]*i<SIZE;j++){
+        mark[prime[j]*i] = 1;
+        if(i%prime[j]==0){
+            l = 0,xx = i;
+            while(xx%prime[j]==0){
+                xx/=prime[j];
+                l++;
+            }
+            mm = 1;
+            for(k=0;k<l;k++) mm*=prime[j];
+            phi[i*prime[j]]=phi[xx]*mm*(prime[j]-1);
+            break;
+        }
+        else phi[i*prime[j]] = phi[i]*(prime[j]-1);
+    }
+    }
+}
+
+void gcdsum(){
+    GS[1] = 1;
+    int i,j;
+    for(i=2;i<SIZE;i++)
+        GS[i] = phi[i];
+    for(i=2;i<SIZE;i++){
+        for(j=i;j<SIZE;j+=i)
+            GS[j]=(GS[j]+(i*phi[j/i])%mod)%mod;
+    }
+}
+ 
+void build(int node,int i,int j){
+    if(i==j)
+        seg[node] = GS[ar[i]];
+    else{
+        int mid = (i+j)/2;
+        build(2*node+1,i,mid);
+        build(2*node+2,mid+1,j);
+        seg[node] = (seg[2*node+1] + seg[2*node+2])%mod;
+    }
+}
+ 
+ll getSum(int node,int i,int j,int l,int r){
+    if(r<i||j<l)
+        return 0;
+    if(l<=i&&r>=j)
+        return seg[node];
+    int mid = (i+j)/2;
+    return (getSum(2*node+1,i,mid,l,r) + getSum(2*node+2,mid+1,j,l,r))%mod;
+}
+ 
+void update(int node, int i, int j, int index, int diff){ // diff = new - old
+    if(i==j){
+        ar[index] +=  diff;
+        seg[node] = GS[ar[index]];
+    }
+    else{
+        int mid = (i+j)/2;
+        if(i<=index&&mid>=index)
+            update(2*node+1,i,mid,index,diff);
+        else
+            update(2*node+2,mid+1,j,index,diff);
+        seg[node] = (seg[2*node+1] + seg[2*node+2])%mod;
+    }
+}
+ 
+int main(){
+	totient();
+	gcdsum();
+    int n,q,l,r,x;
+    ll val;
+    cin>>n;
+    for(int i=0;i<n;i++) cin>>ar[i];
+    build(0,0,n-1);
+    //for(int i=0;i<5;i++) cout<<seg[i]<<" ";
+    cin>>q;
+    char ch;
+    while(q--){
+        cin>>ch;
+        if(ch=='C'){
+        	cin>>l>>r;
+        	cout<<getSum(0,0,n-1,l-1,r-1)<<"\n";
+        }
+        else{
+        	cin>>x>>val;
+        	update(0,0,n-1,x-1,val-ar[x-1]);
+        }
+    }
+    return 0;
+}

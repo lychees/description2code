@@ -1,0 +1,83 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <iostream>
+#include <set>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <complex>
+#include <map>
+#include <queue>
+using namespace std;
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<ll> vl;
+typedef vector<vl> vvl;
+typedef vector<vi> vvi;
+typedef vector<double> vd;
+typedef pair<int, int> pii;
+typedef pair<double, double> pdd;
+typedef vector<pii> vii;
+typedef vector<string> vs;
+
+ll p2(ll x) {
+    return x*x;
+}
+
+ll divu(ll x, ll y) {
+    return max(0LL, (x + y - 1) / y);
+}
+
+int main() {
+    int n, k;
+    cin >> n >> k;
+    vi a(n);
+    ll k2 = p2(k);
+    for (int i = 0; i < n; ++i) scanf("%d", &a[i]);
+    ll add = k2*(a[0] + a[n-1]);
+    vl d(n-2);
+    ll res = p2(n-1);
+    for (int i = 0; i < d.size(); ++i) {
+        d[i] = k2*a[i+1] + p2(i + 1);
+        res = min(res, d[i] + p2(n - i - 2));
+    }
+    for (int tt = 1; tt < min(k-2, 200); ++tt) {
+        vl nd = d;
+        vi q(1, 0);
+        vi time(1, 0);
+        int it = 0;
+        for (int i = 1; i < d.size(); ++i) {
+            int k = 0;
+            while (q.size() > it) {
+                int j = q.back();
+                k = min((ll)n, divu(d[i] + p2(i) - d[j] - p2(j), 2*(i - j)));
+                k = max(k, i);
+                //if (k < n) assert(p2(k)+d[i] <= p2(k-i-j)+d[j]);
+                //if (k > i) assert(p2(k-1-i)+d[i] > p2(k-1-j)+d[j]);
+                if (k <= time.back()) {
+                    q.pop_back();
+                    time.pop_back();
+                } else break;
+            }
+            q.push_back(i);
+            time.push_back(k);
+            while (it + 1 < q.size() && time[it + 1] <= i) ++it;
+            if (i < tt) continue;
+        	ll A = k2*a[i+1];
+            int best = q[it];
+//            int best = q[0];
+            nd[i] = min(nd[i], A + d[best] + p2(i - best));
+/*            for (int j = 0; j < i; ++j) {
+                nd[i] = min(nd[i], A + d[j] + p2(i - j));
+            }*/
+            res = min(res, nd[i] + p2(n - i - 2));
+        }
+        d.swap(nd);
+    }
+    cout << res + add << endl;
+    return 0;
+}

@@ -1,0 +1,56 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+struct sa{
+	int nr[2],pos;
+};
+
+int pos[32][1000004];
+
+bool comp(sa a, sa b){
+	return a.nr[0]==b.nr[0]?a.nr[1]<b.nr[1]:a.nr[0]<b.nr[0];
+}
+
+int lcp(int x,int y,int count,int n){
+	int ans=0;
+	for(int i=count;i>=0&&x<n&&y<n;i--){
+		if(pos[i][x]==pos[i][y]){
+			ans+=1<<i;
+			x+=1<<i;
+			y+=1<<i;
+		}
+	}
+	return ans;
+}
+
+int main()
+{
+	string s;
+	cin >> s;
+	int n=s.length();
+	sa l[n];
+	for(int i=0;i<n;i++)
+		pos[0][i]=s[i]-'a';
+	int count=1;
+	for(int step=1;step<n;step*=2){
+		for(int i=0;i<n;i++){
+			l[i].nr[0]=pos[count-1][i];
+			l[i].nr[1]=(i+step)<n?pos[count-1][i+step]:-1;
+			l[i].pos=i;
+		}
+		sort(l,l+n,comp);
+		for(int i=0;i<n;i++)
+			pos[count][l[i].pos]=i>0&&l[i].nr[0]==l[i-1].nr[0]&&l[i].nr[1]==l[i-1].nr[1]?pos[count][l[i-1].pos]:i;
+		count++;
+	}
+	int ans=0;
+	for(int i=1;i<n;i++){
+		ans=max(ans,lcp(l[i].pos,l[i-1].pos,count-1,n));
+	}
+	cout << ans << endl;
+    //cout << "Hello World!" << endl;
+    return 0;
+}

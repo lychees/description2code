@@ -1,0 +1,93 @@
+#include<iostream>
+#include<fstream>
+#include<cstdlib>
+#include<ctime>
+#define f_in(st) freopen(st,"r",stdin);
+#define f_out(st) freopen(st,"w",stdout);
+#define st_clk double st=clock();
+#define end_clk double en=clock();
+#define show_time cout<<"\tTIME="<<(en-st)/CLOCKS_PER_SEC<<endl;
+using namespace std;
+long long mulmod(long long a,long long b,long long c){
+    long long x = 0,y=a%c;
+    while(b > 0){
+        if(b%2 == 1){
+            x = (x+y)%c;
+        }
+        y = (y*2)%c;
+        b /= 2;
+    }
+    return x%c;
+}
+long long modulo(long long a,long long b,long long c){
+    long long x=1,y=a;
+    while(b > 0){
+        if(b%2 == 1){
+            x=(x*y)%c;
+        }
+        y = (y*y)%c;
+        b /= 2;
+    }
+    return x%c;
+}
+/* Miller-Rabin primality test, iteration signifies the accuracy of the test */
+bool Miller(long long p){
+    if(p<2){
+        return false;
+    }
+    if(p!=2 && p%2==0){
+        return false;
+    }
+    if (p==2 || p==3 || p== 5 || p==7 || p==11 || p==13 || p==17)
+    {
+        return true;
+    }
+    if ((p%6 != 1) && (p%6 !=5))
+    	return false;
+    int ar[7]={2,3,5,7,11,13,17};
+    long long s=p-1;
+    while(s%2==0){
+        s/=2;
+    }
+    for(int i=0;i<7;i++){
+        long long a=ar[i],temp=s;
+        long long mod=modulo(a,temp,p);
+        while(temp!=p-1 && mod!=1 && mod!=p-1){
+            mod=mulmod(mod,mod,p);
+            temp *= 2;
+        }
+        if(mod!=p-1 && temp%2==0){
+            return false;
+        }
+    }
+    return true;
+}
+#define MAX 100006
+long long hashu[MAX];
+main(){
+	srand(time(NULL));
+    #ifndef ONLINE_JUDGE
+    f_in("in9");
+    f_out("out9");
+    #endif
+	int t;
+	cin >> t;
+	long long n = 3;
+	long long s = 2;
+	long long count = 0;
+	for(long long i=3;i<=MAX;i+=2){
+	   for(int j=0;j<4;j++){
+	   	    if(Miller(n)) count++;
+	   	    if(j!=3)
+			n += s;
+	     }
+		 s += 2;
+		 n += s;
+		 hashu[i] = count;
+	}
+	while(t--){
+		int x;
+		cin >> x;
+		printf("%.6f\n",(((double)hashu[x]/((2*x) -1))*100));
+	}
+}

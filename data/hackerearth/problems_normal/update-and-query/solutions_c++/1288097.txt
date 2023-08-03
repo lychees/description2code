@@ -1,0 +1,102 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+typedef long long ll;
+const int MOD = 1000000007;
+const int PW = 1 << 18;
+pair<int, int> tree[2 * PW];
+int arr[222000];
+
+pair<int, int> op(const pair<int, int>& a, const pair<int, int>& b) {
+  return make_pair(max(a.first, b.first), min(a.second, b.second));
+}
+
+void update(int pos, int v) {
+  pos += PW;
+  tree[pos] = {v,v};
+  for (int i = pos >> 1; i > 0; i >>= 1)
+    tree[i] = op(tree[i + i], tree[i + i + 1]);
+}
+
+pair<int, int> get(int l, int r) {
+  pair<int, int> res((int) -1e9, (int) 1e9);
+  for (l += PW, r += PW + 1; l < r; l >>= 1, r >>= 1) {
+    if (l & 1)
+      res = op(res, tree[l++]);
+    if (r & 1)
+      res = op(res, tree[--r]);
+  }
+  return res;
+}
+
+void solve(int test_num) {
+  int N, Q;
+  scanf("%d %d", &N, &Q);
+  fill(tree, tree + 2 * PW, make_pair((int) -1e9, (int) 1e9));
+  for (int i = 1; i <= N; i++) {
+    scanf("%d", arr + i);
+    update(i, arr[i]);
+  }
+  while (Q-- > 0) {
+    char type;
+    scanf(" %c", &type);
+    if (type == 'U') {
+      int pos, val;
+      scanf("%d %d", &pos, &val);
+      update(pos, val);
+      arr[pos] = val;
+    } else {
+      int pos, C;
+      scanf("%d %d", &pos, &C);
+      if (C < 0)
+        printf("-1 -1\n");
+      else {
+        int len = 1, v = 0;
+        for (int low = pos + 1, high = N; low <= high;) {
+          const int mid = (low + high) >> 1;
+          const pair<int, int> ext = get(pos, mid);
+          if (arr[pos] - C <= ext.second && ext.first <= arr[pos] + C) {
+            len = mid - pos + 1;
+            v = max(ext.first - arr[pos], arr[pos] - ext.second);
+            low = mid + 1;
+          } else
+            high = mid - 1;
+        }
+        printf("%d %d\n", len, v);
+      }
+    }
+  }
+}
+
+void solve() {
+#ifdef AZN
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr);
+  double start_t = clock();
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+  int T = 1;
+//cin >> T;
+  for (int t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << "Took: " << ((clock() - start_t) / CLOCKS_PER_SEC);
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

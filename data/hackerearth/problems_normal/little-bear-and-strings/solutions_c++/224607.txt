@@ -1,0 +1,314 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <list>
+#include <complex>
+#include <algorithm>
+#include <set>
+#include <map>
+#include <queue>
+#include <string>
+#include <cstring>
+#include <stack>
+#include <cmath>
+#include <iomanip>
+#include <sstream>
+#include <cassert>
+#include <numeric>
+#include <cfloat>
+#include <climits>
+#include <fstream>
+#include <bitset>
+
+using namespace std;
+typedef long long ll;
+typedef ll li;
+typedef pair<int,int> PI;
+#define EPS (1e-6)
+#define rep(i,n) for(int i=0;i<(int)(n);++i)
+#define REP(i, n) rep (i, n)
+#define F first
+#define S second
+#define mp(a,b) make_pair(a,b)
+#define pb(a) push_back(a)
+#define min3(a,b,c) min((a),min((b),(c)))
+#define min4(a,b,c,d) min((a),min3((b),(c),(d)))
+#define SZ(a) (int)((a).size())
+#define ALL(a) a.begin(),a.end()
+#define RALL(a) a.rbegin(),a.rend()
+#define FLL(a,b) memset((a),b,sizeof(a))
+#define CLR(a) memset((a),0,sizeof(a))
+#define declare(a,it) __typeof(a) it=(a)
+#define FOR(it,a) for(declare(a.begin(),it);it!=a.end();++it)
+#define FORR(it,a) for(declare(a.rbegin(),it);it!=a.rend();++it)
+
+template<typename T,typename U> ostream& operator<< (ostream& out, const pair<T,U>& val){return out << "(" << val.F << ", " << val.S << ")";}
+template<class T> ostream& operator<< (ostream& out, const vector<T>& val){out << "{";rep(i,SZ(val)) out << (i?", ":"") << val[i];return out << "}";}
+typedef double FP;
+typedef complex<FP> pt;
+typedef pt P;
+typedef pair<pt,pt> line;
+namespace std{
+  bool operator<(const P&a,const P&b){
+    if(abs(a.real()-b.real())>EPS)
+      return a.real()<b.real();
+    return a.imag()<b.imag();
+  }
+}
+FP dot(P a,P b){return real(conj(a)*b);}
+FP crs(P a,P b){return imag(conj(a)*b);}
+P ortho(P a){return P(imag(a),-real(a));}
+P ortho(line a){return ortho(a.S-a.F);}
+P crspt(P a,P b,P c,P d){b-=a,d-=c;return a+b*crs(d,c-a)/crs(d,b);}
+P crspt(line a,line b){return crspt(a.F,a.S,b.F,b.S);}
+bool onl(P a1,P a2,P b){return abs(b-a1)+abs(b-a2)<abs(a1-a2)+EPS;}
+bool onl(line a,P b){return onl(a.F,a.S,b);}
+bool iscrs(line a,line b){P c=crspt(a,b);return onl(a,c)&&onl(b,c);}
+void pkuassert(bool t){t=1/t;};
+int dx[]={0,1,0,-1,1,1,-1,-1};
+int dy[]={1,0,-1,0,-1,1,1,-1};
+enum{TOP,BTM,LFT,RGT,FRT,BCK};
+int dxdy2ce[]={RGT,FRT,LFT,BCK};
+int s2i(string& a){stringstream ss(a);int r;ss>>r;return r;}
+template<class T> T shift(T a,int b,int c,int d,int e){
+  __typeof(a[0])t=a[b];
+  a[b]=a[c];a[c]=a[d];a[d]=a[e];a[e]=t;return a;}
+template<class T> T rgt(T a){return shift(a,TOP,LFT,BTM,RGT);}
+template<class T> T lft(T a){return shift(a,TOP,RGT,BTM,LFT);}
+template<class T> T frt(T a){return shift(a,TOP,BCK,BTM,FRT);}
+template<class T> T bck(T a){return shift(a,TOP,FRT,BTM,BCK);}
+line mkl(P a,P v){return line(a,a+v);}
+FP lpdist(line a,P b){return abs(b-crspt(a,mkl(b,ortho(a))));}
+FP spdist(line a,P b){
+  P c(crspt(a,mkl(b,ortho(a))));
+  return onl(a,c)?abs(b-c):min(abs(a.F-b),abs(a.S-b));
+}
+FP ssdist(line a,line b){
+  return
+    iscrs(a,b)?0.:
+    min4(spdist(a,b.F),spdist(a,b.S),
+         spdist(b,a.F),spdist(b,a.S));
+}
+
+
+#define all(c) (c).begin(), (c).end()
+#define iter(c) __typeof((c).begin())
+#define cpresent(c, e) (find(all(c), (e)) != (c).end())
+#define tr(c, i) for (iter(c) i = (c).begin(); i != (c).end(); ++i)
+
+
+void count_buckets(const int *s, int n, int k, bool end, int *b) {
+  for (int i = 0; i <= k; ++i) b[i] = 0;
+  for (int i = 0; i < n; ++i) ++b[s[i]];
+  int c = 0;
+  for (int i = 0; i <= k; ++i) {
+    c += b[i];
+    b[i] = end ? c : c - b[i];
+  }
+}
+
+void induce_sa(const int *s, int n, int k, const bool *t, int *sa, int *b) {
+  // Induce L-type suffixes
+  count_buckets(s, n, k, false, b);
+  for (int i = 0; i < n; ++i) {
+    int j = sa[i] - 1;
+    if (j >= 0 && !t[j]) sa[b[s[j]]++] = j;
+  }
+  // Induce S-type suffixes
+  count_buckets(s, n, k, true, b);
+  for (int i = n - 1; i >= 0; --i) {
+    int j = sa[i] - 1;
+    if (j >= 0 && t[j]) sa[--b[s[j]]] = j;
+  }
+}
+
+bool is_lms(int i, const bool *t) {
+  return i > 0 && t[i] && !t[i - 1];
+}
+
+void construct_sa(const int *s, int n, int k, int *sa) {
+  bool *t = new bool[n];
+  t[n - 1] = true;
+  t[n - 2] = false;
+  for (int i = n - 3; i >= 0; --i) {
+    t[i] = s[i] < s[i + 1] || (s[i] == s[i + 1] && t[i + 1]);
+  }
+
+  // Stage 1: Sort the LMS-substrings & generate the sub-problem
+  int *b = new int[k + 10];
+  count_buckets(s, n, k, true, b);
+  for (int i = 0; i < n; ++i) sa[i] = -1;
+  for (int i = 1; i < n; ++i) if (is_lms(i, t)) sa[--b[s[i]]] = i;
+  induce_sa(s, n, k, t, sa, b);
+
+  int n1 = 0;
+  for (int i = 0; i < n; ++i) if (is_lms(sa[i], t)) sa[n1++] = sa[i];
+  for (int i = n1; i < n; ++i) sa[i] = -1;
+  int k1 = 0, prv = -1;
+  for (int i = 0; i < n1; ++i) {
+    int crr = sa[i];
+    for (int j = 0; ; ++j) {
+      if (prv == -1 || s[crr + j] != s[prv + j] || t[crr + j] != t[prv + j]) {
+        ++k1;
+        break;
+      }
+      else if (j > 0 && (is_lms(crr + j, t) || is_lms(prv + j, t))) break;
+    }
+    sa[n1 + crr / 2] = k1 - 1;
+    prv = crr;
+  }
+  for (int i = n - 1, j = n - 1; i >= n1; --i) {
+    if (sa[i] >= 0) sa[j--] = sa[i];
+  }
+
+  // Stage 2: Recurse and solve the sub-problem
+  int *sa1 = sa, *s1 = sa + n - n1;
+  if (k1 < n1) {
+    construct_sa(s1, n1, k1, sa1);
+  } else {
+    for (int i = 0; i < n1; ++i) sa1[s1[i]] = i;
+  }
+
+  // Stage 3: Induced-sort and construct the SA
+  count_buckets(s, n, k, true, b);
+  for (int i = 1, j = 0; i < n; ++i) {
+    if (is_lms(i, t)) s1[j++] = i;
+  }
+  for (int i = 0; i < n1; ++i) sa[i] = s1[sa1[i]];
+  for (int i = n1; i < n; ++i) sa[i] = -1;
+  for (int i = n1 - 1; i >= 0; --i) {
+    int j = sa[i];
+    sa[i] = -1;
+    sa[--b[s[j]]] = j;
+  }
+  induce_sa(s, n, k, t, sa, b);
+
+  delete [] t;
+  delete [] b;
+}
+
+void construct_sa(const unsigned char *s, int *sa) {
+  int n = strlen((const char*)s);
+  int *si = new int[n + 1];
+  for (int i = 0; i <= n; ++i) si[i] = s[i];
+  construct_sa(si, n + 1, 255, sa);
+  delete[] si;
+}
+
+void construct_lcp(const char *s, int n, int *sa, int *lcp) {
+  static int b[2000010];
+
+  int h = 0;
+  for (int i = 0; i <= n; i++) b[sa[i]] = i;
+  for (int i = 0; i <= n; i++) {
+    if (b[i]) {
+      for (int j = sa[b[i] - 1]; j + h < n && i + h < n && s[j + h] == s[i + h]; h++);
+      lcp[b[i]] = h;
+    }
+    else lcp[b[i]] = -1;
+    if (h > 0) h--;
+  }
+}
+
+
+string s,t1,t2;
+
+ll shash[310000];
+ll p[310000];
+
+ll gethash(int s,int len,ll*ha,ll*p){
+  return ha[s+len] - ha[s]*p[len];
+}
+
+void makehash(const string&s,ll*ha,ll*p,int h){
+  p[0] = 1;
+  rep(i,SZ(s)) ha[i+1] = ha[i]*h + s[i];
+  rep(i,SZ(s)) p[i+1] = p[i] * h;
+}
+
+int sum[310000];
+int sa[310000];
+int lcp[310000];
+
+ll solve(){
+  ll ans = 0;
+  
+  construct_sa((const unsigned char*)s.c_str(),sa);
+  construct_lcp(s.c_str(),SZ(s),sa,lcp);
+
+  // for(int i=0;i<=SZ(s);++i)
+  //   cout << s.substr(sa[i]) << endl;
+  //rep(i,SZ(s)) cout << lcp[i] << endl;
+  rep(i,SZ(s))
+    lcp[i]=lcp[i+1];
+  //cout << lcp[i] << endl;
+
+  ll ha = rand()*2+1;
+  ll ha2 = rand()*2+1;
+  while(ha<31) ha = rand()*2+1;
+  while(ha2<31) ha2 = rand()*2+1;
+  
+  makehash(s,shash,p,ha);
+
+  ll t1ha = 0;
+  ll t2ha = 0;
+
+  rep(i,SZ(t1)) t1ha=t1ha*ha+t1[i];
+  rep(i,SZ(t2)) t2ha=t2ha*ha+t2[i];
+  
+  rep(i,SZ(s)+10) sum[i] = 0;
+  
+  for(int i=SZ(s)-SZ(t2);i>=0;--i)
+    sum[i] = sum[i+1] +
+      (t2ha == gethash(i,SZ(t2),shash,p));
+  
+  bool nf = 0;
+  
+  rep(i,SZ(s)+1){
+    if(sa[i]+max(SZ(t1),SZ(t2)) > SZ(s)) continue;
+    if(t1ha != gethash(sa[i],SZ(t1),shash,p))
+      continue;
+    
+    int sidx = sa[i]+max(0,SZ(t1)-SZ(t2));
+    if(nf)
+      sidx = max(sidx,sa[i]+lcp[i-1]-SZ(t2)+1);
+    
+
+    nf |= sum[sidx];
+    ans += sum[sidx];
+  }
+  
+  //cout << ans << endl;
+  return ans;
+}
+
+string gens(int n){
+  string ret;
+  rep(i,n) ret += '0'+rand()%2;
+  return ret;
+}
+
+int main(int argc, char *argv[])
+{
+  ios::sync_with_stdio(0);
+  cin.tie(0);
+  srand(time(NULL));
+
+
+  // cout << solve() << endl;
+  // cout << gutyoku() << endl;
+  // return 0;
+  
+  // rep(i,1000){
+  //   s=gens(10);
+  //   t1=gens(5);
+  //   t2=gens(5);
+  //   if(gutyoku() != solve()){
+  //     cout << s << ' ' << t1 << ' ' << t2 << endl;
+  //     return 0;
+  //   }
+  // }
+  
+  while(cin >> s >> t1 >> t2) cout << solve() << endl;
+  return 0;
+}

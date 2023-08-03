@@ -1,0 +1,239 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef double ld;
+typedef pair<ll,ll> pl;
+
+#define sl(x) scanf("%lld",&x)
+#define pl(x) printf("%lld\n",x)
+#define sf(x) sort(x.begin(),x.end(),func)
+#define s(x) sort(x.begin(),x.end())
+#define all(v) v.begin(),v.end()
+#define rs(v) { s(v) ; r(v) ; }
+#define r(v) {reverse(all(v));}
+#define pb push_back
+#define mp make_pair
+#define F first
+#define S second
+#define f(i,n) for(int i=0;i<n;i++)
+#define rep(i,a,b) for(int i=a;i<=b;i++)
+
+const ll mod = 1000000007;
+const ll inf = 1e16;
+const ll ninf = LLONG_MIN;
+const ld eps = 1e-12;
+const ll N = 1000005;
+const ll LOGN = 19;
+const ld PI = 3.14159265358979323846;
+ll C = 257;
+ll n, q;
+string s, s2;
+ll p[N], st[4 * N], st2[4 * N];
+ll power(ll a,ll b)
+{
+    ll x=1,y=a;
+    while(b>0)
+    {
+        if(b%2==1)
+        {
+            x=(x*y);
+            if(x>mod) x%=mod;
+        }
+        y = (y*y);
+        if(y>mod) y%=mod;
+        b /= 2;
+    }
+    return x;
+}
+ll add(ll a, ll b)
+{
+    a = a + b;
+    if(a >= mod) a -= mod;
+    if(a < 0) a += mod;
+    return a;
+}
+void build(ll id, ll l, ll r)
+{
+    if(l == r)
+    {
+        st[id] = (s[l] * p[l]) % mod;
+        return;
+    }
+    ll mid = (l + r) / 2;
+    build(id * 2, l, mid);
+    build(id * 2 + 1, mid + 1, r);
+    st[id] = add(st[id * 2], st[id * 2 + 1]);
+}
+ll query(ll id, ll L, ll R, ll l, ll r)
+{
+    if(l > R || r < L || L > R)
+    {
+        return 0;
+    }
+    if(l <= L && R <= r)
+    {
+        return st[id];
+    }
+    ll mid = (L + R) / 2;
+    ll q1 = query(id * 2, L, mid, l, r);
+    ll q2 = query(id * 2 + 1, mid + 1, R, l, r);
+    return add(q1, q2);
+}
+void update(ll id, ll l, ll r, ll i, char x)
+{
+    if(i > r || i < l || l > r)
+    {
+        return;
+    }
+    if(l == i && i == r)
+    {
+        ll a = (x * p[l]) % mod;
+        st[id] = a;
+        return;
+    }
+    ll mid = (l + r) / 2;
+    update(id * 2, l, mid, i, x);
+    update(id * 2 + 1, mid + 1, r, i, x);
+    st[id] = add(st[id * 2], st[id * 2 + 1]);
+}
+ll get(ll l, ll r)
+{
+    ll hl = query(1, 0, n - 1, l, n - 1);
+    ll hr = (r + 1 < n ? query(1, 0, n - 1, r + 1, n - 1) : 0);
+    ll ret = add(hr, - hl);
+    ret = (ret * power(p[l], mod - 2)) % mod;
+    return ret;
+}
+void build2(ll id, ll l, ll r)
+{
+    if(l == r)
+    {
+        st2[id] = (s2[l] * p[l]) % mod;
+        return;
+    }
+    ll mid = (l + r) / 2;
+    build2(id * 2, l, mid);
+    build2(id * 2 + 1, mid + 1, r);
+    st2[id] = add(st2[id * 2], st2[id * 2 + 1]);
+}
+ll query2(ll id, ll L, ll R, ll l, ll r)
+{
+    if(l > R || r < L || L > R)
+    {
+        return 0;
+    }
+    if(l <= L && R <= r)
+    {
+        return st2[id];
+    }
+    ll mid = (L + R) / 2;
+    ll q1 = query2(id * 2, L, mid, l, r);
+    ll q2 = query2(id * 2 + 1, mid + 1, R, l, r);
+    return add(q1, q2);
+}
+void update2(ll id, ll l, ll r, ll i, char x)
+{
+    if(i > r || i < l || l > r)
+    {
+        return;
+    }
+    if(l == i && i == r)
+    {
+        ll a = (x * p[l]) % mod;
+        st2[id] = a;
+        return;
+    }
+    ll mid = (l + r) / 2;
+    update2(id * 2, l, mid, i, x);
+    update2(id * 2 + 1, mid + 1, r, i, x);
+    st2[id] = add(st2[id * 2], st2[id * 2 + 1]);
+}
+ll get2(ll l, ll r)
+{
+    ll hl = query2(1, 0, n - 1, l, n - 1);
+    ll hr = (r + 1 < n ? query2(1, 0, n - 1, r + 1, n - 1) : 0);
+    ll ret = add(hr, - hl);
+    ret = (ret * power(p[l], mod - 2)) % mod;
+    return ret;
+}
+ll rev(ll in)
+{
+    return n - 1 - in;
+}
+ll h[N];
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    cin >> n >> q >> s;
+    p[0] = 1;
+    s2 = s;
+    r(s2);
+    for(ll i = n - 1; i >= 0; i--)
+    {
+        h[i] = (h[i + 1] * C + s[i]) % mod;
+    }
+    for(ll i = 1; i <= n; i++)
+    {
+        p[i] = (p[i - 1] * C) % mod;
+    }
+    build(1, 0, n - 1);
+    build2(1, 0, n - 1);
+    while(q--)
+    {
+        ll type;
+        cin >> type;
+        if(type == 0)
+        {
+            ll i;
+            char x;
+            cin >> i >> x;
+            i--;
+            update(1, 0, n - 1, i, x);
+            s[i] = x;
+            i = rev(i);
+            update2(1, 0, n - 1, i, x);
+            s2[i] = x;
+        }
+        else
+        {
+            ll l, r;
+            cin >> l >> r;
+            l--;
+            r--;
+            if(l == r)
+            {
+                cout << "Yes\n";
+                continue;
+            }
+            ll mid = (l + r) / 2;
+            if((r - l + 1) % 2)
+            {
+                ll h1 = get(l, mid - 1);
+                ll h2 = get2(rev(r), rev(mid + 1));
+                if(h1 == h2)
+                {
+                    cout << "Yes\n";
+                }
+                else
+                {
+                    cout << "No\n";
+                }
+            }
+            else
+            {
+                ll h1 = get(l, mid);
+                ll h2 = get2(rev(r), rev(mid + 1));
+                if(h1 == h2)
+                {
+                    cout << "Yes\n";
+                }
+                else
+                {
+                    cout << "No\n";
+                }
+            }
+        }
+    }
+    return 0;
+}

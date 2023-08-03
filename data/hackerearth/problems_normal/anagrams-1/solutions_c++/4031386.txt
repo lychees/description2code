@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+map<char, int> freq;
+bool isAnagram(string s1, string s2) {
+	for(int i = 0; i < s1.size(); i++) {
+		if(isalpha(s1[i])) {
+			freq[tolower(s1[i])]++;
+		}
+	}
+	for(int i = 0; i < s2.size(); i++) {
+		if(isalpha(s2[i])) {
+			freq[tolower(s2[i])]--;
+		}
+	}
+	bool flag = false;
+	map<char, int>::iterator it = freq.begin();
+	while(it != freq.end()) {
+		if(it->second != 0) {
+			flag = true;
+			break;
+		}
+		it++;
+	}
+	if(flag)
+		return false;
+	else 
+		return true;
+}
+int checkPalinPossible(){
+	int res = 0, oddC = 0;
+	map<char, int>::iterator it = freq.begin();
+	while(it != freq.end()) {
+		if((abs(it->second)%2) != 0) {
+			oddC++;
+		}
+		res += abs(it->second);
+		it++;
+	}
+	if((res%2 == 0 and oddC == 0) or (res%2 == 1 and oddC == 1))
+		return res;
+	else
+		return -1;
+}
+string minPalindrome(int palLen) {
+	string res("", palLen);
+	map<char, int>::iterator it = freq.begin();
+	int i = 0;
+	while(it != freq.end()) {
+		if(abs(it->second) != 0) {
+			if(abs(it->second)%2 == 1) {
+				res[palLen/2] = it->first;
+				if(abs(it->second) != 1) {
+					freq[it->first] -= 1;
+					continue;
+				}
+			} else {
+				int j = 0, k  = 0;
+				for(j = 1, k = i; j <= abs(it->second)/2; j++, k++) {
+					res[k] = it->first;
+					res[(palLen-k)-1] = it->first;
+				}
+				i = k;
+			}
+			it++;	
+		} else{
+			it++;
+		}
+	}
+	return res;
+}
+int main()
+{
+	int T;cin>>T;
+	cin.ignore();
+	while(T--) {
+		string s1, s2;
+		getline(cin, s1);
+		getline(cin, s2);
+		if(isAnagram(s1, s2)) {
+			cout<<"YES"<<endl;
+			freq.clear();
+			continue;
+		} else {
+			int palLen = checkPalinPossible();
+			if(palLen == -1){
+				cout<<"NO LUCK"<<endl;
+			} else {
+				cout<<minPalindrome(palLen)<<endl;
+			}
+			freq.clear();
+		}
+	}
+    return 0;
+}

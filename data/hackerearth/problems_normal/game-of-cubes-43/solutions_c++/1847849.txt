@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("C.inp","r",stdin)
+#define OUTPUT freopen("C.out","w",stdout)
+#define FOR(i,l,r) for(auto i=l;i<=r;i++)
+#define REP(i,l,r) for(auto i=l;i<r;i++)
+#define FORD(i,l,r) for(auto i=l;i>=r;i--)
+#define REPD(i,l,r) for(auto i=l;i>r;i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+
+const int inf=1e9;
+const int MOD=1e9+7;
+const int N=1e2+5;
+const int dx[4]={0,0,-1,1},dy[4]={1,-1,0,0};
+
+int n,m,k,x,y,a[N][N],h[N][N],g[N];
+char s[N];
+ii q[N*N];
+bool inside(int x,int y){
+    return (x>0&&x<=n&&y>0&&y<=m);
+}
+void BFS(int x,int y){
+    //memset(h,0,sizeof(h));
+    memset(g,0,sizeof(g));
+//    printf("%d %d\n",x,y);
+    int top=1,bot=1;
+    q[1]=ii(x,y);
+    h[x][y]=1;
+    while (top<=bot){
+        int cx=q[top].X,cy=q[top].Y;
+        //printf("%d %d\n",cx,cy);
+        top++;
+        g[cy]=max(g[cy],cx);
+        FOR(i,0,3){
+            int nx=cx+dx[i],ny=cy+dy[i];
+            if (inside(nx,ny)&&a[nx][ny]&&!h[nx][ny]){
+                h[nx][ny]=1;
+                q[++bot]=(ii(nx,ny));
+            }
+        }
+    }
+    int down=inf;
+//    FOR(i,1,m) cout<<g[i]<<" \n"[i==m];
+    FOR(i,1,m) if (g[i]){
+        int j=g[i]+1;
+        while (j<=n&&!a[j][i]) j++;
+        down=min(down,j-g[i]-1);
+    }
+//    cout<<down<<'\n';
+    FOR(i,1,bot) a[q[i].X][q[i].Y]--,a[q[i].X+down][q[i].Y]++;
+}
+int main(){
+    scanf("%d%d",&n,&m);
+    FOR(i,1,n){
+        scanf("\n%s",s);
+        FOR(j,1,m) a[i][j]=(s[j-1]=='x');
+    }
+//    FOR(i,1,n){
+//        FOR(j,1,m) printf("%d ",a[i][j]);ENDL;
+//    }
+    scanf("%d",&k);
+    FOR(i,1,k){
+        scanf("%d",&x);
+        x=n-x+1;
+        if (i%2){
+            y=1;
+            while (y<=m&&!a[x][y]) y++;
+            if (y>m) continue;
+        }else{
+            y=m;
+            while (y&&!a[x][y]) y--;
+            if (y==0) continue;
+        }
+        memset(h,0,sizeof(h));
+        a[x][y]=0;
+        if (a[x-1][y]) BFS(x-1,y);
+        if (a[x][y-1]&&!h[x][y-1]) BFS(x,y-1);
+        if (a[x][y+1]&&!h[x][y+1]) BFS(x,y+1);
+        if (a[x+1][y]&&!h[x+1][y]) BFS(x+1,y);
+    }
+    FOR(i,1,n){
+        FOR(j,1,m) printf("%c",(a[i][j])?'x':'.');
+        ENDL;
+    }
+}

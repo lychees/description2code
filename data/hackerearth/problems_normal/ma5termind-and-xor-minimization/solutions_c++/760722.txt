@@ -1,0 +1,121 @@
+#include<iostream>
+#include<vector>
+#include<map>
+using namespace std;
+
+#define MOD 1000000007
+struct node
+{
+	node *character[2];
+	node *parent;
+	long long value;
+	
+	node(){
+		value=0;
+	}
+};
+void number_to_string(int number,char *number_string)
+{
+	int k=29;
+	while(number)
+	{
+		number_string[k]='0'+(number&1);
+		number>>=1;
+		k--;
+	}
+	while(k>=0)
+		number_string[k--]='0';
+}
+
+void insert_trie(node *root,int number,int count)
+{
+	char number_string[30];
+	number_to_string(number,number_string);
+	node *trie=root;
+	for(int i=0;i<30;i++)
+	{
+		if(!trie->character[number_string[i]-'0'])
+		{
+			trie->character[number_string[i]-'0']=new node;
+			trie->character[number_string[i]-'0']->parent=trie;
+			trie->character[number_string[i]-'0']->character[0]=trie->character[number_string[i]-'0']->character[1]=NULL;
+		}
+		trie=trie->character[number_string[i]-'0'];
+		if(i==29){
+			trie->value+=count;
+			trie->value%=MOD;
+		}
+	}
+}
+
+pair<int,long long> get_min(node *root,int number)
+{
+	char number_string[30];
+	number_to_string(number,number_string);
+	node *trie=root;
+	int result=0;
+	for(int i=0;i<30;i++)
+	{
+		result*=2;
+		if(trie->character[(number_string[i]-'0')]){
+			//cout<<"1Going towards "<<(number_string[i]-'0')<<endl;
+			result+=((number_string[i]-'0'));
+			trie=trie->character[(number_string[i]-'0')];
+		}
+		else{
+			//cout<<"2Going towards "<<((number_string[i]-'0')^1)<<endl;
+			result+=((number_string[i]-'0')^1);
+			trie=trie->character[(number_string[i]-'0')^1];
+		}
+	}
+	return make_pair(result,trie->value);
+}
+#include<stdio.h>
+
+int main()
+{
+//	freopen("test.txt","r",stdin);
+	int n;
+	scanf("%d",&n);
+	vector<int> number(n);
+	int sum=0;
+	for(int i=0;i<n;i++){
+		scanf("%d",&number[i]);
+		sum+=number[i];
+	}
+		
+	
+	vector<long long> array(sum+1);
+	vector<pair<int,int> > newElements;
+	array[0]=1;	
+	for(int i=0;i<number.size();i++){
+		newElements.clear();
+		for(int j=0;j<array.size();j++)
+			if(array[j]&&j+number[i]<array.size())
+					newElements.push_back(make_pair(j+number[i],array[j]));
+		
+		for(int j=0;j<newElements.size();j++){
+			array[newElements[j].first]+=newElements[j].second;
+			array[newElements[j].first]%=MOD;
+		}
+			
+	}
+	
+	node *trie=new node;
+	trie->parent=trie->character[0]=trie->character[1]=NULL;
+
+	for(int i=1;i<array.size();i++){
+		if(array[i])
+			insert_trie(trie,i,array[i]);
+	}
+		
+	
+	int q;
+	scanf("%d",&q);
+	while(q--){
+		int n;
+		scanf("%d",&n);
+		pair<int,long long> ans=get_min(trie,n);
+		printf("%d %lld\n",ans.first,ans.second);
+	}
+}

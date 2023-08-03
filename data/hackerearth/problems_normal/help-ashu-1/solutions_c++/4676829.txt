@@ -1,0 +1,93 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef int ll;
+ll power(ll x, ll y){
+    if( y == 0)
+        return 1;
+    ll temp = power(x,y/2);
+    if(y%2)
+        return temp*temp*x;
+    return temp*temp;
+}
+void BuildSegTree(ll MyVec[], int Tree[],ll start_interval, ll end_interval,ll no_node){
+    if(start_interval == end_interval){
+        if(MyVec[start_interval]%2 == 0){
+            Tree[no_node] = 1;
+        }
+        else{
+            Tree[no_node] = 0;
+        }
+        return;
+    }
+    ll mid = (start_interval+end_interval)/2;
+    BuildSegTree(MyVec,Tree,start_interval,mid,2*no_node+1);
+    BuildSegTree(MyVec,Tree,mid+1,end_interval,2*no_node+2);
+
+    Tree[no_node] = Tree[2*no_node+1] + Tree[2*no_node+2];
+}
+
+ll Query_Tree(ll Tree[], ll l, ll r, ll start_interval, ll end_interval,ll no_node){
+    if(end_interval < l || r < start_interval)
+        return 0;
+    //cout << "Str " << start_interval << " " <<  "end " << end_interval << l << " " << r  << " " << endl;
+    if(l<=start_interval && end_interval<=r){
+        return Tree[no_node];
+    }
+    ll mid = (start_interval+end_interval)/2;
+    ll left = Query_Tree(Tree,l,r,start_interval,mid,2*no_node+1);
+    ll right = Query_Tree(Tree,l,r,mid+1,end_interval,2*no_node+2);
+
+    return left+right;
+}
+
+void Update_Tree(ll Tree[], ll idx, ll val, ll start_interval, ll end_interval, ll no_node){
+    if(start_interval == end_interval){
+        if(Tree[no_node] == 1 && val%2 == 1){
+            Tree[no_node] = 0;
+        }
+        else if(Tree[no_node] == 0 && val%2 == 0){
+            Tree[no_node] = 1;
+         }
+        return;
+    }
+    ll mid = (start_interval+end_interval)/2;
+    if(idx <= mid){
+        Update_Tree(Tree, idx, val, start_interval,mid, 2*no_node+1);
+    }
+    else{
+        Update_Tree(Tree, idx, val, mid+1, end_interval, 2*no_node+2);
+    }
+    Tree[no_node] = Tree[2*no_node+1]+ Tree[2*no_node+2];
+}
+
+int main(){
+    ll N,Q,num,i;
+    scanf("%d",&N);
+    int MyVec[N];
+    for(i=0; i<N; i++){
+        scanf("%d",&MyVec[i]);
+    }
+    //ll memory = 2*power(2,ceil(log2(N)));
+    int SegTree[300000];
+    BuildSegTree(MyVec,SegTree,0,N-1,0);
+    //for(i=0; i<13; i++)
+      //  cout << i << " " << SegTree[i].first << " " << SegTree[i].second << endl;
+    scanf("%d",&Q);
+    while(Q--){
+        ll opt,x,y;
+        scanf("%d",&opt);
+        if(opt == 0){
+            scanf("%d%d",&x,&y);
+            Update_Tree(SegTree,x-1,y,0,N-1,0);
+        }
+        else if(opt == 1){
+            scanf("%d%d",&x,&y);
+            printf("%d\n",Query_Tree(SegTree,x-1,y-1,0,N-1,0));
+        }
+        else{
+            scanf("%d%d",&x,&y);
+            printf("%d\n",y-x+1-Query_Tree(SegTree,x-1,y-1,0,N-1,0));
+        }
+    }
+    return 0;
+}

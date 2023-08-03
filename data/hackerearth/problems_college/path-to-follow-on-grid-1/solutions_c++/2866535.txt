@@ -1,0 +1,157 @@
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+
+#include <vector>
+#include <queue>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <iostream>
+#include <string>
+using namespace std;
+
+#define REP(A, B) for (int A = 0; A < B; ++A)
+#define FOR(A, B, C) for (int A = B; A < C; ++A)
+#define SZ(A) (A.size())
+#define PB push_back
+#define ALL(X) X.begin(), X.end()
+typedef long long LL;
+typedef vector<int> VI;
+typedef vector<long long> VLL;
+
+int MOD = 1000000007;
+
+void cal(const VI& Xs, const VI& Ds, LL sums[][333], const int M) {
+  REP(xi, SZ(Xs)) {
+    const int X = Xs[xi];
+    const int D = Ds[xi];
+
+    LL dp[111][333] = {0};
+    dp[X][0] = 1;
+    FOR(j, 1, M+1) {
+      FOR(i, 1, D+1) {
+        dp[i][j] += dp[i-1][j-1] + dp[i+1][j-1];
+        sums[xi][j] += dp[i][j];
+        dp[i][j] %= MOD;
+        sums[xi][j] %= MOD;
+      }
+    }
+    sums[xi][0] = 1;
+  }
+}
+
+VLL getMelements(const LL a[], const int M) {
+  VLL ret;
+  REP(i, M+1) ret.PB(a[i]);
+  return ret;
+}
+
+VI primes;
+void calPrimes() {
+  primes.clear();
+  FOR(i, 2, 303) {
+    bool isPrime = true;
+    FOR(j, 2, i) {
+      if (i % j == 0) isPrime = false;
+    }
+    if (isPrime) primes.PB(i);
+  }
+}
+
+/**
+  Remember to use mod in calculation.
+*/
+class Combination {
+  VI ans;
+
+public:
+  Combination(int n) {
+    VI cntP(SZ(primes), 0);
+
+    ans.PB(1);
+    FOR(i, 1, n+1) {
+      int up = n - i + 1;
+      int down = i;
+
+      REP(j, SZ(primes)) {
+        int prime = primes[j];
+        while (up % prime == 0) {
+          cntP[j]++;
+          up /= prime;
+        }
+        while (down % prime == 0) {
+          cntP[j]--;
+          down /= prime;
+        }
+        if (up == 1 && down == 1) break;
+      }
+
+      LL product = 1;
+      REP(j, SZ(primes)) {
+        int prime = primes[j];
+        int cnt = cntP[j];
+        REP(k, cnt) {
+          product *= prime;
+          if (product >= MOD) product %= MOD;
+        }
+      }
+      ans.PB(product);
+    }
+  }
+
+  int get(int i) {
+    return ans[i];
+  }
+};
+
+VLL mix(const VLL& a, const VLL& b) {
+  int sz = SZ(a);
+  VLL c(sz);
+
+  REP(cntC, sz) {
+    Combination comb(cntC);
+    REP(fromA, cntC+1) {
+      int fromB = cntC - fromA;
+      LL ways = comb.get(fromA);
+
+      LL cntA = a[fromA];
+      LL cntB = b[fromB];
+      LL tot = (((ways * cntA) % MOD) * cntB) % MOD;
+      c[cntC] += tot;
+      c[cntC] %= MOD;
+    }
+  }
+
+  return c;
+}
+
+int main() {
+  bool db = false;
+  time_t start = clock();
+  calPrimes();
+
+  int T; cin >> T;
+  REP(t, T) {
+    int N, M; cin >> N >> M;
+    VI Xs(N), Ds(N);
+    REP(i, N) cin >> Xs[i];
+    REP(i, N) cin >> Ds[i];
+
+    LL sums[111][333] = {0};
+    cal(Xs, Ds, sums, M); // OK, we get SUMs here.
+
+    VLL ans = getMelements(sums[0], M);
+    FOR(i, 1, N) {
+      VLL cur = getMelements(sums[i], M);
+      ans = mix(ans, cur);
+    }
+    cout << ans[M] << endl;
+  }
+  time_t end = clock();
+  if (db)
+    cout << (end - start) << endl;
+
+  return 0;
+}
+

@@ -1,0 +1,101 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+#define max_value (ll)(1e18)
+#define mod (ll)(1e9 + 7)
+#define LN 16
+int dp[10001];
+ll cost[1001][1001];
+bool used[10001];
+vector<pair<int , int >> G[10001];
+vector<pair<int , pair<int , int >>> edges;
+int root(int node){
+    return dp[node] == node ? node : dp[node] = root(dp[node]);
+}
+int depth[10001];
+int pa[20][10001];
+void preprocess_lca(int N ){
+    for(int j = 1 ; j <= N ; ++j)
+        for(int i = 0 ; i <=15 ; ++i) pa[i][j] = -1;
+
+ 		for(int i=1; i<15; i++)
+			for(int j=0; j<N; j++)
+				if(pa[i-1][j] != -1)
+					pa[i][j] = pa[i-1][pa[i-1][j]];
+
+}
+
+int LCA(int u, int v) {
+	if(depth[u] < depth[v]) swap(u,v);
+	int diff = depth[u] - depth[v];
+	for(int i=0; i<15; i++) if( (diff>>i)&1 ) u = pa[i][u];
+	if(u == v) return u;
+	for(int i=14; i>=0; i--) if(pa[i][u] != pa[i][v]) {
+		u = pa[i][u];
+		v = pa[i][v];
+	}
+	return pa[0][u];
+}/*
+void dfs(int node, int prev, int _depth , ll curr){
+	if(used[node]) return ;
+	used[node] =  true ;
+	pa[0][node] = prev;
+	depth[node] = _depth;
+	cost[node] = curr;
+	for(int i = 0; i<G[node].size(); i++)
+		dfs(G[node][i].second, node , _depth+1 , curr + G[node][i].first);
+}
+
+ll query(int A , int B ){
+    return  (cost[A] + cost[B] - 2*cost[LCA(A, B)]);
+}
+*/
+void Dfs(int S , int node , ll curr){
+	if(used[node]) return ;
+	used[node] =  true ;
+	cost[S][node] = curr;
+	for(int i = 0; i<G[node].size(); i++)
+		Dfs( S , G[node][i].second ,  curr + G[node][i].first);
+}
+
+int main(){
+    cin.sync_with_stdio(false);
+    int t;
+    cin>> t ;
+    int C = 1;
+    while(t--){
+        cout << "Case: " <<C++<<endl;
+        int N , M  , Q;
+        cin >> N  >> M >> Q;
+        for(int i = 1;i<= N ;i++) dp[i] =i ;
+        for(int i = 1;i<= M ;i++){
+            int X , Y  , W;
+            cin >> X >> Y >> W;
+            edges.push_back({W , {X , Y}});
+        }
+        sort(edges.begin() , edges.end());
+        for(int i =0 ;i< edges.size() ;i++){
+            int X = edges[i].second .first ;
+            int Y = edges[i].second .second ;
+            int W = edges[i].first ;
+            int uu = root(X);
+            int vv = root(Y);
+            if(uu != vv){
+                dp[uu] = vv;
+                G[X].push_back({W , Y});
+                G[Y].push_back({W , X});
+            }
+        }
+        for(int i = 1;i<= N ;i++){
+            for(int i = 1;i<= N ;i++) used[i] = false;
+            Dfs(i  , i , 0);
+        }
+        while(Q--){
+            int A , B ;
+            cin >> A >> B ;
+            cout << cost[A][B]<<endl;
+        }
+        for(int i = 1;i<= N ;i++) G[i].clear();
+        edges.clear();
+    }
+}

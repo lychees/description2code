@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+
+#define all(x) (x).begin(), (x).end()
+#define li long long
+#define ui unsigned int
+
+using namespace std;
+
+inline int nxt(){
+	int n;
+	scanf("%d", &n);
+	return n;
+}
+
+void solve(){
+	int n = nxt(), m = nxt(), k = nxt();
+	string s, t;
+	cin >> s;
+	cin >> t;
+	vector<vector<vector<int>>> dp(m + 1, vector<vector<int>>(m + 1, vector<int>(n + 1, 1e3)));
+	vector<vector<int>> to(n + 1, vector<int>(26, 0));
+	for (int i = 0; i <= n; i++){
+		string q = s.substr(0, i) + ' ';
+		for (char c = 'a'; c <= 'z'; c++){
+			q.back() = c;
+			int index = 0;
+			while (index < q.length()){
+				int ij = 0;
+				while (index + ij < q.length() && ij < s.length() && q[index + ij] == s[ij])
+					ij++;
+				if (index + ij == q.length())
+					break;
+				else
+					index++;
+			}
+			to[i][c - 'a'] = q.length() - index;
+		}
+	}
+
+	// for (int i = 0; i <= n; i++){
+	// 	for (int j = 0; j < 3; j++){
+	// 		cerr << s.substr(0, i) + " + " << (char)('a' + j) << " -> " << s.substr(0, to[i][j]) << "\n";
+	// 	}
+	// }
+
+	dp[0][0][0] = 0;
+
+	for (int i = 0; i < m; i++){	// номер символа
+		for (int j = 0; j <= i; j++){	// сколько раз встретилось
+			for (int ij = 0; ij <= n; ij++){	// наибольший префикс
+				if (dp[i][j][ij] > k)
+					continue;
+				for (char c = 'a'; c <= 'z'; c++){
+					int d = abs((int)t[i] - c);
+					if (d > 13)
+						d = 26 - d;
+					int nw = (to[ij][c - 'a'] == n) ? j + 1 : j;
+					// if (i == 1 && j == 0 && ij == 1 && c == 'b'){
+					// 	cerr << d << "\n";						
+					// }
+					dp[i + 1][nw][to[ij][c - 'a']] = min(dp[i + 1][nw][to[ij][c - 'a']], dp[i][j][ij] + d);
+				}
+			}
+		}
+	}
+	// cerr << dp[2][0][2] << "\n";
+	int j = m;
+	while (j > 0 && *min_element(all(dp[m][j])) > k)
+		j--;
+	cout << j << "\n";
+}
+
+int main(){
+
+	int t = 1;//nxt();
+	while (t--){
+		solve();
+	}
+
+	return 0;
+}

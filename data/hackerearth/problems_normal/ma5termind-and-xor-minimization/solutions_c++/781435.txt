@@ -1,0 +1,177 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define scan(n) scanf("%d",&n)
+#define MOD 1000000007
+vector<int> numbers,finalarray;
+vector< vector<int> > binaryvect(100001);
+
+vector<int> sumpossible(100001,0);
+
+int temp[100001];
+
+#define ALPHA 2
+#define BIT 21
+long long pow2[BIT];
+
+void initpow()
+{
+    pow2[BIT-1]=1;
+    for(int i = BIT-2; i>=0; i--)
+        pow2[i] = pow2[i+1]*2;
+}
+
+class Trie
+{
+    int leaf;
+    Trie* next[ALPHA];
+public:
+    Trie()
+    {
+        leaf = 0;
+        for(int i = 0 ; i<ALPHA; i++)
+            next[i] = NULL;
+    }
+
+    void insertTrie( Trie *node, vector <int> num ,int numint)
+    {
+        for(int i = 0 ; i < num.size() ; i++)
+        {
+            if( node -> next[ num[ i ] ] )
+            {
+                node = node -> next[ num[ i ] ];
+            }
+            else
+            {
+                node -> next[ num[ i ] ] = new Trie;
+                node = node -> next[ num[ i ] ];
+            }
+        }
+        node -> leaf = numint;
+    }
+
+    int query( Trie * node, vector<int> num )
+    {
+        for(int i = 11; i < 32 ; i++)
+        {
+            if(node->next[num[i]])
+            {
+                node = node->next[num[i]];
+            }
+            else
+            {
+                node = node->next[!num[i]];
+            }
+        }
+
+        return node -> leaf;
+
+    }
+
+};
+
+
+
+void convert()
+{
+    for(int i = 1; i<= 100000; i++)
+    {   int temp = i;
+        while(temp)
+        {
+            binaryvect[i].push_back(temp%2);
+            temp/=2;
+        }
+
+        while(binaryvect[i].size() < 21)
+        {
+            binaryvect[i].push_back(0);
+        }
+
+        reverse(binaryvect[i].begin(),binaryvect[i].end());
+    }
+}
+
+vector<int> convert(int temp)
+{
+    vector<int> binary;
+    while(temp)
+    {
+        binary.push_back(temp%2);
+        temp/=2;
+    }
+
+    while(binary.size() < 32)
+    {
+        binary.push_back(0);
+    }
+
+    reverse(binary.begin(),binary.end());
+    return binary;
+}
+
+void getsumsequences(int n)
+{
+    for(int i = 0; i < n; i++)
+    {
+        for(int j = 1 ; j <= 100000 ; j++)
+            temp[j]=sumpossible[j];
+        temp[numbers[i]]++;
+
+        for(int j = 1 ; j <= 100000 ; j++)
+        {
+            if(sumpossible[ j ] > 0)
+            {
+                temp[ j + numbers[ i ] ] += sumpossible[ j ];
+                temp[ j + numbers[ i ] ] %= MOD;
+            }
+        }
+
+        for(int j = 1 ; j <= 100000 ; j++)
+            sumpossible[j] = temp[j];
+    }
+}
+#define gc getchar
+void scanint(int &x)
+{
+    register int c = gc();
+    x = 0;
+    for(;(c<48 || c>57);c = gc());
+    for(;c>47 && c<58;c = gc()) {x = (x<<1) + (x<<3) + c - 48;}
+}
+int main()
+{
+    initpow();
+    convert();
+    int n;
+    scanint(n);
+    numbers.resize(n);
+
+    for(int i = 0 ; i<n ; i++)
+    {
+        scanint(numbers[i]);
+    }
+
+    getsumsequences(n);
+    Trie root;
+
+    for(int i = 1 ; i<100001; i++)
+    {
+        if(sumpossible[i])
+        {
+            root.insertTrie(&root,binaryvect[i],i);
+        }
+    }
+
+    int q;
+    scanint(q);
+    while(q--)
+    {
+        int a;
+        scanint(a);
+        int ans = root.query(&root, convert(a));
+        printf("%d %d\n",ans,sumpossible[ans]%MOD);
+    }
+
+
+    return 0;
+}
+

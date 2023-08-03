@@ -1,0 +1,110 @@
+#include<iostream>
+
+using namespace std;
+
+char s[200001];
+pair<int, int> tree[2000001];
+int lazy[2000001];
+
+
+void build(int node, int start, int end){
+    if(start == end){
+        if(s[start] == '>'){
+            tree[node].first++;
+        }
+        else{
+            tree[node].second++;
+        }
+    }
+    else{
+        int mid = (start+end)/2;
+        build(node*2, start, mid);
+        build(node*2+1, mid+1, end);
+    	tree[node].first = tree[node*2].first + tree[node*2+1].first;
+    	tree[node].second = tree[node*2].second + tree[node*2+1].second;
+    }
+}
+
+void update(int node, int start, int end, int l, int r){
+    if((lazy[node]%2)){
+        int temp = tree[node].first;
+        tree[node].first = tree[node].second;
+        tree[node].second = temp;
+
+        if(start != end){
+            lazy[node*2] += lazy[node];
+            lazy[node*2+1] += lazy[node];
+        }
+        lazy[node] = 0;
+    }
+    if(start > end || start > r || end < l){
+        return;
+    }
+    if(l <= start && end <= r){
+        int temp = tree[node].first;
+        tree[node].first = tree[node].second;
+        tree[node].second = temp;
+
+        if(start != end){
+            lazy[node*2] ++;
+            lazy[node*2+1] ++;
+        }
+        return;
+    }
+    int mid = (start+end)/2;
+    update(node*2, start, mid, l, r);
+    update(node*2+1, mid+1, end, l, r);
+    tree[node].first = tree[node*2].first + tree[node*2+1].first;
+    tree[node].second = tree[node*2].second + tree[node*2+1].second;
+}
+
+int query(int node, int start, int end, int l, int r, int q){
+    if((lazy[node]%2)){
+        int temp = tree[node].first;
+        tree[node].first = tree[node].second;
+        tree[node].second = temp;
+        
+        if(start != end){
+            lazy[node*2] += lazy[node];
+            lazy[node*2+1] += lazy[node];
+        }
+        lazy[node] = 0;
+    }
+    if(start > end || start > r || end < l){
+        return 0;
+    }
+    if(l <= start && end <= r){
+        if(q == 0) return tree[node].second;
+        else return tree[node].first;
+    }
+    int mid = (start+end)/2;
+    int p1 = query(node*2, start, mid, l, r, q);
+    int p2 = query(node*2+1, mid+1, end, l, r, q);
+    return p1+p2;
+}
+
+int main(){
+    int n, m;
+    cin >> n >> m;
+    cin >> s;
+    build(1, 0, n-2);
+    for(int i=0;i<m;i++){
+        int q;
+        cin >> q;
+        int l, r;
+        cin >> l >> r;
+        if(q == 1){
+            update(1, 0, n-2, l-1, r-2);
+        }
+        else{
+            if(l < r){
+                int ans = query(1, 0, n-2, l-1, r-2, 0);
+                cout << ans << endl;
+            }
+            else{
+                int ans = query(1, 0, n-2, r-1, l-2, 1);
+                cout << ans << endl;
+            }
+        }
+    }
+}

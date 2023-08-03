@@ -1,0 +1,119 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+class SegmentTree {
+private:
+	vector<int> st;
+	vector<bool> lazy;
+	string S;
+	inline int left(int node) { return node<<1; }
+	inline int right(int node) { return (node<<1)+1; }
+
+	void build(int node, int L, int R)
+	{
+		if(L == R)
+		{
+			if(S[L] == '<') st[node] = 1;
+			else st[node] = 0;
+			lazy[node] = false;
+		}
+		else
+		{
+			build(left(node), L, (L+R)/2);
+			build(right(node), (L+R)/2+1, R);
+
+			st[node] = st[left(node)] + st[right(node)];
+		}
+	}
+
+	void nodeupdate(int node, int L, int R)
+	{
+		st[node] = (R-L+1)-st[node];
+		lazy[node] = !lazy[node];
+	}
+
+	void rangeupdate(int node, int L, int R, int a, int b)
+	{
+		if(a > R || b < L) return;
+		else if(a <= L && b >= R) 
+		{
+			//cout << "Honorable edits: " << L << " " << R << " " << st[node] << "\n";
+			nodeupdate(node, L, R);
+			//cout << "Honorable edits: " << L << " " << R << " " << st[node] << "\n";
+		}
+		else
+		{
+			if(lazy[node])
+			{
+				nodeupdate(left(node), L, (L+R)/2);
+				nodeupdate(right(node), (L+R)/2+1, R);
+				lazy[node] = false;
+			}
+			
+			rangeupdate(left(node), L, (L+R)/2, a, b);
+			rangeupdate(right(node), (L+R)/2+1, R, a, b);
+
+			st[node] = st[left(node)]+st[right(node)];
+		}
+	}
+
+	int ans(int node, int L, int R, int a, int b)
+	{
+		if(a > R || b < L) return 0;
+		else if(a <= L && b >= R) return st[node];
+		else
+		{
+			if(lazy[node])
+			{
+				nodeupdate(left(node), L, (L+R)/2);
+				nodeupdate(right(node), (L+R)/2+1, R);
+
+				lazy[node] = false;
+			}
+
+			return ans(left(node), L, (L+R)/2, a, b) + ans(right(node), (L+R)/2+1, R, a, b);
+		}
+	}
+
+public:
+	SegmentTree(string& _A)
+	{
+		S = _A;
+		st.clear(); lazy.clear();
+		st.resize(4*int(S.size())); lazy.resize(4*int(S.size()));
+
+		build(1, 0, int(S.size())-1);
+	}
+
+	void UPD(int a, int b)
+	{
+		rangeupdate(1, 0, int(S.size())-1, a-1, b-2);
+	}
+
+	int QRY(int a, int b)
+	{
+		if(a < b) return ans(1, 0, int(S.size())-1, a-1, b-2);
+		else return (a-b)-ans(1, 0, int(S.size())-1, b-1, a-2);
+	}
+};
+
+int main(void)
+{
+	int n, m, type, l, r;
+	scanf("%d%d", &n, &m);
+	string tmp;
+	cin >> tmp;
+
+	SegmentTree objforqry(tmp);
+	while(m--)
+	{
+		scanf("%d%d%d", &type, &l, &r);
+		if(type == 1)
+		{
+			objforqry.UPD(l, r);
+		}
+		else printf("%d\n", objforqry.QRY(l, r));
+	}
+}

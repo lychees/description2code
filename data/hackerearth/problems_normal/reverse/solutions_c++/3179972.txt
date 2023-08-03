@@ -1,0 +1,215 @@
+#include <bits/stdc++.h>
+#define sz(x) (int((x).size()))
+#define pb push_back
+#define eb emplace_back
+#define all(x) (x).begin(), (x).end()
+template<typename T> bool domax(T &a, T b) { return (b > a ? (a = b, true) : false); }
+template<typename T> bool domin(T &a, T b) { return (b < a ? (a = b, true) : false); }
+typedef long long ll;
+
+const ll Mod = 1000*1000*1000+7;
+
+const std::vector<ll> fuckthis =
+{
+	0, 891148842, 132552407, 603158332, 571628807, 77201297, 436118507, 232907902, 487598936, 595273660, 105259941, 867110426, 220859349, 668454151, 374686542, 376601686, 491765327, 251952, 474611863, 727136538, 126412939, 753438686, 266863532, 800128939, 734985252, 224218888, 88735724, 177734593, 708062722, 809898842, 900370516, 581660961, 302795496, 803226238, 318792643, 140289494, 261046250, 59920693, 196066968, 468409743, 565630814, 761477937, 796336207, 375778410, 450745194, 67475703, 494651543, 256555992, 354693069, 675514913, 904777784, 309886631, 105645226, 380174622, 305206151, 375700579, 405341662, 890544876, 752290184, 284182506, 467672521, 821910673, 811556924, 497109327, 410403094, 2401176, 665286017, 40777526, 313303168, 838050647, 181651366, 2024339, 980510921, 180977650, 940042799, 888553565, 436689045, 703600048, 150069716, 309967881, 691877412, 327196119, 832474988, 937974558, 853458991, 546637492, 654516736, 3717857, 328581713, 153309369, 306212149, 895016306, 504981445, 534402003, 646327037, 433710305, 553283130, 760521227, 771423090, 463102266, 15873000 
+};
+
+void add(ll &a, ll b) {
+	a += b;
+	if (a >= Mod) a -= Mod;
+}
+
+struct M {
+	ll a[105][105];
+	M() { for (int y = 0; y < 105; y++) for (int x = 0; x < 105; x++) a[y][x] = 0; }
+	M operator*(M m) {
+		M n;
+		for (int y = 0; y < 105; y++) for (int x = 0; x < 105; x++) {
+			for (int i = 0; i < 105; i++) add(n.a[y][x], (a[y][i] * m.a[i][x]) % Mod);
+		}
+		return n;
+	}
+} id, mm[33];
+
+int T, N, K;
+ll newfoo[105];
+
+M sqr(M a) {
+	return a*a;
+}
+M modexp(M b, ll e) {
+	//printf("%lld\n", e); fflush(stdout);
+	if (e == 0) return id;
+	else if (e%2 == 1) {
+		M n = modexp(b, e/2);
+		n = sqr(n);
+		n = n * b;
+		return n;
+	} else {
+		M n = modexp(b, e/2);
+		n = sqr(n);
+		return n;
+	}
+}
+ll get(ll i) {
+	i++;
+	ll blah = fuckthis[i / (10*1000*1000)];
+	i %= (10*1000*1000);
+	while (i--) {
+		blah = (blah * 10 + 1) % Mod;
+	}
+	return blah;
+}
+int rev(int i) {
+	int j = 0;
+	while (i) {
+		j = j*10 + i%10;
+		i /= 10;
+	}
+	return j;
+}
+
+int main()
+{
+	scanf("%d", &T);
+	for (int t = 0; t < T; t++) {
+		scanf("%d%d", &N, &K);
+		
+		if (K == 10) {
+			printf("1\n");
+		} else if (K == 2) {
+			ll ans = 5;
+			if (N > 1) ans += 20 * get(N-2);
+			ans %= Mod;
+			printf("%lld\n", ans);
+		} else if (K == 5) {
+			ll ans = 2;
+			if (N > 1) ans += 2 * get(N-2);
+			ans %= Mod;
+			printf("%lld\n", ans);
+		} else if (K == 6) {
+			ll ans = 2;
+			if (N > 1) {
+				M m;
+				m.a[0][0] = 4;
+				m.a[0][1] = 3;
+				m.a[0][2] = 3;
+				m.a[0][3] = 4;
+				m.a[1][1] = 4;
+				m.a[1][2] = 3;
+				m.a[1][0] = 3;
+				m.a[1][3] = 3;
+				m.a[2][2] = 4;
+				m.a[2][0] = 3;
+				m.a[2][1] = 3;
+				m.a[2][3] = 3;
+				m.a[3][3] = 1;
+				for (int y = 0; y < 105; y++) for (int x = 0; x < 105; x++) id.a[y][x] = 0;
+				for (int i = 0; i < 4; i++) id.a[i][i] = 1;
+				M n = id;
+				mm[0] = m;
+				for (int i = 0; i < 32; i++) {
+					mm[i+1] = mm[i] * mm[i];
+					if ((N-2) & (1 << i)) n = n * mm[i];
+				}
+				ans += 6 * n.a[0][3] + 7 * n.a[1][3] + 7 * n.a[2][3] + 6 * n.a[3][3];
+				ans %= Mod;
+			}
+			printf("%lld\n", ans);
+		} else if (K == 4) {
+			ll ans = 0;
+			if (N <= 3) {
+				int tens = 1;
+				for (int i = 0; i < N; i++) tens *= 10;
+				for (int i = 0; i < tens; i++) if (i%4 == 0 && rev(i)%4 == 0) ans++;
+			} else {
+				int tens = 1;
+				for (int i = 0; i < 3; i++) tens *= 10;
+				for (int i = 0; i < tens; i++) if (i%4 == 0 && rev(i)%4 == 0) ans++;
+				ans += 500 * get(N-4);
+				ans %= Mod;
+			}
+			printf("%lld\n", ans);
+		} else if (K == 8) {
+			ll ans = 0;
+			if (N <= 5) {
+				int tens = 1;
+				for (int i = 0; i < N; i++) tens *= 10;
+				for (int i = 0; i < tens; i++) if (i%8 == 0 && rev(i)%8 == 0) ans++;
+			} else {
+				int tens = 1;
+				for (int i = 0; i < 5; i++) tens *= 10;
+				for (int i = 0; i < tens; i++) if (i%8 == 0 && rev(i)%8 == 0) ans++;
+				ans += 12500 * get(N-6);
+				ans %= Mod;
+			}
+			printf("%lld\n", ans);
+		} else if (K == 3 || K == 7 || K == 9) {
+			int cyclelength = 0;
+			M m;
+			for (int i = 0; i <= K*K; i++) m.a[i][i] = 1;
+			for (int y = 0; y < 105; y++) for (int x = 0; x < 105; x++) id.a[y][x] = 0;
+			for (int i = 0; i <= K*K; i++) id.a[i][i] = 1;
+			ll tens = 1;
+			do {
+				for (int y = 0; y < K*K; y++) {
+					std::fill(newfoo, newfoo+105, 0);
+					for (int x = 0; x < K*K; x++) {
+						int forward = x/K, backward = x%K;
+						for (int d = 0; d < 10; d++) {
+							int newforward = (forward + tens * d) % K, newbackward = (backward * 10 + d) % K;
+							int newx = newforward*K + newbackward;
+							add(newfoo[newx], m.a[y][x]);
+							if (newx == 0 && d != 0) add(newfoo[K*K], m.a[y][x]);
+						}
+					}
+					add(newfoo[K*K], m.a[y][K*K]);
+					for (int x = 0; x <= K*K; x++) m.a[y][x] = newfoo[x];
+				}
+				cyclelength++;
+				tens = (tens * 10) % K;
+			} while (tens != 1);
+
+			//printf("cyclelength %d\n", cyclelength); fflush(stdout);
+			//for (int y = 0; y <= K*K; y++) for (int x = 0; x <= K*K; x++) printf("%d %d %lld\n", y, x, m.a[y][x]);
+			
+			int cycles = N / cyclelength;
+			//printf("1cyclelength %d\n", cyclelength); fflush(stdout);
+			//M n = modexp(m, cycles);
+			M n = id;
+			mm[0] = m;
+			for (int i = 0; i < 32; i++) {
+				mm[i+1] = mm[i] * mm[i];
+				if (cycles & (1 << i)) n = n * mm[i];
+			}
+			//printf("2cyclelength %d\n", cyclelength); fflush(stdout);
+			N %= cyclelength;
+			//printf("3cyclelength %d\n", cyclelength); fflush(stdout);
+			tens = 1;
+			for (int i = 0; i < N; i++) {
+				for (int y = 0; y < K*K; y++) {
+					std::fill(newfoo, newfoo+105, 0);
+					for (int x = 0; x < K*K; x++) {
+						int forward = x/K, backward = x%K;
+						for (int d = 0; d < 10; d++) {
+							int newforward = (forward + tens * d) % K, newbackward = (backward * 10 + d) % K;
+							int newx = newforward*K + newbackward;
+							add(newfoo[newx], n.a[y][x]);
+							if (newx == 0 && d != 0) add(newfoo[K*K], n.a[y][x]);
+						}
+					}
+					add(newfoo[K*K], n.a[y][K*K]);
+					for (int x = 0; x <= K*K; x++) n.a[y][x] = newfoo[x];
+				}
+				cyclelength++;
+				tens = (tens * 10) % K;
+			}
+			//printf("----\n"); fflush(stdout);
+			//for (int y = 0; y <= K*K; y++) for (int x = 0; x <= K*K; x++) printf("%d %d %lld\n", y, x, n.a[y][x]);
+			ll ans = n.a[0][K*K];
+			add(ans, 1);
+			printf("%lld\n", ans);
+		}
+	}
+}
+

@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+
+#define FOR(i,a,b) for(int i=(a),_b=(b); i<=_b; i++)
+#define FORD(i,a,b) for(int i=(a),_b=(b); i>=_b; i--)
+#define REP(i,a) for(int i=0,_a=(a); i<_a; i++)
+#define EACH(it,a) for(__typeof(a.begin()) it = a.begin(); it != a.end(); ++it)
+
+#define DEBUG(x) { cout << #x << " = "; cout << (x) << endl; }
+#define PR(a,n) { cout << #a << " = "; FOR(_,1,n) cout << a[_] << ' '; cout << endl; }
+#define PR0(a,n) { cout << #a << " = "; REP(_,n) cout << a[_] << ' '; cout << endl; }
+
+#define sqr(x) ((x) * (x))
+using namespace std;
+const int MN = 50111;
+const int MOD = 1e9 + 7;
+
+vector<int> ke[MN];
+int a[MN], sz[MN];
+long long f[MN][111], g[MN][111];
+int n, k, res;
+
+void dfs(int u, int fu) {
+    memset(f[u], 0, sizeof f[u]);
+    f[u][a[u]] = 1;
+    sz[u] = 1;
+
+    for(auto v : ke[u]) {
+        if (v == fu) continue;
+        dfs(v, u);
+        sz[u] += sz[v];
+
+        FOR(sum,0,min(k,sz[u])) {
+            g[u][sum] = f[u][sum];
+            FOR(x,0,sum)
+                g[u][sum] = (g[u][sum] + f[u][x] * f[v][sum-x]) % MOD;
+        }
+        FOR(x,0,min(k,sz[u])) f[u][x] = g[u][x];
+    }
+    res = (res + f[u][k]) % MOD;
+}
+
+int main() {
+    int ntest; scanf("%d", &ntest);
+    while (ntest--) {
+        scanf("%d%d", &n, &k);
+        FOR(i,1,n) ke[i].clear();
+        FOR(i,1,n) scanf("%d", &a[i]);
+        FOR(i,2,n) {
+            int u, v; scanf("%d%d", &u, &v);
+            ke[u].push_back(v);
+            ke[v].push_back(u);
+        }
+        res = 0;
+        dfs(1, -1);
+        printf("%d\n", res);
+    }
+    return 0;
+}
+

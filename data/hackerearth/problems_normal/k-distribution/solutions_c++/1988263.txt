@@ -1,0 +1,48 @@
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define LOCAL 0
+#define KMAX 100100
+#define MOD 1000000007
+
+int cnt[KMAX];
+int N, K, i, j, x, ans;
+long long sum;
+
+int main() {
+	if (LOCAL) {
+		srand(12345);
+		N = 100;
+		K = 1000;
+	} else scanf("%d %d", &N, &K);
+	assert(1 <= K && K <= 100000);
+	memset(cnt, 0, sizeof(cnt));
+	cnt[0] = 1;
+	for (sum = 0, i = 1; i <= N; i++) {
+		if (LOCAL) {
+			x = 1 + (rand() % 100);
+		} else scanf("%d", &x);
+		assert(1 <= x && x <= 1000000000);
+		sum += x;
+		for (j = K - 1 - x; j >= 0; j--)
+			if (cnt[j] > 0) {
+				cnt[j + x] += cnt[j];
+				if (cnt[j + x] >= MOD) cnt[j + x] -= MOD;
+			}
+	}
+	for (ans = i = 1; i <= N; i++)
+		ans = (ans << 1) % MOD;
+	for (j = 0; j < K; j++) {
+		//fprintf(stderr, "%d: %d\n", j, cnt[j]);
+		ans -= cnt[j];
+		if (ans < 0) ans += MOD;
+		if (sum - j >= K) {
+			ans -= cnt[j];
+			if (ans < 0) ans += MOD;
+		}
+	}
+	printf("%d\n", ans);
+	return 0;
+}

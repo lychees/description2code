@@ -1,0 +1,124 @@
+/* My First Template  
+   :P
+*/
+#include <bits/stdc++.h>
+using namespace std;
+#define mod 1000000007
+#define ll long long int
+#define pb push_back
+#define mk make_pair
+ll power(ll a, ll b) {
+ll x = 1, y = a;
+    while(b > 0) {
+        if(b%2 == 1) {
+            x=(x*y);
+            if(x>mod) x%=mod;
+        }
+        y = (y*y);
+        if(y>mod) y%=mod;
+        b /= 2;
+    }
+    return x;
+}
+vector<int> st[1000001];
+vector<int>::iterator it;
+int n,i,q,maxf,minf,maxd,c,ans;
+int x[1000001],y[1000001];
+struct tp
+{
+	int d,f;
+}sc[1000001];
+ 
+int comp(const void *a,const void *b)
+{
+	struct tp *x=(struct tp *)a;
+	struct tp *y=(struct tp *)b;
+	
+	if(x->f<y->f)
+		return -1;
+	else if(x->f>y->f)
+		return 1;
+	else
+	{
+		if(x->d<y->d)
+			return -1;
+		else
+			return 1;
+	}
+}
+ 
+void construct(int cur,int ss,int se)
+{
+	int min,mid;
+	min=y[ss];
+	st[cur].push_back(y[ss]);
+	for(i=ss+1;i<=se;i++)
+	{
+		if(y[i]<min)
+		{
+			st[cur].push_back(y[i]);
+			min=y[i];
+		}
+	}
+	reverse(st[cur].begin(),st[cur].end());
+	if(ss<se)
+	{
+		mid=(ss+se)/2;
+		construct(2*cur,ss,mid);
+		construct(2*cur+1,mid+1,se);
+	}
+}
+void query(int cur,int ss,int se,int qs,int qe)
+{
+	int mid;
+	if(x[ss]>qe|| x[se]<qs)
+		return;
+	
+	if(x[ss]>=qs && x[se]<=qe)
+	{
+		it=lower_bound(st[cur].begin(),st[cur].end(),maxd);
+		if(it>st[cur].begin())
+		{
+			ans=ans+(it-st[cur].begin());
+			maxd=st[cur].front();
+		}
+		return;
+	}
+	if(ss<se)
+	{
+		mid=(ss+se)/2;
+		query(2*cur,ss,mid,qs,qe);
+		query(2*cur+1,mid+1,se,qs,qe);
+	}
+}
+ 
+ 
+int main()
+{
+	scanf("%d",&n);
+	for(i=0;i<n;i++)
+		scanf("%d %d",&sc[i].d,&sc[i].f);
+	qsort(sc,n,sizeof(struct tp),comp);
+	c=0;
+	x[c]=sc[0].f;
+	y[c++]=sc[0].d;
+	for(i=1;i<n;i++)
+	{
+		if(sc[i].f==sc[i-1].f)
+			continue;
+		x[c]=sc[i].f;
+		y[c++]=sc[i].d;
+	}
+	
+	construct(1,0,c-1);
+	scanf("%d",&q);
+	while(q--)
+	{
+		scanf("%d %d %d",&maxd,&minf,&maxf);
+		ans=0;
+		maxd++;
+		query(1,0,c-1,minf,maxf);
+		printf("%d\n",ans);
+	}
+	return 0;
+}

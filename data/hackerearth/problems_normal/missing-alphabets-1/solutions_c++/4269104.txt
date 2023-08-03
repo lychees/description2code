@@ -1,0 +1,202 @@
+#include <cstring>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int AlphabetRanks[26];
+
+class XString {
+public:
+	XString(char* str) {
+		this->Length = strlen(str);
+
+		this->Word = new char[this->Length + 1];
+
+		strcpy(this->Word, str);
+	}
+
+	~XString() {
+		delete[] this->Word;
+		this->Word = NULL;
+	}
+
+	char* Word;
+	int Length;
+};
+
+XString** Words;
+
+bool InitializeAlphabetRanks(const char* alphabets, int length) {
+	int rank = 0;
+
+	for (int i = 0; i < length; i++) {
+		AlphabetRanks[((int)alphabets[i]) - 97] = ++rank;
+	}
+
+	return (rank == 26);
+}
+
+inline int CompareTo(int nX, int nY) {
+	return ((nX < nY) ? -1 : ((nX > nY) ? 1 : 0));
+}
+
+void SortLexicoGraphically(int startFrom, int count, int charIndex, int maxLength) {
+	int result = 0;
+
+	for (int i = (startFrom + 1); i < (startFrom + count); i++) {
+		XString* item = Words[i];
+
+		int j = i;
+
+		while (j > startFrom) {
+			if (charIndex >= Words[j - 1]->Length && charIndex >= item->Length) {
+				result = CompareTo(Words[j - 1]->Length, item->Length);
+			} else if (charIndex >= Words[j - 1]->Length && charIndex < item->Length) {
+				result = -1;
+			} else if (charIndex < Words[j - 1]->Length && charIndex >= item->Length) {
+				result = 1;
+			} else {
+				result = CompareTo(AlphabetRanks[Words[j - 1]->Word[charIndex] - 97], AlphabetRanks[item->Word[charIndex] - 97]);
+			}
+
+			if (result > 0) {
+				Words[j] = Words[j - 1];
+
+				j--;
+			} else {
+				break;
+			}
+		}
+
+		Words[j] = item;
+	}
+
+	int newStartFrom = startFrom;
+
+	while (charIndex >= Words[newStartFrom]->Length && newStartFrom < (startFrom + count)) {
+		newStartFrom++;
+	}
+
+	if (newStartFrom >= (startFrom + count - 1)) {
+		return;
+	}
+
+	char prevCh = Words[newStartFrom]->Word[charIndex];
+
+	int newCount = 1;
+
+	int newMaxLength = Words[newStartFrom]->Length;
+
+	for (int i = (newStartFrom + 1); i < (startFrom + count); i++) {
+		if (Words[i]->Word[charIndex] != prevCh) {
+			if (newCount > 1 && (charIndex + 1) < maxLength) {
+				SortLexicoGraphically(newStartFrom, newCount, (charIndex + 1), newMaxLength);
+			}
+
+			prevCh = Words[i]->Word[charIndex];
+
+			newStartFrom = i;
+
+			newCount = 1;
+
+			newMaxLength = Words[i]->Length;
+		} else {
+			newCount++;
+
+			if (Words[i]->Length > newMaxLength) {
+				newMaxLength = Words[i]->Length;
+			}
+		}
+	}
+
+	if (newCount > 1 && (charIndex + 1) < maxLength) {
+		SortLexicoGraphically(newStartFrom, newCount, (charIndex + 1), newMaxLength);
+	}
+}
+
+int RunMissingAlphabets() {
+	char temp[1024];
+
+	cin.getline(temp, sizeof(temp));
+
+	int numberOfTestCases = atoi(temp);
+
+	int numberOfWords = 0;
+
+	int maxLength = 0;
+
+	if (numberOfTestCases <= 0) {
+		cout << "Invalid number of test cases";
+
+		return 1;
+	}
+
+	for (int i = 0; i < numberOfTestCases; i++) {
+		cin.getline(temp, sizeof(temp));
+
+		if (!InitializeAlphabetRanks(temp, strlen(temp))) {
+			cout << "Invalid/incomplete alphabets' ordering.";
+
+			return 2;
+		}
+
+		cin.getline(temp, sizeof(temp));
+
+		numberOfWords = atoi(temp);
+
+		if (numberOfWords <= 0) {
+			cout << "Invalid number of words.";
+
+			return 3;
+		}
+
+		maxLength = 0;
+
+		Words = new XString*[numberOfWords];
+
+		for (int j = 0; j < numberOfWords; j++) {
+			cin.getline(temp, sizeof(temp));
+
+			if (strlen(temp) == 0) {
+				cout << "Invalid word";
+
+				return 4;
+			}
+
+			XString* word = new XString(temp);
+
+			Words[j] = word;
+
+			if (word->Length > maxLength) {
+				maxLength = word->Length;
+			}
+		}
+
+		SortLexicoGraphically(0, numberOfWords, 0, maxLength);
+
+		int k = 0;
+
+		while (k < numberOfWords) {
+			XString* word = Words[k];
+
+			Words[k] = NULL;
+
+			cout << word->Word << endl;
+
+			delete word;
+
+			k++;
+		}
+
+		delete[] Words;
+
+		Words = NULL;
+	}
+
+	return 0;
+}
+
+int main() {
+    return RunMissingAlphabets();
+}

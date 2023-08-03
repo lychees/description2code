@@ -1,0 +1,117 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define xx first
+#define yy second
+#define mod 1000000007
+#define pb push_back
+ll modpow ( ll a , ll b )
+{
+ll res =1;
+while ( b )
+{
+if ( b &1) res =( res * a )  ;
+a =( a * a ) ;
+b >>=1;
+}
+return res ;
+}
+ll n,m,i,j,k,ans=0,sum=0,q,x,y,t,r,h,w,b,c,d,z;
+ll P[100000][100];
+vector<vector<ll> >v;
+vector<ll> T,L;
+ll query( ll p, ll q)
+  {
+      ll tmp, log, i;
+   
+  //if p is situated on a higher level than q then we swap them
+      if (L[p] < L[q])
+          tmp = p, p = q, q = tmp;
+  
+  //we compute the value of [log(L[p)]
+      for (log = 1; 1 << log <= L[p]; log++);
+      log--;
+   
+  //we find the ancestor of node p situated on the same level
+  //with q using the values in P
+      for (i = log; i >= 0; i--)
+          if (L[p] - (1 << i) >= L[q])
+              p = P[p][i];
+   
+      if (p == q)
+          return p;
+   
+  //we compute LCA(p, q) using the values in P
+      for (i = log; i >= 0; i--)
+          if (P[p][i] != -1 && P[p][i] != P[q][i])
+              p = P[p][i], q = P[q][i];
+   
+      return T[p];
+  }
+void process3()
+  {
+      ll i, j;
+   
+  //we initialize every element in P with -1
+      for (i = 0; i < n; i++)
+          for (j = 0; 1 << j < n; j++)
+              P[i][j] = -1;
+   
+  //the first ancestor of every node i is T[i]
+      for (i = 0; i < n; i++)
+          P[i][0] = T[i];
+   
+  //bottom up dynamic programing
+      for (j = 1; 1 << j < n; j++)
+         for (i = 0; i < n ; i++)
+             if (P[i][j - 1] != -1)
+                 P[i][j] = P[P[i][j - 1]][j - 1];
+  }
+  void dfs(ll x){
+    for(ll i=0;i<v[x].size();i++){
+      L[v[x][i]]=L[x]+1;
+      dfs(v[x][i]);
+    }
+  }
+int main(){
+  
+ 
+    scanf("%lld",&t);
+    while(t--){
+      scanf("%lld",&n);
+      L.clear();L.resize(n);T.clear();T.resize(n);v.clear();v.resize(n);
+      for(i=0;i<n;i++){
+        scanf("%lld",&x);
+        if(x==0){
+          z=i;
+          x=i;
+        }
+        else{
+          
+          v[x-1].pb(i);
+          x--;
+        }
+        T[i]=x;
+      }
+      L[z]=0;
+      dfs(z);
+      process3();
+      scanf("%lld",&z);
+      while(z--){
+        scanf("%lld %lld",&x,&y);
+        x--;y--;
+        r=query(x,y);
+        if(r==y){
+          cout<<L[x]-L[y]-1<<endl;
+        }
+        else{
+          cout<<-1<<endl;
+        }
+      }
+     
+    }
+    
+  return 0;
+    
+    
+}

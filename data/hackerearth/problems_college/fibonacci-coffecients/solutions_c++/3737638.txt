@@ -1,0 +1,192 @@
+#include <iostream>
+#include <cstdio>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <sstream>
+#include <cmath>
+
+typedef long long ll;
+
+#define forn(i, n) for (int i = 0; i < (int)(n); i++)
+#define forv(i, v) forn(i, v.size())
+
+using namespace std;
+
+ll mod;
+
+struct Node {
+    ll s0, s1;
+    Node() {
+        s0 = s1 = 0;
+    }
+    Node(ll s0, ll s1) : s0(s0), s1(s1) {}
+};
+
+vector<Node> t;
+int n, m;
+vector<ll> a;
+vector<ll> fib;
+
+#define lf(v) ((v << 1) + 1)
+#define rg(v) ((v + 1) << 1)
+
+void build(int v, int l, int r) {
+    for (int i = l; i < r; i++) {
+        t[v].s0 = (t[v].s0 + fib[i - l] * a[i]) % mod;
+    }
+    for (int i = l + 1; i < r; i++) {
+        t[v].s1 = (t[v].s1 + fib[i - l - 1] * a[i]) % mod;
+    }
+    if (r - l > 1) {
+        int mid = (l + r) / 2;
+        build(lf(v), l, mid);
+        build(rg(v), mid, r);
+    }
+}
+
+void update(int v, int l, int r, int pos, ll val) {
+    int i0 = pos - l;
+    t[v].s0 = ((t[v].s0 + fib[i0] * (val - a[pos])) % mod + mod) % mod;
+    if (r - l > 1) {
+        int i1 = pos - l - 1;
+        t[v].s1 = ((t[v].s1 + (i1 < 0 ? 0ll : fib[i1]) * (val - a[pos])) % mod + mod) % mod;
+        int mid = (l + r) / 2;
+        if (pos < mid) {
+            update(lf(v), l, mid, pos, val);
+        } else {
+            update(rg(v), mid, r, pos, val);
+        }
+    }
+}
+
+ll fiboSum(int v, int l, int r, int x, int y, int k) {
+    if (l >= r) throw;
+    if (l == x && r == y) {
+        ll c0 = fib[k];
+        ll c1 = 0;
+        if (k) {
+            c1 = fib[k - 1];
+        }
+        return (t[v].s0 * c0 + t[v].s1 * c1) % mod;
+    }
+    
+    int mid = (l + r) / 2;
+    ll res = 0;
+    if (x < mid) {
+        res = (res + fiboSum(lf(v), l, mid, x, min(y, mid), k)) % mod;
+        k += min(y, mid) - x;
+    }
+    if (y > mid) {
+        res = (res + fiboSum(rg(v), mid, r, max(x, mid), y, k)) % mod;
+    }
+    return res;
+}
+
+ll stupid(int l, int r) {
+    ll res = 0;
+    for (int i = l; i < r; i++) {
+        res = (res + fib[i - l] * a[i]) % mod;
+    }
+    return res;
+}
+
+void test() {
+    //cin >> n >> m >> mod;
+    n = 1 + abs(rand()) % 1000;
+    m = 1 + abs(rand()) % 1000;
+    mod = 2 + abs(rand()) % 1000000000;
+    fib = vector<ll>(max(n, 2));
+    fib[0] = fib[1] = 1;
+    for (int i = 2; i < n; i++) {
+        fib[i] = (fib[i - 1] + fib[i - 2]) % mod;
+    }
+    a = vector<ll>(n);
+    //forn(i, n) scanf("%lld", &a[i]);
+    forn(i, n) a[i] = abs(rand()) % 100;
+    t = vector<Node>(8 * n);
+    build(0, 0, n);
+    
+    forn(i, m) {
+        int ty = 1 + rand() % 2;
+        if (ty == 2) {
+            int l, r;
+            //scanf("%d %d", &l, &r);
+            l = 1 + abs(rand()) % n;
+            r = l + abs(rand()) % (n - l + 1);
+            l--;
+            if (stupid(l, r) != fiboSum(0, 0, n, l, r, 0)) {
+                cerr << i << " " << l << " " << r << endl;
+                cerr << stupid(l, r) << " " << fiboSum(0, 0, n, l, r, 0) <<  endl;
+            }
+            //printf("%lld\n", fiboSum(0, 0, n, l, r, 0));
+        } else {
+            int pos;
+            ll val;
+            pos = 1 + abs(rand()) % n;
+            val = abs(rand()) % 100;
+            //scanf("%d %lld", &pos, &val);
+            pos--;
+            update(0, 0, n, pos, val);
+            a[pos] = val;
+        }
+    }
+    
+}
+
+int main() {
+#ifdef NEREVAR_PROJECT
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    /*
+    forn(it, 2000) {
+        cerr << it << endl;
+        test();
+    }
+    return 0;
+     */
+    cin >> n >> m >> mod;
+    fib = vector<ll>(max(n, 2));
+    fib[0] = fib[1] = 1;
+    for (int i = 2; i < n; i++) {
+        fib[i] = (fib[i - 1] + fib[i - 2]) % mod;
+    }
+    a = vector<ll>(n);
+    forn(i, n) {
+        int x; scanf("%d", &x);
+        a[i] = x;
+    }
+    t = vector<Node>(8 * n);
+    build(0, 0, n);
+    
+    forn(i, m) {
+        int ty;
+        scanf("%d", &ty);
+        if (ty == 2) {
+            int l, r;
+            scanf("%d %d", &l, &r);
+            l--;
+            /*
+            if (stupid(l, r) != fiboSum(0, 0, n, l, r, 0)) {
+                cerr << i << " " << l << " " << r << endl;
+                cerr << stupid(l, r) << " " << fiboSum(0, 0, n, l, r, 0) <<  endl;
+            }
+             */
+            printf("%lld\n", fiboSum(0, 0, n, l, r, 0));
+        } else {
+            int pos;
+            int val;
+            scanf("%d %d", &pos, &val);
+            pos--;
+            update(0, 0, n, pos, val);
+            a[pos] = val;
+        }
+    }
+    return 0;
+}

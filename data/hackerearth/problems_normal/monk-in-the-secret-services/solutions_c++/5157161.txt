@@ -1,0 +1,113 @@
+#include<bits/stdc++.h>
+ 
+using namespace std;
+
+#define mod 1000000000
+#define loop(i,a,b) for(int i=a;i<b;i++)
+#define all(c) (c).begin(),(c).end()
+#define nl cout<<"\n"
+#define sz(a) (int)(a).size()
+#define len(a) (int)a.length()
+#define pb push_back
+#define mp make_pair
+
+typedef vector<long long int> vi;
+typedef vector<vi> vvi;
+typedef pair<int,int> ii;
+typedef vector<ii> vii;
+typedef vector<vii> vvii;
+
+typedef unsigned long long ull;
+typedef long long ll;
+
+const int INF = 2000000000;
+
+ll gcd(ll a, ll b) { int temp; while(b > 0) { temp = a%b; a = b; b = temp; } return a; }
+ll lcm(ll a, ll b) { return a/gcd(a,b)*b; }
+ll modpow(ll a, ll n) { ll p = 1; while(n) { if (n%2) p = p*a%mod; n/=2; a = a*a%mod; } return p; }
+
+int dist[10004];
+
+class Graph
+{
+    int V; 
+    list<ii> *adj;
+public:
+    Graph(int V);
+    void addEdge(int u, int v, int w);
+    vi shortestPath(int s);
+    vvi johnson();
+};
+
+Graph::Graph(int V)
+{
+    this->V = V;
+    adj = new list<ii> [V];
+}
+ 
+void Graph::addEdge(int u, int v, int w)
+{
+    adj[u].push_back(make_pair(v, w));
+    adj[v].push_back(make_pair(u, w));
+}
+
+vi Graph::shortestPath(int src)
+{
+    vi dist(V+1,INF);
+    priority_queue< ii, vector <ii> , greater<ii> > pq;
+
+    pq.push(make_pair(0, src));
+    dist[src] = 0;
+
+    while (!pq.empty())
+    {
+        int u = pq.top().second;
+        pq.pop();
+
+        list< ii >::iterator i;
+        for (i = adj[u].begin(); i != adj[u].end(); ++i)
+        {
+            int v = (*i).first;
+            int weight = (*i).second;
+            if (dist[v] > dist[u] + weight)
+            {
+                dist[v] = dist[u] + weight;
+                pq.push(make_pair(dist[v], v));
+            }
+        }
+    }
+    return dist;
+}
+
+int main()
+{
+    int t,n,m,q,u,v,w,a,s,h;
+    cin>>t;
+    while(t--){
+        cin>>n>>m;
+        Graph g(n+1);
+        while(m--){
+            cin>>u>>v>>w;
+            g.addEdge(u,v,w);
+        }
+        vvi distance(n+1);
+        loop(i,1,n+1){
+            distance[i] = g.shortestPath(i);
+        }
+        cin>>s>>a>>h;
+        ll ans = INT_MIN;
+        ll temp;
+        loop(i,1,n+1){
+            temp = 0;
+            if(i==s || i==a || i==h){
+                continue;
+            }
+            else{
+                temp = distance[s][i] + 2*distance[i][a] + distance[i][h];
+            }
+            if(temp > ans) ans = temp;
+        }
+        cout<<ans<<endl;
+    }
+    return 0;
+}

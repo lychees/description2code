@@ -1,0 +1,93 @@
+#include <stdio.h>
+#include <string.h>
+#include <vector>
+
+using namespace std;
+
+#define NMAX 2048
+#define DEBUG 0
+
+char A[NMAX][NMAX];
+int M, N;
+
+void ReadInput() {
+	int i;
+	scanf("%d %d", &M, &N);
+	for (i = 1; i <= M; i++)
+		scanf("%s", &A[i][1]);
+}
+
+int up[NMAX][NMAX], left[NMAX][NMAX], right[NMAX][NMAX], down[NMAX][NMAX];
+
+void ComputeMaxIntervals() {
+	int i, j;
+	for (i = 1; i <= M; i++)
+		for (j = 1; j <= N; j++)
+			if (A[i][j] == '0') {
+				up[i][j] = 1 + up[i - 1][j];
+				left[i][j] = 1 + left[i][j - 1];
+			}
+	for (i = M; i >= 1; i--)
+		for (j = N; j >= 1; j--)
+			if (A[i][j] == '0') {
+				down[i][j] = 1 + down[i + 1][j];
+				right[i][j] = 1 + right[i][j + 1];
+			}
+}
+
+int cnt[2 * NMAX];
+long long ans;
+vector<int> to_close[NMAX];
+
+void Update(int poz, int v) {
+	poz += NMAX;
+	while (poz >= 1) {
+		cnt[poz] += v;
+		poz >>= 1;
+	}
+}
+
+int Query(int poz) {
+	poz += NMAX - 1;
+	int qans = 0;
+	while (poz > 1) {
+		if ((poz & 1) == 0) qans += cnt[poz | 1];
+		poz >>= 1;
+	}
+	return qans;
+}
+
+void CountFrames() {
+	int ijdif, i, j, k, imax, imin;
+	for (ijdif = M - 1; ijdif >= 1 - N; ijdif--) {
+		for (i = 1; i <= M; i++) to_close[i].clear();
+		memset(cnt, 0, sizeof(cnt));
+		for (i = 1, j = i - ijdif; i <= M; i++, j++) {
+			if (j <= 0 || j > N) continue;
+			if (A[i][j] == '0') {
+				Update(i, +1);
+				if (down[i][j] <= right[i][j]) imax = down[i][j];
+				else imax = right[i][j];
+				imax += i - 1;
+				to_close[imax].push_back(i);
+				if (up[i][j] <= left[i][j]) imin = up[i][j];
+				else imin = left[i][j];
+				imin = i - imin + 1;
+				int qans = Query(imin);
+				ans += qans;
+				if (DEBUG) fprintf(stderr, "ijdif=%d i=%d j=%d imin=%d imax=%d qans=%d ans=%lld\n", ijdif, i, j, imin, imax, qans, ans);
+			}
+			for (k = 0; k < to_close[i].size(); k++)
+				Update(to_close[i][k], -1);
+		}
+	}
+}
+
+int main() {
+	//freopen("y.txt", "r", stdin);
+	ReadInput();
+	ComputeMaxIntervals();
+	CountFrames();
+	printf("%lld\n", ans);
+	return 0;
+}

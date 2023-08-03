@@ -1,0 +1,116 @@
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cstring>
+#include <sstream>
+#include <vector>
+#include <iomanip>
+#include <cmath>
+#include <set>
+#include <map>
+#include <queue> 
+#include <climits>
+#include <cassert>
+
+using namespace std;
+typedef long long LL;
+typedef pair<int,int> pii;
+
+#define pb push_back
+#define mp make_pair
+#define sz size()
+#define ln length()
+#define forr(i,a,b)                 for(int i=a;i<b;i++)
+#define rep(i,n)                    forr(i,0,n) 
+#define all(v)                      v.begin(),v.end()	
+#define uniq(v)                     sort(all(v));v.erase(unique(all(v)),v.end())
+#define clr(a)                      memset(a,0,sizeof a)
+	
+#define debug                       if(1)
+#define debugoff                    if(0)	
+
+#define print(x)                 cerr << x << " ";    
+#define pn()				     cerr << endl;
+#define trace1(x)                cerr << #x << ": " << x << endl;
+#define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+
+#define MAX 500010
+#define MOD 1000000007
+LL pwr[MAX];
+int  primes[MAX],sieve[MAX];
+LL cumm[MAX];
+int k=0;
+void make_sieve(){
+    sieve[1] = sieve[0] = 1;
+    for(int i=2;i*i<MAX;i++){
+        if(!sieve[i])
+            for(int j=i*i;j<MAX;j+=i)
+                sieve[j] = 1;
+    }
+
+    k = 0;
+    for(int i=2;i<MAX;i++)
+    	if(!sieve[i])
+    		primes[k++] = i;
+}
+LL mod_expo(LL a,LL n)
+{
+	LL result = 1;
+	while(n)
+	{
+		if((n&1))
+			result = (result*a)%MOD;
+		a = (a*a)%MOD;
+		n >>= 1;
+	}
+	return result%MOD;
+}
+void pre(){
+	LL ex,diff,cnt;
+	cumm[1] = 1;
+	for(int n=2;n<MAX;n++){
+		int nn = n;
+		for(int i=0;primes[i]*primes[i] <= n;i++){
+			if(nn%primes[i] == 0){
+				cnt =0;
+				while(nn%primes[i] == 0){
+					cnt++;
+					nn/=primes[i];
+				}
+
+				if(cnt > pwr[primes[i]]){
+					diff = cnt - pwr[primes[i]];
+					ex = mod_expo(primes[i],diff);
+					cumm[n] = (cumm[n-1] * ex)%MOD;
+					pwr[primes[i]] = cnt;
+				}
+			}
+		}
+		if(nn > 1){
+			cnt = 1;
+			if(pwr[nn] == 0){
+				cumm[n] = (cumm[n-1] * nn)%MOD;
+				pwr[nn] = 1;
+			}
+		}
+
+		if(cumm[n] == 0)
+			cumm[n] = cumm[n-1];
+	}
+}
+int main()
+{
+	make_sieve();
+	pre();
+	//factorsieve();
+	ios::sync_with_stdio(false);
+	int t,n;
+	cin>>t;
+	while(t--)
+	{
+		cin>>n;
+		cout<<cumm[n]<<endl;
+	}
+	return 0; 
+}

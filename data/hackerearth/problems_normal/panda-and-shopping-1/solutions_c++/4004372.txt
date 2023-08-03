@@ -1,0 +1,45 @@
+#include <iostream>
+#include <stdio.h>
+#include <map>
+#include <vector>
+#include <utility>
+#include <algorithm>
+using namespace std;
+typedef long long ll;
+#define MAXN 100005
+#define MOD 1000000007
+#define INF 0x3FFFFFFFFFFFFFFFLL
+ll A[MAXN], H[MAXN], L[MAXN];
+ll tree[MAXN << 1LL], N;
+void update(int pos, ll val) {
+    for(tree[pos += N] = val; pos >>= 1LL;) tree[pos] = max(tree[pos << 1LL], tree[pos << 1LL | 1LL]);
+}
+ll query(ll l, ll r) {
+    ll ans = -INF;
+    for(l += N, r += N; l < r; l >>= 1LL, r >>= 1LL) {
+        if(l & 1LL) ans = max(ans, tree[l++]);
+        if(r & 1LL) ans = max(tree[--r], ans);
+    }
+    return ans;
+}
+void solve() {
+    scanf("%lld", &N);
+    for(int i = 0; i < N; i++) scanf("%lld %lld", &H[i], &L[i]);
+    for(int i = 0; i < N; i++) A[i] = L[i]; sort(A, A + N);
+    for(int i = 0; i < N; i++) L[i] = lower_bound(A, A + N, L[i]) - A;
+    for(int i = 0; i < N; i++) A[i] = -INF;
+    for(int i = 0; i < N; i++) {
+        ll sum = query(0, L[i] + 1) + H[i];
+        sum = max(sum, H[i]); sum = max(sum, A[i]);
+        update(L[i], sum);
+        A[i] = sum;
+    }
+    //for(int i = 0; i < N; i++) cout << A[i] << " "; cout << endl;
+    ll ans = -INF; for(int i = 0; i < N; i++) ans = max(ans, A[i]);
+    for(int i = 0; i < N; i++) ans = max(ans, H[i]);
+    printf("%lld\n", ans);
+}
+int main() {
+    int t = 1;
+    while(t--) solve();
+}

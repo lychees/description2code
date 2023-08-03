@@ -1,0 +1,108 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("clash.inp","r",stdin)
+#define OUTPUT freopen("clash.out","w",stdout)
+#define FOR(i,l,r) for(auto i=(l);i<=(r);i++)
+#define REP(i,l,r) for(auto i=(l);i<(r);i++)
+#define FORD(i,l,r) for(auto i=(l);i>=(r);i--)
+#define REPD(i,l,r) for(auto i=(l);i>(r);i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+
+const int inf=1e9;
+const int MOD=1e9+7;
+const int maxv=63,N=1e5+10;
+
+int n;
+ll w[N];
+struct fibma{
+    ll a[2][2];
+    void setval(vector <int> _a){
+        REP(i,0,4) a[i/2][i%2]=_a[i];
+    }
+};
+fibma fib[maxv],a[N][2];
+fibma operator *(fibma a,fibma b){
+    fibma tmp;
+    tmp.setval({0,0,0,0});
+    REP(i,0,2)
+        REP(j,0,2)
+            REP(k,0,2) tmp.a[i][j]=(tmp.a[i][j]+a.a[i][k]*b.a[k][j])%MOD;
+    return tmp;
+}
+fibma calfib(ll x){
+    fibma ans;
+    ans.setval({1,0,0,1});
+    REP(i,0,maxv) if (x&(1LL<<i))
+        ans=ans*fib[i];
+    return ans;
+}
+ll co[N][5];
+void prepare(){
+    fib[0].setval({1,1,1,0});
+    REP(i,1,maxv) fib[i]=fib[i-1]*fib[i-1];
+//    cout<<"tick\n";
+    scanf("%d",&n);
+    FOR(i,1,n){
+        ll x,y;
+        scanf("%lld%lld%lld",&x,&y,w+i);
+//        cout<<x<<" "<<y<<" "<<w[i]<<'\n';
+        a[i][0]=calfib(x+1);
+        a[i][1]=calfib(y+1);
+    }
+//    cout<<"tick\n";
+}
+bool gauss_elimination(int n1){
+//    cout<<n1<<'\n';
+//    FOR(i,1,n1)
+//        FOR(j,0,4) cout<<co[i][j]<<" \n"[j==4];
+    FOR(pha,0,3){
+        int idx=0;
+        FOR(i,pha+1,n1) if (co[i][pha]) idx=i;
+        if (!idx) continue;
+        FOR(i,0,4) swap(co[idx][i],co[pha+1][i]);
+        FOR(i,pha+2,n) if (co[i][pha]){
+            ll scale=co[i][pha];
+            FOR(j,0,4) co[i][j]=(((co[i][j]*co[pha+1][pha]-co[pha+1][j]*scale)%MOD)+MOD)%MOD;
+        }
+//        cout<<"Step "<<pha<<'\n';
+//        FOR(i,1,n1){
+//            FOR(j,0,4) cout<<co[i][j]<<" \n"[j==4];
+//        }
+    }
+//    cout<<n1<<'\n';
+//    FOR(i,1,n1)
+//        FOR(j,0,4) cout<<co[i][j]<<" \n"[j==4];
+    FOR(i,1,n1) if (count(co[i],co[i]+4,0)==4&&co[i][4]) return 0;
+    return 1;
+}
+bool check(int n1){
+    FOR(i,1,n1){
+        co[i][4]=w[i];
+        FOR(j,0,1)
+            FOR(k,0,1)
+            co[i][j*2+k]=(a[i][0].a[0][j]*a[i][1].a[0][k])%MOD;
+    }
+    return gauss_elimination(n1);
+}
+void solve(){
+    int L=1,R=n;
+    while (L<=R){
+        int mid=(L+R)/2;
+        if (check(mid)) L=mid+1;
+        else R=mid-1;
+    }
+    FOR(i,1,n) printf("%c",(i<L)+'0');
+}
+int main(){
+//    freopen("input.inp","r",stdin);
+    prepare();
+    solve();
+}

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int N,Q;
+
+const int INF = 1e9;
+
+vector<int> adj[413];
+int res[413][413];
+ 
+int h[413];
+queue<int> frontier;
+int visited[413];
+bool level(int source, int sink) {
+        for (int i=0;i<=N;i++) h[i] = INF;
+        h[source] = 0;
+        frontier.push(source);
+        while (frontier.size()>0) {
+                int x = frontier.front();
+                frontier.pop();
+                for (int i: adj[x]) if (res[x][i] && h[i]==INF) {
+                        h[i] = h[x]+1;
+                        frontier.push(i);
+                }
+        }
+        return (h[sink]!=INF);
+}
+int dfs(int x, int source, int sink) {
+        if (x==sink) return 1;
+        visited[x] = 1;
+        int num = 0;
+        for (int i: adj[x]) {
+        	if (!visited[i] && h[i]==h[x]+1 && res[x][i] && dfs(i,source, sink)) {
+                res[x][i]-=1;
+                res[i][x]+=1;
+                num+=1;
+                if (x!=source) return num;
+        	}
+        }
+        return num;
+}
+int maxflow(int source, int sink) {
+        int flow = 0;
+        while (true) {
+                if (!level(source, sink)) break;
+                for (int i=0;i<=N;i++) visited[i] = 0;
+                flow+=dfs(source, source, sink);
+        }
+        return flow;
+}
+
+vector<pair<int,int> > E;
+
+int main() {
+	scanf("%d%d",&N,&Q);
+	for (int i=0;i<Q;i++) {
+		int a,b;
+		scanf("%d%d",&a,&b);
+		E.push_back(make_pair(a-1,b));
+		adj[a-1].push_back(b);
+		adj[b].push_back(a-1);
+	}
+	int ans = 1e9;
+	for (int i=1;i<=N;i++) {
+		for (auto e: E) {
+			res[e.first][e.second] = 1;
+			res[e.second][e.first] = 1;
+		}
+		ans = min(ans,maxflow(0,i));
+	}
+	printf("%d\n",ans);
+	
+    return 0;
+}

@@ -1,0 +1,78 @@
+#include <iostream>
+#include <deque>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+vector<int>  As;
+vector<int> seconChild;
+pair<int,int> findAs(string &s,int off){
+	//cout<<off<<endl;
+	if(s[off]=='X')
+		return make_pair(0,off+1);
+	else{
+		pair<int,int> left=findAs(s,off+1);
+		pair<int,int> right=findAs(s,left.second);
+		seconChild[off]=left.second;
+		if(left.first>=right.first)
+		As[off]=1;
+		if(s[off]=='A')
+			return make_pair(1+left.first+right.first,right.second);
+			else
+			return make_pair(left.first+right.first,right.second);
+	}	
+}
+long long getCapacity(const string &s,int off, deque<int> &d,bool useMin){
+	long long val=0;
+	switch(s[off]){
+		case 'X':
+		if(useMin)
+			{
+				val =d.front();
+				d.pop_front();
+			}
+			else{
+				val =d.back();
+				d.pop_back();
+			}
+			As[off]=val;
+			return val;
+		case 'A':
+			val=getCapacity(s,off+1,d,useMin);
+			val+=getCapacity(s,seconChild[off],d,useMin);
+			return val;
+		case 'B':
+			val=getCapacity(s,off+1,d,useMin || !As[off]);
+			long long val2=getCapacity(s,seconChild[off],d,useMin || As[off]);
+			return max(val,val2);
+	}
+}
+int main()
+{
+    int t; cin>>t;
+    while(t--){
+    	string s; cin>>s;
+    	As=vector<int>(s.length());
+    	seconChild=vector<int>(s.length());
+    	findAs(s,0);
+    	int n=0;
+    	for(char c: s)
+    		if (c=='X')n++;
+    	deque<int> capa;
+    	for(int i=0;i<n; i++){
+    		int tmp; cin>>tmp;
+    		capa.push_back(tmp);
+    	}
+    	sort(capa.begin(),capa.end());
+    	
+    	long long res=getCapacity(s,0,capa,false);
+    //	for(int i=0;i<s.length();i++)
+    //	cout<<seconChild[i]<<" ";
+    //	cout<<endl;
+    //		for(int i=0;i<s.length();i++)
+    //	cout<<As[i]<<" ";
+    //	cout<<endl;
+    	cout<<res<<endl;
+    }
+    return 0;
+}

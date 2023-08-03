@@ -1,0 +1,240 @@
+#include<bits/stdc++.h>
+//#undef DEBUG
+#ifdef DEBUG
+    #include<debug.h>
+#else
+    #define db(...) {}
+    #define dbt(...) {}
+	#define pprintf(...) {}
+#endif
+using namespace std;
+#define ASSERT(f)       if(!(f)){fprintf(stdout,"Line-->%d  Assertion failed: %s\n",__LINE__,#f);exit(1);}
+#define MOD 	        1000000007LL
+#define ABS(x)          ((x)<0?-(x):(x))
+#define SQR(x) 	        ((x)*(x))
+#define CUBE(x)         ((x)*(x)*(x))
+#define pnl             printf("\n");
+#define REP(i,n)        for(__typeof(n) i=0;i<(n);i++)
+#define FOR(i,a,b)      for(__typeof(b) i=(a);i<(b);++i)
+#define FORE(i,a,b)     for(__typeof(b) i=(a);i<=(b);++i)
+#define FORD(i,a,b,d)   for(__typeof(b) i=(a);i<(b);i+=(d))
+#define FORR(i,n,e)     for(__typeof(n) i=(n);i>=(e);--i)
+#define FORRD(i,n,e,d)  for(__typeof(n) i=(n);i>=(e);i-=(d))
+#define FOREACH(i,s) 	for(__typeof((s).begin()) i=(s).begin();i!=(s).end();i++)
+#define UNIQUE(v)       sort(ALL(v)),v.erase(unique(ALL(v)),v.end())
+#define FILL(a,b)       memset(a,b,sizeof(a))
+#define ALL(v)          (v).begin(), (v).end()
+#define RALL(v)         (v).rbegin(), (v).rend()
+#define checkbit(n,b)   (((n)>>(b))&1)
+#define PB push_back
+#define MP make_pair
+#define XX first
+#define YY second
+template<typename T>inline void SD(T &n){
+    #define g getchar_unlocked()
+    n=0;int c=g,s=1;while(c<'0'||c>'9'){if(c=='-')s=-1;c=g;}while(c>='0'&&c<='9'){n=(n<<3)+(n<<1)+c-'0',c=g;}n=n*s;
+    #undef g
+}
+//#define SD(x) cin>>x;//scanf("%d",&x);//
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef vector<int> VI;
+typedef pair<int,int> PII;
+typedef vector<PII> VPII;
+/* checking the constraints */
+#define CHECK_N ASSERT(N >= 1 && N <= 1000000);
+#define CHECK_M ASSERT(M >= 1 && M <= 1000000);
+#define CHECK_L ASSERT(L >= 1 && L <= N);
+#define CHECK_R ASSERT(R >= L && R <= N);
+#define CHECK_K ASSERT(K >= 1 && K <= 1000000000);
+enum DIR{ EAST, SOUTH, WEST, NORTH };
+template<class node>
+class segtree{
+    int u,v;
+	template<void(*fn)(node&)>void update(int rt,int ll,int rr){
+        if(u<=ll&&rr<=v){return fn(tree[rt]);}
+        int m=(ll+rr)>>1,l=rt<<1,r=l|1;
+        split(tree[rt],tree[l],tree[r]);
+        if(v>m){update<fn>(r,m,rr);}
+        if(u<m){update<fn>(l,ll,m);}
+        tree[rt].merge(tree[l],tree[r]);
+    }
+    node query(int rt,int ll,int rr){
+        if(u<=ll&&rr<=v){return tree[rt];}
+        int m=(ll+rr)>>1,l=rt<<1,r=l|1;
+        split(tree[rt],tree[l],tree[r]);
+        node res;
+        if(u>=m){res=query(r,m,rr);
+        }else if(v<=m){res =query(l,ll,m);
+        }else{node n1=query(l,ll,m),n2=query(r,m,rr);res.merge(n1,n2);}
+        tree[rt].merge(tree[l],tree[r]);
+        return res;
+    }
+    void mergeup(int i){i>>=1;while(i>0){tree[i].merge(tree[i<<1],tree[(i<<1)|1]),i>>=1;}}
+    void splitdown(int i){i>>=1;if(i>0){splitdown(i);}tree[i].split(tree[i<<1],tree[(i<<1)|1]);}
+    inline void split(node& a,node& b,node& c){return a.split(b,c);}
+public:
+    int N,lf,rf;
+    node *tree,id;
+    segtree(int n,const node arr[],node& id){
+        this->id=id;N=0;
+        while((1<<N)<n){N++;}
+        lf=1<<N;rf=lf<<1;
+        tree=new node[rf];
+        REP(i,n){tree[i+lf]=arr[i];}
+        FOR(i,n+lf,rf){tree[i]=id;}
+        FORR(i,lf-1,1){tree[i].merge(tree[i<<1],tree[(i<<1)|1]);}
+    }
+    node query(int u,int v){this->u=u+lf;this->v=v+lf+1;return query(1,lf,rf);}
+    node query(int u){u+=lf;splitdown(u);return tree[u];}
+    template<void(*fn)(node&)>void update(int u,int v){this->u=u+lf;this->v=v+lf+1;update<fn>(1,lf,rf);}
+    template<void(*fn)(node&)>void update(int u){u+=lf;splitdown(u);fn(tree[u]);mergeup(u);}
+    void display(){FOR(i,1,rf){tree[i].display(i);}pnl;pnl;}
+    ~segtree(){delete tree;}
+};
+#define SIZE 1000001
+int N,M,arr[SIZE],K,L,R;
+char line[10];
+struct node{
+    int east,south,west,north;
+    int rot;
+    node(){
+        east=1;
+        south=west=north=rot=0;
+    }
+    void display(){
+        pprintf("E:%d S:%d W:%d N:%d\n",east,south,west,north);
+    }
+    int getAns(){
+        return max(east,max(south,max(west,north)));
+    }
+    void merge(node& l, node& r){
+        east=l.east+r.east;
+        south=l.south+r.south;
+        west=l.west+r.west;
+        north=l.north+r.north;
+        rot=0;
+    }
+    void split(node& l, node& r){
+        //we will do lazy propogation, so we can accumulate rotations untill we really need to do it
+        int realRot = rot%4;
+        l.rot+=realRot;
+        r.rot+=realRot;
+        if(realRot==0){
+            //:D nothing to do :D
+        }else if(realRot==1){
+            //E --> S, S --> W, W --> N, N --> E
+            int tempEast = l.east;l.east = l.north;l.north=l.west;l.west=l.south;l.south = tempEast;
+            tempEast = r.east;r.east = r.north;r.north=r.west;r.west=r.south;r.south = tempEast;
+        }else if(realRot==2){
+            // E <--> W and N <--> S
+            swap(l.east,l.west);swap(l.north,l.south);
+            swap(r.east,r.west);swap(r.north,r.south);
+        }else if(realRot==3){
+            //E --> N, S --> E, W --> S, N --> W
+            int tempWest = l.west;l.west = l.north;l.north=l.east;l.east=l.south;l.south = tempWest;
+            tempWest = r.west;r.west = r.north;r.north=r.east;r.east=r.south;r.south = tempWest;
+        }
+        rot = 0;
+    }
+};
+void change(node& l){
+    l.rot+=K;
+    if(K==0){
+        //:D nothing to do :D
+    }else if(K==1){
+        //E --> S, S --> W, W --> N, N --> E
+        int tempEast = l.east;l.east = l.north;l.north=l.west;l.west=l.south;l.south = tempEast;
+    }else if(K==2){
+        // E <--> W and N <--> S
+        swap(l.east,l.west);swap(l.north,l.south);
+    }else if(K==3){
+        //E --> N, S --> E, W --> S, N --> W
+        int tempWest = l.west;l.west = l.north;l.north=l.east;l.east=l.south;l.south = tempWest;
+    }
+}
+namespace BruteForce{
+    int getAns(){
+        int e=0,s=0,w=0,n=0;
+        FORE(i,L,R){
+            switch(arr[i]){
+                case EAST:e++;break;
+                case SOUTH:s++;break;
+                case WEST:w++;break;
+                case NORTH:n++;break;
+                default:ASSERT(false);
+            }
+        }
+        //pprintf("Querying [%d,%d] E:%d S:%d W:%d N:%d\n",L,R,e,s,w,n);
+        ASSERT(e+s+w+n==R-L+1);
+        return max(e,max(s,max(w,n)));
+    }
+    void update(){
+        FORE(i,L,R){
+            arr[i] = (arr[i]+K)%4;
+        }
+    }
+    void display(){
+        FORE(i,1,N){
+            switch(arr[i]){
+                case EAST:printf("E ");break;
+                case SOUTH:printf("S ");break;
+                case WEST:printf("W ");break;
+                case NORTH:printf("N ");break;
+                default:ASSERT(false);
+            }
+        }
+        pnl;
+    }
+}
+//#define CHECK_BRUTE_FORCE
+node seg[SIZE],id;
+void solve(int cx){
+    SD(N);SD(M);
+    CHECK_N;CHECK_M;
+    //BruteForce::display();
+    segtree<node>s(N,seg,id);
+    REP(m,M){
+        scanf("%s",line);
+        ASSERT(strlen(line)==1);
+        SD(L);SD(R);
+        CHECK_L;CHECK_R;
+        if(line[0]=='Q'){
+            //printf("BruteForce: %d\n",BruteForce::getAns());
+            node ans = s.query(L-1,R-1);
+            printf("%d\n",ans.getAns());
+            #ifdef CHECK_BRUTE_FORCE
+                ASSERT(BruteForce::getAns()==ans.getAns());
+            #endif // LOCAL
+        }else if(line[0]=='C'){
+            SD(K);CHECK_K;
+            K%=4;
+            #ifdef CHECK_BRUTE_FORCE
+                BruteForce::update();//BruteForce::display();
+            #endif
+            s.update<&change>(L-1,R-1);
+        }else if(line[0]=='A'){
+            SD(K);CHECK_K;
+            K%=4;
+            if(K==1){K=3;}else if(K==3){K=1;};
+            //moving 0 step anti-clockwise == moving 0 step clockwise, and vice-versa
+            //moving 1 step anti-clockwise == moving 3 step clockwise, and vice-versa
+            //moving 2 step anti-clockwise == moving 2 step clockwise, and vice-versa
+            //moving 3 step anti-clockwise == moving 1 step clockwise, and vice-versa
+            #ifdef CHECK_BRUTE_FORCE
+                BruteForce::update();//BruteForce::display();
+            #endif
+            s.update<&change>(L-1,R-1);
+        }else{
+            ASSERT(false);
+        }
+    }
+}
+int main(){
+#ifdef LOCAL
+    _IN(in);_OUT(out);TT t("main");//_ERR(err);
+#endif
+//ios_base::sync_with_stdio(false);
+solve(0);
+return 0;
+}

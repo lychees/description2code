@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+const int MAXN = 1e6 + 10;
+const LL MOD = 1e9 + 7;
+
+vector<int> pr;
+LL sm[MAXN];
+LL rem[MAXN];
+
+void pre(){
+	memset(sm, -1, sizeof sm);
+	for(int i = 2;i < MAXN;++i){
+		if(sm[i] == -1){
+			sm[i] = i;
+			pr.push_back(i);
+		}
+		for(int j = 0;j < pr.size() && i * pr[j] < MAXN && pr[j] <= sm[i];++j){
+			sm[i * pr[j]] = pr[j];
+		}
+	}
+}
+void go(int L, int R){
+	for(int i = 0;i < (R - L + 1);++i){
+		sm[i] = L + i;
+		rem[i] = L + i;
+	}
+	int sz = pr.size();
+	for(int i = 0;i < sz;++i){
+		LL p = pr[i];
+		LL mul = L + (p - L % p) % p;
+		for(LL j = mul;j <= R;j += p){
+			sm[j - L] /= pr[i];
+			sm[j - L] *= pr[i] - 1;
+			while(rem[j - L] % pr[i] == 0){
+				rem[j - L] /= pr[i];
+			}
+		}
+	}
+}
+
+
+int main(){
+	pre();
+	int t;
+	cin >> t;
+	while(t--){
+		LL L, R, K;
+		LL ans = 0;
+		cin >> L >> R >> K;
+		go(L, R);
+		for(LL i = 0;i < (R - L + 1);++i){
+			if(rem[i] > 1) {
+				sm[i] /= rem[i];
+				sm[i] *= rem[i] - 1;
+			}
+			if(sm[i] % K == 0){
+				++ans;
+			}
+		}
+		printf("%.6lf\n", ans * 1.0 / (R - L + 1));
+	}
+    return 0;
+}

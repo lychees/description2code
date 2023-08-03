@@ -1,0 +1,68 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Sep 30 10:23:54 2015
+
+@author: gangireddy
+"""
+
+#high = n-1
+def buildSegmentTree(entries, segmenttree, low, high, pos):
+    #print low, high, pos    
+    if low == high:
+        segmenttree[pos] = (entries[low] % 2)
+        return
+    mid = (low + high) / 2
+    buildSegmentTree(entries, segmenttree, low, mid, 2*pos+1)
+    buildSegmentTree(entries, segmenttree, mid+1, high, 2*pos+2)
+    segmenttree[pos] = segmenttree[2*pos+1] + segmenttree[2*pos+2]
+
+def rangeOddQuery(segmenttree, query, low, high, pos):
+    if query[0] > high or query[1] < low:
+        return 0
+    if query[0] <= low and query[1] >= high:
+        return segmenttree[pos]
+    mid = (low + high) / 2
+    return rangeOddQuery(segmenttree, query, low, mid, 2*pos+1) + rangeOddQuery(segmenttree, query, mid+1, high, 2*pos+2)
+
+def updateElement(segmenttree, index, low, high, pos, val):
+    #print low, high, pos
+    if low == high and high == index:
+        segmenttree[pos] = (val % 2)
+        return
+    mid = (low + high) / 2
+    if index <= mid:
+        updateElement(segmenttree, index, low, mid, 2*pos+1, val)
+    else:
+        updateElement(segmenttree, index, mid+1, high, 2*pos+2, val)
+    segmenttree[pos] = segmenttree[2*pos+1] + segmenttree[2*pos+2]
+    
+def next2thpower(v):
+    v -= 1
+    v |= v>>1
+    v |= v>>2
+    v |= v>>4
+    v |= v>>8
+    v |= v>>16
+    v += 1
+    return v
+
+n = int(raw_input())
+arr = map(int, raw_input().split())
+q = int(raw_input())
+#find 2's power next to n
+newn = next2thpower(n)
+#print newn, n
+segtree = [0]*(2*newn-1)
+#lazytree = [0]*(2*newn-1)
+buildSegmentTree(arr, segtree, 0, n-1, 0)
+#print segtree
+for query in xrange(q):
+    t, x, y = map(int, raw_input().split())
+    if t == 0 and (arr[x-1] % 2 != y % 2):
+        #print 'updating'
+        arr[x-1] = y
+        updateElement(segtree, x-1, 0, n-1, 0, y)
+    if t == 1:
+        print (y-x)+1 - rangeOddQuery(segtree, (x-1, y-1), 0, n-1, 0)
+    if t == 2:
+        print rangeOddQuery(segtree, (x-1, y-1), 0, n-1, 0)

@@ -1,0 +1,135 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#ifndef ONLINE_JUDGE
+    #define gc getchar
+#else
+    #define gc getchar_unlocked
+#endif
+#ifndef ONLINE_JUDGE
+    #define pc putchar
+#else
+    #define pc putchar_unlocked
+#endif
+using namespace std;
+int read_int()
+{
+  char c = gc();
+  while(c<'0' || c>'9')
+  c = gc();
+  int ret = 0;
+  while(c>='0' && c<='9')
+  {
+    ret = 10 * ret + c - 48;
+    c = gc();
+  }
+  return ret;
+}
+
+void write_Long(long long int n)
+{
+    long long int N = n, rev, count = 0;
+    rev = N;
+    if (N == 0) { pc('0'); pc('\n'); return ;}
+    while ((rev % 10) == 0) { count++; rev /= 10;}
+    rev = 0;
+    while (N != 0) { rev = (rev<<3) + (rev<<1) + N % 10; N /= 10;}
+    while (rev != 0) { pc(rev % 10 + '0'); rev /= 10;}
+    while (count--) pc('0');
+    pc('\n');
+}
+
+
+long long int read(vector<long long int> &tree,int idx)
+{
+    long long int sum=0;
+    while(idx>0)
+    {
+        sum=sum+tree[idx];
+        idx=idx-(idx & -idx);
+    }
+    return sum;
+}
+void add(vector<long long int> &tree,int idx,long long int val,int n)
+{
+    while(idx<=n)
+    {
+        tree[idx]=tree[idx]+val;
+        idx=idx+(idx & -idx);
+    }
+}
+long long int read_range(vector<long long int> &tree,int l,int r)
+{
+    return (read(tree,r)-read(tree,l-1));
+}
+
+int bin_search(vector<long long int> &arr,int low,int upp,long long int k)
+{
+    int mid=(low+upp)/2;
+    if(arr[mid]==k)
+        return mid;
+    else if(arr[mid]>k)
+        bin_search(arr,low,mid-1,k);
+    else
+        bin_search(arr,mid+1,upp,k);
+}
+
+int main()
+{
+    int n,q;
+    //scanf("%d%d",&n,&q);
+    n=read_int();
+    q=read_int();
+    int a,b;
+    pair<int,int> queries[q+1];
+    vector<long long int> points;
+    points.resize(n+1);
+    vector<long long int> All;
+    All.push_back(-1);
+    All.push_back(0);
+    for(int i=1;i<=q;i++)
+    {
+        scanf("%d%d",&a,&b);
+        queries[i]=make_pair(a,b);
+        points[a]=points[a]+b;
+        All.push_back(points[a]);
+    }
+
+    sort(All.begin(),All.end());
+    All.resize(unique(All.begin(),All.end())-All.begin());
+    All[0]=0;
+
+
+
+    int m=All.size()-1;
+    vector<long long int> fenwick_pos;
+    fenwick_pos.resize(m+1);
+    vector<long long int> fenwick_points;
+    fenwick_points.resize(m+1);
+    for(int i=1;i<=n;i++)
+        points[i]=0;
+    add(fenwick_pos,1,n,m);
+    long long int hsh=0;
+    for(int i=1;i<=q;i++)
+    {
+        a=queries[i].first;
+        b=queries[i].second;
+        int prev_pos=bin_search(All,1,m,points[a]);
+        int new_pos=bin_search(All,1,m,points[a]+b);
+        int p1=read_range(fenwick_pos,prev_pos+1,m)+1;
+        int p2=read_range(fenwick_pos,new_pos+1,m)+1;
+        add(fenwick_pos,prev_pos,-1,m);
+        add(fenwick_pos,new_pos,1,m);
+        add(fenwick_points,prev_pos,-points[a],m);
+        add(fenwick_points,new_pos,points[a]+b,m);
+        hsh=hsh+read_range(fenwick_points,prev_pos,new_pos-1);
+        long long int temp=(long long int)p2*(points[a]+b);
+        temp=temp-(long long int)p1*(points[a]);
+        hsh=hsh+temp;
+        //printf("%lld\n",hsh);
+        write_Long(hsh);
+        points[a]=points[a]+b;
+    }
+
+
+}

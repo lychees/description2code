@@ -1,0 +1,119 @@
+#include<iostream>
+using namespace std;
+#include<stdio.h>
+//#include<conio.h>
+int parent[1000010], r[1000010];
+int N, E;
+long long int K;
+
+int E1[2000100], E2[2000100], W[2000100], MST_W[2000100];
+
+
+void swap(int *a, int *b)
+{
+     int temp = *a;
+     *a = *b;
+     *b = temp;
+}
+int partition(int W[], int E1[], int E2[], int low, int high)
+{
+    int pivot = W[high];
+    int i = low - 1;
+    for(int j = low; j <= high - 1; j++)
+    {
+            if(W[j] <= pivot)
+            {
+                    i++;
+                    swap(&W[i],&W[j]);
+                    swap(&E1[i],&E1[j]);
+                    swap(&E2[i],&E2[j]);
+            }
+    }
+    i++;
+    swap(&W[i],&W[high]);
+    swap(&E1[i],&E1[high]);
+    swap(&E2[i],&E2[high]);
+    return i;
+}
+void quicksort(int W[], int E1[], int E2[], int low, int high)
+{
+     if(low < high)
+     {
+            int p = partition(W,E1,E2,low,high);
+            quicksort(W,E1,E2,low,p-1);
+            quicksort(W,E1,E2,p+1,high);
+     }
+}
+
+int find(int x)
+{
+    if(x!=parent[x])
+                    return find(parent[x]);
+    else
+        return parent[x];
+}
+void Union(int x, int y)
+{
+     int x1 = find(x);
+     int y1 = find(y);
+     if(r[x1] > r[y1])
+                 parent[y1] = x1;
+     else if(r[y1] > r[x1])
+          parent[x1] = y1;
+     else
+     {
+         parent[x1] = y1;
+         r[y1]++;
+     }
+}
+
+int kruskal()
+{
+     int e = 1, j = 1;
+     long long int cost = 0;
+     quicksort(W,E1,E2,1,E);
+    
+     for(int i = 1; i <=N; i++)
+     {
+             parent[i] = i;
+             r[i] = 0;
+     }
+     while(e <= N-1 && j<=E)
+     {
+             int x = find(E1[j]);
+             int y = find(E2[j]);
+             if(x != y)
+             {
+                  cost += (long long int)W[j];
+                  MST_W[e] = W[j];
+                  Union(x,y);
+                  e++;
+             }
+             j++;
+     }
+     
+     int i = e-1, res = 0;
+     while(i>=1 && cost > K)
+     {
+             cost = cost - (long long int)MST_W[i] + (long long int)1;
+             res++;
+             i--;
+     }
+     
+     if(cost <= K && e-1 == N-1)
+             return res;
+     else
+        return -1;
+}
+
+int main()
+{
+    scanf("%d%d%lld",&N,&E,&K);
+    for(int i=1;i<=E;i++)
+            scanf("%d%d%d",&E1[i],&E2[i],&W[i]);
+    
+    printf("%d\n",kruskal());
+    //getch();
+    return 0;
+}
+                 

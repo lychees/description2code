@@ -1,0 +1,89 @@
+//created by shikhar vishnoi
+
+#include <iostream>
+#include <algorithm>
+#include <map>
+#include <vector>
+#include <stack>
+#include <set>
+#include <queue>
+#include <string>
+#include <string.h>
+#include <math.h>  
+#define in(x) scanf("%lld",&x)
+#define ll long long
+#define pb push_back
+#define pp pair<ll,ll>
+#define mp make_pair
+#define maxn 3005
+#define iosync ios_base::sync_with_stdio(false);cin.tie(0);
+const ll mod=1000000007;
+const double pi=3.14159265358979323846;
+const ll inf = (ll) (1e18); 
+using namespace std;
+
+std::vector<ll> g[maxn];
+std::map< pp , ll> edge;
+std::map< pp , ll> check;
+ll rev[maxn][maxn],node[maxn];
+bool visit[maxn];
+
+ll dfs(ll u,ll s)
+{
+    ll cost = 0;
+    visit[u] = true;
+    for (int i = 0; i < g[u].size(); ++i)
+        if(!visit[g[u][i]])
+        {
+            rev[s][edge[mp(u,g[u][i])]] = check[mp(g[u][i],u)] + dfs(g[u][i],s);
+            cost += rev[s][edge[mp(u,g[u][i])]];
+        }
+    return cost;
+}
+ll DFS(ll u,ll ed)
+{
+    ll minn = node[u] - rev[u][ed];
+    visit[u] = true;
+    for (int i = 0; i < g[u].size(); ++i)
+        if(!visit[g[u][i]] && edge[mp(u,g[u][i])] != ed)
+            minn = min (minn,DFS(g[u][i],ed));
+    return minn;
+}
+int main ()
+{
+    // freopen("input.txt", "r", stdin); 
+    // freopen("output.txt", "w", stdout);
+    iosync
+    ll n,a,b,ans = inf;
+    cin>>n;
+    for (int i = 0; i < n-1; ++i)
+    {
+        cin>>a>>b;
+        check[mp(a-1,b-1)] = 1;
+        g[a-1].push_back(b-1);
+        g[b-1].push_back(a-1);
+        edge[mp(a-1,b-1)] = i;
+        edge[mp(b-1,a-1)] = i;
+    }
+    for (int i = 0; i < n; ++i)
+    {
+        memset(visit,0,sizeof(visit));
+        node[i] = dfs(i,i);
+    }
+    for (int i = 0; i < n-1; ++i)
+    {
+        ll price = 0;
+        memset(visit,0,sizeof(visit));
+        for (int j = 0; j < n; ++j)
+            if(!visit[j])
+            {
+                price += DFS(j,i);
+            }
+        ans = min(ans,price);
+    }
+    if(n ==1)
+    	cout<<0;
+    else
+    	cout<<ans;
+    return 0;
+}

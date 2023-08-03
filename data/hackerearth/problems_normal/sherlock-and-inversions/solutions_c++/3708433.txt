@@ -1,0 +1,134 @@
+/*input
+5 3
+1 4 2 3 1
+1 2
+3 5
+1 5
+*/
+ 
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define ll int
+#define PII pair<ll, ll>
+#define f first
+#define s second
+#define F(i,a,b) for(ll i = (ll)(a); i <= (ll)(b); i++)
+#define RF(i,a,b) for(ll i = (ll)(a); i >= (ll)(b); i--)
+#define inf LLONG_MAX
+#define mod 1000000007
+#define MAXN 100005
+#define pb(x) push_back(x)
+
+ 
+ll bit[MAXN], n, l, r, q, ind, brr[MAXN];
+ll pL, pR, tot, BLOCK;
+ll arr[MAXN];
+long long ans[MAXN], answer;
+
+struct Query {
+    int l, r, i;
+};
+vector<Query> quer;
+
+bool cmp(pair < PII, ll > x, pair < PII, ll > y)
+{
+	if(x.f.f/BLOCK != y.f.f/BLOCK) 
+		return x.f.f/BLOCK < y.f.f/BLOCK;
+	return x.f.s < y.f.s;
+}
+ 
+void update(ll p, ll v)
+{
+	tot+=v;
+	for(;p<=100000;p+=p&(-p))
+		bit[p] += v; 	 
+}
+ 
+ll query(ll b)
+{
+	ll sum = 0; 	
+	for(;b>0;b-=b&(-b))
+		sum += bit[b];
+	return sum;
+}
+
+void add_lft(ll pos)
+{
+	answer+=query(pos-1);	
+	update(pos,1);
+}
+ 
+void add_rt(ll pos)
+{
+	answer+=(tot-query(pos));	
+	update(pos,1);
+}
+ 
+void remove_lft(ll pos)
+{
+	answer-=query(pos-1);	
+	update(pos,-1);
+}
+ 
+void remove_rt(ll pos)
+{
+	answer-=(tot-query(pos));	
+	update(pos,-1);
+}
+ 
+int main() 
+{
+	scanf("%d %d",&n,&q);
+	F(i,1,n)
+	{
+		scanf("%d",&brr[i]);
+		arr[i-1]=brr[i];
+	}
+    sort(arr, arr + n);
+    F(i,1,n)
+    	brr[i] = 1 + lower_bound(arr,arr+n,brr[i])-arr;
+	BLOCK=ceil(sqrt(n));
+	F(i,0,q-1)
+	{
+        scanf("%d %d", &l, &r);
+        quer.push_back(Query{l, r, i});
+    }
+	sort(quer.begin(), quer.end(),[&BLOCK](const Query &a, const Query &b) {
+		if (a.l / BLOCK == b.l/ BLOCK)
+			return a.r < b.r;
+		return a.l < b.l;
+    });
+
+	pL=pR=1;
+	update(brr[1],1);
+	F(i,0,q-1)
+	{
+		l=quer[i].l;
+		r=quer[i].r;
+		while(pL<l)
+		{
+			remove_lft(brr[pL]);
+			pL++;
+		}
+		while(pL>l)
+		{
+			add_lft(brr[pL-1]);
+			pL--;
+		}
+		while(pR<r)
+		{
+			add_rt(brr[pR+1]);
+			pR++;
+		}
+		while(pR>r)
+		{
+			remove_rt(brr[pR]);
+			pR--;
+		}
+		ans[quer[i].i]=answer;
+	}
+	F(i,0,q-1)
+		printf("%lld\n",ans[i]);
+	return 0;
+}

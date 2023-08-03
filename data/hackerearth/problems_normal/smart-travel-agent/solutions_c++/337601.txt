@@ -1,0 +1,125 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const int N = 106;
+vector <int> adj[N];
+vector < pair < long long, pair <int, int> > > edges;
+int rnk[N], dad[N];
+int pre[N];
+bool was[N];
+
+int root(int v)
+{
+      return v == dad[v] ? v : (dad[v] = root(dad[v]));
+}
+
+void join(int v1, int v2)
+{
+      v1 = root(v1), v2 = root(v2);
+      if (v1 == v2) return;
+      if (rnk[v1] < rnk[v2]) swap(v1, v2);
+      dad[v2] = v1;
+      if (rnk[v1] == rnk[v2]) rnk[v1]++;
+}
+
+void dfs(int u, int d)
+{
+      was[u] = true;
+      if (u == d) return;
+      for (int v : adj[u])
+            if (!was[v])
+            {
+                  pre[v] = u;
+                  dfs(v, d);
+            }
+}
+
+int main()
+{
+      ios_base::sync_with_stdio(false);
+      cin.tie(NULL);
+
+      int n, m; cin >> n >> m;
+      edges.resize(m);
+      for (int i = 0; i < m; i++)
+      {
+            long long c;
+            int x, y;
+            cin >> x >> y >> c;
+            x--;
+            y--;
+            edges.push_back(make_pair(c, make_pair(x, y)));
+      }
+      sort(edges.begin(), edges.end());
+      reverse(edges.begin(), edges.end());
+
+      int s, d;
+      long long t, ans;
+      cin >> s >> d >> t;
+      s--;
+      d--;
+
+      for (int i = 0; i < n; i++) rnk[i] = 0, dad[i] = i;
+      for (int i = 0; i < m; i++)
+      {
+            long long cur = edges[i].first;
+            int u = edges[i].second.first, v = edges[i].second.second;
+
+            join(u, v);
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+
+            if (root(s) == root(d))
+            {
+                  ans = cur;
+                  i++;
+                  while (i < m and edges[i].first == cur)
+                  {
+                        int uu = edges[i].second.first, vv = edges[i].second.second;
+                        adj[uu].push_back(vv);
+                        adj[vv].push_back(uu);
+                        i++;
+                  }
+                  break;
+            }
+      }
+
+      for (int i = 0; i < n; i++) sort(adj[i].begin(), adj[i].end());
+      pre[s] = -1;
+      dfs(s, d);
+
+      stack <int> ss;
+      while (d != s)
+      {
+            ss.push(d);
+            d = pre[d];
+      }
+
+      cout << s + 1 << " ";
+      while (!ss.empty())
+      {
+            cout << ss.top() + 1 << " ";
+            ss.pop();
+      }
+      cout << "\n" << (t + ans - 2) / (ans - 1) << "\n";
+      return 0;
+}

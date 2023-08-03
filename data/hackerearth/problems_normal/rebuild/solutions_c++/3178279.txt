@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+#define sz(x) (int((x).size()))
+#define pb push_back
+#define eb emplace_back
+#define all(x) (x).begin(), (x).end()
+template<typename T> bool domax(T &a, T b) { return (b > a ? (a = b, true) : false); }
+template<typename T> bool domin(T &a, T b) { return (b < a ? (a = b, true) : false); }
+typedef long long ll;
+
+const int MaxN = 50005;
+
+struct E {
+	int a, b; ll c;
+	E(int a, int b, ll c) : a(a), b(b), c(c) { }
+	bool operator<(const E &e) const {
+		if (c == e.c) {
+			std::pair<int, int> p(a, b), q(e.a, e.b);
+			if (b < a) std::swap(p.first, p.second);
+			if (e.b < e.a) std::swap(q.first, q.second);
+			return p < q;
+		} else return c > e.c;
+	}
+};
+
+int T, N, M, count[MaxN];
+ll ans;
+std::vector<std::pair<int, ll>> e[MaxN];
+std::priority_queue<E> q;
+bool seen[MaxN];
+
+void add(int i) {
+	for (auto p : e[i]) {
+		q.push(E(i, p.first, p.second));
+	}
+}
+
+int main()
+{
+	scanf("%d", &T);
+	for (int t = 0; t < T; t++) {
+		scanf("%d%d", &N, &M);
+		for (int i = 0; i < M; i++) {
+			int a, b; ll c;
+			scanf("%d%d%lld", &a, &b, &c);
+			a--; b--;
+			e[a].eb(b, c);
+			e[b].eb(a, c);
+		}
+		add(0);
+		seen[0] = true;
+		while (!q.empty()) {
+			E f = q.top(); q.pop();
+			int a = f.a, b = f.b; ll c = f.c;
+			if (seen[b]) continue;
+			else seen[b] = true;
+			add(b);
+			count[a]++;
+			count[b]++;
+			ans += c;
+		}
+		printf("%lld\n", ans);
+		for (int i = 0; i < N; i++) printf("%d%c", count[i], " \n"[i == N-1]);
+		for (int i = 0; i < N; i++) {
+			seen[i] = false;
+			count[i] = 0;
+			e[i].clear();
+		}
+		ans = 0;
+	}
+}
+

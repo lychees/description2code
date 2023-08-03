@@ -1,0 +1,99 @@
+#include<iostream>
+using namespace std;
+int primes_ar[110]={0},pc=0,prime_ar[110];
+int fact[110][110],fact1[110][110];
+long long pow_mod(long long a, long long b, long long c) {
+long long x = 1, y = a;
+    while(b > 0) {
+        if(b%2 == 1) {
+            x=(x*y);
+            if(x>c) x%=c;
+        }
+        y = (y*y);
+        if(y>c) y%=c;
+        b /= 2;
+    }
+    return x;
+}
+long long doctor(long long a,long long m) {return pow_mod(a,m-2,m);}
+void prec()
+{
+	for(int i=2;i<=100;i++)
+	{
+		if(primes_ar[i]==0)
+		{
+			prime_ar[pc]=i;
+			pc++;
+			for(int j=i*2;j<=100;j+=i)
+			primes_ar[j]=1;
+		}
+	}
+	for(int i=0;i<pc;i++)
+	{
+		fact[i][0]=1,fact1[i][0]=1;
+		for(int j=1;j<=100;j++)
+		{
+			fact[i][j]=(fact[i][j-1]*j)%prime_ar[i];
+			fact1[i][j]=(doctor(j,prime_ar[i])*fact1[i][j-1])%prime_ar[i];
+		}
+	}
+}
+long long thm(long long a,long long b,long long c)
+{
+	if(a==0 || b==0) return 1;
+	else
+	{
+		long long d1=a%prime_ar[c],d2=b%prime_ar[c];
+		if(d1<d2)
+		return 0;
+		else
+		 return ((fact[c][d1]*fact1[c][d1-d2]*fact1[c][d2])*thm(a/prime_ar[c],b/prime_ar[c],c))%prime_ar[c];
+	}
+}
+int zudd[1000],chat[1000],k=0;
+long long f(long long a,long long b, long long c)
+{
+	k=0;
+	for(int i=0;i<pc;i++)
+	{
+		if(c%prime_ar[i]==0)
+		{
+			chat[k]=prime_ar[i];
+			zudd[k]=thm(a,b,i);
+			k++;
+		}
+	}
+	long long p, i, prod = 1, sum = 0;
+ 
+	for (i = 0; i < k; i++) prod *= chat[i];
+ 
+	for (i = 0; i < k; i++) {
+		p = prod / chat[i];
+		sum = (sum+(zudd[i] * doctor(p, chat[i]) * p)%c)%c;
+	}
+ 
+	return sum %c;
+}
+int main()
+{
+	prec();
+	int test;
+	cin>>test;
+	for(int i=0;i<test;i++)
+	{
+		long long a,b,c;
+		cin>>a>>b>>c;
+		if(a<b)
+		cout<<0<<endl;
+		else if(c==1)
+		cout<<0<<endl;
+		else if(b==1)
+		cout<<1<<endl;
+		else
+		{
+			a=a-b;
+		cout<<f(a+b-1,b-1,c)<<endl;
+		}
+	}
+	return 0;
+}

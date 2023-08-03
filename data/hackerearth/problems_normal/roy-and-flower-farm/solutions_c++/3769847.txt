@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+int A, B, n, p;
+vector<pair<int, int > > cost;
+bool cmp(pair<int, int > p1, pair<int, int > p2){
+		return (p1.second < p2.second);
+}
+map<pair<int, pair<int, int > >, bool > m;
+void func(int x, int prof, int fert){
+	if(x<n && fert+cost[x].second <= p){
+		if(m.find(make_pair(x, make_pair(prof, fert)))!= m.end()){
+			return;
+		}
+		func(x+1, prof+cost[x].first, fert+cost[x].second);
+		func(x+1, prof, fert);
+		m[make_pair(x, make_pair(prof, fert))]=true;
+	}else{
+		if(B < prof+(p-fert)){
+			B=prof+(p-fert);
+			A=fert;
+		//	cout<<"A: "<<A<<" B: "<<B<<endl;
+		}else if(B == prof+(p-fert)){
+			A = min(A, fert);
+		}
+		return;
+	}
+}
+int main()
+{
+    int t;
+    cin>>t;
+    while(t--){
+    	A=0, B=0;
+    	cin>>n>>p;
+    	m.clear();
+    	cost.clear();
+    	int x, y;
+    	for(int i=0; i<n; i++){
+    		scanf("%d %d", &x, &y);
+    		cost.push_back(make_pair(x, y));
+    	}
+    	sort(cost.begin(), cost.end(), cmp);
+    	//func(0, 0, 0);
+
+    	int dp[2][p+1];
+    	memset(dp, 0, sizeof(dp));
+    	int c1=0, c2=1;
+    	for(int i=0; i<n; i++){
+    		for(int j=0; j<=p; j++){
+    			dp[c2][j] = dp[c1][j];
+    			if((j==cost[i].second) || (j>cost[i].second && dp[c1][j-cost[i].second])){
+    				dp[c2][j] = max(dp[c2][j], (dp[c1][j-cost[i].second]+cost[i].first));
+    			}
+    		}
+    		c1=1-c1;
+    		c2=1-c2;
+    	}
+    	for(int i=0; i<=p; i++){
+    		if(B<(dp[c1][i]+p-i)){
+				B=dp[c1][i]+p-i;
+				A=i;
+
+    		}
+    	}
+    	cout<<A<<" "<<B<<endl;
+    }
+    return 0;
+}

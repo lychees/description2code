@@ -1,0 +1,335 @@
+#include<cstdio>
+#include<iostream>
+#include<cstdlib>
+#include<cmath>
+#include<cstring>
+#include<vector>
+#include<set>
+#include<unordered_map>
+#include<list>
+#include<queue>
+#include<algorithm>
+#define mod 1000000007
+typedef long long li;
+using namespace std;
+
+//All Codes are 1-indexed
+
+//Adjacency List
+vector<int> E[100005];
+vector<li> W[100005];
+
+// LCA
+//const int max_nodes, log_max_nodes;
+int num_nodes, log_num_nodes, root;
+//vector<int> children[max_nodes];
+int A[100005][30];
+int LCA_parent[100005];
+int L[100005];
+int dfs_V[100005];
+// children[i] contains the children of node i
+// A[i][j] is the 2^j-th ancestor of node i, or -1 if that
+// L[i] is the distance between node i and the root
+// ancestor does not exist
+// floor of the binary logarithm of n
+int lb(unsigned int n)
+{
+if(n==0)
+return -1;
+int p = 0;
+if (n >= 1<<16) { n >>= 16; p += 16; }
+if (n >= 1<< 8) { n >>= 8; p += 8; }
+if (n >= 1<< 4) { n >>= 4; p += 4; }
+if (n >= 1<< 2) { n >>= 2; p += 2; }
+if (n >= 1<< 1) {
+p += 1; }
+return p;
+}
+void DFS(int i, int p, int l)
+{
+	if(dfs_V[i]!=0)
+		return;
+	dfs_V[i]=1;
+	L[i] = l;
+	LCA_parent[i]=p;
+	for(int j = 0; j < E[i].size(); j++)
+	{
+		if(dfs_V[E[i][j]]==0)
+			DFS(E[i][j], i, l+1);
+	}
+}
+int LCA(int p, int q)
+{
+// ensure node p is at least as deep as node q
+if(L[p] < L[q])
+swap(p, q);
+ // "binary search" for the ancestor of node p situated on the same level as q
+    for(int i = log_num_nodes; i >= 0; i--)
+	if(L[p] - (1<<i) >= L[q])
+	    p = A[p][i];
+    
+    if(p == q)
+	return p;
+
+    // "binary search" for the LCA
+    for(int i = log_num_nodes; i >= 0; i--)
+	if(A[p][i] != -1 && A[p][i] != A[q][i])
+	{
+	    p = A[p][i];
+	    q = A[q][i];
+	}
+    
+    return A[p][0];
+}
+void LCA_precompute(int N, int rooted, int r)
+{
+    // read num_nodes, the total number of nodes
+    num_nodes = N;
+    log_num_nodes=lb(num_nodes);
+    
+    if(rooted)
+    	root=r;
+    else
+    	root=1;
+    // precompute L
+    memset(dfs_V,0,sizeof(dfs_V));
+    memset(L,0,sizeof(L));
+    DFS(root, -1, 0);
+    for(int i = 1; i <= num_nodes; i++)
+    {
+		int p;
+		// read p, the parent of node i or -1 if node i is the root
+		p = LCA_parent[i];
+		A[i][0] = p;
+    }
+    // precompute A using dynamic programming
+    for(int j = 1; j <= log_num_nodes; j++)
+	for(int i = 1; i <= num_nodes; i++)
+	    if(A[i][j-1] != -1)
+		A[i][j] = A[A[i][j-1]][j-1];
+	    else
+		A[i][j] = -1;
+}
+
+//Centroid Decomposition
+
+int D[100005]; // size of sub segment
+int C[100005];
+vector<int> Child[100005];
+vector<int> ParentDist[100005];
+int Parent[100005];
+unordered_map<int,li> Pretty[100005];
+unordered_map<int,int> MaxParent[100005];
+unordered_map<int,li> MaxPosVal[100005];
+unordered_map<int,li>::iterator it_pretty;
+unordered_map<int,int>::iterator it_mp;
+void centroid_dfs(int v, int p, li m, li c, li s, li mpv, int mp, int cp, int par)
+{
+	int x=0,i=0,mpc=0,cpc=0;
+	li d=0,S=0,mc=0,sc=0,mpvc=0;
+	for(i=0;i<E[v].size();i++)
+	{
+		if(E[v][i]!=p && C[E[v][i]]==0)
+		{
+			mc=m;
+			sc=s;
+			mpvc=mpv;
+			mpc=mp;
+			cpc=cp;
+			d=c+W[v][i];
+			sc=s+W[v][i];
+			if(sc>mpv)
+				mpvc=sc;
+			if(d<0)
+			{
+				d=0;
+				cpc=E[v][i];
+			}
+			if(d>m)
+			{
+				mc=d;
+				mpc=cp;
+			}
+			Pretty[par].insert(make_pair(E[v][i],mc));
+			MaxParent[par].insert(make_pair(E[v][i],mpc));
+			MaxPosVal[par].insert(make_pair(E[v][i],mpvc));
+			//printf("Centroid_Parent : %d v : %d w : %lld pretty : %lld mp : %d mpv : %lld s : %lld d : %lld cp : %d\n",par,E[v][i],W[v][i],m,mp,mpv,s,d,cp);
+			centroid_dfs(E[v][i],v,mc,d,sc,mpvc,mpc,cpc,par);
+			S=S+D[E[v][i]];
+		}
+	}
+	D[v]=S+1;
+}
+
+void centroid(int v, int parent, int N, int c, int prev)
+{
+	//printf("v : %lld parent : %lld N : %lld c : %lld\n",v,parent,N,c);
+	int i=0,s=0,mp=0;
+	li m=0,mpv=0;
+	for(i=0;i<E[v].size();i++)
+	{
+		if(E[v][i]!=prev && C[E[v][i]]==0)
+		{
+			s=D[E[v][i]];
+			//printf("v : %lld parent : %lld child : %lld size : %lld\n",v,parent,E[v][i],s);
+			//getchar();
+			if((2*s)>N)
+			{
+				centroid(E[v][i], parent, N, c, v);
+				return;
+			}
+		}
+	}
+	C[v]=c;
+	Parent[v]=parent;
+	Child[parent].push_back(v);
+	for(i=0;i<E[v].size();i++)
+	{
+		if(C[E[v][i]]==0)
+		{
+			if(W[v][i]<0)
+			{
+				m=0;
+				mp=E[v][i];
+				mpv=0;
+			}
+			else
+			{
+				m=W[v][i];
+				mp=v;
+				mpv=W[v][i];
+			}
+			Pretty[v].insert(make_pair(E[v][i],m));
+			MaxParent[v].insert(make_pair(E[v][i],mp));
+			MaxPosVal[v].insert(make_pair(E[v][i],mpv));
+			//printf("Centroid_Parent : %d v : %d w : %lld pretty : %lld mp : %d mpv : %lld s : %lld d : %lld cp : %d\n",v,E[v][i],W[v][i],m,mp,mpv, W[v][i],m,mp);
+			centroid_dfs(E[v][i],v,m,m,W[v][i],mpv,mp,mp,v);
+			centroid(E[v][i],v,D[E[v][i]],c+1,v);
+		}
+	}
+}
+
+void calc_ParentDist(int N)
+{
+	int i=0,j=0,p=0,d=0,l=0;
+	LCA_precompute(N, 0, 0);
+	//printf("CH1\n");
+	for(i=1;i<=N;i++)
+	{
+		p=i;
+		while(p>0)
+		{
+			l=LCA(i,p);
+			d=(L[i]-L[l])+(L[p]-L[l]);
+			//printf("i : %lld p : %lld d : %lld\n",i,p,d);
+			ParentDist[i].push_back(d);
+			p=Parent[p];
+		}
+	}
+}
+
+void centroid_decomposition(int N)
+{
+	memset(C,0,sizeof(C));
+	memset(D,0,sizeof(D));
+	centroid_dfs(1, 0,0,0,0,0,0,0,0);
+	centroid(1, 0, N, 1, 0);
+	//calc_ParentDist(N);
+}
+
+
+int main()
+{
+	int T=0,N=0,i=0,len=0,end=0,M=0,u=0,v=0,c=0,pp=0,qp=0,p=0,q=0,pf=0,qf=0,mp=0;
+	li w=0,ps=0,qs=0,R=0,S=0;
+	scanf("%d%d",&N,&M);
+	for(i=0;i<N-1;i++)
+	{
+		scanf("%d%d%lld",&u,&v,&w);
+		E[u].push_back(v);
+		W[u].push_back(w);
+		E[v].push_back(u);
+		W[v].push_back(w);
+	}
+	centroid_decomposition(N);
+	//Printing Centroid Tree
+	
+	/*queue<int> Q;
+	Q.push(0);
+	while(!Q.empty())
+	{
+		u=Q.front();
+		Q.pop();
+		printf("P : %d Parent : %d Children : ",u,Parent[u]);
+		for(i=0;i<Child[u].size();i++)
+		{
+			Q.push(Child[u][i]);
+			printf("%d ",Child[u][i]);
+		}
+		printf("\n");
+	}
+	*/
+	
+	for(i=0;i<M;i++)
+	{
+		scanf("%d%d",&u,&v);
+		p=u;
+		q=v;
+		ps=0;
+		qs=0;
+		R=0;
+		pf=1;
+		qf=1;
+		S=0;
+		while(p!=q)
+		{
+			if(C[p]>=C[q])
+			{
+				pf=1;
+				pp=Parent[p];
+				it_pretty=Pretty[pp].find(u);
+				ps=it_pretty->second;
+				it_mp=MaxParent[pp].find(u);
+				mp=it_mp->second;
+				//printf("u : %d Centroid_Parent : %d Pretty : %lld MaxParent : %d\n",u,pp,ps,mp);
+				if(mp!=pp)
+					pf=0;
+				p=pp;
+			}
+			else
+			{
+				qf=1;
+				qp=Parent[q];
+				it_pretty=Pretty[qp].find(v);
+				qs=it_pretty->second;
+				it_mp=MaxParent[qp].find(v);
+				mp=it_mp->second;
+				//printf("v : %d Centroid_Parent : %d Pretty : %lld MaxParent : %d\n",v,qp,qs,mp);				
+				if(mp!=qp)
+					qf=0;
+				q=qp;
+			}
+			if(p==q)
+			{
+				R=max(ps,qs);
+				it_pretty=MaxPosVal[p].find(u);
+				if(it_pretty!=MaxPosVal[p].end())
+					S=it_pretty->second;
+				else
+					S=0;
+				it_pretty=MaxPosVal[q].find(v);
+				if(it_pretty!=MaxPosVal[q].end())	
+					S=S+it_pretty->second;
+				R=max(R,S);
+				if(pf==1 && qf==1)
+				{
+					ps=ps+qs;
+					R=max(R,ps);
+				}
+				
+			}
+		}			
+		printf("%lld\n",R);
+	}
+	return 0;
+}

@@ -1,0 +1,197 @@
+
+#include <bits/stdc++.h>
+#define REP(i, a, b) for(int i = a; i < b; i++)
+#define FOR(i, a, b) for(int i = a; i <= b; i++)
+#define FORD(i, a, b) for(int i = a; i >= b; i--)
+
+using namespace std;
+
+typedef long long ll;
+const int maxn = 100005;
+
+const long long inf = 1LL<<61;
+
+int n;
+int a, b;
+int CHS, ID;
+int par[maxn];
+int chain[maxn];
+int id[maxn];
+int rid[maxn];
+int head_chain[maxn];
+int depth[maxn];
+int subtree[maxn];
+vector<int> nbs[maxn];
+int anc[20][maxn];
+ll pref[maxn<<3];
+ll suf[maxn<<3];
+ll sum[maxn<<3];
+ll best[maxn<<3];
+int t[maxn];
+int logn;
+
+#define remax(a, b) a = max(a, b)
+
+void build(int v, int l, int r) {
+    if(l == r) {
+        best[v] = pref[v] = suf[v] = sum[v] = t[rid[l-1]];
+        //cerr << l << " " << r << ": " << t[rid[l-1]] << endl;
+        return;
+    }
+
+    int mid = (l+r)>>1;
+    build(2*v, l, mid);
+    build(2*v+1, mid+1, r);
+
+    pref[v] = pref[2*v];
+    remax(pref[v], sum[2*v] + pref[2*v+1]);
+
+    suf[v] = suf[2*v+1];
+    remax(suf[v], sum[2*v+1] + suf[2*v]);
+
+    sum[v] = sum[2*v] + sum[2*v+1];
+
+    best[v] = max(best[2*v], best[2*v+1]);
+    remax(best[v], suf[2*v] + pref[2*v+1]);
+}
+
+ll qpref, qbest, qsuf, qsum;
+
+void tree_query(int v, int l, int r, int ql, int qr) {
+    if(ql <= l && qr >= r) {
+        remax(qbest, best[v]);
+        remax(qbest, qsuf + pref[v]);
+        ll oldsuf = qsuf;
+        qsuf = suf[v];
+        remax(qsuf, sum[v] + oldsuf);
+        qpref = max(qsum + pref[v], qpref);
+        qsum += sum[v];
+        //cerr << l << " " << r << ":" << ql << " " << qr << " = " << best[v] <<  " " << pref[v] << endl;
+        return;
+    }
+    int mid = (l+r)>>1;
+    if(ql <= mid) tree_query(2*v, l, mid, ql, qr);
+    if(qr >= mid+1)tree_query(2*v+1, mid+1, r, ql, qr);
+
+}
+
+int dfs(int v, int p, int d) {
+    depth[v] = d; par[v] = p;
+    for(int nb : nbs[v]) if(nb != p) {
+        subtree[v] += dfs(nb, v, d+1);
+    }
+    return ++subtree[v];
+}
+
+void hld(int v, int p) {
+    if(head_chain[CHS] < 0) head_chain[CHS] = v;
+
+    chain[v] = CHS;
+    id[v] = ID;
+    rid[ID] = v;
+    ID++;
+
+    int sc = -1, scv = -1;
+    REP(i, 0, nbs[v].size()) {
+        int nb = nbs[v][i];
+        if(nb != p) {
+            if(scv < subtree[nb]) {
+                sc = i; scv = subtree[nb];
+            }
+        }
+    }
+    if(sc < 0) return;
+    hld(nbs[v][sc], v);
+    for(int nb : nbs[v]) if(nb != p && nbs[v][sc] != nb) {
+        CHS++;
+        hld(nb, v);
+    }
+}
+
+void lca() {
+    logn = log2(n);
+    FOR(j, 0, logn) REP(i, 0, n) anc[j][i] = (j ? anc[j-1][anc[j-1][i]] : par[i]);
+}
+
+int lca_query(int a, int b) {
+    if(depth[a] < depth[b]) swap(a, b);
+    FORD(p, logn, 0) if(depth[a] - (1<<p) >= depth[b]) a = anc[p][a];
+    FORD(p, logn, 0) if(anc[p][a] != anc[p][b]) {
+        a = anc[p][a];
+        b = anc[p][b];
+    }
+    return (a == b ? a : anc[0][a]);
+}
+
+pair<ll, ll> query_up(int a, int b, int dest, int pls) {
+    ll res = -inf;
+    ll cpref = -inf;
+    while(chain[a] != chain[b]) {
+        int hc = head_chain[chain[a]];
+        qbest = qpref = -inf;
+        qsuf = qsum = 0;
+        tree_query(1, 1, n, 1+id[hc], 1+id[a]);
+        //cerr << 1+id[hc] << " " << 1+id[a] << " = " << qbest << endl;
+        remax(res, qbest);
+        remax(res, cpref + qsuf);
+        cpref = max(qpref, cpref + qsum);
+        a = par[hc];
+    }
+
+    if(id[b]+pls <= id[a]) {
+        qbest = qpref = -inf;
+        qsuf = qsum = 0;
+        tree_query(1, 1, n, 1+id[b]+pls, 1+id[a]);
+        remax(res, cpref + qsuf);
+        remax(res, qbest);
+        cpref = max(qpref, cpref + qsum);
+        //cerr << ":" << 1+id[b] << " " << 1+id[a] << " = " << qbest << endl;
+    }
+    return {res, cpref};
+}
+
+ll query(int a, int b) {
+    if(a > b) swap(a, b);
+    int l = lca_query(a, b);
+    pair<ll, ll> x = query_up(a, l, l, 0);
+    pair<ll, ll> y = query_up(b, l, l, 1);
+    //cerr << a << " " << l << " b:" << x.first << " p:" << x.second << endl;
+    //cerr << b << " " << l << " b:" << y.first << " p:" << y.second << endl;
+    ll res = max(x.first, y.first);
+    remax(res, x.second);
+    remax(res, y.second);
+    remax(res, x.second+y.second);
+    return res;
+}
+
+int main() {
+    scanf("%d", &n);
+
+    REP(i, 0, n-1) {
+        scanf("%d%d", &a, &b);
+        --a; --b;
+        nbs[a].push_back(b);
+        nbs[b].push_back(a);
+    }
+    REP(i, 0, n) scanf("%d", t+i);
+    //cerr << "input ok" << endl;
+    memset(head_chain, -1, sizeof head_chain);
+    dfs(0, -1, 0);
+    //cerr << "dfs ok" << endl;
+    lca();
+    //cerr << "lca ok" << endl;
+    hld(0, -1);
+    //cerr << "hld ok" << endl;
+
+    build(1, 1, n);
+
+    //REP(i, 0, n) cerr << i+1 << ": " << id[i]+1 << endl;
+
+    int q;
+    scanf("%d", &q);
+    while(q--) {
+        scanf("%d%d", &a, &b);
+        --a; --b;
+        printf("%lld\n", query(a, b));
+    }
+}

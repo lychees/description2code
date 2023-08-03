@@ -1,0 +1,210 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+
+struct node {
+    int sz;
+    int lazy;
+    vi dirs;
+    pii lr;
+    node() :sz ( 0 ),lazy ( 0 ),dirs ( 4 ) {}
+    void init0 ( int L,int R ) {
+        dirs[0]=R-L;
+        lr=mp ( L,R );
+        sz=R-L;
+    }
+    void   assertValid() const {
+        int sz2=0;
+        rep ( i,4 ) sz2+=dirs[i];
+        assert ( sz2==sz );
+        assert ( lazy>=0 && lazy<4 );
+    }
+};
+ostream & operator<< ( ostream & os, const node &n ) {
+    return os<<n.lr<<": Size: "<<n.sz<<", lazy: "<<n.lazy<<" vals. "<<n.dirs;
+
+}
+struct SegmentTreeRR {
+    int n;
+    int size;
+
+    vector<node> tree; 
+    SegmentTreeRR ( int _n ) {
+        n=1;
+        while ( n<_n ) n*=2;
+        size=2*n;
+        tree=vector<node> ( size );
+        build ( 1,0,n );
+    }
+    void build ( int no,int  L,int R ) {
+        tree[no].init0 ( L,R );
+        if ( isLeaf ( no ) ) return;
+        int s= ( L+R ) >>1;
+        build ( 2*no, L,s );
+        build ( 2*no+1,s,R );
+
+    }
+
+
+    bool isLeaf ( int no ) {
+        return no>=n;
+    }
+    void lazyUpdate ( int no ) {
+
+        if ( isLeaf ( no ) || !tree[no].lazy ) return;
+        int up=tree[no].lazy;
+        assert ( up<4 );
+        tree[no].lazy=0;
+        tree[2*no].lazy+=up;
+        tree[2*no+1].lazy+=up;
+        tree[2*no].lazy%=4;
+        tree[2*no+1].lazy%=4;
+        merge ( no );
+    }
+    node merge ( const node &n1,const node &n2 ) {
+        node n;
+
+
+        int i1=4-n1.lazy,i2=4-n2.lazy;
+        if ( i1==4 ) i1=0;
+        if ( i2==4 ) i2=0;
+        n.sz=n1.sz+n2.sz;
+        n.lazy=0;
+        rep ( i,4 ) {
+            n.dirs[i]=n1.dirs[i1]+n2.dirs[i2];
+            i1++;
+            i2++;
+            if ( i1==4 ) i1=0;
+            if ( i2==4 ) i2=0;
+        }
+        n.lr= {n1.lr.first, n2.lr.second};
+        n.assertValid();
+        n1.assertValid();
+        n2.assertValid();
+        return n;
+
+    }
+    void updateNode ( int no, int val ) {
+
+        tree[no].lazy+=val;
+        if ( tree[no].lazy>3 ) tree[no].lazy%=4;
+    }
+    void merge ( int no ) {
+        assert ( !tree[no].lazy );
+        tree[no]=merge ( tree[2*no],tree[2*no+1] );
+    }
+    void  update ( int no, int L, int R, int l, int r , int val ) {
+        if ( l<=L && R<=r ) {
+            updateNode ( no,val );
+            return;
+        }
+        int s= ( L+R ) >>1;
+        lazyUpdate ( no );
+        if ( l<s ) update ( 2*no, L,s,l,r ,val );
+        if ( r>s ) update ( 2*no+1,s,R,l,r ,val );
+        merge ( no );
+        tree[no].assertValid();
+        tree[2*no].assertValid();
+        tree[2*no+1].assertValid();
+    }
+    void update ( int l, int r ,int v ) {
+        assert ( v>=0 && v<4 );
+        update ( 1,0,n,l,r,  v );
+
+    }
+    node query ( int no, int L, int R,int l , int r ) {
+        if ( l<=L && R<=r ) {
+            return tree[no];
+        }
+        int s= ( L+R ) >>1;
+        lazyUpdate ( no );
+        if ( l<s ) {
+            node val1= query ( 2*no,L,s,l,r );
+            if ( r>s ) {
+                node val2=  query ( 2*no+1,s,R,l,r );
+                val1=merge ( val1,val2 );
+            }
+            return val1;
+        } else  return  query ( 2*no+1,s,R,l,r );
+
+    }
+    ll query ( int l,int r ) {
+        node nd=query ( 1,0,n,l,r );
+//         cout<<nd<<endl;
+        return *max_element ( all ( nd.dirs ) );
+    }
+
+};
+int main() {
+    ios_base::sync_with_stdio ( false );
+    int n,q;
+    cin>>n>>q;
+    SegmentTreeRR st ( n );
+    rep ( i,q ) {
+        char t;
+        int l;
+        int r;
+        cin>>t>>l>>r;
+        if ( t=='Q' ) {
+            int res=st.query ( l-1,r );
+            cout<<res<<'\n';
+
+        } else {
+            int k;
+            cin>>k;
+            k%=4;
+            if ( t=='A' ) k=4-k;
+            if ( k==4 ) k=0;
+            st.update ( l-1,r,k );
+
+
+        }
+
+    }
+}

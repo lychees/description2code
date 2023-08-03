@@ -1,0 +1,112 @@
+#include<bits/stdc++.h>
+using namespace std;
+ 
+int n,m,p,C[1<<13];
+int a,b,c;
+vector<pair<int, int> >g[1<<13];
+priority_queue<pair<long long, int> >qu;
+pair<long long, int>  it;
+unordered_set<int > was[1<<13];
+unordered_map< int ,long long > dist[1<<13];
+int did[1<<15];
+set<long long> ttl[1<<13];
+set<long long>::iterator It;
+long long G[1<<15];
+long long get(int x)
+{
+	It=ttl[x].end();
+	--It;
+	return (*It);
+}
+ 
+ 
+int main(){
+cin>>n>>m>>p;
+int MAGIC=n;
+for (int i=0;i<n;i++)
+	cin>>C[i];
+long long minedge=1e9;
+ 
+for (int i=1;i<=m;i++)
+{
+	cin>>a>>b>>c;
+	g[a].push_back(make_pair(b,c));
+	if (c<minedge)
+		minedge=c;
+}
+ 
+dist[0][0]=0;
+was[0].insert(0);
+qu.push(make_pair(0,0));
+ 
+long long ans=1e14;
+ 
+while (qu.size())
+{
+	it=qu.top();
+	qu.pop();
+	pair<long long, int> temp=it;
+	
+	if (-temp.first>=ans-minedge)
+		break;
+	
+	if (dist[temp.second][(-temp.first)%p]!=-temp.first)
+		continue;
+	
+	int qv=temp.second;
+	if (did[qv]>=MAGIC)
+		continue;
+	if (ttl[qv].find(-temp.first)!=ttl[temp.second].end())
+		ttl[qv].erase(-temp.first);
+	did[qv]++;
+	for (int i=0;i<g[qv].size();i++)
+	{
+		int to=g[qv][i].first;
+		if (did[to]>=MAGIC)
+			continue;
+		
+		long long tcost=g[qv][i].second;
+		tcost+=dist[qv][(-temp.first)%p];
+		
+		if (tcost>ans)
+			continue;
+		if (ttl[to].size()+did[to]>=MAGIC&&tcost>=G[to])
+		{
+			continue;
+		}
+		
+		int P=tcost%p;
+		
+		if (P!=C[to])
+		{
+			long long PP=dist[to][P];
+			if (was[to].find(P)==was[to].end()||PP>tcost)
+			{
+				if(ttl[to].find(PP)!=ttl[to].end())
+					ttl[to].erase(PP);
+				
+				was[to].insert(P);
+				dist[to][P]=tcost;
+				qu.push(make_pair(-tcost,to));
+				ttl[to].insert(tcost);
+				while (ttl[to].size()+did[to]>MAGIC)
+				{
+					It=ttl[to].end();
+					--It;
+					long long VAL=(*It);
+					ttl[to].erase(It);
+				}
+				G[to]=get(to);
+				if (to==n-1)
+					ans=min(ans,tcost);
+			}
+		}
+	}
+}
+if (C[0]==0)
+	ans=-1;
+	
+if (ans>1e13)
+	ans=-1;
+cout<<ans<<endl;
+return 0;}

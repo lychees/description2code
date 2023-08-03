@@ -1,0 +1,83 @@
+/**/
+#define _USE_MATH_DEFINES
+#include<bits/stdc++.h>
+using namespace std;
+
+#define pb push_back
+#define For(i, begin, end) for (__typeof(end) i = (begin) - ((begin) > (end)); i != (end) - ((begin) > (end)); i += 1 - 2 * ((begin) > (end)))
+#define all( v ) (v).begin(),(v).end()
+template<typename T> using V = vector<T>;
+typedef long long int ll;
+typedef unsigned long long int ull;
+/***********************************************/
+/*      ____________
+ *     /            \
+ *    /  /\      /\  \
+ *   /  /  \    /  \  \
+ *   \                /
+ *    \     \___/    /
+ *     \____________/
+ */
+const ll mod = 1000000007;
+struct disj{
+	V<size_t> p,r;
+	disj(size_t N){
+		p.resize(N);
+		r.resize(N);
+		For(i,1,N)p[i] = i;
+	}
+	size_t fnd(size_t x){
+		if(p[x] != x)p[x] = fnd(p[x]);
+		return p[x];
+	}
+	void mrg(size_t x,size_t y){
+		size_t px = fnd(x),py = fnd(y);
+		if(r[px] > r[py]) p[py] = px;
+		else p[px] = py;
+		if(r[py] == r[px])r[py]++;
+	}
+};
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(nullptr);
+	size_t N,M,u,v;
+	cin>>N>>M;
+	map<pair<size_t,size_t>,size_t > edges;
+	V<pair<size_t,pair<size_t,size_t> > > fi;
+	V<size_t> res;
+	For(i,0,M){
+		cin>>u>>v;
+		if(edges.count({u,v})){
+			res.pb(edges[{u,v}]);
+			edges[{u,v}] = i+1;
+			continue;
+		}
+		if(edges.count({v,u})){
+			res.pb(edges[{v,u}]);
+			edges[{v,u}] = i+1;
+			continue;
+		}
+		edges[{u,v}] = i+1;
+	}
+	for(auto i : edges){
+		fi.pb({i.second,i.first});
+	}
+	sort(fi.rbegin(),fi.rend());
+	edges.clear();
+	disj j = disj(N+1);
+	For(i,0,fi.size()){
+		size_t px = j.fnd(fi[i].second.first);
+		size_t py = j.fnd(fi[i].second.second);
+		if(px == py){
+			res.pb(fi[i].first);
+		}else{
+			j.mrg(px,py);
+		}
+	}
+	sort(all(res));
+	cout<<res.size()<<'\n';
+	For(i,0,res.size())cout<<res[i]<<'\n';
+	return 0;
+}
+/**/

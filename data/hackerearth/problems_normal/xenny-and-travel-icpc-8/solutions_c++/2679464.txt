@@ -1,0 +1,153 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<map>
+#include<set>
+#define LL long long
+#define MOD 1000000007
+#define INF 100000000
+#define mp make_pair
+#define pb push_back
+using namespace std;
+int dp[2005][2005][2];
+vector<int>v[2005];
+int roadwt[2005][2005];
+int railwt[2005][2005];
+void djikstra_road(int start,int f)
+{
+	set< pair<int,int> >pq;
+	set< pair<int,int> >::iterator it;
+	dp[start][start][0]=0;
+	pq.insert(mp(start,dp[start][start][0]));
+	while(!pq.empty())
+	{
+		it=pq.begin();
+		int u=(*it).first;
+		pq.erase(pq.begin());
+		for(int i=0;i<v[u].size();i++)
+		{
+			int w=roadwt[u][v[u][i]];
+			if(f==1)w=roadwt[v[u][i]][u];
+			if(dp[start][v[u][i]][0]>(dp[start][u][0]+w))
+			{
+				if(dp[start][v[u][i]][0]!=INF)
+				{
+					if(pq.find(mp(v[u][i],dp[start][v[u][i]][0]))!=pq.end())
+					pq.erase(pq.find(mp(v[u][i],dp[start][v[u][i]][0])));
+				}
+				dp[start][v[u][i]][0]=dp[start][u][0]+w;
+				pq.insert(mp(v[u][i],dp[start][v[u][i]][0]));
+			}
+		}
+	}
+}
+
+void djikstra_rail(int start,int f)
+{
+	set< pair<int,int> >pq;
+	set< pair<int,int> >::iterator it;
+	dp[start][start][1]=0;
+	pq.insert(mp(start,dp[start][start][1]));
+	while(!pq.empty())
+	{
+		it=pq.begin();
+		int u=(*it).first;
+		pq.erase(pq.begin());
+		for(int i=0;i<v[u].size();i++)
+		{
+			int w=railwt[u][v[u][i]];
+			if(f==1)w=railwt[v[u][i]][u];
+			if(dp[start][v[u][i]][1]>(dp[start][u][1]+w))
+			{
+				if(dp[start][v[u][i]][1]!=INF)
+				{
+					if(pq.find(mp(v[u][i],dp[start][v[u][i]][1]))!=pq.end())
+					pq.erase(pq.find(mp(v[u][i],dp[start][v[u][i]][1])));
+				}
+				dp[start][v[u][i]][1]=dp[start][u][1]+w;
+				pq.insert(mp(v[u][i],dp[start][v[u][i]][1]));
+			}
+		}
+	}
+}
+int main()
+{
+	ios::sync_with_stdio(0);
+	cin.tie(0);
+	int N;
+	cin>>N;
+	for(int i=1;i<=N;i++)
+	{
+		for(int j=1;j<=N;j++)
+		{
+			cin>>roadwt[i][j];
+
+		}
+	}
+
+	for(int i=1;i<=N;i++)
+	{
+		for(int j=1;j<=N;j++)
+		{
+			cin>>railwt[i][j];
+			if(railwt[i][j]!=0 && roadwt[i][j]!=0)
+			{
+				v[i].pb(j);
+				v[j].pb(i);
+			}
+		
+		}
+	}
+	int U,V;cin>>U>>V;
+	int ans=2*INF+1;
+	for(int i=1;i<=N;i++)
+	{
+		for(int j=1;j<=N;j++)
+		{
+			dp[i][j][0]=INF;
+			dp[i][j][1]=INF;
+		}
+	}	
+	djikstra_rail(U,0);
+	djikstra_road(V,1);
+	
+	for(int i=1;i<=N;i++)
+	{
+		if(i!=U && i!=V)
+		{
+		
+			ans=min(ans,dp[U][i][1]+dp[V][i][0]);
+		}
+	}
+	for(int i=1;i<=N;i++)
+	{
+		for(int j=1;j<=N;j++)
+		{
+			dp[i][j][0]=INF;
+			dp[i][j][1]=INF;
+		}
+	}	
+	djikstra_road(U,0);
+	djikstra_rail(V,1);
+	
+	for(int i=1;i<=N;i++)
+	{
+		if(i!=U && i!=V)
+		{
+		
+			ans=min(ans,dp[U][i][0]+dp[V][i][1]);
+		}
+	}
+
+	cout<<ans<<"\n";
+	
+
+
+
+
+
+
+
+
+	return 0;
+}

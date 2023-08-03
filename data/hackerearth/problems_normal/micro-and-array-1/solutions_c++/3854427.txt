@@ -1,0 +1,92 @@
+#include<bits/stdc++.h>
+#include<algorithm>
+using namespace std;
+
+
+#define MAX 100003
+
+int arr[MAX];
+int tree[4*MAX];
+
+
+void build_tree(int node, int a, int b) {
+    if(a > b) return;
+  	
+  	if(a == b) {
+    		tree[node] = arr[a];
+		return;
+	}
+	
+	build_tree(node*2, a, (a+b)/2);
+	build_tree(node*2+1, 1+(a+b)/2, b);
+	
+	tree[node] = max(tree[node*2], tree[node*2+1]);
+}
+
+
+void update_tree(int node, int a, int b, int i, int value) {
+    
+	if(a > b || a > i || b < i)
+		return;
+    
+  	if(a == b) {
+    		tree[node] = value;
+    		return;
+	}
+
+	update_tree(node*2, a, (a+b)/2, i, value);
+	update_tree(1+node*2, 1+(a+b)/2, b, i, value);
+
+	tree[node] = max(tree[node*2], tree[node*2+1]);
+}
+
+int query_tree(int node, int a, int b, int i, int j) {
+	
+	if(a > b || a > j || b < i) return -1;
+
+	if(a >= i && b <= j)
+		return tree[node];
+
+	int q1 = query_tree(node*2, a, (a+b)/2, i, j);
+	int q2 = query_tree(1+node*2, 1+(a+b)/2, b, i, j);
+
+	int res = max(q1, q2);
+	
+	return res;
+}
+
+int main() {
+	int i,n,q,x,y,type,l,h,mid,temp;
+	scanf("%d %d",&n,&q);
+	for(int i = 0; i < n; i++){
+		scanf("%d",&arr[i]);
+	}
+	build_tree(1,0,n-1);
+	
+	while(q--){
+		scanf("%d",&type);
+		if(type==1){
+			scanf("%d",&x);
+			if(query_tree(1,0,n-1,0,n-1)<x){
+				puts("-1");
+				continue;
+			}
+			l=0;
+			h=n-1;
+			while(l<h){
+				mid=(l+h)/2;
+				temp=query_tree(1,0,n-1,0,mid);
+				if(temp>=x)
+					h=mid;
+				else
+					l=mid+1;
+			}
+			printf("%d\n",l+1);
+		}
+		else{
+			scanf("%d%d",&x,&y);
+			update_tree(1,0,n-1,x-1,y);
+		}
+	}
+	return 0;
+}

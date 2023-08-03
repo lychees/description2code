@@ -1,0 +1,82 @@
+#include<bits/stdc++.h>
+using namespace std;
+vector<vector<pair<long long int,int>>> gr;
+long long int sdt(int a,int b,int n,int par[]) {
+	long long int dist[n+1];
+	bool is[n+1];
+	int i;
+	for(i=0;i<=n;i++) dist[i]=100000000000000000;
+	for(i=0;i<=n;i++) is[i]=false;
+	set<pair<long long int,int>> s;
+	dist[a]=0;
+	s.insert(make_pair(0,a));
+	while(!s.empty()) {
+		pair<long long int,int> p=*(s.begin());
+		s.erase(s.begin());
+		if(is[p.second]) continue;
+		if(p.second==b) return dist[b];
+		else{
+			for(i=0;i<gr[p.second].size();i++) {
+				int v=gr[p.second][i].second;
+				if(dist[v]>dist[p.second]+gr[p.second][i].first) {
+						set<pair<long long int,int>>::iterator it;
+						it=s.find(make_pair(dist[v],v));
+						if(it!=s.end()) {
+							s.erase(it);
+						}
+						dist[v]=dist[p.second]+gr[p.second][i].first;
+						par[v]=p.second;
+						s.insert(make_pair(dist[v],v));
+				}
+			}
+		}
+	}
+	return dist[b];
+} 
+int main()
+{
+	int t;
+	cin>>t;
+	while(t--) {
+		int n,k,i,a,b,c;
+		gr.clear();
+		long long int cst;
+		cin>>n>>k;
+		gr.resize(n+1);
+		for(i=0;i<k;i++) {
+			cin>>a>>b>>cst;
+			gr[a].push_back(make_pair(cst,b));
+			gr[b].push_back(make_pair(cst,a));
+		}
+		cin>>a>>b>>c;
+		int par[n+1],par2[n+1];
+		for(i=0;i<=n;i++) {
+			par[i]=i;
+			par2[i]=i;
+		}
+		long long int atob=sdt(a,b,n,par);
+		long long int btoc=sdt(b,c,n,par2);
+		if(atob+btoc>10000000000000000) cout<<"No Train Found.\n";
+		else{
+			cout<<(atob+btoc)<<endl;
+			stack<int> st;
+			i=c;
+			do {
+				st.push(i);
+				i=par2[i];
+			}while(par2[i]!=i);
+			i=b;
+			while(par[i]!=i) {
+				if(st.top()!=i) st.push(i);
+				i=par[i];
+			}
+			cout<<a<<" ";
+			while(!st.empty()) {
+				cout<<st.top()<<" ";
+				st.pop();
+			}
+			cout<<endl;
+		}
+	}
+	return 0;
+}

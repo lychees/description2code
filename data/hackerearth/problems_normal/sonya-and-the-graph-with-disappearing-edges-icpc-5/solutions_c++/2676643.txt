@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define pii pair <int, int>
+#define pb push_back
+#define MAXN 100005
+#define LL long long
+#define LIM 9000000005000000000LL
+
+vector < vector <int> > G(MAXN);
+pii edge[MAXN];
+map < LL, vector<int> > del;
+LL dist[MAXN];
+bool vis[MAXN];
+int n, m, k;
+
+void bfs()
+{
+	queue <int> Q;
+	Q.push(1);
+	dist[1] = 0LL;
+	vis[1] = 1;
+	while(!Q.empty())
+	{
+		int v = Q.front();
+		Q.pop();
+		LL curr_t = dist[v];
+		if(del[curr_t-1].size())
+		{
+			for (vector<int>::iterator j = del[curr_t-1].begin(); j != del[curr_t-1].end(); ++j)
+			{
+				int f = edge[*j].first;
+				int s = edge[*j].second;
+				G[f].erase(remove(G[f].begin(), G[f].end(), s), G[f].end());
+				G[s].erase(remove(G[s].begin(), G[s].end(), f), G[s].end());
+			}
+			del[curr_t-1].clear();
+		}
+		for (vector<int>::iterator i = G[v].begin(); i != G[v].end(); ++i)
+		{
+			if(!vis[*i])
+			{
+				bool f = 0;
+				for (vector<int>::iterator j = del[curr_t].begin(); j != del[curr_t].end(); ++j)
+				{
+					if(edge[*j].first == v && edge[*j].second == *i)
+					{
+						f = 1;
+						break;
+					}
+					if(edge[*j].second == v && edge[*j].first == *i)
+					{
+						f = 1;
+						break;
+					}
+				}
+				if(f)
+					continue;
+				vis[*i] = 1;
+				dist[*i] = curr_t + 1;
+				Q.push(*i);
+			}
+		}
+	}
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+	cout.tie(0);
+	cin>>n>>m>>k;	
+	for (int i = 1; i <= m; ++i)
+	{
+		cin>>edge[i].first>>edge[i].second;
+		G[ edge[i].first ].pb(edge[i].second);
+		G[ edge[i].second ].pb(edge[i].first);
+	}
+	while(k--)
+	{
+		int t, x;
+		cin>>t>>x;
+		del[t].pb(x);
+	}
+	fill(dist,dist+n+1,LIM);
+	fill(vis,vis+n+1,0);
+	bfs();
+	if(dist[n] == LIM)
+		cout<<-1<<endl;
+	else
+		cout<<dist[n]<<endl;
+	return 0;
+}

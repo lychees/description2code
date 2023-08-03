@@ -1,0 +1,117 @@
+#include <stdio.h>
+#include <string.h>
+
+#define NP 3
+#define VMAX 719
+#define NMAX 333
+
+int P[NP] = {2, 5, 719};
+int A[NP][NMAX][NMAX], B[NP][NMAX][NMAX];
+int N, Q;
+
+void ReadInput() {
+	scanf("%d %d", &N, &Q);
+	memset(B, 0, sizeof(B));
+	for (int i = 1; i <= N; i++) {
+		for (int j = 1; j <= N; j++) {
+			int x;
+			scanf("%d", &x);
+			for (int k = 0; k < NP; k++)
+				A[k][i][j] = x % P[k];
+		}
+		for (int k = 0; k < NP; k++) B[k][i][i] = 1;
+	}
+}
+
+int RaiseToPow(int x, int y, int mod) {
+	if (y == 0) return 1;
+	int rez = RaiseToPow(x, y >> 1, mod);
+	rez = (rez * rez) % mod;
+	if (y & 1) rez = (rez * x) % mod;
+	return rez;
+}
+
+int inv[NP][VMAX];
+
+void ComputeInv() {
+	for (int k = 0; k < NP; k++) {
+		for (int i = 1; i < P[k]; i++)
+			inv[k][i] = RaiseToPow(i, P[k] - 2, P[k]);
+	}
+}
+
+void SwapRows(int k, int r1, int r2) {
+	if (r1 == r2) return;
+	int tmp;
+	for (int j = 1; j <= N; j++) {
+		tmp = A[k][r1][j]; A[k][r1][j] = A[k][r2][j]; A[k][r2][j] = tmp;
+		tmp = B[k][r1][j]; B[k][r1][j] = B[k][r2][j]; B[k][r2][j] = tmp;
+	}
+}
+
+void SwapCols(int k, int c1, int c2) {
+	if (c1 == c2) return;
+	int tmp;
+	for (int i = 1; i <= N; i++) {
+		tmp = A[k][i][c1]; A[k][i][c1] = A[k][i][c2]; A[k][i][c2] = tmp;
+	}
+}
+
+int imax[NP];
+
+void Gauss() {
+	for (int k = 0; k < NP; k++) {
+		int i;
+		for (i = 1; i <= N; i++) {
+			int row = 0, col = 0;
+			for (int p = i; p <= N && !row; p++)
+				for (int q = i; q <= N && !row; q++)
+					if (A[k][p][q] > 0) {
+						row = p;
+						col = q;
+					}
+			if (!row) break;
+			SwapRows(k, i, row);
+			SwapCols(k, i, col);
+			for (int p = i + 1; p <= N; p++) {
+				if (A[k][p][i] == 0) continue;
+				int coef = (-inv[k][A[k][i][i]] * A[k][p][i]) % P[k];
+				if (coef < 0) coef += P[k];
+				for (int j = i; j <= N; j++)
+					A[k][p][j] = (A[k][p][j] + coef * A[k][i][j]) % P[k];
+				for (int j = 1; j <= N; j++)
+					B[k][p][j] = (B[k][p][j] + coef * B[k][i][j]) % P[k];
+			}
+		}
+		imax[k] = i - 1;
+	}
+}
+
+int y[NP][NMAX];
+
+void ProcessQueries() {
+	while (Q--) {
+		for (int i = 1; i <= N; i++) {
+			int x;
+			scanf("%d", &x);
+			for (int k = 0; k < NP; k++) y[k][i] = x % P[k];
+		}
+		int ans = 1;
+		for (int k = 0; k < NP && ans; k++)
+			for (int i = imax[k] + 1; i <= N && ans; i++) {
+				int x = 0;
+				for (int j = 1; j <= N; j++) x = (x + B[k][i][j] * y[k][j]) % P[k];
+				if (x != 0) ans = 0;
+			}
+		if (ans) printf("Yes\n"); else printf("No\n");
+	}
+}
+
+int main() {
+	//freopen("x.txt", "r", stdin);
+	ReadInput();
+	ComputeInv();
+	Gauss();
+	ProcessQueries();
+	return 0;
+}

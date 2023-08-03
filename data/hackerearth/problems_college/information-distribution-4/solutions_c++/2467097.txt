@@ -1,0 +1,233 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef vector<ll> vi;
+typedef set<ll> si;
+typedef pair<ll,ll> pii;
+typedef vector<pii> vii;
+typedef map<ll,ll> mii;
+
+#define inp_s     ios_base::sync_with_stdio(false)
+#define all(s) (s).begin(), (s).end()
+#define FOR(i,a,b) for(ll i=(a);i<(b); i++)
+#define REP(i,b) FOR(i,0,b)
+#define FE(it,set) for(auto it = (set).begin(); it != (set).end(); ++it)
+#define pb push_back
+
+ll partBalance(ll n, ll prime) {
+	return n == 0 ? 0 : n/prime + partBalance(n/prime, prime);
+}
+
+ll calcBalance(ll n, ll r, ll prime) {
+	return partBalance(n,prime) - partBalance(r, prime) - partBalance(n-r, prime);
+}
+
+ll gcd(ll a, ll b) {
+	return b ? gcd(b, a%b) : a;
+}
+
+ll mulMod(ll a, ll b, ll mod) {
+	return a * b % mod;
+}
+ll expMod(ll n, ll p, ll mod) {
+	assert(p >= 0);
+	if(p <= 0) return 1;
+	ll part = expMod(n * n % mod, p/2, mod);
+	if(p % 2) part = (part * n) % mod;
+	return part;
+}
+
+ll calcInvPow(ll mod, ll p){
+	static mii memo;
+	ll& prod = memo[mod];
+	if(prod) return prod;
+	prod = p - 1;
+	assert(mod % p == 0);
+	mod /= p;
+
+	while(mod > 1) {
+		assert(mod % p == 0);
+		mod /= p;
+		prod *= p;
+	}
+	prod--;
+	return prod;
+}
+
+void addRange(vi & v, const ll start, const ll end, const ll delta, const ll P) {
+	const ll N = v.size();
+	if(start > end) return;
+	if(end == 0) return;
+	REP(i,N) {
+		const ll x = start + i;
+		if(x > end)break;
+
+		const ll inRange = (end - x) / N + 1;
+		v[x % N] += delta * inRange;
+	}
+	addRange(v, (start + P - 1) / P , end / P, delta, P);
+
+}
+
+ll multiplierWithoutPrime(ll n, ll i, ll modulo, ll prime) {
+	const ll P = calcInvPow(modulo, prime);
+	ll mul = n - i;
+	while(mul % prime == 0) {
+		mul /= prime;
+	}
+	ll div = i + 1;
+	//cout << mul << " / " <<  div << endl;
+	while(div % prime == 0) {
+		div /= prime;
+	}
+	//cout << "P=" << P << endl;
+	ll invDiv = expMod(div, P, modulo);
+	mul = mulMod(mul, invDiv, modulo);
+	return mul;
+}
+
+ll primeNCRMod(ll n, ll r, ll prime) {
+	r = min(r, n-r);
+	if(r == 0) return 1;
+	const ll balance = calcBalance(n, r, prime);
+	if(balance > 0) {
+		return 0;
+	}
+	vi factorCount(prime);
+	addRange(factorCount, 1, r, -1, prime);
+	addRange(factorCount, n - r + 1, n, +1, prime);
+	//for(ll i: factorCount) cout << i << ' ';
+	//cout << endl;
+
+	ll prod = 1;
+	FOR(i,1,prime) {
+		ll p = factorCount[i];
+		if(p == 0) continue;
+
+		ll base = i;
+		if(p < 0) {
+			base = expMod(base, prime - 2, prime);
+			p = -p;
+		}
+		const ll part = expMod(base, p, prime);
+		//cout << base << " "  << p << " gives " << part << endl;
+		prod = mulMod(prod, part, prime);
+	}
+
+	return prod;
+}
+ll ncrModNew(ll n, ll r, ll modulo, ll prime) {
+	//cout << "n="<<n<<" r="<<r<< " mod=" << modulo << endl;
+	const ll P = calcInvPow(modulo, prime);
+	r = min(r, n-r);
+	if(r == 0) return 1;
+	const ll balance = calcBalance(n, r, prime);
+	const ll factor = expMod(prime, balance, modulo);
+	if(factor == 0) {
+		return 0;
+	}
+	vi factorCount(modulo);
+	addRange(factorCount, 1, r, -1, prime);
+	addRange(factorCount, n - r + 1, n, +1, prime);
+	//for(ll i: factorCount) cout << i << ' ';
+	//cout << endl;
+
+	ll prod = factor;
+	FOR(i,0,modulo) {
+		ll p = factorCount[i];
+		if(p == 0) continue;
+		if(i % prime == 0)continue;
+
+		ll base = i;
+		if(p < 0) {
+			base = expMod(base, P, modulo);
+
+			p = -p;
+		}
+		//cout << "P=" << P << endl;
+		const ll part = expMod(base, p, modulo);
+		//cout << base << " "  << p << " gives " << part << endl;
+		prod = mulMod(prod, part, modulo);
+		//cout << "prod = " << prod << endl;
+	}
+
+	return prod;
+
+}
+
+ll ncrMod(ll n, ll r, ll modulo, ll prime) {
+	r = min(r, n - r);
+	const ll balance = calcBalance(n, r, prime);
+	const ll factor = expMod(prime, balance, modulo);
+	if(factor == 0) {
+		return 0;
+	}
+	ll prod = 1;
+	for(ll i=0;i<r; i++) {
+		ll mul = multiplierWithoutPrime(n, i, modulo, prime);
+		prod = mulMod(prod, mul, modulo);
+	}
+	prod = mulMod(prod, factor, modulo);
+	return prod;
+}
+
+ll crt(ll a, ll b, ll c, ll d) {
+	assert(gcd(b,d) == 1);
+	while(a % d != c) {
+		a += b;
+	}
+	return a;
+}
+
+vii stripThis(ll number)
+{
+	vii ret;
+	int lmt = sqrt(number);
+	for(int i = 2; i <= lmt; i++)
+	{
+		ll num = 1 , tm = 0;
+		while(number%i == 0)
+		{
+			tm += 1;
+			num *= i;
+			number /= i;
+		}
+		if(tm) ret.push_back(make_pair(num,i));
+		lmt = sqrt(number);
+	}
+	if(number > 1) ret.push_back(make_pair(number,number));
+	return ret;
+}
+
+ll solution(ll n, ll r , ll K) {
+	if(n < r) return 0LL;
+	vii parts = stripThis(K);
+	ll sol = 0, mod = 1;
+	for(pii part: parts) {
+		const ll factor = part.first, prime = part.second;
+		ll partial;
+		if(factor != prime){
+			partial = ncrModNew(n, r, factor, prime);
+		} else {
+			partial = primeNCRMod(n, r, prime);
+		}
+
+		sol = crt(sol, mod, partial, factor);
+		mod *= factor;
+		assert(sol < mod);
+	}
+	return sol;
+}
+int main() {
+	inp_s;
+	ll t;
+	cin >> t;
+	REP(i,t) {
+		ll n,r,k;
+		cin >> n >> r >> k;
+		cout << solution(n-1,r-1,k) << '\n';
+	}
+
+	return 0;
+}

@@ -1,0 +1,115 @@
+#include <iostream>
+#include <fstream>
+#include <cstdio>
+#include <math.h>
+#include <vector>
+#include <string.h>
+#include <algorithm>
+#include <climits>
+#include <stack>
+#include <queue>
+#include <set>
+#include <map>
+#define MAX(a,b) a>b?a:b
+#define MIN(a,b) a>b?b:a
+#define FOR(i,n) for(int i=0;i<n;i++)
+#define FOR_X(i,x,n) for(i=x;i<n;i++)
+#define BACK(i,n) for(i=n;i>=0;i--)
+#define BACK_X(i,n,x) for(i=n;i>=x;i--)
+#define fill(a,v) memset(a,v,sizeof(a))
+#define gcd(a,b) __gcd(a,b)
+#define lcm(a,b) a*b/gcd(a,b)
+#define pb push_back
+#define pp pair<int,int>
+typedef long long int lld;
+using namespace std;
+lld A[2][10002];
+lld B[2][10002];
+lld dp[2][10002];
+lld notMark[2][10002];
+lld lazy[2][10002];
+vector<lld> options[10002];
+lld S[2], W[2];
+lld smallestPrime[10005];
+lld N,M,P,Q,R,X,Y,Z;
+const lld mod= 1000000003;
+void generate(){
+	lld last= S[0];
+	for(int i = 0; i < (N*M); i++){
+    //	S[i + 1] = (P * S[i] * S[i] + Q * S[i] + R) % 1000000003 ;
+    	lld tmp=( (((P*last)%mod )*last )%mod + (Q*last)%mod + R )%mod;
+    	last= tmp;
+    	A[(i/M) + 1][(i%M) + 1] = last ;
+	}
+	last= W[0];
+	for(int i = 0; i < (N*M); i++){
+//        W[i + 1] = (X * W[i] * W[i] + Y * W[i] + Z) % 1000000003 ;
+        lld tmp= ( (((X*last)%mod )*last)%mod + (Y*last)%mod + Z )%mod;
+        last = tmp;
+        B[(i/M) + 1][(i%M) + 1] = last ;
+    }
+}
+void sieve(){
+	memset(smallestPrime,0,sizeof(smallestPrime));
+	smallestPrime[0]= smallestPrime[1]= 1;
+	
+	options[1].push_back(1);
+	for(int i=0;i<=M; i++){
+		if(smallestPrime[i]==0 ){
+			smallestPrime[i]= i;
+			options[i].push_back(1);
+			options[i].push_back(i);
+			for(int j=i*i; j<=M;j+=i){
+				if( smallestPrime[j]==0 ){
+					options[i].push_back(j);
+					smallestPrime[j]=i;
+				}
+			}
+		}
+	}
+
+}
+int main()
+{
+	ios_base::sync_with_stdio(0); //dont use with EOF
+	cin>>N>>M;
+	cin>>S[0]>>P>>Q>>R;
+	cin>>W[0]>>X>>Y>>Z;
+//	generate();
+	lld last1= S[0], last2= W[0];
+	sieve();
+	FOR(i,2) FOR(j,M+1) dp[i][j]= lazy[i][j]= notMark[i][j]= 1e16;
+	for(int i=0;i<=M;i++) dp[1][i]= 0;
+	for(int i=1;i<N;i++){
+		for(int j=1;j<=M;j++){
+			lld tmp1= ( (((P*last1)%mod )*last1 )%mod + (Q*last1)%mod + R )%mod;
+			lld tmp2= ( (((X*last2)%mod )*last2 )%mod + (Y*last2)%mod + Z )%mod;
+			last1= tmp1;
+			last2= tmp2;
+			dp[ (i+1)&1 ][j]= MIN( dp[ (i+1)&1 ][j] , dp[i&1][j]+ last1 );
+			if( lazy[ (i+1)&1 ][ smallestPrime[j] ]> dp[i&1][j]+ last2 ){
+				dp[ (i+1)&1 ][j]= MIN( dp[ (i+1)&1 ][j], lazy[ (i+1)&1 ][ smallestPrime[j] ] );
+				lazy[ (i+1)&1 ][ smallestPrime[j] ]= dp[i&1][j] + last2;
+				notMark[ (i+1)&1 ][ smallestPrime[j] ]= j;
+			}
+			else{
+				lld val = dp[i&1][j] + last2;
+				lld pos= notMark[ (i+1)&1 ][ smallestPrime[j] ];
+				dp[ (i+1)&1 ][pos]= MIN( val, dp[ (i+1)&1 ][pos] ); 		}
+		}
+		for(int j=1;j<=M;j++){
+			for(int k=0;k< options[j].size(); k++){
+				lld pos= options[j][k];
+				if( notMark[ (i+1)&1 ][j]== pos) continue;
+				dp[ (i+1)&1 ][pos]= MIN( lazy[ (i+1)&1 ][j], dp[ (i+1)&1 ][pos] );
+			}
+			dp[i&1][j]= lazy[i&1][j]= notMark[i&1][j]= 1e16;
+		}
+	}
+	lld ans=LLONG_MAX;
+	for(int i=1;i<=M;i++){
+		ans= MIN(ans, dp[N&1][i]);
+	}
+	cout<<ans<<endl;
+	return 0;
+}

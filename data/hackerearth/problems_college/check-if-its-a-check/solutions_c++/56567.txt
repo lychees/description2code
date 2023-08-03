@@ -1,0 +1,80 @@
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <fstream>
+using namespace std;
+
+int GetSign(int x)
+{
+	if (x > 0) return 1;
+	if (x < 0) return -1;
+	return 0;
+}
+bool CheckIfCheckStraight(int bkpX, int bkpY, int appX, int appY, int wkpX, int wkpY, int maxSpaces)
+{
+	return ((bkpX == appX) && (abs(bkpY - appY) <= maxSpaces) && !(bkpX == wkpX && ((bkpY > appY && wkpY > appY && wkpY < bkpY) || (bkpY < appY && wkpY < appY && wkpY > bkpY))))
+		|| ((bkpY == appY) && (abs(bkpX - appX) <= maxSpaces) && !(bkpY == wkpY && ((bkpX > appX && wkpX > appX && wkpX < bkpX) || (bkpX < appX && wkpX < appX && wkpX > bkpX))));
+}
+bool CheckIfCheckDiagonal(int bkpX, int bkpY, int appX, int appY, int wkpX, int wkpY, int maxSpaces)
+{
+	return abs(bkpX - appX) == abs(bkpY - appY)
+		&& abs(bkpX - appX) <= maxSpaces
+		&&
+		!(
+			abs(bkpX - wkpX) == abs(bkpY - wkpY)
+			&& GetSign(bkpX - wkpX) == GetSign(bkpX - appX)
+			&& GetSign(bkpY - wkpY) == GetSign(bkpY - appY)
+			&& abs(bkpX - appX) > abs(bkpX - wkpX)
+		);
+}
+bool CheckIfCheckKnight(int bkpX, int bkpY, int appX, int appY)
+{
+	return ((bkpX == appX-2) && ((bkpY == appY + 1) || (bkpY == appY - 1)))
+		|| ((bkpX == appX+2) && ((bkpY == appY + 1) || (bkpY == appY - 1)))
+		|| ((bkpX == appX-1) && ((bkpY == appY + 2) || (bkpY == appY - 2)))
+		|| ((bkpX == appX+1) && ((bkpY == appY + 2) || (bkpY == appY - 2)));
+}
+bool CheckIfCheckQueen(int bkpX, int bkpY, int appX, int appY, int wkpX, int wkpY)
+{
+	bool isInCheck = CheckIfCheckStraight(bkpX, bkpY, appX, appY, wkpX, wkpY, 7);
+	return isInCheck ? true : CheckIfCheckDiagonal(bkpX, bkpY, appX, appY, wkpX, wkpY, 7);
+}
+int main()
+{
+	int t;
+	string output = "";
+	cin >> t;
+	
+	for(int i = 0; i < t; i++)
+	{
+		string blackKingPosition, whiteKingPosition, attackPieceType, attackPiecePosition;
+		int bkpX, bkpY, wkpX, wkpY, appX, appY;
+		bool isInCheck = false;
+
+		cin >> blackKingPosition;
+		cin >> whiteKingPosition;
+		cin >> attackPieceType;
+		cin >> attackPiecePosition;
+
+		bkpX = blackKingPosition.substr(0,1)[0] - 96;
+		stringstream(blackKingPosition.substr(1,1)) >> bkpY;
+		wkpX = whiteKingPosition.substr(0,1)[0] - 96;
+		stringstream(whiteKingPosition.substr(1,1)) >> wkpY;
+		appX = attackPiecePosition.substr(0,1)[0] - 96;
+		stringstream(attackPiecePosition.substr(1,1)) >> appY;
+
+		if(attackPieceType == "r")
+			isInCheck = CheckIfCheckStraight(bkpX, bkpY, appX, appY, wkpX, wkpY, 7);
+		else if(attackPieceType == "b")
+			isInCheck = CheckIfCheckDiagonal(bkpX, bkpY, appX, appY, wkpX, wkpY, 7);
+		else if(attackPieceType == "k")
+			isInCheck = CheckIfCheckKnight(bkpX, bkpY, appX, appY);
+		else if(attackPieceType == "q")
+			isInCheck = CheckIfCheckQueen(bkpX, bkpY, appX, appY, wkpX, wkpY);
+
+		output += (isInCheck ? "check\n" : "-1\n");
+	}
+	
+	cout << output;
+    return 0;
+}

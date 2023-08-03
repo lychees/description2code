@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define MAX 1000010
+#define INF -1000010
+
+vector<int> adj[MAX];
+vector<pair<int, int> > ant[MAX];
+
+int vis[MAX];
+int d[MAX];
+int n, m;
+vector<int> q;
+int t[MAX];
+long long dp[MAX];
+
+void top(int v){
+    vis[v] = 1;
+    for(int i=0; i<adj[v].size(); i++){
+        int u = adj[v][i];
+        if(vis[u]) continue;
+        top(u);
+    }
+    q.push_back(v);
+    return;
+}
+
+
+
+int main(){
+    long long u, v, w;
+    cin>>n>>m;
+
+    for(long long i=0; i<m; i++){
+        cin>>u>>v>>w;
+        adj[u].push_back(v);
+        ant[v].push_back(make_pair(u, w));
+    }
+
+    for(int i=1; i<=n; i++){
+        if(!vis[i]) top(i);
+    }
+
+
+    reverse(q.begin(), q.end());
+    long long res = 0;
+    for(int i=0; i<q.size(); i++){
+        int v = q[i];
+        for(int j=0; j<ant[v].size(); j++){
+            int u = ant[v][j].first;
+            int t = ant[v][j].second;
+            long long c = dp[u] + 2 + t;
+            if(dp[v] == -1 || dp[v] < c){
+                dp[v] = c;
+            }
+        }
+        res=max(res, dp[v]);
+    }
+    printf("%lld\n", res);
+
+    return 0;
+}
+//I used the method mentioned in the editorial. ok
+//First, I am doing a topological sort of the entire graph. ok
+//Then, I am iterating over the vertices in a reverse topological sort order. ok
+//For each vertex, if it does not have any edges, I am setting its time to 0.
+//Otherwise, I am setting its value to 2 + max(time spent in each adjacent node).

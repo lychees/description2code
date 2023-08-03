@@ -1,0 +1,122 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ull long int
+vector<pair<ull,pair<ull,ull> > >vec;
+ull weight[1005][1005];
+ull ans[1005][1005];
+vector<vector<ull> >graph;
+ull arr[1005];
+ull sizee[1005];
+bool visit[1005];
+ull dist[1005];
+ull x,y,n,org;
+
+ull root(ull i)
+{
+    while(i!=arr[i])
+    {
+        arr[i]=arr[arr[i]];
+        i=arr[i];
+    }
+    return i;
+}
+void union_nodes(ull a,ull b)
+{
+    ull ra=root(a);
+    ull rb=root(b);
+    if(sizee[ra]>sizee[rb])
+    {
+        arr[rb]=ra;
+        sizee[ra]+=sizee[rb];
+    }
+    else{
+        arr[ra]=rb;
+        sizee[rb]+=sizee[ra];
+    }
+    return ;
+}
+void graphconstruct()
+{
+    int ctr=0;
+    for(ull k=0;k<vec.size();k++)
+    {
+        ull x=vec[k].second.first;
+        ull y=vec[k].second.second;
+        if(root(x)!=root(y))
+        {
+            union_nodes(x,y);
+            graph[x].push_back(y);
+            graph[y].push_back(x);
+            ctr++;
+            if(ctr==n-1)
+                break;
+        }
+    }
+    return;
+}
+void bfs(ull x)
+{
+    ull p;
+    queue<ull> q;
+    q.push(x);
+    visit[x]=true;
+    while(!q.empty())
+    {
+        p=q.front();
+        q.pop();
+        for(ull j=0;j<graph[p].size();j++)
+        {
+            if(!visit[graph[p][j]])
+            {
+                q.push(graph[p][j]);
+                visit[graph[p][j]]=true;
+                dist[graph[p][j]]=dist[p]+weight[p][graph[p][j]];
+                ans[org][graph[p][j]]=dist[graph[p][j]];
+            }
+        }
+    }
+    return;
+}
+int main()
+{
+    ios::sync_with_stdio(false);
+    ull t,p,m,o,i,w;
+    cin>>t;
+    for(o=1;o<=t;o++)
+    {
+        cout<<"Case: "<<o<<"\n";
+        cin>>n>>p>>m;
+        graph.resize(n+2);
+        for(i=1;i<=n;i++)
+        {
+            arr[i]=i;
+            sizee[i]=1;
+        }
+        memset(ans,0,sizeof(ans));
+        memset(weight,0,sizeof(weight));
+        for(i=0;i<p;i++)
+        {
+            cin>>x>>y>>w;
+            vec.push_back(make_pair(w,make_pair(x,y)));
+            weight[x][y]=w;
+            weight[y][x]=w;
+        }
+        sort(vec.begin(),vec.end());
+        graphconstruct();
+        for(i=1;i<=n;i++)
+        {
+            memset(visit,false,sizeof(visit));
+            memset(dist,0,sizeof(dist));
+            org=i;
+            bfs(i);
+        }
+        for(i=0;i<m;i++)
+        {
+            cin>>x>>y;
+            cout<<abs(ans[x][y])<<"\n";
+        }
+        graph.clear();
+        vec.clear();
+    }
+    return 0;
+}

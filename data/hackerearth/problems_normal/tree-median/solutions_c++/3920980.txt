@@ -1,0 +1,281 @@
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <utility>
+#include <cstdlib>
+#include <memory>
+#include <queue>
+#include <cassert>
+#include <cmath>
+#include <ctime>
+#include <complex>
+#include <bitset>
+#include <fstream>
+#include <unordered_map>
+#include <unordered_set>
+#include <numeric>
+
+using namespace std;
+
+#define pb push_back
+#define fst first
+#define snd second
+#define mp make_pair 
+#define sz(C) ((int) (C).size())
+#define forn(i, n) for (int i = 0; i < (int) n; ++i)
+#define ford(i, n) for (int i = ((int) n) - 1; i >= 0; --i)
+#define y1 gftxdtrtfhyjfctrxujkvbhyjice
+#define y0 ehfoiuvhefroerferjhfjkehfjke
+#define left sdhfsjkshdjkfsdfgkqqweqweh
+#define right yytrwtretywretwreytwreytwr
+#define next jskdfksdhfjkdsjksdjkgf
+#define prev koeuigrihjdkjdfj
+#define hash kjfdkljkdhgjdkfhgurehg
+#define all(C) begin(C), end(C)
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef unsigned int uint;
+typedef pair<int,int> pii;
+typedef pair<ll, ll> pll;
+typedef vector<ll> vll;
+typedef vector<int> vi;
+typedef vector<vector <int> > vvi;
+typedef vector<pii> vii;
+typedef long double ld;
+typedef complex<double> cd;
+typedef vector<cd> vcd;
+
+#define FILE_NAME "a"
+
+
+const int MAXN = 3e5 + 10;
+const int INF = 1e9;
+
+vi g[MAXN];
+int b[MAXN];
+int n, x;
+ll ans[MAXN];
+
+bool read() {
+	// n = 3e5;
+	// x = rand();
+	// forn(i, n - 1) {
+	// 	g[i + 1].pb(i);
+	// 	g[i].pb(i + 1);
+	// }
+	// forn(i, n) {
+	// 	b[i] = rand();
+	// }
+	// return true;
+
+	if  (scanf("%d%d", &n, &x) < 2) {
+		return false;
+	}
+	forn(i, n) {
+		g[i].clear();
+	} 
+	forn(i, n - 1) {
+		int v, u;
+		scanf("%d%d", &v, &u);
+		--v;
+		--u;
+		g[v].pb(u);
+		g[u].pb(v);
+	}
+	forn(i, n) {
+		scanf("%d", &b[i]);
+	}
+	return true;
+}
+
+bool used[MAXN];
+int sz[MAXN];
+ll cur_ans[MAXN];
+
+void dfs_sz(int v, int p) {
+	sz[v] = 1;
+	for (int to : g[v]) {
+		if  (used[to] || to == p) {
+			continue;
+		}
+		dfs_sz(to, v);
+		sz[v] += sz[to];
+	}
+}
+
+int dfs_center(int v, int S, int p) {
+	int mx_to = -1;
+	for (int to : g[v]) {
+		if  (used[to] || to == p) {
+			continue;
+		}
+		if  (mx_to == -1 || sz[to] > sz[mx_to]) {
+			mx_to = to;
+		}
+	}
+	if  (mx_to == -1 || sz[mx_to] * 2 <= S) {
+		return v;
+	}
+	return dfs_center(mx_to, S, v);
+}
+
+int center(int v) {
+	dfs_sz(v, -1);
+	return dfs_center(v, sz[v], -1);
+}
+
+int min_bal;
+int max_bal;
+int cnt[2 * MAXN];
+
+void dfs_bal(int v, int bal, int p) {
+	min_bal = min(min_bal, bal);
+	max_bal = max(max_bal, bal);
+	// printf("init bal = %d\n", bal);
+	for (int to : g[v]) {
+		if  (used[to] || to == p) {
+			continue;
+		}
+		dfs_bal(to, bal + b[to], v);
+	}
+	cur_ans[v] = 0;
+}
+
+void dfs_del(int v, int bal, int p) {
+	// printf("del bal = %d\n", bal);
+	--cnt[bal - min_bal];
+	for (int to : g[v]) {
+		if  (used[to] || to == p) {
+			continue;
+		}
+		dfs_del(to, bal + b[to], v);
+	}
+}
+
+
+void dfs_add(int v, int bal, int p) {
+	// printf("add bal = %d\n", bal);
+	++cnt[bal - min_bal];
+	for (int to : g[v]) {
+		if  (used[to] || to == p) {
+			continue;
+		}
+		dfs_add(to, bal + b[to], v);
+	}
+}
+
+ll dfs_ans(int v, int bal, int root, int p) {
+	if  (-2 <= bal + b[root] && bal + b[root] <= -1) {
+		++cur_ans[v];
+		if  (b[root] == -1) {
+			++ans[root];
+		}
+	}
+	// -2 <= bal + b_root + B <= -1
+	int left_B = -2 - bal - b[root];
+	int right_B = -1 - bal - b[root];
+	for (int B = left_B; B <= right_B; ++B) {
+		int pos = B - min_bal;
+		if  (min_bal <= B && B <= max_bal) {
+			cur_ans[v] += cnt[pos];
+			cur_ans[root] += cnt[pos];
+		}
+	}
+
+	for (int to : g[v]) {
+		if  (used[to] || to == p) {
+			continue;
+		}
+		ll add = dfs_ans(to, bal + b[to], root, v);
+		cur_ans[v] += add;
+	}
+
+	if  (b[v] == -1) {
+		ans[v] += cur_ans[v];
+		// printf("cur_ans[%d] = %lld\n", v, cur_ans[v]);
+	}
+	return cur_ans[v];
+}
+
+void calc(int v) {
+	int root = center(v);
+	// printf("root = %d\n", root);
+	min_bal = INF;
+	max_bal = -INF;
+	dfs_bal(root, 0, -1);
+	forn(it, max_bal - min_bal + 1) {
+		cnt[it] = 0;
+	}
+
+	for (int to : g[root]) {
+		if  (used[to]) {
+			continue;
+		}
+		dfs_add(to, b[to], root);
+	}
+
+	cur_ans[root] = 0;
+	for (int to : g[root]) {
+		if  (used[to]) {
+			continue;
+		}
+		dfs_del(to, b[to], root);
+		dfs_ans(to, b[to], root, root);
+		dfs_add(to, b[to], root);
+	}
+	if  (b[root] == -1) {
+		cur_ans[root] /= 2;
+		ans[root] += cur_ans[root];
+	}
+
+	used[root] = true;
+	for (int to : g[root]) {
+		if  (!used[to]) {
+			calc(to);
+		}
+	}
+}
+
+ll solve() {
+	forn(i, n) {
+		b[i] = (b[i] >= x) ? +1 : -1;
+	}
+	memset (ans, 0, sizeof ans);
+	memset (used, false, sizeof used);
+
+	// forn(i, n) {
+	// 	printf("%d ", b[i]);
+	// }
+	// puts("");
+
+	calc(0);
+
+	ll mx = 0;
+	forn(i, n) {
+		if  (b[i] == 1) {
+			assert(ans[i] == 0);
+		}
+		mx = max(mx, ans[i]);
+	}
+	return mx;
+}
+
+int main() {
+#ifdef LOCAL
+	freopen(FILE_NAME ".in", "r", stdin);
+	// freopen(FILE_NAME ".out", "w", stdout);
+#endif
+
+	while (read()) {
+		cout << solve() << '\n';
+		break;
+	}
+
+	return 0;
+}

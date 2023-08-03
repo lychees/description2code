@@ -1,0 +1,174 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define REPU(i, a, b) for (int i = (a); i < (b); ++i)
+#define REPD(i, a, b) for (int i = (a); i > (b); --i)
+#define MEM(a, x) memset(a, x, sizeof(a))
+#define ALL(a) a.begin(), a.end()
+#define UNIQUE(a) a.erase(unique(ALL(a)), a.end())
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) { return (a < b) ? a : b; }
+template<class T> inline T tmax(T a, T b) { return (a > b) ? a : b; }
+template<class T> inline void amax(T &a, T b) { if (b > a) a = b; }
+template<class T> inline void amin(T &a, T b) { if (b < a) a = b; }
+template<class T> inline T tabs(T a) { return (a > 0) ? a : -a; }
+template<class T> T gcd(T a, T b) { while (b != 0) { T c = a; a = b; b = c % b; } return a; }
+
+typedef vector<ll> vl;
+typedef vector<vl> Mat;
+
+const int N = 1000000;
+int f[7][7], g[7][7];
+const int pw[7] = {1, 10, 100, 1000, 10000, 100000, 1000000};
+
+void unit(Mat &data) {
+	int sz = data.size();
+	REPU(i, 0, sz) data[i][i] = 1;
+}
+
+Mat mul_mat(Mat x, Mat y) {
+	int sz = x.size();
+	Mat ans(sz, vl(sz, 0));
+	REPU(i, 0, sz) REPU(j, 0, sz) REPU(k, 0, sz) {
+		ans[i][j] = (ans[i][j] + x[i][k] * y[k][j]) % MOD;
+	}
+	return ans;
+}
+
+Mat pow_mat(Mat x, ll n) {
+	int sz = x.size();
+	Mat ans(sz, vl(sz, 0));
+	unit(ans);
+	while (n) {
+		if (n & 1) ans = mul_mat(ans, x);
+		x = mul_mat(x, x);
+		n >>= 1;
+	}
+	return ans;
+}
+
+inline ll mod_pow(ll x, ll y, ll p) {
+	ll res = 1;
+	while (y > 0) {
+		if (y & 1) res = (res * x) % p;
+		x = (x * x) % p;
+		y >>= 1;
+	}
+	return res;
+}
+
+inline ll solve(int n, int k) {
+	ll ret = 1;
+	if (k == 2) {
+		// 5 + 20*(10^{n-1}-1)/9
+		ret = 5 + 20LL * mod_pow(9, MOD - 2, MOD) % MOD * (mod_pow(10, n - 1, MOD) - 1);
+		ret %= MOD;
+	}
+	else if (k == 3) {
+		// 1 + (10^n-1)/3
+		ret = 1 + 3LL * mod_pow(9, MOD - 2, MOD) * (mod_pow(10, n, MOD) - 1) % MOD;
+		ret %= MOD;
+	}
+	else if (k == 4) {
+		if (n == 1) ret = 3;
+		else {
+			// 4 + 5(10^{n-1}-1)/9
+			ret = 4 + 5 * mod_pow(9, MOD - 2, MOD) * (mod_pow(10, n - 1, MOD) - 1) % MOD;
+			ret = (ret + MOD) % MOD;
+		}
+	}
+	else if (k == 5) {
+		// 2 + 2*(10^{n-1}-1)/9
+		ret = 2 + 2LL * mod_pow(9, MOD - 2, MOD) % MOD * (mod_pow(10, n - 1, MOD) - 1);
+		ret %= MOD;
+	}
+	else if (k == 6) {
+		if (n == 1) ret = 2;
+		else {
+			// (2/27)*(10^n - 9*n + 26)
+			ret = 2 * mod_pow(27, MOD - 2, MOD) * (mod_pow(10, n, MOD) - 9LL * n + 26) % MOD;
+			if (ret < 0) ret += MOD;
+		}
+	}
+	else if (k == 7) {
+		if (n == 1) ret = 2;
+		else {
+			Mat base(49, vl(49, 0));
+			REPU(i, 0, 49) REPU(j, 0, 49) {
+				base[7 * ((i / 7 + j / 7) % 7) + (i + j) % 7][j] += f[i / 7][i % 7];
+			}
+			Mat ans = pow_mat(base, n / 6);
+			int m = n % 6;
+			if (m != 0) {
+				MEM(g, 0);
+				REPU(i, 0, pw[m]) {
+					int x = 0, y = i;
+					while (y) {
+						x = 10 * x + (y % 10);
+						y /= 10;
+					}
+					REPU(j, 0, m) if (i < pw[j]) {
+						x *= 10;
+					}
+					g[i % 7][x % 7]++;
+				}
+				int mod = pw[m] % 7;
+				ret = 0;
+				REPU(i, 0, 49) REPU(j, 0, 49) {
+					if (7 * ((i / 7 + j / 7) % 7) + ((i + j * mod) % 7) == 0) {
+						ret = (ret + ans[j][0] * g[i / 7][i % 7]) % MOD;
+					}
+				}
+			}
+			else ret = ans[0][0];
+		}
+	}
+	else if (k == 8) {
+		if (n == 1) ret = 2;
+		else if (n == 2) ret = 4;
+		else if (n == 3) ret = 17;
+		else if (n == 4) ret = 142;
+		else {
+			// (5*10^{n-1}+4*28)/36
+			ret = mod_pow(36, MOD - 2, MOD) * (5 * mod_pow(10, n - 1, MOD) + 4 * 28) % MOD;
+		}
+	}
+	else if (k == 9) {
+		// 1 + (10^n-1)/9
+		ret = 1 + mod_pow(9, MOD - 2, MOD) * (mod_pow(10, n, MOD) - 1) % MOD;
+		ret %= MOD;
+	}
+	else {
+		// do nothing
+	}
+	return ret;
+}
+
+int main(int argc, char *argv[]) {
+	ios_base::sync_with_stdio(false);
+	
+	int T, n, k;
+
+	REPU(i, 0, pw[6]) {
+		int x = 0, y = i;
+		while (y) {
+			x = 10 * x + (y % 10);
+			y /= 10;
+		}
+		REPU(j, 0, 6) if (i < pw[j]) {
+			x *= 10;
+		}
+		f[i % 7][x % 7]++;
+	}
+	
+	cin >> T;
+	while (T--) {
+		cin >> n >> k;
+		printf("%lld\n", solve(n, k));
+	}
+	
+	return 0;
+}

@@ -1,0 +1,91 @@
+#include <iostream>
+using namespace std;
+#include <algorithm>
+#include <vector>
+typedef long long int LL;
+vector<pair<LL,LL>> input;
+vector<LL> rangeCountVector;
+vector<pair<LL,LL>> modifiedInputVector;
+
+void modifyInput(){
+	modifiedInputVector.push_back(input[0]);
+	LL c = input.size();
+	LL i = 1,j=0;
+	while(i<c){
+		if(input[i].first <= modifiedInputVector[j].second){
+			modifiedInputVector[j].second = max(modifiedInputVector[j].second,input[i].second);
+		}
+		else
+		{
+			modifiedInputVector.push_back(input[i]);
+			j++;
+		}
+		i++;
+	}
+}
+
+void calculateRangeCount(){
+	LL size = modifiedInputVector.size();
+	LL i = 0;
+	LL sum = 0;
+	rangeCountVector.push_back(0);
+	while(i<size){
+		sum += modifiedInputVector[i].second - modifiedInputVector[i].first + 1;
+		rangeCountVector.push_back(sum);
+		++i;
+	}
+}
+
+void bin_search(LL k){
+	LL mid,start,end;
+	start=0,end=rangeCountVector.size() - 1;
+	LL size = rangeCountVector.size() - 1;
+
+	while(start <= end){
+		mid = (start+end)/2;
+
+		if(k > rangeCountVector[mid] &&  ((mid == size) || (k <= rangeCountVector[mid+1]))){
+			if(mid == size){
+				cout<<"-1"<<endl;
+				return;
+			}
+			else{
+				LL output = modifiedInputVector[mid].first + k - rangeCountVector[mid] - 1;
+				cout<<output<<endl;
+				return;
+			}
+		}
+		else if(k > rangeCountVector[mid]){
+			start = mid + 1;
+		}
+		else{
+			end = mid - 1;
+		}
+	}
+}
+
+int main(){
+	int t;
+	cin>>t;
+	while(t--){
+		input.clear();
+		rangeCountVector.clear();
+		modifiedInputVector.clear();
+
+		LL N,Q;
+		cin>>N>>Q;
+		while(N--){
+			LL A,B;
+			cin>>A>>B;
+			input.push_back(make_pair(A,B));
+		}
+		sort(input.begin(),input.end());
+		modifyInput();
+		calculateRangeCount();
+		while(Q--){
+			LL k;
+			cin>>k;
+			bin_search(k);
+		}
+	}
+}

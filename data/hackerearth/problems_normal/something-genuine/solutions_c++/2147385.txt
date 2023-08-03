@@ -1,0 +1,102 @@
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <set>
+#include <list>
+#include <queue>
+#include <stack>
+#include <vector>
+#include <cassert>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int n;
+int a[200000], nx[200000], pos[200000];
+int st[1 << 19] = {}, sp[1 << 18] = {};
+const int off = 1 << 18;
+const int MOD = 1e9 + 7;
+
+void stInit() {
+    for (int i = off - 1; i >= 1; --i) {
+        st[i] = st[i << 1] + st[(i << 1) | 1];
+        if (st[i] >= MOD) st[i] -= MOD;
+    }
+}
+
+void stPush(int v, int cnt) {
+    for (int i = v << 1; i <= ((v << 1) | 1); ++i) {
+        st[i] = (st[i] + (LL)sp[v] * cnt) % MOD;
+        if (st[i] < 0) st[i] += MOD;
+        if (i < off) {
+            sp[i] += sp[v];
+        }
+    }
+    sp[v] = 0;
+}
+
+void stDec(int v, int L, int R, int l, int r) {
+    if (L == l && R == r) {
+        st[v] -= R - L + 1;
+        if (st[v] < 0) st[v] += MOD;
+        if (v < off) --sp[v];
+        return;
+    }
+    int mid = (L + R) >> 1;
+    if (sp[v]) stPush(v, R - mid);
+    if (l <= mid) stDec(v << 1, L, mid, l, min(r, mid));
+    if (r > mid) stDec((v << 1) | 1, mid + 1, R, max(l, mid + 1), r);
+    st[v] = st[v << 1] + st[(v << 1) | 1];
+    if (st[v] >= MOD) st[v] -= MOD;
+}
+
+int stGet(int v, int L, int R, int l, int r) {
+    if (l > r) return 0;
+    if (L == l && R == r) {
+        return st[v];
+    }
+    int mid = (L + R) >> 1;
+    if (sp[v]) stPush(v, R - mid);
+    int ret = stGet(v << 1, L, mid, l, min(r, mid)) +
+        stGet((v << 1) | 1, mid + 1, R, max(l, mid + 1), r);
+    if (ret >= MOD) ret -= MOD;
+    return ret;
+}
+
+int ans = 0;
+
+int main() {
+    scanf("%d", &n);
+    REP(i, n) scanf("%d", a + i), --a[i];
+    REP(i, n) pos[i] = n;
+    for (int i = n - 1; i >= 0; --i) {
+        nx[i] = pos[a[i]];
+        pos[a[i]] = i;
+    }
+    int sum = 0;
+    REP(i, n) {
+        if (pos[a[i]] == i) ++sum;
+        st[off + i] = sum;
+        ans = (ans + (LL)sum * sum * n) % MOD;
+    }
+    stInit();
+    REP(i, n - 1) {
+        int sum = stGet(1, 0, off - 1, i, nx[i] - 1);
+        ans = (ans - (2ll * sum - nx[i] + i) * (n - 1 - i)) % MOD;
+        if (ans < 0) ans += MOD;
+        stDec(1, 0, off - 1, i, nx[i] - 1);
+    }
+    cout << ans << endl;
+	return 0;
+}

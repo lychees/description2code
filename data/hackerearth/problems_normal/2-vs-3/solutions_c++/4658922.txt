@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define maxn 100001
+
+struct node
+{
+	int l, r, ret;
+	node(){}
+	node(int a, int b)
+	{
+		l = a;
+		r = b;
+	}
+};
+node T[5*maxn];
+char s[maxn];
+bool lazy[5*maxn];
+void cal(int i)
+{
+	int k = ((T[2*i + 1].r - T[2*i + 1].l + 1)&1) ? -1 : 1;
+	T[i].ret = ((T[2*i].ret*k + T[2*i + 1].ret) % 3 + 3) % 3;
+}
+void go(int i, int l, int r)
+{
+	T[i] = node(l, r);
+	if(l == r)
+	{
+		T[i].ret = s[l] - '0';
+		return;
+	}
+	int m = (l + r) >> 1;
+	go(2*i, l, m);
+	go(2*i + 1, m + 1, r);
+	cal(i);
+}
+void update(int i, int k)
+{
+	if(s[k] == '1')
+		return;
+	if(T[i].l == T[i].r)
+	{
+		s[k] = '1';
+		T[i].ret = 1;
+		return;
+	}
+	int m = (T[i].l + T[i].r) >> 1;
+	if(k <= m)
+		update(2*i, k);
+	else
+		update(2*i + 1, k);
+	cal(i);
+}
+int get(int i, int l, int r)
+{
+	if(T[i].l == l && T[i].r == r)
+		return T[i].ret;
+	int m = (T[i].l + T[i].r) >> 1;
+	if(r <= m)
+		return get(2*i, l, r);
+	if(l > m)
+		return get(2*i + 1, l, r);
+	int k = ((r - m)&1)? -1 : 1;
+	int ret = (k*get(2*i, l, m) + get(2*i + 1, m + 1, r)) % 3;
+	return (ret + 3) % 3;
+}
+
+int main()
+{
+	int n, q, i, t, a, b;
+	scanf("%d\n%s%d", &n, s, &q);
+	go(1, 0, n - 1);
+	while(q--)
+	{
+		scanf("%d %d", &t, &a);
+		if(t)
+			update(1, a);
+		else
+		{
+			scanf("%d", &b);
+			printf("%d\n", get(1, a, b));
+		}
+	}
+	return 0;
+}

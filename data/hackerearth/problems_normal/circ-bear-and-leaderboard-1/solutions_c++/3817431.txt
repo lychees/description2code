@@ -1,0 +1,237 @@
+#include <cstdio>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cassert>
+#include <cstring>
+#include <cmath>
+#include <queue>
+#include <set>
+#include <ctime>
+using namespace std;
+
+class drzewko {
+public:
+	struct node {
+		long long key;
+		int roz;
+		int ile;
+		long long sum;
+		node *par;
+		node *left;
+		node *right;
+		node(long long Key) : par(0), left(0), right(0), key(Key), roz(1), sum(Key), ile(1) {}
+		~node() {}
+	} *root;
+
+	void left_rotate(node *x) {
+		node *y = x -> right;
+		x -> right = y -> left;
+		if(y -> left) y -> left -> par = x;
+		y -> par = x -> par;
+
+		if(!x -> par) root = y;
+		else if(x -> par -> left == x) x -> par -> left = y;
+		else x -> par -> right = y;
+		y -> left = x;
+		x -> par = y;
+
+		x -> roz = x -> ile;
+		x -> sum = x -> key * x -> ile;
+		if(x -> right) {
+			x -> roz += x -> right -> roz;
+			x -> sum += x -> right -> sum;
+		}
+		if(x -> left) {
+			x -> roz += x -> left -> roz;
+			x -> sum += x -> left -> sum;
+		}
+		y -> roz = y -> ile + (x -> roz);
+		y -> sum = y -> key * y -> ile + (x -> sum);
+		if(y -> right) {
+			y -> roz += y -> right -> roz;
+			y -> sum += y -> right -> sum;
+		}
+	}
+
+	void right_rotate(node *x) {
+		node *y = x -> left;
+		x -> left = y -> right;
+		if(y -> right) y -> right -> par = x;
+		y -> par = x -> par;
+
+		if(!x -> par) root = y;
+		else if(x -> par -> right == x) x -> par -> right = y;
+		else x -> par -> left = y;
+		y -> right = x;
+		x -> par = y;
+
+		x -> roz = x -> ile;
+		x -> sum = x -> key * x -> ile;
+		if(x -> left) {
+			x -> roz += x -> left -> roz;
+			x -> sum += x -> left -> sum;
+		}
+		if(x -> right) {
+			x -> roz += x -> right -> roz;
+			x -> sum += x -> right -> sum;
+		}
+		y -> roz = y -> ile + (x -> roz);
+		y -> sum = y -> key * y -> ile + (x -> sum);
+		if(y -> left) {
+			y -> roz += y -> left -> roz;
+			y -> sum += y -> left -> sum;
+		}
+	}
+
+	void splay(node *x) {
+		while(x && x -> par) {
+			//cout << x -> key << endl;
+			if(!x -> par -> par) {
+				if(x -> par -> left == x) right_rotate(x -> par);
+				else left_rotate(x -> par);
+			}
+			else if(x -> par -> left == x && x -> par -> par -> left == x -> par) {
+				right_rotate(x -> par -> par);
+				right_rotate(x -> par);
+			}
+			else if(x -> par -> right == x && x -> par -> par -> right == x -> par) {
+				left_rotate(x -> par -> par);
+				left_rotate(x -> par);
+			}
+			else if(x -> par -> right == x && x -> par -> par -> left == x -> par) {
+				left_rotate(x -> par);
+				right_rotate(x -> par);
+			}
+			else if(x -> par -> left == x && x -> par -> par -> right == x -> par) {
+				right_rotate(x -> par);
+				left_rotate(x -> par);
+			}
+			else cout << "cos sie popsulo\n";
+		}
+	}
+
+	drzewko(int n) {
+		node *x = new node (0);
+		x -> ile = n;
+		root = x;
+	}
+	void insert(long long Key) {
+		node *z = root;
+		node *p = 0;
+		while(z) {
+			p = z;
+			if(Key < z -> key) z = z -> left;
+			else if(Key > z -> key) z = z -> right;
+			else {
+				z -> ile++;
+				splay(z);
+				return;
+			}
+		}
+
+		z = new node(Key);
+		z -> par = p;
+
+		if(!p) root = z;
+		else if(Key < p -> key) p -> left = z;
+		else p -> right = z;
+		splay(z);
+	}
+
+	node* find(long long Key) {
+		node *z = root;
+		node *p = 0;
+		while(z) {
+			p = z;
+			if(Key < z -> key) z = z -> left;
+			else if(Key > z -> key) z = z -> right;
+			else {
+				splay(z);
+				return z;
+			}
+		}
+		splay(p);
+		return 0;
+	}
+
+	void erase(node *x) {
+		if(!x) return;
+		splay(x);
+		x -> ile--;
+		if(x -> ile) return;
+		if(!x -> left) {
+			root = x -> right;
+			if(root) root -> par = 0;
+			delete x;
+		}
+		else {
+			node *y = x -> left;
+			node *z = x -> right;
+			delete x;
+			y -> par = 0;
+			root = y;
+			while(y -> right) y = y -> right;
+			splay(y);
+			y -> right = z;
+			if(z) z -> par = y;
+		}
+	}
+
+	int rank(node *x) {
+		int res = 1;
+		while(x) {
+			if(x -> right) res += x -> right -> roz;
+			x = x -> par;
+		}
+		return res;
+	}
+
+	long long sum(node *x) {
+		long long res = 0;
+		while(x) {
+			if(x -> left) res += x -> left -> sum;
+			x = x -> par;
+		}
+		return res;
+	}
+
+	void wypisz(node *z = 0) {
+		if(!z) z = root;
+		cout << z -> key << ' ' << z -> ile << ' ' << z -> roz << endl;
+		if(z -> left) {
+			cout << "w lewo\n";
+			wypisz(z -> left);
+		}
+		if(z -> right) {
+			cout << "w prawo\n";
+			wypisz(z -> right);
+		}
+		cout << "w gore\n";
+	}
+};
+
+int n, q;
+long long A[500007];
+
+int main() {
+	ios_base::sync_with_stdio(0);
+	cin >> n >> q;
+	drzewko X(n);
+	long long wynik = 0;
+	while(q--) {
+		int a, b;
+		cin >> a >> b;
+		drzewko::node *v = X.find(A[a]);
+		wynik -= X.sum(v);
+		wynik -= A[a] * X.rank(v);
+		X.erase(v);
+		A[a] += b;
+		X.insert(A[a]);
+		v = X.find(A[a]);
+		wynik += X.sum(v);
+		wynik += A[a] * X.rank(v);
+		cout << wynik << '\n';
+	}
+	return 0;
+}

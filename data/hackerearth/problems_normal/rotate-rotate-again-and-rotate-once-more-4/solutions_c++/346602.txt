@@ -1,0 +1,260 @@
+
+
+//Author : Piyush Agarwal
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+#define mod 1000000007
+#define inp1(a) scanf("%lld",&a);
+#define outl(a) printf("%lld\n",a);
+#define out(a) printf("%lld ",a);
+#define line printf("\n");
+#define FOR(i,b,e) for(i=b;i<=e;i++)
+#define mp make_pair
+#define pb push_back
+#define inp2(a,b) scanf("%lld %lld",&a,&b)
+      
+inline void finp(ll *n)
+{
+   *n = 0;
+    ll ch = getchar_unlocked();
+    while(ch < '0' || ch > '9')
+    ch = getchar_unlocked();
+    while(ch >= '0' && ch <= '9')
+    (*n) = ((*n)<<3) + ((*n)<<1) + ch - '0', ch = getchar_unlocked();
+}
+  
+ll gcd(ll a,ll b)
+{
+    if(b==0)
+          return a;
+    return gcd(b,a%b);
+}
+struct node
+{
+    ll e,w,n,s,count;
+
+}m[4000005],lazy[4000005];
+ll i,j,k,l,a[1000005],q;
+void segment(ll node,ll b,ll e)
+{
+        if(b==e)
+        {
+            m[node].count=0;
+            m[node].e=1;m[node].w=0;m[node].n=0;m[node].s=0;
+            return;
+        }
+        segment(2*node,b,(e+b)/2);
+        segment(2*node+1,(e+b)/2+1,e);
+        m[node].e=m[2*node].e+m[2*node+1].e;
+        m[node].w=m[2*node].w+m[2*node+1].w;
+        m[node].n=m[2*node].n+m[2*node+1].n;
+        m[node].s=m[2*node].s+m[2*node+1].s;
+        m[node].count=0;
+}
+void update(ll node,ll b,ll e,ll i,ll j,ll inc)
+{
+//    printf("%lld %lld %lld \n",node,b,e);
+    if(lazy[node].count!=0)
+    {
+        lazy[node].count=lazy[node].count%4;
+        ll r=m[node].e,t=m[node].w,y=m[node].s,u=m[node].n;
+
+        if(lazy[node].count==1)
+        {
+        m[node].e=u; m[node].w=y; m[node].s=r; m[node].n=t;
+        }
+        else if(lazy[node].count==2)
+        {
+            m[node].e=t; m[node].s=u;   m[node].w=r;   m[node].n=y;
+        }
+        else if(lazy[node].count==3)
+        {
+           m[node].n=r;   m[node].w=u;  m[node].s=t;   m[node].e=y;
+        }
+        else if(lazy[node].count==-1)
+        {
+            m[node].n=r;   m[node].w=u;   m[node].e=y;   m[node].s=t;
+        }
+        else if(lazy[node].count==-2)
+        {
+            m[node].e=t; m[node].s=u;   m[node].w=r;   m[node].n=y; 
+        }
+        else if(lazy[node].count==-3)
+        {   
+            m[node].w=y; m[node].n=t;   m[node].e=u;    m[node].s=r;
+        }   
+        if(b!=e)
+        {
+            lazy[2*node].count=(lazy[2*node].count+lazy[node].count)%4;
+            lazy[2*node+1].count=(lazy[2*node+1].count+lazy[node].count)%4;
+        }
+        lazy[node].count=0;
+    }
+    if(b>j||i>e)
+        return;
+    if(i<=b&&j>=e)
+    {
+       
+      ll r=m[node].e,t=m[node].w,y=m[node].s,u=m[node].n;
+        
+        if(inc==1)
+        { //  printf("here for i %lld j %lld\n",i,j);
+             m[node].e=u;  m[node].w=y;  m[node].s=r;   m[node].n=t;
+        }
+       else if(inc==2)
+         {
+              m[node].e=t;     m[node].s=u;   m[node].w=r;   m[node].n=y;
+         }
+      else if(inc==3)
+         {
+                m[node].n=r;    m[node].w=u;   m[node].s=t;       m[node].e=y;
+         }
+
+        else if(inc==-1)
+        {
+          m[node].n=r;   m[node].w=u;   m[node].e=y;   m[node].s=t;
+        }
+       else if(inc==-2)
+         {
+            m[node].e=t; m[node].s=u;   m[node].w=r;   m[node].n=y;
+         }
+       else if(inc==-3)
+        {
+             m[node].w=y; m[node].n=t;   m[node].e=u;    m[node].s=r;
+        }
+        if(b!=e)
+        {
+                lazy[2*node].count=(lazy[2*node].count+inc)%4;
+                lazy[2*node+1].count=(lazy[2*node+1].count+inc)%4;
+        }
+        return;
+   }
+     
+    update(2*node,b,(e+b)/2,i,j,inc);
+    update(2*node+1,(e+b)/2+1,e,i,j,inc);
+   
+    m[node].e=m[2*node].e+m[2*node+1].e;
+    m[node].w=m[2*node].w+m[2*node+1].w;
+    m[node].n=m[2*node].n+m[2*node+1].n;
+    m[node].s=m[2*node].s+m[2*node+1].s;
+
+}
+struct node ans;
+void value(ll node,ll b,ll e,ll i,ll j)
+{
+    if(lazy[node].count!=0)
+    {
+        lazy[node].count=lazy[node].count%4;
+        ll r=m[node].e,t=m[node].w,y=m[node].s,u=m[node].n;
+
+        if(lazy[node].count==1)
+        {
+        m[node].e=u; m[node].w=y; m[node].s=r; m[node].n=t;
+        }
+        else if(lazy[node].count==2)
+        {
+            m[node].e=t; m[node].s=u;   m[node].w=r;   m[node].n=y;
+        }
+        else if(lazy[node].count==3)
+        {
+           m[node].n=r;   m[node].w=u;  m[node].s=t;   m[node].e=y;
+        }
+        else if(lazy[node].count==-1)
+        {
+            m[node].n=r;   m[node].w=u;   m[node].e=y;   m[node].s=t;
+        }
+        else if(lazy[node].count==-2)
+        {
+            m[node].e=t; m[node].s=u;   m[node].w=r;   m[node].n=y; 
+        }
+        else if(lazy[node].count==-3)
+        {   
+            m[node].w=y; m[node].n=t;   m[node].e=u;    m[node].s=r;
+        }   
+        if(b!=e)
+        {
+            lazy[2*node].count=(lazy[2*node].count+lazy[node].count)%4;
+            lazy[2*node+1].count=(lazy[2*node+1].count+lazy[node].count)%4;
+        }
+        lazy[node].count=0;
+    }
+    if(b>j||i>e)
+        return;
+    if(i<=b&&j>=e)
+    {
+   // printf("start %lld end %lld %lld %lld %lld  %lld\n",b,e,m[node].e,m[node].w,m[node].n,m[node].s);
+
+      ans.n=ans.n+m[node].n;
+      ans.w=ans.w+m[node].w;
+      ans.s=ans.s+m[node].s;
+      ans.e=ans.e+m[node].e;
+   	// printf("%lld %lld %lld %lld\n",ans.n,ans.w,ans.s,ans.e);     
+   	 return;
+   }
+     
+    value(2*node,b,(e+b)/2,i,j);
+    value(2*node+1,(e+b)/2+1,e,i,j);
+   //printf("start %lld end %lld %lld %lld %lld  %lld\n",b,e,m[node].e,m[node].w,m[node].n,m[node].s);
+
+    m[node].e=m[2*node].e+m[2*node+1].e;
+    m[node].w=m[2*node].w+m[2*node+1].w;
+    m[node].n=m[2*node].n+m[2*node+1].n;
+    m[node].s=m[2*node].s+m[2*node+1].s;
+
+}
+
+
+
+void inorder(ll node,ll b,ll e)
+{
+        if(b==e)
+        {
+           printf("start %lld end %lld %lld %lld %lld  %lld\n",b,e,m[node].e,m[node].w,m[node].n,m[node].s);
+           return; 
+        }
+        inorder(2*node,b,(b+e)/2);
+        inorder(2*node+1,(e+b)/2+1,e);
+        printf("start %lld end %lld %lld %lld %lld  %lld\n",b,e,m[node].e,m[node].w,m[node].n,m[node].s);
+}
+int main()
+{
+    ll e;
+    inp2(e,q);
+    getchar();
+    segment(1,0,e-1);
+    for(i=0;i<q;i++)
+    {
+            string c;
+            ll j,k,o;
+            cin >> c;
+            if(c[0]!='Q')
+            {
+            inp1(j);
+            inp1(k);inp1(o);
+             o=o%4;
+            if(c[0]=='A')
+                o=-o;
+           
+             update(1,0,e-1,j-1,k-1,o);
+            // inorder(1,0,e-1);
+            }
+            else
+            {
+		inp2(j,k);
+       
+		ans.n=ans.e=ans.w=ans.s=0;
+                value(1,0,e-1,j-1,k-1);
+            //    inorder(1,0,e-1);
+                printf("%lld\n",max(ans.e,max(ans.w,(max(ans.s,ans.n)))));
+
+            }
+
+             getchar();
+    }
+   return 0;
+}
+
+ 
+ 
+

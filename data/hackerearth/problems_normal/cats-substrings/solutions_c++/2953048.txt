@@ -1,0 +1,180 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define mp make_pair
+#define pb push_back
+typedef long long ll;
+typedef pair<int,int> pii;
+#define X first
+#define Y second
+
+#define forn(i,n) for (int i = 0; i < int(n); i++)
+#define forab(i,a,b) for (int i = int(a); i <= (int)(b); i++)
+//SUFFIX ARRAY
+const int MAXN = (int)5e5 + 500;
+string s;
+
+int p[MAXN], lcp[MAXN];
+
+void getSA(string s)
+{
+	static int cnt[MAXN], start[MAXN], c[MAXN], oldP[MAXN], oldC[MAXN];
+    static int pos[MAXN], curLCP;
+    static int n, curLen, classes;
+
+	n = s.size();
+	
+	for (int i = 0; i < n; i++)
+		cnt[(int)s[i]]++;
+	
+	start[0] = 0;
+	for (int i = 1; i < MAXN; i++)
+		start[i] = start[i - 1] + cnt[i - 1];
+	
+	for (int i = 0; i < n; i++) 
+		p[start[(int)s[i]]++] = i;
+
+	c[p[0]] = 0;
+	classes = 1;
+	for (int i = 1; i < n; i++) {
+		if (s[p[i - 1]] != s[p[i]])
+			classes++;
+		c[p[i]] = classes - 1;	
+	}
+
+	curLen = 1;
+	while (curLen < n) {
+	    swap(p, oldP);
+		for (int i = 0; i < n; i++)
+		   	oldP[i] = (oldP[i] - curLen + 2 * n) % n;
+	    forn(i, classes)
+	    	cnt[i] = 0;
+	    for (int i = 0; i < n; i++)
+	    	cnt[c[i]]++;	
+	    	
+	    start[0] = 0;
+	    for (int i = 1; i < classes; i++)	
+	    	start[i] = start[i - 1] + cnt[i - 1];
+	    	
+	    for (int i = 0; i < n; i++)
+	    	p[start[c[oldP[i]]]++] = oldP[i];
+	    	
+	    swap(c, oldC);
+	    classes = 1;
+	    c[p[0]] = 0;
+	    for (int i = 1; i < n; i++) {
+	    	if (oldC[p[i - 1]] != oldC[p[i]] || oldC[(p[i - 1] + curLen) % n] != oldC[(p[i] + curLen) % n])
+	    		classes++;
+	    	c[p[i]] = classes - 1;
+	    }
+	    
+	    curLen <<= 1;
+	}
+	
+//LCP
+//THIS PART IS NECESSARY FOR FINDING LCP OF CYCLIC SHIFTS!!!
+	int lf = 0;
+	forab(i, 1, n + 1)
+		if (i == n || c[p[i - 1]] != c[p[i]]) {
+			int rg = i;
+			sort(p + lf, p + rg);
+			reverse(p + lf, p + rg);			
+			lf = i;
+		}    
+//CASAI ALGORITHM		
+	for (int i = 0; i < n; i++)
+		pos[p[i]] = i;
+	
+	curLCP = 0;
+	for (int i = 0; i < n; i++) {
+		int j = pos[i];
+		if (curLCP > 0)
+			curLCP--;
+
+		if (j == n - 1) {
+			lcp[j] = -1;
+			curLCP = 0;
+		} else {
+			int k = p[j + 1];
+			while (curLCP < n && s[(i + curLCP) % n] == s[(k + curLCP) % n])
+				curLCP++;
+			lcp[j] = curLCP;
+		}		
+	}	
+}	
+
+
+struct tri
+{
+	int val, cnt;
+	ll sum;
+	tri() {}
+	tri(int val, int cnt, ll sum):val(val), cnt(cnt), sum(sum) {}
+};
+	
+int main()
+{
+	int n,m;
+	cin >> n;
+	string a;
+	for (int i = 0; i < n; i++)
+	{
+		string t;
+		cin >> t;
+		for (int j = 0; j < (int)t.size(); j++) a.pb(t[j]);
+		a.pb('#');
+	}
+	int RB1 = a.size();
+	cin >> m;
+	
+	for (int i = 0; i < m; i++)
+	{
+		string t;
+		cin >> t;
+		for (int j = 0; j < (int)t.size(); j++) a.pb(t[j]);
+		a.pb('$');
+	}
+	a.pb('!');
+	
+	//cout << a << endl;
+	
+	int N = a.size();
+	getSA(a);
+	/*for (int i = 0; i < N; i++)
+	{
+	   for (int j = p[i]; j < N; j++) cout << a[j];
+	   cout << " (" << p[i] << ")" << endl;
+	}*/
+	
+	//for (int i = 0; i < N; i++) cout << lcp[i] << ' ';
+	//cout << endl;
+	ll ans = 0;
+	
+	
+	
+	
+	for (int _ = 0; _ < 2; _++)
+	{
+		vector<tri> st;
+		//cout << "order = " << _ << endl;
+		for (int i = 1; i < N; i++)
+		{
+			int nv = lcp[i-1];
+			int add = (p[i-1] >= RB1);
+			//cout << "i=" << i << endl;
+			while (st.size() > 0 && st.back().val >= nv)
+			{
+				add += st.back().cnt;
+				st.pop_back();
+			}
+			ll psum = (st.size() > 0 ? st.back().sum : 0);
+			psum += (ll)add * (ll)nv;
+			//cout << nv << ' ' << add << ' ' << psum << endl;
+			st.pb(tri(nv, add, psum));
+			if (p[i] < RB1) ans += st.back().sum;
+		}		
+		reverse(p, p + N);
+		reverse(lcp, lcp + N-1);
+	}
+	cout << ans << endl;
+	return 0;
+}

@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+using namespace std ;
+
+#define MAXN 17
+#define LL long long int 
+#define MOD 1000000007
+
+LL res[MAXN][MAXN],A[MAXN][MAXN],Temp[MAXN][MAXN],mask[MAXN],N,M,ans;
+
+int T ;
+void init(){
+
+	memset(res,0,sizeof res) ;
+	memset(A,0,sizeof A) ;
+	
+	for(int i=0;i<16;i++){
+		for(int j=1;j<10;j++){
+			A[i^mask[j]][i] ++ ;						
+		}
+	}
+	for(int i=0;i<MAXN;i++)
+		res[i][i] = 1 ;
+	A[16][0] = A[16][16] = 1 ;	
+}
+
+void mult(LL A[MAXN][MAXN],LL B[MAXN][MAXN]){
+
+	memset(Temp,0,sizeof Temp) ;
+
+	for(int i=0;i<MAXN;i++){
+		for(int j=0;j<MAXN;j++){
+			for(int k=0;k<MAXN;k++){
+				Temp[i][j] += (A[i][k] * B[k][j]) % MOD ;
+				Temp[i][j] %= MOD ;
+			}
+		}
+	}
+
+	for(int i=0;i<MAXN;i++)
+		for(int j=0;j<MAXN;j++)
+			A[i][j] = Temp[i][j] ;
+}
+
+
+void power(LL N){
+
+	init() ;
+	while(N){
+		if(N&1){
+			mult(res,A) ;
+		}
+		N /= 2 ;
+		mult(A,A) ;
+	}
+}
+
+void print(){
+
+	for(int i=0;i<MAXN;i++){
+		for(int j=0;j<MAXN;j++){
+			cout << A[i][j] << " " ;
+		}
+		cout << endl ;
+	}
+}
+
+LL multiply(LL a,LL b,LL M){
+
+	LL res = 0 ;
+	while(b){
+		if(b&1){
+			res += a ;
+			res %= M ;
+		}
+		b /= 2 ;
+		a += a ;
+		a %= M ;
+	}
+	return res ;
+}
+
+LL mulmod(LL a,LL b,LL mod){
+
+	LL res = 1 ;
+	while(b){
+		if(b&1){
+			res = multiply(res,a,mod) ;
+		}
+		b /= 2 ;
+		a = multiply(a,a,mod) ;
+	}
+	return res ;
+}
+int main(){
+
+	mask[0] = 0 ;
+	mask[1] = 0 ;
+	mask[2] = 8 ;
+	mask[3] = 4 ;
+	mask[4] = 0 ;
+	mask[5] = 2 ;
+	mask[6] = 12 ;
+	mask[7] = 1 ;
+	mask[8] = 8 ;
+	mask[9] = 0 ;
+	scanf("%d",&T) ;
+	while(T--){
+		scanf("%lld",&N) ;
+		power(N+1) ;
+		M = 1LL * MOD * 8 ;
+		LL p10 = (1LL * 80 * ( ( ( mulmod(10,N-1,M)-1) % M) + M ) % M ) % M;
+		LL p9 =  (1LL * 81 * ( ( ( mulmod(9,N-1,M)-1) % M) + M ) % M ) % M;
+		p10 -= p9 ;
+		p10 += M ;
+		p10 %= M ;
+		p10 /= 8 ;
+		ans = (res[16][0] + p10) % MOD ;
+		printf("%lld\n",ans) ;
+	}	
+	return 0 ;
+}

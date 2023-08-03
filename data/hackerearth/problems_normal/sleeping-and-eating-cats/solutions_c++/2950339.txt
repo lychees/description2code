@@ -1,0 +1,133 @@
+//Pranet Verma
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn=100005;
+#define contrib(x) (long long)x*(x+1)/2
+struct Node;
+void remake(Node &x);
+struct Node
+{
+	long long total;
+	int lazy;
+	pair<int,int> prefix,suffix;
+	int cnt;
+	void split(Node &l,Node &r)
+	{
+		if(lazy)
+		{
+			l.lazy=lazy;
+			r.lazy=lazy;
+			remake(l);
+			remake(r);
+			lazy=0;
+		}
+	}
+}tree[4*maxn],identity;
+int a[maxn],n,base;
+void remake(Node &x)
+{
+	x.total=contrib(x.cnt);
+	x.prefix=x.suffix=make_pair(x.lazy,x.cnt);
+}
+Node merge(const Node &l,const Node &r)
+{
+	if(r.cnt==0)
+		return l;
+	if(l.cnt==0)
+		return r;
+	Node ret;
+	ret.lazy=0;
+	ret.cnt=l.cnt+r.cnt;
+	if(l.suffix.first==r.prefix.first)
+	{
+		int newLength=l.suffix.second+r.prefix.second;
+		ret.total=l.total+r.total-contrib(l.suffix.second)-contrib(r.prefix.second)+contrib(newLength);
+		/* if L is pure */
+		if(l.cnt==l.prefix.second)
+			ret.prefix=make_pair(l.prefix.first,newLength);
+		else
+			ret.prefix=l.prefix;
+		/* if R is pure */
+		if(r.cnt==r.prefix.second)
+			ret.suffix=make_pair(r.suffix.first,newLength);
+		else
+			ret.suffix=r.suffix;
+	}
+	else
+	{
+		ret.suffix=r.suffix;
+		ret.prefix=l.prefix;
+		ret.total=l.total+r.total;
+	}
+	return ret;
+}
+void makeTree(int u,int l,int r)
+{
+	if(l==r)
+	{
+		tree[u].lazy=0;
+		if(l<n)
+			tree[u].total=1,
+			tree[u].prefix=tree[u].suffix=make_pair(a[l],1),
+			tree[u].cnt=1;
+		else
+			tree[u].total=0,
+			tree[u].prefix=tree[u].suffix=make_pair(0,0),
+			tree[u].cnt=0;
+		return;			
+	}
+	int m=(l+r)/2;
+	makeTree(2*u+1,l,m);
+	makeTree(2*u+2,m+1,r);
+	tree[u]=merge(tree[2*u+1],tree[2*u+2]);
+}
+Node query(int u,int l,int r,int x,int y)
+{
+	if(x>r || y<l)
+		return identity;
+	if(x<=l && r<=y)
+		return tree[u];
+	tree[u].split(tree[2*u+1],tree[2*u+2]);
+	int m=(l+r)/2;
+	return merge(query(2*u+1,l,m,x,y),query(2*u+2,m+1,r,x,y));
+}
+void update(int u,int l,int r,int x,int y,int c)
+{
+	if(x>r || y<l)
+		return;
+	if(x<=l && r<=y)
+	{
+		tree[u].lazy=c;
+		remake(tree[u]);
+		return;
+	}
+	tree[u].split(tree[2*u+1],tree[2*u+2]);
+	int m=(l+r)/2;
+	update(2*u+1,l,m,x,y,c);
+	update(2*u+2,m+1,r,x,y,c);
+	tree[u]=merge(tree[2*u+1],tree[2*u+2]);
+}
+int main()
+{
+	identity.cnt=0;
+	int q;
+	scanf("%d%d",&n,&q);
+	for(int i=0;i<n;++i)
+		scanf("%d",&a[i]);
+	base=ceil(log2(n));
+	base=(1<<base)-1; 
+	makeTree(0,0,base);
+	while(q--)
+	{
+		int ty,l,r;
+		scanf("%d%d%d",&ty,&l,&r);
+		if(ty==0)
+		{
+			int c;
+			scanf("%d",&c);
+			update(0,0,base,l-1,r-1,c);
+		}
+		else
+			printf("%lld\n",query(0,0,base,l-1,r-1).total);
+	}
+}

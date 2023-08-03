@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+
+struct Ilona {
+    ll top, bottom, sum, best;
+
+    Ilona join_top(Ilona const& o) const {
+        Ilona res(*this);
+        res.best = max(best, o.best);
+        res.best = max(res.best, top + o.bottom);
+        res.sum = sum + o.sum;
+        res.bottom = max(bottom, sum + o.bottom);
+        res.top = max(o.top, o.sum + top);
+        res.best = max(max(res.best, res.sum), max(res.top, res.bottom));
+        return res;
+    }
+
+    Ilona(int X = 0) {
+        sum = best = X;
+        top = bottom = max(X, 0);
+    }
+};
+
+const int maxN = 1e5 + 10;
+const int logN = 17;
+
+int p[maxN][logN];
+Ilona jump[maxN][logN];
+// Ilona val[maxN];
+int maxy[maxN][logN];
+int gl[maxN];
+vector<int>nbh[maxN];
+int n;
+bool B[maxN];
+
+void dfs_init(int v, int parent = 1) {
+    B[v] = true;
+    p[v][0] = parent;
+    for(int i = 1; i < logN; ++i) {
+        p[v][i] = p[p[v][i - 1]][i - 1];
+        jump[v][i] = jump[v][i - 1].join_top(jump[p[v][i - 1]][i - 1]);
+        maxy[v][i] = max(maxy[v][i - 1], maxy[p[v][i - 1]][i - 1]);
+    }
+    for(int a: nbh[v]) {
+        if(!B[a]) {
+            gl[a] = gl[v] + 1;
+            dfs_init(a, v);
+        }
+    }
+}
+
+ll lca(int a, int b) {
+    Ilona resa = 0, resb = 0;
+    int maxres = -1e9;
+    if(gl[a] > gl[b]) swap(a, b);
+    for(int i = logN - 1; i >= 0; --i) {
+        if((gl[b] - gl[a]) & (1 << i)) {
+            resb = resb.join_top(jump[b][i]);
+            maxres = max(maxres, maxy[b][i]);
+            b = p[b][i];
+        }
+    }
+//     printf("after jumping: %d %d\n", a, b);
+    if(a == b) {
+        resb = resb.join_top(jump[a][0]);
+        maxres = max(maxy[a][0], maxres);
+        if(maxres < 0) return maxres;
+        return resb.best;
+    }
+    for(int i = logN - 1; i >=0; --i) {
+        if(p[a][i] != p[b][i]) {
+            resa = resa.join_top(jump[a][i]);
+            resb = resb.join_top(jump[b][i]);
+            maxres = max(maxres, max(maxy[a][i], maxy[b][i]));
+            a = p[a][i];
+            b = p[b][i];
+        }
+    }
+    resa = resa.join_top(jump[a][1]);
+    resb = resb.join_top(jump[b][0]);
+    swap(resb.top, resb.bottom);
+    resa = resa.join_top(resb);
+    maxres = max(maxres, max(maxy[a][1], maxy[b][0]));
+//     printf("top: %lld bottom: %lld sum: %lld best: %lld, max: %d\n", resa.top, resa.bottom, resa.sum, resa.best, maxres);
+    if(maxres < 0) return maxres;
+    return resa.best;
+}
+
+int main() {
+    scanf("%d", &n);
+    for(int a, b, i = 1; i < n; ++i) {
+        scanf("%d%d", &a, &b);
+        nbh[a].push_back(b);
+        nbh[b].push_back(a);
+    }
+    for(int l, i = 1; i <= n; ++i) {
+        scanf("%d", &l);
+        jump[i][0] = maxy[i][0] = l;
+    }
+    dfs_init(1);
+    int q, a, b;
+    scanf("%d", &q);
+    while(q--) {
+        scanf("%d%d", &a, &b);
+        printf("%lld\n", lca(a, b));
+    }
+    return 0;
+}

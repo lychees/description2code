@@ -1,0 +1,160 @@
+#include <cstdio>
+#include <cstring>
+#include <cassert>
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+#define TRACE(x) cerr << #x << " = " << x << endl
+
+typedef long long ll;
+typedef pair<int, int> P;
+#define X first
+#define Y second
+
+const int MAX = 305;
+
+int Add(int a, int b, int mod)
+{
+  return (a + b + mod) % mod;
+}
+
+int Mul(int a, int b, int mod)
+{
+  return (a * b) % mod;
+}
+
+int Pot(int b, int e, int mod)
+{
+  int ret = 1;
+  for (; e; e/=2, b=Mul(b, b, mod))
+    if (e & 1)
+      ret = Mul(ret, b, mod);
+
+  return ret;
+}
+
+int Div(int a, int b, int mod)
+{
+  return Mul(a, Pot(b, mod - 2, mod), mod);
+}
+
+int p[MAX][MAX];
+int prosti[3] = {2, 5, 719};
+int koef[3][MAX][MAX], rje[3][MAX][MAX];
+int n;
+
+void Gauss(vector <int> V[MAX], vector <int> Rje[MAX], int mod)
+{
+  int ind = 0;
+
+  for (int stup=0; stup<n; stup++) {
+    for (int i=ind; i<n; i++) {
+      if (V[i][stup]) {
+//        for (int j=0; j<n; j++)
+  //        swap(Rje[j][i], Rje[j][ind]);
+        swap(V[i], V[ind]);
+        swap(Rje[i], Rje[ind]);
+
+        for (int j=0; j<n; j++) {
+          if (ind == j || !V[j][stup])
+            continue;
+
+          int piv = mod - Div(V[j][stup], V[ind][stup], mod);
+
+          for (int k=0; k<n; k++) {
+            V[j][k] = Add(V[j][k], Mul(piv, V[ind][k], mod), mod);
+            Rje[j][k] = Add(Rje[j][k], Mul(piv, Rje[ind][k], mod), mod);
+          }
+        }
+
+        ind++;
+        break;
+      }
+    }
+  }
+}
+
+int main()
+{
+  int q;
+
+  scanf("%d%d", &n, &q);
+
+  for (int i=0; i<n; i++)
+    for (int j=0; j<n; j++)
+      scanf("%d", &p[i][j]);
+
+  for (int pr=0; pr<3; pr++) {
+    vector <int> V[MAX];
+    for (int i=0; i<n; i++)
+      for (int j=0; j<n; j++)
+        V[i].push_back(p[i][j] % prosti[pr]);
+
+    vector <int> Rje[MAX];
+    for (int i=0; i<n; i++) {
+      Rje[i] = vector<int> (n, 0);
+      Rje[i][i] = 1;
+    }
+
+    Gauss(V, Rje, prosti[pr]);
+    for (int i=0; i<n; i++)
+      for (int j=0; j<n; j++) {
+        koef[pr][i][j] = V[i][j];
+        rje[pr][i][j] = Rje[i][j];
+      }
+  }
+
+/*  for (int i=0; i<n; i++) {
+    for (int j=0; j<n; j++)
+      printf("%d ", koef[0][i][j]);
+    printf("\n");
+  }
+
+  printf("\n");
+  for (int i=0; i<n; i++) {
+    printf("RJE ");
+    for (int j=0; j<n; j++)
+      printf("%d ", rje[0][i][j]);
+    printf("\n");
+  }
+  return 0;*/
+
+  for (; q--; ) {
+    int val[MAX];
+    for (int i=0; i<n; i++)
+      scanf("%d", &val[i]);
+
+    int da = 1;
+
+    for (int pr=0; pr<3; pr++) {
+      for (int i=0; i<n; i++) {
+        int ima = 0;
+        for (int j=0; j<n; j++)
+          if (koef[pr][i][j])
+            ima = 1;
+
+        if (ima)
+          continue;
+
+//        printf("NEMA PROSTI %d %d\n", pr, i);
+
+        int sum = 0;
+        for (int j=0; j<n; j++)
+          sum = Add(sum, Mul(rje[pr][i][j], val[j], prosti[pr]), prosti[pr]);
+
+        if (sum) {
+//          printf("DAADADA %d %d %d\n", i, sum, pr);
+          da = 0;
+        }
+      }
+    }
+
+    printf("%s\n", da ? "Yes" : "No");
+  }
+
+  return 0;
+}
+

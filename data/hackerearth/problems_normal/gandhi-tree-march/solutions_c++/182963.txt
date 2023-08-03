@@ -1,0 +1,126 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <stdlib.h> // for exit()
+#include <algorithm> // std::sort
+using namespace std;
+
+/**Effects: adds ids of specified column of the "Gandhi Tree March" graph to colToPrint
+ * Returns: last visited position in chain definition
+ **/
+int constructCol(vector<char> *colToPrint, int colNumToPrint, int currCol, string *chainDef, int pos) {
+	//Get Person_Id (expect a-z or '.' if empty chain)
+	int currPos = pos;
+	char ch = chainDef->at(currPos);
+	if (ch >= 'a' && ch <= 'z') { //Valid person id, check chain contents
+		//If in column being printed, add to vector
+		if (currCol == colNumToPrint) colToPrint->push_back(ch);
+		//Check for opening '('
+		currPos++;
+		ch = chainDef->at(currPos);
+		if (ch != '(') {
+			cerr << "Invalid Person_Chain_Definition, missing \"(\"";
+			exit(-1);
+		}
+		//Recurse on left and right children
+		currPos = constructCol(colToPrint, colNumToPrint, currCol-1, chainDef, currPos+1);
+		currPos = constructCol(colToPrint, colNumToPrint, currCol+1, chainDef, currPos+1);
+		////Check for closing ')'
+		currPos++;
+		ch = chainDef->at(currPos);
+		if (ch != ')') {
+			cerr << "Invalid Person_Chain_Definition, missing \")\"";
+			exit(-1);
+		}
+	} else if (ch != '.') {
+		cerr << "Invalid Person_Id: " << ch << endl;
+		exit(-1);
+	}
+	return currPos;
+}
+
+/**Prints specified column contents of the "Gandhi Tree March" graph representing chain definition
+ * Expects user input 1: number of test cases
+ * Expects user input 2+i, 0<=i<nTestCases: "columnNumberToPrint TreeDef"
+ * Requires: first input is an positive integer value, and TreeDef is defined as follows:
+ *           TreeDef is: either empty, represented by a dot "."
+ *                       or of form: "id (TreeDef TreeDef)", without spaces
+ *           id is: an alphabetic character from a-z
+ * Result: prints ids of the specified column in alphabetical order, 
+ *         or if no ids are present, prints "Common Gandhijee!" (without quotes)
+ *
+ * Example of valid input:
+ *   9
+ *   -4 a(b(c(d(..).)e(f(..)g(..)))h(.i(j(..).)))
+ *   -3 a(b(c(d(..).)e(f(..)g(..)))h(.i(j(..).)))
+ *   -2 a(b(c(d(..).)e(f(..)g(..)))h(.i(j(..).)))
+ *   -1 a(b(c(d(..).)e(f(..)g(..)))h(.i(j(..).)))
+ *   0 a(b(c(d(..).)e(f(..)g(..)))h(.i(j(..).)))
+ *   1 a(b(c(d(..).)e(f(..)g(..)))h(.i(j(..).)))
+ *   2 a(b(c(d(..).)e(f(..)g(..)))h(.i(j(..).)))
+ *   3 a(b(c(d(..).)e(f(..)g(..)))h(.i(j(..).)))
+ *   4 a(b(c(d(..).)e(f(..)g(..)))h(.i(j(..).)))
+ *
+ * Graph corresponding to a(b(c(d(..).)e(f(..)g(..)))h(.i(j(..).))):
+ *
+ * Col #:   -3-2-1 0 1 2 3
+ *                 a
+ *               b
+ *             c   e
+ *           d   f   g
+ *                   h
+ *                     i
+ *                   j
+ * 
+ * Program output:
+ *   Common Gandhijee!
+ *   d
+ *   c
+ *   bf
+ *   ae
+ *   ghj
+ *   i
+ *   Common Gandhijee!
+ *   Common Gandhijee!
+ **/
+int main(int argc, char *argv[]) {
+	int nTestCases;
+	if (!(cin >> nTestCases)) {
+		cerr << "Invalid value for nTestCases: " << nTestCases << endl;
+		exit(-1);
+	}
+	
+	//Retrieve column numbers to print and corresponding chain definitions
+	vector<int> cols;
+	vector<string> defs;
+	for (int n=0; n<nTestCases; n++) {
+		//Retrieve column number to print
+		int colNumber;
+		if (!(cin >> colNumber)) {
+			cerr << "Invalid value for colNumber: " << colNumber << endl;
+			exit(-1);
+		}
+		cols.push_back(colNumber);
+		//Retrieve chain definition
+		string chainDef;
+		std::getline(std::cin.ignore(), chainDef);
+		defs.push_back(chainDef);
+	}
+	
+	//Construct specified columns of each chain definition
+	for (int n=0; n<nTestCases; n++) {
+		vector<char> myCol;
+		constructCol(&myCol, cols[n], 0, &defs[n], 0);
+		
+		//Print contents of specified column in alphabetical order, or print "Common Gandhijee!" if it is empty
+		if (myCol.size() == 0) {
+			cout << "Common Gandhijee!" << endl;
+		} else {
+			//Sort elements in alphabetical order
+			std::sort(myCol.begin(), myCol.end());
+			for (vector<char>::size_type i=0; i<myCol.size(); i++) cout << myCol[i];
+			cout << endl;
+		}
+	}
+	return 0;
+}

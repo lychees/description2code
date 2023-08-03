@@ -1,0 +1,114 @@
+#include <cstdio>
+#define MAXN 1000005
+#define MAXAI 2097155
+#define mod 1000000007
+using namespace std;
+
+struct matr {
+    int val[5][5];
+
+    matr() {
+        for(int i = 0; i < 5; ++i)
+            for(int j = 0; j < 5; ++j)
+                val[i][j] = (i == j);
+    }
+
+    matr(int x) {
+        for(int i = 0; i < 5; ++i)
+            for(int j = 0; j < 5; ++j)
+                val[i][j] = (i == j);
+
+        for(int j = 0; j < 5; ++j)
+            val[x][j] = 1;
+    }
+
+    matr(const matr& m) {
+        for(int i = 0; i < 5; ++i)
+            for(int j = 0; j < 5; ++j)
+                val[i][j] = m.val[i][j];
+    }
+
+    matr& operator=(const matr& m) {
+        for(int i = 0; i < 5; ++i)
+            for(int j = 0; j < 5; ++j)
+                val[i][j] = m.val[i][j];
+
+        return *this;
+    }
+};
+
+char s[MAXN];
+int n, nrq, v[MAXN];
+int mapc[30];
+matr ai[MAXAI];
+
+matr multiply(matr &a, matr&b) {
+    matr res;
+
+    for(int i = 0; i < 5; ++i)
+        for(int j = 0; j < 5; ++j) {
+            long long x = 0;
+
+            for(int k = 0; k < 5; ++k)
+                x = (x + 1LL * a.val[i][k] * b.val[k][j]) % mod;
+
+            res.val[i][j] = x;
+        }
+
+    return res;
+}
+
+void build_ai(int node, int l, int r) {
+    if(l == r) {
+        ai[node] = matr(v[l]);
+        return;
+    }
+
+    int mid = (l + r) >> 1;
+    build_ai(2 * node, l, mid);
+    build_ai(2 * node + 1, mid + 1, r);
+
+    ai[node] = multiply(ai[2 * node], ai[2 * node + 1]);
+}
+
+void update_ai(int node, int l, int r, int &posq, int &valq) {
+    if(l == r) {
+        ai[node] = matr(valq);
+        return;
+    }
+
+    int mid = (l + r) >> 1;
+    if(posq <= mid) update_ai(2 * node, l, mid, posq, valq);
+    else update_ai(2 * node + 1, mid + 1, r, posq, valq);
+
+    ai[node] = multiply(ai[2 * node], ai[2 * node + 1]);
+}
+
+int main() {
+    mapc['A' - 'A'] = 0, mapc['C' - 'A'] = 1, mapc['T' - 'A'] = 2, mapc['G' - 'A'] = 3;
+
+    scanf("%d %d ", &n, &nrq);
+    scanf("%s\n", s + 1);
+
+    for(int i = 1; i <= n; ++i)
+        v[i] = mapc[s[i] - 'A'];
+
+    build_ai(1, 1, n);
+
+    int posq, valq;
+    char c;
+    while(nrq--) {
+        scanf("%d %c\n", &posq, &c);
+        valq = mapc[c - 'A'];
+
+        update_ai(1, 1, n, posq, valq);
+        
+        long long ans = 0;
+        for(int i = 0; i < 5; ++i)
+            ans += ai[1].val[i][4];
+
+        printf("%lld\n", ans % mod);
+    }
+
+    return 0;
+}

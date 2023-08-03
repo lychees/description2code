@@ -1,0 +1,63 @@
+#include <iostream>
+using namespace std;
+
+using ull = unsigned long long;
+constexpr ull mod = 1000000007;
+
+ull r[101];
+ull factorial[101];
+ull invfactorial[101];
+
+ull powm(ull x, ull n) {
+	ull res = 1;
+	while (n) {
+		if (n % 2) 
+			res = (res * x) % mod;
+		x = (x * x) % mod;
+		n /= 2;
+	}
+	return res;
+}
+
+ull inversem(ull x) {
+	return powm(x, mod - 2);
+}
+
+void prepare() {
+	r[0] = 1;
+	r[1] = 0;
+	for (int i = 2; i <= 100; ++i) 
+		r[i] = ((i - 1) * (r[i - 1] + r[i - 2])) % mod;
+	factorial[0] = 1;
+	for (int i = 1; i <= 100; ++i)
+		factorial[i] = (i * factorial[i - 1]) % mod;
+	invfactorial[100] = inversem(factorial[100]);
+	for (int i = 99; i >= 0; --i)
+		invfactorial[i] = ((i + 1) * invfactorial[i + 1]) % mod;
+}
+
+ull binomial(unsigned n, unsigned m) {
+	ull res = (factorial[n] * invfactorial[m]) % mod;
+	return (res * invfactorial[n - m]) % mod;
+}
+
+ull ren(unsigned n, unsigned k) {
+	return (binomial(n, k) * r[k]) % mod;
+}
+
+int main() {
+	prepare();
+	
+	ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    
+    unsigned n, l, r;
+    cin >> n >> l >> r;
+    ull res = 0;
+    for (unsigned i = l; i <= r; ++i)
+    	res += ren(n, i);
+    
+    res = ((res % mod) * invfactorial[n]) % mod;
+    cout << res << '\n';
+    return 0;
+}

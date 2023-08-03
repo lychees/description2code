@@ -1,0 +1,74 @@
+#include "bits/stdc++.h"
+using namespace std;
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+static const int INF = 0x3f3f3f3f; static const long long INFL = 0x3f3f3f3f3f3f3f3fLL;
+typedef vector<int> vi; typedef pair<int, int> pii; typedef vector<pair<int, int> > vpii; typedef long long ll;
+template<typename T, typename U> static void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> static void amax(T &x, U y) { if(x < y) x = y; }
+
+struct State {
+	long long d;
+	int type;
+	int u, v;
+	bool operator<(const State &that) const { return d > that.d; }
+};
+
+int main() {
+	int n; int m;
+	while(~scanf("%d%d", &n, &m)) {
+		vector<vector<pair<int,int>>> graph[2], igraph[2];
+		rep(type, 2) {
+			graph[type].assign(n, vector<pii>());
+			igraph[type].assign(n, vector<pii>());
+		}
+		rep(i, m) {
+			int u; int v; int w; char c[2];
+			scanf("%d%d%d%s", &u, &v, &w, c), -- u, -- v;
+			graph[*c == '(' ? 0 : 1][u].emplace_back(v, w);
+			igraph[*c == '(' ? 0 : 1][v].emplace_back(u, w);
+		}
+		vector<vector<long long>> dist[2];
+		rep(type, 2)
+			dist[type].assign(n, vector<long long>(n, INFL));
+		priority_queue<State> pq;
+		auto add = [&](long long d, int type, int u, int v) {
+			if(dist[type][u][v] > d) {
+				dist[type][u][v] = d;
+				pq.push(State{ d, type, u, v });
+			}
+		};
+		rep(i, n)
+			add(0, 0, i, i);
+		rep(i, n) for(const auto &e : graph[1][i])
+			add(e.second, 1, i, e.first);
+		vector<bool> vis(n * n * 2);
+		while(!pq.empty()) {
+			auto s = pq.top(); pq.pop();
+			int sh = (s.u * n + s.v) * 2 + s.type;
+			if(vis[sh]) continue;
+			vis[sh] = true;
+			if(s.type == 0) {
+				for(const auto &e : graph[1][s.v])
+					add(s.d + e.second, 1, s.u, e.first);
+				rep(k, n) {
+					add(dist[0][k][s.u] + s.d, 0, k, s.v);
+					add(s.d + dist[0][s.v][k], 0, s.u, k);
+				}
+			} else {
+				for(const auto &e : igraph[0][s.u])
+					add(e.second + s.d, 0, e.first, s.v);
+			}
+		}
+		rep(i, n) {
+			rep(j, n) {
+				if(j != 0) putchar(' ');
+				long long d = dist[0][i][j];
+				printf("%lld", d == INFL ? -1 : d);
+			}
+			puts("");
+		}
+	}
+	return 0;
+}

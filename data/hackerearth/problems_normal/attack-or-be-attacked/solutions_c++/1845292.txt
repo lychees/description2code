@@ -1,0 +1,121 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+template<int MOD>
+struct ModInt {
+	static const int Mod = MOD;
+	unsigned x;
+	ModInt(): x(0) { }
+	ModInt(signed sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	ModInt(signed long long sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	int get() const { return (int)x; }
+	
+	ModInt &operator+=(ModInt that) { if((x += that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator-=(ModInt that) { if((x += MOD - that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator*=(ModInt that) { x = (unsigned long long)x * that.x % MOD; return *this; }
+	ModInt &operator/=(ModInt that) { return *this *= that.inverse(); }
+	
+	ModInt operator+(ModInt that) const { return ModInt(*this) += that; }
+	ModInt operator-(ModInt that) const { return ModInt(*this) -= that; }
+	ModInt operator*(ModInt that) const { return ModInt(*this) *= that; }
+	ModInt operator/(ModInt that) const { return ModInt(*this) /= that; }
+	
+	ModInt inverse() const {
+		signed a = x, b = MOD, u = 1, v = 0;
+		while(b) {
+			signed t = a / b;
+			a -= t * b; std::swap(a, b);
+			u -= t * v; std::swap(u, v);
+		}
+		if(u < 0) u += Mod;
+		ModInt res; res.x = (unsigned)u;
+		return res;
+	}
+};
+typedef ModInt<1000000007> mint;
+
+int main() {
+	int N, M, P, Q;
+	while(~scanf("%d%d%d%d", &N, &M, &P, &Q)) {
+		mint ans;
+		//+ total
+		{	mint board = mint(N) * M;
+			ans += board * (board-1);
+		}
+		//- bishop  -> knight
+		{	//  \sum_{i=0}^{N-1} \sum_{j=0}^{M-1} min(i,j)
+			//= \sum_{k=0}^{min(N,M)-1} k ((N-k)+(M-k)-1)
+			//= (K-1) * K * (3*M + 3*N - 4*K - 1) / 6 where K = min(N,M)
+			int K = min(N, M);
+			mint sum = mint(K-1) * K * (mint(3)*M + mint(3)*N - mint(4)*K - 1) / 6;
+			ans -= sum * 4;
+		}
+		//- bishop <-  knight
+		{	vi xs;
+			xs.push_back(0);
+			xs.push_back(P);
+			xs.push_back(Q);
+			xs.push_back(N - P);
+			xs.push_back(N - Q);
+			xs.push_back(N);
+			xs.push_back(M - P);
+			xs.push_back(M - Q);
+			xs.push_back(M);
+			sort(all(xs));
+			xs.erase(unique(all(xs)), xs.end());
+			const int dy[]={Q,Q,P,P,-P,-P,-Q,-Q};
+			const int dx[]={P,-P,Q,-Q,Q,-Q,P,-P};
+			mint sum;
+			rep(i, xs.size() - 1) rep(j, xs.size() - 1) {
+				int y = xs[i], x = xs[j];
+				if(y < 0 || x < 0 || y >= N || x >= M) continue;
+				int cnt = 0;
+				rep(d, 8) {
+					int yy = y + dy[d], xx = x + dx[d];
+					if(0 <= yy && yy < N && 0 <= xx && xx < M)
+						++ cnt;
+				}
+				mint area = mint(xs[i+1] - xs[i]) * mint(xs[j+1] - xs[j]);
+				sum += area * cnt;
+			}
+			ans -= sum;
+		}
+		//+ bishop <-> knight = 0
+		printf("%d\n", ans.get());
+	}
+	return 0;
+}

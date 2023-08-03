@@ -1,0 +1,163 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define gc getchar_unlocked
+#define pc putchar_unlocked
+#define repl(i, a, b) for(i=a; i<b; i++)
+#define repe(i, a, b) for(i=a; i<=b; i++)
+#define per(i, a, b) for(i=a; i>=b; i--)
+#define vi vector<int>
+#define vl vector<long>
+#define vll vector<long long>
+#define pb(x) push_back(x)
+#define ppb pop_back()
+#define lt(i) (i<<1)
+#define rt(i) ((i<<1)+1)
+#define mp(a, b) make_pair(a, b)
+#define ln length()
+#define ms0(a) memset(a, 0, sizeof(a))
+#define sz size()
+#define md(a, b) ((a+b)>>1)
+#define ff first
+#define ss second
+#define pii pair<int, int>
+#define pll pair<long, long>
+#define pLL pair<long long, long long>
+#define all(v) v.begin(),v.end()
+#define pn pc('\n');
+using namespace std;
+
+
+void sll(ll &x)
+{
+    register char c = gc();
+    x = 0;
+    int neg = 0;
+    for(;((c<48 || c>57) && c != '-');c = gc());
+    if(c=='-') {neg=1;c=gc();}
+    for(;c>47 && c<58;c = gc()) {x = (x<<1) + (x<<3) + c - 48;}
+    if(neg) x=-x;
+}
+
+void wll(ll a)
+{
+        if(a<0)
+        {
+                pc('-');
+                a=-a;
+        }
+
+        char snum[100];
+        int i=0;
+        do
+        {
+                snum[i++]=a%10+48;
+                a=a/10;
+        }
+        while(a!=0);
+        --i;
+        while(i>=0)
+        putchar_unlocked(snum[i--]);
+        putchar_unlocked('\n');
+}
+
+ll power(ll a, ll b, ll mod)
+{
+        ll ret = 1 ;
+        while(b)
+        {
+                if(b & 1 ) ret = ret*a % mod;
+                a = a*a % mod;
+                b >>= 1 ;
+        }
+        return ret;
+}
+
+ll gcd(ll a, ll b)
+{
+    while(b) b ^= a ^= b ^= a %= b;
+    return a;
+}
+vll v[500100], b[500100], to[500100];
+ll n, m, temp, q, thresh[500100], f[500100], x[500100], d[500100], ans[500100]={0};
+ll cnt=0, in[500100], out[500100], l[500100], r[500100], level[500100];
+ll bit[2][1000100];
+void update(ll ind, ll x, ll val){
+	while(x <= n){
+		bit[ind][x]+=val;
+		x+=(x&(-x));
+	}
+}
+ll query(ll x, ll d){
+	ll ret1=0, ret2=0;
+	while(x){
+		ret1+=bit[0][x];
+		ret2+=bit[1][x];
+		x-=(x&(-x));
+	}
+	return ret1+d*ret2;
+}
+void dfs(ll x, ll p){
+	in[x]=++cnt;
+	out[x]=in[x];	
+	ll i;
+	repl(i,0,v[x].sz)
+		if(v[x][i] != p){
+			level[v[x][i]]=level[x]+1;
+			dfs(v[x][i], x);
+		}
+	out[x]=cnt;
+}
+
+
+int main()
+{
+	ll t, i, j, k;
+	sll(n);sll(m);
+	repe(i,1,n-1){
+		sll(temp);
+		v[temp].pb(i+1);	
+	}
+	repe(i,1,n){
+		sll(temp);b[temp].pb(i);
+	}
+	repe(i,1,m)sll(thresh[i]);
+	sll(q);
+	repe(i,1,q){
+		sll(f[i]);sll(x[i]);sll(d[i]);
+	}
+	level[1]=1;
+	dfs(1, -1);
+//	repe(i,1,n)cout<<in[i]<<" "<<out[i]<<" "<<level[i]<<endl;
+	repe(i,1,m){l[i]=1;r[i]=q+1;}
+	repe(t, 1, 20){
+		repe(i,1,n)bit[0][i]=bit[1][i]=0;
+		repe(i,1,m){
+			if(l[i] != r[i])to[md(l[i],r[i])].pb(i);
+		}
+		int flag=1;
+		repe(i,1,q){
+			update(0, in[f[i]], x[i]-level[f[i]]*d[i]);
+			update(0, out[f[i]]+1, -x[i]+level[f[i]]*d[i]);
+			update(1, in[f[i]], d[i]);
+			update(1, out[f[i]]+1, -d[i]);		
+			repl(j,0,to[i].sz){
+				flag=0;
+				ll z=to[i][j], sum=0;
+				repl(k,0,b[z].sz){
+					sum+=query(in[b[z][k]], level[b[z][k]]);
+					if(sum > (ll)(1e18))
+						break;
+				}	
+				if(sum >= thresh[z]){r[z]=i;ans[z]=i;}
+				else l[z]=i+1;
+			}
+			to[i].clear();
+		}
+		if(flag)break;
+	}
+	repe(i,1,m){
+		if(!ans[i])printf("rekt\n");
+		else wll(ans[i]);
+	}
+	return 0;
+}

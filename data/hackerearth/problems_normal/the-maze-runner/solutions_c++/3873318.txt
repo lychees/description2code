@@ -1,0 +1,205 @@
+#include <cstdio>
+#include <cmath>
+
+int n, h, maze[110][2], connect[220][220];
+double dist[220][220], minDist[220];
+
+double computeDist(int x1, int y1, int x2, int y2)
+{
+	return sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+}
+
+bool isAbove(int x1, int y1, int x2, int y2, int x3, int y3)
+{
+	if (x3 > x2)
+	{
+		return (y1-y3)*(x3-x2) >= (y3-y2)*(x1-x3);
+	}
+	return (y1-y3)*(x3-x2) <= (y3-y2)*(x1-x3);
+}
+
+bool isBelow(int x1, int y1, int x2, int y2, int x3, int y3)
+{
+	if (x3 > x2)
+	{
+		return (y3-y2)*(x1-x2) >= (y1-y2)*(x3-x2);
+	}
+	return (y3-y2)*(x1-x2) <= (y1-y2)*(x3-x2);
+}
+
+bool doesConnect(int ind1, int height1, int ind2, int height2)
+{
+	int x2 = maze[ind1][0], y2 = maze[ind1][1], x3 = maze[ind2][0], y3 = maze[ind2][1];
+	if (height1 == 1)
+	{
+		y2 += h;
+	}
+	if (height2 == 1)
+	{
+		y3 += h;
+	}
+	for (int i = ind1+1; i < ind2; i++)
+	{
+		if (!isAbove(maze[i][0], maze[i][1]+h, x2, y2, x3, y3) || !isBelow(maze[i][0], maze[i][1], x2, y2, x3, y3))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+void checkConnections()
+{
+	for (int i = 1; i <= n; i++)
+	{
+		for (int j = i+1; j <= n; j++)
+		{
+			for (int k = 0; k < 4; k++)
+			{
+				if (doesConnect(i-1, k%2, j-1, k/2))
+				{
+					connect[2*i+(k%2)][2*j+k/2] = 1;
+					dist[2*i+(k%2)][2*j+k/2] = computeDist(maze[i-1][0], maze[i-1][1] + (((k%2)==0)?0:h), maze[j-1][0], maze[j-1][1] + (((k/2)==0)?0:h));
+				}
+				else
+				{
+					connect[2*i+(k%2)][2*j+k/2] = 0;
+				}
+			}
+		}
+	}
+	for (int i = 1; i <= n; i++)
+	{
+		bool test = true;
+		for (int j = 1; j < i; j++)
+		{
+			if (maze[j-1][1] > maze[i-1][1] || maze[j-1][1] + h < maze[i-1][1])
+			{
+				test = false;
+				break;
+			}
+		}
+		if (test)
+		{
+			connect[0][2*i] = 1;
+			dist[0][2*i] = maze[i-1][0] - maze[0][0];
+		}
+		else
+		{
+			connect[0][2*i] = 0;
+		}
+	}
+	for (int i = 1; i <= n; i++)
+	{
+		bool test = true;
+		for (int j = 1; j < i; j++)
+		{
+			if (maze[j-1][1] > maze[i-1][1] + h || maze[j-1][1] + h < maze[i-1][1] + h)
+			{
+				test = false;
+				break;
+			}
+		}
+		if (test)
+		{
+			connect[0][2*i+1] = 1;
+			dist[0][2*i+1] = maze[i-1][0] - maze[0][0];
+		}
+		else
+		{
+			connect[0][2*i+1] = 0;
+		}
+	}
+	for (int i = 1; i <= n; i++)
+	{
+		bool test = true;
+		for (int j = i+1; j <= n; j++)
+		{
+			if (maze[j-1][1] > maze[i-1][1] || maze[j-1][1] + h < maze[i-1][1])
+			{
+				test = false;
+				break;
+			}
+		}
+		if (test)
+		{
+			connect[2*i][2*n+2] = 1;
+			dist[2*i][2*n+2] = maze[n-1][0] - maze[i-1][0];
+		}
+		else
+		{
+			connect[2*i][2*n+2] = 0;
+		}
+	}
+	for (int i = 1; i <= n; i++)
+	{
+		bool test = true;
+		for (int j = i+1; j <= n; j++)
+		{
+			if (maze[j-1][1] > maze[i-1][1] + h || maze[j-1][1] + h < maze[i-1][1] + h)
+			{
+				test = false;
+				break;
+			}
+		}
+		if (test)
+		{
+			connect[2*i+1][2*n+2] = 1;
+			dist[2*i+1][2*n+2] = maze[n-1][0] - maze[i-1][0];
+		}
+		else
+		{
+			connect[2*i+1][2*n+2] = 0;
+		}
+	}
+	int lower = maze[0][1], upper = maze[0][1]+h;
+	for (int i = 1; i < n; i++)
+	{
+		if (maze[i][1]+h < upper)
+		{
+			upper = maze[i][1] + h;
+		}
+		if (maze[i][1] > lower)
+		{
+			lower = maze[i][1];
+		}
+	}
+	if (lower <= upper)
+	{
+		connect[0][2*n+2] = 1;
+		dist[0][2*n+2] = maze[n-1][0] - maze[0][0];
+	}
+	else
+	{
+		connect[0][2*n+2] = 0;
+	}
+}
+
+int main()
+{
+	scanf("%d", &n);
+	n++;
+	for (int i = 0; i < n; i++)
+	{
+		scanf("%d %d", &maze[i][0], &maze[i][1]);
+	}
+	scanf("%d", &h);
+	checkConnections();
+	minDist[0] = 0;
+	for (int i = 2; i <= 2*n+2; i++)
+	{
+		minDist[i] = 1000000000;
+		for (int j = 2; j < i - (i % 2); j++)
+		{
+			if (connect[j][i] == 1 && minDist[i] > minDist[j] + dist[j][i])
+			{
+				minDist[i] = minDist[j] + dist[j][i];
+			}
+		}
+		if (connect[0][i] == 1 && minDist[i] > dist[0][i])
+		{
+			minDist[i] = dist[0][i];
+		}
+	}
+	printf("%.10f\n", minDist[2*n+2]);
+}

@@ -1,0 +1,121 @@
+//This is getting accepted!
+#include<bits/stdc++.h>
+#define pb push_back
+#define mp make_pair
+#define FI first
+#define SE second
+#define ll long long
+#define oo 1000000009
+#define Rep(i,n) for(int i = 0; i < (n); ++i)
+
+using namespace std;
+
+const int N = 200;
+
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef ll matrix[N][N];
+typedef long double ld;
+
+const ll MOD = 1000000007;
+const double EPS = 1e-8;
+const double PI = 2 * acos(0);
+const int maxn = 1e6 + 6;
+
+int n, a[2000100], b[2000100], t[100100];
+ll c[6000100];
+
+typedef complex<ld> cplex;
+int rev[maxn];
+cplex wlen_pw[maxn], fa[maxn], fb[maxn];;
+
+void fft(cplex a[], int n, bool invert) {
+	for (int i = 0; i < n; ++i) if (i < rev[i]) swap (a[i], a[rev[i]]);
+
+	for (int len = 2; len <= n; len <<= 1) {
+		ld alpha = 2 * PI / len * (invert ? -1 : +1);
+		int len2 = len >> 1;
+
+		wlen_pw[0] = cplex(1, 0);
+		cplex wlen(cos(alpha), sin(alpha));
+		for (int i = 1; i < len2; ++i) wlen_pw[i] = wlen_pw[i-1] * wlen;
+
+		for (int i = 0; i < n; i += len) {
+			cplex t, *pu = a+i, *pv = a + i + len2,
+					*pu_end = a + i + len2, *pw = wlen_pw;
+			for (; pu != pu_end; ++pu, ++pv, ++pw) {
+				t = *pv * *pw;
+				*pv = *pu - t;
+				*pu += t;
+			}
+		}
+	}
+
+	if (invert) Rep(i, n) a[i] /= n;
+}
+
+void calcRev(int n, int logn) {
+	Rep(i, n) {
+		rev[i] = 0;
+		Rep(j, logn) if (i & (1 << j)) rev[i] |= 1 << (logn - 1 - j);
+	}
+}
+
+void mulpoly(int a[], int b[], ll c[], int na, int nb, int &n) {
+	int l = max(na, nb), logn = 0;
+	for (n = 1; n < l; n <<= 1) ++logn;
+	n <<= 1; ++logn;
+	calcRev(n, logn);
+
+	Rep(i, n) fa[i] = fb[i] = cplex(0);
+	Rep(i, na) fa[i] = cplex(a[i]);
+	Rep(i, nb) fb[i] = cplex(b[i]);
+
+	fft(fa, n, false);
+	fft(fb, n, false);
+
+	Rep(i, n) fa[i] *= fb[i];
+	fft(fa, n, true);
+
+	Rep(i, n) c[i] = (ll)(fa[i].real() + 0.5);
+}
+
+
+int main() {
+ //   freopen("inp.txt","r",stdin);
+
+    cin >> n;
+    int amax = -1, amin = oo;
+    int ans = 0;
+    for (int i=1; i<=n; i++) {
+        cin >> t[i];
+        int x = t[i];
+        if (a[x]) ans = 1;
+        a[x] = 1;
+        if (x > amax) amax = x;
+        if (x < amin) amin = x;
+    }
+ //   cout << ans << endl;
+    int bmax = amax - amin + 1;
+  //  cout << amax << " " << bmax << endl;
+    for (int i=1; i<=n; i++) {
+        int x;
+        x = amax - t[i];
+    //    cout << "x " << x << endl;
+        b[x] = 1;
+    }
+    amax ++;
+    int cmax = 0;
+  //  a[1] = 1; a[2] = 1; a[3] = 1;
+  //  b[0] = 1; b[2] = 1; b[0] = 1;
+    mulpoly(a, b, c, amax, bmax, cmax);
+    for (int i=amax; i<=cmax; i++) {
+        if (c[i]) ans++;
+    }
+
+    cout << ans << endl;
+
+}
+
+
+

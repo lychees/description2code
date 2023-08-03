@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+const long long INF = 1e16;
+using namespace std;
+
+int N, Q;
+struct node
+{
+    long long L, R, M, sum;
+    node operator + (const node & B) const
+    {
+        node C;
+        C.sum = sum + B.sum;
+        C.L = max(L, sum + B.L);
+        C.R = max(B.R, R + B.sum);
+        C.M = max(max(M, B.M), max(max(C.L, C.R), R + B.L));
+
+        C.sum = max(C.sum, -INF);
+        C.L = max(C.L, -INF);
+        C.R = max(C.R, -INF);
+        C.M = max(C.M, -INF);
+        return C;
+    }
+} IT[2000002];
+pair <int, int> a[500005], K[500005];
+long long ans[500005];
+
+void update(int k, int l, int r, int x, int v)
+{
+    if (r < x || x < l) return;
+    if (l == r) IT[k] = {v, v, v, v};
+    else
+    {
+        int m = (l + r) / 2;
+        update(2 * k, l, m, x, v);
+        update(2 * k + 1, m + 1, r, x, v);
+        IT[k] = IT[2 * k] + IT[2 * k + 1];
+    }
+}
+
+main()
+{
+    scanf("%d %d", &N, &Q);
+    for (int i = 1; i <= N; i++) scanf("%d", &a[i].first), a[i].second = i;
+    for (int i = 1; i <= Q; i++) scanf("%d", &K[i].first), K[i].second = i;
+
+    sort(a + 1, a + N + 1);
+    sort(K + 1, K + Q + 1);
+    for (int i = 1; i <= 4 * N; i++) IT[i] = {-INF, -INF, -INF, -INF};
+
+    for (int i = 1, j = 1; j <= Q; j++)
+    {
+        for (; i <= N && a[i].first <= K[j].first; i++)
+            update(1, 1, N, a[i].second, a[i].first);
+        ans[K[j].second] = IT[1].M;
+    }
+
+    for (int i = 1; i <= Q; i++)
+        if (ans[i] != -INF) printf("%lld\n", ans[i]);
+            else printf("No Solution\n");
+}

@@ -1,0 +1,53 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+vector<pair<long long, int>> items;
+//int p[10] = {29,23,19,17,13,11,7,5,3,2};
+int p[11] = {1,2,      3,      5,      7,     11,     13,     17,     19,     23,     29 };
+int n;
+int w;
+long long ans = 0;
+long long c[2][2001][2001];
+
+int cur = 0, pre = 0;
+void solve(){
+	for (int pt=0;pt<11;pt++)
+	for (int i=1;i<=n;i++)
+	for (int wt=1;wt<=w;wt++){
+		if (pt==0) {
+			//c[0][i][wt] = max(c[0][i-1][wt],c[0][i][wt-1]);
+			c[0][i][wt] = c[0][i-1][wt];
+			if (wt>=items[i-1].second) c[0][i][wt] = max(c[0][i][wt],items[i-1].first + c[0][i-1][wt-items[i-1].second] );
+		}
+		else {			
+			cur = pt&1;
+			pre = 1-cur;
+			//c[cur][i][wt] = c[pre][i][wt];
+			//c[cur][i][wt] = max(max(c[pre][i][wt],c[cur][i-1][wt]),c[cur][i][wt-1]);
+			c[cur][i][wt] = max(c[pre][i][wt],c[cur][i-1][wt]);
+			if (wt>=items[i-1].second) c[cur][i][wt] = max(max(c[cur][i][wt],items[i-1].first + c[cur][i-1][wt-items[i-1].second]),items[i-1].first*p[pt] + c[pre][i-1][wt-items[i-1].second]);
+		}
+	}
+	  
+    
+}
+int main()
+{
+    
+    
+    long long pro;
+    int weight;
+    scanf("%d%d",&n,&w);
+    for (int i=0;i<n;i++){
+    	scanf("%lld%d",&pro,&weight);
+    	items.push_back(make_pair(pro,weight));
+    }
+    sort(items.begin(),items.end());
+    
+   
+	
+    solve();
+    printf("%lld\n",c[0][n][w]);
+    return 0;
+}

@@ -1,0 +1,136 @@
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<utility>
+
+#define isOverlappingFromLeft(o, c) ((c.x >= o.x && c.x <= (o.d))? true: false)
+#define isOverlappingFromRight(o,c) ((c.d >= o.x && c.d <= o.d)? true: false)
+#define isOverlappingFromBoth(o, c) ((c.x < o.x && c.d > o.d)? true: false)
+
+using namespace std;
+
+//BarrierStatus is used to check whether a barrier
+//is overlapping some previously used barrier
+enum BarrierStatus{
+    OVERLAPPING_FROM_LEFT, OVERLAPPING_FROM_RIGHT, OVERLAPPING_FROM_BOTH,
+    DOES_NOT_OVERLAPPING, HIDDEN
+};
+
+typedef struct Barrier{
+    long x;      //position
+    long d;      //barrier length
+
+    long getLength(){
+        return (d - x)+1;
+    }
+}Barrier;
+
+/* Declaration for function that will be used in the program */
+int removeOverlappingAndGetTotal(vector<Barrier>&, Barrier&);
+BarrierStatus getBarrierStatus(const Barrier &older, Barrier &current);
+Barrier removeOverlappingFromLeft(const Barrier &, Barrier &);
+Barrier removeOverlappingFromRight(const Barrier&, Barrier&);
+std::pair<Barrier, Barrier> removeOverlappingFromBoth(vector<Barrier>&,const Barrier&, Barrier&);
+
+
+
+int main()
+{
+    /* prevBarriers will store all the barrier to check
+       whether a new barrier is overlapping some other barrier */
+
+    vector<Barrier> prevBarriers;
+    long totalAntsBlocked = 0;
+    long totalBarriers = 0;
+    long y;
+
+    scanf("%ld", &totalBarriers);
+
+    while(totalBarriers > 0)
+    {
+        Barrier currentBarrier;
+        scanf("%ld %ld %ld", &currentBarrier.x, &y, &currentBarrier.d);
+        currentBarrier.d += currentBarrier.x;
+        totalAntsBlocked += removeOverlappingAndGetTotal(prevBarriers, currentBarrier);
+        totalBarriers--;
+    }
+    printf("%ld", totalAntsBlocked);
+    return 0;
+}
+
+
+int removeOverlappingAndGetTotal(vector<Barrier> &prevBarriers, Barrier &currentBarrier)
+{
+    long result = 0;
+    if(!prevBarriers.empty()){
+        //vector<Barrier>::iterator itr = prevBarriers.begin();
+        int i = 0;
+        size_t vSize = prevBarriers.size();
+        while(i < vSize){
+            BarrierStatus status = getBarrierStatus(prevBarriers[i], currentBarrier);
+            switch(status){
+                case OVERLAPPING_FROM_LEFT: {
+                    removeOverlappingFromLeft(prevBarriers[i], currentBarrier);
+                    break;
+                }
+                case OVERLAPPING_FROM_RIGHT: {
+                    removeOverlappingFromRight(prevBarriers[i], currentBarrier);
+                    break;
+                }
+                case OVERLAPPING_FROM_BOTH: {
+                    std::pair<Barrier, Barrier> extra = removeOverlappingFromBoth(prevBarriers, prevBarriers[i], currentBarrier);
+                    result += removeOverlappingAndGetTotal(prevBarriers, extra.first);
+                    result += removeOverlappingAndGetTotal(prevBarriers, extra.second);
+                    return result;
+                }
+                case DOES_NOT_OVERLAPPING:{
+                    break;
+                }
+                case HIDDEN:{
+                    return 0;
+                }
+            }
+            i++;
+        }
+    }
+    prevBarriers.push_back(currentBarrier);
+    return result + currentBarrier.getLength();
+}
+
+BarrierStatus getBarrierStatus(const Barrier &older, Barrier &current){
+    bool isLeft = isOverlappingFromLeft(older, current);
+    bool isRight= isOverlappingFromRight(older, current);
+
+    //this condition means that current barrier is
+    //totally overlapped by some other barrier.
+    if(isLeft == true && isRight == true)
+        return HIDDEN;
+    else if(isOverlappingFromBoth(older, current))
+        return OVERLAPPING_FROM_BOTH;
+    else if(isLeft)
+        return OVERLAPPING_FROM_LEFT;
+    else if(isRight)
+        return OVERLAPPING_FROM_RIGHT;
+    else
+        return DOES_NOT_OVERLAPPING;
+}
+
+
+Barrier removeOverlappingFromLeft(const Barrier &older, Barrier &current){
+    current.x = older.d + 1;
+}
+
+Barrier removeOverlappingFromRight(const Barrier &older, Barrier &current){
+    current.d = older.x - 1;
+}
+
+std::pair<Barrier, Barrier> removeOverlappingFromBoth(vector<Barrier> &prevBarriers, const Barrier &older, Barrier &current){
+    Barrier left;
+    left.x = current.x;
+    left.d = older.x - 1;
+
+    Barrier right;
+    right.x = older.d + 1;
+    right.d = current.d;
+    return pair<Barrier, Barrier>(left, right);
+}

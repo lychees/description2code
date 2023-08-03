@@ -1,0 +1,92 @@
+#include <stdio.h>
+#include <vector>
+#include <algorithm>
+#define pb push_back
+#define lli long long int
+#define MOD 1000000007
+
+using namespace std;
+
+lli dp[1005][1005];
+lli ways[1005];
+int color[1005];
+int pos[1005];
+int temp[1005];
+
+int main(void) {
+    int t;
+    int n, m;
+    int l, c;
+    lli r;
+
+    scanf(" %d", &t);
+
+    while(t--) {
+        scanf(" %d %d", &n, &m);
+
+        for (int i = 1; i <= n; i++) {
+            scanf(" %d %d", &l, &c);
+            pos[l] = i;
+            temp[i] = c;
+        }
+
+        int s = 0;
+        for (int i = 0; i < n; i++) {
+            //printf("s = %d\n", s);
+            color[i] = temp[pos[s]];
+            s = pos[s];
+        }
+
+        /*for (int i = 0; i < n; i++) {
+            printf("i = %d, color[i] = %d\n", i, color[i]);
+        } */
+
+        for (int i = 1; i <= 1000; i++) {
+            ways[i] = 0;
+        }
+
+        dp[n][1] = 0;
+        for (int i = n - 1; i >= 0; i--) {
+            dp[i][1] = dp[i + 1][1];
+            if (ways[color[i]] == 0) {
+                ways[color[i]] = 1;
+                dp[i][1]++;
+            }
+        }
+
+        r = dp[0][1];
+        for (int j = 2; j <= n; j++) {
+            for (int i = 0; i <= 1000; i++) {
+                ways[i] = 0;
+            }
+            for (int i = n - 1; i >= 0; i--) {
+                if (j + i > n) {
+                    dp[i][j] = 0;
+                    continue;
+                }
+
+                //printf("debug i = %d, j = %d\n", i, j);
+                //printf("dp[i + 1][j - 1] = %lld, dp[i + 1][j] = %lld, sum - ways[color[i]] = %lld\n", dp[i + 1][j - 1], dp[i + 1][j], dp[i + 1][j] - ways[color[i]]);
+                //printf("sum = %lld, ways[color[i]] = %lld\n", dp[i + 1][j], ways[color[i]]);
+                dp[i][j] = dp[i + 1][j - 1];
+                dp[i][j] += (dp[i + 1][j] - ways[color[i]] + MOD); /* dp[i + 1][j]; */
+                dp[i][j] %= MOD;
+                ways[color[i]] = dp[i + 1][j - 1] % MOD;
+            }
+            if (j <= m) {
+                r += dp[0][j];
+                r %= MOD;
+            }
+        }
+
+        /*for (int i = 0; i < n; i++) {
+            for (int j = 0; j <= 4; j++) {
+                printf("%d ", dp[i][j]);
+            }
+            printf("\n");
+        } */
+        printf("%lld\n", r);
+    }
+
+    return 0;
+}

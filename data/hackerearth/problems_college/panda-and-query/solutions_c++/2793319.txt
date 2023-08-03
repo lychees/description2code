@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long int ll;
+
+char str[1000005];
+ll open[3000000],close[3000000],ans[3000000];
+struct d{
+    ll ans;
+    ll open;
+    ll close;
+};
+void start(ll i,ll left,ll right){
+    if(left==right){
+        if(str[left]=='{'){
+            open[i] = 1;
+        }else{
+            close[i] = 1;
+        }
+    }else{
+
+        start(i*2+1,left,(left+right)/2);
+        start(i*2+2,(left+right)/2 + 1,right);
+        ans[i] = min(open[i*2+1],close[i*2+2]);
+        open[i] = open[i*2+1]+open[i*2+2]-ans[i];
+        close[i] = close[i*2+1]+close[i*2+2]-ans[i];
+        ans[i] += ans[i*2+1]+ans[i*2+2];
+    }
+}
+struct d query(ll i,ll left,ll right,ll b,ll e){
+    if(right<b||left>e){
+        return d{0,0,0};
+    }
+    if(left>=b&&right<=e){
+        return d{ans[i],open[i],close[i]};
+    }
+    struct d x,y;
+    x=query(i*2+1,left,(left+right)/2,b,e);
+    y=query(i*2+2,(left+right)/2+1,right,b,e);
+    struct d ret;
+    ret.ans = min(x.open,y.close);
+    ret.open = x.open + y.open-ret.ans;
+    ret.close = x.close + y.close-ret.ans;
+    ret.ans += x.ans + y.ans;
+    return ret;
+}
+int main(){
+    scanf("%s",str);
+    ll n = strlen(str);
+    ll q;
+    scanf("%lld",&q);
+    start(0,0,n-1);
+    for(;q>0;q--){
+        ll b,e;
+        scanf("%lld%lld",&b,&e);
+        printf("%lld\n",2*query(0,0,n-1,b-1,e-1).ans);
+    }
+
+    return 0;
+}

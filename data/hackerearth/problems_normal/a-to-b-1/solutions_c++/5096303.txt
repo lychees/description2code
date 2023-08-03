@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MOD = 1e9 + 7;
+#define MAXN 100010
+
+ll modn(ll x) { return x % MOD; }
+
+ll tree[4 * MAXN], arr[MAXN];
+
+void build(int idx, int l, int r)
+{
+	if(l == r)
+	{
+		tree[idx] = arr[l];
+		return;
+	}
+	build(2 * idx, l, (l + r) / 2);
+	build(2 * idx + 1, (l + r) / 2 + 1, r);
+	tree[idx] = modn(tree[2 * idx] * tree[2 * idx + 1]);
+}
+
+ll query(int idx, int start, int end, int l, int r)
+{
+	if(start > r || end < l)
+		return 1;
+	if(start >= l && end <= r)
+		return tree[idx];
+	
+	return modn(query(2 * idx, start, (start + end) / 2, l, r) * query(2 * idx + 1, (start + end) / 2 + 1, end, l, r));
+}
+
+void update(int idx, int l, int r, int pos, int val)
+{
+	if(l > pos || r < pos)
+		return;
+	if(l == r)
+	{
+		tree[idx] = val;
+		return;
+	}
+	
+	update(2 * idx, l, (l + r) / 2, pos, val);
+	update(2 * idx + 1, (l + r) / 2 + 1, r, pos, val);
+	tree[idx] = modn(tree[2 * idx] * tree[2 * idx + 1]);
+}
+
+
+int main()
+{
+	int n;
+	scanf("%d", &n);
+	for(int i = 0; i < n; i++)
+		scanf("%d", &arr[i]);
+    for(int i = 0; i < 4 * n; i++)
+    	tree[i] = 1;
+    	
+    build(1, 0, n - 1);
+    int q, cmd, id, val;
+    scanf("%d", &q);
+    
+    while(q--)
+    {
+    	scanf("%d %d", &cmd, &id);
+    	if(cmd == 0)
+    	{
+    		scanf("%d", &val);
+    		update(1, 0, n - 1, id - 1, val);
+    	}
+    	else
+    	{
+    		ll ans1 = query(1, 0, n - 1, 0, id - 2);
+    		ll ans2 = query(1, 0, n - 1, id, n - 1);
+    		printf("%lld\n", modn(ans1 * ans2));
+    		
+    	}
+    }
+    
+    return 0;
+}

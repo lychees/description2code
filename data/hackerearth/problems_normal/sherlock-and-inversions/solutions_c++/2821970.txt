@@ -1,0 +1,124 @@
+//Abhishek Bansal
+#include<bits/stdc++.h>
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+#define SZ(a) (int)(a.size())
+#define SET(a,b) memset(a,b,sizeof(a))
+#define LET(x,a) __typeof(a) x(a)
+#define TR(v,it) for( LET(it,v.begin()) ; it != v.end() ; it++)
+#define loop(i,a,b) for(int i=a;i<b;i++)
+#define si(n) scanf("%d",&n)
+#define sll(n) scanf("%lld",&n)
+#define sortv(a) sort(a.begin(),a.end())
+#define all(a) a.begin(),a.end()
+#define DRT()  int t; cin>>t; while(t--)
+#define TRACE
+#ifdef TRACE
+#define trace1(x)                cerr << #x << ": " << x << endl;
+#define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define trace4(a, b, c, d)       cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+#define trace5(a, b, c, d, e)    cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << endl;
+#define trace6(a, b, c, d, e, f) cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << " | " << #f << ": " << f << endl;
+#else
+#define trace1(x)
+#define trace2(x, y)
+#define trace3(x, y, z)
+#define trace4(a, b, c, d)
+#define trace5(a, b, c, d, e)
+#define trace6(a, b, c, d, e, f)
+#endif
+using namespace std;
+typedef long long int lli;
+typedef pair<int,int> ii;
+typedef vector<int> vi;
+typedef vector< vi > vvi;
+typedef vector< ii > vii;
+lli modpow(lli a,lli n,lli temp){lli res=1,y=a;while(n>0){if(n&1)res=(res*y)%temp;y=(y*y)%temp;n/=2;}return res%temp;}
+//***********************************END OF TEMPLATE*********************************************************************
+const int MAX = 100005;
+typedef struct node{
+	int l,r,id;
+}node;
+node query[MAX];
+typedef struct BIT{
+	int sz;
+	lli tree[MAX];
+	void init(int n){
+		sz=n;
+		SET(tree,0);
+	}
+	void update(int i,int v){
+		while(i<=sz){
+			//trace1(i);
+			tree[i]+=1ll*v;
+			i+=(i&(-i));
+		}
+		return;
+	}
+	lli query(int i){
+		lli sum=0;
+		while(i>0){
+			sum+=1ll*tree[i];
+			i-=(i&(-i));
+		}
+		return sum;
+	}
+}BIT;
+int a[MAX],SIZE,size;
+BIT bit;
+lli ans=0,f[MAX];
+bool cmp(node a,node b){
+	return (a.l/SIZE < b.l/SIZE || (a.l/SIZE==b.l/SIZE && a.r<b.r));
+}
+void addl(int i){
+	ans+=bit.query(a[i]-1);
+	bit.update(a[i],1);
+}
+void addr(int j){
+	ans+=bit.query(size)-bit.query(a[j]);
+	bit.update(a[j],1);
+}
+void reml(int i){
+	ans-=bit.query(a[i]-1);
+	bit.update(a[i],-1);
+}
+void remr(int j){
+	ans-=bit.query(size)-bit.query(a[j]);
+	bit.update(a[j],-1);
+}
+int main(){
+	int n,q;
+	vi v;
+	cin>>n>>q;
+	SIZE = sqrt(n);
+	size=n+3;
+	bit.init(size);
+	for(int i=0;i<n;++i){
+		cin>>a[i];
+		v.PB(a[i]);
+	}
+	sort(all(v));
+	auto it = unique(all(v));
+	for(int i=0;i<n;++i)
+		a[i]=lower_bound(v.begin(),it,a[i])-v.begin() + 2;
+	for(int i=0;i<q;++i){
+		cin>>query[i].l>>query[i].r;
+		query[i].id=i;
+	}
+	sort(query,query+q,cmp);
+	int L=0,R=-1;
+	for(int i=0;i<q;++i){
+		query[i].l--;
+		query[i].r--;
+		while(L<query[i].l)reml(L++);
+		while(L>query[i].l)addl(--L);
+		while(R<query[i].r)addr(++R);
+		while(R>query[i].r)remr(R--);
+		f[query[i].id]=ans;
+	}
+	for(int i=0;i<q;++i)printf("%lld\n",f[i]);
+	return 0;
+}

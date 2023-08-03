@@ -1,0 +1,131 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int maxn = (1<<20);
+const int mod = (int)(1e9+7);
+int a[maxn];
+struct node
+{
+    int mx,cnt_mx;
+    node() {mx = 0 ;cnt_mx = 1;}
+    node (int val)
+    {
+        mx = val;
+        cnt_mx = 1;
+    }
+};
+node temp;
+node merge(node a,node b)
+{
+    temp.mx=max(a.mx,b.mx);
+    temp.cnt_mx=0;
+    if (temp.mx==a.mx)
+        temp.cnt_mx=a.cnt_mx;
+    if (temp.mx==b.mx)
+        temp.cnt_mx=(temp.cnt_mx+b.cnt_mx)%mod;
+    temp.cnt_mx %= mod;
+    return temp;
+}
+struct segment_tree
+{
+    node tr[4*maxn];
+    void init(int l,int r,int id)
+    {
+        if (l==r)
+        {
+            tr[id]=node(0);
+            return ;
+        }
+        int mid = (l+r)>>1;
+        init(l,mid,2*id+1);
+        init(mid+1,r,2*id+2);
+        tr[id]=merge(tr[2*id+1],tr[2*id+2]);
+    }
+    node query(int ql,int qr,int l,int r,int id)
+    {
+        if (ql<=l && r<=qr)
+            return tr[id];
+        if (ql>r || qr<l)
+            return node(0);
+        int mid = (l+r)>>1;
+        node goleft = query(ql,qr,l,mid,2*id+1);
+        node goright = query(ql,qr,mid+1,r,2*id+2);
+        return merge(goleft,goright);
+    }
+    void update(int pos,int val,int c,int l,int r,int id)
+    {
+        if (l>pos ||r<pos)
+            return;
+        if (l==r && l==pos)
+        {
+            if(tr[id].mx==val)
+                tr[id].cnt_mx += c;
+            if (tr[id].mx < val)
+                tr[id].cnt_mx = c;
+            tr[id].cnt_mx %= mod;
+            tr[id].mx = max(tr[id].mx,val);
+            return;
+        }
+        int mid = (l+r)>>1;
+        update(pos,val,c,l,mid,2*id+1);
+        update(pos,val,c,mid+1,r,2*id+2);
+        tr[id]= merge(tr[2*id+1],tr[2*id+2]);
+    }
+};
+int n;
+void read()
+{
+    cin>>n;
+    for (int i=0;i<n;i++)
+        cin>>a[i];
+}
+segment_tree ls,gs;
+void solve()
+{
+    ls.init(0,maxn-1,0);
+    gs.init(0,maxn-1,0);
+    int lis=0,cnt = 0;
+    for (int i=0;i<n;i++)
+    {
+        if (a[i]<0)
+        {
+            int glis=gs.query(0,-a[i]-1,0,maxn-1,0).mx;
+            int gcnt=gs.query(0,-a[i]-1,0,maxn-1,0).cnt_mx;
+
+            if (glis == 0)
+                gcnt = 1;
+            if (glis+1>lis)
+                cnt = gcnt;
+            else if (glis+1==lis)
+                cnt += gcnt;
+            cnt %= mod;
+            lis = max(lis,glis+1);
+            ls.update(-a[i],glis+1,gcnt,0,maxn-1,0);
+        }
+        else
+        {
+            int glis=ls.query(0,a[i]-1,0,maxn-1,0).mx;
+            int gcnt=ls.query(0,a[i]-1,0,maxn-1,0).cnt_mx;
+
+            if (glis == 0)
+                gcnt = 1;
+            if (glis+1>lis)
+                cnt = gcnt;
+            else if (glis+1==lis)
+                cnt += gcnt;
+            cnt %= mod;
+            lis = max(lis,glis+1);
+            gs.update(a[i],glis+1,gcnt,0,maxn-1,0);
+        }
+    }
+    cout<<lis<<" "<<cnt<<endl;
+}
+#undef int
+int main()
+{
+    ios::sync_with_stdio(0);
+    //freopen("input.txt","r",stdin);
+    read();
+    solve();
+    return 0;
+}

@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+typedef vector<int> vi;
+
+vi st, lazy, arr;
+
+void propagate(int p, int L, int R){
+	if (lazy[p]){
+		st[p] = (R - L + 1) - st[p];
+		if (L != R) {
+			lazy[p * 2] = 1 - lazy[p * 2];
+			lazy[p * 2 + 1] = 1 - lazy[p * 2 + 1];
+		}
+	} 
+	lazy[p] = 0;
+}
+
+void build(int p, int L, int R){
+	if (L == R) {
+		st[p] = arr[L];
+	} else {
+		int mid = (L + R) / 2;
+		build(p * 2, L, mid);
+		build(p * 2 + 1, mid + 1, R);
+		st[p] = st[p * 2] + st[p * 2 + 1];
+	}
+}
+
+void update(int p, int L, int R, int i, int j){
+	propagate(p, L, R);
+	if (i > R || j < L) return;
+	if (i <= L && j >= R) {
+		lazy[p] = 1 - lazy[p];
+		propagate(p, L, R);
+		return;
+	}
+	int mid = (L + R) / 2;
+	update(p * 2, L, mid, i, j);
+	update(p * 2 + 1, mid + 1, R, i, j);
+	st[p] = st[p * 2] + st[p * 2 + 1];
+}
+
+int query(int p, int L, int R, int i, int j){
+	propagate(p, L, R);
+	if (i > R || j < L) return 0;
+	if (i <= L && j >= R){
+		return st[p];
+	}
+	int mid = (L + R) / 2;
+	int p1 = query(p * 2, L, mid, i, j);
+	int p2 = query(p * 2 + 1, mid + 1, R, i, j);
+	return p1 + p2;
+}
+
+int main(){
+	int n, q; cin >> n >> q;
+	n--;
+	string line;
+	cin >> line;
+	
+	arr.resize(n);
+	st.resize(4 * n);
+	lazy.assign(4 * n, 0);
+	
+	for (int i = 0; i < n; i++) arr[i] = (line[i] == '>');
+	build(1, 0, n-1);
+	
+	while (q--){
+		int dir, L, R;
+		scanf("%d%d%d", &dir, &L, &R);
+		L--; R--;
+		if (dir == 1){
+			update(1, 0, n-1, L, R - 1);
+		} else {
+			bool rev = false;
+			if (L > R){
+				swap(L, R);
+				rev = true;
+			}
+			int res = query(1, 0, n-1, L, R - 1);
+			if (rev) printf("%d\n", res);
+			else printf("%d\n", R - L - res);
+		}
+	}
+
+	return 0;
+}

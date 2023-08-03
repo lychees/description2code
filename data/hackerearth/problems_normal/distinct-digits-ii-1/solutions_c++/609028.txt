@@ -1,0 +1,168 @@
+#include <iostream>
+ #include <string>
+ #include <algorithm>
+ #include <stdio.h>
+ #define mid (l+r)/2
+ #define MOD 1000000007
+ using namespace std;
+ struct node
+ {
+     int MIN;
+     int count1;
+     int MAX;
+     int count2;
+     bool is;
+ };
+ node tree[5*100000];
+ int a[1000000];
+ int countdistinct(int j)
+ {
+     int h[10]={0};
+     int k=j;
+     h[k%10]++;
+     k/=10;
+     while(k>0)
+     {
+         h[k%10]++;
+         k/=10;
+     }
+     int ret=0;
+     for (int i=0;i<10;i++)
+        if (h[i]>0)
+            ret++;
+    return ret;
+ }
+ node merge(node a,node b)
+ {
+     node ret;
+     if (a.MAX>b.MAX)
+     {
+         ret.MAX=a.MAX;
+         ret.count1=a.count1;
+     }
+     else if (b.MAX>a.MAX)
+     {
+         ret.MAX=b.MAX;
+         ret.count1=b.count1;
+     }
+     else
+     {
+         ret.MAX=a.MAX;
+         ret.count1=a.count1+b.count1;
+     }
+     if (a.MIN<b.MIN)
+     {
+         ret.MIN=a.MIN;
+         ret.count2=a.count2;
+     }
+     else if (b.MIN<a.MIN)
+     {
+         ret.MIN=b.MIN;
+         ret.count2=b.count2;
+     }
+     else
+     {
+         ret.MIN=b.MIN;
+         ret.count2=a.count2+b.count2;
+     }
+     ret.is=1;
+     return ret;
+ }
+ void build(int x,int l,int r)
+ {
+     if (l==r)
+     {
+         int now;
+         now=countdistinct(a[l]);
+         tree[x].count1=tree[x].count2=1;
+         tree[x].MAX=now;
+         tree[x].MIN=now;
+         tree[x].is=1;
+     }
+     else
+     {
+         build(2*x,l,mid);
+         build(2*x+1,mid+1,r);
+         tree[x]=merge(tree[2*x],tree[2*x+1]);
+     }
+ }
+ node query(int x,int l,int r,int s,int e)
+ {
+     node ret;
+     ret.MAX=ret.MIN=ret.count1=ret.count2=ret.is=0;
+     if (e<l || s>r)
+        return ret;
+    else if (l>=s && r<=e)
+        return tree[x];
+    else
+    {
+        node p1=query(x*2,l,mid,s,e);
+        node p2=query(x*2+1,mid+1,r,s,e);
+        if (p1.is==0)
+            return p2;
+        else if (p2.is==0)
+            return p1;
+        else
+            return merge(p1,p2);
+    }
+ }
+ void update(int x,int l,int r,int v)
+ {
+     if (v<l || v>r)
+        return;
+     else if (v==l && v==r)
+     {
+         int now;
+         now=countdistinct(a[l]);
+         tree[x].count1=tree[x].count2=1;
+         tree[x].MAX=now;
+         tree[x].MIN=now;
+         tree[x].is=1;
+     }
+     else
+     {
+         update(x*2,l,mid,v);
+         update(x*2+1,mid+1,r,v);
+         tree[x]=merge(tree[2*x],tree[2*x+1]);
+     }
+ }
+ int main()
+ {
+     int n;
+     cin>>n;
+     for (int i=1;i<=n;i++)
+        cin>>a[i];
+     build(1,1,n);
+     int q;
+     cin>>q;
+     for (int i=0;i<q;i++)
+     {
+         string x;
+         long long u,v;
+         cin>>x>>u>>v;
+         if (x=="ADD")
+         {
+             a[u]=(a[u]+v)%MOD;
+             update(1,1,n,u);
+         }
+         else if (x=="MUL")
+         {
+             a[u]=(a[u]*v)%MOD;
+             update(1,1,n,u);
+         }
+         else if (x=="REP")
+         {
+             a[u]=(v)%MOD;
+             update(1,1,n,u);
+         }
+         else
+         {
+             node p=query(1,1,n,u,v);
+             if (x=="MAX")
+                cout<<p.MAX<<" "<<p.count1<<endl;
+            else
+                cout<<p.MIN<<" "<<p.count2<<endl;
+        }
+     }
+ }
+

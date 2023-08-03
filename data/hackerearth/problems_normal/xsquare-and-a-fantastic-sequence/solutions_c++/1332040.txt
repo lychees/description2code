@@ -1,0 +1,53 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+	int T;
+	cin >> T;
+	for(int t =0; t < T; t++) {
+		int N,M;
+		string S1,S2;
+		cin >> N >> M >> S1 >> S2;
+		vector< vector<int> > G(N);
+		for(int i =0; i < M; i++) {
+			int a,b;
+			cin >> a >> b;
+			G[--a].push_back(--b);
+			G[b].push_back(a);}
+//		vector< vector<int> > pos(26);
+		vector<int> comp(N,-1),p0(26,0),p1(26,0),pos;
+		queue<int> q;
+		int ans =0;
+		for(int i =0; i < N; i++) if(comp[i] == -1) {
+			q.push(i);
+			comp[i] =1;			
+			while(!q.empty()) {
+				p0[S1[q.front()]-'a']++;
+				p1[S2[q.front()]-'a']++;
+				pos.push_back(q.front());
+//				pos[S2[q.front()]-'a'].push_back(q.front());
+				for(int j =0; j < G[q.front()].size(); j++) if(comp[G[q.front()][j]] == -1) {
+					comp[G[q.front()][j]] =1;
+					q.push(G[q.front()][j]);}
+				q.pop();}
+			sort(begin(pos),end(pos));
+			vector<int> pf(26,0);
+			for(int j =0; j < 26; j++) pf[j] =min(p0[j],p1[j]);
+			for(int j =0; j < 26; j++) p0[j] -=pf[j], p1[j] -=pf[j], ans +=pf[j];
+//			for(int j =0; j < 26; j++) sort(pos[j].begin(),pos[j].end());
+			for(int j =0; j < pos.size(); j++) {
+				if(p1[S2[pos[j]]-'a'] == 0) {
+					S1[pos[j]] =S2[pos[j]];
+					continue;}
+				for(int k =0; k < 26; k++) if(p0[k] > 0 || (k == S2[pos[j]]-'a' && pf[k] > 0)) {
+					if(p0[k] == 0) pf[k]--;
+					else {
+						p0[k]--;
+						p1[S2[pos[j]]-'a']--;}
+					S1[pos[j]] ='a'+k;
+					break;}
+				}
+			for(int j =0; j < 26; j++) p0[j] =p1[j] =0;
+			pos.clear();}
+		cout << ans << "\n" << S1 << "\n";}
+    return 0;}

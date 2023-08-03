@@ -1,0 +1,139 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define end hello_cpp
+
+#ifdef LOCAL
+    #define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#else
+    #define eprintf(...) (void)42;
+#endif
+
+const int MOD = (int)1e9 + 7;
+const int MAXN = 50500;
+
+inline int add(int a, int b) {
+    return (a + b) % MOD;
+}
+
+inline int mul(int a, int b) {
+    return (a * 1LL * b) % MOD;
+}
+
+int a[MAXN];
+int fst[MAXN];
+int nxt[2 * MAXN];
+int end[2 * MAXN];
+int edges;
+
+inline void addEdge(int u, int v) {
+    nxt[edges] = fst[u];
+    end[edges] = v;
+    fst[u] = edges++;
+}
+
+int cnt[MAXN];
+int par[MAXN];
+
+void dfs(int v, int p = -1) {
+    cnt[v] = a[v];
+    par[v] = p;
+    for (int i = fst[v]; i != -1; i = nxt[i]) {
+        int to = end[i];
+        if (to != p) {
+            dfs(to, v);
+            cnt[v] += cnt[to];
+        }
+    }
+}
+
+int dp[MAXN][111];
+int dp2[2 * MAXN][111];
+
+int f(int, int);
+int g(int, int, int);
+
+int f(int v, int k) {
+    if (k - a[v] < 0) {
+        return 0;
+    }
+    if (k - a[v] > cnt[v]) {
+        return 0;
+    }
+    int &res = dp[v][k];
+    if (res != -1) {
+        return res;
+    }
+    return res = g(v, fst[v], k - a[v]);
+}
+
+int g(int v, int e, int k) {
+    if (e == -1) {
+        return k == 0 ? 1 : 0;
+    }
+    int &res = dp2[e][k];
+    if (res != -1) {
+        return res;
+    }
+    int to = end[e];
+    if (to == par[v]) {
+        return res = g(v, nxt[e], k);
+    }
+    res = 0;
+    for (int take = 0; take <= k && take <= cnt[to]; take++) {
+        if (take == 0) {
+            int val = 1;
+            if (a[to] == 0) {
+                val = add(val, f(to, take));
+            }
+            res = add(res, mul(val, g(v, nxt[e], k - take)));
+        } else {
+            res = add(res, mul(f(to, take), g(v, nxt[e], k - take)));
+        }
+    }
+    return res;
+}
+
+int main() {
+#ifdef LOCAL
+    freopen("a.in", "r", stdin);
+#endif
+    int tests;
+    scanf("%d", &tests);
+    for (int test = 1; test <= tests; test++) {
+        int n, k;
+        scanf("%d%d", &n, &k);
+        for (int i = 0; i < n; i++) {
+            scanf("%d", &a[i]);
+            fst[i] = -1;
+        }
+        edges = 0;
+        for (int i = 0; i < n - 1; i++) {
+            int u, v;
+            scanf("%d%d", &u, &v);
+            --u, --v;
+            addEdge(u, v);
+            addEdge(v, u);
+        }
+        dfs(0);
+        for (int i = 0; i < n; i++) {
+            eprintf("%d %d\n", cnt[i], par[i]);
+        }
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j <= k; j++) {
+                dp[i][j] = -1;
+            }
+        }
+        for (int i = 0; i < edges; i++) {
+            for (int j = 0; j <= k; j++) {
+                dp2[i][j] = -1;
+            }
+        }
+        int ans = 0;
+        for (int i = 0; i < n; i++) {
+            ans = add(ans, f(i, k));
+        }
+        printf("%d\n", ans);
+    }
+    return 0;
+}

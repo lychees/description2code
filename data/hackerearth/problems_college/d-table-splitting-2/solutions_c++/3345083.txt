@@ -1,0 +1,76 @@
+#include <iostream>
+#include <cstdio>
+#include <memory.h>
+
+using namespace std;
+
+const int nn = 1 << 24;
+
+int n, m;
+char s[nn];
+char d[nn];
+
+char* f[1 << 20];
+
+int qn, ql;
+int q[nn][2];
+
+void add(char** f, int r, int c, char z) {
+	if (f[r][c] != z) {
+		f[r][c] = z;
+		q[ql][0] = r;
+		q[ql][1] = c;
+		++ql;
+	}
+}
+
+void solve() {
+	cin >> n >> m;
+	
+	f[1] = s + 2 + m;
+	for (int i = 1; i <= n; ++i) {
+		cin >> (f[i] + 1);
+		f[i + 1] = f[i] + m + 2;
+	}
+
+	memcpy(d, s, (n + 2) * (m + 2));
+
+	for (char z = 'a'; z <= 'z'; ++z) {
+		memcpy(s, d, (n + 2) * (m + 2));
+		qn = ql = 0;
+		for (int i = 1; i <= n; ++i) {
+			add(f, i, 1, z);
+			add(f, i, m, z);
+		}
+		for (int j = 1; j <= m; ++j) {
+			add(f, 1, j, z);
+			add(f, n, j, z);
+		}
+
+		while (qn < ql) {
+			int r = q[qn][0];
+			int c = q[qn][1];
+			++qn;
+
+			for (int dr = -1; dr <= +1; ++dr) for (int dc = -1; dc <= +1; ++dc) {
+				int nr = r + dr;
+				int nc = c + dc;
+				if (nr > 0 && nr <= n && nc > 0 && nc <= m)
+					add(f, nr, nc, z);
+			}
+		}
+
+		for (int i = 2; i < n; ++i) for (int j = 2; j < m; ++j) if (f[i][j] != z) {
+			cout << "NO" << endl; return;
+		}
+	}
+	cout << "YES" << endl;
+}
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	int t; cin >> t;
+	while (t --> 0)
+		solve();
+	return 0;
+}

@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+const int SZ = (1 << 18) + 1;
+int le[SZ], cle[SZ] = {}, ri[SZ], cri[SZ] = {}, tot[SZ], pu[SZ] = {};
+LL ans[SZ] = {};
+const int off = 1 << 17;
+int n, m;
+
+void stMerge(int v, int i, int j) {
+    ans[v] = ans[i] + ans[j];
+    tot[v] = tot[i] + tot[j];
+    le[v] = le[i];
+    ri[v] = ri[j];
+    cle[v] = cle[i];
+    cri[v] = cri[j];
+    if (ri[i] == le[j] && cri[i] && cle[j]) {
+        ans[v] -= ((LL)cri[i] * (cri[i] + 1)) >> 1;
+        ans[v] -= ((LL)cle[j] * (cle[j] + 1)) >> 1;
+        int nc = cri[i] + cle[j];
+        ans[v] += ((LL)nc * (nc + 1)) >> 1;
+        if (cri[i] == tot[i]) {
+            le[v] = ri[i];
+            cle[v] = nc;
+        }
+        if (cle[j] == tot[j]) {
+            ri[v] = ri[i];
+            cri[v] = nc;
+        }
+    }
+}
+
+void stPush(int v, int cnt) {
+    for (int i = (v << 1); i <= ((v << 1) | 1); ++i) {
+        le[i] = ri[i] = pu[v];
+        cle[i] = cri[i] = cnt;
+        ans[i] = ((LL)cle[i] * (cle[i] + 1)) >> 1;
+        if (cnt > 1) pu[i] = pu[v];
+    }
+    pu[v] = 0;
+}
+
+int stCol;
+void stUpdate(int v, int L, int R, int l, int r) {
+    if (L == l && R == r) {
+        le[v] = ri[v] = stCol;
+        cle[v] = cri[v] = R - L + 1;
+        ans[v] = ((LL)cle[v] * (cle[v] + 1)) >> 1;
+        if (L != R) pu[v] = stCol;
+        return;
+    }
+    int mid = (L + R) >> 1;
+    if (pu[v]) stPush(v, R - mid);
+    if (l <= mid) stUpdate(v << 1, L, mid, l, min(r, mid));
+    if (r > mid) stUpdate((v << 1) | 1, mid + 1, R, max(l, mid + 1), r);
+    stMerge(v, v << 1, (v << 1) | 1);
+}
+
+void stGet(int v, int L, int R, int l, int r) {
+    if (L == l && R == r) {
+        stMerge(SZ - 1, 0, v);
+        le[0] = le[SZ - 1];
+        ri[0] = ri[SZ - 1];
+        cle[0] = cle[SZ - 1];
+        cri[0] = cri[SZ - 1];
+        tot[0] = tot[SZ - 1];
+        ans[0] = ans[SZ - 1];
+        return;
+    }
+    int mid = (L + R) >> 1;
+    if (pu[v]) stPush(v, R - mid);
+    if (l <= mid) stGet(v << 1, L, mid, l, min(r, mid));
+    if (r > mid) stGet((v << 1) | 1, mid + 1, R, max(l, mid + 1), r);
+}
+
+int main() {
+    //freopen("input.txt", "r", stdin);
+    for (int i = off; i < (off << 1); ++i) tot[i] = 1;
+    for (int i = off - 1; i >= 1; --i) tot[i] = tot[i << 1] << 1;
+    scanf("%d%d", &n, &m);
+    REP(i, n) {
+        int x;
+        scanf("%d", &x);
+        le[off + i] = ri[off + i] = x;
+        cle[off + i] = cri[off + i] = 1;
+        ans[off + i] = 1;
+    }
+    for (int i = off - 1; i >= 1; --i) {
+        stMerge(i, i << 1, (i << 1) | 1);
+    }
+    REP(i, m) {
+        int qt, l, r;
+        scanf("%d%d%d", &qt, &l, &r), --l, --r;
+        if (qt == 0) {
+            scanf("%d", &stCol);
+            stUpdate(1, 0, off - 1, l, r);
+        } else {
+            le[0] = ri[0] = cle[0] = cri[0] = tot[0] = ans[0] = 0;
+            stGet(1, 0, off - 1, l, r);
+            printf("%lld\n", ans[0]);
+        }
+    }
+    return 0;
+}     

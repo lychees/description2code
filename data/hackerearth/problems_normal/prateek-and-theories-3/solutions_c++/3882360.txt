@@ -1,0 +1,104 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+struct EndPoint
+{
+	int time; //point of time
+	bool isStart; //stores if this is start or end point
+};
+
+bool compareTime( const EndPoint & ep1, const EndPoint &ep2 )
+{
+	//first sort according to time if they are different
+	if( ep1.time != ep2.time )
+	{
+		if( ep1.time < ep2.time )
+			return true;
+		return false;
+	}
+	//give preference to end point if the times are equal
+	if( !ep1.isStart && ep2.isStart )
+		return true;
+	return false;
+}
+
+//Another approach based on merge sort
+int get_max_overlap(vector<int>& start_time, vector<int>& end_time)
+{
+	sort( start_time.begin(), start_time.end() );
+	sort( end_time.begin(), end_time.end() );
+
+	int i = 0, j = 0;	
+	int max_overlap = 0;
+	int current_overlap = 0;
+	while( i < start_time.size() && j < end_time.size() )
+	{
+		if( start_time[i] < end_time[j] )
+		{
+			current_overlap++;
+			max_overlap = max( current_overlap, max_overlap);
+			i++;
+		}
+		else
+		{
+			current_overlap--;
+			j++;
+		}
+	}
+	return max_overlap;
+}
+
+int main()
+{
+	int t;
+	cin >> t;
+	while( t-- )
+	{
+		int n;
+		cin >> n;
+		vector<int> start_time(n), end_time(n);
+		int i, j;
+		for( i = 0; i < n; i++ ){
+			cin >> start_time[i];
+			cin >> end_time[i];}
+	
+			
+				
+		vector<EndPoint> endPoints(2*n);
+				
+		for( i = 0, j = n; i < n && j < 2*n; i++, j++ )
+		{
+			EndPoint ep;			
+			ep.time = start_time[i];
+			ep.isStart = true;
+			endPoints[i] = ep;
+
+			EndPoint ep1;
+			ep1.time = end_time[i];
+			ep1.isStart = false;
+			endPoints[j] = ep1;
+		}
+		
+		sort( endPoints.begin(), endPoints.end(), compareTime );
+
+		int maxCount = 0, count = 0;
+
+		for( i = 0; i < endPoints.size(); i++ )
+		{
+			//increment counter if it is a start point and also track maxCount
+			if( endPoints[i].isStart )
+			{
+				maxCount = max( maxCount, ++count );
+			}
+			else //decrement the count if it is end of interval
+			{
+				count--;
+			}
+		}
+		cout << maxCount << endl;
+	}
+	return 0;
+}

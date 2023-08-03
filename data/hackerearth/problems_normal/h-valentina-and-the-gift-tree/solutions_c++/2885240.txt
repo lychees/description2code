@@ -1,0 +1,209 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+#define MP make_pair
+#define PB push_back
+#define LL long long
+#define st first
+#define nd second
+#define FI st
+#define SE nd
+#define FOR(i,a,b) for(int i = (a); i <= (b); i++)
+#define RE(i,n) FOR(i,1,n)
+#define R(i,n) FOR(i,0,(int)(n)-1)
+#define REP(i,n) R(i,n)
+#define ALL(x) (x).begin(), (x).end()
+#define SZ(x) ((int)(x).size())
+#define PII pair<int,int>
+#define VI vector<int>
+template<class C> void mini(C&a4, C b4){a4=min(a4,b4);}
+template<class C> void maxi(C&a4, C b4){a4=max(a4,b4);}
+
+template<class TH> void _dbg(const char *sdbg, TH h){cerr<<sdbg<<"="<<h<<"\n";}
+template<class TH, class... TA> void _dbg(const char *sdbg, TH h, TA... a){
+  while(*sdbg!=',')cerr<<*sdbg++;cerr<<"="<<h;_dbg(sdbg+1,a...);
+}
+
+#ifdef LOCAL
+#define debug(...) _dbg(#__VA_ARGS__, __VA_ARGS__)
+#define debugv(C) {for(auto&c:C)cerr<<c<<",";cerr<<endl;}
+#else
+#define debug(...) (__VA_ARGS__)
+#define debugv(C) {}
+#define cerr if(0)cout
+#endif
+
+
+
+const LL Infty = 1e17;
+
+struct LargestSub {
+  LL bestPref, bestSuf, bestSub, sum;
+  
+  LargestSub(){
+    bestPref = 0;
+    bestSuf  = 0;
+    bestSub  = -Infty;
+    sum      = 0;
+  }
+  
+  LargestSub(LL a){
+    bestPref = a;
+    bestSuf  = a;
+    bestSub  = a;
+    sum      = a;
+  }
+  
+  LargestSub(LL pref, LL suf, LL sub, LL sm){
+    bestPref = pref;
+    bestSuf  = suf;
+    bestSub  = sub;
+    sum      = sm;
+  }
+  
+  void merge(const LargestSub right){
+    assert(bestSub != -Infty || right.bestSub != -Infty);
+    
+    //LargestSub result;
+    bestSub  = max(max(bestSub, right.bestSub),
+                          bestSuf + right.bestPref);
+    bestSuf  = max(right.bestSuf, right.sum + bestSuf);
+    bestPref = max(bestPref, sum + right.bestPref);
+    sum = sum + right.sum;
+  }
+  
+  void invert(){
+    swap(bestPref, bestSuf);
+  }
+  
+  void dbg() const {
+    debug(bestPref, bestSuf, bestSub, sum);
+  }
+};
+
+
+const int LgMaxN = 18;
+const int MaxN = 100005;
+
+vector<int> adj[MaxN];
+int N, Q;
+LargestSub weights[LgMaxN][MaxN];
+int jmpPointer[LgMaxN][MaxN];
+int depth[MaxN];
+bool visited[MaxN];
+
+void input(){
+  scanf("%d", &N);
+  for(int i = 0; i < N-1; i++){
+    int u, v;
+    scanf("%d%d", &u, &v);
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+  }
+  
+  for(int i = 1; i <= N; i++){
+    int c;
+    scanf("%d", &c);
+    weights[0][i] = LargestSub(c);
+  }
+  
+  scanf("%d", &Q);
+}
+
+void dfs(int v){
+  visited[v] = true;
+  for(int s : adj[v]){
+    if(visited[s]) continue;
+    jmpPointer[0][s] = v;
+    depth[s] = depth[v]+1;
+    dfs(s);
+  }
+}
+
+void build_pointers(){
+  for(int layer = 1; layer < LgMaxN; layer++){
+    for(int v = 1; v <= N; v++){
+      int p = jmpPointer[layer-1][v];
+      jmpPointer[layer][v] = jmpPointer[layer-1][p];
+      if(layer <= 2) debug(layer, v, jmpPointer[layer][v]);
+      
+      weights[layer][v] = weights[layer-1][v];
+      if(p != 0){
+        weights[layer][v].merge(weights[layer-1][p]);
+      }
+    }
+  }
+}
+
+
+
+LL proc_query(int u, int v){
+  if(depth[u] < depth[v]) swap(u, v);
+  int diff = depth[u]-depth[v];
+  LargestSub uSub, vSub;
+  //debug(uSub.bestSub);
+  
+  //debug(u, v, diff);
+  
+  for(int i = LgMaxN-1; i >= 0; i--){
+    if(diff & (1<<i)){
+      uSub.merge(weights[i][u]);
+      u = jmpPointer[i][u];
+    }
+    //debug(uSub.bestSub);
+  }
+  
+  if(u == v){ uSub.merge(weights[0][u]); return uSub.bestSub; }
+  //debug(1);
+  
+  for(int i = LgMaxN-1; i >= 0; i--){
+    int pu = jmpPointer[i][u],
+        pv = jmpPointer[i][v];
+    if(pu == pv) continue;
+    
+    //debug(u, v, pu, pv, i);
+    
+    uSub.merge(weights[i][u]);
+    vSub.merge(weights[i][v]);
+    u = pu;
+    v = pv;
+  }
+  
+  //debug(u, v);
+  uSub.merge(weights[0][u]);
+  vSub.merge(weights[0][v]);
+  
+  u = jmpPointer[0][u];
+  //assert(u);
+  
+  //uSub.dbg();
+  //weights[0][u].dbg();
+  //vSub.dbg();
+  //debug(2, uSub.bestSub, u, weights[0][u].bestSub, vSub.bestSub);
+  
+  uSub.merge(weights[0][u]);
+  vSub.invert();
+  uSub.merge(vSub);
+  return uSub.bestSub;
+}
+
+int main(){
+  ios_base::sync_with_stdio(0);
+  cin.tie(0);
+  cout<<fixed<<setprecision(10);
+  
+  input();
+  jmpPointer[0][0] = 0;
+  jmpPointer[0][1] = 0; depth[1] = 0;
+  dfs(1);
+  build_pointers();
+  
+  
+  for(int query = 1; query <= Q; query++){
+    int u, v;
+    scanf("%d%d", &u, &v);
+    printf("%lld\n", proc_query(u,v));
+  }
+  
+  return 0; 
+}

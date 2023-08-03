@@ -1,0 +1,88 @@
+#include<iostream>
+#include<algorithm>
+#include<stack>
+#include<vector>
+#include<list>
+using namespace std;
+
+int width[100][100];
+stack<int> path;
+vector< vector<int> > paths;
+
+void DFS(int s, int d, int n) {
+    path.push(s);
+    //visited[s] = 1;
+
+    if (s == d) {
+        stack<int> c = path;
+        vector<int> l;
+        while (!c.empty()) {
+            l.push_back(c.top());
+            c.pop();
+        }
+        reverse(l.begin(), l.end());
+        paths.push_back(l);
+    }
+    else {
+        for (int i = 0; i < n; i++) {
+            if (width[s][i] != 0) {
+                DFS(i, d, n);
+            }
+        }
+    }
+    //visited[s] = 0;
+    path.pop();
+}
+
+int main() {
+
+    int n, r, c1, c2, p, s, d, t;
+    cin >> n >> r;
+
+    for (int i = 0; i < r; i++) {
+        cin >> c1 >> c2 >> p;
+        width[c1-1][c2-1] = p;
+    }
+
+    cin >> s >> d >> t;
+
+    DFS(s-1, d-1, n);
+
+    int num_paths = paths.size();
+    int min_arr[num_paths], counter = 0;
+    for (vector< vector<int> >::iterator it = paths.begin(); it < paths.end(); it++) {
+        //cout << (*it).size() << endl;
+        vector<int> currlist = (*it);
+        int min_val = width[currlist.at(0)][currlist.at(1)], currwidth;
+        for (int pit = 1; pit < currlist.size() - 1; pit++) {
+            currwidth = width[currlist.at(pit)][currlist.at(pit + 1)];
+            if (currwidth < min_val) {
+                min_val = currwidth;
+            }
+        }
+        min_arr[counter] = min_val;
+        counter++;
+    }
+    int max_val = min_arr[0], max_ind = 0;
+    for(int i = 1; i < num_paths; i++) {
+        //cout << max_val << " : " << min_arr[i] << endl;
+        if (min_arr[i] > max_val){
+            max_val = min_arr[i];
+            max_ind = i;
+        }
+    }
+
+    vector<int> currpath = paths.at(max_ind);
+    for (int i = 0; i < currpath.size(); i++) {
+        cout << currpath.at(i) + 1 << " ";
+    }
+    cout << "\n";
+
+    if (t % (max_val - 1) == 0) {
+        cout << t / (max_val - 1);
+    } else {
+        cout << t / (max_val - 1) + 1;
+    }
+
+    return 0;
+}

@@ -1,0 +1,109 @@
+//You only fail when you stop trying...
+#include <iostream>
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+#define inf 1000000000000
+#define mod 1000000007
+#define pb push_back
+#define mp make_pair
+#define all(v) v.begin(),v.end()
+#define S second
+#define F first
+#define boost1 ios::sync_with_stdio(false);
+#define boost2 cin.tie(0);
+#define mem(a,val) memset(a,val,sizeof a)
+#define endl "\n"
+#define maxn 1000005
+
+ll mobius[maxn],prime[maxn],bit[maxn],a[maxn];
+vector<ll>prime_factor[maxn];
+vector<ll>store[maxn];
+
+void update(ll ind,ll val) 
+{
+    while(ind<=100000)
+    {
+        bit[ind]+=val;
+        ind+=(ind&-ind);
+    }
+}
+ll query(ll ind)
+{
+    ll sum=0;
+    while(ind>0)
+    {
+        sum+=bit[ind];
+        ind-=(ind&-ind);
+    }
+    return sum;
+}
+int main()
+{
+	boost1;boost2;
+	ll i,j,n,q,ans=0,val,temp;
+	for(i=1;i<=1000000;i++)
+	mobius[i]=-1;
+	mobius[1]=1;
+	for(i=2;i<=1000000;i++)
+	{
+		if(prime[i])
+		continue;
+		for(j=i;j<=1000000;j+=i)
+		{
+			if(j!=i)
+			prime[j]=1;
+			prime_factor[j].pb(i);
+			ll ctr=0;
+			ll tj=j;
+			while(tj%i==0)
+			{
+				tj/=i;
+				ctr++;
+			}
+			if(ctr>1)
+			mobius[j]=0;
+		}
+	}
+	for(i=2;i<=1000000;i++)
+	{
+		if(mobius[i]==-1)
+		{
+			if(prime_factor[i].size()%2)
+			mobius[i]=-1;
+			else
+			mobius[i]=1;
+		}
+	}
+	cin>>n;
+	for(i=1;i<=n;i++)
+	cin>>a[i];
+	for(i=1;i<=n;i++)
+	{
+		val=a[i];
+		for(j=1;j*j<=val;j++)
+		{
+			if(val%j)
+			continue;
+			store[j].pb(a[i]);
+			if(val/j==j)
+			continue;
+			store[val/j].pb(a[i]);
+		}
+	}
+	for(i=1;i<=100000;i++)
+	{
+		temp=0;
+		for(j=0;j<store[i].size();j++)
+		{
+			temp+=query(100000)-query(store[i][j]);
+			update(store[i][j],1);
+		}
+		ans+=mobius[i]*temp;
+		for(j=0;j<store[i].size();j++)
+		update(store[i][j],-1);
+	}
+	cout<<ans;
+	return 0;
+}
+//mobius inversion method

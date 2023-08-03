@@ -1,0 +1,328 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <cassert>
+#define MAXN 100010
+
+using namespace std;
+
+struct anode {
+    int a;
+    int sum;
+    int sz;
+    anode *ch[2], *par;
+    bool rev;
+
+    int dir() {
+        return this == par->ch[1];
+    }
+
+    void push() {
+        if (rev) {
+            swap(ch[0],ch[1]);
+            if (ch[0]) ch[0]->rev ^= 1;
+            if (ch[1]) ch[1]->rev ^= 1;
+            rev = 0;
+        }
+    }
+
+    void pushall() {
+        if (par) par->pushall();
+        push();
+    }
+
+    void upd() {
+        sum = a;
+        sz = 1;
+        if (ch[0]) {
+            sum += ch[0]->sum;
+            sz += ch[0]->sz;
+        }
+        if (ch[1]) {
+            sum += ch[1]->sum;
+            sz += ch[1]->sz;
+        }
+    }
+
+    void setc(anode * v, int d) {
+        ch[d] = v;
+        if (v) v->par = this;
+    }
+
+    void rot() {
+        int d = dir();
+        anode * u = par;
+        u->setc(ch[!d],d);
+        if (u->par) u->par->setc(this,u->dir());
+        else par = NULL;
+        setc(u,!d);
+        u->upd();
+        upd();
+    }
+
+    void splay() {
+        pushall();
+        while (par) {
+            if (par->par && dir() == par->dir()) par->rot();
+            rot();
+        }
+    }
+};
+
+void merge(anode * &u, anode * v) {
+    u->splay();
+    while (u->ch[1]) u = u->ch[1], u->push();
+    u->splay();
+    v->splay();
+    u->setc(v,1);
+    u->upd();
+}
+
+anode * findkth(anode * u, int k) {
+    u -> splay();
+    //cerr << k << " <= " << u->sz << endl;
+    while (1) {
+        int sz = 0;
+        if (u -> ch[0])
+            sz = u -> ch[0] -> sz;
+
+        //cerr << sz << ' ' << k << endl;
+
+        if (sz + 1 == k) break;
+        if (sz >= k) u = u -> ch[0];
+        else {
+            k -= sz + 1;
+            u = u -> ch[1];
+        }
+        u -> push();
+    }
+    u -> splay();
+    return u;
+}
+
+anode * split(anode * &u, int k) {
+    //cerr << "splitting " << k << endl;
+    u = findkth(u,k);
+    //cerr << k << "th found" << endl;
+    if (u -> ch[1] == NULL) return NULL;
+    anode * v = u -> ch[1];
+    u -> ch[1] -> par = NULL;
+    u -> ch[1] = NULL;
+    u -> upd();
+    return v;
+}
+
+struct node {
+    int sz;
+    node *ch[2], *par;
+    bool rev;
+    anode * t;
+
+    int dir() {
+        if (!par) return -1;
+        if (this == par->ch[0]) return 0;
+        if (this == par->ch[1]) return 1;
+        return -1;
+    }
+
+    bool isroot() {
+        return dir() == -1;
+    }
+
+    void push() {
+        if (rev) {
+            swap(ch[0],ch[1]);
+            if (ch[0]) ch[0]->rev ^= 1;
+            if (ch[1]) ch[1]->rev ^= 1;
+            rev = 0;
+        }
+    }
+
+    void pushall() {
+        if (!isroot()) par->pushall();
+        push();
+    }
+
+    void upd() {
+        sz = 1;
+        if (ch[0]) sz += ch[0]->sz;
+        if (ch[1]) sz += ch[1]->sz;
+    }
+
+    void setc(node * v, int d) {
+        ch[d] = v;
+        if (v) v->par = this;
+    }
+
+    void rot() {
+        int d = dir();
+        node * u = par;
+        u->setc(ch[!d],d);
+        if (!u->isroot()) u->par->setc(this,u->dir());
+        else {
+            par = u->par;
+            t = u->t;
+            u->t = NULL;
+        }
+        setc(u,!d);
+        u->upd();
+        upd();
+    }
+
+    void splay() {
+        pushall();
+        while (!isroot()) {
+            if (!par->isroot() && dir() == par->dir()) par->rot();
+            rot();
+        }
+    }
+
+    //this and u are roots
+    void setc2(node * u) {
+        if (ch[1]) {
+            //cerr << "hi" << endl;
+            //cerr << "size: " << sz << " child size: " << ch[1]->sz << endl;
+            //cerr << sz << ' ' << t->sz << endl;
+            assert(sz == t->sz);
+            ch[1] -> t = split(t, sz - ch[1]->sz);
+            assert(ch[1]->sz == ch[1]->t->sz);
+            ch[1] = NULL;
+            upd();
+        }
+        if (u) {
+            ch[1] = u;
+            upd();
+            merge(t,u->t);
+            assert(sz == t->sz);
+            u->t = NULL;
+        }
+    }
+
+    void expose() {
+        splay();
+        setc2(NULL);
+        while (par) {
+            //cerr << "a" << endl;
+            par->splay();
+            //cerr << "b" << endl;
+            par->setc2(this);
+            //cerr << "c" << endl;
+            splay();
+            //cerr << "d" << endl;
+        }
+    }
+
+    void makeroot() {
+        expose();
+        rev ^= 1;
+        t->splay();
+        t->rev ^= 1;
+    }
+};
+
+int n,q;
+anode a[MAXN];
+node nodes[MAXN];
+vector<int> e[MAXN];
+
+void debug(anode * u) {
+    cerr << "ID: " << u-a << ": " << u->a << endl;
+    u -> pushall();
+    cerr << "L: ";
+    if (u->ch[0]) cerr << u->ch[0]->a << endl;
+    else cerr << "NULL" << endl;
+    cerr << "R: ";
+    if (u->ch[1]) cerr << u->ch[1]->a << endl;
+    else cerr << "NULL" << endl;
+    cerr << "PAR: ";
+    if (u->par) cerr << u->par->a << endl;
+    else cerr << "NULL" << endl;
+    cerr << "SUM: " << u->sum << endl;
+    cerr << "SIZE: " << u->sz << endl;
+    cerr << endl;
+}
+
+void debug(node * u) {
+    cerr << "ID: " << u-nodes << endl;
+    u -> pushall();
+    cerr << "L: ";
+    if (u->ch[0]) cerr << u->ch[0]-nodes << endl;
+    else cerr << "NULL" << endl;
+    cerr << "R: ";
+    if (u->ch[1]) cerr << u->ch[1]-nodes << endl;
+    else cerr << "NULL" << endl;
+    cerr << "PAR: ";
+    if (u->par) cerr << u->par-nodes << endl;
+    else cerr << "NULL" << endl;
+    cerr << "SIZE: " << u->sz << endl;
+    cerr << "T: ";
+    if (u->t) cerr << u->t-a << endl;
+    else cerr << "NULL" << endl;
+    cerr << endl;
+}
+
+void debugall() {
+    cerr << "anodes: " << endl;
+    for (int i = 1; i <= n; i++) {
+        debug(&a[i]);
+    }
+    cerr << "nodes: " << endl;
+    for (int i = 1; i <= n; i++) {
+        debug(&nodes[i]);
+    }
+}
+
+void dfs(int u, int prv) {
+    for (int v : e[u]) {
+        if (v == prv) continue;
+        dfs(v,u);
+        nodes[v].par = &nodes[u];
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(0);
+
+    cin >> n >> q;
+
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i].a;
+        a[i].upd();
+        nodes[i].t = &a[i];
+        nodes[i].upd();
+    }
+
+    for (int i = 1; i < n; i++) {
+        int u,v;
+        cin >> u >> v;
+        e[u].push_back(v);
+        e[v].push_back(u);
+    }
+
+    dfs(1,0);
+
+    while (q--) {
+        char op;
+        int u,v;
+        cin >> op >> u >> v;
+
+        //debugall();
+
+        nodes[u].makeroot();
+        //cerr << endl << u << " is root" << endl;
+        //debugall();
+
+        nodes[v].expose();
+        //cerr << v << " exposed" << endl;
+        nodes[v].t->splay();
+
+        if (op == 'R') {
+            nodes[v].t->rev ^= 1;
+        }
+        if (op == 'S') {
+            cout << nodes[v].t->sum << '\n';
+        }
+
+        //debugall();
+    }
+}

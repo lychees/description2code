@@ -1,0 +1,113 @@
+#include "bits/stdc++.h"
+using namespace std;
+const int N = 1e5 + 5;
+const int LN = 17;
+const int SQN = 300;
+int n;
+int a , b , c;
+vector < pair < int , int > > v[N];
+int q;
+int k;
+int arr[N];
+int parent[N];
+int sz[N];
+pair < int , pair < int , int > > edges[N];
+int dp[LN][N];
+int val[LN][N];
+int depth[N];
+void dfs(int node , int parent){
+	dp[0][node] = parent;
+	depth[node] = depth[parent] + 1;
+	for(auto it : v[node]){
+		if(it.first != parent){
+			val[0][it.first] = it.second;
+			dfs(it.first , node);
+		}
+	}
+}
+inline int lca(int a , int b){
+	if(depth[a] < depth[b]){
+		swap(a , b);
+	}
+	int mnval = 1e9;
+	int dif = depth[a] - depth[b];
+	for(int i = 0 ; i < LN ; ++i){
+		if(dif & (1 << i)){
+			mnval = min(mnval , val[i][a]);
+			a = dp[i][a];
+		}
+	}
+	if(a != b){
+		for(int i = LN - 1 ; i >= 0 ; --i){
+			if(dp[i][a] != dp[i][b]){
+				mnval = min(mnval , val[i][a]);
+				mnval = min(mnval , val[i][b]);
+				a = dp[i][a];
+				b = dp[i][b];
+			}
+		}
+		mnval = min(mnval , val[0][a]);
+		mnval = min(mnval , val[0][b]);
+	}
+	return mnval;
+}
+int find(int node){
+	if(parent[node] == node){
+		return node;
+	}
+	return parent[node] = find(parent[node]);
+}
+int main(){
+	scanf("%d" , &n);
+	for(int i = 1 ; i < n ; ++i){
+		scanf("%d %d %d" , &a , &b , &c);
+		v[a].emplace_back(make_pair(b , c));
+		v[b].emplace_back(make_pair(a , c));
+		edges[i] = make_pair(c , make_pair(a , b));
+	}
+	sort(edges + 1 , edges + n);
+	dfs(1 , 0);
+	for(int i = 1 ; i < LN ; ++i){
+		for(int j = 1 ; j <= n ; ++j){
+			dp[i][j] = dp[i - 1][dp[i - 1][j]];
+			val[i][j] = min(val[i - 1][j] , val[i - 1][dp[i - 1][j]]);
+		}
+	}
+	scanf("%d" , &q);
+	while(q--){
+		scanf("%d" , &k);
+		for(int i = 1 ; i <= k ; ++i){
+			scanf("%d" , arr + i);
+		}
+		if(k < SQN){
+			long long sum = 0;
+			for(int i = 1 ; i < k ; ++i){
+				for(int j = i + 1 ; j <= k ; ++j){
+					sum += lca(arr[i] , arr[j]);
+				}
+			}
+			printf("%lld\n" , sum);
+		}
+		else{
+			for(int i = 1 ; i <= n ; ++i){
+				parent[i] = i;
+				sz[i] = 0;
+			}
+			for(int i = 1 ; i <= k ; ++i){
+				sz[arr[i]] = 1;
+			}
+			long long sum = 0;
+			for(int i = n - 1 ; i >= 1 ; --i){
+				a = edges[i].second.first;
+				b = edges[i].second.second;
+				c = edges[i].first;
+				int x = find(a);
+				int y = find(b);
+				sum += 1LL * sz[x] * sz[y] * c;
+				parent[y] = x;
+				sz[x] += sz[y];
+			}
+			printf("%lld\n" , sum);
+		}
+	}
+}

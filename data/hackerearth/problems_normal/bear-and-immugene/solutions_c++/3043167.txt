@@ -1,0 +1,206 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define DEBUG 0
+#define MOD 1000000007
+#define NMAX 1000100
+#define GMAX 131072//4096
+#define LL long long
+
+char S[NMAX];
+int N, Q;
+
+inline int GetNumber(char ch) {
+	if (ch == 'A') return 0;
+	if (ch == 'C') return 1;
+	if (ch == 'G') return 2;
+	return 3;
+}
+
+void ReadInput() {
+	scanf("%d %d %s", &N, &Q, S);
+	for (int i = 0; i < N; i++)
+		S[i] = GetNumber(S[i]);
+}
+
+int gstart[GMAX], gend[GMAX], cnt_total[GMAX][4], cnt_tranz[GMAX][4][4], nhas[GMAX][4], GSIZE, ng;
+int cnt[NMAX][4], sum_cnt[NMAX][4], last[NMAX][4];
+int segtree_cnt_tranz[2 * GMAX][4][4], segtree_cnt_total[2 * GMAX][4];
+
+void InitSegTree() {
+	int i, j, k;
+	for (i = 1; i < 2 * GMAX; i++) {
+		for (j = 0; j < 4; j++) {
+			segtree_cnt_total[i][j] = 0;
+			for (k = 0; k < 4; k++)
+				if (j == k) segtree_cnt_tranz[i][j][k] = 1;
+				else segtree_cnt_tranz[i][j][k] = 0;
+		}
+	}
+}
+
+void UpdateSegTree(int g) {
+	int lson , rson, i, j, k;
+	memcpy(segtree_cnt_tranz[g + GMAX], cnt_tranz[g], sizeof(cnt_tranz[g]));
+	memcpy(segtree_cnt_total[g + GMAX], cnt_total[g], sizeof(cnt_total[g]));
+	for (i = 0; i < 4; i++)
+		if (nhas[g][i] == 0)
+			segtree_cnt_tranz[g + GMAX][i][i] = 1;
+	g = (g + GMAX) >> 1;
+	while (g >= 1) {
+		lson = g << 1;
+		rson = lson + 1;
+		for (i = 0; i < 4; i++)
+			for (j = 0; j < 4; j++) {
+				segtree_cnt_tranz[g][i][j] = 0;
+				for (k = 0; k < 4; k++)
+					segtree_cnt_tranz[g][i][j] = ((LL) segtree_cnt_tranz[g][i][j] + (LL) segtree_cnt_tranz[lson][i][k] * (LL) segtree_cnt_tranz[rson][k][j]) % MOD;
+			}
+		for (i = 0; i < 4; i++) {
+			segtree_cnt_total[g][i] = segtree_cnt_total[lson][i];
+			for (j = 0; j < 4; j++)
+				segtree_cnt_total[g][i] = ((LL) segtree_cnt_total[g][i] + (LL) segtree_cnt_tranz[lson][i][j] * (LL) segtree_cnt_total[rson][j]) % MOD;
+		}
+		g >>= 1;
+	}
+}
+
+int ComputeTotalUsingSegTree() {
+	int total = 1, i;
+	for (i = 0; i < 4; i++) {
+		total += segtree_cnt_total[1][i];
+		if (total >= MOD) total -= MOD;
+	}
+	return total;
+}
+
+void InitGroup(int g, int imin) {
+	int i, j, k;
+	if (DEBUG) {
+		fprintf(stderr, "[Init Group] g=%d gstart=%d gend=%d:", g, gstart[g], gend[g]);
+		for (i = gstart[g]; i <= gend[g]; i++) fprintf(stderr, " %d", S[i]);
+		fprintf(stderr, "\n");
+	}
+	for (i = imin; i <= gend[g]; i++) {
+		for (j = 0; j < 4; j++) {
+			if (i == gstart[g]) {
+				sum_cnt[i][j] = 0;
+				last[i][j] = -1;
+			} else {
+				sum_cnt[i][j] = sum_cnt[i - 1][j];
+				last[i][j] = last[i - 1][j];
+			}
+		}
+		for (j = 0; j < 4; j++) {
+			cnt_total[g][j] -= cnt[i][j]; if (cnt_total[g][j] < 0) cnt_total[g][j] += MOD;
+			cnt[i][j] = sum_cnt[i][j];
+			if (last[i][S[i]] - 1 >= gstart[g]) {
+				cnt[i][j] -= sum_cnt[last[i][S[i]] - 1][j]; if (cnt[i][j] < 0) cnt[i][j] += MOD;
+			}
+			cnt_total[g][j] += cnt[i][j]; if (cnt_total[g][j] >= MOD) cnt_total[g][j] -= MOD;
+			sum_cnt[i][j] += cnt[i][j]; if (sum_cnt[i][j] >= MOD) sum_cnt[i][j] -= MOD;
+		}
+		if (last[i][S[i]] < 0) {
+			cnt[i][S[i]] = sum_cnt[i][S[i]] = 1;
+			cnt_total[g][S[i]]++; if (cnt_total[g][j] >= MOD) cnt_total[g][j] -= MOD;
+		}
+		last[i][S[i]] = i;
+	}
+	for (j = 0; j < 4; j++)
+		for (k = 0; k < 4; k++) {
+			cnt_tranz[g][j][k] = sum_cnt[gend[g]][j];
+			if (last[gend[g]][k] - 1 >= gstart[g]) {
+				cnt_tranz[g][j][k] -= sum_cnt[last[gend[g]][k] - 1][j]; if (cnt_tranz[g][j][k] < 0) cnt_tranz[g][j][k] += MOD;
+			}
+		}
+	if (DEBUG) {
+		for (j = 0; j < 4; j++) fprintf(stderr, "cnt_total[%d]=%d\n", j, cnt_total[g][j]);
+		for (j = 0; j < 4; j++)
+			for (k = 0; k < 4; k++)
+				fprintf(stderr, "cnt_tranz[%d][%d]=%d\n", j, k, cnt_tranz[g][j][k]);
+	}
+	UpdateSegTree(g);
+}
+
+void PreprocessInput() {
+	int i, j, k, g;
+	//for (GSIZE = 1; GSIZE * GSIZE < N / 2; GSIZE++);
+	GSIZE = 16;
+	for (ng = -1, i = 0; i < N; i++) {
+		if ((i % GSIZE) == 0) {
+			ng++;
+			gstart[ng] = i;
+		}
+		gend[ng] = i;
+	}
+	ng++;
+	if (DEBUG) fprintf(stderr, "N=%d GSIZE=%d ng=%d\n", N, GSIZE, ng);
+	for (i = 0; i < N; i++)
+		for (j = 0; j < 4; j++)
+			cnt[i][j] = 0;
+	for (g = 0; g < ng; g++) {
+		for (j = 0; j < 4; j++) {
+			for (k = 0; k < 4; k++)
+				cnt_tranz[g][j][k] = 0;
+			cnt_total[g][j] = nhas[g][j] = 0;
+		}
+		for (i = gstart[g]; i <= gend[g]; i++)
+			nhas[g][S[i]]++;
+		InitGroup(g, gstart[g]);
+	}
+}
+
+unsigned long long cnt_continue[NMAX][4], total[NMAX];
+
+int ComputeTotal(int gstart) {
+	if (DEBUG) fprintf(stderr, "[ComputeTotal]\n");
+	int g, i, j;
+	total[0] = 1;
+	for (i = 0; i < 4; i++) cnt_continue[0][i] = 1;
+	for (g = gstart; g < ng; g++) {
+		for (i = 0; i < 4; i++) cnt_continue[g + 1][i] = 0;
+		total[g + 1] = total[g];
+		for (i = 0; i < 4; i++) {
+			if (nhas[g][i] > 0) {
+				total[g + 1] += cnt_continue[g][i] * cnt_total[g][i];
+				for (j = 0; j < 4; j++)
+					cnt_continue[g + 1][j] += cnt_continue[g][i] * cnt_tranz[g][i][j];
+			} else {
+				cnt_continue[g + 1][i] += cnt_continue[g][i];
+			}
+		}
+		for (i = 0; i < 4; i++)
+			if (cnt_continue[g + 1][i] >= MOD) cnt_continue[g + 1][i] %= MOD;
+		if (total[g + 1] >= MOD) total[g + 1] %= MOD;
+		if (DEBUG) fprintf(stderr, "After group g=%d/%d: total=%llu cntc=%llu %llu %llu %llu\n", g, ng - 1, total[g + 1], cnt_continue[g + 1][0], cnt_continue[g + 1][1], cnt_continue[g + 1][2], cnt_continue[g + 1][3]);
+	}
+	return (int) total[ng];
+}
+
+void ProcessOperations() {
+	if (DEBUG) fprintf(stderr, "total init=%d\n", ComputeTotalUsingSegTree());
+	int x, g, first = 1;
+	char ch;
+	while (Q--) {
+		scanf("%d %c", &x, &ch); x--;
+		if (DEBUG) fprintf(stderr, "Change x=%d from %d to %d\n", x, S[x], GetNumber(S[x]));
+		g = x / GSIZE;
+		nhas[g][S[x]]--;
+		S[x] = GetNumber(ch);
+		nhas[g][S[x]]++;
+		InitGroup(g, x);
+		//printf("%d\n", ComputeTotal(first ? 0 : g));
+		//first = 0;
+		printf("%d\n", ComputeTotalUsingSegTree());
+	}
+}
+
+int main() {
+//	freopen("B.txt", "r", stdin);
+	ReadInput();
+	InitSegTree();
+	PreprocessInput();
+	ProcessOperations();
+	return 0;
+}

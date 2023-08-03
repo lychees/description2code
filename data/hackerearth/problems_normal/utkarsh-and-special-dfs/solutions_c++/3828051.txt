@@ -1,0 +1,153 @@
+#include <bits/stdc++.h>
+#include<ext/pb_ds/assoc_container.hpp>
+#include<ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+using namespace std;
+
+#define fi first
+#define se second
+#define pb push_back
+#define mp make_pair
+#define MODV 1000000007
+
+typedef long long ll;
+typedef double dbl;
+typedef vector<int> vi;
+typedef pair<int, int> pi;
+template <typename T>
+using ordered_set = tree<T, null_type, greater<T>, rb_tree_tag, tree_order_statistics_node_update>;
+void domod(int &a, ll b){a=(a+b)%MODV;}
+void mulmod(int &a, ll b){a=(a*b)%MODV;}
+inline int power(int a, int b) {
+  int res = 1;
+  while (b > 0) {
+    if (b & 1) { mulmod(res, a); }
+    b >>= 1;
+    mulmod(a, a);
+  }
+  return res;
+}
+
+inline int inv(int a) { return power(a, MODV - 2); }
+
+class graphal
+{
+  public:
+    int n,*tin,*tout,timer=1,*a,*val;
+    //1 1->bidirectional, 2->reverse edges
+    vector <int> *ed;
+    graphal(const int &n){
+      this->n=n;
+      ed = new vector<int>[n];
+      tin=new int[n]();
+      tout=new int[n]();
+      val=new int[2*n+5]();
+      a=new int[n];
+    }
+    ~graphal(){ delete[] ed;delete[] tin;delete[] tout;delete[] val;delete[] a;}
+    void add(int a, int b){ ed[a].push_back(b);ed[b].push_back(a); }
+    void load(int m){
+      int x,y;
+      for(int i=0;i<m;i++){
+        scanf("%d %d",&x,&y);
+        add(x-1,y-1);
+      }
+    }
+    void loada(){ for(int i=0;i<n;i++){ scanf("%d",a+i); } }
+    void dfs(int ix=0, int par=-1, int d=1){
+      bool leaf=true;
+      tin[ix]=timer;
+      val[timer++]=d;
+      mulmod(d,a[ix]);
+      for(auto i:ed[ix])
+        if(i!=par){
+          leaf=false;
+          dfs(i,ix,d);
+        }
+      tout[ix]=timer++;
+    }
+};
+template <typename T>
+class bitree{ //range max between two ix
+  int n; T *a; //inp array ix 0->n-1
+  T *t, *upd; //b tree
+  bool *lz;
+  public:
+  bitree(T *a, int &n):n(n),a(a){
+    t = new T[4*n](); upd=new T[4*n]();lz=new bool[4*n]();
+    for(auto i=0;i<4*n;i++){
+      upd[i]=1;
+      lz[i]=false;
+    }
+  }
+  ~bitree(){ delete[] t;delete[] upd;delete[]lz;}
+  void build(){build(1,0,n-1);}
+  void build(int v, int l, int r){
+    if(l==r){ t[v] = a[l]; return; }
+    int mid = (l+r)/2, nv=v*2;
+    build(nv, l, mid); build(nv+1, mid+1, r);
+    t[v]=(t[nv]+t[nv+1])%MODV;
+  }
+  void trickledown(int v, int nv){
+    mulmod(upd[nv],upd[v]);
+    mulmod(upd[nv+1],upd[v]);
+    mulmod(t[nv],upd[v]);
+    mulmod(t[nv+1],upd[v]);
+    lz[nv]=true;lz[nv+1]=true;
+    lz[v]=false;
+    upd[v]=1;
+  }
+  void update(int ql, int qr, int mu){update(ql,qr,mu,1,0,n-1);}
+  void update(int ql, int qr, int mu, int v, int l, int r){
+    if(ql>qr)return;
+    if(ql>r || qr<l)return;
+    if(l==r){ mulmod(t[v],mu); return; }
+    if(ql<=l && qr>=r){
+      mulmod(upd[v],mu);
+      mulmod(t[v],mu);
+      lz[v]=true;
+      return;
+    }
+    int mid = (l+r)/2, nv=v*2;
+    if(lz[v]){ trickledown(v,nv); }
+    update(ql,qr,mu,nv,l,mid);
+    update(ql,qr,mu,nv+1,mid+1,r);
+    t[v]=(t[nv]+t[nv+1])%MODV;
+  }
+  T query(int ql, int qr){return query(ql,qr,1,0,n-1);}
+  T query(int ql,int qr,int v,int L,int R){ //ql, qr inclusive
+    if(ql>R || qr<L)return 0;
+    if(ql<=L && qr>=R)return t[v];
+    int MID = (L+R)/2, nv=v*2;
+    if(lz[v]){trickledown(v,nv);}
+    T ans = (query(ql,qr,nv,L,MID)+ query(ql,qr,nv+1,MID+1,R))%MODV;
+    return ans;
+  }
+};
+
+int main() {
+  int n,q;
+  scanf("%d %d", &n,&q);
+  graphal g(n);
+  g.load(n-1);
+  g.loada();
+  g.dfs();
+  bitree<int> b(g.val,g.timer);
+  b.build();
+  for(auto i=0;i<q;i++){
+    int t,v,x,m;
+    scanf("%d %d", &t,&v);
+    v--;
+    if(t==1){
+      scanf("%d", &x);
+      m=x;
+      mulmod(m,inv(g.a[v]));
+      b.update(g.tin[v]+1,g.tout[v]-1,m);
+      g.a[v]=x;
+
+    }else{
+      printf("%d\n",b.query(g.tin[v],g.tout[v]));
+    }
+  }
+  return 0;
+}

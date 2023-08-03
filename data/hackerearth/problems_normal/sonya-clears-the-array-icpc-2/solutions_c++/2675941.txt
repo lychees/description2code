@@ -1,0 +1,72 @@
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<string>
+#include<cstring>
+using namespace std;
+
+typedef long long LL;
+typedef vector<int> VI;
+
+#define REP(i,n) for(int i=0, i##_len=(n); i<i##_len; ++i)
+#define EACH(i,c) for(__typeof((c).begin()) i=(c).begin(),i##_end=(c).end();i!=i##_end;++i)
+#define eprintf(s...) fprintf(stderr, s)
+
+template<class T> inline void amin(T &a, const T &b) { if (b<a) a=b; }
+template<class T> inline void amax(T &a, const T &b) { if (a<b) a=b; }
+
+const int MAX = 10000000;
+int min_factor[MAX+1];
+vector<int>prime;
+void make_prime() {
+    for (int i=2; i<=MAX; i+=2) min_factor[i] = 2;
+    for (int i=3; i<=MAX; i+=3) if (!min_factor[i]) min_factor[i] = 3;
+    for (int i=5, d=2; i*i<=MAX; ) {
+	if (!min_factor[i]) {
+	    min_factor[i] = i;
+	    for (int j=i*i; j<=MAX; j+=i)
+		if (!min_factor[j]) min_factor[j] = i;
+	}
+	i += d; d = 6 - d;
+    }
+    for (int i=2; i<=MAX; i++) {
+	if (min_factor[i]==0) min_factor[i] = i;
+	if (min_factor[i]==i) prime.push_back(i);
+    }
+}
+
+LL cost(int x, int y) {
+    int xp = lower_bound(prime.begin(), prime.end(), x) - prime.begin();
+    int yp = lower_bound(prime.begin(), prime.end(), y) - prime.begin();
+    if (yp <= xp) {
+	yp = xp+1;
+    } else {
+	xp = yp-1;
+    }
+    return prime[xp] - x + prime[yp] - y;
+}
+
+int N, A[511];
+LL dp[511][511];
+
+int main() {
+    make_prime();
+    scanf("%d", &N);
+    REP (i, N) scanf("%d", A+i);
+
+    memset(dp, 0x3f, sizeof dp);
+    REP (i, N+1) dp[i][i] = 0;
+    for (int i=N-2; i>=0; i--) {
+	
+	for (int j=i+1; j<N; j+=2)
+	    amin(dp[i][j+1], cost(A[i], A[j]) + dp[i+1][j]);
+
+	for (int j=i+2; j<=N; j++)
+	    for (int k=i; k<=j; k++)
+		amin(dp[i][j], dp[i][k] + dp[k][j]);
+    }
+
+    printf("%lld\n", dp[0][N] + N/2);
+    return 0;
+}

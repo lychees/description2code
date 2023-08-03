@@ -1,0 +1,68 @@
+#include <stdio.h>
+#include <iostream>
+using namespace std;
+// Initialize maximum no of EGGs and floors
+const int EGGS = 504;
+const int FLOORS = 504;
+
+int array[EGGS+1][FLOORS+1];
+
+//function to compute the trials
+int omlette(const int e, const int f)
+{
+	// basic cases or rare cases only. i say such cases are rare as i like Manhattan
+   	if (e == 1) return f;
+   	if (f == 0) return 0;
+   	if (f == 1) return 1;
+   
+   	// Memoization at work. to check if we have already calculated a value.
+   	if ( array[e][f] >= 0 )
+      		return array[e][f];
+
+   	// initialize minimum number of drops to number of floors 
+   	int min = f;
+   	for (int n = 1; n <= f; ++n)
+      	{      
+      		const int a = omlette(e-1, n-1);//drop from floor n. If it breaks,test floors 1 to n-1 with e-1 eggs.
+      
+      		const int b = omlette(e, f-n); // If it doesn't break,test floors n+1 to f with e eggs.
+      
+      		const int c = 1 + (a > b ? a : b);// find worst case number of drops. since 1 drop already used.
+      
+      		min = (c < min ? c : min); // minimum for all n.
+      	}
+	array[e][f] = min; // Memoization of the result
+
+   return min;
+}
+
+int main()
+{
+	int e;
+   	// for 1 egg check all floors . Making sure of the rare case
+   	for (int f = 1; f <= FLOORS; ++f)
+      		array[1][f] = f;
+  
+	for (e = 2; e <= EGGS; ++e) // making sure of the rare case
+      	{
+      		array[e][1] = 1; // With just 1 floor we only need one drop.
+      		array[e][0] = 0; // With zero floors we don't need any drops.
+      	}
+
+   	// rest of array is made -1. Will be used later for computation. these are frequent cases
+   	for (e = 2; e <= EGGS; ++e)
+      		for (int f = 2; f <= FLOORS; ++f)
+         		array[e][f] = -1;
+ 
+      int eggs, floors;
+	int T;
+      cin>>T;
+      while(T--){
+      scanf("%d", &floors);
+      //cin >> eggs;
+      scanf("%d", &eggs);
+      //cout <<omlette(eggs,floors) << endl;
+      printf("%d\n", omlette(eggs,floors));
+      }
+   return 0;
+}

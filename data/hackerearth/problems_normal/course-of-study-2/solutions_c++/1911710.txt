@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define LIM 200055
+#define MOD 1000000007
+#define s(x)  scanf("%lld", &x)
+#define ll long long
+
+ll fact[LIM];
+ll invfact[LIM];
+
+ll powmod(ll base, ll expo) {
+	ll result = 1;
+	while (expo) {
+		if (expo & 1) {
+			result = (result * 1LL * base) % MOD;
+		}
+		expo >>= 1;
+		base = (base * 1LL * base) % MOD;
+	}
+	return result;
+}
+
+ll invmod(ll base) {
+	return powmod(base, MOD - 2);
+}
+
+ll init() {
+	fact[0] = 1;
+	for (ll i = 1; i < LIM; ++i) {
+		fact[i] = (fact[i - 1] * 1LL * i) % MOD;
+	}
+	invfact[LIM - 1] = invmod(fact[LIM - 1]);
+	for (ll i = LIM - 1; i > 0; --i) {
+		invfact[i - 1] = (invfact[i] * 1LL * i) % MOD;
+	}
+}
+
+ll nCr(ll n, ll r) {
+	if (r > n || r < 0) {
+		return 0;
+	}
+	return (((fact[n] * 1LL * invfact[r]) % MOD) * 1LL * invfact[n - r]) % MOD;
+}
+
+vector<vector<ll> > v;
+
+int main() {
+	init();
+
+	ll n; s(n);
+	v.resize(n);
+	for (ll i = 0; i < n; ++i) {
+		ll m; s(m);
+		for (ll j = 0; j < m; ++j){
+			ll item; s(item);
+			v[i].push_back(item);
+		}
+		sort(v[i].begin(), v[i].end());
+	}
+
+	ll numberOfElement = 1;
+	ll ans = 1;
+	for (ll i = 0; i < n; ++i) {
+		  ll j = 0;
+		   while (j < v[i].size()) {
+			ll cur = v[i][j];
+			ll count = 0;
+			while (cur == v[i][j]) {
+				++count; ++j;
+			}
+			ans = ((ans *  fact[count]) % MOD);
+		}
+		ll sum = 0;
+		ll lim = min(numberOfElement, (ll) v[i].size());
+		for (ll r = 1; r <= lim; ++r) {
+			ll breaks;
+			if (r == 1) {
+				breaks = 1;
+			}
+			else {
+				breaks = nCr(v[i].size() - 1, r - 1);
+			}
+			sum = (sum + (nCr(numberOfElement, r) * 1LL * breaks) % MOD) % MOD;
+	}
+
+		numberOfElement += v[i].size();
+		ans = (ans * 1LL * sum) % MOD;
+	}
+	cout << ans << endl;
+    return 0;
+}

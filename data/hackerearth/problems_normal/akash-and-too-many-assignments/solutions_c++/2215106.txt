@@ -1,0 +1,74 @@
+#include <memory.h>
+#include <iostream>
+#include <string>
+using namespace std;
+const int maxn=1+1e6,maxv=26;
+
+int FT[maxn][maxv];
+string s;
+
+void inc(int pos) {
+    for (int i=pos;i<maxn;i=i|(i+1))
+        for (int j=s[pos]-'a';j<maxv;j=j|(j+1))
+            ++FT[i][j];
+}
+
+void dec(int pos) {
+    for (int i=pos;i<maxn;i=i|(i+1))
+        for (int j=s[pos]-'a';j<maxv;j=j|(j+1))
+            --FT[i][j];
+}
+
+int sum(int pos,int ch) {
+    int res=0;
+    for (int i=pos;i>=0;i=(i&(i+1))-1)
+        for (int j=ch;j>=0;j=(j&(j+1))-1)
+            res+=FT[i][j];
+    return res;
+}
+
+int sum(int ch,int l,int r) {
+    return sum(r,ch)-sum(l-1,ch);
+}
+
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    memset(FT,0,sizeof(FT));
+    int n,m;
+    cin>>n>>m;
+    cin>>s;
+    for (int i=0;i<s.size();i++)
+        inc(i);
+    for (int i=0;i<m;i++) {
+        int type;
+        cin>>type;
+        if (type) {
+            int l,r,k;
+            cin>>l>>r>>k;
+            --l,--r;
+            if (k>r-l+1 || l>r)
+                cout<<"Out of range\n";
+            else {
+                int lb=0,rb=26;
+                while (lb<rb) {
+                    int m=(lb+rb)/2;
+                    if (sum(m,l,r)<k)
+                        lb=m+1;
+                    else
+                        rb=m;
+                }
+                cout<<char('a'+(lb+rb)/2)<<"\n";
+            }
+        }
+        else {
+            char ch; int pos;
+            cin>>pos>>ch; --pos;
+            dec(pos);
+            s[pos]=ch;
+            inc(pos);
+        }
+    }
+    return 0;
+}

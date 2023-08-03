@@ -1,0 +1,199 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+/*
+*/
+
+struct dsu
+{
+	vector<int> p;
+	vector<int> sz;
+	dsu(int n)
+	{
+		p = vector<int> (n, -1);
+		sz = vector<int> (n, 0);
+	}
+	int find(int i)
+	{
+		if (p[i] == -1 || p[i] == i)
+			return i;
+		return p[i] = find(p[i]);
+	}
+	void un(int i, int j)
+	{
+		i = find(i);
+		j = find(j);
+		if (i == j)
+			return;
+		sz[i] += sz[j];
+		p[j] = i;
+	}
+	int getSz(int i)
+	{
+		return sz[find(i)];
+	}
+};
+
+int p[100005][20];
+int mnEdge[100005][20];
+int L[100005];
+int in[100005];
+vector<int> ord;
+vector<pair<int, int> > tr[100005];
+
+void dfs(int i, int par, int d)
+{
+	for (int j = 1; j < 20; j++)
+		p[i][j] = -1, mnEdge[i][j] = 1000000000;
+	
+	in[i] = ord.size();
+	ord.push_back(i);
+	p[i][0] = par;
+	for (int j = 1; j < 20; j++)
+	{
+		if (p[i][j-1] == -1)
+			break;
+		p[i][j] = p[p[i][j-1]][j-1];
+		mnEdge[i][j] = min(mnEdge[p[i][j-1]][j-1], mnEdge[i][j-1]);
+	}
+	L[i] = d;
+	for (int j = 0; j < tr[i].size(); j++)
+	{
+		if (tr[i][j].first == par)
+			continue;
+		mnEdge[tr[i][j].first][0] = tr[i][j].second;
+		dfs(tr[i][j].first, i, d+1);
+	}
+}
+
+int getMnEdge(int i, int j)
+{
+	int len = L[i] - L[j];
+	if (len == 0)
+		return 0;
+	int mn = 1000000000;
+	int cur = i;
+	for (int k = 19; k >= 0; k--)
+	{
+		if ((1<<k) <= len)
+		{
+			mn = min(mn , mnEdge[cur][k]);
+			len -= (1<<k);
+			cur = p[cur][k];
+		}
+	}
+	return mn;
+}
+
+int LCA(int x, int y)
+{
+    if(L[x] < L[y])
+	swap(x, y);
+
+    for(int i = 19; i >= 0; i--)
+	if(L[x] - (1<<i) >= L[y])
+	    x = p[x][i];
+    
+    if(x == y)
+		return x;
+
+    for(int i = 19; i >= 0; i--)
+		if(p[x][i] != -1 && p[x][i] != p[y][i])
+		{
+	    	x = p[x][i];
+	   		y = p[y][i];
+		}
+    
+    return p[x][0];
+}
+
+long long solve(vector<int> &cities)
+{
+	if (cities.size() == 1)
+		return 0;
+	priority_queue<int> q;
+	vector<pair<int, pair<int, int> > > edges;
+	for (int i = 0; i < cities.size(); i++)
+	{
+		q.push(in[cities[i]]);
+	}
+	map<int, int> mp;
+	while (q.size() > 1)
+	{
+		int t1, t2;
+		t1 = q.top();
+		q.pop();
+		t2 = q.top();
+		if (t1 == t2)
+			continue;
+		
+		q.pop();
+		
+		t1 = ord[t1];
+		t2 = ord[t2];
+		if (!mp.count(t1))
+		{
+			int sz = mp.size();
+			mp[t1] = sz;
+		}
+
+		if (!mp.count(t2))
+		{
+			int sz = mp.size();
+			mp[t2] = sz;
+		}
+
+		int lca = LCA(t1, t2);
+		if (t1 != lca)
+		{
+			edges.push_back(make_pair(getMnEdge(t1, lca), make_pair(t1, lca)));
+		}
+		q.push(in[lca]);
+		q.push(in[t2]);
+	}
+	sort(edges.begin(), edges.end());
+	dsu tr(mp.size());
+	for (int i = 0; i < cities.size(); i++)
+	{
+		tr.sz[mp[cities[i]]] = 1;
+	}
+	long long ans = 0;
+	for (int i = edges.size()-1; i >= 0; i--)
+	{
+		int u = mp[edges[i].second.first];
+		int v = mp[edges[i].second.second];
+		ans += tr.getSz(u)*1ll*edges[i].first*1ll*tr.getSz(v);
+		tr.un(u, v);
+	}
+	return ans;
+}
+
+int main()
+{
+	int n;
+	scanf("%d", &n);
+	for (int i = 1; i < n; i++)
+	{
+		int u, v, c;
+		scanf("%d %d %d", &u, &v, &c);
+		u--;
+		v--;
+		tr[u].push_back(make_pair(v, c));
+		tr[v].push_back(make_pair(u, c));
+	}
+	dfs(0, -1, 0);
+	int q;
+	scanf("%d", &q);
+	while (q--)
+	{
+		int c;
+		scanf("%d", &c);
+		vector<int> cities(c);
+		for (int i = 0; i < c; i++)
+		{
+			scanf("%d", &cities[i]);
+			cities[i]--;
+		}
+		printf("%lld\n", solve(cities));
+	}
+}

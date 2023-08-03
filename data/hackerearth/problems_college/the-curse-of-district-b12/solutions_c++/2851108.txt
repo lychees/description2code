@@ -1,0 +1,91 @@
+/*
+ID: ashish1610
+PROG:
+LANG: C++
+*/
+#include<bits/stdc++.h>
+using namespace std;
+#define ll				long long int
+#define vi				vector<int>
+#define vl				vector<ll>
+#define	pii				pair<int,int>
+#define pil				pair<int, ll>
+#define pll				pair<ll, ll>
+#define pli 			pair<ll, int>
+#define pb(v, a)		v.push_back(a)
+#define mp(a, b)		make_pair(a, b)
+#define MOD				1000000007
+#define rep(i, a, b)	for(i=a; i<=b; ++i)
+#define rrep(i, a, b)	for(i=a; i>=b; --i)
+#define si(a)			scanf("%d", &a)
+#define sl(a)			scanf("%lld", &a)
+#define pi(a)			printf("%d", a)
+#define pl(a)			printf("%lld", a)
+#define pn 				printf("\n")
+ll pow_mod(ll a, ll b) {
+	ll res = 1;
+	while(b) {
+		if(b & 1)
+			res = (res * a) % MOD;
+		a = (a * a) % MOD;
+		b >>= 1;
+	}
+	return res;
+}
+double prob[25][25];
+double res[(1 << 20) + 5];
+bool visited[(1 << 20) + 5];
+void bfs(int mask, int n) {
+	visited[mask] = true;
+	queue<int> q;
+	q.push(mask);
+	res[mask] = 1.0;
+	while(!q.empty()) {
+		int nd = q.front();
+		// cout << nd << " ";
+		q.pop();
+		int bit_cnt = __builtin_popcount(nd);
+		int cnt = (bit_cnt * (bit_cnt - 1)) / 2;
+		double tmp_res = 1.0 / cnt;
+		// cout << tmp_res << " ";
+		// cout << bit_cnt << " ";
+		for(int i = 0; i < n; ++i) {
+			if(nd & (1 << i)) {
+				for(int j = 0; j < i; ++j) {
+					if(nd & (1 << j)) {
+						int new_mask = nd ^ (1 << i);
+						if(!visited[new_mask]) {
+							q.push(new_mask);
+						}
+						visited[new_mask] = true;
+						res[new_mask] += prob[j][i] * res[nd] * tmp_res;
+
+						new_mask = nd ^ (1 << j);
+						if(!visited[new_mask]) {
+							q.push(new_mask);
+						}
+						visited[new_mask] = true;
+						res[new_mask] += prob[i][j] * res[nd] * tmp_res;
+					}
+				}
+			}
+		}
+	}
+}
+int main() {
+	int n;
+	cin >> n;
+	for(int i = 0; i < n; ++i) {
+		for(int j = 0; j < n; ++j) {
+			cin >> prob[i][j];
+		}
+	}
+	int mask = (1 << n) - 1;
+	memset(visited, false, sizeof(visited));
+	bfs(mask, n);
+	for(int i = 0; i < n; ++i) {
+		printf("%0.5lf ", res[(1 << i)]);
+	}
+	pn;
+	return 0;
+}

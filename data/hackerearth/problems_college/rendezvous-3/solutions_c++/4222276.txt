@@ -1,0 +1,131 @@
+#include<bits/stdc++.h>
+#define MAX 100000
+#define pb push_back
+#define forn(i,n) for(i=1;i<=n;i++)
+#define fornb(i,n) for(i=n;i>=1;i--)
+#define for0(i,n) for(i=0;i<n;i++)
+#define for0b(i,n) for(i=n-1;i>=0;i--)
+
+typedef long long ll;
+typedef double lf;
+
+using namespace std;
+
+int n,m,a,b,w,s;
+vector<pair<int,int> > gr[MAX+2];vector<pair<int,int> > gr1[MAX+2];
+vector<pair<int,int> > V;//first is parent and second is rank
+
+struct kedge{
+	int val,v1,v2; //val has value of edge and v1,v2 corr. vertices
+};
+
+bool kcompare(kedge k1,kedge k2){
+	if(k1.val < k2.val)
+		return true;
+	else
+		return false;
+}
+
+kedge edges[MAX+5];int sz=0;
+kedge info[MAX+5];int fsz=0;
+
+void read()
+{
+	int i,j;pair<int,int> pair1,pair2;
+	for0(i,MAX+2){
+		gr[i].clear();
+		gr1[i].clear();
+	}
+	cin>>n>>m;
+	for0(i,m){
+		cin>>a>>b>>w;
+		if(a>b){
+			int temp=a;
+			a=b;
+			b=temp;
+		}
+		a--;b--;
+		pair1.first=b;
+		pair1.second=w;
+		gr1[a].pb(pair1);
+	}
+	s=0;
+	for0(i,n){
+		sort(gr1[i].begin(),gr1[i].end());j=0;
+		while(j<gr1[i].size()){
+			int k=j+1;
+			gr[i].pb(gr1[i][j]);
+			edges[sz].val=gr1[i][j].second;
+			edges[sz].v1=i;
+			edges[sz].v2=gr1[i][j].first;sz++;
+			while(k<gr1[i].size() && (gr1[i][j].first == gr1[i][k].first))
+				k++;
+			j=k;
+		}
+	}
+}
+
+int find(int x)
+{
+	if(V[x].first!=x)
+		V[x].first = find(V[x].first);
+	return V[x].first;
+}
+
+void Union(int x,int y)
+{
+	int xpar=find(x);
+	int ypar=find(y);
+
+	if(xpar == ypar)
+		return;
+
+	if(V[xpar].second > V[ypar].second)
+		V[ypar].first = xpar;
+	else if(V[xpar].second < V[ypar].second)
+		V[xpar].first = ypar;
+	else{
+		V[ypar].first = xpar;
+		V[xpar].second++;
+	}
+}
+
+void addEdge(kedge k){
+	info[fsz]=k;
+	fsz++;	
+}
+
+void kruskal(){
+	int i,j;
+	for0(i,n){
+		pair<int,int> p;
+		p.first=i;p.second=0;
+		V.pb(p);
+	}
+	sort(edges,edges+sz,kcompare);
+	for0(i,sz){
+		int p1=find(edges[i].v1);
+		int p2=find(edges[i].v2);
+		if(p1!=p2)	//if p1 == p2 then the edge will form a cycle
+		{
+			addEdge(edges[i]);
+			Union(p1,p2);
+		}
+	}
+}
+
+ll printsum(){
+	ll sum=0;int i;
+	for0(i,fsz)
+		sum+=info[i].val;
+	return sum;
+}
+
+int main()
+{
+	ios::sync_with_stdio(0);
+	read();
+	kruskal();
+	cout<<printsum()<<endl;
+	return 0;
+}

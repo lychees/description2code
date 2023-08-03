@@ -1,0 +1,108 @@
+/*
+ID: ashish1610
+PROG: Xor minimization
+LANG: C++
+*/
+#include<bits/stdc++.h>
+using namespace std;
+#define ll	long long int
+#define MOD 1000000007
+bool flag[100005];
+ll dp[100005];
+int trie[4*1000005];
+int n;
+int ar[105];
+void subset_sum(int cnt)
+{
+	memset(flag,false,sizeof(flag));
+	memset(dp,0,sizeof(dp));
+	flag[0]=true;
+	dp[0]=1;
+	int tmp=1;
+	for(int i=0;i<n;++i)
+	{
+		for(int j=tmp;j>=0;--j)
+		{
+			if(flag[j])
+			{
+				tmp=max(tmp,j+ar[i]);
+				flag[j+ar[i]]=true;
+				dp[j+ar[i]]+=dp[j];
+				dp[j+ar[i]]%=MOD;
+			}
+		}
+	}
+}
+void insert_trie(int val)
+{
+	int ind=1;
+	for(int i=19;i>=0;--i)
+	{
+		if(val & (1<<i))
+		{
+			trie[2*ind+1]=1;
+			ind=2*ind+1;
+		}
+		else
+		{
+			trie[2*ind]=1;
+			ind=2*ind;
+		}
+	}
+}
+int query_trie(int val)
+{
+	int res=0;
+	int ind=1;
+	for(int i=19;i>=0;--i)
+	{
+		if(val & (1<<i))
+		{
+			if(trie[2*ind+1])
+			{
+				res+=(1<<i);
+				ind=2*ind+1;
+			}
+			else
+				ind=2*ind;
+		}
+		else
+		{
+			if(!trie[2*ind])
+			{
+				res+=(1<<i);
+				ind=2*ind+1;
+			}
+			else
+				ind=2*ind;
+		}
+	}
+	return res;
+}
+int main()
+{
+	int cnt=0;
+	scanf("%d",&n);
+	for(int i=0;i<n;++i)
+	{
+		scanf("%d",&ar[i]);
+		cnt+=ar[i];
+	}
+	subset_sum(cnt);
+	memset(trie,0,sizeof(trie));
+	for(int i=1;i<=cnt;++i)
+	{
+		if(flag[i])
+			insert_trie(i);
+	}
+	int q;
+	scanf("%d",&q);
+	while(q--)
+	{
+		ll a;
+		scanf("%lld",&a);
+		int ans=query_trie(a);
+		printf("%d %lld\n",ans,dp[ans]);
+	}
+	return 0;
+}

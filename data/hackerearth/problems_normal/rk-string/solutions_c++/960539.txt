@@ -1,0 +1,102 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+int f(string& s, int p, char c)
+{
+	int i;
+	for(i = p + 1; i < (int)s.size() && s[i] != c; ++i);
+	return i;
+}
+
+unsigned long long ans(string& s, char c, int n)
+{
+	int begin = 0, end = 0;
+	int beforeBegin = -1, afterEnd = -1;
+	
+	int found = 0;
+	
+	if(n != 0)
+		begin = f(s,-1,c);
+	else
+		begin = beforeBegin;
+	
+	if(begin < (int)s.size() && n > 0)
+		found++;
+	
+	end = begin;
+	
+	while(end < (int)s.size())
+	{
+		if(found == n)
+		{
+			afterEnd = f(s, end, c);
+			break;
+		}
+		
+		end++;
+		
+		if(s[end] == c)
+			found++;
+	}
+	
+	unsigned long long result = 0;
+	
+	while(true)
+	{
+		if(n > 0)
+		{
+			if(end == s.size() || afterEnd == -1)
+				break;
+				
+			unsigned long long a = begin - beforeBegin;
+			unsigned long long b = afterEnd - end;
+			result += a * b;
+			
+			beforeBegin = begin;
+			begin = f(s, begin, c);
+			
+			end = afterEnd;
+			afterEnd = f(s, afterEnd, c);
+		}
+		else
+		{
+			if(beforeBegin == s.size() || afterEnd == -1)
+				break;
+				
+			unsigned long long ks = (afterEnd - beforeBegin - 1);
+			
+			unsigned long long a = ks % 2 == 0? ks / 2 : ks;
+			unsigned long long b = ks % 2 == 1? (ks + 1)/2 : ks+ 1;
+			
+			result += a* b;
+			
+			beforeBegin = f(s, beforeBegin, c);
+			afterEnd = f(s, afterEnd, c);
+		}
+	}
+	
+	return result;	
+}
+
+int main()
+{
+	std::ios::sync_with_stdio(false);
+	
+	int t;
+	cin>>t;
+	
+	while(t--)
+	{
+		int m,n;
+		cin>>m>>n;
+		
+		string str;
+		cin>>str;
+		
+		cout<<ans(str, 'R', m) << " ";
+		cout<<ans(str, 'K', n) << "\n";
+	}
+}

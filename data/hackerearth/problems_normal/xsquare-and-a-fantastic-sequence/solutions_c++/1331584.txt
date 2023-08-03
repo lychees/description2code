@@ -1,0 +1,84 @@
+/* Written by Filip Hlasek 2015 */
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <string>
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+
+#define FOR(i,a,b) for(int i=(a);i<=(b);i++)
+#define FORD(i,a,b) for(int i=(a);i>=(b);i--)
+#define REP(i,b) for(int i=0;i<(b);i++)
+
+using namespace std;
+
+#define MAXN 1111111
+int N, M;
+vector<int> graph[MAXN];
+char S1[MAXN], S2[MAXN], ans[MAXN];
+bool done[MAXN];
+vector<int> seq;
+int ANS;
+
+void dfs(int v) {
+  done[v] = true;
+  seq.push_back(v);
+  REP(i, graph[v].size()) if (!done[graph[v][i]]) dfs(graph[v][i]);
+}
+
+int cnt1[MAXN], cnt2[MAXN];
+
+int main(int argc, char *argv[]) {
+  int T;
+  scanf("%d", &T);
+  while (T--) {
+    scanf("%d%d", &N, &M);
+    REP(i, N) graph[i].clear();
+    scanf("%s", S1);
+    scanf("%s", S2);
+    REP(i, M) {
+      int a, b;
+      scanf("%d%d", &a, &b); a--; b--;
+      graph[a].push_back(b);
+      graph[b].push_back(a);
+    }
+    REP(i, N) done[i] = false;
+    ANS = 0;
+    REP(i, N) if (!done[i]) {
+      seq.clear();
+      dfs(i);
+      sort(seq.begin(), seq.end());
+      REP(j, 30) cnt1[j] = cnt2[j] = 0;
+      REP(j, seq.size()) {
+        int k = seq[j];
+        cnt1[S1[k] - 'a']++;
+        cnt2[S2[k] - 'a']++;
+      }
+      int pos = 0;
+      REP(j, seq.size()) {
+        int k = seq[j];
+        while (pos < 30 && cnt2[pos] >= cnt1[pos]) pos++;
+        int required = S2[k] - 'a';
+        if ((cnt1[required] && required <= pos) || cnt1[required] >= cnt2[required]) {
+          cnt1[required]--;
+          ans[k] = required + 'a';
+          ANS++;
+        }
+        else {
+          cnt1[pos]--;
+          ans[k] = pos + 'a';
+        }
+        cnt2[required]--;
+      }
+    }
+    ans[N] = '\0';
+    printf("%d\n", ANS);
+    printf("%s\n", ans);
+  }
+  return 0;
+}

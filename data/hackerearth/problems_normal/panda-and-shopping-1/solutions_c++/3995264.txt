@@ -1,0 +1,131 @@
+
+#include<bits/stdc++.h>
+using namespace std;
+//int arrr[1000005];
+// inhortcuts for "common" data types in contests
+typedef long long li;
+typedef vector<int> vi;
+typedef pair<int, int> ii;
+typedef vector<ii> vii;
+typedef set<int> si;
+typedef map<string, int> msi;
+#define rep(i, a, b) for(li i=a; i<b; i++)
+#define ALL(c) c.begin(), c.end()
+#define rloop(i, a, b) for(int i=b-1; i>=a; i--)
+#define loopinc(i, a, b, inc) for(int i=a; i<b; i+=inc)
+/*Use like- 
+rep(i,0,n - 1)
+*/
+
+template<class T> T pwr(T b, T p){T r=1,x=b;while(p){if(p&1)r*=x;x*=x;p=(p>>1);}return r;}
+ 
+#define     inf             (0x7f7f7f7f)
+#define     inf1             -(0x7f7f7f7f)
+const int MAXN = 2e5+5;
+#define MOD 1000000007
+li modPow(li a, li x, li p) {
+    //calculates a^x mod p in logarithmic time.
+    li ansrt = 1;
+    while(x > 0) {
+        if( x % 2 != 0) {
+            ansrt = (ansrt * a) % p;
+        }
+        a = (a * a) % p;
+        x /= 2;
+    }
+
+    return ansrt;
+}
+class CompareDist
+{
+public:
+    bool operator()(pair<long long,long long> n1,pair<long long,long long> n2) {
+        return n1.second>n2.second;
+    }
+};
+class CompareDist1
+{
+public:
+    bool operator()(pair<long long,long long> n1,pair<long long,long long> n2) {
+        return n1.second<n2.second;
+    }
+};
+long long ans[MAXN],H[MAXN], L[MAXN], l1[MAXN],tree[4 * MAXN];
+unordered_map < long long, long long > hasht;
+
+void update(int node, int start, int end, int idx, int val)
+{
+    if(start == end)
+    {
+        // Leaf node
+        //A[idx] += val;
+        tree[node] = val;
+    }
+    else
+    {
+        int mid = (start + end) / 2;
+        if(start <= idx and idx <= mid)
+        {
+            // If idx is in the left child, recurse on the left child
+            update(2*node, start, mid, idx, val);
+        }
+        else
+        {
+            // if idx is in the right child, recurse on the right child
+            update(2*node+1, mid+1, end, idx, val);
+        }
+        // Internal node will have the sum of both of its children
+        tree[node] = max(tree[2*node], tree[2*node+1]);
+    }
+}
+int query(int node, int start, int end, int l, int r)
+{
+    if(r < start or end < l)
+    {
+        // range represented by a node is completely outside the given range
+        return -1;
+    }
+    if(l <= start and end <= r)
+    {
+        // range represented by a node is completely inside the given range
+        return tree[node];
+    }
+    // range represented by a node is partially inside and partially outside the given range
+    int mid = (start + end) / 2;
+    int p1 = query(2*node, start, mid, l, r);
+    int p2 = query(2*node+1, mid+1, end, l, r);
+    return max(p1, p2);
+}
+int main() {
+	
+	long long tot=0,ansrt=inf1;
+	int n;
+	cin>>n;
+	rep(i,0,4*n ){
+		tree[i] = inf1;
+	}
+	rep(i,0,n ) {
+		cin>>H[i]>>L[i];
+	}
+	rep(i,0,n ) {
+		l1[i]=L[i];
+	}
+	ans[0] = H[0];
+	sort(l1, l1 + n);
+	rep(i,0,n ) {
+		if(hasht.find(l1[i]) == hasht.end()) {
+			hasht[l1[i]] = tot;
+			tot++;
+		}
+	}
+	update(1, 0, n - 1, hasht[L[0]], ans[0]);
+	rep(i,1,n ) {
+		ans[i] = max(H[i], query(1, 0, n - 1, 0, hasht[L[i]]) + H[i]);
+		update(1, 0, n - 1, hasht[L[i]], ans[i]);
+	}
+	rep(i,0,n ) {
+		ansrt = max(ansrt, ans[i]);
+	}
+	cout<<ansrt<<endl;
+	return 0;
+}

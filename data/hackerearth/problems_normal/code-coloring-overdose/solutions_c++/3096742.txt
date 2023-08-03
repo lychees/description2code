@@ -1,0 +1,84 @@
+#include <iostream>
+#include <stdio.h>
+#include <algorithm>
+#include <cmath>
+#include <vector>
+#include <iomanip>
+#include <utility>
+#include <set>
+#include <map>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define F first
+#define S second
+
+const int N = 500500;
+const long long mod = (long long)1e9 + 7LL;
+
+int n, k, m;
+int c[N];
+int b[N];
+long long two[N];
+long long f[13][N];
+map<int, int> have;
+map<int, int> :: iterator it;
+long long fact[N];
+long long inv_f[N];
+
+long long power(long long x, long long n) {
+    if (n == 0LL) return 1LL;
+    if (n == 1LL) return x;
+    if (n % 2LL == 0LL) {
+        long long y = power(x, n / 2LL);
+        return (y * y) % mod;
+    } else {
+        long long y = power(x, n - 1LL);
+        return (x * y) % mod;
+    }
+}
+
+long long C(int n, int k) {
+    if (k > n) return 0LL;
+    return ((fact[n] * inv_f[k]) % mod * inv_f[n - k]) % mod;
+}
+
+int main() {
+    scanf("%d%d%d", &n, &k, &m);
+    for (int i = 1; i <= n; i++) {
+        scanf("%d", &c[i]);
+        have[c[i]]++;
+    }
+    fact[0] = 1LL;
+    inv_f[0] = 1LL;
+    for (int i = 1; i <= n; i++) {
+        fact[i] = (1LL * i * fact[i - 1]) % mod;
+        inv_f[i] = power(fact[i], mod - 2);
+    }
+    int sz = 0;
+    for (it = have.begin(); it != have.end(); it++) {
+        b[++sz] = it -> S;
+    }
+    two[0] = 1LL;
+    for (int i = 1; i <= n; i++) {
+        two[i] = (two[i - 1] * 2LL) % mod;
+    }
+    f[0][0] = 1LL;
+    for (int i = 0; i < sz; i++) {
+        for (int j = 0; j <= m; j++) {
+            if (f[j][i] == 0LL) continue;
+            f[j][i + 1] += f[j][i];
+            f[j][i + 1] %= mod;
+            long long add = 1LL * (two[b[i + 1]] - 1LL) * f[j][i];
+            add %= mod;
+            f[j + 1][i + 1] += add;
+            f[j + 1][i + 1] %= mod;
+        }
+    }
+    long long ans = 0LL;
+    for (int i = 0; i <= m; i++) ans += f[i][sz], ans %= mod;
+    cout << ans << endl;
+    return 0;
+}

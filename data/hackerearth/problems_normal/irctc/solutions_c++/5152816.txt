@@ -1,0 +1,128 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MAX 100005
+#define pii pair< long long int,long long  int >
+#define pb(x) push_back(x)
+long long int INF = 1000000000000000;
+struct comp {
+	bool operator() (const pii &a, const pii &b) {
+		return a.second > b.second;
+	}
+};
+priority_queue< pii, vector< pii >, comp > Q;
+vector< pii > G[MAX];
+long long int D[MAX];
+bool F[MAX];
+int Path[MAX];
+vector<int> p;
+vector<int> p1;
+int main()
+{
+	int test;
+	scanf("%d", &test);
+	while (test--)
+	{
+		long long int Dist = 0;
+		int i, u, v, w, sz, nodes, edges, starting;
+		// create graph
+		scanf("%d %d", &nodes, &edges);
+		for (i = 0; i<edges; i++) {
+			scanf("%d %d %d", &u, &v, &w);
+			G[u].pb(pii(v, w));
+			G[v].pb(pii(u, w)); // for undirected
+		}
+		int A, B, C;
+		scanf("%d%d%d", &A, &B, &C);
+		for (i = 1; i <= nodes; i++){
+			D[i] = INF;
+			F[i] = false;
+		}
+		D[A] = 0;
+		Q.push(pii(A, 0));
+		// dijkstra
+		while (!Q.empty()) {
+			u = Q.top().first;
+			Q.pop();
+			if (F[u]) continue;
+			sz = G[u].size();
+			for (i = 0; i<sz; i++) {
+				v = G[u][i].first;
+				w = G[u][i].second;
+				if (!F[v] && D[u] + w < D[v]) {
+					D[v] = D[u] + w;
+					Path[v] = u;
+					Q.push(pii(v, D[v]));
+				}
+			}
+			F[u] = 1; // done with u
+		}
+		if (D[B] == INF)
+		{
+			printf("No Train Found.\n");
+			goto end;
+		}
+		else
+		{
+			Dist += D[B];
+			for (int v = B; v != A; v = Path[v])
+			{
+				p.push_back(v);
+			}
+			p.push_back(A);
+		}
+		Q = priority_queue< pii, vector< pii >, comp >();
+		for (i = 1; i <= nodes; i++)
+		{
+			D[i] = INF;
+			F[i] = false;
+		}
+		D[B] = 0;
+		Q.push(pii(B, 0));
+		// dijkstra
+		while (!Q.empty())
+		{
+			u = Q.top().first;
+			Q.pop();
+			if (F[u]) continue;
+			sz = G[u].size();
+			for (i = 0; i<sz; i++)
+			{
+				v = G[u][i].first;
+				w = G[u][i].second;
+				if (!F[v] && D[u] + w < D[v]) {
+					D[v] = D[u] + w;
+					Path[v] = u;
+					Q.push(pii(v, D[v]));
+				}
+			}
+			F[u] = 1; // done with u
+		}
+		//Check there is path or not
+		if (D[C] == INF)
+		{
+			printf("No Train Found.\n");
+			goto end;
+		}
+		else
+		{
+			Dist += D[C];
+			printf("%lld\n", Dist);
+			for (i = p.size() - 1; i >= 0; i--)
+				printf("%d ", p[i]);
+			p.clear();
+			for (int v = C; v != B; v = Path[v])
+				p.push_back(v);
+			for (i = p.size() - 1; i >= 0; i--)
+				printf("%d ", p[i]);
+			printf("\n");
+		}
+	end:
+		//Clear Graph
+		p.clear();
+		for (i = 0; i<MAX; i++)
+			G[i].clear();
+		Q = priority_queue< pii, vector< pii >, comp >();
+	}
+	return 0;
+}
+

@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ALPHABET_SIZE 26
+struct trieNode
+{
+	int maxWeight;
+	struct trieNode *children[ALPHABET_SIZE];
+};
+typedef struct trieNode TrieNode;
+struct elm
+{
+	string s;
+	int weight;
+};
+typedef struct elm Element;
+TrieNode* getNode()
+{
+	TrieNode *node = (TrieNode*)malloc(sizeof(TrieNode));
+	for (int i = 0; i < ALPHABET_SIZE; ++i)
+	{
+		node->children[i] = NULL;
+	}
+	return node;
+}
+int getAlphaIndex(char ch)
+{
+	return (ch-97);
+}
+int max(int a, int b)
+{
+	return (a>b)?a:b;
+}
+int search(TrieNode *root, string s)
+{
+	TrieNode *pCrawl = root;
+	int slength = s.length();
+	for (int i = 0; i < slength; ++i)
+	{
+		int alphaIndex = getAlphaIndex(s[i]);
+		if(pCrawl->children[alphaIndex]==NULL)
+		{
+			return -1;
+		}
+		pCrawl = pCrawl->children[alphaIndex];
+	}
+	return pCrawl->maxWeight;
+}
+void insert(TrieNode *root, Element elm)
+{
+	TrieNode *pCrawl = root;
+	string s = elm.s;
+	int slength = elm.s.length();
+
+	for (int i = 0; i < slength; ++i)
+	{
+		int alphaIndex = getAlphaIndex(s[i]);
+		if(pCrawl->children[alphaIndex] == NULL)
+		{
+			/* create new node and set its value to weight*/
+			pCrawl->children[alphaIndex] = getNode();
+			pCrawl->children[alphaIndex]->maxWeight = elm.weight;
+		}
+		else
+		{
+			/*update weight*/
+			pCrawl->children[alphaIndex]->maxWeight = max(pCrawl->children[alphaIndex]->maxWeight, elm.weight);
+		}
+		pCrawl = pCrawl->children[alphaIndex];
+	}
+}
+
+int main()
+{
+	int n,q;
+	cin>>n>>q;
+	vector<Element> myvector;
+
+	Element temp;
+	for (int i = 0; i < n; ++i)
+	{
+		temp.s.clear();
+		cin>>temp.s>>temp.weight;
+		myvector.push_back(temp);
+	}
+	TrieNode *root = getNode();
+	for (int i = 0; i < n; ++i)
+	{
+		insert(root,myvector[i]);
+	}
+	string s;
+	for (int i = 0; i < q; ++i)
+	{
+		cin>>s;
+		int answer = search(root,s);
+		cout<<answer<<endl;
+	}
+	return 0;
+}

@@ -1,0 +1,66 @@
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+
+using namespace std;
+
+const int X[] = { 0, 0, 1, 2, 0, 4, 3, 8, 1, 0 };
+
+long long dp[32][16];
+
+long long go(int n, int m) {
+	long long& ret = dp[n][m];
+	if (ret >= 0) return ret;
+	if (n == 0) return ret = (m == 0 ? 1 : 0);
+	ret = 0;
+	for (int i = 1; i < 10; i++) {
+		ret += go(n-1, m ^ X[i]);
+	}
+	return ret;
+}
+
+long long go(long long x) {
+	int d[32];
+	int n = 0;
+	while (true) {
+		d[n++] = x % 10;
+		x /= 10;
+		if (x == 0) break;
+	}
+	reverse(d, d+n);
+	
+	long long res = 0;
+	for (int i = 1; i < n; i++) res += go(i, 0);
+	int m = 0;
+	for (int i = 0; i < n; i++) {
+		for (int j = 1; j < d[i]; j++)
+			res += go(n-i-1, m ^ X[j]);
+		if (d[i] == 0) break;
+		m ^= X[d[i]];
+	}
+	return res;
+}
+
+int main()
+{
+	memset(dp, 0xff, sizeof(dp));
+	int t; cin >> t;
+	while (t--) {
+		long long a;
+		long long b;
+		long long k;
+		cin >> a >> b >> k;
+		k--; b++;
+		k += go(a);
+		if (k >= go(b))
+			cout << -1 << endl;
+		else {
+			while (a+1 < b) {
+				long long mid = (a+b) / 2;
+				if (k < go(mid)) b = mid; else a = mid;
+			}
+			cout << a << endl;
+		}
+	}
+    return 0;
+}

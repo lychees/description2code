@@ -1,0 +1,101 @@
+#include <cstdio>
+
+#define MAX_PRIMES 10
+
+#define MAX_NUM (1000*1000*1000)
+
+int reqdDivisors[1<<MAX_PRIMES];
+int totalDivisors;
+int primesCount;
+int primes[MAX_PRIMES];
+
+void getAllRequiredNumbers();
+int getNumberCount(int n);
+int getNumberCountDebug(int n);
+
+int main(){
+	int queries;
+	scanf("%d %d",&primesCount, &queries);
+	
+	for(int i=0; i<primesCount; i++)
+		scanf("%d",primes+i);
+	
+	getAllRequiredNumbers();
+	
+	/*printf("prime numbers are: ");
+	for(int i=0; i<primesCount; i++)
+		printf("%5d",primes[i]);
+	printf("\n");
+
+	printf("Total multiples: %d Required multiples are: ",totalDivisors);
+	for(int i=0; i<totalDivisors; i++)
+		printf("%d ",reqdDivisors[i]);
+	printf("\n");
+
+	int n;
+	//scanddf("%d",&n);
+	for(n=1; n<1000000; n++){
+		printf("\r%d",n);
+		if(getNumberCount(n)!=getNumberCountDebug(n))
+			printf("%d %d %d\n",n,getNumberCount(n),getNumberCountDebug(n));
+	}*/
+	int A,B;
+	for(int i=0; i<queries; i++){
+		scanf("%d %d",&A,&B);
+		printf("%d\n",getNumberCount(B)-getNumberCount(A-1));
+	}
+	return 0;
+}
+
+int getNumberCount(int n){
+	int count=0;
+	for(int i=0; i<totalDivisors; i++){
+		//printf("%10d %10d cur divisors count=%d\n",n,reqdDivisors[i],n/reqdDivisors[i]);
+		count+=n/reqdDivisors[i];
+	}
+	return count;
+}
+
+void getAllRequiredNumbers(){
+	int divisorIndex=0;
+	int maxDivisors=1<<primesCount;
+	for(int i=1; i<maxDivisors; i++){
+		long long curDivisor=-1;
+		int isReqdDivisor=1;
+		for(int k=0; k<primesCount; k++){
+			int cur_bit=(i>>k)&1;
+			if(cur_bit)
+				curDivisor=-curDivisor*primes[k];
+			
+			if(curDivisor>MAX_NUM||curDivisor<-MAX_NUM){
+				isReqdDivisor=0;
+				break;					
+			}
+		}
+		if(isReqdDivisor)
+			reqdDivisors[divisorIndex++]=curDivisor;
+	}
+	totalDivisors=divisorIndex;
+}
+
+
+int getNumberCountDebug(int n){
+	int* sieve= new int[n+1];
+	for(int k=1 ; k<=n; k++){
+		sieve[k]=0;
+	}
+
+	for(int i=0; i<primesCount; i++){
+		int cur_prime=primes[i];
+		for(int k=cur_prime; k<=n; k+=cur_prime){
+			sieve[k]=1;
+		}	
+	}
+
+	int count=0;
+	for(int k=1 ; k<=n; k++)
+		count+=sieve[k];
+
+	delete sieve;
+	return count;
+}

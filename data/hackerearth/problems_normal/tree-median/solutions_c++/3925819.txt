@@ -1,0 +1,195 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int h[1000000];
+vector<int> v[1000000];
+int d[1000000];
+long long nm,mn;
+int n;
+bool used[1000000];
+int x;
+int c[1000000];
+int dist[1000000];
+int so_far[5000000];
+int base=2000000;
+long long new_path[1000000];
+long long path[1000000];
+long long g[1000000];
+
+void solve(int,int);
+
+void dfs(int all,int x,int p)
+{
+    h[x]=1;
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(to==p || used[to])
+            continue;
+        dfs(all,to,x);
+        h[x]+=h[to];
+    }
+    d[x]=all-h[x];
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(to==p || used[to])
+            continue;
+        d[x]=max(d[x],h[to]);
+    }
+    if(d[x]<mn)
+    {
+        mn=d[x];
+        nm=x;
+    }
+}
+
+void go1(int x,int p,int y)
+{
+    h[x]=1;
+    y+=c[x];
+    dist[x]=y;
+    so_far[base+dist[x]]++;
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(used[to] || to==p)
+            continue;
+        go1(to,x,y);
+        h[x]+=h[to];
+    }
+}
+
+void go2(int x,int p,int y)
+{
+    so_far[base+dist[x]]+=y;
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(used[to] || to==p)
+            continue;
+        go2(to,x,y);
+    }
+}
+
+void go3(int centre,int x,int p)
+{
+    int cur=dist[x]+c[centre];
+    int need1=-1-cur;
+    int need2=-2-cur;
+    new_path[x]=so_far[base+need1]+so_far[base+need2];
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(used[to] || to==p)
+            continue;
+        go3(centre,to,x);
+    }
+}
+
+void go4(int x,int p)
+{
+    g[x]=new_path[x];
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(used[to] || p==to)
+            continue;
+        go4(to,x);
+        g[x]+=g[to];
+    }
+    ///cout<<x<<' '<<g[x]<<' '<<new_path[x]<<"\n";
+    if(x==p)
+    {
+        g[x]-=new_path[x]+new_path[x];
+        g[x]/=2;
+        g[x]+=new_path[x];
+    }
+    ///cout<<"ADD "<<x<<' '<<g[x]<<"\n";
+    path[x]+=g[x];
+}
+
+void clear_dfs(int x,int p)
+{
+    so_far[base+dist[x]]--;
+    new_path[x]=0;
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(used[to] || p==to)
+            continue;
+        clear_dfs(to,x);
+    }
+}
+
+void go(int all,int x)
+{
+    ///cout<<"IN "<<all<<' '<<x<<"\n";
+    dist[x]=0;
+    used[x]=1;
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(!used[to])
+            go1(to,x,0);
+    }
+    so_far[base]++;
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(!used[to])
+        {
+            go2(to,x,-1);
+            go3(x,to,x);
+            go2(to,x,1);
+        }
+    }
+    so_far[base]--;
+    new_path[x]=so_far[base-1-c[x]]+so_far[base-2-c[x]];
+    so_far[base]++;
+    go4(x,x);
+    clear_dfs(x,x);
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(!used[to])
+            solve(h[to],to);
+    }
+}
+
+void solve(int all,int x)
+{
+    mn=n+3;
+    nm=-1;
+    dfs(all,x,-1);
+    go(all,nm);
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cin>>n>>x;
+    for(int i=1;i<n;i++)
+    {
+        int xx,yy;
+        cin>>xx>>yy;
+        v[xx].push_back(yy);
+        v[yy].push_back(xx);
+    }
+    for(int i=1;i<=n;i++)
+    {
+        cin>>c[i];
+        if(c[i]>=x)
+            c[i]=1;
+        else
+            c[i]=-1;
+    }
+    solve(n,1);
+    long long mx=0;
+    for(int i=1;i<=n;i++)
+        if(c[i]<0)
+            mx=max(mx,path[i]);
+    cout<<mx<<"\n";
+    return 0;
+}

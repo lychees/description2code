@@ -1,0 +1,115 @@
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+#define MAX 305
+
+int powmod(int a, int e, int mod) {
+    int ret = 1;
+    for (; e; e >>= 1, a = a * a % mod)
+        if (e & 1)
+            ret = ret * a % mod;
+    return ret;
+}
+
+int invmod(int a, int mod) {
+    return powmod(a, mod-2, mod);
+}
+
+void lu(int l[MAX][MAX], int a[MAX][MAX], int n, int mod) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++)
+            l[i][j] = 0;
+        l[i][i] = 1;
+    }
+    for (int k = 0; k < n; k++) {
+        if (a[k][k] == 0) {
+            int kk = -1;
+            for (int i = k+1; i < n; i++) {
+                if (a[i][k] != 0) {
+                    kk = i;
+                    break;
+                }
+            }
+            if (kk == -1) continue;
+            for (int j = k; j < n; j++)
+                swap(a[k][j], a[kk][j]);
+            for (int j = 0; j < n; j++)
+                swap(l[k][j], l[kk][j]);
+        }
+        int c = invmod(a[k][k], mod);
+        for (int j = k; j < n; j++)
+            a[k][j] = a[k][j] * c % mod;
+        for (int j = 0; j < n; j++)
+            l[k][j] = l[k][j] * c % mod;
+        for (int i = k+1; i < n; i++) {
+            int c = a[i][k];
+            if (c == 0) continue;
+            for (int j = k; j < n; j++)
+                a[i][j] = (a[i][j] - c * a[k][j]) % mod;
+            for (int j = 0; j < n; j++)
+                l[i][j] = (l[i][j] - c * l[k][j]) % mod;
+        }
+    }
+    for (int k = n-1; k >= 0; k--) {
+        if (a[k][k] == 0) {
+            int kk = -1;
+            for (int i = k-1; i >= 0; i--) {
+                if (a[i][k] != 0) {
+                    kk = i;
+                    break;
+                }
+            }
+            if (kk == -1) continue;
+            for (int j = k; j >= 0; j--)
+                swap(a[k][j], a[kk][j]);
+            for (int j = 0; j < n; j++)
+                swap(l[k][j], l[kk][j]);
+        }
+        for (int i = k-1; i >= 0; i--) {
+            int c = a[i][k];
+            if (c == 0) continue;
+            for (int j = k; j >= 0; j--)
+                a[i][j] = (a[i][j] - c * a[k][j]) % mod;
+            for (int j = n-1; j >= 0; j--)
+                l[i][j] = (l[i][j] - c * l[k][j]) % mod;
+        }
+    }
+}
+
+const int mod[3] = {2, 5, 719};
+
+int n, q;
+int w[MAX][MAX], y[MAX];
+int a[3][MAX][MAX], b[MAX];
+int l[3][MAX][MAX];
+
+int main() {
+    scanf("%d %d", &n, &q);
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            scanf("%d", &w[i][j]);
+    for (int k = 0; k < 3; k++) {
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                a[k][i][j] = w[i][j] % mod[k];
+        lu(l[k], a[k], n, mod[k]);
+    }
+    while (q--) {
+        for (int i = 0; i < n; i++)
+            scanf("%d", &y[i]);
+        bool ans = true;
+        for (int k = 0; ans && k < 3; k++) {
+            for (int i = 0; i < n; i++) {
+                b[i] = 0;
+                for (int j = 0; j < n; j++)
+                    b[i] += l[k][i][j] * y[j] % mod[k];
+                b[i] %= mod[k];
+            }
+            for (int i = n-1; ans && i >= 0; i--)
+                if (a[k][i][i] == 0 && b[i] != 0)
+                    ans = false;
+        }
+        puts(ans ? "Yes" : "No");
+    }
+}

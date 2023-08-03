@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define pdd pair<double,double>
+#define X first
+#define Y second
+#define REP(i,a) for(int i=0;i<a;++i)
+#define REPP(i,a,b) for(int i=a;i<b;++i)
+#define FILL(a,x) memset(a,x,sizeof(a))
+#define	foreach( gg,itit )	for( typeof(gg.begin()) itit=gg.begin();itit!=gg.end();itit++ )
+#define	mp make_pair
+#define	pb push_back
+#define sz(a) int((a).size())
+#define	debug(ccc)	cout << #ccc << " = " << ccc << endl;
+#define present(c,x) ((c).find(x) != (c).end())
+#define EQ(a,b) (fabs((a)-(b))<eps)
+inline int max(int a,int b){return a<b?b:a;}
+inline int min(int a,int b){return a>b?b:a;}
+inline ll max(ll a,ll b){return a<b?b:a;}
+inline ll min(ll a,ll b){return a>b?b:a;}
+const int mod = 1e9+7;
+const int N = 200000+10;
+const ll INF = 1e18;
+ll tree[6*N],lazy[6*N];
+void make_tree(int C,int s,int e){
+  if(s==e) { tree[C]=0;return;}
+  int C1=C<<1,C2=C1 | 1, m=(s+e)>>1;
+  make_tree(C1,s,m);
+  make_tree(C2,m+1,e);
+  tree[C]=tree[C1]+tree[C2];
+}
+void update(int C,int S,int E,int s,int e){
+  if(s<=S&&e>=E){
+    lazy[C]+=1;
+    lazy[C]%=mod;
+  }
+  if(lazy[C]!=0){
+    tree[C]=(tree[C]+(lazy[C]*(E-S+1))%mod)%mod;;      // lazy propagation part
+    if(S!=E){
+        lazy[C<<1]+=lazy[C];
+        lazy[C<<1]%=mod;
+        lazy[(C<<1)+1]+=lazy[C];
+        lazy[(C<<1)+1]%=mod;
+    }
+    lazy[C]=0;
+  }
+  if(s>E||e<S||S>E) return ;
+  if(s<=S&&e>=E){
+
+    return ;
+  }
+  if(S!=E){                               //update
+    update(C<<1,S,(S+E)>>1,s,e);
+    update((C<<1)+1,((S+E)>>1)+1,E,s,e);
+  }
+  tree[C]=(tree[C<<1]+tree[(C<<1)+1])%mod;
+}
+
+int query(int C,int S,int E,int s,int e){
+  if(s>E||e<S||S>E) return 0;
+  if(lazy[C]!=0){
+    tree[C]=(tree[C]+(lazy[C]*(E-S+1))%mod)%mod;;      // lazy propagation part
+    if(S!=E){
+      lazy[C<<1]+=lazy[C];
+      lazy[C<<1]%=mod;
+      lazy[(C<<1)+1]+=lazy[C];
+      lazy[(C<<1)+1]%=mod;
+    }
+    lazy[C]=0;
+  }
+  if(s<=S&&e>=E){
+    return tree[C];           //query
+  }
+  return (query(C<<1,S,(S+E)>>1,s,e)+query((C<<1)+1,((S+E)>>1)+1,E,s,e))%mod;
+}
+int arr[N];ll a[N],b[N];
+map<ll ,int> M;
+int main(){
+  int n;
+  scanf("%d",&n);
+  REP(i,n) scanf("%lld",&a[i]);
+  ll ans=0;
+  for(int i=n-1;i>=0;i--){
+    if(!M.count(a[i])) arr[i]=n;
+    else arr[i]=M[a[i]];
+    M[a[i]]=i;
+  }
+  ll prev=0;
+  for(int i=n-1;i>=0;--i){
+    int y=arr[i]-1;
+
+    prev=(prev+2*query(1,0,n-1,i,y)+(y-i+1))%mod;
+    ans=(ans+prev)%mod;
+    update(1,0,n-1,i,y);
+  }
+  printf("%lld\n",ans);
+  return 0;
+}

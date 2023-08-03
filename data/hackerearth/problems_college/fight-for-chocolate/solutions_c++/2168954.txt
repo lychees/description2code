@@ -1,0 +1,329 @@
+
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <sstream>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <set>
+#include <map>
+#include <ctime>
+#include <cassert>
+
+using namespace std;
+
+#define fs first
+#define sc second
+#define pb push_back
+#define mp make_pair
+#define range(i, n) for (int i=0; i<(n); ++i)
+#define range2(i, m,  n) for (int i=m; i<(n); ++i)
+#define forit(it,v) for(typeof((v).begin()) it = v.begin() ; it != (v).end() ; ++it)
+#define eprintf(...) fprintf(stderr, __VA_ARGS__),fflush(stderr)
+#define sz(a) ((int)(a).size())
+#define all(a) (a).begin(),a.end()
+#define two(i) (1<<(i))
+
+typedef long long ll;
+typedef vector<int> VI;
+typedef pair<int, int> PII;
+
+const double eps = 1e-8;
+const double pi = acos(-1.0);
+ 
+const int MAX = 10;
+
+
+struct UF
+{
+    vector<int> pa;
+    UF(int n) {
+        range(i, n) {
+            pa.pb(i);
+        }
+    }
+    int op_f(int x) {
+        return x == pa[x] ? x : pa[x] = op_f(pa[x]);
+    }
+
+    void op_u(int x, int y) {
+        x = op_f(x);
+        y = op_f(y);
+        if (x == y) return;
+        if (x > y) swap(x, y);
+        pa[y] = x;
+    }
+};
+
+int n, m, k;
+char bo[MAX][MAX];
+
+bool check_k_limit(int u,int  v) {
+    return abs(u-v) <= k;
+}
+
+bool check_match(int state, int dep, char bo[MAX][MAX]) {
+    range(i, m) {
+        if (bo[dep][i] != 'U' && bo[dep][i] != ( (state & two(i)) ? 'D' : 'T')) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void dump_info(int dep, int t_cnt, int d_cnt, vector<PII> last_row) {
+    printf("dep = %d, t_cnt = %d, d_cnt = %d, last_row = ", dep, t_cnt, d_cnt);
+    range(i, last_row.size()) {
+        printf("(%d,%d) ", last_row[i].fs, last_row[i].sc);
+    }
+    putchar('\n');
+}
+
+struct State {
+    int dep;
+    int t_cnt;
+    vector<PII> last_row;
+    State(int dep, int t_cnt, vector<PII> last_row) {
+        this->dep = dep;
+        this->t_cnt = t_cnt;
+        this->last_row = last_row;
+    }
+    bool operator < (const State &rhs) const {
+        if (dep != rhs.dep) return dep < rhs.dep;
+        if (t_cnt != rhs.t_cnt) return t_cnt < rhs.t_cnt;
+        return last_row < rhs.last_row;
+    }
+};
+
+map<State, int> cache;
+
+int solve(int dep, int t_cnt, int d_cnt, vector<PII> last_row) {
+    //dump_info(dep, t_cnt, d_cnt, last_row);
+    if (dep == n) {
+        //check k limit
+        if (!check_k_limit(t_cnt, d_cnt)) {
+            return 0;
+        }
+        //no two componment
+        range(i, m) {
+            if (last_row[i].sc > 0) {
+            //    printf("row idx at %d is %d, bigger than 0\n", i, last_row[i].sc);
+                return 0;
+            }
+        }
+       // printf("add one\n");
+        return 1;
+    }
+
+    State state = State(dep, t_cnt, last_row);
+    if (cache.find(state) != cache.end()) {
+        return cache[state];
+    }
+
+    int &ret = cache[state];
+    int next_t_cnt, next_d_cnt;
+    vector<PII> cur_row;
+    vector<char> row_c;
+    int idx[2];
+    if (dep == 0) {
+        //generate first row
+        range(s, two(m)) {
+            //choose state s
+            next_t_cnt = next_d_cnt = 0;
+            row_c.clear();
+            range(i, m) {
+                if (two(i) & s) {
+                    row_c.push_back('D');
+                    next_d_cnt ++;
+                } else {
+                    row_c.push_back('T');
+                    next_t_cnt ++;
+                }
+            }
+
+            //check match
+            if (!check_match(s, dep, bo)) {
+                continue;
+            }
+
+            //represent row
+            cur_row.clear();
+            idx[0] = idx[1] = -1;
+            range(i, m) {
+                int ty = row_c[i] == 'T' ? 0 : 1;
+                if (!i || row_c[i - 1] != row_c[i]) {
+                    idx[ty] ++;
+                }
+                cur_row.pb(mp(ty, idx[ty]));
+            }
+
+            ret += solve(dep + 1, next_t_cnt, next_d_cnt, cur_row);
+        }
+    }
+
+    if (dep > 0) {
+        //generate next row
+        range(s, two(m)) {
+            next_t_cnt = t_cnt;
+            next_d_cnt = d_cnt;
+            row_c.clear();
+
+            range(i, m) {
+                if (two(i) & s) {
+                    row_c.push_back('D');
+                    next_d_cnt ++;
+                } else {
+                    row_c.push_back('T');
+                    next_t_cnt ++;
+                }
+            }
+
+            //check match
+            if (!check_match(s, dep, bo)) {
+                continue;
+            }
+
+            //represent row
+            if ( ((s == 0) || (s == two(m) - 1)) && dep < n - 1) {
+                continue;
+            }
+            UF uf(m);
+            cur_row.clear();
+            range(i, m) {
+                if (i && row_c[i] == row_c[i-1]) {
+                    uf.op_u(i, i-1);
+                }
+                int ty = row_c[i] == 'T' ? 0 : 1;
+                cur_row.pb(mp(ty, -1));
+            }
+
+            set<PII> safe_set;
+            range(i, m) {
+                if (last_row[i].fs == cur_row[i].fs) {
+                    safe_set.insert(last_row[i]);
+                    range(j, m) {
+                        if (last_row[j] == last_row[i] &&
+                            last_row[j].fs == cur_row[j].fs) {
+                            uf.op_u(j, i);
+                        }
+                    }
+                }
+            }
+            //if one cell is unsafe, then 
+            // 1. idx = 0
+            // 2. cur_row must no contain this type of block
+            bool unsafe = false;
+            range(i, m) {
+                if (safe_set.find(last_row[i]) == safe_set.end()) {
+                    if (last_row[i].sc != 0) {
+                        unsafe = true;
+                    }
+                    range(j, m) {
+                        if (cur_row[j].fs == last_row[i].fs) {
+                            unsafe = true;
+                            break;
+                        }
+                    }
+                    if (unsafe) break;
+                }
+            }
+            if (unsafe) continue;
+
+            idx[0] = idx[1] = -1;
+            int i;
+            int ni;
+
+            range(i, m) {
+                int ty = cur_row[i].fs;
+                int pa = uf.op_f(i);
+                if (pa != i) {
+                    cur_row[i].sc = cur_row[pa].sc;
+                } else {
+                    idx[ty] ++;
+                    cur_row[i].sc = idx[ty];
+                }
+            }
+
+            //check square
+            bool has_square = false;
+            for (int i = 0; i < m - 1; i++) {
+                if (cur_row[i].fs == cur_row[i+1].fs &&
+                    cur_row[i].fs == last_row[i].fs &&
+                    cur_row[i].fs == last_row[i+1].fs) {
+                    has_square = true;
+                    break;
+                }
+            }
+            if (has_square) {
+                continue;
+            }
+            ret += solve(dep + 1, next_t_cnt, next_d_cnt, cur_row);
+        }
+    }
+
+
+    return ret;
+}
+
+void rotate() {
+    char tmp[MAX][MAX];
+    memcpy(tmp, bo, sizeof(bo));
+    range(i, n)
+        range(j, m)
+            bo[j][i] = tmp[i][j];
+    swap(n, m);
+}
+
+int main() {
+    int t;
+    t=1;
+    range(ca, t) {
+        cin >> n >> m >> k;
+        range(i, n) {
+            scanf("%s", bo[i]);
+        }
+        if (n < m) rotate();
+
+        int ans = 0;
+        if (m == 1) {
+            range(i, 2) {
+                range(j, n) {
+                    bool flag = abs(j + 1 -  (n - j - 1)) <= k;
+                    char ch = (i == 0) ? 'T':'D';
+                    int u;
+                    for (u = 0; u < n; u++) {
+                        if (bo[u][0] != 'U' && (bo[u][0] != ch)) {
+                            flag = false;
+                        }
+                        if (u == j) {
+                            ch = ch == 'T' ? 'D': 'T';
+                        }
+                    }
+                    if (flag) ans ++;
+                }
+            }
+        } else {
+            vector<PII> row;
+            cache.clear();
+            ans = solve(0, 0, 0, row);
+        }
+        cout << ans << endl;
+    }
+    return 0;
+}
+
+
+/*
+board:
+TTTTT
+TDDDT
+TDTDT
+TDTDT
+TTTTT
+
+TDTDT
+TDDDT
+ */

@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+
+typedef long long li;
+ 
+using namespace std;
+
+#define F(i, n) for(i = 0;i < n; ++i)
+#define FI(i, st, ft) for(i = st;i <= ft; ++i)
+#define pb(a, b) a.push_back(b)
+#define x second
+#define y first
+#define MAXN 200001
+#define mk make_pair
+#define mod 1000000009
+#define inf 1000000000000000000li
+
+string str, op;
+pair <li, li> dp[312][312];
+li vis[312][312];
+
+pair <li, li> calc(li k, pair <li, li> i, pair <li, li> j)
+{
+	pair <li, li> ans;
+	if(op[k] == 'a'){
+		ans.first = i.first * j.first + i.second * j.first + i.first * j.second;
+		ans.second = i.second * j.second;
+	}
+	else if(op[k] == 'o'){
+		ans.first = i.first * j.first;
+		ans.second = i.second * j.first + i.first * j.second + i.second * j.second;
+	}
+	else{
+		ans.first = i.first * j.first + i.second * j.second;
+		ans.second = i.second * j.first + i.first * j.second;
+	}
+	ans.first = ans.first % mod;
+	ans.second = ans.second % mod;
+	return ans;
+}
+
+pair <li, li> rec(li i, li j)
+{
+	pair <li, li> temp;
+	temp.first = 0;
+	temp.second = 0;
+	
+	if(vis[i][j] != -1) return dp[i][j];
+	
+	if(i == j){
+		if(str[i] - '0') temp.second = 1;
+		else temp.first = 1;
+	}
+	else{
+		li k;
+		FI(k, i + 1, j){
+			pair <li, li> st = rec(i, k - 1);
+			pair <li, li> ft = rec(k, j);
+			pair <li, li> cur = calc(k - 1, st, ft);
+			temp.first = (temp.first + cur.first) % mod;
+			temp.second = (temp.second + cur.second) % mod;
+		}
+	}
+	dp[i][j] = temp;
+	vis[i][j] = 1;
+	return temp;
+}
+
+int main()
+{
+	//freopen("input.txt", "r", stdin);
+	memset(vis, -1, sizeof vis);
+	cin >> str >> op;
+	li q, t1, t2;
+	rec(0, str.size() - 1);
+	cin >> q;
+	while(q--){
+		string temp;
+		cin >> t1 >> t2 >> temp;
+		--t1;
+		--t2;
+		if(temp == "false") cout << dp[t1][t2].first;
+		else cout << dp[t1][t2].second;
+		cout << "\n";
+	}
+	return 0;
+}

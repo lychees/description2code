@@ -1,0 +1,158 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const int md = (int)1e9 + 7;
+
+struct matrix
+{
+	vector <vector <int> > mat;
+
+	matrix(int n = 0, bool id = false)
+	{
+		mat.resize(n);
+		for (int i = 0; i < n; i++) mat[i].resize(n);
+		if (id) for (int i = 0; i < n; i++) mat[i][i] = 1;
+	}
+
+	inline int size() { return (int)mat.size(); }
+	vector <int>& operator[] (int i) { return mat[i]; }
+};
+
+matrix operator * (matrix &a, matrix &b)
+{
+	int n = a.size();
+	matrix ret(n);
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
+			for (int k = 0; k < n; k++)
+			{
+				ret[i][j] += 1ll * a[i][k] * b[k][j] % md;
+				if (ret[i][j] >= md) ret[i][j] -= md;
+			}
+	return ret;
+}
+
+matrix pow(matrix &a, long long p)
+{
+	int n = a.size();
+	matrix ret(n, true);
+	while (p > 0)
+	{
+		if (p % 2 == 1) ret = ret * a;
+		p /= 2, a = a * a;
+	}
+	return ret;
+}
+
+inline int g(int x) { return min(2, 1 + x); }
+inline int conv(int x, int y, int z) { return x * 9 + y * 3 + z; }
+
+matrix base()
+{
+	matrix ret(27);
+	for (int u = 0; u < 3; u++)
+		for (int v = 0; v < 3; v++)
+			for (int w = 0; w < 3; w++)
+			{
+				int row = conv(u, v, w);
+				if (u == 2 and v == 2 and w == 2)
+				{
+					ret[row][conv(2, 2, 2)]++;
+					for (int i = 0; i < 3; i++) ret[row][conv(2, 2, i)]++;
+					for (int i = 0; i < 3; i++) ret[row][conv(i, 2, 2)]++;
+					for (int i = 0; i < 3; i++)
+						for (int j = 0; j < 3; j++)
+							for (int k = 0; k < 3; k++)
+								ret[row][conv(i, j, k)]++;
+					continue;
+				}
+				if (u == 2 and v == 2)
+				{
+					ret[row][conv(2, 2, g(w))]++;
+					for (int i = 0; i < 3; i++)
+						for (int j = 0; j < 3; j++)
+							ret[row][conv(i, j, g(w))]++;
+					continue;
+				}
+				if (u == 2 and w == 2)
+				{
+					for (int i = 0; i < 3; i++)
+						for (int j = 0; j < 3; j++)
+							ret[row][conv(i, g(v), j)]++;
+					continue;
+				}
+				if (v == 2 and w == 2)
+				{
+					ret[row][conv(g(u), 2, 2)]++;
+					for (int i = 0; i < 3; i++)
+						for (int j = 0; j < 3; j++)
+							ret[row][conv(g(u), i, j)]++;
+					continue;
+				}
+				if (u == 2)
+				{
+					for (int i = 0; i < 3; i++)
+						ret[row][conv(i, g(v), g(w))]++;
+					continue;
+				}
+				if (v == 2)
+				{
+					for (int i = 0; i < 3; i++)
+						ret[row][conv(g(u), i, g(w))]++;
+					continue;
+				}
+				if (w == 2)
+				{
+					for (int i = 0; i < 3; i++)
+						ret[row][conv(g(u), g(v), i)]++;
+					continue;
+				}
+				ret[row][conv(g(u), g(v), g(w))]++;
+			}
+	return ret;
+}
+
+int go(int n)
+{
+	if (n == 1) return 4;
+	matrix b = base();
+	b = pow(b, n - 2);
+	int a[] = { 1, 1, 2, 1, 2, 3, 2, 3, 7, 1, 1, 2, 2, 4, 6, 3, 5, 12, 2, 2, 4, 3, 6, 9, 7, 12, 29 };
+	int ret = 0;
+	for (int i = 0; i < 27; i++)
+	{
+		ret += 1ll * b[26][i] * a[i] % md;
+		if (ret >= md) ret -= md;
+	}
+	return ret;
+}
+
+int main()
+{
+	int t; scanf("%d", &t);
+	while (t--)
+	{
+		int n; scanf("%d", &n);
+		printf("%d\n", go(n));
+	}
+	return 0;
+}

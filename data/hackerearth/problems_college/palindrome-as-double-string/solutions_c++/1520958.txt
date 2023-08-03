@@ -1,0 +1,66 @@
+#include <cstdio>
+#include <unistd.h>
+#include <stdint.h>
+ 
+struct X {
+ 
+static const size_t M=10000*11+123;
+  char buffer[M];
+  char * c;
+  char * o;
+  uint16_t tbl[100];
+  X() {
+    for(size_t i=0; i < 100; ++i)
+      tbl[i] = ('0' + (i / 10)) | ('0' + i % 10) << 8;
+  }
+ 
+  inline size_t next_int() {
+    while (*c < '0') ++c;
+    size_t ans=0;
+    while (*c >= '0') {
+      ans = ans*10 + *c - '0';
+      ++c;
+    }
+    return ans;
+  }
+  
+ 
+  inline void write_int(size_t x) {
+    size_t i=1;
+    size_t v=10;
+    while (x+1 > v) {
+      v *= 10;
+      ++i;
+    }
+    o += i;
+    char * oo=o;
+    while(i >= 2) {
+      oo-=2;
+      *reinterpret_cast<uint16_t*>(oo) = tbl[x % 100];
+      x /= 100;
+      i -= 2;
+    }
+    if (i == 1) {
+      (*--oo) = '0'+x;
+    }
+    *(o++) = '\n';
+  }
+  
+  void run() {
+    buffer[read(0, buffer, M)] = 0;
+    c=buffer;
+    o=buffer;
+    size_t T=next_int();
+    while(T--) {
+      size_t n=next_int();
+      write_int(n&~1);
+    }
+    write(1, buffer, o-buffer);
+  }
+};
+ 
+int main() {
+  X _;
+  _.run();
+  return 0;
+}

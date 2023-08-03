@@ -1,0 +1,224 @@
+#include<cstdio>
+#include<algorithm>
+#include<cmath>
+#include<vector>
+#include<set>
+#include<utility>
+
+using namespace std;
+
+typedef long long ll;
+
+#define Query pair<pair<int, int>, pair<int, int>>
+#define A first.first
+#define B first.second
+#define C second.first
+#define D second.second
+
+const int max_n = 1e5 + 50;
+const int LOG = 30;
+
+int n, q;
+ll ans[max_n];
+vector<pair<int, int>>	adj[max_n];
+ll maxi[4 * max_n], lazy[4 * max_n];
+int s_t[max_n], f_t[max_n], col[max_n], g, sz[max_n], cn[LOG];
+bool block[max_n];
+int top[max_n], ttop[max_n];
+vector<Query>	sec, vec[max_n];
+multiset<ll>	st;
+ll save[max_n];
+int level[max_n];
+
+bool cmp(Query a, Query b){	return	a.D < b.D; }
+
+int get_size(int v, int p = -1){
+	sz[v] = 1;
+	for (pair<int, int>	e:adj[v]){
+		int u = e.first;
+		if (!block[u] && u != p)	sz[v] += get_size(u, v);
+	}
+	return	sz[v];
+}
+
+void init(int lv, int v, int p = -1, ll de = 0, int kde = 0){
+	s_t[v] = cn[lv]++;
+	save[s_t[v]] = de;
+	col[v] = g;
+	level[v] = kde;
+	for (pair<int, int>	e:adj[v]){
+		int u = e.first;
+		if (!block[u] && u != p)
+			init(lv, u, v, de + e.second, kde + 1);
+	}
+	f_t[v] = cn[lv];
+}
+
+void shift(int v){
+	lazy[v<<1] += lazy[v];
+	lazy[v<<1^1] += lazy[v];
+	maxi[v<<1] += lazy[v];
+	maxi[v<<1^1] += lazy[v];
+	lazy[v] = 0;
+}
+
+void build(int v, int b, int e){
+	lazy[v] = 0;
+	if (e - b == 1){
+		maxi[v] = save[b];
+		return;
+	}
+
+	int mid = (b + e)/ 2;
+	build(v<<1, b, mid);
+	build(v<<1^1, mid, e);
+	maxi[v] = max(maxi[v<<1], maxi[v<<1^1]);
+}
+
+ll get(int v, int b, int e, int l, int r){
+	if (l >= r)	return	-1;
+	if (l <= b && e <= r)	return	maxi[v];
+	if (r <= b || e <= l)	return	-1;
+
+	shift(v);
+	int mid = (b + e)/ 2;
+	return	max(get(v<<1, b, mid, l, r), get(v<<1^1, mid, e, l, r));
+}
+
+void add_query(int v, int p = -1){
+	for (Query t:vec[v]){
+		if (t.B == -1)	sec.push_back(t);
+		else if (col[t.A] == col[t.B]){
+			if (level[t.A] > level[t.B])	swap(t.A, t.B);
+			sec.push_back(t);
+		}
+	}
+
+	for (pair<int, int>	e:adj[v])
+		if (!block[e.first] && e.first != p)	add_query(e.first, v);
+}
+
+void get_top(int v, int p, int r){
+	top[v] = r;
+	for (pair<int, int>	e:adj[v]){
+		int u = e.first;
+		if (u != p && !block[u]){
+			ttop[u] = e.second;
+			get_top(u, v, r);
+		}
+	}
+}	
+
+void add(int v, int b, int e, int l, int r, ll val){
+	if (l <= b && e <= r){
+		lazy[v] += val;
+		maxi[v] += val;
+		return;
+	}
+	if (r <= b || e <= l)	return;
+
+	shift(v);
+	int mid = (b + e)/ 2;
+	add(v<<1, b, mid, l, r, val);
+	add(v<<1^1, mid, e, l, r, val);
+	maxi[v] = max(maxi[v<<1], maxi[v<<1^1]);
+}
+
+void solve(int v, int lv){
+	int p = -1, size = get_size(v);
+	bool flag = 1;
+	while (flag){
+		flag = 0;
+		for (pair<int, int>	e:adj[v]){
+			int u = e.first;
+			if (!block[u] && u != p && sz[u] > size/2){
+				p = v;
+				v = u;
+				flag = 1;
+				break;
+			}
+		}
+	}
+
+	block[v] = 1;
+	for (pair<int, int>	e:adj[v])
+		if (!block[e.first])	solve(e.first, lv + 1);
+	block[v] = 0;
+	g++;
+
+	st.clear();
+	st.insert(0);	st.insert(0);
+	init(lv, v);
+	build(1, s_t[v], f_t[v]);
+	sec.clear();
+	add_query(v);
+	sort(sec.begin(), sec.end(), cmp);
+	for (pair<int, int>	e:adj[v]){
+		int u = e.first;
+		if (!block[u]){
+			st.insert(get(1, s_t[v], f_t[v], s_t[u], f_t[u]));
+			ttop[u] = e.second;
+			get_top(u, v, u);
+		}
+	}
+	multiset<ll>::iterator it2 = st.end();
+	it2--;
+		
+	for (Query t:sec){
+		if (t.B == -1){
+			int u = t.A;
+			if (u == v){
+				multiset<ll>::iterator it = st.end();
+				it--;
+				ll temp = *it;
+				it--;
+				temp += *it;
+				ans[t.D] = max(ans[t.D], temp);
+			}
+			else{
+				ll temp = get(1, s_t[v], f_t[v], s_t[u], f_t[u]);
+				p = top[u];
+				temp += max(get(1, s_t[v], f_t[v], s_t[v], s_t[p]), get(1, s_t[v], f_t[v], f_t[p], f_t[v]));
+				ans[t.D] = max(ans[t.D], temp);
+			}
+		}
+		else{
+			int p = top[t.B];
+			st.erase(st.find(get(1, s_t[v], f_t[v], s_t[p], f_t[p])));
+
+			ll dif = t.C - ttop[t.B];
+			ttop[t.B] = t.C;
+			add(1, s_t[v], f_t[v], s_t[t.B], f_t[t.B], dif);
+			
+			st.insert(get(1, s_t[v], f_t[v], s_t[p], f_t[p]));
+		}
+	}
+}
+
+int main(){
+	scanf("%d%d", &n, &q);
+	for (int i = 0; i < n - 1; i++){
+		int a, b, c;	scanf("%d%d%d", &a, &b, &c);	a--, b--;
+		adj[a].push_back({b, c});
+		adj[b].push_back({a, c});
+	}
+
+	for (int i = 0; i < q; i++){
+		int type;	scanf("%d", &type);
+		if (type == 2){
+			int v;	scanf("%d", &v);	v--;
+			vec[v].push_back({{v, -1}, {-1, i}});
+		}
+		else{
+			ans[i] = -1;
+			int v, u, c;	scanf("%d%d%d", &v, &u, &c);	v--, u--;
+			vec[v].push_back({{v, u}, {c, i}});
+			vec[u].push_back({{u, v}, {c, i}});
+		}
+	}
+	solve(0, 0);
+	
+	for (int i = 0; i < q; i++)
+		if (ans[i] != -1)	printf("%lld\n", ans[i]);
+	return 0;
+}

@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+const int vm = 100001;
+
+bool sieve[vm];
+vector<int> primes;
+int val[vm];
+
+void init() {
+	ll i, j, p, lim;
+	int pow;
+	sieve[1] = true;
+	for (i = 2; i < vm; ++i) {
+		if (!sieve[i]) {
+			primes.push_back(i);
+			for (j = i * i; j < vm; j += i) sieve[j] = true;
+			val[i] = 1;
+		}
+		else {
+			val[i] = 0;
+			j = i; lim = int(sqrt(i));
+			for (auto it = primes.begin(); it != primes.end(); ++it) {
+				p = *it;
+				if (p > lim) break;
+				if ((j % p) == 0) {
+					pow = 0;
+					while ((j % p) == 0) {
+						++pow;
+						j /= p;
+					}
+					val[i] ^= pow;
+				}
+			}
+			if (j > 1) val[i] ^= 1;
+		}
+	}
+}
+
+void init2() {
+	val[1] = 0;
+	int i, j, lim;
+	for (i = 2; i < vm; ++i) {
+		set<int> s;
+		lim = int(sqrt(i));
+		s.insert(0);
+		for (j = 2; j <= lim; ++j) {
+			if ((i % j) == 0) {
+				s.insert(val[j]);
+				s.insert(val[i/j]);
+			}
+		}
+		for (val[i] = 0; s.count(val[i]); ++val[i]);
+	}
+}
+
+int main(int argc, char* argv[]) {
+	ios_base::sync_with_stdio(false);
+	init2();
+	int n, x, res;
+	cin >> n; res = 0;
+	while (n--) {
+		cin >> x;
+		res ^= val[x];
+	}
+	if (res == 0) cout << "BOB\n";
+	else cout << "ALICE\n";
+	return 0;
+}

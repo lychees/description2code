@@ -1,0 +1,126 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <limits.h>
+#define N 10
+using namespace std;
+
+typedef pair<int, int> ii;
+typedef vector<int> vi;
+typedef vector<bool> vb;
+typedef vector<ii> vii;
+typedef vector<vi> vvi;
+
+vvi adjmat;
+vvi distmat;
+vvi edgetomat;
+vi distto;
+vi edgeto;
+vb marked;
+vi cost;
+
+void dijkstra(int s)
+{
+	distto.assign(N, INT_MAX);
+	edgeto.assign(N, -1);
+	marked.assign(N, false);
+	//distto[s] = adjmat[s][s];
+	distto[s] = cost[s];
+	priority_queue<ii, vector<ii>, greater<ii> > pq;
+	pq.push(make_pair(distto[s], s));
+	while(!pq.empty())
+	{
+		ii wu = pq.top();
+		pq.pop();
+		int u = wu.second;
+		if (marked[u]) continue;
+		marked[u] = true;
+		for (int v = 0; v < N; ++v)
+		{
+			int w = adjmat[u][v];
+			if(distto[v] > distto[u] + w)
+			{
+				distto[v] = distto[u] + w;
+				edgeto[v] = u;
+				pq.push(make_pair(distto[v], v));
+			}
+		}
+	}
+} 
+
+void print_mat(vvi& mat)
+{
+	for (int i = 0; i < N; ++i)
+	{
+		for (int j = 0; j < N; ++j)	
+		{
+			cout << mat[i][j] << " ";
+		}
+		cout << endl;
+	}
+}
+
+int main()
+{
+	int T, nchars_pnumber, pnumber;
+	cin >> T;
+	while(T--)
+	{
+		vi min_cost_dig(N, INT_MAX);
+		cost.assign(N, 0);
+		adjmat.assign(N, vi());
+		distmat.assign(N, vi());
+		edgetomat.assign(N, vi());
+		for (int i = 0; i < N; ++i)
+		{
+			cin >> cost[i];
+			adjmat[i].assign(N, INT_MAX);
+			distmat[i].assign(N, INT_MAX);
+			edgetomat[i].assign(N, -1);
+		}
+		for (int i = 0; i < N; ++i)
+		{
+			for (int j = 0; j < N; ++j)	
+			{
+				int res = (i+j)%10;
+				adjmat[i][res] = cost[j];
+			}
+		}
+		//print_mat(adjmat);
+		// run dijkstra for every vertex
+		for (int i = 0; i < N; ++i)
+		{
+			dijkstra(i);
+			for (int j = 0; j < N; ++j)
+			{
+				distmat[i][j] = distto[j];
+			}
+		}
+		//print_mat(distmat);
+		// get minimum distance
+		for (int j = 0; j < N; ++j)
+		{
+			for (int i = 0; i < N; ++i)
+			{
+				if (distmat[i][j] < min_cost_dig[j])
+				{
+					min_cost_dig[j] = distmat[i][j];
+				}
+			}
+		}
+		// read phone number
+		cin >> nchars_pnumber;
+		int ans = 0;
+		char ch;
+		cin.read(&ch, sizeof(ch)); // \n
+		for (int i = 0; i < nchars_pnumber; ++i)
+		{
+			cin.read(&ch, sizeof(ch));
+			int digit = ch - '0';
+			ans += min_cost_dig[digit];
+		}
+		//cout << endl;
+		cout << ans << endl;
+	}	
+}

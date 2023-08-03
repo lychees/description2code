@@ -1,0 +1,123 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+struct Djikstra {
+    const int n;
+    const vector<vector<pii>> &edg;
+    vll distances;
+    const int root;
+    Djikstra ( const vector<vector<pii>> &_edg,int _root ) :n ( _edg.size() ),edg ( _edg ) ,distances ( n,-1 ),root ( _root ) {
+        build();
+    }
+    void build() {
+        priority_queue<pll> pq;
+        vll visited ( n );
+        pq.push ( mp ( 0,root ) );
+        int found=0;
+        while ( !pq.empty() && found<n ) {
+            pll nxt=pq.top();
+            int no=nxt.second;
+            pq.pop();
+            if ( visited[no]>0 ) continue;
+            visited[no]=1;
+            found++;
+            distances[no]=-nxt.first;
+            for ( pii p: edg[no] ) {
+                if ( !visited[p.first] || visited[p.first]< nxt.first-p.second ) {
+                    pq.push ( mp ( nxt.first-p.second,p.first ) );
+                    visited[p.first]= nxt.first-p.second;
+                }
+            }
+        }
+    }
+};
+int main() {
+    ios_base::sync_with_stdio ( false );
+    int n,m,s;
+    cin>>n>>m>>s;
+    s--;
+    vi k ( n );
+    cin>>k;
+    vector<vpii> adj ( n );
+    rep ( i,m ) {
+        int u,v,w;
+        cin>>u>>v>>w;
+        u--;
+        v--;
+        adj[u].push_back ( {v,w} );
+        adj[v].push_back ( {u,w} );
+    }
+    Djikstra dj ( adj,s );
+    ll pSum=0;
+    vll &d=dj.distances;
+
+    rep ( i,n ) {
+        if ( d[i]>=0 ) pSum+=d[i];
+    }
+    ll ksum=0;
+    rep ( i,n ) {
+        if ( d[i]>=0 ) ksum+=k[i];
+    }
+   
+    ll kd=0;
+    rep ( i,n ) {
+        if ( d[i]>=0 ) kd+=k[i]*d[i];
+    }
+    vll res ( n );
+
+    rep ( i,n ) {
+        if ( d[i]<0 ) res[i]=0; //cout<<0<<'\n';
+        else {
+            ll su= ( ksum-k[i] ) *d[i]+kd-k[i]*d[i];
+            res[i]=su;
+        }
+    }
+    cout<<res;
+
+}

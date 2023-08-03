@@ -1,0 +1,263 @@
+#include<bits/stdc++.h>
+using namespace std;
+long long int arr[100000];
+long long int segment[400001][2][2];
+#define mod 1000000007
+typedef struct shivam
+{
+    long long int e,o,e2,o2;
+}shivam;
+int fun(long long int num)
+{
+	int count[10];
+	for(int i=0;i<10;i++)
+	count[i]=0;
+ 
+	while(num)
+	{
+		count[num%10]++;
+		num=num/10;
+	}
+	int temp=0;
+	for(int i=0;i<10;i++)
+	{
+		if(count[i])
+		temp++;
+	}
+	return temp;
+ 
+}
+void constructtree(int low,int high,int pos)
+{
+    int count1=0;
+ 
+    if(low==high)
+    {
+         count1=fun(arr[low]);
+        segment[pos][1][1]=count1;
+        segment[pos][0][1]=1;
+        segment[pos][1][0]=count1;
+        segment[pos][0][0]=1;
+ 
+        return ;
+    }
+    int mid=(low+high)/2;
+    constructtree(low,mid,2*pos+1);
+    constructtree(mid+1,high,2*pos+2);
+    if(segment[2*pos+1][1][1]>segment[2*pos+2][1][1])
+    {
+        segment[pos][1][1]=segment[2*pos+1][1][1];
+        segment[pos][0][1]=segment[2*pos+1][0][1];
+ 
+    }
+    else if((segment[2*pos+1][1][1]<segment[2*pos+2][1][1]))
+    {
+        segment[pos][1][1]=segment[2*pos+2][1][1];
+        segment[pos][0][1]=segment[2*pos+2][0][1];
+    }
+    else
+    {
+        segment[pos][1][1]=segment[2*pos+2][1][1];
+        segment[pos][0][1]=segment[2*pos+2][0][1]+segment[2*pos+1][0][1];
+ 
+    }
+    if(segment[2*pos+1][1][0]>segment[2*pos+2][1][0])
+    {
+        segment[pos][1][0]=segment[2*pos+2][1][0];
+        segment[pos][0][0]=segment[2*pos+2][0][0];
+ 
+    }
+    else if((segment[2*pos+1][1][0]<segment[2*pos+2][1][0]))
+    {
+        segment[pos][1][0]=segment[2*pos+1][1][0];
+        segment[pos][0][0]=segment[2*pos+1][0][0];
+    }
+    else
+    {
+        segment[pos][1][0]=segment[2*pos+2][1][0];
+        segment[pos][0][0]=segment[2*pos+2][0][0]+segment[2*pos+1][0][0];
+ 
+    }
+}
+shivam sum(int qlow,int qhigh,int low,int high,int pos,int opt)
+{
+    if(qhigh<low||qlow>high)
+    {
+        shivam obj;
+        obj.e=0;
+        obj.o=0;
+        obj.e2=0;
+        obj.o2=0;
+         return obj;
+    }
+        if(qlow<=low&&qhigh>=high)
+        {shivam obj;
+        obj.e=segment[pos][1][1]%mod;
+        obj.o=segment[pos][0][1]%mod;
+        obj.e2=segment[pos][1][0]%mod;
+        obj.o2=segment[pos][0][0]%mod;
+ 
+         return obj;
+ 
+ 
+        }
+ 
+        int mid=(low+high)/2;
+        shivam obj1=sum(qlow,qhigh,low,mid,2*pos+1,opt);
+        shivam obj2=sum(qlow,qhigh,mid+1,high,2*pos+2,opt);
+        shivam obj3;
+        if(obj1.e>obj2.e)
+        {
+            obj3.e=obj1.e;
+            obj3.o=obj1.o;
+            obj3.e2=obj1.e2;
+            obj3.o2=obj1.o2;
+        }
+       else if(obj1.e<obj2.e)
+        {
+            obj3.e=obj2.e;
+            obj3.o=obj2.o;
+            obj3.e2=obj2.e2;
+            obj3.o2=obj2.o2;
+        }
+    else
+        {
+            obj3.e=obj1.e;
+            obj3.o=obj1.o+obj2.o;
+            obj3.e2=obj1.e2;
+            obj3.o2=obj1.o2+obj2.o2;
+        }
+        if(obj1.e2>obj2.e2)
+        {
+            if(obj2.e2!=0)
+            {
+            obj3.e2=obj2.e2;
+            obj3.o2=obj2.o2;
+            }
+        }
+       else if(obj1.e2<obj2.e2)
+        {
+            if(obj1.e2!=0)
+            {
+            obj3.e2=obj1.e2;
+            obj3.o2=obj1.o2;
+            }
+        }
+    else
+        {
+            if(obj1.e2!=0)
+            {
+            obj3.e2=obj1.e2;
+            obj3.o2=obj1.o2+obj2.o2;
+            }
+        }
+ 
+        return obj3;
+}
+void update(int low,int high,int pos,int index,long long int value,int opt)
+{
+    if(index<low||index>high||low>high)
+        return ;
+    if(low==high)
+    {
+        if(opt==1)
+        arr[index]=(arr[index]%mod+value%mod)%mod;
+        if(opt==2)
+          arr[index]=(arr[index]%mod*(value)%mod)%mod;
+        if(opt==3)
+            arr[index]=value%mod;
+         int count1=fun(arr[low]);
+        segment[pos][1][1]=count1;
+        segment[pos][0][1]=1;
+        segment[pos][1][0]=count1;
+        segment[pos][0][0]=1;
+ 
+    }
+ 
+ 
+    else
+    {
+          int mid=(low+high)/2;
+        update(low,mid,2*pos+1,index, value,opt);
+        update(mid+1, high, 2*pos+2, index, value,opt);
+         if(segment[2*pos+1][1][1]>segment[2*pos+2][1][1])
+    {
+        segment[pos][1][1]=segment[2*pos+1][1][1];
+        segment[pos][0][1]=segment[2*pos+1][0][1];
+ 
+    }
+    else if((segment[2*pos+1][1][1]<segment[2*pos+2][1][1]))
+    {
+        segment[pos][1][1]=segment[2*pos+2][1][1];
+        segment[pos][0][1]=segment[2*pos+2][0][1];
+    }
+    else
+    {
+        segment[pos][1][1]=segment[2*pos+2][1][1];
+        segment[pos][0][1]=segment[2*pos+2][0][1]+segment[2*pos+1][0][1];
+ 
+    }
+    if(segment[2*pos+1][1][0]>segment[2*pos+2][1][0])
+    {
+        segment[pos][1][0]=segment[2*pos+2][1][0];
+        segment[pos][0][0]=segment[2*pos+2][0][0];
+ 
+    }
+    else if((segment[2*pos+1][1][0]<segment[2*pos+2][1][0]))
+    {
+        segment[pos][1][0]=segment[2*pos+1][1][0];
+        segment[pos][0][0]=segment[2*pos+1][0][0];
+    }
+    else
+    {
+        segment[pos][1][0]=segment[2*pos+2][1][0];
+        segment[pos][0][0]=segment[2*pos+2][0][0]+segment[2*pos+1][0][0];
+ 
+    }
+    }
+ 
+ 
+}
+int main()
+{
+    long long int n,q,i;
+    cin>>n;
+    for(i=0;i<n;i++)
+    {
+        scanf("%lld",&arr[i]);
+    }
+    constructtree(0,n-1,0);
+   // for(i=0;i<=17;i++)
+     //   cout<<segment[i][1][1]<<" "<<segment[i][0][1]<<endl;
+     long long int opt,x,y;
+     char str[100];
+     cin>>q;
+     while(q--)
+     {
+         fflush(stdin);
+         cin>>str;
+         cin>>x>>y;
+         if(strcmp(str,"ADD")==0)
+            update(0,n-1,0,x-1,y,1);
+         if(strcmp(str,"MUL")==0)
+            update(0,n-1,0,x-1,y,2);
+        if(strcmp(str,"REP")==0)
+            update(0,n-1,0,x-1,y,3);
+            if(strcmp(str,"MAX")==0)
+            {
+            shivam obj=sum(x-1,y-1,0,n-1,0,0);
+            cout<<obj.e<<" "<<obj.o<<endl;
+            }
+            if(strcmp(str,"MIN")==0)
+            {
+            shivam obj=sum(x-1,y-1,0,n-1,0,0);
+                        cout<<obj.e2<<" "<<obj.o2<<endl;
+ 
+ 
+            }
+          //  for(i=0;i<=19;i++)
+             //   cout<<segment[i][1][0]<<" "<<segment[i][0][0]<<endl;
+     }
+ 
+return 0;
+}

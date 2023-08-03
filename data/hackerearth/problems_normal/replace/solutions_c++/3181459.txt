@@ -1,0 +1,279 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int, int> pii; typedef vector<pair<int, int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+struct MaximumFlow {
+	typedef int Index;
+	typedef int Flow;
+	static const Flow InfCapacity = INF;
+	struct Edge {
+		Index to;
+		Flow capacity;
+		Index rev;
+	};
+	vector<vector<Edge> > g;
+	void init(Index n) { g.assign(n, vector<Edge>()); }
+	void add(Index i, Index j, Flow capacity) {
+		Edge e, f; e.to = j, f.to = i; e.capacity = capacity, f.capacity = 0;
+		g[i].push_back(e); g[j].push_back(f);
+		g[i].back().rev = (Index)g[j].size() - 1; g[j].back().rev = (Index)g[i].size() - 1;
+	}
+	void addB(Index i, Index j, Flow capacity) {
+		Edge e, f; e.to = j, f.to = i; e.capacity = capacity, f.capacity = capacity;
+		g[i].push_back(e); g[j].push_back(f);
+		g[i].back().rev = (Index)g[j].size() - 1; g[j].back().rev = (Index)g[i].size() - 1;
+	}
+	//gを破壊する
+	Flow maximumFlow(int s, int t) {
+		int n = g.size();
+		vector<Index> level(n);
+		Flow total = 0; bool update;
+		do {
+			update = false;
+			fill(level.begin(), level.end(), -1); level[s] = 0;
+			queue<Index> q; q.push(s);
+			for(Index d = n; !q.empty() && level[q.front()] < d; ) {
+				int u = q.front(); q.pop();
+				if(u == t) d = level[u];
+				each(e, g[u]) if(e->capacity > 0 && level[e->to] == -1)
+					q.push(e->to), level[e->to] = level[u] + 1;
+			}
+			vector<Index> iter(n);
+			for(Index i = 0; i < n; i ++) iter[i] = (int)g[i].size() - 1;
+			while(1) {
+				Flow f = augment(level, iter, s, t, InfCapacity);
+				if(f == 0) break;
+				total += f; update = true;
+			}
+		} while(update);
+		return total;
+	}
+	Flow augment(vector<Index> &level, vector<Index> &iter, Index u, Index t, Flow f) {
+		if(u == t || f == 0) return f;
+		Index lv = level[u];
+		if(lv == -1) return 0;
+		level[u] = -1;
+		for(; iter[u] >= 0; -- iter[u]) {
+			Edge &e = g[u][iter[u]];
+			if(level[e.to] <= lv) continue;
+			Flow l = augment(level, iter, e.to, t, min(f, e.capacity));
+			if(l == 0) continue;
+			e.capacity -= l; g[e.to][e.rev].capacity += l;
+			level[u] = lv;
+			return l;
+		}
+		return 0;
+	}
+};
+
+unsigned long long readTimeStampCounter() {
+	unsigned a = 123456789, b = 987654321;
+#ifdef __GNUC__
+	asm(
+		"rdtsc;\n\t"
+		: "=d" (a), "=a" (b)
+		);
+#else
+	__asm {
+		rdtsc;
+		mov a, edx;
+		mov b, eax;
+	};
+#endif
+	return (unsigned long long)a << 32 | b;
+}
+unsigned xor128() {
+	static unsigned x = 123456789, y = 362436069,
+		z = (unsigned)(readTimeStampCounter() >> 32), w = (unsigned)readTimeStampCounter();
+	unsigned t = x ^ (x << 11);
+	x = y; y = z; z = w;
+	return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
+}
+
+
+struct PolynomialHashKD {
+	static const int D = 1;
+	static const int NumMods = 5;
+	static const unsigned Mods[NumMods];
+	typedef unsigned long long ull;
+	struct Hash {
+		unsigned hs[NumMods];
+		Hash() { for(int k = 0; k < NumMods; ++ k) hs[k] = 0; }
+		Hash(unsigned x) {
+			if(x < Mods[NumMods - 1]) {
+				for(int k = 0; k < NumMods; ++ k) hs[k] = x;
+			} else {
+				for(int k = 0; k < NumMods; ++ k) hs[k] = x % Mods[k];
+			}
+		}
+		bool operator==(const Hash &that) const {
+			bool res = true;
+			for(int k = 0; k < NumMods; ++ k)
+				res &= hs[k] == that.hs[k];
+			return res;
+		}
+		bool operator<(const Hash &that) const {
+			for(int k = 0; k < NumMods; ++ k)
+				if(hs[k] != that.hs[k])
+					return hs[k] < that.hs[k];
+			return false;
+		}
+		Hash &operator+=(const Hash &that) {
+			for(int k = 0; k < NumMods; ++ k)
+				if((hs[k] += that.hs[k]) >= Mods[k])
+					hs[k] -= Mods[k];
+			return *this;
+		}
+		Hash operator+(const Hash &that) const { return Hash(*this) += that; }
+		Hash &operator-=(const Hash &that) {
+			for(int k = 0; k < NumMods; ++ k)
+				if((hs[k] += Mods[k] - that.hs[k]) >= Mods[k])
+					hs[k] -= Mods[k];
+			return *this;
+		}
+		Hash operator-(const Hash &that) const { return Hash(*this) -= that; }
+		Hash operator*(const Hash &that) const {
+			Hash res;
+			for(int k = 0; k < NumMods; ++ k)
+				res.hs[k] = (ull)hs[k] * that.hs[k] % Mods[k];
+			return res;
+		}
+	};
+	static Hash seeds[D];
+	static std::vector<Hash> powh[D];
+
+	static void initSeeds() {
+		for(int i = 0; i < 40; ++ i) xor128();
+		for(int d = 0; d < D; ++ d)
+			for(int k = 0; k < NumMods; ++ k) {
+				unsigned x;
+				do x = xor128(); while(x == 0 || x >= Mods[k]);
+				seeds[d].hs[k] = x;
+			}
+	}
+	static void precomputePowerTable(int newSize) {
+		if((int)powh[0].size() >= newSize) return;
+		if(seeds[0].hs[0] == 0) initSeeds();
+		for(int d = 0; d < D; ++ d) {
+			int oldSize = powh[d].size();
+			powh[d].resize(newSize);
+			if(oldSize == 0)
+				for(int k = 0; k < NumMods; ++ k) powh[d][0].hs[k] = 1;
+			for(int i = std::max(1, oldSize); i < newSize; i ++) for(int k = 0; k < NumMods; ++ k)
+				powh[d][i].hs[k] = (ull)powh[d][i - 1].hs[k] * seeds[d].hs[k] % Mods[k];
+		}
+	}
+};
+const unsigned PolynomialHashKD::Mods[PolynomialHashKD::NumMods] = { 2147483647U, 2147483629U, 2147483587U, 2147483579U, 2147483563U };
+PolynomialHashKD::Hash PolynomialHashKD::seeds[PolynomialHashKD::D];
+std::vector<PolynomialHashKD::Hash> PolynomialHashKD::powh[PolynomialHashKD::D];
+
+
+typedef const char *Pos;
+typedef PolynomialHashKD::Hash Hash;
+map<Hash, vector<Hash> > graph;
+map<Hash, int> subtsize;
+void parse(Pos &p, vector<Hash> &res);
+
+Hash parse1(Pos &p) {
+	vector<Hash> v;
+	parse(p, v);
+	sort(all(v));
+	int size = 1;
+	for(Hash h : v)
+		size += subtsize[h];
+	Hash h(size);
+	for(Hash t : v)
+		h = h * PolynomialHashKD::seeds[0] + t;
+	if(!graph.count(h)) {
+		graph[h] = v;
+		subtsize[h] = size;
+	}
+	return h;
+}
+
+void parse(Pos &p, vector<Hash> &res) {
+	assert(*p == '{');
+	++ p;
+	res.clear();
+	while(*p == '{')
+		res.push_back(parse1(p));
+	assert(*p == '}');
+	++ p;
+}
+
+int main() {
+	PolynomialHashKD::initSeeds();
+	int T;
+	scanf("%d", &T);
+	for(int ii = 0; ii < T; ++ ii) {
+		string s;
+		//{ {{}} {{}{}} }
+		//{ {{{}}} {{{}{}}} }
+		cin >> s;
+		graph.clear();
+		Pos p = s.c_str();
+		vector<Hash> top;
+		parse(p, top);
+		map<Hash, int> topmap;
+		for(Hash h : top)
+			++ topmap[h];
+		vector<Hash> hashes;
+		for(const auto &p : graph)
+			hashes.push_back(p.first);
+		int src = graph.size(), dst = src + 1;
+		MaximumFlow mf; mf.init(dst + 1);
+		for(auto p : topmap) {
+			int u = lower_bound(hashes.begin(), hashes.end(), p.first) - hashes.begin();
+			mf.add(src, u, p.second);
+		}
+		rep(u, hashes.size()) {
+			vector<Hash> arcs = graph[hashes[u]];
+			sort(arcs.begin(), arcs.end());
+			arcs.erase(unique(arcs.begin(), arcs.end()), arcs.end());
+			for(Hash h : arcs) {
+				int v = lower_bound(hashes.begin(), hashes.end(), h) - hashes.begin();
+				mf.add(u, v, INF);
+			}
+		}
+		rep(u, hashes.size()) if(!topmap.count(hashes[u])) {
+			mf.add(u, dst, 1);
+		}
+		int ans = mf.maximumFlow(src, dst);
+		printf("%d\n", ans);
+	}
+	return 0;
+}

@@ -1,0 +1,193 @@
+#include <bits/stdc++.h>
+#define _ ios_base::sync_with_stdio(0);cin.tie(0);
+
+using namespace std;
+
+#define ll long long
+#define ff first
+#define ss second
+#define mpa make_pair
+#define MOD 1000000007
+#define pb push_back
+#define lld I64d
+#define MXN 1000000
+
+char cad[100];
+ll DP[20][100000];
+int final_state;
+
+
+int set_bit(int dig, int state)
+{
+	if(dig == 4) {
+		int temp = set_bit(2, state);
+		return set_bit(2, temp);
+	}
+	
+	if(dig == 6) {
+		int temp = set_bit(2, state);
+		return set_bit(3, temp);
+	}
+	
+	if(dig == 8) {
+		int temp = set_bit(2, state);
+		temp = set_bit(2, temp);
+		return set_bit(2, temp);
+	}
+	
+	if(dig == 9) {
+		int temp = set_bit(3, state);
+		return set_bit(3, temp);
+	}
+	
+	int num[10];
+	for(int i = 0; i < 10; ++i) {
+		num[i] = state%3;
+		state /= 3;
+	}
+	
+	if(num[dig] == 0) 
+		num[dig] = 1;
+	else
+		num[dig] = 3 - num[dig];
+	
+	int Ans = 0 ;
+	int pow_3 = 1;
+    for ( int i = 0 ; i <= 9 ; i++){
+    	Ans += (num[i] * pow_3);
+    	pow_3 *= 3;
+	}
+	return Ans;
+}
+
+
+bool chk_bit(int state)
+{
+	int num[10];
+	for(int i = 0; i < 10; ++i) {
+		num[i] = state%3;
+		state /= 3;
+	}
+	
+	if(num[0])
+		return false;
+			
+	for(int i = 0; i < 10; ++i) {
+		if(num[i] != 0) {
+			if((i == 2 || i == 3 || i == 5 || i == 7) && num[i] == 1) {
+				return false;
+			}
+		}
+	}
+	
+	return true;
+}
+
+ll rec(int len, int state, int is)
+{
+	if(len == 0) {
+		if(is) return 0;
+		return chk_bit(state);
+	}
+	
+	if(DP[len][state] != -1) return DP[len][state];
+	
+	ll Ans = 0;
+	
+	for(int i = 0; i < 10; ++i) {
+				Ans += rec(len - 1 , (is && i == 0 )? 0 : set_bit(i, state), is && i == 0);
+	}
+	
+	return DP[len][state] = Ans;
+}
+
+ll ans(ll num)
+{
+	sprintf(cad, "%lld", num);
+	
+	//cout<<"cad => " << cad <<"\n";
+	
+	int len = strlen(cad);
+	
+	int state = 0;
+	
+	ll Ans = 0;
+	int rem = len;
+	bool is = true;
+	
+	for(int i = 0; i < len; ++i) { //Left to Rig
+		
+		int dig = cad[i] - '0';
+		rem--;
+		
+	//	cout<<"rem => " << rem <<" dig => " << dig <<"\n";
+		
+		for(int i = 0; i < dig; ++i) {
+			if(is && i == 0)
+				Ans += rec(rem, 0, true);
+			else
+				Ans += rec(rem, set_bit(i, state), false);
+		}
+		
+		is = is && dig == 0;
+		state = set_bit(dig, state);	
+	}
+	
+	return Ans; 
+}
+
+void solve()
+{
+	ll A;
+	ll B;
+	ll K;
+	scanf("%lld%lld%lld", &A, &B, &K);
+	
+	ll range = ans(B + 1) - ans(A);
+	
+	//cout<<"range => " << range <<"\n";
+	
+	if(range < K) {
+		puts("-1");
+		return ;
+	}
+	
+	ll start = ans(A);
+	
+	while(B - A >= 4) {
+		ll mid = (A + B)/2;
+		ll wht = ans(mid + 1);
+		
+		if(wht - start >= K) {
+			B = mid;
+		} else {
+			A = mid;
+		}
+	}
+	
+	ll ans2;
+	
+	for(ll i = A; i <= B; ++i) {
+		ll tmp = ans(i + 1);
+		if(tmp - start == K) {
+			ans2 = i;
+			break;
+		}
+	}
+	
+	printf("%lld\n", ans2);
+}
+
+int main()
+{
+		memset(DP, -1, sizeof DP);
+		
+		int T;
+		scanf("%d", &T);
+		
+		while(T--) {
+			solve();
+		}
+		
+		return 0;
+}

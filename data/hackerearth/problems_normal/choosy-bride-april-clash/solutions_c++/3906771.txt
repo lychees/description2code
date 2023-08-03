@@ -1,0 +1,139 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+const int N = 3e5;
+const long long int inf = 1e18;
+struct node{
+    long long int max_v;
+    int cnt;
+    long long int delta;
+    bool is_leaf;
+}tree[2][4*N];
+long long a[2][N],n;
+
+void push(struct node tree[],int v){
+    if(!tree[v].is_leaf){
+        tree[2*v].max_v += tree[v].delta;
+        tree[2*v].delta += tree[v].delta;
+        tree[2*v +1].max_v += tree[v].delta;
+        tree[2*v +1].delta += tree[v].delta;
+    }
+
+    tree[v].delta = 0;
+}
+void combine(struct node tree[],struct node& r,int v){
+    if(r.max_v > tree[v].max_v){
+        return ;
+    }
+    int u = v,d=0;
+    while(!tree[v].is_leaf)
+    {
+        push(tree, v);
+        if(r.max_v > tree[2*v].max_v){
+            v = 2*v + 1;
+        }else{
+            d += tree[v].cnt - tree[2*v].cnt;
+            v = 2*v;
+        }
+    }
+
+    d += tree[v].cnt;
+    r.max_v = tree[u].max_v ;
+    r.cnt += d;
+}
+void build_tree(struct node tree[],long long int a[],int v,int l,int r){
+    if(l==r){
+        tree[v].max_v = a[l];
+        tree[v].cnt = 1;
+        tree[v].delta = 0;
+        tree[v].is_leaf = true;
+        return;
+    }
+
+    int m = (l+r)/2;
+
+     build_tree(tree,a,2*v,l,m);
+     build_tree(tree,a,2*v+1,m+1,r);
+
+     tree[v] = tree[2*v];
+     tree[v].is_leaf = false;
+     combine(tree,tree[v],2*v+1);
+}
+void query(struct node tree[],struct node& collect,int v,int s,int e,int l,int r){
+    push(tree,v);
+    if(s>r || e<l)return;
+    if(s>=l && e<=r){
+        combine(tree,collect,v);
+        return;
+    }
+
+     int m = (s+e)/2;
+
+     query(tree,collect,2*v,s,m,l,r);
+     query(tree,collect,2*v+1,m+1,e,l,r);
+
+}
+void update(struct node tree[],int v,int s,int e,int l,int r,long long delta){
+    push(tree,v);
+    if(s>r || e<l)return;
+    if(s>=l && e<=r){
+        tree[v].max_v += delta;
+        tree[v].delta += delta;
+        return;
+    }
+
+     int m = (s+e)/2;
+
+     update(tree,2*v,s,m,l,r,delta);
+     update(tree,2*v+1,m+1,e,l,r,delta);
+     tree[v]=tree[2*v];
+     tree[v].is_leaf = false;
+     tree[v].delta = 0;
+     combine(tree,tree[v],2*v+1);
+}
+int main()
+{
+    int t,q,tp,i,l,r;
+    long long x;
+    cin>>t;
+    while(t--)
+    {
+        cin>>n>>q;
+
+        for(i=1;i<=n;i++){
+            cin>>x;
+            a[0][i]=x;
+            a[1][n-i+1]=x;
+        }
+
+        build_tree(tree[0],a[0],1,1,n);
+        build_tree(tree[1],a[1],1,1,n);
+        /*for(i=1;i<=10;i++)
+        {
+            cout<<tree[1][i].max_v<<' '<<tree[1][i].cnt<<endl;
+        }*/
+        while(q--)
+        {
+            cin>>tp;
+
+            if(tp == 1){
+                cin>>l>>r;
+                struct node collect;
+                collect.max_v = -inf;
+                collect.cnt = 0;
+                if(l<=r)
+                query(tree[0],collect,1,1,n,l,r);
+                else
+                query(tree[1],collect,1,1,n,n-l+1,n-r+1);
+
+                cout<<collect.cnt<<endl;
+
+            }else{
+                cin>>l>>r>>x;
+                update(tree[0],1,1,n,l,r,x);
+                update(tree[1],1,1,n,n-r+1,n-l+1,x);
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,197 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+//SOurce: codeforces.com
+static struct IO {
+	char tmp[1 << 10];
+
+	// fast input routines
+	char cur;
+
+//#define nextChar() (cur = getc(stdin))
+//#define peekChar() (cur)
+	inline char nextChar() { return cur = getchar(); }
+	inline char peekChar() { return cur; }
+
+	inline operator bool() { return peekChar(); }
+	inline static bool isBlank(char c) { return (c < '-' && c); }
+	inline bool skipBlanks() { while (isBlank(nextChar())); return peekChar() != 0; }
+
+	inline IO& operator >> (char & c) { c = nextChar(); return *this; }
+
+	inline IO& operator >> (char * buf) {
+		if (skipBlanks()) {
+			if (peekChar()) {
+				*(buf++) = peekChar();
+				while (!isBlank(nextChar())) *(buf++) = peekChar();
+			} *(buf++) = 0; } return *this; }
+
+	inline IO& operator >> (string & s) {
+		if (skipBlanks()) {	s.clear(); s += peekChar();
+			while (!isBlank(nextChar())) s += peekChar(); }
+		return *this; }
+
+	inline IO& operator >> (double & d) { if ((*this) >> tmp) sscanf(tmp, "%lf", &d); return *this;	}
+
+#define defineInFor(intType) \
+	inline IO& operator >>(intType & n) { \
+		if (skipBlanks()) { \
+			int sign = +1; \
+			if (peekChar() == '-') { \
+				sign = -1; \
+				n = nextChar() - '0'; \
+			} else \
+				n = peekChar() - '0'; \
+			while (!isBlank(nextChar())) { \
+				n += n + (n << 3) + peekChar() - 48; \
+			} \
+			n *= sign; \
+		} \
+		return *this; \
+	}
+
+defineInFor(int)
+defineInFor(unsigned int)
+defineInFor(long long)
+
+	// fast output routines
+
+//#define putChar(c) putc((c), stdout)
+	inline void putChar(char c) { putchar(c); }
+	inline IO& operator << (char c) { putChar(c); return *this; }
+	inline IO& operator << (const char * s) { while (*s) putChar(*s++); return *this; }
+
+	inline IO& operator << (const string & s) { for (int i = 0; i < (int)s.size(); ++i) putChar(s[i]); return *this; }
+
+	char * toString(double d) { sprintf(tmp, "%lf%c", d, '\0'); return tmp; }
+	inline IO& operator << (double d) { return (*this) << toString(d); }
+
+
+#define defineOutFor(intType) \
+	inline char * toString(intType n) { \
+		char * p = (tmp + 30); \
+		if (n) { \
+			bool isNeg = 0; \
+			if (n < 0) isNeg = 1, n = -n; \
+			while (n) \
+				*--p = (n % 10) + '0', n /= 10; \
+			if (isNeg) *--p = '-'; \
+		} else *--p = '0'; \
+		return p; \
+	} \
+	inline IO& operator << (intType n) { return (*this) << toString(n); }
+
+defineOutFor(int)
+defineOutFor(long long)
+
+#define endl ('\n')
+#define cout __io__
+#define cin __io__
+} __io__;
+
+
+
+const int mx = 1500;
+
+int num[mx];
+int n;
+vector<int> sorted[3 * mx];
+
+void init(int i, int a, int b) {
+	//cout << i << " " << a << " " << b << endl;
+	sorted[i].resize(b - a + 1);
+
+	if(a == b) {
+		sorted[i][0] = num[a];
+		return;
+	}
+	int m = (a + b) / 2;
+
+	init(2 * i + 1, a, m);
+	init(2 * i + 2, m + 1, b);
+
+	//assert(sorted[i].size() == sorted[2 * i + 1].size() + sorted[2 * i + 2].size());
+
+	//cout << i << "-> " << a << " " << b << endl;
+
+	merge(sorted[2 * i + 1].begin(), sorted[2 * i + 1].end(),
+	sorted[2 * i + 2].begin(), sorted[2 * i + 2].end(),
+	sorted[i].begin());
+}
+
+int x, qa, qb;
+int get(int i, int a, int b) {
+	if(b < qa || a > qb) return 0;
+	//cout << i << " " << a << " " << b << " " << qa << " " << qb << " " << x << endl;
+	if(qa <= a && b <= qb) {
+		//for(int j = 0; j < sorted[i].size(); ++j) cout << sorted[i][j] << " ";
+		//cout << ">" << endl;
+		int ret = lower_bound(sorted[i].begin(), sorted[i].end(), x) - sorted[i].begin();
+		//cout << "= " << ret << endl;
+		return ret;
+	}
+	int m = (a + b) / 2;
+
+	return get(2 * i + 1, a, m) + get(2 * i + 2, m + 1, b);
+}
+
+map<int, int> id, rev;
+
+void normalize() {
+	vector<int> v(num, num + n);
+	sort(v.begin(), v.end());
+	v.resize(unique(v.begin(), v.end()) - v.begin());
+	for(int i = 0; i < n; ++i) {
+		id[v[i]] = i;
+		rev[i] = v[i];
+	}
+	for(int i = 0; i < n; ++i) num[i] = id[num[i]];
+}
+
+int ans[mx][mx];
+void pre() {
+	for(qa = 0; qa < n; ++qa) {
+		priority_queue<int> q1;
+		priority_queue<int, vector<int>, greater<int> > q2;
+
+		int len = 0;
+		for(int qb = qa; qb < n; ++qb) {
+			++len;
+			if(q1.size() && num[qb] <= q1.top()) q1.push(num[qb]);
+			else q2.push(num[qb]);
+			int req = (len + 1) / 2;
+
+			if(q1.size() > req) {
+				q2.push(q1.top());
+				q1.pop();
+			} else if(q1.size() < req) {
+				//assert(q2.size() > 0);
+				q1.push(q2.top());
+				q2.pop();
+			}
+
+			ans[qa][qb] = q1.top();
+		}
+	}
+}
+
+int main()
+{
+	int q;
+    cin >> n;
+
+    for(int i = 0; i < n; ++i) cin >> num[i];
+    //normalize();
+    pre();
+    init(0, 0, n - 1);
+    cin >> q;
+    int maxx = *max_element(num, num + n);
+
+    for(int qq = 0; qq < q; ++qq) {
+    	cin >> qa >> qb;
+    	--qa, --qb;
+    	cout << ans[qa][qb] << endl;
+    }
+    return 0;
+}
+

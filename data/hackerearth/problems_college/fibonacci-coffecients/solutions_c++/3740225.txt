@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define upperlimit 1000100
+#define INF 1e18
+#define eps 1e-8
+#define endl '\n'
+#define mp make_pair
+#define pb push_back
+#define pcc pair<char,char>
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define tr(container,it) for(typeof(container.begin()) it=container.begin();it!=container.end();it++)
+#define F first
+#define S second
+
+using namespace std;
+
+ll gcd(ll n1,ll n2){
+	if(n1%n2==0)return n2;
+	return gcd(n2,n1%n2);
+}
+ll powmod(ll base,ll exponent)
+{
+	ll ans=1;
+	while(exponent){
+		if(exponent&1)ans=(ans*base);
+		base=(base*base);
+		exponent/=2;
+	}
+	return ans;
+}
+ll mod;
+ll fib[upperlimit+1];
+ll arr[upperlimit+1];
+struct tree{
+	ll f1,f2,f3;
+};
+tree segtree[4*upperlimit+1];
+void build(int node,int l,int r){
+	if(l>r)return;
+	if(l==r){
+		segtree[node].f1=arr[l];
+		segtree[node].f2=arr[l];
+		segtree[node].f3=0;
+		return;
+	}
+	for(int i=l;i<=r;i++){
+		segtree[node].f1=(segtree[node].f1+fib[i-l+2]*arr[i])%mod;
+		segtree[node].f2=(segtree[node].f2+fib[i-l+1]*arr[i])%mod;
+		segtree[node].f3=(segtree[node].f3+fib[i-l+0]*arr[i])%mod;
+	}
+	int mid=(l+r)>>1;
+	build(2*node,l,mid);
+	build(2*node+1,mid+1,r);
+}
+void update(int node,int l,int r,int ind,int val){
+	if(l>r)return;
+	if(l==r&&l==ind){
+		segtree[node].f1=val;
+		segtree[node].f2=val;
+		segtree[node].f3=0;
+		arr[ind]=val;
+		return;
+	}
+
+	segtree[node].f1=(segtree[node].f1+fib[ind-l+2]*(mod+val-arr[ind]))%mod;
+	segtree[node].f2=(segtree[node].f2+fib[ind-l+1]*(mod+val-arr[ind]))%mod;
+	segtree[node].f3=(segtree[node].f3+fib[ind-l+0]*(mod+val-arr[ind]))%mod;
+
+	int mid=(l+r)>>1;
+	if(ind>mid)update(2*node+1,mid+1,r,ind,val);
+	else update(2*node,l,mid,ind,val);
+}
+tree query(int node,int i,int j,int l,int r){
+	tree ret;
+	ret.f1=0;
+	ret.f2=0;
+	ret.f3=0;
+	if(i>j||i>r||j<l)return ret;
+	if(i>=l&&j<=r){
+		if(i==l)return segtree[node];
+		ret.f1=(fib[i-l+1]*segtree[node].f1+fib[i-l+0]*segtree[node].f2)%mod;
+		ret.f2=(fib[i-l+1]*segtree[node].f2+fib[i-l+0]*segtree[node].f3)%mod;
+		ret.f3=(fib[i-l+0]*segtree[node].f2+fib[i-l-1]*segtree[node].f3)%mod;
+		return ret;
+	}
+
+	int mid=(i+j)>>1;
+	tree q1=query(2*node,i,mid,l,r);
+	tree q2=query(2*node+1,mid+1,j,l,r);
+
+	ret.f1=(q1.f1+q2.f1)%mod;
+	ret.f2=(q1.f2+q2.f2)%mod;
+	ret.f3=(q1.f3+q2.f3)%mod;
+	
+	return ret;
+}
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	int n,m,i,j;
+	cin>>n>>m>>mod;
+	for(i=1;i<=n;i++)cin>>arr[i];
+	fib[0]=0;
+	fib[1]=1;
+	for(i=2;i<=upperlimit;i++)fib[i]=(fib[i-1]+fib[i-2])%mod;
+	build(1,1,n);
+	int q_type,l,r;
+	while(m--){
+		cin>>q_type>>l>>r;
+		if(q_type==2){
+			tree res=query(1,1,n,l,r);
+			cout<<(res.f2)<<endl;
+		}
+		else update(1,1,n,l,r);
+	}
+
+	return 0;
+}

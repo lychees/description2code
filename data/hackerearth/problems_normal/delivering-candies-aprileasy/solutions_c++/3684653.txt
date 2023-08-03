@@ -1,0 +1,141 @@
+/*input
+5 4 3
+5 4 3 2 1
+1 2 5
+3 2 3
+3 5 1
+1 5 1
+*/
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+//loops
+#define f(i,s,n) for(ll i=(ll)s;i<(ll)n;i++)
+#define rf(i,n,s) for(ll i=(ll)(n-1);i>=(ll)s;i--)
+#define pb push_back
+//reset
+#define ms0(X) memset((X), 0, sizeof((X)))
+#define ms1(X) memset((X), -1, sizeof((X)))
+//STL
+#define pii pair<ll,ll>
+#define vll vector<ll>
+#define vpii vector<pii >
+#define mpii map<pii,ll> 
+#define msll map<string, ll> 
+#define mll map<ll, ll>
+#define sortv(v) sort(v.begin(),v.end())
+#define F first
+#define S second
+#define INF 100000000000LL
+//standard values
+#define EPS 1e-6
+const int MAXN = 100005;
+const int mod=1e9+7;
+//comparator
+bool cmp(pii a,pii b){
+  if(a.F==b.F) return a.S<b.S;
+  else return a.F<b.F;
+}
+ll exp(ll a, ll b){ll ans=1;while(b!=0){if(b%2)ans=ans*a;a=a*a;b/=2;}return ans;}
+/********************************************************************************************************/
+vpii v[MAXN];
+vpii tmp[MAXN];
+pair<pii,ll> edges[MAXN];
+ll dis[MAXN];
+ll mem[MAXN];
+ll dismem[MAXN];
+bool vis[MAXN];
+priority_queue<pii,vpii,greater<pii > >pq;
+ll dij(ll st)
+{
+  dis[st]=0;
+  pq.push({0,st});
+  while(!pq.empty())
+  {
+    pii a=pq.top();
+    pq.pop();
+    ll fro=a.S;
+    if(vis[fro]==1)
+      continue;
+    else
+      vis[fro]=1;
+    f(i,0,v[fro].size()){
+      ll to=v[fro][i].F;
+      if(a.F+v[fro][i].S<dis[to]){
+        dis[to]=a.F+v[fro][i].S;
+        pq.push({dis[to],to});
+      }
+    }
+  }
+}
+void dfs(ll st)
+{
+  vis[st]=1;
+  f(i,0,tmp[st].size()){
+    if(!vis[tmp[st][i].F]){
+      dfs(tmp[st][i].F);
+    }
+  }
+}
+int main() 
+{
+  ios_base::sync_with_stdio(0);cin.tie(0);cout.tie(0);
+  ll n,m,s;
+  cin>>n>>m>>s;
+  f(i,1,n+1){
+    dis[i]=INF;
+  }
+  f(i,1,n+1){
+    cin>>mem[i];
+  }
+  f(i,0,m){
+    ll a,b,w;
+    cin>>edges[i].F.F>>edges[i].F.S>>edges[i].S;
+    a=edges[i].F.F;
+    b=edges[i].F.S;
+    w=edges[i].S;
+    tmp[a].pb({b,w});
+    tmp[b].pb({a,w});
+  }
+  dfs(s);
+
+  ll totmem=0;
+  f(i,1,n+1){
+    if(vis[i]==1){
+      totmem+=mem[i];
+    }
+  }
+  f(i,0,m){
+    ll a=edges[i].F.F;
+    ll b=edges[i].F.S;
+    if(vis[a]&&vis[b])
+     {
+      v[a].pb({b,edges[i].S});
+      v[b].pb({a,edges[i].S});
+     }
+  }
+  ms0(vis);
+  dij(s);
+  ll tot=0;
+  f(i,1,n+1){
+    if(dis[i]!=INF){
+      dismem[i]=dis[i]*mem[i];
+    }
+    tot+=dismem[i];
+  }
+  //cout<<totmem<<" "<<tot<<endl;
+  f(i,1,n+1){
+    if(dis[i]==INF){
+      cout<<0<<" ";
+      continue;
+    }
+    else{
+      ll val=(totmem-mem[i])*dis[i];
+      //cout<<val<<" ";
+      val+=tot-dismem[i];
+      cout<<val<<" ";
+    }
+  }
+  return 0;
+}
+

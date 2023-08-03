@@ -1,0 +1,104 @@
+/* 
+	author:- AMIT KUMAR
+		INDIAN INSTITUTE OF INFORMATION TECHNOLOGY, ALLAHABAD
+		
+	EXAMPLE:- 2 3 1 2 2 2
+	let k=12;
+	In brute force , what we must have been doing is that, for each element we would have been seeing 
+	its contribution in w sized continuos subsets starting at this element such that the sum of that
+	set was less than or equal to k.
+	i.e. if index 1 is chosed. (ie. element 2 at position 1 was chosen )
+		 Then, 2<k , 2+3<k ,2+3+1<k ,2+3+1+2<k ,2+3+1+2+2<k i.e. in total, index 1 is contributing to 
+		 answer 5 times.
+		 Lets see the same other way around.
+		 if we can in some way get to know the farthest index j from some index i such that the sum from i
+		 to j is not greater than k, then it is quite obvious that in j-i+1 sized subset, that i indexed
+		 element surely contributed. More clear observation will tell you that even for all sizes w>=1 but
+		 less than i-j+1 , the same ith indexed element also contributed.
+		 i.e.
+		 for 1th index. the farthest point is 5th point i.e. 2 3 1 2 2 is largest continous subarray possible
+		 starting from 1th index whose sum is not greater than k.Thus it not only contributed in size of 5, but
+		 also contributed to 4 size subarray i.e. 2 3 1 2 , also to 3 size subarray i.e. 2 3 1 , also 
+		 to 2 size array i.e. 2 3 , also to 1 size i.e. 2 itself.
+	HOW TO FIND THE LARGEST INDEX FOR ith POSITION
+		One option is to use brute force for each element which is time limit exceed.
+		Second option is quite constructive. If we could maintain the cumulative sum array, then automatically, 
+		we will get something which will be in sorted order(reason to be happy) i.e. a sorted cumulative array
+		on which we can apply binary search now.
+		We will look for the lower_bound of the value equal to cum[i-1]+k i.e. for ith position, we want the
+		farthest index from i, but we are actually making a search on cumulative array and we have to make sure
+		that we have to achieve that subarray whose total is not greater than k but most importantly it starts 
+		from ith indexed elements onwards i.e. we have to look till that index j where cum[j]-cum[i-1]<=k;
+		i.e. for value cum[j]<=cum[i-1]+k;
+	AT last, when all corresponding sized subarrays are incrimented.We have to sum up this cnt array from backwards.
+	WHY TO SUM UP THE CNT ARRAY?
+		As mentioned before, every w sized subarray is obviously going to contribute to all sizes x<w that is why
+		we need to sum up from backside.
+		i.e. if we have 3 times 4 size subarray possible such that their sum was not greater than k, then for 
+		each time we have to add its contribution to 3 2 and 1 size i.e. 3 times needed to be added.
+	THAT'S IT.
+
+*/
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+ll cum[1000100],cnt[1000100],a[1000100];
+
+ll binarysearch(ll low,ll high,ll val)
+{
+	ll mid;
+	while(low<=high)
+	{
+		mid=(low+high)/2;
+		if(cum[mid]==val)
+			return mid;
+		if(cum[mid]>val)
+		{
+			high=mid-1;
+		}
+		else
+		{
+			low=mid+1;
+		}
+	}
+	return high;
+}
+int main()
+{
+	ll t;
+	scanf("%lld",&t);
+	while(t--)
+	{
+		ll n,k;
+		memset(cnt,0,sizeof(cnt));
+		memset(cum,0,sizeof(cum));
+		scanf("%lld %lld",&n,&k);
+		ll i;
+		cum[0]=0;
+		for(i=1; i<=n; i++)
+		{
+			scanf("%lld",&a[i]);
+			cum[i]=cum[i-1]+a[i];
+		}
+		ll size=0;
+		for(i=1; i<=n; i++)
+		{
+			if(a[i]>k)
+				continue;
+			ll idx=binarysearch(i,n,cum[i-1]+k);
+			size=idx-i+1;
+		//	printf("%lld is idx for %lld th index and size %lld\n",idx,i,size);
+			cnt[size]++;
+		}
+		for(i=n-1; i>=1; i--)
+		{
+			cnt[i]+=cnt[i+1];
+		}
+		for(i=1; i<=n; i++)
+		{
+			printf("%lld ",cnt[i]);
+		}
+		printf("\n");
+	}
+	return 0;
+}

@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAGIC=20000;
+long long A, B, X, Y, K;
+
+inline int digsum(long long x)
+{
+    int ret=0;
+    while(x)
+    {
+        ret+=x%10;
+        x/=10;
+    }
+    return ret;
+}
+
+int num[13], N;
+long long dp[13][2][9*12+1][20001];
+
+long long rec(int pos, int small, int sum, int mod)
+{
+    if(pos==N)
+        return X<=sum && sum<=Y && mod==0;
+    long long& ret=dp[pos][small][sum][mod];
+    if(ret!=-1)
+        return ret;
+    ret=0;
+    int limit=small?num[pos]:9;
+    for(int i=0; i<=limit; i++)
+        ret+=rec(pos+1, small && i==limit, sum+i, (mod*10+i)%K);
+    return ret;
+}
+
+long long solve(long long V)
+{
+    if(V==0)
+        return 0;
+    for(N=0; V; N++, V/=10)
+        num[N]=V%10;
+    reverse(num, num+N);
+    //cout<<sizeof dp;
+    memset(dp, -1, sizeof dp);
+    return rec(0, 1, 0, 0);
+}
+
+int main()
+{
+    cin>>A>>B>>X>>Y>>K;
+    if(K>=MAGIC)
+    {
+        long long ans=0;
+        for(long long i=((A-1)/K+1)*K; i<=B; i+=K)
+        {
+            int d=digsum(i);
+            if(X<=d && d<=Y)
+                ans++;
+        }
+        
+        
+        printf("%lld\n", ans);
+    }
+    else
+        cout<< solve(B)-solve(A-1);
+    return 0;
+}

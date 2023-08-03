@@ -1,0 +1,78 @@
+// RMQ segment tree
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+int n;
+int a[100200];
+
+struct segment {
+    int node, low, high;
+    inline bool inside(int l, int r) { return l <= low and high <= r; }
+    inline bool outside(int l, int r) { return l > high or r < low; }
+    inline segment first_half() { return {node * 2, low, (low + high) / 2}; }
+    inline segment second_half() { return {node * 2 + 1, (low + high) / 2 + 1, high}; }
+};
+
+struct segment_value { int pos, val; };
+const segment_value not_found = {-1, 0};
+segment_value combine(const segment_value &a, const segment_value &b) { return a.val > b.val ? a : b; }
+
+struct segment_tree {
+    int size;
+    vector<segment_value> st;
+
+    segment top() { return {1, 0, size - 1}; }
+    int __attribute__ ((noinline)) rmq(int low, int high) { return query(top(), low, high).pos; }
+
+    void build(int *a, int alen) {
+        size = alen;
+        int nodes = 2;
+        while (nodes < 2 * size) nodes *= 2;
+        st.resize(nodes);
+        init(a, top());
+    }
+
+    segment_value query(segment s, int l, int r) {
+        if (s.outside(l, r))
+            return not_found;
+        if (s.inside(l, r))
+            return st[s.node];
+        else
+            return combine(query(s.first_half(), l, r), query(s.second_half(), l, r));
+    }
+
+private:
+    segment_value init(int *a, segment s) {
+        if (s.low == s.high)
+            return st[s.node] = segment_value{s.low, a[s.low]};
+        else
+            return st[s.node] = combine(init(a, s.first_half()), init(a, s.second_half()));
+    }
+} tree;
+
+long long cost(int low, int high) {
+    if (low >= high)
+        return 0;
+    if (low + 1 == high)
+        return max(a[low], a[high]);
+    int mid = tree.rmq(low, high);
+    long long ret = 0;
+    if (low < mid)
+        ret += a[mid] + cost(low, mid - 1);
+    if (mid < high)
+        ret += a[mid] + cost(mid + 1, high);
+    return ret;
+}
+
+int main() {
+    int cases;
+    scanf("%d", &cases);
+    for (int cs = 1; cs <= cases; cs++) {
+        scanf("%d", &n);
+        for (int i = 0; i < n; i++)
+            scanf("%d", &a[i]);
+        tree.build(a, n);
+        printf("%lld\n", cost(0, n - 1));
+    }
+}

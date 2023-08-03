@@ -1,0 +1,120 @@
+//----------shivam_wadhwa----------//
+#include <bits/stdc++.h>
+#define ll long long int
+#define sc1(x) scanf("%d",&x)
+#define sc2(x,y) scanf("%d%d",&x,&y)
+#define scll(x) scanf("%lld",&x)
+#define pint(c) printf("%d",c)
+#define pll(c) printf("%lld",c)
+#define ps() printf(" ")
+#define pn() printf("\n")
+
+#define vi vector<int>
+#define vii vector<pair<int,int> >
+#define mp make_pair
+#define pb push_back
+
+//loops
+#define ff(i,n,a) for(i=a;i<n;++i)
+#define fb(i,n,a) for(i=n,i>=a;--i)
+
+//constants
+const int mxn=1e5+1;
+const int MOD=1e9+7;
+using namespace std;
+vi adj[mxn];
+vi reversedadj[mxn];
+int cnumber[mxn];
+stack<int> process;
+int visited[mxn];
+void reversegraph(int sizeofgraph)
+{
+	int n=sizeofgraph;
+	for(int i=1;i<=n;++i)
+	{
+		for(int j=0;j<adj[i].size();++j)
+		{
+			int v=adj[i][j];
+			reversedadj[v].pb(i);
+		}
+	}
+}
+vector<int> components[mxn];
+void DFS(int src,int turn=0,int type=-1)
+{
+	visited[src]=1;
+	if(!type)
+	{
+		components[turn].pb(src);
+		cnumber[src]=turn;
+	}
+	for(int i=0;i<(type==0?reversedadj[src].size():adj[src].size());++i)
+	{
+		int v;
+		if(!type)
+			v=reversedadj[src][i];
+		else
+			v=adj[src][i];
+		if(!visited[v])
+		{
+			if(!type)
+			DFS(v,turn,type);
+			else
+			DFS(v);
+		}
+	}
+	if(type)
+	process.push(src);
+}
+void compute(int n)
+{
+	for(int i=1;i<=n;++i)
+	{
+		if(!visited[i])
+		{
+			DFS(i);
+		}
+	}
+	reversegraph(n);
+	for(int i=1;i<=n;++i)
+	{
+		visited[i]=0;
+	}
+	int count=1;
+	while(!process.empty())
+	{
+		int u=process.top();
+		if(!visited[u])
+		{
+			DFS(u,count,0);
+			count++;
+		}
+		process.pop();
+	}
+
+}
+int main()
+{
+	int t=1;
+	//sc1(t);
+	while(t--)
+	{
+		int n,m;
+		cin>>n>>m;
+		for(int i=0;i<m;++i)
+		{
+			int a,b;
+			cin>>a>>b;
+			adj[a].pb(b);
+		}	
+		compute(n);
+		for(int i=1;i<=n;++i)
+		{
+			if(components[cnumber[i]].size()>1)
+				cout<<1<<" ";
+			else
+				cout<<0<<" ";
+		}
+	}
+	return 0;
+}

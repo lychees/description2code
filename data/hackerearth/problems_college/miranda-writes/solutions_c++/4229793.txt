@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define TRACE
+#ifdef TRACE
+#define TR(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+  cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+  const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define TR(...)
+#endif
+
+typedef long long        LL;
+typedef vector < int >   VI;
+typedef pair < int,int > II;
+typedef vector < II >    VII;
+
+#define MOD              1000000007
+#define EPS              1e-12
+#define N                410
+#define PB               push_back
+#define MP               make_pair
+#define F                first 
+#define S                second
+#define ALL(v)           v.begin(),v.end()
+#define SZ(a)            (int)a.size()
+#define FILL(a,b)        memset(a,b,sizeof(a))
+#define SI(n)            scanf("%d",&n)
+#define SLL(n)           scanf("%lld",&n)
+#define PLLN(n)          printf("%lld\n",n)
+#define PIN(n)           printf("%d\n",n)
+#define REP(i,j,n)       for(LL i=j;i<n;i++)
+#define PER(i,j,n)       for(LL i=n-1;i>=j;i--)
+#define endl             '\n'
+#define fast_io          ios_base::sync_with_stdio(false);cin.tie(NULL)
+const LL INF = LL(1e15);
+int n , m , k;
+VII g[N];
+map <int , int> mp;
+
+LL D[1<<17][N];
+bool vis[1<<17][N];
+inline void dijkstra(){
+  priority_queue <pair<int , II> , vector <pair<int , II> > , greater < pair<int , II> > > pq;
+  REP(i,0,1<<k)REP(j,1,n+1)D[i][j] = INF;
+  D[0][1] = 0;
+  pq.push(MP(0,MP(0,1)));
+  while(!pq.empty()){
+    auto top = pq.top();
+    pq.pop();
+    int x = top.S.S , mask = top.S.F;
+    if(mask == ((1<<k)-1) && x == n) return;
+    if(vis[mask][x])continue;
+    vis[mask][x] = true;
+    for(auto i : g[x]){
+      int y = i.F , w = i.S;
+      int newMask = mask;
+      if(mp.count(y)) newMask |= (1<<(mp[y]));
+      if(D[newMask][y] > D[mask][x] + w){
+        D[newMask][y] = D[mask][x] + w;
+        pq.push(MP(D[newMask][y],MP(newMask,y)));
+      }
+    }
+  }
+}
+
+
+int main() {
+  SI(n); SI(m); SI(k);
+  REP(i,0,m) {
+    int u , v , c; SI(u); SI(v); SI(c);
+    g[u].PB(MP(v,c));
+    g[v].PB(MP(u,c));
+  }
+  REP(i,0,k) {
+    int x; SI(x); mp[x] = i;
+  }
+  dijkstra();
+  PLLN(D[(1<<k)-1][n]);
+  return 0;
+}

@@ -1,0 +1,173 @@
+using namespace std;
+ 
+#include <algorithm>
+#include <bitset>
+#include <cassert>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include    <list>
+#include <ctime>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <vector>
+ 
+#define rep(i,n) for(__typeof(n) i=0; i<(n); i++)
+#define foreach(i,n) for(__typeof((n).begin())i =(n).begin();i!=(n).end();i++)
+#define inf (1<<30)
+#define eps 1e-9
+#define pb push_back
+#define ins insert
+#define mp make_pair
+#define sz(x) ((int)x.size())
+#define clr clear()
+#define all(x) x.begin(),x.end()
+#define xx first
+#define yy second
+#define sqr(x) ((x)*(x))
+#define mem(x,val) memset((x),(val),sizeof(x));
+#define read(x) freopen(x,"r",stdin);
+#define rite(x) freopen(x,"w",stdout);
+ 
+template <class T> inline T __in() { T v; cin>>v; return v; }
+ 
+#define Q __in<int>()
+#define QQ __in<i64>()
+#define QS __in<st>()
+ 
+typedef long long i64;
+typedef unsigned long long ui64;
+typedef string st;
+typedef vector<int> vi;
+typedef vector<st> vs;
+typedef map<int,int> mii;
+typedef map<st,int> msi;
+typedef map<int,st> mis;
+typedef set<int> si;
+typedef set<st> ss;
+typedef pair<i64,i64> pii;
+typedef vector<pii> vpii;
+ 
+namespace dinic{
+ 
+    #define MAXN 50000
+    #define INF 100000000
+    #define wint int
+ 
+    struct edge {
+        int a, b;
+        wint cap;
+        wint flow;
+    };
+ 
+    int n, s, t, ptr[MAXN], q[MAXN];
+    wint d[MAXN];
+    vector<edge> e;
+    vector<int> g[MAXN];
+ 
+    void init(int _n,int _s,int _t){
+        n=_n, s=_s, t=_t;
+        e.clear();
+        for(int i=0; i<n; i++) g[i].clear();
+    }
+ 
+    void add_edge (int a, int b) {
+        int cap=1;
+        edge e1 = { a, b, cap, 0 };
+        edge e2 = { b, a, 0, 0 };
+        g[a].push_back ((int) e.size());
+        e.push_back (e1);
+        g[b].push_back ((int) e.size());
+        e.push_back (e2);
+    }
+ 
+    bool bfs() {
+        int qh=0, qt=0;
+        q[qt++] = s;
+        memset (d, -1, n * sizeof d[0]);
+        d[s] = 0;
+        //cout<<"t="<<t<<endl;
+        while (qh < qt && d[t] == -1) {
+            int v = q[qh++];
+            //cout<<"top="<<v+1<<endl;
+            for (size_t i=0; i<g[v].size(); ++i) {
+                int id = g[v][i],
+                    to = e[id].b;
+                    //cout<<v+1<<" to "<<to+1<<endl;
+                if (d[to] == -1 && e[id].flow < e[id].cap) {
+                    q[qt++] = to;
+                    d[to] = d[v] + 1;
+                }
+            }
+        }
+        return d[t] != -1;
+    }
+ 
+    wint dfs (int v, wint flow) {
+        if (!flow)  return 0;
+        if (v == t)  return flow;
+        for (; ptr[v]<(int)g[v].size(); ++ptr[v]) {
+            int id = g[v][ptr[v]],
+                to = e[id].b;
+            if (d[to] != d[v] + 1)  continue;
+            wint pushed = dfs (to, min (flow, e[id].cap - e[id].flow));
+            if (pushed) {
+                e[id].flow += pushed;
+                e[id^1].flow -= pushed;
+                return pushed;
+            }
+        }
+        return 0;
+    }
+ 
+    wint dinic() {
+        wint flow = 0;
+        for (;;) {
+            if (!bfs())  break;
+            memset (ptr, 0, n * sizeof ptr[0]);
+            while (wint pushed = dfs (s, INF))
+                flow += pushed;
+        }
+        return flow;
+    }
+}
+ 
+ 
+int main(){
+	//read("in");
+	int test;
+	scanf("%d",&test);
+	while( test-- ){
+		int n;
+		scanf("%d",&n);
+		vpii vec;
+		mii ase;
+		int k=0;
+		rep(i,n){
+			int x,y;
+			scanf("%d%d",&x,&y);
+			vec.pb(mp(x,y));
+			ase[x]=ase[y]=0;
+		}
+		foreach(it,ase) it->yy=k++;
+		int src=sz(ase)*2, snk=src+1;
+		dinic::init(snk+1,src,snk);
+		rep(i,n){
+			int x=ase[vec[i].xx];
+			int y=ase[vec[i].yy];
+			dinic::add_edge(x,y+sz(ase));
+		}
+		rep(i,k){
+			dinic::add_edge(src,i);
+			dinic::add_edge(i+sz(ase),snk);
+		}
+		printf("%d\n",dinic::dinic());
+	}
+	return 0;
+}

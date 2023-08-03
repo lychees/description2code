@@ -1,0 +1,161 @@
+#include <bits/stdc++.h>
+// iostream is too mainstream
+#include <cstdio>
+// bitch please
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <list>
+#include <cmath>
+#include <iomanip>
+#include <time.h>
+#define dibs reserve
+#define OVER9000 1234567890
+#define ALL_THE(CAKE,LIE) for(auto LIE =CAKE.begin(); LIE != CAKE.end(); LIE++)
+#define tisic 47
+#define soclose 1e-8
+#define chocolate win
+// so much chocolate
+#define patkan 9
+#define ff first
+#define ss second
+#define abs(x) ((x < 0)?-(x):x)
+#define uint unsigned int
+#define dbl long double
+#define pi 3.14159265358979323846
+using namespace std;
+// mylittledoge
+
+#ifdef DONLINE_JUDGE
+	// palindromic tree is better than splay tree!
+	#define lld I64d
+#endif
+
+long long roads =0;
+vector<long long> Rv,Rvd;
+vector<int> par,S,comp,s,top;
+
+void DFS(int R, vector< vector<int> > &G, vector<bool> &bl) {
+	comp.push_back(R);
+	S[R] =1;
+	ALL_THE(G[R],it) if(!bl[*it] && par[*it] == -1) {
+		par[*it] =R;
+		if(comp[0] != R) top[*it] =top[R];
+		DFS(*it,G,bl);
+		S[R] +=S[*it];}
+	}
+
+struct fin {
+	vector<long long> T;
+	fin(int N) {T.resize(N+tisic,0);}
+
+	int lastone(int x) {return x&(x^(x-1));}
+
+	void put(int pos, int val) {
+		for(int i =pos+1; i < (int)T.size(); i +=lastone(i)) T[i] +=val;
+		}
+
+	long long get(int pos) {
+		long long ret =0;
+		for(int i =pos+1; i > 0; i -=lastone(i)) ret +=T[i];
+		return ret;}
+	};
+
+void solve(int R, vector< vector<int> > &G, vector<int> &B, vector<bool> &bl) {
+	// centroid
+	comp.clear();
+	par[R] =R;
+	DFS(R,G,bl);
+	ALL_THE(comp,it) if(S[*it]*2 >= (int)comp.size()) {
+		bool isc =true;
+		ALL_THE(G[*it],jt) if(!bl[*jt] && par[*jt] == *it && S[*jt]*2 > (int)comp.size()) {
+			isc =false;
+			break;}
+		if(isc) {
+			R =*it;
+			break;}
+		}
+	ALL_THE(comp,it) {
+		par[*it] =-1;
+		Rvd[*it] =0;}
+	comp.clear();
+	par[R] =top[R] =R;
+	ALL_THE(G[R],it) if(!bl[*it]) top[*it] =*it;
+	DFS(R,G,bl);
+
+	// zrataj cesty s kladnym suctom prechadzajuce R
+	int n =comp.size();
+	fin F(2*n);
+	s[R] =0;
+	for(int i =1; i < n; i++) s[comp[i]] =s[par[comp[i]]]+B[comp[i]];
+	int a =0;
+	if(B[R] == 1) roads++;
+	else Rv[R]++;
+	for(int i =1; i < n; i++) {
+		while(top[comp[a]] != top[comp[i]]) {
+			F.put(n-(B[R]+s[comp[a]]),1);
+			a++;}
+		Rv[R] +=F.get(n+s[comp[i]]+2)-F.get(n+s[comp[i]]);
+		roads +=F.get(n+s[comp[i]]);}
+	while(a < n) {
+		F.put(n-(B[R]+s[comp[a]]),1);
+		a++;}
+	// zrataj cesty prechadzajuce R, konciace v kazdom vrchole
+	for(int i =1; i < n; i++) {
+		int r =i;
+		while(r < n && top[comp[r]] == top[comp[i]]) r++;
+		for(int j =i; j < r; j++) F.put(n-(B[R]+s[comp[j]]),-1);
+		for(int j =i; j < r; j++) {
+			Rvd[comp[j]] +=F.get(n+s[comp[j]]+2)-F.get(n+s[comp[j]]);}
+		for(int j =i; j < r; j++) F.put(n-(B[R]+s[comp[j]]),1);
+		i =r-1;}
+	for(int i =n-1; i > 0; i--) {
+		ALL_THE(G[comp[i]],it) if(par[*it] == comp[i]) Rvd[comp[i]] +=Rvd[*it];
+		Rv[comp[i]] +=Rvd[comp[i]];}
+
+	ALL_THE(comp,it) par[*it] =-1;
+	bl[R] =true;
+	ALL_THE(G[R],it) if(!bl[*it]) solve(*it,G,B,bl);
+	}
+
+int main() {
+	cin.sync_with_stdio(0);
+	cin.tie(0);
+	cout << fixed << setprecision(10);
+	int N,X;
+	cin >> N >> X;
+	vector< vector<int> > G(N);
+	for(int i =0; i < N-1; i++) {
+		int a,b;
+		cin >> a >> b;
+		G[--a].push_back(--b);
+		G[b].push_back(a);}
+	vector<int> B(N);
+	for(int i =0; i < N; i++) {
+		cin >> B[i];
+		if(B[i] >= X) B[i] =1;
+		else B[i] =-1;}
+
+	Rv.resize(N,0);
+	Rvd.resize(N,0);
+	vector<bool> bl(N,false);
+	S.resize(N);
+	par.resize(N,-1);
+	s.resize(N);
+	top.resize(N);
+	solve(0,G,B,bl);
+
+	long long ans =0;
+	for(int i =0; i < N; i++) {
+		Rv[i]--;
+		if(B[i] == -1) ans =max(ans,Rv[i]);}
+	cout << ans << "\n";
+	return 0;}
+
+// look at my code
+// my code is amazing

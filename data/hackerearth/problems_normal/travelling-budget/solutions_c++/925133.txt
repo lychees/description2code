@@ -1,0 +1,159 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#include <bitset>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii;
+typedef long long ll; typedef vector<long long> vl; typedef pair<long long,long long> pll; typedef vector<pair<long long,long long> > vpll;
+typedef vector<string> vs; typedef long double ld;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+struct WeightedStaticGraph {
+	typedef int Vertex;
+	typedef long long Weight; typedef long long Dist;
+	static const Dist InfDist;
+	struct To {
+		Vertex to; Weight w;
+		To() { }
+		To(Vertex to_, Weight w_): to(to_), w(w_) { }
+	};
+	typedef std::pair<Vertex,To> Edge;
+	typedef const To *const_iterator;
+ 
+	void init(int n_, const std::vector<Edge> &edges) {
+		n = n_; int m = edges.size();
+		tos.resize(m+1); offsets.resize(n+1);
+		for(int e = 0; e < m; e ++) offsets[edges[e].first] ++;
+		for(int v = 1; v <= n_; v ++) offsets[v] += offsets[v-1];
+		for(int e = 0; e < m; e ++)
+			tos[-- offsets[edges[e].first]] = edges[e].second;
+	}
+	int numVertices() const { return n; }
+ 
+	inline const_iterator edgesBegin(int v) const { return &tos[offsets[v]]; }
+	inline const_iterator edgesEnd(int v) const { return &tos[offsets[v+1]]; }
+private:
+	int n;
+	std::vector<To> tos;
+	std::vector<int> offsets;
+};
+const WeightedStaticGraph::Dist WeightedStaticGraph::InfDist = 0x7fffffffffffffffLL;
+typedef WeightedStaticGraph Graph;
+
+bool topologicalSort(int n, Graph::Vertex f[], Graph::Vertex ord[]) {
+	vector<int> deg(n);
+	for(int i = 0; i < n; i ++) if(f[i] != -1) deg[f[i]] ++;
+	int q = 0;
+	for(int i = 0; i < n; i ++) if(deg[i] == 0) ord[q ++] = i;
+	for(int p = 0; p < q; p ++) {
+		Graph::Vertex to = f[ord[p]];
+		if(to != -1)
+			if((-- deg[to]) == 0) ord[q ++] = to;
+	}
+	for(int i = 0; i < n; i ++) if(deg[i] > 0) return false;
+	return true;
+}
+ 
+bool queueBasedBellmanFord(const Graph &g, int s, Graph::Dist dist[], Graph::Vertex prev[]) {
+	int n = g.numVertices();
+	queue<Graph::Vertex> q; vector<bool> onqueue(n);
+	fill(dist, dist+n, Graph::InfDist);
+	fill(prev, prev+n, -1);
+	vector<Graph::Vertex> tmp_ord(n);
+	int relaxes = 0;
+	dist[s] = 0; q.push(s); onqueue[s] = true;
+	while(!q.empty()) {
+		Graph::Vertex v = q.front(); q.pop(); onqueue[v] = false;
+		relaxes ++;
+		for(Graph::const_iterator it = g.edgesBegin(v), et = g.edgesEnd(v); it != et; ++ it) {
+			relaxes ++;
+			Graph::Dist d = dist[v] + it->w; Graph::Vertex u = it->to;
+			if(d < dist[u]) {
+				if(!onqueue[u]) {
+					onqueue[u] = true;
+					q.push(u);
+				}
+				dist[u] = d;
+				prev[u] = v;
+				if(relaxes >= n) {	//n???????????????
+					relaxes = 0;
+					if(!topologicalSort(n, prev, &tmp_ord[0]))
+						return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+
+int main() {
+	int T;
+	scanf("%d", &T);
+//	rep(ii, T) {
+//		int n, m, B;
+//		scanf("%d%d%d", &n, &m, &B);
+	int n, m, B;
+	while(~scanf("%d%d%d", &n, &m, &B)) {
+		vector<Graph::Edge> edges;
+		rep(i, m) {
+			int u, v, c; long long l;
+			scanf("%d%d%d%lld", &u, &v, &c, &l), -- u, -- v;
+			if(u < 0 || u >= n || v < 0 || v >= n || c < 0 || c > B || l < 0) return 1;
+			if(c == 0) return 1;
+			rer(b, 0, B-c)
+				edges.push_back(Graph::Edge(b * n + u, Graph::To((b+c) * n + v, l)));
+		}
+		rep(i, n) rer(b, 0, B-1)
+			edges.push_back(Graph::Edge(b * n + i, Graph::To((b+1) * n + i, 0)));
+		Graph g; g.init((B+1) * n, edges);
+		vector<long long> dist((B+1) * n);
+		vector<int> prev((B+1) * n);
+		bool ok = queueBasedBellmanFord(g, 0 * n + 0, &dist[0], &prev[0]);
+		if(!ok) return 1;
+		int Q;
+		scanf("%d", &Q);
+		rep(i, Q) {
+			int x, y;
+			scanf("%d%d", &x, &y), -- x;
+			if(x < 0 || x >= n || y < 0 || y > B) return 1;
+			long long ans = dist[y * n + x];
+			if(ans == Graph::InfDist)
+				puts("-1");
+			else
+				printf("%d\n", ans);
+		}
+	}
+	return 0;
+}

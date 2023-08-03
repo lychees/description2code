@@ -1,0 +1,191 @@
+#include<bits/stdc++.h>
+ 
+using namespace std;
+ 
+ 
+ 
+typedef vector<int> vi;
+typedef vector<pair<int,int> > vii;
+ 
+typedef map<int,int> mi;
+typedef map<string,int> ms;
+typedef set<int> si;
+typedef long long ll;  
+typedef pair<int, int> ii;  
+typedef pair<long, long> pll;  
+typedef vector<long> vl;
+typedef vector<pair<long,long> > vll;
+typedef pair<int,pair<int,int > > iii;
+typedef vector< pair<int,pair<int,int > > > viii;
+ 
+ 
+ 
+#define      iosbase        ios_base::sync_with_stdio(false)
+#define       MOD           1000000007
+ 
+#define       ff            first
+#define       ss            second
+#define       MAX           100008
+#define       dbg(x)        cout<<#x<<"="<<x<<endl
+#define       sc            scanf
+#define       pf            printf
+#define       pb            push_back
+#define       pff           push_front
+#define       mp            make_pair
+#define       f(i,n)        for(i=0;i<n;i++)
+#define       L(i,j,n)      for(i=j;i<n;i++)
+#define       EPS           1e-9
+#define       INF           INT_MAX
+ 
+#define ONLINE_JUDGE
+
+const int LOG=20;
+ 
+vector<pll>adj[MAX];
+ 
+ll level[MAX];
+bool vis[MAX];
+
+struct node
+{
+	ll parent,sf,pf,sm,best;
+	node(){}
+}nd[MAX][LOG+2];
+
+ 
+ 
+void dfs(ll v,ll p,ll w)
+{
+	 
+	vis[v]=1;
+	nd[v][0].parent=p;
+	nd[v][0].sf=max(0LL,w);
+	nd[v][0].pf=max(0LL,w);
+	nd[v][0].sm=w;
+	nd[v][0].best=max(w,0LL);
+	 
+	 
+	level[v]=level[p]+1;
+	for(ll i=0;i<adj[v].size();i++)
+	{
+
+		 if(!vis[adj[v][i].ff])
+		dfs(adj[v][i].ff,v,adj[v][i].ss);
+	}
+}
+
+ll LCA(ll x,ll y)
+{
+	ll i;
+	for(i=LOG;i>=0;i--)
+	{
+		if(level[x]-(1<<i)>=level[y])
+		{
+			x=nd[x][i].parent;
+			 
+		}
+	}
+	 
+	if(x==y)
+		return x;
+	 for(i=LOG;i>=0;i--)
+	 {
+	 	 
+	 	if(nd[x][i].parent!=nd[y][i].parent)
+	 	{
+	 		x=nd[x][i].parent;
+	 		y=nd[y][i].parent;
+	 		 
+	 	}
+	 }
+	 return nd[x][0].parent;
+
+}
+ 
+int main()
+{
+	ll n,q,x,y,w,i,j;
+	sc("%lld %lld",&n,&q);
+	for(i=1;i<n;i++)
+	{
+		sc("%lld %lld %lld",&x,&y,&w);
+		adj[x].pb(mp(y,w));
+		adj[y].pb(mp(x,w));
+	}
+	 
+	dfs(1,0,0);
+	 
+	for(j=1;j<=LOG;j++)
+	{
+		 
+		for(i=1;i<=n;i++)
+		{
+			//dbg(i);dbg(j);dbg(nd[4][0].parent);
+			if(nd[i][j-1].parent==-1)
+				nd[i][j].parent=-1;
+			else
+			{
+				 
+				node xx=nd[i][j-1];
+				node yy=nd[nd[i][j-1].parent][j-1];
+				 
+				nd[i][j].parent=yy.parent;
+				 
+				nd[i][j].sf=max(xx.sf+yy.sm,yy.sf);
+				nd[i][j].pf=max(xx.pf,xx.sm+yy.pf);
+				nd[i][j].sm=xx.sm+yy.sm;
+				nd[i][j].best=max(xx.best,max(yy.best,xx.sf+yy.pf));
+				nd[i][j].best=max(nd[i][j].best,max(nd[i][j].pf,nd[i][j].sf));
+			}
+			 
+		}
+		 		 
+	}
+ 	 
+ 	 
+	while(q--)
+	{
+		sc("%lld %lld",&x,&y);
+		if(x==y)
+		{
+			cout<<"0\n";
+			continue;
+		}
+		if(level[x]<level[y])
+		{
+			swap(x,y);
+		}    
+		                // x is always at lower level
+		ll sfxsum1=0,sfxsum2=0,res1=0,res2=0,ans=0;
+ 
+		ll lca=LCA(x,y);
+		 
+		for(i=LOG;i>=0;i--)
+		{
+			if(level[x]-(1<<i)>=level[lca]) //nd[x][i]
+			{
+				 res1=max(res1,nd[x][i].best);
+				 res1=max(res1,sfxsum1+nd[x][i].pf);
+				 sfxsum1=max(sfxsum1+nd[x][i].sm,nd[x][i].sf);
+				 x=nd[x][i].parent;
+			}
+		}
+		 
+		for(i=LOG;i>=0;i--)
+		{
+			if(level[y]-(1<<i)>=level[lca]) //nd[x][i]
+			{
+				 res2=max(res2,nd[y][i].best);
+				 res2=max(res2,sfxsum2+nd[y][i].pf);
+				 sfxsum2=max(sfxsum2+nd[y][i].sm,nd[y][i].sf);
+				  y=nd[y][i].parent;
+			}
+		}
+		 
+		ans=max(res1,res2);
+		ans=max(ans,sfxsum1+sfxsum2);
+		cout<<ans<<endl;	 
+ 
+	}
+ 
+}

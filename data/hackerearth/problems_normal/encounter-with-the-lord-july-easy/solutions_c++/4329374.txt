@@ -1,0 +1,231 @@
+
+#include<bits/stdc++.h>
+ 
+using namespace std;
+ 
+#define ff first
+#define ss second
+#define pb push_back
+#define mp make_pair
+#define all(x) x.begin(),x.end()
+#define sz(x) ((int)x.size())
+#define eps 1e-9
+ 
+const int MOD = 1e9+7;
+ 
+typedef long long ll;
+typedef pair<int,int> pii;
+ 
+ll POWER[65];
+ll power(ll a, ll b) {ll ret=1;while(b) {if(b&1) ret*=a;a*=a;if(ret>=MOD) ret%=MOD;if(a>=MOD) a%=MOD;b>>=1;}return ret;}
+ll inv(ll x) {return power(x,MOD-2);}
+ 
+void precompute() {
+	POWER[0]=1;
+	for(int i=1;i<63;i++) POWER[i]=POWER[i-1]<<1LL;
+}
+ 
+#define int long long
+const int MAXN = 203;
+int dp[MAXN][MAXN];
+int ar[MAXN][MAXN];
+ 
+#define MAXK 83 //max number of vertices in one part
+#define INF 100000000 //just infinity
+ 
+int k;
+int cost[MAXK][MAXK]; //cost matrix
+int n, max_match; //n workers and n jobs
+int lx[MAXK], ly[MAXK]; //labels of X and Y parts
+int xy[MAXK]; //xy[x] - vertex that is matched with x,
+int yx[MAXK]; //yx[y] - vertex that is matched with y
+bool S[MAXK], T[MAXK]; //sets S and T in algorithm
+int slack[MAXK]; //as in the algorithm description
+int slackx[MAXK]; //slackx[y] such a vertex, that
+ // l(slackx[y]) + l(y) - w(slackx[y],y) = slack[y]
+int prv[MAXK]; //array for memorizing alternating paths
+ 
+ void update_labels()
+{
+ int x, y, delta = INF; //init delta as infinity
+ for (y = 0; y < n; y++) //calculate delta using slack
+ if (!T[y])
+ delta = min(delta, slack[y]);
+ for (x = 0; x < n; x++) //update X labels
+ if (S[x]) lx[x] -= delta;
+ for (y = 0; y < n; y++) //update Y labels
+ if (T[y]) ly[y] += delta;
+ for (y = 0; y < n; y++) //update slack array
+ if (!T[y])
+ slack[y] -= delta;
+}
+ 
+void add_to_tree(int x, int prvx) 
+//x - current vertex,prvx - vertex from X before x in the alternating path,
+//so we add edges (prvx, xy[x]), (xy[x], x)
+{
+ S[x] = true; //add x to S
+ prv[x] = prvx; //we need this when augmenting
+ for (int y = 0; y < n; y++) //update slacks, because we add new vertex to S
+ if (lx[x] + ly[y] - cost[x][y] < slack[y])
+ {
+ slack[y] = lx[x] + ly[y] - cost[x][y];
+ slackx[y] = x;
+ }
+}
+ 
+void init_labels()
+{
+ memset(lx, 0, sizeof(lx));
+ memset(ly, 0, sizeof(ly));
+ for (int x = 0; x < n; x++)
+ for (int y = 0; y < n; y++)
+ lx[x] = max(lx[x], cost[x][y]);
+}
+void augment() //main function of the algorithm
+{
+ if (max_match == n) return; //check wether matching is already perfect
+ int x, y, root; //just counters and root vertex
+ int q[MAXK], wr = 0, rd = 0; //q - queue for bfs, wr,rd - write and read
+ //pos in queue
+ memset(S, false, sizeof(S)); //init set S
+ memset(T, false, sizeof(T)); //init set T
+ memset(prv, -1, sizeof(prv)); //init set prv - for the alternating tree
+ for (x = 0; x < n; x++) //finding root of the tree
+ if (xy[x] == -1)
+ {
+ q[wr++] = root = x;
+ prv[x] = -2;
+ S[x] = true;
+ break;
+ }
+ 
+ for (y = 0; y < n; y++) //initializing slack array
+ {
+ slack[y] = lx[root] + ly[y] - cost[root][y];
+ slackx[y] = root;
+ }
+ //second part of augment() function
+ while (true) //main cycle
+ {
+ while (rd < wr) //building tree with bfs cycle
+ {
+ x = q[rd++]; //current vertex from X part
+ for (y = 0; y < n; y++) //iterate through all edges in equality graph
+ if (cost[x][y] == lx[x] + ly[y] && !T[y])
+ {
+ if (yx[y] == -1) break; //an exposed vertex in Y found, so
+ //augmenting path exists!
+ T[y] = true; //else just add y to T,
+ q[wr++] = yx[y]; //add vertex yx[y], which is matched
+ //with y, to the queue
+ add_to_tree(yx[y], x); //add edges (x,y) and (y,yx[y]) to the tree
+ }
+ if (y < n) break; //augmenting path found!
+ }
+ if (y < n) break; //augmenting path found!
+ 
+ update_labels(); //augmenting path not found, so improve labeling
+ wr = rd = 0; 
+ for (y = 0; y < n; y++) 
+ //in this cycle we add edges that were added to the equality graph as a
+ //result of improving the labeling, we add edge (slackx[y], y) to the tree if
+ //and only if !T[y] && slack[y] == 0, also with this edge we add another one
+ //(y, yx[y]) or augment the matching, if y was exposed
+ if (!T[y] && slack[y] == 0)
+ {
+ if (yx[y] == -1) //exposed vertex in Y found - augmenting path exists!
+ {
+ x = slackx[y];
+ break;
+ }
+ else
+ {
+ T[y] = true; //else just add y to T,
+ if (!S[yx[y]]) 
+ {
+ q[wr++] = yx[y]; //add vertex yx[y], which is matched with
+ //y, to the queue
+ add_to_tree(yx[y], slackx[y]); //and add edges (x,y) and (y,
+ //yx[y]) to the tree
+ }
+ }
+ }
+ if (y < n) break; //augmenting path found!
+ }
+ 
+ if (y < n) //we found augmenting path!
+ {
+ max_match++; //increment matching
+ //in this cycle we inverse edges along augmenting path
+ for (int cx = x, cy = y, ty; cx != -2; cx = prv[cx], cy = ty)
+ {
+ ty = xy[cx];
+ yx[cy] = cx;
+ xy[cx] = cy;
+ }
+ augment(); //recall function, go to step 1 of the algorithm
+ }
+}//end of augment() function
+ 
+int hungarian()
+{
+ n=k;
+ int ret = 0; //weight of the optimal matching
+ max_match = 0; //number of vertices in current matching
+ memset(xy, -1, sizeof(xy)); 
+ memset(yx, -1, sizeof(yx));
+ init_labels(); //step 0
+ augment(); //steps 1-3
+ for (int x = 0; x < n; x++) //forming answer there
+ ret += cost[x][xy[x]];
+ return ret;
+}
+#undef int
+ 
+int main() {
+//	freopen("TASK.in","r",stdin);	
+//	freopen("TASK.out","w",stdout);
+	#define int long long
+	precompute();
+	int t;
+	cin>>t;
+	while(t--) {
+		int N,m;
+		scanf("%lld%lld%lld",&N,&m,&k);
+		for(int i=1;i<=N;i++) for(int j=1;j<=N;j++) ar[i][j]=INF,dp[i][j]=INF;
+		for(int i=1;i<=N;i++) ar[i][i]=dp[i][i]=0;
+		for(int i=1;i<=m;i++) {
+			int x,y,c;
+			scanf("%lld%lld%lld",&x,&y,&c);
+			ar[x][y]=min(ar[x][y],c);
+			dp[x][y]=min(ar[x][y],c);
+			ar[y][x]=min(ar[y][x],c);
+			dp[y][x]=min(ar[y][x],c);
+		}
+		for(int p=1;p<=N;p++) {
+			for(int i=1;i<=N;i++) {
+				for(int j=1;j<=N;j++) {
+					dp[i][j]=min(dp[i][j],dp[i][p]+dp[p][j]);
+				}
+			}
+		}
+		int maxi=-1;
+		for(int i=1;i<=k;i++) {
+			for(int j=N-k+1;j<=N;j++) {
+				if(dp[i][j]>=10000) dp[i][j]=10000;
+				maxi=max(maxi,dp[i][j]);
+			}
+		}
+		for(int i=1;i<=k;i++) {
+			int counter=0;
+			for(int j=N-k+1;j<=N;j++) {
+				cost[i-1][counter++]=maxi-dp[i][j];
+			}
+		}
+		int ans=hungarian();
+		ans=k*maxi-ans;
+		printf("%lld\n",ans);
+	}
+	return 0;
+}

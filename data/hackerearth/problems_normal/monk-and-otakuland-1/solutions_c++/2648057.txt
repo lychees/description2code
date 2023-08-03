@@ -1,0 +1,161 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define ff first
+#define ss second
+#define mp make_pair
+#define pb push_back
+#define si(a)     scanf("%d", &a)
+#define sl(a)     scanf("%lld", &a)
+#define pi(a)     printf("%d\n", a)
+#define pl(a)     printf("%lld\n", a)
+
+int tree[4*200010][2];  // 1 for > 2 for lazy
+string s;
+
+void constructSegTree(int index, int start, int end)
+{
+    if(start==end)
+    {
+        if(s[start]=='>')
+        {
+            tree[index][0] = 1;
+        }
+        return;
+    }
+    
+    int mid = (end-start)/2 + start;
+    constructSegTree(2*index+1,start,mid);
+    constructSegTree(2*index+2,mid+1,end);
+    
+    tree[index][0] = tree[2*index+1][0] + tree[2*index+2][0];
+}
+
+int getQuery(int index, int start, int end, int n, int m)
+{
+    if(tree[index][1]!= 0) 
+    { 
+        int val = end-start+1;
+        tree[index][0] = val-tree[index][0];
+ 
+        if(start!=end) {
+            tree[index*2+1][1]^= 1; 
+            tree[index*2+2][1]^= 1;
+        }
+ 
+        tree[index][1] = 0; 
+    }
+    int result,x1,x2;
+
+    if(n>end || start>m)
+	return 0;
+	
+	if(start > end )
+	return 0 ;
+	
+    if(start>=n && end<=m)
+    {
+        return tree[index][0];
+    }
+    
+    int mid = start + (end-start)/2;
+    
+    x1 = getQuery(2*index+1,start,mid,n,m);
+    x2 = getQuery(2*index+2,mid+1,end,n,m);
+
+    result = x1+x2;
+    
+    return result;
+}
+
+void updateSegTree(int node, int start, int end, int l, int r)
+{
+    if(tree[node][1]!=0) 
+    { 
+        int val = end-start+1;
+        tree[node][0] = val-tree[node][0];
+ 
+        if(start != end) 
+        {
+            tree[node*2+1][1]^= 1;
+            tree[node*2+2][1]^= 1;
+        }
+ 
+        tree[node][1] = 0; 
+    }
+    
+    if(l>end || start>r)
+    {
+        return ;
+    }
+    
+    if(start>=l && r>=end)
+    {
+        int val = end-start+1;
+        tree[node][0] = val-tree[node][0];
+        
+        if(start!=end)
+        {
+            tree[2*node+1][1]^= 1;
+            tree[2*node+2][1]^= 1;  
+        }
+        return ;
+    }
+    
+    long long mid  = (end-start)/2 + start;
+    updateSegTree(2*node+1,start,mid,l,r);
+    updateSegTree(2*node+2,mid+1,end,l,r);
+    
+    tree[node][0] = tree[2*node+1][0] + tree[2*node+2][0];
+}
+
+
+int main()
+{
+	memset(tree,0,sizeof(tree));
+    int n,m;
+    si(n);si(m);
+
+    cin>>s;
+    constructSegTree(0,0,n-2);
+
+    /*for(int i=0;i<9;i++)
+        cout<<tree[i][0]<<" ";
+    cout<<endl;
+*/
+    for(int i=0;i<m;i++)
+    {
+        int type;
+        si(type);
+
+        if(type==2)
+        {
+            int l,r;
+            si(l);si(r);
+            
+            if(r>l)
+            {
+                int ans = getQuery(0,0,n-2,l-1,r-2);
+                int val = r-l-ans;
+                cout<<val<<endl;
+            }
+            else if(l>r)
+            {
+                int ans = getQuery(0,0,n-2,r-1,l-2);
+                cout<<ans<<endl;
+            }
+            else
+            {
+            	cout<<"0"<<endl;
+            }
+        }
+        else
+        {
+            int l,r;
+            si(l);si(r);
+            updateSegTree(0,0,n-2,l-1,r-2);
+        }
+    }
+    
+
+}

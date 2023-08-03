@@ -1,0 +1,75 @@
+#include <stdio.h>
+
+#define NMAX 100100
+#define LL long long
+#define KMAXWINDOW 1
+
+int A[NMAX];
+int N, K, kmax, i, j, jidx, jidx1, p;
+LL d, e, minscore, ans, a, b, icross;
+LL cmin[KMAXWINDOW + 1][NMAX];
+
+struct DequeEntry {
+	int idx, istart;
+	long long base;
+};
+
+struct DequeEntry deq[KMAXWINDOW + 1][NMAX];
+int li[KMAXWINDOW + 1], ls[KMAXWINDOW + 1];
+
+int main() {
+//	freopen("y.txt", "r", stdin);
+	scanf("%d %d", &N, &K);
+	for (i = 1; i <= N; i++) scanf("%d", &A[i]);
+	d = (LL) (N - 1) * (LL) (N - 1);
+	ans = (LL) K * (LL) K * (LL) (A[1] + A[N]) + d;
+	for (kmax = 2; kmax <= K; kmax++) {
+		minscore = ((LL) K * (LL) K * (LL) (kmax - 2)) << 10;
+		if (minscore > d) break;
+	}
+	if (kmax > K) kmax = K;
+	for (j = 0; j < KMAXWINDOW; j++) {
+		cmin[j][1] = ans + 1;
+		li[j] = 0; ls[j] = -1;
+	}
+	cmin[1][1] = (LL) K * (LL) K * (LL) A[1];
+	li[1] = ls[1] = 0;
+	deq[1][0].idx = 1;
+	deq[1][0].istart = 2;
+	deq[1][0].base = cmin[1][1] + 1;
+	for (j = 1; j < kmax; j++) {
+		jidx = j & KMAXWINDOW;
+		jidx1 = (j + 1) & KMAXWINDOW;
+		li[jidx1] = 0; ls[jidx1] = -1;
+		for (i = 2; i <= N; i++) {
+			cmin[jidx1][i] = ans + 1;
+			if (li[jidx] > ls[jidx]) continue;
+			while (li[jidx] < ls[jidx] && deq[jidx][li[jidx] + 1].istart <= i) li[jidx]++;
+			cmin[jidx1][i] = deq[jidx][li[jidx]].base + (LL) i * (LL) i - (LL) 2 * (LL) deq[jidx][li[jidx]].idx * (LL) i + (LL) K * (LL) K * (LL) A[i];
+			p = i + 1;
+			d = cmin[jidx1][i] + (LL) i * (LL) i;
+			while (li[jidx1] <= ls[jidx1]) {
+				e = deq[jidx1][ls[jidx1]].base;
+				if (e >= d) {
+					ls[jidx1]--; continue;
+				}
+				a = d - e;
+				b = 2 * (i - deq[jidx1][ls[jidx1]].idx);
+				icross = (a + b - 1) / b;
+				if (icross <= deq[jidx1][ls[jidx1]].istart) {
+					ls[jidx1]--; continue;					
+				}
+				if (icross > N) p = N + 1;
+				else p = icross;
+				break;
+			}
+			ls[jidx1]++;
+			deq[jidx1][ls[jidx1]].idx = i;
+			deq[jidx1][ls[jidx1]].istart = p;
+			deq[jidx1][ls[jidx1]].base = cmin[jidx1][i] + (LL) i * (LL) i;
+		}
+		if (cmin[jidx1][N] < ans) ans = cmin[jidx1][N];
+	}
+	printf("%lld\n", ans);
+	return 0;
+}

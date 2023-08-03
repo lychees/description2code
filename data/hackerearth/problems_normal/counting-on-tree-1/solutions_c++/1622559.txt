@@ -1,0 +1,68 @@
+#include <cstdio>
+#include <vector>
+
+using namespace std;
+
+const int N = 50010, K = 110, mod = 1000000007;
+int n, k, a[N], vel[N];
+int dp[N][K];
+bool f[N];
+vector<int> v[N];
+
+int init(int c, int p)
+{
+	vel[c] = 1;
+	for (auto i : v[c]) if (i != p && !f[i]) vel[c] += init(i, c);
+	return vel[c];
+}
+
+int cent(int c, int p, int k)
+{
+	int m = 0, x;
+	for (auto i : v[c]) if (i != p && !f[i] && vel[i] > m) m = vel[i], x = i;
+	if (m <= k >> 1) return c;
+	return cent(x, c, k);
+}
+
+void calc(int c, int p)
+{
+	dp[c][0] = 0;
+	for (int i = 0; i <= k; i++) dp[c][i + a[c]] = dp[p][i];
+	for (auto i : v[c]) if (i != p && !f[i]) calc(i, c);
+	if (p) for (int i = 0; i <= k; i++) dp[p][i] = (dp[p][i] + dp[c][i]) % mod;
+}
+
+int res(int c)
+{	
+	int sol, g;
+	init(c, 0);
+	g = cent(c, 0, vel[c]);
+	f[g] = true; calc(g, 0);
+	sol = dp[g][k];
+	for (auto i : v[g]) if (!f[i]) sol = (sol + res(i)) % mod;
+	return sol;
+}
+
+void solve()
+{
+	scanf("%d %d", &n, &k);
+	for (int i = 1; i <= n; i++) scanf("%d", &a[i]);
+	for (int i = 1; i < n; i++)
+	{
+		int x, y;
+		scanf("%d %d", &x, &y);
+		v[x].push_back(y);
+		v[y].push_back(x);
+	}
+	dp[0][0] = 1;
+	printf("%d\n", res(1));	
+	for (int i = 1; i <= n; i++) f[i] = false, v[i].clear();
+}
+
+int main()
+{
+	int t;
+	scanf("%d", &t);
+	while (t--) solve();
+	return 0;	
+}

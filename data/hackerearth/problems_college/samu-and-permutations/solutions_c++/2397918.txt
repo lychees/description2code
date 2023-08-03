@@ -1,0 +1,56 @@
+#include <iostream>
+#include <limits>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+using namespace std;
+#define MAXN 15
+int DP[1<<MAXN][MAXN];
+vector<int> sweetness;
+int N;
+int solve(int used,int last){
+    if(DP[used][last]>0)
+        return DP[used][last];
+    int s=used;
+    int cur_pos;
+    for(cur_pos=0;s;cur_pos++){
+        s &= s - 1;
+    }
+    if (cur_pos == N)
+        return 0;
+    int i, mx = numeric_limits<int>::min();
+    for(i=0;i<N;i++) {
+        if (!((used) & (1<<i)))
+        {
+            int next_used = used | (1<<i);
+            int subcost = solve(next_used, i);
+            int additional = (cur_pos+1) * abs(sweetness[last] - sweetness[i]);
+            mx = max(mx, subcost + additional);
+        }
+    }
+    DP[used][last] = mx;
+    return mx;
+}
+int main(){
+    int t;
+    cin>>t;
+    while (t--) {
+        for(int i=0;i<(1<<MAXN);i++){
+            for (int j = 0; j < MAXN; j++) {
+                DP[i][j]=0;
+            }
+        }
+        cin>>N;
+        sweetness.clear();
+        for (int i=0; i < N; i++) {
+            int x;
+            cin>>x;
+            sweetness.push_back(x);
+        }
+        int ans=numeric_limits<int>::min();
+        for (int i=0; i<N; i++) {
+            ans=max(ans,solve(1<<i,i));
+        }
+        cout<<ans<<"\n";
+    }
+}

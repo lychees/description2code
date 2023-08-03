@@ -1,0 +1,101 @@
+#include<bits/stdc++.h>
+using  namespace std;
+const int MAXN=100*1000+9;
+#define ft first
+#define sd second
+#define mp make_pair
+int N,M,arr[MAXN],STMX[4*MAXN],STMN[4*MAXN],X,Y,C;
+ void build(int id,int st,int en){
+    if(st==en){
+        STMX[id]=arr[st];
+        STMN[id]=arr[st];
+        return;
+    }
+    int md=(st+en)/2;
+    build(2*id,st,md);
+    build(2*id+1,md+1,en);
+    STMX[id]=max(STMX[2*id],STMX[2*id+1]);
+    STMN[id]=min(STMN[2*id],STMN[2*id+1]);
+    return;
+}
+ void upd(int id,int st,int en,int pos,int val){
+    if(st==en && st==pos){
+        STMX[id]=val;
+        STMN[id]=val;
+        return;
+    }
+    int md=(st+en)/2;
+    if(st<=pos && pos<=md){
+        upd(2*id,st,md,pos,val);
+    }else if(md+1<=pos && pos<=en){
+        upd(2*id+1,md+1,en,pos,val);
+    }
+    STMX[id]=max(STMX[2*id],STMX[2*id+1]);
+    STMN[id]=min(STMN[2*id],STMN[2*id+1]);
+    return;
+}
+ pair<int,int> qry(int id,int st,int en,int l,int r){
+    pair<int,int>ret;
+    if(en<l || r<st || st>en){
+        ret.ft=INT_MIN;
+        ret.sd=INT_MAX;
+        return ret;
+    }
+    if(l<=st && en<=r){
+        return mp(STMX[id],STMN[id]);
+    }
+    int md=(st+en)/2;
+    pair<int,int>left,right;
+    left=qry(2*id,st,md,l,r);
+    right=qry(2*id+1,md+1,en,l,r);
+    return mp(max(left.ft,right.ft),min(left.sd,right.sd));
+}
+ bool check(int L,int R,int C){
+    pair<int,int> ret;
+    ret=qry(1,1,N,L,R);
+    return ((ret.ft-arr[L]<=C) && (arr[L]-ret.sd<=C));
+}
+ void solve(int X,int C){
+    int V1,V2;
+    V1=V2=-1;
+    if(C>=0){
+        int lo,md,hi;
+        lo=X;
+        hi=N;
+        while(lo<=hi){
+            md=(lo+hi)/2;
+            bool f=check(X,md,C);
+            if(f && (md==N || check(X,md+1,C)==false) )
+                break;
+            else if(f){
+                lo=md+1;
+            }else{
+                hi=md-1;
+            }
+        }
+        V1=md-X+1;
+        pair<int,int>ret=qry(1,1,N,X,md);
+        V2=max(ret.ft-arr[X],arr[X]-ret.sd);
+    }
+    printf("%d %d\n",V1,V2);
+}
+int main(){ 
+    ios::sync_with_stdio(false);
+    cin>>N>>M;//scanf("%d %d",&N,&M);
+    for(int i=1;i<=N;++i){
+        cin>>arr[i];//scanf("%d",&arr[i]);
+    }
+    build(1,1,N);
+    while(M--){
+        char ch;cin>>ch;//scanf("%s",str+1);
+        if(ch=='U'){
+            cin>>X>>Y;//scanf("%d%d",&X,&Y);
+            arr[X]=Y;
+            upd(1,1,N,X,Y);
+        }else if(ch=='Q'){
+            cin>>X>>Y;//scanf("%d%d",&X,&Y);
+            solve(X,Y);
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,80 @@
+#define _USE_MATH_DEFINES
+#include <algorithm>
+#include <cstdio>
+#include <functional>
+#include <iostream>
+#include <cfloat>
+#include <climits>
+#include <cstring>
+#include <cmath>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <time.h>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> i_i;
+typedef pair<ll, int> ll_i;
+typedef pair<double, int> d_i;
+typedef pair<ll, ll> ll_ll;
+typedef pair<double, double> d_d;
+struct edge { int u, v; ll w; };
+
+ll MOD = 1000000007;
+ll _MOD = 1000000009;
+double EPS = 1e-10;
+int INF = INT_MAX / 2;
+
+ll extgcd(ll a, ll b, ll& x, ll& y) {
+	if (b == 0) {
+		x = (a >= 0) ? 1 : -1;
+		y = 0;
+		return abs(a);
+	}
+	else {
+		ll res = extgcd(b, a % b, y, x);
+		y -= (a / b) * x;
+		return res;
+	}
+}
+
+ll mod_inverse(ll a, ll m) {
+	ll x, y;
+	extgcd(a, m, x, y);
+	return (m + x % m) % m;
+}
+
+ll c(int n, int k, vector<ll>& f, vector<ll>& fi) {
+	if (n < 0 || k < 0 || n - k < 0) return 0;
+	return f[n] * fi[k] % MOD * fi[n - k] % MOD;
+}
+
+ll h(int n, int k, vector<ll>& f, vector<ll>& fi) {
+	if (n == 0 && k == 0) return 1;
+	return c(n - 1, k - 1, f, fi);
+}
+
+int main() {
+	vector<ll> f(100001), fi(100001);
+	f[0] = fi[0] = 1;
+	for (int i = 1; i <= 100000; i++) {
+		f[i] = f[i - 1] * i % MOD;
+		fi[i] = mod_inverse(f[i], MOD);
+	}
+	int T; cin >> T;
+	while (T--) {
+		int N, M, C; scanf("%d%d%d", &N, &M, &C);
+		ll ans = 0;
+		ans += h(M, C + 1, f, fi) * h(N - M, C, f, fi);
+		ans += h(M, C, f, fi) * h(N - M, C, f, fi);
+		ans += h(M, C, f, fi) * h(N - M, C, f, fi);
+		ans += h(M, C - 1, f, fi) * h(N - M, C, f, fi);
+		cout << ans % MOD << endl;
+	}
+}

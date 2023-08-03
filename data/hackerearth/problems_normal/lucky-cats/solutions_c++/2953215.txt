@@ -1,0 +1,159 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+
+const int MOD=1000000007;
+const int KMAX=11;
+const int NMAX=10005;
+pii shifts[KMAX][NMAX][KMAX+1];
+int K;
+void add ( int l, pii &p ) {
+    p.first+=l;
+    if ( p.first>K ) {
+        p.first=0;
+        p.second++;
+    }
+}
+int cnt ( int n ) {
+    int c=0;
+    while ( n ) {
+        if ( n%10==4 || n%10==7 ) c++;
+        n/=10;
+
+    }
+    return c;
+}
+int bruteForce ( int k ) {
+    pii state=mp ( 0,0 );
+    reu ( i,1,k+1 ) {
+        add ( cnt ( i ),state );
+
+    }
+    cout<<"state after brute force: "<<state<<endl;
+    return state.second;
+}
+void shift ( pii &p1,const pii &p2 ) {
+    p1.first=p2.first;
+    p1.second+=p2.second;
+
+    if ( p1.second>=MOD ) p1.second-=MOD;
+
+}
+int eval ( string number ) {
+
+    int l=0;
+    pii state=mp ( 0,0 );
+    for ( int current=number.size()-1,i=0; current>0; current-- ,i++ ) {
+        int d=number[i]-'0';
+        rep ( j,d ) {
+            int l2=min ( K+1,l+ ( j==4 || j==7 ) );
+            pii nxt=shifts[state.first][current-1][l2];
+            shift ( state,nxt );
+
+//              cout<<"adding "<<nxt<<" for j="<<j<<",l="<<l2<<" n="<<current<<" result: "<<state<<endl;
+        }
+        l=min ( K+1,l+ ( d==4 || d==7 ) );
+    }
+    int d=number[number.size()-1]-'0';
+    rep ( j,d +1 ) {
+        int l2=min ( K+1,l+ ( j==4 || j==7 ) );
+        add ( l2,state );
+//         cout<<"adding "<<l2<<" result: "<<state<<endl;
+    }
+//     cout<<"state after eval: "<<state<<endl;
+    return state.second%MOD;
+}
+int main() {
+    ios_base::sync_with_stdio ( false );
+
+    cin>>K;
+    string number;
+    cin>>number;
+//     int n=number.size();
+    int n=NMAX;
+    ll shiftall=10;
+    rep ( k,K+1 ) {
+        rep ( l,K+1 ) {
+            pii start=mp ( k,0 );
+            rep ( j,10 ) {
+                int l2=l+ ( j==4 || j==7 );
+                add ( l2,start );
+
+            }
+            shifts[k][0][l]=start;
+        }
+        shifts[k][0][K+1]=mp ( 0,shiftall );
+    }
+    reu ( i,1,n ) {
+        shiftall=10*shiftall%MOD;
+        rep ( k,K+1 ) {
+            shifts[k][i][K+1]=mp ( 0,shiftall );
+            rep ( l,K +1 ) {
+                pii start=mp ( k,0 );
+                rep ( j,10 ) {
+                    int l2=l+ ( j==4 || j==7 );
+                    shift ( start,shifts[start.first][i-1][l2] );
+                }
+                shifts[k][i][l]=start;
+            }
+
+        }
+    }
+     int r1=eval ( number );
+     cout<<r1<<endl;
+//     assert ( number.size() <9 );
+//     int r2=bruteForce ( atoi ( number.c_str() ) );
+//     cout<<"brute Force: ";
+//     cout<<r2<<endl;
+    
+//     reu(i,1,501){
+//     cout<<i<<" "<<bruteForce(i)<<" "<<eval(to_string(i))<<endl;
+        
+//     }
+}

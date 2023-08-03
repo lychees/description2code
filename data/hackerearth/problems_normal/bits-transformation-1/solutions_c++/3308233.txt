@@ -1,0 +1,167 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#include<set>
+#include<map>
+#include<queue>
+#include<vector>
+#include<string>
+#include<cstring>
+#include<unordered_map>
+#include<cassert>
+#include<cmath>
+
+//code by cl3488
+
+#define dri(X) int (X); scanf("%d", &X)
+#define drii(X, Y) int X, Y; scanf("%d%d", &X, &Y)
+#define driii(X, Y, Z) int X, Y, Z; scanf("%d%d%d", &X, &Y, &Z)
+#define pb push_back
+#define mp make_pair
+#define rep(i, s, t) for ( int i=(s) ; i <(t) ; i++)
+#define fill(x, v) memset (x, v, sizeof(x))
+#define all(x) (x).begin(), (x).end()
+#define why(d) cerr << (d) << "!\n"
+#define whisp(X, Y) cerr << (X) << " " << (Y) << "#\n"
+#define exclam cerr << "!!\n"
+typedef long long ll;
+using namespace std;
+typedef pair<int, int> pii;
+const ll inf = (ll)1e9 + 70;
+const ll mod = 1e9 + 7;
+const int maxn = 2004;
+int x, y, z, t; int n;
+int a[maxn]; int target[maxn];
+
+ll dp[maxn][maxn][2];
+ll nextof[2][maxn][maxn];
+
+inline int costtoswitch(int e){
+	if (e == 0) return x;
+	else return y;
+}
+
+ll perform(int i, int j, int typeneeded){
+	if (dp[i][j][typeneeded] != -1) return dp[i][j][typeneeded];
+	if (i == n){
+		if (j != 0) return inf;
+		return 0;
+	}
+	if (j == 0){//special case that I'm tired of thinking about.  Let's not be fancy; just handle it seperately!
+		ll ans = 0;
+		if (a[i] == target[i]){
+			ans = perform(i + 1, 0, 0);
+		}
+		else if (a[i] == -1){
+			ll option1 = perform(i + 1, 0, 0);//cost to switch is 0.
+			ll option2 = (ll)t * (nextof[target[i]][i][0] - i) + perform(i + 1, 1, target[i]);
+			ans = min(option1, option2) + z;
+		}
+		else{
+			ll option1 = costtoswitch(a[i]) + perform(i + 1, 0, 0);
+			ll option2 = (ll)t * (nextof[target[i]][i][0] - i) + perform(i + 1, 1, target[i]);
+			ans = min(option1, option2);
+		}
+		dp[i][j][0] = ans;
+		dp[i][j][1] = ans;//while we're here, we might as well handle both of them.
+		return ans;
+	}
+	//KNOW: YOU HAVE DEBT!!!!  This means that the value of a[i] WILL be set to 1-typeneeded, regardless of what it is initially.
+	int c = 1 - typeneeded; int goal = target[i];ll ans = 0;
+
+	if (a[i] == -1){//special case that I'm tired of thinking about.  Let's not be fancy; just handle it seperately!
+		if (c == goal){//basically, you have a choice about whether you count that as paying off debt or not.
+			ll option1 = (ll)t * (nextof[typeneeded][i][j - 1] - i) + perform(i + 1, j, typeneeded);
+			//IF you don't pay off your debt: well, they were expecting you to do so...you have to placate them.
+			ll option2 = perform(i + 1, j - 1, typeneeded);
+			ans = min(option1, option2);
+			//if (i == 1 && j == 1){
+			//	whisp((ll)t * (nextof[1][1][j] - i) , perform(i + 1, j, typeneeded));
+			//}
+		}
+		else{//greedy guess: since you chose to swap before (thus giving debt), you're not interested in doing the direct substitution.
+			ll option1 = (ll)t * (nextof[typeneeded][i][j - 1] - i) + (ll)t * (nextof[goal][i][j] - i) + perform(i + 1, j + 1, typeneeded);
+			//similar story here: you were expected to pay off that debt!
+			ll option2 = (ll)t * (nextof[goal][i][j - 1] - i) + perform(i + 1, j, typeneeded);
+			ans = min(option1, option2);
+		}
+		ans += z;
+		dp[i][j][typeneeded] = ans;
+		//cout << i << " " << j << "    " << typeneeded << "            " << ans << "\n";
+		return ans;
+	}
+
+	if (c == goal){
+		if (a[i] == c){//no debt repayment and none expected.
+			ans = perform(i + 1, j, typeneeded);
+		}
+		else{
+			ans = perform(i + 1, j - 1, typeneeded);
+		}
+	}
+	else{
+		if (a[i] == c){
+			ans = (ll)t * (nextof[goal][i][j] - i) + perform(i + 1, j + 1, typeneeded);
+		}
+		else{
+			ans = (ll)t * (nextof[goal][i][j - 1] - i) + perform(i + 1, j, typeneeded);
+		}
+	}
+	dp[i][j][typeneeded] = ans;
+	//cout << i << " " << j << "    " << typeneeded << "            " << ans << "\n";
+	return ans;
+}
+
+int main(){
+	if (fopen("input.txt", "r")) freopen("input.txt", "r", stdin);
+	dri(T);
+	rep(tc, 0, T){
+		cin >> n;
+		cin >> x >> y >> z >> t;
+		string aa; string ttarget; cin >> aa >> ttarget;
+		rep(i, 0, n){
+			if (aa[i] == '0' || aa[i] == '1'){
+				a[i] = aa[i] - '0';
+			}
+			else{
+				a[i] = -1;
+			}
+			target[i] = ttarget[i] - '0';
+		}
+		fill(dp, -1);
+		rep(k, 0, maxn){
+			nextof[0][n-1][k] = inf;
+			nextof[1][n-1][k] = inf;
+		}
+		//preprocessing.
+		for (int i = n - 2; i >= 0; i--){
+			if (a[i+1] == 0 || a[i+1] == -1){
+				nextof[0][i][0] = i+1;
+				rep(k, 1, maxn){
+					nextof[0][i][k] = nextof[0][i + 1][k - 1];
+				}
+			}
+			else{
+				rep(k, 0, maxn){
+					nextof[0][i][k] = nextof[0][i + 1][k];
+				}
+			}
+			if (a[i+1] == 1 || a[i+1] == -1){
+				nextof[1][i][0] = i+1;
+				rep(k, 1, maxn){
+					nextof[1][i][k] = nextof[1][i + 1][k - 1];
+				}
+			}
+			else{
+				rep(k, 0, maxn){
+					nextof[1][i][k] = nextof[1][i + 1][k];
+				}
+			}
+		}
+		cout << perform(0, 0, 0) << "\n";
+	}
+	return 0;
+}

@@ -1,0 +1,102 @@
+#include <iostream>
+
+#include <vector>
+#include <cmath>
+#include <cstring>
+
+using namespace std;
+
+typedef unsigned long long ullong;
+
+vector<int> primes;
+
+#define MAXP 1001000
+
+// Sieve of Erastothenes 1: normal
+bool sieve[MAXP+1];
+#define NOTPRIME(b) (sieve[(b)])
+
+void sieve_erastothenes() {
+   register unsigned int p;
+
+   primes.clear();
+   primes.reserve((int) ceil((MAXP+1)/log(MAXP+1)*(1 + 1.2762/log(MAXP+1))));
+
+// memset(sieve, 0, sizeof(sieve));
+   sieve[0] = sieve[1] = true;
+   for (p = 2; ; ++p) {
+      ullong p2 = ((ullong) p) * ((ullong) p);
+      if (p2 > MAXP) break;
+      if (NOTPRIME(p)) continue;
+      primes.push_back(p);
+      for (ullong k = p2; k <= MAXP; k += p)
+         sieve[k] = true;
+   }
+   for (; p <= MAXP; ++p) {
+      if (NOTPRIME(p)) continue;
+      primes.push_back(p);
+   }
+}
+
+int N;
+int A[504];
+
+int cost[504][504];
+
+void precompute_cost_matrix() {
+   for (int i = 0; i < N; ++i) {
+      for (int j = i+1; j < N; ++j) {
+         if (A[i] >= A[j]) {
+            int k = lower_bound(primes.begin(), primes.end(), A[i])
+                    - primes.begin();
+            cost[i][j] = (primes[k] - A[i]) + (primes[k+1] - A[j]);
+         }
+         else if (A[j] <= 2) {
+            cost[i][j] = (2 - A[i]) + (3 - A[j]);
+         }
+         else {
+            int k = lower_bound(primes.begin(), primes.end(), A[j])
+                    - primes.begin();
+            if (A[i] <= primes[k-1])
+               cost[i][j] = (primes[k-1] - A[i]) + (primes[k] - A[j]);
+            else
+               cost[i][j] = (primes[k] - A[i]) + (primes[k+1] - A[j]);
+         }
+      }
+   }
+}
+
+const long long INF = 1000000000;
+
+long long memo[504][504];
+long long go(int L, int R) {
+   if (L > R) return 0;
+   if (L == R) return INF;
+   long long& res = memo[L][R];
+   if (res < 0) {
+      res = INF;
+      for (int m = L+1; m <= R; m += 2) {
+         res = min(res, cost[L][m] + go(L+1, m-1) + go(m+1, R));
+      }
+   }
+   return res;
+}
+
+int main(int argc, char* argv[]) {
+   ios_base::sync_with_stdio(false); 
+   cin.tie(NULL);
+
+   sieve_erastothenes();
+
+   cin >> N;
+   for (int i = 0; i < N; ++i)
+      cin >> A[i];
+
+   precompute_cost_matrix();
+
+   memset(memo, -1, sizeof(memo));
+   long long res = go(0, N-1) + N/2;
+   cout << res << endl;
+
+   return 0;
+}

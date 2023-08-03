@@ -1,0 +1,142 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+template <size_t MAXL, size_t MAXR, size_t MAXE> struct BipartiteMatcher {
+#define NIL MAXL
+  static const int INF = 13371337;
+  int matchleft[MAXL + 1], matchright[MAXR], edgecnt, leftcnt, rightcnt;
+  int last[MAXL], to[MAXE], next[MAXE];
+  int dist[MAXL + 1], queue[MAXL];
+
+  void init(int boys, int girls) {
+    memset(last, -1, sizeof(last));
+    edgecnt = 0;
+    leftcnt = boys;
+    rightcnt = girls;
+  }
+
+  void addedge(int boy, int girl) {
+    to[edgecnt] = girl;
+    next[edgecnt] = last[boy];
+    last[boy] = edgecnt++;
+  }
+
+  bool bfs() {
+    int qf = 0, qb = 0;
+    for (int v = 0; v < leftcnt; v++)
+      if (matchleft[v] == NIL)
+        dist[queue[qb++] = v] = 0;
+      else
+        dist[v] = INF;
+    for (dist[NIL] = INF; qf < qb; qf++)
+      for (int at = queue[qf], e = last[at]; e > -1; e = next[e])
+        if (dist[matchright[to[e]]] == INF) dist[queue[qb++] = matchright[to[e]]] = dist[at] + 1;
+    return dist[NIL] != INF;
+  }
+
+  bool dfs(int at) {
+    if (at == NIL) return true;
+    for (int e = last[at]; e > -1; e = next[e])
+      if (dist[matchright[to[e]]] == dist[at] + 1 && dfs(matchright[to[e]])) {
+        matchleft[at] = to[e];
+        matchright[to[e]] = at;
+        return true;
+      }
+    dist[at] = INF;
+    return false;
+  }
+
+  int go() {
+    fill(matchleft, matchleft + leftcnt, NIL);
+    fill(matchright, matchright + rightcnt, NIL);
+    int matches = 0;
+    for (int v = 0; v < leftcnt; v++)
+      for (int e = last[v]; e > -1; e = next[e])
+        if (matchright[to[e]] == NIL) {
+          matchright[to[e]] = v;
+          matchleft[v] = to[e];
+          matches++;
+          break;
+        }
+    while (bfs())
+      for (int v = 0; v < leftcnt; v++)
+        if (matchleft[v] == NIL && dfs(v)) matches++;
+    return matches;
+  }
+};
+typedef long long ll;
+const ll MAX = 333;
+BipartiteMatcher<MAX, MAX, MAX * MAX> bpm;
+
+void solve(ll test_num) {
+  (void) test_num;
+  ll N, M;
+  cin >> N >> M;
+  vector<ll> arr(N);
+  for (ll& a : arr) {
+    cin >> a;
+  }
+  vector<ll> vals(N + M - 1);
+  for (ll& v : vals) {
+    cin >> v;
+  }
+  vector<ll> sorted = vals;
+  sort(sorted.begin(), sorted.end());
+  sorted.erase(unique(sorted.begin(), sorted.end()), sorted.end());
+  ll res = sorted.back();
+  for (ll low = 0, high = sorted.size() - 2; low <= high;) {
+    const ll mid = (low + high) >> 1;
+    bpm.init(N, N);
+    for (ll i = 0; i < N; ++i) {
+      for (ll j = 0; j < N; ++j) {
+        if (vals[i + arr[j]] <= sorted[mid]) {
+          bpm.addedge(i, j);
+        }
+      }
+    }
+    const ll mats = bpm.go();
+    if (mats == N) {
+      res = sorted[mid];
+      high = mid - 1;
+    } else {
+      low = mid + 1;
+    }
+  }
+  cout << res << endl;
+}
+
+void solve() {
+#ifdef AZN
+//make_case();
+  double start_t = (double) clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr);
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+  ll T = 1;
+//  scanf("%d", &T);
+//  cin >> T;
+  for (ll t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << fixed << setprecision(3) << "Took: " << (((double) clock() - start_t) / CLOCKS_PER_SEC)
+      << endl;
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

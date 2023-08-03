@@ -1,0 +1,289 @@
+/*input
+6
+1 2 3 4 5 6
+4
+1 2 5
+2 1 4
+0 5 4
+1 1 6
+*/
+
+/*Coded By- 
+	Shivang Bansal
+	(IET LUCKNOW)
+
+Motivation- 	
+	The More You Sweat In Peace
+	The Less You Bleed In Wars ^_^
+*/
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <math.h>
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <queue>
+
+using namespace std;
+
+
+// Functions Start
+#define min3(a,b,c) 		min(min(a,b),c)
+#define max3(a,b,c) 		max(max(a,b),c)
+// Functions End
+
+
+/// Array Start
+#define SET(a)              memset( a, -1,    sizeof(a) )
+#define CLR(a)              memset( a,  0,    sizeof (a) )
+#define MEM(a,val)          memset( a,  val,  sizeof(a) )
+#define FILL(a, n, val)    	fill(a, a+n, val)
+/// Array End
+
+
+//Input Output Start
+#define sf                  scanf
+#define pf                  printf
+//Scan
+#define sd(n) 				scanf("%d", &n)
+#define sd2(a, b) 			scanf("%d%d", &a, &b)
+#define sd3(a, b, c) 		scanf("%d%d%d", &a, &b, &c)
+#define sd4(a, b, c, d) 	scanf("%d%d%d%d", &a, &b, &c, &d)
+#define sc(n)				cin >> n
+#define slld(n) 			scanf("%lld", &n)
+//Print
+#define pd(n) 				printf("%d", n)
+#define pds(n) 				printf("%d ", n)
+#define pdn(n) 				printf("%d\n",n)
+#define pd2(a, b) 			printf("%d %d\n", a, b)
+#define pd3(a, b, c) 		printf("%d %d %d\n", a, b, c)
+#define pd4(a, b, c, d) 	printf("%d %d %d %d\n", a, b, c, d)
+#define plld(n) 			printf("%lld", n)
+#define pllds(n) 			printf("%lld ", n)
+#define plldn(n) 			printf("%lld\n", n)
+#define pc(n) 				printf("%c", n)
+#define pcn(n) 				printf("%c\n", n)
+#define ps(n) 				printf("%s", n)
+#define psn(n) 				printf("%s\n", n)
+//Input Output End
+
+
+/// TypeDef Start
+typedef  long long int          ll;
+typedef  map<string,int>        msi;
+typedef  map<int,int>	        mii;
+typedef  map<ll, ll>            mll;
+typedef  map<char,int>          mci;
+typedef  map<int,string>	    mis;
+typedef  pair<int,int> 	        pii;
+typedef  pair<string, int>      psi;
+typedef  pair<string, string>   pss;
+typedef  vector<int> 	        vi;
+typedef  vector<string> 	    vs;
+typedef  vector<char>	        vc;
+typedef  vector<bool>           vb;
+typedef  vector< pii >          vii;
+/// TypeDef End
+
+//Important Constants
+#define MOD 1000000007
+#define MAX INT_MAX
+#define MIN INT_MIN
+
+/// Vector Start
+#define pb					   push_back
+/// Vector End
+
+/// Pair Start
+#define ff                     first
+#define ss                     second
+#define mp                     make_pair
+/// Pair End
+														/*  Just a LITTLE more EFFORT ^_^  */
+map<int, int> map1;
+map<int, map< int ,int > > map2;
+
+
+struct SegmentTreeNode
+{
+	int evenCount, oddCount;
+
+	void assignLeaf(int value)
+	{
+		if(value % 2 == 0)
+		{
+			evenCount = 1;
+			oddCount = 0;
+		}
+		else
+		{
+			evenCount = 0;
+			oddCount = 1;
+		}
+	}
+
+	void merge(SegmentTreeNode &left, SegmentTreeNode &right)
+	{
+		evenCount = left.evenCount + right.evenCount;
+		oddCount = left.oddCount + right.oddCount;
+	}
+
+	int getValue(int q)
+	{
+		if(q == 1)
+			return evenCount;
+		else
+			return oddCount;
+	}
+
+};
+
+template< class InputType, class OutputType>
+class SegmentTree
+{
+	SegmentTreeNode *nodes;
+	int N;
+
+public:
+	SegmentTree(InputType arr[], int N)
+	{
+		this->N = N;
+		nodes = new SegmentTreeNode[getSgementTreeSize(N)];
+
+		buildTree(arr, 1, 0, N-1);
+	}
+
+	~SegmentTree() 
+    {
+        delete[] nodes;
+    }
+
+    OutputType getValue(int q, int lo, int hi)
+    {
+    	SegmentTreeNode result = getValue(1, 0, N-1, lo, hi);
+    	return result.getValue(q);
+    }
+
+    void update(int index, InputType value)
+    {
+    	update(1, 0, N-1, index, value);
+    }
+
+
+private:
+
+	void buildTree(InputType arr[], int stIndex, int lo, int hi)
+	{
+		if(lo == hi)
+		{
+			nodes[stIndex].assignLeaf(arr[lo]);
+			return;
+		}
+		int mid = (lo + hi) / 2;
+		int leftChildIndex = stIndex * 2;
+		int righChildIndex = leftChildIndex + 1;
+
+		buildTree(arr, leftChildIndex, lo, mid);
+		buildTree(arr, righChildIndex, mid+1, hi);
+
+		nodes[stIndex].merge(nodes[leftChildIndex], nodes[righChildIndex]);
+	}
+
+	SegmentTreeNode getValue(int stIndex, int leftMostIndex, int rightMostIndex, int lo, int hi)
+	{
+		if(lo == leftMostIndex && hi == rightMostIndex)
+		{
+			return nodes[stIndex];
+		}
+		int mid = (leftMostIndex + rightMostIndex) / 2;
+		if(hi <= mid)
+		{
+			return getValue(stIndex*2, leftMostIndex, mid, lo, hi);
+		}
+		if(lo > mid)
+		{
+			return getValue(stIndex*2+1, mid+1, rightMostIndex, lo, hi);
+		}
+		SegmentTreeNode leftResult = getValue(stIndex*2, leftMostIndex, mid, lo, mid);
+		SegmentTreeNode rightResult = getValue(stIndex*2+1, mid+1, rightMostIndex, mid+1, hi);
+
+		SegmentTreeNode result;
+		result.merge(leftResult, rightResult);
+
+		return result;
+	}
+
+	void update(int stIndex, int lo, int hi, int index, InputType value)
+	{
+		if(lo == hi)
+        {
+            nodes[stIndex].assignLeaf(value);
+            return;
+        }
+
+        int mid = (lo + hi) / 2;
+        int leftChildIndex = 2 * stIndex;
+        int rightChildIndex = leftChildIndex + 1;
+
+        if(index <= mid)
+        {
+            update(leftChildIndex, lo, mid, index, value);
+        }
+        else
+        {
+            update(rightChildIndex, mid+1, hi, index, value);
+        }
+
+        nodes[stIndex].merge(nodes[leftChildIndex], nodes[rightChildIndex]); 
+    }
+	
+
+	int getSgementTreeSize(int N)
+	{
+		int size = 1;
+		for (; size < N; size <<= 1);
+		
+		return size << 1;
+	}
+
+};
+
+int main()
+{
+	int N; 
+	sd(N);
+	int arr[N+2];
+	for (int i = 0; i < N; ++i)
+	{
+		sd(arr[i]);
+	}
+
+	SegmentTree< int, int> st(arr, N);
+
+	int Q;
+	sd(Q);
+	while(Q--)
+	{
+		int q, l, r;
+		sd3(q, l, r);
+		if(q == 1 || q == 2)
+		{
+			pdn(st.getValue(q, l-1, r-1));
+		}
+		else
+		{
+			st.update(l-1, r);	//here l is index and r is updating value
+		}
+
+	}
+
+
+	return 0;
+}

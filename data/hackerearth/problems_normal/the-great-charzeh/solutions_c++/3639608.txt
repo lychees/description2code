@@ -1,0 +1,164 @@
+#include <bits/stdc++.h>
+#define INF INT_MAX
+using namespace std;
+
+#define rep(i, a, b) for(int i = (a); i < int(b); ++i)
+#define rrep(i, a, b) for(int i = (a) - 1; i >= int(b); --i)
+#define trav(it, v) for(typeof((v).begin()) it = (v).begin(); it != (v).end(); ++it)
+#define all(v) (v).begin(), (v).end()
+#define what_is(x) cerr << #x << " is " << x << endl;
+
+typedef double fl;
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef vector<pii> vpi;
+
+struct Edge{
+    int from, to, c, flow;
+
+    Edge(int _from, int _to, int _c, int _flow);
+};
+
+struct Graph{
+
+    vector<Edge> edges;
+
+    Graph(int numNodes);
+
+    void AddEdge(int from, int to, int c);
+    
+    void AddEdge(int from, int to, int c, int flow);
+
+    pair<int, Graph> MaxFlow(int s, int t);
+
+    private:
+    // Contains all edges that go to and from each node, respectively
+    vector<vector<int> > edgesIn, edgesOut;
+};
+
+Edge::Edge(int _from, int _to, int _c, int _flow) : from(_from), to(_to), c(_c), flow(_flow){
+}
+
+Graph::Graph(int numNodes){
+    edgesIn = vector<vector<int> >(numNodes);
+    edgesOut = vector<vector<int> >(numNodes);
+}
+
+void Graph::AddEdge(int from, int to, int c){
+    AddEdge(from, to, c, 0);
+}
+
+void Graph::AddEdge(int from, int to, int c, int flow){
+    Edge edge(from, to, c, flow);
+    edges.push_back(edge);
+    edgesOut[from].push_back(edges.size()-1);
+    edgesIn[to].push_back(edges.size()-1);
+}
+
+// Returns the maximum flow from s to t through the graph, as well as a graph containing the flows that achieve this
+pair<int, Graph> Graph::MaxFlow(int s, int t){
+    int N=edgesIn.size();
+    int totalFlow = 0;
+    while(true){
+        vector<int> flowTo(N, 0);
+        vector<bool> vis(N, false);
+        vector<Edge*> parent(N);
+        flowTo[s]=INF;
+        priority_queue<pair<int, int> > pq;
+        pq.push(make_pair(flowTo[s], s));
+    bool stop=0;
+        while(!pq.empty() && !stop){
+            int cur=pq.top().second;
+            pq.pop();
+            if(vis[cur])
+                continue;
+            vis[cur]=true;
+            for(int i=0; i < (int)edgesOut[cur].size(); ++i){
+                Edge* edge=&edges[edgesOut[cur][i]];
+                int f=min(flowTo[cur], edge->c-edge->flow);
+                if(f > flowTo[edge->to]){
+                    flowTo[edge->to]=f;
+                    parent[edge->to]=edge;
+            if(edge->to == t)
+            stop=1;
+                    pq.push(make_pair(f, edge->to));
+                }
+            }
+            for(int i=0; i < (int)edgesIn[cur].size(); ++i){
+                Edge* edge=&edges[edgesIn[cur][i]];
+                int f=min(flowTo[cur], edge->flow);
+                if(f > flowTo[edge->from]){
+                    flowTo[edge->from]=f;
+                    parent[edge->from]=edge;
+            if(edge->from == t)
+            stop=1;
+                    pq.push(make_pair(f, edge->from));
+                }
+            }
+        }
+        if(!flowTo[t])
+            break;
+        totalFlow += flowTo[t];
+        int cur=t;
+        while(cur != s){
+            Edge* edge=parent[cur];
+            if(edge->to == cur){
+                edge->flow += flowTo[t];
+                cur=edge->from;
+            }
+            else{
+                edge->flow -= flowTo[t];
+                cur=edge->to;
+            }
+        }
+    }
+    Graph ans(N);
+    for(int i=0; i < (int)edges.size(); ++i){
+        Edge edge=edges[i];
+        if(!edge.flow)
+            continue;
+        ans.AddEdge(edge.from, edge.to, edge.c, edge.flow);
+    }
+    return make_pair(totalFlow, ans);
+}
+
+int a[305];
+int f[605];
+int fsorted[605];
+int n, m;
+
+bool possible(int maxDead){
+	Graph g(605);
+	rep(i,0,n){
+		g.AddEdge(0, 2+i, 1);
+		g.AddEdge(2+n+i, 1, 1);
+	}
+	rep(i,0,n){
+		rep(j,0,n){
+			if(f[a[i]+j] <= maxDead)
+				g.AddEdge(2+i, 2+n+j, 1);
+		}
+	}
+	return g.MaxFlow(0, 1).first == n;
+}
+
+int main(){
+	scanf("%d%d", &n, &m);
+	rep(i,0,n)
+		scanf("%d", a+i);
+	rep(i,0,n+m-1){
+		scanf("%d", f+i);
+		fsorted[i]=f[i];
+	}
+	sort(fsorted, fsorted+(n+m-1));
+	int lo=-1, hi=n+m-1;
+	while(hi-lo > 1){
+		int mid=(lo+hi)/2;
+		if(possible(fsorted[mid]))
+			hi=mid;
+		else
+			lo=mid;
+	}
+	printf("%d\n", fsorted[hi]);
+}

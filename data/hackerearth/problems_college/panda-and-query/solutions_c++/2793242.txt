@@ -1,0 +1,81 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define pb push_back
+#define mod 1000000007
+#define ll long long int
+struct s
+{
+    int lt;
+    int rt;
+    int tot;
+}tr[300015];
+string a;
+int min(int aa,int b)
+{
+    if(aa<b)return aa;
+    return b;
+}
+s combine(s x,s y)
+{
+    int q,r,p;
+    p=x.tot+y.tot;
+    q=x.lt+y.lt;
+    r=x.rt+y.rt;
+    int v=x.lt-x.tot;
+    int u=y.rt-y.tot;
+    p+=min(v,u);
+    return ((s){q,r,p});
+}
+void build(int id,int st,int en)
+{
+    if(st==en)
+    {
+        if(a[st]=='{')
+            tr[id]=((s){1,0,0});
+        else
+            tr[id]=((s){0,1,0});
+        return;
+    }
+    int mid,l=id<<1;
+    mid=((en-st)>>1)+st;
+    build(l,st,mid);
+    build(l+1,mid+1,en);
+	tr[id]=combine(tr[l],tr[l+1]);
+}
+s query(int id,int st,int en,int x,int y)
+{
+    int mid,l=id<<1;
+    mid=((en-st)>>1)+st;
+
+    if((x==st&&y==en)||(st==en))
+    {
+        return tr[id];
+    }
+    if(y<=mid)
+        return query(l,st,mid,x,y);
+    else if(x>mid)
+        return query(l+1,mid+1,en,x,y);
+    s o,p;
+    o=query(l,st,mid,x,mid);
+    p=query(l+1,mid+1,en,mid+1,y);
+    return combine(o,p);
+}
+int main()
+{
+    int q,l,r,n;
+    cin>>a;
+    n=a.length();
+    build(1,0,n-1);
+    cin>>q;
+    while(q--)
+    {
+        cin>>l>>r;
+        l--;r--;
+        s te=query(1,0,n-1,l,r);
+        //cout<<"V="<<te.lt<<" "<<te.rt<<"\n";
+        int ans=te.tot;
+        ans*=2;
+        cout<<ans<<"\n";
+    }
+    return 0;
+}

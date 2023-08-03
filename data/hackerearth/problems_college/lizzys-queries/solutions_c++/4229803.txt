@@ -1,0 +1,124 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+ll checkmod[] = {1000000007, 1006003, 122959073};
+ll segf[400005][3],segb[400005][3],pwr[100005][3];
+int A[100005],sz;
+struct ret
+{
+    ll fhash[3],bhash[3];
+    int len;
+}x;
+void build(int node,int l,int r)
+{
+    int i;
+    if(l==r)
+    {
+        for(i=0;i<sz;i++)
+            segf[node][i]=segb[node][i]=A[l]%checkmod[i];
+        return;
+    }
+    build(2*node+1,l,(l+r)/2);
+    build(2*node+2,(l+r)/2+1,r);
+    int first=(l+r)/2-l+1,second=r-(l+r)/2;
+    for(i=0;i<sz;i++)
+    {
+        segf[node][i]=((segf[2*node+1][i]*pwr[second][i])%checkmod[i]+segf[2*node+2][i])%checkmod[i];
+        segb[node][i]=((segb[2*node+2][i]*pwr[first][i])%checkmod[i]+segb[2*node+1][i])%checkmod[i];
+    }
+}
+ret query(int node,int l,int r,int ql,int qr)
+{
+    int i;
+    if(r<ql||l>qr)
+    {
+        for(i=0;i<sz;i++)
+            x.fhash[i]=x.bhash[i]=0;
+        x.len=0;
+        return x;
+    }
+    if(l>=ql&&r<=qr)
+    {
+        for(i=0;i<sz;i++)
+        {
+            x.fhash[i]=segf[node][i];
+            x.bhash[i]=segb[node][i];
+        }
+        x.len=r-l+1;
+        //cout<<l<<" "<<r<<" "<<x.fhash[9]<<endl;
+        return x;
+    }
+    ret lchild=query(2*node+1,l,(l+r)/2,ql,qr);
+    ret rchild=query(2*node+2,(l+r)/2+1,r,ql,qr);
+    for(i=0;i<sz;i++)
+    {
+        x.fhash[i]=((lchild.fhash[i]*pwr[rchild.len][i])%checkmod[i]+rchild.fhash[i])%checkmod[i];
+        x.bhash[i]=((rchild.bhash[i]*pwr[lchild.len][i])%checkmod[i]+lchild.bhash[i])%checkmod[i];
+    }
+    x.len=lchild.len+rchild.len;
+    //cout<<l<<" "<<r<<" "<<x.fhash[9]<<endl;
+    return x;
+}
+void update(int node,int l,int r,int index,int val)
+{
+    int i;
+    if(index<l||index>r)
+        return;
+    if(l==r)
+    {
+        for(i=0;i<sz;i++)
+            segf[node][i]=segb[node][i]=val%checkmod[i];
+        return;
+    }
+    update(2*node+1,l,(l+r)/2,index,val);
+    update(2*node+2,(l+r)/2+1,r,index,val);
+    int first=(l+r)/2-l+1,second=r-(l+r)/2;
+    for(i=0;i<sz;i++)
+    {
+        segf[node][i]=((segf[2*node+1][i]*pwr[second][i])%checkmod[i]+segf[2*node+2][i])%checkmod[i];
+        segb[node][i]=((segb[2*node+2][i]*pwr[first][i])%checkmod[i]+segb[2*node+1][i])%checkmod[i];
+    }
+}
+char s[100005];
+int main()
+{
+    int n,q,i,j,type,l,r;
+    sz=3;
+    for(i=0;i<sz;i++)
+        pwr[0][i]=1;
+    for(i=1;i<=100000;i++)
+        for(j=0;j<sz;j++)
+            pwr[i][j]=(pwr[i-1][j]*27)%checkmod[j];
+    scanf("%d%d%s",&n,&q,s);
+    for(i=0;i<n;i++)
+        A[i]=s[i]-'a'+1;
+    build(0,0,n-1);
+    //cout<<segb[0][9]<<endl;
+    while(q--)
+    {
+        scanf("%d",&type);
+        if(type==0)
+        {
+            scanf("%d%s",&i,s);
+            i--;
+            update(0,0,n-1,i,s[0]-'a'+1);
+        }
+        else
+        {
+            scanf("%d%d",&l,&r);
+            l--,r--;
+            x=query(0,0,n-1,l,r);
+            for(i=0;i<sz;i++)
+            {
+                if(x.fhash[i]!=x.bhash[i])
+                    break;
+            }
+            //cout<<x.fhash[9]<<" "<<x.bhash[9]<<endl;
+            if(i==sz)
+                printf("Yes\n");
+            else
+                printf("No\n");
+        }
+    }
+    return 0;
+}

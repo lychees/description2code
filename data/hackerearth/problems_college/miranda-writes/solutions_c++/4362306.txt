@@ -1,0 +1,131 @@
+#include<bits/stdc++.h>
+#define ll long long
+#define maxn 1000009
+#define INF 1e16
+#define si(x) scanf("%d",&x);
+#define sl(x) scanf("%ld",&x);
+#define sll(x) scanf("%lld",&x);
+#define ss(x) scanf("%s",x);
+#define loop(i,a,b) for(int i=a; i<b; i++)
+#define mp1 make_pair 
+#define pb push_back 
+#define mod 1000000007
+#define pll pair<ll,ll>
+#define ppll pair<ll, pair<ll,ll> >
+using namespace std;
+int n, m, k;
+ll dist[402][402],dp[17][1<<16];
+ll mask[maxn],vert[19];
+vector< pair<ll,ll> > v[maxn];
+pair<ll,pair<ll,ll> > pr;
+struct cmp{
+	bool operator()(const ppll &a, const ppll &b)
+	{
+		return (a.first> b.first);
+	}
+};
+void solve(ll a)
+{
+	ll curd,maindt,ver,msk,wt;
+	priority_queue<ll,vector< ppll >,cmp> st;
+	ppll pr;
+	pr.first=dp[a][mask[vert[a]]];
+	pr.second.first=a;
+	pr.second.second=mask[vert[a]];
+	st.push(pr);
+	ll v1,w;
+	while(!st.empty())
+	{
+		pr=st.top();
+		st.pop();
+		msk=pr.second.second;
+		wt=pr.first;
+		ver=pr.second.first;
+		//if(wt>dist[ver][msk])
+		//continue;
+		//if(msk==62)
+		//puts("hi");
+		//cout<<msk<<endl;
+		for(int x=0;x<v[ver].size();x++)
+        {
+            v1=v[ver][x].first;
+            w=v[ver][x].second;
+            if(wt+w<dp[v1][msk|mask[vert[v1]]])
+            {
+                dp[v1][msk|mask[vert[v1]]]=wt+w;
+                st.push({wt+w,{v1,msk|mask[vert[v1]]}});
+            }
+        }
+    }
+}
+int main()
+{
+	cin >> n >> m >> k;
+	for(int i = 1; i <= n; i++)
+	{
+		for(int j = 1; j <= n; j++) dist[i][j] = 1e18;
+	}
+	while(m--)
+	{
+		int u, v1, c;
+		cin >> u >> v1 >> c;
+		dist[u][v1] = dist[v1][u] = c;
+	}
+	for(int p = 1; p <= n; p++)
+	{
+		for(int i = 1; i <= n; i++)
+		{
+			for(int j = 1; j <= n; j++) dist[i][j] = min(dist[i][j], dist[i][p] + dist[p][j]);
+		}
+	}
+	if(k == 0)
+	{
+		cout << dist[1][n];
+		return 0;
+	}
+	ll msk1=0;
+	ll ct=1,a;
+		for(int i=1; i<=k; i++)
+		{
+			for(int j=0; j<=(1 << k); j++) 
+				dp[i][j] =INF;
+		}
+		loop(i,1,k+1)
+		{
+			cin>>a;
+			vert[i]=a;
+			mask[a]=(1LL<<ct);
+			msk1|=mask[a];
+//			dp[i][mask[a]]=dist[1][a];
+			ct++;
+		}
+		loop(i,1,k+1)
+		{
+			loop(j,i+1,k+1)
+			{
+						v[i].pb(mp1(j,dist[vert[i]][vert[j]]));
+						v[j].pb(mp1(i,dist[vert[j]][vert[i]]));	
+			}
+		}
+		ll ans=INF,actans=INF;
+		loop(i,1,k+1)
+		{
+			ans=INF;
+			for(int i1=1; i1<=k; i1++)
+			{
+				for(int j1=0; j1<=(1 << (k+1)); j1++) 
+					dp[i1][j1] = 1e18;
+			}
+			dp[i][mask[vert[i]]]=dist[1][vert[i]];
+			solve(i);
+			loop(j,1,k+1)
+			{
+				ans=min(ans,dp[j][msk1]+dist[vert[j]][n]);
+			//	cout<<dp[i][msk1]<<" "<<dist[vert[i]][n]<<endl;
+			}
+			//cout<<ans<<endl;
+			actans=min(actans,ans);
+		}
+		cout<<actans<<endl;
+	return 0;
+}

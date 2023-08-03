@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define boost ios::sync_with_stdio(true); cin.tie(0); cout.tie(0);
+#define pii pair<int,int>
+#define vpii vector<pair<int,int> >
+#define vvpii vector<vector<pair<int,int> > >
+#define vi vector<int>
+#define vii vector<vector<int> >
+#define pb push_back 
+#define mp make_pair 
+#define onebit(n) __builtin_popcount(n) //get number of one-bits in the bit representation of n
+#define rep(i,n) for(i=0;i<n;i++)
+
+int memo[1<<15][15],n=0,m=0,k=0;
+
+int inf=1000000000;
+int ans=inf;
+
+int tsp(int mask,vector<vector<int> > &dist,vector<int> &a,int last)
+{
+	if(memo[mask][last]!=-1)
+		return memo[mask][last];
+	
+	if(mask==(1<<k)-1)
+		return memo[mask][last]=dist[a[last]][n-1];
+	
+	int ans=inf;
+	int i;
+	for(i=0;i<k;i++)
+	{
+		if(!((mask>>i)&1))
+		{
+			ans=min(ans,tsp((mask | (1<<i)),dist,a,i)+dist[a[last]][a[i]]);
+		}
+	}
+	return memo[mask][last]=ans;
+}
+
+
+
+void floyd_warshall(vector<vector<int> > &dp,int n)
+{
+	int i,j,k;
+	for(k=0;k<n;k++)
+	{
+		for(i=0;i<n;i++)
+		{
+			for(j=0;j<n;j++)
+			{
+					if(i==j)
+						dp[i][j]=0;
+					else
+						dp[i][j]=min(dp[i][j],dp[i][k]+dp[k][j]);
+			}
+		}
+	}	
+}
+
+
+int main()
+{
+//	boost;
+	scanf("%d %d %d",&n,&m,&k);
+	vector<vector<int> > dp(n+1,vector<int>(n+1,inf));
+	memset(memo,-1,sizeof(memo));
+	while(m--)
+	{
+		int a,b,c;
+		scanf("%d %d %d",&a,&b,&c);
+		a--;
+		b--;
+		dp[a][b]=c;
+		dp[b][a]=c;
+	}
+	int i;
+	for(i=0;i<n;i++)
+		dp[i][i]=0;
+	floyd_warshall(dp,n);
+	vi a;
+	for(i=0;i<k;i++)
+	{
+		int x;
+		scanf("%d",&x);
+		x--;
+		a.pb(x);
+	}
+	if(k==0)
+	{
+		printf("%lld\n",dp[0][n-1]);
+		return 0;
+	}
+
+	for(i=0;i<k;i++)
+	{
+		ans=min(ans,tsp(1<<i,dp,a,i)+dp[0][a[i]]);
+	}
+
+	printf("%lld\n",ans);
+	return 0;
+}	

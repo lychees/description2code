@@ -1,0 +1,94 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef double ld;
+typedef pair<ll,ll> pl;
+
+#define sl(x) scanf("%lld",&x)
+#define pl(x) printf("%lld\n",x)
+#define sf(x) sort(x.begin(),x.end(),func)
+#define s(x) sort(x.begin(),x.end())
+#define all(v) v.begin(),v.end()
+#define rs(v) { s(v) ; r(v) ; }
+#define r(v) {reverse(all(v));}
+#define pb push_back
+#define mp make_pair
+#define F first
+#define S second
+#define f(i,n) for(int i=0;i<n;i++)
+#define rep(i,a,b) for(int i=a;i<=b;i++)
+
+const ll mod = 1000000007;
+const ll inf = 1e16;
+const ll ninf = LLONG_MIN;
+const ld eps = 1e-12;
+const ll N = 1000005;
+const ll LOGN = 19;
+const ld PI = 3.14159265358979323846;
+ll n, m, k;
+ll d[405][405];
+ll vis[405];
+vector < pl > g[N];
+ll a[N];
+ll dp[16][1 << 16 + 2];
+void dijkstra(ll x)
+{
+    f(i, 405) d[x][i] = inf, vis[i] = 0;
+    d[x][x] = 0;
+    priority_queue < pl > q;
+    q.push(mp(0, x));
+    while(!q.empty())
+    {
+        ll u = q.top().S;
+        q.pop();
+        if(vis[u]) continue;
+        vis[u] = 1;
+        for(pl xx : g[u])
+        {
+            ll v = xx.F;
+            ll c = xx.S;
+            if(d[x][v] > d[x][u] + c)
+            {
+                d[x][v] = d[x][u] + c;
+                q.push({-1 * d[x][v], v});
+            }
+        }
+    }
+}
+ll solve(ll pre, ll mask)
+{
+    if(dp[pre][mask] != -1) return dp[pre][mask];
+    ll ret = inf;
+    for(ll i = 1; i <= k; i++)
+    {
+        if((mask & (1 << i)) == 0)
+        {
+            ret = min(ret, d[a[pre]][a[i]] + solve(i, mask | (1 << i)));
+        }
+    }
+    if(ret == inf)
+    {
+        ret = d[a[pre]][n];
+    }
+    dp[pre][mask] = ret;
+    return ret;
+}
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    cin >> n >> m >> k;
+    f(i, m)
+    {
+        ll u, v, c;
+        cin >> u >> v >> c;
+        g[u].pb(mp(v, c));
+        g[v].pb(mp(u, c));
+    }
+    memset(dp, -1, sizeof(dp));
+    a[0] = 1;
+    f(i, k) cin >> a[i + 1];
+    for(ll i = 1; i <= n; i++) dijkstra(i);
+    cout << solve(0, 0) << "\n";
+    return 0;
+}

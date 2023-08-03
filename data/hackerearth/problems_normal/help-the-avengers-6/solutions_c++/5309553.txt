@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+#define MAX 32005
+
+using namespace std;
+
+bool isPrime[1000005];
+
+void seive()
+{
+	for (long int i = 0; i <= 1e6; i++)
+		isPrime[i] = true;
+	isPrime[0] = isPrime[1] = false;
+	for (long int i = 2; i <= 1e6; i++)
+		if (isPrime[i])
+			for (long int j = 2 * i; j <= 1e6; j += i)
+				isPrime[j] = false;
+}
+
+int segtree[4 * MAX];
+long int a[MAX];
+
+void build(int pos, int l, int r)
+{
+	if (l == r)
+	{
+		segtree[pos] = isPrime[a[l]] ? 1 : 0;
+		//cout<<"pos = "<<pos<<"l = "<<l<<" r = "<<r<<"ans = "<<segtree[pos]<<endl;
+		return;
+	}
+	int mid = (l + r) >> 1;
+	build(2 * pos, l, mid);
+	build(2 * pos + 1, mid + 1, r);
+	segtree[pos] = segtree[2 * pos] + segtree[2 * pos + 1];
+	//cout<<"pos = "<<pos<<"l = "<<l<<" r = "<<r<<"ans = "<<segtree[pos]<<endl;
+}
+
+void update(int idx, int pos, int l, int r, long int x)
+{
+	if (idx<l || idx>r)
+		return;
+	if (l == r)
+	{
+		a[idx] = x;
+		segtree[pos] = isPrime[a[idx]] ? 1 : 0;
+		return;
+	}
+	int mid = (l + r) >> 1;
+	update(idx, 2 * pos, l, mid, x);
+	update(idx, 2 * pos + 1, mid + 1, r, x);
+	segtree[pos] = segtree[2 * pos] + segtree[2 * pos + 1];
+}
+
+int query(int lQ, int rQ, int pos, int l, int r)
+{
+	if (rQ<l || lQ>r)
+		return 0;
+	if (lQ <= l&&rQ >= r)
+		return segtree[pos];
+	int mid = (l + r) >> 1;
+	return query(lQ, rQ, 2 * pos, l, mid) + query(lQ, rQ, 2 * pos + 1, mid + 1, r);
+}
+
+int main()
+{
+	seive();
+	int t;
+	cin >> t;
+	while (t--)
+	{
+		int n, q;
+		cin >> n;
+		for (int i = 0; i<n; i++)
+			cin >> a[i];
+		build(1, 0, n - 1);
+		cin >> q;
+		while (q--)
+		{
+			char c;
+			cin >> c;
+			if (c == 'A')
+			{
+				int lQ, rQ;
+				cin >> lQ >> rQ;
+				cout << query(--lQ, --rQ, 1, 0, n - 1) << endl;
+			}
+			else
+			{
+				int idx;
+				long int val;
+				cin >> idx >> val;
+				update(--idx, 1, 0, n - 1, val);
+			}
+		}
+
+	}
+	return 0;
+}

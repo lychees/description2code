@@ -1,0 +1,75 @@
+    #include<iostream>
+    #include<cassert>
+    #include<cstdio>
+    #define lld long long
+    using namespace std;
+    const int MaxN = 100000 + 10, Mod = 1e9 + 7, DIV = 300, NumBc = MaxN / DIV;
+    int n, A[MaxN], tms[MaxN], head[MaxN], last[MaxN], sl[MaxN][NumBc], nw[NumBc];
+    int he2[MaxN][NumBc], jicheng[MaxN];
+    int bigc[MaxN], tcol[NumBc];
+    void init()
+    {
+    	scanf("%d", &n);
+    	for(int i = 1; i <= n; ++i) scanf("%d", &A[i]);
+    }
+    inline int lowbit(int x){return x & -x;}
+    void add(int t){if(t <= n) for(int i = t; i <= n; i += lowbit(i)) ++jicheng[i];}
+    int qry(int t){int ret = 0;for(int i = t; i > 0; i -= lowbit(i)) ret += jicheng[i];return ret;}
+    void solve()
+    {
+    	int p = 0, u, x, ans = 0, maxcol = 0;
+    	for(int i = 1; i <= n; ++i)
+    	{
+    		if(A[i] > maxcol) maxcol = A[i];
+    		last[i] = head[A[i]];
+    		he2[i][0] = he2[last[i]][0] + 1;
+    		head[A[i]] = i;
+    		++tms[A[i]];
+    	}
+    	for(int i = 1; i <= maxcol; ++i) if(tms[i] > DIV) tcol[bigc[i] = ++p] = i;
+    	for(int i = 1; i <= n; ++i)
+    	{
+    		if(bigc[A[i]]) ++nw[bigc[A[i]]];
+    		for(int j = 1; j <= p; ++j) sl[i][j] = nw[j];
+    		u = last[i];
+    		for(int j = 1; j <= p; ++j)
+    		{
+    			x = sl[i][j] - sl[u][j];
+    			he2[i][j] = (he2[u][j] + sl[i][j]) % Mod;
+    			if(bigc[A[i]] != j)
+    			{
+    				jicheng[i] = ((lld)x * (lld)he2[u][j] + (lld)jicheng[i]) % Mod;
+    				if(!bigc[A[i]])
+    				{
+    					assert(tms[tcol[j]] - sl[i][j] >= 0);
+    					ans = ((lld)ans + ((lld)sl[i][j] * (lld)he2[i][0] - (lld)he2[i][j]) * (lld)(tms[tcol[j]] - sl[i][j])) % Mod;
+    				}
+    			}
+    		}
+    		jicheng[i] = (jicheng[i] + jicheng[u]) % Mod;
+    		ans = (jicheng[i] + ans) % Mod;
+    	}
+    	for(int i = 1; i <= n; ++i) jicheng[i] = 0;
+    	x = 0;
+    	for(int i = 1; i <= n; ++i)
+    	{
+    		sl[i][0] += sl[i - 1][0];
+    		u = --tms[A[i]];
+    		if(!bigc[A[i]])
+    		{
+    			for(int j = head[A[i]]; j != i; j = last[j])
+    			{
+    				++x;++sl[j][0];--u;
+    				add(n - j + 1);
+    				ans = ((lld)ans + (lld)x - (lld)sl[i][0] - (lld)qry(n - j + 1) - (lld)u * (lld)(he2[i][0] - 1)) % Mod;
+    			}
+    		}
+    	}
+    	printf("%d\n", (ans + Mod) % Mod);
+    }
+    int main()
+    {
+    	init();
+    	solve(); 
+    	return 0;
+    } 

@@ -1,0 +1,156 @@
+
+#include <bits/stdc++.h>
+#define lli long long int
+#define pii pair<int,int>
+#define plli pair<lli,lli>
+#define X first
+#define Y second
+using namespace std;
+
+const int N = 1000;
+const int M = 10000;
+bool f[N + 5];
+vector<int> pr;
+lli pz[N + 5][20];
+const lli mod = 1e9 + 7;
+int ps;
+
+void primes()
+{
+	for (int i=2 ; i<=N ; i++)
+	{
+		if (f[i]==false)
+		{
+			for (int j=i*i ; j<=N ; j+=i)
+				f[j] = true;
+			pr.push_back(i);
+		}
+	}
+	
+	for (int i=0 ; i<pr.size() ; i++)
+	{
+		lli x = pr[i] , j = 1;
+		pz[x][0] = 1;
+		while (pz[x][j-1]<=N) pz[x][j] = (pz[x][j-1]*x)%mod , j++;
+	}
+	ps = pr.size();
+}
+
+void decompos(int x , int* s)
+{
+	fill(s , s+200 , 0);
+
+	int k = 0;
+	while (x!=1)
+	{
+		if (x%pr[k] == 0) s[k]++ , x/=pr[k];
+		else k++;
+	}
+}
+
+void combine(int* l , int* r , int* s)
+{
+	for (int i=0 ; i<ps ; i++) s[i] = max(l[i] , r[i]);
+}
+
+int calc(int* x)
+{
+	lli ans = 1;
+	for (int i=0 ; i<ps ; i++)
+	{
+		int y = pr[i];
+		int c = x[i];
+		ans = (ans * pz[y][c])%mod;
+	}
+	return (int)ans;
+}
+
+int n;
+int a[M + 5];
+int s[4*M+5][200];
+int pos[M + 5];
+struct SegmentTree
+{
+	SegmentTree()
+	{
+		init(1 , 1 , n);
+	}
+	
+	void init(int p , int i , int j)
+	{
+		if ( i==j ) { pos[i]=p; decompos(a[i] , s[p]); return; }
+		int m = (i+j)/2 , l = p*2 , r = l+1;
+		init(l , i , m);
+		init(r , m+1 , j);
+		combine(s[l] , s[r] , s[p]);
+	}
+	
+	void update(int i , int j)
+	{
+		int p = pos[i];
+		decompos(j , s[p]);
+		p/=2;
+		while (p!=0)
+		{
+			int l = p*2 , r = l+1;
+			combine(s[l] , s[r] , s[p]);
+			p/=2;
+		}
+	}
+	
+	int ans[205];
+	int get(int i , int j)
+	{
+		fill(ans , ans+200 , 0);
+		get( 1 , 1 , n , i , j);
+		return calc(ans);
+	}
+	
+	void get(int p , int i , int j , int L , int R)
+	{
+		if (j<L || i>R) return;
+		
+		if (i>=L && j<=R)
+		{
+			combine(s[p] , ans , ans);
+			return;
+		}
+		
+		int m = (i+j)/2 , l = p*2 , r = l+1;
+		get(l , i , m , L , R);
+		get(r , m+1 , j , L , R);
+	}
+};
+
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	
+	primes();
+	
+	cin>>n;
+	
+	for (int i=1 ; i<=n ; i++) cin>>a[i];
+	
+	SegmentTree st;
+	
+	/*for (int i=1 ; i<=7 ; i++)
+	{
+		cout<<i<<"\t:\t";
+		for (int j=0 ; j<5 ; j++)
+			cout<<s[i][j]<<"\t";
+		cout<<"\n";
+	}*/
+	
+	int q;
+	cin>>q;
+	while (q--)
+	{
+		int x,y,z;
+		cin>>z>>x>>y;
+		if (z==1) { st.update(x , y); }
+		else { cout<<st.get(x,y)<<"\n"; }
+	}
+	
+	return 0;
+}

@@ -1,0 +1,97 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+#include <map>
+#include <iostream>
+#include <string>
+#include <stack>
+#include <vector>
+#include <set>
+#include <queue>
+#include <cassert>
+#include <cmath>
+#include <bitset>
+#include <ctime>
+#include <queue>
+#include <fstream>
+using namespace std;
+ 
+#define pb push_back
+#define mp make_pair
+#define pii pair< int, int >
+#define GC getchar( )
+#define PC putchar
+#define x first
+#define y second
+ 
+typedef long long llint;
+ 
+FILE *fin = fopen( "input.txt", "r" );
+FILE *fout = fopen( "output.txt", "w" );
+
+const int N = 500005;
+const int INF = 2000000000;
+
+set< pair< int, pii > > S;
+int n;
+int P[ N ];
+int maks, mini;
+int off = 1;
+int lo, hi;
+pii T[ ( 1 << 21 ) + 10 ];
+llint sum[ N ];
+
+void load( ) {
+	scanf( "%d", &n );
+	off = 1;
+	while( off < n ) off <<= 1;
+	for( int i = 0; i < off * 2; i++ ) T[ i ].first = T[ i ].second = 0;
+	for( int i = 0; i < n; i++ ) {
+		scanf( "%d", &T[ i + off ].first );
+		T[ i + off ].second = i;
+		if( i == 0 ) sum[ i ] = T[ i + off ].first;
+		else sum[ i ] = sum[ i - 1 ] + T[ i + off ].first;
+	}
+}
+
+pii query( int a, int b, int node ) {
+	if( a > hi ) return mp( 0, -1 );
+	if( b < lo ) return mp( 0, -1 );
+	if( a >= lo && b <= hi ) return T[ node ];
+	return max( query( a, ( a + b ) / 2, node * 2 ), query( ( a + b ) / 2 + 1, b, node * 2 + 1 ) );
+}
+
+llint f( int x, int y ) {
+//	printf( "x, y == %d %d\n", x, y );
+	if( x >= y ) return 0;
+	lo = x;
+	hi = y;
+	pii ans = query( 0, off - 1, 1 );
+	int go = ans.second;
+//	printf( "go == %d\n", go );
+	llint sol = 0;
+	if( go == x ) sol = f( go + 1, y ) + ans.first;
+	else if( go == y ) sol = f( x, go - 1 ) + ans.first;
+	else sol = 2 * ans.first + f( x, go - 1 ) + f( go + 1, y );
+	return sol;
+		
+}
+
+void solve( ) {
+	for( int i = off - 1; i >= 1; i-- ) T[ i ] = max( T[ i * 2 ], T[ i * 2 + 1 ] );
+	cout << f( 0, n - 1 ) << endl;
+}
+
+		
+		
+
+int main( void ) {
+	int t;
+	scanf( "%d", &t );
+	while( t-- ) {
+		load( );
+		solve( );
+	}
+	return 0;
+}

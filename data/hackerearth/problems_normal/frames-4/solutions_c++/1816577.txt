@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+
+typedef unsigned long long ll;
+using namespace std;
+
+#define all(x) x.begin(), x.end()
+#define f(i,a,b) for(int i = (a); i <= (b); i++)
+#define fd(i,a,b) for(int i = (a); i >= (b); i--)
+#define mp make_pair
+#define faster_io() ios_base::sync_with_stdio(false)
+#define pb push_back
+#define pii pair<int,int>
+#define SZ(x) ((int)x.size())
+#define vii vector<pair<int,int>>
+
+const int INF = 16384;
+const ll INFLL = 100000000000000000ll;
+const ll MOD = 1000000007;
+
+// ----------------------------------------------------------------------------------------------------------
+
+int H, W, Up[2005][2005], Down[2005][2005], B[2005][2005], T[2005];
+vector<int> Del[2005];
+
+void update(int x, int v)
+{
+    while(x <= 2000)
+    {
+        T[x] += v;
+        x += x&-x;
+    }
+}
+
+int query(int x)
+{
+    int ret = 0;
+    while(x > 0)
+    {
+        ret += T[x];
+        x -= x&-x;
+    }
+    return ret;
+}
+
+int main()
+{
+    faster_io();
+    cin >> H >> W;
+    string s;
+
+    f(i,1,H)
+    {
+        cin >> s;
+        f(j,1,W) B[i][j] = s[j-1] - '0';
+    }
+
+    f(i,1,H)
+    {
+        int last = W+1;
+        fd(j,W,1)
+            if(B[i][j]) last = j;
+            else Down[i][j] = last-j-1;
+    }
+    f(j,1,W)
+    {
+        int last = H+1;
+        fd(i,H,1)
+            if(B[i][j]) last = i;
+            else
+                Down[i][j] = min(Down[i][j], last-i-1);
+    }
+
+    f(i,1,H)
+    {
+        int last = 0;
+        f(j,1,W)
+            if(B[i][j]) last = j;
+            else Up[i][j] = j-last-1;
+    }
+    f(j,1,W)
+    {
+        int last = 0;
+        f(i,1,H)
+            if(B[i][j]) last = i;
+            else Up[i][j] = min(Up[i][j], i-last-1);
+    }
+
+    ll ans = 0;
+
+    vii points;
+    f(r,1,H) points.pb({r,W});
+    f(c,1,W-1) points.pb({H,c});
+
+    for(pii point : points)
+    {
+        int i = point.first, j = point.second;
+
+        while(i > 0 && j > 0)
+        {
+            if(B[i][j])
+            {
+                for(int k : Del[i]) update(k,-1);
+                Del[i].clear();
+                i--, j--;
+                continue;
+            }
+
+            Del[i-Up[i][j]].pb(i);
+            update(i,1);
+            ans += query(i+Down[i][j]);
+            for(int k : Del[i]) update(k,-1);
+            Del[i].clear();
+            i--, j--;
+        }
+    }
+
+    cout << ans;
+}

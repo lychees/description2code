@@ -1,0 +1,101 @@
+
+//Author : Utkarsh $axena
+
+#include<bits/stdc++.h>
+#include<iostream>
+using namespace std;
+#define fre 	freopen("0.in","r",stdin),freopen("0.out","w",stdout)
+#define abs(x) ((x)>0?(x):-(x))
+#define M 1000000007
+#define lld signed long long int
+#define pp pop_back()
+#define ps(x) push_back(x)
+#define mpa make_pair
+#define pii pair<int,int>
+#define fi first
+#define se second
+#define scan(x) scanf("%d",&x)
+#define print(x) printf("%d\n",x)
+#define scanll(x) scanf("%lld",&x)
+#define printll(x) printf("%lld\n",x)
+#define boost ios_base::sync_with_stdio(0)
+//vector<int> g[2*100000+5];int visited[2*100000+5];
+int mxt[2*1000000*4+5],mnt[2*1000000*4+5];
+int a[200000+5],n;
+void update(int i,int si,int sj,int at,int val)
+{
+	if(si==sj)
+	{
+		mnt[i]=val;
+		mxt[i]=val;
+	}
+	else
+	{
+		int mid=(si+sj)/2;
+		if(at<=mid)update(2*i,si,mid,at,val);
+		else update(2*i+1,mid+1,sj,at,val);
+		mnt[i]=min(mnt[2*i],mnt[2*i+1]);
+		mxt[i]=max(mxt[2*i],mxt[2*i+1]);
+	}
+}
+pii query(int i,int si,int sj,int qi,int qj)
+{
+	if(si==qi and sj==qj)
+	{
+		return mpa(mxt[i],mnt[i]);
+	}
+	else
+	{
+		int mid=(si+sj)/2;
+		if(qj<=mid)return query(2*i,si,mid,qi,qj);
+		else if(mid+1<=qi)return query(2*i+1,mid+1,sj,qi,qj);
+		pii t1=query(2*i,si,mid,qi,mid);
+		pii t2=query(2*i+1,mid+1,sj,mid+1,qj);
+		pii t3;
+		t3.fi=max(t1.fi,t2.fi);
+		t3.se=min(t1.se,t2.se);
+		return t3;
+	}
+}
+int bin(int i,int j,int x,int c)
+{
+	//cout<<i<<' '<<j<<endl;
+	if(i==j)return i;
+	int mid=ceil((i+j)/2.0);
+	pii t=query(1,1,n,x,mid);
+	//cout<<x<<' '<<mid<<'\t'<<t.fi<<' '<<t.se<<'\t'<<a[x]+c<<endl;
+	if(a[x]-c<=t.se and t.fi<=a[x]+c)return bin(mid,j,x,c);
+	else return bin(i,mid-1,x,c);
+}
+int main()
+{
+	//fre;
+	int m,x,y;
+	char c;
+	cin>>n>>m;
+	for(int i=1;i<=n;++i)
+			scan(a[i]),update(1,1,n,i,a[i]);
+	while(m--)
+	{
+		scanf(" %c%d%d",&c,&x,&y);
+		//cout<<c<<' '<<x<<' '<<y<<endl;
+		if(c=='U')
+		{
+
+			update(1,1,n,x,y);
+			a[x]=y;
+		}
+		else
+		{
+			if(y<0){printf("%d %d\n",-1,-1);continue;}
+
+			int pl=bin(x,n,x,y);
+			pii t=query(1,1,n,x,pl);
+			int mx=t.fi;
+			int mn=t.se;
+			int z=max(a[x]-mn,mx-a[x]);
+			printf("%d %d\n",pl-x+1,z);
+
+		}
+	}
+}

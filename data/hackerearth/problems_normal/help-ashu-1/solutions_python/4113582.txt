@@ -1,0 +1,62 @@
+import math
+
+n = int(raw_input())
+arr = map(int,raw_input().split())
+q = int(raw_input())
+#tree stores count of odd number
+height = int(math.ceil(math.log(n,2)))
+tn = int(math.pow(2,height))
+tree = [0]*(2*tn)
+# print 2*tn
+
+def buildSegTree(node,l,r,arr):
+	if l==r:
+		tree[node] = arr[l]%2
+	else:
+		mid = (l+r)/2
+		buildSegTree(2*node,l,mid,arr)
+		buildSegTree(2*node+1,mid+1,r,arr)
+		tree[node] = tree[2*node]+tree[2*node+1]
+buildSegTree(1,0,n-1,arr)
+# print tree
+
+def countOdd(node,start,end,l,r):
+	if r<start or l>end:
+		return 0
+	if l<=start and r>=end:
+		return tree[node]
+	mid = (start+end)/2
+	return countOdd(2*node,start,mid,l,r)+ countOdd(2*node+1,mid+1,end,l,r)
+
+def countEven(l,r):
+	return r-l+1 - countOdd(1,0,n-1,l,r)
+
+def updateUtil(node,l,r,idx,val):
+	if l==r:
+		tree[node] = val%2 
+	else:
+		mid = (l+r)/2
+		if idx<=mid:
+			updateUtil(2*node,l,mid,idx,val)
+		else:
+			updateUtil(2*node+1,mid+1,r,idx,val)
+		tree[node] = tree[2*node+1]+tree[2*node]
+	
+
+def update(x,y):
+	# inc = y-arr[x]
+	# arr[x]=y
+	# print x,inc,arr
+	updateUtil(1,0,n-1,x,y)
+	
+# print countOdd(1,0,n-1,1,4)
+
+while q>0:
+	typ,x,y = map(int,raw_input().split())
+	if typ == 1:
+		print countEven(x-1,y-1)
+	if typ == 2:
+		print countOdd(1,0,n-1,x-1,y-1)
+	if typ == 0:
+		update(x-1,y)
+	q-=1

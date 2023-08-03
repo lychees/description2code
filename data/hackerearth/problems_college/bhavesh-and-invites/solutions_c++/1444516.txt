@@ -1,0 +1,64 @@
+#include<queue>
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<string>
+#include<cstring>
+using namespace std;
+
+typedef long long LL;
+typedef vector<int> VI;
+
+#define REP(i,n) for(int i=0, i##_len=(n); i<i##_len; ++i)
+#define EACH(i,c) for(__typeof((c).begin()) i=(c).begin(),i##_end=(c).end();i!=i##_end;++i)
+
+template<class T> inline void amin(T &a, T b) { if (a>b) a=b; }
+template<class T> inline void amax(T &a, T b) { if (a<b) a=b; }
+
+const int INF = 1<<29;
+typedef vector<VI> Adj;
+int N, M, S;
+Adj G;
+int main() {
+    scanf("%d%d", &N, &M);
+    G = Adj(N);
+    REP (i, M) {
+	int x, y;
+	scanf("%d%d", &x, &y);
+	x--; y--;
+	G[x].push_back(y);
+	G[y].push_back(x);
+    }
+    scanf("%d", &S); S--;
+
+    VI len(N, INF);
+    VI ord;
+    int ma = 0;
+    len[S] = 0;
+    queue<int> qu;
+    qu.push(S);
+    while (!qu.empty()) {
+	int v = qu.front(); qu.pop();
+	ord.push_back(v);
+	EACH (e, G[v]) {
+	    if (len[*e] == INF) {
+		len[*e] = len[v] + 1;
+		amax(ma, len[*e]);
+		qu.push(*e);
+	    }
+	}
+    }
+
+    vector<LL> I(N, 0);
+    REP (i, N) if (len[i] == ma) I[i]++;
+    reverse(ord.begin(), ord.end());
+    EACH (e, ord) {
+	EACH (f, G[*e]) {
+	    if (len[*e] < len[*f]) I[*e] += I[*f];
+	}
+    }
+
+    REP (i, N) printf("%lld%c", I[i], i+1 == N? '\n': ' ');
+    return 0;
+}

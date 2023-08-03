@@ -1,0 +1,204 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <limits.h>
+#include <vector>
+#include <stdlib.h>
+#include <algorithm>
+#include <memory.h>
+#include <string.h>
+#include <math.h>
+#include <string>
+#include <algorithm>
+#include <functional>
+#include <cassert>
+#include <map>
+#include <set>
+#include <list>
+
+using namespace std;
+typedef long long lli;
+typedef vector<int> vi;
+typedef vector<lli> vli;
+typedef pair<int, int> pii;
+typedef vector<pii> vpii;
+typedef long double ld;
+
+const int INF = 0x3f3f3f3f;
+const lli LINF = 0x3f3f3f3f3f3f3f3f;
+
+//#define _LOCAL_DEBUG_
+#ifdef _LOCAL_DEBUG_
+#define eprintf(...) fprintf(stderr,__VA_ARGS__)
+#else
+#define eprintf(...) 
+#endif
+
+struct Query {
+	int f, x, d;
+	Query() {}
+	Query(int _f, int _x, int _d) : f(_f), x(_x), d(_d) {}
+};
+
+const int MAGIC = 708;
+const int MAX = 5e5 + 100;
+int n, nb;
+vi g[MAX];
+int lvl[MAX] = { 0 };
+int tin[MAX] = { 0 }, tout[MAX] = { 0 };
+int parent[MAX] = { 0 };
+lli cTr[MAX] = { 0 };
+lli nTr[MAX] = { 0 }, nX[MAX] = { 0 };
+int nD[MAX] = { 0 };
+
+int b[MAX] = { 0 };
+bool usedB[MAX] = { 0 };
+lli tr[MAX] = { 0 };
+vi bv[MAX];
+
+int nq;
+Query queries[MAX];
+int res[MAX] = { 0 };
+
+void clear() {
+	//memset(usedB, 0, sizeof(usedB));
+	//for (int i = 0; i < MAX; i++) g[i].clear();
+	//memset(cTr, 0, sizeof(cTr));
+	//memset(nTr, 0, sizeof(nTr));
+	//memset(res, 0, sizeof(res));
+}
+
+bool isAncestor(int v, int p) {
+	return tin[p] <= tin[v] && tout[v] <= tout[p];
+}
+
+void calculateLvl(int v, int p, int &time) {
+	tin[v] = time++;
+	lvl[v] = p == -1 ? 0 : lvl[p] + 1;
+	for (auto to : g[v])
+		calculateLvl(to, v, time);
+	tout[v] = time++;
+}
+
+void calculateBulkTr(int v) {
+	nTr[b[v]] += nX[v];
+	for (int to : g[v]) {
+		nX[to] += nX[v] + nD[v];
+		nD[to] += nD[v];
+		calculateBulkTr(to);
+	}
+	nX[v] = nD[v] = 0;
+}
+
+bool sb[MAX];
+int sbv[MAX];
+int nsbv;
+
+void calculatePerQueryTr(int lq, int rq, vi bu) {
+	for (int iq = lq; iq <= rq; iq++) {
+		for (auto bi : bu) 
+			for (int iv = 0; iv < bv[bi].size(); iv++) {
+				int v = bv[bi][iv];
+				if (isAncestor(v, queries[iq].f))
+					cTr[bi] += queries[iq].x + 1ll * (lvl[v] - lvl[queries[iq].f]) * queries[iq].d;
+			}
+
+		for (auto bi : bu)
+			if (!res[bi] && cTr[bi] >= tr[bi])
+				res[bi] = iq + 1;
+	}
+}
+
+void bp(int lq, int rq, vi &bu) {
+	bool split = 1ll * (rq - lq + 1) * bu.size() > MAX;
+	int mq = split ? (rq + lq) / 2 : lq - 1;
+	for (int v = 0; v < n; v++) nD[v] = nX[v] = 0;
+	for (int bi = 0; bi < nb; bi++) nTr[bi] = 0;
+	for (int iq = 0; iq <= mq; iq++)
+		nX[queries[iq].f] += queries[iq].x, 
+		nD[queries[iq].f] += queries[iq].d;
+	for (int v = 0; v < n; v++) {
+		int p = parent[v];
+		nX[v] += nX[p] + nD[p];
+		nD[v] += nD[p];
+		nTr[b[v]] += nX[v];
+	}
+
+	if (!split) {
+		for (int bi = 0; bi < nb; bi++) cTr[bi] = nTr[bi];
+		calculatePerQueryTr(lq, rq, bu);
+		return;
+	}
+
+	vi lbu, rbu;
+	for (auto bi : bu)
+		if (tr[bi] <= nTr[bi]) lbu.push_back(bi);
+		else rbu.push_back(bi);
+
+	bp(lq, mq, lbu);
+	bp(mq + 1, rq, rbu);
+}
+
+void read() {
+	for (int i = 1; i < n; i++) {
+		int p;
+		scanf("%d", &p);
+		p--;
+		parent[i] = p;
+		g[p].push_back(i);
+	}
+	parent[0] = n;
+	int time = 0;
+	calculateLvl(0, -1, time);
+	for (int i = 0; i < n; i++) {
+		scanf("%d", &b[i]);
+		b[i]--;
+		bv[b[i]].push_back(i);
+	}
+	for (int i = 0; i < nb; i++) scanf("%lld", &tr[i]);
+	scanf("%d", &nq);
+	for (int i = 0; i < nq; i++) {
+		int f, x, d;
+		scanf("%d%d%d", &f, &x, &d);
+		f--;
+		queries[i] = Query(f, x, d);
+	}
+}
+
+void solve() {
+	vi bu(nb);
+	for (int bi = 0; bi < nb; bi++) bu[bi] = bi;
+	bp(0, nq - 1, bu);
+
+	for (int i = 0; i < nb; i++)
+		if (!res[i]) printf("rekt\n");
+		else printf("%d\n", res[i]);
+}
+
+
+int main() {
+	//freopen("out.txt", "w", stdout);
+	//int nv = 15000, nb = 15000;
+	//printf("%d %d\n", nv, nb);
+	//for (int i = 1; i < nv; i++) printf("%d ", rand() % i + 1);
+	//printf("\n");
+	//for (int i = 0; i < nv; i++) printf("%d ", rand() % nb + 1);
+	//printf("\n");
+	//for (int i = 0; i < nb; i++) printf("%d ", rand() % 10000);
+	//int nq = 15000;
+	//printf("%d\n", nq);
+	//for (int i = 0; i < nq; i++)
+	//	printf("%d %d %d\n", rand() % nv + 1, rand() % 100 , rand() % 100);
+#ifdef _LOCAL_VAN
+#endif
+	//freopen("in.txt", "r", stdin);
+
+	while (scanf("%d %d", &n, &nb) == 2) {
+		clear();
+		read();
+		solve();
+#ifndef _LOCAL_VAN
+		return 0;
+#endif
+	}
+	return 0;
+}

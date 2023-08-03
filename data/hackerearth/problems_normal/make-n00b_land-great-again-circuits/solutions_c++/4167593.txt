@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define DEBUG(x)	cerr << #x << " = " << x << endl;
+#define INPUT		freopen("Data.inp", "r", stdin);
+#define OUTPUT		freopen("Data.out", "w", stdout);
+
+typedef long long LL;
+typedef pair<int, int> II;
+struct Donation {
+	int u, x, y;
+};
+
+const int N = (int) 5e5 + 10;
+int n, m, k, x[N], y[N], h[N], timer;
+vector<int> adj[N], pos[N], V[N];
+Donation Q[N];
+
+LL p[N], ft[2][N];
+int l[N], r[N], f[N];
+
+void DFS(int u) {
+	x[u] = ++timer;
+	for (int i = 0; i < (int) adj[u].size(); ++i) {
+		int v = adj[u][i];
+		h[v] = h[u] + 1;
+		DFS(v);
+	}
+	y[u] = timer;
+}
+
+void Update(LL *ft, int i, int j, LL v) {
+	j++;
+	for (; i <= n; i += i & -i) ft[i] += v;
+	for (; j <= n; j += j & -j) ft[j] -= v;
+}
+
+LL Query(LL *ft, int i) {
+	LL ans = 0;
+	while (i) {
+		ans += ft[i];
+		i -= i & -i;
+	}
+	return ans;
+}
+
+LL Query(int u) {
+	LL a = Query(ft[0], x[u]);
+	LL b = Query(ft[1], x[u]);
+	return a + h[u] * b;
+}
+
+int main() {
+	scanf("%d%d", &n, &m);
+	for (int i = 2; i <= n; ++i) {
+		int x; scanf("%d", &x);
+		adj[x].push_back(i);
+	}
+	for (int i = 1; i <= n; ++i) {
+		int x; scanf("%d", &x);
+		pos[x].push_back(i);
+	}
+	for (int i = 1; i <= m; ++i) scanf("%lld", &p[i]);
+	scanf("%d", &k);
+	for (int i = 1; i <= k; ++i) scanf("%d%d%d", &Q[i].u, &Q[i].x, &Q[i].y);
+
+	DFS(1);
+	for (int i = 1; i <= m; ++i) l[i] = 1, r[i] = k, f[i] = -1;
+	for (int time = 1; time <= 20; ++time) {
+		for (int i = 1; i <= n; ++i) ft[0][i] = ft[1][i] = 0;
+		for (int i = 1; i <= k; ++i) V[i].clear();
+		for (int i = 1; i <= m; ++i) if (l[i] <= r[i]) {
+			int mid = (l[i] + r[i]) >> 1;
+			V[mid].push_back(i);
+		}
+		for (int i = 1; i <= k; ++i) {
+			Update(ft[0], x[Q[i].u], y[Q[i].u], Q[i].x - (LL) h[Q[i].u] * Q[i].y);
+			Update(ft[1], x[Q[i].u], y[Q[i].u], Q[i].y);
+			for (int t = 0; t < (int) V[i].size(); ++t) {
+				int u = V[i][t]; LL S = 0;
+				for (int z = 0; z < (int) pos[u].size(); ++z) S += Query(pos[u][z]);
+				int mid = (l[u] + r[u]) >> 1;
+				if (S >= p[u]) {
+					f[u] = mid;
+					r[u] = mid - 1;
+				}
+				else l[u] = mid + 1;
+			}
+		}
+	}
+
+	for (int i = 1; i <= m; ++i) {
+		if (f[i] == -1) puts("rekt");
+		else printf("%d\n", f[i]);
+	}
+	return 0;
+}

@@ -1,0 +1,116 @@
+///HEADERS
+
+#include <bits/stdc++.h>
+
+#define ALL(v) v.begin(), v.end()
+#define REP(i, a, b) for(int i = a; i < b; i++)
+#define REPD(i, a, b) for(int i = a; i > b; i--)
+#define REPLL(i, a, b) for(ll i = a; i < b; i++)
+#define FOR(i, a, b) for(int i = a; i <= b; i++)
+#define FORD(i, a, b) for(int i = a; i >= b; i--)
+#define FORLL(i, a, b) for(ll i = a; i <= b; i++)
+#define inf 1000000001
+
+using namespace std;
+
+typedef long long ll;
+typedef long double ld;
+
+typedef vector<int>::iterator vit;
+typedef set<int>::iterator sit;
+typedef vector<int> vi;
+typedef pair<int, int> pii;
+typedef vector<pii > vpii;
+typedef pair<ld, ld> pld;
+typedef pair<ll, ll> point;
+
+#define remax(a, b) a = max(a, b)
+#define remin(a, b) a = min(a, b)
+
+#define popcount __builtin_popcount
+#define pb push_back
+#define mp make_pair
+#define st first
+#define nd second
+
+#define x first
+#define y second
+
+#define eps 1e-9
+#define pi acos(-1.0)
+#define maxn 200007
+
+typedef pair<pii, pii> query;
+
+int z, n, q, cx, cy;
+int a1, b1;
+int a2, b2;
+int sqrtn;
+int t[maxn];
+
+int cntx[maxn];
+int cnty[maxn];
+long long cres;
+
+vector<query> qs;
+
+bool cmp(query a, query b) {
+    if(a.st.y/sqrtn != b.st.y/sqrtn) return a.st.y < b.st.y;
+    return a.st.x < b.st.x;
+}
+
+void moveone(int& cx, int dir, int cntx[maxn], int cnty[maxn]) {
+    if(dir < 0) {
+        int old = t[cx--];
+        cntx[old]--;
+        cres -= cnty[old];
+    }
+    else {
+        ++cx;
+        cntx[t[cx]]++;
+        cres += cnty[t[cx]];
+    }
+
+}
+
+void move(int nx, int ny) {
+    while(cx != nx) {
+        int dir = (cx < nx ? 1 : -1);
+        moveone(cx, dir, cntx, cnty);
+    }
+    while(cy != ny) {
+        int dir = (cy < ny ? 1 : -1);
+        moveone(cy, dir, cnty, cntx);
+    }
+}
+
+long long res[maxn];
+
+int main() {
+	scanf("%d", &n);
+	sqrtn = sqrt(n);
+
+	FOR(i, 1, n) scanf("%d", t+i);
+
+    cin >> q;
+    qs.reserve(q);
+    REP(i, 0, q) {
+        scanf("%d%d", &a1, &b1);
+        scanf("%d%d", &a2, &b2);
+        --a1; --a2;
+        qs.pb({{b1, b2}, {i, 1}});
+        qs.pb({{a1, a2}, {i, 1}});
+        qs.pb({{a1, b2}, {i, -1}});
+        qs.pb({{a2, b1}, {i, -1}});
+    }
+    sort(ALL(qs), cmp);
+
+    for(query& q : qs) {
+        int qid = q.nd.st;
+        int mul = q.nd.nd;
+        move(q.st.x, q.st.y);
+        res[qid] += mul * cres;
+    }
+
+    REP(i, 0, q) printf("%lld\n",res[i]);
+}

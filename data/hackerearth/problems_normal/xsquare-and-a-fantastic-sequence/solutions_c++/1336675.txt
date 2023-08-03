@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN = 100000 + 10;
+
+vector<int> G[MAXN];
+char A[MAXN], B[MAXN];
+int dsu[MAXN], N, M;
+
+int get(int x) {
+  if (x != dsu[x]) dsu[x] = get(dsu[x]);
+  return dsu[x];
+}
+
+int main() {
+  int T; scanf("%d", &T);
+  while (T --) {
+    scanf("%d%d", &N, &M);
+    scanf("%s%s", A, B);
+    for (int i = 0; i < N; ++ i) {
+      dsu[i] = i; G[i].clear();
+    }
+    while (M --) {
+      int l, r; scanf("%d%d", &l, &r);
+      l = get(l - 1), r = get(r - 1);
+      if (l != r) dsu[l] = r;
+    }
+    for (int i = 0; i < N; ++ i) {
+      G[get(i)].push_back(i);
+    }
+    int ret = 0;
+    for (int i = 0; i < N; ++ i) {
+      int ca[26], cb[26], cnt[26];
+      for (int j = 0; j < 26; ++ j) ca[j] = cb[j] = cnt[j] = 0;
+      for (auto &v : G[i]) ca[A[v] - 'a'] ++, cb[B[v] - 'a'] ++;
+      for (int j = 0; j < 26; ++ j) cnt[j] = min(ca[j], cb[j]);
+      for (int j = 0; j < 26; ++ j) ret += cnt[j];
+      for (auto &v : G[i]) {
+        for (int j = 0; j < 26; ++ j) {
+          int o = B[v] - 'a';
+          if (j == o) {
+            if (cnt[j]) {
+              A[v] = B[v];
+              cnt[j] --;
+              ca[j] --;
+              cb[j] --;
+              break;
+            }
+          }
+          else {
+            if (ca[j] > cnt[j] && cb[o] > cnt[o]) {
+              A[v] = j + 'a';
+              ca[j] --; cb[o] --; break;
+            }
+          }
+        }
+      }
+    }
+    printf("%d\n%s\n", ret, A);
+  }
+  return 0;
+}

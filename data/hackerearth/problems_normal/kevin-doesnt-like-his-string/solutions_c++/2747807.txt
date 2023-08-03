@@ -1,0 +1,193 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+using namespace std;
+#define MAX 100002
+class solver {
+public:
+	int n;
+	int k;
+	string s;
+	string ans;
+	string solve() {
+		ans = s;
+		for (int i = 0;i<(1 << n);i++) {
+			int cc = 0;
+			for (int j = 0;j<n;j++) {
+				if ((i >> j) & 1) {
+					cc++;
+				}
+			}
+			if (cc <= k) {
+				string tt = s;
+				vector<char> VV;
+				for (int j = 0;j<n;j++) {
+					if ((i >> j) & 1) {
+						VV.push_back(s[j]);
+					}
+				}
+				int ind = 0;
+				sort(VV.begin(), VV.end());
+				for (int j = 0;j<n;j++) {
+					if ((i >> j) & 1) {
+						tt[j] = VV[ind];
+						ind++;
+					}
+				}
+				ans = min(ans, tt);
+			}
+		}
+		return ans;
+	}
+};
+int n;
+int k;
+char s[MAX];
+
+int all_cnt[27];
+int rem_rank[MAX];
+
+vector<int> indexx[27];
+
+int contain_but_not_used[27];
+int must_contain_but_not_contain[27];
+
+vector<int> happy;
+
+bool can_change(int ind) {
+	if (rem_rank[ind] < must_contain_but_not_contain[s[ind] - 'a']) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+bool can_change2(char a) {
+	if (contain_but_not_used[a - 'a'] && k) {
+		return true;
+	}
+	if (all_cnt[a - 'a'] && k > 1) {
+		return true;
+	}
+	return false;
+}
+bool can_change3(char a) {
+	if (contain_but_not_used[a - 'a']) {
+		return true;
+	}
+	if (all_cnt[a - 'a'] &&k) {
+		return true;
+	}
+	return false;
+}
+void chang(int ind, char a) {
+	if (contain_but_not_used[a - 'a']) {
+		k--;
+		contain_but_not_used[a - 'a']--;
+	}
+	else {
+		all_cnt[a - 'a']--;
+		must_contain_but_not_contain[a - 'a']++;
+		k--;
+		k--;
+	}
+	all_cnt[s[ind] - 'a']--;
+	if (must_contain_but_not_contain[s[ind] - 'a']) {
+		must_contain_but_not_contain[s[ind] - 'a']--;
+		return;
+	}
+	contain_but_not_used[s[ind] - 'a']++;
+}
+void chang2(int ind, char a) {
+	if (contain_but_not_used[a - 'a']) {
+		contain_but_not_used[a - 'a']--;
+	}
+	else {
+		all_cnt[a - 'a']--;
+		must_contain_but_not_contain[a - 'a']++;
+		k--;
+	}
+}
+vector<char> V;
+string outt;
+
+solver sol;
+int main() {
+	cin >> n >> k;
+	int copy_k = k;
+	scanf("%s", s);
+	for (int i = 0;i < n;i++) {
+		all_cnt[s[i] - 'a']++;
+		indexx[s[i] - 'a'].push_back(i);
+	}
+	for (int i = 0;i < 27;i++) {
+		if (indexx[i].size() == 0) {
+			continue;
+		}
+		for (int j = indexx[i].size() - 1;j >= 0;j--) {
+			rem_rank[indexx[i][j]] = indexx[i].size() - j - 1;
+		}
+	}
+	for (int i = 0;i < n;i++) {
+		if (can_change(i)) {
+			bool cc = false;
+			for (char j = 'a';j < s[i];j++) {
+				if (can_change2(j)) {
+					chang(i, j);
+					cc = true;
+					happy.push_back(i);
+					break;
+				}
+			}
+			if (cc == false) {
+				all_cnt[s[i] - 'a']--;
+			}
+		}
+		else {
+			happy.push_back(i);
+			must_contain_but_not_contain[s[i] - 'a']--;
+			for (char j = 'a';;j++) {
+				if (can_change3(j)) {
+					chang2(i, j);
+					break;
+				}
+			}
+		}
+	}
+	sort(happy.begin(), happy.end());
+	happy.erase(unique(happy.begin(), happy.end()), happy.end());
+	for (int i = 0;i < happy.size();i++) {
+		V.push_back(s[happy[i]]);
+	}
+	sort(V.begin(), V.end());
+	for (int i = 0;i < happy.size();i++) {
+		s[happy[i]] = V[i];
+	}
+	outt = s;
+	printf("%s", outt.c_str());
+	puts("");
+	return 0;
+}
+//

@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int N = 212345;
+vector<int> Al[N];
+int vis[N], dist[N];
+vector<pair<int,int> > edges;
+map<pair<int,int> , int> Mp;
+
+int BFS(int n){
+    for (int i=1; i<=n; i++){
+        dist[i] = -1;
+    }
+    vis[1] = true;
+    queue<int> q;
+    q.push(1);
+    dist[1] = 0;
+
+    while (!q.empty()){
+        int s = q.front();
+        int cur = dist[s];
+        for (int i=0; i<Al[s].size(); i++){
+            int to = Al[s][i];
+
+            if (!vis[to]){
+                ///check if deleted
+                bool del = false;
+                if (Mp.count(make_pair(s,to))){
+                    int delat = Mp[make_pair(s,to)];
+                    if (delat<=cur){
+                        del = true;
+                    }
+                }
+                if (del){continue;}
+                dist[to] = cur+1;
+                q.push(to);
+                vis[to] = 1;
+            }
+        }
+        q.pop();
+    }
+    int ret = dist[n];
+    return ret;
+}
+
+int main(){
+    //freopen("in.txt","r",stdin);
+    int n,m,k;
+    cin>>n>>m>>k;
+    //cout<<n<<m<<k<<endl;
+    int s,t;
+    for (int i=0; i<m; i++){
+        cin>>s>>t;
+        Al[s].push_back(t);
+        Al[t].push_back(s);
+        edges.push_back(make_pair(s,t));
+    }
+
+    int id;
+    for (int i=0; i<k; i++){
+        cin>>t>>id;
+        id--;
+        pair<int,int> p = edges[id];
+        Mp[p] = t;
+        Mp[make_pair(p.second,p.first)] = t;
+    }
+    cout<<BFS(n)<<"\n";
+}

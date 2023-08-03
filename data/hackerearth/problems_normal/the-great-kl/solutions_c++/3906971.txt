@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("clash.inp","r",stdin)
+#define OUTPUT freopen("clash.out","w",stdout)
+#define FOR(i,l,r) for(auto i=(l);i<=(r);i++)
+#define REP(i,l,r) for(auto i=(l);i<(r);i++)
+#define FORD(i,l,r) for(auto i=(l);i>=(r);i--)
+#define REPD(i,l,r) for(auto i=(l);i>(r);i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+
+const int inf=1e9;
+const int MOD=1e9+7;
+const int N=1e5+10;
+
+int n,m,pa[N][20],lv[N],en[N],t[N],f[N];
+vector <int> v[N],gr[N];
+queue <int> q;
+void BFS(){
+    fill(en+1,en+n+1,1);
+    q.push(1);
+    while (!q.empty()){
+        int x=q.front();q.pop();
+        if (lv[x]>lv[en[t[x]]]) en[t[x]]=x;
+        for(auto y:v[x]) if (y!=pa[x][0]){
+            pa[y][0]=x;
+            lv[y]=lv[x]+1;
+            q.push(y);
+        }
+    }
+}
+int LCA(int x,int y){
+    if (lv[x]<lv[y]) swap(x,y);
+    for(int i=0,v=lv[x]-lv[y];v;i++,v>>=1) if (v&1)
+        x=pa[x][i];
+    if (x==y) return x;
+    FORD(i,int(log2(lv[x])),0) if (pa[x][i]!=pa[y][i])
+        x=pa[x][i],y=pa[y][i];
+    return pa[x][0];
+}
+void prepare(){
+    scanf("%d%d",&n,&m);
+    FOR(i,1,n) {
+        scanf("%d",t+i);
+        gr[t[i]].push_back(i);
+    }
+    REP(i,1,n){
+        int x,y;
+        scanf("%d%d",&x,&y);
+        v[x].push_back(y);
+        v[y].push_back(x);
+    }
+    BFS();
+    REP(lay,1,20)
+        FOR(i,1,n) pa[i][lay]=pa[pa[i][lay-1]][lay-1];
+}
+void solve(){
+    FOR(i,1,n){
+        int z=LCA(i,en[t[i]]);
+        f[t[i]]=max(f[t[i]],lv[i]+lv[en[t[i]]]-2*lv[z]);
+    }
+    FOR(i,1,m) cout<<f[i]<<" ";
+}
+int main(){
+//    freopen("input.inp","r",stdin);
+    prepare();
+    solve();
+}

@@ -1,0 +1,84 @@
+#include <iostream>
+#include <queue>
+#include <vector>
+#include <utility>
+using namespace std;
+
+int root(int Arr[], int i){
+	while(Arr[i] != i){
+		Arr[i] = Arr[Arr[i]];
+		i = Arr[i];
+	}
+	return i;
+}
+
+bool graph_union(int Arr[], int size[], int i, int j, int &max){
+	int root_i = root(Arr, i), root_j = root(Arr, j);
+	if(root_i == root_j) return false;
+	if(size[root_i] > size[root_j]){
+		size[root_i] += size[root_j];
+		Arr[root_j] = root_i;
+		if(max < size[root_i])
+			max = size[root_i];
+	}
+	else{
+		size[root_j] += size[root_i];
+		Arr[root_i] = root_j;
+		if(max < size[root_j])
+			max = size[root_j];
+	}
+	return true;
+}
+
+struct MyComparator{
+	bool operator() (pair<int , pair<int, int>> &x, pair<int , pair<int, int>> &y){
+		return x.first < y.first;
+	}
+};
+
+int main()
+{
+    int N, M, a, b, c, MArr[1001], Msize[1001], WArr[1001], Wsize[1001], count = 0, Mmax = 1, Wmax = 1, max;
+    bool addRoad;
+    pair<int , pair<int, int>> edge;
+    priority_queue<pair<int , pair<int, int>>, vector<pair<int , pair<int, int>>>, MyComparator> Q;
+    cin >> N >> M;
+    max = M;
+    for(int i = 1; i <= N; i++){
+    	MArr[i] = i;
+    	Msize[i] = 1;
+    	WArr[i] = i;
+    	Wsize[i] = 1;
+    }
+    while(M--){
+    	cin >> a >> b >> c;
+    	edge = make_pair(c, make_pair(a, b));
+    	Q.push(edge);
+    }
+    while(!Q.empty()){
+    	edge = Q.top();
+    	Q.pop();
+    		switch(edge.first){
+    			case 1: if(graph_union(MArr, Msize, edge.second.first, edge.second.second, Mmax))
+    						count++;
+    					break;
+    			case 2: if(graph_union(WArr, Wsize, edge.second.first, edge.second.second, Wmax))
+    						count++;
+    					break;
+    			case 3: addRoad = false;
+    					if(graph_union(WArr, Wsize, edge.second.first, edge.second.second, Wmax))
+    						addRoad = true;
+    					if(graph_union(MArr, Msize, edge.second.first, edge.second.second, Mmax))
+    						addRoad = true;
+    					if(addRoad) count++;
+    					break;
+    		}
+    }
+    if(Mmax == N && Wmax == N){
+    	cout << max - count << endl;
+    }
+    else{
+    	cout << -1 << endl;
+    }
+    return 0;
+}

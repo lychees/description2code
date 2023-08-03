@@ -1,0 +1,121 @@
+#include <iostream>
+#include <fstream>
+#include <set>
+#include <map>
+#include <string>
+#include <vector>
+#include <bitset>
+#include <algorithm>
+#include <cstring>
+#include <cstdlib>
+#include <cmath>
+#include <cassert>
+#include <queue>
+
+
+typedef long long ll;
+typedef long double ld;
+
+using namespace std;
+const int MAXN = 120000;
+const int LOG = 20;
+
+int n, q;
+vector<pair<int, int> > eds[MAXN];
+
+int was[MAXN];
+ll mx[LOG][MAXN];
+ll up[LOG][MAXN];
+ll dw[LOG][MAXN];
+ll sm[LOG][MAXN];
+int go[LOG][MAXN];
+int tin[MAXN];
+int tout[MAXN];
+int tm;
+
+void dfs(int v) {
+	tin[v] = tm++;
+	was[v] = 1;
+	for (pair<int, int> u: eds[v]) {
+		if (!was[u.first]) {
+			go[0][u.first] = v;
+			sm[0][u.first] = u.second;
+			mx[0][u.first] = max(u.second, 0);
+			dw[0][u.first] = mx[0][u.first];
+			up[0][u.first] = mx[0][u.first];
+			dfs(u.first);
+		}
+	}
+	tout[v] = tm++;
+}
+
+void init() {
+	dfs(0);
+	for (int i = 1; i < LOG; ++i) {
+		for (int j = 0; j < n; ++j) {
+			int k = go[i - 1][j];
+			go[i][j] = go[i - 1][k];
+			sm[i][j] = sm[i - 1][j] + sm[i - 1][k];
+			mx[i][j] = max(mx[i - 1][j], max(mx[i - 1][k], up[i - 1][j] + dw[i - 1][k]));
+			up[i][j] = max(up[i - 1][k], up[i - 1][j] + sm[i - 1][k]);
+			dw[i][j] = max(dw[i - 1][j], dw[i - 1][k] + sm[i - 1][j]);
+		}
+	}
+}
+
+int is_p(int a, int b) {
+	return tin[a] <= tin[b] && tout[b] <= tout[a];
+}
+
+pair<ll, ll> get(int x, int y) {
+	ll ans = 0;
+	ll now = 0;
+	for (int i = LOG - 1; i >= 0 && x != y; --i) {
+		if (!is_p(go[i][x], y) || go[i][x] == y) {
+			ans = max(ans, mx[i][x]);
+			ans = max(ans, now + dw[i][x]);
+			now = max(now + sm[i][x], up[i][x]);
+			x = go[i][x];
+		}
+	}
+	return make_pair(ans, now);
+}
+
+int lca(int a, int b) {
+	if (is_p(a, b))
+		return a;
+	for (int i = LOG - 1; i >= 0; --i) {
+		if (!is_p(go[i][a], b))
+			a = go[i][a];
+	}
+	return go[0][a];
+}
+
+
+int main() {
+	scanf("%d%d", &n, &q);
+	for (int i = 0; i < n - 1; ++i) {
+		int a, b, c;
+		scanf("%d%d%d", &a, &b, &c);
+		--a;
+		--b;
+		eds[a].push_back(make_pair(b, c));
+		eds[b].push_back(make_pair(a, c));
+	}
+	init();
+	for (int i = 0; i < q; ++i) {
+		int a, b;
+		scanf("%d%d", &a, &b);
+		--a;
+		--b;
+		int xx = lca(a, b);
+		pair<ll, ll> a2 = get(a, xx);
+		pair<ll, ll> b2 = get(b, xx);
+		ll ans = max(a2.first, max(b2.first, a2.second + b2.second));
+		ans = max(ans, 0ll);
+		printf("%lld\n", ans);
+	}
+	return 0;
+}
+
+

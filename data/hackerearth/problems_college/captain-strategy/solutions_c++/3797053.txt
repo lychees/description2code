@@ -1,0 +1,93 @@
+	#include <bits/stdc++.h>
+	using namespace std;
+	 
+	typedef long long ll;
+	typedef vector<int> vec;
+	typedef pair<int, int> pit;
+	const int MOD = 1000000007;	 
+	#define rt(i, a, b) for (int i = (a); i < (b); ++i)
+	#define fu(i, a, b) for (int i = (a); i <= (b); ++i)
+	#define sz(a) ((int) a.size())
+	#define pp(a) push_back(a)
+	#define mm(a) memset(a, 0, sizeof(a))
+	 
+	template<class T> inline T tmn(T a, T b) {return (a < b) ? a : b;}
+	template<class T> inline T tmx(T a, T b) {return (a > b) ? a : b;}
+	template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+	template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+	template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+	template<class T> T gcd(T a, T b) {if (b == 0) return a; return gcd(b, a % b);}
+	 
+	const int ma= 100005;
+	vector<int> G[ma];
+	int ord[ma], sub[ma], sky[ma];
+	int n, ptr;
+	 
+	template<class T> struct wick {
+	    vector<T> bit;
+	    int fsize;
+	    
+	    wick(int _n) {
+	        fsize = _n;
+	        bit.assign(_n + 1, 0);
+	    }
+	    
+	    void addOn(int ind, T val) {
+	        for (int i = ind; i <= fsize; i += i & -i) {
+	            bit[i] += val;
+	        }
+	    }
+	    
+	    T get(int ind) {
+	        T ans = 0;
+	        for (int i = ind; i > 0; i -= i & -i) {
+            ans += bit[i];
+	        }
+	        return ans;
+	    }
+	};
+	 
+	int dfs(int v, int pre) {
+	    sub[v] = 1;
+    ord[v] = ptr++;
+	    rt(i, 0, G[v].size()) {
+	        if (G[v][i] != pre) {
+	            sub[v] += dfs(G[v][i], v);
+	        }
+	    }
+	    return sub[v];
+	}
+	 
+	int main(int argc, char *argv[]) {
+	    ios_base::sync_with_stdio(false);
+	    int m, u, v, s, x;
+	    char op;
+	    cin >> n >> m;
+	    fu(i, 1, n) cin >> sky[i];
+	    rt(i, 1, n) {
+	        cin >> u >> v;
+	        G[v].pp(u);
+	        G[u].pp(v);
+	    }
+	    ptr = 1;
+	    mm(sub);
+	    dfs(1, 0);
+	    wick<int> fw = wick<int>(ptr);
+    fu(i, 1, n) {
+	        fw.addOn(ord[i], sky[i]);
+	    }
+    rt(i, 0, m) {
+	        cin >> op;
+	        if (op == 'Q') {
+	            cin >> s;
+	            printf("%d\n", fw.get(ord[s] + sub[s] - 1) - fw.get(ord[s] - 1));
+	        }
+	        else {
+	            cin >> s >> x;
+	            fw.addOn(ord[s], x - sky[s]);
+	            sky[s] = x;
+	        }
+	    }
+	    return 0;
+	}
+

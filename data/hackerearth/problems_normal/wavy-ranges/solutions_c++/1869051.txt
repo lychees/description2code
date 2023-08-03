@@ -1,0 +1,136 @@
+//#pragma comment(linker,"/STACK:100000000000,100000000000")
+
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <vector>
+#include <cmath>
+#include <map>
+#include <fstream>
+#include <stack>
+#include <set>
+#include <iomanip>
+#include <queue>
+#include <map>
+#include <functional>
+#include <list>
+#include <sstream>
+#include <ctime>
+#include <climits>
+#include <bitset>
+#include <list>
+#include <cassert>
+#include <complex>
+
+using namespace std;
+
+/* Constants begin */
+const long long inf = 2e18 + 7;
+const long long mod = 1e9 + 7;
+const double eps = 1e-12;
+const double PI = 2*acos(0.0);
+const double E = 2.71828;
+/* Constants end */
+
+/* Defines begin */
+#define pb push_back
+#define mp make_pair
+#define ll long long
+#define ull unsigned long long
+//#define double long double
+#define F first
+#define S second
+#define all(a) (a).begin(),(a).end()
+#define forn(i,n) for (int (i)=0; (i)<(n); ++(i))
+#define random (rand()<<16|rand())
+#define sqr(x) (x)*(x)
+#define base complex<double>
+#define sz(a) (int)(a).size()
+/* Defines end */
+
+ll n, k;
+ll f[25][10][2][2][2];
+ll a[25], sz;
+
+ll go(ll x) {
+    if (x < 10) return x;
+    sz = 0;
+    memset(f, 0, sizeof f);
+    while (x) {
+        a[sz++] = x % 10;
+        x /= 10;
+    }
+    reverse(a, a + sz);
+    f[0][0][0][1][1] = 1;
+    f[0][0][1][1][1] = 1;
+    for (int i = 0; i < sz; ++i) {
+        for (int j = 0; j <= 9; ++j) {
+            for (int x1 = 0; x1 <= 1; ++x1) {
+                for (int x2 = 0; x2 <= 1; ++x2) {
+                    for (int x3 = 0; x3 <= 1; ++x3) {
+                        if (!f[i][j][x1][x2][x3]) continue;
+                        for (int dig = 0; dig <= 9; ++dig) {
+                            if (dig > a[i] && x2) continue;
+                            if (x3 == 1) {
+                                f[i + 1][dig][x1][(dig==a[i])&x2][(dig==0)&x3] =
+                                f[i][j][x1][x2][x3];
+                            } else {
+                                if (x1 == 0 && dig >= j) {
+                                    continue;
+                                }
+                                if (x1 == 1 && dig <= j) {
+                                    continue;
+                                }
+                                f[i + 1][dig][x1^1][(dig==a[i])&x2][x3&(dig==0)] +=
+                                f[i][j][x1][x2][x3];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    ll res = 0;
+    for (int i = 0; i <= 9; ++i) {
+        res += f[sz][i][0][0][0];
+        res += f[sz][i][1][0][0];
+    }
+    res -= 8;
+    return res;
+}
+
+ll cnt(ll l, ll r) {
+    if (l > r) return 0;
+    return go(r + 1) - go(l);
+}
+
+void Solve() {
+    cin >> n >> k;
+    ll l = 0, r = n + 1;
+    while (r - l > 1) {
+        ll m = (l + r) / 2;
+        if (cnt(m, n) <= k) r = m; else l = m;
+    }
+    if (r <= 0 || cnt(r, n) != k) cout << -1 << " "; else cout << r << " ";
+    l = n - 1, r = inf;
+    while (r - l > 1) {
+        ll m = (l + r) / 2;
+        if (cnt(n, m) <= k) l = m; else r = m;
+    }
+    if (l > 1e18) cout << -1 << endl; else cout << l << endl;
+}
+
+int main(void) {
+    #ifdef nobik
+        freopen("input.txt", "rt", stdin);
+        freopen("output.txt", "wt", stdout);
+    #endif
+    int t; cin >> t;
+    for (int i = 1; i <= t; ++i) {
+        Solve();
+    }
+    return 0;
+}

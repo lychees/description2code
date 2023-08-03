@@ -1,0 +1,109 @@
+//g++ -std=c++11 ./SC.cpp -o ./p
+#include <bits/stdc++.h>
+using namespace std;
+
+#define pb push_back
+#define ff first
+#define ss second
+#define rz resize
+#define len length
+
+typedef long long ll;
+typedef pair<int,int> pii;
+
+vector<ll> A;
+
+struct nn{
+  int b,e,l,pr,sf;
+  void mg(nn&ln,nn&rn){
+    b = ln.b,e=rn.e;
+    l=max(ln.l,rn.l);
+    pr = ln.pr,sf = rn.sf;
+
+    bool join = (A[ln.e]<A[rn.b]);
+
+    if(join){
+      l = max(l,ln.sf+rn.pr);
+
+      if(pr == rn.b-ln.b)
+	pr += rn.pr;
+
+      if(sf == rn.e-ln.e)
+	sf += ln.sf;
+    }
+
+  }
+};
+
+vector<nn> st;
+
+void bld(int bb,int ee,int x=1){
+  if(bb==ee){
+    st[x].b=st[x].e=bb;
+    st[x].l=st[x].pr=st[x].sf=1;
+    return;
+  }
+  int m = (bb+ee)>>1,l = x<<1;
+
+  bld(bb,m,l),bld(m+1,ee,l+1);
+  st[x].mg(st[l],st[l+1]);
+}
+
+void upd(int &pos,int &val,int x=1){
+  if(st[x].b==st[x].e){
+    A[pos]+=val;
+    return;
+  }
+  int m = (st[x].b+st[x].e)>>1,l = x<<1;
+  if(pos>m)
+    upd(pos,val,l+1);
+  else
+    upd(pos,val,l);
+  st[x].mg(st[l],st[l+1]);
+}
+
+nn qry(int &u,int &v,int x=1){
+
+  if(u<=st[x].b and st[x].e<=v)
+    return st[x];
+
+  int m = (st[x].b+st[x].e)>>1,l = x<<1;
+  
+  if(u>m)
+    return qry(u,v,l+1);
+  if(v<=m)
+    return qry(u,v,l);
+
+  nn lq=qry(u,v,l),rq=qry(u,v,l+1);
+  nn ret;ret.mg(lq,rq);
+  return ret;
+};
+
+
+int main(){
+  ios::sync_with_stdio(0),cin.tie(0);
+
+  int T,N,Q,i,j;
+  char t;
+  cin>>T;
+  while(T--){
+    cin>>N>>Q;
+    A.clear(),A.rz(N+1);
+    for(i=1;i<=N;i++)
+      cin>>A[i];
+
+    st.clear(),st.rz(4*A.size());
+    bld(1,N);
+
+    while(Q--){
+      cin>>t>>i>>j;
+      if(t=='1')
+	upd(i,j);
+      else
+	cout<< qry(i,j).l << endl;
+
+    }
+
+  }
+  return 0;
+};

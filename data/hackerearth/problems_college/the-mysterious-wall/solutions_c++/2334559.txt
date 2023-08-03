@@ -1,0 +1,181 @@
+#include <bits/stdc++.h>
+
+#define LLI long long int
+#define LLU long long unsigned int
+#define LI  long int
+#define LU  long unsigned
+#define MAX(a,b) ((b)^(((a)^(b))&-((a)>(b))))
+#define MIN(a,b) ((b)^(((a)^(b))&-((a)<(b))))
+#define BUG printf("BUGGEeee");
+#define PRINT(n) printf("%d\n",n);
+#define MOD 1000000007
+#define POWER2(v) (v && !(v & (v - 1)))
+#define FOR(i,n) for(i=0;i<n;i++)
+#define PA pair<LLI,LLI>
+#define PB pair<PA,LLI>
+#define PUS(x) push_back(x)
+
+
+
+
+using namespace std;
+
+
+
+char str1[100005]="";
+char str2[100005]="";
+
+
+void computeLPSArray(char *pat, int M, int *lps);
+
+int KMPSearch(char *pat, char *txt)
+{
+    int M = strlen(pat);
+    int N = strlen(txt);
+
+    // create lps[] that will hold the longest prefix suffix values for pattern
+    int *lps = (int *)malloc(sizeof(int)*M);
+    int j  = 0;  // index for pat[]
+
+    // Preprocess the pattern (calculate lps[] array)
+    computeLPSArray(pat, M, lps);
+
+    int i = 0;  // index for txt[]
+    while (i < N)
+    {
+      if (pat[j] == txt[i])
+      {
+        j++;
+        i++;
+      }
+
+      if (j == M)
+      {
+        return 1;
+        j = lps[j-1];
+      }
+
+      // mismatch after j matches
+      else if (i < N && pat[j] != txt[i])
+      {
+        // Do not match lps[0..lps[j-1]] characters,
+        // they will match anyway
+        if (j != 0)
+         j = lps[j-1];
+        else
+         i = i+1;
+      }
+    }
+    free(lps); // to avoid memory leak
+    return 0;
+}
+
+void computeLPSArray(char *pat, int M, int *lps)
+{
+    int len = 0;  // lenght of the previous longest prefix suffix
+    int i;
+
+    lps[0] = 0; // lps[0] is always 0
+    i = 1;
+
+    // the loop calculates lps[i] for i = 1 to M-1
+    while (i < M)
+    {
+       if (pat[i] == pat[len])
+       {
+         len++;
+         lps[i] = len;
+         i++;
+       }
+       else // (pat[i] != pat[len])
+       {
+         if (len != 0)
+         {
+           // This is tricky. Consider the example AAACAAAA and i = 7.
+           len = lps[len-1];
+
+           // Also, note that we do not increment i here
+         }
+         else // if (len == 0)
+         {
+           lps[i] = 0;
+           i++;
+         }
+       }
+    }
+}
+
+int main(int argc,char* argv[])
+{
+	
+		int T;
+		scanf("%d\n",&T);
+		while(T--)
+		{
+			scanf("%s",str1);
+
+			scanf("%s",str2);
+			int abc[26]={0},abc2[26]={0};
+			for(int i=0;str2[i]!=0;i++)
+			{
+				abc2[str2[i]-'a']++;
+			}
+			int k;
+			for(int i=0;str2[i]!='\0' && str1[i]!='\0';i++)
+			{
+				abc[str1[i]-'a']++;
+				k=i;
+			}
+			int flag=0,fl=0;
+			for(int i=0;i<26;i++)
+			{
+				if(abc[i]==abc2[i])
+				{
+					flag++;
+				}
+				
+			}
+
+			if(flag==26)
+			{
+				fl=1;
+
+			}
+			flag=0;
+			int l1=strlen(str2);
+			for(int i=l1;str1[i]!='\0';i++)
+			{
+				abc[str1[i-l1]-'a']--;
+				abc[str1[i]-'a']++;
+				for(int i=0;i<26;i++)
+				{
+					if(abc[i]==abc2[i])
+					{
+						flag++;
+					}
+					
+				}
+				//cout<<flag<<endl;
+				if(flag==26)
+				{
+					fl=1;
+
+				}
+				flag=0;
+			}
+
+			if(fl)
+			{
+				cout<<"YES\n";
+			}
+			else
+			{
+				cout<<"NO\n";
+			}
+
+	
+		}
+		return 0;
+}
+
+

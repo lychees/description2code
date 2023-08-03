@@ -1,0 +1,117 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i, n) for(int i=0;i<n;i++)
+#define f first
+#define s second
+#define ll long long
+#define pi pair<ll,ll>
+#define pb push_back
+int sz[300011];
+ll val[300011];
+vector<int> g[300011];
+int nn;
+bool del[300011];
+
+void dfs1(int v,int p) {
+	nn++;
+	sz[v] = 1;
+	for (auto x:g[v]) {
+		if( x!=p  and !del[x]){
+			dfs1(x,v);
+			sz[v]+=sz[x];
+		}
+	}
+}
+
+int dfs2(int v,int p){
+	for( auto x:g[v] ){
+		if( x!=p and !del[x] ){
+			if( sz[x] > nn/2 ){
+				return dfs2(x,v);
+			}
+		}
+	}
+	return v;
+}
+map<ll, ll>F;
+ll ans[300011] = {0};
+int cur_cent;
+ll calc(int v, int p, ll path_sum,ll add) {
+	path_sum += val[v];
+	ll ret = F[-1-path_sum]+F[-2-path_sum];
+	ans[cur_cent] += ret*add;
+	for (auto x: g[v]) {
+		if (x != p and !del[x]) {
+			ret += calc(x, v, path_sum, add);
+		}
+	}
+	ans[v] += ret;
+	return ret;
+}
+void update(int v, int p, ll path_sum) {
+	path_sum += val[v];
+	F[path_sum]++;
+	for (auto x: g[v]) {
+		if (x != p and !del[x]) {
+			update(x,v,path_sum);
+		}
+	}
+}
+void decompose(int v) {
+	nn=0;
+	dfs1(v,v);
+	int r=dfs2(v,v);
+	del[r]=1;
+	cur_cent = r;
+	F.clear();
+	F[0]++;
+	for(auto x:g[r]) {
+		if(!del[x]) {
+			calc(x, x, val[r], 1);
+			update(x,x,0);
+		}
+	}
+	F.clear();
+	reverse(g[r].begin(),g[r].end());
+	for (auto x : g[r]) {
+		if (!del[x]) {
+			calc(x, x, 0, 0);
+			update(x, x, val[r]);
+		}
+	}
+	for (auto x:g[r]) {
+		if(!del[x]){
+			decompose(x);
+		}
+	}
+	
+}
+
+int main()
+{
+	ios_base :: sync_with_stdio(0);
+	cin.tie(0);
+    int n, x, u, v;
+    cin >> n >> x;
+    rep (i, n-1) {
+    	cin >> u >> v;
+    	u--;
+    	v--;
+    	g[u].pb(v);
+    	g[v].pb(u);
+    }
+    int b;
+    rep (i, n) {
+    	cin >> b;
+    	if (b >= x) val[i] = 1;
+    	else val[i] = -1;
+    }
+    decompose(0);
+    ll pt = 0;
+    rep (i, n) {
+    	if(val[i] == -1) {
+    		pt = max(pt, ans[i]);
+    	}
+    }
+    cout << pt;
+}

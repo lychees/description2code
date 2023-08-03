@@ -1,0 +1,211 @@
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <stack>
+#include <queue>
+#include <algorithm>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <memory.h>
+#include <ctime>
+#include <bitset>
+
+using namespace std;
+
+#define ABS(a) ((a>0)?a:-(a))
+#define MIN(a,b) ((a<b)?(a):(b))
+#define MAX(a,b) ((a<b)?(b):(a))
+#define FOR(i,a,n) for (int i=(a);i<(n);++i)
+#define MEMS(a,b) memset((a),(b),sizeof(a))
+#define FI(i,n) for (int i=0; i<(n); ++i)
+#define pnt pair <int, int>
+#define mp make_pair
+#define LL long long
+#define U unsigned
+
+int sz[300100];
+vector<vector<int> > g;
+int b[300100];
+LL ans[300100];
+map<int,int> mm;
+int forbid[300100];
+
+void dfs2(int v, int par) {
+	sz[v] = 1;
+	FOR(i,0,g[v].size()) {
+		int to = g[v][i];
+		if ((to == par) || (forbid[to]))
+			continue;
+		dfs2(to,v);
+		sz[v] += sz[to];
+	}
+}
+
+vector<int> temp;
+
+void dfs3(int v, int par, int sum) {
+	sum += b[v];
+	temp.push_back(sum);
+	FOR(i,0,g[v].size()) {
+		int to = g[v][i];
+		if ((to == par) || (forbid[to]))
+			continue;
+		dfs3(to,v,sum);
+	}
+}
+
+LL good[300100];
+vector<int> s;
+int par[300100];
+
+
+void dfs4(int v, int p, int sum) {
+	sum += b[v];
+	par[v] = p;
+	good[v] = 0;
+	if (mm.find(-1-sum)!=mm.end()) {
+		good[v] += mm[-1-sum];
+	}
+	if (mm.find(-2-sum)!=mm.end()) {
+		good[v] += mm[-2-sum];
+	}
+	FOR(i,0,g[v].size()) {
+		int to = g[v][i];
+		if ((to == p) || (forbid[to]))
+			continue;
+		dfs4(to,v,sum);
+	}
+	s.push_back(v);
+}
+
+
+void dfs1(int v) {
+	dfs2(v, -1);
+	int tot = sz[v];
+	int p = -1;
+	int center = v;
+	while (1) {
+		int max1 = -1;
+		int who = -1;
+		FOR(i,0,g[center].size()) {
+			int to = g[center][i];
+			if ((to == p) || (forbid[to]))
+				continue;
+			if (sz[to] > max1) {
+				max1 = sz[to];
+				who = to;
+			}
+		}
+		if (max1*2>tot) {
+			p = center;
+			center = who;
+		} else {
+			break;
+		}
+	}
+	forbid[center] = 1;
+	//cout<<center<<" ";
+	temp.clear();
+	mm.clear();
+	dfs3(center,-1,0);
+	FOR(i,0,temp.size())
+		mm[temp[i]]++;
+	s.clear();
+	good[center] = 0;
+	FOR(i,0,g[center].size()) {
+		int to = g[center][i];
+		if (forbid[to]) {
+			continue;
+		}
+		temp.clear();
+		dfs3(to,center,b[center]);
+		FOR(i,0,temp.size()) {
+			mm[temp[i]]--;
+		}
+		par[to] = center;
+		dfs4(to,center,0);
+		FOR(i,0,temp.size()) {
+			mm[temp[i]]++;
+		}
+	}
+	s.push_back(center);
+	par[center] = -1;
+	FOR(i,0,s.size()) {
+		int v = s[i];
+		if (b[v] == -1)
+		{
+			if (v!=center) {
+				ans[v] += good[v];
+			} else {
+				good[v] -= mm[-2];
+				good[v] -= (mm[-1]-1);
+				ans[v] += good[v]/2;
+				ans[v] += mm[-2];
+				ans[v] += (mm[-1]-1);
+			}
+		}
+		if (par[v] != -1)
+			good[par[v]] += good[v];
+	}
+	FOR(i,0,g[center].size()) {
+		int to = g[center][i];
+		if (forbid[to]) {
+			continue;
+		}
+		dfs1(to);
+	}
+}
+
+
+int main()
+{
+#ifdef Fcdkbear
+        freopen("in.txt", "r", stdin);
+        //freopen("out.txt", "w", stdout);
+        double beg = clock();
+#endif
+
+        //srand(time(NULL));
+        int n,x;
+        scanf("%d%d",&n,&x);
+        //n = 20;
+        //x = 1;
+        g.resize(n);
+        FOR(i,0,n-1) {
+        	int v1,v2;
+        	scanf("%d%d",&v1,&v2);
+        	/*v2 = i+2;
+        	v1 = rand()%(i+1);
+        	v1++;*/
+        	v1--;
+        	v2--;
+        	g[v1].push_back(v2);
+        	g[v2].push_back(v1);
+        }
+        FOR(i,0,n)
+        {
+        	scanf("%d",&b[i]);
+        	//b[i] = rand()&1;
+        	if (b[i]<x)
+        		b[i] = -1;
+        	else
+        		b[i] = 1;
+        }
+        dfs1(0);
+        LL res = 0;
+        FOR(i,0,n)
+        	res = max(res,ans[i]);
+        cout<<res<<endl;
+
+
+#ifdef Fcdkbear
+        double end = clock();
+        fprintf(stderr, "*** Total time = %.3lf ***\n", (end - beg) / CLOCKS_PER_SEC);
+#endif
+        return 0;
+}

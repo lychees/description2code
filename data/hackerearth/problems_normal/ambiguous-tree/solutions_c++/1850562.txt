@@ -1,0 +1,347 @@
+/*
+***************************************************************************************************************
+
+							Author : Yash Sadhwani
+
+						PATIENCE IS ABOVE PERFECTION !!!!
+
+**************************************************************************************************************
+*/
+#include<stdio.h>
+#include<iostream>
+#include<vector>
+#include<string.h>
+#include<algorithm>
+#include<deque>
+#include<map>
+#include<set>
+#include<stdlib.h>
+#include<math.h>
+#include<queue>
+#include<stack>
+#include<functional>
+using namespace std;
+#define ll long long
+#define si(x) scanf("%d",&x)
+#define sl(x) scanf("%lld",&x)
+#define sd(x) scanf("%lf",&x)
+#define sc(x) scanf("%c",&x)
+#define ss(x) scanf("%s",x)
+#define vl vector<ll>
+#define vi vector<int>
+#define vvl vector< vl >
+#define vvi vector< vi >
+#define pb push_back
+#define mod 1000000007
+#define mem(x,y) memset(x,y,sizeof(x))
+#define f(i,a,b) for(int i=(a);i<(b);i++)
+#define max_int_value 2147483647
+#define max_long_value 9223372036854775807
+#define ub(X,v) upper_bound(X.begin(),X.end(),v)
+#define lb(X,v) lower_bound(X.begin(),X.end(),v)
+
+
+
+//qsort(ww,cc,sizeof(tp),compare);
+/*int compare(const void *a,const void *b){
+	ll y=((((tp*)a)->w)-(((tp*)b)->w));
+	if(y>0)return 1;
+	else if(y==0)return 0;
+	else return -1;
+}
+
+//return true if in correct positions
+bool way(ii x,ii y){
+	return x.first<y.first or x.first==y.first and x.second<y.second;
+}
+
+//return false if in correct positions
+struct OrderBy
+{
+    bool operator() (ii a, ii b) { return a.S < b.S; }
+};
+priority_queue<ii, std::vector<ii >, OrderBy> Q;
+
+
+ll modpow(ll base, ll exponent,ll modulus){
+	if(base==0&&exponent==0)return 0;
+	ll result = 1;
+	while (exponent > 0){
+		if (exponent % 2 == 1)
+		    result = (result * base) % modulus;
+		exponent = exponent >> 1;
+		base = (base * base) % modulus;
+	}
+	return result;
+}
+
+#define getchar_unlocked getchar
+using namespace std;
+inline int scan(){
+    char c = getchar_unlocked();
+    int x = 0;
+    while(c<'0'||c>'9'){
+        c=getchar_unlocked();
+    }
+    while(c>='0'&&c<='9'){
+        x=(x<<1)+(x<<3)+c-'0';
+        c=getchar_unlocked();
+    }
+    return x;
+}
+
+*/
+
+
+#define MAXN 100010
+#define ii pair<int,int>
+#define F first
+#define S second
+
+
+
+int ancestor[20][MAXN];
+
+int child[20][MAXN];
+
+ll dp[20][MAXN];
+
+
+ll NC2(int x){
+	ll ret=x*1LL*(x-1);
+	ret/=2;
+	return ret;
+}
+
+int N;
+
+int parent[MAXN];
+
+int subtree[MAXN];
+
+int depth[MAXN];
+
+int pow2[30];
+
+inline void pre(void){
+	pow2[0]=1;
+	for(int i=1;i<=N;i++)ancestor[0][i]=parent[i],child[0][i]=i;
+	for(int x=1;x<20;x++){
+
+		pow2[x]=pow2[x-1]*2;
+		for(int i=1;i<=N;i++){
+			if(depth[i]<pow2[x])continue;
+			ancestor[x][i]=ancestor[x-1][ancestor[x-1][i]];
+			child[x][i]=child[x-1][ancestor[x-1][i]];
+			dp[x][i]=dp[x-1][i]+dp[x-1][ancestor[x-1][i]];
+			int boy=child[x-1][i],father=ancestor[x-1][i];
+			int _n=subtree[father]-subtree[boy];
+			dp[x][i]+=NC2(_n);
+		}
+	}
+	/*cout<<"\nANCESTOR\n";
+	for(int x=0;x<5;x++){
+        for(int i=1;i<=N;i++)cout<<ancestor[x][i]<<" ";
+        cout<<endl;
+	}
+	cout<<"\nCHILD\n";
+	for(int x=0;x<5;x++){
+        for(int i=1;i<=N;i++)cout<<child[x][i]<<" ";
+        cout<<endl;
+	}
+	cout<<"\nDP\n";
+	for(int x=0;x<5;x++){
+        for(int i=1;i<=N;i++)cout<<dp[x][i]<<" ";
+        cout<<endl;
+	}*/
+}
+
+
+vi AdjList[MAXN];
+
+bool visited[MAXN];
+
+void dfs(int node,int dad,int deep){
+	visited[node]=true;
+	depth[node]=deep;
+	parent[node]=dad;
+	for(int i=0;i<AdjList[node].size();i++){
+		if(!visited[AdjList[node][i]]){
+			dfs(AdjList[node][i],node,deep+1);
+			subtree[node]+=subtree[AdjList[node][i]];
+		}
+	}
+	subtree[node]++;
+}
+
+int inter;
+
+//make a higher than b
+ll query(int a,int b){
+	if(depth[a]>depth[b])swap(a,b);
+	int up=depth[b]-depth[a];
+	ll ret=NC2(subtree[b]);
+	inter=b;
+	for(int i=19;i>=0 and up;i--){
+		if(pow2[i]>up)continue;
+		if(pow2[i]==up){
+			ret+=dp[i][inter];
+			inter=child[i][inter];
+			up=0;
+		}else{
+			up-=pow2[i];
+			ret+=dp[i][inter];
+			int father=ancestor[i][inter],boy=child[i][inter];
+			int _n=subtree[father]-subtree[boy];
+			ret+=NC2(_n);
+			inter=father;
+		}
+	}
+	//cout<<ret<<" ";
+	//ret+=NC2(N-subtree[inter]);
+	//cout<<ret<<endl;
+	return ret;
+}
+
+//lca using rmq
+bool visited_rmq[MAXN];
+int position_rmq[MAXN];
+int start_position[MAXN];
+int arr_time[MAXN];
+vi arr_rmq;
+void flush_rmq(void){
+	for(int i=0;i<MAXN;i++)visited_rmq[i]=false;
+}
+int curr_time;
+void dfs_rmq(int x){
+	visited_rmq[x]=true;
+	arr_time[x]=curr_time++;
+	arr_rmq.pb(arr_time[x]);
+	start_position[x]=arr_rmq.size()-1;
+	int len=AdjList[x].size();
+	for(int i=0;i<len;i++){
+		if(!visited_rmq[AdjList[x][i]]){
+     		dfs_rmq(AdjList[x][i]);
+			arr_rmq.pb(arr_time[x]);
+		}
+	}
+    arr_rmq.pb(arr_time[x]);
+}
+#define ls (node<<1)
+#define rs ((node<<1)+1)
+int tree_rmq[1000010*4];
+void build_tree(int node,int start,int end){
+	if(start==end){
+		tree_rmq[node]=arr_rmq[start];
+        return;
+	}
+	int mid=(start+end)/2;
+	build_tree(ls,start,mid);
+	build_tree(rs,mid+1,end);
+	tree_rmq[node]=min(tree_rmq[ls],tree_rmq[rs]);
+}
+int query_rmq(int node,int start,int end,int left,int right){
+	if(start>end || left>end || right<start)return max_int_value;
+	if(start>=left && end<=right)return tree_rmq[node];
+	int mid=(start+end)/2;
+	int l_query=query_rmq(ls,start,mid,left,right);
+	int r_query=query_rmq(rs,mid+1,end,left,right);
+	return min(l_query,r_query);
+}
+int lca(int a,int b){
+	int l_left,r_right;
+	l_left=min(start_position[a],start_position[b]);
+	r_right=max(start_position[a],start_position[b]);
+	int ret=query_rmq(1,0,arr_rmq.size()-1,l_left,r_right);
+	return position_rmq[ret];
+}
+void construct_rmq_table(void){
+	curr_time=1;
+	flush_rmq();
+	dfs_rmq(1);
+    build_tree(1,0,arr_rmq.size()-1);
+	for(int i=1;i<=N;i++){
+		position_rmq[arr_time[i]]=i;
+	}
+}
+
+
+ll Fquery(int a,int b){
+	int LCA=lca(a,b);
+	//cout<<LCA<<endl;
+	int cnt=0;
+	ll A,B,RET;
+	if(depth[a]<depth[b])swap(a,b);
+	A=query(LCA,a);
+	cnt=subtree[inter];
+	//cout<<A<<" "<<cnt<<" "<<inter<<endl;
+	if(LCA!=a and LCA!=b){
+		B=query(LCA,b);
+		cnt+=subtree[inter];
+	}else{
+		B=0;
+	}
+	//cout<<B<<" "<<cnt<<" "<<inter<<endl;
+	RET=NC2(N-cnt)+A+B;
+	return RET;
+}
+
+int Q;
+
+void built_in_input(void){
+    N=10;
+    AdjList[1].pb(2); AdjList[2].pb(1);
+    AdjList[1].pb(3); AdjList[3].pb(1);
+    AdjList[2].pb(4); AdjList[4].pb(2);
+    AdjList[1].pb(5); AdjList[5].pb(1);
+    AdjList[3].pb(6); AdjList[6].pb(3);
+    AdjList[3].pb(7); AdjList[7].pb(3);
+    AdjList[6].pb(8); AdjList[8].pb(6);
+    AdjList[5].pb(9); AdjList[9].pb(5);
+    AdjList[5].pb(10); AdjList[10].pb(5);
+    Q=10;
+}
+
+inline void ReadInput(void){
+	si(N);
+	for(int i=1;i<N;i++){
+		int a,b;
+		si(a); si(b);
+		AdjList[a].pb(b);
+		AdjList[b].pb(a);
+	}
+	si(Q);
+}
+
+inline void solve(void){
+	dfs(1,0,0);
+	pre();
+	construct_rmq_table();
+	while(Q--){
+		int a,b;
+		si(a); si(b);
+		if(a==b or N==1){
+			printf("0\n");
+		}else{
+			ll ret=NC2(N);
+			ret-=Fquery(a,b);
+			printf("%lld\n",ret );
+		}
+	}
+}
+
+inline void Refresh(void){
+
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	ReadInput();
+	//built_in_input();
+	solve();
+    return 0;
+}
+
+
+//A man got to have a code

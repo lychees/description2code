@@ -1,0 +1,107 @@
+#include <iostream>
+#include <cstdio>
+#include <cctype>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
+#include <climits>
+#include <vector>
+#include <map>
+#include <list>
+#include <queue>
+#include <stack>
+#include <algorithm>
+#include <limits>
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int, int> ii;
+typedef vector<vi> vvi;
+typedef vector<ii> vii;
+typedef long long ll;
+typedef vector<ll> vll;
+#define pb push_back
+#define mp make_pair
+#define all(c) (c).begin(),(c).end()
+
+#define trace(x) cerr << #x << ": " << x << endl;
+#define trace2(x, y) cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z) cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define trace4(a, b, c, d) cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+#define track(a) cerr << #a << ": "; for (auto tmp: a) cerr << tmp << " "; cerr << endl;
+#define trackp(a) cerr << #a << ": "; for (auto tmp: a) cerr << "(" << tmp.first << ", " << tmp.second << "), "; cerr << endl;
+
+#define MAX 200050
+#define MOD 1000000007
+
+vector<bool> isprime;
+vector<int> primes;
+void sieve(int n)
+{
+	isprime.resize(n + 1);
+	for (int i = 0; i <= n; i++)
+		isprime[i] = 1;
+	isprime[1] = 0;
+	isprime[2] = 1;
+	for (int i = 2; i * i <= n; i++)
+		if (isprime[i])
+			for (int j = 2; i * j < n; j++)
+					isprime[i * j] = 0;
+	for (int i = 2; i < n; i++)
+		if (isprime[i])
+			primes.push_back(i);
+	return;
+}
+
+int bit[1000500];
+
+int query(int indx)
+{
+    int sum = 0;
+    while (indx) {
+        sum += bit[indx];
+        indx -= (indx & -indx);
+    }
+    return sum;
+}
+
+void update(int indx, int x)
+{
+    while (indx < MAX) {
+        bit[indx] += x;
+        indx += (indx & -indx);
+    }
+}
+
+int main()
+{
+    sieve(1000005);
+    int n;
+    scanf("%d", &n);
+    int a[MAX], b[MAX];
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &b[i]);
+        update(b[i], 1);
+    }
+    long long inversions = 0;
+    for (int i = 0; i < n; i++) {
+        update(b[i], -1);
+        inversions += query(a[i]-1);
+    }
+    bool flag = 1;
+    for (int i = 0; i < primes.size() && primes[i]*primes[i] <= inversions; i++) {
+        if (inversions % primes[i] == 0) {
+            flag = 0;
+            break;
+        }
+    }
+    if (flag) {
+        printf("MAGIC INVERSION\n");
+    } else {
+        printf("SIMPLE INVERSION\n");
+    }
+
+}

@@ -1,0 +1,96 @@
+#include<iostream>
+#define MOD 1000000007
+
+using namespace std;
+long long f[1000011];
+
+typedef long long l_long;
+
+void fact()
+{
+    int i = 1;
+    f[0] = 1;
+    while(i<1000011)
+    {
+        f[i] = f[i-1] * i;
+        f[i] = f[i] % MOD;
+        i++;
+    }
+}
+
+l_long fast_pow(l_long a,l_long n)
+{
+    l_long result = 1;
+    l_long power = n;
+    l_long value = a;
+    while(power>0)
+    {
+        if(power&1)
+        {
+            result = result*value;
+            result = result%MOD;
+        }
+        value = value*value;
+        value = value%MOD;
+        power /= 2;
+    }
+    return result;
+}
+l_long inv(l_long x)
+{
+    return fast_pow(x,MOD-2);
+}
+
+int main()
+{
+    int T;
+    cin>>T;
+    fact();
+    while(T--)
+    {
+        string input;
+        cin>>input;
+
+        l_long count[26] = {0};
+
+        l_long c_count = 0;
+        l_long v_count = 0;
+
+        for(int i=0; input[i]!='\0'; i++)
+        {
+            int k = input[i]-'a';
+            count[k]++;
+            if(input[i]=='a' || input[i]=='e' || input[i]=='i' || input[i]=='o' || input[i]=='u')
+                v_count++;
+            else
+                c_count++;
+        }
+
+        int possible = c_count + 1 - v_count;
+        if(possible < 0)
+        {
+            cout<<"-1"<<endl;
+            continue;
+        }
+
+        l_long c_fact = f[c_count];
+        l_long v_fact = f[c_count+1] * inv(f[possible]);
+        v_fact%=MOD;
+
+        for(int i=0; i<26; i++)
+        {
+            int tmp = i + 'a';
+            if(tmp=='a' || tmp=='e' || tmp=='i' || tmp=='o' || tmp=='u')
+            {
+                v_fact = v_fact*inv(f[count[i]]);
+                v_fact%=MOD;
+            }
+            else
+            {
+                c_fact = c_fact*inv(f[count[i]]);
+                c_fact%=MOD;
+            }
+        }
+        cout<<(c_fact*v_fact)%MOD<<endl;
+    }
+}

@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <string.h>
+
+#define NMAX 11111
+#define KMAX 11
+#define MOD 1000000007
+#define DEBUG 0
+
+char N[NMAX]; 
+int next[NMAX][KMAX + 1][KMAX + 1][2];
+int d, dfirst, K, D, kprefix, ki, kans, knext;
+
+int main() {
+//	freopen("x.txt", "r", stdin);
+	scanf("%d %s", &K, N + 1); K++;
+	D = strlen(N + 1);
+	for (d = 1; d <= D; d++) N[d] -= '0';
+	for (kprefix = 0; kprefix <= K; kprefix++) {
+		for (ki = 0; ki < K; ki++)
+			if (ki + kprefix < K) {
+				next[0][kprefix][ki][0] = 0;
+				next[0][kprefix][ki][1] = ki + kprefix;
+			} else {
+				next[0][kprefix][ki][0] = 1;
+				next[0][kprefix][ki][1] = 0;
+			}
+	}
+	for (d = 1; d < D; d++) {
+		for (kprefix = 0; kprefix <= K; kprefix++)
+			for (ki = 0; ki < K; ki++) {
+				kans = 0; knext = ki;
+				for (dfirst = 0; dfirst <= 9; dfirst++) {
+					if (dfirst == 4 || dfirst == 7) {
+						if (kprefix < K) {
+							kans += next[d - 1][kprefix + 1][knext][0];
+							if (kans >= MOD) kans -= MOD;
+							knext = next[d - 1][kprefix + 1][knext][1];
+						} else {
+							kans += next[d - 1][K][knext][0];
+							if (kans >= MOD) kans -= MOD;
+							knext = next[d - 1][K][knext][1];
+						}
+					} else {
+						kans += next[d - 1][kprefix][knext][0];
+						if (kans >= MOD) kans -= MOD;
+						knext = next[d - 1][kprefix][knext][1];
+					}
+					if (DEBUG) fprintf(stderr, "  d=%d kprefix=%d ki=%d df=%d => %d %d\n", d, kprefix, ki, dfirst, kans, knext);
+				}
+				next[d][kprefix][ki][0] = kans;
+				next[d][kprefix][ki][1] = knext;
+				if (DEBUG) fprintf(stderr, "d=%d kprefix=%d ki=%d => %d %d\n", d, kprefix, ki, next[d][kprefix][ki][0], next[d][kprefix][ki][1]);
+			}
+	}
+	for (kans = ki = kprefix = 0, d = 1; d <= D; d++) {
+		for (dfirst = 0; dfirst < N[d]; dfirst++) {
+			if (dfirst == 4 || dfirst == 7) {
+				if (kprefix < K) {
+					kans += next[D - d][kprefix + 1][ki][0];
+					if (kans >= MOD) kans -= MOD;
+					ki = next[D - d][kprefix + 1][ki][1];
+				} else {
+					kans += next[D - d][K][ki][0];
+					if (kans >= MOD) kans -= MOD;
+					ki = next[D - d][K][ki][1];
+				}
+			} else {
+				kans += next[D - d][kprefix][ki][0];
+				if (kans >= MOD) kans -= MOD;
+				ki = next[D - d][kprefix][ki][1];
+			}
+			if (DEBUG) fprintf(stderr, "d=%d/%d kprefix=%d df=%d: kans=%d ki=%d\n", d, D, kprefix, dfirst, kans, ki);
+		}
+		if ((N[d] == 4 || N[d] == 7) && kprefix < K) kprefix++;
+	}
+	if (ki + kprefix >= K) {
+		kans++;
+		if (kans >= MOD) kans -= MOD;
+		ki = 0;
+	}
+	if (DEBUG) fprintf(stderr, "kans=%d ki=%d\n", kans, ki);
+	printf("%d\n", kans);
+	return 0;
+}

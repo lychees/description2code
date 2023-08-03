@@ -1,0 +1,161 @@
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+#include <cctype>
+#include <utility>
+#include <queue>
+#include <cmath>
+#include <complex>
+using namespace std;
+
+typedef long long LL;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+typedef vector<PII> VPII;
+typedef pair<LL, LL> PLL;
+typedef pair<int, LL> PIL;
+typedef pair<LL, int> PLI;
+typedef double DB;
+
+#define pb push_back
+#define mset(a, b) memset(a, b, sizeof a)
+#define all(x) (x).begin(), (x).end()
+#define bit(x) (1 << (x))
+#define bitl(x) (1LL << (x))
+#define sqr(x) ((x) * (x))
+#define sz(x) ((int)(x.size()))
+#define cnti(x) (__builtin_popcount(x))
+#define cntl(x) (__builtin_popcountll(x))
+#define clzi(x) (__builtin_clz(x))
+#define clzl(x) (__builtin_clzll(x))
+#define ctzi(x) (__builtin_ctz(x))
+#define ctzl(x) (__builtin_ctzll(x))
+
+#define X first
+#define Y second
+
+#define Error(x) cout << #x << " = " << x << endl
+
+template <typename T, typename U> 
+inline void chkmax(T& x, U y) {
+	if (x < y) x = y;
+}
+
+template <typename T, typename U>
+inline void chkmin(T& x, U y) {
+	if (y < x) x = y;
+}
+
+const int MN = 100005;
+int n, m;
+int c[MN], sz[MN], ans[MN];
+int ma[MN][2];
+VI con[MN];
+
+void dfs(int u, int p) {
+	sz[u] = 1;
+	for (int i = 0; i < con[u].size(); i++) {
+		int v = con[u][i];
+		if (v == p) continue;
+		dfs(v, u);
+		sz[u] += sz[v];
+	}
+}
+
+int centroid(int u) {
+	int i, p(0), v, n, s(sz[u]);
+	while (1) {
+		n = 0;
+		for (int i = 0; i < con[u].size(); i++) {
+			v = con[u][i];
+			if (v != p && sz[v] * 2 >= s) {
+				n = v;
+				break;
+			}
+		}
+		if (n == 0) return u;
+		p = u, u = n;
+	}
+	return u;
+}
+
+VI col;
+map<int, int> VC[MN];
+
+void DFS(int u, int p, int x, int c, int cl) {
+	col.push_back(::c[u]);
+	ma[::c[u]][0] = ma[::c[u]][1] = -1;
+	for (int i = 0; i < con[u].size(); i++) {
+		int v = con[u][i];
+		if (v == p) continue;
+		int xx = x + 1;
+		int cc = c == 0 ? v : c;
+		if (::c[v] == cl) chkmax(ans[cl], xx);
+		VC[cc][::c[v]] = max(VC[cc][::c[v]], xx);
+		DFS(v, u, xx, cc, cl);
+	}
+}
+
+int val[MN];
+
+void calc(int u) {
+	col.clear();
+	for (int i = 0; i < con[u].size(); i++) VC[con[u][i]].clear();
+	DFS(u, 0, 0, 0, c[u]);
+	for (int i = 0; i < con[u].size(); i++) {
+		int v = con[u][i];
+		for (map<int, int>::iterator it = VC[v].begin(); it != VC[v].end(); it++) {
+			int cc = it->X;
+			int dd = it->Y;
+			if (dd > ma[cc][0]) {
+				ma[cc][1] = ma[cc][0];
+				ma[cc][0] = dd;
+			} else if (dd > ma[cc][1]) {
+				ma[cc][1] = dd;
+			}
+		}
+	}
+	for (int i = 0; i < col.size(); i++) {
+		int cc = col[i];
+		if (ma[cc][0] != -1 && ma[cc][1] != -1) 
+			chkmax(ans[cc], ma[cc][0] + ma[cc][1]);
+	}
+}
+
+void solve(int u) {
+	dfs(u, 0);
+	u = centroid(u);
+	calc(u);
+	for (int i = 0; i < con[u].size(); i++) {
+		int v = con[u][i];
+		con[v].erase(find(all(con[v]), u));
+		solve(v);
+	}
+	con[u].clear();
+}
+
+int main() {
+
+	scanf("%d%d", &n, &m);
+	for (int i = 1; i <= n; i++) scanf("%d", c + i);
+	for (int i = 1; i < n; i++) {
+		int u, v;
+		scanf("%d%d", &u, &v);
+		con[u].push_back(v);
+		con[v].push_back(u);
+	}
+	solve(1);
+	for (int i = 1; i <= m; i++) {
+		if (i != 1) putchar(' ');
+		printf("%d", ans[i]);
+	} puts("");
+		
+	return 0;
+}

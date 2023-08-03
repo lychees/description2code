@@ -1,0 +1,152 @@
+#include <iostream>
+#include <stdio.h>
+#include <math.h>
+using namespace std;
+
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX_VAL 9999999
+#define NULL_VAL 0 /*Change it zero for Sum tree*/ 
+/********************************
+ * 
+ *  Help Ashu - Segment Tree Unsolved
+ * 
+ * ****************************/
+
+
+void construct(int a[],int seg[],int low, int high,int pos){
+	
+/********* Time Complexity : O(N); ******/
+	
+		if(low==high){
+			seg[pos] = a[low];
+			return;
+			}
+		int mid = (high+low)/2;	
+	
+		/*Left SubTree*/
+		construct( a, seg, low, mid, 2*pos+1);
+		/*Right SubTree*/
+		construct( a, seg, mid+1, high, 2*pos+2);
+	
+		//seg[pos] = MIN(seg[2*pos+1],seg[2*pos+2]);
+		
+		/**To construct the Sum Tree*/
+		seg[pos] =  seg[2*pos+1]+seg[2*pos+2];
+	}
+
+/***********Update rouine*************************
+ *    idx => position to update
+ * 	  val => value to update
+*/
+
+void update(int a[],int seg[],int low, int high, int pos,int idx,int val){
+	
+	if(low == high){
+		
+		a[idx] = val;
+		seg[pos] = val;
+		return ;
+		}
+		
+	int mid = (low+high)/2;
+	if(low <= idx && idx <= mid )
+	     update( a, seg, low,  mid,  2*pos+1,  idx, val);
+	else
+		 update( a, seg, mid+1,high, 2*pos+2,  idx, val);
+	
+	//seg[pos] = MIN(seg[2*pos+1],seg[2*pos+2]);
+		
+		/**To construct the Sum Tree*/
+		seg[pos] =  seg[2*pos+1]+seg[2*pos+2];	 
+	
+	}
+
+int rangeQuery(int seg[],int low, int high, int pos,int qlow, int qhigh){
+	
+	/****Total Overlap*****/
+	if(qlow<= low && qhigh >= high){
+		return seg[pos];
+		}
+		
+		/****NO Overlap*****/
+	if(qlow > high || qhigh < low)
+	{	return 0; 
+		}
+		
+		/****Partial Overlap*****/
+		int mid = (low+high)/2;
+
+		return  rangeQuery(seg ,low, mid, 2*pos+1, qlow,qhigh)+
+		rangeQuery(seg , mid+1, high, 2*pos+2, qlow,qhigh);
+		      
+		
+	
+	}
+
+int main(){
+	
+	long int N;
+	cin>>N;
+
+	int a[N];
+	/*Maximum size of segment tree */
+	int x = (int)(ceil(log2(N))); 
+	int max_size = 2*(int)pow(2, x) - 1;
+	int seg[max_size];
+	
+	int key;
+	for(long int i=0;i<N;i++){
+		cin>>key;
+		if(key%2==0)
+			a[i]=0;
+		else
+			a[i]=1;	
+	}
+	 for(int i=0;i<max_size;i++)
+				seg[i] =NULL_VAL;
+				
+	/*Building a tree */		
+		construct(a,seg,0,N-1,0);
+		
+		
+	//	cout<<"\n"<<seg[0]<<" \n"<<rangeQuery( seg, 0, N-1, 0,1,4);
+		
+		long int Q;
+		cin>>Q;
+		for(int i=0;i<Q;i++){
+			int ch;
+			cin>>ch;
+			
+							switch(ch){
+								case 0:
+										int idx,val;
+										cin>>idx>>val;
+										if(val%2==0)
+											val=0;
+										else
+											val=1;
+										update( a, seg, 0,N-1, 0,idx-1,val); /*Idx because problem has 1-index*/
+										
+										break;
+								
+								case 1:  /*Even Query*/
+										int qlow,qhigh;
+										cin>>qlow>>qhigh;
+										cout<< (qhigh-qlow+1)-rangeQuery( seg, 0, N-1, 0,qlow-1,qhigh-1)<<"\n";
+										break;
+								case 2:
+										/*Odd Query*/
+										cin>>qlow>>qhigh;
+										cout<< rangeQuery( seg, 0, N-1, 0,qlow-1,qhigh-1)<<"\n";
+										break;		
+								
+								}
+	 }
+	
+	
+   
+	//for(int i=0;i<max_size;i++)
+		//		cout<<" "<<seg[i];
+	
+	return 0;
+	}

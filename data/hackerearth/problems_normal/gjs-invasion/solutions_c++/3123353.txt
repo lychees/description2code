@@ -1,0 +1,86 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define Int long long
+Int dp[66000];
+Int dp2[66000];
+Int dp3[66000];
+int main()
+{
+    Int T;
+    cin>>T;
+    while (T--)
+    {
+        Int N,mask,i,j;
+        cin>>N;
+        if (N==1)
+        {
+            cout<<"0\n";
+            continue;
+        }
+        for (mask=2;mask<(1<<N);++mask)
+        {
+            i=__builtin_popcountll(mask)-1;
+            if (i==0)
+            {
+                dp3[mask]=1;
+                continue;
+            }
+            for (j=0;j<N;++j)
+            {
+                if (j==i)
+                    continue;
+                if (mask&(1<<j))
+                    dp3[mask]+=dp3[mask^(1<<j)];
+            }
+        }
+        for (mask=2;mask<(1<<N);++mask)
+        {
+            i=__builtin_popcount(mask)-1;
+            if (i==0)
+            {
+                dp2[mask]=1;
+                continue;
+            }
+            for (j=0;j<N;++j)
+            {
+                if (j==i)
+                    continue;
+                if (mask&(1<<j))
+                {
+                    dp2[mask]+=dp2[mask^(1<<j)];
+                    if (j>i)
+                    dp2[mask]+=dp3[mask^(1<<j)];
+                }
+            }
+        }
+        for (mask=2;mask<(1<<N);++mask)
+        {
+            i=__builtin_popcount(mask)-1;
+            if (i==0)
+            {
+                dp[mask]=0;
+                continue;
+            }
+            for (j=0;j<N;++j)
+            {
+                if (j==i)
+                    continue;
+                if (mask&(1<<j))
+                {
+                    dp[mask]+=dp[mask^(1<<j)];
+                    if (j>i)
+                    dp[mask]+=(dp3[mask^(1<<j)]*i-dp2[mask^(1<<j)]);
+                    else
+                    dp[mask]+=dp2[mask^(1<<j)];
+                }
+            }
+        }
+        cout<<dp[(1<<N)-1]<<"\n";
+        for (mask=2;mask<(1<<N);++mask)
+        {
+            i=__builtin_popcount(mask)-1;
+            dp[mask]=dp2[mask]=dp3[mask]=0;
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,140 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define assn(n,a,b) assert(n<=b and n>=a)
+#define pb push_back
+#define mp make_pair
+#define F first
+#define S second
+#define sd(n) scanf("%d",&n)
+typedef pair<int,int> PII;
+typedef vector<PII> VPII;
+typedef vector<int> VI;
+typedef vector<VI> VVI;
+typedef long long LL;
+#define MAXN 100000
+#define MAXM 100000
+#define MOD 1000000007
+LL mpow(LL a, LL n) 
+{LL ret=1;LL b=a;while(n) {if(n&1) 
+    ret=(ret*b)%MOD;b=(b*b)%MOD;n>>=1;}
+return (LL)ret;}
+VI tree[6*MAXN];
+int arr[MAXN+10];
+int mmap[1009],revmap[1009],cnt=0;
+void pre(){
+    for(int i=2; i<=1000; i++){
+        int fl=0;
+        for(int j=2; j*j<=i; j++)
+            if(i%j==0)fl=1;
+        if(not fl)
+            mmap[i]=cnt,revmap[cnt]=i,cnt++;
+    }
+    /*
+    for(int i=0; i<10; i++)
+        cout << revmap[i] << " ";
+    cout << endl;
+    for(int i=0; i<20; i++)
+        cout << i << "->" << mmap[i] << " ";
+    cout << endl;*/
+}
+VI merge(VI a, VI b){
+    VI ret;
+    ret=b;
+    /*
+    cout << "a ;" ;
+    for(int i=0; i<cnt; i++)
+        cout << a[i] << " ";
+    cout << endl;
+    cout << "b ;" ;
+    for(int i=0; i<cnt; i++)
+        cout << b[i] << " ";
+    cout << endl;
+    */
+    int n=a.size();
+    assert(n==cnt);
+    for(int i=0; i<n; i++)
+        ret[i]=max(ret[i],a[i]);
+    /*
+    cout << "ret ;" ;
+    for(int i=0; i<cnt; i++)
+        cout << ret[i] << " ";
+    cout << endl;*/
+    return ret;
+}
+void assign(int node, int p){
+//    cout << node << " " << p << endl;
+    tree[node].clear();
+    tree[node].resize(cnt);
+    int temp=p;
+    for(int j=2; j*j<=temp; j++)
+        if(temp%j==0){
+            int cntt=0;
+            while(temp%j==0)cntt++,temp/=j;
+            //cout << j << " " << mmap[j]  << " " << cntt << endl; 
+            tree[node][mmap[j]]=max(tree[node][mmap[j]],cntt);
+        }
+    if(temp>1){
+        tree[node][mmap[temp]]=max(tree[node][mmap[temp]],1);
+//        cout << temp << " " << mmap[temp]  << " " << 1 << endl; 
+    }
+}
+void build_tree(int node, int a, int b)
+{
+    if(a > b) return;
+    if(a == b){
+        assign(node,arr[a]);
+        return;
+    }
+    build_tree(node*2, a, (a+b)/2);
+    build_tree(node*2+1, 1+(a+b)/2, b);
+    tree[node] = merge(tree[node*2],tree[node*2+1]);
+}
+VI query_tree(int node, int a, int b, int i, int j){
+    if(a > b || a > j || b < i){
+        VI ret;
+        ret.resize(cnt);
+        return ret;
+    }
+    if(a >= i && b <= j)return tree[node];
+    VI q1 = query_tree(node*2, a, (a+b)/2, i, j);
+    VI q2 = query_tree(1+node*2, 1+(a+b)/2, b, i, j);
+    return merge(q1,q2);
+}
+void update_tree(int node, int a, int b, int i, int value){
+    if(a > b || a > i || b < i)
+        return;
+    if(a == b){
+        assign(node,value);
+        return;
+    }
+    update_tree(node*2, a, (a+b)/2, i,  value);
+    update_tree(1+node*2, 1+(a+b)/2, b, i, value);
+    tree[node] = merge(tree[node*2], tree[node*2+1]);
+}
+int main()
+{
+    pre();
+    int m,n;
+    sd(n);
+    for(int i=0; i<n; i++){
+        sd(arr[i]);
+        assn(arr[i],1,1000000000);
+    }
+    build_tree(1,0,n-1);
+    sd(m);
+    assn(n,1,MAXN);
+    assn(m,1,MAXM);
+    while(m--){
+        int fl,l,r;
+        sd(fl),sd(l),sd(r);
+        if(fl==2){
+            VI ret=query_tree(1,0,n-1,l-1,r-1);
+            LL rett=1;
+            for(int i=0; i<ret.size(); i++)
+                rett=(rett*mpow(revmap[i],ret[i]))%MOD;
+            printf("%lld\n",rett);
+        }
+        else update_tree(1,0,n-1,l-1,r);
+    }
+    return 0;
+}

@@ -1,0 +1,167 @@
+//Created By Mayur Agarwal :)
+
+
+#include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <set>
+#include <algorithm>
+#include <map>
+#include <iterator>
+#include <functional>
+#include <queue>
+
+#define ll long long
+#define rep(i, c) for(auto &(i) : (c))
+#define ind(a) scanf("%d",&a)
+#define in(a) scanf("%lld",&a)
+#define inc(a) scanf("%c",&a)
+#define ins(a) scanf("%s",a)
+#define pr(a) printf("%lld\n",a)
+#define debug(x) cout << #x << " = " << x << endl
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define pb push_back
+#define ff first
+#define ss second
+#define SIZE 200010
+const ll mod = 1000000007L;
+
+using namespace std;
+typedef pair<int, int>pll;
+int n, q;
+std::vector<pll>vec[SIZE];
+int par[SIZE][20];
+int h[SIZE];
+struct node
+{
+	ll best = 0, pre = 0, suf = 0, sum = 0;
+	node() {}
+	node(ll w)
+	{
+		best = pre = suf = max(0ll, w);
+		sum = w;
+	}
+	inline void reverse()
+	{
+		swap(pre, suf);
+	}
+} poo[SIZE][20];
+
+inline node merge(const node &a, const node &b)
+{
+	node res;
+	res.sum = a.sum + b.sum;
+	res.pre = max(a.pre, a.sum + b.pre);
+	res.suf = max(b.suf, b.sum + a.suf);
+	res.best = max(max(a.best, b.best), a.suf + b.pre);
+	res.best = max(res.best, max(res.pre, res.suf));
+	return res;
+}
+
+inline void dfs(int v = 0, int p = -1)
+{
+	if (~p)
+		h[v] = 1 + h[p];
+
+	par[v][0] = p;
+	for (int i = 1; i < 19; ++i)
+	{
+		if (~par[v][i - 1])
+		{
+			par[v][i] = par[par[v][i - 1]][i - 1];
+			poo[v][i] = merge(poo[par[v][i - 1]][i - 1], poo[v][i - 1]);
+		}
+	}
+	rep(i, vec[v])
+	{
+		if (i.ff - 	p)
+		{
+			poo[i.ff][0] = node(i.ss);
+			dfs(i.ff, v);
+		}
+	}
+}
+inline int lca(int v, int u)
+{
+	if (h[v] < h[u])
+	{
+		swap(v, u);
+	}
+	for (int i = 18; i >= 0; --i)
+	{
+		if (~par[v][i] && h[par[v][i]] >= h[u])
+			v = par[v][i];
+	}
+	if (v == u)
+		return v;
+	for (int i = 18; i >= 0; --i)
+	{
+		if (par[v][i] - par[u][i])
+		{
+			v = par[v][i];
+			u = par[u][i];
+		}
+	}
+	return par[v][0];
+}
+inline node solve(int v, int p)
+{
+	node ans;
+	for (int i = 18; i >= 0; --i)
+	{
+		if (~par[v][i] && h[par[v][i]] >= h[p])
+		{
+			ans = merge(poo[v][i], ans);
+			v = par[v][i];
+		}
+	}
+	return ans;
+}
+inline ll query(int v, int u)
+{
+	int x = lca(v, u);
+	node A = solve(v, x);
+	node B = solve(u, x);
+	// cout << A.best << " " << B.best << endl;
+	// cout << A.pre << " " << A.suf << " " << A.sum << endl;
+	// cout << B.pre << " " << B.suf << " " << B.sum << endl;
+	A.reverse();
+	node ans = merge(A, B);
+	return ans.best;
+}
+int main()
+{
+#ifndef ONLINE_JUDGE
+	freopen("input.txt", "r", stdin);
+#endif
+	MS1(par);
+	ind(n);
+	ind(q);
+	int u, v;
+	int w;
+	for (int i = 1; i < n; ++i)
+	{
+		ind(v);
+		ind(u);
+		ind(w);
+		u--;
+		v--;
+		vec[u].pb(pll(v, w));
+		vec[v].pb(pll(u, w));
+	}
+	dfs();
+	while (q--)
+	{
+		int u, v;
+		ind(v);
+		ind(u);
+		v--;
+		u--;
+		pr(query(v, u));
+	}
+	return 0;
+}

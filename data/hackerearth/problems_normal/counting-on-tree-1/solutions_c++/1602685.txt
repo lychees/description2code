@@ -1,0 +1,71 @@
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <set>
+#include <list>
+#include <queue>
+#include <stack>
+#include <vector>
+#include <cassert>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+#define foreach(e, x) for (__typeof(x.begin()) e = x.begin(); e != x.end(); ++e)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int n, k, tt;
+vector<int> g[50000];
+int a[50000];
+int d[50000][101], f[101], mx[50000];
+const int MOD = 1e9 + 7;
+int ans;
+
+void dfs(int v, int par = -1) {
+    REP(i, k + 1) d[v][i] = 0;
+    d[v][a[v]] = 1;
+    mx[v] = a[v];
+    for (int to : g[v]) if (to != par) {
+        dfs(to, v);
+        REP(i, k + 1) {
+            int upTo = min(i, mx[v]);
+            int from = max(0, i - mx[to]);
+            f[i] = 0;
+            for (int j = from; j <= upTo; ++j) {
+                f[i] = (f[i] + (LL)d[v][j] * d[to][i - j]) % MOD;
+            }
+        }
+        mx[v] = min(mx[v] + mx[to], k);
+        REP(i, mx[v] + 1) d[v][i] = f[i];
+    }
+    ans = (ans + d[v][k]) % MOD;
+    d[v][0] = (d[v][0] + 1) % MOD;
+}
+
+int main() {
+    scanf("%d", &tt);
+    REP(test, tt) {
+        scanf("%d%d", &n, &k);
+        REP(i, n) scanf("%d", a + i);
+        REP(i, n - 1) {
+            int from, to;
+            scanf("%d%d", &from, &to), --from, --to;
+            g[from].pb(to);
+            g[to].pb(from);
+        }
+        ans = 0;
+        dfs(0);
+        printf("%d\n", ans);
+        REP(i, n) g[i].clear();
+    }
+	return 0;
+}

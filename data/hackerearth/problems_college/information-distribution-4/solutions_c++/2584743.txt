@@ -1,0 +1,120 @@
+#include<iostream>
+#include<cstdio>
+#include<stdlib.h>
+#include<iomanip>
+#include<math.h>
+#include<limits.h>
+#include<string.h>
+#include <ctime>
+#include <deque>
+#include<algorithm>
+#include<vector>
+#include<stack>
+#include<queue>
+#include<map>
+#include<bitset>
+#include<set>
+#include <sstream>
+#include <list>
+#define mod 1000000007
+#define MAX 100000000
+using namespace std;
+#define scan(a) scanf("%d",&a);
+#define print(a) printf("%d\n",a);
+#define mem(a,v) memset(a,v,sizeof(a))
+#define clr(a) memset(a,0,sizeof(a))
+#define pb(x) push_back(x)
+#define sort(a) sort(a.begin(),a.end())
+#define inf 1e9
+#define mp(a,b) make_pair(a,b)
+#define V vector
+#define S string
+#define Gu getchar_unlocked
+#define Pu putchar_unlocked
+#define Read(n) ch=Gu(); while (ch<'0') ch=Gu(); n=ch-'0'; ch=Gu(); while (!(ch<'0')) {n=10*n+ch-'0'; ch=Gu();}
+#define Write(n) r=n; chptr=s; *chptr=r%10+'0'; r/=10; for (; r; r/=10) {++chptr; *chptr=r%10+'0'; } Pu(*chptr); for (; chptr!=s; ) Pu(*--chptr);
+typedef long long LL;
+typedef long double LD;
+typedef long L;
+typedef pair<int,int> pii;
+const double pi=acos(-1.0);
+LL power(LL a,LL b,LL m)
+{
+	LL d=1;
+	while(b)
+	{
+		if(b&1)
+			d=(d*a)%m;
+		a=(a*a)%m;
+		b=b>>1;
+	}
+	return d%m;
+}
+LL nCr(LL n,LL r,LL m)
+{
+	LL dp[102][102];
+	clr(dp);
+	for(int i=0;i<=n;i++)
+	{
+		for(int j=0;j<=r && j<=i;j++)
+		{
+			if(j==0 || j==i)
+				dp[i][j]=1;
+			else
+				dp[i][j]=(dp[i-1][j-1]+dp[i-1][j])%m;
+		}
+	}
+	return dp[n][r]%m;
+}
+LL lucas(LL n,LL r,LL m)
+{
+	if(n==0 && r==0)
+		return 1;
+	LL ni=n%m;
+	LL ri=r%m;
+	if(ri>ni)
+		return 0;
+	return lucas((n/m),(r/m),m)*nCr(ni,ri,m);
+}
+int main()
+{
+	LL primes[]={2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97};
+	int t;
+	cin>>t;
+	while(t--)
+	{
+		LL n,r,m,tmp;
+		cin>>n>>r>>m;
+		n-=1;
+		r-=1;
+		if(r>n)
+		{
+			cout<<"0"<<endl;
+			continue;
+		}
+		tmp=m;
+		vector<LL>fact,aa;
+		// lucas
+		for(int i=0;i<25;i++)
+		{
+			if(tmp%primes[i]==0 && tmp>1)
+			{
+				fact.pb(primes[i]);	
+				tmp/=primes[i];
+			}	
+		}	
+		for(int i=0;i<fact.size();i++)
+		{
+			aa.pb(lucas(n,r,fact[i]));
+		}
+		// chinese remainder 
+		LL sum=0;
+		for(int i=0;i<fact.size();i++)
+		{
+			LL p=m/fact[i];
+			sum=(sum+((((p*aa[i])%m)*power(p,fact[i]-2,fact[i]))%m))%m;
+		}
+		cout<<sum%m<<endl;
+	}
+	return 0;
+}

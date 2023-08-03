@@ -1,0 +1,134 @@
+#include <bits/stdc++.h>
+#define HASHN 2
+#define MAXBLOOM 20000000
+
+using namespace std;
+
+#define rep(i, a, b) for(int i = (a); i < int(b); ++i)
+#define rrep(i, a, b) for(int i = (a) - 1; i >= int(b); --i)
+#define trav(it, v) for(typeof((v).begin()) it = (v).begin(); it != (v).end(); ++it)
+#define all(v) (v).begin(), (v).end()
+
+typedef double fl;
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef vector<pii> vpi;
+
+int A[2][705][705];
+int n, m, x, y;
+int hhor[2][HASHN][705][705];
+int h[2][HASHN][705][705];
+map<ll, vector<ll> > Map;
+bool has[MAXBLOOM], has2[MAXBLOOM];
+bool has3[MAXBLOOM], has4[MAXBLOOM];
+
+ll powerMod(ll a, ll b, ll mod){
+	if(b == 0)
+		return 1;
+	if(b%2)
+		return (a*powerMod((a*a)%mod, b/2, mod))%mod;
+	return powerMod((a*a)%mod, b/2, mod);
+}
+
+int len;
+ll val;
+ll a, mod;
+queue<int> q;
+ll sub;
+int Q[1000];
+int qfront, qback;
+
+void Hash(int _len, ll _a, ll _mod){
+	qfront=0;
+	qback=0;
+	len=_len;
+	a=_a;
+	mod=_mod;
+	val=0;
+	sub=powerMod(a, len, mod);
+}
+
+inline void read(int v){
+	if(qback-qfront >= len){
+		val -= sub*Q[qfront++];
+	}
+	Q[qback++]=v;
+	val=((val+v)*a)%mod;
+	if(val < 0)val += mod;
+}
+
+bool testSz(int sz){
+	ll mul[]={11, 8};
+	ll mod[]={592837417, 498273203};
+	int N[2]={n,x}, M[2]={m,y};
+	rep(a,0,2)
+	rep(hind,0,HASHN){
+	rep(i,0,N[a]){
+		Hash(sz, mul[hind], mod[hind]);
+		rep(j,0,M[a]){
+			read(A[a][i][j]);
+			if(j >= sz-1)
+				hhor[a][hind][i][j]=val;
+		}
+	}
+	rep(j,sz-1,M[a]){
+		Hash(sz, mul[(hind+1)%HASHN], mod[(hind+1)%HASHN]);
+		rep(i,0,N[a]){
+			read(hhor[a][hind][i][j]);
+			if(i >= sz-1)
+				h[a][hind][i][j]=val;
+		}
+	}
+	}
+	Map.clear();
+	rep(i,sz-1,n)
+	rep(j,sz-1,m){
+		has[h[0][0][i][j]%MAXBLOOM]=1;
+		has3[h[0][1][i][j]%MAXBLOOM]=1;
+	}
+	rep(i,sz-1,x)
+	rep(j,sz-1,y){
+		has2[h[1][0][i][j]%MAXBLOOM]=1;
+		has4[h[1][1][i][j]%MAXBLOOM]=1;
+	}
+	rep(i,sz-1,n)
+	rep(j,sz-1,m){
+		int H=h[0][0][i][j];
+		if(!has2[H%MAXBLOOM] || !has4[h[0][1][i][j]%MAXBLOOM])
+			continue;
+		Map[H].push_back(h[0][1][i][j]);
+	}
+	rep(i,sz-1,x)
+	rep(j,sz-1,y){
+		int H=h[1][0][i][j];
+		if(!has[H%MAXBLOOM] || !has3[h[1][1][i][j]%MAXBLOOM])
+			continue;
+		for(int k=0; k < Map[H].size(); ++k)
+			if(h[1][1][i][j] == Map[h[1][0][i][j]][k])
+				return 1;
+	}
+	return 0;
+}
+
+int main(){
+	scanf("%d%d", &n, &m);
+	rep(i,0,n)
+		rep(j,0,m)
+			scanf("%d", A[0][i]+j);
+	scanf("%d%d", &x, &y);
+	rep(i,0,x)
+		rep(j,0,y)
+			scanf("%d", A[1][i]+j);
+	int lo=-1, hi=min(min(min(n,m),x),y)+1;
+	while(hi-lo > 1){
+		int sz=(lo+hi)/2;
+		if(lo == -1 && hi > 10)
+			sz=hi/4;
+		if(testSz(sz))
+			lo=sz;
+		else
+			hi=sz;
+	}
+	printf("%d\n", lo);
+}

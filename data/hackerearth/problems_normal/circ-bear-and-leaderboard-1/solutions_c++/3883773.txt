@@ -1,0 +1,176 @@
+#include <cassert>
+#include <cstdio>
+#include <iostream>
+#include <sstream>
+#include <numeric>
+#include <bitset>
+#include <vector>
+#include <set>
+#include <string>
+#include <map>
+#include <cmath>
+#include <algorithm>
+#include <queue>
+#include <cstdlib>
+#include <functional>
+#include <cstring>
+#include <ctime>
+#include <memory.h>
+
+#define y1 AAA_BBB
+#define y0 AAA_AAA
+
+#define pb push_back
+#define mp make_pair
+#define fi first
+#define se second
+#define forn(i, n) for(int i = 0; i < (int)(n); ++i)
+#define ford(i, n) for(int i = (int)(n) - 1; i >= 0; --i)
+#define fore(i, a, b) for(int i = (int)(a); i <= (int)(b); ++i)
+#define for1(i, n) for(int i = 1; i <= (int)(n); ++i)
+#define all(v) (v).begin(), (v).end()
+
+using namespace std;
+
+typedef long long i64;
+typedef unsigned long long u64;
+typedef long double ld;
+typedef vector<int> vi;
+typedef vector<i64> vi64;
+typedef pair<int, int> pii;
+typedef vector<pii> vpi;
+typedef vector<vi> vvi;
+typedef vector<vi64> vvi64;
+
+template <class T> T inline sqr(T x) {
+    return x * x;
+}
+
+const ld pi = 3.1415926535897932384626433832795;
+const ld eps = 1e-8;
+
+struct item {
+        i64 key;
+        int prior;
+        int q;
+        i64 sum;
+        item * l, * r, * par;
+        item() { }
+        item (i64 key, int prior) : key(key), prior(prior), q(1), sum(key), l(NULL), r(NULL), par(NULL) { }
+};
+typedef item * pitem;
+
+i64 sum(pitem t) {
+	if (t) return t->sum;
+	else return 0;
+}
+
+i64 q(pitem t) {
+	if (t) return t->q;
+	else return 0;
+}
+
+void upd(pitem t) {
+	if (t)
+		t->sum = t->key + sum(t->l) + sum(t->r), t->q = 1 + q(t->l) + q(t->r);
+}
+
+void setPar(pitem t, pitem p) {
+	if (t) t->par = p;
+}
+pitem merge (pitem l, pitem r) {
+	if (!l || !r)
+		return l ? l : r;
+	else if (l->prior > r->prior) {
+		l->r = merge (l->r, r);
+		setPar(l->r, l);
+		upd(l);
+		return l;
+	}
+	else {
+		r->l = merge (l, r->l);
+		setPar(r->l, r);
+		upd(r);
+		return r;
+	}
+}
+
+pair<pitem, pitem> split(pitem root, i64 key)
+{
+	if (!root)
+		return make_pair((pitem)NULL, (pitem)NULL);
+	
+	if (key < root->key)
+	{
+		pair<pitem, pitem> splitted = split(root->l, key);
+		root->l = splitted.second;
+		setPar(splitted.second, root);
+		setPar(splitted.first, NULL);
+		upd(root);
+		return make_pair(splitted.first, root);
+	}
+	else
+	{
+		pair<pitem, pitem> splitted = split(root->r, key);
+		root->r = splitted.first;
+		setPar(splitted.first, root);
+		setPar(splitted.second, NULL);
+		upd(root);
+		return make_pair(root, splitted.second);
+	}
+}
+
+pitem par(pitem t) {
+	if (t) return t->par;
+	else return NULL;
+}
+
+int main()
+{
+#ifdef HOME
+    freopen("input.txt", "r", stdin);
+#endif
+    ios::sync_with_stdio(false);
+    int n, qu;
+    cin >> n >> qu;
+    vector<i64> pts(n);
+    i64 ans = 0;
+    pitem root = NULL;
+    forn (i, n)
+		root = merge(root, new item(0, rand()));
+	
+	forn (i, qu) {
+		int p, b;
+		cin >> p >> b;
+		p--;
+		pitem l, m, r;
+		auto w = split(root, pts[p]);
+		l = w.first, r = w.second;
+		//cerr << par(l) << " " << par(r) << endl;
+
+		ans -= pts[p] * (q(r) + 1);
+		w = split(r, pts[p] + b);
+		m = w.first, r = w.second;
+		ans += (pts[p] + b) * (q(r) + 1);
+		//cerr << "1 " << ans << endl;
+		pitem t;
+		w = split(m, pts[p] + b - 1);
+		m = w.first, t = w.second;
+		ans += sum(m);
+		m = merge(m, t);
+		
+		w = split(l, pts[p] - 1);
+		l = w.first, t = w.second;		
+		ans += sum(t) - pts[p];
+		if (t) 
+			t = merge(t->l, t->r);
+		l = merge(l, t);
+		
+		pts[p] += b;
+		m = merge(m, new item(pts[p], rand()));
+		l = merge(l, m);
+		root = merge(l, r);
+		cout << ans << "\n";
+	}
+    return 0;
+}

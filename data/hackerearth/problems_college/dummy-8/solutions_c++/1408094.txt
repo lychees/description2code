@@ -1,0 +1,154 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+char board[100][100];
+bool vs[100][100][4];
+ll dist[10000][4];
+const ll INF = 1000000000000000000L;
+int N, M;
+
+bool fun2(int row, int col, int st);
+int fun1(int row, int col);
+
+bool fun2(int row, int col, int st) {
+  st = st % 4;
+  if (row < 0 || row >= M || col < 0 || col >= N) return false;
+
+  if (board[row][col] != '.' && board[row][col] != 'S' && board[row][col] != 'G') return false;
+   
+  for (int ccc = 1; col + ccc < N; ccc++) {
+    int nr = row, nc = col + ccc;
+    if (board[nr][nc] == '#') break;
+
+    int lscf = fun1(nr, nc);
+    if (lscf != 4) {
+      int nst = (lscf + st) % 4;
+      if (nst == 0)
+        return false;
+      break;
+    }
+  }
+  for (int ccc = -1; col + ccc >= 0; ccc--) {
+    int nr = row, nc = col + ccc;
+    if (board[nr][nc] == '#')
+      break;
+
+    int lscf = fun1(nr, nc);
+    if (lscf != 4) {
+      int nst = (lscf + st) % 4;
+      if (nst == 2)
+        return false;
+      break;
+    }
+  }
+  
+  for (int rrr = 1; row + rrr < M; rrr++) {
+    int nr = row + rrr, nc = col;
+    if (board[nr][nc] == '#')
+      break;
+
+    int lscf = fun1(nr, nc);
+    if (lscf != 4) {
+      int nst = (lscf + st) % 4;
+      if (nst == 1)
+        return false;
+      break;
+    }
+  }
+  for (int rrr = -1; row + rrr >= 0; rrr--) {
+    int nr = row + rrr, nc = col;
+    if (board[nr][nc] == '#')
+      break;
+
+    int lscf = fun1(nr, nc);
+    if (lscf != 4) {
+      int nst = (lscf + st) % 4;
+      if (nst == 3)
+        return false;
+      break;
+    }
+  }
+  return true;
+}
+
+int main() {
+  int T;
+  cin >> T;
+
+  for (int t = 1; t <= T; t++) {
+    cin >> M >> N;
+
+    int source, dest;
+    for (int i = 0; i < M; i++) {
+      cin.ignore();
+      for (int j = 0; j < N; j++) {
+        cin >> board[i][j];
+
+        if (board[i][j] == 'S')
+          source = i * N + j;
+        else if (board[i][j] == 'G')
+          dest = i * N + j;
+      }
+    }
+
+    for (int i = 0; i < M; i++) {
+      for (int j = 0; j < N; j++)
+        for (int k = 0; k < 4; k++)
+          vs[i][j][k] = false;
+    }
+
+    for (int i = 0; i < N*M; i++)
+      for (int j = 0; j < 4; j++)
+        dist[i][j] = INF;
+
+    queue< pair<int, int> > Q;
+    Q.push(make_pair(source, 0));
+    vs[source / N][source % N][0] = true;
+    dist[source][0] = 0;
+
+    while (!Q.empty()) {
+      int node = Q.front().first;
+      int st = Q.front().second;
+      Q.pop();
+
+      int row = node / N, col = node % N;
+      for (int rrr = -1; rrr <= 1; rrr++) {
+        for (int ccc = -1; ccc <= 1; ccc++) {
+          if (!(rrr * ccc) && (rrr != ccc) &&
+              fun2(row+rrr, col+ccc, st+1) &&
+              !vs[row+rrr][col+ccc][(st+1)%4]) {
+            int child = (row + rrr) * N + col + ccc;
+            int nst = (st + 1) % 4;
+            dist[child][nst] = min(
+              dist[child][nst],
+              dist[node][st] + 1);
+            vs[row+rrr][col+ccc][(st+1)%4]=true;
+            Q.push(make_pair(child, (st+1) % 4));
+          }
+        }
+      }
+    }
+
+    cout << "Case #" << t << ": ";
+    ll mindist = INF;
+    for (int i = 0; i < 4; i++)
+      mindist = min(mindist, dist[dest][i]);
+    if (mindist != INF)
+      cout << mindist << "\n";
+    else
+      cout << "impossible\n";
+  }
+  return 0;
+ }
+ 
+ 
+ int fun1(int row, int col) {
+  switch (board[row][col]) {
+    case '<': return 0;
+    case '^': return 1;
+    case '>': return 2;
+    case 'v': return 3;
+  }
+  return 4;
+}

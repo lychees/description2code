@@ -1,0 +1,179 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define FOR(i,a,b) for(int i = (a); i <= (b); ++i)
+#define FORD(i,a,b) for(int i = (a); i >= (b); --i)
+#define RI(i,n) FOR(i,1,(n))
+#define REP(i,n) FOR(i,0,(n)-1)
+#define mini(a,b) a=min(a,b)
+#define maxi(a,b) a=max(a,b)
+#define mp make_pair
+#define pb push_back
+#define st first
+#define nd second
+#define sz(w) (int) w.size()
+typedef vector<int> vi;
+typedef long long ll;
+typedef long double ld;
+typedef pair<int,int> pii;
+#define int long long 
+const int inf = 1e15L + 2e6 + 5;
+const int nax = 105;
+
+//maksymalnego skojarzenia, indeksowanie od 1, wszystko na intach
+//w skojx[] bedzie skojarzenie
+
+namespace Hung{
+  int n;
+  int m[nax][nax];
+  int skojx[nax], skojy[nax];
+  int lx[nax], ly[nax];
+  bool S[nax], T[nax];
+  int q[nax], qbeg, qend;
+  int slack[nax], prev[nax];
+  
+  void init(int size) {
+    n = size;
+    FOR(i,1,n) FOR(j,1,n) m[i][j] = 0; 
+    FOR(i,1,n) skojx[i] = skojy[i] = 0;
+  }
+  
+  void AddEdge(int a, int b, int c) {
+    m[a][b] = max(m[a][b], c);
+  }
+  
+  int hungarian() {
+	  RI(i,n)RI(j,n) if(abs(m[i][j]) != inf) m[i][j] *= -1;
+	 /*RI(i, n) {
+		  RI(j, n) printf("%d ", m[i][j]);
+		  puts("");
+	  }
+	  puts("");*/
+    FOR(i,1,n) {
+      ly[i] = 0; lx[i] = -inf;
+      FOR(j,1,n) lx[i] = max(lx[i], m[i][j]);
+    }
+    
+    REP(k,n) {
+      qbeg = qend = 0;
+      FOR(i,1,n) S[i] = T[i] = false;
+      FOR(i,1,n) if (!skojx[i]) {
+        q[qend++] = i; break;
+      }
+      
+      S[q[0]] = true;
+      FOR(i,1,n) slack[i] = lx[q[0]] + ly[i] - m[q[0]][i], prev[i] = q[0];
+      
+      int y = 0;
+      while (true) {
+        while (qbeg < qend) {
+          int x = q[qbeg++]; S[x] = true;
+          FOR(i,1,n) if (!T[i]) {
+            if (slack[i] > lx[x] + ly[i] - m[x][i]) {
+              slack[i] = lx[x] + ly[i] - m[x][i];
+              prev[i] = x;
+            }
+            if (lx[x] + ly[i] == m[x][i]) {
+              T[i] = true;
+              if (skojy[i])
+                q[qend++] = skojy[i];
+              else {
+                y = i; goto koniec;
+              }
+            }
+          }
+        }
+        
+        int minslack = inf;
+        FOR(i,1,n) if (!T[i]) minslack = min(minslack, slack[i]);
+        FOR(i,1,n) {
+          if (S[i]) lx[i] -= minslack;
+          if (T[i]) 
+            ly[i] += minslack;
+          else
+            slack[i] -= minslack;
+        }
+        FOR(i,1,n) if (!T[i] && !slack[i]) {
+          T[i] = true;
+          if (skojy[i]) {
+            q[qend++] = skojy[i];
+          }
+          else {
+            y = i; goto koniec;
+          }
+        }
+      }
+    
+    koniec:
+      while (y) { 
+        skojy[y] = prev[y]; 
+        int pom = skojx[prev[y]];
+        skojx[prev[y]] = y;
+        y = pom; 
+      }
+    }
+    
+    int res = 0;
+    FOR(i,1,n) res += m[i][skojx[i]];
+    res *= -1;
+    return res;  
+  }
+}
+
+int n;
+vi w[nax];
+int cost[nax];
+int dp[nax][nax];
+
+void clear() {
+	REP(i, nax) w[i].clear();
+	REP(i,nax) cost[i] = 0;
+}
+
+int dfs(int a, int par) {
+	vi they;
+	for(int b : w[a]) if(b != par) they.pb(b);
+	// don't use w[a]
+	int s = 1;
+	for(int b : they) s += dfs(b, a);
+	RI(COL, s) if(COL < n || a == 1) {
+		Hung :: init(s);
+		for(int i = 0; i < sz(they); ++i) {
+			int b = they[i];
+			RI(col, s)
+				Hung :: m[i+1][col] = dp[b][col];
+			Hung :: m[i+1][n] = 1000000;
+		}
+		RI(col, s) Hung :: m[s][col] = 1000000;
+		Hung :: m[s][COL] = cost[COL];
+		dp[a][COL] = Hung :: hungarian();
+		FOR(i,COL+1,n) mini(dp[a][i], dp[a][COL] - cost[COL] + cost[i]);
+	}
+	return s;
+}	
+
+void te() {
+	cin >> n;
+	REP(i, n+1)REP(j,n+1)dp[i][j] = 1000 * 1000 * 10;
+	RI(col, n - 1) cin >> cost[col];
+	sort(cost + 1, cost + n);
+	REP(_, n - 1) {
+		int a, b;
+		cin >> a >> b;
+		w[a].pb(b);
+		w[b].pb(a);
+	}
+	dfs(1, -1);
+	cout << dp[1][n] << "\n";
+	clear();
+}
+
+#undef int
+int main() {
+	int z;
+	scanf("%d", &z);
+	while(z--) te();
+	RI(i, z) {
+		te();
+	}
+	return 0;
+}

@@ -1,0 +1,126 @@
+//      go_on
+#include <bits/stdc++.h>
+using namespace std;
+
+
+//      LOOPS AND MEM
+#define mz(a) memset(a,0,sizeof(a))
+#define md(a,m,n) memset(a,0,sizeof(a[0][0])*m*n);
+#define mmin1(a) memset(a,-1,sizeof(a))
+#define minf(a) memset(a,MEMSET_INF,sizeof(a));
+#define f(i,a,n) for(i=a;i<=n;++i)
+#define fs(i,a,n) for(i=a;i<n;++i)
+#define fl(i,n,a) for(i=n;i>=a;--i)
+
+
+//       I/O
+#define i(n) cin>>n
+#define is(n) scanf("%s",n)
+#define s(n) scanf("%d",&n)
+#define sl(n) scanf("%lld",&n)
+#define o(n) cout<<n
+#define p(n) printf("%d",n)
+#define pl(n) printf("%lld",n)
+#define os printf(" ")
+#define on printf("\n")
+
+
+//       CONTAINERS
+typedef vector <int> vi;
+typedef pair<int, int> pii;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define all(a)  a.begin(),a.end()
+//#define fv(i,v) for(auto i = v.begin();i !=v.end(); ++i)
+
+
+//        DEF AND INIT
+#define lli long long int
+#define M 1000000007
+#define eps 1e-15
+#define N 202000
+//vector<pair<int, pii> >v;
+
+int len,pos[N],ind[N],tmp[N],gap,lcp[N],lcppos[N][30];
+char s[N];
+
+
+
+
+bool cmp(int i,int j)
+{
+    if(pos[i]!=pos[j])     return (pos[i]<pos[j]);
+    i+=gap;
+    j+=gap;
+    return ((i<len) && (j<len))?(pos[i]<pos[j]):(i>j);
+}
+
+
+void sa()
+{
+    int i;
+    f(i,0,len-1)    ind[i]=i,pos[i]=s[i];
+    for(gap=1;;gap*=2)
+    {
+        sort(ind,ind+len,cmp);
+        fs(i,0,len-1)           tmp[i+1]=tmp[i]+cmp(ind[i],ind[i+1]);
+        f(i,0,len-1)            pos[ind[i]]=tmp[i];
+        if(tmp[len-1]==len-1)   break;
+    }
+}
+
+void lcp_()
+{
+    for(int i=0,k=0;i<len;++i) if(pos[i]!=len-1)
+    {
+        for(int j=ind[pos[i]+1];s[i+k]==s[j+k];)      ++k;
+        lcp[pos[i]+1]=k;
+        if(k)   --k;
+    }
+}
+
+void lcp_2()
+{
+    int i,j;
+    f(i,0,len-1)        lcppos[i][0]=lcp[i];
+    for(i=1;(1<<i)<=len;++i)
+    {
+        for(j=0;j+(1<<i)-1<len;++j)
+        {
+            if(lcppos[j][i-1]<=lcppos[j+(1<<(i-1))][i-1])
+                lcppos[j][i]=lcppos[j][i-1];
+            else
+                lcppos[j][i]=lcppos[j+(1<<(i-1))][i-1];
+        }
+    }
+}
+int solve(int a, int b)
+{
+    int idx=0;
+    if(a>b)     swap(a,b);
+    if(a==b)    return len-ind[a];
+    while((1<<idx)<=(b-a)) ++idx;
+    return min(lcppos[a+1][idx-1],lcppos[b-(1<<(idx-1))+1][idx-1]);
+}
+
+int main()
+{
+    int i,q,x;
+    is(s);
+    len=strlen(s);
+    reverse(s,s+len);
+    sa();
+    lcp_();
+    lcp_2();
+    i(q);
+    while(q--)
+    {
+        i(x);
+        x=len-x;
+        o(solve(pos[x],pos[0]));
+        on;
+    }
+    return 0;
+}

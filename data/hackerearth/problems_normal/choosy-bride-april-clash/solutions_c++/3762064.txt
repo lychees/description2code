@@ -1,0 +1,181 @@
+#include <cstdio>
+#include <cmath>
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <cassert>
+#include <string>
+#include <cstring>
+#include <queue>
+
+using namespace std;
+
+#define rep(i,a,b) for(int i = a; i < b; i++)
+#define S(x) scanf("%d",&x)
+#define S2(x,y) scanf("%d%d",&x,&y)
+#define P(x) printf("%d\n",x)
+#define all(v) v.begin(),v.end()
+#define FF first
+#define SS second
+
+typedef long long int LL;
+typedef pair<int, int > pii;
+typedef vector<int > vi;
+
+const int N = 250001;
+const int BSZ = 420;
+
+LL A[N], RA[N];
+int n;
+
+int L[N], R[N], X[N];
+int ANS[N];
+
+struct SQRT {
+  int l,r;
+  LL tot;
+  vector<LL > v;
+};
+
+SQRT B[N / BSZ + 2];
+int blocks;
+
+void pre() {
+  blocks = -1;
+  int nxt = 0;
+  LL mx = -1000000000000000LL;
+  rep(i,0,n) {
+    if(i == nxt) {
+      blocks++;
+      nxt += BSZ;
+      B[blocks].v.clear();
+      B[blocks].tot = 0;
+      B[blocks].l = i;
+    }
+    B[blocks].r = i;
+    if(!B[blocks].v.size() || A[i] >= B[blocks].v.back()) {
+      B[blocks].v.push_back(A[i]);
+    }
+  }
+}
+
+void UUU(int l, int r, int x) {
+  rep(i,0,blocks+1) {
+    if(r < B[i].l || l > B[i].r) continue;
+    if(l <= B[i].l && r >= B[i].r) {
+      B[i].tot += x;
+      continue;
+    }
+    rep(j,B[i].l,B[i].r+1) {
+      A[j] += B[i].tot;
+      if(j >= l && j <= r) {
+        A[j] += x;
+      }
+    }
+    B[i].tot = 0;
+    B[i].v.clear();
+
+    rep(j,B[i].l,B[i].r+1) {
+      if(!B[i].v.size() || A[j] >= B[i].v.back()) {
+        B[i].v.push_back(A[j]);
+      }
+    }
+  }
+}
+
+int QQQ(int l, int r) {
+  LL mx = -1000000000000000LL;
+  int ans = 0;
+  rep(i,0,blocks+1) {
+    if(r < B[i].l || l > B[i].r) continue;
+
+    if(l <= B[i].l && r >= B[i].r) {
+      if(B[i].v.size()) {
+        if(B[i].v[0] + B[i].tot >= mx) {
+          ans += B[i].v.size();
+          mx = B[i].v.back() + B[i].tot;
+        } else if(B[i].v.back() + B[i].tot >= mx) {
+          int lo = 0, hi = B[i].v.size() - 1;
+          int res = -1;
+          while(lo <= hi) {
+            int mi = (lo + hi) >> 1;
+            if(B[i].v[mi] + B[i].tot < mx) {
+              res = mi;
+              lo = mi + 1;
+            } else {
+              hi = mi - 1;
+            }
+          }
+          ans += B[i].v.size() - 1 - res;
+          mx = B[i].v.back() + B[i].tot;
+        }
+      }
+      // printf("%d %lld %d\n",i,mx,ans);
+      continue;
+    }
+
+    rep(j,max(l,B[i].l),min(r,B[i].r)+1) {
+      if(A[j] + B[i].tot >= mx) {
+        ans++;
+        mx = A[j] + B[i].tot;
+      }
+    }
+  }
+  return ans;
+}
+
+int main() {
+  int t;
+  S(t);
+  while(t--) {
+    int q;
+    S2(n,q);
+    rep(i,0,n) {
+      scanf("%lld",&A[i]);
+      RA[n-1-i] = A[i];
+    }
+    pre();
+    rep(i,0,q) {
+      int type;
+      S(type);
+      if(type == 1) {
+        int l,r;
+        scanf("%d%d",&l,&r);
+        L[i] = l; R[i] = r;
+        if(l <= r) {
+          ANS[i] = QQQ(l-1,r-1);
+          // P(ANS[i]);
+        } else {
+          ANS[i] = -2;
+        }
+      } else {
+        ANS[i] = -1;
+        int l,r,x;
+        scanf("%d%d%d",&l,&r,&x);
+        L[i] = l; R[i] = r; X[i] = x;
+        UUU(l-1, r-1, x);
+      }
+    }
+
+    // reverse queries
+    rep(i,0,n) {
+      A[i] = RA[i];
+
+    }
+    pre();
+    rep(i,0,q) {
+      if(ANS[i] == -2) {
+        ANS[i] = QQQ(n - L[i], n - R[i]);
+      } else if(ANS[i] == -1) {
+        UUU(n - R[i], n - L[i], X[i]);
+      }
+
+      if(ANS[i] != -1) {
+        P(ANS[i]);
+      }
+    }
+  }
+  return 0;
+}

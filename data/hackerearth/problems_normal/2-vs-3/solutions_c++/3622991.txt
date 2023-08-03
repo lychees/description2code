@@ -1,0 +1,98 @@
+#include <iostream>
+#include <cstdio>
+#include <cmath>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+#define MAXN 100005
+int a[MAXN];
+int t[4*MAXN];
+int p[MAXN];
+string s;
+int n,q;
+
+
+void update(int v,int tl,int tr,int i,int val)
+{
+		
+	if(tl==tr)
+	{
+		t[v]=val;
+		return;
+	}
+	int tm=(tl+tr)>>1,L=v<<1,R=L+1;
+	if(i<=tm)update(L,tl,tm,i,val);
+	else update(R,tm+1,tr,i,val);
+	t[v]=(t[L]*p[tr-tm]+t[R])%3;
+}
+
+int query(int v,int tl,int tr,int l,int r)
+{
+	
+	if(tl==tr)
+	{
+		return t[v];
+
+	}
+	if(l<=tl&&tr<=r)
+		return t[v];
+
+	int tm=(tl+tr)>>1,L=v<<1,R=L+1;
+	if(r<=tm)return query(L,tl,tm,l,r);
+	else if(l>tm)return query(R,tm+1,tr,l,r);
+	else 
+	return (query(L,tl,tm,l,tm)*(p[r-tm])+query(R,tm+1,tr,tm+1,r))%3;
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	cin>>n;
+	cin>>s;
+	memset(t,0,sizeof(t));
+	for(int i=0;i<n;i++)
+	{
+		a[i]=s[i]-'0';
+	}
+	p[0]=1;
+	for(int i=1;i<=n+2;i++)
+		p[i]=(p[i-1]*2)%3;
+
+	
+
+	//build(1,0,n-1);
+
+	for(int i=0;i<n;i++)
+		if(a[i]==1)
+			update(1,0,n-1,i,a[i]);
+
+	cin>>q;
+	while(q--)
+	{
+		int op;
+		int l,r;
+		cin>>op;
+		if(op==0)
+		{
+			cin>>l>>r;
+			int ans=query(1,0,n-1,l,r)%3;
+			cout<<ans<<endl;
+			continue;
+		}
+		if(op==1)
+		{
+			cin>>l;
+			if(a[l]==0){
+			update(1,0,n-1,l,1);
+			a[l]=1;
+			}
+			continue;		
+
+		}
+	}
+
+
+	return 0;
+}

@@ -1,0 +1,98 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#include<set>
+#include<map>
+#include<queue>
+#include<vector>
+#include<string>
+#include<cstring>
+#include<unordered_map>
+#include<cassert>
+#include<cmath>
+
+//code by cl3488
+
+#define dri(X) int (X); scanf("%d", &X)
+#define drii(X, Y) int X, Y; scanf("%d%d", &X, &Y)
+#define driii(X, Y, Z) int X, Y, Z; scanf("%d%d%d", &X, &Y, &Z)
+#define pb push_back
+#define mp make_pair
+#define rep(i, s, t) for ( int i=(s) ; i <(t) ; i++)
+#define fill(x, v) memset (x, v, sizeof(x))
+#define all(x) (x).begin(), (x).end()
+#define why(d) cerr << (d) << "!\n"
+#define whisp(X, Y) cerr << (X) << " " << (Y) << "#\n"
+#define exclam cerr << "!!\n"
+typedef long long ll;
+using namespace std;
+typedef pair<int, int> pii;
+const ll inf = (ll)1e9 + 70;
+const ll mod = 1e9 + 7;
+const int maxn = 50005;
+int K;
+
+ll dp[maxn][105];
+ll tdp[105];
+int a[maxn];
+
+vector<vector<int>> adj;
+vector<vector<int>> ch;
+vector<int> order;
+void dfs(int v, int p){
+	order.push_back(v);
+	for (int u : adj[v]){
+		if (u == p) continue;
+		ch[v].push_back(u);
+		dfs(u, v);
+	}
+}
+
+int main(){
+	if (fopen("input.txt", "r")) freopen("input.txt", "r", stdin);
+	dri(T);
+	rep(Tc, 0, T){
+		dri(n); cin >> K;
+		rep(i, 1, n + 1){
+			dri(t); a[i] = t;
+		}
+		adj = vector<vector<int>>(n+1);
+		ch = vector<vector<int>>(n+1);
+		rep(i, 1, n){
+			drii(a, b); adj[a].push_back(b); adj[b].push_back(a);
+		}
+		order.clear();
+		dfs(1, 0);
+		reverse(all(order));
+		for (int v : order){
+			rep(i, 0, K+1){
+				dp[v][i] = 0;
+			}
+			dp[v][a[v]] = 1;
+			// before any children: base case.
+
+			for (int c : ch[v]){
+				//now, the sliding window!
+				rep(i, 0, K + 1){
+					tdp[i] = dp[v][i];//do nothing.
+					rep(l, 0, i + 1){//take a nonzero subset with sum l.
+						tdp[i] += dp[v][i - l] * dp[c][l]; tdp[i] %= mod;
+					}
+				}
+				//transfer back
+				rep(i, 0, K + 1){
+					dp[v][i] = tdp[i];
+				}
+			}
+		}
+		ll ans = 0;
+		rep(v, 1, n + 1){
+			ans += dp[v][K]; ans %= mod;
+		}
+		cout << (ans + mod) % mod << "\n";
+	}
+	return 0;
+}

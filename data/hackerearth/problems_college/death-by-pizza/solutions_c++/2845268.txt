@@ -1,0 +1,136 @@
+#include <bits/stdc++.h>
+#define MAX 20004
+using namespace std;
+
+int a[MAX];
+bool lazy[40*MAX];
+int lazy1[40*MAX][6];
+long long sum,seg[40*MAX];
+char pizza[] = "pizza";
+
+
+int getPos(int l, int i, int start) {
+
+	int pos = start + (i-l)%5;
+	if(pos>5)
+		pos-=5;
+	return pos;
+
+}
+
+void clear(int cur, int l, int r, int start, int t) {
+
+	long long x = (r-l+1)/5;
+	long long temp=0;
+	temp += x*sum;
+	int y = (r-l+1)%5;
+	for(int i=0,j=start;i<y;i++,j++) {
+		if(j==6)
+			j=1;
+		temp += pizza[j-1] - 'a' + 1;
+	}
+	int mid = (l+r)/2;
+	int left = cur << 1;
+	int right = left+1;
+    temp*=t;
+    seg[cur] += temp;
+    if(l!=r) {
+
+        lazy1[left][start]+=t;
+        lazy1[right][getPos(l,mid+1,start)]+=t;
+        lazy[left]=lazy[right]=true;
+    }
+    lazy1[cur][start]=0;
+}
+
+
+long long update(int cur, int l, int r, int i, int j) {
+
+	if(lazy[cur]) {
+        for(int k=1;k<6;k++)
+            if(lazy1[cur][k])
+                clear(cur,l,r,k,lazy1[cur][k]);
+        lazy[cur] = false;
+	}
+
+
+	if(l>j||r<i)
+		return seg[cur];
+
+	if(l>=i && r<=j) {
+		clear(cur, l, r, getPos(i,l,1),1);
+		return seg[cur];
+	}
+
+	int mid = (l+r)/2;
+	int left = cur << 1;
+	int right = left+1;
+	long long x = update(left,l,mid,i,j);
+	long long y = update(right,mid+1,r,i,j);
+	return seg[cur] = x+y;
+}
+
+
+long long get(int cur, int l, int r, int i, int j) {
+
+    if(lazy[cur]) {
+        for(int k=1;k<6;k++)
+            if(lazy1[cur][k])
+                clear(cur,l,r,k,lazy1[cur][k]);
+        lazy[cur] = false;
+	}
+
+
+	if(l>j||r<i)
+		return 0;
+
+	if(l>=i && r<=j)
+		return seg[cur];
+
+	int mid = (l+r)/2;
+	int left = cur << 1;
+	int right = left+1;
+	long long x = get(left,l,mid,i,j);
+	long long y = get(right,mid+1,r,i,j);
+	return x+y;
+
+}
+
+int init(int cur, int l , int r) {
+
+	if(l==r)
+		return seg[cur] = a[l];
+
+	int mid = (l+r)/2;
+	int left = cur << 1;
+	int right = left+1;
+	int x = init(left,l,mid);
+	int y = init(right,mid+1,r);
+	return seg[cur] = x+y;
+
+}
+
+int main()
+{
+	sum=0;
+	for(int i=1;i<6;i++)
+		sum += pizza[i-1] - 'a' + 1;
+
+
+    int n,q;
+    cin >>n >> q;
+    for(int i=0;i<n;i++)
+    	scanf("%d",&a[i]);
+    init(1,0,n-1);
+    while(q--) {
+    	int ch,l,r;
+    	scanf("%d%d%d",&ch,&l,&r);
+    	l--,r--;
+    	if(ch)
+    		printf("%d/%d\n",get(1,0,n-1,l,r),r-l+1);
+    	else
+    		update(1,0,n-1,l,r);
+
+    }
+    return 0;
+}

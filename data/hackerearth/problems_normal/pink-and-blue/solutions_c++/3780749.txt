@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct node {
+	int id;
+	char type;	//'B' or 'G'
+	int color;	// 0 or 1. 0 = blue.
+	vector<int> nbrs;
+	bool visited;
+};
+
+int isinverted(node n) {
+	if(n.type == 'B') 
+		return n.color == 0;
+	if(n.type == 'G')
+		return n.color == 1;
+}
+
+int color(vector<node> &graph, int start) {
+	int ans = isinverted(graph[start]);
+	
+	graph[start].visited = true;
+	for(int i = 0; i < graph[start].nbrs.size(); i++) {
+		node &nbr = graph[ graph[start].nbrs[i] ];
+		if(!nbr.visited) {
+			nbr.color = !graph[start].color;
+			ans += color(graph, graph[start].nbrs[i]);
+		}
+	}
+	
+	return ans;
+}
+
+int main()
+{
+    int n, m;
+    cin >> n >> m;
+    vector<node> graph(1+n);
+    
+    for(int i = 1; i <= n; i++) {
+    	cin >> graph[i].type;
+    	graph[i].visited = false;
+    }
+    
+    for(int i = 0; i < m; i++) {
+    	int x, y;
+    	cin >> x >> y;
+    	graph[x].nbrs.push_back(y);
+    	graph[y].nbrs.push_back(x);
+    }
+    
+    graph[1].color = 0;
+    int inversions1 = color(graph, 1);
+    
+    for(int i = 1; i <= n; i++) graph[i].visited = false;
+    
+    graph[1].color = 1;
+    int inversions2 = color(graph, 1);
+    
+    cout << min(inversions1, inversions2) << "\n";
+    return 0;
+}

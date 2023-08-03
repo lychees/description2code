@@ -1,0 +1,131 @@
+#include <iostream>
+#include <algorithm>
+#include <string>
+using namespace std;
+
+struct nd{
+    int mx;
+    int rep_mx;
+    int mn;
+    int rep_mn;
+};
+string aa;
+int n,q;
+long long l,r;
+nd sgt[400002];
+long long arr[100003];
+bool vis[10];
+long long mod=1000000007;
+int func(int x){
+    if(x==0)return 1;
+    for(int i=0;i<10;i++)vis[i]=false;
+    int ret=0;
+    while(x>0){
+        if(vis[x%10]==false)ret++;
+        vis[x%10]=true;
+        x/=10;
+    }
+    return ret;
+}
+nd sum(nd a,nd b){
+    nd ret;
+    if(a.mx==b.mx){
+        ret.mx=a.mx;
+        ret.rep_mx=a.rep_mx+b.rep_mx;
+    } else if(a.mx>b.mx){
+        ret.mx=a.mx;
+        ret.rep_mx=a.rep_mx;
+    } else {
+        ret.mx=b.mx;
+        ret.rep_mx=b.rep_mx;
+    }
+    if(a.mn==b.mn){
+        ret.mn=a.mn;
+        ret.rep_mn=a.rep_mn+b.rep_mn;
+    } else if(a.mn>b.mn){
+        ret.mn=b.mn;
+        ret.rep_mn=b.rep_mn;
+    } else {
+        ret.mn=a.mn;
+        ret.rep_mn=a.rep_mn;
+    }
+    return ret;
+}
+void build(int node,int l,int r){
+    if(l==r){
+        sgt[node].mn=func(arr[l]);
+        sgt[node].mx=sgt[node].mn;
+        sgt[node].rep_mn=1;
+        sgt[node].rep_mx=1;
+        return;
+    }
+    build(2*node,l,(r+l)/2);
+    build(2*node+1,(r+l)/2+1,r);
+    sgt[node]=sum(sgt[2*node],sgt[2*node+1]);
+}
+
+void upd1(int node,int l,int r,int ind){
+    if(l==r){
+        sgt[node].mn=func(arr[l]);
+        sgt[node].mx=sgt[node].mn;
+        sgt[node].rep_mn=1;
+        sgt[node].rep_mx=1;
+        return;
+    }
+    if(ind<=(r+l)/2)
+        upd1(2*node,l,(r+l)/2,ind);
+    else
+        upd1(2*node+1,(r+l)/2+1,r,ind);
+    sgt[node]=sum(sgt[2*node],sgt[2*node+1]);
+}
+
+nd query(int node,int l,int r,int s,int e){
+    nd ret,t;
+    ret.mn=1000000008;
+    ret.mx=-1000000008;
+    ret.rep_mn=0;
+    ret.rep_mx=0;
+    if(s<=l && r<=e){
+        return sgt[node];
+    }
+    if(s<=(l+r)/2){
+        t=query(2*node,l,(r+l)/2,s,e);
+        ret=sum(ret,t);
+    }
+    if((r+l)/2+1<=e){
+        t=query(2*node+1,(r+l)/2+1,r,s,e);
+        ret=sum(ret,t);
+    }
+    return ret;
+}
+
+
+int main(){
+    cin>>n;
+    for(int i=0;i<n;i++){
+        cin>>arr[i];
+    }
+    build(1,0,n-1);
+    cin>>q;
+    while(q--){
+        cin>>aa>>l>>r;
+        if(aa=="ADD"){
+            arr[l-1]+=r;
+            arr[l-1]%=mod;
+            upd1(1,0,n-1,l-1);
+        } else if(aa=="MUL"){
+            arr[l-1]*=r;
+            arr[l-1]%=mod;
+            upd1(1,0,n-1,l-1);
+        } else if(aa=="REP"){
+            arr[l-1]=r;
+            upd1(1,0,n-1,l-1);
+        } else if(aa=="MAX"){
+            nd t=query(1,0,n-1,l-1,r-1);
+            cout<<t.mx<<" "<<t.rep_mx<<endl;
+        } else {
+            nd t=query(1,0,n-1,l-1,r-1);
+            cout<<t.mn<<" "<<t.rep_mn<<endl;
+        }
+    }
+}

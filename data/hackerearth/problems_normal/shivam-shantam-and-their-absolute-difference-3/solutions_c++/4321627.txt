@@ -1,0 +1,284 @@
+// https://www.hackerearth.com/problem/algorithm/shivam-shantam-and-their-absolute-difference-3/
+
+#include <list>
+#include <iostream>
+#include <iterator>
+#include <algorithm>
+#include <limits>
+#include <cassert>
+#include <cmath>
+#include <map>
+#include <set>
+#include <chrono>
+#include <cstddef>
+#include <vector>
+#include <iomanip>
+
+using namespace std;
+using number_t = int_fast64_t;
+const number_t modulo = 1000000007;
+const number_t limit = 2000;
+const number_t zero = 0;
+
+// --------------------------------------------------------------------------------
+
+/*
+ * uint_fwd_list_with_generations_t
+ *
+ * container for numbers 0 .. n-1
+ * - allows add items in O(1)
+ * - allows emumerate them in order reversed they've added
+ * - allows to check if item is in list in O(1)
+ * - allows to clear list in O(1)
+ * */
+
+class uint_fwd_list_with_generations_t {
+  public:
+    typedef std::size_t size_type;
+
+  private:
+    std::vector<size_type> next_;
+    std::vector<size_type> generations_;
+    size_type head_;
+    size_type size_;
+    size_type generation_;
+
+  private:
+    size_type n() const { return next_.size(); }
+    size_type null() const { return n(); }
+
+  public:
+    uint_fwd_list_with_generations_t(size_type lim) :
+      next_(lim, 0),
+      generations_(lim, 0),
+      head_(lim),
+      size_(0),
+      generation_(1)
+    {
+    }
+
+    explicit uint_fwd_list_with_generations_t(const uint_fwd_list_with_generations_t& other) = default;
+    uint_fwd_list_with_generations_t(uint_fwd_list_with_generations_t&& other) = default;
+
+  public:
+    class iterator {
+      private:
+        size_type n_;
+        const uint_fwd_list_with_generations_t* list_;
+
+      public:
+        iterator() : n_(0), list_(std::nullptr_t()) {}
+        iterator(const iterator& other) = default;
+        iterator(iterator&& other) = default;
+        iterator(size_type n, const uint_fwd_list_with_generations_t* list) : n_(n), list_(list) {}
+        iterator& operator=(const iterator& other) = default;
+        iterator& operator=(iterator&& other) = default;
+
+      public:
+        iterator& operator++() {
+          n_ = list_->next_[n_];
+          return *this;
+        }
+        iterator operator++(int) {
+          return iterator(list_->next_[n_], list_);
+        }
+        size_type operator*() {
+          return n_;
+        }
+
+        bool operator==(const iterator& other) const {
+          return n_ == other.n_ && list_ == other.list_;
+        }
+        bool operator!=(const iterator& other) const {
+          return !(*this == other);
+        }
+
+        friend class uint_fwd_list_with_generations_t;
+    };
+
+  public:
+    size_type front() const { return head_; }
+
+    iterator begin() const { return iterator(head_, this); }
+    iterator end() const { return iterator(null(), this); }
+    iterator cbegin() const { return begin(); }
+    iterator cend() const { return end(); }
+
+    bool empty() const { return head_ == null(); }
+    size_type size() const { return size_; }
+    size_type max_size() const { return n(); }
+
+    void clear() {
+      head_ = null();
+      ++generation_;
+    }
+
+    void push(size_type value) {
+      assert(!(*this)[value]);
+      next_[value] = head_;
+      head_ = value;
+      generations_[value] = generation_;
+      ++size_;
+    }
+
+    void pop() {
+      assert(!empty());
+      generations_[head_] = generation_ - 1;
+      head_ = next_[head_];
+      --size_;
+    }
+
+    bool insert(size_type value) {
+      if ((*this)[value]) {
+        return false;
+      }
+      push(value);
+      return true;
+    }
+
+    void swap(uint_fwd_list_with_generations_t& other) {
+      std::swap(head_, other.head_);
+      std::swap(next_, other.next_);
+      std::swap(size_, other.size_);
+      std::swap(generation_, other.generation_);
+      std::swap(generations_, other.generations_);
+    }
+
+  public:
+    iterator find(size_type value) const {
+      return (*this)[value] ? iterator(value, this) : end();
+    }
+    size_type count(size_type value) const {
+      return (*this)[value] ? 1 : 0;
+    }
+
+  public:
+    bool operator[](size_type value) const {
+      return generations_[value] == generation_;
+    }
+};
+
+void swap(uint_fwd_list_with_generations_t& a,
+    uint_fwd_list_with_generations_t& b)
+{
+  a.swap(b);
+}
+
+namespace std {
+  template<>
+  struct iterator_traits<uint_fwd_list_with_generations_t::iterator> {
+    typedef std::ptrdiff_t difference_type;
+    typedef std::size_t value_type;
+    typedef const std::size_t* pointer;
+    typedef const std::size_t& reference;
+    typedef std::forward_iterator_tag iterator_category;
+  };
+}
+
+// --------------------------------------------------------------------------------
+
+pair<uint_fwd_list_with_generations_t, vector<number_t>>
+get_all_possible_total_results(const vector<number_t>& X) {
+  const size_t n = 1 + limit * X.size();
+  uint_fwd_list_with_generations_t prev(n), next(n);
+  vector<number_t> val_prev(n), val_next(n);
+  prev.insert(0);
+  val_prev[0] = 1;
+
+  for (auto mark : X) {
+    if (mark == 0) {
+      continue;
+    }
+    for (auto i : prev) {
+      number_t val = val_prev[i];
+
+      if (next.insert(i)) {
+        val_next[i] = val;
+      }
+      else {
+        val_next[i] += val;
+        val_next[i] %= modulo;
+      }
+
+      if (next.insert(i + mark)) {
+        val_next[i + mark] = val;
+      }
+      else {
+        val_next[i + mark] += val;
+        val_next[i + mark] %= modulo;
+      }
+    }
+    swap(prev, next);
+    swap(val_prev, val_next);
+    next.clear();
+  }
+  // return make_pair(move(prev), move(val_prev));
+  return make_pair(prev, val_prev);
+}
+
+// --------------------------------------------------------------------------------
+
+template<typename T1, typename T2>
+ostream& operator<<(ostream& ostrm, const pair<T1, T2>& p) {
+  ostrm << "[" << p.first << ", " << p.second << "]";
+  return ostrm;
+}
+
+// --------------------------------------------------------------------------------
+
+number_t fenwick_tree_get(const vector<number_t>& tree, int i) {
+  number_t result = 0;
+  for (int j = i; j >= 0; j &= j + 1, --j) {
+    result += tree[j];
+  }
+  return result;
+}
+
+// --------------------------------------------------------------------------------
+
+int main() {
+  number_t N;
+  cin >> N;
+
+  vector<number_t> A;
+  A.reserve(N);
+  copy_n(istream_iterator<number_t>(cin), N, back_inserter(A));
+
+  vector<number_t> B;
+  B.reserve(N);
+  copy_n(istream_iterator<number_t>(cin), N, back_inserter(B));
+
+  number_t Q;
+  cin >> Q;
+
+  auto pair_A = get_all_possible_total_results(A);
+  auto pair_B = get_all_possible_total_results(B);
+
+  vector<number_t> fenwick_tree_B(pair_B.second.size());
+  for (size_t i : pair_B.first) {
+    number_t val = pair_B.second[i];
+    for (size_t j = i; j < fenwick_tree_B.size(); j |= j + 1) {
+      fenwick_tree_B[j] += val;
+    }
+  }
+
+  number_t total = 0;
+  for (number_t i : pair_A.first) {
+    number_t diff = fenwick_tree_get(fenwick_tree_B,
+        min(i + Q, static_cast<number_t>(fenwick_tree_B.size() - 1)));
+    if (i > Q) {
+      diff -= fenwick_tree_get(fenwick_tree_B, i - Q - 1);
+    }
+    diff %= modulo;
+    number_t val = pair_A.second[i];
+    total += diff * val;
+    total %= modulo;
+  }
+
+  cout << total << endl;
+
+  return 0;
+}
+
+// --------------------------------------------------------------------------------
+

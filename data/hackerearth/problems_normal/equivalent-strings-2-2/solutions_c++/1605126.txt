@@ -1,0 +1,150 @@
+#include <bits/stdc++.h>
+using namespace std ;
+#define LL long long int
+#define ft first
+#define sd second
+#define PII pair<int,int>
+#define MAXN 222222
+#define MAXM 111
+#define mp make_pair
+#define f_in(st) freopen(st,"r",stdin)
+#define f_out(st) freopen(st,"w",stdout)
+#define sc(x) scanf("%d",&x)
+#define scll(x) scanf("%lld",&x)
+#define pr(x) printf("%lld\n",x)
+#define pb push_back
+#define MOD 1000000007
+#define p 5
+
+int T,N,L,R,K,Q,Look[26][MAXN];
+char A[MAXN] , B[MAXN];
+vector<int> adj_A[26] , adj_B[26] ;
+vector<LL> hash_A[26] , hash_B[26] ;
+vector<LL> sum_A[26] , sum_B[26] ;
+LL mod=7420738134811LL ;
+LL P[MAXN] , SP[MAXN];
+
+
+bool f1(){
+    int l1 , r1 , l2 , r2;
+    l1 = L ;
+    r1 = L + K - 1 ;
+    l2 = R ;
+    r2 = R + K - 1 ;
+    for(int i=0;i<26;i++){
+        if(Look[i][L] != -1 && Look[i][L] <= r1){
+            int idx = R + (Look[i][L] - L) ;
+            idx = B[idx] - 'a' ;
+            int c1 , c2 , idx1 ,idx2 ,idx3 , idx4;
+            idx1 = lower_bound(adj_A[i].begin(),adj_A[i].end(),l1)-adj_A[i].begin()-1 ;
+            idx2 = upper_bound(adj_A[i].begin(),adj_A[i].end(),r1)-adj_A[i].begin()-1 ;
+            idx3 = lower_bound(adj_B[idx].begin(),adj_B[idx].end(),l2)-adj_B[idx].begin()-1 ;
+            idx4 = upper_bound(adj_B[idx].begin(),adj_B[idx].end(),r2)-adj_B[idx].begin()-1 ;
+            c1 = idx2 - idx1 ;
+            c2 = idx4 - idx3 ;
+            if(c1 != c2)
+                return 0 ;
+            LL s1 = sum_A[i][idx2] - (idx1 < 0 ? 0 : sum_A[i][idx1] ) ;
+            LL s2 = sum_B[idx][idx4] - (idx3 < 0 ? 0 : sum_B[idx][idx3] ) ;
+            if(L < R){
+            	s2 -= 1LL*(R-L)*c1 ;
+            }else if(L > R){
+            	s1 -= 1LL*(L-R)*c1 ;
+            }
+            if(s1 != s2)
+                return 0 ;
+            LL h1 = hash_A[i][idx2] - (idx1 < 0 ? 0 : hash_A[i][idx1] ) ;
+            LL h2 = hash_B[idx][idx4] - (idx3 < 0 ? 0 : hash_B[idx][idx3] ) ;
+            s1 = sum_A[i][idx2] - (idx1 < 0 ? 0 : sum_A[i][idx1] ) ;
+            s2 = sum_B[idx][idx4] - (idx3 < 0 ? 0 : sum_B[idx][idx3] ) ;
+            h1 -= (1LL * s1 * (idx1+1));
+            h2 -= (1LL * s2 * (idx3+1));
+            if(L < R){
+            	h2 -= 1LL * (R-L) * (1LL * c1 * (c1+1) / 2 )  ;
+            }else if(R < L){
+            	h1 -= 1LL * (L-R) * (1LL * c1 * (c1+1) / 2 )  ;
+            }
+
+            if(h1 != h2)
+                return 0 ;
+        }
+    }
+    return 1 ;
+}
+
+int main(){
+
+    P[0] = 1 ;
+    SP[0] = 1 ;
+    for(int i=1;i<MAXN;i++){
+        P[i] = P[i-1] * p ;
+        P[i] %= mod ;
+        SP[i] = P[i] ;
+        SP[i] += SP[i-1] ;
+        SP[i] %= mod ;
+    }
+
+    sc(T) ;
+
+    while(T--){
+
+        scanf("%s",A+1) ;
+        scanf("%s",B+1) ;
+        N = strlen(A+1) ;
+
+        for(int i=1;i<=N;i++){
+            adj_A[A[i]-'a'].pb(i) ;
+            adj_B[B[i]-'a'].pb(i) ;
+        }
+
+        for(int i=0;i<26;i++)
+            Look[i][N+1] = -1;
+
+        for(int i=N;i>0;i--){
+            for(int j=0;j<26;j++){
+                Look[j][i] = Look[j][i+1] ;
+            }
+            Look[A[i]-'a'][i] = i ;
+        }
+
+        for(int i=0;i<26;i++){
+            LL sum = 0 , num = 0 ;
+            for(int j=0;j<adj_A[i].size();j++){
+                sum += adj_A[i][j] ;
+                sum_A[i].pb(sum) ;
+                num = num + (1LL * (j+1) * adj_A[i][j]) ;
+                hash_A[i].pb(num) ;
+           }
+        }
+
+        for(int i=0;i<26;i++){
+            LL sum = 0 , num = 0 ;
+            for(int j=0;j<adj_B[i].size();j++){
+                sum += adj_B[i][j] ;
+                sum_B[i].pb(sum) ;
+                num = num + (1LL * (j+1) * adj_B[i][j]) ;
+                hash_B[i].pb(num) ;
+            }
+        }
+
+
+        sc(Q) ;
+        while( Q-- ){
+            sc(L) ; sc(R); sc(K) ;
+            if(f1()){
+                puts("yes") ;
+            }else{
+                puts("no") ;
+            }
+        }
+        for(int i=0;i<26;i++){
+        	adj_A[i].clear() ;
+        	adj_B[i].clear() ;
+        	sum_A[i].clear() ;
+        	sum_B[i].clear() ;
+        	hash_A[i].clear() ;
+        	hash_B[i].clear() ;
+        }
+    }
+    return 0 ;
+}

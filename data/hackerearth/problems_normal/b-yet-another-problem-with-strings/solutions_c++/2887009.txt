@@ -1,0 +1,168 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+#define MP make_pair
+#define PB push_back
+#define LL long long
+#define int LL
+#define st first
+#define nd second
+#define FI st
+#define SE nd
+#define FOR(i,a,b) for(int i = (a); i <= (b); i++)
+#define RE(i,n) FOR(i,1,n)
+#define R(i,n) FOR(i,0,(int)(n)-1)
+#define REP(i,n) R(i,n)
+#define ALL(x) (x).begin(), (x).end()
+#define SZ(x) ((int)(x).size())
+#define PII pair<int,int>
+#define VI vector<int>
+template<class C> void mini(C&a4, C b4){a4=min(a4,b4);}
+template<class C> void maxi(C&a4, C b4){a4=max(a4,b4);}
+
+template<class TH> void _dbg(const char *sdbg, TH h){cerr<<sdbg<<"="<<h<<"\n";}
+template<class TH, class... TA> void _dbg(const char *sdbg, TH h, TA... a){
+  while(*sdbg!=',')cerr<<*sdbg++;cerr<<"="<<h;_dbg(sdbg+1,a...);
+}
+
+#ifdef LOCAL
+#define debug(...) _dbg(#__VA_ARGS__, __VA_ARGS__)
+#define debugv(C) {for(auto&c:C)cerr<<c<<",";cerr<<endl;}
+#else
+#define debug(...) (__VA_ARGS__)
+#define debugv(C) {}
+#define cerr if(0)cout
+#endif
+
+const int64_t Mod = 2305843009213693951LL;
+//#warning change base
+const int64_t Base = 23589713251235789LL;
+
+inline int64_t add_mod(int64_t a, int64_t b){ a += b; if(a>Mod) a -= Mod; return a; }
+inline int64_t sub_mod(int64_t a, int64_t b){ a -= b; if(a<0) a += Mod; return a; }
+inline int64_t mul_mod(int64_t a, int64_t b){ 
+  __int128_t x = ((__int128_t)a * b);
+  return add_mod(x&Mod, x>>61LL);
+  //return (x + (x>>61LL)) & Mod;
+}
+
+int N, Q;
+const int MaxN = 200005;
+
+vector<int64_t> powers;
+unordered_multiset<int64_t> hashes[MaxN];
+vector<string> texts;
+vector<int64_t> curHashes;
+set<int> curLengths;
+
+void precomp(){
+  powers.resize(MaxN*2);
+  powers[0] = 1;
+  for(int i = 1; i < MaxN*2; i++){
+    powers[i] = mul_mod(powers[i-1], Base);
+  }
+}
+
+inline int64_t get_hash(const string& s){
+  int L = SZ(s);
+  int64_t res = 0;
+  for(int i = 0; i < L; i++){
+    res = add_mod(res, mul_mod(s[i], powers[L-i-1]));
+  }
+  return res;
+}
+
+void input(){
+  cin >> N >> Q;
+  for(int i = 0; i < N; i++){
+    string s;
+    cin >> s;
+    
+    texts.push_back(s);
+    uint64_t H = get_hash(s);
+    curHashes.push_back(H);
+    hashes[s.size()].insert(H);
+    curLengths.insert((int)s.size());
+  }
+}
+
+
+inline bool find_val(const string& pattern){
+  int S = SZ(pattern);
+  for(int len : curLengths){
+    if(len > S) break;
+    
+    int64_t H = get_hash(pattern.substr(0, len));
+    if(hashes[len].count(H)) return true;
+    
+    for(int end = len; end < S; end++){
+      H = sub_mod(H, mul_mod(pattern[end-len], powers[len-1]));
+      H = add_mod(mul_mod(H, Base), pattern[end]);
+      if(hashes[len].count(H)) return true;
+    }
+  }
+  return false;
+}
+
+inline void add_char(int id, char ch){
+  debug(id, ch);
+  int64_t prevH = curHashes[id];
+  int64_t nextH = add_mod(mul_mod(prevH, Base), ch);
+  int prevLen = SZ(texts[id]),
+      nextLen = prevLen + 1;
+      
+  hashes[prevLen].erase(hashes[prevLen].find(prevH));
+  if(hashes[prevLen].size() == 0) curLengths.erase(prevLen);
+  
+  hashes[nextLen].insert(nextH);
+  curLengths.insert(nextLen);
+  curHashes[id] = nextH;
+  texts[id].push_back(ch);
+}
+
+
+#undef int
+int main(){
+#define int LL
+  ios_base::sync_with_stdio(0);
+  cin.tie(0);
+  cout<<fixed<<setprecision(10);
+  
+  precomp();
+  input();
+  
+  int LAST_YES = 0;
+  
+  for(int query = 0; query < Q; query++){
+    int type;
+    cin >> type;
+    
+    if(type == 1){
+      string pattern;
+      cin >> pattern;
+      for(char& ch : pattern){
+        int value = ch - 'a';
+        value = (value + LAST_YES) % 26;
+        ch = value + 'a';
+      }
+      debug(LAST_YES, pattern);
+      
+      if(find_val(pattern)){
+        cout << "YES\n";
+        LAST_YES = query;
+      } else {
+        cout << "NO\n";
+      }
+    } else {
+      int i, alpha;
+      cin >> i >> alpha;
+      i = (i + LAST_YES) % N;
+      alpha = (alpha + LAST_YES) % 26;
+      add_char(i, 'a'+alpha);
+    }
+  }
+ 
+  
+  
+  return 0; 
+}

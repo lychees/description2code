@@ -1,0 +1,116 @@
+#include<iostream>
+#include<set>
+#include<algorithm>
+#include<vector>
+#include<list>
+#include<climits>
+#include<queue>
+using namespace std;
+
+typedef vector<list<pair<int,int> > > graph;
+
+
+struct cmp
+{
+	bool operator()(pair<int,int> a,pair<int,int> b)
+	{
+		return a>b;
+	}
+};
+
+vector<int> dijkstras(const graph &G,int source)
+{
+	const int INVALID = INT_MAX;
+	priority_queue<pair<int,int>,vector<pair<int,int> >, cmp > Q;
+	
+	vector<bool> used(G.size(),false);  
+	vector<int> distances(G.size(),INVALID);  
+	
+	distances[source]=0;
+	Q.push(make_pair(0,source));
+	
+	while(!Q.empty())
+	{
+		pair<int,int> current=Q.top();
+		Q.pop();
+		if(!used[current.second])
+		{
+			used[current.second]=true;
+			for(list<pair<int,int> >::const_iterator i=G[current.second].begin();i!=G[current.second].end();i++)
+			{
+				if(distances[i->first]>distances[current.second]+i->second)
+				{
+					distances[i->first]=distances[current.second]+i->second;
+					Q.push(make_pair(distances[i->first],i->first));
+				}
+					
+			}
+		}
+	}
+	return distances;	
+}
+int prims(const graph &G,int source)
+{
+	const int INVALID = INT_MAX;
+	priority_queue<pair<int,int>,vector<pair<int,int> >, cmp > Q;
+	
+	vector<bool> used(G.size(),false);  
+	vector<int> distances(G.size(),INVALID);  
+	
+	distances[source]=0;
+	Q.push(make_pair(0,source));
+	
+	int weight=0;
+	while(!Q.empty())
+	{
+		pair<int,int> current=Q.top();
+		Q.pop();
+		if(!used[current.second])
+		{
+			used[current.second]=true;
+			weight+=current.first;
+			for(list<pair<int,int> >::const_iterator i=G[current.second].begin();i!=G[current.second].end();i++)
+			{
+				if(!used[i->first]&&distances[i->first]>i->second)
+				{
+					distances[i->first]=i->second;
+					Q.push(make_pair(distances[i->first],i->first));
+				}	
+			}
+		}
+	}
+	return weight;	
+}
+
+
+int main(){
+	int t;
+	cin>>t;
+	
+	while(t--){
+		int n,m,k;
+		cin>>n>>m>>k;
+		
+		graph G(n);
+		while(m--){
+			int a,b,c;
+			cin>>a>>b>>c;
+			a--;
+			b--;
+			G[a].push_back(make_pair(b,c));
+			G[b].push_back(make_pair(a,c));
+		}
+		
+		vector<vector<int> > distances(k);
+		for(int i=0;i<k;i++)
+			distances[i]=dijkstras(G,i);
+		
+		graph minPathGraph(k);
+		for(int i=0;i<k;i++){
+			for(int j=0;j<k;j++)
+				minPathGraph[i].push_back(make_pair(j,distances[i][j]));
+		}
+		
+		cout<<prims(minPathGraph,0)<<endl;
+	}
+}

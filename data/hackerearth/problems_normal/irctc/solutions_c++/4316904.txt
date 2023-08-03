@@ -1,0 +1,203 @@
+#include <iostream>
+#include <string>
+#include <stack>
+#include <set>
+#include <vector>
+#include <stdio.h>
+
+using namespace std;
+
+int main()
+{
+    int t;
+
+    cin >> t;
+
+    while(t--)
+    {
+        long int n, k, a, b, c, src, dest, via;
+
+        cin >> n >> k;
+
+        vector <long int> graph[n+1], graphD[n+1];
+
+        for(long int i=0;i<k;i++)
+        {
+            scanf("%ld %ld %ld", &a, &b, &c);
+
+            graph[a].push_back(b);
+
+            graph[b].push_back(a);
+
+            graphD[a].push_back(c);
+
+            graphD[b].push_back(c);
+        }
+
+        cin >> src >> via >> dest;
+
+        long int dist[n+1], parent[n+1];
+
+        set <pair<long int, long int>> stck;
+
+        for(long int i=1;i<=n;i++)
+        {
+            dist[i]=1000000000;
+
+            parent[i]=-1;
+
+            if(i==src)
+            {
+                dist[i]=0;
+
+                stck.insert(make_pair(0, i));
+            }
+            else
+            {
+                stck.insert(make_pair(1000000000, i));
+            }
+        }
+
+        long int currNode, currDist;
+
+        while(!stck.empty())
+        {
+            auto temp=stck.begin();
+
+            currDist=temp->first;
+
+            currNode=temp->second;
+
+            if(currNode==via)
+            {
+                break;
+            }
+
+            stck.erase(make_pair(currDist, currNode));
+
+            for(long int i=0;i<graph[currNode].size();i++)
+            {
+                if(dist[graph[currNode][i]]>currDist+graphD[currNode][i])
+                {
+                    parent[graph[currNode][i]]=currNode;
+
+                    stck.erase(make_pair(dist[graph[currNode][i]], graph[currNode][i]));
+
+                    dist[graph[currNode][i]]=currDist+graphD[currNode][i];
+
+                    stck.insert(make_pair(dist[graph[currNode][i]], graph[currNode][i]));
+                }
+            }
+        }
+
+        if(parent[via]==-1)
+        {
+            cout << "No Train Found." << endl;
+
+            continue;
+        }
+
+        stack <long int> path1;
+
+        long int temp=via;
+
+        while(temp!=-1)
+        {
+            path1.push(temp);
+
+            temp=parent[temp];
+        }
+
+        long int dist1=dist[via];
+
+        stck.clear();
+
+        for(long int i=1;i<=n;i++)
+        {
+            dist[i]=1000000000;
+
+            parent[i]=-1;
+
+            if(i==via)
+            {
+                dist[i]=0;
+
+                stck.insert(make_pair(0, i));
+            }
+            else
+            {
+                stck.insert(make_pair(1000000000, i));
+            }
+        }
+
+        while(!stck.empty())
+        {
+            auto temp=stck.begin();
+
+            currDist=temp->first;
+
+            currNode=temp->second;
+
+            if(currNode==dest)
+            {
+                break;
+            }
+
+            stck.erase(make_pair(currDist, currNode));
+
+            for(long int i=0;i<graph[currNode].size();i++)
+            {
+                if(dist[graph[currNode][i]]>currDist+graphD[currNode][i])
+                {
+                    parent[graph[currNode][i]]=currNode;
+
+                    stck.erase(make_pair(dist[graph[currNode][i]], graph[currNode][i]));
+
+                    dist[graph[currNode][i]]=currDist+graphD[currNode][i];
+
+                    stck.insert(make_pair(dist[graph[currNode][i]], graph[currNode][i]));
+                }
+            }
+        }
+
+        if(parent[dest]==-1)
+        {
+            cout << "No Train Found." << endl;
+
+            continue;
+        }
+
+        stack <long int> path2;
+
+        temp=dest;
+
+        while(temp!=-1)
+        {
+            path2.push(temp);
+
+            temp=parent[temp];
+        }
+
+        cout << dist1+dist[dest] << endl;
+
+        while(!path1.empty())
+        {
+            printf("%ld ", path1.top());
+
+            path1.pop();
+        }
+
+        path2.pop();
+
+        while(!path2.empty())
+        {
+            printf("%ld ", path2.top());
+
+            path2.pop();
+        }
+
+        cout << endl;
+    }
+
+    return 0;
+}

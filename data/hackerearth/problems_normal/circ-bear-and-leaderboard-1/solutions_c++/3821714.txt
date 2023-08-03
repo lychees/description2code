@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+
+#ifndef ONLINE_JUDGE
+#define dbg(x) cerr << __LINE__ << " : " << #x << " = " << (x) << endl;
+#else
+#define dbg(x)
+#endif
+
+#define ff first
+#define ss second
+const int MAXN = 500500;
+ll ft[MAXN], ftsum[MAXN];
+
+ll query(ll tree[], int x){
+    ll res = 0;
+    for (; x >= 0; x = (x & (x + 1)) - 1)
+        res += tree[x];
+    return res;
+}
+
+void update(ll tree[], int x, ll val){
+    for (; x < MAXN; x = (x | (x + 1)))
+        tree[x] += val;
+}
+
+int main(){
+    std::ios_base::sync_with_stdio(false);
+    int n; scanf("%d", &n);
+    int q; scanf("%d", &q);
+    vector<ll> arr(n, 0);
+    vector<pii> instr(q);
+    vector<ll> xs; xs.push_back(0);
+    for (int i = 0; i < q; i++){
+        int id, val; scanf("%d%d", &id, &val);
+        id--;
+        instr[i] = {id, val};
+        arr[id] += val;
+        xs.push_back(arr[id]);
+    }
+    sort(xs.begin(), xs.end());
+    xs.erase(unique(xs.begin(), xs.end()), xs.end());
+    update(ft, 0, n);
+    ll res = 0;
+    arr.assign(n, 0);
+
+    for (int i = 0; i < q; i++){
+        int id, val;
+        tie(id, val) = instr[i];
+        int cur = lower_bound(xs.begin(), xs.end(), arr[id]) - xs.begin();
+        int nxt = lower_bound(xs.begin(), xs.end(), arr[id] + val) - xs.begin();
+
+        ll rep = query(ftsum, nxt - 1) - arr[id];
+        if (cur) rep -= query(ftsum, cur - 1);
+        res += rep;
+        update(ftsum, cur, -arr[id]);
+        res -= (n - query(ft, cur) + 1) * arr[id];
+        arr[id] += val;
+        res += (n - query(ft, nxt) + 1) * arr[id];
+        update(ft, cur, -1);
+        update(ft, nxt, +1);
+        update(ftsum, nxt, +arr[id]);
+        cout << res << "\n";
+    }
+
+
+    return 0;
+}

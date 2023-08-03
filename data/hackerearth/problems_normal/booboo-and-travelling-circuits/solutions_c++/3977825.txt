@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<vi> vvi; 
+typedef pair<int,int> ii;
+typedef pair<ll,ll> pll;
+typedef pair<double,double> pdd;
+
+#define fill(a,x) memset(a,x,sizeof(a)) 
+#define all(x) x.begin(), x.end()
+#define tr(x,it) for( auto it = x.begin(); it!=x.end(); ++it)
+#define rtr(x,it) for( auto it = x.rbegin(); it!=x.rend(); ++it)
+#define sz(a) int((a).size()) 
+#define pb push_back 
+#define F first
+#define S second
+#define FOR(i,a,b) for(int i = a; i<=b; ++i)
+#define NFOR(i,a,b) for(int i = a; i>=b; --i)
+#define fast ios_base::sync_with_stdio(false),cin.tie(0),cout.tie(0);
+const ll INF = 1e18;
+const int mod = 1e9+3;
+const int N = 2e3 + 10; 
+const int M = 1e4 + 10;
+ll dp[M];
+int A[N][M],B[N][M];
+pair<pll,ll> MI[M];
+int sieve[M];
+int main(){
+  clock_t tm = clock();
+  fast;
+  int t = 1;
+  //cin >> t;
+  FOR(_t,1,t){
+      
+      FOR(i,0,M-1){
+        MI[i] = {{0,1},0};
+      }
+      int n,m;
+      cin >> n >> m;
+      ll s,p,q,r,w,x,y,z;
+      cin >> s >> p >> q >> r;
+      cin >> w >> x >> y >> z;
+      
+      FOR(i,0,n*m-1){
+        ll temp = (s*s)%mod;
+        s = ( (p*temp)%mod + (q*s)%mod + r)%mod;
+        A[i/m + 1][i%m + 1] = s;
+      }
+      FOR(i,0,n*m-1){
+        ll temp = (w*w)%mod;
+        w = ( (x*temp)%mod + (y*w)%mod + z)%mod;
+        B[i/m + 1][i%m + 1] = w;
+      }
+
+      FOR(i,2,M-1)sieve[i]=i;
+      for(int i = 2; i*i < M ; i++){
+        if(sieve[i]==i){
+          for(int j = i*i; j < M ; j+=i){
+            sieve[j]=min(i,sieve[j]);
+          }
+        }
+      }
+      fill(dp,0);
+      NFOR(i,n-1,1){
+        dp[1] = A[i][1] + dp[1];
+        FOR(j,2,m){
+            if(MI[sieve[j]].F.S != j)dp[j] = min( A[i][j] + dp[j],B[i][j] + MI[sieve[j]].F.F);
+            else dp[j] = min( A[i][j]+ dp[j], B[i][j] + MI[sieve[j]].S );
+        }
+        FOR(j,1,m)MI[j] = {{INF,-1},INF};
+        FOR(j,2,m){
+          if(dp[j] < MI[sieve[j]].F.F){
+            MI[sieve[j]].S = MI[sieve[j]].F.F;
+            MI[sieve[j]].F.F = dp[j];
+            MI[sieve[j]].F.S = j;
+          }
+          else if(dp[j] < MI[sieve[j]].S ){
+            MI[sieve[j]].S = dp[j];
+          }
+          if(dp[1] < MI[sieve[j]].F.F){
+            MI[sieve[j]].S = MI[sieve[j]].F.F;
+            MI[sieve[j]].F.F = dp[1];
+            MI[sieve[j]].F.S = 1;
+          }
+          else if(dp[1] < MI[sieve[j]].S){
+            MI[sieve[j]].S = dp[1];
+          }
+        } 
+        //cout << MI[0].F.F << "a\n";
+      }
+
+      ll ans = dp[1];
+      FOR(i,2,m){
+        assert(dp[i] < INF );
+        ans = min( ans ,dp[i]);
+      }
+      cout << ans << "\n";
+
+  } 
+  tm = clock()-tm ;
+  cerr << (float)(tm)/CLOCKS_PER_SEC << "\n";
+  return 0;
+} 

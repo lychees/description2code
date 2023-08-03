@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+#define M 1000000007
+using namespace std;
+int dp[2][1000005][2];
+int A[205];
+int B[205];
+template <typename T>
+inline void fi(T *a)
+{
+    register char c=0;
+    while (c<33) c=getchar_unlocked();
+    *a=0;
+    int tmp = 0;
+    while (c>33)
+    {
+        if ( c == 45 ) tmp = 1;
+        else *a=*a*10+c-'0';
+        c=getchar_unlocked();
+    }
+    if ( tmp == 1 ) *a = 0-(*a);
+}
+int main()
+{
+    int n,q;
+    fi(&n);
+    assert(n >= 1 & n <= 200);
+    for ( int i = 1; i <= n; i++ ) fi(&A[i]), assert(A[i] >= 0 && A[i] <= 2000);
+    for ( int i = 1; i <= n; i++ ) fi(&B[i]), assert(B[i] >= 0 && B[i] <= 2000);
+    fi(&q);
+    assert(q >= 0 && q <= 1000000);
+    dp[0][0][0] = 1;
+    for ( int i = 1; i <= n; i++ ) {
+        memset(dp[i%2], 0, sizeof(dp[i%2]));
+        for ( int j = 0; j <= 400000; j++ ) {
+            for ( int k = 0; k < 2; k++ ) {
+                if ( j == 0 && k == 1 ) continue;
+                if ( !dp[(i-1)%2][j][k] ) continue;
+                int act_diff = j, new_diff;
+                if ( k == 1 ) act_diff = -j;
+                new_diff = act_diff + A[i];
+                dp[i%2][abs(new_diff)][new_diff < 0] += dp[(i-1)%2][j][k];
+                if ( dp[i%2][abs(new_diff)][new_diff < 0] >= M ) dp[i%2][abs(new_diff)][new_diff < 0] -= M;
+                new_diff = act_diff - B[i];
+                dp[i%2][abs(new_diff)][new_diff < 0] += dp[(i-1)%2][j][k];
+                if ( dp[i%2][abs(new_diff)][new_diff < 0] >= M ) dp[i%2][abs(new_diff)][new_diff < 0] -= M;
+                new_diff = act_diff + A[i] - B[i];
+                dp[i%2][abs(new_diff)][new_diff < 0] += dp[(i-1)%2][j][k];
+                if ( dp[i%2][abs(new_diff)][new_diff < 0] >= M ) dp[i%2][abs(new_diff)][new_diff < 0] -= M;
+                new_diff = act_diff;
+                dp[i%2][abs(new_diff)][new_diff < 0] += dp[(i-1)%2][j][k];
+                if ( dp[i%2][abs(new_diff)][new_diff < 0] >= M ) dp[i%2][abs(new_diff)][new_diff < 0] -= M;
+            }
+        }
+    }
+    int ans = 0;
+    for ( int j = 0; j <= min(q,1000000); j++ ) {
+        for ( int k = 0; k < 2; k++ ) {
+            ans += dp[n%2][j][k];
+            if ( ans >= M ) ans -= M;
+        }
+    }
+    printf("%d\n", ans);
+    return 0;
+}

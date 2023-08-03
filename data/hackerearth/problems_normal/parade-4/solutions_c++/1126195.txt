@@ -1,0 +1,60 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstring>
+#include <map>
+using namespace std;
+
+#define MOD 1000000007
+#define MAX 1024
+int f[MAX][MAX], color[MAX], last[MAX], tot[MAX], in[MAX], v[MAX];
+
+int main()
+{
+	int t, n, m, h, c;
+	for(scanf("%d", &t); t; t--) {
+		scanf("%d %d", &n, &m);
+		for(int i = 0; i < n; i++) {
+			scanf("%d %d", &h, &c);
+			color[i] = c;
+			in[h] = i;
+		}
+		c = in[0];
+		for(int i = 0; i < n; i++) {
+			v[i] = color[c];
+			c = in[c+1];
+		}
+		
+		int resp = 0;
+		memset(color, -1, sizeof(color));
+		for(int i = 0; i < n; i++) {
+			c = v[i];
+			last[i] = color[c];
+			color[c] = i;
+		}
+		
+		for(int i = 0; i < n; i++) {
+			f[i][1] = (last[i] < 0) ? 1 : 0;
+			resp = (resp+f[i][1])%MOD;
+		}
+		
+		for(int j = 2; j <= m; j++) {
+			tot[j-2] = 0;
+			for(int i = j-1; i < n; i++) {
+				tot[i] = (tot[i-1]+f[i-1][j-1])%MOD;					
+				
+				if (last[i] < j-1) {
+					f[i][j] = tot[i];
+				} else {
+					f[i][j] = (tot[i]-tot[last[i]]);
+					if (f[i][j] < 0) f[i][j] += MOD;
+				}
+				
+				resp = (resp+f[i][j])%MOD;
+			}
+		}
+		
+		printf("%d\n", resp);
+	}
+    return 0;
+}

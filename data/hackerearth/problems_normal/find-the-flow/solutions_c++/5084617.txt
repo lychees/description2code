@@ -1,0 +1,66 @@
+#include<iostream>
+#include<queue>
+#include<cstring>
+
+using namespace std;
+
+int adj[30][30];
+int rgraph[30][30];
+char s1[10];
+char s2[10];
+bool visited[30];
+int parent[30];
+int ans = 0;
+
+bool bfs(int s, int t){
+    memset(visited, 0, sizeof(visited));
+    queue<int> q;
+    q.push(s);
+    parent[s] = -1;
+    visited[s] = true;
+
+    while(!q.empty()){
+        int u = q.front();
+        q.pop();
+        for(int i=0;i<26;i++){
+            if(!visited[i] && rgraph[u][i] > 0){
+                q.push(i); parent[i] = u; visited[i] = true;
+            }
+        }
+    }
+    return visited[t] == true;
+}
+
+void solve(){
+    int s = 'S'-'A';
+    int t = 'T'-'A';
+            for(int i=0;i<=26;i++) for(int j=0;j<=26;j++) rgraph[i][j] = adj[i][j];
+
+            int maxflow = 0;
+            while(bfs(s, t)){
+                int path = 1000000000;
+                for(int i=t;i!=s;i=parent[i]){
+                    int u = parent[i];
+                    path = min(path, rgraph[u][i]);
+                }
+
+                for(int i=t;i!=s;i=parent[i]){
+                    int u = parent[i];
+                    rgraph[u][i] -= path;
+                    rgraph[i][u] += path;
+                }
+                maxflow += path;
+            }
+    cout << maxflow << endl;
+}
+
+int main(){
+    int e;
+    cin >> e;
+    for(int i=0;i<e;i++){
+        int c;
+        cin >> s1 >> s2 >> c;
+        adj[s1[0]-'A'][s2[0]-'A'] = c;
+    }
+    solve();
+}

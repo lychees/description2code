@@ -1,0 +1,206 @@
+#include<bits/stdc++.h>
+#define bs 1000000007
+using namespace std;
+int n,m,ar[200][200];
+long long A[200][200];
+int coef[200][200][15];
+int Y[100];
+long long pw(long long a,long long b)
+{
+	if (b==0)
+		return 1;
+	if (b%2)
+		return a*pw(a,b-1)%bs;
+	return pw(a*a%bs,b/2);
+}
+long long inv(long long x)
+{
+	return pw(x,bs-2);
+}
+int have[200][200][15];
+void construct_matrix(int pt)
+{
+	for (int i=1;i<=n;i++)
+		for (int j=1;j<=n;j++)
+			A[i][j]=0;
+		
+	for (int i=1;i<=n;i++)
+		for (int j=1;j<=n;j++)
+		for (int q=0;q<=10;q++)
+		{
+			if (have[i][j][q]==1)
+				A[i][j]=(A[i][j]+pw(pt,q)*coef[i][j][q])%bs;
+		}
+}
+vector<vector<long long> >norm()
+{
+	vector<vector<long long > > a;
+	a.resize(n);
+	for (int i=0;i<n;i++)
+		a[i].resize(n);
+	for (int i=0;i<n;i++)
+		for (int j=0;j<n;j++)
+			a[i][j]=A[i+1][j+1];
+	return a;
+}
+void show(vector<vector<long long> > v)
+{
+	for (int i=0;i<v.size();i++)
+	{
+		for (int j=0;j<v.size();j++)
+			cout<<v[i][j]<<" ";
+		cout<<endl;
+	}
+}
+int get_determinant(vector<vector<long long> > a)
+{
+	long long det=1;
+	int n=a.size();
+	for (int i=0;i<n;i++)
+	{	
+		int k=i;
+		for (int j=i+1;j<n;j++)
+			if (a[j][i]>a[k][i])
+				k=j;
+		
+		if (a[k][i]==0)
+		{
+			return 0;
+		}
+		
+		swap(a[i],a[k]);
+		
+		if(i!=k)
+			det=(bs-det)%bs;
+		
+		det=det*a[i][i]%bs;
+		
+		int Q=inv(a[i][i]);
+		
+		for (int j=i+1;j<n;j++)
+		{
+			a[i][j]=(a[i][j]*Q)%bs;
+		}
+		
+		for (int j=0;j<n;j++)
+			if (j!=i&&a[j][i]>0)
+			{
+				for (int k=i+1;k<n;k++)
+				{
+					a[j][k]-=a[i][k]*a[j][i]%bs;
+					if (a[j][k]<0)
+						a[j][k]+=bs;
+				}
+			}
+	}
+	
+	return det;
+}
+vector<vector<long long> > read_matrix()
+{
+	vector<vector<long long> > v;
+	int x;
+	cin>>x;
+	v.resize(x);
+	for (int i=0;i<v.size();i++)
+		v[i].resize(x);
+	for (int i=0;i<v.size();i++)
+		for (int j=0;j<v.size();j++)
+		{
+			int val;
+			cin>>val;
+			v[i][j]=val;
+		}
+	return v;
+}
+vector<long long> solve(vector<vector<long long> > a)
+{
+	vector<long long>ans;
+	int n=a.size();
+	int m=a[0].size()-1;
+	vector<int> where(m,-1);
+	for (int col=0,row=0;col<m&&row<n;++col)
+	{
+		int sel=row;
+		for (int i=row;i<n;i++)
+			if (abs(a[i][col])>abs(a[sel][col]))
+				sel=i;
+		if (a[sel][col]==0)
+			continue;
+		for (int i=col;i<=m;i++)
+			swap(a[sel][i],a[row][i]);
+		where[col]=row;
+		
+		for (int i=0;i<n;i++)
+			if (i!=row)
+			{
+				long long c=a[i][col]*inv(a[row][col])%bs;
+				for (int j=col;j<=m;j++)	
+				{
+					a[i][j]=a[i][j]-a[row][j]*c%bs;
+					if (a[i][j]<0)
+						a[i][j]+=bs;
+				}
+			}
+		++row;
+	}
+	
+	ans.assign(m,0);
+	for (int i=0;i<m;i++)
+	{
+		ans[i]=a[where[i]][m]*inv(a[where[i]][i])%bs;
+	}
+	return ans;
+}
+int main(){
+	
+cin>>n>>m;
+for (int i=1;i<=m;i++)
+{
+	int a,b,c;
+	cin>>a>>b>>c;
+	have[a][b][c]=1;
+}
+for (int i=1;i<=n;i++)
+	for (int j=1;j<=n;j++)
+		for (int q=0;q<=10;q++)	
+		{
+			coef[i][j][q]=rand();
+		}
+	
+for (int Q=0;Q<=10*n;Q++)
+{
+	construct_matrix(Q);
+	vector<vector<long long> > a=norm();
+	
+	Y[Q]=get_determinant(a);
+}
+vector<vector<long long > > system;
+system.resize(10*n+1);
+for (int i=0;i<=10*n;i++)
+{
+	system[i].resize(10*n+2);
+	long long val=pw(i,10*n);
+	for (int j=0;j<=10*n;j++)
+	{
+		if (i==0)
+			system[i][j]=(j==10*n?1:0);
+		else
+		{
+		system[i][j]=val;
+		if (val!=0)
+			val=(val*inv(i))%bs;
+		}
+	}
+	system[i][system[i].size()-1]=Y[i];
+}
+vector<long long> res=solve(system);
+for (int i=0;i<res.size();i++)	
+	if (res[i])
+		res[i]=1;
+reverse(res.begin(),res.end());
+for (int i=0;i<res.size();i++)
+	cout<<res[i];
+cout<<endl;
+return 0;
+}

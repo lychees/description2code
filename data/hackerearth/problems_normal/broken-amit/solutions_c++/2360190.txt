@@ -1,0 +1,97 @@
+// 2015-08-21
+#include <bits/stdc++.h>
+#include <unordered_map>
+#include <array>
+#include <forward_list>
+#include <unordered_set>
+using namespace std;
+
+#ifndef LOCAL
+//#define LOCAL
+#endif
+
+#define ff first
+#define ss second
+#define sz(x) (int)((x).size())
+#define szo(x) sizeof(x)
+#define pub push_back
+#define pob pop_back
+#define fo(i,j,k) for (int i = j; i <= (int)(k); ++i) // [j..k]
+#define fd(i,j,k) for (int i = j; i >= (int)(k); --i) // [j..k]
+#define gg cout << "OK\n"
+
+#define SET_BIT(mask, index) (mask |= (1 << index))
+#define TEST_BIT(mask, index) (mask & (1 << index))
+#define CLEAR_BIT(mask, index) (mask &= ~(1 << index))
+#define TOGGLE_BIT(mask, index) (mask ^= (1 << index))
+const int INF = 1000000000;
+using pii = pair<int, int>;
+using pip = pair<int, pii>;
+using ll = long long;
+using vi = vector<int>;
+using vll = vector<ll>;
+
+template<class T> T scan() { T t; cin >> t; return t; }
+#define sc(T) scan<decltype(T)>()
+#define sci scan<int>()
+#define scll scan<ll>()
+#define scs scan<string>()
+
+
+const int MAX_LD = 500000 + 3, MAX_N = 17;
+
+int L[MAX_LD], D[MAX_LD], n;
+ll dp[(1 << MAX_N)];
+
+void readInfo(int* cont) {
+	fo(i, 0, n - 1) {
+		cont[i] = sci;
+	}
+}
+
+int popcnt32(int u) {
+	u = (u & 0x55555555) + ((u >> 1) & 0x55555555);
+	u = (u & 0x33333333) + ((u >> 2) & 0x33333333);
+	u = (u & 0x0f0f0f0f) + ((u >> 4) & 0x0f0f0f0f);
+	u = (u & 0x00ff00ff) + ((u >> 8) & 0x00ff00ff);
+	u = (u & 0x0000ffff) + ((u >> 16) & 0x0000ffff);
+	return u;
+}
+
+ll compute(int mask = 0) {
+	if (mask == (1 << n) - 1) {
+		return 0;
+	}
+
+	if (dp[mask] != -1) {
+		return dp[mask];
+	}
+	ll ans = LLONG_MIN;
+
+	fo(i, 0, n - 1) {
+		if (!TEST_BIT(mask, i)) {
+			int step = popcnt32(mask);
+			ll love = (n * 1LL * L[i]) + (i * 1LL * D[i] * step * (step + 1) / 2) - (n * 1LL * i * D[i] * step);
+			ans = max(ans, love + compute(mask | (1 << i)));
+		}
+	}
+	return dp[mask] = ans;
+}
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(nullptr);
+#ifdef LOCAL
+	freopen("input.txt", "r", stdin);
+	// freopen("output.txt", "w+", stdout);
+#endif
+
+	n = sci;
+	readInfo(L);
+	readInfo(D);
+
+	memset(dp, -1, szo(dp));
+	cout << compute() << "\n";
+
+	return 0;
+}

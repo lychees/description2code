@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+#define rf freopen("inp.in", "r", stdin)
+using namespace std;
+const int MAX = 2000050;
+
+int V, N, M, T, cmp, components;
+int VIS[MAX];
+string S[MAX];
+vector < int > adjList[MAX];
+queue < int > q;
+
+inline void ins(int u, int v){
+	adjList[u].push_back(v);
+	adjList[v].push_back(u);
+}
+
+inline bool f(int i, int j){
+	return (i >= 0 and i < N and j >= 0 and j < M);
+}
+
+inline void bfs(int x){
+	q.push(x);
+	while(!q.empty()){
+		int u = q.front();
+		q.pop();
+		if(VIS[u]) continue;
+		cmp++, VIS[u] = 1;
+		for(auto v : adjList[u])
+			q.push(v);
+	}
+}
+
+int main(){
+ 	
+ 	cin.tie(0), ios::sync_with_stdio(0);
+	int T;
+	cin >> T;
+
+	while(T--){
+
+		cin >> N >> M;
+
+		V = (N + 1) * (M + 1);
+
+		// Cleanup
+		components = 0;
+		for(int i = 0 ; i <= V ; i++){
+			adjList[i].clear();
+			VIS[i] = 0;
+		}
+
+		for(int i = 0 ; i < N ; i++) cin >> S[i];
+
+		// Make Graph
+		for(int i = 0 ; i < N ; i++){
+			for(int j = 0 ; j < M ; j++){
+				bool ok = f(i - 1, j);
+				if( (ok and S[i - 1][j] != S[i][j]) or (!ok) )
+					ins(i * (M + 1) + j, i * (M + 1) + j + 1);
+				ok = f(i + 1, j);
+				if( (ok and S[i + 1][j] != S[i][j]) or (!ok) )
+					ins( (i + 1) * (M + 1) + j, (i + 1) * (M + 1) + j + 1);
+				ok = f(i, j - 1);
+				if( (ok and S[i][j - 1] != S[i][j]) or (!ok) )
+					ins( (i) * (M + 1) + j, (i + 1) * (M + 1) + j);
+				ok = f(i, j + 1);
+				if( (ok and S[i][j + 1] != S[i][j]) or (!ok) )
+					ins( (i) * (M + 1) + j + 1, (i + 1) * (M + 1) + j + 1);
+			}
+		}
+
+		// Find Components
+		for(int i = 0; i <= V ; i++){
+			if(VIS[i]) continue;
+			cmp = 0;
+			bfs(i);
+			if(cmp == 1) continue;
+			components++;
+		}
+
+		cout << ( (components > 1) ? "NO" : "YES" ) << '\n';
+	}
+}  

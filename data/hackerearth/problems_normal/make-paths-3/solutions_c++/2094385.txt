@@ -1,0 +1,135 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+struct node{
+  long in_heap;
+  long n_val;
+};
+
+class compare_1 { // simple comparison function
+   public:
+      bool operator()(const pair<long, pair<long, long> > x,const pair<long, pair<long, long> >  y) { return (x.second.first-y.second.first)<0; } // returns x>y
+};
+
+class compare_2 { // simple comparison function
+   public:
+      bool operator()(const pair<long, pair<long, long> > x,const pair<long, pair<long, long> >  y) { return (x.first-y.first)<0; } // returns x>y
+};
+class compare_3 { // simple comparison function
+   public:
+      bool operator()(const pair<long,long> x,const pair<long,long> y) { return (x.second-y.second)>0; } // returns x>y
+};
+
+#define rank first
+#define parent second
+
+long find(vector<pair<long, long>>&subsets, long i)
+{
+    // find root and make root as parent of i (path compression)
+    if (subsets[i].parent != i)
+        subsets[i].parent = find(subsets, subsets[i].parent);
+ 
+    return subsets[i].parent;
+}
+ 
+
+void Union(vector<pair<long, long>>&subsets , long  x, long y)
+{
+    long xroot = find(subsets, x);
+    long yroot = find(subsets, y);
+ 
+    // Attach smaller rank tree under root of high rank tree
+    // (Union by Rank)
+    if (subsets[xroot].rank < subsets[yroot].rank)
+        subsets[xroot].parent = yroot;
+    else if (subsets[xroot].rank > subsets[yroot].rank)
+        subsets[yroot].parent = xroot;
+ 
+    // If ranks are same, then make one as root and increment
+    // its rank by one
+    else
+    {
+        subsets[yroot].parent = xroot;
+        subsets[xroot].rank++;
+    }
+}
+
+int main()
+{
+    string input;
+    getline(cin, input);
+    long V;
+    V=atoi(input.c_str());
+    int nvtx = V;
+    vector<pair<long, pair<long, long> > > g; /*(node_num, (x, y))*/
+   // vector<pair<long, long> > G; /*(node_num, (x, y))*/
+    vector<pair<long, pair<long, long> > > g1; /*(node_num, (x, y))*/
+   // vector<pair<long, long> > G1; /*(node_num, (x, y))*/
+    vector<pair<long, pair<long,long> > > e; /*(dist, (node-numx1, node_numx2)*/
+    
+    
+    
+    long node_num=0;
+    while(nvtx){
+        string point;
+        getline(cin, point);
+        istringstream xy(point);
+        long x,  y;
+        xy>>x; xy>>y;
+        node_num++;
+        g.push_back(make_pair(node_num, make_pair(x,y)));
+        g1.push_back(make_pair(node_num, make_pair(y,x)));
+        //G.push_back(make_pair(x,y));
+        //G1.push_back(make_pair(y,x));
+        nvtx--;
+    }
+    /*Kruskal*/
+    vector<pair<long, long> >subset; /*parent- rank pair*/
+    for(long i=0; i<V; i++){
+    	subset.push_back(make_pair(0, i));
+    }
+    
+  long min_sum1=0;
+  long min_sum2=0;
+     
+    sort(g.begin(), g.end(), compare_1());
+   
+    sort(g1.begin(), g1.end(), compare_1());
+    
+    
+    
+    for(long i=0; i<V-1; i++){
+    	e.push_back(make_pair(labs(g[i].second.first- g[i+1].second.first),make_pair(g[i].first, g[i+1].first)));
+    	e.push_back(make_pair(labs(g1[i].second.first- g1[i+1].second.first),make_pair(g1[i].first, g1[i+1].first)));
+    	
+    }
+    sort(e.begin(), e.end(), compare_2()); /*2v-2 edges*/
+    
+    long edges=0;
+    long min_sum=0;
+    long next_edge=0;
+    // Number of edges to be taken is equal to V-1
+    while (edges < V - 1)
+    {
+    	//cout << " Need Edges founf with node " <<e[edges].second.first <<" " <<e[edges].second.second << endl;
+        //return 0;
+        long x = find(subset, e[next_edge].second.first-1);
+        long y = find(subset, e[next_edge].second.second-1);
+        //cout << "X and Y are" << x << ""<< y<< "Edge count"<< edges<<endl;
+        
+        // If including this edge does't cause cycle, include it
+        // in result and increment the index of result for next edge
+        if (x != y)
+        {
+            min_sum += e[next_edge].first ;
+            Union(subset, x, y);
+            //cout << "Edges founf with node " << x<<" " <<y << endl;
+            edges++;
+        }
+        next_edge++;
+        // Else discard the next_edge
+        
+    }
+    
+    cout << min_sum;
+}

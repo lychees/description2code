@@ -1,0 +1,119 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define pb push_back
+#define mp make_pair
+#define all(x) x.begin(),x.end()
+#define sz(x) ((int)x.size())
+
+const int MOD = 1e9+7;
+
+typedef long long ll;
+typedef pair<int,int> pii;
+
+const int MAXN = 1e5+5;
+const int LMAXN = 18;
+ll ans[LMAXN][MAXN];
+ll suf[LMAXN][MAXN];
+ll pre[LMAXN][MAXN];
+ll sum[LMAXN][MAXN];
+bool vis[MAXN];
+int Edge[MAXN];
+int parent[MAXN];
+int P[LMAXN][MAXN];
+int POWER[LMAXN];
+vector< pii > adj[MAXN];
+int L[MAXN];
+
+void DFS(int s, int par=-1, int edge=-1) {
+	if(par==-1) L[s]=0;
+	else L[s]=L[par]+1;
+	Edge[s]=edge;
+	parent[s]=par;
+	vis[s]=true;
+	for(auto it:adj[s]) {
+		if(!vis[it.ff]) DFS(it.ff,s,it.ss);
+	}
+}
+int Log,n;
+void computeLCA() {
+	POWER[0]=1;
+	for(int i=1;POWER[i-1]<=100000;i++) POWER[i]=POWER[i-1]<<1;
+	for(int i=0;POWER[i]<=n;i++) {
+		Log=i;
+		for(int j=1;j<=n;j++) P[i][j]=-1;
+	}
+	for(int i=1;i<=n;i++) {
+		P[0][i]=parent[i];
+		sum[0][i]=Edge[i];
+		ans[0][i]=max(0,Edge[i]);
+		suf[0][i]=max(0,Edge[i]);
+		pre[0][i]=max(0,Edge[i]);
+	}
+	for(int i=1;POWER[i]<n;i++) {
+		for(int j=1;j<=n;j++) {
+			if(P[i-1][j]!=-1) {
+				P[i][j]=P[i-1][P[i-1][j]];
+				sum[i][j]=sum[i-1][j]+sum[i-1][P[i-1][j]];
+				pre[i][j]=max(pre[i-1][j],pre[i-1][P[i-1][j]]+sum[i-1][j]);
+				suf[i][j]=max(suf[i-1][P[i-1][j]],sum[i-1][P[i-1][j]]+suf[i-1][j]);
+				ans[i][j]=max(ans[i-1][j],ans[i-1][P[i-1][j]]);
+				ans[i][j]=max(ans[i][j],pre[i-1][P[i-1][j]]+suf[i-1][j]);
+			}
+		}
+	}
+}
+int find(int x, int y) {
+	if(L[x]>L[y]) swap(x,y);
+	for(int i=Log;i>=0;i--) {
+		if(L[y]-POWER[i]>=L[x]) y=P[i][y];
+	}
+	if(x==y) return y;
+	for(int i=Log;i>=0;i--) {
+		if(P[i][x]!=P[i][y]) x=P[i][x],y=P[i][y];
+	}
+	return parent[x];
+}
+void compute(ll &best, ll &pref, ll &suff, ll &summ, int len, int idx) {
+	if(len==0) return;
+	int bit=31-__builtin_clz(len);
+	best=max(best,ans[bit][idx]);
+	best=max(best,suff+pre[bit][idx]);
+	pref=max(pref,pre[bit][idx]+summ);
+	suff=max(suf[bit][idx],sum[bit][idx]+suff);
+	summ+=sum[bit][idx];
+	compute(best,pref,suff,summ,len-POWER[bit],P[bit][idx]);
+}
+int main() {
+	// freopen("TASK.in","r",stdin);	
+	// freopen("TASK.out","w",stdout);
+	int q;
+	cin>>n>>q;
+	for(int i=1;i<n;i++) {
+		int x,y,z;
+		scanf("%d%d%d",&x,&y,&z);
+		adj[x].pb(mp(y,z));
+		adj[y].pb(mp(x,z));
+	}
+	DFS(1);
+	computeLCA();
+	while(q--) {
+		int x,y;
+		scanf("%d%d",&x,&y);
+		int lca=find(x,y);
+		int len=abs(L[lca]-L[x]);
+		ll best=0,pref=0,suff=0,summ=0;
+		ll best2=0,pref2=0,suff2=0,summ2=0;
+		compute(best,pref,suff,summ,len,x);
+		len=abs(L[lca]-L[y]);
+		compute(best2,pref2,suff2,summ2,len,y);
+		swap(suff2,pref2);
+		best=max(best,best2);
+		best=max(best,suff+pref2);
+		printf("%lld\n",best);
+	}
+	return 0;
+}

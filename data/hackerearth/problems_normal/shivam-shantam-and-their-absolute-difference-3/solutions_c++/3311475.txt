@@ -1,0 +1,125 @@
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
+#define s(t) scanf("%d",&t)
+#define ll long long int
+#define mod 1000000007
+
+
+ll C[500000];
+ll D[500000];
+ll F[500000];
+ll G[500000];
+
+int main()
+{
+	int n, A[1000], B[1000], i, j, q ;
+	s(n);
+	int a_range = 2, b_range = 2;
+	
+	for( i= 0; i<n; i++)
+	{
+		s(A[i]);
+		a_range += A[i];
+	}
+
+	for( i= 0; i<n; i++)
+	{
+		s(B[i]);
+		b_range += B[i];
+	}
+
+	s(q);
+
+	sort(A , A+ n);
+	sort(B , B+ n);
+
+
+	for( i= 0; i<= 500000; i++)
+	{
+		C[i] = F[i] = 0;
+		D[i] = G[i] = 0;
+	}
+	//F[0] = C[0] = D[0] = G[0] = 1;
+
+	for( i=0 ; i< n; i++)
+	{
+		for(j = 0; j<= a_range; j++)
+		{
+			F[j+A[i]] = C[j+A[i]] + C[j] ; 
+			F[j] %= mod;
+		}
+		F[A[i]]++;
+
+		for(j = 0; j<= a_range; j++)
+			C[j] = F[j];
+		//C[A[i]] = 1;
+	}
+	
+	F[0]++; // case  for  none
+	
+	/*for( i=0 ; i<=10; i++)
+		printf("%d %lld\n", i ,F[i] );*/
+	
+
+	for( i= 0 ; i< n; i++)
+	{
+		for(j = 0; j<= b_range; j++)
+		{
+			D[j+B[i]] = G[j+B[i]] + G[j] ;
+			D[j] %= mod; 
+		}
+		D[B[i]]++;
+
+		for(j = 0; j<= b_range; j++)
+			G[j] = D[j];
+		//C[A[i]] = 1;
+	}
+
+	G[0]++; // case  for  none
+
+	/*for( i=0 ; i<=10; i++)
+		printf("%d %lld\n", i ,G[i] );*/
+
+	
+	// operations on F[] and G[]
+
+	for( i = 1 ; i <= b_range; i++)
+	{
+		G[i] += G[i-1];
+		G[i] %= mod;
+	}
+
+	/*for( i=0 ; i<=10; i++)
+		printf("%d ", G[i] );*/
+
+
+	ll total = 0;
+	for( i=0 ; i <= a_range; i++)
+	{
+		int low = i - q;
+		int high = i + q;
+
+		if( low < 0 )
+			low = 0;
+		if( high > b_range)
+			high = b_range;
+
+		ll val ;
+		if( low > 0)
+		{
+			val = G[high] - G[ low - 1];	
+			if(val < 0 )
+				val += mod;
+		}
+		else
+			val = G[high];
+
+		total += (val * F[i]) % mod;
+		total %= mod;
+	}
+	printf("%lld\n", total );
+	return 0;
+}

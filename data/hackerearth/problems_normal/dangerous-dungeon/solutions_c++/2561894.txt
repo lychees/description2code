@@ -1,0 +1,314 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+struct HashTable {
+public:
+	typedef unsigned Key;
+	typedef int Size, Index;
+
+	Key emptyKey() const { return ~0U; }
+
+	Index hash(const Key &key) const { return key * 1000000007U + 123456789U; }
+
+	bool equals(const Key &key1, const Key &key2) const { return key1 == key2; }
+	bool isEmptyKey(const Key &key) const { return key == emptyKey(); }
+
+public:
+	HashTable(Size minCapacity = 0): table(NULL), tableSize(0), numElements(0) {
+		reserve(minCapacity);
+	}
+
+	HashTable(const HashTable &that): table(NULL), tableSize(0), numElements(0) {
+		*this = that;
+	}
+
+	HashTable &operator=(const HashTable &that) {
+		if(this == &that) return *this;
+		numElements = 0;	//reallocateでコピーさせないために
+		reserve(that.numElements);
+		clear();
+		copyTable(that.table, that.table + that.tableSize);
+		numElements = that.numElements;
+		return *this;
+	}
+
+	~HashTable() {
+		delete[] table;
+		table = NULL;
+	}
+
+	void swap(HashTable &that) {
+		std::swap(table, that.table);
+		std::swap(tableSize, that.tableSize);
+		std::swap(numElements, that.numElements);
+	}
+
+	void clear() {
+		for(Key *p = table, *pEnd = p + tableSize; p != pEnd; ++ p)
+			if(!isEmptyKey(*p))
+				*p = emptyKey();
+		numElements = 0;
+	}
+
+public:
+	bool empty() const { return numElements == 0; }
+	Size size() const { return numElements; }
+	Size capacity() const { return calculateCapacity(tableSize); }
+
+	bool reserve(Size minCapacity) {
+		if(minCapacity <= calculateCapacity(tableSize))
+			return false;
+		Size newSize = tableSize == 0 ? 4 : tableSize * 2;
+		while(calculateCapacity(newSize) < minCapacity)
+			newSize *= 2;
+		reallocate(newSize);
+		return true;
+	}
+
+private:
+	static Size calculateCapacity(Size tableSize) {
+		return tableSize * 3 / 4;
+	}
+
+	void copyTable(const Key *p, const Key *pEnd) {
+		for(; p != pEnd; ++ p) {
+			if(!isEmptyKey(*p)) {
+				Index index;
+				bool found = probe(*p, index);
+				assert(!found);
+				table[index] = *p;
+			}
+		}
+	}
+
+	void reallocate(Size newSize) {
+		assert(newSize > tableSize && (newSize & (newSize - 1)) == 0);
+		Key *oldTable = table;
+		Size oldSize = tableSize;
+		table = new Key[newSize];
+		tableSize = newSize;
+		std::fill(table, table + tableSize, emptyKey());
+		if(numElements != 0)
+			copyTable(oldTable, oldTable + oldSize);
+		delete[] oldTable;
+	}
+
+private:
+	//keyが見つかったかどうかを返す
+	bool probe(const Key &key, Index &resIndex) const {
+		assert(numElements < tableSize);
+		Size mask = tableSize - 1;
+		Index h = hash(key) & mask, numProbes = 0;
+		while(1) {
+			const Key &k = table[h];
+			if(isEmptyKey(k)) {
+				resIndex = h;
+				return false;
+			}else if(equals(k, key)) {
+				resIndex = h;
+				return true;
+			}
+			++ numProbes;
+			h = (h + numProbes) & mask;
+			assert(numProbes < tableSize);
+		}
+	}
+
+public:
+	bool count(const Key &key) const {
+		if(empty()) return false;
+		Index dummy;
+		return probe(key, dummy);
+	}
+	
+	bool insert(const Key &key) {
+		reserve(numElements + 1);
+		Index index;
+		bool found = probe(key, index);
+		if(found) return false;
+		table[index] = key;
+		++ numElements;
+		return true;
+	}
+
+	const Key *find(const Key &key) const {
+		if(empty()) return NULL;
+		Index index;
+		bool found = probe(key, index);
+		if(!found) return NULL;
+		return &table[index];
+	}
+
+	Key *find(const Key &key) {
+		return const_cast<Key*>(find(key));
+	}
+
+	Key &findInsert(const Key &key) {
+		reserve(numElements + 1);
+		Index index;
+		bool found = probe(key, index);
+		if(!found) {
+			table[index] = key;
+			++ numElements;
+		}
+		return table[index];
+	}
+
+private:
+	Key *table;
+	Size tableSize;		//power of two (or 0)
+	Size numElements;	//number of nonempty elements
+};
+
+struct RadixHeap {
+	typedef unsigned long long T;
+	enum { B = 64 };
+	vector<T> buckets[B + 1];
+	T minimums[B + 1];
+	T last;
+
+	RadixHeap() { clear(); }
+
+	void clear() {
+		for(int k = 0; k <= B; ++ k)
+			buckets[k].clear();
+		for(int k = 0; k <= B; ++ k)
+			minimums[k] = numeric_limits<T>::max();
+		last = 0;
+	}
+
+	void push(T x) {
+		assert(last <= x);
+		push(x, last);
+	}
+
+	T pop() {
+		pull();
+		buckets[0].pop_back();
+		return last;
+	}
+
+private:
+	void push(T x, T t) {
+		int k = findBucket(t, x);
+		buckets[k].push_back(x);
+		amin(minimums[k], x);
+	}
+
+	void pull() {
+		if(!buckets[0].empty()) return;
+		int k = 1;
+		for(; buckets[k].empty(); ++ k) ;
+		T t = minimums[k];
+		each(i, buckets[k])
+			push(*i, t);
+		last = t;
+		buckets[k].clear();
+		minimums[k] = numeric_limits<T>::max();
+	}
+
+	static int findBucket(unsigned long long x, unsigned long long y) {
+		return x == y ? 0 : bsr(x ^ y) + 1;
+	}
+
+	static int bsr(unsigned long long x) {
+#if defined(__GNUC__)
+		return 63 - __builtin_clzll(x);
+#else
+		unsigned long res;
+		_BitScanReverse64(&res, x);
+		return res;
+#endif
+}
+
+};
+
+
+int main() {
+	int n, m, p;
+	while(1) {
+		if(!~scanf("%d%d%d", &n, &m, &p)) break;
+		vi o(n);
+		rep(i, n) {
+			scanf("%d", &o[i]);
+		}
+		vector<vpii> g(n);
+		rep(i, m) {
+			int a, b, c;
+			scanf("%d%d%d", &a, &b, &c);
+			g[a].push_back(mp(b, c));
+		}
+		HashTable dist(n * n);
+		vi sizes(n, 0);
+		RadixHeap q;
+		int qsize = 0;
+		if(o[0] != 0) {
+			q.push(0LL * n + 0);
+			++ qsize;
+		}
+		ll ans = INFL;
+		while(qsize > 0) {
+			ll tt = q.pop(); -- qsize;
+			ll t = tt / n;
+			int i = tt % n;
+			int x = t % p;
+			if(sizes[i] == n)
+				continue;
+			if(!dist.insert(x * 123456789U + i))
+				continue;
+			++ sizes[i];
+			if(i == n - 1) {
+				ans = t;
+				break;
+			}
+			each(e, g[i]) {
+				int j = e->first;
+				ll u = t + e->second;
+				int y = u % p;
+				if(y == o[j]) continue;
+				q.push(u * n + j);
+				++ qsize;
+			}
+		}
+		if(ans == INFL)
+			puts("-1");
+		else
+			printf("%lld\n", ans);
+	}
+	return 0;
+}

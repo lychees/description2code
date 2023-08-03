@@ -1,0 +1,117 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const unsigned long long B1 = 131, B2 = 137;
+const int N = 1<<20;
+const unsigned MOD = 176081;
+
+struct rolling_hash {
+	unsigned long long h1,h2;
+	void initialize() {
+		h1=0llu;
+		h2=0llu;
+	}
+	void append(char a) {
+		h1=(h1*B1+a-'a'+1);
+		h2=h2*B2+a-'a'+1;
+	}
+	bool operator <(const rolling_hash &a) const {
+		if(h1<a.h1) return true;
+		if(h1>a.h1) return false;
+		return h2<a.h2;
+	}
+	bool operator==(const rolling_hash &a) const {
+		return (h1==a.h1 && h2==a.h2);
+	}
+};
+
+struct hash_x {
+	bool operator()(const rolling_hash &a) const {
+		return (a.h1<<1)^(a.h2>>1);
+	}
+};
+
+vector <rolling_hash> hash_map[MOD];
+vector <int> cnt[MOD];
+
+void clear_map() {
+	int i;
+	for(i=0;i<MOD;i++) hash_map[i].clear(),cnt[i].clear();
+}
+
+int get(rolling_hash &a) {
+	return (a.h1^a.h2)%MOD;
+}
+
+int find_hash(rolling_hash &a) {
+  int i,where=get(a);
+  for(i=0;i<hash_map[where].size();i++) if(hash_map[where][i]==a) return cnt[where][i];
+  return 0;
+}
+
+void insert_hash(rolling_hash &a) {
+  int i,where=get(a);
+  for(i=0;i<hash_map[where].size();i++) if(hash_map[where][i]==a) {
+    cnt[where][i]++;
+    return;
+  }
+  hash_map[where].push_back(a);
+  cnt[where].push_back(1);
+}
+
+int n,k;
+//unordered_map <rolling_hash, int, hash_x> m;
+unsigned long long pow1[N],pow2[N];
+char a[N];
+rolling_hash ph[N];
+
+rolling_hash get_hash(int from, int to) {
+	rolling_hash h1,h2,ans;
+	h1=ph[to];
+	h2=ph[from-1];
+	h2.h1=(h2.h1*pow1[to-from+1]);
+	h2.h2=h2.h2*pow2[to-from+1];
+	ans.h1=h1.h1-h2.h1;
+	ans.h2=h1.h2-h2.h2;
+	return ans;
+}
+
+bool check(int length) {
+	int i;
+	rolling_hash h;
+	clear_map();
+	for(i=1;i+length-1<=n;i++) {
+		h=get_hash(i,i+length-1);
+		insert_hash(h);
+		if(find_hash(h)>=k) return true;
+	}
+	return false;
+}
+
+int main() {
+	int i,left,right,middle;
+	rolling_hash h;
+	
+	scanf("%d %d", &k, &n);
+	scanf("%s", a+1);
+	pow1[0]=1;
+	pow2[0]=1;
+	for(i=1;i<N;i++) pow1[i]=pow1[i-1]*B1,pow2[i]=pow2[i-1]*B2;
+	h.initialize();
+	ph[0]=h;
+	for(i=1;i<=n;i++)
+		h.append(a[i]),
+		ph[i]=h;
+	left=0;
+	right=n+1;
+	while(right-left>1) {
+		middle=(left+right)>>1;
+		if(check(middle)) left=middle;
+		else right=middle;
+	}
+	
+	printf("%d\n", left);
+	
+	return 0;
+}

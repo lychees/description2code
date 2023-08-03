@@ -1,0 +1,94 @@
+#include<bits/stdc++.h>
+using namespace std;
+int tree[4*100069];
+char arr[100069];
+int ld_zero[100069];
+int p[1000069];
+int build(int node, int start, int end)
+{
+    if(start == end)
+    {
+        tree[node] = (arr[start]-'0');
+        return tree[node];
+    }
+    else
+    {
+        int mid = (start + end) / 2;
+        int l=build(2*node, start, mid);
+        int r=build(2*node+1, mid+1, end);
+        tree[node] = (l*p[end-mid]%3+r)%3;
+		return tree[node];
+    }
+}
+void update(int node, int start, int end, int idx)
+{
+    if(start == end)
+    {
+        arr[idx] = '1';
+        tree[node] = 1;	
+    }
+    else
+    {
+        int mid = (start + end) / 2;
+        if(start <= idx && idx <= mid)
+        	update(2*node, start, mid, idx);
+    	else
+        	update(2*node+1, mid+1, end, idx);
+        
+        
+		tree[node] = (tree[2*node]*p[end-mid]%3+tree[2*node+1])%3;   // checking both child of calling node
+    	
+	}
+}
+
+int query(int node, int start, int end, int l, int r)
+{
+    if(r < start || end < l)
+    	return 0;
+    
+	if(l <= start && end <= r)
+    	return (tree[node]*p[r-end]);
+    
+	int mid = (start + end) / 2;
+    int p1 = query(2*node, start, mid, l, r);
+    int p2 = query(2*node+1, mid+1, end, l, r);
+ //   printf("%d %d %d %d %d\n",p1,p2,node,start,end);
+	return (p1%3+p2%3)%3;
+}
+int main()
+{
+  //  printf("SDfs");	
+	p[0]=1;
+	for(int i=1;i<=100001;i++)
+		p[i]=(2*p[i-1])%3;
+	
+	int t,i;
+	{
+		int n,q;
+		scanf("%d",&n);
+		scanf("%s",arr);
+		build(1,0,n-1);
+//		for(i=1;i<=7;i++)
+//			printf("%d ",tree[i]);
+		scanf("%d",&q);	
+		while(q--)
+		{
+			int x,idx,l,r,val;
+			scanf("%d",&x);
+			if(x==1)
+			{
+					scanf("%d",&idx);
+					if(arr[idx]=='0')
+						update(1,0,n-1,idx);
+			}
+			else
+			{
+					scanf("%d%d",&l,&r);
+					int ans=query(1,0,n-1,l,r);
+					printf("%d\n",ans);
+			}		
+		}	
+	}
+	return 0;	
+
+}

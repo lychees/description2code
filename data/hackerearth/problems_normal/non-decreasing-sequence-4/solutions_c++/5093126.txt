@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+const int N = 1e6 + 10;
+const int inf = 1e9;
+ 
+pair <int, int> pa[N];
+int a[N], b[N], c[N], res[N];
+int fenw[N];
+int esz;
+
+void modify(int x, int v) {
+	while (x <= esz) {
+		if (v > fenw[x]) fenw[x] = v;
+		x = (x | (x - 1)) + 1;
+	}
+}
+
+int find_max(int x) {
+	int v = -inf;
+	while (x > 0) {
+		if (fenw[x] > v) v = fenw[x];
+		x &= x - 1;
+	}
+	return v;
+}
+ 
+int main() {
+	int t;
+	scanf("%d", &t);
+	for (int tt = 1; tt <= t; tt++) {
+		fill(fenw, fenw + N, 0);
+		int n, k;
+		scanf("%d", &n);
+		for (int i = 0; i < n; i++) {
+			scanf("%d", &a[i]);
+			pa[i] = make_pair(a[i], i);
+		}
+		scanf("%d", &k);
+		sort(pa, pa + n);
+		int prev = -inf, cnt = 0;
+		for (int i = 0; i < n; i++) {
+			if (pa[i].first > prev) {
+				prev = pa[i].first;
+				++cnt;
+			}
+			b[pa[i].second] = cnt;
+			c[cnt] = pa[i].first;
+		}
+		esz = n;
+		for (int i = 0; i < n; i++) {
+			if (b[i] == 1) {
+				res[b[i]] = 1;
+			} else {
+				res[b[i]] = find_max(b[i] - 1) + 1;
+			}
+			modify(b[i], res[b[i]]);
+		}
+		int ans = -1;
+		for (int i = 1; i <= cnt; i++) {
+			if (res[i] == k) {
+				ans = c[i];
+				break;
+			} 
+		}
+		printf("%d\n", ans);
+	}
+	return 0;
+}

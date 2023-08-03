@@ -1,0 +1,46 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAX = 1e5 + 5;
+const int LIM = 1<<20;
+
+#define inchar      getchar_unlocked
+
+template<typename T> void inPos(T &x){x=0;register T c=inchar();while(((c<48)||(c>57))&&(c!='-'))c=inchar();bool neg=false;if(c=='-')neg=true;for(;c<48||c>57;c=inchar());for(;c>47&&c<58;c=inchar())x=(x<<3)+(x<<1)+(c&15);if(neg)x=-x;}
+
+int a[MAX];
+int freq[LIM];
+long long dp[LIM][21];
+
+int main() {
+    #ifndef ONLINE_JUDGE
+        freopen("inp.txt", "r", stdin);
+    #endif
+    int t, n;
+    inPos(t);
+    while(t--) {
+        inPos(n);
+        for(int i=1; i<=n; ++i) {
+            inPos(a[i]);
+            freq[a[i]] += 1;
+        }
+        for(int mask=0; mask<LIM; ++mask) {
+            dp[mask][0] = freq[mask];
+            if (mask & 1) {
+                dp[mask][0] += freq[mask ^ 1]; 
+            }
+            for(int i=1; i<=20; ++i) {
+                dp[mask][i] = dp[mask][i-1];
+                if (mask & (1<<i)) {
+                    dp[mask][i] += dp[mask ^ (1<<i)][i-1];
+                }
+            }
+        }
+        long long ans = 0;
+        for(int i=0; i<LIM; ++i) {
+            ans += freq[i] * dp[LIM - i - 1][20];
+            freq[i] = 0;
+        }
+        printf("%lld\n", ans);
+    }
+}

@@ -1,0 +1,113 @@
+// https://www.hackerearth.com/algorithms-india-hacks-2016/algorithm/d-table-splitting-2/
+//karanaggarwal
+#include<bits/stdc++.h>
+using namespace std;
+
+#define TRACE
+#ifdef TRACE
+#define trace(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+    cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+    const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define trace(...)
+#endif
+
+#define si(x) scanf("%d",&x)
+#define x first
+#define y second
+#define F first
+#define S second
+#define PB push_back
+#define MP make_pair
+
+typedef long long LL;
+typedef pair<int,int> PII;
+typedef vector<int> VI;
+typedef vector<PII> VPII;
+
+
+string A[1000];
+int  N,M; 
+int n;
+bool is_valid(PII a)
+{
+    if(a.x < 0 or a.y<0 or a.x>=N or a.y>=M)return false;
+    return true;
+}
+bool is_valid2(PII a)
+{
+    if(a.x < 0 or a.y<0 or a.x>N or a.y>M)return false;
+    return true;
+}
+PII add(PII a, PII b)
+{
+    a.x += b.x; a.y += b.y; return a;
+}
+
+
+const int mn = 5000000;
+VI G[mn]; 
+bool V[mn];
+
+void add_edge(PII a, PII b)
+{
+    if(is_valid2(a)==false or is_valid2(b)==false)return;
+    int u = a.F * (M+1) + a.S;
+    int v = b.F * (M+1) + b.S;
+    G[u].PB(v); G[v].PB(u);
+}
+
+void bfs()
+{
+    int s = 0;
+    queue<int> Q;
+    V[s] = true; Q.push(s);
+    while(!Q.empty())
+    {
+        int x = Q.front(); Q.pop();
+        for(auto y : G[x]) if(V[y]==false){  V[y] = true; Q.push(y);}
+    }
+}
+
+int main()
+{
+    PII D[4] = {{-1,0} , {0,-1}, {0,1}, {1,0}};
+    int t; si(t); while(t--)
+    {
+        si(N); si(M);
+        n = (N+1)*(M+1);
+        for(int i =0; i<n; i++){G[i].clear(); V[i] = false;}
+        for(int i =0; i<N; i++)
+            cin>>A[i];
+        for(int ii =0; ii<=N; ii++)
+            for(int jj = 0; jj<=M; jj++)
+            {
+                PII cr = {ii,jj};
+                PII CR[6];
+                CR[2] = cr; 
+                CR[1] = add(CR[2],D[0]);
+                CR[0] = add(CR[1],D[1]);
+                CR[3] = add(CR[2],D[1]);
+                CR[4] = add(CR[2],D[2]);
+                CR[5] = add(CR[2],D[3]);
+                int i,j;
+                i= 1; j = 2;
+                    if( not(is_valid(CR[i]) and is_valid(CR[j]) and A[CR[i].x][CR[i].y]==A[CR[j].x][CR[j].y]))
+                        add_edge(CR[2],CR[4]);
+                i = 3; j = 2; 
+                    if( not(is_valid(CR[i]) and is_valid(CR[j]) and A[CR[i].x][CR[i].y]==A[CR[j].x][CR[j].y]))
+                        add_edge(CR[2],CR[5]);
+            }
+        bfs();
+        bool can = false;
+        for(int i =0; i<n; i++) if(!G[i].empty() and V[i]==false){ can = true; break;}
+        if(can)printf("NO\n"); else printf("YES\n");
+    }
+    return 0;	
+}

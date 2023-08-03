@@ -1,0 +1,154 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define pb push_back
+#define pf push_front
+#define ff first
+#define ss second
+#define rz resize
+#define len length()
+
+typedef long long ll;
+typedef pair<int,int> pii;
+
+ll M;
+
+struct Mat{
+  ll a,b,c;
+};
+
+Mat F{1,1,0};
+
+Mat operator*(const Mat& x,const Mat& y){
+  Mat r{0,0,0};
+  r.a = (x.a*y.a)%M+(x.b*y.b)%M;
+  r.b = (x.a*y.b)%M+(x.b*y.c)%M;
+  r.c = (x.b*y.b)%M+(x.c*y.c)%M;
+  return r;
+};
+
+Mat operator+(const Mat& x,const Mat& y){
+  Mat r{0,0,0};
+  r.a = (x.a+y.a)%M;
+  r.b = (x.b+y.b)%M;
+  r.c = (x.c+y.c)%M;
+  return r;
+};
+
+Mat operator*(const Mat& x,ll& y){
+  Mat r;
+  r.a = (x.a*y)%M;
+  r.b = (x.b*y)%M;
+  r.c = (x.c*y)%M;
+  return r;
+};
+
+Mat ex(ll n){
+  Mat y={1,0,1},x={0,1,-1};
+  while(n){
+    if(n&1)
+      y=y*x;
+    x=x*x;
+    n>>=1;
+  }
+  return y;
+}
+
+struct nn{
+  Mat q;
+  int b,e;
+  void mg(nn&n1,nn&n2){
+    b=n1.b,e=n2.e;
+    q = n1.q+n2.q;
+  }
+};
+
+vector<nn> st;
+vector<Mat> V;
+
+vector<ll> a;
+void bld(int bb,int ee,int x=1){
+  if(bb==ee){
+    st[x].b=st[x].e=bb;
+    st[x].q = V[bb]*a[bb];
+    return;
+  }
+  int m = (bb+ee)>>1, l=x<<1;
+  bld(bb,m,l);bld(m+1,ee,l+1);
+  st[x].mg(st[l],st[l+1]);
+}
+
+void upd(int L,int X){
+  a[L]=X;
+  int x=1,m;
+  while(st[x].b!=st[x].e){
+    m=(st[x].b+st[x].e)>>1;
+    x<<=1;
+    if(L>m)
+      x++;
+  }
+
+  st[x].q = V[L]*a[L];
+  x>>=1,m=x<<1;
+  while(x){
+    st[x].mg(st[m],st[m+1]);
+    x>>=1,m=x<<1;
+  }
+
+}
+
+nn qry(int &u,int &v,int x=1){
+
+  if( (u<=st[x].b) and (st[x].e<=v) )
+    return st[x];
+
+  int m=(st[x].b+st[x].e)>>1,l=x<<1;
+
+  if(u>m)
+    return qry(u,v,l+1);
+  if(v<=m)
+    return qry(u,v,l);
+
+  nn lq=qry(u,v,l),rq=qry(u,v,l+1);
+  nn qq;qq.mg(lq,rq);
+  return qq;
+};
+
+int main(){
+  ios::sync_with_stdio(0),cin.tie(0);
+
+  ll n,m;
+
+  cin>>n>>m>>M;
+  a.rz(n+1);
+
+  for(int i=1;i<=n;i++)
+    cin>>a[i];
+
+  V.rz(n+1);
+
+  V[1] = F;
+  for(int i=2;i<=n;i++){
+    V[i] = V[i-1]*F;
+  }
+
+  st.rz(4*a.size());
+  bld(1,n,1);
+
+  char query;
+  int i,j;
+  while(m--){
+    cin >> query >> i >> j;
+
+    if(query=='1'){
+      upd(i,j);
+    }else{
+
+      Mat Q = qry(i,j).q*ex(i);
+
+      cout << (Q.a+M)%M << endl;
+    }
+  }
+
+  return 0;
+};

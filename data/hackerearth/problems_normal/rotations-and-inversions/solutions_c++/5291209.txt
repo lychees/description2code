@@ -1,0 +1,195 @@
+#include <bits/stdc++.h>
+
+#define MAXN 1000000
+
+using namespace std;
+
+struct SegTree
+{
+	long long tree[2 * MAXN];
+
+	void build(long long l, long long r, long long idx)
+	{
+		if (l == r)
+		{
+			tree[idx] = 0;
+			return;
+		}
+
+		long long mid = l + (r - l) / 2;
+		build(l, mid, 2 * idx + 1);
+		build(mid + 1, r, 2 * idx + 2);
+
+		tree[idx] = tree[2 * idx + 1] + tree[2 * idx + 2];
+	}
+
+	void update(long long pos, long long val, long long l, long long r, long long idx)
+	{
+		if (pos < l || pos > r)
+			return;
+
+		if (l == r && l == pos)
+		{
+			tree[idx] += val;
+			return;
+		}
+
+		long long mid = l + (r - l) / 2;
+		update(pos, val, l, mid, 2 * idx + 1);
+		update(pos, val, mid + 1, r, 2 * idx + 2);
+
+		tree[idx] = tree[2 * idx + 1] + tree[2 * idx + 2];
+	}
+
+	long long Query(long long qL, long long qR, long long l, long long r, long long idx)
+	{
+		if (qL > qR)
+			return 0;
+
+		if (qL > r || qR < l)
+			return 0;
+
+		if (qL <= l && r <= qR)
+			return tree[idx];
+
+		long long mid = l + (r - l) / 2;
+		return Query(qL, qR, l, mid, 2 * idx + 1) + Query(qL, qR, mid + 1, r, 2 * idx + 2);
+	}
+};
+
+long long N;
+long long a[MAXN];
+
+void read()
+{
+	scanf("%lld", &N);
+
+	for (long long i = 0; i < N; i++)
+		scanf("%lld", &a[i]);
+}
+
+pair<int, int> b[MAXN];
+long long numbRank[MAXN];
+
+long long bin_search(long long k)
+{
+	long long l = 0, r = N - 1, mid, ans;
+
+	while (l <= r)
+	{
+		mid = l + (r - l) / 2;
+
+		if (b[mid].first >= k)
+		{
+			ans = mid;
+			r = mid - 1;
+		}
+		else
+			l = mid + 1;
+	}
+
+	return ans;
+}
+
+bool cmp(pair<int, int> d, pair<int, int> z)
+{
+	return d.first < z.first;
+}
+
+long long cnst = 52;
+
+bool better(long long f, long long s)
+{
+	for (long long k = 0, i = f, j = s; k < min(N, cnst); k++, i++, j++)
+	{
+		i %= N;
+		j %= N;
+
+		if (a[i] < a[j])
+			return true;
+
+		if (a[i] > a[j])
+			return false;
+	}
+
+	return false;
+}
+
+SegTree t;
+
+void solve()
+{
+	cnst = MAXN / N;
+
+	for (int i = 0; i < MAXN - 1; i++)
+		b[i].first = 0, b[i].second = 0;
+
+	for (long long i = 0; i < N; i++)
+		b[i].first = a[i], b[i].second = i;
+
+	sort(b, b + N, cmp);
+
+	numbRank[b[0].second] = 1;
+	for (long long i = 1; i < N; i++)
+		numbRank[b[i].second] = numbRank[b[i - 1].second] + (b[i].first != b[i - 1].first);
+
+	//for(int i = 0; i < N; i++)
+	//	printf("%d, ", numbRank[i]);
+	//printf("\n");
+
+
+	long long currans = 0;
+
+	t.build(0, N - 1, 0);
+	for (long long i = 0; i < N; i++)
+	{
+		t.update(numbRank[i], 1, 0, N, 0);
+		currans += t.Query(numbRank[i] + 1, N, 0, N, 0);
+	}
+
+	//for(int i = 0; i < N; i++)
+	//	printf("Less than %d:   %d\n", a[i], t.Query(0, numbRank[i] - 1, 0, N, 0));
+
+	long long ans = currans, pos = 0;
+
+	for (long long i = 0; i < N; i++)
+	{
+		currans -= t.Query(0, numbRank[i] - 1, 0, N, 0);
+		currans += t.Query(numbRank[i] + 1, N, 0, N, 0);
+
+		//printf("%lld: %lld = last - %d + %d, %lld\n", i, currans, 
+		//		t.Query(0, numbRank[i] - 1, 0, N, 0), t.Query(numbRank[i] + 1, N, 0, N, 0), ans);
+
+		if (ans < currans)
+		{
+			ans = currans;
+			pos = i + 1;
+		}
+		else if (currans == ans)
+		{
+			if (better(i + 1, pos)) pos = i + 1;
+			else pos = pos;
+		}
+	}
+
+	printf("%lld %lld\n", pos, ans);
+}
+
+int main()
+{
+	long long T;
+	scanf("%lld", &T);
+
+	for (long long i = 0; i < T; i++)
+	{
+		memset(t.tree, 0, sizeof(t.tree));
+		memset(a, 0, sizeof(a));
+		memset(numbRank, 0, sizeof(numbRank));
+
+		read();
+		solve();
+	}
+
+	return 0;
+}
+

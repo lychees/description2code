@@ -1,0 +1,240 @@
+#include<iostream>
+using namespace std;
+int arr[6010000];
+#define inf 999999999
+struct st
+ {
+ 	 int     zero;
+ 	 int one;
+ } 
+ tree[6000000];
+ 
+ int lazy[6000000];
+int  ans=0;
+  int read_int(){
+	char r;
+	bool start=false,neg=false;
+int ret=0;
+	while(true){
+		r=getchar();
+		if((r-'0'<0 || r-'0'>9) && r!='-' && !start){
+			continue;
+		}
+		if((r-'0'<0 || r-'0'>9) && r!='-' && start){
+			break;
+		}
+		if(start)ret*=10;
+		start=true;
+		if(r=='-')neg=true;
+		else ret+=r-'0';
+	}
+	if(!neg)
+		return ret;
+	else
+		return -ret;
+}
+int query(int node,int start,int end,int r1,int r2,int  tt)
+ {
+  //   cout<<start<<" "<<end<<endl;
+  //  cout<<" r1 "<<r1<<" r2 "<<r2<<endl;
+ 
+  
+   if(lazy[node])
+   {
+   	    if(lazy[node]%2==1)
+   	    {
+   	    	int temp=tree[node].zero;
+     	    tree[node].zero=tree[node].one;
+     	    tree[node].one=temp;
+            lazy[2*node]+=lazy[node];
+             lazy[2*node+1]+=lazy[node];
+     
+		   }
+		   lazy[node]=0;
+         
+   }
+   if(start>end || r1>end || r2<start || r1>r2) return 0;
+   if(r1<=start && r2>=end)
+    {
+    //	 cout<<"here "<<node<<endl;
+    	if(tt==1)
+    	{
+    	//	cout<<" returning       "<<tree[node].zero<<endl;
+    		ans+=tree[node].zero;
+    		 return tree[node].zero;
+    		 
+		}
+    
+     else
+     {//
+     	// cout<<"  returning       "<<tree[node].one<<endl;
+     		ans+=tree[node].one;
+     	 return tree[node].one;
+     	 
+     
+	 }
+     
+     
+    }
+    else
+    {
+     int q1=query(2*node,start,(start+end)/2,r1,r2,tt);
+     int q2=query(2*node+1,((start+end)/2)+1,end,r1,r2,tt);
+ 
+     return (q1+q2);
+    }
+ }
+ 
+ 
+void update(int node ,int start,int end,int r1,int r2,int val)
+ {
+ 	
+ //	cout<<" update in the range "<<start<<" "<<end<<endl;
+
+  
+  if(lazy[node]!=0)
+   {
+   	// cout<<" lazy node "<<node<<endl;
+   	
+     int times=lazy[node];
+    // cout<<" lazy node "<<node<<" times "<<times<<endl;
+     times%=2;
+     
+     if(times==1)
+     {
+     	 int temp=tree[node].zero;
+     	 tree[node].zero=tree[node].one;
+     	 tree[node].one=temp;
+     	 
+     //	 cout<<" making lazing "<<2*node<<" "<<2*node+1<<endl;
+         lazy[2*node+1]+=1;
+         lazy[2*node]+=1;
+          
+	 }
+	 
+    lazy[node]=0;
+    
+   }
+   
+   
+    if(r1>end  || r2<start   || start>end) return  ;
+  if(r1<=start && r2>=end)
+   {
+   
+     int temp=tree[node].zero;
+     	 tree[node].zero=tree[node].one;
+     	 tree[node].one=temp;
+     if(start!=end)
+      {
+      	
+       lazy[2*node]+=1;
+       lazy[2*node+1]+=1;
+      //  cout<<" making lazing "<<2*node<<" "<<2*node+1<<endl;
+      }
+      return  ;
+   }
+   
+    update(2*node, start,(start+end)/2,r1,r2,val);
+    update(2*node+1, ((start+end)/2)+1,end,r1,r2,val);
+    // cout<<" finalizing node "<<node<<endl;
+     tree[node].zero=tree[2*node].zero+tree[2*node+1].zero;
+    tree[node].one=tree[2*node].one+tree[2*node+1].one;
+   
+ }
+ 
+ 
+void build(int node , int start,int end)
+ {
+ 	
+  if(start==end)
+  {
+  	 if(arr[start]==1)
+  	 {
+  	 	tree[node].zero=0;
+  	 	tree[node].one=1;
+	   }
+	   else
+	   {
+	   	tree[node].zero=1;
+  	 	tree[node].one=0;
+	   }
+  	// cout<<"  at nod"<<node<<"  zero          "<<tree[node].zero<<" one      "<<tree[node].one<<endl;
+   }
+  else if(start>end) return ;
+  else
+   {
+    build(2*node,start,(start+end)/2);
+    build(2*node+1,((start+end)/2)+1,end);
+    tree[node].zero=tree[2*node].zero+tree[2*node+1].zero;
+    tree[node].one=tree[2*node].one+tree[2*node+1].one;
+  
+   }
+   
+ }
+ 
+ 
+int main()
+ {
+  
+   int n,q;
+   // cin>>n>>q;
+   n=read_int();
+   q=read_int();
+    
+    char ae[10000+n];
+    cin>>ae;
+     for(int i=0;i<n-1;i++)
+     {
+     	
+     
+     	 
+     	  if(ae[i]=='>')arr[i]=1;
+     	  else   arr[i]=0;
+     	
+	 }
+
+	 
+      for(int i=0;i<2*n+100;i++)
+       {
+       	tree[i].zero=0;
+       	tree[i].one=0;
+	   }
+	   
+       build(1,0,n-2);
+ 
+       
+    
+        while(q--)
+         {
+         	ans=0;
+            int typ,l,r;
+          // cin>>typ>>l>>r;
+           typ=read_int();
+            l=read_int();
+             r=read_int();
+             if(typ==2)
+             {
+             	int res;
+             	if(l<=r)
+             	 res=query(1,0,n-2,l-1,r-2,1);
+             	else
+             	{
+             	
+             		 res=query(1,0,n-2,r-1,l-2,0);
+               
+				 }
+             	cout<<ans<<endl;
+               
+			 }
+			 else
+			 {
+			 	int val=0;
+			     update(1,0,n-2,l-1,r-2,val);
+			 }
+              
+              
+             
+         }
+       
+  return 0;
+ }

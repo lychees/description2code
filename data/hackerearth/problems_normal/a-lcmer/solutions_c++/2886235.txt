@@ -1,0 +1,108 @@
+#include <bits/stdc++.h>
+
+#define FOR(i,a,b) for (int i = (int)(a); i < (int)(b); ++i)
+#define REP(i,n) FOR(i,0,n)
+#define pb push_back
+#define ll long long
+
+#define TRACE(x) cerr << #x << " = " << x << endl
+#define _ << " _ " <<
+
+using namespace std;
+
+const int Mod = 1000000007;
+
+int n, l, r, x;
+int cnt;
+int num[1<<10]; // broj brojeva koji imaju samo bitmasku od x, nista vise
+int temp[1<<10];
+int prod[1<<10];
+
+int Sum;
+
+ll fac[105];
+ll inv[105];
+
+inline ll add(ll a, ll b){a += b; if (a >= Mod) return a-Mod; return a;}
+inline ll mul(ll a, ll b){return (a*b)%Mod;}
+ll poten(ll x, ll y){
+	ll r = 1;
+	while (y){
+		if (y&1) r = mul(r, x);
+		x = mul(x, x);
+		y >>= 1;
+	} return r;
+}
+
+ll choose(ll a, ll b){
+	if (b < 0 || b > a) return 0;
+	return mul(fac[a], mul(inv[b], inv[a-b]));
+}
+
+ll BigChoose(ll a, ll b){
+	if (a < b || b < 0) return 0;
+	if (a-b < b) b = a-b;
+	ll r = inv[b];
+	REP(i,b) r = mul(r, a-i);
+	return r;
+}
+
+ll Func(int t){
+	ll r = 0;
+	REP(i,1<<cnt){
+		ll cr = BigChoose(num[i]+n-1, n);
+		if (__builtin_popcount(i)%2==0) r += cr;
+		else r -= cr;
+	}
+	//TRACE(t _ r);
+	r %= Mod;
+	if (r < 0) return r + Mod;
+	return r;
+}
+
+void solve(){
+	cin >> n >> l >> r >> x;
+	vector < int > pot;
+	memset(num, 0, sizeof num);
+	int y = x;
+	for (int i = 2; i*i <= y; ++i){
+		int bla = 1;
+		while (y%i == 0) y /= i, bla *= i;
+		if (bla != 1) pot.pb(bla);
+	}
+	if (y != 1) pot.pb(y);
+	cnt = pot.size();
+	prod[0] = 1;
+	FOR(i,1,1<<cnt) REP(j,cnt) if ((i>>j)&1) prod[i] = prod[i^(1<<j)] * pot[j];
+	REP(i,1<<cnt) temp[i] = r/prod[i] - (l-1)/prod[i];
+	REP(i,1<<cnt){
+		int t = i;
+		do {
+			if (__builtin_popcount(t) % 2 == 0) num[i] += temp[t];
+			else num[i] -= temp[t];
+			t = (t-1) & i;
+		} while (t != i); //TRACE(i _ num[i]);
+	}
+	
+	Sum = 0;
+	REP(i,1<<cnt) Sum += num[i];
+	
+	ll R = 0; cout << Func(0) << endl; return;
+	FOR(i,1,n+1) R = add(R, mul(Func(i), 1/*choose(n-1,i-1)*/));
+	
+	cout << R << endl;
+	
+}
+
+int main(){ 
+	fac[0] = 1;
+	REP(i,102) fac[i+1] = mul(fac[i], i+1);
+	REP(i,103) inv[i] = poten(fac[i], Mod-2);
+	
+	//TRACE(BigChoose(7,3));
+    
+    int t;
+    cin >> t;
+    while (t--) solve();
+    return 0;
+}

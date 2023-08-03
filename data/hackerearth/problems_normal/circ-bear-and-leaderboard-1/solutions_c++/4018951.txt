@@ -1,0 +1,108 @@
+//Created By Mayur Agarwal :)
+
+#include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <set>
+#include <algorithm>
+#include <map>
+#include <iterator>
+#include <functional>
+#include <queue>
+
+#define ll long long
+#define ind(a) scanf("%d",&a)
+#define in(a) scanf("%lld",&a)
+#define inc(a) scanf("%c",&a)
+#define ins(a) scanf("%s",a)
+#define pr(a) printf("%lld\n",a)
+#define debug(x) cout << #x << " = " << x << endl
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define pb push_back
+#define ff first
+#define ss second
+#define SIZE 500010
+const ll mod = 1000000007L;
+
+using namespace std;
+typedef pair<ll, ll>pll;
+ll n, q;
+ll participant[SIZE], ar[SIZE], points[SIZE], b[SIZE], bc[SIZE];
+map<ll, ll>mp;
+map<ll, ll>::iterator it;
+map<ll, ll>::reverse_iterator rit;
+ll bit[2][SIZE];
+
+void update(ll t, ll idx, ll val)
+{
+	while (idx < SIZE)
+	{
+		bit[t][idx] += val;
+		idx += (idx & -idx);
+	}
+}
+
+ll query(ll t, ll idx)
+{
+	ll res = 0;
+	while (idx > 0)
+	{
+		res += bit[t][idx];
+		idx -= (idx & -idx);
+	}
+	return res;
+}
+int main()
+{
+#ifndef ONLINE_JUDGE
+	freopen("input.txt", "r", stdin);
+	freopen("output.txt", "w", stdout);
+#endif
+	ios_base::sync_with_stdio(0); cin.tie(0);
+
+	cin >> n >> q;
+	ar[1] = 0;
+	// Coordinate Compression
+	mp[ar[1]] = 0;
+	for (int i = 2; i <= q + 1; i++)
+	{
+		cin >> participant[i] >> points[i];
+		ar[i] = b[participant[i]] + points[i];
+		b[participant[i]] += points[i];
+		mp[ar[i]] = 0;
+	}
+
+	ll new_value = 0;
+	for (rit = mp.rbegin(); rit != mp.rend(); rit++)
+	{
+		rit->second = ++new_value;
+	}
+	MS0(b);
+	ll ans = 0;
+	for (ll i = 2; i <= q + 1; i++)
+	{
+		ll c, d;
+		c = participant[i];
+		d = points[i];
+		ll idx = mp[b[c]];
+		ll prev_rank = query(0, idx - 1) + 1;
+		ans -= prev_rank * b[c];
+		ans -= query(1, new_value) - query(1, idx);
+
+		update(0, idx, -1);
+		update(1, idx, -b[c]);
+		b[c] += d;
+		idx = mp[b[c]];
+		ll cur_rank = query(0, idx - 1) + 1;
+		update(0, idx, 1);
+		update(1, idx, b[c]);
+		ans += cur_rank * b[c];
+		ans += query(1, new_value) - (query(1, idx));
+		cout << ans << endl;
+	}
+	return 0;
+}

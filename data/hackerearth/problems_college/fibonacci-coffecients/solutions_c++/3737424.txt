@@ -1,0 +1,136 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+using namespace std;
+
+void getTL()
+{
+	int x = 0;
+	while(true)
+	{
+		x++;
+	}
+	printf("%d\n", x);
+	return;
+}
+
+typedef long long ll;
+ll MOD;
+ll add(ll x, ll y)
+{
+	x += y;
+	if (x >= MOD) return x - MOD;
+	return x;
+}
+ll sub(ll x, ll y)
+{
+	x -= y;
+	if (x < 0) return x + MOD;
+	return x;
+}
+ll mult(ll x, ll y)
+{
+	return (x * y) % MOD;
+}
+
+const int N = 1 << 18;
+
+struct Node
+{
+	int l, r;
+	ll A, B;
+
+	Node() : l(-1), r(-1), A(), B() {}
+	Node(int _l, int _r) : l(_l), r(_r), A(0), B(0) {}
+};
+Node tree[2 * N];
+ll F[2 * N];
+
+Node merge(Node L, Node R)
+{
+	if (L.l == -1) return R;
+	if (R.l == -1) return L;
+	Node V = Node(L.l, R.r);
+	int len = L.r - L.l - 1;
+	V.A = add(L.A, add(mult(R.A, F[len]), mult(R.B, F[len + 1])));
+	V.B = add(L.B, add(mult(R.A, F[len + 1]), mult(R.B, F[len + 2])));
+	return V;
+}
+
+void setVal(int v, ll x)
+{
+	v += N;
+	tree[v].A = 0;
+	tree[v].B = x;
+	while(v > 1)
+	{
+		v >>= 1;
+		tree[v] = merge(tree[2 * v], tree[2 * v + 1]);
+	}
+	return;
+}
+
+Node getVal(int v, int l, int r)
+{
+	if (l <= tree[v].l && tree[v].r <= r)
+		return tree[v];
+	if (l >= tree[v].r || tree[v].l >= r)
+		return Node();
+	return merge(getVal(2 * v, l, r), getVal(2 * v + 1, l, r));
+}
+
+void buildTree()
+{
+	for (int i = 0; i < N; i++)
+		tree[N + i] = Node(i, i + 1);
+	for (int i = N - 1; i > 0; i--)
+		tree[i] = merge(tree[2 * i], tree[2 * i + 1]);
+	return;
+}
+
+int main()
+{
+//	freopen("input.txt", "r", stdin);
+//	freopen("output.txt", "w", stdout);
+
+	int n, q;
+	scanf("%d%d%lld", &n, &q, &MOD);
+	if (MOD < 2)
+		getTL();
+	F[0] = 0;
+	F[1] = 1 % MOD;
+	for (int i = 2; i < 2 * N; i++)
+		F[i] = add(F[i - 1], F[i - 2]);
+	buildTree();
+	for (int i = 0; i < n; i++)
+	{
+		ll x;
+		scanf("%lld", &x);
+		x %= MOD;
+		setVal(i, x);
+	}
+	for (int i = 0; i < q; i++)
+	{
+		int type;
+		scanf("%d", &type);
+		if (type == 1)
+		{
+			int v;
+			ll x;
+			scanf("%d%lld", &v, &x);
+			v--;
+			setVal(v, x);
+		}
+		else
+		{
+			int l, r;
+			scanf("%d%d", &l, &r);
+			l--;
+			Node R = getVal(1, l, r);
+			printf("%lld\n", R.B);
+		}
+	}
+
+	return 0;
+}

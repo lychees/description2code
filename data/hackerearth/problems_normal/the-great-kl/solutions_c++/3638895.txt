@@ -1,0 +1,211 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+#define ll long long
+#define si(X) scanf("%d", &(X))
+#define sll(X) scanf("%lld",&(X))
+
+ll gcd(ll a,ll b){
+	if(b==0)
+	return a;
+	return gcd(b,a%b);
+}
+
+
+
+const int mod = 1e9+7;
+
+ll expo(ll base,ll pow){
+    ll ans = 1;
+    
+    while(pow!=0){
+        if(pow&1==1){
+            ans = ans*base;
+            ans = ans%mod;
+        }
+        base *= base;
+        base%=mod;
+        pow/=2;
+        
+    }
+    return ans;
+}
+double pi = 3.141592653589793238462643;
+double error = 0.0000001;
+/* -------Template ends here-------- */ 
+
+const int MAX = 100001;
+
+vector<int> vec[MAX];
+bool vis[MAX];
+int level[MAX];
+int par[MAX];
+vector<int> citp[MAX];
+
+
+void pre(){
+	memset(vis,0,sizeof(vis));
+	memset(level,0,sizeof(level));
+	memset(par,0,sizeof(par));
+	//memset(in_ma_lev,0,sizeof(in_ma_lev));
+}
+
+void find_levels(int root){
+	level[root] = 0;
+	vis[root] = 1;
+	par[root] = -1;
+	
+	queue<int> Q;
+	Q.push(root);
+	
+	while(!Q.empty()){
+		int u = Q.front();
+		Q.pop();
+		
+		for(int i = 0;i<vec[u].size();i++){
+			int v = vec[u][i];
+			if(vis[v]==false){
+				Q.push(v);
+				level[v] = level[u]+1;
+				vis[v] = 1;
+				par[v] = u;
+			}
+		}	
+	}	
+}
+
+int AN[MAX][17];
+int n;
+void preprocess(){
+	
+	memset(AN,-1,sizeof(AN));
+	
+	for(int i = 1;i<=n;i++){                                         //  *** put here i = 1;i<=n
+		AN[i][0] = par[i];
+	}
+	
+	for(int j = 1; (1<<j)<n; j++){                                 // *** put here (1<<j)<=n
+		for(int i = 1; i<=n; i++){   
+		     if((1<<j)>level[i])
+			 continue;                       
+		     AN[i][j] = AN[ AN[i][j-1] ][ j-1 ];                                     
+		}
+	}
+	
+}
+
+int LCA(int p,int q){
+	// see p always has to be below or equal to q;
+	// level[a]>level[b] ==> a is below b
+	
+	int a = level[p];
+	int b = level[q];
+	
+	if(b>a){
+		int temp = p;
+		p = q;
+		q = temp;
+	}
+	
+	int lo;
+	 //cout<<"here  "<<p<<"   "<<level[p]<<endl;
+	for(lo = 0; (1<<lo)<=level[p]; lo++){
+	//	cout<<"lo is "<<lo<<endl;
+	}                        
+	lo--;
+	
+	//since p is below q;
+	
+	for(int j = lo; j>=0; j--){
+		if(level[p] - (1<<j) >= level[q] ){
+			p = AN[p][j];
+		}
+		//cout<<"ok  "<<j<<"    "<<p<<endl;
+	}
+	
+	if(p==q){
+		return p;
+	}
+	
+	for(int j = lo; j>=0; j--){
+		if( (AN[p][j]!=-1) && (AN[p][j]!=AN[q][j]) ){
+			p = AN[p][j];
+			q = AN[q][j];
+		}
+	}
+	return par[p];
+}
+
+
+int main(){
+	pre();
+	si(n);
+	int k;
+	si(k);
+	int el;
+	for(int i = 1;i<=n;i++){
+		si(el);
+		citp[el].push_back(i);
+	}
+	int u,v;
+	
+	for(int i = 0;i<n-1;i++){
+		si(u);
+		si(v);
+		vec[u].push_back(v);
+		vec[v].push_back(u);
+	}
+	find_levels(1);
+	preprocess();
+	
+	for(int i = 1;i<=k;i++){
+		int si = citp[i].size();
+		if(si==0)
+		continue;
+		if(si==1){
+			printf("0 ");
+			//cout<<"0 ";
+			continue;
+		}
+		// to find node with highest level
+		int tt = 0;
+		for(int j = 0;j<si;j++){
+			int u = citp[i][j];
+			if(level[u]>level[tt]){
+				tt = u;
+			}
+		}
+		int ma = 0;
+		
+		for(int j = 0;j<si;j++){
+				u = tt;
+				v = citp[i][j];
+				
+				int lca = LCA(u,v);
+				ma = max(ma,(level[u]+level[v]-2*level[lca]));
+				
+			
+		}
+		printf("%d ",ma);
+		//cout<<ma<<" ";
+	}
+	
+	
+	
+		
+	
+	
+	
+/*	
+    int n;
+	si(n);
+	pi(n);
+	int arr[n];
+	loop(i,n){
+	   si(arr[i])
+    }
+	
+	
+	*/
+	
+}

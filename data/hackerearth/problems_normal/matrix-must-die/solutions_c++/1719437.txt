@@ -1,0 +1,83 @@
+
+#include <bits/stdc++.h>
+
+#define FOR(i,a,b) for(int i=(a),_b=(b); i<=_b; i++)
+#define FORD(i,a,b) for(int i=(a),_b=(b); i>=_b; i--)
+#define REP(i,a) for(int i=0,_a=(a); i<_a; i++)
+#define EACH(it,a) for(__typeof(a.begin()) it = a.begin(); it != a.end(); ++it)
+
+#define DEBUG(x) { cout << #x << " = "; cout << (x) << endl; }
+#define PR(a,n) { cout << #a << " = "; FOR(_,1,n) cout << a[_] << ' '; cout << endl; }
+#define PR0(a,n) { cout << #a << " = "; REP(_,n) cout << a[_] << ' '; cout << endl; }
+
+#define sqr(x) ((x) * (x))
+using namespace std;
+
+const long long MOD = 1e9 + 7;
+
+struct Matrix {
+    long long x[9][9];
+} I, trans[66];
+
+Matrix operator * (const Matrix& a, const Matrix& b) {
+    Matrix c;
+    REP(i,9) REP(j,9) {
+        c.x[i][j] = 0;
+        REP(k,9)
+            c.x[i][j] += a.x[i][k] * b.x[k][j];
+        c.x[i][j] %= MOD;
+    }
+    return c;
+}
+
+void init() {
+    REP(i,9) I.x[i][i] = 1;
+
+    REP(i,3) REP(j,3) {
+        int u = i*3 + j;
+        REP(x,3) REP(y,3) {
+            int f = abs(i - x) + abs(j - y) + abs(i + j - x - y);
+            int v = x*3 + y;
+
+            trans[0].x[u][v] = f;
+        }
+    }
+    FOR(i,1,40) trans[i] = trans[i-1] * trans[i-1];
+}
+
+Matrix get(long long t) {
+    Matrix res = I;
+    FOR(i,0,40)
+        if ((t >> i) & 1) {
+            res = res * trans[i];
+        }
+    return res;
+}
+
+int a[5][5];
+
+int main() {
+    ios :: sync_with_stdio(false);
+    init();
+    int ntest; cin >> ntest;
+    while (ntest--) {
+        long long n; cin >> n;
+        REP(i,3) REP(j,3) cin >> a[i][j];
+
+        Matrix t = get(n);
+        REP(i,3) {
+            REP(j,3) {
+                int u = i*3 + j;
+                long long res = 0;
+                REP(x,3) REP(y,3) {
+                    int v = x*3 + y;
+                    res = (res + t.x[u][v] * a[x][y]) % MOD;
+                }
+                cout << res << ' ';
+            }
+            cout << '\n';
+        }
+    }
+    return 0;
+}
+

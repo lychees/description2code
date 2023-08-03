@@ -1,0 +1,199 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+#define N 2
+#define PB push_back
+#define MOD 1000000007
+#define LL long long int
+#define MP make_pair
+#define F first
+#define S second
+
+LL a[N][N], b[N][N], c[N][N];
+int par[2000000];
+int rnk[2000000];
+vector< pair< LL, pair<int, int> > > vec;
+
+inline int finD(int x){
+    return (x == par[x] ? x : par[x] = finD(par[x]));
+}
+
+inline void unioN(int x, int y){
+    x = finD(x);
+    y = finD(y);
+    if(rnk[x] >= rnk[y]){
+        par[y] = x;
+        rnk[x] += rnk[y];
+    }
+    else{
+        par[x] = y;
+        rnk[y] += rnk[x];
+    }
+}
+
+void mul(LL e[N][N], LL f[N][N]){
+    int i, j, k;
+    for(i = 0; i < N; i++){
+        for(j = 0; j < N; j++){
+            c[i][j] = 0;
+        }
+    }
+    for(i = 0; i < N; i++){
+        for(j = 0; j < N; j++){
+            for(k = 0; k < N; k++){
+                c[i][k] += e[i][j] * f[j][k];
+                if(c[i][k] >= MOD){
+                    c[i][k] %= MOD;
+                }
+            }
+        }
+    }
+}
+
+void copymat(LL e[N][N], LL f[N][N]){
+    int i, j;
+    for(i = 0; i < N; i++){
+        for(j = 0; j < N; j++){
+            e[i][j] = f[i][j];
+        }
+    }
+}
+
+void print(LL a[N][N]){
+    for(int i = 0; i < 10; i++){
+        printf("-");
+    }
+    printf("\n");
+    for(int i = 0; i < N; i++){
+        for(int j = 0; j < N; j++){
+            cout<<a[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+}
+
+void power(LL a[N][N], LL k){
+    int i, j;
+    for(i = 0; i < N; i++){
+        for(j = 0; j < N; j++){
+            b[i][j] = (i == j ? 1 : 0);
+        }
+    }
+    while(k > 0){
+        if(k & 1){
+            mul(b, a);
+            for(i = 0; i < N; i++){
+            for(j = 0; j < N; j++){
+                b[i][j] = c[i][j];
+            }
+        }
+        }
+        mul(a, a);
+        for(i = 0; i < N; i++){
+            for(j = 0; j < N; j++){
+                a[i][j] = c[i][j];
+            }
+        }
+        //print(b);
+        //print(a);
+        k /= 2;
+    }
+}
+
+inline int fib(LL n){
+    if(n == 0){
+        return 0;
+    }
+    if(n == 1){
+        return 1;
+    }
+    a[0][0] = 1;
+    a[0][1] = 1;
+    a[1][0] = 1;
+    a[1][1] = 0;
+    power(a, n - 1);
+    //print(a);
+    return b[0][0];
+}
+
+int main(){
+    LL n, k1, k2, k3, k4, c, i, j, ans = 0, k;
+    cin>>n>>k1>>k2>>k3>>k4;
+    //n = 1;
+    //cout<<fib(4)<<endl;
+    if(n == 1){
+        cout<<"0"<<endl;
+        return 0;
+    }
+    LL a = fib(k1);
+    LL pa = fib(k1 - 1);
+    LL b = fib(k2);
+    LL pb = fib(k2 - 1);
+    for(i = 0; i < n; i++){
+        for(j = 0; j < n - 1; j++){
+            c = a + b;
+            if(c >= MOD){
+                c -= MOD;
+            }
+            vec.PB(MP(c, MP(i * n + j, i * n + j + 1)));
+            //printf("(%lld, %lld) -> (%lld, %lld) : %lld\n", i, j, i, j + 1, a + b);
+            c = a + pa;
+            pa = a;
+            a = c;
+            if(a >= MOD){
+                a -= MOD;
+            }
+            c = b + pb;
+            if(c >= MOD){
+                c -= MOD;
+            }
+            pb = b;
+            b = c;
+        }
+    }
+    for(i = 0; i < n; i++){
+        for(j = 0; j < n; j++){
+            k = i * n + j;
+            par[k] = k;
+            rnk[k] = 1;
+        }
+    }
+    a = fib(k3);
+    pa = fib(k3 - 1);
+    b = fib(k4);
+    pb = fib(k4 - 1);
+    for(j = 0; j < n; j++){
+        for(i = 0; i < n - 1; i++){
+            c = a + b;
+            if(c >= MOD){
+                c -= MOD;
+            }
+            vec.PB(MP(c, MP(i * n + j, i * n + j + n)));
+            //printf("(%lld, %lld) -> (%lld, %lld) : %lld\n", i, j, i + 1, j, a + b);
+            c = a + pa;
+            pa = a;
+            a = c;
+            if(a >= MOD){
+                a -= MOD;
+            }
+            c = b + pb;
+            if(c >= MOD){
+                c -= MOD;
+            }
+            pb = b;
+            b = c;
+        }
+    }
+    ans = 0;
+    sort(vec.begin(), vec.end());
+    j = vec.size();
+    for(i = 0; i < j; i++){
+        if(finD(vec[i].S.F) != finD(vec[i].S.S)){
+            ans += vec[i].F;
+            unioN(vec[i].S.F, vec[i].S.S);
+        }
+    }
+    cout<<ans<<endl;
+    return 0;
+}

@@ -1,0 +1,131 @@
+#include<iostream>
+#include<stdio.h>
+#include<limits.h>
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef pair<long long int,long long int> P;
+vector <P> v[1001];
+vector <P> d[1001];
+long long int weights[1001],pset[1001],parent[1001],visited[1001];
+int mat[1001][1001];
+
+void dfs(int s,int x,int tot)
+{
+    int i;
+    visited[x]=1;
+    for(i=0;i<d[x].size();i++)
+    {
+        if(visited[d[x][i].first]==0)
+        {
+            tot+=d[x][i].second;
+            mat[s][d[x][i].first]=tot;
+            dfs(s,d[x][i].first,tot);
+            tot-=d[x][i].second;
+        }
+    }
+}
+
+long long int minKey(long long int n)
+{
+    long long int u=INT_MAX,i,pos;
+    for(i=1;i<=n;i++)
+    {
+        if(pset[i]==0 && weights[i]<u)
+        {
+            u=weights[i];
+            pos=i;
+        }
+    }
+    return pos;
+}
+
+void GetMst(int n)
+{
+        long long int i,j,u;
+        for(i=1;i<=n;i++)
+        {
+            weights[i]=INT_MAX;
+            pset[i]=0;
+        }
+        parent[1]=-1;
+        weights[1]=0;
+        for(i=1;i<=n;i++)
+        {
+            u=minKey(n);
+            pset[u]=1;
+
+            for(j=0;j<v[u].size();j++)
+            {
+                if(pset[v[u][j].first]==0 && v[u][j].second<weights[v[u][j].first])
+                    {
+                        weights[v[u][j].first]=v[u][j].second;
+                        parent[v[u][j].first]=u;
+                    }
+            }
+        }
+}
+
+
+int main()
+{
+    long long int t,n,m,i,j,u,b,w,k,sum=0,p,cas=0;
+    scanf("%lld",&t);
+    //cin >> t;
+    while(t--)
+    {
+        cas++;
+        sum=0;
+        scanf("%lld%lld%lld",&n,&p,&m);
+       // cin >> n >> p >> m;
+        for(i=1;i<=n;i++)
+        {
+            v[i].clear();
+            d[i].clear();
+            pset[i]=0;
+            parent[i]=0;
+            weights[i]=0;
+        }
+        for(i=1;i<=n;i++)
+            for(j=1;j<=n;j++)
+                mat[i][j]=0;
+
+        for(i=1;i<=p;i++)
+        {
+            scanf("%lld%lld%lld",&u,&b,&w);
+            //cin >> u >> b >> w;
+            v[u].push_back(make_pair(b,w));
+            v[b].push_back(make_pair(u,w));
+        }
+        GetMst(n);
+
+        for(i=2;i<=n;i++)
+        {
+                j=weights[i];
+                d[i].push_back(make_pair(parent[i],j));
+                d[parent[i]].push_back(make_pair(i,j));
+
+        }
+
+        for(i=1;i<=n;i++)
+        {
+            for(j=1;j<=n;j++)
+                visited[j]=0;
+            dfs(i,i,0);
+        }
+
+        printf("Case: %lld\n",cas);
+        for(i=1;i<=m;i++)
+        {
+            scanf("%lld%lld",&u,&b);
+            //cin >> u >> b;
+            //if(mat[u][b]<mat[b][u])
+                sum=mat[u][b];
+            //else
+              //  sum=mat[b][u];
+            printf("%lld\n",sum);
+            //cout << sum << endl;
+        }
+    }
+    return 0;
+}

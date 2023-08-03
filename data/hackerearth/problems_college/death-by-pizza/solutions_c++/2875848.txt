@@ -1,0 +1,176 @@
+#include<cstdio>
+#include<cstring>
+#include<algorithm>
+#include<cmath>
+using namespace std;
+typedef long long ll;
+long long tree[66536];
+int lazy[66536][5];
+
+int mul[5]={78,62,53,27,1};
+void updateValueUtil( int ss, int se, int l,int r,int index,int i)
+{
+int j,mid = (se+ss)/2; 
+long long ans;
+int tmp=se-ss+1,tmp2;
+	for(j=0;j<5;j++)
+	{
+	if(lazy[index][j])
+{
+	if(tmp>=(5-j))
+	{
+	ans=mul[j];
+	tmp2=tmp-(5-j);
+	if(tmp2>0)
+	ans=ans+(1LL*(tmp2/5)*mul[0])+mul[0]-mul[tmp2%5];
+	}
+	else
+	{
+		ans=mul[j]-mul[j+tmp];
+	}
+	tree[index]+=(ans*lazy[index][j]);
+	if (se > ss)
+	{
+	lazy[2*index+1][j]+=lazy[index][j];
+	lazy[2*index+2][(j+mid+1-ss)%5]+=lazy[index][j];
+	}
+	lazy[index][j]=0;
+}
+	}
+
+if(r<ss||l>se)
+return;
+
+if(l<= ss && se <= r)
+{
+	
+	j=(i+ss-l)%5;
+	
+	if(tmp>=(5-j))
+	{
+	ans=mul[j];
+	tmp2=tmp-(5-j);
+	if(tmp2>0)
+	ans=ans+(1LL*(tmp2/5)*mul[0])+mul[0]-mul[tmp2%5];
+	}
+	else
+	{
+		ans=mul[j]-mul[j+tmp];
+	}
+	tree[index]+=ans;
+	if (se > ss)
+	{
+	lazy[2*index+1][j]+=1;
+	lazy[2*index+2][(j+mid+1-ss)%5]+=1;
+	}	
+	return;
+}
+
+updateValueUtil( ss, mid, l,r, 2*index + 1,i);
+updateValueUtil( mid+1, se, l,r, 2*index + 2,i);
+tree[index]=tree[2*index+1]+tree[2*index+2];
+
+}
+long long getSumUtil(int ss, int se, int qs,int qe, int index)
+{
+	long long ans;
+int tmp=se-ss+1,tmp2,j;
+int mid = (se+ss)/2; 
+	for(int j=0;j<5;j++)
+	{
+	if(lazy[index][j])
+{
+	if(tmp>=(5-j))
+	{
+	ans=mul[j];
+	tmp2=tmp-(5-j);
+	if(tmp2>0)
+	ans=ans+(1LL*(tmp2/5)*mul[0])+mul[0]-mul[tmp2%5];
+	}
+	else
+	{
+		ans=mul[j]-mul[j+tmp];
+	}
+	tree[index]+=(ans*lazy[index][j]);
+	if (se > ss)
+	{
+	lazy[2*index+1][j]+=lazy[index][j];
+	lazy[2*index+2][(j+mid+1-ss)%5]+=lazy[index][j];
+	}
+	lazy[index][j]=0;
+}
+	}
+
+// If segment of this node is a part of given range, then return the
+    // sum of the segment
+    if (qs <= ss && qe >= se)
+        return tree[index];
+ 
+    // If segment of this node is outside the given range
+    if (se < qs || ss > qe)
+        return 0;
+ 
+    // If a part of this segment overlaps with the given range
+    
+   long long q1= getSumUtil( ss, mid, qs, qe, 2*index+1) ;
+    long long q2= getSumUtil( mid+1, se, qs, qe, 2*index+2);
+    return q1+q2;
+}
+
+long long build_tree(int arr[],int node, int ts, int te)
+{
+	//printf("%d-->(%d,%d)\n",node+1,ts,te);
+if(ts==te) 
+{tree[node]=arr[ts]; return tree[node];}
+int mid=(ts+te)/2;
+tree[node]=build_tree(arr,2*node+1, ts, mid)+
+build_tree(arr,2*node+2, mid+1, te);
+return tree[node];
+}
+
+long long gcd(long long a, long long b) {
+	while(b) b ^= a ^= b ^= a %= b;
+	return a;
+}
+
+main(){
+	
+	int t,n,i,x,y,type;
+	long long ans;
+		scanf("%d",&n);
+		scanf("%d",&t);
+	int arr[n];
+	 int hei= (int)(ceil(log2(n))); //Height of segment tree
+     int max_size = 2*(int)pow(2, hei) - 1;		
+	  
+		ans=0;
+		for(i=0;i<n;i++)
+		{
+			scanf("%d",&arr[i]);
+		}
+		
+		build_tree(arr,0,0,n-1);
+	/*	for(i=0;i<max_size;i++)
+		{
+			printf("%d->%lld\n",i+1,tree[i]);
+		}
+	*/	long long gd;
+		while(t--)	
+		{
+			scanf("%d%d%d",&type,&x,&y);
+		if(type==0)
+		updateValueUtil( 0, n-1,x-1 ,y-1, 0,0);
+		else
+		{
+		ans=getSumUtil( 0, n-1, x-1, y-1, 0);
+		//gd=gcd(ans,(y-x+1));
+		printf("%lld/%d\n",ans,(y-x+1));
+		}
+		}
+	/*	for(i=0;i<max_size;i++)
+		{
+			printf("%d-->tree=%lld lazy=%d\n",i,tree[i],lazy[i]);
+		}*/
+
+	return 0;
+}

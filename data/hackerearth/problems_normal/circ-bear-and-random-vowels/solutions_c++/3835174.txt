@@ -1,0 +1,90 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+#define MOD 1000000007
+#define MAX 3005
+
+long long powmod(long long a, int e) {
+    long long ret = 1;
+    for (; e; e >>= 1, a = a * a % MOD)
+        if (e & 1)
+            ret = ret * a % MOD;
+    return ret;
+}
+
+long long invmod(long long a) {
+    return powmod(a, MOD-2);
+}
+
+long long fact[MAX], ifact[MAX];
+long long comb(int n, int k) {
+    if (k > n || k < 0) return 0;
+    return (fact[n] * ifact[k] % MOD) * ifact[n-k] % MOD;
+}
+
+const char vowels[] = "aeiouy";
+
+int n, m;
+char s[MAX];
+int cnt_vowels[MAX], min_turns;
+bool is_vowel[MAX];
+long long dp[MAX][MAX];
+
+long long go(int pos, int turns) {
+    long long &ret = dp[pos][turns];
+    if (ret != -1)
+        return ret;
+    if (pos == n) {
+        if (turns < min_turns)
+            return ret = 0;
+        if (n - cnt_vowels[n] - turns > cnt_vowels[n] + turns)
+            return ret = comb(cnt_vowels[n], m - turns);
+        return ret = 0;
+    }
+    if (turns > m)
+        return ret = 0;
+    if (is_vowel[pos])
+        return ret = go(pos+1, turns);
+    ret = 0;
+    if (pos+2 < n && !is_vowel[pos+1] && !is_vowel[pos+2]) {
+        ret += comb(n - (pos+3) + cnt_vowels[pos+1], m - turns);
+        ret += go(pos+1, turns+1) + go(pos+2, turns+1) + go(pos+3, turns+1);
+    }
+    else {
+        ret += go(pos+1, turns) + go(pos+1, turns+1);
+    }
+    return ret %= MOD;
+}
+
+int main() {
+    fact[0] = ifact[0] = 1;
+    for (int i = 1; i < MAX; i++) {
+        fact[i] = fact[i-1] * i % MOD;
+        ifact[i] = invmod(fact[i]);
+    }
+
+    scanf("%d %d %s", &n, &m, s);
+    memset(is_vowel, 0, sizeof(is_vowel));
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < 6; j++)
+            if (s[i] == vowels[j])
+                is_vowel[i] = true;
+
+    cnt_vowels[0] = 0;
+    for (int i = 1; i <= n; i++)
+        cnt_vowels[i] = cnt_vowels[i-1] + is_vowel[i-1];
+    bool is_hard = n - cnt_vowels[n] > cnt_vowels[n];
+    for (int i = 2; i < n; i++)
+        if (!is_vowel[i-2] && !is_vowel[i-1] && !is_vowel[i])
+            is_hard = true;
+    if (!is_hard) {
+        puts("0");
+        return 0;
+    }
+
+    min_turns = max(0, m - cnt_vowels[n]);
+    memset(dp, -1, sizeof(dp));
+    printf("%lld\n", go(0, 0));
+}

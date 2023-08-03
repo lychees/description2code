@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <map>
+using namespace std;
+#define N 500000
+int st[N << 2];
+char str[N][20];
+int arr[N];
+#define gc getchar
+void read(int &n) {
+    n = 0;
+    char ch = gc();
+    while ( !isdigit(ch) ) ch=gc();
+    while ( isdigit(ch) ) {
+        n = n*10 + ch-48;
+        ch=gc();
+    }
+}
+
+void build(int node, int l, int r)
+{
+	if (l == r) {
+		st[node] = 1;
+		return;
+	}
+	int n = node << 1;
+	int mid = (l + r) / 2;
+	build(n, l, mid);
+	build(n + 1, mid + 1, r);
+	st[node] = st[n] + st[n + 1];
+	return;
+}
+ 
+void update(int node, int l, int r, int idx)
+{
+	if (l == r) {
+		st[node] = 0;
+		return;
+	}
+	int mid = (l + r) / 2;
+	int n = node << 1;
+	if (idx <= mid) {
+		update(n, l, mid, idx);
+	}
+	else {
+		update(n + 1, mid + 1, r, idx);
+	}
+	st[node] = st[n] + st[n + 1];
+	return;
+}
+ 
+int query(int node, int l, int r, int k)
+{
+	if (l == r) {
+		return l;
+	}
+	int mid = (l + r) / 2;
+	int n = node << 1;
+	if (k <= st[n]) {
+		return query(n, l, mid, k);
+	}
+	else {
+		return query(n + 1, mid + 1, r, k - st[n]);
+	}
+}
+ 
+int main()
+{
+	int t;	
+	read(t);
+	while (t--) {
+		int n;
+		read(n);
+		for (int i = 0; i < n; i++) {
+			scanf("%s", str[i]);
+		}
+		for (int i = 0; i < n; i++) {
+			read(arr[i]);
+		}
+		build(1, 0, n - 1);
+		int maxx = INT_MIN;
+		for (int i = 1; i < n; i++) {
+			int x;
+			read(x);
+			int getx = query(1, 0, n - 1, x);
+			maxx = max(maxx, arr[getx]);
+			printf("%s %d\n", str[getx], maxx);
+		//	cout << str[getx] << " " << maxx << endl;
+			update(1, 0, n - 1, getx);
+		}
+		int getx = query(1, 0, n - 1, 1);
+		maxx = max(maxx, arr[getx]);
+		printf("%s %d\n", str[getx], maxx);
+		//cout << str[getx] << " " << maxx << endl;
+	}
+	return 0;
+}

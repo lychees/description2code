@@ -1,0 +1,78 @@
+#include<bits/stdc++.h>
+#include<string>
+using namespace std;
+#define ll long long int
+#define sc1ll(x) scanf("%lld",&x)
+#define sc2ll(x,y) scanf("%lld%lld",&x,&y)
+#define sc3ll(x,y,z) scanf("%lld%lld%lld",&x,&y,&z)
+#define mod_val 1000000009
+vector<vector<ll> > True(301,vector<ll>(301));
+vector<vector<ll> > False(301,vector<ll>(301));
+void count_parenth(string symb,string oper,ll num)
+{
+    ll k,tik,tkj;
+    for(ll i=0;i<num;i++)
+    {
+        True[i][i]=(symb[i]=='1')?1:0;
+        False[i][i]=(symb[i]=='0')?1:0;
+    }
+
+    for(ll gap=1;gap<num;++gap)
+    {
+        for( ll i=0,j=gap; j<num ; ++i,++j )
+        {
+            True[i][j]=False[i][j]=0;
+            for(ll g=0;g<gap;g++)
+            {
+                k = i + g;
+                tik=( (True[i][k]%mod_val) + (False[i][k]%mod_val) )%mod_val;
+                tkj=( (True[k+1][j]%mod_val) + (False[k+1][j]%mod_val) )%mod_val;
+
+                if(oper[k]=='a')
+                {
+                    True[i][j] = ( (True[i][j]%mod_val)+((True[i][k]%mod_val)*(True[k+1][j]%mod_val))%mod_val )%mod_val;
+                    False[i][j] = ( ((False[i][j]%mod_val) + ((tik%mod_val)*(tkj%mod_val))%mod_val)%mod_val - ((True[i][k]%mod_val)*(True[k+1][j]%mod_val))%mod_val )%mod_val;
+                    if(False[i][j]<0)
+                        False[i][j]+=mod_val;
+                }
+                if (oper[k] == 'o')
+                {
+                    False[i][j] = ( (False[i][j]%mod_val) + ((False[i][k]%mod_val)*(False[k+1][j]%mod_val))%mod_val )%mod_val;
+                    True[i][j] = ( (True[i][j]%mod_val) + ((tik%mod_val)*(tkj%mod_val))%mod_val - ((False[i][k]%mod_val)*(False[k+1][j]%mod_val))%mod_val)%mod_val;
+                    if(True[i][j]<0)
+                        True[i][j]+=mod_val;
+                }
+                if (oper[k] == 'x')
+                {
+                    True[i][j] = ( ((True[i][j]%mod_val) + ((False[i][k]%mod_val)*(True[k+1][j]%mod_val))%mod_val)%mod_val + ((True[i][k]%mod_val)*(False[k+1][j]%mod_val))%mod_val)%mod_val;
+                    False[i][j] = ( ( (False[i][j]%mod_val) + ((True[i][k]%mod_val)*(True[k+1][j]%mod_val))%mod_val )%mod_val + ((False[i][k]%mod_val)*(False[k+1][j]%mod_val))%mod_val)%mod_val;
+                }
+            }
+        }
+    }
+}
+int main()
+{
+    string symb,oper,test;
+    ll num,i,j,q,l,r,ans;
+    cin>>symb>>oper;
+    count_parenth(symb,oper,symb.length());
+    sc1ll(q);
+    while(q--)
+    {
+        sc2ll(l,r);
+        l-=1;
+        r-=1;
+        cin>>test;
+        if(test=="true")
+        {
+            ans=True[l][r];
+            cout<<ans<<endl;
+        }
+        else
+        {
+            ans=False[l][r];
+            cout<<ans<<endl;
+        }
+    }
+}

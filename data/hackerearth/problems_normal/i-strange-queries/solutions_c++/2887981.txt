@@ -1,0 +1,127 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n;
+
+int tab[100007];
+
+int d=100;
+int l[100007], r[100007];
+int nal[100007];
+
+int il;
+
+vector <int> kol[100007];
+
+short int jew[50007][503];
+unsigned int pun[50007][503];
+
+int dos[100007];
+int pre[503][50007];
+
+int q;
+
+int a, b, x, y;
+
+int l1, p1, l2, p2;
+
+unsigned int wyn;
+
+int main()
+{
+    scanf("%d", &n);
+    il=(n+d-1)/d;
+    for (int i=1; i<=n; i++)
+    {
+        scanf("%d", &tab[i]);
+        nal[i]=(i+d-1)/d;
+        kol[tab[i]].push_back(i);
+        jew[tab[i]][nal[i]]++;
+    }
+    for (int i=1; i<=il; i++)
+    {
+        l[i]=1000000000;
+    }
+    for (int i=1; i<=n; i++)
+    {
+        l[nal[i]]=min(l[nal[i]], i);
+        r[nal[i]]=max(r[nal[i]], i);
+    }
+    for (int i=1; i<=n; i++)
+    {
+        for (int j=1; j<=il; j++)
+        {
+            pun[i][j]=jew[tab[i]][j]+pun[i-1][j]+pun[i][j-1]-pun[i-1][j-1];
+        }
+    }
+    for (int i=1; i<=n; i++)
+    {
+        if (kol[i].size()>=d)
+        {
+            q++;
+            dos[i]=q;
+            for (int j=1; j<=n; j++)
+            {
+                pre[q][j]=pre[q][j-1]+(tab[j]==i);
+            }
+        }
+    }
+    scanf("%d", &q);
+    while(q--)
+    {
+        scanf("%d%d%d%d", &a, &b, &x, &y);
+        if (y-x<b-a)
+        {
+            swap(x, a);
+            swap(y, b);
+        }
+        l1=nal[a];
+        p1=nal[b];
+        l2=nal[x];
+        p2=nal[y];
+        wyn=0;
+        if (l1<p1)
+        {
+            if (l2<p2)
+            {
+                wyn+=pun[b][p2-1]-pun[a-1][p2-1]-pun[b][l2]+pun[a-1][l2];
+                for (int i=x; i<=r[l2]; i++)
+                {
+                    if (!dos[tab[i]])
+                    wyn+=upper_bound(kol[tab[i]].begin(), kol[tab[i]].end(), b)-lower_bound(kol[tab[i]].begin(), kol[tab[i]].end(), a);
+                    else
+                    wyn+=pre[dos[tab[i]]][b]-pre[dos[tab[i]]][a-1];
+                }
+                for (int i=y; i>=l[p2]; i--)
+                {
+                    if (!dos[tab[i]])
+                    wyn+=upper_bound(kol[tab[i]].begin(), kol[tab[i]].end(), b)-lower_bound(kol[tab[i]].begin(), kol[tab[i]].end(), a);
+                    else
+                    wyn+=pre[dos[tab[i]]][b]-pre[dos[tab[i]]][a-1];
+                }
+            }
+            else
+            {
+                for (int i=x; i<=y; i++)
+                {
+                    if (!dos[tab[i]])
+                    wyn+=upper_bound(kol[tab[i]].begin(), kol[tab[i]].end(), b)-lower_bound(kol[tab[i]].begin(), kol[tab[i]].end(), a);
+                    else
+                    wyn+=pre[dos[tab[i]]][b]-pre[dos[tab[i]]][a-1];
+                }
+            }
+        }
+        else
+        {
+            for (int i=a; i<=b; i++)
+            {
+                if (!dos[tab[i]])
+                wyn+=upper_bound(kol[tab[i]].begin(), kol[tab[i]].end(), y)-lower_bound(kol[tab[i]].begin(), kol[tab[i]].end(), x);
+                else
+                wyn+=pre[dos[tab[i]]][y]-pre[dos[tab[i]]][x-1];
+            }
+        }
+        printf("%u\n", wyn);
+    }
+    return 0;
+}

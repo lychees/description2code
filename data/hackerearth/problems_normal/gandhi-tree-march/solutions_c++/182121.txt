@@ -1,0 +1,144 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <stdlib.h> // for exit()
+#include <algorithm> // std::sort
+using namespace std;
+
+/**Effects: adds ids to corresponding vector representing a column in the "Gandhi Tree March" graph
+ * Returns: last visited position in chain definition
+ **/
+int constructGraph(vector<vector<char> > *nonnegativeCols, vector<vector<char> > *negativeCols, int currCol, string *chainDef, unsigned int defPos) {
+	//Get Person_Id (expect a-z or '.' if empty chain)
+	unsigned int currPos = defPos;
+	char ch = chainDef->at(currPos);
+	if (ch >= 'a' && ch <= 'z') { //Valid person id, check chain contents
+		//Check which vector, index to use
+		vector<vector<char> > *myColVector;
+		unsigned int myColIndex;
+		if (currCol<0) {
+			myColVector = negativeCols;
+			myColIndex = (currCol * -1) - 1; //contains cols -1,-2,-3,...
+		} else {
+			myColVector = nonnegativeCols;
+			myColIndex = currCol; //contains cols 0,1,2,...
+		}
+		//Add person id to correct column
+		if (myColVector->size() <= myColIndex) {
+			vector<char> emptyCol;
+			do {
+				myColVector->push_back(emptyCol);
+			} while (myColVector->size() <= myColIndex);
+		}
+		(*myColVector)[myColIndex].push_back(ch);
+		//Check for opening '('
+		currPos++;
+		ch = chainDef->at(currPos);
+		if (ch != '(') {
+			cerr << "Invalid Person_Chain_Definition, missing \"(\"";
+			exit(-1);
+		}
+		//Recurse on left and right children
+		currPos = constructGraph(nonnegativeCols, negativeCols, currCol-1, chainDef, currPos+1);
+		currPos = constructGraph(nonnegativeCols, negativeCols, currCol+1, chainDef, currPos+1);
+		////Check for closing ')'
+		currPos++;
+		ch = chainDef->at(currPos);
+		if (ch != ')') {
+			cerr << "Invalid Person_Chain_Definition, missing \")\"";
+			exit(-1);
+		}
+	} else if (ch != '.') {
+		cerr << "Invalid Person_Id: " << ch << endl;
+		exit(-1);
+	}
+	return currPos;
+}
+
+/**Constructs "Gandhi Tree March" graph from user-provided chain definition and prints contents of the specified column
+ * Expects user input #1: column number to print
+ * Expects user input #2: tree definition in the following format:
+ *           TreeDef is either empty, represented by a dot '.'
+ *           or of form: id (TreeDef TreeDef),
+ *           where id is an alphabetic character from a-z
+ * Requires: all ids appearing in tree definition are printed in alphabetical order
+ *           starting from 'a', without skipping letters, chain def contains no spaces.
+ *           (eg. a,b,c,d,e,f okay, b,c,d not okay, a,b,f not okay, a,c,b not okay)
+ * Result: prints ids present in the specified column in alphabetical order, 
+ *         or if no ids are present, prints "Common Gandhijee!" without quotes
+ *
+ * Example of valid inputs:
+ *   -1
+ *   a( b(c(d(..) .) e(f(..) g(..))) h(. i(j(..))) )
+ * This constructs the following graph and prints the contents of column -1 to cout: bf
+ *
+ * Col #:   -3-2-1 0 1 2 3
+ *                 a
+ *               b
+ *             c   e
+ *           d   f   g
+ *                   h
+ *                     i
+ *                   j
+ **/
+int main(int argc, char *argv[]) {
+	int nTestCases;
+	if (!(cin >> nTestCases)) {
+		cerr << "Invalid value for nTestCases: " << nTestCases << endl;
+		exit(-1);
+	}
+	
+	vector<int> cols;
+	vector<string> defs;
+	
+	for (int n=0; n<nTestCases; n++) {
+		//Retrieve column number to print
+		int colNumber;
+		if (!(cin >> colNumber)) {
+			cerr << "Invalid value for colNumber: " << colNumber << endl;
+			exit(-1);
+		}
+		cols.push_back(colNumber);
+		//Retrieve chain definition
+		string chainDef;
+		std::getline(std::cin.ignore(), chainDef);
+		defs.push_back(chainDef);
+	}
+	
+	//Construct columns of graph from chain definition
+	for (int n=0; n<nTestCases; n++) {
+		vector<vector<char> > nonnegativeCols, negativeCols;
+		constructGraph(&nonnegativeCols, &negativeCols, 0, &defs[n], 0);
+		
+		//Print contents of specified column or "Common Gandhijee!" if no contents exist
+		
+		//Check which vector, index to use
+		vector<vector<char> > *myColVector;
+		unsigned int myColIndex;
+		if (cols[n]<0) {
+			myColVector = &negativeCols;
+			myColIndex = (cols[n] * -1) - 1; //contains cols -1,-2,-3,...
+		} else {
+			myColVector = &nonnegativeCols;
+			myColIndex = cols[n]; //contains cols 0,1,2,...
+		}
+		
+		//First check if column exists, if not print "Common Gandhijee!" and exit
+		if (myColVector->size() <= myColIndex) {
+			cout << "Common Gandhijee!" << endl;
+		} else {
+			//If column exists, print contents or "Common Gandhijee!" if it is empty
+			vector<char> *myCol = &((*myColVector)[myColIndex]);
+			int numIds = myCol->size();
+			if (numIds == 0) {
+				cout << "Common Gandhijee!" << endl;
+			} else {
+				//First sort elements in alphabetical order
+				std::sort(myCol->begin(), myCol->end());
+				for (int i=0; i<numIds; i++) cout << (*myCol)[i];
+				cout << endl;
+			}
+		}
+	}
+	return 0;
+}

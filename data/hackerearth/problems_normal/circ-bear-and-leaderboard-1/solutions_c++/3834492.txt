@@ -1,0 +1,221 @@
+/*
+ * Now we will use the Binary Indexed Tree to compute the position and the count*score
+ *   The count * score will be handled in normal fashion, but the position will need to be reversed
+ */
+#include <iostream>
+#include <stdio.h>
+#include <cstdio>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <set>
+#include <iterator>
+
+using namespace std;
+
+#define MIN(a,b)  (a<=b ? a : b)
+#define MAX(a,b)  (a >= b ? a : b)
+#define MAXPART 500000
+
+//
+//  class definitions
+//
+class BIT
+{
+	private:
+		unsigned long long *B;
+		unsigned long long *V;
+		int N;
+
+
+	public:
+		BIT(int inN)
+		{
+			N = inN;
+			B = new unsigned long long[N+1];
+			V = new unsigned long long[N+1];
+			for(int i=0;i<=N;i++)
+			{
+				B[i] = 0;
+				V[i] = 0;
+			}
+		}
+		//remember this takes a delta value rather than an absolute value
+		void set(int j, long long val)
+		{
+			int i;
+			V[j] += val;
+			i=j;
+			while (i <= N) {
+				B[i] += (long long) val;
+				i += (i & -i);
+			}
+		}
+
+		long long getSingle(int j)
+		{
+			return V[j];
+		}
+
+		long long get(int j)
+		{
+			if(j <= 0) return 0;
+			int i;
+			i = j;
+			long long sum = 0;
+			while(i > 0) {
+				sum += (long long) B[i];
+				i -= (i & -i);
+			}
+			return sum;
+		}
+
+		unsigned long long diff(int j, int i)  //get(j) - get(i-1)
+		{
+			if(i > j) return 0L;
+			long long jSum = 0L, iM1Sum = 0L;
+			jSum = this->get(j);
+			iM1Sum = this->get(i - 1);
+			return jSum - iM1Sum;
+		}
+};
+//
+//  Shared variable definitions
+//
+int N;
+unsigned long long pScore[MAXPART + 1];
+long long tHash = 0;
+long long inVals[MAXPART + 1][2];
+vector<long long> inSums;
+vector<long long> inDist;
+long long *InDist;
+long curCount[MAXPART + 1];
+//long curPos[MAXPART + 1];
+int numInput = 0;
+int numSums = 0;
+int numDistinct = 0;
+//
+//Addressing functions for BIT function, important these are 1 based indexes, so the address needs adjusted
+//
+int nDIST;  //number of distinct values for the sums, the rev index computes the reverse index since this sums from bottom
+            //to top
+BIT *posInfo;
+BIT *distInfo;
+#define NBITSIZE    (nDIST + 1)
+//Remember this has to be 1 based indexing
+#define INDX(i)     (i)
+//Remember this has to be 1 based indexing
+#define REVINDX(i)  (nDIST+1-(i))
+//This assumes the standard 0 based and computes the number of elements above
+int pos(int i)
+{
+	return (posInfo->getSingle(REVINDX(i+1)) > 0 ?
+			posInfo->get(REVINDX(i+1)) - posInfo->getSingle(REVINDX(i+1)) + 1 :
+			posInfo->get(REVINDX(i+1)));
+}
+//
+//  Shared function definitions
+//
+int findLoc(long long inVal)
+{
+	int minL = 0;
+	int maxL = inDist.size() - 1;
+	int m;
+	m = (maxL + minL)/2;
+	while(m != minL)
+	{
+		if(inVal > InDist[m])
+			minL = m;
+		else if(inVal == InDist[m]) return m;
+		else
+			maxL = m;
+		m = (maxL + minL)/2;
+	}
+	if(inVal == InDist[m]) return m;
+	else return maxL;
+}
+//
+//  Main
+//
+int main(int argc, char** argv) {
+
+	for(int i=0;i<=MAXPART;i++)
+	{
+		curCount[i] = 0;
+		//curPos[i] = 0;
+	}
+	inSums.push_back(0);
+	int Q;
+	cin >> N >> Q;
+	long long outVals[Q];
+	int q = Q;
+	int a, b;
+	numInput = 0;
+	numSums = 1;  //Since we will count 0 as a distinct value (especially at the start)
+	while(q-- > 0)
+	{
+		scanf("%d %d",&a,&b);
+		inVals[numInput][0] = a;
+		inVals[numInput][1] = b;
+		numInput++;
+		pScore[a] += (long long) b;
+		inSums.push_back(pScore[a]);
+		numSums++;
+	}
+	//Sort the sums
+	sort(inSums.begin(), inSums.end());
+	long long lastVal = -1;
+	for(int i=0;i<inSums.size();i++)
+		if(inSums[i] != lastVal)
+		{
+			inDist.push_back(inSums[i]);
+			lastVal = inSums[i];
+		}
+	nDIST = inDist.size();
+	InDist = new long long[nDIST];
+	for(int i=0;i<nDIST;i++) InDist[i] = inDist[i];
+	//Now inDist contains all of the possible distinct values for the scores
+	for(int i=0;i<=MAXPART;i++) pScore[i] = 0;
+	curCount[0] = N;
+	posInfo = new BIT(NBITSIZE);
+	posInfo->set(REVINDX(1),N);
+	distInfo = new BIT(nDIST);
+	distInfo->set(1,0);
+
+	Q = 0;
+	int maxPos = 0;
+	while(Q < numInput) {
+		int a, b;
+		a = inVals[Q][0];
+		b = inVals[Q][1];
+		long long lastPTScore = pScore[a];
+		long long pTScore = pScore[a] + (long long) b;
+		int lastLoc = findLoc(lastPTScore);
+		int curLoc = findLoc(pTScore);
+		int oldPos = pos(lastLoc);
+		pScore[a] = pTScore;
+		//Updates the counts and the position information
+		curCount[lastLoc]--;
+		posInfo->set(REVINDX(lastLoc+1), -1);
+		curCount[curLoc]++;
+		posInfo->set(REVINDX(curLoc+1), +1);
+		//subtract for lastLoc
+		distInfo->set(lastLoc + 1, -InDist[lastLoc]);
+		//add for the curLoc
+		distInfo->set(curLoc + 1, InDist[curLoc]);
+		long long pSum = distInfo->diff(curLoc, lastLoc+1);
+		long long tSum = 0;
+		for(int j=lastLoc;j<curLoc;j++)
+			tSum += inDist[j]*curCount[j];
+
+		tHash += pSum;
+		tHash -= lastPTScore * (long long) oldPos;
+		tHash += pTScore * (long long) pos(curLoc);
+
+		printf("%lld\n",tHash);
+		Q++;
+	}
+
+	return 0;
+}
+

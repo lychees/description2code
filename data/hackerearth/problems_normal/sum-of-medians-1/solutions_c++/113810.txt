@@ -1,0 +1,227 @@
+#include <iostream>
+using namespace std;
+
+class HeapAsc {
+	private:
+		int size;
+		int* A;
+		int N;
+	
+	public:
+	HeapAsc(int N) {
+		this->N = N;
+		this->A = new int[N];
+		this->size = 0;
+	}
+	
+	~HeapAsc() {
+		delete [] this->A;
+	}
+	
+	int getSize() {return size; }
+	int getTop() {return A[0]; }
+
+	// up heap
+	void up_heap_asc(int index) {
+		if (index == 0) return;
+		int parentIndex = (index - 1) / 2;
+
+		if (A[parentIndex] > A[index]) {
+			int temp = A[index];
+			A[index] = A[parentIndex];
+			A[parentIndex] = temp;
+		}
+		up_heap_asc(parentIndex);
+	}
+
+	// down heap
+	void heapify_asc (int i) {
+		int l = 2 * i + 1; // left(i);
+		int r = 2 * i + 2; // right(i);
+		int smallest = i;
+		if (l < size && A[l] < A[smallest]) smallest = l;
+		if (r < size && A[r] < A[smallest]) smallest = r;
+		if(smallest != i) {
+			int temp = A[i];
+			A[i] = A[smallest];
+			A[smallest] = temp;
+			heapify_asc (smallest);
+		}
+	}
+
+	// bottom-up heap construction
+	void bottomUpHeap_asc() {
+		for (int i = size / 2 - 1; i >= 0; i--) {
+			heapify_asc(i);
+		}
+	}
+
+	void add(int entry) {
+		if (size+1 <= N) {
+			A[size] = entry;
+			up_heap_asc(size);
+			size++;
+		}
+	}
+
+	int extract() {
+		int result = A[0];
+		A[0] = A[size-1];
+		//A[size-1] = result;
+		size--;
+		heapify_asc(0);
+		return result;
+	}
+};
+
+
+class HeapDsc {
+	private:
+		int size;
+		int* A;
+		int N;
+	
+	public:
+	HeapDsc(int N) {
+		this->N = N;
+		this->A = new int[N];
+		this->size = 0;
+	}
+	
+	~HeapDsc() {
+		delete [] this->A;
+	}
+	
+	int getSize() {return size; }
+	int getTop() {return A[0]; }
+
+	// up heap
+	void up_heap_dsc(int index) {
+		if (index == 0) return;
+		int parentIndex = (index - 1) / 2;
+
+		if (A[parentIndex] < A[index]) {
+			int temp = A[index];
+			A[index] = A[parentIndex];
+			A[parentIndex] = temp;
+		}
+		up_heap_dsc(parentIndex);
+	}
+
+	// down heap
+	void heapify_dsc (int i) {
+		int l = 2 * i + 1; // left(i);
+		int r = 2 * i + 2; // right(i);
+		int largest = i;
+		if (l < size && A[l] > A[largest]) largest = l;
+		if (r < size && A[r] > A[largest]) largest = r;
+		if(largest != i) {
+			int temp = A[i];
+			A[i] = A[largest];
+			A[largest] = temp;
+			heapify_dsc (largest);
+		}
+	}
+
+	// bottom-up heap construction
+	void bottomUpHeap_dsc() {
+		for (int i = size / 2 - 1; i >= 0; i--) {
+			heapify_dsc(i);
+		}
+	}
+
+	void add(int entry) {
+		if (size+1 <= N) {
+			A[size] = entry;
+			up_heap_dsc(size);
+			size++;
+		}
+	}
+
+	int extract() {
+		int result = A[0];
+		A[0] = A[size-1];
+		//A[size-1] = result;
+		size--;
+		heapify_dsc(0);
+		return result;
+	}
+};
+
+
+int main()
+{
+	int N;
+	cin >> N; 
+	
+/*
+	int m, n;
+	m = N/2;
+	if (N % 2 == 0)
+		n = N/2-1;
+	else
+		n = N/2;
+*/
+	int m = N;
+	int n = N;
+
+	long SumMedians = 0;
+
+	HeapAsc upper(m);
+	int median = 0;
+	HeapDsc lower(n);
+
+	int i = 0; int d = 0;
+	bool even = true;
+	while (i < N) {
+		cin >> d;
+
+		// put the new item into the list
+		if (i == 0) {
+			median = d;
+		} else {
+			if (d > median) upper.add(d);
+			else lower.add(d);
+		}
+		i++; even = !even;
+
+		int locMedian = 0;
+		// find new median
+		if (even) {
+			locMedian = (i/2)-1;
+		} else { // odd
+			locMedian = ((i+1)/2)-1;
+		}
+
+		// rearrange if necessary
+		if (lower.getSize() > locMedian) {
+			upper.add(median);
+			median = lower.extract();
+
+		} else if (lower.getSize() == locMedian) {
+			// do nothing
+
+		} else { //	(lower.getSize() < locMedian)
+			lower.add(median);
+			median = upper.extract();
+		}
+/*
+		// __debug__
+		if (lower.getSize() != 0)
+			cout << lower.getTop() << " ";
+		cout << median << " ";
+		if (upper.getSize() != 0)
+			cout << upper.getTop();
+
+		cout << ": " << lower.getSize() + 1 + upper.getSize();
+		cout << endl;
+*/
+		// __debug__
+		SumMedians += median;
+	}
+
+//	cout << "---------" << endl;
+//	cout << SumMedians << endl;
+	cout << SumMedians % 100000 << endl;
+    return 0;
+}

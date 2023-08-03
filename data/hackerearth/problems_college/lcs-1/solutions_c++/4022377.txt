@@ -1,0 +1,208 @@
+//Copyright 2016 Ricky_Saurav
+/*
+   Licensed under the "THE BEER-WARE LICENSE" (Revision 42):
+   Ricky_Saurav wrote this file. As long as you retain this notice you
+   can do whatever you want with this stuff. If we meet some day, and you think
+   this stuff is worth it, you can buy me a beer in return.
+   */
+#include <iostream>
+#include <stdio.h>
+#include <string>
+#include <map>
+#include <set>
+#include <string.h>
+#include <vector>
+#include <algorithm>
+#include <math.h>
+#include <queue>
+#include <cassert>
+#define NL "\n"
+typedef long long ll;
+#define fillm(a, val) memset(a, val, sizeof(a))
+using namespace std;
+const double pi = acos(-1.0);
+const ll mod = 1000000007;
+const ll maxn = 402005;
+const ll inf = 1ll << 30;
+const int offset = 2005;
+int logtb[maxn << 2];
+struct suffix_tree
+{
+    map<int, int> to[maxn << 1];
+    int str[maxn], st[maxn << 1], len[maxn << 1] = {inf}, link[maxn << 1];
+    int node, pos, sz = 1, n;
+    int lev[maxn << 1], in[maxn << 1], eu[maxn << 2], sp[maxn << 2][25], loc[maxn]; //only for lcp related problems.
+    vector<int> ends;                                                               //only needed for gst . ends.push_back(n) after each string.
+    int tim = 0;
+    int num, ans[maxn], prev;
+    void pre(int node)
+    {
+        eu[tim] = node;
+        in[node] = tim++;
+        for (auto i : to[node])
+        {
+            int next = i.second;
+            if (len[next] > maxn)
+            {
+                int lim = *lower_bound(ends.begin(), ends.end(), st[next]);
+                len[next] = lim - st[next]; //replace n with lowerbound(ends,st[next]) for gst.
+                loc[st[next] - lev[node]] = next;
+                //cout << st[next] - lev[node] << " ";
+            }
+            lev[next] = lev[node] + len[next];
+            pre(next);
+            eu[tim++] = node;
+        }
+    }
+    void build_sp()
+    {
+        for (int i = 0; i < (sz << 1); i++)
+            sp[i][0] = eu[i];
+        for (int j = 1; (1 << j) <= (sz << 1); j++)
+        {
+            for (int i = 0; i + (1 << j) - 1 < (sz << 1); i++)
+            {
+                sp[i][j] = lev[sp[i][j - 1]] < lev[sp[i + (1 << (j - 1))][j - 1]] ? sp[i][j - 1] : sp[i + (1 << (j - 1))][j - 1];
+            }
+        }
+    }
+    int lca(int a, int b)
+    {
+        a = in[a], b = in[b];
+        if (a > b)
+            swap(a, b);
+        int k = logtb[b - a + 1];
+        return lev[sp[a][k]] < lev[sp[b - (1 << k) + 1][k]] ? sp[a][k] : sp[b - (1 << k) + 1][k];
+    }
+    int make_node(int _pos, int _len)
+    {
+        st[sz] = _pos;
+        len[sz] = _len;
+        return sz++;
+    }
+    void go_edge()
+    {
+        while (pos > len[to[node][str[n - pos]]])
+        {
+            node = to[node][str[n - pos]];
+            pos -= len[node];
+        }
+    }
+    void add_letter(int c)
+    {
+        str[n++] = c;
+        pos++;
+        int last = 0; //no internal node left unlinked.
+        while (pos > 0)
+        {
+            go_edge();
+            int edge = str[n - pos];
+            int &v = to[node][edge];
+            int t = str[st[v] + pos - 1];
+            if (v == 0)
+            {
+                v = make_node(n - 1, inf);
+                link[last] = node; //create suffix link
+                last = 0;          //no internal node created
+            }
+            else if (t == c)
+            {
+                link[last] = node;
+                return;
+            }
+            else
+            {
+                int u = make_node(st[v], pos - 1);
+                to[u][c] = make_node(n - 1, inf);
+                to[u][t] = v;
+                st[v] += pos - 1;
+                len[v] -= pos - 1;
+                v = u;
+                link[last] = u;
+                last = u;
+            }
+            if (node == 0)
+                pos--;
+            else
+                node = link[node];
+        }
+    }
+    void dfs(int node, bool flag)
+    {
+        if (to[node].size() == 0)
+        {
+            int type = str[st[node] + len[node]];
+            //cout << type << " ";
+            if (type < num)
+                prev = node;
+            else
+            {
+                type = type - num;
+                int lcp = lev[lca(node, prev)];
+                ans[type] = max(ans[type], lcp);
+            }
+        }
+        if (flag)
+        {
+            for (auto it = to[node].rbegin(); it != to[node].rend(); it++)
+            {
+                int next = it->second;
+                dfs(next, flag);
+            }
+        }
+        else
+        {
+            for (auto i : to[node])
+            {
+                int next = i.second;
+                dfs(next, flag);
+            }
+        }
+    }
+};
+int main()
+{
+#ifdef LOCAL_SYS
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    logtb[1] = 0;
+    for (int i = 2; i < (maxn << 2); i++)
+        logtb[i] = logtb[i - 1] + (!(i & (i - 1)));
+    int n, q;
+    cin >> n;
+    string s;
+    suffix_tree st;
+    st.num = n;
+    for (int i = 0; i < n; i++)
+    {
+        cin >> s;
+        for (auto j : s)
+            st.add_letter(j - 'a' + offset);
+        st.ends.push_back(st.n);
+        st.add_letter(i);
+    }
+    cin >> q;
+    for (int i = 0; i < q; i++)
+    {
+        cin >> s;
+        for (auto j : s)
+            st.add_letter(j - 'a' + offset);
+        st.ends.push_back(st.n);
+        st.add_letter(n + i);
+    }
+    st.pre(0);
+    //cout << endl;
+    st.build_sp();
+    st.dfs(0, 0);
+    //cout << endl;
+    st.dfs(0, 1);
+    //cout << endl;
+    for (int i = 0; i < q; i++)
+    {
+        cout << st.ans[i] << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,118 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <iomanip>
+#include <vector>
+using namespace std;
+
+class Disjoint_Set {
+	private:
+		vector<unsigned> P;
+		vector<unsigned> rank;
+	public:
+		Disjoint_Set(int n)
+		{
+			P.resize(n);
+			rank.resize(n);
+			for (int i = 0; i < n; i++)
+				P[i] = i;
+		}
+		void merge(unsigned node_x, unsigned node_y)
+		{
+			unsigned rep_x = find(node_x);
+			unsigned rep_y = find(node_y);
+			if (rank[rep_x] > rank[rep_y])
+				P[rep_y] = rep_x;
+			else {
+			        P[rep_x] = rep_y;
+				if (rank[rep_x] == rank[rep_y])
+					rank[rep_y]++;
+			}
+		}
+		unsigned int find(unsigned node)
+		{
+			unsigned tmp = node;
+			while (node != P[node]) {
+				node = P[tmp];
+				tmp = node;
+			}
+			return node;
+		}
+};
+
+#define MAX 100005
+int f[MAX][26], lef[MAX][26];
+
+int main()
+{
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n, m;
+        scanf("%d%d", &n, &m);
+        char s[MAX], t[MAX];
+        scanf("%s%s", s, t);
+        Disjoint_Set D(n);
+        for (int i = 0; i < m; i++) {
+            int a, b;
+            scanf("%d%d", &a, &b);
+            a--, b--;
+            D.merge(a, b);
+        }
+        int color[MAX];
+        for (int i = 0; i < n; i++) {
+            color[i] = D.find(i);
+        }
+
+        for (int i = 0; i < n; i++) {
+            f[color[i]][s[i] - 'a']++;
+        }
+
+        for (int i = 0; i < n; i++) {
+            lef[color[i]][t[i] - 'a']++;
+        }
+        char new_str[MAX];
+        for (int i = 0; i < n; i++) {
+            if (lef[color[i]][t[i] - 'a'] > f[color[i]][t[i] - 'a']) {
+                bool flag = 0;
+                for (int j = 0; j < t[i]-'a'; j++) {
+                    if (f[color[i]][j] && lef[color[i]][j] < f[color[i]][j]) {
+                        flag = 1;
+                        new_str[i] = j + 'a';
+                        f[color[i]][j]--;
+                        break;
+                    }
+                }
+                if (!flag) {
+                    if (f[color[i]][t[i] - 'a']) {
+                        flag = 1;
+                        new_str[i] = t[i];
+                        f[color[i]][t[i] - 'a']--;
+                    }
+                }
+                if (!flag) {
+                    for (int j = t[i]-'a'+1; j < 26; j++) {
+                        if (f[color[i]][j] && lef[color[i]][j] < f[color[i]][j]) {
+                            flag = 1;
+                            new_str[i] = j + 'a';
+                            f[color[i]][j]--;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                if (f[color[i]][t[i] - 'a']) {
+                        new_str[i] = t[i];
+                        f[color[i]][t[i] - 'a']--;
+                }
+            }
+            lef[color[i]][t[i] - 'a']--;
+        }
+        int count = 0;
+        for (int i = 0; i < n; i++) {
+            if (new_str[i] == t[i]) count++;
+        }
+        new_str[n] = '\0';
+        printf("%d\n%s\n", count, new_str);
+    }
+}

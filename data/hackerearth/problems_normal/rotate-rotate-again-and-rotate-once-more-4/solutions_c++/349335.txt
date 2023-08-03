@@ -1,0 +1,136 @@
+#include <bits/stdc++.h>
+#define MAX 1000000
+using namespace std;
+struct NODE {
+	int data[4];
+	int flip;
+	NODE(int a=0, int b=0, int c=0, int d=0, int f=0) {
+		data[0] = a;
+		data[1] = b;
+		data[2] = c;
+		data[3] = d;
+		flip = f;
+	}
+	void setData(int a=0, int b=0, int c=0, int d=0, int f=0) {
+		data[0] = a;
+		data[1] = b;
+		data[2] = c;
+		data[3] = d;
+		flip = f;
+	}
+	NODE operator +(NODE other) {
+		NODE result;
+		for(int i=0;i<4;i++) result.data[i] = data[i] + other.data[i];
+		return result;
+	}
+	void operator =(NODE other) {
+		for(int i=0;i<4;i++) data[i] = other.data[i];
+	}
+	void rotate_reset() {
+		flip%=4;
+		flip = (flip+4)%4;
+		while(flip>0) {
+			int temp = data[0];
+			data[0] = data[1];
+			data[1] = data[2];
+			data[2] = data[3];
+			data[3] = temp;
+			flip--;
+		}
+	}
+};
+NODE tree[(MAX<<2) + 1];
+NODE emptyNode(0,0,0,0,0);
+void init(int idx, int start, int end) {
+	if(start==end) tree[idx].setData(1);
+	else {
+		int mid = (start+end)>>1;
+		int left = idx<<1;
+		int right = left+1;
+		init(left, start, mid);
+		init(right, mid+1, end);
+		tree[idx] = tree[left] + tree[right];
+	}
+}
+void refreash(int idx, int start, int end) {
+	tree[idx].flip%=4;
+	if(tree[idx].flip) {
+        //cout<<"refresh idx: "<<idx<<" start: "<<start<<" end: "<<end<<endl;
+		if(start!=end) {
+			int left = idx<<1;
+			int right = left+1;
+			tree[left].flip += tree[idx].flip;
+			tree[right].flip += tree[idx].flip;
+		}
+		tree[idx].rotate_reset();
+	}
+}
+void update(int idx, int start, int end, int i, int j, int rotation) {
+    //cout<<"idx: "<<idx<<endl;
+	if(start>end || end<i || start>j){
+	    refreash(idx, start, end);
+	    return;
+    }
+	if(start>=i && end<=j && start<=end) {
+		tree[idx].flip = (tree[idx].flip+rotation)%4;
+		refreash(idx, start, end);
+		//cout<<tree[idx].flip<<" in range return\n";
+		return;
+	}
+	refreash(idx, start, end);
+	int mid = (start+end)>>1;
+	int left = idx<<1;
+	int right = left+1;
+	update(left, start, mid, i, j, rotation);
+	update(right, mid+1, end, i, j, rotation);
+	if(start!=end)tree[idx] = tree[left] + tree[right];
+	//cout<<"update\n";
+}
+NODE query(int idx, int start, int end, int i, int j) {
+    //cout<<"idx: "<<idx<<endl;
+	if(start>end || end<i || start>j) return emptyNode;
+	refreash(idx, start, end);
+	if(start>=i && end<=j && start<=end) return tree[idx];
+	int mid = (start+end)>>1;
+	int left = idx<<1;
+	int right = left+1;
+	return query(left, start, mid, i, j) + query(right, mid+1, end, i, j);
+	/*refreash(idx, start, end);
+	if(start==i && end==j)return tree[idx];
+	int mid = (start+end)>>1;
+	int left = idx<<1;
+	int right = left+1;
+	if(j<=mid) return query(left,start,mid,i,j);
+	if(i>mid) return query(right,mid+1, end, i, j);
+	return query(left, start, mid, i, mid) + query(right, mid+1, end, mid+1, j);*/
+}
+int main() {
+	int n,m,l,r,k;
+	scanf("%d%d",&n,&m);
+	init(1,1,n);
+	while(m--) {
+		char ch;
+		cin>>ch;
+		switch(ch) {
+		case 'C':
+			scanf("%d%d%d",&l,&r,&k);
+			k = k%4;
+			update(1,1,n,l,r,k);
+			break;
+		case 'A':
+			scanf("%d%d%d",&l,&r,&k);
+			k = (-k)%4;
+			k = (k+4)%4;
+			update(1,1,n,l,r,k);
+			break;
+		case 'Q':
+			scanf("%d%d",&l,&r);
+			NODE node = query(1,1,n,l,r);
+			int mx = INT_MIN;
+			for(int i=0;i<4;i++)mx = max(mx,node.data[i]);
+			printf("%d\n",mx);
+			break;
+		}
+	}
+	return 0;
+}

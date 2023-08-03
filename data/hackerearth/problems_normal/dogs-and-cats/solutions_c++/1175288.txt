@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int mod= (int)(1e6) + 3;
+int fac[mod + 10], inv[mod + 10];
+int power(int x, int k) {
+    if (k == 0) return 1;
+    long long t = power(x, k / 2);
+    t = (t * t) % mod;
+    if (k % 2 == 1) t = (t * x) % mod;
+    return t;
+}
+void init() {
+    fac[0] = 1;
+    for(int i = 1; i < mod; i++) fac[i] = ((long long)(fac[i - 1]) * i) % mod;
+    for(int i = 0; i < mod; i++) inv[i] = power(fac[i], mod - 2);
+}
+int combi(int n,int k)
+{
+	//cout<<"fac["<<n<<"]="<<fac[n]<<" "<<"inv["<<k-1<<"]="<<inv[k-1]<<" "<<"inv["<<k<<"]="<<inv[k]<<"\n";
+     if(n<k) return 0;
+     return ( (long long)(fac[n]) * ( (long long) (inv[n-k]) * inv[k] ) %mod )  %mod;
+}
+int Lucas(long long n, long long k) 
+{
+    if (max(n, k) < mod) {/*cout<<"combi("<<n<<","<<k<<")="<<combi(n,k)<<"\n";*/return combi(n, k);}
+    return ((long long)(combi(n % mod, k % mod)) * Lucas(n / mod, k / mod)) % mod;
+}
+int multi(int n, int t, long long D) //number of solutions of equation (a_1)+(a_2)+(a_3)+...+(a_n)=D,0<=a_i<=t.
+{
+	//cout<<"D="<<D<<"  t="<<t<<" and n= "<<n<<"\n";
+    int ret = Lucas(D+n-1,D);
+    //cout<<ret<<"\n";
+    for(int i = 1; i <= n; i++) 
+   {
+        long long x = D - (long long)(i) * (t + 1);
+        if (x < 0) break;
+        int j = ( (long long) (Lucas(n,i)) * Lucas(x+n-1, x) ) % mod;
+        if (i % 2 == 1) ret = (ret - j + mod) % mod;
+        else ret = (ret + j) % mod;
+    }
+    return ret;
+}
+int main()
+{
+    int t;
+    cin >> t;
+    init();
+    while (t--) 
+	{
+        long long int  tot,tt,n,x,y;
+        cin >> x >> y >> tt;
+          if(tt*x<y) {cout<<"0\n";continue;}
+        n=x+y;
+        tot=(tt+1)*x-n;
+        tt--;//changing qn into most common multi... theorem (see editorial)
+        cout << multi(n, tt, tot) << endl;
+    }
+}

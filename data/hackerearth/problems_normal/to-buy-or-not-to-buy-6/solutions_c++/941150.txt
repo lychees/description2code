@@ -1,0 +1,100 @@
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <cassert>
+using namespace std;
+#define p(x) cerr<<#x<<":"<<x<<"\n"
+#define f first
+#define s second
+#define lim 1000000
+int cs,n,m,i,j,mn,c,q,g,x,y,z0;
+pair<int,pair<int,int> > A[lim];
+int P[lim],R[lim];
+int find(int x)
+{
+  if(P[x]!=x)
+    P[x]=find(P[x]);
+  return P[x];
+}
+void link(int x,int y)
+{
+  if(R[x]<R[y])
+    P[x]=y;
+  else
+  {
+    P[y]=x;
+    if(R[x]==R[y])
+      R[x]++;
+  }
+}
+int mst(int ind)
+{
+  int z=n,sum=0,x,y,i;
+  for(i=0;i<n;i++)
+  {
+    P[i]=i;
+    R[i]=0;
+  }
+  if(ind<m)
+  {
+    link(A[ind].s.f,A[ind].s.s);
+    z--;
+    sum+=A[ind].f;
+  }
+  for(i=0;i<m;i++)
+    if(i!=ind)
+    {
+      x=find(A[i].s.f);
+      y=find(A[i].s.s);
+      if(x!=y)
+      {
+        link(x,y);
+        z--;
+        sum+=A[i].f;
+      }
+    }
+  if(z0==-1)
+    z0=z;
+  else
+    if(z!=z0)
+      return 1000000000;
+  return sum;
+}
+int main()
+{
+  scanf("%d",&cs);
+  while(cs--)
+  {
+    scanf("%d%d",&n,&m);
+    for(i=0;i<m;i++)
+    {
+      scanf("%d%d%d",&A[i].s.f,&A[i].s.s,&A[i].f);
+      A[i].s.f--;
+      A[i].s.s--;
+      if(A[i].s.f>A[i].s.s)
+        swap(A[i].s.f,A[i].s.s);
+    }
+    sort(A,A+m);
+    z0=-1;
+    mn=mst(m);
+    scanf("%d",&q);
+    c=0;
+    for(j=0;j<q;j++)
+    {
+      scanf("%d%d",&x,&y);
+      if(x>y)
+        swap(x,y);
+      x--;
+      y--;
+      for(i=0;i<m && x!=A[i].s.f || y!=A[i].s.s;i++);
+      assert(i<m);
+      if(mst(i)==mn)//if(A[i].f==A[0].f)
+        c++;
+    }
+    g=__gcd(c,q);
+    printf("%d/%d\n",c/g,q/g);//printf("1/%d\n",q);
+  }
+	return 0;
+}

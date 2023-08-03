@@ -1,0 +1,138 @@
+#include <bits/stdc++.h>
+#define M 1000000007
+int A[200001];
+int tree[700005];
+int lazy[700005];
+bool flag[700005];
+int p2[200001];
+int dp[200001];
+using namespace std;
+inline void fi(int *a)
+{
+ register char c=0;
+ while (c<33) c=getchar_unlocked();
+ *a=0;
+ int tmp = 0;
+ while (c>33)
+ {
+     if ( c == 45 ) tmp = 1;
+     else *a=*a*10+c-'0';
+     c=getchar_unlocked();
+ }
+ if ( tmp == 1 ) *a = 0-(*a);
+}
+void pre()
+{
+	p2[0] = 1;
+	for ( int i = 1; i <= 200000; i++ ) {
+		p2[i] = p2[i-1]*2;
+		if ( p2[i] >= M ) p2[i] -= M;
+	}
+	return;
+}
+void build(int node, int left, int right)
+{
+	if ( left > right ) return;
+	if ( left == right ) {
+		tree[node] = A[left];
+		return;
+	}
+	int mid = (left+right)>>1;
+	build(node<<1, left, mid);
+	build((node<<1)|1, mid+1, right);
+	tree[node] = (tree[node<<1] + tree[(node<<1)|1]);
+	if ( tree[node] >= M ) tree[node] -= M;
+}
+void pushdown(int node, int left, int right)
+{
+	int mid = (left+right)>>1;
+	if ( flag[node] ) {
+		int val = (p2[right-left+1]-1);
+		if ( val < 0 ) val += M;
+		val = ((long long)val*(long long)lazy[node])%M;
+		tree[node] = (tree[node]+val);
+		if ( tree[node] >= M ) tree[node] -= M;
+		if ( left != right ) {
+			lazy[node<<1] = (lazy[node<<1]+lazy[node]);
+			lazy[(node<<1)|1] = (lazy[(node<<1)|1]+((long long)p2[mid+1-left]*(long long)lazy[node])%M);
+			if ( lazy[node<<1] >= M ) lazy[node<<1] -= M;
+			if ( lazy[(node<<1)|1] >= M ) lazy[(node<<1)|1] -= M;
+			flag[node<<1] = flag[(node<<1)|1] = true;
+		}
+		lazy[node] = 0;
+		flag[node] = false;
+	}
+	return;
+}
+void update(int node, int left, int right, int i, int j)
+{
+	pushdown(node, left, right);
+	if ( left > right|| left > j || right < i ) return;
+	int mid = (left+right)>>1;
+	if ( left >= i && right <= j ) {
+		int val1 = p2[left-i+1];
+		int val2 = (p2[right-left+1]-1);
+		if ( val2 < 0 ) val2 += M;
+		val1 = ((long long)val1*(long long)val2)%M;
+		tree[node] = (tree[node] + val1);
+		if ( tree[node] >= M ) tree[node] -= M;
+		if ( left != right ) {
+			lazy[node<<1] = (lazy[node<<1]+p2[left-i+1]);
+			lazy[(node<<1)|1] = (lazy[(node<<1)|1]+p2[mid+1-i+1]);
+			if ( lazy[node<<1] >= M ) lazy[node<<1] -= M;
+			if ( lazy[(node<<1)|1] >= M ) lazy[(node<<1)|1] -= M;
+			flag[node<<1] = flag[(node<<1)|1] = true;
+		}
+		return;
+	}
+	update(node<<1, left, mid, i, j);
+	update((node<<1)|1, mid+1, right, i, j);
+	tree[node] = (tree[node<<1] + tree[(node<<1)|1]);
+	if ( tree[node] >= M ) tree[node] -= M;
+}
+int query(int node, int left, int right, int i, int j)
+{
+	pushdown(node, left, right);
+	if ( left > right || left > j || right < i ) return 0;
+	if ( left >= i && right <= j ) return tree[node];
+	int mid = (left+right)>>1;
+	int p = query(node<<1, left, mid, i, j) + query((node<<1)|1, mid+1, right, i, j);
+	if ( p >= M ) p -= M;
+	return p;
+}
+int main()
+{
+	pre();
+	int n,q,type,x,y;
+	fi(&n);
+	bool ff = false;
+	for ( int i = 0; i < n; i++ ) {
+        fi(&A[i]);
+        if ( i != 0 ) dp[i] = dp[i-1] + A[i];
+        else dp[i] = A[i];
+        if ( dp[i] >= M ) dp[i] -= M;
+    }
+	build(1,0,n-1);
+	fi(&q);
+	while ( q-- ) {
+		fi(&type); fi(&x); fi(&y);
+		x--; y--;
+		if ( type == 0 ) {
+             update(1,0,n-1,x,y);
+             ff = true;
+        }
+		else {
+             if ( !ff ) {
+                  int ans;
+                  if ( x == 0 ) ans = dp[y];
+                  else {
+                       ans = dp[y]-dp[x-1];
+                       if ( ans < 0 ) ans += M;
+                  }
+                  printf("%d\n", ans);
+             }
+             else printf("%d\n", query(1,0,n-1,x,y));
+        }            
+	}
+    return 0;
+}

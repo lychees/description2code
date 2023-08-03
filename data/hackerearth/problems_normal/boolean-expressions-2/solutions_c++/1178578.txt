@@ -1,0 +1,221 @@
+/* Divanshu Garg */
+
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <queue>
+#include <deque>
+#include <stack>
+#include <bitset>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <climits>
+#include <cctype>
+#include <cassert>
+#include <complex>
+
+using namespace std;
+
+#define ull unsigned long long
+#define ill long long int
+#define pii pair<int,int>
+#define pb(x) push_back(x)
+#define F(i,a,n) for(int i=(a);i<(n);++i)
+#define REP(i,a,n) for(i=(a);i<(n);++i)
+#define FD(i,a,n) for(int i=(a);i>=(n);--i)
+#define FE(it,x) for(it=x.begin();it!=x.end();++it)
+#define V(x) vector<x>
+#define S(x) scanf("%d",&x)
+#define Sl(x) scanf("%llu",&x)
+#define M(x,i) memset(x,i,sizeof(x))
+#define debug(i,sz,x) F(i,0,sz){cout<<x[i]<<" ";}cout<<endl
+#define MAX(a,b) ((a)>(b)?(a):(b))
+ill ABS(ill a) { if ( a < 0 ) return (-a); return a; }
+#define fr first
+#define se second
+
+/* Relevant code begins here */
+
+/* Input from file or online */
+
+void input() {
+#ifndef ONLINE_JUDGE
+    freopen("input.txt","r",stdin);
+#endif
+}
+
+/* Input opener ends */
+
+char s[505], op[505];
+int n;
+
+#define MOD 1000000009
+ill dp[305][305][2];
+
+int f(int l,int r,int what) {
+
+	if ( l == r ) {
+		if ( s[l]-'0' == what ) return 1;
+		return 0;
+	}
+
+	ill &res = dp[l][r][what];
+	if ( res != -1 ) return res;
+	res = 0;
+
+	F(i,l,r) {
+
+		vector<bool> g;
+		if ( op[i] == 'a' ) {
+			g.pb(0);g.pb(0);g.pb(0);g.pb(1);
+		}
+		if ( op[i] == 'o' ) {
+			g.pb(0);g.pb(1);g.pb(1);g.pb(1);	
+		}
+		if ( op[i] == 'x' ) {
+			g.pb(0);g.pb(1);g.pb(1);g.pb(0);
+		}
+
+		F(j,0,2) {
+			F(k,0,2) {
+				int x = j*2 + k;
+				if ( g[x] == what ) {
+					res += (((ill)f(l,i,j)*(ill)f(i+1,r,k))%MOD);
+					if ( res >= MOD ) res %= MOD;
+				}	
+			}
+		}
+
+	}
+
+	return res;
+
+}
+
+
+void ans() {
+
+	F(i,0,305) F(j,0,305) F(k,0,2) dp[i][j][k] = 0;
+
+	F(len,0,n) {
+
+		F(l,0,n) {
+			int r = l+len;
+			if ( r >= n ) continue;
+
+			F(what,0,2) {
+
+				ill &res = dp[l][r][what];
+				res = 0;
+				if ( l == r ) {
+					if ( s[l]-'0' == what ) res = 1;
+					continue;
+				}
+
+				F(i,l,r) {
+
+					vector<bool> g;
+					if ( op[i] == 'a' ) {
+						g.pb(0);g.pb(0);g.pb(0);g.pb(1);
+					}
+					if ( op[i] == 'o' ) {
+						g.pb(0);g.pb(1);g.pb(1);g.pb(1);	
+					}
+					if ( op[i] == 'x' ) {
+						g.pb(0);g.pb(1);g.pb(1);g.pb(0);
+					}
+
+					F(j,0,2) {
+						F(k,0,2) {
+							int x = j*2 + k;
+							if ( g[x] == what ) {
+								res += dp[l][i][j]*dp[i+1][r][k];
+							}	
+						}
+					}
+
+					res %= MOD;
+
+				}
+
+			} 
+
+		}
+
+	}
+
+
+}
+
+
+#define gc getchar
+
+inline void readint(int &n) {
+	n = 0;
+	char ch = gc();
+    while ( !isdigit(ch) ) ch=gc();
+    while ( isdigit(ch) ) {
+    	n = n*10 + ch-48;
+    	ch = gc();
+    }
+}
+
+int main() {
+
+    input();
+
+    int k = 0;
+    char ch = gc();
+    while ( !isdigit(ch) ) ch=gc();
+    while ( isdigit(ch) ) {
+    	s[k++] = ch;
+    	ch = gc();
+    } s[k++] = '\0';
+
+    k = 0;
+    ch = gc();
+    while ( !isalpha(ch) ) ch=gc();
+    while ( isalpha(ch) ) {
+    	op[k++] = ch;
+    	ch = gc();
+    } op[k++] = '\0';
+    
+    // scanf("%s %s",s,op);
+    n = strlen(s);
+
+    ans();
+
+    int q; readint(q);
+    F(i,0,q) {
+    	int l,r;
+    	readint(l); readint(r); l--; r--;
+    	char get[10];
+    	
+    	k = 0;
+	    ch = gc();
+	    while ( !isalpha(ch) ) ch=gc();
+	    while ( isalpha(ch) ) {
+	    	get[k++] = ch;
+	    	ch = gc();
+	    } get[k++] = '\0';
+
+    	bool g = 0;
+    	if ( get[0] == 't' ) g = 1;
+    	// cout << "--" << g <<endl;
+    	printf("%lld\n", dp[l][r][g]);
+    }
+
+    return 0;
+
+}

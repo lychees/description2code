@@ -1,0 +1,378 @@
+
+/* string coder = "Balajiganapathi"; */
+
+//#define LOCAL
+#ifdef LOCAL
+#   define TRACE
+#else
+#   define NDEBUG
+#endif
+
+#include<bits/stdc++.h>
+#include<sys/resource.h>
+
+using namespace std;
+
+/* aliases */
+using vi  = vector<int>;
+using pi  = pair<int, int>;
+using vs  = vector<string>;
+using vpi = vector<pi>;
+using ll  = long long int;
+
+/* shortcut macros */
+#define mp              make_pair
+#define fi              first
+#define se              second
+#define mt              make_tuple
+#define gt(t, i)        get<i>(t)
+#define all(x)          (x).begin(), (x).end()
+#define ini(a, v)       memset(a, v, sizeof(a))
+#define re(i, s, n)     for(auto i = s, _##i = (n); i < _##i; ++i)
+#define rep(i, s, n)    re(i, s, (n) + 1)
+#define fo(i, n)        re(i, 0, n)
+#define si(x)           (int)(x.size())
+#define pu              push_back
+#define is1(mask,i)     ((mask >> i) & 1)
+
+/* trace macro */
+#ifdef TRACE
+#   define trace(v...)  {cerr << __func__ << ":" << __LINE__ << ": " ;_dt(#v, v);}
+#else
+#   define trace(...)
+#endif
+
+#ifdef TRACE
+pi _gp(string s) {
+    pi r(0, si(s) - 1);
+    int p = 0, s1 = 0, s2 = 0, start = 1;
+    fo(i, si(s)) {
+        int x = (s1 | s2);
+        if(s[i] == ' ' && start) {
+            ++r.fi;
+        } else {
+            start = 0;
+            if(s[i] == ',' && !p && !x) {
+                r.se = i - 1;
+                return r;
+            }
+            if(x && s[i] == '\\') ++i;
+            else if(!x && s[i] == '(') ++p;
+            else if(!x && s[i] == ')') --p;
+            else if(!s2 && s[i] == '\'') s1 ^= 1;
+            else if(!s1 && s[i] == '"') s2 ^= 1;
+        }
+    }
+    return r;
+}
+
+template<typename H> void _dt(string u, H&& v) {
+    pi p = _gp(u);
+    cerr << u.substr(p.fi, p.se - p.fi + 1) << " = " << forward<H>(v) << " |" << endl;
+}
+
+template<typename H, typename ...T> void _dt(string u, H&& v, T&&... r) {
+    pi p = _gp(u);
+    cerr << u.substr(p.fi, p.se - p.fi + 1) << " = " << forward<H>(v) << " | ";
+    _dt(u.substr(p.se + 2), forward<T>(r)...);
+}
+
+template<typename T> 
+ostream &operator <<(ostream &o, vector<T> v) { // print a vector
+    o << "{";
+    fo(i, si(v) - 1) o << v[i] << ", ";
+    if(si(v)) o << v.back();
+    o << "}";
+    return o;
+}
+
+template<typename T1, typename T2> 
+ostream &operator <<(ostream &o, map<T1, T2> m) { // print a map
+    o << "[";
+    for(auto &p: m) {
+        o << " (" << p.fi << " -> " << p.se << ")";
+    }
+    o << " ]";
+    return o;
+}
+
+template <size_t n, typename... T>
+typename enable_if<(n >= sizeof...(T))>::type
+    print_tuple(ostream&, const tuple<T...>&) {} 
+
+template <size_t n, typename... T>
+typename enable_if<(n < sizeof...(T))>::type
+    print_tuple(ostream& os, const tuple<T...>& tup) {
+    if (n != 0)
+        os << ", ";
+    os << get<n>(tup);
+    print_tuple<n+1>(os, tup);
+}
+
+template <typename... T>
+ostream& operator<<(ostream& os, const tuple<T...>& tup) { // print a tuple
+    os << "(";
+    print_tuple<0>(os, tup);
+    return os << ")";
+}
+
+template <typename T1, typename T2>
+ostream& operator<<(ostream& os, const pair<T1, T2>& p) { // print a pair
+    return os << "(" << p.fi << ", " << p.se << ")";
+}
+#endif
+    
+/* util functions */
+
+template<typename T>
+string tostr(T x) {
+    ostringstream oss;
+    oss << x;
+    return oss.str();
+}
+
+template<typename T1, typename T2, typename T3>
+T1 modpow(T1 a, T2 p, T3 mod) {
+    T1 ret = 1;
+
+    a %= mod;
+    for(; p > 0; p /= 2) {
+        if(p & 1) ret = 1ll * ret * a % mod;
+        a = 1ll * a * a % mod;
+    }
+
+    return ret;
+}
+
+#define x1 _asdfzx1
+#define y1 _ysfdzy1
+
+int dx[] {-1, 0, 1, 0, 1, 1, -1, -1};
+int dy[] {0, -1, 0, 1, 1, -1, 1, -1};
+
+/* constants */
+constexpr auto PI  = 3.14159265358979323846L;
+constexpr auto oo  = numeric_limits<int>::max() / 2 - 10;
+constexpr auto eps = 1e-6;
+constexpr auto mod = 1000000007;
+
+template<int nodes>
+class DSU {
+    static_assert(nodes >= 0, "nodes must be positive");
+
+    public:
+    int parent[nodes], rank[nodes];
+    int comps, n;
+
+    DSU() {
+        reset(nodes); 
+    }
+
+    void reset(int _n) {
+        assert(_n >= 0 && _n <= nodes);
+
+        n = _n;
+        for(int i = 0; i < n; ++i) {
+            parent[i] = i;
+            rank[i] = 0;
+        }
+
+        comps = n;
+    }
+
+    int find(int x) {
+        assert(0 <= x && x < n);
+        if(x != parent[x]) return parent[x] = find(parent[x]);
+        return parent[x];
+    }
+
+    void merge(int x, int y) {
+        assert(0 <= x && x < n);
+        assert(0 <= y && y < n);
+        assert(1 <= comps && comps <= n);
+
+        x = find(x); y = find(y);
+        if(x == y) return;
+
+        assert(comps > 1);
+
+        if(rank[x] > rank[y]) {
+            parent[y] = x;
+        } else if(rank[y] > rank[x]) {
+            parent[x] = y;
+        } else {
+            ++rank[x];
+            parent[y] = x;
+        }
+        --comps;
+    }
+
+    friend ostream& operator<<(ostream &o, DSU &dsu) {
+        o << "DSU[" << dsu.n << "," << dsu.comps << "]{";
+        for(int i = 0; i < dsu.n; ++i) {
+            o << " " << i << "->" << dsu.parent[i] << "(" << dsu.rank[i] << ")";
+        }
+        return o << "}";
+    }
+};
+
+/* code */
+constexpr int mx = 2000006;
+int n, m;
+string s[mx];
+vi comp[mx];
+set<int> adj[mx];
+DSU<mx> dsu;
+
+int cc;
+char c;
+
+void add(int cc, int i, int j) {
+    int other;
+    if(i < 0) other = -1;
+    else if(i >= n) other = -2;
+    else if(j < 0) other = -3;
+    else if(j >= n) other = -4;
+    else other = comp[i][j];
+}
+
+bool ans;
+bool isvalid(int i, int j) {
+    return i >= 0 && i < n && j >= 0 && j < m;
+}
+void connect(int i, int j, int ni, int nj, int d) {
+    if(!isvalid(ni, nj) || s[ni][nj] != c) return;
+    /*
+    if(d == 0) {
+        ++ni;
+    } else if(d == 1) {
+        ++nj;
+    } else {
+        ++i; ++j; ++ni; ++nj;
+        if(d == 2) --i;
+        else --j;
+    }
+    */
+    bool add = false;
+
+    for(int dd = (d+1) % 4; dd != (d+3) % 4; dd = (dd + 2) % 4) {
+        int i1 = i + dx[dd], j1 = j + dy[dd];
+        if(!isvalid(i1, j1)) continue;
+        if(s[i1][j1] != c && comp[i1][j1] == -1) add = true;
+        //if(!isvalid(i1, j1) || s[i1][j1] == c || comp[i1][j1] != -1) continue;
+        i1 = ni + dx[dd], j1 = nj + dy[dd];
+        if(!isvalid(i1, j1)) continue;
+        if(s[i1][j1] != c && comp[i1][j1] == -1) add = true;
+        //if(!isvalid(i1, j1) || s[i1][j1] == c || comp[i1][j1] != -1) continue;
+        //add = true;
+        //break;
+    }
+    trace(i, j, ni, nj, add);
+    if(!add) return;
+
+    int a = i * m + j, b = ni * m + nj;
+    if(dsu.find(a) == dsu.find(b)) {
+        trace(cc, a, b, i, j, ni, nj);
+        ans = false;
+    } else {
+        dsu.merge(a, b);
+    }
+}
+
+void dfs(int i, int j, int pi, int pj) {
+    if(i < 0 || i >= n || j < 0 || j >= m || s[i][j] != c) {
+        //add(cc, i, j);
+        return;
+    }
+    if(comp[i][j] != -1) return;
+    comp[i][j] = cc;
+    fo(d, 4) {
+        int ni = i + dx[d], nj = j + dy[d];
+        if(ni == pi && nj == pj) continue;
+        dfs(ni, nj, i, j);
+        if(n * m > 100) connect(i, j, ni, nj, d);
+    }
+}
+
+void inclimit() {
+
+const rlim_t kStackSize = 128L * 1024L * 1024L;   // min stack size = 128MB
+    struct rlimit rl;
+    int result;
+
+    result = getrlimit(RLIMIT_STACK, &rl);
+    if (result == 0)
+    {
+        if (rl.rlim_cur < kStackSize)
+        {
+            rl.rlim_cur = kStackSize;
+            result = setrlimit(RLIMIT_STACK, &rl);
+            if (result != 0)
+            {
+                fprintf(stderr, "setrlimit returned result = %d\n", result);
+            }
+        }
+    }
+}
+
+int vis[102][102];
+
+void dfs2(int i, int j, int x) {
+    if(!isvalid(i, j)) {
+        ans = true;
+        return;
+    }
+    if(vis[i][j] || comp[i][j] == x) return;
+    vis[i][j] = 1;
+
+    fo(d, 8) dfs2(i + dx[d], j + dy[d], x);
+}
+
+void solve(int x) {
+    ini(vis, 0);
+    fo(i, n) fo(j, m) if(!vis[i][j] && comp[i][j] != x) {
+        ans = false;
+        dfs2(i, j, x);
+        if(!ans) return;
+    }
+}
+
+int main() {
+    inclimit();
+    int t;
+    cin >> t;
+    while(t--) {
+        ans = true;
+        cin >> n >> m;
+        fo(i, n) cin >> s[i];
+        fo(i, n + 2) {
+            comp[i] = vi(m, -1);
+        }
+        fo(i, mx) adj[i].clear();
+        dsu.reset(n * m);
+        cc = 0;
+        fo(i, n) fo(j, m) {
+            if(comp[i][j] == -1) {
+                c = s[i][j];
+                dfs(i, j, -1, -1);
+                ++cc;
+            }
+        }
+        if(n * m <= 100) {
+            fo(i, cc) {
+                solve(i);
+                if(!ans) break;
+            }
+        }
+
+        /*
+        fo(i, n) {
+            fo(j, m) cout << comp[i][j];
+            cout << endl;
+        }
+        */
+        cout << (ans? "YES": "NO") << endl;
+    }
+    
+	return 0;
+}

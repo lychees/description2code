@@ -1,0 +1,68 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+vector<unsigned> primes;
+
+vector<unsigned> nums(10001);
+vector<unsigned> cd(10001);
+
+void prepare() {
+	primes.reserve(1600);
+	vector<int> sieve(10001, 0);
+	primes.push_back(2);
+	for (unsigned i = 3; i < 10000; i += 2)
+		if (sieve[i] == 0) {
+			primes.push_back(i);
+			for (unsigned j = i * i; j < 10000; j += 2 * i)
+				sieve[j] = 1;
+		}
+}
+
+unsigned ans(unsigned l, unsigned r) {
+	for (unsigned i = 0; i <= r - l; ++i) {
+		nums[i] = l + i;
+		cd[i] = 1;
+	}
+	
+	for (unsigned p: primes) {
+		for (unsigned i = p - (l - 1) % p - 1; i <= r - l; i += p) {
+			unsigned pw = 0;
+			while (nums[i] % p == 0) {
+				nums[i] /= p;
+				++pw;
+			}
+			cd[i] *= (pw + 1);
+		}
+	}
+	
+	unsigned highest = 0;
+	unsigned count = 0;
+	for (unsigned i = 0; i <= r - l; ++i) {
+		if (nums[i] != 1)
+			cd[i] *= 2;
+			
+		if (cd[i] > highest) {
+			highest = cd[i];
+			count = 1;
+		} else if (cd[i] == highest) {
+			++count;
+		}
+	}
+	return count + 1;
+}
+
+int main() {
+	ios_base::sync_with_stdio(0);
+    cin.tie(0);
+	
+	prepare();
+	int t;
+	cin >> t;
+	while (t--) {
+		unsigned l, r;
+		cin >> l >> r;
+		cout << ans(l, r) << '\n';
+	}
+    return 0;
+}

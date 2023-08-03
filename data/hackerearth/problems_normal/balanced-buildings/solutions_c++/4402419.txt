@@ -1,0 +1,75 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=500031;
+int n,s,p,m;
+int x[N];
+long long dp[N];
+multiset<long long> Sdown,Sup;
+multiset<long long>::iterator it;
+long long sum_up,sum_down;
+void rebalance()
+{
+	while(Sdown.size()>0 && (Sdown.size()*p)>=(Sup.size())*m)
+	{
+		it=Sdown.end();
+		--it;
+		long long val=(*it);
+		sum_down-=val;
+		sum_up+=val;
+		Sdown.erase(Sdown.find(val));
+		Sup.insert(val);
+	}
+	while(true)
+	{
+		if(Sdown.size()==0 || Sup.size()==0)
+		break;
+		it=Sdown.end();
+		--it;
+		long long val1=(*it);
+		it=Sup.begin();
+		long long val2=(*it);
+		if(val1<=val2)
+			break;
+		Sdown.erase(Sdown.find(val1));
+		sum_down-=val1;
+		sum_down+=val2;
+		sum_up-=val2;
+		sum_up+=val1;
+		Sup.erase(Sup.find(val2));
+		Sdown.insert(val2);
+		Sup.insert(val1);
+	}
+}		
+int main(){
+	cin >> n >> s >> m >>p;
+	for(int i=1;i<=n;i++)
+	{
+		cin >> x[i];
+	}
+	for(int i=1;i<=n;i++)
+	{
+		dp[i]=-1e18;
+	}
+	dp[0]=0;
+	for(int i=0;i<n;i++)
+	{
+		Sdown.clear();
+		Sup.clear();
+		sum_down=sum_up=0;
+		for(int j=i+1;j<=n;j++)
+		{
+			Sdown.insert(x[j]);
+			sum_down+=x[j];	
+			rebalance();
+			it = Sup.begin();
+			int val=(*it);
+			long long toadd=val* 1ll * Sdown.size()-sum_down;
+			long long tosub= sum_up-val*1ll*Sup.size();
+			long long score_here=-(toadd*p + tosub*m)+ 1ll*s*(j-i-1);
+			dp[j]=max(dp[j],dp[i]+score_here);
+		}
+	}
+	cout << dp[n] <<endl;
+	return 0;
+}
+	

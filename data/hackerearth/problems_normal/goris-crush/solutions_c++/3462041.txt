@@ -1,0 +1,78 @@
+#include <iostream>
+#include <algorithm>
+#include <cstdio>
+#include <vector>
+#include <set>
+#include <map>
+using namespace std;
+int n,arr[100009];
+map<int,int>m;
+set<int>s;
+struct E{
+    int type;
+    int a,b;
+}query[100009];
+int cnt=1;
+int BIT[1000009];
+void UPD(int k,int val){
+    for(;k<=cnt;k += (k&(-k))){
+        BIT[k]+=val;
+    }
+}
+int Query(int k){
+    int ans=0;
+    for(;k>0;k-= (k&(-k))){
+        ans+=BIT[k];
+    }
+    return ans;
+}
+int q,k;
+int main(){
+    cin>>n>>q>>k;
+    for(int i=1;i<=n;i++){
+        scanf("%d",&arr[i]);
+        s.insert(arr[i]);
+    }
+    for(int i=0;i<q;i++){
+        cin>>query[i].type;
+        if(query[i].type==0){
+            cin>>query[i].a;
+            cin>>query[i].b;
+            s.insert(query[i].b);
+        }
+        else{
+            int a,b,c,d;
+            cin>>a>>b>>c>>d;
+            int x,y;
+            x=max(a,c);
+            y=min(b,d);
+            s.insert(x);
+            s.insert(y);
+            query[i].a=x;
+            query[i].b=y;
+        }
+    }
+    for(set<int>::iterator i=s.begin();i!=s.end();i++){
+        m[*i] = cnt;
+        cnt++;
+    }
+    for(int i=1;i<=n;i++){
+        UPD(m[arr[i]],1);
+    }
+    for(int i=0;i<q;i++){
+        if(query[i].type==0){
+            UPD(m[arr[query[i].a]],-1);
+            UPD(m[query[i].b],1);
+            arr[query[i].a]=query[i].b;
+        }
+        else{
+            int x=Query(m[query[i].b]),y=Query(m[query[i].a]-1);
+            if(x-y>=k){
+                cout<<"Propose"<<endl;
+            }
+            else{
+                cout<<"Do not propose"<<endl;
+            }
+        }
+    }
+}

@@ -1,0 +1,69 @@
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+#define MAX 100010
+using namespace std;
+
+vector<int> SegTree(4*MAX,0);
+
+void BuildTree(vector<int>&a, int Vertex, int Left, int tr) 
+{
+  if (Left == tr) SegTree[Vertex] = a[Left];
+  else 
+  {
+    int tm = (Left + tr) / 2;
+    BuildTree(a, 2*Vertex, Left, tm);
+    BuildTree(a, 2*Vertex+1, tm+1, tr);
+    SegTree[Vertex] = SegTree[2*Vertex] + SegTree[2*Vertex+1];
+  }
+}
+
+int Summa(int v, int LeftPos, int RightPos, int Left, int Right) 
+{
+  if (Left > Right) return 0;
+  if ((Left == LeftPos) && (Right == RightPos)) return SegTree[v];
+  int Middle = (LeftPos + RightPos) / 2;
+  return Summa(v*2, LeftPos, Middle, Left, min(Right,Middle)) + 
+         Summa(v*2+1, Middle+1, RightPos, max(Left,Middle+1), Right);
+}
+
+void update(int v, int LeftPos, int RightPos, int Position, int NewValue) 
+{
+  if (LeftPos == RightPos) SegTree[v] = NewValue;
+  else 
+  {
+    int Middle = (LeftPos + RightPos) / 2;
+    if (Position <= Middle) update (v*2, LeftPos, Middle, Position, NewValue);
+    else update (v*2+1, Middle+1, RightPos, Position, NewValue);
+    SegTree[v] = SegTree[v*2] + SegTree[v*2+1];
+  }
+}
+
+vector<int> v;
+int n, q, i, j, x, y, t;
+
+int main(void)
+{
+  scanf("%d",&n);
+  v.resize(n+1);
+  for(i = 1; i <= n; i++)
+  {
+    scanf("%d",&v[i]);
+    v[i] = v[i] % 2; // even = 0, odd = 1
+  }
+  BuildTree(v,1,1,n);
+
+  scanf("%d",&q);
+  for(i = 0; i < q; i++)
+  {
+    scanf("%d %d %d",&t,&x,&y);
+    if (t == 0)
+      update(1,1,n,x,y % 2);
+    else
+    if (t == 1)
+      printf("%d\n",y - x + 1 - Summa(1,1,n,x,y));
+    else
+      printf("%d\n",Summa(1,1,n,x,y));
+  }
+  return 0;
+}

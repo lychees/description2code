@@ -1,0 +1,141 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int n, x;
+int b[300000];
+vector<int> g[300000];
+bool deleted[300000] = {};
+int sz[300000];
+vector<int> sub[300000], cnt[300000], all, allCnt;
+int subc;
+LL extra[300000] = {}, ex[300000];
+
+void calcSizes(int v, int p) {
+    sz[v] = 1;
+    for (int to : g[v]) if (to != p && !deleted[to]) {
+        calcSizes(to, v);
+        sz[v] += sz[to];
+    }
+}
+
+int balance;
+void dfs(int v, int p) {
+    balance += b[v];
+    sub[subc].pb(balance);
+    all.pb(balance);
+    for (int to : g[v]) if (to != p && !deleted[to]) {
+        dfs(to, v);
+    }
+    balance -= b[v];
+}
+
+int root;
+LL res, ans = 0;
+void dfs2(int v, int p) {
+    balance += b[v];
+    ex[v] = 0;
+    if (balance + b[root] == -2 || balance + b[root] == -1) {
+        ++ex[v];
+        res += 2;
+    }
+    for (int i = -2; i <= -1; ++i) {
+        int ind = i - balance - b[root] + (int)all.size();
+        if (ind >= 0 && ind < (int)allCnt.size()) {
+            ex[v] += allCnt[ind];
+            res += allCnt[ind];
+        }
+        ind = i - balance - b[root] + (int)sub[subc].size();
+        if (ind >= 0 && ind < (int)cnt[subc].size()) {
+            ex[v] -= cnt[subc][ind];
+            res -= cnt[subc][ind];
+        }
+    }
+    for (int to : g[v]) if (to != p && !deleted[to]) {
+        dfs2(to, v);
+        ex[v] += ex[to];
+    }
+    extra[v] += ex[v];
+    balance -= b[v];
+}
+
+void calc(vector<int> &a, vector<int> &cnt) {
+    cnt.resize(2 * a.size() + 1);
+    for (int x : a) {
+        ++cnt[x + (int)a.size()];
+    }
+}
+
+void cd(int v) {
+    calcSizes(v, -1);
+    int p = -1, tot = sz[v];
+    bool done = false;
+    while (!done) {
+        done = true;
+        for (int to : g[v]) if (to != p && !deleted[to] && 2 * sz[to] >= tot) {
+            p = v;
+            v = to;
+            done = false;
+            break;
+        }
+    }
+    root = v;
+
+    subc = 0;
+    for (int to : g[v]) if (!deleted[to]) {
+        balance = 0;
+        dfs(to, v);
+        ++subc;
+    }
+    REP(i, subc) calc(sub[i], cnt[i]);
+    calc(all, allCnt);
+
+    subc = 0;
+    res = 0;
+    for (int to : g[v]) if (!deleted[to]) {
+        balance = 0;
+        dfs2(to, v);
+        ++subc;
+    }
+    assert(res % 2 == 0);
+    if (b[v] == -1) {
+        ans = max(ans, res / 2 + extra[v]);
+    }
+
+    REP(i, subc) {
+        sub[i].clear();
+        cnt[i].clear();
+    }
+    all.clear();
+    allCnt.clear();
+
+    deleted[v] = true;
+    for (int to : g[v]) if (!deleted[to]) {
+        cd(to);
+    }
+}
+
+int main() {
+    //freopen("input.txt", "r", stdin);
+    scanf("%d%d", &n, &x);
+    REP(i, n - 1) {
+        int from, to;
+        scanf("%d%d", &from, &to), --from, --to;
+        g[from].pb(to);
+        g[to].pb(from);
+    }
+    REP(i, n) {
+        int val;
+        scanf("%d", &val);
+        b[i] = (val >= x) ? 1 : -1;
+    }
+    cd(0);
+    cout << ans << endl;
+    return 0;
+}

@@ -1,0 +1,262 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#include<set>
+#include<map>
+#include<queue>
+#include<vector>
+#include<string>
+#include<cstring>
+#include<unordered_map>
+#include<cassert>
+#include<cmath>
+
+//code by cl3488
+
+#define dri(X) int (X); scanf("%d", &X)
+#define drii(X, Y) int X, Y; scanf("%d%d", &X, &Y)
+#define driii(X, Y, Z) int X, Y, Z; scanf("%d%d%d", &X, &Y, &Z)
+#define pb push_back
+#define mp make_pair
+#define rep(i, s, t) for ( int i=(s) ; i <(t) ; i++)
+#define fill(x, v) memset (x, v, sizeof(x))
+#define all(x) (x).begin(), (x).end()
+#define why(d) cerr << (d) << "!\n"
+#define whisp(X, Y) cerr << (X) << " " << (Y) << "#\n"
+#define exclam cerr << "!!\n"
+#define left(p) (p << 1)
+#define right(p) ((p<<1)+1)
+#define Mid ((l + r) >> 1)
+typedef long long ll;
+using namespace std;
+typedef pair<int, int> pii;
+const ll inf = (ll)1e9 + 70;
+const ll mod = 1e9 + 7;
+const int maxn = 1e5 + 1000;
+int n;
+//first, a min-treap.
+int vaal[40 * maxn];
+int sz[40 * maxn];
+int ch[40 * maxn][2];
+int pr[40 * maxn];
+
+void update(int p){
+	if (p == 0)return;
+	sz[p] = sz[ch[p][0]] + 1 + sz[ch[p][1]];
+}
+
+pii split(int p, int k){///left subtree will have all elements which are strictly less than k.
+	if (p == 0) return pii(0, 0);
+	//I like this way better.  You could have a third case, though...
+	if (k <= vaal[p]){
+		pii x = split(ch[p][0], k);
+		ch[p][0] = x.second;
+		update(p);
+		return pii(x.first, p);
+	}
+	else{
+		pii x = split(ch[p][1], k);//in this case, the root is in the result; so we need vaal[p] < k, which we have(!)
+		ch[p][1] = x.first;
+		update(p);
+		return pii(p, x.second);
+	}
+}
+int tt = 0;
+
+int join(int p, int q){//please, remember the disjointness condition!
+	if (p == 0) return q;
+	if (q == 0) return p;
+	if (pr[p] < pr[q]){
+		ch[p][1] = join(ch[p][1], q);
+		update(p);
+		return p;
+	}
+	else{
+		ch[q][0] = join(p, ch[q][0]);
+		update(q);
+		return q;
+	}
+}
+
+int delmin(int p){
+	if (ch[p][0] == 0) return ch[p][1];
+	ch[p][0] = delmin(ch[p][0]);
+	update(p);
+	return p;
+}
+
+int insert(int root, int k){
+	tt++;
+	vaal[tt] = k;
+	pr[tt] = rand();
+	sz[tt] = 1;
+	pii x = split(root, k);
+	return join(join(x.first, tt), x.second);
+}
+
+int del(int root, int k){
+	pii x = split(root, k);
+	int p = delmin(x.second);
+	return join(x.first, p);
+}
+
+struct ST{
+	int ST[4 * maxn];
+
+	int val[maxn];
+	
+	void init(int p, int l, int r){
+		rep(i, l, r+1){
+			ST[p] = insert(ST[p], val[i]);
+		}
+		if (l == r) return;
+		init(left(p), l, Mid);
+		init(right(p), Mid + 1, r);
+	}
+	void init(){
+		init(1, 0, n - 1);
+	}
+	int ans = 0; int X = 0;
+	void countnumberstrictlybelow(int p, int l, int r, int i, int j){
+		if (l > j || r < i) return;
+		if (i <= l && r <= j){
+			pii e = split(ST[p], X);
+			ans += sz[e.first];
+			ST[p] = join(e.first, e.second);
+			return;
+		}
+		countnumberstrictlybelow(left(p), l, Mid, i, j);
+		countnumberstrictlybelow(right(p), Mid + 1, r, i, j);
+	}
+	int countnumberstrictlybelow(int i, int j, int x){
+		ans = 0; X = x;
+		countnumberstrictlybelow(1, 0, n - 1, i, j);
+		return ans;
+	}
+	void modify(int p, int l, int r, int i){
+		if (l > i || r < i){
+			return;
+		}
+		ST[p] = del(ST[p], val[i]);
+		ST[p] = insert(ST[p], X);
+		if (l == r) return;
+		modify(left(p), l, Mid, i);
+		modify(right(p), Mid + 1, r, i);
+	}
+	void modify(int i, int x){
+		X = x;
+		modify(1, 0, n - 1, i);
+		val[i] = x;
+	}
+} Z;
+
+
+vector<int> adj[maxn];
+int tt0 = -1;
+int tt1 = -1;
+int dfsnum[maxn];
+int postorder[maxn];
+int endsubtree[maxn];
+int pa[maxn];
+vector<int> order;
+
+int val0[maxn];
+
+void dfs(int v){
+	tt0++; dfsnum[v] = tt0;
+	order.push_back(v);
+	for (int u : adj[v]){
+		if (u == pa[v]) continue;
+		pa[u] = v;
+		dfs(u);
+	}
+	endsubtree[v] = tt0;
+	tt1++; postorder[v] = tt1;
+}
+
+int isdesc(int u, int v){//is v a descendent of u?  If so, return v'.  Otherwise, return u.
+	if (dfsnum[u] < dfsnum[v] && postorder[u] > postorder[v]){
+		for (int vp : adj[u]){
+			if (vp == pa[u]) continue;
+			if (dfsnum[vp] <= dfsnum[v] && postorder[vp] >= postorder[v]) return vp;
+		}
+		assert(false);
+		return 0;
+	}
+	return 0;
+}
+
+int main(){
+	if (fopen("input.txt", "r")) freopen("input.txt", "r", stdin);
+	cin >> n;
+	rep(i, 1, n){
+		drii(a, b); adj[a].push_back(b); adj[b].push_back(a);
+	}
+	dfs(1);
+	rep(i, 0, n){
+		dri(t); val0[i + 1] = t;
+	}
+	rep(i, 0, n){
+		Z.val[i] = val0[order[i]];
+	}
+	Z.init();
+	dri(qq);
+	rep(q, 0, qq){
+		dri(type);
+		if (type == 1){//modification
+			dri(ii); int i = dfsnum[ii];
+			dri(X);
+			Z.modify(i, X);
+		}
+		else{
+			dri(k); k--;
+			drii(u, v);
+			if (u == v){
+				u = 1; v = 1;//to fix the bug... this really is a seperate case.
+			}
+			//question: is v a descendent of u?
+			int vp = isdesc(u, v);
+			if (vp == 0){
+				int i = dfsnum[u];
+				int j = endsubtree[u];
+				//binary search
+				//rep(t, i, j + 1)cout << Z.val[t] << " "; cout << endl;
+
+				int lo = 0;
+				int hi = 1e6 + 5;
+				while (hi - lo > 1){
+					int mid = (hi + lo) / 2;
+					int X = mid;
+					if (Z.countnumberstrictlybelow(i, j, X) <= k){
+						lo = X;
+					}
+					else{
+						hi = X;
+					}
+				}
+				cout << lo << "\n";
+			}
+			else{
+				int i = dfsnum[vp];
+				int j = endsubtree[vp];
+				int lo = 0;
+				int hi = 1e6 + 5;
+				while (hi - lo > 1){
+					int mid = (hi + lo) / 2;
+					int X = mid;
+					if (Z.countnumberstrictlybelow(0, n - 1, X) - Z.countnumberstrictlybelow(i, j, X) <= k){
+						lo = X;
+					}
+					else{
+						hi = X;
+					}
+				}
+				cout << lo << "\n";
+			}
+		}
+	}
+	return 0;
+}

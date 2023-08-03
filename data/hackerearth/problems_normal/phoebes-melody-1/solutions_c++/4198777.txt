@@ -1,0 +1,293 @@
+// https://www.hackerearth.com/problem/algorithm/phoebes-melody-1/
+
+#include <list>
+#include <iostream>
+#include <iterator>
+#include <algorithm>
+#include <limits>
+#include <cassert>
+#include <cmath>
+#include <map>
+#include <set>
+#include <chrono>
+#include <cstddef>
+#include <vector>
+#include <iomanip>
+#include <type_traits>
+
+using namespace std;
+using number_t = uint_fast64_t;
+const number_t modulo = 1000000007;
+const number_t zero = 0;
+const number_t one = 1;
+
+// --------------------------------------------------------------------------------
+
+template<typename It>
+class fenwick_tree_max_t {
+  private:
+    typedef decltype(iterator_traits<It>::value_type) T;
+    std::vector<T> v_;
+
+  public:
+    fenwick_tree_max_t(It b, It e) : v_(distance(b, e)) {
+      auto r_b = reverse_iterator<It>(e);
+      auto r_e = reverse_iterator<It>(b);
+      size_t pos = v_.size() - 1;
+      for (auto i = r_b; i != r_e; ++i, --pos) {
+        v_[pos] = *i;
+        for (auto j = pos | (pos + 1); j < v_.size(); j |= j + 1) {
+          v_[j] = max(v_[j], *i);
+        }
+      }
+    }
+
+  public:
+    T operator[](int i) {
+      T result = v_[i];
+      for (int j = (i & (i + 1)) - 1; j >= 0; j &= j + 1, --j) {
+        result = max(v_[j], result);
+      }
+      return result;
+    }
+};
+
+// --------------------------------------------------------------------------------
+
+/*
+ * Possible cases for segment tree:
+ * 1. set value to itervals... or modify all values from interval in some way.
+ * 2. get max on interval
+ * 3. get leftmost or rightmost value which satisfy some condition.
+ *
+ * possible optimizations:
+ * 1. do not allocate 'tail' for sequence to sum up to 2^n
+ * 2. omit first elem which is always 0.
+ * */
+
+class segment_tree_t {
+  private:
+    const size_t size_;
+    const size_t depth_;
+    const size_t aligned_size_;
+    const size_t total_size_;
+
+  public:
+    vector<number_t> tree_;
+
+  public:
+    segment_tree_t(size_t s) :
+      size_(s),
+      /* size/depth
+       * 1 - 1
+       * 2 - 2
+       * 3 - 3
+       * 4 - 3
+       *
+       *
+       * */
+      depth_(static_cast<size_t>(ceil(log(s) / log(2))) + 1),
+      aligned_size_(1 << (depth_ - 1)),
+      total_size_(1 << depth_),
+      tree_(total_size_, numeric_limits<number_t>::max())
+    {
+    }
+
+  private:
+    void update(number_t n, size_t i, size_t l, size_t r, size_t cur) {
+// cout << "n == " << n << ", i == " << i << ", l == " << l << ", r == " << r << ", cur == " << cur << endl;
+      if (l != r) {
+        tree_[cur] = min(tree_[cur], n);
+      }
+      if (r - l > 1) {
+        size_t m = (l + r) / 2;
+        cur <<= 1;
+        if (l <= i && i < m) {
+          update(n, i, l, m, cur);
+        }
+        else {
+          assert(m <= i && i < r);
+          update(n, i, m, r, cur | 1);
+        }
+      }
+    }
+
+    size_t get_value_index(number_t n, const size_t l, const size_t r, size_t cur_l, size_t cur_r, size_t cur, bool leftmost) {
+// cout << "l == " << l << ", r == " << r << ", cur_l == " << cur_l << ", cur_r == " << cur_r << ", cur == " << cur << ", leftmost == " << leftmost << ", tree_[cur] == " << tree_[cur] << endl;
+      if (r <= l || tree_[cur] >= n || r <= cur_l || cur_r <= l) {
+        return size_;
+      }
+
+      assert(l < r && cur_l < cur_r);
+
+      if (r - l == 1) {
+        return (*this)[l] >= n ? size_ : l;
+      }
+
+      size_t cur_m = (cur_l + cur_r) / 2;
+      cur <<= 1;
+
+      if (cur_l <= l && r < cur_m) {
+        return get_value_index(n, l, r, cur_l, cur_m, cur, leftmost);
+      }
+      else if (cur_m <= l && r < cur_r) {
+        return get_value_index(n, l, r, cur_m, cur_r, cur | 1, leftmost);
+      }
+      else {
+        if (leftmost) {
+          size_t v = get_value_index(n, l, min(cur_m, r), cur_l, cur_m, cur, leftmost);
+          if (v != size_) {
+            return v;
+          }
+          return get_value_index(n, max(cur_m, l), r, cur_m, cur_r, cur | 1, leftmost);
+        }
+        else {
+          size_t v = get_value_index(n, max(cur_m, l), r, cur_m, cur_r, cur | 1, leftmost);
+          if (v != size_) {
+            return v;
+          }
+          return get_value_index(n, l, min(cur_m, r), cur_l, cur_m, cur, leftmost);
+        }
+      }
+    }
+
+  public:
+    void update(number_t n, size_t i) {
+      update(n, i, 0, aligned_size_, 1);
+// cout << endl;
+    }
+
+    size_t check_get_rightmost_less_than(number_t n, size_t l, size_t r) {
+      for (size_t i = l; i < r; ++i) {
+        size_t idx = r - 1 - (i - l);
+        if ((*this)[idx] < n) {
+          return idx;
+        }
+      }
+      return size_;
+    }
+
+    size_t get_rightmost_less_than(number_t n, size_t l, size_t r) {
+      size_t idx = get_value_index(n, l, r, 0, aligned_size_, 1, false);
+      /*
+      size_t check_idx = check_get_rightmost_less_than(n, l, r);
+      if (idx != check_idx) {
+        printf("%s, idx == %lu, check_idx == %lu\n", __PRETTY_FUNCTION__, idx, check_idx);
+        assert(false);
+      }
+      */
+      return idx;
+    }
+
+    size_t check_get_leftmost_less_than(number_t n, size_t l, size_t r) {
+      for (size_t i = l; i < r; ++i) {
+        size_t idx = i;
+        if ((*this)[idx] < n) {
+          return idx;
+        }
+      }
+      return size_;
+    }
+
+    size_t get_leftmost_less_than(number_t n, size_t l, size_t r) {
+      size_t idx = get_value_index(n, l, r, 0, aligned_size_, 1, true);
+      /*
+      size_t check_idx = check_get_leftmost_less_than(n, l, r);
+      if (idx != check_idx) {
+        printf("%s, idx == %lu, check_idx == %lu\n", __PRETTY_FUNCTION__, idx, check_idx);
+        assert(false);
+      }
+      */
+      return idx;
+    }
+
+    number_t operator[](size_t i) {
+      return tree_[aligned_size_ + i];
+    }
+};
+
+// --------------------------------------------------------------------------------
+
+int main() {
+  size_t T;
+  cin >> T;
+  for (size_t t = 0; t < T; ++t) {
+    size_t N, K;
+    cin >> N >> K;
+// cout << "N == " << N << ", K == " << K << endl;
+
+    segment_tree_t tree(N);
+    for (size_t i = 0; i < N; ++i) {
+      number_t V_i;
+      cin >> V_i;
+      tree.update(V_i, i);
+
+// cout << V_i << " ";
+    }
+// cout << endl;
+
+/*
+copy(begin(tree.tree_), end(tree.tree_), ostream_iterator<number_t>(cout, " "));
+cout << endl;
+*/
+
+// continue;
+
+/*
+for (size_t i = 0; i < N; ++i) {
+  cout << tree[i] << " ";
+}
+cout << endl;
+// */
+
+    size_t total = 0;
+    for (size_t i = 0; i < N; ++i) {
+// cout << "i == " << i << endl;
+      size_t len = N;
+      if (i >= K) {
+        size_t idx = tree.get_rightmost_less_than(tree[i], 0, i - K + 1);
+// cout << "rightmost idx == " << idx << endl;
+        if (idx != N) {
+          len = min(len, i - idx);
+        }
+      }
+      if (i < N - K) {
+        size_t idx = tree.get_leftmost_less_than(tree[i], i + K, N);
+// cout << "leftmost idx == " << idx << endl;
+        if (idx != N) {
+          len = min(len, idx - i);
+        }
+      }
+      if (len == N) {
+        len = 0;
+      }
+// cout << "len == " << len << endl << endl;
+      total += len;
+    }
+
+    cout << total << endl;
+
+// break;
+
+    /*
+     * While we read each key, next key that can be played after it is either before it
+     * or after it.
+     * First obvious approach:
+     * - All keys are read into array, we use two fenwick trees to establish
+     * closest maximum for each key and add them up.
+     * */
+
+    /*
+    vector<number_t> v;
+    v.reserve(N);
+    copy_n(istream_iterator<number_t>(cin), N, back_inserter(v));
+
+    for (size_t i = K, j = 0; i < v.size(); ++i, ++j) {
+    }
+    */
+  }
+  return 0;
+}
+
+// --------------------------------------------------------------------------------
+

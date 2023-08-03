@@ -1,0 +1,172 @@
+#include <stdint.h>
+#include <bits/stdc++.h>
+using namespace std;
+
+uint64_t MOD = 1000000007;
+
+struct point
+{
+	int x;
+	int y;
+};
+
+bool is_collinear(point &p1, point &p2, point &p3)
+{
+	int a = p1.x * p2.y + p2.x * p3.y + p3.x * p1.y;
+	int b = p1.y * p2.x + p2.y * p3.x + p3.y * p1.x;
+
+	return (a == b);
+}
+
+uint64_t num_ways(int n, int cand, int *mask, uint64_t *R2)
+{
+	int m = cand & mask[n];
+	if (m == 0)
+		return R2[n];
+
+	int x = m & (m - 1);
+	int y = m ^ x;
+
+	m = x;
+
+	uint64_t ans = 0;
+	ans = (ans + num_ways(n, m, mask, R2)) % MOD;
+	ans = (ans + num_ways((n | y), m, mask, R2)) % MOD;
+
+	return ans;
+}
+
+main()
+{
+	uint64_t *fact = new uint64_t[9];
+
+	fact[0] = 1;
+	for (uint64_t i = 1; i <= 8; i++)
+		fact[i] = i * fact[i - 1];
+
+	char *bin_log = new char[65536];
+	for (int i = 0; i < 16; i++)
+		bin_log[(1 << i)] = i;
+
+	int *up = new int[16];
+	for (int i = 0; i < 16; i++)
+		up[i] = (1 << 16) - (1 << i);
+
+	int T;
+	cin >> T;
+
+	for (int t = 0; t < T; t++)
+	{
+		int N;
+		cin >> N;
+
+		point *P = new point[N];
+		for (int i = 0; i < N; i++)
+			cin >> P[i].x >> P[i].y;
+
+		vector<vector<int > > Q(N, vector<int >(N, 0));
+		for (int i = 0; i < N; i++)
+		{
+			for (int j = 0; j < N; j++)
+			{
+				if (i == j)
+					continue;
+
+				for (int k = 0; k < N; k++)
+				{
+					if (k == i || k == j)
+						continue;
+
+					if (is_collinear(P[i], P[j], P[k]))
+						Q[i][j] |= (1 << k);
+				}
+			}
+		}
+
+		int num = (1 << N);
+		int *R1 = new int[num];
+		uint64_t *R2 = new uint64_t[num];
+		int *mask = new int[num];
+
+		for (int i = 0; i < num; i++)
+			mask[i] = 0;
+
+		R1[0] = 0;
+		R2[0] = 1;
+
+		for (int i = 1; i < num; i++)
+		{
+			if ((i & (i - 1)) == 0)
+			{
+				R1[i] = 1;
+				R2[i] = 1;
+				
+				continue;
+			}
+
+			int x = i & (i - 1);
+			int y = x ^ i;
+
+			int a = bin_log[y];
+
+			int val = 1 + R1[x];
+			uint64_t freq = R2[x];
+
+			int b = x;
+			while(b)
+			{
+				int t1 = b & (b - 1);
+				int t2 = b ^ t1;
+				b = t1;				
+
+				int c = bin_log[t2];
+
+				int rem = x ^ t2;
+				int valid_mask = Q[a][c] & up[c] & i;
+
+				rem ^= valid_mask;
+				if ((1 + R1[rem]) > val)
+					continue;
+
+				uint64_t w = num_ways(rem, valid_mask, mask, R2);
+				if ((1 + R1[rem]) == val)
+					freq = (freq + w) % MOD;	
+				else
+				{
+					val = 1 + R1[rem];
+					freq = w;
+				}
+			}
+
+			R1[i] = val;
+			R2[i] = freq;
+
+			int m = i;
+			while(m)
+			{
+				int x = m & (m - 1);
+				int y = m ^ x;
+				int z = i ^ y;
+					
+				if (R1[i] == R1[z])
+					mask[z] |= y;
+				
+				m = x;
+			}
+		}
+
+		uint64_t ans = R2[num - 1];
+		ans = (ans * fact[R1[num - 1]]) % MOD;
+
+		std::cout << R1[num - 1] << " " << ans << std::endl;
+
+		delete[] mask;
+		delete[] R1;
+		delete[] R2;
+		delete[] P;
+	}
+
+	delete[] up;
+	delete[] fact;
+	delete[] bin_log;
+}

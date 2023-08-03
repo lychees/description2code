@@ -1,0 +1,101 @@
+#include <iostream>
+#include <vector>
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+#define N 5*100010
+int arr[N];
+int data[N];
+int occ[N];
+int query(int l,int r)
+{
+	--l;
+	int ans=0;
+	while(l!=r&&(l>=0 || r))
+	{
+		if(l<r) ans+=data[r],r&=r-1;
+		else ans-=data[l],l&=l-1;
+	}
+	if(l==-1) ans+=data[0];
+	return ans;
+}
+void update(int idx,int delta)
+{
+	if(idx==0)
+	{
+		data[0]+=delta;
+		return;
+	}
+	while(idx<N)
+	{
+		data[idx]+=delta;
+		idx+=idx&-idx;
+	}
+}
+int main()
+{
+	int n,q,k;
+	scanf("%d%d%d",&n,&q,&k);
+	vector<int> ds;
+	for(int i=0;i<n;++i)
+	{
+		scanf("%d",&arr[i]);
+		ds.push_back(arr[i]);
+	}
+	vector<vector<int>> qs;
+	for(int i=0;i<q;++i)
+	{
+		int t;
+		scanf("%d",&t);
+		if(t==0)
+		{
+			qs.emplace_back(2);
+			scanf("%d%d",&qs.back()[0],&qs.back()[1]);
+			ds.push_back(qs.back()[1]);
+			--qs.back()[0];
+		}
+		else
+		{
+			qs.emplace_back(4);
+			for(int j=0;j<4;++j)
+			{
+				scanf("%d",&qs.back()[j]);
+				ds.push_back(qs.back()[j]);
+			}
+		}
+	}
+	sort(ds.begin(),ds.end());
+	ds.erase(unique(ds.begin(),ds.end()),ds.end());
+	for(int i=0;i<n;++i)
+	{
+		int idx = lower_bound(ds.begin(),ds.end(),arr[i])-ds.begin();
+	//	if(++occ[idx]==1)
+		update(idx,1);
+	}
+	for(auto &q:qs)
+	{
+		if(q.size()==2)
+		{
+			int idx = lower_bound(ds.begin(),ds.end(),arr[q[0]])-ds.begin();
+		//	if(--occ[idx]==0)
+			update(idx,-1);
+			idx = lower_bound(ds.begin(),ds.end(),q[1])-ds.begin();
+		//	if(++occ[idx]==1)
+			update(idx,1);
+			arr[q[0]] = q[1];
+		}
+		else
+		{
+			int l = max(q[0],q[2]);
+			int r = min(q[1],q[3]);
+		
+			int cnt=0;
+
+			if(l<=r) cnt = query(lower_bound(ds.begin(),ds.end(),l)-ds.begin(),lower_bound(
+				ds.begin(),ds.end(),r)-ds.begin());
+				if(cnt>=k) printf("Propose\n");
+				else printf("Do not propose\n");
+		}
+	}
+    return 0;
+}

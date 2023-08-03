@@ -1,0 +1,115 @@
+#include<bits/stdc++.h>
+#define ALL(X)        X.begin(),X.end()
+#define FOR(I,A,B)    for(int (I) = (A); (I) <= (B); (I)++)
+#define FORW(I,A,B)   for(int (I) = (A); (I) < (B);  (I)++)
+#define FORD(I,A,B)   for(int (I) = (A); (I) >= (B); (I)--)
+#define FOREACH(I,A)  for(__typeof(A.begin()) I = A.begin(); I != A.end(); ++I)
+#define CLEAR(X)      memset(X,0,sizeof(X))
+#define SIZE(X)       int(X.size())
+#define CONTAIN(A,X)  (A.find(X) != A.end())
+#define PB            push_back
+#define MP            make_pair
+#define X             first
+#define Y             second
+#define LBOUND(P,R,Q) ({__typeof(P) X=P,RR=(R), PP = P; while(PP<RR) {X = (PP+(RR-PP)/2); if(Q) RR = X; else PP = X+1;} PP;})
+using namespace std;
+typedef signed long long slong;
+typedef long double ldouble;
+const slong Infinity = 1000000100;
+const ldouble Epsilon = 1e-9;
+template<typename T, typename U> ostream& operator << (ostream& os, const pair<T,U>&p) { return os << "(" << p.X << "," << p.Y << ")"; }
+template<typename T> ostream& operator << (ostream &os, const vector<T>& V) { os << "["; FORW(i,0,SIZE(V)) os << V[i] << ((i==SIZE(V)-1) ? "" : ","); return os << "]"; }
+template<typename T> ostream& operator << (ostream &os, const set<T>& S) {os << "("; FOREACH(i,S) os << *i << (*i==*S.rbegin()?"":","); return os << ")"; }
+template<typename T, typename U> ostream& operator << (ostream &os, const map<T, U>& M){os << "{"; FOREACH(i,M) os << *i << (*i.X==M.rbegin()->X?"":","); return os << "}"; }
+
+slong mod=1000000007;
+slong sil[110], rs[110];
+
+slong powm(slong a, slong x)
+{
+    slong ret=1;
+    while(x)
+    {
+        if(x%2) ret=(ret*a)%mod;
+        x/=2;
+        a=(a*a)%mod;
+    }
+    return ret;
+}
+
+void read_data() {
+    sil[1]=sil[0]=1;
+    rs[1]=1;
+    FOR(i,2,105)
+    {
+        sil[i]=(sil[i-1]*i)%mod;
+        rs[i]=powm(sil[i],mod-2);
+    }
+}
+
+slong newton(slong n, slong k)
+{
+    slong licz=1;
+    FORW(i,0,k) licz=(licz*(n-i))%mod;
+    return (licz*rs[k])%mod;
+}
+
+void solve() { 
+    int n, l, r, x;
+    scanf("%d %d %d %d", &n, &l, &r, &x);
+    vector<int> p;
+    for(int i=2;i<50000;i++)
+    {
+        int j=1, x2=x;
+        while(x%i == 0)
+        {
+            x/=i;
+            j*=i;
+        }
+        if(j>1) p.PB(j);
+    }
+    if(x > 1) p.PB(x);
+    
+    int m=SIZE(p);
+    //printf("size p %d\n", m);
+    vector<int> v((1<<m),0), il((1<<m),1);
+    for(int mask=1;mask<(1<<m);mask++)
+    {
+        for(int j=0;j<m;j++)
+        {
+            if(mask&(1<<j)) il[mask]*=p[j];
+        }
+    }
+    
+    for(int mask=1;mask<(1<<m);mask++)
+    {
+        for(int submask=mask;submask>0;submask=((submask-1)&mask))
+        {
+            if((submask&mask) != submask) continue;
+            int b=(-1);
+            if((__builtin_popcount(submask))%2) b=1;
+            v[mask]+=b*(r/il[submask] - (l-1)/il[submask]);
+        }
+    }
+    
+    slong ans=0;
+    for(int mask=0;mask<(1<<m);mask++)
+    {
+        slong b=1;
+        //printf("dla maski %d wychodzi %d i newton (%d , %d) %lld\n", mask, v[mask], r-l-v[mask]+n, n, newton(r-l-v[mask]+n,n));
+        //printf("%d %d %d %d %d\n", r,l,v[mask],n, r-l-v[mask]+n);
+        if((__builtin_popcount(mask))%2) b=-1;
+        ans=(ans+mod+b*newton(r-l-v[mask]+n,n))%mod;
+    }
+    printf("%lld\n", ans);
+    
+    //printf("%lld\n", newton(100003+2,2));
+}
+
+int main() {
+    read_data();
+    int t;
+    scanf("%d", &t);
+    while(t--) solve();
+    return 0;
+}

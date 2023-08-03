@@ -1,0 +1,163 @@
+#include<cstdio>
+#include<algorithm>
+#include<vector>
+#include<cstring>
+
+using namespace std;
+
+typedef long long ll;
+
+const int MAXN = 5e5 + 10;
+
+int n, m, q;
+vector<int>	adj[MAXN];
+int s_t[MAXN], f_t[MAXN], tm, mp[MAXN], depth[MAXN];
+ll fen[MAXN], nd[MAXN], mn[4 * MAXN], weed[4 * MAXN], tw[4 * MAXN];
+vector<int>	vec[MAXN];
+int ind[MAXN], val1[MAXN], val2[MAXN], sec[MAXN];
+int beg[MAXN], en[MAXN], ret[MAXN], mid[MAXN];
+int cc[MAXN];
+
+ll get(int v){
+	ll ret = 0;
+	for (v++; v; v-=v&-v)
+		ret += fen[v];
+	return ret;
+}
+
+void add(int l, int r, int val){
+	for (l++; l < MAXN; l += l&-l)	fen[l] += val;
+	for (r++; r < MAXN; r += r&-r)	fen[r] -= val;
+}
+
+void dfs(int v){
+	mp[tm] = v;
+	s_t[v] = tm++;
+	for (int u:adj[v])
+		depth[u] = depth[v] + 1, dfs(u);
+	f_t[v] = tm;
+}
+
+void plant(int v = 1, int b = 0, int e = n){
+	if (e - b == 1){
+		mn[v] = depth[mp[b]];
+		return;
+	}
+
+	int mid = (b + e)/ 2;
+	plant(v<<1, b, mid);
+	plant(v<<1^1, mid, e);
+	mn[v] = min(mn[v<<1], mn[v<<1^1]);
+}
+
+void water(int v, int b, int e, int l, int r, int x, int de){
+	if (l <= b && e <= r){
+		weed[v] += x;
+		if (mn[v] - de)
+			tw[v] += ll(mn[v] - de) * x;
+		return;
+	}
+	if (r <= b || e <= l)	return;
+
+	int mid = (b + e)/ 2;
+	water(v<<1, b, mid, l, r, x, de);
+	water(v<<1^1, mid, e, l, r, x, de);
+}
+
+ll smoke(int v, int b, int e, int pos){
+	ll x = 0, y = 0, tt = 0;
+	while (1){
+		if (mn[v] - tt)
+			x += (mn[v] - tt) * y;
+		x += tw[v];
+		y += weed[v];
+		tt = mn[v];
+		
+		if (e - b == 1)	return x;
+		int mid = (b + e)/ 2;
+		if (pos < mid)
+			v = v<<1, e = mid;
+		else
+			v = v<<1^1, b = mid;
+	}
+}
+
+void go(){
+	memset(cc, 0, sizeof(cc));
+	for (int i = 0; i < m; i++)
+		if (beg[i] <= en[i])
+			cc[mid[i]]++;
+	for (int i = 1; i <= q+2; i++)
+		cc[i] += cc[i - 1];
+
+	int mx = 0;
+	for (int i = 0; i < m; i++)
+		if (beg[i] <= en[i])
+			sec[--cc[mid[i]]] = i, mx = max(mx, mid[i]);
+
+	memset(fen, 0, sizeof(fen));
+	memset(weed, 0, sizeof(weed));
+	memset(tw, 0, sizeof(tw));
+	int cur = 0;
+	for (int i = 0; i < mx; i++){
+		int a = ind[i], b = val1[i], c = val2[i];
+		add(s_t[a], f_t[a], b);
+		if (c)
+			water(1, 0, n, s_t[a], f_t[a], c, depth[a]);
+		for (; cur < cc[i + 2]; cur++){
+			int v = sec[cur];
+			ll sm = 0;
+			for (int u:vec[v]){
+				sm += smoke(1, 0, n, s_t[u]) + get(s_t[u]);
+				if (sm >= nd[v])	break;
+			}
+			if (sm >= nd[v])
+				ret[v] = mid[v], en[v] = mid[v] - 1;
+			else
+				beg[v] = mid[v] + 1;
+		}
+	}
+}
+
+int main(){
+	scanf("%d %d", &n, &m);
+	for (int i = 1; i < n; i++){
+		int p;	scanf("%d", &p), p--;
+		adj[p].push_back(i);
+	}
+	dfs(0);
+	plant();
+
+	for (int i = 0; i < n; i++){
+		int p;	scanf("%d", &p), p--;
+		vec[p].push_back(i);
+	}
+	for (int i = 0; i < m; i++)
+		vec[i].shrink_to_fit();
+	for (int i = 0; i < m; i++)
+		scanf("%lld", &nd[i]);
+	scanf("%d", &q);
+	for (int i = 0; i < q; i++)
+		scanf("%d %d %d", &ind[i], &val1[i], &val2[i]), ind[i]--;
+
+	for (int i = 0; i < m; i++)
+		beg[i] = 1, en[i] = q, ret[i] = q + 2;
+
+	bool fl = 1;
+	while (fl){
+		fl = 0;
+		for (ll i = 0; i < m; i++)
+			mid[i] = (beg[i] + en[i]) >> 1;
+		go();
+
+		for (ll i = 0; i < m && !fl; i++)
+			if (beg[i] <= en[i])	fl = 1;
+	}
+	
+	for (int i = 0; i < m; i++)
+		if (ret[i] == q + 2)
+			printf("rekt\n");
+		else
+			printf("%d\n", ret[i]);
+	return 0;
+}

@@ -1,0 +1,90 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <iostream>
+#include <set>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <complex>
+#include <map>
+#include <queue>
+using namespace std;
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<ll> vl;
+typedef vector<vl> vvl;
+typedef vector<vi> vvi;
+typedef vector<double> vd;
+typedef pair<int, int> pii;
+typedef pair<double, double> pdd;
+typedef vector<pii> vii;
+typedef vector<string> vs;
+const int mod = 1000000009;
+const int MAX = 5000;
+
+void add(int & a, int b) {
+  a += b;
+  if (a >= mod) a -= mod;
+}
+
+void rem(int & a, int b) {
+  a -= b;
+  if (a < 0) a += mod;
+}
+
+int main() {
+  int T;
+  cin >> T;
+  for (int test = 1; test <= T; ++test) {
+    int n, k;
+    cin >> n >> k;
+    vi w(k), s(n);
+    for (int i = 0; i < k; ++i) cin >> w[i];
+    for (int i = 0; i < n; ++i) cin >> s[i];
+    vvi d(1 << k, vi(MAX+1));
+    vi temp(MAX+1);
+    for (int mask = 0; mask < (1 << k); ++mask) {
+      d[mask][0] = 1;
+      for (int i = 0; i < k; ++i) if (mask & (1 << i)) {
+        int x = w[i];
+        temp = d[mask];
+        for (int j = 0; j <= MAX - x; ++j) add(d[mask][j+x], d[mask][j]);
+        for (int j = 0; j < temp.size(); ++j) {
+          rem(d[mask][j], temp[j]);
+        }
+      }
+//      cerr << mask << endl; for (int i = 0; i < 15; ++i) if (d[mask][i]) cerr << i << ' ' << d[mask][i] << endl;
+    }
+    vi res(1 << k);
+    res[0] = 1;
+    for (int i = 0; i < n; ++i) {
+      vi nres(res.size());
+      for (int mask = 0; mask < (1 << k); ++mask) {
+        vi v;
+        for (int b = 0; b < k; ++b) if (mask & (1 << b)) v.push_back(b);
+        for (int b = 0; b <= v.size(); ++b) {
+          int l = (b == 0) ? 0 : v[b-1];
+          int r = (b < v.size()) ? v[b] : k-1;
+          for (int m = 0; m < (1 << (r - l + 1)); ++m) {
+            int mask1 = 0;
+            for (int b1 = 0; b1 <= r-l; ++b1) if (m & (1 << b1)) mask1 += (1 << (l + b1));
+            nres[mask | mask1] = (nres[mask | mask1] + res[mask] * (ll)d[mask1][s[i]]) % mod;
+          }
+          if (b < v.size()) {
+            rem(nres[mask], res[mask] * (ll)d[1 << v[b]][s[i]] % mod);
+          }
+        }
+      }
+      res.swap(nres);
+//      for (int i = 0; i < res.size(); ++i) cerr << res[i] << ' '; cerr << endl;
+    }
+    ll ans = 0;
+    for (int i = 0; i < res.size(); ++i) ans += res[i];
+    cout << (ans % mod + mod) % mod << endl;
+  }
+  return 0;
+}

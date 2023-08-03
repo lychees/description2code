@@ -1,0 +1,153 @@
+#include<cstdio>
+#include<cstring>
+#include<set>
+#include<queue>
+#include<vector>
+#include<algorithm>
+#include<cstdlib>
+#include<ctime>
+#include<cmath>
+
+using namespace std;
+
+int i, j, n, m, k;
+long x[259], y[259], a[259], b[259], s[259], C[259], urm[259], pre[259];
+long long p, u, mij, ras, D[259][259];
+
+vector<long> v[259];
+
+long mod(long x) {
+    if (x < 0) {
+    	return -x;
+    }
+    
+    return x;
+}
+
+long cup(long nod) {
+    if (C[nod] == 1) {
+    	return 0;
+    }
+    
+    C[nod] = 1;
+    
+    vector<long>::iterator it;
+    
+    for (it = v[nod].begin(); it != v[nod].end(); it++) {
+        if (pre[*it] == 0) {
+            pre[*it] = nod;
+            urm[nod] = *it;
+            
+            return 1;
+        }
+    }
+    
+    for (it = v[nod].begin(); it != v[nod].end(); it++) {
+        if (cup(pre[*it])) {
+            pre[*it] = nod;
+            urm[nod] = *it;
+            
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
+int cuplaj() {
+    int ok = 1;
+    
+    for (i = 1; i <= n; i++) {
+        C[i] = urm[i] = 0;
+    }
+    
+    for (j = 1; j <= m; j++) {
+        pre[j] = 0;
+    }
+    
+    while (ok) {
+        ok = 0;
+        
+        for (i = 1; i <= n; i++) {
+            C[i] = 0;
+        }
+        
+        for (i = 1; i <= n; i++) {
+            if (urm[i] == 0) {
+            	ok += cup(i);
+            }
+        }
+    }
+    
+    ok = 0;
+    
+    for (i = 1; i <= n; i++) {
+        ok += (urm[i] > 0);
+    }
+    
+    return ok;
+}
+
+bool ok(long long dstmx) {
+    int i;
+    
+    for (i = 1; i <= n; i++) {
+        v[i].clear();
+    }
+    
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= m; j++) {
+            if (D[i][j] <= dstmx) {
+            	v[i].push_back(j);
+            }
+        }
+    }
+    
+    return (cuplaj() >= k);
+}
+
+int main()
+{
+	scanf("%d %d %d", &n, &m, &k);
+
+	for (i = 1; i <= n; i++) {
+    	scanf("%ld %ld", &x[i], &y[i]);
+	}
+
+	for (i = 1; i <= m; i++) {
+    	scanf("%ld %ld", &a[i], &b[i]);
+	}
+
+	for (i = 1; i <= n; i++) {
+		scanf("%d", &s[i]);
+	}
+
+	for (i = 1; i <= n; i++) {
+    	for(j = 1; j <= m; j++) {
+        	double dis1 = (a[j] - x[i]) * (a[j] - x[i]);
+        	double dis2 = (b[j] - y[i]) * (b[j] - y[i]);
+        	double dis = dis1 + dis2;
+        	double speed = s[i] * s[i];
+        
+        	D[i][j] = ceil(dis / speed);
+    	}
+	}
+
+	p = 0;
+	u = 10000000000000000;
+
+	while (p <= u) {
+    	mij = (p + u) / 2;
+    
+    	if (ok(mij)) {
+        	ras = mij;
+        	u = mij - 1;
+    	} else {
+    		p = mij + 1;
+    	}
+	}
+	
+	printf("%lld\n", ras);
+
+	return 0;
+}

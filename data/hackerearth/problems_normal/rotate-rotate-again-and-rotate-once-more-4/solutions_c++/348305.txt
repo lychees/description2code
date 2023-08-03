@@ -1,0 +1,200 @@
+/**
+ * In this code we have a very large array called arr, and very large set of operations
+ * Operation #1: Increment the elements within range [i, j] with value val
+ * Operation #2: Get max element within range [i, j]
+ * Build tree: build_tree(1, 0, N-1)
+ * Update tree: update_tree(1, 0, N-1, i, j, value)
+ * Query tree: query_tree(1, 0, N-1, i, j)
+ */
+
+#include<iostream>
+#include<algorithm>
+#include <stdio.h>
+using namespace std;
+
+#include<string.h>
+#include<math.h> 
+
+#define MAX 2097151 // Why? :D
+
+ struct SNode
+    {
+         int MaxFreqency[4];
+    }tree[MAX];
+
+int lazy[MAX];
+void build_tree(int node, int a, int b) {
+if(a > b) return; // Out of range
+if(a == b) { // Leaf node
+tree[node].MaxFreqency[0] = 1;
+tree[node].MaxFreqency[1] = 0;
+tree[node].MaxFreqency[2] = 0;
+tree[node].MaxFreqency[3] = 0;
+return;
+}
+build_tree(node*2, a, (a+b)/2); // Init left child
+build_tree(node*2+1, 1+(a+b)/2, b); // Init right child
+SNode left = tree[node * 2];
+                SNode right = tree[node * 2 + 1];
+                tree[node].MaxFreqency[0] = left.MaxFreqency[0] + right.MaxFreqency[0];
+                tree[node].MaxFreqency[1] = left.MaxFreqency[1] + right.MaxFreqency[1];
+                tree[node].MaxFreqency[2] = left.MaxFreqency[2] + right.MaxFreqency[2];
+                tree[node].MaxFreqency[3] = left.MaxFreqency[3] + right.MaxFreqency[3];
+}
+
+
+/**
+ * Query tree to get max element value within range [i, j]
+ */
+SNode query_tree(int node, int a, int b, int i, int j) {
+    SNode s ;
+    if(a > b || a > j || b < i) {s.MaxFreqency[0] = 0 ; s.MaxFreqency[1] = 0 ; s.MaxFreqency[2] = 0 ; s.MaxFreqency[3] = 0 ; 
+    return s;
+    }// Out of range
+    if(lazy[node] != 0) { // This node needs to be updated
+		int movement = lazy[node];
+		int updatedInt[4];
+    		for(int i = 0 ; i < 4 ; i++)
+    		    updatedInt[i] = 0;
+            for (int i = 0; i < 4; i++)
+                {
+                    if (tree[node].MaxFreqency[i] > 0 )
+                    {
+                        int updatedPosition = (i + movement) % 4;
+                        updatedInt[updatedPosition] = tree[node].MaxFreqency[i];
+                        
+                    }
+                    
+                }
+                	for(int i = 0 ; i < 4 ; i++){
+                		tree[node].MaxFreqency[i] = updatedInt[i];
+                		//printf("%d\n",tree[node].MaxFreqency[i]);
+                	}
+ 
+		if(a != b) {
+			lazy[node*2] += lazy[node]; // Mark child as lazy
+			lazy[node*2+1] += lazy[node]; // Mark child as lazy
+		}
+ 
+		lazy[node] = 0; // Reset it
+	}
+	if(a >= i && b <= j) // Current segment is totally within range [i, j]
+		return tree[node];
+
+	SNode left = query_tree(node*2, a, (a+b)/2, i, j); // Query left child
+	SNode right = query_tree(1+node*2, 1+(a+b)/2, b, i, j); // Query right child
+
+	 
+            SNode newNode ;
+            newNode.MaxFreqency[0] = left.MaxFreqency[0] + right.MaxFreqency[0];
+             newNode.MaxFreqency[1] = left.MaxFreqency[1] + right.MaxFreqency[1];
+             newNode.MaxFreqency[2] = left.MaxFreqency[2] + right.MaxFreqency[2];
+             newNode.MaxFreqency[3] = left.MaxFreqency[3] + right.MaxFreqency[3];
+            return newNode;
+}
+
+void update_tree(int node, int a, int b, int i, int j , int movement) {
+    //printf("%d %d %d %d %d %d\n" , node , a , b , movement , i , j);
+    if(lazy[node] != 0) { // This node needs to be updated
+       //printf("%d\n",lazy[node]);
+   		int updatedInt[4];
+    		for(int i = 0 ; i < 4 ; i++)
+    		    updatedInt[i] = 0;
+            for (int i = 0; i < 4; i++)
+                {
+                    if (tree[node].MaxFreqency[i] > 0 )
+                    {
+                        int updatedPosition = (i + lazy[node]) % 4;
+                        updatedInt[updatedPosition] = tree[node].MaxFreqency[i];
+                        
+                    }
+                    
+                }
+                	for(int i = 0 ; i < 4 ; i++){
+                		tree[node].MaxFreqency[i] = updatedInt[i];
+                	}
+		if(a != b) {
+			lazy[node*2] += lazy[node]; // Mark child as lazy
+    			lazy[node*2+1] += lazy[node]; // Mark child as lazy
+		}
+ 
+   		lazy[node] = 0; // Reset it
+  	}
+  
+    if(a > b || a > j || b < i) return ; // Out of range
+    if(a >= i && b <= j) { // Segment is fully within range
+    		int updatedInt[4];
+    		for(int i = 0 ; i < 4 ; i++)
+    		    updatedInt[i] = 0;
+            for (int i = 0; i < 4; i++)
+                {
+                    if (tree[node].MaxFreqency[i] > 0 )
+                    {
+                        int updatedPosition = (i + movement) % 4;
+                        updatedInt[updatedPosition] = tree[node].MaxFreqency[i];
+                        
+                    }
+                    
+                }
+                	for(int i = 0 ; i < 4 ; i++){
+                		tree[node].MaxFreqency[i] = updatedInt[i];
+                		//printf("%d\n",tree[node].MaxFreqency[i]);
+                	}
+		if(a != b) { // Not leaf node
+			lazy[node*2] += movement;
+			lazy[node*2+1] += movement;
+			//printf("%d %d %d\n" , lazy[node*2] , lazy[node*2 + 1] , node);
+		}
+ 
+    		return;
+	}
+
+
+	update_tree(node*2, a, (a+b)/2, i, j,movement); // Query left child
+update_tree(1+node*2, 1+(a+b)/2, b, i, j,movement); // Query right child
+
+	 
+            SNode left = tree[node*2] ;
+            SNode right = tree[node*2 + 1];
+            tree[node].MaxFreqency[0] = left.MaxFreqency[0] + right.MaxFreqency[0];
+             tree[node].MaxFreqency[1] = left.MaxFreqency[1] + right.MaxFreqency[1];
+             tree[node].MaxFreqency[2] = left.MaxFreqency[2] + right.MaxFreqency[2];
+             tree[node].MaxFreqency[3] = left.MaxFreqency[3] + right.MaxFreqency[3];
+            return ;
+}
+
+int main() {
+    //while(true)
+	{
+     int totalN , totalQuery ;
+     scanf("%d",&totalN);
+	 scanf("%d",&totalQuery);
+	 build_tree(1, 0, totalN-1);
+     while (totalQuery > 0)
+            {
+            	char chr;
+                int start , end;
+                cin >> chr;
+				scanf("%d%d",&start,&end);
+				if(chr == 'C'){
+					int amount;
+				   scanf("%d",&amount);
+                   update_tree(1, 0, totalN - 1, start - 1, end - 1, amount % 4);
+				}else if (chr == 'A'){
+				   int amount;
+				   scanf("%d",&amount);
+                   update_tree(1, 0, totalN - 1, start - 1, end - 1, 4 -(amount % 4));
+				}
+					else{
+                     SNode r = query_tree(1, 0, totalN - 1, start - 1 , end - 1);
+                     int maxNum = -1;
+                     for(int i = 0 ; i < 4 ; i++){
+                     	//printf("%d\n",r.MaxFreqency[i]);
+                     	maxNum = max(r.MaxFreqency[i],maxNum);
+                     }
+                     printf("%d\n",maxNum);
+				}
+                totalQuery--;
+            }
+	}		
+}

@@ -1,0 +1,255 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define f first
+#define s second
+#define mp make_pair
+#define pb push_back
+#define ll long long
+#define inf -1000000000000000000LL
+///just change the values in the "pos" array depending on the question , rest all is fine !
+///simultaneously change the values in segment tree depending on the question too!
+#define N 100011
+int depth[N],pt,cno,par[N],dp[20][N],chainno[N],chainhead[N];
+vector< int >adj[N];
+struct node
+{
+    ll suf,pref,sum,mx;
+} st[N*6];
+ll a[N],pos[N];
+int posinbase[N],subsz[N];
+///depth[i] denotes the height of the i'th node
+///pt in the current position to be added
+///cno is the current chain being modified
+///par[i] if the parent of i'th node
+///chainno[i] denotes the number of chain of i'th node
+///chainhead[i] denotes the vertex which is the head of i'th node
+///pos[i] denotes the value of i'th vertex to be worked upon!
+///posinbase[i] denote the position in base array of i'th vertex
+node merg(node a,node b)
+{
+    node ans;
+    ans.sum=a.sum+b.sum;
+    ans.pref=max(a.pref,a.sum+b.pref);
+    ans.suf=max(b.suf,b.sum+a.suf);
+    ans.mx=max(a.mx,max(b.mx,a.suf+b.pref));
+    return ans;
+}
+///builds the segment tree
+void build(int n,int b,int e)
+{
+    if(b==e)
+    {
+        st[n].suf=pos[b];
+        st[n].pref=pos[b];
+        st[n].sum=pos[b];
+        st[n].mx=pos[b];
+        return;
+    }
+    int l=2*n,mid=(b+e)/2;
+    build(l,b,mid);
+    build(l+1,mid+1,e);
+    st[n]=merg(st[l],st[l+1]);
+}
+///queries the segment tree
+node queryst(int n,int b,int e,int x,int y)
+{
+    if(b>=x&&e<=y)
+        return st[n];
+    int l=2*n,mid=(b+e)/2;
+    if(x>mid)
+        return queryst(l+1,mid+1,e,x,y);
+    else if(y<=mid)
+        return queryst(l,b,mid,x,y);
+    else
+    {
+        node a=queryst(l,b,mid,x,mid);
+        node b=queryst(l+1,mid+1,e,mid+1,y);
+        return (merg(a,b));
+    }
+}
+///clears all arrays
+void clearing(int n)
+{
+    for(int i=0; i<=n+10; i++)
+    {
+        pos[i]=subsz[i]=chainno[i]=0;
+        chainhead[i]=-1;
+        depth[i]=0;
+        par[i]=-1;
+        adj[i].clear();
+    }
+    for(int i=0; i<=17; i++)
+        for(int j=0; j<=n; j++)
+            dp[i][j]=-1;
+}
+///decomposes the tree using HLD technique
+void hld(int u,int p)
+{
+    if(chainhead[cno]==-1)
+        chainhead[cno]=u;
+    pos[pt]=a[u];
+    chainno[u]=cno;
+    posinbase[u]=pt;
+    pt++;
+    int mx=-1,loc=-1;
+    for(int i=0; i<adj[u].size(); i++)
+    {
+        int k=adj[u][i];
+        if(k==p)
+            continue;
+        if(subsz[k]>mx)
+        {
+            mx=subsz[k];
+            loc=k;
+        }
+    }
+    if(loc!=-1)
+        hld(loc,u);
+    for(int i=0; i<adj[u].size(); i++)
+    {
+        int k=adj[u][i];
+        if(k==p||k==loc)
+            continue;
+        cno++;
+        hld(k,u);
+    }
+}
+///LCA STARTS
+void dfs(int u,int h,int p)
+{
+    subsz[u]=1;
+    par[u]=p;
+    depth[u]=h;
+    for(int i=0; i<adj[u].size(); i++)
+    {
+        int k=adj[u][i];
+        if(k==p)
+            continue;
+        dfs(k,h+1,u);
+        subsz[u]+=subsz[k];
+    }
+}
+void pre(int n)
+{
+    int i;
+    for(i=0; i<n; i++)
+        dp[0][i]=par[i];
+    for(i=1; (1<<i)<=n; i++)
+    {
+        for(int j=0; j<n; j++)
+            dp[i][j]=dp[i-1][dp[i-1][j]];
+    }
+}
+int lca(int u,int v)
+{
+    if(depth[u]<depth[v])
+        swap(u,v);
+    int diff=depth[u]-depth[v];
+    for(int i=0; i<=17; i++)
+        if((diff>>i)&1)
+            u=dp[i][u];
+    if(u==v)
+        return u;
+    for(int i=17; i>=0; i--)
+    {
+        if(dp[i][u]!=dp[i][v])
+        {
+            u=dp[i][u];
+            v=dp[i][v];
+        }
+    }
+    return dp[0][u];
+}
+///LCA ENDS
+///queries from u to v
+///v is the ancestor of u
+///changes atmost logn chains to reach 'u'
+node queryup(int u,int v,int n)
+{
+    int uchain=chainno[u];
+    int vchain=chainno[v];
+    node ans;
+    ans.suf=ans.pref=ans.sum=ans.mx=inf;
+    int c=0;
+    while(1)
+    {
+        if(uchain==vchain)
+        {
+            if(u!=v)
+            {
+                if(c==0)
+                    ans=queryst(1,0,n-1,posinbase[v]+1,posinbase[u]);
+                else
+                    ans=merg(queryst(1,0,n-1,posinbase[v]+1,posinbase[u]),ans);
+                c++;
+            }
+            //printf("-----%d %d %lld %lld %lld %lld\n",posinbase[u],posinbase[v],ans.pref,ans.suf,ans.sum,ans.mx);
+            break;
+        }
+        if(c==0)
+            ans=queryst(1,0,n-1,posinbase[chainhead[uchain]],posinbase[u]);
+        else
+            ans=merg(queryst(1,0,n-1,posinbase[chainhead[uchain]],posinbase[u]),ans);
+        c++;
+        //printf("%d %lld %lld %lld %lld\n",u,ans.pref,ans.suf,ans.sum,ans.mx);
+        u=chainhead[uchain];
+        u=par[u];
+        uchain=chainno[u];
+    }
+    return ans;
+}
+///query on the path from 'u' to 'v'
+ll query(int u,int v,int n)
+{
+    int x=lca(u,v);
+    //printf("%d\n",x);
+    node ans1=queryup(u,x,n);
+    node ans2=queryup(v,x,n);
+    node ans=queryst(1,0,n-1,posinbase[x],posinbase[x]);
+//    printf("%lld %lld %lld %lld\n",ans1.pref,ans1.suf,ans1.sum,ans1.mx);
+//    printf("%lld %lld %lld %lld\n",ans2.pref,ans2.suf,ans2.sum,ans2.mx);
+//    printf("%lld %lld %lld %lld\n",ans.pref,ans.suf,ans.sum,ans.mx);
+    swap(ans2.pref,ans2.suf);
+    return (merg(merg(ans2,ans),ans1).mx);
+}
+int main()
+{
+    int n,q,i,j;
+    scanf("%d",&n);
+    clearing(n);
+    for(i=0; i<n-1; i++)
+    {
+        int u,v;
+        scanf("%d %d",&u,&v);
+        u--;
+        v--;
+        adj[u].pb(v);
+        adj[v].pb(u);
+    }
+    for(i=0; i<n; i++)
+        scanf("%lld",&a[i]);
+    dfs(0,0,-1);
+    pt=0;
+    cno=0;
+    hld(0,-1);
+    build(1,0,n-1);
+//    for(i=1; i<=10; i++)
+//        printf("%lld %lld %lld %lld\n",st[i].pref,st[i].suf,st[i].sum,st[i].mx);
+    pre(n);
+    scanf("%d",&q);
+    while(q--)
+    {
+        int u,v;
+        scanf("%d %d",&u,&v);
+        u--;
+        v--;
+        if(u==v)
+        {
+            printf("%lld\n",a[u]);
+            continue;
+        }
+        printf("%lld\n",query(u,v,n));
+    }
+
+    return 0;
+}

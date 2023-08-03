@@ -1,0 +1,109 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<memory.h>
+using namespace std;
+long long n , k;
+long long dp[25][2][10][5];
+vector<int> dig;
+
+long long get2(int pos , bool les , int dg , int dir)
+{
+    long long &ans = dp[pos][les][dg][dir];
+    if(ans != -1) return ans;
+    ans = 0;
+    if(pos == (int)dig.size())
+    {
+        ans = 1;
+        return ans;
+    }
+    for(int ndg = 0;ndg < 10;ndg ++)
+    {
+        if(!les && ndg > dig[pos])
+            break;
+        bool nles = les || (ndg < dig[pos]);
+        int ndir = dg < ndg ? 1 : 2;
+        if(dg != ndg && ((dir == 0) || (dir + ndir) == 3))
+            ans += get2(pos + 1 , nles , ndg , ndir);
+    }
+    return ans;
+}
+long long get(long long inp)
+{
+    memset(dp , -1 , sizeof dp);
+
+    dig.clear();
+    while(inp > 0)
+    {
+        dig.push_back(inp % 10ll);
+        inp /= 10ll;
+    }
+
+    reverse(dig.begin() , dig.end());
+
+    long long ans1 = 0;
+    for(int i = 1;i < (int)dig.size();i ++)
+        for(int j = 1;j <= 9;j ++)
+            ans1 += get2(i + 1 , true , j , 0);
+
+
+    for(int j = 1;j < dig[0];j ++)
+        ans1 += get2(1 , true , j , 0);
+
+    ans1 += get2(1 , false , dig[0] , 0);
+
+    return ans1;
+}
+long long solveLeft()
+{
+    long long t1 = get(n);
+    long long be = 1 , en = n , ans = -1;
+    while(be <= en)
+    {
+        long long mid = (be + en) / 2ll;
+        long long cnt = get(mid - 1);
+        //cout << mid << " " << cnt << endl;
+        if(t1 - cnt <= k)
+        {
+            if(t1 - cnt == k)
+                ans = mid;
+            en = mid - 1;
+        }
+        else
+            be = mid + 1;
+    }
+    return ans;
+}
+long long solveRight()
+{
+    long long t1 = get(n - 1);
+    long long be = n , en = 1e18 , ans = -1;
+    while(be <= en)
+    {
+        long long mid = (be + en) / 2ll;
+        long long cnt = get(mid);
+
+        if(cnt - t1 <= k)
+        {
+            if(cnt - t1 == k)
+                ans = mid;
+            be = mid + 1;
+        }
+        else
+            en = mid - 1;
+    }
+    return ans;
+}
+
+int main()
+{
+    int T;
+    cin >> T;
+    for(int t = 0;t < T;t ++)
+    {
+        cin >> n >> k;
+        cout << solveLeft() << " " << solveRight() << endl;
+        //cout << get(n) << endl;
+    }
+    return 0;
+}

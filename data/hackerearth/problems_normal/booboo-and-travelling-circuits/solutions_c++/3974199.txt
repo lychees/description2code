@@ -1,0 +1,130 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <limits.h>
+#include <vector>
+#include <stdlib.h>
+#include <algorithm>
+#include <memory.h>
+#include <string.h>
+#include <math.h>
+#include <string>
+#include <algorithm>
+#include <functional>
+#include <cassert>
+#include <map>
+#include <set>
+#include <list>
+
+using namespace std;
+typedef long long lli;
+typedef vector<int> vi;
+typedef vector<lli> vli;
+typedef pair<int, int> pii;
+typedef vector<pii> vpii;
+typedef long double ld;
+
+const int INF = 0x3f3f3f3f;
+const lli LINF = 0x3f3f3f3f3f3f3f3f;
+
+//#define _LOCAL_DEBUG_
+#ifdef _LOCAL_DEBUG_
+#define eprintf(...) fprintf(stderr,__VA_ARGS__)
+#else
+#define eprintf(...) 
+#endif
+
+const int MAXN = 2e3 + 10;
+const int MAXM = 1e4 + 10;
+
+int n, m;
+
+vi groupNumbers[MAXM];
+int groupId[MAXM];
+
+lli cost[MAXN][MAXM] = { 0 };
+int A[MAXM] = { 0 }, B[MAXM] = { 0 };
+lli minCostForGroup[MAXM];
+int minCostSourceForGroup[MAXM];
+
+void clear() {
+	memset(cost, LINF, sizeof(cost));
+}
+
+void update(lli &a, const lli b) { if (b < a) a = b; }
+
+void solve() {
+	int P, Q, R, S;
+	int X, Y, Z, W;
+	scanf("%d%d%d%d", &S, &P, &Q, &R);
+	scanf("%d%d%d%d", &W, &X, &Y, &Z);
+
+	memset(cost[1], 0, sizeof(cost[1]));
+	for (int i = 1; i < n; i++) {
+		for (int i = 0; i < m; i++) {
+			S = (1ll * P * S % 1000000003 * S + 1ll * Q * S % 1000000003 + R) % 1000000003;
+			W = (1ll * X * W % 1000000003 * W + 1ll * Y * W % 1000000003 + Z) % 1000000003;
+			A[i + 1] = S;
+			B[i + 1] = W;
+		}
+
+		for (int k = 1; k <= m; k++) update(cost[i + 1][k], cost[i][k] + A[k]);
+		for (int j = 2; j <= m; j++) update(cost[i + 1][1], cost[i][j] + B[j]);
+
+		memset(minCostSourceForGroup, -1, sizeof(minCostSourceForGroup));
+		memset(minCostForGroup, LINF, sizeof(minCostForGroup));
+		for (int j = 2; j <= m; j++) {
+			int gId = groupId[j];
+			lli tBCost = B[j] + cost[i][j];
+			if (tBCost < minCostForGroup[gId])
+				minCostForGroup[gId] = tBCost, minCostSourceForGroup[gId] = j;
+		}
+		for (int k = 2; k <= m; k++) {
+			int gId = groupId[k];
+			if (k == minCostSourceForGroup[gId]) continue;
+			update(cost[i + 1][k], minCostForGroup[gId]);
+		}
+
+		for (int k = 2; k <= m; k++) {
+			int gId = groupId[k];
+			if (k != minCostSourceForGroup[gId]) continue;
+			for (auto j : groupNumbers[gId]) {
+				if (j == k) continue;
+				update(cost[i + 1][k], cost[i][j] + B[j]);
+			}
+		}
+	}
+
+	lli mn = LLONG_MAX;
+	for (int i = 1; i <= m; i++) mn = min(mn, cost[n][i]);
+
+	printf("%lld\n", mn);
+}
+
+int getLowestFactor(int x) {
+	for (int f = 2; f * f <= x; f++)
+		if (x % f == 0) return f;
+	return x;
+}
+
+void precalc() {
+	for (int x = 2; x <= m; x++) {
+		int f = getLowestFactor(x);
+		groupNumbers[f].push_back(x);
+		groupId[x] = f;
+	}
+}
+
+int main() {
+#ifdef _LOCAL_VAN
+	freopen("in.txt", "r", stdin);
+#endif
+	while (scanf("%d%d", &n, &m) == 2) {
+		clear();
+		precalc();
+		solve();
+#ifndef _LOCAL_VAN
+		return 0;
+#endif
+	}
+	return 0;
+}

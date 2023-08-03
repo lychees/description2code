@@ -1,0 +1,176 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define ll long long int
+#define mp(i,j) make_pair(i,j)
+#define pb(x) push_back(x)
+#define MAXN 100010
+#define MOD 1000000007
+
+ll c[MAXN];
+ll vis[MAXN];
+vector <ll> g[MAXN];
+ll found;
+ll euler[MAXN*10];
+ll l[MAXN*10];
+ll first[MAXN];
+ll level[MAXN];
+pair<ll,ll> st[MAXN*40];
+ll dist[MAXN];
+vector <ll> which[MAXN];
+
+void dfs(ll x,ll lvl)
+{
+	vis[x] = 1;
+	level[x] = lvl;
+	euler[++found] = x;
+	first[x] = found;
+
+	ll i,sz = g[x].size();
+
+	for(i=0;i<sz;i++) {
+		if(!vis[g[x][i]]) {
+			dfs(g[x][i],lvl+1);
+			euler[++found] = x;
+		}
+	}
+}
+
+void construct(ll s,ll e,ll ind)
+{
+	if(s==e) st[ind] = mp(s,l[s]);
+	else {
+		construct(s,(s+e)/2,ind*2);
+		construct((s+e)/2+1,e,ind*2+1);
+
+		if(st[ind*2].second<st[ind*2+1].second) {
+			st[ind] = st[ind*2];
+		} else {
+			st[ind] = st[ind*2+1];
+		}
+	}
+}
+
+pair<ll,ll> query(ll s,ll e,ll qs,ll qe,ll ind)
+{
+	if(e<qs || s>qe) return mp(INT_MAX,INT_MAX);
+	
+	if(s>=qs && e<=qe) return st[ind];
+	else {
+		pair <ll,ll> p1,p2;
+
+		p1 = query(s,(s+e)/2,qs,qe,ind*2);
+		p2 = query((s+e)/2+1,e,qs,qe,ind*2+1);
+
+		if(p1.second<p2.second) {
+			return p1;
+		} else {
+			return p2;
+		}
+	}
+}
+
+int main()
+{
+	ll i,j,k,n,m,a,b,ans,pre;
+
+	scanf("%lld%lld", &n,&m);
+
+	for(i=1;i<=n;i++) {
+		scanf("%lld", &c[i]);
+		which[c[i]].pb(i);
+	}
+
+	for(i=1;i<n;i++) {
+		scanf("%lld%lld", &a,&b);
+		g[a].pb(b);
+		g[b].pb(a);
+	}
+
+	memset(vis,0,sizeof(vis));
+
+	found = 0;
+
+	dfs(1,0);
+	
+	memset(dist,-1,sizeof(dist));
+	pre = -1;
+
+///	for(i=1;i<=found;i++) {
+//		cout<<euler[i]<<" ";
+//	}
+//	cout<<endl;
+
+	for(i=1;i<=found;i++) {
+		l[i]=level[euler[i]];
+
+//		if(dist[euler[i]] == -1) {
+//			dist[euler[i]] = pre+1;
+//		}
+//		pre = dist[euler[i]];
+//		cout<<pre<<" ";
+//		cout<<l[i]<<" ";
+	}
+//	cout<<endl;
+
+//	for(i=1;i<=n;i++) {
+//		cout<<first[i]<<" ";
+//	}
+//	cout<<endl;
+
+	construct(1,found,1);
+
+	for(i=1;i<=m;i++) {
+		ll sz = which[i].size();
+
+		ans = 0;
+		j = 0;
+		for(k=0;k<sz;k++) if(level[which[i][k]]>level[which[i][j]]) j = k;
+
+/*
+		queue <pair<ll,ll> > q;
+
+		q.push(mp(which[i][j],0));
+
+		memset(vis,0,sizeof(vis));
+		vis[which[i][j]] = 1;
+
+		while(!q.empty()) {
+			pair<ll,ll> pp = q.front();
+
+			q.pop();
+
+			if(c[pp.first]==i) {
+				ans = max(ans,pp.second);
+			}
+
+			ll ssz = g[pp.first].size();
+
+			for(k=0;k<ssz;k++) {
+				if(!vis[g[pp.first][k]]) {
+					vis[g[pp.first][k]] = 1;
+					q.push(mp(g[pp.first][k],pp.second+1));
+				}
+			}
+		}
+*/
+			for(k=0;k<sz;k++) {
+				ll l1=level[which[i][j]],l2=level[which[i][k]];
+
+				pair<ll,ll> lca;
+
+		//		cout<<"Between pair: ";
+		//		cout<<which[i][j]<<" "<<which[i][k]<<" with levels: "<<l1<<" "<<l2<<" and firsts: "<<first[which[i][j]]<<" "<<first[which[i][k]]<<endl;
+
+				lca = query(1,found,min(first[which[i][j]],first[which[i][k]]),max(first[which[i][j]],first[which[i][k]]),1);
+
+		//		cout<<lca.first<<" "<<lca.second<<endl;
+				ans = max(ans,(ll)labs(l1-lca.second)+labs(l2-lca.second));
+				
+			}
+		printf("%lld ", ans);
+	}
+	printf("\n");
+
+	return 0;
+}

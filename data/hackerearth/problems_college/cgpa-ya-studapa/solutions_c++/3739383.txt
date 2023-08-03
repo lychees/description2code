@@ -1,0 +1,121 @@
+#include <iostream>
+#include <cstdio>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <sstream>
+#include <cmath>
+
+typedef long long ll;
+
+#define forn(i, n) for (int i = 0; i < (int)(n); i++)
+#define forv(i, v) forn(i, v.size())
+
+#define all(v) v.begin(), v.end()
+
+using namespace std;
+
+const int MAXN = 105;
+const ll INF = 1e15;
+
+ll dp[MAXN][MAXN][MAXN];
+
+void solveCase() {
+    int n;
+    cin >> n;
+    vector<ll> x(n), y(n), p(n);
+    forn(i, n) {
+        cin >> x[i];
+    }
+    forn(i, n) {
+        cin >> y[i];
+    }
+    forn(i, n) {
+        cin >> p[i];
+    }
+    vector<ll> vx = x;
+    vx.push_back(0);
+    vector<ll> vy = y;
+    vy.push_back(0);
+    sort(all(vx));
+    vx.erase(unique(vx.begin(), vx.end()), vx.end());
+    sort(all(vy));
+    vy.erase(unique(vy.begin(), vy.end()), vy.end());
+    int cX = (int)vx.size();
+    int cY = (int)vy.size();
+    forn(i, cX + 1) forn(j, cY + 1) forn(k, n + 2) dp[i][j][k] = INF;
+    
+    vector< vector<ll> > sR(cX, vector<ll>(cY));
+    vector< vector<ll> > sU(cX, vector<ll>(cY));
+    
+    for (int i = cX - 1; i >= 0; i--) {
+        for (int j = cY - 1; j >= 0; j--) {
+            ll sumP = 0;
+            int l = 0;
+            forn(k, n) {
+                if (x[k] <= vx[i] || y[k] <= vy[j]) {
+                    sumP += p[k];
+                    l++;
+                }
+            }
+            
+            
+          
+             
+            
+            forn(k, l + 1) {
+                dp[i][j][k] = -sumP;
+            }
+            
+            for (int k = l + 1; k <= n; k++) {
+                if (i < cX - 1) {
+                    ll stepX = vx[i + 1] - vx[i];
+                    ll newD = stepX - sumP;
+                    newD = max(newD, stepX + dp[i + 1][j][k] );//- sumP - sU[i + 1][j]);
+                    //newD = max(newD, 0ll);
+                    dp[i][j][k] = min(dp[i][j][k], newD);
+                }
+                if (j < cY - 1) {
+                    ll stepY = vy[j + 1] - vy[j];
+                    ll newD = stepY - sumP;
+                    newD = max(newD, stepY + dp[i][j + 1][k]);//- sumP  - sR[i][j + 1]);
+                    //newD = max(newD, 0ll);
+                    dp[i][j][k] = min(dp[i][j][k], newD);
+                }
+            }
+        }
+    }
+    
+    /*
+    forn(i, cX) {
+        forn(j, cY) {
+            cerr << vx[i] << " " << vy[j] << ":";
+
+            for (int k = 1; k <= 3; k++) {
+                cerr << " " << dp[i][j][k];
+            }
+            cerr << endl;
+        }
+    }
+     */
+    
+    for (int k = 1; k <= n; k++) {
+        cout << max(0ll, dp[0][0][k]);
+        if (k < n) cout << " "; else cout << endl;
+    }
+}
+
+int main() {
+#ifdef NEREVAR_PROJECT
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#endif
+    int tc; cin >> tc;
+    forn(i, tc) solveCase();
+    return 0;
+}

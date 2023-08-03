@@ -1,0 +1,236 @@
+
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>
+#include <ctime>
+#include <cassert>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <unordered_map>
+#include <unordered_set>
+#include <memory.h>
+using namespace std;
+typedef long long ll;
+
+const int BSZ = 256;
+const int MAXN = 100005;
+const int MAXB = MAXN / BSZ + 1;
+
+int n;
+int a[MAXN];
+
+int m;
+int x[MAXB], la[MAXB], ra[MAXB];
+ll v[MAXB];
+
+int blen(const int j) {
+  if (j < m - 1) {
+    return BSZ;
+  }
+  return n - j * BSZ;
+}
+
+int bleft(const int j) {
+  if (x[j] >= 0) {
+    return x[j];
+  }
+  const int si = j * BSZ;
+  return a[si];
+}
+
+int bright(const int j) {
+  if (x[j] >= 0) {
+    return x[j];
+  }
+  const int si = j * BSZ;
+  const int ei = si + blen(j) - 1;
+  return a[ei];
+}
+
+int bla(const int j) {
+  if (x[j] >= 0) {
+    return blen(j);
+  }
+  return la[j];
+}
+
+int bra(const int j) {
+  if (x[j] >= 0) {
+    return blen(j);
+  }
+  return ra[j];
+}
+
+ll bvalue(const int j) {
+  if (x[j] >= 0) {
+    const int t = blen(j);
+    return 1ll * t * (t + 1) / 2;
+  }
+  return v[j];
+}
+
+ll count(const int si, const int ei) {
+  ll ret = 0;
+  int i = si;
+  while (i <= ei) {
+    int k = i + 1;
+    while (k <= ei && a[k] == a[i]) {
+      k++;
+    }
+    const int t = k - i;
+    ret += 1ll * t * (t + 1) / 2;
+    i = k;
+  }
+  return ret;
+}
+
+void bupdate(const int j) {
+  const int si = j * BSZ;
+  const int ei = si + blen(j) - 1;
+
+  if (x[j] >= 0) {
+    for (int i = si; i <= ei; i++) {
+      a[i] = x[j];
+    }
+    x[j] = -1;
+  }
+
+  int i = si + 1;
+  while (i <= ei && a[i] == a[si]) {
+    i++;
+  }
+  la[j] = i - si;
+
+  i = ei - 1;
+  while (i >= si && a[i] == a[ei]) {
+    i--;
+  }
+  ra[j] = ei - i;
+
+  v[j] = count(si, ei);
+}
+
+int main() {
+  int q;
+  scanf("%d %d", &n, &q);
+  for (int i = 0; i < n; i++) {
+    scanf("%d", a + i);
+  }
+
+  m = (n + BSZ - 1) / BSZ;
+
+  for (int j = 0; j < m; j++) {
+    x[j] = -1;
+    bupdate(j);
+  }
+
+  while (q--) {
+    int t, l, r;
+    scanf("%d %d %d", &t, &l, &r);
+    l--, r--;
+
+    const int bl = l / BSZ;
+    const int br = r / BSZ;
+
+    if (t == 0) {
+      int c;
+      scanf("%d", &c);
+
+      if (bl < br) {
+        bupdate(bl);
+        bupdate(br);
+        for (int i = l; i <= (bl + 1) * BSZ; i++) {
+          a[i] = c;
+        }
+        for (int i = br * BSZ; i <= r; i++) {
+          a[i] = c;
+        }
+        bupdate(bl);
+        bupdate(br);
+        for (int j = bl + 1; j < br; j++) {
+          x[j] = c;
+        }
+      } else {
+        bupdate(bl);
+        for (int i = l; i <= r; i++) {
+          a[i] = c;
+        }
+        bupdate(bl);
+      }
+
+    } else {  // t == 1
+      ll ans = 0;
+
+      if (bl < br) {
+        bupdate(bl);
+        bupdate(br);
+
+        const int ei = (bl + 1) * BSZ - 1;
+        const int si = br * BSZ;
+
+        ans += count(l, ei);
+        ans += count(si, r);
+
+        for (int j = bl + 1; j < br; j++) {
+          ans += bvalue(j);
+        }
+
+        if (bl + 1 < br) {
+          int j = bl, c = bright(j), ll = min(bra(j), ei - l + 1), rr = 0;
+          while (j < br) {
+            int k = j + 1;
+            while (k < br && bleft(k) == c && blen(k) == bla(k)) {
+              rr += bla(k);
+              ans -= bvalue(k);
+              k++;
+            }
+
+            if (bleft(k) == c) {
+              const int rrr = (k < br) ? bla(k) : min(bla(br), r - si + 1);
+              ans -= 1ll * rrr * (rrr + 1) / 2;
+              rr += rrr;
+            }
+
+            ans -= 1ll * ll * (ll + 1) / 2;
+            ans += 1ll * (ll + rr) * (ll + rr + 1) / 2;
+
+            j = k;
+            c = bright(j);
+            ll = bra(j);
+            rr = 0;
+          }
+        } else {
+          if (a[ei] == a[si]) {
+            const int ll = min(ra[bl], ei - l + 1);
+            const int rr = min(la[br], r - si + 1);
+            ans -= 1ll * ll * (ll + 1) / 2;
+            ans -= 1ll * rr * (rr + 1) / 2;
+            ans += 1ll * (ll + rr) * (ll + rr + 1) / 2;
+          }
+        }
+
+      } else {
+        bupdate(bl);
+        ans += count(l, r);
+      }
+
+      printf("%lld\n", ans);
+    }
+  }
+
+  return 0;
+}

@@ -1,0 +1,188 @@
+#include <bits/stdc++.h>
+#define ff first
+#define ss second
+#define sz size()
+#define pb push_back
+#define mp make_pair
+#define pf push_front 
+#define ff first
+#define ss second
+#define SET(a,b) memset(a,b,sizeof(a))
+#define all(c) (c).begin(),(c).end() 
+#define tr(c,i) for(typeof((c).begin() i = (c).begin(); i != (c).end(); i++) 
+#define present(c,x) ((c).find(x) != (c).end()) 
+#define cpresent(c,x) (find(all(c),x) != (c).end()) 
+#define SL(n) scanf("%lld",&n)
+#define PL(n) printf("%lld",n)
+#define SI(n) scanf("%d",&n)
+#define _ ios_base::sync_with_stdio(0);cin.tie(0)
+using namespace std;
+typedef long long int LL;
+class node{
+public:
+	LL ss;
+	LL length;
+};
+typedef vector<LL> VL;
+typedef vector<int> VI; 
+typedef vector<VL> VVL; 
+typedef pair<LL,LL> PLL; 
+typedef stack<node> st;
+typedef queue<node> qu;
+typedef pair<int ,int> II;
+typedef vector<II> VII;
+void FastIO()
+{
+	ios_base::sync_with_stdio(0);
+	cin.tie(NULL);
+	cout.tie(NULL);
+}
+int N, Q;
+pair<int,int> tmp[100001];
+
+// Variables, that hold current "state" of computation
+long long current_answer=0;
+long long cnt[100];
+
+// Array to store answers (because the order we achieve them is messed up)
+long long answers[100500];
+int BLOCK_SIZE;
+int arr[100500];
+
+// We will represent each query as three numbers: L, R, idx. Idx is 
+// the position (in original order) of this query.
+pair< pair<int, int>, int> queries[100500];
+bool bySecond(pair<int, int> v1, pair<int, int> v2){
+    return (v1.second < v2.second);
+}
+int node[100001]={0};
+ 
+void add(int pos, int v){
+    if(!pos) return;
+    for(int i = pos; i <= N; i += (i&-i)){
+        node[i] += v;
+    }
+}
+
+int sum(int pos){
+    int ans = 0;
+    for(int i = pos; i >= 1; i -= (i&-i)){
+        ans += node[i];
+    }
+    return ans;
+}
+
+int query(int a, int b){
+    return sum(b) - sum(a - 1);
+}
+
+// Essential part of Mo's algorithm: comparator, which we will
+// use with std::sort. It is a function, which must return True
+// if query x must come earlier than query y, and False otherwise.
+inline bool mo_cmp(const pair< pair<int, int>, int> &x,
+        const pair< pair<int, int>, int> &y)
+{
+    int block_x = x.first.first / BLOCK_SIZE;
+    int block_y = y.first.first / BLOCK_SIZE;
+    if(block_x != block_y)
+        return block_x < block_y;
+    return x.first.second < y.first.second;
+}
+
+// When adding a number, we first nullify it's effect on current
+// answer, then update cnt array, then account for it's effect again.
+inline void add_L(int x)
+{
+   current_answer+=query(1,x-1);
+   add(x,1);
+}
+
+// Removing is much like adding.
+inline void remove_L(int x)
+{
+    current_answer-=query(1,x-1);
+    add(x,-1);
+}
+inline void add_R(int x)
+{
+   current_answer+=query(x+1,N);
+   add(x,1);
+}
+
+// Removing is much like adding.
+inline void remove_R(int x)
+{
+    current_answer-=query(x+1,N);
+    add(x,-1);
+}
+
+int main()
+{
+	FastIO();
+    cin >> N >> Q;
+    BLOCK_SIZE = static_cast<int>(sqrt(N));
+
+    // Read input array
+    map<int, int> number_transformer;
+ 
+    for(int i = 1; i <= N; i++) {
+        cin >> arr[i];
+    }
+ 
+    vector<int> sorted_numbers;
+    sorted_numbers.pb(-1);
+    for(int i=1;i<=N;i++)
+    	sorted_numbers.pb(arr[i]);
+    sort(sorted_numbers.begin(), sorted_numbers.end());
+ 	int ll=1;
+    for(int i = 1; i <=N; i++) { 
+        if(number_transformer.count(sorted_numbers[i])==0){
+            number_transformer[sorted_numbers[i]] = ll;
+            ll++;
+        }
+    }
+ 
+    for(int i = 1; i <= N; i++) {
+        arr[i] = number_transformer[arr[i]];
+    }
+    //for(int i=1;i<=N;i++)
+    	//cout << arr[i] << " ";
+
+    for(int i = 0; i < Q; i++) {
+        cin >> queries[i].first.first >> queries[i].first.second;
+        queries[i].second = i;
+    }
+
+    sort(queries, queries + Q, mo_cmp);
+    int mo_left = 1, mo_right = 0;
+
+    for(int i = 0; i < Q; i++) {
+        int left = queries[i].first.first;
+        int right = queries[i].first.second;
+
+        while(mo_right < right) {
+            mo_right++;
+            add_R(arr[mo_right]);
+           // cout << current_answer << endl;
+        }
+        while(mo_right > right) {
+            remove_R(arr[mo_right]);
+            mo_right--;
+        }
+
+        while(mo_left < left) {
+            remove_L(arr[mo_left]);
+            mo_left++;
+        }
+        while(mo_left > left) {
+            mo_left--;
+            add_L(arr[mo_left]);
+        }
+
+        answers[queries[i].second] = current_answer;
+    }
+
+    for(int i = 0; i < Q; i++)
+        cout << answers[i] << "\n";
+    return 0;
+}

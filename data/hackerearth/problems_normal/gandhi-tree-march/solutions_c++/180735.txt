@@ -1,0 +1,97 @@
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+string ans;
+
+struct Node
+{
+    char data;
+    struct Node *left, *right;
+};
+
+Node* newNode(int data)
+{
+    Node *temp = new Node;
+    temp->data = data;
+    temp->left = temp->right = NULL;
+    return temp;
+}
+
+void findMinMax(Node *node, int *min, int *max, int hd)
+{
+    if (node == NULL) return;
+    if (hd < *min)  *min = hd;
+    else if (hd > *max) *max = hd;
+
+    findMinMax(node->left, min, max, hd-1);
+    findMinMax(node->right, min, max, hd+1);
+}
+
+void printVerticalLine(Node *node, int line_no, int hd)
+{
+
+    if (node == NULL) return;
+    if (hd == line_no)
+        ans.push_back(node->data);
+
+    printVerticalLine(node->left, line_no, hd-1);
+    printVerticalLine(node->right, line_no, hd+1);
+}
+
+void verticalOrder(Node *root, int line_no)
+{
+    int min = 0, max = 0;
+    findMinMax(root, &min, &max, 0);
+
+    if (line_no >= min && line_no <= max)
+    {
+        printVerticalLine(root, line_no, 0);
+        sort(ans.begin(),ans.end());
+        cout << ans <<endl;
+    }
+    else
+        cout << "Common Gandhijee!\n";
+}
+
+Node* makeTree(string tree, int &start)
+{
+    Node* root;
+    while(tree[start] == '(' || tree[start] == ')')
+        start++;
+
+    if(tree[start] >= 'a' && tree[start] <= 'z')
+    {
+        root = newNode(tree[start]);
+        start++;
+        root->left = makeTree(tree, start);
+        root->right = makeTree(tree, start);
+    }
+    else if(tree[start] == '.')
+    {
+        root = NULL;
+        start++;
+    }
+    return root;
+}
+Node* convert(string tree)
+{
+    int start = 0;
+    return makeTree(tree, start);
+}
+
+int main()
+{
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int l;
+        ans.clear();
+        string tree;
+        cin >> l >> tree;
+        Node *root = convert(tree);
+        verticalOrder(root, l);
+    }
+    return 0;
+}

@@ -1,0 +1,86 @@
+#include <cstdio>
+#include <vector>
+#include <cstdlib>
+#include <cassert>
+using namespace std;
+
+const int64_t modulo = 1000000000 + 7;
+struct matrix {
+    int m[9][9];
+};
+matrix power[46];
+
+matrix init_mat() {
+    matrix base;
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            for (int x = 0; x < 3; x++)
+                for (int y = 0; y < 3; y++)
+                    base.m[i * 3 + j][x * 3 + y] = abs(i - x) + abs(j - y) + abs(i + j - x - y);
+    return base;
+}
+
+matrix operator *(const matrix &a, const matrix &b) {
+    matrix ret;
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            int64_t tmp = 0;
+            // for (int k = 0; k < 9; k++)
+            //     tmp += int64_t(a.m[i][k]) * b.m[k][j];
+            tmp = int64_t(a.m[i][0]) * b.m[0][j] +
+                int64_t(a.m[i][1]) * b.m[1][j] +
+                int64_t(a.m[i][2]) * b.m[2][j] +
+                int64_t(a.m[i][3]) * b.m[3][j] +
+                int64_t(a.m[i][4]) * b.m[4][j] +
+                int64_t(a.m[i][5]) * b.m[5][j] +
+                int64_t(a.m[i][6]) * b.m[6][j] +
+                int64_t(a.m[i][7]) * b.m[7][j] +
+                int64_t(a.m[i][8]) * b.m[8][j] ;
+            ret.m[i][j] = int(tmp % modulo);
+        }
+    }
+    return ret;
+}
+
+matrix exp_mat(matrix base, int64_t n) {
+    matrix mexp;
+    for (int i = 0; i < 9; i++)
+        for (int j = 0; j < 9; j++)
+            mexp.m[i][j] = (i == j);
+    int bit = 0;
+    while (n) {
+        if (n % 2)
+            mexp = mexp * power[bit];
+        bit++;
+        n /= 2;
+    }
+    return mexp;
+}
+
+int main() {
+    const matrix base = init_mat();
+    power[0] = base;
+    for (int i = 1; i < 46; i++)
+        power[i] = power[i - 1] * power[i - 1];
+
+    int cases;
+    scanf("%d", &cases);
+    for (int cs = 1; cs <= cases; cs++) {
+        int64_t n;
+        scanf("%jd", &n);
+        int a[9];
+        for (int i = 0; i < 9; i++)
+            scanf("%d", &a[i]);
+        matrix mexp = exp_mat(base, n);
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                int row = i * 3 + j;
+                int64_t ans = 0;
+                for (int k = 0; k < 9; k++)
+                    ans += int64_t(mexp.m[row][k]) * a[k];
+                printf("%d ", int(ans % modulo));
+            }
+            printf("\n");
+        }
+    }
+}

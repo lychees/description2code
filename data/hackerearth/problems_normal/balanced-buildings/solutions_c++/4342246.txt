@@ -1,0 +1,72 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef struct lol {
+    long long second;
+    int first;
+}troll;
+
+int i,j,k,n,a[2505],sus,jos,profit,last,N=105;
+long long dp[2505][2505],sum[2505];
+troll aib[1000005];
+
+void update(int poz,int val,int val2) {
+    while(poz<=N) aib[poz].second+=val,aib[poz].first+=val2,poz+=-poz&poz;
+}
+
+troll query(int poz) {
+    troll ans={0,0};
+
+    while(poz) ans.second+=aib[poz].second,ans.first+=aib[poz].first,poz-=-poz&poz;
+
+    return ans;
+}
+
+long long Check(int x,int y,int val) {
+    long long ans=1LL*(y-x)*profit;
+    troll gmb=query(val);
+
+    ans-=(1LL*gmb.first*val-gmb.second)*sus;
+    ans+=1LL*(1LL*(y-x+1-gmb.first)*val-(sum[y]-sum[x-1]-gmb.second))*jos;
+
+    return ans;
+}
+
+void Solve(int x,int y) {
+    if(x>=y) return;
+
+    int st=1,dr=N,pivot;
+    long long gmb,fnc;
+
+    if(N<200) st=1; else st=2e3;
+
+    while(st<=dr)
+    {
+      pivot=(st+dr)/2;
+
+      gmb=Check(x,y,pivot);
+      fnc=Check(x,y,pivot+1);
+
+      if(dp[x][y]<gmb) dp[x][y]=gmb;
+      if(dp[x][y]<fnc) dp[x][y]=fnc;
+
+      if(gmb<fnc) st=pivot+2;
+      else dr=pivot-1;
+    }
+}
+
+int main()
+{
+  scanf("%d%d%d%d",&n,&profit,&jos,&sus);
+  for(i=1;i<=n;++i) scanf("%d",&a[i]),sum[i]=sum[i-1]+a[i],N=max(N,a[i]);
+
+  for(i=1;i<=n;++i)
+  {
+    for(j=i;j<=n;++j) update(a[j],a[j],1),Solve(i,j);
+    for(j=i;j<=n;++j) update(a[j],-a[j],-1),dp[1][j]=max(dp[1][j],dp[1][i-1]+dp[i][j]);
+  }
+
+  cout<<dp[1][n]<<'\n';
+
+ return 0;
+}

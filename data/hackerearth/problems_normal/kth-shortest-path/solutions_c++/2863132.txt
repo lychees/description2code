@@ -1,0 +1,156 @@
+#include<iostream>
+#include<set>
+#include<vector>
+#include<sstream>
+#include <bits/stdc++.h>
+#include<algorithm>
+using namespace std ;
+
+vector<int>dp[102][102] ;
+int a[102][102] ;
+bool pathar[102][102] ;
+
+int main()
+{
+    int t , i ,j , s_up , s_left ,l ,p  , cnt =0 ,n,m ,q  ,tx , ty , k ;
+    stringstream ss ;
+    string st ;
+    cin>>t;
+    while(t--)
+    {
+         cin>>n>>m ;
+
+         //init() ;
+          for(i=0;i<n;i++)
+         {
+             for(j=0;j<m;j++)
+                {
+                    a[i][j] = 0 ;
+                    dp[i][j].clear();
+                    pathar[i][j] = false ;
+                }
+         }
+
+
+
+         for(i=0;i<n;i++)
+         {
+             for(j=0;j<m;j++)
+                {
+                    ss.clear();
+                    cin>>st ;
+
+                    if( st == "##" )
+                       {
+                         a[i][j] = -1;
+                         pathar[i][j] =true ;
+                       }
+                    else
+                    {
+                        ss<<st ;
+                        ss>>a[i][j] ;
+                    }
+
+                }
+         }
+
+
+
+   // DFS( 0 , 0  , 0 );
+
+    if( !pathar[0][0])
+    {
+       dp[0][0].push_back(a[0][0]);
+    }
+
+    for(i=1;i<n;i++)
+    {
+        if( !pathar[i][0])
+        {
+            if( (int)dp[i-1][0].size() > 0 )
+            {
+                dp[i][0].push_back( a[i][0] + dp[i-1][0][0] ) ;
+            }
+        }
+    }
+
+    for(j=1;j<m;j++)
+    {
+        if( !pathar[0][j] )
+        {
+            if( (int)dp[0][j-1].size() > 0)
+            {
+                dp[0][j].push_back( a[0][j] + dp[0][j-1][0]) ;
+            }
+        }
+    }
+
+   for(i=1;i<n;i++)
+   {
+       for(j=1;j<m;j++)
+       {
+        if( !pathar[i][j])
+        {
+           s_up = (int)dp[i-1][j].size() ;
+           s_left = (int)dp[i][j-1].size() ;
+
+           l = 0;
+           p = 0;
+           cnt = 0;
+           while( (l<s_up || p < s_left) && cnt != 101)
+           {
+               if( l == s_up)
+               {
+                    dp[i][j].push_back(a[i][j] + dp[i][j-1][p] );
+                    p++;
+               }
+               else if( p == s_left)
+               {
+                    dp[i][j].push_back(a[i][j] + dp[i-1][j][l] );
+                    l++;
+               }
+               else
+               {
+                   if( dp[i-1][j][l] > dp[i][j-1][p] )
+                   {
+                       dp[i][j].push_back(a[i][j] + dp[i][j-1][p] );
+                       p++;
+                   }
+                   else
+                   {
+                       dp[i][j].push_back(a[i][j] + dp[i-1][j][l] );
+                       l++;
+                   }
+               }
+               cnt++;
+           }
+        }
+       }
+    }
+
+
+
+    cin>>q;
+
+    while(q--)
+    {
+
+        cin>>tx>>ty>>k ;
+
+        if( pathar[tx][ty] )
+        {
+            cout<<"Obstacle"<<endl ;
+            continue ;
+        }
+        else if( dp[tx][ty].size() < k )
+           {
+                cout<<"Not so many paths"<<endl ;
+                continue;
+           }
+
+        cout<<dp[tx][ty][k-1]<<endl ;
+    }
+
+
+    }
+}

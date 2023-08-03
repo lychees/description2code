@@ -1,0 +1,208 @@
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#define MOD 1000000007
+#define MAX 400000
+
+using namespace std;
+int maxtree[MAX], mintree[MAX];
+int arr[(MAX>>1)], u, v, val;
+int ttlx[MAX], ttln[MAX];
+int digit(int num)
+{
+    int dig[10]={0,0,0,0,0,0,0,0,0,0};
+    int count = 0;
+    while(num)
+    {
+        if(!dig[num%10]++)
+            count++;
+        num /= 10;
+    }
+    return count;
+}
+void buildmax(int node, int l, int r)
+{
+    if(l==r)
+    {
+        maxtree[node] = digit(arr[l]);
+        ttlx[node] = 1;
+        return;
+    }
+    buildmax( (node<<1)+1, l, ((l+r)>>1));
+    buildmax( (node<<1)+2, ((l+r)>>1)+1, r);
+
+    maxtree[node] = max(maxtree[(node<<1)+1], maxtree[(node<<1)+2]);
+    if(maxtree[node]==maxtree[(node<<1)+1])
+        ttlx[node]+=ttlx[(node<<1)+1];
+    if(maxtree[node]==maxtree[(node<<1)+2])
+        ttlx[node]+=ttlx[(node<<1)+2];
+    return;
+}
+void buildmin(int node, int l, int r)
+{
+    if(l==r)
+    {
+        mintree[node] = digit(arr[l]);
+        ttln[node] = 1;
+        return;
+    }
+    buildmin((node<<1)+1, l, ((l+r)>>1));
+    buildmin((node<<1)+2, ((l+r)>>1)+1, r);
+
+    mintree[node] = min(mintree[(node<<1)+1], mintree[(node<<1)+2]);
+    if(mintree[node]==mintree[(node<<1)+1])
+        ttln[node]+=ttln[(node<<1)+1];
+    if(mintree[node]==mintree[(node<<1)+2])
+        ttln[node]+=ttln[(node<<1)+2];
+    return;
+}
+
+int maxquerry(int node, int l, int r)
+{
+    if(r<u||v<l)
+        return 0;
+    if(l>=u&&r<=v)
+        return maxtree[node];
+    int mx = maxquerry((node<<1)+1, l, ((l+r)>>1));
+    int nx = maxquerry((node<<1)+2, ((l+r)>>1)+1, r);
+    return max(mx, nx);
+}
+
+int minquerry(int node, int l, int r)
+{
+    if(r<u||v<l)
+        return MOD;
+    if(l>=u&&r<=v)
+        return mintree[node];
+    int mn = minquerry((node<<1)+1, l, ((l+r)>>1));
+    int nn = minquerry((node<<1)+2, ((l+r)>>1)+1, r);
+    return min(mn, nn);
+}
+int maxcount(int node, int l, int r)
+{
+    if(r<u||v<l)
+        return 0;
+    if(l>=u&&r<=v)
+    {
+        if(maxtree[node]==val)
+            return ttlx[node];
+        else return 0;
+    }
+    int mx = maxcount((node<<1)+1, l, ((l+r)>>1));
+    int nx = maxcount((node<<1)+2, ((l+r)>>1)+1, r);
+    return mx+nx;
+
+}
+int mincount(int node, int l, int r)
+{
+    if(r<u||v<l)
+        return 0;
+    if(l>=u&&r<=v)
+    {
+        if(mintree[node]==val)
+            return ttln[node];
+        else return 0;
+    }
+    int mx = mincount((node<<1)+1, l, ((l+r)>>1));
+    int nx = mincount((node<<1)+2, ((l+r)>>1)+1, r);
+    return mx+nx;
+
+}
+
+void updatemax(int node, int l, int r)
+{
+    if(u<l||u>r)
+        return;
+    if(l==u&&r==u)
+    {
+        maxtree[node] = val;
+        return;
+    }
+    updatemax(node*2+1, l, ((l+r)>>1));
+    updatemax(node*2+2, ((l+r)>>1)+1, r);
+    maxtree[node] = max(maxtree[(node<<1)+1], maxtree[(node<<1)+2]);
+    ttlx[node] = 0;
+    if(maxtree[node]==maxtree[(node<<1)+1])
+        ttlx[node]+=ttlx[(node<<1)+1];
+    if(maxtree[node]==maxtree[(node<<1)+2])
+        ttlx[node]+=ttlx[(node<<1)+2];
+    return;
+}
+void updatemin(int node, int l, int r)
+{
+    if(u<l||u>r)
+        return;
+    if(l==u&&r==u)
+    {
+        mintree[node] = val;
+        return;
+    }
+    updatemin(node*2+1, l, ((l+r)>>1));
+    updatemin(node*2+2, ((l+r)>>1)+1, r);
+    mintree[node] = min(mintree[(node<<1)+1], mintree[(node<<1)+2]);
+    ttln[node] = 0;
+    if(mintree[node]==mintree[(node<<1)+1])
+        ttln[node]+=ttln[(node<<1)+1];
+    if(mintree[node]==mintree[(node<<1)+2])
+        ttln[node]+=ttln[(node<<1)+2];
+    return;
+}
+int main()
+{
+    int n, t, q;
+    scanf("%d", &n);
+    for(int i = 0; i<n; i++)
+        scanf("%d", &arr[i]);
+
+    buildmax(0, 0, n-1);
+    buildmin(0, 0, n-1);
+    scanf("%d", &q);
+    char type[5];
+    long long temp;
+    for(int i = 0; i<q; i++)
+    {
+        scanf("%s %d %d",type, &u, &v);
+
+        if(type[2]=='X')
+        {
+            u--, v--;
+            val = maxquerry(0, 0, n-1);
+            printf("%d %d\n",val, maxcount(0, 0, n-1));
+        }
+        else if(type[2]=='N')
+        {
+            u--, v--;
+            val = minquerry(0, 0, n-1);
+            printf("%d %d\n",val, mincount(0, 0, n-1));
+        }
+        else if(type[2]=='L')
+        {
+            u--;
+            temp = arr[u];
+            temp = (temp*(long long)v)%MOD;
+            arr[u] = temp;
+            val = digit(temp);
+            updatemax(0, 0, n-1);
+            updatemin(0, 0, n-1);
+        }
+        else if(type[2]=='P')
+        {
+            u--;
+            arr[u] = v;
+            val = digit(v);
+            updatemax(0, 0, n-1);
+            updatemin(0, 0, n-1);
+        }
+        else
+        {
+            u--;
+            temp = arr[u]+v;
+            if(temp>MOD)
+                temp-=MOD;
+            arr[u] = temp;
+            val = digit(temp);
+            updatemax(0, 0, n-1);
+            updatemin(0, 0, n-1);
+        }
+    }
+}

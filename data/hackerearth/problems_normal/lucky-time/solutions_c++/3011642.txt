@@ -1,0 +1,101 @@
+#include <iostream>
+#include <cstdio>
+using namespace std;
+
+// https://www.hackerearth.com/problem/algorithm/lucky-time/
+
+bool isEqual(int x, int y) {
+    return x == y;
+}
+
+bool flagChangeHour     = false;    // verifica se foi feita mudana na variavel hora
+bool flagChangeMinute   = false;    // verifica se foi feita mudana na variavel minuto
+bool firstLoopInMinute  = true;     // variavel que verifica se eh a primeira vez que entro no loop para mudança do minuto
+int changeHour(int h) {
+    // e a casa dedcimanl igual a casa da unidade
+    // manter se no loop,
+    // h > 9 serve para que o loop acabe quando
+    // pois para todo (m<10) m%10 == m/10
+    while( isEqual(h/10, h%10) ) {
+        flagChangeHour = true;
+        h = (h % 24);
+        // if(h == 0) h++;
+        if(h > 0 && h < 10)
+            break;
+        h++;
+    }
+    return h;
+}
+
+int changeMinute(int m, int &h) {
+    while( (isEqual(m/10, m%10) )
+        || isEqual(m/10, h/10) || isEqual(m%10, h%10)
+        || isEqual(m%10, h/10) || isEqual(m/10, h%10) ) {
+        flagChangeMinute = true;
+        m = (m % 60);
+        if(m == 0 && ! firstLoopInMinute) {
+            if( !flagChangeHour ) {
+                h = (h+1)%24;
+                h = changeHour(h);
+            }
+        }
+        firstLoopInMinute = false;
+        m = (m+1)%60;
+        //if( (m > 0 && m < 10) && (m/10 != h/10 && m%10 != h%10) ) break;
+    }
+    return m;
+}
+
+int changeSecond(int s, int &h, int &m) {
+    while( (s/10 == s%10 )
+        || isEqual(s/10, h/10) || isEqual(s%10, h%10)
+        || isEqual(s%10, h/10) || isEqual(s/10, h%10)
+        || isEqual(s/10, m/10) || isEqual(s%10, m%10)
+        || isEqual(s%10, m/10) || isEqual(s/10, m%10)) {
+        s = (s + 1)  % 60;
+        if(s == 0) {
+            if( ! flagChangeMinute ) {
+                //h = (h+1)%24;
+                //h = changeHour(h);
+                firstLoopInMinute = false;
+                m = (m+1)%60;
+                m = changeMinute(m, h);
+                s = 1;
+            }
+            //m = (m+1)%60;
+            //m = changeMinute(m, h);
+            //s = m > h ? m : h;
+        }
+        // s > 0 e < 10 porque 01, 02, 03 ... 09 tem digitos diferentes
+        //else if((s > 0 && s < 10) && (s/10 != m/10 && s%10 != m%10) && (s/10 != h/10 && s%10 != h%10) ) {break;}
+    }
+    return s;
+}
+
+int main()
+{
+    int h, m, s, cases;
+    scanf("%d", &cases);
+    for(int i=0; i<cases; i++) {
+        scanf("%d%*[\:]%d%*[\:]%d", &h, &m, &s);
+        h = changeHour(h);
+        if(flagChangeHour) {
+            m = changeMinute(0, h);
+        } else {
+            m = changeMinute(m, h);
+        }
+        if(flagChangeMinute) {
+            s = changeSecond(0, h, m);
+        } else {
+            s = changeSecond(s, h, m);
+        }
+
+        // se segundos == 0 tenho que verificar se
+        //printf(cases > 1 ? "%02d:%02d:%02d\n" : "%02d:%02d:%02d" , h, m, s);
+        printf("%02d:%02d:%02d\n", h, m, s);
+        flagChangeHour      = false;
+        flagChangeMinute    = false;
+        firstLoopInMinute   = true;
+    }
+    return 0;
+}

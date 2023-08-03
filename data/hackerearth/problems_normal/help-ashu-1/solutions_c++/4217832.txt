@@ -1,0 +1,105 @@
+#include<bits/stdc++.h>
+#include<stdio.h>
+#include<iostream>
+using namespace std;
+struct seg_tree{
+        long long int even;
+        long long int odd;
+};
+struct seg_tree seg_tree1[400000];
+long long int a[100000];
+void build1(int l,int r,int node){
+    if(l==r){
+        if(a[l]%2==0){
+
+        seg_tree1[node].even=1;
+        seg_tree1[node].odd=0;
+        }
+        else
+        {
+
+        seg_tree1[node].odd=1;
+        seg_tree1[node].even=0;
+        }
+        return;
+        }
+    int mid=l+r>>1;
+    build1(l,mid,2*node);
+    build1(mid+1,r,2*node+1);
+    seg_tree1[node].even = seg_tree1[2*node].even + seg_tree1[node*2 + 1].even;
+    seg_tree1[node].odd= seg_tree1[2*node].odd + seg_tree1[node*2 + 1].odd;
+}
+
+long long int even_query(int node,int qlow,int qhigh,int l,int r)
+{
+
+        if(qlow<=l&&qhigh>=r)
+            return seg_tree1[node].even;
+        if(r<qlow | qhigh<l)
+            return 0;
+        int mid = l+r>>1;
+        return even_query(2*node,qlow,qhigh,l,mid)+even_query(2*node+1,qlow,qhigh,mid+1,r);
+
+}
+long long int odd_query(int node,int qlow,int qhigh,int l,int r)
+{
+
+        if(qlow<=l&&qhigh>=r)
+            return seg_tree1[node].odd;
+        if(r<qlow | qhigh<l)
+            return 0;
+        int mid = l+r>>1;
+        return odd_query(2*node,qlow,qhigh,l,mid)+odd_query(2*node+1,qlow,qhigh,mid+1,r);
+
+}
+void update(int node,int l,int r, int idx,int val){
+    if(l==r){
+        if(a[l]%2==0){
+          seg_tree1[node].even = 1;
+          seg_tree1[node].odd = 0;
+            }
+        else{
+            seg_tree1[node].even = 0;
+            seg_tree1[node].odd = 1;
+          }
+          return;
+          }
+       int mid = l+r>>1;
+       if(l<=idx&&idx<=mid)
+            update(2*node,l,mid,idx,val);
+        else
+            update(2*node+1,mid+1,r,idx,val);
+    seg_tree1[node].even = seg_tree1[2*node].even + seg_tree1[node*2 + 1].even;
+    seg_tree1[node].odd= seg_tree1[2*node].odd + seg_tree1[node*2 + 1].odd;
+//return;
+}
+
+int main(){
+long long int n,l,r,option,q;
+scanf("%lld",&n);
+
+for(int i=1;i<=n;i++)
+    scanf("%lld",&a[i]);
+    build1(1,n,1);
+scanf("%lld",&q);
+while(q--){
+    scanf("%lld%lld%lld",&option,&l,&r);
+    if(option==0){
+
+      a[l]=r;
+      update(1,1,n,l,r);
+    }
+
+    if(option==1){
+
+      printf("%lld\n",even_query(1,l,r,1,n));
+    }
+    if(option==2){
+
+      printf("%lld\n",odd_query(1,l,r,1,n));
+    }
+
+}
+
+return 0;
+}

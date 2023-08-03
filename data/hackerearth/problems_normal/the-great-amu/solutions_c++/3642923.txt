@@ -1,0 +1,134 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int N, Q;
+
+int powmod(int a, int b, int m)
+{
+    int ret=1;
+    for(; b>0; b/=2)
+    {
+        if(b&1)
+            ret=ret*a%m;
+        a=a*a%m;
+    }
+    return ret;
+}
+
+int inv(int x, int m)
+{
+    return powmod(x, m-2, m);
+}
+
+void row_echelon(vector<vector<int>>& A, vector<vector<int>>& B, vector<int>& P, int M)
+{
+    for(int i=0; i<N; i++)
+        for(int j=0; j<N; j++)
+            A[i][j]%=M;
+    for(int i=0, p=0; i<N; i++)
+    {
+        int idx=-1;
+        p--;
+        do
+        {
+            p++;
+            for(int j=i; j<N; j++) if(A[j][p]!=0)
+            {
+                idx=j;
+                break;
+            }
+        }
+        while(p<N && idx==-1);
+        if(p>=N)
+            break;
+        for(int j=0; j<N; j++)
+            swap(A[i][j], A[idx][j]);
+        swap(P[i], P[idx]);
+        int x=inv(A[i][p], M);
+        for(int j=0; j<N; j++)
+            A[i][j]=A[i][j]*x%M;
+        B[P[i]][P[i]]=x;
+        for(int j=i+1; j<N; j++)
+        {
+            int m=A[j][p];
+            B[P[j]][P[i]]=(B[P[j]][P[i]]+m)%M;
+            for(int k=p; k<N; k++)
+                A[j][k]=((A[j][k]-m*A[i][k])%M+M)%M;
+        }
+    }
+}
+
+bool process(vector<vector<int>>& A, vector<vector<int>>& B, vector<int>& P, int M, vector<int> V)
+{
+    for(int i=0; i<N; i++)
+    {
+        if(B[P[i]][P[i]])
+            V[P[i]]=V[P[i]]*B[P[i]][P[i]]%M;
+        for(int j=i+1; j<N; j++)
+            V[P[j]]=((V[P[j]]-V[P[i]]*B[P[j]][P[i]])%M+M)%M;
+    }
+    for(int i=N-1; i>=0; i--)
+        for(int j=i+1; j<N; j++)
+            V[P[i]]=((V[P[i]]-V[P[j]]*A[i][j])%M+M)%M;
+    for(int i=0; i<N; i++)
+    {
+        bool zero=true;
+        for(int j=0; j<N; j++)
+            zero&=A[i][j]==0;
+        if(zero && V[P[i]]%M!=0)
+            return false;
+    }
+    return true;
+}
+
+int main()
+{
+    scanf("%d%d", &N, &Q);
+    vector<vector<int>> A;
+    A.resize(N);
+    for(int i=0; i<N; i++)
+    {
+        A[i].resize(N);
+        for(int j=0; j<N; j++)
+            scanf("%d", &A[i][j]);
+    }
+    vector<vector<int>> A2, A5, A719;
+    vector<vector<int>> B2, B5, B719;
+    vector<int> P2, P5, P719;
+    A2=A5=A719=A;
+    B2.resize(N);
+    B5.resize(N);
+    B719.resize(N);
+    P2.resize(N);
+    P5.resize(N);
+    P719.resize(N);
+    for(int i=0; i<N; i++)
+    {
+        B2[i].resize(N);
+        B5[i].resize(N);
+        B719[i].resize(N);
+        P2[i]=i;
+        P5[i]=i;
+        P719[i]=i;
+    }
+    row_echelon(A2, B2, P2, 2);
+    row_echelon(A5, B5, P5, 5);
+    row_echelon(A719, B719, P719, 719);
+    for(int i=0; i<Q; i++)
+    {
+        vector<int> V(N);
+        for(int j=0; j<N; j++)
+            scanf("%d", &V[j]);
+        vector<int> Y=V;
+        bool good=true;
+        good&=process(A2, B2, P2, 2, V);
+        good&=process(A5, B5, P5, 5, V);
+        good&=process(A719, B719, P719, 719, V);
+        if(good)
+            printf("Yes\n");
+        else
+            printf("No\n");
+    }
+    return 0;
+}

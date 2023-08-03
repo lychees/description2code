@@ -1,0 +1,123 @@
+#include<bits/stdc++.h>
+#define gc getchar_unlocked
+using namespace std;
+static unordered_map<int,unsigned short> bit[100001];
+static unsigned short bit_temp[100001][1001];
+int ma = 0;
+static int bit1[100001];
+int query1(int ind){
+	int ans=0;
+	while(ind>0){
+		ans+=bit1[ind];
+		ind-=ind&-ind;
+	}
+	return ans;
+}
+void update1(int ind){
+	while(ind<=ma){
+		bit1[ind]++;
+		ind+=ind&-ind;
+	}
+	return ;
+}
+int query(int ind,int num){
+	int ans = 0;
+	while(ind>0){
+		if(num<=1000)
+		ans += bit_temp[ind][num];
+		else
+		ans += bit[ind][num-1000];
+		ind -= ind&-ind;
+	}
+	return ans;
+}
+void update(int ind,int num){
+	while(ind<=ma){
+		if(num<=1000)
+		bit_temp[ind][num]++;
+		else
+		bit[ind][num-1000]++;
+		ind += ind&-ind;
+	}
+	return;
+}
+int main(){
+	/*int ma=0;
+	for(int i=2;i<=100000;i++){
+		int x = i,c=0;
+		for(int j=2;j<=sqrt(x);j++){
+			if(x%j==0){
+				while(x%j==0)
+					x/=j;
+				c++;
+			}
+		}
+		if(x>1)
+			c++;
+		ma = max(ma,c);
+	}
+	printf("%d\n",ma);*/
+	for(int i=0;i<100001;i++){
+		bit[i].reserve(1024);
+		bit[i].max_load_factor(0.25);
+	}
+	static bool v[400];
+	vector<int> prime;
+	for(int i=2;i<=400;i++){
+		if(v[i])
+		continue;
+		prime.push_back(i);
+		for(int j=2*i;j<=400;j+=i)
+		   v[j]=true;
+	}
+	int n;
+	scanf("%d",&n);
+	int a[n];
+	for(int i=0;i<n;i++){
+		scanf("%d",&a[i]);
+		if(a[i]<0)
+			a[i]*=-1;
+		ma = max(ma,a[i]);
+	}
+	vector<int> pr;
+	long long ans = 0;
+	for(int i=n-1;i>=0;i--){
+		int x = a[i],c=0;
+		pr.clear();
+		for(int j=0;j<prime.size()&&prime[j]<=sqrt(x);j++){
+			if(x%prime[j]==0){
+				pr.push_back(prime[j]);
+				while(x%prime[j]==0)
+					x/=prime[j];
+			}
+		}
+		if(x>1)
+			pr.push_back(x);
+		int len = pr.size();
+		//printf("len=%d\n",len);
+		for(int j=1;j<=((1<<len)-1);j++){
+			int num=1,f = -1;
+			for(int k=0;k<len;k++){
+				if((j>>k)&1)
+					num*=pr[k],f*=-1;
+			}
+			c += f * query(a[i]-1,num);
+			//printf("num=%d\n",num);
+		}
+		int total = query1(a[i]-1);
+		update1(a[i]);
+		ans += total - c;
+		//printf("%d %d\n",total,c);
+		for(int j=1;j<=((1<<len)-1);j++){
+			int num=1;
+			for(int k=0;k<len;k++){
+				if((j>>k)&1)
+					num*=pr[k];
+			}
+			update(a[i],num);
+			//printf("num=%d\n",num);
+		}
+	}
+	printf("%lld\n",ans);
+	return 0;
+}

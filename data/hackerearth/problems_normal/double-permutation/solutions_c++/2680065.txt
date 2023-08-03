@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+
+#define fi first
+#define se second
+#define pb push_back
+#define mp make_pair
+#define pii pair<int,int>
+#define MOD 1000000007
+#define ll long long int
+#define MAXINT 2000000000
+#define N 100000
+#define M 200000
+
+using namespace std;
+
+int A[1000006];
+int tree[1<<21];
+
+void update(int n,int l,int r,int q) {
+	tree[n]++;
+	if(l==r)	return;
+	int m=(l+r)>>1,left=(n<<1);
+	if(m>=q)
+		update(left,l,m,q);
+	else
+		update(left+1,m+1,r,q);
+}
+
+int query(int n,int nl,int nr,int ql,int qr) {
+	if(nl>qr || nr<ql)	return 0;
+	if(nl>=ql && nr<=qr) return tree[n];
+	int m=(nl+nr)>>1,left=(n<<1);
+	return query(left,nl,m,ql,qr)+query(left+1,m+1,nr,ql,qr);
+}
+
+int main() {
+	int n,i,g,l,e;
+	ll k,ol,tl,ans=0;
+	cin>>n;
+	for(i=1;i<=2*n;i++)
+		cin>>A[i];
+	if(n==1)	cout<<1<<endl;
+	else {
+	k=1;
+	for(i=1;i<=n-2;i++)
+		k=(k*2)%MOD;
+	ol=(k*2)%MOD;
+	tl=k;
+	update(1,1,n,A[2*n]);
+	for(i=2*n-1;i>=1;i--) {
+		if(A[i]!=n)
+			g=query(1,1,n,A[i]+1,n);
+		else
+			g=0;
+		if(A[i]!=1)
+			l=query(1,1,n,1,A[i]-1);
+		else
+			l=0;
+		e=query(1,1,n,A[i],A[i]);
+		ans+=(g*tl)%MOD+(e*ol)%MOD+(l*3*tl)%MOD;
+		ans%=MOD;
+		update(1,1,n,A[i]);
+	}
+	cout<<ans<<endl;}
+	return 0;
+}
+
+/*
+g 1/4
+e 1/2
+l 3/4
+2/4+1/2
+1/2+3/4
+1/2
+*/

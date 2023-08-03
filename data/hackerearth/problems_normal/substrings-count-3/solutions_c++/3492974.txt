@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <unordered_map>
+using namespace std;
+
+void read(vector<string>& words)
+{
+	int n;
+	cin >> n;
+
+	for (int i = 0; i < n; ++i) {
+		string word;
+		cin >> word;
+		words.emplace_back(word);
+	}
+}
+
+void preprocess(const vector<string>& words, unordered_map<string, vector<int>>& words_map)
+{
+	for (size_t l = 0; l < words.size(); ++l) {
+		const string& word = words[l];
+		for (size_t i = 0; i < word.size(); ++i) {
+			string substr;
+			substr.reserve(word.size() - i);
+			for (size_t j = i; j < word.size(); ++j) {
+				substr.push_back(word[j]);
+				words_map[substr].push_back((int)l);
+			}
+		}
+	}
+	for (auto& it : words_map) {
+		auto& pos_vector = it.second;
+		auto p = std::unique(std::begin(pos_vector), std::end(pos_vector));
+		pos_vector.resize(std::distance(std::begin(pos_vector), p));
+	}
+}
+
+void print_preprocessed(unordered_map<string, vector<int>>& words_map)
+{
+	for (const auto& it : words_map) {
+		std::cout << it.first << " : ";
+		for (const auto& pos : it.second) {
+			cout << pos << " ";
+		}
+		cout << endl;
+	}
+}
+
+void solve(const unordered_map<string, vector<int>>& words_map)
+{
+	int Q;
+	cin >> Q;
+	while (Q--) {
+		int start, end;
+		std::string ss;
+		cin >> start >> end >> ss;
+		--start;
+		--end;
+		auto it = words_map.find(ss);
+		if (it != words_map.end()) {
+			const auto& v = it->second;
+			auto first = std::lower_bound(std::begin(v), std::end(v), start) - begin(v);
+			auto second = std::upper_bound(std::begin(v), std::end(v), end) - begin(v);
+			size_t num_substrings = second - first;
+			std::cout << num_substrings << std::endl;
+		}
+	}
+}
+
+int main()
+{
+	vector<string> words;
+	read(words);
+	unordered_map<string, vector<int>> words_map;
+	preprocess(words, words_map);
+	// print_preprocessed(words_map);
+	solve(words_map);
+    return 0;
+}

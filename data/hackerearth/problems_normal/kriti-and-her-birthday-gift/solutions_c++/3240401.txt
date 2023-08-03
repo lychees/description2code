@@ -1,0 +1,95 @@
+#include<iostream>
+#include<cmath>
+#include<algorithm>
+#include<cstdio>
+#include<cstdlib>
+#include<cstring>
+#include<unordered_map>
+#include<set>
+#include<vector>
+using namespace std;
+#define ll long long
+void include_test_case(){
+    #ifndef ONLINE_JUDGE
+       freopen("in", "r", stdin);
+       freopen("out", "w", stdout);
+    #endif
+}
+int block_size;
+
+struct query{
+    int l,r,pos;
+    ll h;
+};
+
+bool compare1(query q1,query q2){
+    int q1_block=q1.l/block_size;
+    int q2_block=q2.l/block_size;
+    if(q1_block!=q2_block)
+        return q1_block<q2_block;
+    return q1.r<q2.r;
+}
+inline ll gethash(string s){
+    ll h=0;
+    for(int i=0;i<s.length();i++){
+        h*=27;
+        h+=s[i]-'a';
+    }
+    return h;
+}
+int main() {
+    include_test_case();
+	ios::sync_with_stdio(0);
+	int n;
+	cin>>n;
+    block_size=sqrt(n);
+    ll ar[n];
+    for(int i=0;i<n;i++){
+        string tmp;
+        cin>>tmp;
+        ar[i]=gethash(tmp);
+    }
+    int q;
+    cin>>q;
+    query qarr[q];
+    int corr_pos[q];
+    for(int i=0;i<q;i++){
+        string tmp;
+        cin>>qarr[i].l>>qarr[i].r>>tmp;
+        qarr[i].pos=i;
+        qarr[i].h=gethash(tmp);
+    }
+    sort(qarr,qarr+q,compare1);
+    int prevL=0,prevR=0;
+    unordered_map<ll,int> mp;
+    for(int i=0;i<q;i++){
+        int l=qarr[i].l,r=qarr[i].r;
+        l--,r--;
+        
+        while(prevL<l){
+            mp[ar[prevL]]--;
+            prevL++;
+        }
+        while(prevL>l){
+            mp[ar[prevL-1]]++;
+            prevL--;
+        }
+
+        while(prevR<=r){
+            mp[ar[prevR]]++;
+            prevR++;
+        }
+        while(prevR>r+1){
+            mp[ar[prevR-1]]--;
+            prevR--;
+        }
+/*        map<ll,int>::iterator it=mp.begin();
+        while(it!=mp.end()){
+            cout<<it->first<<" "<<it->second<<endl;
+            it++;
+        }*/
+        corr_pos[qarr[i].pos]=mp[qarr[i].h];
+    }
+    for(int i=0;i<q;i++)cout<<corr_pos[i]<<endl;
+	return 0;
+}

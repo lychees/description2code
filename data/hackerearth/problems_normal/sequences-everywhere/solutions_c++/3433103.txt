@@ -1,0 +1,93 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+using namespace std;
+
+namespace stuff {
+typedef long long ll;
+vector<int> vals;
+vector<ll> lcms;
+int len[55];
+
+ll calc(ll upto) {
+  if (upto == 1) {
+    return 1;
+  } else if (upto == 2) {
+    return 1 + 1;
+  } else if (upto == 3) {
+    return 1 + 1 + 2;
+  }
+  // <= upto
+  ll res = 0;
+  for (int i = vals.size() - 2; i > 1; --i) {
+    res += (len[vals[i + 1]] + 1LL) * (upto / lcms[i] - upto / lcms[i + 1]);
+  }
+  res += (len[3] + 1LL) * (upto / 2 - 1 - upto / 6); // all even integers other than 2 not divisble by 6
+  res += (len[2] + 1LL) * ((upto - 1) / 2); // all odd integers <= upto other than 1
+  if (upto >= 1) {
+    ++res;
+  }
+  if (upto >= 2) {
+    ++res;
+  }
+  return res;
+}
+
+void solve(int test_num) {
+  ll fr, to;
+  cin >> fr >> to;
+  ll lcm = 1;
+  vals.emplace_back(1);
+  lcms.emplace_back(1);
+  for (int x = 1; lcm <= ll(1e17); ++x) {
+    if (lcm % x != 0) {
+      lcm = lcm * x / __gcd(lcm, (ll) x);
+      vals.emplace_back(x);
+      lcms.emplace_back(lcm);
+    }
+  }
+//  pln(vals);
+//  pln(lcms);
+  for (int x = 1; x < 55; ++x) {
+    len[x] = 1;
+    for (int j = 1; j < x; ++j) {
+      if (x % j != 0) {
+        len[x] += len[j];
+        break;
+      }
+    }
+  }
+  const ll res = calc(to) - calc(fr - 1);
+  cout << res << endl;
+}
+
+void solve() {
+#ifdef AZN
+//make_case();
+  double start_t = clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr);
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+  int T = 1;
+//  scanf("%d", &T);
+//  cin >> T;
+  for (int t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << fixed << setprecision(3) << "Took: " << ((clock() - start_t) / CLOCKS_PER_SEC) << endl;
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

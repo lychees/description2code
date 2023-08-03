@@ -1,0 +1,175 @@
+/*    SHUBHAM SINHA    */
+ 
+ 
+ 
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <string.h>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <list>
+#include <math.h>
+ 
+#define ll unsigned long long
+#define maxN 100
+#define maxVal 100000000
+#define minVal -100000000
+#define mod 1000000007LL
+ 
+#define gcd(a,b) __gcd(a,b)
+ 
+using namespace std;
+ 
+char a[maxN+5][maxN+5];
+int visit[maxN+5][maxN+5];
+int timer=0;
+vector<pair<int,int> > made[maxN*maxN+5];
+int n,m,c;
+
+int ri[]={0,0,1,-1};
+int cj[]={1,-1,0,0};
+
+bool cmp(pair<int,int> a,pair<int,int> b)
+{
+	if(a.first!=b.first)
+		return a.first>b.first;
+	return a.second<b.second;
+}
+
+void bfs(int si,int sj)
+{
+	int k,ui,uj,vi,vj;
+	queue<pair<int,int> > q;
+	q.push(make_pair(si,sj));
+	visit[si][sj]=timer;
+	while(!q.empty())
+	{
+		ui=q.front().first;
+		uj=q.front().second;
+		made[c].push_back(make_pair(ui,uj));
+		q.pop();
+		for(k=0;k<4;k++)
+		{
+			vi=ui+ri[k];
+			vj=uj+cj[k];
+			if(vi>=0&&vi<n&&vj>=0&&vj<m&&visit[vi][vj]!=timer&&a[vi][vj]=='x')
+			{
+				visit[vi][vj]=timer;
+				q.push(make_pair(vi,vj));
+			}
+		}
+	}
+}
+
+int searchb(pair<int,int> p,int i)
+{
+	int j;
+	for(j=0;j<(int)made[i].size();j++)
+		if(p.first==made[i][j].first&&p.second==made[i][j].second)
+			return j;
+	return -1;
+}
+
+int main()
+{
+	int i,j,k,z,l,p,x,f,mind,mindk;
+	scanf("%d%d",&n,&m);
+	for(i=0;i<n;i++)
+		scanf("%s",a[i]);
+	for(i=0;i<=n;i++)
+		for(j=0;j<=m;j++)
+			visit[i][j]=0;
+	scanf("%d",&z);
+	c=0;
+	timer=0;
+	for(f=0;f<z;f++)
+	{
+		scanf("%d",&p);
+		p=n-p;
+		x=-1;
+		if(f%2==0)
+		{
+			for(j=0;j<m;j++)
+				if(a[p][j]=='x')
+				{
+					x=j;
+					break;
+				}
+		}
+		else
+		{
+			for(j=(m-1);j>=0;j--)
+				if(a[p][j]=='x')
+				{
+					x=j;
+					break;
+				}
+		}
+		if(x==-1)
+			continue;
+		else
+		{
+			a[p][x]='.';
+			timer++;
+			for(i=1;i<=(c+1);i++)
+				made[i].clear();
+			c=0;
+			for(i=0;i<n;i++)
+				for(j=0;j<m;j++)
+				{
+					if(a[i][j]=='x'&&visit[i][j]!=timer)
+					{
+						c++;
+						bfs(i,j);
+						mind=maxVal;
+						mindk=-1;
+						sort(made[c].begin(),made[c].end(),cmp);
+						for(k=0;k<made[c].size();k++)
+						{
+							//get cube to the nearest bottom
+							if(made[c][k].first==(n-1))
+							{
+								mind=0;
+								mindk=k;
+								break;
+							}
+							for(l=(made[c][k].first+1);l<n;l++)
+								if(a[l][made[c][k].second]=='x'&&searchb(make_pair(l,made[c][k].second),c)==-1)
+								{
+									if(mind>((l-1)-made[c][k].first))
+									{
+										mind=(l-1)-made[c][k].first;
+										mindk=k;
+									}
+									break;
+								}
+							if(mind>((n-1)-made[c][k].first))
+							{
+								mind=(n-1)-made[c][k].first;
+								mindk=k;
+							}
+						}
+						if(mind==0)
+							continue;
+						for(k=0;k<(int)made[c].size();k++)
+						{
+							//printf("%d\n",made[c][k].first);
+							a[made[c][k].first][made[c][k].second]='.';
+							a[made[c][k].first+mind][made[c][k].second]='x';
+							visit[made[c][k].first+mind][made[c][k].second]=timer;
+						}
+					}
+				}
+		}
+	}
+	for(i=0;i<n;i++)
+	{
+		for(j=0;j<m;j++)
+			printf("%c",a[i][j]);
+		printf("\n");
+	}
+    return 0;
+}

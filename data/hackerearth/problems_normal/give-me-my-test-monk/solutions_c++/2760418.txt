@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int NCR_MAX = 109;
+const int MD = 1e9 + 7;
+
+long long C[NCR_MAX][NCR_MAX];
+long long dp[109];
+
+void ncrInit(){
+	for(int i=0; i<NCR_MAX; i++){
+    	C[i][0]=1;
+    	for(int j=1; j<=i; j++){
+    		C[i][j] = (C[i-1][j] + C[i-1][j-1]) % MD;
+      	}
+    }
+}
+
+long long modPow(long long n,long long k,int MOD){
+    long long r=1;
+    while(k){
+        if(k&1){
+            r=(r*n)%MOD;
+        }
+        n=(n*n)%MOD;
+        k>>=1;
+    }
+    return r % MOD;
+}
+
+long long d(int n){
+	long long& res = dp[n];
+	if(res != -1){
+		return res;
+	}
+	if(n == 0 || n == 1){
+		return 1-n;
+	}
+	res = 1LL*(n-1)*(d(n-1)+d(n-2))%MD;
+	return res;
+}
+
+int main(int argc, char const *argv[]){
+	
+	ncrInit();
+	
+	int n, l, r;
+	cin >> n >> l >> r;
+
+	long long nr = 0;
+
+	memset(dp, -1, sizeof(dp));
+
+	for(int i=l; i<=r; i++){
+		nr = nr + 1LL*C[n][i]*d(i);
+		nr %= MD;
+	}
+
+	long long dr = 1;
+	for(int i=2; i<=n; i++){
+		dr *= i;
+		dr %= MD;
+	}
+
+	dr = modPow(dr, MD-2, MD);
+	long long ans = nr * dr % MD;
+	printf("%lld\n", ans);
+	return 0;
+}

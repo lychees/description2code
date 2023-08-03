@@ -1,0 +1,125 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+typedef vector<PII> VPII;
+typedef pair<LL, LL> PLL;
+typedef pair<int, LL> PIL;
+typedef pair<LL, int> PLI;
+typedef double DB;
+
+#define pb push_back
+#define mset(a, b) memset(a, b, sizeof a)
+#define all(x) (x).begin(), (x).end()
+#define bit(x) (1 << (x))
+#define bitl(x) (1LL << (x))
+#define sqr(x) ((x) * (x))
+#define sz(x) ((int)(x.size()))
+
+#define X first
+#define Y second
+
+template <typename T, typename U> 
+inline void chkmax(T& x, U y) {
+	if (x < y) x = y;
+}
+
+template <typename T, typename U>
+inline void chkmin(T& x, U y) {
+	if (y < x) x = y;
+}
+const int MAXN = 305;
+const int M[] = {2, 5, 719};
+int n, q;
+int w[3][MAXN][MAXN], b[3][MAXN][MAXN], A[MAXN][MAXN];
+int v[MAXN];
+void Ext(int a, int b, int &x, int &y) {
+	if (b == 0) {
+		x = 1, y = 0;
+		return;
+	}
+	Ext(b, a % b, y, x);
+	y -= a / b * x;
+}
+int rev(int x, int y) {
+	int a, b;
+	Ext(x, y, a, b);
+	a %= y;
+	if (a < 0) a += y;
+	return a;
+}
+void init() {
+	for (int it = 0; it < 3; it++) {
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				w[it][i][j] = A[i][j] % M[it];
+			}
+			b[it][i][i] = 1;
+		}
+		for (int i = 0; i < n; i++) {
+			if (!w[it][i][i]) {
+				int found = 0;
+				for (int j = i; !found && j < n; j++) {
+					for (int k = i; !found && k < n; k++) if (w[it][j][k]) {
+						for (int l = 0; l < n; l++) {
+							swap(w[it][i][l], w[it][j][l]);
+							swap(b[it][i][l], b[it][j][l]);
+						}
+						for (int l = 0; l < n; l++) {
+							swap(w[it][l][i], w[it][l][k]);
+						}
+						found = 1;
+					}
+				}
+			}
+			if (!w[it][i][i]) continue;
+			int x = rev(w[it][i][i], M[it]);
+			for (int j = 0; j < n; j++) {
+				w[it][i][j] = w[it][i][j] * x % M[it];
+				b[it][i][j] = b[it][i][j] * x % M[it];
+			}
+			for (int j = 0; j < n; j++) if (j != i && w[it][j][i]) {
+				int cur = w[it][j][i];
+				for (int k = 0; k < n; k++) {
+					w[it][j][k] -= cur * w[it][i][k] % M[it];
+					if (w[it][j][k] < 0) w[it][j][k] += M[it];
+					b[it][j][k] -= cur * b[it][i][k] % M[it];
+					if (b[it][j][k] < 0) b[it][j][k] += M[it];
+				}
+			}
+		}
+	}
+}
+
+bool valid() {
+	for (int it = 0; it < 3; it++) {
+		for (int i = n - 1; i >= 0; i--) {
+			if (w[it][i][i] == 0) {
+				int cur = 0;
+				for (int j = 0; j < n; j++) {
+					cur = (cur + b[it][i][j] * v[j]) % M[it];
+				}
+				if (cur) return 0;
+			}
+		}
+	}
+	return 1;
+}
+int main() {
+	
+	scanf("%d%d", &n, &q);
+	for (int i = 0; i < n; i++) {
+		int s = 0;
+		for (int j = 0; j < n; j++) {
+			scanf("%d", A[i] + j);
+		}
+	}
+	init();
+	while (q--) {
+		for (int i = 0; i < n; i++) scanf("%d", v + i);
+		puts(valid() ? "Yes" : "No");
+	}
+	return 0;
+}

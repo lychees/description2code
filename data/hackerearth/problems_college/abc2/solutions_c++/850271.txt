@@ -1,0 +1,64 @@
+#include <cstring>
+#include<iostream>
+#include <algorithm>
+using namespace std;
+
+const int maxn = 110;
+const int maxf = 110*1000;
+
+int d[maxn][maxf];
+
+struct Race {
+    int s, e;
+    bool used;
+    inline bool operator < (const Race &o) const {
+        return e > o.e;
+    }
+} race[maxn];
+
+int main() {
+    int t;
+    for (cin >> t; t--;) {
+        memset(d, 0, sizeof d);
+
+        int f, n;
+        cin >> f >> n;
+
+        for (int i = 0; i < n; i++) {
+            cin >> race[i].s >> race[i].e;
+            race[i].used = false;
+        }
+
+        sort(race, race + n);
+
+        int count = 0;
+
+        bool found;
+        do {
+            found = 0;
+            for (int i = 0; i < n; i++)
+            if (!race[i].used && race[i].e >= race[i].s && race[i].s >= f) {
+                race[i].used = true;
+                count++;
+                f += race[i].s - race[i].e;
+                found = true;
+            }
+        } while (found);
+
+
+        for (int i = n - 1; i >= 0; i--) {
+            for (int j = 0; j < maxf; j++) {
+                d[i][j] = d[i + 1][j];
+                if (!race[i].used && j >= race[i].s) {
+                    int f2 = j - race[i].s + race[i].e;
+                    if (f2 < maxf)
+                        d[i][j] = max(d[i][j], 1 + d[i + 1][f2]);
+                }
+            }
+        }
+
+        cout << d[0][f] + count << endl;
+    }
+
+    return 0;
+}

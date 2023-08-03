@@ -1,0 +1,141 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <climits>
+#include <cctype>
+
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <utility>
+
+using namespace std;
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef pair<int, int> II;
+typedef vector<int> VI;
+typedef vector<long long> VLL;
+typedef vector<bool> VB;
+
+#define LLMAX LLONG_MAX
+#define SZ(A) ((int)A.size())
+#define LEN(A) ((int)A.length())
+#define MS(A) memset(A, 0, sizeof(A))
+#define MSV(A,a) memset(A, a, sizeof(A))
+#define MAX(a,b) ((a >= b) ? (a) : (b))
+#define MIN(a,b) ((a >= b) ? (b) : (a))
+#define ABS(a) (((a) > 0) ? (a) : (-a))
+#define MP make_pair
+#define X first
+#define Y second
+#define PB push_back
+#define FOUND(A, x) (A.find(x) != A.end())
+#define getcx getchar//_unlocked
+
+#define REP(i, n) for(int i = 0; i < (n); i++)
+#define FOR(i, a, n) for(int i = a; i < n; i++)
+#define REV(i, a, n) for(int i = a; i > n; i--)
+#define FORALL(itr, c) for(itr = (c).begin(); itr != (c).end(); itr++)
+#define ALL(A) A.begin(), A.end()
+#define LLA(A) A.rbegin(), A.rend()
+
+inline void inp( int &n ) {
+        n=0; int ch = getcx(); int sign = 1;
+        while(ch < '0' || ch > '9') { if(ch == '-') sign=-1; ch = getcx(); }
+        while(ch >= '0' && ch <= '9') { n = (n << 3) + (n << 1) + ch - '0', ch = getcx(); }
+		n = n * sign;
+}
+const int LIM=1e5;
+struct node{
+    int X,Y,id;
+};
+struct node2{
+    int a,b,dist;
+};
+vector<node> v1,v2;
+vector<II> G[100000];
+bool cmpx(node a,node b){
+    if(a.X==b.X)
+        return a.Y<b.Y;
+    return a.X<b.X;
+}
+bool cmpy(node a,node b){
+    if(a.Y==b.Y)
+        return a.X<b.X;
+    return a.Y<b.Y;
+}
+bool cmp(node2 a,node2 b){
+    return a.dist<b.dist;
+}
+int parent[LIM+1];
+int ranks[LIM+1];
+int findSet(int p){
+    if(parent[p]==p) return p;
+    parent[p]=findSet(parent[p]);
+    return parent[p];
+}
+void unions(int x,int y){
+    int px=findSet(x);
+    int py=findSet(y);
+    if(ranks[px]<ranks[py])
+        parent[px]=py;
+    else
+        parent[py]=px;
+    if(ranks[px]==ranks[py]) ranks[px]++;
+}
+int main(){
+    int n;
+    node nd;
+    inp(n);
+    REP(i,n){
+        inp(nd.X),inp(nd.Y);
+        nd.id=i;
+        v1.PB(nd);
+        v2.PB(nd);
+    }
+    sort(v1.begin(),v1.end(),cmpx);
+    sort(v2.begin(),v2.end(),cmpy);
+    node2 t;
+    vector<node2> v;
+    for(int i=1;i<v1.size();i++){
+        int a=v1[i-1].id,b=v1[i].id;
+        int dist=abs(v1[i-1].X-v1[i].X);
+        G[a].PB(MP(b,dist));
+        G[b].PB(MP(a,dist));
+        t.a=a;
+        t.b=b;
+        t.dist=dist;
+        v.PB(t);
+    }
+    for(int i=1;i<v2.size();i++){
+        int a=v2[i-1].id,b=v2[i].id;
+        int dist=abs(v2[i-1].Y-v2[i].Y);
+        G[a].PB(MP(b,dist));
+        G[b].PB(MP(a,dist));
+        t.a=a;
+        t.b=b;
+        t.dist=dist;
+        v.PB(t);
+    }
+    sort(v.begin(),v.end(),cmp);
+    for(int i=0;i<=n;i++){
+        parent[i]=i;
+        ranks[i]=0;
+    }
+    LL ans=0;
+    REP(i,v.size()){
+        if(findSet(v[i].a)!=findSet(v[i].b)){
+            unions(v[i].a,v[i].b);
+            ans+=v[i].dist;
+        }
+    }
+    printf("%d\n",ans);
+    return 0;
+}

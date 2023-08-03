@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define mp make_pair
+#define pb push_back
+typedef long long ll;
+typedef pair<int,int> pii;
+#define X first
+#define Y second
+
+const int maxd = 10005;
+const int maxk = 13;
+typedef pair<ll,ll> pll;
+#define end joijoij
+ll cnt[maxd][maxk][maxk];
+ll end[maxd][maxk][maxk];
+const ll mod = (ll)1e9 + 7ll;
+bool clc[maxd][maxk][maxk];
+int k;
+void get_dp(int deg, int start, int all)
+{
+	assert(deg >= 0 && deg < maxd && start >= 0 && start < maxk && all >= 0 && all < maxk);
+	if (clc[deg][start][all]) return;
+	clc[deg][start][all] = 1;
+	if (deg == 0)
+	{
+		if (start + all >= k)
+		{
+			cnt[deg][start][all] = 1;
+			end[deg][start][all] = 0;
+		}
+		else
+		{
+			cnt[deg][start][all] = 0;
+			end[deg][start][all] = start+all;
+		}
+	}
+	else
+	{
+		int cstart = start;
+		cnt[deg][start][all] = 0;
+		for (int dig = 0; dig < 10; dig++)
+		{
+			int add = (dig==4||dig==7?1:0);
+			get_dp(deg-1, cstart, min(k,all + add));
+			cnt[deg][start][all] = (cnt[deg][start][all] + cnt[deg-1][cstart][min(k,all+add)]) % mod;
+			cstart = end[deg-1][cstart][min(k,all+add)];
+		}
+		end[deg][start][all] = cstart;
+	}
+	//cout << "cnt[" << deg << "][" << start << "][" << all << "] = " << cnt[deg][start][all] << endl;
+	//cout << "end[" << deg << "][" << start << "][" << all << "] = " << end[deg][start][all] << endl;
+	
+}
+
+char s[maxd];
+
+pair<ll,int> solve(int deg, int start, int all, char* cur)
+{
+	if (deg == 0)
+	{
+		get_dp(0,all,start);
+		return mp(cnt[0][all][start], (int)end[0][all][start]);
+	}
+	int cstart = start;
+	ll mcnt = 0;
+	for (int dig = 0; dig <= (cur[0]-'0'); dig++)
+	{
+		int add = (dig==4||dig==7?1:0);		
+		if (dig < (cur[0]-'0'))
+		{
+			//cout << "solve (" << deg << "," << start << "," << all << ") -> " << dig << endl;
+			//cout << "(" << deg-1 << "," << cstart << "," << min(k,all+add) << ")" << endl;
+			get_dp(deg-1, cstart, min(k,all + add));
+			mcnt = (mcnt + cnt[deg-1][cstart][min(k,all+add)]) % mod;
+			cstart = end[deg-1][cstart][min(k,all+add)];
+			//cout << "cstart=" << cstart << endl;
+			//cout << "mcnt=" << mcnt << endl;
+	    }
+	    else
+	    {
+			pair<ll,int> v = solve(deg-1, cstart, min(k,all+add), cur + 1);
+			mcnt = (mcnt + v.X) % mod;
+			cstart = v.Y;
+		}
+	}
+	//cout << "solve(" << deg << "," << start << "," << all << ") = " << mcnt << "," << cstart << endl;
+	return mp(mcnt, cstart);
+}
+
+int main()
+{
+	assert(scanf("%d", &k) == 1);
+	k++;
+	assert(scanf("%s", s) == 1);
+	int cd = strlen(s);
+	ll ans = solve(cd, 0, 0, s).X;
+	cout << ans << endl;
+	
+	return 0;
+}

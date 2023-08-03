@@ -1,0 +1,71 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+const int NN = 1000;
+int n;
+vector<int> a;
+void read() {
+	scanf("%d", &n);
+	a.resize(n);
+	for (int i = 0; i < n; ++i) scanf("%d", &a[i]);
+}
+
+vector<vector<int>> vs1, vs2;
+vector<int> cnt, first, last;
+void preprocess() {
+	vs1.resize(n);
+	vs2.resize(n);
+	vs1.front().push_back(a[0]);
+	for (int i = 1; i < n; ++i) {
+		vs1[i] = vs1[i - 1];
+		vs1[i].push_back(a[i]);
+		sort(vs1[i].begin(), vs1[i].end());
+	}
+	
+	vs2.back().push_back(a[n - 1]);
+	for (int i = n - 2; i >= 0; --i) {
+		vs2[i] = vs2[i + 1];
+		vs2[i].push_back(a[i]);
+		sort(vs2[i].begin(), vs2[i].end());
+	}
+	
+	cnt.resize(NN + 1);
+	first.resize(NN + 1, -1);
+	last.resize(NN + 1, -1);
+	for (int i = 0; i < n; ++i) {
+		cnt[a[i]] ++;
+		last[a[i]] = i;
+		if (first[a[i]] == -1) first[a[i]] = i;
+	}
+}
+
+int process() {
+	int ans = *max_element(cnt.begin(), cnt.end());
+	for (int i = 0; i <= NN; ++i) {
+		if (!cnt[i]) continue;
+		for (int f = i + 1; f <= NN; ++f) {
+			if (!cnt[f]) continue;
+			int tans = cnt[i] + cnt[f];
+			int l = min(first[i], first[f]);
+			int r = max(last[i], last[f]);
+			if (l > 0) {
+				auto t = upper_bound(vs1[l - 1].begin(), vs1[l - 1].end(), i);
+				if (t != vs1[l - 1].end() and *t < f) ++tans;
+			}
+			if (r < n - 1) {
+				auto t = upper_bound(vs2[r + 1].begin(), vs2[r + 1].end(), i);
+				if (t != vs2[r + 1].end() and *t < f) ++tans;
+			}
+			ans = max(ans, tans);
+		}
+	}
+	return ans;
+}
+
+int main() {
+    read();
+    preprocess();
+    int ans = process();
+    cout << ans;
+    return 0;
+}

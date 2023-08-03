@@ -1,0 +1,131 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define mem(a, x) memset(a, x, sizeof(a))
+#define all(a) a.begin(), a.end()
+#define uni(a) a.erase(unique(all(a)), a.end())
+#define count_bits(x) __builtin_popcount(x)
+#define count_bitsll(x) __builtin_popcountll(x)
+#define least_bits(x) __builtin_ffs(x)
+#define least_bitsll(x) __builtin_ffsll(x)
+#define most_bits(x) 32 - __builtin_clz(x)
+#define most_bitsll(x) 64 - __builtin_clz(x)
+
+vector<string> split(const string &s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c)) v.push_back(x);
+	return v;
+}
+
+#define error(args...) { vector<string> _v = split(#args, ','); err(_v.begin(), args); }
+
+void err(vector<string>::iterator it) {}
+
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << '\n';
+	err(++it, args...);
+}
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {while (b != 0) {T c = a; a = b; b = c % b;} return a;}
+
+const int N = 55, INF = (int) 1E9;
+int n, m;
+int dp[N][N][N];
+string g[N];
+
+int dx[5] = {0, 1, 0, -1, 0};
+int dy[5] = {0, 0, 1, 0, -1};
+
+bool inside(int x, int y) {
+	return x >= 0 && x <= n + 1 && y >= 0 && y < m;
+}
+
+inline int amod(int x, int y) {
+	x %= y;
+	if (x < 0) x += y;
+	return x;
+}
+
+struct State {
+	int x, y, t, c;
+};
+
+class Comp {
+public:
+	Comp() {}
+	bool operator() (const State &s1, const State &s2) const {
+		return s1.c > s2.c;
+	}
+};
+
+int solve(bool flag) {
+	repu(i, 0, N) repu(j, 0, N) repu(k, 0, N) dp[i][j][k] = INF;
+    
+    priority_queue<State, vector<State>, Comp> que;
+    dp[0][0][0] = 0;
+    que.push((State) {0, 0, 0, 0});
+    
+    while (que.size()) {
+    	State s = que.top(); que.pop();
+    	if (s.c > dp[s.x][s.y][s.t]) continue;
+    	repu(i, 0, 5) {
+    		int nx = s.x + dx[i];
+    		int ny = s.y + dy[i];
+    		if (inside(nx, ny)) {
+    			bool ok = 1;
+    			repu(j, 0, m) {
+    				if (g[nx][j] == 'X') {
+    					if (nx & 1) {
+    						if (flag && amod(j - s.t - 1, m) == ny) ok = 0;
+    						if (!flag && amod(j + s.t + 1, m) == ny) ok = 0;
+    					}
+    					if (!(nx & 1)) {
+    						if (flag && amod(j + s.t + 1, m) == ny) ok = 0;
+    						if (!flag && amod(j - s.t - 1, m) == ny) ok = 0;
+    					}
+    				}
+    			}
+    			int tm = amod(s.t + 1, m);
+    			if (ok && dp[nx][ny][tm] > dp[s.x][s.y][s.t] + 1) {
+    				dp[nx][ny][tm] = dp[s.x][s.y][s.t] + 1;
+    				que.push((State) {nx, ny, tm, dp[nx][ny][tm]});
+    			}
+    		}
+    	}
+    }
+    
+    int ans = INF;
+    repu(i, 0, N) amin(ans, dp[n + 1][m - 1][i]);
+    return ans;
+}
+
+int main(int argc, char *argv[]) {
+    ios_base::sync_with_stdio(false);
+    
+    cin >> n >> m;
+    repu(i, 0, n + 2) {
+    	cin >> g[i];
+    	repu(j, 0, m) assert(g[i][j] == 'B' || g[i][j] == 'X' || g[i][j] == 'T' || g[i][j] == '.');
+    }
+    
+    assert(g[0][0] == 'B' && g[n + 1][m - 1] == 'T');
+    
+    int ans = tmin(solve(0), solve(1));
+    if (ans == INF) cout << "Impossible" << endl;
+    else cout << ans << endl;
+    
+    return 0;
+}

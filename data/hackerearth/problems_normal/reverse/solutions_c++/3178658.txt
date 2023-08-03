@@ -1,0 +1,193 @@
+#include <cstdio>
+#include <cmath>
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <cassert>
+#include <string>
+#include <cstring>
+#include <queue>
+
+using namespace std;
+
+#define rep(i,a,b) for(int i = a; i < b; i++)
+#define S(x) scanf("%d",&x)
+#define S2(x,y) scanf("%d%d",&x,&y)
+#define P(x) printf("%d\n",x)
+#define all(v) v.begin(),v.end()
+#define FF first
+#define SS second
+
+typedef long long int LL;
+typedef pair<int, int > pii;
+typedef vector<int > vi;
+
+const int mod = 1000000007;
+
+LL _pow(LL a, LL b) {
+  if(!b) return 1;
+  if(b == 1) return a;
+  if(b == 2) return a * a % mod;
+  if(b & 1) {
+    return a * _pow(a,b-1) % mod;
+  }
+  return _pow(_pow(a,b/2),2);
+}
+
+int A8[4] = {2, 4, 17, 142};
+int A7[6] = {2, 4, 22, 206, 2113, 20728};
+int MOD7[6] = {3, 2, 6, 4, 5, 1};
+const int SZ = 7 * 7;
+LL A[7][SZ][SZ];
+LL B[SZ][SZ];
+LL C[SZ][SZ];
+
+LL X[7][7][7];
+
+
+void solve(int n) {
+  if(!n) {
+    memset(B, 0, sizeof(B));
+    rep(i,0,SZ) {
+      B[i][i] = 1;
+    }
+    return;
+  }
+  solve(n/2);
+  memset(C, 0, sizeof(C));
+  rep(i,0,SZ) rep(j,0,SZ) {
+    rep(k,0,SZ) {
+      C[i][j] += B[i][k] * B[k][j];
+      C[i][j] %= mod;
+    }
+  }
+  memcpy(B, C, sizeof(B));
+
+  if(n & 1) {
+    memset(C, 0, sizeof(C));
+    rep(i,0,SZ) rep(j,0,SZ) {
+      rep(k,0,SZ) {
+        C[i][j] += B[i][k] * A[6][k][j];
+        C[i][j] %= mod;
+      }
+    }
+    memcpy(B, C, sizeof(B));
+  }
+}
+
+int main() {
+  int t;
+  S(t);
+  while(t--) {
+    int n,k;
+    S2(n,k);
+    LL ans;
+    if(k == 2) {
+
+      ans = 2 * (_pow(10, n) + mod - 1) % mod;
+      ans = (ans * _pow(9, mod-2) + 3) % mod;
+      if(n == 1) ans = 5;
+
+    } else if(k == 3) {
+
+      ans = 3 * (_pow(10,n) + mod - 1) % mod;
+      ans = ans * _pow(9, mod-2) % mod;
+      ans = (ans + 1) % mod;
+
+    } else if(k == 4) {
+
+      ans = 5 * (_pow(10, n-1) + mod - 1) % mod;
+      ans = ans * _pow(9, mod-2) % mod;
+      ans = (ans + 4) % mod;
+      if(n == 1) ans = 3;
+
+    } else if(k == 5) {
+
+      ans = 2 * (_pow(10, n-1) + mod - 1) % mod;
+      ans = (ans * _pow(9, mod-2) + 2) % mod;
+
+    } else if(k == 6) {
+      if(n == 1) {
+        ans = 2;
+      } else {
+        n--;
+        ans = 10 * (_pow(10,n-1) - 1 + mod) % mod;
+        ans = ans * _pow(9, mod-2) % mod;
+        ans = (ans - n + _pow(10, n) + mod) % mod;
+        ans = ans * _pow(9, mod-2) % mod;
+        ans = ans * 6 % mod;
+        ans = (ans + 2) % mod;
+      }
+    } else if(k == 7) {
+
+      if(n <= 5) {
+        ans = A7[n-1];
+      } else {
+
+        // Iterate 6 step cycle
+        memset(A, 0, sizeof(A));
+        rep(i,0,SZ) {
+          A[0][i][i] = 1;
+        }
+        int offSet = 0;
+        rep(i,1,7) {
+          rep(j,0,7) rep(k,0,7) rep(l,0,10) {
+            int jj = (j * 10 + l) % 7;
+            int kk = (l * MOD7[(i-1+offSet)%6] + k) % 7;
+            rep(m,0,7*7) {
+              A[i][jj * 7 + kk][m] += A[i-1][j * 7 + k][m];
+              A[i][jj * 7 + kk][m] %= mod;
+            }
+          }
+        }
+
+        // rep(i,0,SZ) {
+        //   rep(j,0,SZ) printf("%lld ",A[6][i][j]); printf("\n");
+        // }
+
+        solve(n/6);
+        n %= 6;
+
+        memset(X, 0, sizeof(X));
+        rep(i,0,7) rep(j,0,7) {
+          X[0][i][j] = B[i * 7 + j][0];
+        }
+
+
+        rep(itr,1,n+1) {
+          rep(i,0,7) rep(j,0,7) rep(k,0,10) {
+            int ii = (i * 10 + k) % 7;
+            int jj = (k * MOD7[(itr-1+offSet)%6] + j) % 7;
+            X[itr][ii][jj] += X[itr-1][i][j];
+            X[itr][ii][jj] %= mod;
+          }
+        }
+        ans = X[n][0][0];
+
+      }
+    } else if(k == 8) {
+
+      if(n <= 4) {
+        ans = A8[n-1];
+      } else {
+        ans = 800 * (_pow(10, n-5) + mod - 1) % mod;
+        ans = ans * _pow(9, mod-2) % mod;
+        ans = (ans + 92) % mod;
+        ans = (13 * _pow(10,n-3) + ans) % mod;
+      }
+
+    } else if(k == 9) {
+
+      ans = (_pow(10,n) + mod - 1) % mod;
+      ans = ans * _pow(9, mod-2) % mod;
+      ans = (ans + 1) % mod;
+
+    } else if(k == 10) {
+      ans = 1;
+    }
+    printf("%lld\n",ans);
+  }
+  return 0;
+}

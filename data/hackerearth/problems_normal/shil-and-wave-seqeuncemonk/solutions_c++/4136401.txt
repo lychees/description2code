@@ -1,0 +1,46 @@
+#include <iostream>
+using namespace std;
+
+int n;
+int inc_BIT[100005], dec_BIT[100005], freq_BIT[100005];
+int MOD = 1e9 + 7;
+int maxi = -1;
+
+void update(int BIT[], int i, int val){
+    for(; i <= 100000; i += (i & -i)){
+        BIT[i] = ((BIT[i] % MOD) + (val % MOD)) % MOD ;
+    }
+}
+
+int query(int BIT[], int i){
+    int ret = 0;
+    for(; i > 0; i -= (i & -i)){
+        ret = ((ret % MOD) + (BIT[i] % MOD)) % MOD ;
+    }
+        return ret % MOD;
+}
+
+int mod(int a){
+    a = a % MOD;
+    if(a < 0) return a + MOD;
+    else return a;
+}
+
+int main(){
+    cin >> n;
+   for(int i = 1; i <= n; i++){
+        int x;
+        cin >> x;
+        maxi = max(x, maxi);
+        update(freq_BIT, x, 1);
+        update(inc_BIT, x, query(freq_BIT, x - 1));
+        update(inc_BIT, x, query(dec_BIT, x - 1));
+        update(dec_BIT, x, mod(query(freq_BIT, 100000) - query(freq_BIT, x)));
+        update(dec_BIT, x, mod(query(inc_BIT, 100000) - query(inc_BIT, x)));
+   }
+
+
+   cout << (query(inc_BIT, 100000) + query(dec_BIT, 100000)) % MOD << endl;
+
+   return 0;
+}

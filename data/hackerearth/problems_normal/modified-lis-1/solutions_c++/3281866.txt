@@ -1,0 +1,110 @@
+#include <iostream>
+#include <algorithm>
+
+using namespace std;
+
+#define MOD 1000000007
+
+struct node {
+  int max = 0;
+  long long ways = 0;
+};
+
+int N;
+long long A[100001];
+int dp[100001];   // Max Length i..N
+long long dp2[100001];  // Number of Sequences of Max Length starting from i;
+node segtree[800001];
+
+const int RANGE_MIN = -100000, RANGE_MAX = 100000;
+
+inline int find_mid(int L, int R) {
+  int x = L + R;
+  if(x > 0) return x/2;
+  else return -((-x + 1)/2);
+}
+
+node merge(node L, node R) {
+  node N;
+
+  if(L.max == R.max) {
+    N.max = L.max;
+    N.ways = (L.ways + R.ways) % MOD;
+  }
+  else if(L.max > R.max) {
+    N.max = L.max;
+    N.ways = L.ways;
+  }
+  else {
+    N.max = R.max;
+    N.ways = R.ways;
+  }
+
+  return N;
+}
+
+node query(int L, int R, int A, int B, int i) {
+  if(L > B || R < A) return node();
+
+  if(A <= L && R <= B) return segtree[i];
+
+  int mid = find_mid(L, R);
+  return merge(query(L, mid, A, B, 2*i + 1), query(mid + 1, R, A, B, 2*i + 2));
+}
+
+void update(int L, int R, int i, int pos, node val) {
+  if(L == R) {
+    segtree[i] = merge(segtree[i], val);
+    return;
+  }
+
+  int mid = find_mid(L, R);
+  if(pos <= mid) {
+    update(L, mid, 2*i + 1, pos, val);
+  }
+  else {
+    update(mid + 1, R, 2*i + 2, pos, val);
+  }
+
+  segtree[i] = merge(segtree[2*i + 1], segtree[2*i + 2]);
+}
+
+int main() {
+  ios::sync_with_stdio(false); cin.tie(0);
+
+  cin >> N;
+
+  for(int i = 0; i < N; i++) cin >> A[i];
+
+  for(int i = N - 1; i >= 0; i--) {
+    node ans;
+    if(A[i] > 0) {
+      ans = query(RANGE_MIN, RANGE_MAX, RANGE_MIN, -A[i] - 1, 0);
+    }
+    else {
+      ans = query(RANGE_MIN, RANGE_MAX, -A[i] + 1, RANGE_MAX, 0);
+    }
+
+    dp[i] = 1 + ans.max;
+    dp2[i] = ans.ways;
+
+    if(dp2[i] == 0) dp2[i] = 1;
+
+    node curr_upd; curr_upd.max = dp[i]; curr_upd.ways = dp2[i];
+    update(RANGE_MIN, RANGE_MAX, 0, A[i], curr_upd);
+  }
+
+  int max_l = 0; long long num_ways = 0;
+  for(int i = 0; i < N; i++) {
+    if(dp[i] > max_l) {
+      max_l = dp[i];
+      num_ways = dp2[i];
+    }
+    else if(dp[i] == max_l) {
+      num_ways += dp2[i];
+      num_ways %= MOD;
+    }
+  }
+
+  cout << max_l << " " << num_ways << endl;
+}

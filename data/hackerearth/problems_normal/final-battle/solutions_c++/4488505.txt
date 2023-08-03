@@ -1,0 +1,412 @@
+/*
+*/
+
+//#pragma comment(linker, "/STACK:16777216")
+#define _CRT_SECURE_NO_WARNINGS
+
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <complex>
+#include <math.h>
+#include <set>
+#include <vector>
+#include <map>
+#include <queue>
+#include <stdio.h>
+#include <stack>
+#include <algorithm>
+#include <list>
+#include <ctime>
+#include <memory.h>
+#include <assert.h>
+
+#define y0 sdkfaslhagaklsldk
+#define y1 aasdfasdfasdf
+#define yn askfhwqriuperikldjk
+#define j1 assdgsdgasghsf
+#define tm sdfjahlfasfh
+#define lr asgasgash
+#define norm asdfasdgasdgsd
+
+#define eps 1e-9
+#define M_PI 3.141592653589793
+#define bs 1000000007
+#define bsize 350
+
+using namespace std;
+
+const int INF = 1e9;
+const int N = 105000;
+
+int n, Q;
+int w[N];
+int a[N], b[N], c[N];
+vector<int> by_weight[N];
+int cur_comps;
+int mapp[N];
+
+int get(int x)
+{
+	if (x == w[x])
+	{
+		return x;
+	}
+	return w[x] = get(w[x]);
+}
+
+void merge(int a, int b)
+{
+	a = get(a);
+	b = get(b);
+	if (a == b)
+		return;
+	--cur_comps;
+	w[a] = b;
+}
+
+void show(vector<vector<long long> > v)
+{
+	for (int i = 0; i < v.size(); i++)
+	{
+		for (int j = 0; j < v[i].size(); j++)
+		{
+			cout << v[i][j] << " ";
+		}
+		cout << endl;
+	}
+}
+
+vector<vector<long long> > normalize(vector<vector<long long> > v)
+{
+//	show(v);
+	for (int i = 0; i < v.size(); i++)
+	{
+		for (int j = 0; j < v[i].size(); j++)
+		{
+			v[i][j] %= bs;
+			if (v[i][j] < 0)
+				v[i][j] += bs;
+		}
+	}
+//	show(v);
+	return v;
+}
+
+int mult(int a, int b)
+{
+	long long res = 1ll * a*b;
+	res %= bs;
+	if (res < 0)
+		res += bs;
+	return res;
+}
+
+long long pw(long long a, long long b)
+{
+	if (b == 0)
+		return 1;
+	if (b % 2)
+		return a*pw(a, b - 1) % bs;
+	return pw(a*a%bs, b / 2);
+}
+
+int inv(long long x)
+{
+	//cout << x << " " << pw(x, bs - 2) << "%" << endl;
+	return pw(x, bs - 2);
+}
+
+int sub(int a, int b)
+{
+	a -= b;
+	a %= bs;
+	if (a < 0)
+		a += bs;
+	return a;
+}
+
+long long get_det(vector<vector<long long> > v)
+{
+	long long res = 1;
+	int n = v.size();
+
+	//show(v);
+
+	int det = 1;
+
+	for (int i = 0; i < n; i++)
+	{
+		//show(v);
+
+		int k = i;
+		for (int j = i + 1; j < n;j++)
+		{
+			if (v[j][i]>v[k][i])
+				k = j;
+		}
+		
+		//cout << k << "%" << v[k][i] << endl;
+		if (v[k][i] == 0)
+		{
+			return 0;
+		}
+
+		//show(v);
+		swap(v[i], v[k]);
+		//cout << k << endl;
+		if (i != k)
+		{
+			det = mult(det, -1);
+		}
+		det = mult(det, v[i][i]);
+		//show(v);
+
+		for (int j = i + 1; j < n; j++) // tofix
+		{
+			//cout << v[i][j] << "%" << endl;
+			v[i][j] = mult(v[i][j], inv(v[i][i]));
+			//cout << v[i][j] << "%" << inv(v[i][i]) << " "<<v[i][i]<<endl;
+		}
+		
+		//v[i][i] = 1;
+
+	//	show(v);
+		for (int j = 0; j < n; j++)
+		{
+			if (j != i&&v[j][i]>0)
+			{
+				for (int k = i+1; k < n; k++)
+				{
+					v[j][k] = sub(v[j][k], mult(v[i][k], v[j][i]));
+				}
+			}
+		}
+		/*
+		for (int j = i + 1; j < n; j++)
+		{
+			v[j][i] = 0;
+		}*/
+
+	//	show(v);
+	}
+//	cout << "#" << det << endl;
+	return det;
+}
+
+int used[N];
+vector<int> G[N];
+int taken[N];
+vector<int> visited;
+
+void dfs(int v)
+{
+	used[v] = 1;
+	visited.push_back(v);
+	for (int i = 0; i < G[v].size(); i++)
+	{
+		int to = G[v][i];
+		if (used[to])
+			continue;
+		dfs(to);
+	}
+}
+
+vector<vector<long long> > update(vector<vector<long long> > v)
+{
+	v.erase(v.begin());
+	for (int i = 0; i < v.size(); i++)
+	{
+		v[i].erase(v[i].begin());
+	}
+	return v;
+}
+
+vector<int> gg[N];
+int reached[N];
+
+void trace(int v)
+{
+	reached[v] = 1;
+	for (int i = 0; i < gg[v].size(); i++)
+	{
+		int to = gg[v][i];
+		if (reached[to])
+			continue;
+		trace(to);
+	}
+}
+
+int main(){
+	//freopen("fabro.in","r",stdin);
+	//freopen("fabro.out","w",stdout);
+	//freopen("F:/in.txt", "r", stdin);
+	//freopen("F:/output.txt", "w", stdout);
+	ios_base::sync_with_stdio(0);
+	//cin.tie(0);
+	
+	cin >> n >> Q;
+	assert(n >= 2 && n <= 75);
+	assert(Q >= 1 && Q <= n*(n - 1) / 2);
+	for (int i = 1; i < n; i++)
+	{
+		int a, b;
+
+		cin >> a >> b;
+		gg[a].push_back(b);
+		gg[b].push_back(a);
+		assert(a != b);
+		assert(a >= 1 && a <= n&&b >= 1 && b <= n);
+
+/*		g[a].push_back(b);
+		g[b].push_back(a);*/
+	}
+
+	trace(1);
+	for (int i = 1; i <= n; i++)
+	{
+		assert(reached[i] == 1);
+	}
+
+	for (int i = 1; i <= Q; i++)
+	{
+		cin >> a[i] >> b[i] >> c[i];
+		assert(a[i] >= 1 && a[i] <= n);
+		assert(b[i] >= 1 && b[i] <= n);
+		assert(c[i] >= 1 && c[i] <= 1e5);
+		--a[i];
+		--b[i];
+		by_weight[c[i]].push_back(i);
+	}
+
+	for (int i = 0; i <= n; i++)
+	{
+		w[i] = i;
+	}
+
+	cur_comps = n;
+
+	long long ans = 1;
+
+	for (int i = 1; i <= 100000; i++) 
+	{
+		if (by_weight[i].size() == 0)
+			continue;
+
+		for (int j = 0; j < n; j++)
+		{
+			used[j] = 0;
+			G[j].clear();
+		}
+
+		for (int j = 0; j < by_weight[i].size(); j++)
+		{
+			int id = by_weight[i][j];
+			G[get(a[id])].push_back(get(b[id]));
+			G[get(b[id])].push_back(get(a[id]));
+		}
+
+		for (int j = 0; j < n; j++)
+		{
+			if (used[j])
+				continue;
+			if (G[j].size() == 0)
+				continue;
+			visited.clear();
+			dfs(j);
+			for (int q = 0; q < n; q++)
+			{
+				taken[q] = 0;
+			}
+
+			int cnt = 0;
+			vector<int> v2;
+			for (int q = 0; q < visited.size(); q++)
+			{
+				v2.push_back(get(visited[q]));
+			}
+			sort(v2.begin(), v2.end());
+
+			for (int q = 0; q < v2.size(); q++)
+			{
+				if (q == 0 || v2[q] != v2[q - 1])
+				{
+
+					taken[v2[q]] = cnt;
+					++cnt;
+				}
+			}
+
+			vector<vector<long long> > V;
+			V.resize(cnt);
+			for (int i = 0; i < V.size(); i++)
+			{
+				V[i].resize(cnt);
+				for (int j = 0; j < V[i].size(); j++)
+				{
+					V[i][j] = 0;
+				}
+			}
+
+			for (int j = 0; j < visited.size(); j++)
+			{
+				int v = visited[j];
+				int id1 = get(v);
+				for (int q = 0; q < G[v].size(); q++)
+				{
+					int to = G[v][q];
+					int id2 = get(to);
+					id1 = taken[get(v)];
+					id2 = taken[id2];
+					V[id1][id2]--;
+					V[id1][id1]++;
+				}
+			}
+			/*
+			for (int j = 0; j < visited.size(); j++)
+			{
+				cout << visited[j] << "%" << get(visited[j]) << endl;
+			}*/
+
+			//show(V);
+			V = normalize(V);
+			V = update(V);
+//			ans = mult(ans,get_det(V));// mult(ans, get_det(V));
+			ans = ans*get_det(V);// ans = mult(ans, get_det(V));
+		//	cout << i<<"%"<<"@" << ans << endl;
+		}
+
+		for (int j = 0; j < by_weight[i].size(); j++)
+		{
+			int id = by_weight[i][j];
+			int id1 = a[id];
+			int id2 = b[id];
+			id1 = get(id1);
+			id2 = get(id2);
+			//cout << id1 << "%" << id2 << endl;
+			merge(id1, id2);
+			//cout << "@" << endl;
+		}
+		/*
+		if (i == 3)
+		{
+			for (int j = 0; j<n; j++)
+			{
+				cout << j << "%" << get(j) << endl;
+			}
+		}*/
+
+	}
+
+	if (cur_comps > 1)
+	{
+		cout << 0 << endl;
+	}
+	else
+	{
+		cout << ans%bs << endl;
+	}
+
+	cin.get(); cin.get();
+	return 0;
+}

@@ -1,0 +1,132 @@
+#pragma comment(linker, "/STACK:500000000")
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <list>
+#include <map>
+#include <math.h>
+#include <set>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <string.h>
+#include <time.h>
+#include <queue>
+#include <utility>
+#include <vector>
+using namespace std;
+
+#define y0 y123
+#define y1 y1234
+#define ll long long
+#define PI 3.1415926535897932384626433832795
+#define EPS 1e-9
+#define INF 2147483647
+
+
+int gcd(int a, int b) { return (!b) ? a : gcd(b, a % b); }
+int lcm(int a, int b) { return a / gcd(a,b) * b; }
+
+int nextInt() { int n; scanf("%d", &n); return n; }
+ll nextLong() { ll n; scanf("%I64d", &n); return n; }
+
+
+struct Edge {
+	int to, cost;
+
+	Edge() {}
+
+	Edge(int _to, int _cost) {
+		to = _to;
+		cost = _cost;
+	}
+};
+
+struct Edge2 {
+	int u, v, c;
+
+	Edge2() {}
+
+	Edge2(int _u, int _v, int _c) {
+		u = _u;
+		v = _v;
+		c = _c;
+	}
+
+	bool const operator<(const Edge2 &other) const {
+		return c < other.c;
+	}
+};
+
+vector<Edge> a[100 + 1];
+bool used[100 + 1];
+int d[100 + 1];
+int p[100 + 1];
+
+int find (int i) {
+	return (i == p[i]) ? p[i] : p[i] = find(p[i]);
+}
+
+void unite(int i, int j) {
+	p[find(i)] = find(j);
+}
+
+int main() {
+	int t = nextInt();
+	for (int tt = 0; tt < t; ++tt) {
+		int n = nextInt();
+		int m = nextInt();
+		int k = nextInt();
+		for (int i = 1; i <= n; ++i) {
+			a[i].clear();
+			p[i] = i;
+		}
+		vector<Edge2> e;
+		for (int i = 0; i < m; ++i) {
+			int u = nextInt();
+			int v = nextInt();
+			int c = nextInt();
+			a[u].push_back(Edge(v, c));
+			a[v].push_back(Edge(u, c));
+			if (u <= k && v <= k) {
+				e.push_back(Edge2(u, v, c));
+			}
+		}
+		for (int s = 1; s <= k; ++s) {
+			for (int i = 1; i <= n; ++i) {
+				d[i] = INF;
+				used[i] = false;
+			}
+			d[s] = 0;
+			for (int i = 1; i <= n; ++i) {
+				int v = -1;
+				for (int j = 1; j <= n; ++j) {
+					if (!used[j] && (v == -1 || d[j] < d[v])) {
+						v = j;
+					}
+				}
+				for (int j = 0; j < a[v].size(); ++j) {
+					int to = a[v][j].to;
+					int cost = a[v][j].cost;
+					d[to] = min((ll)d[v] + cost, (ll)d[to]);
+				}
+				used[v] = true;
+			}
+			for (int i = s + 1; i <= k; ++i) {
+				if (d[i] != INF) {
+					e.push_back(Edge2(s, i, d[i]));
+				}
+			}
+		}
+		sort(e.begin(), e.end());
+		ll res = 0;
+		for (int i = 0; i < e.size(); i++) {
+			if (find(e[i].u) != find(e[i].v)) {
+				res += e[i].c;
+				unite(e[i].u, e[i].v);
+			}
+		}
+		printf("%lld\n", res);
+	}
+	return 0;
+}

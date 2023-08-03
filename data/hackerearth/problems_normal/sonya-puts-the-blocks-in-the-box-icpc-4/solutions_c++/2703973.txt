@@ -1,0 +1,61 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+long long arr[105][100005];
+long long sum[105][10000];
+int size[105];
+int n,m;
+long long dp[105][100005];
+
+int main()
+{
+	cin>>n>>m;
+	long long f[105][1005];
+	memset(sum,0,sizeof(sum));
+	for(int i=0;i<n;i++)
+	{
+		cin>>size[i];
+		for(int j=0;j<size[i];j++){
+			cin>>arr[i][j];
+			sum[i][j+1] = sum[i][j]+arr[i][j];
+		}
+	}
+	
+	for(int i=0;i<n;i++){
+		f[i][0] = 0;
+		for(int j=1;j<=m;j++){
+			long long temp = LLONG_MIN;
+			if(j <= size[i]){
+				for(int k=j;k<=size[i];k++){
+					temp = max(temp,sum[i][k]-sum[i][k-j]);
+				}
+			}
+			f[i][j] = max(temp,f[i][j-1]);
+		}
+	}
+	
+	dp[n-1][0] = 0;
+	for(int i=1;i<=m;i++)
+	{
+		dp[n-1][i] = f[n-1][i];
+	}
+	for(int i=n-2;i>=0;i--)
+	{
+		dp[i][0] = 0;
+		for(int j=1;j<=m;j++)
+		{
+			long long temp = LLONG_MIN;
+			dp[i][j] = dp[i+1][j];
+			for(int k=1;k<=j && k<=size[i];k++){
+				dp[i][j] = max(dp[i][j],f[i][k]+dp[i+1][j-k]);
+			}
+		}
+	}
+	
+	long long ans = LLONG_MIN;
+	for(int i=0;i<=m;i++)
+		ans = max(ans,dp[0][i]);
+	cout<<ans<<endl;
+	return 0;
+}

@@ -1,0 +1,135 @@
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+#include <cctype>
+#include <numeric>
+#include <queue>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#define FOR(i,s,e) for(int i=(s);i<(int)(e);i++)
+#define FOE(i,s,e) for(int i=(s);i<=(int)(e);i++)
+#define ALL(x) (x).begin(), (x).end()
+#define CLR(s) memset(s,0,sizeof(s))
+#define PB push_back
+#define EARLY if(found)return;
+using namespace std;
+typedef long long LL;
+typedef pair<int,int> pii;
+typedef map<int,int> mii;
+typedef vector<int> vi;
+#define x first
+#define y second
+
+const int N = 16;
+int x[N], y[N];
+
+int MOD=1e9+7;
+int n;
+bool ok[1<<N];
+int dp[1<<N];
+int vis[1<<N];  // avoid duplicate update
+int ch[1<<N];
+int tran[1<<N];
+int m;
+const int INF = 1<<28;
+
+int t[N][1<<N];
+int sz[N];
+
+int main() {
+        int T; scanf("%d", &T);
+        while (T--) {
+                scanf("%d", &n);
+                FOR(i,0,n) scanf("%d%d",x+i,y+i);
+
+                //if (n==16) --n;
+
+                FOR(i,0,1<<n) ok[i]=0;
+                FOR(i,0,n) sz[i]=0;
+
+                FOR(bit,1,1<<n) {
+                        if((bit&(bit-1))==0) ok[bit]=1;
+                        else {
+                                int i,j;
+                                i=0;   while(!((1<<i)&bit)) ++i;
+//                              i=lo[bit];
+                                j=i+1; while(!((1<<j)&bit)) ++j;
+                                int dx=x[i]-x[j];
+                                int dy=y[i]-y[j];
+                                ok[bit]=1;
+                                FOR(k,0,n)if((1<<k)&bit){
+                                        int dx1=x[k]-x[i];
+                                        int dy1=y[k]-y[i];
+                                        if(dx1*dy!=dx*dy1) ok[bit]=0;
+                                }
+                        }
+                        if(ok[bit]) {
+                                // least significant set bit
+                                int i=0; while(!((1<<i)&bit)) ++i;
+//                              int i=lo[bit];
+                                t[i][sz[i]++]=bit;
+                        }
+                }
+
+                // OPT 1
+                m=0;
+                FOR(bit,1,1<<n) {
+                        FOR(j,0,n) if(!((1<<j)&bit)) if(ok[bit|(1<<j)]) {
+                                ok[bit]=0; break;
+                        }
+                        if(ok[bit]) tran[m++]=bit;
+                }
+
+                // compute minimal steps, to bound DP transition
+                FOR(k,0,1<<n) dp[k]=INF;
+                dp[0]=0;
+                FOR(k,0,1<<n) {
+                        FOR(j,0,m) {
+                                int u=k|tran[j];
+                                dp[u]=min(dp[u],dp[k]+1);
+                        }
+                }
+                int Mn = dp[(1<<n)-1];
+        //      printf("Mn=%d\n", Mn);
+
+                FOR(k,0,1<<n) vis[k]=-1;
+                dp[0]=0; ch[0]=1;
+                FOR(k,1,1<<n) dp[k]=INF;
+
+                int dup=0;
+
+                FOR(q,0,1<<n){
+                //      printf("[%d] = %d (%d)\n", q, dp[q], ch[q]);
+                        if(dp[q]>=Mn) continue; // OPT 2
+                        int i=0; while(((1<<i)&q)) ++i;
+                        int tmp=dp[q]+1;
+                        FOR(j,0,sz[i]) {
+                                int k=q|t[i][j];
+                                if(vis[k]==q) { ++dup; continue; }// avoid duplicate update
+                                vis[k]=q;
+                                if(tmp==dp[k]) {
+                                        ch[k]+=ch[q];
+                                        if(ch[k]>=MOD) ch[k]%=MOD;
+                                }else if(tmp<dp[k]){
+                                        dp[k]=tmp;
+                                        ch[k]=ch[q];
+                                }
+                        }
+                }
+                LL A = dp[(1<<n)-1];
+                LL C = ch[(1<<n)-1];
+//              printf("(%d %d)\n", A, C);
+                FOE(j,2,A) C=(C*j)%MOD;
+                printf("%lld %lld\n", A, C);
+
+//              int CNT=0; FOR(i,0,1<<n) if(dp[i]==A/2) ++CNT; printf("%d\n", CNT);
+//              printf("dup=%d\n", dup);
+        }
+        return 0;
+}

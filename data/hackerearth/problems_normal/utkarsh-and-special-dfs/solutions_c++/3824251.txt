@@ -1,0 +1,218 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <ctype.h>
+#include <deque>
+#include <queue>
+#include <cstring>
+#include <set>
+#include <list>
+#include <map>
+#include <unordered_map>
+#include <stdio.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef std::vector<int> vi;
+typedef std::vector<bool> vb;
+typedef std::vector<string> vs;
+typedef std::vector<double> vd;
+typedef std::vector<long long> vll;
+typedef std::vector<std::vector<int> > vvi;
+typedef std::vector<std::vector<bool> > vvb;
+typedef std::vector<std::pair<int, int> > vpi;
+typedef std::pair<int, int> pi;
+typedef std::pair<ll, ll> pll;
+typedef std::vector<pll> vpll;
+
+const long long mod = 1000000007;
+
+#define all(c) (c).begin(),(c).end()
+#define sz(c) (int)(c).size()
+#define forn(i, a, b) for(int i = a; i < b; i++)
+
+#define pb push_back
+#define mp make_pair
+int n;
+const int gr = 300;
+std::vector<std::vector<int>> ch;
+std::vector<int> par;
+std::vector<std::vector<int>> nb;
+std::vector<std::vector<int>> lvl;
+std::vector<int> v_lvl;
+vi imp;
+vll a;
+vi stepdad;
+vll up;
+vll down;
+
+ll gcd (ll a, ll b, ll & x, ll & y) {
+    if (a == 0) {
+        x = 0; y = 1;
+        return b;
+    }
+    ll x1, y1;
+    ll d = gcd (b%a, a, x1, y1);
+    x = y1 - (b / a) * x1;
+    y = x1;
+    return d;
+}
+
+ll invmod(ll a, ll modulo) {
+    ll x, y;
+    gcd(a, modulo, x, y);
+    return (x+modulo*modulo)%modulo;
+}
+
+void build_imp(int v) {
+    int s = 1;
+    std::deque<int> vert;
+    vert.pb(v);
+    int cur = 0;
+    while(cur < vert.size() && vert.size() + ch[vert[cur]].size() < gr) {
+        for(auto x : ch[vert[cur]]) vert.pb(x);
+        cur++;
+    }
+    forn(i, cur, vert.size()) {
+        imp[vert[i]] = 1;
+        stepdad[vert[i]] = par[v];
+        for (auto u: ch[vert[i]]) {
+            build_imp(u);
+        }
+    }
+}
+
+ll get_down(int v) {
+    if(imp[v]) return down[v];
+    ll ans = 0;
+    for (auto u : ch[v]) ans += get_down(u);
+    ans = ((ans % mod) * a[v] + 1) % mod;
+    return ans;
+}
+
+ll get_up(int v) {
+    if (v == 0) return 1;
+    if (imp[v]) return (up[v] * get_up(stepdad[v])) % mod;
+    ll ans = 1;
+    while (!imp[v]) {
+        ans = (ans * a[v]) % mod;
+        v = par[v];        
+    }
+    return (ans * get_up(v)) % mod;
+}
+
+void update_up(int v, ll x) {
+    if (imp[v]) up[v] = (up[v] * x) % mod;
+    else {
+        for(auto u : ch[v]) update_up(u, x);
+    }
+}
+
+void update_down(int v, ll diff) {
+    int orig = v;
+    while(!imp[v]) {
+        v = par[v];
+        if(!imp[v]) diff = (diff * a[v]) % mod;
+    }
+    while (v != 0) {
+        if(v==orig) down[v] = (down[v] + diff) % mod;
+        else down[v] = (down[v] + diff * a[v]) % mod;
+        diff = (diff * up[v]) % mod;
+        if (v==orig) diff = (diff*invmod(a[v], mod)) % mod;
+        v = stepdad[v];
+    }
+}
+
+int main()
+{
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "rt", stdin);
+    freopen("output.txt", "wt", stdout);
+#endif
+    int q;
+    scanf("%d %d", &n, &q);
+    up.resize(n+1);
+    down.resize(n+1);
+    ch.resize(n+1);
+    par.resize(n+1);
+    nb.resize(n+1);
+    a.resize(n+1);
+    lvl.resize(n+1);
+    stepdad.resize(n+1);
+    v_lvl = move(vi(n+1, 0));
+    int m = 1;
+    par[1] = 0;
+
+    lvl[1].push_back(1);
+    v_lvl[1]=1;
+    for(int i=1;i<n;i++){
+        int u,v;
+        scanf("%d %d", &u, &v);
+        nb[u].push_back(v);
+        nb[v].push_back(u);
+        //xp;
+    }
+    int l=2;
+    
+    while(m<n){
+        for(int k=0; k<lvl[l-1].size(); k++){
+            int v=lvl[l-1][k];
+            for(int h=0; h<nb[v].size();h++){
+                if(v_lvl[nb[v][h]]==0){
+                    v_lvl[nb[v][h]]=l;
+                    lvl[l].push_back(nb[v][h]);
+                    m++;
+                    ch[v].push_back(nb[v][h]);
+                    par[nb[v][h]]=v;
+                }
+            }
+        }
+        l++;
+    }
+    l--;
+    a[0] = 1;
+    std::vector<long long> lsize(l+1);
+    for(int i=1; i<=l;i++) lsize[i]=lvl[i].size();
+    imp = move(vi(n+1, 0));
+    a.resize(n+1);
+    forn(i,1,n+1) scanf("%lld", &a[i]);
+    imp[0] = 1;
+    build_imp(1);
+    for(int lev = l; lev>=1; lev--) {
+        for(auto v: lvl[lev]) {
+            down[v] = 0;
+            for(auto u: ch[v]) down[v]+=down[u];
+            down[v] = ((down[v] % mod) * a[v] + 1) % mod;
+        }
+    }
+
+    for(int lev = 1; lev<=l; lev++) {
+        for(auto v: lvl[lev]) {
+            if (imp[par[v]]) up[v] = a[v];
+            else up[v] = (up[par[v]] * a[v]) % mod;
+        }
+    }
+    
+    forn (i,0,q) {
+        int c, v;
+        scanf("%d %d", &c, &v);
+        if (c == 2) {
+            printf("%lld\n", (((get_up(v) * get_down(v)) % mod) * invmod(a[v], mod)) % mod);
+            continue;
+        }
+        ll x;
+        scanf("%lld", &x);
+        ll t = (invmod(a[v], mod) * x) % mod;
+        ll was = (get_down(v) + mod -1) % mod;
+        ll is = (was * t) % mod;
+        ll diff = (is + mod - was) % mod;
+//        diff = (diff * invmod(x, mod)) % mod;
+        update_down(v, diff);
+        update_up(v, t);
+        a[v] = x;
+    }
+    
+}
+

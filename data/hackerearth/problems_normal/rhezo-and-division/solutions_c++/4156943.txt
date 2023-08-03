@@ -1,0 +1,124 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+void computeLPSArray(string pat, int M, int *lps);
+vector<int> v;
+void KMPSearch(string pat, string txt)
+{
+    int M = pat.length();
+    int N = txt.length();
+ 
+    int lps[1001000];
+    int j  = 0;  
+   
+    computeLPSArray(pat, M, lps);
+ 
+    int i = 0;  // index for txt[]
+    while (i < N)
+    {
+      if (pat[j] == txt[i])
+      {
+        j++;
+        i++;
+      }
+ 
+      if (j == M)
+      {
+        v.push_back(i-j);
+        j = lps[j-1];
+      }
+ 
+      // mismatch after j matches
+      else if (i < N && pat[j] != txt[i])
+      {
+        // Do not match lps[0..lps[j-1]] characters,
+        // they will match anyway
+        if (j != 0)
+         j = lps[j-1];
+        else
+         i = i+1;
+      }
+    }
+    
+}
+ 
+void computeLPSArray(string pat, int M, int *lps)
+{
+    int len = 0;  // length of the previous longest prefix suffix
+    int i;
+ 
+    lps[0] = 0; // lps[0] is always 0
+    i = 1;
+ 
+    // the loop calculates lps[i] for i = 1 to M-1
+    while (i < M)
+    {
+       if (pat[i] == pat[len])
+       {
+         len++;
+         lps[i] = len;
+         i++;
+       }
+       else // (pat[i] != pat[len])
+       {
+         if (len != 0)
+         {
+           // This is tricky. Consider the example 
+           // AAACAAAA and i = 7.
+           len = lps[len-1];
+ 
+           // Also, note that we do not increment i here
+         }
+         else // if (len == 0)
+         {
+           lps[i] = 0;
+           i++;
+         }
+       }
+    }
+}
+
+#define MOD 1000000007
+int dp[2][4][3][2][2]={0};
+#define MAXN 10010
+int Z[2*MAXN];//Z-array as in Z-function
+
+int main(){
+	string p="", t="";
+	cin>>p>>t;
+	int cur=0, prev=1;
+	KMPSearch(p, t);
+//	for(int i=0; i<v.size(); i++)cout<<v[i]<<" ";cout<<endl;
+	for(int i=0; i<(int)v.size(); i++){
+		v[i]++;
+		for(int j=0; j<4; j++)
+		for(int k=0; k<3; k++)
+		for(int l=0; l<2; l++)
+		for(int x=0; x<2; x++)
+			dp[cur][j][k][l][x]=dp[prev][j][k][l][x];
+		
+		int two=0, three=0, five=0, seven=0;
+		if(v[i]%5 == 0)five=1;
+		if(v[i]%7 == 0)seven=1;
+		if(v[i]%8 == 0)two = 3;
+		else if(v[i]%4 == 0)two=2;
+		else if(v[i]%2 == 0)two=1;
+		if(v[i]%9 == 0)three = 2;
+		else if(v[i]%3 == 0)three=1;
+		for(int j=0; j<4; j++)
+		for(int k=0; k<3; k++)
+		for(int l=0; l<2; l++)
+		for(int x=0; x<2; x++){
+			 int ntwo = min(3, two+j);
+			 int nthree = min(2, three+k);
+			 int nfive = min(1, five+l);
+			 int nseven = min(1, seven+x);
+			 dp[cur][ntwo][nthree][nfive][nseven] = (dp[cur][ntwo][nthree][nfive][nseven]+dp[prev][j][k][l][x])%MOD; 
+			 if(!j && !k && !l && !x)
+			 	dp[cur][ntwo][nthree][nfive][nseven]=(dp[cur][ntwo][nthree][nfive][nseven]+1)%MOD;
+		}
+		cur=!cur;prev=!prev;
+	}
+	cout<<dp[prev][3][2][1][1]<<endl;
+	return 0;
+}

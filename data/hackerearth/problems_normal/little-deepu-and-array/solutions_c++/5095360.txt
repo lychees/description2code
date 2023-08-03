@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+#define mp make_pair
+#define mx 100005
+#define pp pair < long int ,long int >
+
+using namespace std;
+
+long int segtree[4*mx],lazy[4*mx];
+int n;
+pp a[mx];
+
+
+void build(int node,int l,int r)
+{
+    if(l==r)
+    {
+        segtree[node] = a[l].first;
+        lazy[node] = 0;
+        return;
+    }
+    int mid = (l+r)/2;
+    build(2*node,l,mid);
+    build(2*node+1,mid+1,r);
+    segtree[node] = min(segtree[2*node],segtree[2*node+1]);
+}
+
+long int query(int lQ,int rQ,int l,int r,long int node)
+{
+    if(lazy[node]!=0)
+    {
+        segtree[node] += lazy[node];
+        if(l!=r)
+        {
+            lazy[2*node] += lazy[node];
+            lazy[2*node+1] += lazy[node];
+        }
+        lazy[node] = 0;
+    }
+
+    if(rQ<l||lQ>r)
+        return INT_MAX;
+
+    if(lQ<=l&&rQ>=r)
+        return segtree[node];
+
+    int mid = (l+r)/2;
+    return min(query(lQ,rQ,l,mid,2*node),query(lQ,rQ,mid+1,r,2*node+1));
+}
+
+void update(long int node,int l,int r,long int x)
+{
+    if(lazy[node]!=0)
+    {
+        segtree[node] += lazy[node];
+        if(l!=r)
+        {
+            lazy[2*node] += lazy[node];
+            lazy[2*node+1] += lazy[node];
+        }
+        lazy[node] = 0;
+    }
+
+    if(segtree[node]>x)
+    {
+        segtree[node] -= 1;
+        if(l!=r)
+        {
+            lazy[2*node] -= 1;
+            lazy[2*node+1] -= 1;
+        }
+        return; // do not update further children
+    }
+
+    if(l==r)
+        return;
+
+    int mid = (l+r)/2;
+    update(2*node,l,mid,x);
+    update(2*node+1,mid+1,r,x);
+    segtree[node] = min(segtree[2*node],segtree[2*node+1]);
+}
+
+
+int main()
+{
+    cin>>n;
+    for(int i=0;i<n;i++)
+    {
+        long int x;
+        cin>>x;
+        a[i] = mp(x,i);
+    }
+    sort(a,a+n);
+    build(1,0,n-1);
+
+    int m;
+    cin>>m;
+    for(int i=0;i<m;i++)
+    {
+        long int x;
+        cin>>x;
+        update(1,0,n-1,x);
+    }
+
+    for(int i=0;i<n;i++)
+    {
+        long int t = query(i,i,0,n-1,1);
+        a[i].first = t;
+        swap(a[i].first,a[i].second);
+    }
+    sort(a,a+n);
+    for(int i=0;i<n;i++)
+        cout<<a[i].second<<" ";
+    cout<<endl;
+    return 0;
+}

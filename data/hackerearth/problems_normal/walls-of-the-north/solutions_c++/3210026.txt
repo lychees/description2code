@@ -1,0 +1,48 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+void set(int p, int val, vector<int>& v) {
+    ++p;
+    while (p < v.size()) {
+        v[p] = max(v[p], val);
+        p = p * 2 - (p & (p - 1));
+    }
+}
+
+int get(int p, vector<int>& v) {
+    int res = 0;
+    ++p;
+    while (p) {
+        res = max(res, v[p]);
+        p &= p - 1;
+    }
+    return res;
+}
+
+void solve() {
+    int n; cin >> n;
+    vector<int> h(n); for (int i = 0; i < n; ++i) cin >> h[i];
+    vector<int> a = h; sort(a.begin(), a.end()); a.resize(unique(a.begin(), a.end()) - a.begin());
+    for (int i = 0; i < n; ++i) h[i] = lower_bound(a.begin(), a.end(), h[i]) - a.begin();
+    
+    vector<int> inc(n + 2), dec(n + 2);
+    for (int i = 0; i < n; ++i) {
+        int a = get(h[i], dec);
+        int b = get(n - h[i], inc);
+        set(n - h[i], 1 + a, inc);
+        set(h[i], 1 + b, dec);
+    }
+    cout << max(get(n, inc), get(n, dec)) << endl;
+}
+
+int main() {
+    int t;
+    cin >> t;
+    while (t --> 0)
+        solve();
+    return 0;
+}

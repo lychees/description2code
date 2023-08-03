@@ -1,0 +1,123 @@
+/**
+**/
+/**
+Author : Sabariram
+**/
+#include <iostream>
+#include<cstring>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+#define localTest 0
+#define ll long long
+#define MEMSET(a,v)  memset(a,v,sizeof(a))
+#if localTest
+#include<string.h>
+#endif // localTest
+
+#define MAX 2010
+
+ll dp[4][MAX][MAX];
+
+bool inp[MAX][MAX];
+
+vector<ll> fList[MAX];
+
+int BITree[MAX];
+ll temp,pos, mHeight,n,m,ans;
+
+int getSum(int i)
+{
+    int sum = 0;
+    for(;i>0; i -= (i &(-i)))
+        sum += BITree[i];
+    return sum;
+}
+void update(int i, int val, int limit)
+{
+    for(;i<=limit; i += (i &(-i)))
+        BITree[i] += val;
+}
+
+void countFrame(int j, int k)
+{
+    if(inp[j][k])
+    {
+        temp = min(dp[0][j][k],dp[2][j][k]);
+        ans += (getSum(pos)-getSum(pos-temp-1));
+        temp = min(dp[1][j][k],dp[3][j][k]);
+        fList[pos+temp-1].push_back(pos);
+        update(pos,1,mHeight);
+    }
+    for(int l = 0;l<fList[pos].size();l++)
+        update(fList[pos][l],-1,mHeight);
+}
+
+void clearDS()
+{
+    pos = 1;
+    MEMSET(BITree,0);
+    for(int i=0;i<MAX;i++)
+        fList[i].clear();
+}
+
+int main()
+{
+    #if localTest
+    char file[10];
+    cin>>file;
+    strcat(file,".txt");
+    fclose(stdin);
+    freopen(file,"r",stdin);
+    #endif // localTest
+    char ch;
+    cin>>n>>m;
+    ans = 0;
+    for(int i=1;i<=n;i++)
+        for(int j=1;j<=m;j++)
+        {
+            while(ch = getchar(),ch!='0' && ch != '1');
+            if(ch == '0')
+            {
+                inp[i][j] = true;
+                ans++;
+            }
+            else
+                inp[i][j] = false;
+        }
+    MEMSET(dp,0);
+    for(int i=1;i<=n;i++)
+        for(int j=1;j<=m;j++)
+        {
+            if(inp[i][j])
+            {
+                dp[0][i][j] = dp[0][i][j-1]+1;
+                dp[2][i][j] = dp[2][i-1][j]+1;
+            }
+        }
+    for(int i=n;i>0;i--)
+        for(int j=m;j>0;j--)
+        {
+            if(inp[i][j])
+            {
+                dp[1][i][j] = dp[1][i][j+1]+1;
+                dp[3][i][j] = dp[3][i+1][j]+1;
+            }
+        }
+    mHeight = min(m,n);
+    for(int i = 1;i<=n;i++)
+    {
+        clearDS();
+        for(int j=i, k = 1;j<=n&&k<=m;j++,k++,pos++)
+            countFrame(j,k);
+    }
+    for(int i = 2;i<=m;i++)
+    {
+        clearDS();
+        for(int j=1, k = i;j<=n&&k<=m;j++,k++,pos++)
+            countFrame(j,k);
+    }
+    cout<<ans<<endl;
+    return 0;
+}

@@ -1,0 +1,124 @@
+//
+//  main.cpp
+//  ChemicalReactionHE
+//
+//  Created by Shashank Shekhar on 16/08/16.
+//  Copyright © 2016 Shashank Shekhar. All rights reserved.
+//
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <climits>
+#include <unordered_map>
+#include <map>
+#include <set>
+#include <queue>
+#include <cstring>
+#include <sstream>
+#include <iterator>
+#include <stack>
+#define minInt INT_MIN
+#define maxInt INT_MAX
+#define umaxInt UINT_MAX
+#define llminInt LLONG_MIN
+#define llmaxInt LLONG_MAX
+#define MOD 1000000007
+#define mp(a, b) make_pair(a, b)
+#define pb(a) push_back(a)
+#define fr(i,a,N) for (int i =a;i<N;i++)
+#define fre(i,a,N) for (int i =a;i<=N;i++)
+#define lli long long int
+#define ulli  unsigned long long int
+#define ui unsigned int
+#define pii pair<int,int>
+#define vi vector<int>
+#define vpii vector<pair<int,int>>
+using namespace std;
+int seg[2000000];
+void constr(int n,int l,int r) {
+    if (l==r) {
+        seg[n] = 1;
+        return;
+    }
+    int mid  = (l+r) >>1;
+    constr(2*n,l,mid);
+    constr(2*n+1,mid+1,r);
+    seg[n] = seg[2*n] + seg[2*n+1];
+}
+int q(int n,int l,int r,int x) {
+    if (l==r)
+        return l;
+    int mid = (l+r) >>1,ll = n<<1,rr = ll+1;
+    int lsm = seg[ll];
+    if (lsm>=x ) return q(ll,l,mid,x);
+    else return q(rr,mid+1,r,x- lsm);
+    
+}
+//void print () {
+//    fre (i,1,20)
+//    cout << seg[i] << " ";
+//    cout << "\n";
+//}
+void ins(int id,int l,int r,int ret,int val) {
+    if(l==r) {
+        seg[id]+=val;
+        return;
+    }
+    int mid=(l+r)>>1,lft=(id<<1),rgt=lft+1;
+    if(ret<=mid) ins(lft,l,mid,ret,val);
+    else ins(rgt,mid+1,r,ret,val);
+    seg[id]=seg[lft]+seg[rgt];
+}
+int main(int argc, const char * argv[]) {
+    // insert code here...
+    int t,n,val;
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    cout.tie(0);
+    string ele,e1,op;
+    cin >>t;
+    while (t--) {
+        cin >>n;
+        constr(1,1,n);
+        vector<pair<string,int>>ar(n+1);
+        vector<pair<string,int>>::iterator ir;
+        //        vi ord(n-1);
+        fre(i,1,n) {
+            cin >> ele;
+            ar[i] = mp(ele,0);
+        }
+        fre(i,1,n) {
+            cin >> val;
+            ar[i].second= val;;
+        }
+        int sm =minInt;
+        fre(i,1,n-1) {
+            cin >> val;
+            int ret = q(1,1,n,val);
+            ins(1,1,n,ret,-1);
+            sm = max(sm,ar[ret].second);
+            cout << ar[ret].first << " " << sm << endl;
+        }
+        int ret = q(1,1,n,1);
+        ins(1,1,n,ret,-1);
+        sm = max(sm,ar[ret].second);
+        cout << ar[ret].first << " " << sm << endl;
+        
+    }
+        return 0;
+}
+
+/*
+ vector<pair<string,int>>ar(n+1);
+ vector<pair<string,int>>::iterator ir;
+ //        vi ord(n-1);
+ fre(i,1,n) {
+ cin >> ele;
+ ar[i] = mp(ele,0);
+ }
+ fre(i,1,n) {
+ cin >> val;
+ ar[i].second= val;;
+ }
+ */

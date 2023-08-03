@@ -1,0 +1,107 @@
+//Program: b
+//Author: gary
+//Date: 18/10/2014
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <string>
+#include <algorithm>
+using namespace std;
+#define SZ(x) ( (int) (x).size() )
+#define dbg(x) cerr << #x << " = " << x << endl;
+#define mp make_pair
+#define pb push_back
+#define fi first
+#define se second
+typedef long long ll;
+typedef pair<int, int> pii;
+// const int INF = 1e9;
+// const int MAX_N = ;
+
+ll dp[19][1 << 4][2];
+int S[19], c;
+
+int xormask[] = {-1,  // 
+		 0,   // 2^0 * 3^0 * 5^0 * 7^0
+		 1,   // 2^1 * 3^0 * 5^0 * 7^0
+		 2,   // 2^0 * 3^1 * 5^0 * 7^0
+		 0,   // 2^2 * 3^0 * 5^0 * 7^0
+		 4,   // 5^1
+		 3,   // 2 * 3
+		 8,   // 7
+		 1,   // 2^3
+		 0   // 3^2
+};
+// f = true, we already got T[i] < S[i] somewhere 
+ll rec(int n, int mask, int f){
+  if(n == -1){
+    return mask == 0;
+  }
+
+  ll& ans = dp[n][mask][f];
+  if(ans != -1)
+    return ans;
+  ans = 0;
+  int m = (f ? 9 : S[n]);
+  for(int i = 1; i <= m; i++){
+    ans += rec(n - 1, mask ^ xormask[i], f || (i < m));
+  }
+  return ans;
+}
+
+ll func(ll n){
+  c = 0;
+  while(n > 0){
+    S[c++] = n % 10;
+    n /= 10;
+  }
+  memset(dp, -1, sizeof dp);
+  ll ans = 0, r;
+  for(int i = 0; i < c; i++){
+    r = rec(i, 0, i < c - 1);
+    ans += r;
+  }
+  return ans;
+}
+
+bool good(int x){
+  int m = 0;
+  while(x > 0){
+    if(x % 10 == 0)
+      return 0;
+    m ^= xormask[x % 10];
+    x /= 10;
+  }
+  return m == 0;
+}
+
+int main(){
+  int T, K;
+  ll A, B;
+  scanf("%d", &T);
+  while(T--){
+    scanf("%lld%lld%d", &A, &B, &K);
+
+    ll be = func(A - 1);
+    ll lo = A, hi = B;
+    while(lo < hi){
+      ll mid = (lo + hi) / 2;
+      if(func(mid) - be < K){
+	lo = mid + 1;
+      } else {
+	hi = mid;
+      }
+    }
+    if(lo > B || func(lo) - be != K){
+      lo = -1;
+    }
+    printf("%lld\n", lo);
+  }
+  return 0;
+}

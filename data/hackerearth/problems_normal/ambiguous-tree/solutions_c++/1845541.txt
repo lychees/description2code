@@ -1,0 +1,125 @@
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <climits>
+#include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+#include <cctype>
+#include <utility>
+#include <queue>
+#include <cmath>
+using namespace std;
+
+typedef pair<int, int> pii;
+typedef long long LL;
+typedef vector<int> vi;
+typedef vector<pii> vpii;
+
+#define pb push_back
+
+#define X first
+#define Y second
+
+#define N 100005
+
+int dp[N], par[N], low[N], q[N * 2], qid[N], sz[N], f[N][20], up[N], id[N], R[2 * N][20], bit[4 * N];
+int T, qn;
+
+LL C(int t) {
+	return 1LL * t * (t - 1) / 2;
+}
+
+vector<int> adj[N];
+LL sum[N];
+
+void DFS(int u, int p, int d) {
+    int i, v;
+    dp[u] = d, par[u] = p, low[u] = ++T, q[qn] = id[T] = u, qid[u] = qn++, sz[u] = 1;
+    f[u][0] = p;
+    for (i = 1; i <= 17; i++) f[u][i] = f[f[u][i - 1]][i - 1];
+    for (i = adj[u].size() - 1; i >= 0; i--) {
+        v = adj[u][i];
+        if (!low[v]) {
+			DFS(v, u, d + 1), q[qn++] = u;
+			sz[u] += sz[v];
+		}
+    }
+    up[u] = T;
+}
+
+void build() {
+    DFS(1, 0, 0);
+    int i, j, k, u, v;
+    for (i = 0; i < qn; i++) R[i][0] = q[i];
+    for (j = i = 0; i < qn; i++) {
+        if (i == (1 << j)) bit[i] = j++;
+        else bit[i] = j - 1;
+    }
+    for (k = j = 1; j * 2 <= qn; j <<= 1, k++)
+        for (i = 0; i < qn; i++) {
+            u = R[i][k] = R[i][k - 1];
+            if (i + j < qn) {
+                v = R[i + j][k - 1];
+                if (dp[u] > dp[v]) R[i][k] = v;
+            }
+        }
+}
+
+int LCA(int u, int v) {
+    if (u == v) return u;
+    int x(qid[u]), y(qid[v]), d(abs(x - y) + 1), D(bit[d]);
+    if (x > y) swap(x, y);
+    int p(R[x][D]), q(R[y - (1 << D) + 1][D]);
+    return (dp[p] > dp[q]) ? q : p;
+}
+
+int getf(int u, int d) {
+	int i;
+	for (i = 17; i >= 0; i--) {
+		if ((1 << i) <= d) u = f[u][i], d -= 1 << i;
+	}
+	return u;
+}
+
+int main() {
+	int n, m, i, u, v, w, x, y, d;
+	LL ans;
+
+	scanf("%d", &n);
+
+	sz[0] = n;
+	for (i = 1; i < n; i++) {
+		scanf("%d%d", &u, &v);
+		adj[u].pb(v), adj[v].pb(u);
+	}
+
+	DFS(1, 0, 0);
+	build();
+
+	sum[0] = C(n);
+	for (i = 1; i <= n; i++) {
+		u = id[i], v = par[u];
+		sum[u] = sum[v] - 1LL * (sz[v] - sz[u]) * sz[u];
+	}
+
+	for (scanf("%d", &m); m--; ) {
+		scanf("%d%d", &u, &v);
+		w = LCA(u, v);
+		d = dp[u] - dp[w];
+		if (d > 0) x = sz[getf(u, d - 1)];
+		else x = 0;
+		d = dp[v] - dp[w];
+		if (d > 0) y = sz[getf(v, d - 1)];
+		else y = 0;
+		ans = sum[u] + sum[v] - 2 * sum[w] + 2 * C(sz[w]) - C(sz[w] - x) - C(sz[w] - y) + C(n - x - y);
+		ans = C(n) - ans;
+		printf("%lld\n", ans);
+	}
+
+	return 0;
+}

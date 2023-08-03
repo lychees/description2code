@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+using ll = long long;
+
+constexpr int maxk = 110;
+
+int n, k;
+
+vector<vector<int>> vec;
+vector<int> sub_sz, cost;
+
+vector<array<int, maxk>> dp;
+
+void rem_father(const int cur){
+	for(const auto next : vec[cur]){
+		vec[next].erase(find(begin(vec[next]), end(vec[next]), cur));
+		rem_father(next); } }
+
+void do_sub_sz(const int cur){
+	sub_sz[cur] = cost[cur];
+	for(const auto next : vec[cur]){
+		do_sub_sz(next);
+		sub_sz[cur] += sub_sz[next]; } }
+
+constexpr int mod = 1e9 + 7;
+
+array<int, maxk> combine(
+	const array<int, maxk>& a, const int n,
+	const array<int, maxk>& b, const int m){
+	array<int, maxk> rez = {};
+	for(int i = 0; i <= k && i <= n; ++i){
+		for(int j = 0; i+j <= k && j <= m; ++j){
+			rez[i+j] += ((ll)a[i] * (ll)b[j]) % mod;
+			rez[i+j] %= mod; } }
+
+	return rez; }
+
+void do_dp(const int cur){
+	for(const auto next : vec[cur]){
+		do_dp(next); }
+
+	dp[cur][cost[cur]] = 1;
+	int n_cur = 1;
+
+	for(const auto next : vec[cur]){
+		++dp[next][0];
+
+		dp[cur] = combine(dp[cur], n_cur, dp[next], sub_sz[next]);
+		n_cur += sub_sz[next];
+
+		--dp[next][0]; } }
+
+int get_rez(){
+	int rez = 0;
+
+	for(const auto& x : dp){
+		rez += x[k];
+		if(rez >= mod){
+			rez -= mod; } }
+
+	return rez; }
+
+void do_test(){
+	cin >> n >> k;
+
+	vec.resize(n), dp.resize(n), sub_sz.resize(n), cost.resize(n);
+	for(auto& x : cost){
+		cin >> x; }
+
+	for(int i = 0, x, y; i < n-1; ++i){
+		cin >> x >> y;
+		--x, --y;
+		vec[x].push_back(y);
+		vec[y].push_back(x); }
+
+	rem_father(0);
+	do_sub_sz(0);
+	do_dp(0);
+	cout << get_rez() << '\n';
+
+	vec.clear(), dp.clear(), sub_sz.clear(), cost.clear(); }
+
+int main(){
+	int t;
+	cin >> t;
+	while(t--){
+		do_test(); }
+
+	return 0; }

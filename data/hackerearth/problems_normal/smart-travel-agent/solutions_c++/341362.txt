@@ -1,0 +1,140 @@
+#include<iostream>
+#include<cstdio>
+#include<cstdlib>
+#include<cstring>
+#include<climits>
+#include<cmath>
+#include<algorithm>
+
+#include<vector>
+#include<string>
+#include<queue>
+#include<utility>
+#include<list>
+#include<map>
+
+#define lli long long int
+#define li long int
+#define si(i) scanf("%d",&i)
+#define slli(i) scanf("%lld",&i)
+#define rep(i,a,b) for(i=a,i<b;i++)
+#define repi(i,a,b) for(i=a;i>=b;i--)
+
+#ifndef ONLINE_JUDGE
+    #define gc getchar
+#else
+    #define gc getchar_unlocked
+#endif
+
+#define MOD 1000000007
+#define DIFF 1e-9
+
+using namespace std;
+/**************************************/
+
+typedef struct edge
+{
+	int st, ed, weight;
+}edge;
+
+edge stack[10001];
+int top;
+
+vector<int> *adj;
+
+int W[101][101], N, path[1010];
+
+int max_of_min=INT_MIN, curr_min, cnt;
+
+bool found;
+
+void update()
+{
+	int st, ed;
+	curr_min=INT_MAX;
+	for(int i=0;i<top;i++)
+	{
+		if(stack[i].weight<curr_min)
+		{
+			curr_min=stack[i].weight;
+			st=stack[i].st;
+			ed=stack[i].ed;
+		}
+	}
+	cnt=top;
+	if(max_of_min<curr_min)
+	{
+		max_of_min=curr_min;
+		for(int i=1;i<=top;i++)
+			path[i]=stack[i-1].st;
+		path[0]=cnt+2;
+		path[cnt+1]=stack[top-1].ed;
+	}
+	W[st][ed]=W[ed][st]=0;
+}
+void DFS_Util(int v, int w, bool* visited)
+{
+	if(!found)
+	{
+		visited[v]=true;
+		if(v==w)
+		{
+			//stack[top++]=v;
+			update();
+			found=1;
+			return;
+		}
+ 
+		vector<int>::iterator i;
+ 
+		for(i=adj[v].begin();i!=adj[v].end();++i)
+		{
+			if(!visited[*i] && W[v][*i]!=0)
+			{
+				stack[top].st=v;
+				stack[top].ed=*i;
+				stack[top++].weight=W[v][*i];
+				DFS_Util(*i,w,visited);
+				top--;
+			}
+		}
+	}
+}
+
+void DFS(int v, int w)
+{
+	bool *visited=(bool*)calloc(N+1,sizeof(bool));
+	found=0;
+	top=0;
+	DFS_Util(v,w,visited);
+	free(visited);
+}
+
+int main()
+{
+	int N, R, S, D, T, i, ans;
+	scanf("%d %d",&N,&R);
+	adj=new vector<int>[N+1];
+	while(R--)
+	{
+		scanf("%d %d %d",&S,&D,&T);
+		W[S][D]=W[D][S]=T;
+		adj[S].push_back(D);
+		adj[D].push_back(S);
+	}
+	scanf("%d %d %d",&S,&D,&T);
+	cnt=1;
+
+	while(cnt!=0)
+	{
+		cnt=0;
+		DFS(S,D);
+	}
+
+	max_of_min--;
+	ans=ceil((double)T/max_of_min);
+	for(i=1;i<path[0];i++)
+		printf("%d ",path[i]);
+	printf("\n%d\n",ans);
+	return 0;
+}

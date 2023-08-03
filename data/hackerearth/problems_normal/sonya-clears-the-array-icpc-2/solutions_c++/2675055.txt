@@ -1,0 +1,93 @@
+#include<cstdio>
+#include<cstring>
+#include<cctype>
+#include<cmath>
+#include<cstdlib>
+
+#include<iostream>
+#include<string>
+#include<algorithm>
+#include<vector>
+#include<stack>
+#include<queue>
+#include<set>
+using namespace std;
+
+#define ll long long
+#define MX 1000500
+
+int dp[505][505];
+int arr[MX];
+int flag[MX];
+int next1[MX];
+int prev1[MX];
+
+void sieve() {
+    flag[0] = 1;
+    flag[1] = 1;
+    for(int i = 4; i < MX; i+=2) flag[i] = 1;
+    for(ll i = 3; i < MX; i+=2) {
+        if(flag[i] == 1) continue;
+        for(ll j = i*i; j < MX; j+=i*2)
+            flag[j] = 1;
+    }
+    for(int i = MX-2; i >= 0; i--) {
+        next1[i] = next1[i+1];
+        if(flag[i] == 0) next1[i] = i;
+    }
+    prev1[0] = 2;
+    for(int i = 1; i < MX; i++) {
+        prev1[i] = prev1[i-1];
+        if(flag[i-1] == 0) prev1[i] = i-1;
+    }
+    //for(int i = 0; i < 100; i++)
+        //printf("%d %d %d\n", prev1[i], i, next1[i]);
+
+}
+
+int calc(int a, int b)
+{
+    //printf("%d %d\n", a, b);
+    int cost = 0;
+    if(a > b){
+        cost = a+1-b;
+        b = a+1;
+    };
+    int x = prev1[b];
+    int y = next1[b];
+    //printf("%d %d %d %d\n", a, b, x, y);
+    if(x < y && x >= a)
+        return x-a+y-b+cost;
+    x = next1[b];
+    y = next1[x+1];
+    //printf("2nd %d %d %d %d\n", a, b, x, y);
+    return x-a+y-b+cost;
+}
+
+int func(int i, int j)
+{
+    if(i > j) return 0;
+    if(i == j) return 1000000000;
+    int & res = dp[i][j];
+    if(res != -1) return res;
+    res = 1000000000;
+    for(int k = i+1; k <= j; k++)
+    {
+        res = min(res, func(i+1,k-1)+func(k+1,j)+ calc(arr[i], arr[k]));
+    }
+    return res;
+}
+
+int main() {
+    sieve();
+    int n;
+    while(scanf("%d", &n) == 1)
+    {
+        for(int i = 0; i < n; i++)
+            scanf("%d", &arr[i]);
+        memset(dp,-1,sizeof dp);
+        printf("%d\n", func(0,n-1)+n/2);
+    }
+    return 0;
+}
+

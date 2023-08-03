@@ -1,0 +1,98 @@
+    #include<bits/stdc++.h>
+    using namespace std;
+    #define ll long long
+    #define rep(i,j,n) for(ll i=j;i<=n;++i)
+    #define vi vector<int>
+    #define pii pair<int,int>
+    #define vpii vector<pii>
+    #define pb push_back
+    #define mp make_pair
+    #define mod 1000000007
+    #define MAX 1000001
+    bool prime[MAX];
+    ll tree[4*MAX],arr[MAX];
+    void primegen()
+    {
+    //	memset(prime,true,sizeof(prime));
+    	for(ll i=2;i*i<=MAX;++i)
+    	{
+    		if(prime[i])
+    		{
+    		    //cout<<i<<endl;
+    			for(ll j=i+i;j<=MAX;j+=i) prime[j]=false;
+    		}
+    	}
+    }
+     
+    void build(ll pos,ll left,ll right)
+    {
+    	if(left==right)
+    	{if(prime[arr[left]])
+    	tree[pos]=1;
+    	return;
+    	}else
+    	{
+    		ll mid=(left+right)/2;
+    		build(2*pos,left,mid);
+    		build(2*pos+1,mid+1,right);
+    		tree[pos] = tree[pos*2] + tree[pos*2+1];
+    	}
+    }
+     
+    void update(ll pos,ll left,ll right,ll idx,ll val)
+    {
+    	if(left==right)
+    	{
+    		arr[idx]=val;
+    		tree[pos]=prime[arr[idx]]?1:0;
+    		return;
+    	}
+    	ll mid=(left+right)/2;
+    	if(left<=idx && idx<=mid) update(2*pos,left,mid,idx,val);
+    	if(mid<idx && idx<=right) update(2*pos+1,mid+1,right,idx,val);
+    	tree[pos] = tree[2*pos]+tree[2*pos+1];
+    }
+     
+    ll query(ll pos,ll left,ll right,ll start,ll end)
+    {
+    	if(start>right || end<left) return 0;
+    	if(left==start && right == end) return tree[pos];
+    	ll mid=(left+right)/2;
+    	if(start>mid) return query(2*pos+1,mid+1,right,start,end);
+    	if(end<=mid) return query(2*pos,left,mid,start,end);
+     
+    	return query(2*pos,left,mid,start,mid)+query(2*pos+1,mid+1,right,mid+1,end);
+    }
+     
+    int main()
+    {
+        ios::sync_with_stdio(false);
+        memset(prime,true,sizeof(prime));
+        primegen();
+        //rep(i,2,30) if(prime[i]) cout<<i<<endl;
+        prime[0]=prime[1]=false;
+        ll t,n;
+        cin>>t;
+        while(t--)
+        {
+        	cin>>n;
+        	memset(arr,0,sizeof(arr));
+        	memset(tree,0,sizeof(tree));
+        	rep(i,1,n) cin>>arr[i];
+        	build(1,1,n);
+        	ll q;
+        	cin>>q;
+        	while(q--)
+        	{
+        		char ch;
+        		ll start,en;
+        		cin>>ch>>start>>en;
+        		if(ch=='A')
+        		cout<<query(1,1,n,start,en)<<endl;
+        		else
+        		update(1,1,n,start,en);
+        	}
+        }
+     
+        return 0;
+    }

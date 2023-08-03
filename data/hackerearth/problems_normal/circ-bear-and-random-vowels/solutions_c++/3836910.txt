@@ -1,0 +1,126 @@
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+#include <climits>
+#include <cctype>
+#include <utility>
+#include <queue>
+#include <cmath>
+#include <complex>
+using namespace std;
+
+typedef long long LL;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+typedef vector<PII> VPII;
+typedef pair<LL, LL> PLL;
+typedef pair<int, LL> PIL;
+typedef pair<LL, int> PLI;
+typedef double DB;
+
+#define pb push_back
+#define mset(a, b) memset(a, b, sizeof a)
+#define all(x) (x).begin(), (x).end()
+#define bit(x) (1 << (x))
+#define bitl(x) (1LL << (x))
+#define sqr(x) ((x) * (x))
+#define sz(x) ((int)(x.size()))
+#define cnti(x) (__builtin_popcount(x))
+#define cntl(x) (__builtin_popcountll(x))
+#define clzi(x) (__builtin_clz(x))
+#define clzl(x) (__builtin_clzll(x))
+#define ctzi(x) (__builtin_ctz(x))
+#define ctzl(x) (__builtin_ctzll(x))
+
+#define X first
+#define Y second
+
+#define Error(x) cout << #x << " = " << x << endl
+
+template <typename T, typename U> 
+inline void chkmax(T& x, U y) {
+	if (x < y) x = y;
+}
+
+template <typename T, typename U>
+inline void chkmin(T& x, U y) {
+	if (y < x) x = y;
+}
+
+const int MOD = 1e9 + 7;
+const int MAXN = 3333;
+
+const char vowels[] = "aeiouy";
+
+void add(int &x, int y) {
+	x += y;
+	if (x >= MOD) x -= MOD;
+}
+
+int C[MAXN][MAXN];
+int dp[2][7][MAXN];
+int cnt[MAXN];
+
+char s[MAXN];
+
+int main() {
+	
+	int n, m;
+	scanf("%d%d%s", &n, &m, s);
+	for (int i = 0; i <= n; i++) {
+		C[i][0] = C[i][i] = 1;
+		for (int j = 1; j < i; j++) {
+			C[i][j] = (C[i-1][j] + C[i-1][j-1]) % MOD;
+		}
+	}
+	int ans = C[n][m], now = 0;
+	dp[0][0][0] = 1;
+	for (int i = 0; i < n; i++) {
+		now ^= 1;
+		int flg = 1;
+		for (int j = 0; j < 6; j++) {
+			if (s[i] == vowels[j]) {
+				flg = 0;
+				break;
+			}
+		}
+		cnt[i+1] = cnt[i] + (!flg);
+		for (int j = 0; j <= i+1; j++) {
+			for (int k = 0; k < 7; k++) {
+				dp[now][k][j] = 0;
+			}
+		}
+		for (int j = 0; j <= i; j++) {
+			for (int x = 0; x < 7; x++) {
+				if (dp[!now][x][j]) {
+					int y = ((x&3)<<1) | flg;
+					if (y < 7) {
+						add(dp[now][y][j+(!flg)], dp[!now][x][j]);
+					}
+					if (flg) {
+						int z = (x&3)<<1;
+						add(dp[now][z][j+1], dp[!now][x][j]);
+					}
+				}
+			}
+		}
+	}
+	for (int i = max(m, max(cnt[n], (n+1)/2)); i <= min(m + cnt[n], n); i++) {
+		int sum = 0;
+		for (int j = 0; j < 7; j++) {
+			sum = (sum + dp[now][j][i]) % MOD;
+		}
+		sum = (LL)sum * C[cnt[n]][m-i+cnt[n]] % MOD;
+		ans = (ans + MOD - sum) % MOD;
+	}
+	cout << ans << endl;
+	return 0;
+}
+

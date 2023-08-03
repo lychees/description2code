@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define mp make_pair
+#define pb push_back
+
+typedef long long ll;
+typedef pair<int, int> pii;
+
+const int MAXN = 100100;
+const int MAXM = 2 * MAXN;
+const ll INF = 1e15;
+
+int n, m, s;
+int k[MAXN];
+int to[MAXM], nxt[MAXM], w[MAXM], head[MAXN], E;
+ll d[MAXN];
+struct cmp {
+  bool operator()(int a, int b) {
+    if (d[a] != d[b]) return d[a] < d[b];
+    return a < b;
+  }
+};
+set<int, cmp> q;
+
+void addEdge(int a, int b, int c) {
+  to[E] = b; w[E] = c; nxt[E] = head[a]; head[a] = E++;
+  to[E] = a; w[E] = c; nxt[E] = head[b]; head[b] = E++;
+}
+
+void dijkstra(int s) {
+  for (int i = 1; i <= n; ++i) {
+    d[i] = INF;
+  }
+  d[s] = 0;
+  q.insert(s);
+  while (!q.empty()) {
+    int v = *q.begin();
+    q.erase(q.begin());
+    for (int id = head[v]; ~id; id = nxt[id]) {
+      if (d[to[id]] > d[v] + w[id]) {
+        q.erase(to[id]);
+        d[to[id]] = d[v] + w[id];
+        q.insert(to[id]);
+      }
+    }
+  }
+}
+
+int main() {
+#ifdef LOCAL
+  freopen("input.txt", "r", stdin);
+#endif
+  memset(head, 0xff, sizeof head);
+  scanf("%d%d%d", &n, &m, &s);
+  for (int i = 1; i <= n; ++i) {
+    scanf("%d", k + i);
+  }
+  for (int i = 1, a, b, c; i <= m; ++i) {
+    scanf("%d%d%d", &a, &b, &c);
+    addEdge(a, b, c);
+  }
+  dijkstra(s);
+  int nn = 0;
+  ll sumk = 0, sumdk = 0;
+  for (int i = 1; i <= n; ++i) {
+    if (d[i] < INF) {
+      sumk += k[i];
+      sumdk += d[i] * k[i];
+      ++nn;
+    }
+  }
+  for (int i = 1; i <= n; ++i) {
+    if (d[i] == INF) {
+      printf("0 ");
+    } else {
+      printf("%lld ", d[i] * sumk + sumdk - 2 * d[i] * k[i]);
+    }
+  }
+  return 0;
+}

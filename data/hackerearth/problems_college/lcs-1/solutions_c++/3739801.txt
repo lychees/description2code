@@ -1,0 +1,135 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MOD = 1e9 + 7;
+const int N = 5e5 + 7;
+const int LG = 20;
+const int CT = 1e6 + 7;
+
+typedef long long ll;
+
+#define rank df1
+
+set<int> st[N];
+int ans[N];
+int par[N];
+bool ok[N];
+int col[N];
+string s;
+int rank[LG][N];
+int n, m, q;
+pair<pair<int, int>, int> tmp[N];
+pair<int, int> e[N];
+
+int lcp(int x, int y)
+{
+	if (x == y)
+		return n - x;
+	int ans = 0;
+	for (int i=LG-1; i>=0 && x < n && y < n; i--)
+		if (rank[i][x] == rank[i][y])
+		{
+			x += 1 << i;
+			y += 1 << i;
+			ans |= 1 << i;
+		}
+	return ans;
+}
+
+int root(int v)
+{
+	return par[v] == -1 ? v : par[v] = root(par[v]);
+}
+
+void merge(int v, int u, int val)
+{
+	v = root(v);
+	u = root(u);
+	if (v == u)
+		return;
+	if (st[u].size() <= st[v].size())
+		swap(u, v);
+	ok[u] |= ok[v];
+	if (ok[u])
+	{
+		while (!st[u].empty())
+		{
+			int x = *st[u].begin();
+			st[u].erase(st[u].begin());
+			ans[x] = max(ans[x], val);
+		}
+		while (!st[v].empty())
+		{
+			int x = *st[v].begin();
+			st[v].erase(st[v].begin());
+			ans[x] = max(ans[x], val);
+		}
+	}
+	else
+	{
+		while (!st[v].empty())
+		{
+			st[u].insert(*st[v].begin());
+			st[v].erase(st[v].begin());
+		}
+	}
+	par[v] = u;
+}
+
+int main()
+{
+	ios::sync_with_stdio(false);
+	cin >> m;
+	for (int i=0; i<m; i++)
+	{
+		cin >> s;
+		for (int j=0; j<s.length(); j++)
+			col[n] = 0, rank[0][n++] = s[j] + CT;
+		col[n] = -1, rank[0][n++] = i;
+	}
+	cin >> q;
+	for (int i=0; i<q; i++)
+	{
+		cin >> s;
+		for (int j=0; j<s.length(); j++)
+			col[n] = i+1, rank[0][n++] = s[j] + CT;
+		col[n] = -1, rank[0][n++] = i+m;
+	}
+
+	for (int i=1; i<LG; i++)
+	{
+		for (int j=0; j<n; j++)
+			if (j + (1 << (i-1)) < n)
+				tmp[j] = {{rank[i-1][j], rank[i-1][j + (1 << (i-1))]}, j};
+			else
+				tmp[j] = {{rank[i-1][j], -1}, j};
+		sort(tmp, tmp+n);
+		for (int j=0; j<n; j++)
+			if (j != 0 && tmp[j].first == tmp[j-1].first)
+				rank[i][tmp[j].second] = rank[i][tmp[j-1].second];
+			else
+				rank[i][tmp[j].second] = j+1;
+	}
+
+	memset(par, -1, sizeof par);
+	/*cout << s << "\n";
+	  for (int i=0; i<n; i++)
+	  cout << tmp[i].second << " ";
+	  cout << "\n";*/
+
+	for (int i=0; i<n; i++)
+		if (col[tmp[i].second] > 0)
+			st[i].insert(col[tmp[i].second]);
+		else if (col[tmp[i].second] == 0)
+			ok[i] = 1;
+
+	for (int i=0; i+1<n; i++)
+		e[i] = {lcp(tmp[i].second, tmp[i+1].second), i};
+	sort(e, e+n-1);
+	reverse(e, e+n-1);
+	for (int i=0; i+1<n; i++)
+		merge(e[i].second, e[i].second+1, e[i].first);
+	for (int i=1; i<=q; i++)
+		cout << ans[i] << "\n";
+	cout << "\n";
+	return 0;
+}

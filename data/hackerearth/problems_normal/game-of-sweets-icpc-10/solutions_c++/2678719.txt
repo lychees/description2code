@@ -1,0 +1,137 @@
+#include<cstdio>
+#include<cstring>
+#include<cctype>
+#include<cmath>
+#include<cstdlib>
+
+#include<iostream>
+#include<string>
+#include<algorithm>
+#include<vector>
+#include<stack>
+#include<queue>
+#include<set>
+using namespace std;
+
+#define ll long long
+#define MX 100050
+#define _poc __builtin_popcount
+
+int C = 30;
+
+int flag[MX];
+int vis[MX];
+int coun[MX];
+
+int getbit(int a, int pos)
+{
+    return (a>>pos)&1;
+}
+
+int setbit(int a, int pos)
+{
+    return (1<<pos)|a;
+}
+
+int get1part(int a, int pos)
+{
+    return (a>>(C-pos));
+}
+
+int get2part(int a, int pos)
+{
+    return a&((1<<(pos))-1);
+}
+
+int func(int n)
+{
+    for(int i = 0; i <= n; i++)
+    {
+        int u = i/C;
+        int v = i%C;
+        if(getbit(flag[u],v) == 0) continue;
+        //printf("%d\n", i);
+        if(v == 0)
+        {
+            for(int j = 0; j+i <= n+C; j+= C)
+            {
+                vis[j/C] |= flag[(j+i)/C];
+            }
+        }
+        else
+        {
+            for(int j = 0; j+i <= n+C; j+= C)
+            {
+                int x = j/C;
+                /*for(int i = 0; i < C; i++)
+                    printf("%d", getbit(flag[x+u],i));
+                puts("");*/
+                int fs = get1part(flag[x+u],C-v);
+                /*for(int i = 0; i < C-v; i++)
+                    printf("%d", getbit(fs,i));
+                puts("");*/
+                int se = (get2part(flag[x+u+1],v)<<(C-v));
+                /*for(int i = 0; i < C; i++)
+                    printf("%d", getbit(se,i));
+                puts("");
+                puts("");*/
+                vis[x] |=  fs | se;
+            }
+            //puts("");
+        }
+    }
+    int ans = 0;
+    for(int i = 1; i <= n; i++)
+    {
+        //if(getbit(vis[i/C],i%C)) printf("%d\n", i);
+        ans += getbit(vis[i/C],i%C);
+    }
+    return ans;
+}
+
+int main()
+{
+    /*int a, b;
+    while(scanf("%d %d", &a, &b) == 2)
+    {
+        for(int i = 0; i < C; i++)
+            printf("%d", getbit(a,i));
+        puts("");
+        for(int i = 0; i < C; i++)
+            printf("%d", getbit(get1part(a, b),i));
+        printf("\n");
+        for(int i = 0; i < C; i++)
+            printf("%d", getbit(get2part(a, b),i));
+        puts("");
+    }*/
+
+    int n, mx;
+    while(scanf("%d", &n) == 1)
+    {
+
+        int x;
+        mx = 0;
+
+        memset(flag,0,sizeof flag);
+        memset(vis,0,sizeof vis);
+        memset(coun,0,sizeof coun);
+
+        for(int i = 0; i < n; i++)
+        {
+            scanf("%d", &x);
+            mx = max(mx,x);
+            coun[x]++;
+            int u = x/C;
+            flag[u] = setbit(flag[u],x%C);
+        }
+        int ans = func(mx);
+        for(int i = 0; i <= mx; i++)
+            if(coun[i] > 1)
+            {
+                ans++;
+                break;
+            }
+        printf("%d\n", ans);
+    }
+    return 0;
+}

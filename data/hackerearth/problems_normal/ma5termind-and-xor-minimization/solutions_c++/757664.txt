@@ -1,0 +1,121 @@
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <stack>
+#include <bitset>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <fstream>
+#include <cstring>
+#define tr(c,i) for(typeof((c).begin()) i = (c).begin(); i != (c).end(); i++)
+using namespace std;
+int ans[100001][2],fans;
+struct node
+{
+	node *next[2];
+};
+void init(node *x)
+{
+	(*x).next[0]=NULL;
+	(*x).next[1]=NULL;
+}
+void trie_insert(node *head,int num,int pos)
+{
+	if(pos==-1)
+		return;
+	int curr;
+	if(num & (1<<pos))
+		curr=1;
+	else
+		curr=0;
+	if((*head).next[curr]==NULL)
+	{
+		(*head).next[curr]=new node;
+		init((*head).next[curr]);
+	}
+	trie_insert((*head).next[curr],num,pos-1);
+}
+void trie_find(node *head,int num,int pos)
+{
+	if(pos==-1)
+		return;
+	int curr;
+	if(num & (1<<pos))
+		curr=1;
+	else
+		curr=0;
+	if((*head).next[curr]==NULL)
+	{
+		fans+=((1-curr)*(1<<pos));
+		trie_find((*head).next[1-curr],num,pos-1);
+	}
+	else
+	{
+		fans+=(curr*(1<<pos));
+		trie_find((*head).next[curr],num,pos-1);
+	}
+}
+int main()
+{
+	int n;
+	scanf("%d",&n);
+	int tot=0,A[n];
+	for (int i = 0; i < n; ++i)
+	{
+		scanf("%d",&A[i]);
+		tot+=A[i];
+	}
+	ans[0][0]=1;
+	ans[0][1]=1;
+	for (int i = 0; i < n; ++i)
+	{
+		for (int j = A[i]; j <= tot; ++j)
+		{
+			ans[j][i%2]=(ans[j][i%2]+ans[j-A[i]][(i+1)%2])%1000000007;
+		}
+		for (int j = 1; j <= tot; ++j)
+		{
+			ans[j][(i+1)%2]=ans[j][i%2];
+		}
+	}
+	node *head = new node;
+	init(head);
+	if(n%2)
+	{
+		for (int i = 1; i <= tot; ++i)
+		{
+			ans[i][0]=ans[i][1];
+			if(ans[i][0])
+				trie_insert(head,i,30);
+		}
+	}
+	else
+	{
+		for (int i = 1; i <= tot; ++i)
+		{
+			if(ans[i][0])
+				trie_insert(head,i,30);
+		}
+	}
+	int q,x;
+	scanf("%d",&q);
+	while(q--)
+	{
+		scanf("%d",&x);
+		fans=0;
+		trie_find(head,x,30);
+		printf("%d %d\n", fans,ans[fans][0]);
+	}
+	return 0;
+}

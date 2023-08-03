@@ -1,0 +1,74 @@
+#include<iostream>
+#include<memory.h>
+using namespace std;
+struct mat
+{
+    static const int MAXN = 28;
+    int n;
+    long long a[MAXN][MAXN];
+    mat()
+    {
+        memset(a , 0 , sizeof a);
+    }
+    mat(int _n)
+    {
+        n = _n;
+        memset(a , 0 , sizeof a);
+    }
+};
+const long long MOD = 1234567891;
+mat getident(int n)
+{
+    mat A(n);
+    for(int i = 0;i < n;i ++)
+        A.a[i][i] = 1;
+    return A;
+}
+mat mul(mat A , mat B)
+{
+    int n = A.n;
+    mat ans(n);
+    for(int i = 0;i < n;i ++)
+        for(int j = 0;j < n;j ++)
+            for(int k = 0;k < n;k ++)
+                ans.a[i][j] = (ans.a[i][j] + (A.a[i][k] * B.a[k][j]) % MOD) % MOD;
+    return ans;
+}
+mat pow(mat A , long long k)
+{
+    if(k == 0)
+        return getident(A.n);
+    mat ans = pow(A , k / 2);
+    ans = mul(ans , ans);
+    if(k % 2) ans = mul(ans , A);
+    return ans;
+}
+int main()
+{
+    int t , k , m;
+    cin >> t;
+    while(t --)
+    {
+        cin >> k >> m;
+        mat M(m + 1);
+        for(int i = 0;i < m;i ++)
+        {
+            M.a[i][i] = i + 1;
+            if(i)
+                M.a[i][i - 1] = 26 - i;
+            M.a[m][i] = 1;
+        }
+        M.a[m][m] = 1;
+        mat res = pow(M , k / 2);
+        long long ans = (res.a[m][0] * 26ll) % MOD;
+        if(k % 2)
+        {
+            res = mul(res , M);
+            ans = (ans + res.a[m][0] * 26ll) % MOD;
+        }
+        else
+            ans = (ans * 2ll) % MOD;
+        cout << ans << endl;
+    }
+    return 0;
+}

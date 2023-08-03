@@ -1,0 +1,80 @@
+#include <cstdio>
+#include <stdlib.h>
+#include <string.h>
+#include <memory.h>
+#include <math.h>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+
+// Code: 
+// by lboris
+
+typedef unsigned long long llu;
+typedef long long int lls;
+typedef unsigned int uint;
+
+#define f(i,s,e) for(uint i=s;i<e;++i)
+#define fe(i,s,e) for(uint i=s;i<=e;++i)
+uint primes[] = { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 0 };
+bool prim[100];
+uint rems[16];
+char dd9[] = { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 };
+typedef std::vector<llu> llvector;
+llvector UN;
+llu precalc9[16];
+
+llu calc_r(char *dd, int idx, int len, llu nx, bool bp)
+{
+	if (idx > len){
+		if (bp) {
+			UN.push_back(nx);
+			return 1;
+		}
+		return 0;
+	}
+	llu res = 0;
+	char pd = (nx % 10) * 10;
+	nx *= 10;
+	uint fd = dd[idx];
+	f(d, ((idx==1)? 1:0), fd) {
+		if ((nx+d)%idx == rems[idx]) {
+			res += calc_r(dd9, idx + 1, len, nx + d, bp || (nx != 0 && prim[pd + d])); 
+		}
+	}
+	if ((nx + dd[idx])% idx == rems[idx]) {
+		res += calc_r(dd, idx + 1, len, (nx + dd[idx]), bp || (nx != 0 && prim[pd + dd[idx]])); 
+	}
+	return res;
+};
+
+llu get(llu x) {
+	if (x < 11)return 0;
+	uint idx = std::upper_bound(UN.begin(), UN.end(), x)-UN.begin();
+	return idx;
+}
+
+llu solve(llu L, llu R) {
+	return get(R) - get(L - 1);
+}
+
+int main(int argc, char **argv){
+	uint N;
+	llu L, R;
+	f(i, 0, 100)prim[i] = false;
+	int i = 0; while (primes[i] != 0) { prim[primes[i]] = true; ++i; }
+	fe(i, 1, 15) { scanf("%u", rems + i); }
+	precalc9[0] = precalc9[1] = 0;
+	fe(i, 2, 15) {
+		precalc9[i] = calc_r(dd9, 1, i, 0, false);
+	}
+	std::sort(UN.begin(), UN.end());
+	scanf("%u", &N);
+	f(i, 0, N){
+		scanf("%llu %llu", &L, &R);
+		printf("%llu\n", (rems[1] != 0) ? 0 : solve(L, R));
+	}
+	return 0;
+}
+

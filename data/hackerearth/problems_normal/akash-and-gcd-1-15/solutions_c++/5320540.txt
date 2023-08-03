@@ -1,0 +1,135 @@
+/* Rishabh Arora
+   IIIT-Hyderabad */
+
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef pair<int,int> II;
+typedef vector<int> VI;
+typedef vector<II> VII;
+typedef long long int LL;
+typedef unsigned long long int ULL;
+
+#define MAXSIZE 1000005
+#define mod 1000000007
+#define rep(i, a, b) for(i = a; i < b; i++)
+#define rev(i, a, b) for(i = a; i > b; i--)
+#define INF INT_MAX
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+#define SET(a,b) memset(a, b, sizeof(a))
+
+//debugging statements
+#define TRACE
+#ifdef TRACE
+#define trace(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+	cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+	const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define trace(...)
+#endif
+
+vector<LL> P;
+int A[MAXSIZE], F[MAXSIZE], bit[MAXSIZE], phi[MAXSIZE];
+bool check[MAXSIZE];
+
+int UPD(int x) {
+  
+  int i,upper = sqrt(x),sum = 0;
+  
+  rep(i, 1, upper+1) {
+    if(x % i == 0) {
+      sum += i*phi[x/i];
+      sum += (x/i)*phi[i];
+      sum %= mod;
+    }
+  }
+  
+  if(upper*upper == x) {
+    sum += ((mod - upper*phi[upper]) % mod);
+    sum %= mod;
+  }
+  return sum;
+}
+
+void update(int idx, int val, int N) { 
+  while(idx <= N) {
+    bit[idx] +=  ((mod + val) % mod);
+    bit[idx] %= mod;
+    idx += (idx & (-idx));
+  } 
+  return;
+}
+
+int sum(int idx) {
+  int sum = 0;
+  while(idx > 0) { 
+    sum += (bit[idx]);
+    sum %= mod;
+    idx -= (idx & (-idx)); 
+  }
+  return sum;
+}
+
+int Q(int L, int R) { 
+  int r = sum(R), l = sum(L-1);
+  return (r + mod - l) % mod;
+}
+
+int main() {
+
+  ios::sync_with_stdio(false);	
+  cin.tie(NULL);
+
+  int N;
+  int i, j;
+
+  cin>>N;
+
+  rep(i, 1, N+1)  
+    cin>>A[i];
+  
+  rep(i, 1, 5e5+1)
+    phi[i] = i;
+  
+  rep(i, 2, 5e5+1) 
+    if(phi[i] == i)
+      for(j = i; j <= (5e5); j += i) {
+	phi[j] /= i;
+	phi[j] *= (i-1);
+      }
+
+  rep(i, 1, 5e5+1)  
+    F[i] = UPD(i);
+  
+  rep(i, 1, N+1)
+    update(i, F[A[i]] ,N);
+
+  int q;
+  cin>>q;
+
+  int L, R;
+  char ch;
+  
+  while(q--) { 
+    cin>>ch>>L>>R;
+    
+    if(ch == 'U') {
+      update(L, -1*F[A[L]], N);
+      A[L] = R;
+      update(L, F[A[L]], N);
+    }
+    else 
+      cout<<Q(L, R)<<endl;
+  }
+  
+  return 0;
+}

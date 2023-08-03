@@ -1,0 +1,158 @@
+#include<bits/stdc++.h>
+#define mod 1000000007
+#define nax 1000005
+
+using namespace std;
+long long ftree[1000005];
+long long arr[1000005];
+long long eulerPhi[nax];
+long long divisor[nax],ans[nax];
+vector<long long> prime;
+bool isprime[nax];
+long long update(long long idx, long long value,long long maxi)
+{
+    idx++;
+    while(idx<=maxi)
+    {
+        ftree[idx]+=value;
+        if(ftree[idx]>=mod)
+            ftree[idx]-=mod;
+        idx+=(idx & (-idx));
+    }
+}
+long long get_sum(long long idx)
+{
+    idx++;
+    long long sum=0;
+    while(idx !=0)
+    {
+        sum+=ftree[idx];
+        if(sum>=mod)
+            sum-=mod;
+        if(sum<0)
+        sum+=mod;
+        idx-=((-idx) & idx);
+    }
+    return sum;
+
+}
+
+long long build(long long n)
+{
+
+    for(long long i=0;i<n+1;i++)
+        ftree[i]=0;
+    for(long long i=0;i<n+1;i++)
+    {
+        update(i,arr[i],n+1);
+    }
+
+}
+long long find_div()
+{
+  for(long long i=1;i<nax;i++)
+  {
+
+      for(long long j=i;j<nax;j+=i)
+      {
+          //divisor[j].push_back(i);
+          ans[j]+=((i*eulerPhi[j/i])%mod);
+          if(ans[j]>=mod)
+            ans[j]-=mod;
+
+      }
+  }
+}
+
+
+
+ void init()
+ {
+
+     for(long long i =0;i<nax;i++)
+     {
+
+        isprime[i]=true;
+        ans[i]=0;
+     }
+    isprime[0]=isprime[1]=false;
+     for(long long i=2;i<nax;i++)
+     {
+         if(isprime[i])
+         {
+             for(long long j =i+i;j<nax;j+=i)
+                isprime[j]=false;
+         }
+     }
+     for(long long i=0;i<nax;i++)
+     {
+         if(isprime[i])
+            prime.push_back(i);
+     }
+ }
+
+ void  eulerSieve () {
+     long long N=nax;
+
+
+
+    for (long long i = 1; i <= N; i++)
+        eulerPhi[i] = i;
+
+
+
+    for (long long i = 1; i <= N; i++) {
+        if (isprime[i])
+        {
+
+            for (long long j = i; j <= N; j += i)
+                eulerPhi[j] -= eulerPhi[j] / i;
+        }
+    }
+}
+int main()
+{
+    ios::sync_with_stdio(false);
+init();
+eulerSieve ();
+find_div();
+long long  n,x,y,q;
+cin>>n;
+for(long long i=0;i<n;i++)
+{
+    cin>>x;
+    arr[i]=ans[x];
+
+}
+
+build(n);
+string str;
+cin>>q;
+while(q--)
+{
+    cin>>str;
+    if(str=="C")
+    {
+        cin>>x>>y;
+
+        if(x==1)
+        cout<<get_sum(y-1)<<"\n";
+        else
+        cout<<(get_sum(y-1)-get_sum(x-2)+mod)%mod<<"\n";
+
+    }
+    else
+    {
+        cin>>x>>y;
+        long long tmp = (ans[y]-arr[x-1]+mod)%mod;
+        arr[x-1]=ans[y];
+        update(x-1,tmp,nax);
+    }
+
+}
+
+
+
+
+
+}

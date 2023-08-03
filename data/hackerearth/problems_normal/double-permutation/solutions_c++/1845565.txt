@@ -1,0 +1,147 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<unordered_map>
+#include<unordered_set>
+using namespace std;
+#define MOD 1000000007
+int n;
+#define MAX 200003
+int a[MAX];
+set<int> oc;  //occer
+long long int bit[MAX];  //not same
+void add(int i, int x){
+	while (i < MAX){
+		bit[i] += x;
+		i += i&-i;
+	}
+}
+long long int sum(int i){
+	long long int r = 0;
+	while (i){
+		r += bit[i];
+		i -= i&-i;
+	}
+	return r;
+}
+long long int bit1[MAX];  //same
+void add1(int i, int x){
+	while (i < MAX){
+		bit1[i] += x;
+		i += i&-i;
+	}
+}
+long long int sum1(int i){
+	long long int r = 0;
+	while (i){
+		r += bit1[i];
+		i -= i&-i;
+	}
+	return r;
+}
+long long int p2[MAX];
+int main(){
+	p2[0] = 1LL;
+	for (int i = 1; i < MAX; i++){
+		p2[i] = p2[i - 1];
+		p2[i] *= 2LL;
+		p2[i] %= MOD;
+	}
+	scanf("%d", &n);
+	for (int i = 0; i < n*2; i++){
+		scanf("%d", &a[i]);
+	}
+	long long int ans = 0;
+	long long int same = 0;
+	for (int i = 0; i < n * 2; i++){
+		long long int up = i-same*2 - sum(a[i]);
+		long long int sup = same - sum1(a[i]);
+		long long int eq = oc.count(a[i]);
+		long long int ww = n - oc.size();
+		if (eq == 0){
+			ww--;
+		}
+		ww=p2[ww];
+		//it is 2
+		if (up){
+			long long int way = p2[oc.size() - eq - 1];
+			way *= ww;
+			way%=MOD;
+			way *= up;
+			way %= MOD;
+			ans += way;
+			ans %= MOD;
+		}
+		if (sup){
+			long long int way = p2[oc.size() - eq - 1];
+			way *= ww;
+			way%=MOD;
+			way *= sup*2LL;
+			way %= MOD;
+			ans += way;
+			ans %= MOD;
+		}
+		//eq
+		if (eq){
+			long long int way = p2[oc.size() - 1]; 
+			way *= ww;
+			way%=MOD;
+			ans += way;
+			ans %= MOD;
+		}
+		//it is 1
+		long long int low = sum(a[i] - 1);
+		long long int slow = sum1(a[i] - 1);
+		if (low||slow){
+			long long int way = p2[oc.size() - eq - 1];
+			way *= ww;
+			way%=MOD;
+			way *= (low + slow*2LL);
+			way %= MOD;
+			ans += way;
+			ans %= MOD;
+		}
+		if (up || sup){
+			long long int way = p2[oc.size() - eq];
+			way *= ww;
+			way%=MOD;
+			way *= (up + sup*2LL);
+			way %= MOD;
+			ans += way;
+			ans %= MOD;
+		}
+		oc.insert(a[i]);
+		if (eq){
+			same++;
+			add(a[i], -1);
+			add1(a[i], 1);
+		}
+		else{
+			add(a[i], 1);
+		}
+	}
+	printf("%lld\n", ans);
+	return 0;
+}

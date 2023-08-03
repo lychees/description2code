@@ -1,0 +1,218 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+using namespace std;
+#define Foreach(i, c) for(__typeof((c).begin()) i = (c).begin(); i != (c).end(); ++i)
+#define For(i,a,b) for(int (i)=(a);(i) < (b); ++(i))
+#define rof(i,a,b) for(int (i)=(a);(i) > (b); --(i))
+#define rep(i, c) for(auto &(i) : (c))
+#define x first
+#define y second
+#define pb push_back
+#define PB pop_back()
+#define iOS ios_base::sync_with_stdio(false)
+#define sqr(a) (((a) * (a)))
+#define all(a) a.begin() , a.end()
+#define error(x) cerr << #x << " = " << (x) <<endl
+#define Error(a,b) cerr<<"( "<<#a<<" , "<<#b<<" ) = ( "<<(a)<<" , "<<(b)<<" )\n";
+#define errop(a) cerr<<#a<<" = ( "<<((a).x)<<" , "<<((a).y)<<" )\n";
+#define coud(a,b) cout<<fixed << setprecision((b)) << (a)
+#define L(x) ((x)<<1)
+#define R(x) (((x)<<1)+1)
+#define umap unordered_map
+#define double long double
+typedef long long ll;
+typedef pair<int,int>pii;
+typedef vector<int> vi;
+typedef complex<double> point;
+template <typename T> using os =  tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
+template <class T>  inline void smax(T &x,T y){ x = max((x), (y));}
+template <class T>  inline void smin(T &x,T y){ x = min((x), (y));}
+const int maxn = 1e5 + 10;
+struct query{
+	int ind;
+	int type;
+	int v, u, w;
+	query(){}
+	query(int t,int a,int V,int b = 9,int c = 0){v = V, ind = a, u = b, w = c, type = t;}
+	//	type, index, v[, u, w]
+	//	type 0 = modify
+	//	type 1 = ask
+};
+inline bool CMP(const query &a, const query &b){
+	return a.ind < b.ind;
+}
+ll ans[maxn];
+vector<query> Q[maxn];
+vi adj[maxn];
+int sst[maxn];
+int tim, st[maxn], ft[maxn], n, q;
+bool block[maxn];
+int sz[maxn], cmp[maxn], cent[maxn];
+vi ver;
+inline int dfs_count(int v,int p = -1){
+	sz[v] = 1;
+	rep(u, adj[v])
+		if(u - p && !block[u]){
+			sz[v] += dfs_count(u, v);
+		}
+	return sz[v];
+}
+inline void dfs_time(int v,int p = -1){
+	ver.pb(v);
+	sst[tim] = v;
+	st[v] = tim ++;
+	rep(u, adj[v])
+		if(!block[u] && p - u)
+			dfs_time(u, v);
+	ft[v] = tim;
+}
+inline void dfs_comp(int v,int p,int c,int centroid){
+	cmp[v] = c;
+	cent[v] = centroid;
+	rep(u, adj[v])
+		if(!block[u] && p - u)
+			dfs_comp(u, v, c, centroid);
+}
+ll lz[maxn * 4];
+typedef pair<ll, ll> pll;
+pll seg[maxn * 4];
+inline void build(int id = 1,int l = 0,int r = tim){
+	seg[id].x = lz[id] = 0LL;
+	seg[id].y = l;
+	if(r - l < 2)	return ;
+	int mid = (l+r)/2;
+	build(L(id), l, mid);
+	build(R(id), mid, r);
+}
+inline void add(int id, ll var){
+	lz[id] += var;
+	seg[id].x += var;
+}
+inline void shift(int id){
+	add(L(id), lz[id]);
+	add(R(id), lz[id]);
+	lz[id] = 0LL;
+}
+inline void add(int x,int y,ll var,int id = 1,int l = 0,int r = tim){
+	if(x >= r or l >= y)	return ;
+	if(x <= l && r <= y){
+		add(id, var);
+		return ;
+	}
+	int mid = (l+r)/2;
+	shift(id);
+	add(x, y, var, L(id), l, mid);
+	add(x, y, var, R(id), mid, r);
+	seg[id] = max(seg[L(id)], seg[R(id)]);
+}
+inline pll ask(int x,int y,int id = 1,int l = 0,int r = tim){
+	if(x >= r or l >= y)
+		return {0LL, 0LL};
+	if(x <= l && r <= y)	return seg[id];
+	int mid = (l + r)/2;
+	shift(id);
+	return max(ask(x, y, L(id), l, mid),
+			   ask(x, y, R(id), mid, r));
+}
+inline void centroid_decomposition(int v){
+	int n = dfs_count(v), p = -1;
+	while(true){
+		bool fnd = false;
+		rep(u, adj[v])
+			if(!block[u] && p - u && sz[u] * 2 >= n){
+				p = v;
+				fnd = true;
+				v = u;
+				break ;
+			}
+		if(!fnd)
+			break ;
+	}
+	block[v] = true;
+	int tt = 0;
+	int C = v;
+	cent[v] = v;
+	rep(u, adj[v])	if(!block[u])
+		centroid_decomposition(u), ++ tt;
+	tim = 0;
+	ver.clear();
+	dfs_time(v);
+	rep(u, adj[v])	if(!block[u])
+		dfs_comp(u, v, u, v);
+	build();
+	vector<query> qu;
+	rep(vv, ver)
+		rep(q, Q[vv]){
+			int ind = q.ind;
+			int u = q.u;
+			int w = q.w;
+			if(cent[v] == cent[u] or q.type)
+				qu.pb(q);
+		}
+	sort(all(qu), CMP);
+	rep(q, qu){
+		int t = q.type,
+			v = q.v,
+			u = q.u,
+			w = q.w,
+			ind = q.ind;
+		if(st[v] > st[u] && !t)	swap(v, u);	// v is a parent of u
+		if(!t)
+			add(st[u], ft[u], w);
+		else if(v == C){
+			pll p = ask(0, tim);
+			int pos = p.y;
+			v = sst[pos];
+			smax(ans[ind], p.x);
+			if(tt > 1)
+				smax(ans[ind], ask(st[v], ft[v]).x + max(ask(0, st[cmp[v]]).x, ask(ft[cmp[v]], tim).x));
+		}
+		else{
+			if(tt > 1)
+				smax(ans[ind], ask(st[v], ft[v]).x + max(ask(0, st[cmp[v]]).x, ask(ft[cmp[v]], tim).x));
+			else
+				smax(ans[ind], ask(st[v], ft[v]).x);
+		}
+	}
+	block[v] = false;
+}
+map <pii, int> mp;
+inline int modify(int v, int u,int w){
+	if(v > u)	swap(v, u); // v < u
+	int ans = w - mp[{v, u}];
+	mp[{v, u}] = w;
+	return ans;
+}
+int main(){
+	iOS;
+	memset(cent, -1, sizeof cent);
+	memset(ans, -1, sizeof ans);
+	cin >> n >> q;
+	For(i,1,n){
+		int v, u, w;
+		cin >> v >> u >> w;
+		-- v, -- u;
+		adj[v].pb(u);
+		adj[u].pb(v);
+		Q[v].pb(query(0, -1, v, u, modify(v, u, w)));
+	}
+	For(i,0,q){
+		int t, v, u, w;
+		cin >> t >> v;
+		-- t, -- v;
+		if(!t){
+			cin >> u >> w;
+			-- u;
+			Q[v].pb(query(0, i, v, u, modify(v, u, w)));
+		}
+		else
+			Q[v].pb(query(1, i, v)), ans[i] = -2;
+	}
+	centroid_decomposition(0);
+	For(i,0,q)
+		if(ans[i] + 1)
+			cout << ans[i] << '\n';
+	return 0;
+}

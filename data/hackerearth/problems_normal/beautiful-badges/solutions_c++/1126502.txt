@@ -1,0 +1,60 @@
+#include <iostream>
+#include <set>
+#include <cstring>
+#include <queue>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+int start_of[100500];
+vector< pair< pair<int, int>, int> > order;
+set< pair<int, int> > was; // start, idx;
+
+int main()
+{
+    int n;
+    cin.sync_with_stdio(false);
+    cin >> n;
+
+    for(int i = 0; i < n; i++) {
+        int type, val;
+        cin >> type >> val;
+        if(type == 1) {
+            order.push_back(make_pair(make_pair(val * val, 0), -1));
+        } else {
+            val *= val;
+            int start = val / 2 + 1;
+            int end = 2 * val - 1;
+
+            start_of[i] = start;
+            order.push_back(make_pair(make_pair(start, -1), i));
+            order.push_back(make_pair(make_pair(end, 1), i));
+        }
+    }
+
+    sort(order.begin(), order.end());
+    int sz = order.size();
+    int ans = 0;
+
+    for(int i = 0; i < sz; i++) {
+        int type = order[i].first.second;
+
+        if(type == 0) {
+            if(was.empty())
+                continue;
+            set< pair<int, int> >::iterator it = was.begin();
+            ans++;
+            was.erase(it);
+        } else if(type == -1) {
+            was.insert(make_pair(order[i].first.first, order[i].second));
+        } else {
+            set< pair<int, int> >::iterator it = 
+                was.find(make_pair(start_of[order[i].second], order[i].second));
+            if(it != was.end())
+                was.erase(it);
+        }
+    }
+
+    cout << ans << endl;
+    return 0;
+}

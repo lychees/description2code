@@ -1,0 +1,48 @@
+#include <iostream>
+#include <map>
+#include <cmath>
+
+using namespace std;
+typedef unsigned long long ull;
+const ull modval = 1000000007;
+
+ull power(ull a, ull e) {
+	if(e == 0) return 1;
+	ull temp = power(a, e/2);
+	temp *= temp;
+	temp %= modval;
+	if(e%2) return (temp*a)%modval;
+	return temp;
+}
+
+map<ull, ull> ways;
+void solve(ull candies) {
+	if(ways.find(candies) != ways.end()) return;
+	ull one_taken = candies-1;
+	ull sq = sqrt(one_taken);
+	ull temp_ans = 1;
+	for(ull dist_size = 2; dist_size <= sq; dist_size++) {
+		if(one_taken%dist_size == 0) {
+			solve(dist_size);
+			ull n_piles = one_taken/dist_size;
+			if(n_piles != dist_size) {
+				solve(n_piles);
+				temp_ans += power(ways[n_piles], dist_size);
+				temp_ans %= modval;
+			}
+			temp_ans += power(ways[dist_size], n_piles);
+			temp_ans %= modval;
+		}
+	}
+	ways.insert(make_pair(candies, temp_ans));
+}
+
+int main(void) {
+	unsigned long long N;
+	cin >> N;
+	ways.insert(make_pair(0, 1));
+	ways.insert(make_pair(1, 1));
+	ways.insert(make_pair(2, 1));
+	solve(N);
+	cout << ways[N] << endl;
+}

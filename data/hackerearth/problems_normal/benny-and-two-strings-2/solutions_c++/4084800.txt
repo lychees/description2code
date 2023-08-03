@@ -1,0 +1,108 @@
+#include <iostream>
+#include <iterator>
+#include <utility>
+#include <memory.h>
+#include <queue>
+#include <stack>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <algorithm>
+#include <set>
+#include <map>
+#include <vector>
+#include <ctype.h>
+#define si(i) scanf("%d",&i)
+#define sll(i) scanf("%lld",&i)
+#define ss scanf("\n%s",i)
+#define ll long long
+#define pb push_back
+#define mp make_pair
+#define fs first
+#define sc second
+#define REP(i,n) for(int i=0;i<n;i++)
+#define FOR(i,j,n) for(int i=j;i<n;i++)
+#define FORR(i,j,n) for(int i=n-1;i>-1;i--)
+#define test(t) int t;si(t);while(t--)
+#define M 1000000007
+using namespace std;
+int n,m,k;
+int lps[202];
+int LCP[202][26];
+bool vis[202][202][502];
+int dp[202][202][502];
+string s,t;
+int cal(string a,int len){
+	int match = 0;
+	lps[0] = 0;
+	FOR(i,1,len){
+		while(match > 0 && a[match+1] != a[i])
+			match = lps[match-1];
+			match += (a[match] == a[i]);
+			lps[i] = match;
+	}
+	return lps[len - 1];
+}
+void pre(){
+	string s_prefix = "";
+	REP(i,26) // 'a' - 'z'
+		LCP[0][i] = cal(s_prefix + (char)(i + 'a'),1);
+	REP(i,n){
+		s_prefix += s[i];
+		// 'a' - 'z'
+		REP(j,26){
+			LCP[ i + 1 ][j] = cal(s_prefix + (char)( j + 'a' ),i + 2); 
+		}
+	}
+	return;
+}
+int max(int a,int b){
+
+	return a > b ? a : b;
+}
+int min(int a,int b){
+	return a < b ? a : b;
+}
+int d(int a,int b){
+	int d = abs(a-b);
+	if(a > b){
+		d = min(26 - a + b,a-b);
+	}
+	else{
+		d = min(26 - b + a,b-a);
+	}
+	return d;
+}
+int f(int idx,int match,int cost){
+	if(idx == m)
+		return 0;
+	if(vis[idx][match][cost])
+		return dp[idx][match][cost];
+	vis[idx][match][cost] = true;
+	int ans=0;
+	REP(i,26){
+		int dist = d(i,t[idx]-97);
+		if(dist + cost <= k){
+			if(i == s[match]-97){
+				if(match == n-1)
+					ans = max(ans,1 + f(idx + 1,LCP[n-1][i],cost+dist));
+				else
+					ans = max(ans,f(idx+ 1, match + 1,cost + dist));
+			}
+			else
+				ans = max(ans,f(idx + 1,LCP[match][i],cost + dist));
+		}
+	}
+	dp[idx][match][cost] = ans;
+	return ans;
+}
+int main(){
+	//start here
+	cin >> n >> m >> k;
+	cin >> s >> t;
+	memset(vis,false,sizeof(vis));
+	pre();
+	cout << f(0,0,0) << endl;
+	return 0;
+}

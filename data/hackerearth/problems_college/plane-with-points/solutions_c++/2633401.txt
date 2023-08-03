@@ -1,0 +1,189 @@
+#include<set>
+#include<map>
+#include<string>
+#include<stdio.h>
+#include<sstream>
+#include<algorithm>
+#include<queue>
+#include<cmath>
+#include<string.h>
+using namespace std ;
+#define MOD 1000000007
+#define INF (int)1e9
+#define MAXN 20
+typedef pair<int,int> P ;
+
+int n,pre[MAXN],fac[MAXN],x[MAXN],y[MAXN] ;
+int col[MAXN][MAXN] ;
+
+char bit[1 << MAXN] ;
+char good[1 << MAXN] ;
+char best[1 << MAXN] ;
+char valid[1 << MAXN] ;
+
+char vid,id[1 << MAXN] ;
+int memo[1 << MAXN] ;
+int solve(int mask)
+{
+ if(bit[mask] <= 2) return 1 ;
+ if(id[mask] == vid) return memo[mask] ;
+ if(good[mask]) return pre[bit[mask]] ;
+ id[mask] = vid ;
+
+ int j,nmask = mask ;
+ for(j = 0;j < n;j++) if(mask & 1 << j)
+ {
+  nmask ^= 1 << j ;
+  break ;
+ }
+
+ int ways = 0,can = best[mask] ;
+ if(best[nmask] == can - 1) ways = solve(nmask) ;
+ for(int i = nmask;i > 0;i = ((i - 1) & nmask))
+ {
+  int k = i | 1 << j ;
+  if(valid[k] && best[mask ^ k] == can - 1)
+  {
+   ways += solve(mask ^ k) ;
+   if(ways >= MOD) ways -= MOD ;
+  }
+ }
+ return memo[mask] = ways ;
+}
+
+void generate()
+{
+ for(int tt = 0;tt < 10;tt++)
+ {
+  char in[] = "in .txt" ;
+  in[2] = tt + '0' ;
+  FILE * fout = fopen(in,"w") ;
+  
+  int runs = 50 ;
+  fprintf(fout,"%d\n",runs) ;
+  for(int j = 0;j < runs;j++)
+  {
+   n = rand() % 18 ;
+   if(tt == 8) n = 18 ;
+   
+   char vis[102][102] ;
+   memset(vis,0,sizeof vis) ;
+   for(int i = 0;i < n;i++)
+   {
+    if(tt < 3 && j < 15)
+    {
+     x[i] = rand() % 10 ;
+     y[i] = rand() % 10 ;     
+    }
+    else if(tt < 6 && j < 15)
+    {
+     x[i] = rand() % 5 ;
+     y[i] = rand() % 5 ;
+    }
+    else if(tt < 10 && j < 15)
+    {
+     x[i] = i ;
+     y[i] = i + (rand() % 5 - 2) ;
+     if(y[i] < 0) y[i] = i ;
+    }
+    else
+    {
+     x[i] = rand() % 100 + 1 ;
+     y[i] = rand() % 100 + 1 ;
+    }
+    
+    if(vis[x[i]][y[i]]) { i-- ; continue ; }
+    vis[x[i]][y[i]] = 1 ;
+   }
+
+
+   fprintf(fout,"%d\n",n) ;
+   for(int i = 0;i < n;i++) fprintf(fout,"%d %d\n",x[i],y[i]) ;
+  }
+  fclose(fout) ;
+ }
+}
+
+int main()
+{
+ fac[0] = 1 ;
+ for(int i = 1;i < MAXN;i++) fac[i] = 1LL * i * fac[i - 1] % MOD ;
+ for(int i = 1;i < 1 << MAXN;i++) bit[i] = bit[i >> 1] + (i & 1) ;
+ pre[0] = pre[1] = 1 ;
+ for(int i = 2;i < MAXN;i++)
+ {
+  pre[i] = 1LL * pre[i - 2] * (i - 1) % MOD ;
+  if(i % 2 == 1) pre[i] += pre[i - 1] ;
+  pre[i] %= MOD ;
+ }
+
+// generate() ; return 0 ;
+
+ int runs ; 
+ scanf("%d",&runs) ;
+ while(runs--)
+ {
+  scanf("%d",&n) ;
+  for(int i = 0;i < n;i++) scanf("%d%d",&x[i],&y[i]) ;
+  
+  memset(col,0,sizeof col) ;
+  for(int k1 = 0;k1 < n;k1++)
+   for(int k2 = 0;k2 < n;k2++)
+   {
+    for(int j = 0;j < n;j++)
+    {
+     int area = x[j] * (y[k1] - y[k2]) + x[k1] * (y[k2] - y[j]) + x[k2] * (y[j] - y[k1]) ;
+     if(area == 0) col[k1][k2] |= 1 << j ;
+    }
+   }
+  
+  for(int i = 0;i < 1 << n;i++)
+  {
+   if(bit[i] <= 2) { valid[i] = true ; continue ; }
+   for(int j = 0;j < n;j++) if(i & 1 << j)
+   {
+    int k1 = -1 ;
+    for(int k = j + 1;k < n;k++) if(i & 1 << k) { k1 = k ; break ; }
+    if((col[j][k1] | i) == col[j][k1]) valid[i] = true ;
+    else valid[i] = false ;
+    break ;
+   }
+  }
+  
+  best[0] = 0 ;
+  for(int i = 1;i < 1 << n;i++)
+  {
+   if(bit[i] == 1) { best[i] = 1 ; continue ; }
+   int j;
+   for(j = 0;j < n;j++) if(i & 1 << j) break ;
+   
+   int cret = n ;
+   for(int k = j + 1;k < n;k++)
+    if(i & 1 << k)
+     cret = min(cret,1 + best[i & ~col[j][k]]) ;
+   best[i] = cret ;
+  }
+  
+  for(int i = 0;i < 1 << n;i++)
+  {
+   good[i] = 1 ;
+   if(bit[i] <= 2) continue ;
+   int j;
+   for(j = 0;j < n;j++) if(i & 1 << j) break ;
+   if(!good[i ^ 1 << j]) { good[i] = 0 ; continue ; }
+   
+   for(int k = j + 1;k < n;k++)
+    if(i & 1 << k)
+     if(bit[i & col[j][k]] > 2)
+      good[i] = 0 ;
+  }
+  
+  int tot = best[(1 << n) - 1] ;
+  vid++ ;
+  int ret = solve((1 << n) - 1) ;
+  ret = 1LL * ret * fac[tot] % MOD ;
+  printf("%d %d\n",tot,ret) ;
+ }
+ 
+ return 0 ;
+}

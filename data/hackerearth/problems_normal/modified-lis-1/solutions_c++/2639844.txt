@@ -1,0 +1,176 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> ii;
+/////////////////////////////////////////////////// BEGIN OF SEGMENT TREE ///////////////////////////////////////////////////
+template<typename Data, typename Value=Data>
+class SegmentTreeLogic {
+public:
+	virtual Data from_position(const int pos)=0;
+	virtual Data from_value(const Value old_value, const Value value)=0;
+	virtual Data combine(const Data lhs, const Data rhs)=0;
+};
+
+template<typename Data, typename Value=Data>
+class SegmentTree {
+public:
+	SegmentTree(SegmentTreeLogic<Data, Value>& logic, int left, int right);
+	~SegmentTree();
+	inline Data query(int i, int j)    { return query(0, left, right, i, j); }
+	inline Data query(int i)           { return query(0, left, right, i, i); }
+	inline void update(int i, Value v) { update(0, left, right, i, v);       }
+private:
+	void build(int no, int l, int r);
+	Data query(int no, int l, int r, int i, int j);
+	void update(int no, int l, int r, int i, Value v);
+
+	const int left, right;
+	SegmentTreeLogic<Data, Value> *const m_logic;
+	Data *const m_data;
+};
+
+template<typename Data, typename Value>
+SegmentTree<Data, Value>::SegmentTree(SegmentTreeLogic<Data, Value>& logic, const int left, const int right)
+	: left(left)
+	, right(right)
+	, m_logic(&logic)
+	, m_data(static_cast<Data*>(malloc(4 * (right-left+1) * sizeof(Data))))
+{
+	build(0, left, right);
+}
+
+template<typename Data, typename Value>
+SegmentTree<Data, Value>::~SegmentTree() {
+	free(m_data);
+}
+
+template<typename Data, typename Value>
+void SegmentTree<Data, Value>::build(const int no, const int l, const int r) {
+	if (l == r) {
+		m_data[no] = m_logic->from_position(l);
+	} else {
+		const int m = (l + r) / 2;
+		const int no_esq = 2*no+1;
+		const int no_dir = 2*no+2;
+
+		build(no_esq, l, m);
+		build(no_dir, m+1, r);
+		m_data[no] = m_logic->combine(m_data[no_esq], m_data[no_dir]);
+	}
+}
+
+template<typename Data, typename Value>
+Data SegmentTree<Data, Value>::query(const int no, const int l, const int r, const int i, const int j) {
+	if (l == i && r == j) {
+		return m_data[no];
+	} else {
+		const int m = (l + r) / 2;
+		const int no_esq = 2*no+1;
+		const int no_dir = 2*no+2;
+
+		if (j <= m)
+			return query(no_esq, l, m, i, j);
+		else if (i > m)
+			return query(no_dir, m+1, r, i, j);
+		else
+			return m_logic->combine(query(no_esq, l, m, i, m), query(no_dir, m+1, r, m+1, j));
+	}
+}
+
+template<typename Data, typename Value>
+void SegmentTree<Data, Value>::update(const int no, const int l, const int r, const int i, const Value v) {
+	if (l == r) {
+		m_data[no] = m_logic->from_value(m_data[no], v);
+	} else {
+		const int m = (l + r) / 2;
+		const int no_esq = 2*no+1;
+		const int no_dir = 2*no+2;
+
+		if (i <= m)
+			update(no_esq, l, m, i, v);
+		else
+			update(no_dir, m+1, r, i, v);
+		m_data[no] = m_logic->combine(m_data[no_esq], m_data[no_dir]);
+	}
+}
+
+/////////////////////////////////////////////////// END OF SEGMENT TREE ///////////////////////////////////////////////////
+const int MOD = 1000000000 + 7;
+struct Data {
+    int maxv, cntv;
+};
+struct Logic : public SegmentTreeLogic<Data, Data> {
+    Data from_position(const int) {
+        return Data{0, 1};
+    }
+    Data from_value(const Data a, const Data b) {
+        if (a.maxv == 0 && b.maxv == 0)
+            return Data{0, 1};
+        if (a.maxv == b.maxv)
+            return Data{a.maxv, (a.cntv + b.cntv) % MOD};
+        else if (a.maxv > b.maxv)
+            return Data{a.maxv, a.cntv};
+        else
+            return Data{b.maxv, b.cntv};
+    }
+    Data combine(const Data a, const Data b) {
+        return from_value(a, b);
+    }
+};
+
+const int MAX_N = 100000;
+int n;
+int v[MAX_N];
+int a[MAX_N];
+bool p[MAX_N];
+
+int main() {
+    scanf("%d", &n);
+    for (int i = 0; i < n; ++i)
+        scanf("%d", v+i);
+    for (int i = 0; i < n; ++i)
+        a[i] = abs(v[i]),
+        p[i] = v[i] > 0;
+
+    Logic logic;
+    SegmentTree<Data, Data> sp(logic, 1, 100000+1), sn(logic, 1, 100000+1);
+    for (int i = n-1; i >= 0; --i) {
+        //printf("checking: %d\n", v[i]);
+        if (p[i]) {
+            Data d = sn.query(a[i]+1, 100000+1);
+            //printf("\tfound: %d %d\n", d.maxv, d.cntv);
+            sp.update(a[i], Data{d.maxv+1, d.cntv});
+        } else {
+            Data d = sp.query(a[i]+1, 100000+1);
+            //printf("\tfound: %d %d\n", d.maxv, d.cntv);
+            sn.update(a[i], Data{d.maxv+1, d.cntv});
+        }
+    }
+    int k = 0;
+    int ways = 0;
+    for (int i = 1; i <= 100000; ++i) {
+        {
+            Data d = sp.query(i, i);
+            if (d.maxv > k) {
+                k = d.maxv;
+                ways = d.cntv;
+            } else if (d.maxv == k) {
+                ways += d.cntv;
+                ways %= MOD;
+            }
+        }
+        {
+            Data d = sn.query(i, i);
+            if (d.maxv > k) {
+                k = d.maxv;
+                ways = d.cntv;
+            } else if (d.maxv == k) {
+                ways += d.cntv;
+                ways %= MOD;
+            }
+        }
+    }
+
+    printf("%d %d\n", k, ways);
+}

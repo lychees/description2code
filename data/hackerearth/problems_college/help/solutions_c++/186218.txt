@@ -1,0 +1,194 @@
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+
+
+long long n;
+long long m;
+long long size;
+int power2;
+
+//bool debug=false; For debugging
+//In this array, the allocations are as follows
+// 0 --> n/2-1                 ,  n/2 --> n-1
+// 0 --> n/4-1, n/4 --> 2n/4-1, 2n/4 --> 3n/4-1, 3n/4 --> n-1
+// 0 --> n/m-1, n/m --> 2n/m-1, 2n/m --> 3n/m-1, 3n/m --> 4n/m-1 .., (m-1)n/m --> n-1
+int* loc;
+int** locUpdate;
+
+int arrayStart;
+void initLoc();
+int moveItem(int item); //returns the number of items before the current item
+void storeEmptyLocation(int loc);
+int getTotalEmptyLocations(int loc);
+
+/*int * item2; For testing purpose
+int moveItem2(int item);*/
+
+int main(int argc, char* argv[]){
+
+	scanf("%lld %lld", &n, &m);
+	
+	/*srand(time(NULL)); For testing purposes
+	n=100000;
+	m=100000;*/
+
+	initLoc();
+	for(int i=0; i<m; i++){
+		int curItem;
+		scanf("%d",&curItem);
+		//curItem=(n+rand())%n+1;
+
+		int totalItemsBelow = moveItem(curItem);
+		printf("%d\n",totalItemsBelow);
+
+		/*int totalItemsBelow2 = moveItem2(curItem);
+		//printf("item:%d m1:%d m2:%d loc:%d\n",curItem, totalItemsBelow, totalItemsBelow2,loc[curItem-1]);
+		if(totalItemsBelow!=totalItemsBelow2){
+			printf("item:%d m1:%d m2:%d loc:%d\n",curItem, totalItemsBelow, totalItemsBelow2,loc[curItem-1]);
+		}*/
+	}
+	return 0;
+}
+
+void initLoc(){
+	power2=0;
+	int numPower2=1;
+	size=m+n;
+
+	while(numPower2*2<size){
+		numPower2*=2;
+		power2++;
+	}
+
+	locUpdate= new int*[power2+1];
+	int curArraySize=2;
+	for(int i=0; i<power2; i++){
+		locUpdate[i]=new int[curArraySize];
+		for(int j=0; j<curArraySize; j++)
+			locUpdate[i][j]=0;
+		curArraySize*=2;
+	}
+	locUpdate[power2]=new int[size];
+	loc =  new int[n];
+
+	for(int i=0; i<size; i++){
+		locUpdate[power2][i]=0;
+	}
+	for(int i=0; i<n; i++){
+		loc[i]=m+i;
+	}
+	arrayStart=m;
+
+	//For testing
+	/*item2 =  new int[n]; 
+	for(int i=0; i<n; i++){
+		item2[i]=i+1;
+	}*/
+}
+
+void destroy(){
+	for(int i=0;i<power2; i++){
+		delete locUpdate[i];
+	}
+	delete locUpdate;
+	delete loc;
+	//delete item2; Testing purposes
+}
+
+//We move the item to be moved before the first item.
+//We then leave the place from which it was moved as empty
+//The locUpdate keeps track of all the items empty between arrayStart and the item address
+//The items are numbered 1..n, hence there corresponding indices will be item-1
+int moveItem(int item){
+	int itemIndex=item-1;
+	int curItemAddress=loc[itemIndex];
+	int totalElementsBeforeItem=curItemAddress-arrayStart-getTotalEmptyLocations(curItemAddress);
+	int newItemAddress=arrayStart-1;
+	storeEmptyLocation(curItemAddress);
+	loc[itemIndex]=newItemAddress;
+	arrayStart--;
+	return totalElementsBeforeItem;
+}
+
+//Sum all the locUpdates corresponding to the item
+int getTotalEmptyLocations(int itemLoc){
+	long long curArraySize=2;
+	int emptyLocations=0;
+	for(int i=0;i<power2; i++){
+		long long arrayLoc; 
+		if( (itemLoc*curArraySize)%size == 0)
+			arrayLoc = (itemLoc*curArraySize)/size;
+		else {
+			arrayLoc = (itemLoc*curArraySize)/size;
+			//If the condition itemLoc >= arrayLoc*size/curArraySize && itemLoc < (arrayLoc+1)*size/curArraySize is violated
+			if( (arrayLoc+1)*size/curArraySize <= itemLoc )
+				arrayLoc++;
+
+
+			/*if( itemLoc < arrayLoc*size/curArraySize  ){
+				printf("less error\n");
+				exit(0);
+			}
+			if(  itemLoc >= (arrayLoc+1)*size/curArraySize ) {
+				printf("more error arrayLoc=%lld, itemLoc=%d check=%lld arraySize=%lld size=%lld\n",arrayLoc,itemLoc,(arrayLoc+1)*size/curArraySize,curArraySize,size);
+				exit(0);
+			}*/
+
+		}
+
+		//if(debug)
+		//	printf("i=%d, itemloc=%d, arrayLoc=%lld, locUpdate=%d\n",i,itemLoc,arrayLoc,locUpdate[i][arrayLoc]);
+		emptyLocations+=locUpdate[i][arrayLoc];
+		curArraySize*=2;
+	}
+	emptyLocations +=locUpdate[power2][itemLoc];
+	return emptyLocations;
+}
+
+void storeEmptyLocation(int loc){
+
+	/*if(loc==0){
+		locUpdate[0][0]++;
+		locUpdate[0][1]++;
+		return;
+	}*/
+
+	long long arrayIndex=1;
+	long long arraySize=2;
+
+	for(int i=0; i<power2; i++) {
+
+		if( loc < (size*arrayIndex)/arraySize ) {
+			//printf("store loc=%d i=%d arrayIndex=%d checkValue=%d\n",loc,i,arrayIndex,(size*arrayIndex)/arraySize );
+			locUpdate[i][arrayIndex]++;
+			arrayIndex--;
+		} else if (loc == (size*arrayIndex)/arraySize) {
+			locUpdate[i][arrayIndex]++;
+			return;
+		}
+		arraySize*=2;
+		arrayIndex=arrayIndex*2+1;
+	}
+
+	locUpdate[power2][loc]++;
+}
+
+/* For testing purposes
+int moveItem2(int item){
+	int loc=-1;
+	for(int i=0; i<n; i++){
+		if(item2[i]==item){
+			loc=i;
+			break;
+		}
+	}
+	int elementsBefore=loc;
+
+	for(int i=loc-1; i>=0; i--){
+		item2[i+1]=item2[i];
+	}
+	item2[0]=item;
+
+	return elementsBefore;
+}*/

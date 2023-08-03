@@ -1,0 +1,151 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+const int N = 2e5 + 5, LOGN = 20;
+
+vector<int> V;
+stack<int> S;
+vector<pair<int, int> > adj[N];
+vector<pair<pair<int, int>, int> > edge;
+int start[N], finish[N], dep[N];
+int p[N][LOGN], minEdge[N][LOGN];
+int id[N], B[N];
+bool visited[N];
+int myP[N], sz[N];
+int cntr;
+
+void dfs(int u, int prev, int edge_cost){
+    dep[u] = dep[prev] + 1;
+    p[u][0] = prev, minEdge[u][0] = edge_cost;
+
+    for(int i = 1; i < LOGN; i++){
+        p[u][i] = p[p[u][i - 1]][i - 1];
+        minEdge[u][i] = min(minEdge[u][i - 1], minEdge[p[u][i - 1]][i - 1]);
+    }
+
+    start[u] = ++cntr;
+    for(auto v : adj[u]){
+        if(v.first == prev)   continue;
+        dfs(v.first, u, v.second);
+    }
+    finish[u] = ++cntr;
+}
+
+int lca(int u, int v){
+    if(dep[u] < dep[v]) swap(u, v);
+    int diff = dep[u] - dep[v];
+    for(int i = LOGN - 1; i >= 0; i--)
+        if(diff & (1 << i))
+            u = p[u][i];
+    if(u == v)  return u;
+    for(int i = LOGN - 1; i >= 0; i--)
+        if(p[u][i] != p[v][i])
+            u = p[u][i], v = p[v][i];
+    return p[u][0];
+}
+
+int queryMin(int u, int v){
+    int diff = dep[v] - dep[u], ans = INT_MAX;
+    for(int i = LOGN - 1; i >= 0; i--)
+        if(diff & (1 << i))
+            ans = min(ans, minEdge[v][i]), v = p[v][i];
+    return ans;
+}
+
+bool ancestor(int p, int u){
+    return (start[p] < start[u] and finish[p] > finish[u]);
+}
+
+bool cmp(int a, int b){
+    return start[a] < start[b];
+}
+
+bool cmpEdge(pair<pair<int, int>, int> a, pair<pair<int, int>, int> b){
+    return a.second > b.second;
+}
+
+int par(int x){
+    if(myP[x] != x) myP[x] = par(myP[x]);
+    return myP[x];
+}
+
+int sizeOf(int a){
+    return sz[par(a)];
+}
+
+int dsu(int a, int b){
+    int p1 = par(a), p2 = par(b);
+    if(sz[p2] > sz[p1]) swap(p1, p2);
+    sz[p1] += sz[p2];
+    myP[p2] = p1;
+}
+
+int main(){
+
+    int n, q, k, u, v, w, tmp;
+
+    cin>>n;
+    for(int i = 1; i < n; i++){
+        cin>>u>>v>>w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+
+    dfs(1, 0, INT_MAX);
+
+    cin>>q;
+
+    while(q--){
+
+        V.clear();
+        edge.clear();
+
+        cin>>k;
+        for(int i = 1; i <= k; i++){
+            cin>>tmp;
+            B[i] = tmp, visited[tmp] = 1;
+            V.push_back(tmp);
+        }
+
+        sort(V.begin(), V.end(), cmp);
+
+        int lol = V.size();
+        for(int i = 0; i < lol - 1; i++) V.push_back(lca(V[i], V[i + 1]));
+
+        sort(V.begin(), V.end(), cmp);
+
+        V.resize(distance(V.begin(), unique(V.begin(), V.end())));
+
+        for(int i = 0; i < V.size(); i++)   id[V[i]] = i + 1;
+
+        while(!S.empty())   S.pop();
+        S.push(V[0]);
+
+        for(int i = 1; i < V.size(); i++){
+            while(!ancestor(S.top(), V[i]))   S.pop();
+            u = S.top(), v = V[i], w = queryMin(u, v);
+            edge.push_back({{id[u], id[v]}, w});
+            S.push(V[i]);
+        }
+
+        for(int i = 1; i <= V.size(); i++)  sz[i] = 1, myP[i] = i;
+
+        for(int i = 0; i < V.size(); i++)
+            if(!visited[V[i]])
+                sz[id[V[i]]] = 0;
+
+        sort(edge.begin(), edge.end(), cmpEdge);
+
+        ll ans = 0;
+        for(auto e : edge){
+            int u = e.first.first, v = e.first.second, w = e.second;
+            ans += (1LL * w * sizeOf(u) * sizeOf(v));
+            dsu(u, v);
+        }
+
+        cout<<ans<<'\n';
+
+        for(int i = 1; i <= k; i++) visited[B[i]] = 0;
+    }
+}

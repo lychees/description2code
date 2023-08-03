@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("think.inp","r",stdin)
+#define OUTPUT freopen("think.out","w",stdout)
+#define FOR(i,l,r) for(auto i=l;i<=r;i++)
+#define REP(i,l,r) for(auto i=l;i<r;i++)
+#define FORD(i,l,r) for(auto i=l;i>=r;i--)
+#define REPD(i,l,r) for(auto i=l;i>r;i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+
+const int inf=1e9;
+const int MOD=1e9+7;
+const int M=1e2+10;
+
+int s[M],t[M];
+ll fac[M][M],rev[M][M],refac[M][M];
+vector <int> pri;
+ll power(ll x,ll y,ll mod){
+    ll ans=1;
+    while (y){
+        if (y&1) ans=ans*x%mod;
+        x=x*x%mod;
+        y>>=1;
+    }
+    return ans;
+}
+ll C(ll x,ll y,ll mod){
+    if (y>x) return 0;
+    return fac[mod][x]*refac[mod][y]%mod*refac[mod][x-y]%mod;
+}
+ll lucas(ll x,ll y,ll mod){
+    ll ans=1;
+    while (x||y){
+        ans=ans*C(x%mod,y%mod,mod)%mod;
+        x/=mod;y/=mod;
+    }
+    return ans;
+}
+void prepare(){
+    REP(i,2,M) if (!t[i]){
+        pri.push_back(i);
+        for(int j=i;j<M;j+=i) t[j]=i;
+        ///precalculate binomial
+        fac[i][0]=1;
+        REP(j,1,i) fac[i][j]=fac[i][j-1]*j%i;
+        rev[i][1]=1;
+        REP(j,2,i) rev[i][j]=i-(i/j)*rev[i][i%j]%i;
+        refac[i][0]=1;
+        REP(j,1,i) refac[i][j]=refac[i][j-1]*rev[i][j]%i;
+    }
+}
+ll solve(ll n,ll m,ll mod){
+    int top=0;
+    for(auto i:pri) if (mod%i==0) s[++top]=i;
+    ll sum=0;
+    FOR(i,1,top) {
+//        cout<<s[i]<<" "<<lucas(n-1,m-1,s[i])<<" "<<power(mod/s[i],s[i]-1,mod)<<'\n';
+        sum=(sum+power(mod/s[i],s[i]-1,mod)*lucas(n-1,m-1,s[i]))%mod;
+    }
+    return sum;
+}
+int main(){
+    prepare();
+    int test;
+    cin>>test;
+    while (test--){
+        ll n,m,mod;
+        cin>>n>>m>>mod;
+        cout<<solve(n,m,mod)<<'\n';
+    }
+}

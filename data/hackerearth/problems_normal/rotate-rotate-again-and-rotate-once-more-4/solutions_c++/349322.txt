@@ -1,0 +1,164 @@
+#include<iostream>
+#include<algorithm>
+#include<cstring>
+#include<stdio.h>
+#define lint long long
+using namespace std;
+
+struct   lst {
+	lint r[5];
+}st[7000009];
+
+struct dir {
+	lint ant, clo;
+}lazy[7000009];
+void built(lint node, lint b, lint e) {
+	lint i,k,j;
+	if(b > e) 
+		return; 
+  	if(b == e) {
+  		for (i = 0; i < 4; i++) 
+  			st[node].r[i] = 0;
+    		st[node].r[0]++; 
+		return;
+	}
+	built(node*2, b, (b+e)/2); 
+	built(node*2+1, ((b+e)/2)+1, e);
+	for(i = 0;i < 4;i++)
+		st[node].r[i] = st[node*2].r[i] + st[node*2+1].r[i];
+}
+void update(int node, int b, int e, int qs, int qe, int K, char c)
+{
+	lst temp,temp1;
+	lint i,j,val =0;;
+  	if(lazy[node].clo != 0 || lazy[node].ant != 0) { 
+   		 val= lazy[node].clo;
+   		val = val % 4;
+   		 
+   		temp = st[node];
+  		for(i = 0;i < 4;i++) {
+  			st[node].r[i] = temp.r[( i + val) % 4];
+  		}
+  		val= lazy[node].ant;
+   		val = val % 4;
+   		temp = st[node];
+  		for( i = 0;i < 4;i++) {
+  			st[node].r[i] = temp.r[(4 + i - val) % 4];
+  		}
+		if(b != e) {
+			lazy[node*2].ant += lazy[node].ant; 
+			lazy[node*2].clo += lazy[node].clo;
+   			lazy[node*2+1].ant += lazy[node].ant; 
+   			lazy[node*2+1].clo += lazy[node].clo;
+		}
+   		lazy[node].ant = 0;
+		lazy[node].clo = 0; 
+  	}
+	if(b > e|| b > qe || e < qs) 
+		return;
+  	if(b >= qs && e <= qe) {
+    	 
+   		temp1 = st[node];
+   		if(c == 'A') {
+  			for( i = 0;i < 4;i++) {
+  				st[node].r[i] = temp1.r[(4 + i - K) % 4];
+  			}
+  		}
+  		else if(c == 'C') {
+  			for( i = 0;i < 4;i++) {
+  				st[node].r[i] = temp1.r[(i + K) % 4];
+ 			}
+  		}
+		if(b != e) { 
+			if(c == 'A')		
+				lazy[node*2].ant += K;
+			else {
+				lazy[node*2].clo += K;
+			}
+			if(c == 'A')		
+				lazy[node*2 + 1].ant += K;
+			else {
+				lazy[node*2 + 1].clo += K;
+			}
+		}
+
+    		return;
+	}
+	update(node*2, b, (b+e)/2, qs, qe, K,c); 
+	update(node*2+1, ((b+e)/2)+1, e, qs, qe, K,c);
+	for( i = 0;i < 4;i++) {
+		st[node].r[i] = st[node*2].r[i] + st[node*2+1].r[i];
+	}
+}
+struct lst query(lint node, lint b, lint e, lint qs, lint qe) 
+{
+	lint i,val;	
+	
+	lst temp = {0},ans;
+	if(b > e || b > qe || e < qs) 
+		return temp; 
+	if(lazy[node].clo != 0 || lazy[node].ant != 0) {
+   		 val= lazy[node].clo;
+   		val = val % 4;
+   		temp = st[node];
+  		for( i = 0;i < 4;i++) {
+  			st[node].r[i] = temp.r[( i + val) % 4];
+  		}
+  		val= lazy[node].ant;
+   		val = val % 4;
+   		temp = st[node];
+  		for( i = 0;i < 4;i++) {
+  			st[node].r[i] = temp.r[(4 + i - val) % 4];
+  		}
+		if(b != e) {
+			lazy[node*2].ant += lazy[node].ant;
+			lazy[node*2].clo += lazy[node].clo;
+   			lazy[node*2+1].ant += lazy[node].ant;
+   			lazy[node*2+1].clo += lazy[node].clo;
+		}
+   		lazy[node].ant = 0;
+		lazy[node].clo = 0; 
+  	}
+	if(b >= qs && e <= qe) 
+		return st[node];
+
+	lst q1 = query(node*2, b, (b+e)/2, qs, qe);
+	lst q2 = query(node*2+1, ((b+e)/2)+1, e, qs, qe); 
+	
+	 
+	for( i = 0;i < 4;i++) {
+		ans.r[i] = q1.r[i] + q2.r[i];
+	}
+	return ans;
+}
+int main() {
+	
+	lint n,i,j,k,l,m,x,y,q;
+	char c;
+	scanf("%lld%lld",&n,&q);
+	built(1, 0, n-1);
+	string s;
+	memset(lazy, 0, sizeof(lazy));
+	while(q--)
+	{
+		
+		cin>>s;
+		c = s[0];
+		
+		if (s[0] == 'A' || s[0] == 'C') {
+			scanf("%lld%lld%lld", &x, &y, &k);
+			k = k % 4;
+			update(1,0,n-1,x-1, y-1,k,c);
+		} else {
+			scanf("%lld%lld", &x, &y);
+			
+			lst temp = query(1, 0, n - 1, x - 1, y - 1);
+			k = 0;
+			for(i = 0; i < 4; ++i)
+				 k = max(k, temp.r[i]);
+			printf("%lld\n",k);
+		}
+	
+}
+	return 0;
+}

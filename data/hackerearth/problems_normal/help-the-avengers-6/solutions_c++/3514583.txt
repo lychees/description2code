@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+bool vis [1000000 + 10];
+int siz = 0;
+
+int N = 1000000 + 10;
+
+void sieve(){
+
+    vis[1] = true;
+    for(long long i = 2; i * i <= N; i++){
+        if(!vis[i]){
+            for( long long j = i * i; j <= N; j+= i){
+                vis[j] = true;
+            }
+        }
+    }
+}
+
+int arr [32000 + 10];
+int tree [32000 * 4 + 10];  // size = N * 4 = 200000 * 4
+
+void build (int index , int le , int ri){
+
+    if(le == ri){
+        tree[index] = !vis[arr[le]];
+        return;
+    }
+    build(index * 2 + 1 , le , (le + ri) / 2);
+    build(index * 2 + 2,  (le + ri) / 2 + 1, ri );
+    tree[index] = tree[index * 2 + 1] + tree[index * 2 + 2];
+    return;
+}
+
+void update (int index , int le , int ri , int target , int value){
+
+    if(le == ri){
+        tree[index] = !vis[value] ;
+        return ;
+    }
+    if(target <= (le + ri) / 2 ){
+        update(index * 2 + 1, le , (le + ri) / 2, target, value);
+    } else {
+        update(index * 2 + 2, (le + ri) / 2 + 1 , ri , target, value);
+    }
+      tree[index] = tree[index * 2 + 1] + tree[index * 2 + 2];
+      return;
+}
+
+int query (int index , int le , int ri , int a , int b){
+
+    if(le >= a && ri <= b){
+        return tree[index];
+    }
+    if(le > b || ri < a) return 0;
+    int w = query(index * 2 + 1, le , (le + ri) / 2 , a  ,  b) ;
+    return w + query(index * 2 + 2, (le + ri) / 2 + 1, ri , a  ,  b);
+
+}
+
+
+int main()
+{
+    int t , n , q, tem1 , tem2;
+    char c;
+
+    sieve();
+
+    cin >> t;
+
+    while(t--){
+
+        cin >> n;
+        for(int i = 0; i < n; i++) cin >> arr[i];
+
+        build(0 , 0 , n - 1);
+
+        cin >> q;
+
+        for(int i = 0; i < q; i++){
+
+           cin >> c >> tem1 >> tem2;
+
+           if(c == 'C') update(0 , 0 , n - 1, tem1 - 1 , tem2);
+           else cout << query(0 , 0 , n - 1, tem1 - 1, tem2 - 1) << "\n";
+        }
+
+    }
+
+    return 0;
+}

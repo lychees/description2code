@@ -1,0 +1,118 @@
+#include <iostream>
+#include <vector>
+#include <cstdio>
+#include <algorithm>
+#include <set>
+#include <map>
+#include <cassert>
+#include <numeric>
+#include <string>
+#include <cstring>
+#include <cmath>
+using namespace std;
+
+#ifdef LOCAL
+	#define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#else
+	#define eprintf(...) 42
+#endif
+
+typedef long long int int64;
+
+const int N = (int) 1e5 + 100;
+
+struct Edge
+{
+	int a, b, c;
+	Edge() : a(), b(), c() {}
+
+	void read()
+	{
+		scanf("%d%d%d", &a, &b, &c);
+		a--;
+		b--;
+	}
+	bool operator < (const Edge &A) const
+	{
+		return c > A.c;
+	}
+} edge[N];
+
+int par[N];
+vector <int> list[N];
+map <int, int> cnt[N];
+long long answer[N];
+int n, q;
+
+void read()
+{
+	scanf("%d", &n);
+	for (int i = 0; i < n; i++)
+	{
+		list[i].clear();
+		cnt[i].clear();
+		answer[i] = 0;
+	}
+	
+	for (int i = 0; i < n - 1; i++)
+		edge[i].read();
+
+	for (int i = 0; i < n; i++)
+	{
+		par[i] = i;
+		list[i].push_back(i);
+	}
+
+	scanf("%d", &q);
+	for (int i = 0; i < q; i++)
+	{
+		int k;
+		scanf("%d", &k);
+		for (int j = 0; j < k; j++)
+		{
+			int x;
+			scanf("%d", &x);
+			x--;
+			cnt[x][i]++;
+		}
+	}
+}
+
+void solve()
+{
+	sort(edge, edge + n - 1);
+	for (int i = 0; i < n - 1; i++)
+	{
+		int a = par[edge[i].a], b = par[edge[i].b];
+		eprintf("merge %d + %d : %d\n", a, b, edge[i].c);
+
+		if ((int) list[a].size() < (int) list[b].size() )
+			swap(a, b);
+		for (int x : list[b] )
+		{
+			par[x] = a;
+			list[a].push_back(x);
+		}
+		for (auto p : cnt[b] )
+		{
+			answer[p.first] += p.second * 1LL * cnt[a][p.first] * 1LL * edge[i].c;
+			cnt[a][p.first] += p.second;
+		}
+		cnt[b].clear();
+		list[b].clear();
+	}
+
+	for (int i = 0; i < q; i++)
+		printf("%lld\n", answer[i] );
+}
+
+int main(int,  char **)
+{
+
+	read();
+	solve();
+
+	return 0;
+}
+
+

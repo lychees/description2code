@@ -1,0 +1,145 @@
+#include <cstdio>
+#include <cmath>
+#include <vector>
+#include <memory.h>
+#define rep(i,x,y) for(int i=x;i<=y;i++)
+#define REP(i,x,y) for(int i=x;i>=y;i--)
+using namespace std;
+typedef long long ll;
+const int P=1000000007;
+vector <int> p[100001];
+int n,c[100001],sum[100001],lsum[100001],lst[100001],rsum[100011],nxt[100001],R[100001],fw[100001];
+ll sum1[100001],sum2[100001],r2,r3,r4;
+int ask(int x)
+{
+  int ans=0;
+  for(int i=x;i;i-=i&-i)
+    ans+=fw[i];
+  return ans;
+}
+void ins(int x)
+{
+  for(int i=x;i<=n;i+=i&-i)
+    fw[i]++;
+  return;
+}
+ll ksm(int bas,int k,int p)
+{
+  if(k==0)return 1;
+  if(k==1)return bas;
+  ll ans=ksm(bas,k>>1,p);
+  ans=(ans*ans)%p;
+  if(k&1)ans=(ans*bas)%p;
+  return ans;
+}
+ll c4(int n)
+{
+  return 1ll*n*(n-1)*(n-2)%P*(n-3)%P*r2%P*r3%P*r4%P;
+}
+int main()
+{
+  r2=ksm(2,P-2,P);
+  r3=ksm(3,P-2,P);
+  r4=ksm(4,P-2,P);
+  scanf("%d",&n);
+  memset(sum,0,sizeof(sum));
+  rep(i,1,n)
+  {
+    scanf("%d",&c[i]);
+    sum[c[i]]++;
+  }
+  ll now=0,ans=0;
+  rep(i,1,100000)
+  {
+    ll tem=1ll*(sum[i]-1)*sum[i]/2%P;
+    ans=(ans+now*tem)%P;
+    now=(now+tem)%P;
+  }
+  memset(lst,0,sizeof(lst));
+  lsum[0]=-1;
+  rep(i,1,n)
+  {
+    lsum[i]=lsum[lst[c[i]]]+1;
+    lst[c[i]]=i;
+  }
+  memset(lst,0,sizeof(lst));
+  rsum[0]=-1;
+  REP(i,n,1)
+  {
+    nxt[i]=lst[c[i]];
+    rsum[i]=rsum[lst[c[i]]]+1;
+    lst[c[i]]=i;
+  }
+  now=0;
+  rep(i,1,n)
+  {
+    ans=ans-now*rsum[i];
+    if(ans<0)ans=P-((-ans)%P);
+    ans%=P;
+    now=(now+lsum[i])%P;
+  }
+  int k=floor(4.0*sqrt((double)n/log(n)));
+  int np=0;
+  rep(i,1,100000)
+    if(sum[i]>=k)
+    {
+      int rt=0;
+      REP(j,n,1)
+      {
+        if(c[j]==i)rt++;
+        R[j]=rt;
+      }
+      memset(sum1,0,sizeof(sum1));
+      memset(sum2,0,sizeof(sum2));
+      int lt=0;
+      rep(j,1,n)
+      {
+        if(c[j]==i)
+        {
+          lt++;
+          continue;
+        }
+        ans=ans-sum1[c[j]]*R[j];
+        if(ans<0)ans=P-((-ans)%P);
+        ans%=P;
+        if(sum[c[j]]<k)
+        {
+          ll tem=(1ll*rt*rt+1ll*R[j]*R[j]-2ll*rt*R[j]-rt+R[j])*lsum[j]+sum2[c[j]]+sum1[c[j]]*(2*R[j]+1-2*rt);
+          if(tem<0)tem=P-(-tem)%P;
+          tem%=P; 
+          tem=(tem*r2)%P;
+          ans-=tem;
+          if(ans<0)ans=P-((-ans)%P);
+          ans%=P;
+          sum2[c[j]]=(sum2[c[j]]+1ll*lt*lt)%P;
+        }
+        sum1[c[j]]=(sum1[c[j]]+lt)%P;
+      }
+    }
+    else
+    {
+      for(int j=lst[i];j;j=nxt[j])
+        for(int l=nxt[j];l;l=nxt[l])
+          p[j].push_back(l);
+    }
+  memset(fw,0,sizeof(fw));
+  REP(i,n,1)
+    if(p[i].size()>0)
+    {
+      rep(j,0,p[i].size()-1)
+        ans-=ask(p[i][j]-1);
+      if(ans<0)ans=P-(-ans)%P;
+      ans%=P;
+      rep(j,0,p[i].size()-1)
+        ins(p[i][j]);
+    }
+  rep(i,1,100000)
+  {
+    ll tem=c4(sum[i]);
+    ans+=tem;
+    if(sum[i]<k)ans+=tem;
+    ans%=P;
+  }
+  printf("%lld\n",ans);
+  return 0;
+} 

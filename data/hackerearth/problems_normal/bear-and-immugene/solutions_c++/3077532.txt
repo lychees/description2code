@@ -1,0 +1,117 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define REP(i,a,b) for(i=a;i<b;i++)
+#define rep(i,n) REP(i,0,n)
+
+#define mygc(c) (c)=getchar_unlocked()
+#define mypc(c) putchar_unlocked(c)
+
+#define ll long long
+#define ull unsigned ll
+
+void reader(int *x){int k,m=0;*x=0;for(;;){mygc(k);if(k=='-'){m=1;break;}if('0'<=k&&k<='9'){*x=k-'0';break;}}for(;;){mygc(k);if(k<'0'||k>'9')break;*x=(*x)*10+k-'0';}if(m)(*x)=-(*x);}
+int reader(char c[]){int i,s=0;for(;;){mygc(i);if(i!=' '&&i!='\n'&&i!='\r'&&i!='\t'&&i!=EOF) break;}c[s++]=i;for(;;){mygc(i);if(i==' '||i=='\n'||i=='\r'||i=='\t'||i==EOF) break;c[s++]=i;}c[s]='\0';return s;}
+template <class T, class S> void reader(T *x, S *y){reader(x);reader(y);}
+void writer(int x, char c){int s=0,m=0;char f[10];if(x<0)m=1,x=-x;while(x)f[s++]=x%10,x/=10;if(!s)f[s++]=0;if(m)mypc('-');while(s--)mypc(f[s]+'0');mypc(c);}
+template<class T> void writerLn(T x){writer(x,'\n');}
+
+#define MD 1000000007
+
+void mul(int a[], int b[], int res[]){
+  int i, j, k;
+  ll tmp;
+  rep(i,5) rep(j,5){
+    tmp = 0;
+    rep(k,5) tmp += (ll)a[i*5+k] * b[k*5+j];
+    res[i*5+j] = tmp % MD;
+  }
+}
+
+struct segtree{
+  int N;
+  int (*data)[25];
+
+  void malloc(int maxN){
+    int i;
+    for(i=1;i<maxN;i*=2);
+    data = (int(*)[25])std::malloc(sizeof(int[25])*2*i);
+  }
+
+  int* operator[](int i){
+    return data[N+i];
+  }
+
+  void setN(int n){
+    int i;
+    for(i=1;i<n;i*=2);
+    N = i;
+  }
+
+  void build(void){
+    int i;
+    for(i=N-1;i;i--){
+      mul(data[2*i], data[2*i+1], data[i]);
+    }
+  }
+
+  void set(int ind, int val){
+    int i, j;
+    ind += N;
+    rep(i,25) data[ind][i] = 0;
+    rep(i,5) data[ind][i*5+i] = 1;
+    if(val>=0) rep(i,5) data[ind][i*5+val] = 1;
+  }
+
+  inline void change(int ind, int val){
+    int i, j;
+    set(ind, val);
+    ind += N;
+    while(ind > 1){
+      if(ind < (ind^1)) mul(data[ind], data[ind^1], data[ind/2]);
+      else              mul(data[ind^1], data[ind], data[ind/2]);
+      ind /= 2;
+    }
+  }
+};
+
+int N, Q;
+char S[1000100];
+
+int cnv[200];
+int X; char Y[10];
+
+int main(){
+  int i, j, k;
+  ll res;
+  segtree t;
+
+  cnv['A'] = 1;
+  cnv['C'] = 2;
+  cnv['T'] = 3;
+  cnv['G'] = 4;
+
+  reader(&N,&Q);
+  reader(S);
+
+  t.malloc(N);
+  t.setN(N);
+  rep(i,N) t.set(i, cnv[S[i]]);
+  REP(i,N,t.N) t.set(i, -1);
+  t.build();
+
+  while(Q--){
+    reader(&X,Y);
+    X--;
+    t.change(X, cnv[Y[0]]);
+
+    res = 0;
+    rep(i,5) res += t.data[1][i];
+    res %= MD;
+    writerLn((int)res);
+  }
+
+  return 0;
+}
+
+

@@ -1,0 +1,163 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<array>
+#include<tuple>
+#include<hash_map>
+#include<hash_set>
+#include<valarray>
+#include<forward_list>
+#include<unordered_map>
+#include<unordered_set>
+using namespace std;
+int t;
+#define MAX 10002
+#define MOD 1000000007
+long long int dp[MAX][1 << 5];
+long long int mat[1 << 5][1 << 5];
+long long int init[1 << 5];
+long long int ans[1 << 5][1 << 5];
+long long int res[1 << 5];
+long long int tmp[1 << 5];
+long long int tmpp[1 << 5][1 << 5];
+#define A (1<<4)+1
+int main(){
+	scanf("%d", &t);
+		for (int j = 0; j < (1 << 4); j++){
+			mat[j][j] += 3;
+			for (int k = 0; k < 4; k++){
+				mat[j ^ (1 << k)][j]++;
+			}
+			mat[j ^ ((1 << 0) | (1 << 1))][j]++;
+			mat[j ^ 1][j]++;
+			mat[1 << 4][j]++;
+		}
+		mat[1 << 4][1 << 4] += 10;
+		mat[0][A] += 3;
+		for (int i1 = 0; i1 < 4; i1++){
+			mat[1 << i1][A]++;
+		}
+		mat[((1 << 0) | (1 << 1))][A]++;
+		mat[1 << 0][A]++;
+	init[0] = 3;
+	for (int i = 0; i < 4; i++){
+		init[1 << i] = 1;
+	}
+	init[((1 << 0) | (1 << 1))] = 1;
+	init[1 << 0]++;
+	init[A] = 1;
+	mat[A][A] = 1;
+	while (t--){
+		long long int n;
+		scanf("%lld", &n);
+		n--;
+		//????
+		for (int i = 0; i < (1 << 5); i++){
+			res[i] = init[i];
+		}
+		for (int j = 0; j < (1 << 5); j++){
+			for (int k = 0; k < (1 << 5); k++){
+				ans[j][k] = mat[j][k];
+			}
+		}
+		//mat[A][A] = 1;
+		while (n){
+			if (n & 1){
+				//res[A] = 1;
+				for (int i = 0; i < (1 << 5); i++){
+					tmp[i] = 0;
+					for (int j = 0; j < (1 << 5); j++){
+						tmp[i] += res[j] * ans[i][j];
+						tmp[i] %= MOD;
+					}
+				}
+				for (int i = 0; i < (1 << 5); i++){
+					res[i] = tmp[i];
+				}
+			}
+			for (int i = 0; i < (1 << 5); i++){
+				for (int j = 0; j < (1 << 5); j++){
+					tmpp[i][j] = 0LL;
+					for (int k = 0; k < (1 << 5); k++){
+						tmpp[i][j] += ans[i][k] * ans[k][j];
+						tmpp[i][j] %= MOD;
+					}
+				}
+			}
+			for (int i = 0; i < (1 << 5); i++){
+				for (int j = 0; j < (1 << 5); j++){
+					ans[i][j] = tmpp[i][j];
+				}
+			}
+			n >>= 1LL;
+		}
+		long long int anss = res[0] + res[1 << 4];
+		anss++;
+		anss %= MOD;
+		printf("%lld\n", anss);
+	}
+	return 0;
+	/*DP*/
+	dp[0][0] = 3;
+	for (int i = 0; i < 4; i++){
+		dp[0][1 << i] = 1;
+	}
+	dp[0][((1 << 0) | (1 << 1))] = 1;
+	dp[0][1 << 0]++;
+	for (int i = 0; i < MAX - 1; i++){
+		dp[i+1][0] = 3;
+		for (int i1 = 0; i1 < 4; i1++){
+			dp[i+1][1 << i1] = 1;
+		}
+		dp[i+1][((1 << 0) | (1 << 1))] = 1;
+		dp[i+1][1 << 0]++;
+		for (int j = 0; j < (1 << 4); j++){
+			dp[i + 1][j] += dp[i][j] * 3LL;
+			dp[i + 1][j] %= MOD;
+			for (int k = 0; k < 4; k++){
+				dp[i + 1][j ^ (1 << k)] += dp[i][j];
+				dp[i + 1][j ^ (1 << k)] %= MOD;
+			}
+			dp[i + 1][j ^ ((1 << 0) | (1 << 1))] += dp[i][j];
+			dp[i + 1][j ^ (1 << 0)] += dp[i][j];
+			dp[i + 1][j ^ 1] %= MOD;
+			dp[i + 1][j ^ ((1 << 0) | (1 << 1))] %= MOD;
+			dp[i + 1][1 << 4] += dp[i][j];
+			dp[i + 1][1 << 4] %= MOD;
+		}
+		dp[i + 1][1 << 4] += dp[i][1 << 4] * 10LL;
+		dp[i + 1][1 << 4] %= MOD;
+	}
+	while (t--){
+		int n;
+		scanf("%d", &n);
+		n--;
+		long long int ans = dp[n][0] + dp[n][1 << 4];
+		ans++;
+		ans %= MOD;
+		printf("%lld\n", ans);
+	}
+	return 0;
+}

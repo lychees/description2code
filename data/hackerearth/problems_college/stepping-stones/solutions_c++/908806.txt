@@ -1,0 +1,139 @@
+#include <stack>
+#include <cstdio>
+#include <cctype>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
+#include <cmath>
+#include <climits>
+#include <iostream>
+#include <vector>
+#include <map>
+#include <list>
+#include <queue>
+#include <algorithm>
+#include <limits>
+#include <bitset>
+using namespace std;
+
+//Shorthands
+typedef vector<int> vi;
+typedef pair<int, int> ii;
+typedef vector<vi> vvi;
+typedef vector<ii> vii;
+typedef long long ll;
+typedef vector<ll> vll;
+#define sd(x) scanf("%d", &x)
+#define sl(x) scanf("%lld", &x)
+#define For(i, j, k) for (int i = j; i <= k; i++)
+#define Ford(i, j, k) for (int i = j; i >= k; i--)
+#define sz(a) int((a).size())
+#define rsz resize
+#define pb push_back
+#define all(c) (c).begin(),(c).end()
+#define tr(c,i) for(auto i = (c).begin(); i != (c).end(); i++)
+#define present(c,x) ((c).find(x) != (c).end())
+#define abs(x) (((x) > 0) ? (x) : (-(x)))
+#define mp make_pair
+
+//DEBUG
+#define trace(x) cerr << #x << ": " << x << endl;
+#define trace2(x, y) cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z) cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define trace4(a, b, c, d) cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+#define track(a) cerr << #a << ": "; for (auto tmp: a) cerr << tmp << " "; cerr << endl;
+#define trackp(a) cerr << #a << ": "; for (auto tmp: a) cerr << "(" << tmp.first << ", " << tmp.second << "), "; cerr << endl;
+
+#define MOD 1000000007LL
+#define INF 1e15
+
+long long power(long long n,int m)
+{
+    if (m == 0) return 1;
+    long long x = pow(n,m/2);
+    if(m % 2 == 0)
+               return (x*x);
+    else
+               return (((x*x))*n);
+}
+
+
+
+void input()
+{
+    #ifndef ONLINE_JUDGE
+        string file = "input.txt";
+        freopen(file.c_str(), "r", stdin);
+    #endif // ONLINE_JUDGE
+}
+
+void output()
+{
+    #ifndef ONLINE_JUDGE
+        freopen("output.txt", "w", stdout);
+    #endif // ONLINE_JUDGE
+}
+
+ll dp[5005][5005];
+
+ll query(vector<ll> &prefix, int l ,int r)
+{
+    if (l > r)
+        return 0;
+    return (prefix[r] + MOD - prefix[l-1]) % MOD;
+}
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    int n, a, b, k;
+    cin >> n >> a >> b >> k;
+    bool flag = false;
+    if (a > b) flag = true;
+    dp[0][a] = 1;
+    /*for (int j = 0; j <= n; j++)
+        cout << dp[0][j] << " ";
+    cout << endl;*/
+    for (int i = 1; i <= k; i++) {
+        vector<ll> prefix(n + 5);
+        for (int j = 1; j <= n; j++)
+            prefix[j] = (prefix[j-1] + dp[i-1][j]) % MOD;
+        //track(prefix);
+        if (!flag) {
+            for (int j = 1; j < b; j++) {
+                if ((abs(j-b)) % 2 == 0) {
+                        //trace2(j, j + (b - j)/2  - 1);
+                        dp[i][j] += query(prefix, 1, j + (b - j)/2  - 1);
+                } else {
+                        //trace2(j, (b - j)/2 + j);
+                        dp[i][j] += query(prefix, 1, (b - j)/2 + j);
+                }
+                dp[i][j] %= MOD;
+                dp[i][j] += MOD;
+                dp[i][j] -= dp[i-1][j];
+                dp[i][j] %= MOD;
+            }
+        } else {
+            for (int j = b+1; j <= n; j++) {
+                //trace(j - (b - j)/2  + 1);
+                if ((abs(j-b)) % 2 == 0) dp[i][j] += query(prefix, j - abs(b - j)/2  + 1, n);
+                else dp[i][j] += query(prefix, j - abs(b - j)/2, n);
+                dp[i][j] %= MOD;
+                dp[i][j] += MOD;
+                dp[i][j] -= dp[i-1][j];
+                dp[i][j] %= MOD;
+            }
+        }
+
+        /*for (int j = 0; j <= n; j++)
+            cout << dp[i][j] << " ";
+        cout << endl;*/
+
+    }
+    ll sum = 0;
+    for (int i = 1; i <= n; i++) {
+        sum += dp[k][i];
+        sum %= MOD;
+    }
+    cout << sum << endl;
+}

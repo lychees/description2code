@@ -1,0 +1,126 @@
+#include<bits/stdc++.h>
+#define f(i,l,r) for(i=l;i<r;i++)
+#define fr(i,r,l) for(i=r;i>l;i--)
+#define s(n) scanf("%llu",&n)
+#define pl(n) printf("%llu\n",n)
+#define ss(s) scanf("%s",s);
+#define sz size()
+#define ll long long int
+#define llu unsigned long long int
+#define pb push_back
+#define mp make_pair
+#define vll vector<ll>
+#define pll pair<ll,ll>
+#define vpll vector< pll > 
+#define F first
+#define S second
+#define mod 1000000007
+#define maxa 1000005
+#define maxv 100000000000000009
+#define pi 3.14159265358979323846
+#define all(v) v.begin() , v.end()
+using namespace std;
+llu power[100005];
+struct g{
+    llu suff;
+    llu pre;
+    llu cnt;
+}tree[400005];
+ll prod(ll a,ll b){ ll x,d;
+    if(b==0)return 1;
+    else{
+        d=prod(a,b/2);
+        x=(d*d)%mod;
+        if(b%2==0)
+            return x;
+        else
+            return (x*(a%mod))%mod;
+    }
+}
+char s[100005];
+void init(llu node , llu l , llu r){
+    if(l > r)
+        return;
+    if(l == r){
+        tree[node].pre = s[l]-'a'+1;
+        tree[node].suff = s[l]-'a'+1;
+        tree[node].cnt = 1;
+        return;
+    }
+    llu mid = (l+r)/2;
+    init(2*node , l ,mid);
+    init(2*node+1,mid+1,r);
+    tree[node].pre = (tree[2*node].pre + (tree[2*node+1].pre*power[tree[2*node].cnt])%mod)%mod;
+    tree[node].suff = (tree[2*node+1].suff + (tree[2*node].suff*power[tree[2*node+1].cnt])%mod)%mod;
+    tree[node].cnt = tree[2*node].cnt + tree[2*node+1].cnt;
+    return ;
+}
+struct g get(llu node , llu left , llu right , llu L,llu R){
+    if(left > right || left > R || right < L){
+        struct g waste;
+        waste.cnt = 0;
+        return waste;
+    }
+    if(left >= L && right <= R)
+        return tree[node];
+    llu mid = (left + right)/2;
+    struct g x = get(2*node , left , mid , L,R);
+    struct g y = get(2*node+1,mid+1,right,L,R);
+    if(x.cnt && y.cnt){
+        x.pre = (x.pre + (y.pre*power[x.cnt])%mod)%mod;
+        x.suff = ((x.suff*power[y.cnt])%mod + y.suff)%mod;
+        x.cnt+=y.cnt;
+        return x;
+    }
+    if(x.cnt)
+        return x;
+    return y;
+
+}
+void update(llu node , int left , int right , int x ,int value){
+    if(left >right || left > x || right < x)
+        return;
+    if(left == right && right == x){
+        tree[node].pre = tree[node].suff = value;
+        return;
+    }
+    llu mid = (left + right)/2;
+    update(2*node , left , mid , x, value);
+    update(2*node +1, mid+1 , right, x, value);
+
+    tree[node].pre = (tree[2*node].pre + (tree[2*node+1].pre*power[tree[2*node].cnt])%mod)%mod;
+    tree[node].suff = ((tree[2*node].suff*power[tree[2*node+1].cnt])%mod + tree[2*node+1].suff)%mod;
+}
+int main(){
+
+    llu i,n,q,x;
+    power[0] = 1;
+    for(i=1;i<=100005;i++){
+        power[i] = (power[i-1]*31)%mod;
+    }
+    s(n),s(q);
+    ss(s);
+    init(1,0,n-1);
+    while(q--){
+        s(x);
+        if(x){
+            llu l,r;
+            s(l),s(r);
+            l--;
+            r--;
+            struct g ans = get(1,0,n-1,l,r);
+            if(ans.pre == ans.suff)
+                cout << "Yes\n";
+            else
+                cout << "No\n";
+        }
+        else{
+            llu index;
+            char c;
+            scanf("%llu %c",&index,&c);
+            update(1,0,n-1,index-1,c-'a'+1);
+        }
+    }
+
+    return 0;
+}

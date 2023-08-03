@@ -1,0 +1,173 @@
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+#include <climits>
+#include <cctype>
+#include <utility>
+#include <queue>
+#include <cmath>
+#include <complex>
+using namespace std;
+
+typedef long long LL;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+typedef vector<PII> VPII;
+typedef pair<LL, LL> PLL;
+typedef pair<int, LL> PIL;
+typedef pair<LL, int> PLI;
+typedef double DB;
+
+#define pb push_back
+#define mset(a, b) memset(a, b, sizeof a)
+#define all(x) (x).begin(), (x).end()
+#define bit(x) (1 << (x))
+#define bitl(x) (1LL << (x))
+#define sqr(x) ((x) * (x))
+#define sz(x) ((int)(x.size()))
+#define cnti(x) (__builtin_popcount(x))
+#define cntl(x) (__builtin_popcountll(x))
+#define clzi(x) (__builtin_clz(x))
+#define clzl(x) (__builtin_clzll(x))
+#define ctzi(x) (__builtin_ctz(x))
+#define ctzl(x) (__builtin_ctzll(x))
+
+#define X first
+#define Y second
+
+#define Error(x) cout << #x << " = " << x << endl
+
+template <typename T, typename U> 
+inline void chkmax(T& x, U y) {
+	if (x < y) x = y;
+}
+
+template <typename T, typename U>
+inline void chkmin(T& x, U y) {
+	if (y < x) x = y;
+}
+
+const int MOD = 1e9 + 7;
+const int MN = 100005;
+const int MM = bit(18) + 5;
+int n, q, tot;
+VI con[MN];
+int st[MN], en[MN], a[MN], A[MN], _st[MN];
+
+int modExp(int a, int b, int m) {
+	int ret = 1;
+	for (; b; b >>= 1, a = (LL)a * a % m)
+		if (b & 1) ret = (LL)ret * a % m;
+	return ret; 
+}
+
+void dfs(int u, int p, int val) {
+	st[u] = ++tot;
+	_st[tot] = u;
+	A[u] = val;
+	for (int i = 0; i < con[u].size(); i++) {
+		int v = con[u][i];
+		if (v == p) continue;
+		dfs(v, u, (LL)val * a[u] % MOD);
+	}
+	en[u] = tot;
+}
+
+#define TREE int t, int l, int r
+#define LEFT t + t, l, mid
+#define RIGHT t + t + 1, mid + 1, r
+#define MID int mid = (l + r) / 2
+int sum[MM], I[MM];
+
+inline void up(int t) {
+	sum[t] = (sum[t + t] + sum[t + t + 1]) % MOD;
+}
+
+inline void renew(int t, int v) {
+	sum[t] = (LL)sum[t] * v % MOD;
+	I[t] = (LL)I[t] * v % MOD;	
+}
+
+inline void down(int t) {
+	if (I[t] != 1) {
+		renew(t + t, I[t]);
+		renew(t + t + 1, I[t]);
+		I[t] = 1;		
+	}
+}
+
+void build(TREE) {
+	I[t] = 1;
+	if (l == r) {
+		sum[t] = A[_st[l]];
+		return;
+	}
+	MID;
+	build(LEFT), build(RIGHT);
+	up(t);
+}
+
+void update(TREE, int ll, int rr, int v) {
+	if (ll > rr) return; 
+	if (ll <= l && r <= rr) {
+		renew(t, v);
+		return;
+	}
+	MID;
+	down(t);
+	if (ll <= mid) update(LEFT, ll, rr, v);
+	if (rr > mid) update(RIGHT, ll, rr, v);
+	up(t);
+}
+
+int get(TREE, int ll, int rr) {
+	if (ll <= l && r <= rr) {
+		return sum[t];
+	}
+	MID;
+	down(t);
+	int ret = 0;
+	if (ll <= mid) ret = get(LEFT, ll, rr);
+	if (rr > mid) ret = (ret + get(RIGHT, ll, rr)) % MOD;
+	return ret;
+}
+
+int main() {
+	
+	while (scanf("%d%d", &n, &q) == 2) {
+		for (int i = 1; i <= n; i++) con[i].clear();
+		for (int i = 1; i < n; i++) {
+			int u, v;
+			scanf("%d%d", &u, &v);
+			con[u].push_back(v);
+			con[v].push_back(u);
+		}
+		for (int i = 1; i <= n; i++) scanf("%d", a + i);
+		
+		tot = 0;
+		dfs(1, 0, 1);
+		build(1, 1, n);
+		while (q--) {
+			int tp, u, v;
+			scanf("%d%d", &tp, &u);
+			if (tp == 1) {
+				scanf("%d", &v);
+				int val = (LL)modExp(a[u], MOD - 2, MOD) * v % MOD;
+				a[u] = v;
+				update(1, 1, n, st[u] + 1, en[u], val);
+			} else {
+				printf("%d\n", get(1, 1, n, st[u], en[u]));
+			}
+		}
+	}
+	
+	return 0;
+}
+

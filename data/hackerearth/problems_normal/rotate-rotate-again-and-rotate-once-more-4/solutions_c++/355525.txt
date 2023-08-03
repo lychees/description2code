@@ -1,0 +1,290 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <map>
+#include <functional>
+#include <algorithm>
+#include <cstdlib>
+#include <iomanip>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <limits>
+#include <cmath>
+#include <numeric>
+#include <set>
+
+using namespace std;
+
+#define gx getchar_unlocked
+#define px putchar_unlocked
+#define ps putchar_unlocked(' ')
+#define pn putchar_unlocked('\n')
+#define LIM 1000006
+#define MOD 1000000007
+#define pb push_back
+#define mp make_pair
+#define MEM(a, b) memset(a, (b), sizeof(a))
+#define CLR(a) memset(a, 0, sizeof(a))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define ABS(X) ( (X) > 0 ? (X) : ( -(X) ) )
+#define rep(i,n) for(int i =0; i < n ; i++)
+#define reps(i,x,y) for(int i =x; i < y ; i++)
+#define repb(i,x,y) for(int i =x; i >= y ; i--)
+#define all(a) a.begin(),a.end()
+#define DBG(vari) cerr<<#vari<<" ==> "<<(vari)<<endl;
+
+const int INF = 2000000000;
+const double pi=acos(-1.0);
+
+typedef long long int i64;
+typedef long int i32;
+typedef vector<int> VI;
+typedef pair<int,int> PII;
+typedef vector <PII> VPII;
+
+void scan(int &x)
+{
+   register int c = gx();
+   x = 0;
+   for(;(c<48 || c>57);c = gx());
+   for(;c>47 && c<58;c = gx())
+   {
+       x = (x<<1) + (x<<3) + c - 48;
+   }
+}
+
+
+
+struct Node{
+i64 xx[4];
+i64 c;
+i64 a;
+}tree[3*LIM];
+
+
+void build(int node,int p,int q){
+if( p == q){
+tree[node].xx[0] = q-p+1;
+tree[node].xx[1] = 0;
+tree[node].xx[2] = 0;
+tree[node].xx[3] = 0;
+//tree[node].c = 0;tree[node].a = 0;
+
+/*rep(i,4) cout << tree[node].xx[i] << " ";cout << endl;
+DBG(tree[node].c);
+DBG(tree[node].a);*/
+
+return;
+}
+
+int mid,lef,rig;
+mid = (p+q)>>1;
+lef = node<<1;rig = lef+1;
+
+build(lef,p,mid);
+build(rig,mid+1,q);
+
+tree[node].xx[0] = q-p+1;
+tree[node].xx[1] = 0;
+tree[node].xx[2] = 0;
+tree[node].xx[3] = 0;
+//tree[node].a = 0;
+//tree[node].c = 0;
+
+/*rep(i,4) cout << tree[node].xx[i] << " ";cout << endl;
+DBG(tree[node].c);
+DBG(tree[node].a);*/
+//DBG(p);DBG(q);
+//DBG(tree[node].xx[0]);
+
+}
+
+void update(int node,int p,int q,int x,int y,int v,int d)
+{
+if( p == x && q == y){
+//DBG(p);DBG(q);
+if( d == 0){
+//DBG(tree[node].c);
+tree[node].c += v;
+i64 xy[4]={0};
+rep(i,4){
+xy[(i+v)%4] = tree[node].xx[i];
+}
+//memcpy(tree[node].xx,xy,sizeof(xy));
+rep(i,4) tree[node].xx[i] = xy[i];
+
+}
+else{
+tree[node].a += v;
+i64 xy[4]={0};
+rep(i,4){
+xy[((i-v)%4+4)%4] = tree[node].xx[i];
+}
+rep(i,4) tree[node].xx[i] = xy[i];
+}
+
+//rep(i,4) cout << tree[node].xx[i] << " ";cout << endl;
+//DBG(tree[node].c);
+//DBG(tree[node].a);
+return;
+}
+int mid = (p+q)>>1;
+int lef = node <<1;int rig = lef+1;
+
+if( y <= mid)
+update(lef,p,mid,x,y,v,d);
+else if( x > mid)
+update(rig,mid+1,q,x,y,v,d);
+else{
+update(lef,p,mid,x,mid,v,d);
+update(rig,mid+1,q,mid+1,y,v,d);
+}
+
+//DBG(p);DBG(q);
+//rep(i,4) cout << tree[lef].xx[i] << " ";cout << endl;
+//rep(i,4) cout << tree[rig].xx[i] << " ";cout << endl;
+
+rep(i,4) tree[node].xx[i] = tree[lef].xx[i] + tree[rig].xx[i];
+
+if( tree[node].c > 0){
+i64 xy[4]={0};
+rep(i,4){
+xy[(i+tree[node].c)%4] = tree[node].xx[i];
+}
+//memcpy(tree[node].xx,xy,sizeof(xy));
+rep(i,4) tree[node].xx[i] = xy[i];
+}
+
+if( tree[node].a > 0){
+int yy[4] = {0};
+rep(i,4){
+yy[((i-tree[node].a)%4+4)%4] = tree[node].xx[i];
+}
+//memcpy(tree[node].xx,yy,sizeof(yy));
+rep(i,4) tree[node].xx[i] = yy[i];
+}
+
+//tree[node].a = tree[lef].a + tree[rig].a ;
+//tree[node].c = tree[lef].c + tree[rig].c ;
+}
+
+i64 ans[4];
+
+void query(int node,int p,int q,int x,int y,pair<i64,i64> pp)
+{
+
+if( p == x && q == y){
+
+
+//DBG(p);DBG(q);
+//DBG(pp.first);
+//DBG(pp.second);
+//rep(i,4) cout << tree[node].xx[i] << " ";cout << endl;
+int xx[4] ={0};
+//memcpy(xx,tree[node].xx,sizeof(tree[node].xx));
+
+int flag = 0;
+if( pp.first > 0){
+flag = 1;
+rep(i,4){
+xx[((i-pp.first)%4+4)%4] = tree[node].xx[i];
+}
+}
+if( pp.second > 0){
+if( !flag){
+rep(i,4){
+xx[(i+pp.second)%4] = tree[node].xx[i];
+}
+}
+else{
+int yy[4];
+rep(i,4) yy[i] = xx[i];
+rep(i,4){
+xx[(i+pp.second)%4] = yy[i];
+}
+
+}
+}
+if( pp.first == 0 && pp.second == 0)
+rep(i,4) xx[i] = tree[node].xx[i];
+//memcpy(xx,tree[node].xx,sizeof(tree[node].xx));
+//rep(i,4) cout << xx[i] << " ";cout << endl;
+rep(i,4) ans[i] += xx[i];
+return;
+
+}
+int mid,lef,rig;
+mid = (p+q)>>1;
+lef = node<<1;rig = lef+1;
+
+
+if( y <= mid){
+query(lef,p,mid,x,y,mp( (pp.first + tree[node].a)%4 , (pp.second + tree[node].c)%4));
+}
+else if( x > mid){
+query(rig,mid+1,q,x,y,mp( (pp.first + tree[node].a)%4 , (pp.second + tree[node].c)%4));
+}
+else{
+query(lef,p,mid,x,mid,mp( (pp.first + tree[node].a)%4 , (pp.second + tree[node].c)%4));
+query(rig,mid+1,q,mid+1,y,mp( (pp.first + tree[node].a )%4, (pp.second + tree[node].c)%4));
+}
+
+}
+
+int main()
+{
+//freopen("aain.txt","r",stdin);
+//freopen("aaout.txt","w",stdout);
+
+std::ios_base::sync_with_stdio(false);
+int n,q;
+cin >> n >> q;
+
+//update(1,0,n-1,0,n-1,0,0);
+build(1,0,n-1);
+//rep(i,4) cout << tree[3].xx[i] << " ";cout << endl;
+
+//DBG(tree[2].c);
+rep(i,q){
+char c;
+cin >> c;
+if ( c == 'C'){
+int l,r,k;
+cin >> l >> r >> k;
+k = k%4;
+if( k!= 0)
+update(1,0,n-1,l-1,r-1,k,0);
+//cout << "first node\n";rep(i,4) cout << tree[1].xx[i] << " ";cout << endl;
+//DBG(tree[1].a);
+//DBG(tree[1].c);
+}
+else if( c == 'A'){
+int l,r,k;
+cin >> l >> r >> k;
+k = k%4;
+if( k!= 0)
+update(1,0,n-1,l-1,r-1,k,1);
+//cout << "first node\n";rep(i,4) cout << tree[1].xx[i] << " ";//cout << endl;
+//DBG(tree[1].a);
+//DBG(tree[1].c);
+}
+else{
+int l,r;
+cin >> l >> r;
+CLR(ans);
+query(1,0,n-1,l-1,r-1,mp(0,0));
+
+//rep(i,4) cout << ans[i] << " ";cout << endl;
+sort(ans,ans+4);
+cout << ans[3] << endl;
+
+}
+
+}
+return 0;
+}
+

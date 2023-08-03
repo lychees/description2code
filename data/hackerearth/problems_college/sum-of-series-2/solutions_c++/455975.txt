@@ -1,0 +1,112 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<vector>
+#include<algorithm>
+#include<cmath>
+#define mod 1000000007
+#define lim 2000000
+using namespace std;
+vector<int> prime;
+typedef long long ll;
+ll b[lim+7],inv[lim+7],f[lim+10];
+int ch[lim];
+void sieve()
+{
+    memset(ch,0,sizeof(ch));
+    ch[0]=1;
+    ch[1]=1;
+    for(int i=2;i*i<=1000000;i++)
+    {
+       // cout<<"i="<<i<<endl;
+        if(!ch[i])
+        for(int j=i*i;j<=1000000;j+=i)
+        ch[j]=1;
+    }
+    for(int i=0;i<=1000000;i++)
+        if(!ch[i])
+        prime.push_back(i);
+   // for(int i=0;i<prime.size();i++)
+     //           cout<<prime[i]<<" ";
+      //  cout<<endl;
+        
+}
+
+ll mulmod(ll a,ll b){
+    ll x=0,y=a%mod;
+    while(b>0)
+    {
+        if(b%2==1)
+            x=(x+y)%mod;
+        y=(y*2)%mod;
+        b/=2;
+    }
+    return x%mod;
+}
+ll poww(ll a,ll b){
+    ll x=1,y=a;
+    while(b>0){
+        if(b%2==1){
+            x=(x*y)%mod;
+        }
+        y = (y*y)%mod; // squaring the base
+        b/=2;
+    }
+    return x%mod;
+}
+void pp()
+{
+    b[0]=1;
+    for(int i=1;i<=lim;i++)
+        b[i]=(b[i-1]*i)%mod;
+    inv[lim]=poww(b[lim],mod-2);
+	for(int i=lim-1;i>=0;i--)		 
+		inv[i]=(inv[i+1]*(i+1))%mod;
+}
+ll  C(ll n,ll r)
+{
+    ll sol;
+	sol=(b[n]*inv[r])%mod;
+	sol=(sol*inv[n-r])%mod;
+	return sol;
+}
+void pre()
+{
+    for(int i=0;i<prime.size();i++)
+        {
+                int num=prime[i];
+                //cout<<"num="<<num<<endl;
+                ll a=poww(num,2);
+                ll bb=C(2*num-2,num-1);
+                //cout<<"a="<<a<<" b="<<b<<endl;
+                ll temp=mulmod(a,bb);
+                //cout<<"temp="<<temp<<endl;
+                f[num]=temp;
+        }
+}
+int main()
+{
+    int t;
+    cin>>t;
+    pp();
+    sieve();
+    pre();
+    while(t--)
+    {
+        ll n;
+        scanf("%lld",&n);
+      // memset(b,0,sizeof(b));
+       // memset(inv,0,sizeof(inv));
+        ll ans=0;
+    	//n^2*C(2*n-2,n-1).
+        for(int i=0;i<prime.size();i++)
+        {
+                int num=prime[i];
+                if(num>n)
+                break;
+                ans=(ans+f[num])%mod;
+        }
+        printf("%lld\n",ans);
+    }
+    return 0;
+}

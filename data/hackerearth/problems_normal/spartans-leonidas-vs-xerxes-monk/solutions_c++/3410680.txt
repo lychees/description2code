@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+
+#define all(v) (v).begin(),(v).end()
+#define INF int(1e8)
+#define NINF int(-1e8)
+#define clr(a,v) memset(a,v,sizeof(a))
+#define ll long long
+#define ull unsigned long long
+#define ld long double
+#define eps 1e-8
+#define PI acos(-1)
+#define readFile freopen("in.txt","r",stdin)
+#define writeFile freopen("out.txt","w",stdout)
+#define fastio ios_base::sync_with_stdio(false)
+
+using namespace std;
+
+const int N = 100100;
+
+struct Node{
+    ll l,r,pre,suf,res;
+    int rng;
+    Node(){
+        l = r = pre = suf = res = 0;
+        rng = 0;
+    }
+    Node(ll x){
+        l = r = x;
+        pre = suf = res = 1;
+        rng = 1;
+    }
+};
+
+Node merge(Node n1, Node n2){
+    if(!n1.rng) return n2;
+    if(!n2.rng) return n1;
+    Node ret;
+    ret.l = n1.l;
+    ret.r = n2.r;
+    ret.pre = n1.pre;
+    ret.suf = n2.suf;
+    ret.res = max(n1.res,n2.res);
+    ret.rng = n1.rng + n2.rng;
+    if(n1.r < n2.l) 
+        ret.res = max(ret.res,n1.suf + n2.pre);
+    if(n1.pre==n1.rng && n1.r < n2.l) 
+        ret.pre += n2.pre;
+    if(n2.suf==n2.rng && n1.r < n2.l) 
+        ret.suf += n1.suf;
+    return ret;
+}
+
+Node tree[N*4];
+ll arr[N];
+
+void build(int node, int l, int r){
+    if(l==r){
+        tree[node] = Node(arr[l]);
+        return;
+    }
+    int mid = (l+r)>>1;
+    build(node<<1,l,mid);
+    build(node<<1|1,mid+1,r);
+    tree[node] = merge(tree[node<<1],tree[node<<1|1]);
+}
+
+void update(int node, int l, int r, int idx, ll val){
+    if(l==r){
+        arr[l] += val;
+        tree[node] = Node(arr[l]);
+        return;
+    }
+    int mid = (l+r)>>1;
+    if(idx <= mid) update(node<<1,l,mid,idx,val);
+    else update(node<<1|1,mid+1,r,idx,val);
+    tree[node] = merge(tree[node<<1],tree[node<<1|1]);
+}
+
+Node query(int node, int l, int r, int st, int en){
+    if(st > r || en < l) return Node();
+    if(st >= l && en <= r) return tree[node];
+    int mid = (st+en)>>1;
+    return merge(query(node<<1,l,r,st,mid),query(node<<1|1,l,r,mid+1,en));
+}
+
+void test(int node, int l, int r){
+    cout << "range : " << l << " => " << r << ":\n";
+    cout << "left : " << tree[node].l << " , right : " << tree[node].r << "\n";
+    cout << "best left : " << tree[node].pre << " , best right : " << tree[node].suf << " answer : " << tree[node].res << "\n";
+    if(l==r) return;
+    int mid = (l+r)>>1;
+    test(node<<1,l,mid);
+    test(node<<1|1,mid+1,r);
+}
+
+void init(){
+    for(int i = 1; i < N; i++) tree[i] = Node(), arr[i] = 0;
+}
+
+int main() {
+#ifndef ONLINE_JUDGE
+    readFile;
+#endif
+    fastio;
+    int t; cin >> t;
+    while(t--){
+        init();
+        int n,m; cin >> n >> m;
+        for(int i = 1; i <= n; i++) cin >> arr[i];
+        build(1,1,n);
+//        test(1,1,n);
+        while(m--){
+            ll t,l,r; cin >> t >> l >> r;
+            if(!t) cout << query(1,l,r,1,n).res << "\n";
+            else update(1,1,n,l,r);
+        }
+    }
+    
+    return 0;
+}

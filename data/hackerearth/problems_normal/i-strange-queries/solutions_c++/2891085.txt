@@ -1,0 +1,97 @@
+/*
+[0 L2][0 R2]  + [0 L1-1][0 R1-1] - ( [0 L2][0 R1-1] + [0 L1-1][0 R2] )
+*/
+#include <bits/stdc++.h>
+#define si(n) scanf("%d",&n)
+#define ll long long
+using namespace std;
+
+typedef struct query{
+	int l,r,i,s; // left right index sign(+/-)
+}query;
+
+
+int a[50001];
+query Q[200001];
+ll int ans[50001];
+int F1[50001];
+int F2[50001];
+int SQRT;
+
+bool sortx(const query q1, const query q2)
+{
+	return q1.l/SQRT == q2.l/SQRT ? q1.r < q2.r : q1.l < q2.l;
+}
+
+int addl(int pos)
+{
+	F1[a[pos]]++;
+	return F2[a[pos]];
+}
+
+int addr(int pos)
+{
+	F2[a[pos]]++;
+	return F1[a[pos]];
+}
+
+int dell(int pos)
+{
+	F1[a[pos]]--;
+	return F2[a[pos]];
+}
+
+int delr(int pos)
+{
+	F2[a[pos]]--;
+	return F1[a[pos]];
+}
+
+
+int main()
+{
+	int n,i,q;
+	si(n);
+	SQRT = sqrt(n);
+	for(i=0;i<n;i++)
+		si(a[i]);
+	si(q);
+	int l1,l2,r1,r2; // in Ques it is l1 r1 l2 r2
+	int co = 0;
+	for(i=0;i<q;i++)
+	{
+		si(l1);si(l2);
+		si(r1);si(r2);
+		l1--;l2--;r1--;r2--;
+		Q[co].i = i; Q[co].l = l2; Q[co].r = r2; Q[co].s = 1;co++;
+		if(l1!=0)
+		{
+			Q[co].i = i; Q[co].l = l1-1; Q[co].r = r2; Q[co].s = -1; co++;
+			if(r1 != 0)
+			{	Q[co].i = i; Q[co].l = l1-1; Q[co].r = r1-1; Q[co].s = 1; co++;	}
+		}
+		if(r1!=0)
+		{
+			Q[co].i = i; Q[co].l = l2; Q[co].r = r1-1; Q[co].s = -1; co++;
+		}
+	}
+	sort(Q,Q+co,sortx);
+	int cL=0,cR=0,L,R,S;
+	ll int cA=addl(cL)+addr(cR);
+	for(i=0;i<co;i++)
+	{
+		L = Q[i].l; R = Q[i].r; S = Q[i].s;
+		while( cL < L)
+			cA += addl(++cL);
+		while( cL > L)
+			cA -= dell(cL--);
+		while( cR < R)
+			cA += addr(++cR);
+		while( cR > R)
+			cA -= delr(cR--);
+		ans[Q[i].i] += S*cA;
+	}
+	for(i=0;i<q;i++)
+		printf("%lld\n",ans[i]);
+	return 0;
+}

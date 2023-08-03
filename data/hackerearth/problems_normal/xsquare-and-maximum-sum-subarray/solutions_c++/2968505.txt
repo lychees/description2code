@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+#define MAXN 505500
+#define INF 10000000000000000LL
+int N,Q,K;
+pair<int,int> arr[MAXN],queries[MAXN];
+
+struct node{
+    long long prefix,suffix,sum,best;
+};
+node tree[4*MAXN];
+
+void setLeaf(node &ans,long long val){
+    ans.best=ans.sum=ans.prefix=ans.suffix=val;
+}
+
+node merge(node l,node r){
+    node ans;
+    ans.sum = l.sum+r.sum;
+    ans.sum = max(ans.sum,-INF);
+    ans.best = max(max(l.best,r.best),l.suffix+r.prefix);
+    ans.best = max(ans.best,-INF);
+    ans.prefix = max(l.prefix,l.sum+r.prefix);
+    ans.prefix = max(ans.prefix,-INF);
+    ans.suffix = max(r.suffix,r.sum+l.suffix);
+    ans.suffix = max(ans.suffix,-INF);
+    return ans;
+}
+
+void build(int low,int high,int pos){
+    if (low==high){
+        setLeaf(tree[pos],arr[low].first);
+        return;
+    }
+    int mid = (low+high)/2;
+    build(low,mid,pos*2);
+    build(mid+1,high,pos*2+1);
+    tree[pos] = merge(tree[pos*2],tree[pos*2+1]);
+}
+
+void update(int low,int high,int idx,int pos){
+    if (low==high){
+        setLeaf(tree[pos],-INF);
+        return;
+    }
+    int mid = (low+high)/2;
+    if (idx<=mid)
+        update(low,mid,idx,pos*2);
+    else if (idx>mid)
+        update(mid+1,high,idx,pos*2+1);
+    tree[pos] = merge(tree[pos*2],tree[pos*2+1]);
+}
+
+node query(int low,int high,int qlow,int qhigh,int pos){
+    if (low>=qlow && high<=qhigh)
+        return tree[pos];
+    int mid = (low+high)/2;
+    if (qhigh<=mid)
+        return query(low,mid,qlow,qhigh,pos*2);
+    else if (qlow > mid)
+        return query(mid+1,high,qlow,qhigh,pos*2+1);
+    return merge(query(low,mid,qlow,qhigh,pos*2), query(mid+1,high,qlow,qhigh,pos*2+1));
+}
+
+int main()
+{
+    scanf("%d%d",&N,&Q);
+    for (int i=0; i<N; i++){
+        scanf("%d",&arr[i].first);
+        arr[i].second = i;
+    }
+    for (int i=0; i<Q; i++){
+        scanf("%d",&queries[i].first);
+        queries[i].second = i;
+    }
+    build(0,N-1,1);
+    sort(arr,arr+N);
+    sort(queries,queries+Q);
+    int i = Q-1;
+    int j = N-1;
+    long long ans[Q];
+    while (i>=0){
+        int K = queries[i].first;
+        while (j>=0 && arr[j].first>K){
+            update(0,N-1,arr[j].second,1);
+            j--;
+        }
+        ans[queries[i].second] = query(0,N-1,0,N-1,1).best;
+        i--;
+    }
+    for (int i=0;i<Q;i++){
+        if (ans[i]!=-INF)
+            printf("%lld\n",ans[i]);
+        else
+            printf("No Solution\n") ;
+    }
+}

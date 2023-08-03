@@ -1,0 +1,100 @@
+# include <limits.h>
+# include <iostream>
+# include <vector>
+
+using namespace std;
+
+// A utility function to get maximum of two integers
+int max(int a, int b) { return (a > b)? a: b; }
+
+int eggFloor[501][501];
+ 
+/* Function to get minimum number of trails needed in worst
+  case with n eggs and k floors */
+void eggDrop(int n, int k)
+{
+    /* A 2D table where entery eggFloor[i][j] will represent minimum
+       number of trials needed for i eggs and j floors. */
+
+    int res;
+    int i, j, x;
+ 
+    // We need one trial for one floor and0 trials for 0 floors
+    for (i = 1; i <= n; i++)
+    {
+        eggFloor[i][1] = 1;
+        eggFloor[i][0] = 0;
+    }
+ 
+    // We always need j trials for one egg and j floors.
+    for (j = 1; j <= k; j++)
+        eggFloor[1][j] = j;
+ 
+    // Fill rest of the entries in table using optimal substructure
+    // property
+    for (i = 2; i <= n; i++)
+    {
+        for (j = 2; j <= k; j++)
+        {
+            eggFloor[i][j] = INT_MAX;
+            for (x = 1; x <= j; x++)
+            {
+                res = 1 + max(eggFloor[i-1][x-1], eggFloor[i][j-x]);
+                if (res < eggFloor[i][j])
+                    eggFloor[i][j] = res;
+            }
+        }
+    }
+ 
+    // eggFloor[n][k] holds the result
+
+}
+ 
+ 
+typedef struct FloorEgg
+{
+	int eggs;
+	int floors;
+} FloorEgg;
+/* Driver program to test to pront printDups*/
+int main()
+{
+
+	//init
+	for(int i = 0 ; i < 501 ; i++)
+		for(int j = 0 ; j < 501 ; j++)
+			eggFloor[i][j] = -1;
+	
+	//----
+	
+    int cases;
+    cin >> cases;
+    vector<FloorEgg> inputs;
+
+    int max_eggs=0;
+    int max_floors = 0;
+    for(int i = 0 ; i < cases ; i++)
+	{
+		FloorEgg ef;
+		cin >> ef.floors >> ef.eggs;
+		
+		max_eggs = max(max_eggs , ef.eggs);
+		max_floors = max(max_floors ,ef.floors);
+		
+		inputs.push_back(ef);
+	}
+	
+	eggDrop(max_eggs , max_floors);
+	
+	for(int i = 0 ; i < cases ; i++)
+	{
+		int floors = inputs[i].floors;
+		int eggs = inputs[i].eggs;
+		
+		if(eggFloor[eggs][floors] == -1) eggDrop(eggs , floors);
+		
+		cout << eggFloor[eggs][ floors] <<endl;
+	}
+		
+    return 0;
+}

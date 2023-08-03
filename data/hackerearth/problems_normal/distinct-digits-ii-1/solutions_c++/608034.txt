@@ -1,0 +1,146 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii;
+typedef long long ll; typedef vector<long long> vl; typedef pair<long long,long long> pll; typedef vector<pair<long long,long long> > vpll;
+typedef vector<string> vs; typedef long double ld;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+struct Val {
+	int mini, minicnt;
+	int maxi, maxicnt;
+	Val(): mini(INF), minicnt(0), maxi(-INF), maxicnt(0) {}
+	explicit Val(int x): mini(x), minicnt(1), maxi(x), maxicnt(1) {}
+	Val &operator+=(const Val &that) {
+		if(mini > that.mini)
+			mini = that.mini, minicnt = that.minicnt;
+		else if(mini == that.mini)
+			minicnt += that.minicnt;
+		if(maxi < that.maxi)
+			maxi = that.maxi, maxicnt = that.maxicnt;
+		else if(maxi == that.maxi)
+			maxicnt += that.maxicnt;
+		return *this;
+	}
+};
+
+struct GetRangeSegmentTree {
+	static Val combineVal(const Val &x, const Val &y) { return Val(x) += y; }
+	static void combinesVal(Val &x, const Val &y) { x += y; }
+	static Val identityVal() { return Val(); } 
+
+	vector<Val> nodes;
+	int n;
+	void init(int n_, const Val &v = Val()) { init(vector<Val>(n_, v)); }
+	void init(const vector<Val> &u) {
+		n = 1; while(n < (int)u.size()) n *= 2;
+		nodes.resize(n, identityVal());
+		nodes.insert(nodes.end(), u.begin(), u.end());
+		nodes.resize(n * 2, identityVal());
+		for(int i = n-1; i > 0; -- i)
+			nodes[i] = combineVal(nodes[i*2], nodes[i*2+1]);
+	}
+	Val get(int i) {
+		return nodes[i + n];
+	}
+	Val getRangeCommutative(int l, int r) const {
+		Val m = identityVal();
+		for(; l && l + (l&-l) <= r; l += l&-l)
+			combinesVal(m, nodes[(n+l) / (l&-l)]);
+		for(; l < r; r -= r&-r)
+			combinesVal(m, nodes[(n+r) / (r&-r) - 1]);
+		return m;
+	}
+	void set(int i, const Val &x) {
+		i += n; nodes[i] = x;
+		for(i >>= 1; i > 0; i >>= 1)
+			nodes[i] = combineVal(nodes[i*2], nodes[i*2+1]);
+	}
+};
+
+int digitcnt(int x) {
+	bool b[10] = {};
+	while(x > 0) {
+		b[x % 10] = true;
+		x /= 10;
+	}
+	return count(b, b + 10, true);
+}
+
+int main() {
+	const int MOD = 1000000007;
+	int N;
+	scanf("%d", &N);
+	vector<int> A(N);
+	rep(i, N) scanf("%d", &A[i]);
+	GetRangeSegmentTree segt;
+	vector<Val> initval(N);
+	rep(i, N) initval[i] = Val(digitcnt(A[i]));
+	segt.init(initval);
+	int Q;
+	scanf("%d", &Q);
+	char ty[4];
+	rep(ii, Q) {
+		scanf("%s", ty);
+		if(ty[0] == 'A') {
+			int u, v;
+			scanf("%d%d", &u, &v), -- u;
+			A[u] = (A[u] + v) % MOD;
+			segt.set(u, Val(digitcnt(A[u])));
+		}else if(ty[1] == 'U') {
+			int u, v;
+			scanf("%d%d", &u, &v), -- u;
+			A[u] = ((long long)A[u] * v) % MOD;
+			segt.set(u, Val(digitcnt(A[u])));
+		}else if(ty[0] == 'R') {
+			int u, v;
+			scanf("%d%d", &u, &v), -- u;
+			A[u] = v % MOD;
+			segt.set(u, Val(digitcnt(A[u])));
+		}else if(ty[1] == 'A') {
+			int l, r;
+			scanf("%d%d", &l, &r), -- l;
+			Val val = segt.getRangeCommutative(l, r);
+			printf("%d %d\n", val.maxi, val.maxicnt);
+		}else if(ty[1] == 'I') {
+			int l, r;
+			scanf("%d%d", &l, &r), -- l;
+			Val val = segt.getRangeCommutative(l, r);
+			printf("%d %d\n", val.mini, val.minicnt);
+		}else {
+			cerr << "???" << endl;
+		}
+	}
+	return 0;
+}

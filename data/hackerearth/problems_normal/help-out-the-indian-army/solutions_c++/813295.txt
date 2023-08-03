@@ -1,0 +1,122 @@
+#include <iostream>
+#include <vector>
+#include <map>
+using namespace std;
+
+static void push2Map( map<long, long> & sortedMinRange, long x1, long x2)
+{
+	map<long, long>::iterator f = sortedMinRange.find(x1);
+	if(f == sortedMinRange.end())
+	{
+		sortedMinRange.insert(make_pair(x1, x2));
+	}
+	else
+	{
+		if(x2 > f->second)
+			f->second = x2;
+	}
+}
+
+static void push2Vec( vector<pair<long, long> > & rangeVec, int & vecLast, long x1, long x2)
+{
+	if(vecLast == -1)
+	{
+		rangeVec.push_back(make_pair(x1, x2));
+		vecLast = 0;
+	}
+	else
+	{
+		long & xLast2 = rangeVec[vecLast].second;
+		if( x1 <= xLast2)
+		{
+			if(x2 > xLast2)
+			{
+				xLast2 = x2;
+			}
+		}
+		else
+		{
+			rangeVec.push_back(make_pair(x1, x2));
+			vecLast++;
+		}
+	}
+}
+
+int main()
+{
+	int N;
+	long S, E;
+	cin >> N >> S >> E;
+	
+	if(S==E)
+	{
+		cout << 0 << endl;
+		return 0;
+	}
+	
+	long x, p;
+	long x1, x2;
+	
+	map<long, long> sortedMinRange;
+	
+	int i;
+	for(i=0;i<N;++i)
+	{
+		cin >> x >> p;
+
+		x1 = x-p;
+		x2 = x+p;
+		
+		if(x1 >= E)
+			continue;
+		if(x2 <= S)
+			continue;
+		
+		if(x1 < S)
+			x1 = S;
+		if(x2 > E)
+			x2 = E;
+		
+		//cout << "input: x1: " << x1 << " : x2: " << x2 << endl;
+		push2Map(sortedMinRange, x1, x2);
+	}
+	push2Map(sortedMinRange, S, S);
+	push2Map(sortedMinRange, E, E);
+	
+	vector<pair<long, long> > rangeVec;
+	rangeVec.reserve(N+2);
+	int vecLast = -1;
+
+	//push2Vec(rangeVec, vecLast, S, S);
+	map<long, long>::iterator mI0 = sortedMinRange.begin();
+	map<long, long>::iterator mI1 = sortedMinRange.end();
+	for( ; mI0 != mI1; ++mI0)
+	{
+		x1 = mI0->first;
+		x2 = mI0->second;
+		//cout << "map: x1: " << x1 << " : x2: " << x2 << endl;
+		push2Vec(rangeVec, vecLast, x1, x2);
+	}
+	//push2Vec(rangeVec, vecLast, E, E);
+	
+	long dis = 0;
+	vector<pair<long, long> >::iterator vI0 = rangeVec.begin();
+	vector<pair<long, long> >::iterator vI1 = rangeVec.end();
+	long prev = -1;
+	for( ; vI0 != vI1; ++vI0)
+	{
+		x1 = (*vI0).first;
+		x2 = (*vI0).second;
+
+		if(prev != -1)
+		{
+			dis += (x1 - prev);
+		}
+		prev = x2;
+		//cout << "vector: x1: " << x1 << " : x2: " << x2 << " : prev: " << prev << " :dis: " << dis << endl;
+	}
+	cout << dis << endl;
+	
+	
+    return 0;
+}

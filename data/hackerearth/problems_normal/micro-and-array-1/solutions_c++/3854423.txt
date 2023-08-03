@@ -1,0 +1,121 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+
+using namespace std;
+
+class Node {
+	public:
+	int maxValue;
+	int position;
+};
+
+class SegmentTree {
+	public:
+	Node *segArray;
+	int *arr;
+	int N;
+	
+	void constructTree(int segStart, int segEnd, int index) {
+        if (segStart == segEnd) {
+            segArray[index].position = segStart;
+            segArray[index].maxValue = arr[segStart];
+            return;
+        }
+        int midPoint = segStart + (segEnd - segStart) / 2;
+        int leftIndex, rightIndex;
+        leftIndex = 2 * index;
+        rightIndex = 2 * index + 1;
+        constructTree(segStart, midPoint, leftIndex);
+        constructTree(midPoint + 1, segEnd, rightIndex);
+        if (segArray[leftIndex].maxValue > segArray[rightIndex].maxValue) {
+            segArray[index].position = segArray[leftIndex].position;
+            segArray[index].maxValue = segArray[leftIndex].maxValue;
+        } else {
+            segArray[index].position = segArray[rightIndex].position;
+            segArray[index].maxValue = segArray[rightIndex].maxValue;
+        }
+    }
+    
+    int queryTree(int segStart, int segEnd, int index, int givenValue) {
+        if (segStart == segEnd) {
+            return segArray[index].position;
+        } else if (segArray[index].maxValue == givenValue) {
+            return segArray[index].position;
+        }
+
+        int midPoint = segStart + (segEnd - segStart) / 2;
+        int leftIndex, rightIndex;
+        leftIndex = 2 * index;
+        rightIndex = 2 * index + 1;
+        int leftMax = segArray[leftIndex].maxValue;
+        int rightMax = segArray[rightIndex].maxValue;
+        if (leftMax >= givenValue) {
+            return queryTree(segStart, midPoint, leftIndex, givenValue);
+        } else if (rightMax >= givenValue) {
+            return queryTree(midPoint + 1, segEnd, rightIndex, givenValue);
+        }
+    }
+    
+    void updateTree(int segStart, int segEnd, int index, int givenPos, int newValue) {
+        if (segStart == segEnd) {
+            segArray[index].maxValue = newValue;
+            return;
+        }
+        int midPoint = segStart + (segEnd - segStart) / 2;
+        int leftIndex, rightIndex;
+        leftIndex = 2 * index;
+        rightIndex = 2 * index + 1;
+        if (givenPos <= midPoint) {
+            updateTree(segStart, midPoint, leftIndex, givenPos, newValue);
+        } else {
+            updateTree(midPoint + 1, segEnd, rightIndex, givenPos, newValue);
+        }
+        if (segArray[leftIndex].maxValue > segArray[rightIndex].maxValue) {
+            segArray[index].position = segArray[leftIndex].position;
+            segArray[index].maxValue = segArray[leftIndex].maxValue;           
+        } else {
+            segArray[index].position = segArray[rightIndex].position;
+            segArray[index].maxValue = segArray[rightIndex].maxValue;
+            
+        }
+    }
+	
+};
+
+int main() {
+	class SegmentTree tree = SegmentTree();
+	int N, Q, i, j;
+	int X, Y;
+	scanf("%d%d",&N ,&Q);
+	tree.arr = (int *) malloc((N + 1) * sizeof (int));
+    for (i = 1; i <= N; i++) {
+        scanf("%d", &tree.arr[i]);
+    }
+    int size = 4 * N + 1;
+    tree.segArray = (Node *) malloc(size * sizeof (Node));
+    tree.constructTree(1, N, 1);
+    int position;
+    int query;
+    int givenValue;
+     while (Q > 0) {
+        scanf("%d", &query);
+         if (1 == query) {
+            scanf("%d", &givenValue);
+            if (tree.segArray[1].maxValue < givenValue) {
+                position = -1;
+                printf("%d\n", position);
+            } else {
+            	position = tree.queryTree(1, N, 1, givenValue);
+                printf("%d\n", position);
+            }
+        } else if (0 == query) {
+            scanf("%d%d", &X, &Y);
+            tree.updateTree(1, N, 1, X, Y);
+        }
+        Q--;
+     }
+    free(tree.segArray);
+    free(tree.arr);
+	return 0;
+}

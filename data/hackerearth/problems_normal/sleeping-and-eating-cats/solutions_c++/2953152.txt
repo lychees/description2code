@@ -1,0 +1,78 @@
+#include <cstdio>
+#include <set>
+
+using namespace std;
+
+typedef long long ll;
+
+const int N = 100010;
+int n, m, a[N];
+ll t[N], b[N];
+set<int> s;
+set<int>::iterator it0, it1;
+
+void upd(int i, ll x)
+{
+    if (!i) return;
+    ll d = x - b[i];
+    b[i] = x;
+    for (; i <= n; i += i & -i) t[i] += d;
+}
+
+ll get(int i)
+{
+    ll s = 0;
+    for (; i; i -= i & -i) s += t[i];
+    return s;
+}
+
+ll bc(int x)
+{
+    return (ll) x * (x + 1) / 2;
+}
+
+int main()
+{
+    scanf("%d %d", &n, &m);
+    for (int i = 1; i <= n; i++) scanf("%d", &a[i]);
+    for (int i = 0, t = 0; i <= n; i++) if (a[i] != a[i + 1])
+    {
+        upd(i, bc(i - t));
+        t = i;
+        s.insert(i);
+    }
+    s.insert(n + 1);
+    while (m--)
+    {
+        int k, x, y;
+        scanf("%d %d %d", &k, &x, &y);
+        it0 = s.lower_bound(x);
+        it1 = s.upper_bound(y);
+        if (!k)
+        {
+            int z, l, g;
+            scanf("%d", &z);
+            if (x > 1) it0 = s.lower_bound(x - 1);
+            k = a[*it0]; l = *(--it0); g = *it1;
+            for (set<int>::iterator it = ++it0; it != it1; it++) upd(*it, 0);
+            s.erase(it0, it1);
+            if (k != z && l < x - 1)
+            {
+                a[x - 1] = k;
+                upd(x - 1, bc(x - l - 1));
+                s.insert(x - 1);
+            } else
+            x = l + 1;
+            if (a[g] != z && g > y) s.insert(y); else
+            y = g;
+            a[y] = z;
+            upd(g, bc(g - y));
+            upd(y, bc(y - x + 1));
+        } else
+        {
+            if (it0 == it1) printf("%lld\n", bc(y - x + 1)); else
+            printf("%lld\n", bc(y - *(--it1)) + bc(*it0 - x + 1) + get(*it1) - get(*it0));
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,143 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int MAX=100*1000+9;
+int N,M;
+int arr[MAX+6],mintree[4*MAX+9],maxtree[4*MAX+9];
+void build_min(int id,int st,int en){
+    if(st==en){
+        mintree[id]=st;
+        return;
+    }
+    int  md=(st+en)/2;
+    build_min(2*id,st,md);
+    build_min(2*id+1,md+1,en);
+    if(arr[mintree[2*id]]<arr[mintree[2*id+1]])
+        mintree[id]=mintree[2*id];
+    else 
+        mintree[id]=mintree[2*id+1];
+    return;
+}
+void upd_min(int id,int st,int en,int pos,int val){
+    if(st==en){
+        mintree[id]=st;
+        arr[pos]=val;
+        return;
+    }
+    int md=(st+en)/2;
+    if(st<=pos && pos<=md ){
+        upd_min(2*id,st,md,pos,val);
+    }else if((md+1)<=pos && pos <=en){
+        upd_min(2*id+1,md+1,en,pos,val);
+    }
+    if(arr[mintree[2*id]]<arr[mintree[2*id+1]])
+        mintree[id]=mintree[2*id];
+    else 
+        mintree[id]=mintree[2*id+1];
+    return;
+}
+int qry_min(int id,int st,int en,int l,int r){
+    if(en<l || r<st || st>en)
+        return 0;//mintree[0]=INT_MAX;
+    if(l<=st && en<=r)
+        return mintree[id];
+    int md=(st+en)/2;
+    int left=qry_min(2*id,st,md,l,r);
+    int right=qry_min(2*id+1,md+1,en,l,r);
+    if(arr[left]<arr[right])
+        return left;
+    else 
+        return right;
+}
+void build_max(int id,int st,int en){
+    if(st==en){
+        maxtree[id]=st;
+        return;
+    }
+    int  md=(st+en)/2;
+    build_max(2*id,st,md);
+    build_max(2*id+1,md+1,en);
+    if(arr[maxtree[2*id]]>arr[maxtree[2*id+1]])
+        maxtree[id]=maxtree[2*id];
+    else 
+        maxtree[id]=maxtree[2*id+1];
+    return;
+}
+void upd_max(int id,int st,int en,int pos,int val){
+    if(st==en && st==pos){
+        maxtree[id]=st;
+        arr[pos]=val;
+        return;
+    }
+    int md=(st+en)/2;
+    if(st<=pos && pos<=md ){
+        upd_max(2*id,st,md,pos,val);
+    }else if(md+1<=pos && pos <=en){
+        upd_max(2*id+1,md+1,en,pos,val);
+    }
+    if(arr[maxtree[2*id]]>arr[maxtree[2*id+1]])
+        maxtree[id]=maxtree[2*id];
+    else 
+        maxtree[id]=maxtree[2*id+1];
+    return;
+}
+int qry_max(int id,int st,int en,int l,int r){
+    if(en<l || r<st || st>en)
+        return 0;//arr[0]=INT_MIN;
+    if(l<=st && en<=r)
+        return maxtree[id];
+    int md=(st+en)/2;
+    int left=qry_max(2*id,st,md,l,r);
+    int right=qry_max(2*id+1,md+1,en,l,r);
+    if(arr[left]>arr[right])
+        return left;
+    else 
+        return right;
+}
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin>>N>>M;
+    for(int i=1;i<=N;++i){
+        cin>>arr[i];
+    }
+    arr[0]=INT_MAX;
+    arr[0]=INT_MIN;
+    build_min(1,1,N);
+    build_max(1,1,N);
+  // puts("asdf");
+    while(M--){
+        char ch;cin>>ch;
+        if(ch=='C'){
+            int l,r;cin>>l>>r;
+            int ans1=0;
+            arr[0]=INT_MIN;
+            int max1=qry_max(1,1,N,l,r);
+           //puts(";lkj");
+            int max1_val=arr[max1];
+        
+            upd_max(1,1,N,max1,INT_MIN);
+            int max2=qry_max(1,1,N,l,r);
+            int max2_val=arr[max2];
+            ans1=max1_val*max2_val;
+            upd_max(1,1,N,max1,max1_val);
+            int ans2=0;
+            arr[0]=INT_MAX;
+            int min1=qry_min(1,1,N,l,r);
+            int min1_val=arr[min1];
+            upd_min(1,1,N,min1,INT_MAX);
+            int min2=qry_min(1,1,N,l,r);
+            int min2_val=arr[min2];
+            ans2=min1_val*min2_val;
+            upd_min(1,1,N,min1,min1_val);
+          //  printf("ans1 %d ans2 %d\n",ans1,ans2); 
+            int ans=max(ans1,ans2);
+            cout<<ans<<"\n";
+        }else if(ch=='P'){
+            int i,P;
+            cin>>i>>P;
+            upd_max(1,1,N,i,P);
+            upd_min(1,1,N,i,P);//jhkjh
+        }
+    }
+    return 0;
+}

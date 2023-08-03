@@ -1,0 +1,116 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define f(i,a,b) for(int i=a;i<b;i++)
+#define ll long long
+#define inf 105
+#define imax INT_MAX
+#define mp(a,b) make_pair(a,b)
+#define getfile freopen("inp.txt","r",stdin)
+vector<int> graph[26];
+vector<int> in[26];
+int vis[26];
+vector<int> st;
+int tot=0;
+bool sv[26];
+void makegraph(string s,string t)
+{
+    int sl=s.length();
+    int tl=s.length();
+    f(i,0,min(sl,tl))
+    {
+        if(s[i]!=t[i])
+        {
+            graph[s[i]-'a'].push_back(t[i]-'a');
+            in[t[i]-'a'].push_back(s[i]-'a');
+            break;
+        }
+    }
+}
+void dodfs(int i)
+{
+    vis[i]=1;
+    f(j,0,graph[i].size())
+    {
+        int node=graph[i][j];
+        if(vis[node]==0)
+            dodfs(node);
+    }
+    st.push_back(i);
+}
+void toposort()
+{
+    memset(vis,0,sizeof(vis));
+    f(i,0,26)
+    if(vis[i]==0&&graph[i].size()!=0)
+        dodfs(i);
+    f(i,0,26)
+        if(vis[i]^sv[i]==1)
+            st.push_back(i);
+    vector<int> v[26];
+    int stat[26];
+    memset(stat,0,sizeof(stat));
+    for(int i=st.size()-1;i>=0;i--)
+    {
+        if(in[st[i]].size()==0)
+            stat[st[i]]=1;
+        f(j,0,graph[st[i]].size())
+        {
+            int newnode=graph[st[i]][j];
+            stat[newnode]=max(stat[newnode],stat[st[i]]+1);
+        }
+    }
+    f(i,0,26)
+    if(stat[i]!=0)
+    v[stat[i]].push_back(i+'a');
+    f(i,0,26)
+    sort(v[i].begin(),v[i].end());
+    f(i,0,26)
+    {
+        if(v[i].size()!=0)
+        {
+            f(j,0,v[i].size())
+            cout<<(char)v[i][j];
+            cout<<"\n";
+        }
+    }
+    //cout<<"\n";
+
+}
+main()
+{
+    //getfile;
+    int t;
+    cin>>t;
+    string s[105];
+
+    memset(sv,0,sizeof(sv));
+    f(i,0,t)
+    {
+        cin>>s[i];
+        f(j,0,s[i].length())
+        sv[s[i][j]-'a']=1;
+    }
+    if(t==1)
+    {
+        memset(sv,0,sizeof(sv));
+        f(i,0,s[0].length())
+        {
+            int id=s[0][i]-'a';
+            if(sv[id]==0)
+            {
+                sv[id]=1;
+                cout<<id+'a'<<"\n";
+            }
+        }
+    }
+    else
+    {
+        f(i,0,t-1)
+        {
+            makegraph(s[i],s[i+1]);
+        }
+    }
+    toposort();
+
+
+}

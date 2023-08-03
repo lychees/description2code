@@ -1,0 +1,124 @@
+#include <bits/stdc++.h>
+#define lli long long
+
+using namespace std;
+
+string s;
+int sz;
+int tc;
+int vis[19][2][10][2][2];
+lli dp[19][2][10][2][2];
+
+lli f(int idx, int tight, int prev, int st, int flag)
+{
+	if ( idx == sz ) return st;
+	if ( vis[idx][tight][prev][st][flag] == tc ) return dp[idx][tight][prev][st][flag];
+	vis[idx][tight][prev][st][flag] = tc;
+	lli ans = 0;
+	if ( st == 0 ) {
+		ans += f(idx+1, 0, 0, 0, flag);
+		if ( tight == 1 ) {
+			for ( int i = 1; i <= s[idx]-49; i++ ) ans += f(idx+1, 0, i, 1, flag);
+			if ( s[idx]-48 != 0 ) ans += f(idx+1, 1, s[idx]-48, 1, flag);
+		}
+		else {
+			for ( int i = 1; i <= 9; i++ ) ans += f(idx+1, 0, i, 1, flag);
+		}
+	}
+	else {
+		if ( tight == 0 ) {
+			for ( int i = 0; i <= 9; i++ ) {
+				if ( flag == 0 ) {
+					if ( i > prev ) ans += f(idx+1, 0, i, st, flag^1);
+				}
+				else {
+					if ( i < prev ) ans += f(idx+1, 0, i, st, flag^1);
+				} 
+			}
+		}
+		else {
+			for ( int i = 0; i <= s[idx]-49; i++ ) {
+				if ( flag == 0 ) {
+					if ( i > prev ) ans += f(idx+1, 0, i, st, flag^1);
+				}
+				else {
+					if ( i < prev ) ans += f(idx+1, 0, i, st, flag^1);
+				}
+			}
+			if ( flag == 0 ) {
+				if ( s[idx]-48 > prev ) ans += f(idx+1, 1, s[idx]-48, st, flag^1);
+			}
+			else {
+				if ( s[idx]-48 < prev ) ans += f(idx+1, 1, s[idx]-48, st, flag^1);
+			}
+		}
+	}
+	dp[idx][tight][prev][st][flag] = ans;
+	return ans;
+}
+
+// fast input
+template<typename T>
+inline void fi(T *a)
+{
+ register char c=0;
+ while (c<33) c=getchar_unlocked();
+ *a=0;
+ int tmp = 0;
+ while (c>33)
+ {
+     if ( c == 45 ) tmp = 1;
+     else *a=*a*10+c-'0';
+     c=getchar_unlocked();
+ }
+ if ( tmp == 1 ) *a = 0-(*a);
+}
+
+lli get(lli x)
+{
+	stringstream ss;
+	ss.clear();
+	ss << x;
+	s = ss.str();
+	sz = (int)s.size();
+	tc++;
+	lli ans = f(0,1,0,0,0);
+	tc++;
+	ans += f(0,1,0,0,1) - min(9LL,x);
+	return ans;
+}
+
+int main()
+{
+	int t;
+	lli n,k,l,r,m,ans1,ans2,val,pre;
+	tc = 0;
+	fi(&t);
+	while ( t-- ) {
+		fi(&n), fi(&k);
+		l = 1, r = n, ans1 = -1;
+		pre = get(n);
+		while ( l <= r ) {
+			m = (l+r)/2;
+			val = pre - get(m-1);
+			if ( val <= k ) {
+				r = m-1;
+				if ( val == k ) ans1 = m;
+			}
+			else l = m+1;
+		}
+		l = n, r = 1000000000000000000LL, ans2 = -1;
+		pre = get(n-1);
+		while ( l <= r ) {
+			m = (l+r)/2;
+			val = get(m) - pre;
+			if ( val <= k ) {
+				l = m+1;
+				if ( val == k ) ans2 = m;
+			}
+			else r = m-1;
+		}
+		printf("%lld %lld\n", ans1, ans2);
+	}
+	return 0;
+}

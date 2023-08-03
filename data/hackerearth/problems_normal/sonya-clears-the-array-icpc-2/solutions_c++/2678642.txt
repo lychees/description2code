@@ -1,0 +1,83 @@
+#include <cstdio>
+#include <vector>
+#include <cstring>
+#include <iostream>
+#include <cassert>
+
+using namespace std;
+
+const int kMaxP = 2000000;
+const int kMaxN = 610;
+const long long kInf = (long long)(2e10);
+
+bool is_prime[kMaxP];
+vector<int> start;
+
+void CalculateIsPrime() {
+  memset(is_prime, true, sizeof(is_prime));
+  is_prime[0] = is_prime[1] = false;
+  for (int i = 2; i < kMaxP; ++i) {
+    if (is_prime[i]) {
+      start.push_back(i);
+      for (int j = 2 * i; j < kMaxP; j += i) {
+        is_prime[j] = false;
+      }
+    }
+  }
+}
+
+int cost[kMaxN][kMaxN], n, a[kMaxN];
+long long dp[kMaxN][kMaxN];
+
+long long DP(int l, int r) {
+  if (l > r) return 0;
+  assert((r - l + 1) % 2 == 0);
+  long long& ans = dp[l][r];
+  if (ans == -1) {
+    ans = kInf;
+    for (int mid = l + 1; mid <= r; mid += 2) {
+      ans = min(ans, DP(l + 1, mid - 1) + DP(mid + 1, r) + cost[l][mid] + 1);
+    }
+  }
+  return ans;
+}
+
+int main() {
+#ifdef ssu1
+  freopen("input.txt", "r", stdin);
+#endif
+  CalculateIsPrime();
+  scanf("%d", &n);
+
+  assert(n % 2 == 0);
+  assert(n >= 0);
+
+  if (n == 0) {
+    puts("0");
+    return 0;
+  }
+
+  for (int i = 0; i < n; ++i) {
+    scanf("%d", &a[i]);
+    // a[i] = 1e6;
+  }
+
+  for (int i = 0; i < n; ++i) {
+    for (int j = i + 1; j < n; ++j) {
+      int mx = max(a[i], a[j]), idx = 0;
+      if (mx == a[i]) {
+        idx = lower_bound(start.begin(), start.end(), a[i]) - start.begin();
+      } else {
+        idx = lower_bound(start.begin(), start.end(), a[j]) - start.begin();
+        idx = max(0, idx - 100);
+      }
+      while (!(a[i] <= start[idx] && a[j] <= start[idx + 1]))
+        idx++;
+      cost[i][j] = start[idx] + start[idx + 1] - a[i] - a[j];
+    }
+  }
+
+  memset(dp, -1, sizeof dp);
+  cout << DP(0, n - 1) << endl;
+  return 0;
+}

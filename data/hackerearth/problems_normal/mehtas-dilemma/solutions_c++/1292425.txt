@@ -1,0 +1,140 @@
+#include <iostream>
+#include <cmath>
+#include <map>
+#include <cstdlib>
+#include <iomanip>
+#include <cstdio>
+#include <cstring>
+#include <vector>
+using namespace std;
+
+const int sz = 1 << 5;
+const int mod = 1e9 + 7;
+
+vector<int> numbers = {2, 3, 5, 7};
+int mat0[sz][sz], mat[sz][sz], start[sz];
+int iden[sz][sz], tmp[sz][sz];
+
+int fastpow(int a, long long n)
+{
+    int ret = 1;
+    while(n) {
+        if(n & 1)
+            ret = static_cast<long long>(ret) * a % mod;
+        a = static_cast<long long>(a) * a % mod;
+        n >>= 1;
+    }
+    return ret;
+}
+
+long long sm(int q, long long n)
+{
+    long long t = fastpow(q, n) - 1;
+    if(t < 0)
+        t += mod;
+    t *= fastpow(q - 1, mod - 2);
+    return t % mod;
+}
+
+int get0(long long n)
+{
+    long long t = 90 * sm(10, n - 1);
+    t -= 81 * sm(9, n - 1);
+    t += 1;
+    if(t < 0)
+        t += mod;
+    return t % mod;
+}
+
+int get_mask(int n)
+{
+    if(n == 0)
+        return 0;
+    int ret = 0;
+    for(int i = 0; i < 4; i++) {
+        int cnt = 0;
+        while(n % numbers[i] == 0) {
+            n /= numbers[i];
+            cnt = 1 - cnt;
+        }
+        ret |= cnt * (1 << i);
+    }
+
+    return ret;
+}
+
+int solve()
+{
+    long long n;
+    cin >> n;
+
+    for(int i = 0; i < sz; i++)
+        for(int j = 0; j < sz; j++)
+            iden[i][j] = i == j;
+
+    memcpy(mat, mat0, sizeof(mat0));
+
+    int ans = get0(n);
+    while(n) {
+        if(n & 1) {
+            for(int i = 0; i < sz; i++)
+                for(int j = 0; j < sz; j++) {
+                    tmp[i][j] = 0;
+                    for(int k = 0; k < sz; k++) {
+                        tmp[i][j] = (tmp[i][j] + static_cast<long long>(iden[i][k]) * 
+                                mat[k][j]) % mod;
+                    }
+                }
+
+            memcpy(iden, tmp, sizeof(tmp));
+        }
+
+        for(int i = 0; i < sz; i++)
+            for(int j = 0; j < sz; j++) {
+                tmp[i][j] = 0;
+                for(int k = 0; k < sz; k++) {
+                    tmp[i][j] = (tmp[i][j] + static_cast<long long>(mat[i][k]) * 
+                            mat[k][j]) % mod;
+                }
+            }
+        memcpy(mat, tmp, sizeof(tmp));
+
+        n >>= 1;
+    }
+
+    for(int i = 0; i < sz; i++)
+        ans = (ans + static_cast<long long>(start[i]) * iden[i][0]) % mod;
+    return ans;
+}
+
+void init()
+{
+    for(int i = 0; i < sz; i++)
+        for(int j = 0; j < sz; j++) {
+            if(j < sz / 2) {
+                mat0[i][j] += i == j;
+                mat0[i][j] += i - sz / 2 == j;
+            } else {
+                if(i >= sz / 2) {
+                    for(int k = 1; k < 10; k++) {
+                        int msk = get_mask(k) ^ (i - sz / 2);
+                        if(msk == j - sz / 2)
+                            mat0[i][j] += 1;
+                    }
+                }
+            }
+        }
+
+    for(int i = 1; i < 10; i++)
+        start[get_mask(i) + sz / 2] += 1;
+}
+
+int main()
+{
+    init();
+    int t;
+    cin >> t;
+    while(t-- > 0)
+        cout << solve() << endl;
+    return 0;
+}

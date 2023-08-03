@@ -1,0 +1,107 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<ll, int> P;
+const int MOD = 1000000007;
+const ll INF = (ll) 1e15;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define foru(i, a, b) for (int i = (a); i <= (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define ford(i, a, b) for (int i = (a); i >= (b); --i)
+#define sz(a) ((int) a.size())
+#define pb(a) push_back(a)
+#define mp(a, b) make_pair(a, b)
+#define mem(a) memset(a, 0, sizeof(a))
+#define all(a) a.begin(), a.end()
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void add_max(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void add_min(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {if (b == 0) return a; return gcd(b, a % b);}
+
+struct Fenwick {
+    vector<ll> fw;
+    int size;
+    
+    Fenwick() {}
+    
+    Fenwick(int n) {
+        size = n + 5;
+        fw.resize(n + 5, 0);
+    }
+    
+    void add(int ind, int val) {
+        for (int i = ind; i <= size; i += i & -i) {
+            fw[i] += val;
+        }
+    }
+    
+    ll get(int ind) {
+        ll ans = 0;
+        for (int i = ind; i > 0; i -= i & -i) {
+            ans += fw[i];
+        }
+        return ans;
+    }
+};
+
+int main(int argc, char *argv[]) {
+    ios_base::sync_with_stdio(false);
+    int n, q, x, y;
+    char X, Y;
+    string s, op;
+    cin >> n;
+    vector<vector<ll> > A(5, vector<ll>(n + 1));
+    repu(t, 0, 5) {
+        foru(i, 1, n) cin >> A[t][i];
+    }
+    cin >> s;
+    vi ind[5];
+    repu(i, 0, s.size()) {
+        ind[s[i] - 'A'].pb(i + 1);
+    }
+    Fenwick fw[5][5];
+    repu(i, 0, 5) {
+        repu(j, 0, 5) {
+            fw[i][j] = Fenwick(n);
+            repu(k, 0, ind[i].size()) {
+                fw[i][j].add(ind[i][k], A[j][ind[i][k]]);
+            }
+        }
+    }
+    cin >> q;
+    repu(i, 0, q) {
+        cin >> op;
+        if (op == "Qe") {
+            cin >> X >> Y;
+            int nx = X - 'A', ny = Y - 'A';
+            repu(j, 0, 5) {
+                swap(fw[j][nx], fw[j][ny]);
+            }
+            swap(A[nx], A[ny]);
+        }
+        else if (op == "Qc") {
+            cin >> x >> Y;
+            int nx = s[x - 1] - 'A', ny = Y - 'A';
+            repu(j, 0, 5) {
+                fw[nx][j].add(x, -A[j][x]);
+                fw[ny][j].add(x, A[j][x]);
+            }
+            s[x - 1] = Y;
+        }
+        else {
+            cin >> x >> y;
+            ll ans = 0;
+            repu(j, 0, 5) {
+                ans += fw[j][j].get(y) - fw[j][j].get(x - 1);
+            }
+            printf("%lld\n", ans);
+        }
+    }
+    return 0;
+}

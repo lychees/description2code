@@ -1,0 +1,213 @@
+/* ***************************
+Author: Abhay Mangal (abhay26)
+*************************** */
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <algorithm>
+#include <cstring>
+#include <cassert>
+#include <numeric>
+#include <utility>
+#include <bitset>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+using namespace std;
+ #define tr(container, it) \
+    for(typeof(container.begin()) it = container.begin(); it != container.end(); it++)
+#define maX(a,b) (a) > (b) ? (a) : (b)
+#define pii pair< int, int >
+#define pip pair< int, pii >
+#define psl pair< string, ll >
+#define FOR(i,n) for(int i=0; i<(int)n ;i++)
+#define REP(i,a,n) for(int i=a;i<(int)n;i++)
+#define pb push_back
+#define mp make_pair
+typedef long long ll;
+#define MOD 1000000007
+//int dx[]= {-1,0,1,0};
+//int dy[]= {0,1,0,-1};
+int notdone;
+long long mpow(long long a, long long b)
+{
+	long long ans = 1;
+	while(b > 0)
+	{
+		if(b&1)
+			ans = (ans * a) % MOD;
+		a = (a*a) % MOD;
+		b /= 2;
+	}
+	return ans % MOD;
+}
+ll inv5,inv7;
+struct node
+{
+    int val,a,b;
+};
+vector<pip> V;
+
+int search(int v) {
+	int l = 0, r = V.size()-1;
+	while (l <= r) {
+		int m = (l + r) / 2;
+		int z = V[m].first;
+		if (z == v)
+			return m;
+		if (z < v)
+			l = m + 1;
+		else
+			r = m - 1;
+	}
+	return -1;
+}
+
+
+int bestcnt = 10000000;
+vector<int> ret(10);
+int ans[1000];
+int dig[1000];
+int min1 = 1000;
+bool better(int len)
+{
+    for(int i=len-1;i>=0;i--)
+    {
+        if(dig[i] != ans[i])
+            return dig[i] < ans[i];
+    }
+    return 0;
+}
+void calc(int a, int b, int c, int d)
+{
+	if (a/3+b/2+c+d > 900)
+		return;
+   // if(a + b + c + d > bestcnt)
+      //  return;
+	//FOR(i,10)
+	//ret[0] = 0;
+	int pos = 0;
+	while (b >= 2)
+    {
+		dig[pos++] = 9;
+		b -= 2;
+	}
+	while (a >= 3)
+    {
+		dig[pos++] = 8;
+		a -= 3;
+	}
+	while (d >= 1)
+    {
+		dig[pos++] = 7;
+		d--;
+	}
+	while (a >= 1 && b >= 1)
+	{
+		dig[pos++] = 6;
+		a--;
+		b--;
+	}
+	while (c >= 1)
+	{
+		dig[pos++] = 5;
+		c--;
+	}
+	while (a >= 2)
+	{
+		dig[pos++] = 4;
+		a -= 2;
+	}
+	while (b >= 1)
+	{
+		dig[pos++] = 3;
+		b--;
+	}
+	while (a >= 1)
+	{
+		dig[pos++] = 2;
+		a--;
+	}
+	if(pos < min1 || (min1 == pos && better(pos)))
+    {
+        for (int i=0; i < pos; i++)
+			ans[i] = dig[i];
+		min1 = pos;
+    }
+}
+
+void gen()
+{
+    long long pA = 1;
+	for(int a=0; a / 3 < 700; a++)
+    {
+		long long pB = pA;
+		for (int b=0; a / 3 + b / 2 < 700; b++)
+		{
+		    pii x;
+			//x.val = (int)pB;
+			x.first = a;
+			x.second = b;
+			V.pb(pip((int)pB,x));
+			pB = (pB * 3)%MOD;
+		}
+		pA = (pA * 2)%MOD;
+	}
+	//cout << V.size();
+	sort(V.begin(),V.end());
+}
+int main()
+{
+    notdone = 1;
+    gen();
+    //return 0;
+    inv5=400000003;
+    inv7=142857144;
+    int n;
+    scanf("%d",&n);
+    //n = 16;
+    if(n == 0)
+    {
+        cout << 10;
+        return 0;
+    }
+    if(n < 10)
+    {
+        cout << n ;
+        return 0;
+    }
+
+	long long pC = n;
+	int gg = 0;
+	for (int c = 0; c < 700; ++c)
+    {
+		long long pD = pC;
+		for (int d = 0; c + d < 700; ++d)
+		{
+			int x = search(pD);
+		    if (x!= -1)
+            {
+                //gg++;
+		        calc(V[x].second.first, V[x].second.second, c, d);
+		    }
+			pD = (pD*inv7);
+			if(pD > MOD)
+                pD %= MOD;
+		}
+		pC = (pC*inv5);
+		if(pC > MOD)
+            pC %= MOD;
+	}
+	//cout << gg << endl;
+	for(int i=min1-1;i>=0;i--)
+        printf("%d",ans[i]);
+
+return 0;
+}

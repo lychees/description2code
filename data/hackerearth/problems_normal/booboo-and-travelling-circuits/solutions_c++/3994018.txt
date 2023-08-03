@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define MAXN 2005
+#define MAXM 10005
+#define mod 1000000003
+int low[MAXM];
+ int A[MAXN][MAXM];
+ int B[MAXN][MAXM];
+
+ll dp[2][MAXM];
+ll last[MAXM];
+ll slast[MAXM];
+int S[2];
+int W[2];
+const ll INF=1e18;
+
+inline ll mul(ll a,ll b)
+{
+    ll ret=a*b;
+    if(ret>=mod)
+        ret%=mod;
+    return ret;
+}
+inline ll add(ll a,ll b)
+{
+    ll ret=a+b;
+    if(ret>=mod)
+        ret-=mod;
+    return ret;
+}
+
+int main()
+{   
+    int N,M;
+    int S0,P,Q,R;
+    int W0,X,Y,Z;
+    cin>>N>>M;
+    cin>>S[0]>>P>>Q>>R;
+    cin>>W[0]>>X>>Y>>Z;
+    int cur=1,oth=0;
+    for(int i = 0; i < (N*M); i++){
+    ll temp=(mul(P ,mul( S[oth] , S[oth])) + mul(Q , S[oth]) + R) % 1000000003;
+    S[cur] = temp;
+    A[(i/M) + 1][(i%M) + 1] = S[cur];
+    swap(cur,oth);
+    }
+    cur=1,oth=0;
+    for(int i = 0; i < (N*M); i++){
+        ll temp= (mul(X ,mul( W[oth] , W[oth])) +mul( Y , W[oth]) + Z) % 1000000003;
+        W[cur] =temp;
+        B[(i/M) + 1][(i%M) + 1] = W[cur];
+        swap(cur,oth);
+    }
+
+    //memset(last,0,sizeof(last));
+    memset(low,-1,sizeof(low));
+   // memset(dp,0,sizeof(dp));
+    low[1]=1;
+    for(int i=2;i<=M;i++)
+    {
+        if(low[i]==-1)
+        {
+            low[i]=i;
+            for(int j=i+i;j<=M;j+=i)
+            {
+                if(low[j]==-1)
+                    low[j]=i;
+            }
+        }
+
+    }
+
+   // for(int i=1;i<=100;i++)
+    //  cout<<i<<" "<<low[i]<<endl;
+    for(int j=1;j<=M;j++)
+        slast[j]=last[j]=INF;
+    for(int j=1;j<=M;j++)
+        {dp[1][j]=0;
+            if(j!=1)
+            last[low[j]]=min(last[low[j]],1LL*B[1][j]);
+			if(low[j]!=j)
+			slast[low[j]]=min(slast[low[j]],1LL*B[1][j]);
+        }
+     cur=0,oth=1;
+
+    for(int i=2;i<=N;i++)
+    {
+        //j==1
+        
+        dp[cur][1]=dp[oth][1]+1LL*A[i-1][1];
+        for(int j=2;j<=M;j++)
+            dp[cur][1]=min(dp[cur][1],dp[oth][j]+1LL*B[i-1][j]);
+        for(int j=2;j<=M;j++)
+        {
+            dp[cur][j]=dp[oth][j]+1LL*A[i-1][j];
+            if(M<=100){
+            for(int k=2;k<=M;k++)
+            {
+                if(k==j)continue;
+                if(low[k]==low[j])
+                    dp[cur][j]=min(dp[cur][j],dp[oth][k]+1LL*B[i-1][k]);
+            }}
+            else
+            {if(low[j]!=j)
+            dp[cur][j]=min(dp[cur][j],last[low[j]]);
+            else
+            dp[cur][j]=min(dp[cur][j],slast[low[j]]);
+            	
+            }
+        }
+        for(int j=2;j<=M;j++)
+            slast[j]=last[j]=INF;
+        for(int j=2;j<=M;j++){
+        last[low[j]]=min(last[low[j]],dp[cur][j]+1LL*B[i][j]);    
+        if(low[j]!=j)
+        slast[low[j]]=min(slast[low[j]],dp[cur][j]+1LL*B[i][j]);
+        }
+        swap(cur,oth);
+    }
+    ll ans=INF;
+    for(int i=1;i<=M;i++)
+        ans=min(ans,dp[oth][i]);
+    cout<<ans<<endl;
+    return 0;   
+}

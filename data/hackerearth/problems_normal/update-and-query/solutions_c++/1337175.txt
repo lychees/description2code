@@ -1,0 +1,144 @@
+#include <iostream>
+#include <cmath>
+#define SIZ 100010
+#define SQROOT 320
+
+using namespace std;
+
+typedef long long int64;
+
+int a[SIZ], minimum[SQROOT], maximum[SQROOT];
+int n;
+int sqRoot;
+
+void populate() {
+    sqRoot = (int64) sqrt(n);
+    int64 numBuckets = sqRoot;
+    
+    if (sqRoot*sqRoot < n)
+        numBuckets++;
+    
+    int64 min, max;
+    for(int64 bucket=0 ; bucket<numBuckets ; bucket++) {
+        min = max = a[bucket*sqRoot];
+        for (int64 i=bucket*sqRoot ; i<bucket*sqRoot+sqRoot && i<n; i++) {
+            if (a[i] < min)
+                min = a[i];
+            if (a[i] > max)
+                max = a[i];
+        }
+        minimum[bucket] = min;
+        maximum[bucket] = max;
+    }
+}
+
+void update(int64 x, int64 y) {
+    a[x] = y;
+    int bucket = x/sqRoot;
+    
+    int min = a[bucket*sqRoot], max = a[bucket*sqRoot];
+    for(int i=bucket*sqRoot ; i<bucket*sqRoot+sqRoot && i<n ; i++) {
+        if(min>a[i])
+            min = a[i];
+        if(max<a[i])
+            max = a[i];
+    }
+    minimum[bucket] = min;
+    maximum[bucket] = max;
+}
+inline bool satisfies(int64 ax, int64 z, int64 min, int64 max) {
+    return (ax-z<=min && min<=ax+z && ax-z<=max && max<=ax+z);
+}
+inline int64 getZ(int64 ax, int64 min, int64 max) {
+    int64 z = 9999999999999999LL;
+    int64 temp;
+    temp = ax-min;
+    if(satisfies(ax, temp, min, max) && z>temp)
+        z = temp;
+    temp = min-ax;
+    if(satisfies(ax, temp, min, max) && z>temp)
+        z = temp;
+    temp = ax-max;
+    if(satisfies(ax, temp, min, max) && z>temp)
+        z = temp;
+    temp = max-ax;
+    if(satisfies(ax, temp, min, max) && z>temp)
+        z = temp;
+    return z;
+}
+void query(int64 x, int64 c) {
+    int64 index = x;
+    int64 min, max;
+    
+    min = max = a[x];
+    while(index%sqRoot!=0 && index<n) {
+        if (a[x]-c <= a[index] && a[index] <= a[x]+c) {
+            if (min > a[index])
+                min = a[index];
+            if (max < a[index])
+                max = a[index];
+            index++;
+        } else {
+            goto skip;
+        }
+    }
+    while(index<n) {
+        if (a[x]-c <= minimum[index/sqRoot] && maximum[index/sqRoot] <= a[x]+c) {
+            if (min > minimum[index/sqRoot])
+                min = minimum[index/sqRoot];
+            if (max < maximum[index/sqRoot])
+                max = maximum[index/sqRoot];
+            index += sqRoot;
+        } else {
+            break;
+        }
+    }
+    while(index<n) {
+        if (a[x]-c <= a[index] && a[index] <= a[x]+c) {
+            if (min > a[index])
+                min = a[index];
+            if (max < a[index])
+                max = a[index];
+            index++;
+        } else {
+            break;
+        }
+    }
+
+    skip:
+    if (index>n)
+    	index = n;
+    
+    if (index == x) {
+        cout<<"-1 -1\n";
+    } else {
+        int64 z = getZ(a[x], min, max);
+        if (z==9999999999999999LL) {
+        	cout<<"-1 -1\n";
+        } else {
+            cout<<(index-x)<<" "<<z<<'\n';
+        }
+    }
+}
+int main() {
+    std::ios_base::sync_with_stdio(false);
+    int64 m, x, y;
+    char q;
+    
+    cin>>n>>m;
+    for (int64 i=0 ; i<n ; i++) {
+        cin>>a[i];
+    }
+    populate();
+    
+    while(m--) {
+        cin>>q>>x>>y;
+        if (q == 'U' || q == 'u') {
+            update(x-1, y);
+        } else {
+            query(x-1, y);
+        }
+    }
+    
+    return 0;
+}

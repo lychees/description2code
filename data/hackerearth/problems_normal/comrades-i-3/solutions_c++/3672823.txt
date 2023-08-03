@@ -1,0 +1,227 @@
+#include <iostream>
+#include <stdio.h>
+#include <limits.h>
+#include <vector>
+#include <queue>
+using namespace std;
+
+typedef pair<int, int> ii;
+typedef vector<int> vi;
+typedef vector<ii> vii;
+
+class UnionFind
+{
+private:
+    vi rank, size_set, p;
+    int num_sets;
+public:
+    UnionFind(int N) { num_sets = N; rank.assign(N, 0); size_set.assign(N,1);
+        p.assign(N, 0); for (int i = 0; i < N; ++i) { p[i] = i; } };
+    int find_set(int i) { return (i==p[i]) ? i : p[i]=find_set(p[i]);};
+    void union_set(int i, int j) {
+        int y = find_set(i), x = find_set(j);
+        if(y==x) return;
+        num_sets--;
+        if(rank[x] > rank[y]) { p[y]=x; size_set[x] += size_set[y];
+        } else { p[x]=y; size_set[y]+=size_set[x]; 
+                if (rank[x]==rank[y]) rank[y]++; 
+        }
+    };
+    bool same_set(int i, int j) { return find_set(i)==find_set(j); };
+    int get_set_size(int i) {  return size_set[find_set(i)]; };
+    int get_num_sets() { return num_sets; };
+};
+
+//vi branch;
+vi distto;
+vi idvisit;
+vi pred;
+vector<vii> adjlist;
+//int nbranch;
+
+/*
+ii dfs(int s)
+{
+	if(pred[s]==s)
+	{
+		distto[s] = 0;
+		nbranch++;
+		return make_pair(0, nbranch);
+	}
+	if(distto[s]==INT_MAX)
+	{	
+		ii db = dfs(pred[s]);
+		distto[s] = db.first + 1;
+		branch[s] = db.second;	
+	}
+	return make_pair(distto[s], branch[s]);
+}
+*/
+
+void bfs(int s)
+{   
+    distto[s] = 0;
+    queue<int> qe;
+    qe.push(s);
+    while(!qe.empty())
+    {
+        int u = qe.front();
+        qe.pop();
+        for (int i = 0; i < adjlist[u].size(); ++i)
+        {
+            int v = adjlist[u][i].first;
+            distto[v] = distto[u] + 1;
+            qe.push(v);
+        }
+    }
+}
+
+int dfs(int s, int id, UnionFind& uf)
+{
+    //int N = adjlist.size();
+    //idvisit.assign(N, INT_MAX);
+    idvisit[s] = id;
+    int newid = id+1;
+    for (int i = 0; i < adjlist[s].size(); ++i)
+    {
+        int v = adjlist[s][i].first;
+        if (adjlist[s].size() == 1)
+            uf.union_set(s, v);
+        newid = dfs(v, newid, uf);
+    }
+    return newid;
+}
+
+int main()
+{
+    int T, N, p, Q, x, y;
+    int root_node = 0;
+    scanf("%d", &T);
+    while(T--)
+    {
+    	//nbranch = 0;
+    	scanf("%d", &N);
+    	pred.assign(N, -1);
+    	//branch.assign(N, -1);
+        idvisit.assign(N, -1);
+        distto.assign(N, INT_MAX);
+        adjlist.assign(N, vii());
+        UnionFind uf(N);
+    	for(int i=0; i< N; i++)
+    	{
+    		scanf("%d", &p);
+    		if (p == 0)
+    		{
+                root_node = i;
+    		 	pred[i] = i;
+    		 	distto[i] = 0;
+    		 	//branch[i] = 0;
+    		}else
+            {
+    			pred[i] = p-1;
+                adjlist[pred[i]].push_back(make_pair(i, 1));
+            }
+    	}
+        bfs(root_node);
+        dfs(root_node, 1, uf);
+        int htree = -1;
+        
+        for (int i = 0; i < N; ++i)
+        {
+            if (distto[i] > htree) 
+                htree = distto[i];
+        }
+        //cout << "htree" << htree << endl;
+        /*
+        cout << "bfs" << endl;
+        for (int i = 0; i < N; ++i)
+        {
+            cout << distto[i] << " ";
+        }
+        cout << endl;
+        for (int i = 0; i < N; ++i)
+        {
+            cout << idvisit[i] << " ";
+        }
+        cout << endl;
+        */
+    	/*
+    	for (int i = 0; i < N; ++i)
+    	{
+    		dfs(i);
+    	}
+		*/
+    	/*
+    	for (int i = 0; i < N; ++i)
+    	{
+    		cout << branch[i] << " ";
+    	}
+    	cout << endl;
+    	for (int i = 0; i < N; ++i)
+    	{
+    		cout << distto[i] << " ";
+    	}
+    	cout << endl;
+		*/
+    	scanf("%d", &Q);
+    	for(int i=0; i< Q; i++)
+    	{
+    		scanf("%d %d", &x, &y);
+    		x--; y--;
+    		int dist = -1;
+    		/*
+    		//cout << x << " - " << y << endl;
+    		if (x == 667 && y == 657)	
+    		{
+    			cout << branch[x] << " " << branch[y] << " | " << distto[x] << " " << distto[y] << endl;
+    			cout << pred[x] << " ---- " << pred[y] << endl;
+    		}
+    		if (x == y)
+    		{
+    			//cout << " x equals y" << endl;
+    			dist = 0;
+    			//return 0;
+    		}else if ((branch[x]==branch[y] || y==pred[y]) && distto[x]>distto[y]){
+    			//cout << "take diff " << distto[x] << " " << distto[y] << endl;
+    			dist = (distto[x] - distto[y]) - 1;
+    		} else {
+    			dist = -1;
+    		}
+    		*/
+    		
+    		int count = 0;
+    		int node = x;
+            //cout << " htree " << htree << endl;
+
+            /*
+            if ( (idvisit[x]-idvisit[y]) > htree ) {
+                dist = -1;
+            }else */
+
+            /*
+            else if (x==y) {
+                dist = 0;
+            }
+            */
+    		
+            if (idvisit[x]<idvisit[y]) {
+                dist = -1;
+            } else if ( uf.same_set(x, y) ) {
+                dist = (distto[x] - distto[y])-1;
+            }else {
+	    		while(node!=pred[node])
+	    		{
+	    			node = pred[node];
+	    			if (node == y)
+	    				break;
+	    			count++;
+	    		}
+	    		if (node == y)
+	    			dist = count;
+    		}
+    		
+    		printf("%d\n", dist);
+    	}
+    }
+    return 0;
+}

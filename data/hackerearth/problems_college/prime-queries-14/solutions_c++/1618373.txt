@@ -1,0 +1,98 @@
+#include <iostream>
+using namespace std;
+
+#define MAX 100000
+
+int tree[4*MAX+1];
+int arr[100001];
+bool prime[1000001];
+
+int getMid(int a , int b)
+{
+	return a + (b-a)/2;
+}
+
+void makeTree(int ss , int se , int si){
+	if(ss == se){
+		tree[si] = arr[ss];
+		return ;
+	}
+	int mid = getMid(ss,se);
+	makeTree(ss,mid,2*si);
+	makeTree(mid+1,se,2*si+1);
+	tree[si] = max(tree[2*si] , tree[2*si+1]);
+}
+
+
+int query(int ss , int se , int si , int l, int r){
+	if(l>se || ss > r){
+		return -1;
+	}
+
+	if(l<= ss && r >= se){
+		return tree[si];
+	}
+	int mid = getMid(ss,se);
+	return max(query(ss,mid,2*si,l,r),query(mid+1,se,2*si+1,l,r));
+	
+}
+
+void update(int ss , int se, int si , int a ,int b){
+	
+	if(ss > a || se < a ){
+		return;
+	}
+	
+	if(ss == se && ss == a ){
+		arr[a] = b;
+		if(prime[b]==true) arr[a] = -1;
+		tree[si] = arr[a];
+		return ;
+	}
+	
+	int mid = getMid(ss,se);
+	
+	update(ss,mid,2*si,a,b);
+	update(mid+1,se,2*si+1,a,b);
+	
+	tree[si] = max(tree[2*si] , tree[2*si+1]);
+}
+
+
+
+void pr(){
+	prime[0] = true;
+	prime[1] = true;
+	for(int i=2;i<=1000;i++){
+		for(int j = i*2;j<=1000000;j+= i){
+			prime[j] = true;
+		}
+	}		
+}
+
+
+int main()
+{
+    pr();
+    int n,q;
+    cin>>n>>q;
+    
+    for(int i=1;i<=n;i++){
+    	cin>>arr[i];
+    	if(prime[arr[i]] == true)  arr[i] = -1;
+    }
+    
+   	makeTree(1,n,1);
+   	while(q--){
+   		int x , l ,r;
+   		cin>>x>>l>>r;
+   		if(x==1){
+   			int ans = query(1,n,1,l,r);
+   			
+   			 cout<<ans<<endl;
+   		}else {
+   			update(1,n,1,l,r);
+   		}
+   	}
+    return 0;
+}

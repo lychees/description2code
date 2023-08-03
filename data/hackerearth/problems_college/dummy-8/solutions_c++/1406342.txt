@@ -1,0 +1,119 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair <int,int> pii;
+typedef vector <int> vi;
+
+#define rep(i, n) for(int i = 0; i < (n); ++i)
+
+#define eb emplace_back
+#define ff first
+#define ss second
+#define all(c) c.begin(), c.end()
+#define sz(a) ((int)a.size())
+#define mset(a, v) memset(a, v, sizeof(a))
+
+const int N = 310;
+const int INF = 0x3f3f3f3f;
+
+char grid[4][N][N];
+int dist[4][N][N];
+int dx[] = {-1, 0, 0, +1};
+int dy[] = {0, -1, +1, 0};
+char dir[4] = {'v', '>', '<', '^'};
+
+int n, m;
+map <char, char> nxt;
+
+inline bool valid(int x, int y, int state) {
+    if(x < 0 or x >= n) return false;
+    if(y < 0 or y >= m) return false;
+    if(grid[state][x][y] != '.') return false;
+    if(dist[state][x][y] != INF) return false;
+
+    rep(k, 4) {
+        int nx = x + dx[k], ny = y + dy[k];
+        while(nx >= 0 and nx < n and ny >= 0 and ny < m) {
+            if(grid[state][nx][ny] == dir[k]) return false;
+            if(grid[state][nx][ny] != '.') break;
+            nx = nx + dx[k];
+            ny = ny + dy[k];
+        }
+    }
+    return true;
+}
+
+inline void solve() {
+    cin >> n >> m;
+    int srcR = -1, srcC = -1, destR = -1, destC = -1;
+    rep(i, n) {
+        string s;
+        cin >> s;
+        rep(j, m) {
+            if(s[j] == 'S') srcR = i, srcC = j, s[j] = '.';
+            else if(s[j] == 'G') destR = i, destC = j, s[j] = '.';
+
+            grid[0][i][j] = s[j];
+
+            rep(k, 3) {
+                assert(nxt.count(grid[k][i][j]));
+                grid[k + 1][i][j] = nxt[grid[k][i][j]];
+            }
+        }
+    }
+
+    assert(srcR != -1 and srcC != -1);
+    assert(destR != -1 and destC != -1);
+
+    mset(dist, 0x3f);
+
+    queue < pair <pii, int> > Q;
+    
+    Q.push({{srcR, srcC}, 0});
+    dist[0][srcR][srcC] = 0;
+
+    while(!Q.empty()) {
+        auto cur = Q.front(); Q.pop();
+        int x = cur.ff.ff, y = cur.ff.ss, state = cur.ss;
+
+
+        if(x == destR and y == destC) break;
+
+        rep(k, 4) {
+            int nx = x + dx[k];
+            int ny = y + dy[k];
+            int nState = (state + 1) % 4;
+
+            if(valid(nx, ny, nState)) {
+                Q.push({{nx, ny}, nState});
+                dist[nState][nx][ny] = dist[state][x][y] + 1;
+            }
+        }
+    }
+
+    int ans = INF;
+    rep(i, 4) ans = min(ans, dist[i][destR][destC]);
+
+    if(ans == INF) cout << "impossible\n";
+    else cout << ans << "\n";
+}
+
+int main() 
+{
+    nxt['.'] = '.';
+    nxt['#'] = '#';
+    nxt['<'] = '^';
+    nxt['^'] = '>';
+    nxt['>'] = 'v';
+    nxt['v'] = '<';
+
+    int numTest;
+    cin >> numTest;
+    for(int test = 1; test <= numTest; ++test) {
+        cout << "Case #" << test << ": ";
+        solve(); 
+    }
+    return 0;
+}

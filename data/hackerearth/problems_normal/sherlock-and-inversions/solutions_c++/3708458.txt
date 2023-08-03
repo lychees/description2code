@@ -1,0 +1,147 @@
+/*input
+5 3
+1 4 2 3 1
+1 2
+3 5
+1 5
+*/
+ 
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define ll long long
+#define PII pair<ll, ll>
+#define f first
+#define s second
+#define F(i,a,b) for(ll i = (ll)(a); i <= (ll)(b); i++)
+#define RF(i,a,b) for(ll i = (ll)(a); i >= (ll)(b); i--)
+#define inf LLONG_MAX
+#define mod 1000000007
+#define MAXN 100005
+#define pb(x) push_back(x)
+#define BLOCK 317
+ 
+ 
+ll bit_l[MAXN], bit_r[MAXN], n, l, r, q, ind, brr[MAXN];
+pair < PII, ll > quer[2*MAXN];
+ll pL, pR, ans[MAXN], answer;
+PII arr[MAXN];
+ 
+bool cmp(pair < PII, ll > x, pair < PII, ll > y)
+{
+	if(x.f.f/BLOCK != y.f.f/BLOCK) 
+		return x.f.f/BLOCK < y.f.f/BLOCK;
+	return x.f.s < y.f.s;
+}
+ 
+void update_lft(ll p, ll v)
+{
+	for(;p<=100000;p+=p&(-p))
+		bit_l[p] += v; 	 
+}
+ 
+ll query_lft(ll b)
+{
+	ll sum = 0; 	
+	for(;b>0;b-=b&(-b))
+		sum += bit_l[b];
+	return sum;
+}
+ 
+void update_rt(ll p, ll v)
+{
+	for(;p>0;p-=p&(-p))
+		bit_r[p] += v; 	 
+}
+ 
+ll query_rt(ll b)
+{
+	ll sum = 0; 	
+	for(;b<=100000;b+=b&(-b))
+		sum += bit_r[b];
+	return sum;
+}
+ 
+void add_lft(ll pos)
+{
+	answer+=query_lft(pos-1);	
+	update_lft(pos,1);
+	update_rt(pos,1);
+}
+ 
+void add_rt(ll pos)
+{
+	answer+=query_rt(pos+1);	
+	update_lft(pos,1);
+	update_rt(pos,1);
+}
+ 
+void remove_lft(ll pos)
+{
+	answer-=query_lft(pos-1);	
+	update_lft(pos,-1);
+	update_rt(pos,-1);
+}
+ 
+void remove_rt(ll pos)
+{
+	answer-=query_rt(pos+1);	
+	update_lft(pos,-1);
+	update_rt(pos,-1);
+}
+ 
+int main() 
+{
+	scanf("%lld %lld",&n,&q);
+	F(i,1,n)
+	{
+		scanf("%lld",&arr[i].f);
+		arr[i].s=i;
+	}
+	sort(arr+1,arr+1+n);
+	F(i,1,n)
+	{
+		if(arr[i].f>arr[i-1].f)
+			brr[arr[i].s]=++ind;
+		else
+			brr[arr[i].s]=ind;
+	}
+	F(i,1,q)
+	{
+		scanf("%lld %lld",&quer[i].f.f,&quer[i].f.s);
+		quer[i].s=i;
+	}
+	sort(quer+1,quer+1+q,cmp);
+	pL=pR=1;
+	update_lft(brr[1],1);
+	update_rt(brr[1],1);
+	F(i,1,q)
+	{
+		l=quer[i].f.f;
+		r=quer[i].f.s;
+		while(pL<l)
+		{
+			remove_lft(brr[pL]);
+			pL++;
+		}
+		while(pL>l)
+		{
+			add_lft(brr[pL-1]);
+			pL--;
+		}
+		while(pR<r)
+		{
+			add_rt(brr[pR+1]);
+			pR++;
+		}
+		while(pR>r)
+		{
+			remove_rt(brr[pR]);
+			pR--;
+		}
+		ans[quer[i].s]=answer;
+	}
+	F(i,1,q)
+		printf("%lld\n",ans[i]);
+	return 0;
+}

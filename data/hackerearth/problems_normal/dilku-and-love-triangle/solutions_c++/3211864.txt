@@ -1,0 +1,207 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long     LL;
+typedef pair<int,int> pii;
+
+double PI  = acos(-1);
+double EPS = 1e-7;
+int INF    = 1000000000;
+LL INFLL   = 1000000000000000000LL;
+
+#define fi            first
+#define se            second
+#define mp            make_pair
+#define pb            push_back
+
+#define input(in)     freopen(in,"r",stdin)
+#define output(out)   freopen(out,"w",stdout)
+
+#define MIN(a, b)     (a) = min((a), (b))
+#define MAX(a, b)     (a) = max((a), (b))
+
+#define RESET(a, b)   memset(a,b,sizeof(a))
+#define ALL(a)        (a).begin(), (a).end()
+#define SIZE(a)       (int)a.size()
+#define SORT(a)       sort(ALL(a))
+#define UNIQUE(a)     (a).erase( unique( ALL(a) ), (a).end() )
+#define FOR(a, b, c)  for (int (a)=(b); (a)<=(c); (a)++)
+#define FORD(a, b, c) for (int (a)=(b); (a)>=(c); (a)--)
+#define FORIT(a, b)   for (__typeof((b).begin()) a=(b).begin(); a!=(b).end(); a++)
+
+int mx[8] = {-1,1,0,0,-1,-1,1,1};
+int my[8] = {0,0,-1,1,-1,1,-1,1};
+
+// ----- //
+
+vector< pair<int,int> > adj[500005];
+int boss[500005];
+int id  [500005];
+int nxt[500005];
+int sz  [500005];
+int gsz [500005];
+int gidx[500005];
+int lv  [500005];
+int par [500005];
+int co = 0;
+
+vector<int> bit[500005];
+
+void hld(int p,int con)
+{
+  if (!con)
+  {
+    boss[p] = p;
+    id[p] = ++co;
+    gsz[co] = 1;
+    gidx[p] = gsz[co];
+  }
+  FOR(a,0,SIZE(adj[p])-1)
+  {
+    int nx = adj[p][a].fi;
+    if (nx != par[p])
+    {
+      if (adj[p][a].se)
+      {
+        nxt[p] = nx;
+        boss[nx] = boss[p];
+        id[nx] = id[p];
+        gsz[id[p]]++;
+        gidx[nx] = gsz[id[p]];
+      }
+      hld(nx,adj[p][a].se);
+    }
+  }
+}
+
+void dfs(int p,int d)
+{
+  //cout << "DFS " << p << " " << d << endl;
+  sz[p] = 1;
+  lv[p] = d;
+  FOR(a,0,SIZE(adj[p])-1)
+  {
+    int nx = adj[p][a].fi;
+    if (nx != par[p])
+    {
+      par[nx] = p;
+      dfs(nx,d+1);
+      sz[p] += sz[nx];
+    }
+  }
+  FOR(a,0,SIZE(adj[p])-1)
+  {
+    int nx = adj[p][a].fi;
+    if (nx != par[p])
+    {
+      //cout << "IH " << p-1 << " " << nx-1 << " " << sz[p] << " " << sz[nx] << endl;
+      if (2*sz[nx] >= sz[p])
+      {
+        adj[p][a].se = 1;
+      }
+    }
+  }
+  //cout << p << " " << sz[p] << endl;
+}
+
+int lca(int u,int v)
+{
+  while (id[u] != id[v])
+  {
+    if (lv[boss[u]] > lv[boss[v]]) u = par[boss[u]];
+    else v = par[boss[v]];
+  }
+  if (lv[u] > lv[v]) return v;
+  else return u;
+}
+
+void look_inside(int N) {
+  int i;
+ 
+  printf("\n");
+  printf("HEAVY: \n");
+  printf("(i, j): i----(heavy edge)----j\n\n");
+ 
+  for (i = 1; i <= N; i++)
+    printf("(%d, %d)\n", i, nxt[i]);
+  
+  printf("\n");
+  printf("CHAIN: \n");
+  printf("(i, j): Node i is in group (heavy-path group) number j\n\n");
+  
+  for (i = 1; i <= N; i++)
+    printf("(%d, %d)\n", i, id[i]);
+ 
+  printf("\n");
+  printf("HEAD: \n");
+  printf("(i, j): Node i goes up all the way to the highest node (j) which is in the same group\n\n");
+ 
+  for (i = 1; i <= N; i++)
+    printf("(%d, %d)\n", i, boss[i]);
+}
+
+int ans[500005];
+
+void upd(int u, int val) {
+  if (u == 0) return;
+  int groupId = id[u];
+  int groupIdx = gsz[groupId]+1-gidx[u];
+  for(int i = groupIdx; i <= gsz[groupId]; i += (i & -i)) {
+    bit[groupId][i] += val;
+  }
+  upd(par[boss[u]], val);
+}
+
+int que(int u) {
+  int groupId = id[u];
+  int groupIdx = gsz[groupId]+1-gidx[u];
+  int res = 0;
+  for(int i = groupIdx; i > 0; i -= (i & -i)) {
+    res += bit[groupId][i];
+  }
+  return res;
+}
+
+int main()
+{
+  int n, q;
+  scanf("%d%d",&n,&q);
+  FOR(a,1,n-1)
+  {
+    int u,v;
+    scanf("%d%d",&u,&v);
+    adj[u].pb(mp(v,0));
+    adj[v].pb(mp(u,0));
+  }
+  par[1] = 0;
+  dfs(1,0);
+  hld(1,0);
+  //printf("%d\n",lca(9,12)-1);
+  //look_inside(n);
+
+  FOR(a,1,co) {
+    FOR(b,1,gsz[a]+1) bit[a].pb(0);
+    //cout << a << " " << gsz[a] << endl;
+  }
+  while(q--) {
+    int t;
+    scanf("%d",&t);
+    if (t == 1) {
+      int u, v, lc;
+      scanf("%d%d",&u,&v);
+      lc = lca(u, v);
+      //cout << u << " " << v << " " << lc << endl;
+      ans[lc]++;
+      upd(u, 1);
+      upd(v, 1);
+      upd(lc, -2);
+    }
+    else {
+      int x;
+      scanf("%d\n", &x);
+      printf("%d\n", que(x)+ans[x]);
+    }
+  }
+
+}

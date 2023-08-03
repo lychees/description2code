@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+#define mp make_pair
+#define N 600005
+using namespace std;
+typedef long long ll;
+struct node
+{
+ int ch[2],sum;
+}t[N*20];
+int Troot[N],cnt;
+int append_node(int sum,int l,int r);
+
+void insert(int rt,int pre_rt,int x)
+{
+    int i,k;
+    for(i=20;i>=0;i--)
+    {
+        k=(x>>i)&1;
+        t[rt].ch[k]=append_node(t[t[pre_rt].ch[k]].sum+1,t[t[pre_rt].ch[k]].ch[0],t[t[pre_rt].ch[k]].ch[1]);
+        rt=t[rt].ch[k];
+        pre_rt=t[pre_rt].ch[k];
+    }
+}
+int query(int l,int r,int x)
+{
+    int k,ret=0,i;
+    for(i=20;i>=0;i--)
+    {
+        k=(x>>i)&1;
+        if(!(t[t[r].ch[k^1]].sum-t[t[l].ch[k^1]].sum!=0))
+            r=t[r].ch[k],l=t[l].ch[k];
+        else
+        {
+            ret+=(1<<i);
+            r=t[r].ch[k^1],l=t[l].ch[k^1];
+        }
+        
+    }
+    return ret;
+}
+ 
+int main () {
+	int n,q,i;
+	scanf("%d%d",&n,&q);
+	int tot=0;
+	for (i=0 ; i < n ; i++) {
+		int k;
+		scanf("%d",&k);
+		tot++;
+		Troot[tot]=append_node(t[Troot[tot-1]].sum+1, t[Troot[tot-1]].ch[0], t[Troot[tot-1]].ch[1]);
+		insert(Troot[tot],Troot[tot-1],k);
+	}
+	for(int j=0;j<q;j++) {
+		int l,r,x;
+		scanf("%d%d%d",&l,&r,&x);
+		printf("%d\n",query(Troot[l-1],Troot[r],x));
+	}
+    return 0;
+}
+int append_node(int sum,int l,int r)
+{
+    cnt++;
+    t[cnt].ch[0]=l;
+    t[cnt].ch[1]=r;
+    t[cnt].sum=sum;
+    return cnt;
+}

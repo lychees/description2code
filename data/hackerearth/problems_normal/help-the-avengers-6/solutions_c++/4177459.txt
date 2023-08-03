@@ -1,0 +1,125 @@
+#include <iostream>
+using namespace std;
+const int maxA = 1000001;
+void update(int T[], int node, int start, int end, int A[], int index)
+{
+	if (start == end)
+	{
+		T[node] = A[index]; 
+		return;
+	}
+	
+	int mid = (start+end)/2;
+	int left = 2*node;
+	int right = 2*node+1;
+	if (index <= mid)
+	{
+		update(T,left,start,mid,A,index);
+	}else
+	{
+		update(T,right,mid+1,end,A,index);
+	}
+	T[node] = T[left] + T[right];
+	return;
+};
+int numPrimes(int T[], int node, int start, int end, int X, int Y)
+{
+	if ((X <= start) && (Y >= end))
+	{
+		return T[node];
+	}
+	if ((X > end) || (Y < start))
+	{
+		return 0;
+	}
+	
+	int mid = (start + end)/2;
+	int left = 2*node;
+	int right = 2*node+1;
+	if (Y <= mid)
+	{
+		return numPrimes(T,left,start,mid,X,Y);
+	}else if (X > mid)
+	{
+		return numPrimes(T,right,mid+1,end,X,Y);
+	}else
+	{
+		return numPrimes(T,left,start,mid,X,Y) + numPrimes(T,right,mid+1,end,X,Y); 
+	}
+};
+int main()
+{
+	int t;
+	cin >> t;
+	bool *primelist = new bool[maxA+1];
+	primelist[0] = false;
+	primelist[1] = false;
+	for(int i = 2; i <= maxA; ++i)
+	{
+		primelist[i] = true;
+	}
+	for(int i = 2; (i*i) <= maxA; ++i)
+	{
+		if (primelist[i])
+		{
+			for(int j = 2;i*j <= maxA; ++j)
+			{
+				primelist[i*j] = false;
+			}
+		}
+	};
+	for(int i = 0; i < t; ++i)
+	{
+		int N;
+		cin >> N;
+		int *T = new int[4*N+1];
+		for(int j = 0; j <= 4*N; ++j)
+		{
+			T[j] = 0;
+		};
+		int *A = new int[N+1];
+		for(int j = 0; j <= N; ++j)
+		{
+			A[j] = 0;
+		}
+		for(int j = 1;j <= N; ++j)
+		{
+			int tmp;
+			cin >> tmp;
+			A[j] = (primelist[tmp] == true);
+			if (A[j] > 0)
+			{
+				update(T,1,1,N,A,j);
+			}
+		}
+		int Q;
+		cin >> Q;
+		//Q=0;
+		for(int j = 0; j < Q; ++j)
+		{
+			char type;
+			int X,Y;
+			cin >> type >> X >> Y;
+			if (type == 'C')
+			{
+				int tmp = (primelist[Y] == true);
+				if (tmp != A[X])
+				{
+					A[X] = tmp;
+					update(T,1,1,N,A,X);
+				}
+			}else if (type == 'A')
+			{
+				Y = ((Y <= N)?Y:N);
+				X = ((X >= 1)?X:1);
+				int tmp = numPrimes(T,1,1,N,X,Y);
+				cout << tmp << endl;
+			}
+		}
+		delete[] A;
+		delete[] T;
+	}
+	delete[] primelist;
+    //cout << "Hello World!" << endl;
+    return 0;
+}

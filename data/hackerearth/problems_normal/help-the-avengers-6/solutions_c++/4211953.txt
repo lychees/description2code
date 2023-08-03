@@ -1,0 +1,172 @@
+#include <iostream>
+#include <stdio.h>
+#include <math.h>
+#include <string>
+using namespace std;
+
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MAX_VAL 9999999
+#define NULL_VAL 0 /*Change it zero for Sum tree*/ 
+/********************************
+ * 
+ * Avenger UNsolved
+ * 
+ * ****************************/
+
+int isprime(long long int N) {
+    int count = 0;
+    for( int i = 1;i * i <=N;++i ) {
+         if( N % i == 0) {
+         if( i * i == N )
+                     count++;
+                 else                                                     // i < sqrt(N) and (N / i) > sqrt(N)
+                     count += 2;
+      }
+    }
+    if(count == 2)
+       return 1;
+    else
+        return 0;
+       
+}
+
+void construct(int a[],int seg[],int low, int high,int pos){
+	
+/********* Time Complexity : O(N); ******/
+	
+		if(low==high){
+			seg[pos] = a[low];
+			return;
+			}
+		int mid = (high+low)/2;	
+	
+		/*Left SubTree*/
+		construct( a, seg, low, mid, 2*pos+1);
+		/*Right SubTree*/
+		construct( a, seg, mid+1, high, 2*pos+2);
+	
+		//seg[pos] = MIN(seg[2*pos+1],seg[2*pos+2]);
+		
+		/**To construct the Sum Tree*/
+		seg[pos] =  seg[2*pos+1]+seg[2*pos+2];
+	}
+
+/***********Update rouine*************************
+ *    idx => position to update
+ * 	  val => value to update
+*/
+
+void update(int a[],int seg[],int low, int high, int pos,int idx,int val){
+	
+	if(low == high){
+		
+		a[idx] = val;
+		seg[pos] = val;
+		return ;
+		}
+		
+	int mid = (low+high)/2;
+	if(low <= idx && idx <= mid )
+	     update( a, seg, low,  mid,  2*pos+1,  idx, val);
+	else
+		 update( a, seg, mid+1,high, 2*pos+2,  idx, val);
+	
+	//seg[pos] = MIN(seg[2*pos+1],seg[2*pos+2]);
+		
+		/**To construct the Sum Tree*/
+		seg[pos] =  seg[2*pos+1]+seg[2*pos+2];	 
+	
+	}
+
+int rangeQuery(int seg[],int low, int high, int pos,int qlow, int qhigh){
+	
+	/****Total Overlap*****/
+	if(qlow<= low && qhigh >= high){
+		return seg[pos];
+		}
+		
+		/****NO Overlap*****/
+	if(qlow > high || qhigh < low)
+	{	return 0; 
+		}
+		
+		/****Partial Overlap*****/
+		int mid = (low+high)/2;
+
+		return  rangeQuery(seg ,low, mid, 2*pos+1, qlow,qhigh)+
+		rangeQuery(seg , mid+1, high, 2*pos+2, qlow,qhigh);
+		      
+		
+	
+	}
+
+int main(){
+	
+	int T;
+	cin>>T;
+	for(int g=0;g<T;g++)
+	{		long int N;
+			long int Q;
+			cin>>N;
+		
+			int a[N];
+			/*Maximum size of segment tree */
+			int x = (int)(ceil(log2(N))); 
+			int max_size = 2*(int)pow(2, x) - 1;
+			int seg[max_size];
+			
+		    int key;
+			for(long int i=0;i<N;i++){
+				cin>>key;
+				
+				 if( isprime(key) )
+					a[i]=1;
+				else
+					a[i]=0;	
+			}
+			 for(int i=0;i<max_size;i++)
+						seg[i] =NULL_VAL;
+						
+			/*Building a tree */		
+				construct(a,seg,0,N-1,0);
+				
+				
+			//	cout<<"\n"<<seg[0]<<" \n"<<rangeQuery( seg, 0, N-1, 0,1,4);
+				
+			   cin>>Q;
+				for(int i=0;i<Q;i++){
+					char ch;
+					cin>>ch;
+					
+									switch(ch){
+										case 'A':  /*Even Query*/
+												int qlow,qhigh;
+												cin>>qlow>>qhigh;
+												cout<<rangeQuery( seg, 0, N-1, 0,qlow-1,qhigh-1)<<"\n";
+												break;
+										
+										case 'C':
+												int idx,val;
+											    
+												
+												cin>>idx>>val;
+												if( isprime(val) )
+													val=1;
+												else
+													val=0;
+												update( a, seg, 0,N-1, 0,idx-1,val); /*Idx because problem has 1-index*/
+												
+												break;
+										
+									
+										
+										}
+			 }
+			
+	}
+   
+	//for(int i=0;i<max_size;i++)
+		//		cout<<" "<<seg[i];
+	
+	return 0;
+	}

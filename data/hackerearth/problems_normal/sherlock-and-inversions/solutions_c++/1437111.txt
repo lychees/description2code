@@ -1,0 +1,140 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const int N = 1e5 + 23, magic = 333;
+int a[N], l[N], r[N], o[N], nl[N], nr[N];
+long long tree[N], ans[N];
+
+struct fenwick
+{
+	long long pref(int x)
+	{
+		long long ret = 0;
+		for (int i = x; i >= 0; i = (i & (i+1)) - 1) ret += tree[i];
+		return ret;
+	}
+	inline void upd(int x, long long val) { for (int i = x; i < N; i |= i+1) tree[i] += val; }
+	inline long long que(int x, int y) { return pref(y) - pref(x-1); }
+} bit;
+
+bool cmp(int i, int j)
+{
+	if (l[i] / magic != l[j] / magic) return l[i] / magic < l[j] / magic;
+	return r[i] < r[j];
+}
+
+void solve(int q)
+{
+	int ll = 0, rr = 0;
+	bit.upd(a[0], 1);
+	long long inv = 0;
+	for (int i = 0; i < q; i++)
+	{
+		if (ll / magic == l[i] / magic)
+		{
+			if (ll <= l[i])
+			{
+				while (ll < l[i])
+				{
+					inv -= bit.que(0, a[ll] - 1);
+					bit.upd(a[ll], -1);
+					ll++;
+				}
+			}
+			else
+			{
+				ll--;
+				while (ll >= l[i])
+				{
+					inv += bit.que(0, a[ll] - 1);
+					bit.upd(a[ll], 1);
+					ll--;
+				}
+				ll++;
+			}
+			rr++;
+			while (rr <= r[i])
+			{
+				inv += bit.que(a[rr] + 1, N - 1);
+				bit.upd(a[rr], 1);
+				rr++;
+			}
+			rr--;
+		}
+		else
+		{
+			if (rr <= r[i])
+			{
+				rr++;
+				while (rr <= r[i])
+				{
+					inv += bit.que(a[rr] + 1, N - 1);
+					bit.upd(a[rr], 1);
+					rr++;
+				}
+				rr--;
+			}
+			else
+			{
+				while (rr > r[i])
+				{
+					inv -= bit.que(a[rr] + 1, N - 1);
+					bit.upd(a[rr], -1);
+					rr--;
+				}
+			}
+			while (ll < l[i])
+			{
+				inv -= bit.que(0, a[ll] - 1);
+				bit.upd(a[ll], -1);
+				ll++;
+			}
+		}
+		ans[o[i]] = inv;
+	}
+}
+
+vector <int> V;
+
+int main()
+{
+//	freopen("in", "r", stdin);
+	int n, q;
+	scanf("%d%d", &n, &q);
+	for (int i = 0; i < n; i++) scanf("%d", a + i);
+	V.resize(n);
+	for (int i = 0; i < n; i++) V[i] = a[i];
+	sort(V.begin(), V.end());
+	V.resize(unique(V.begin(), V.end()) - V.begin());
+	for (int i = 0; i < n; i++)
+		a[i] = lower_bound(V.begin(), V.end(), a[i]) - V.begin();
+	for (int i = 0; i < q; i++) scanf("%d%d", l + i, r + i);
+	for (int i = 0; i < q; i++) l[i]--, r[i]--;
+	for (int i = 0; i < q; i++) o[i] = i;
+	sort(o, o + q, cmp);
+	for (int i = 0; i < q; i++) nl[i] = l[i], nr[i] = r[i];
+	for (int i = 0; i < q; i++) l[i] = nl[o[i]], r[i] = nr[o[i]];
+	solve(q);
+	for (int i = 0; i < q; i++)
+		printf("%lld\n", ans[i]);
+	return 0;
+}

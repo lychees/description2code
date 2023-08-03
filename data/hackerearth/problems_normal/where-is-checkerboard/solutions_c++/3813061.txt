@@ -1,0 +1,113 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#define PATSIZE 32
+using namespace std;
+
+typedef vector<int> vi;
+
+vector<string> mat;
+vi maxps1;
+vi maxps2;
+int N, M;
+vector<vi> exist1;
+vector<vi> exist2;
+
+void max_prefix_suffix(string &pat, vi& maxps)
+{
+	int m = pat.size();
+	int j = 0;
+	for (int i = 1; i < m; ++i)
+	{
+		while(j>=0 && pat[i]!=pat[j]) {
+			if (j==0)
+				j =-1;
+			else
+				j = maxps[j-1];
+		}
+		j++;
+		maxps[i] = j;
+	}
+}
+
+void fill_exist_mat(vector<vi>& exist, string& pat, vi& maxps) {
+	// verify row by row
+	for (int i = 0; i < N; ++i)
+	{
+		int k = 0;
+		for (int j = 0; j < M; ++j)	
+		{
+			while(k>=0 && mat[i][j]!=pat[k]) {
+				if (k==0)
+					k = -1;
+				else
+					k = maxps[k-1];
+			}
+			k++;
+			if (k==PATSIZE) {
+				exist[i][j-PATSIZE+1] = 1;
+			}
+		}
+	}	
+}
+
+// Where is Checkerboard 
+int main()
+{
+	
+	cin >> N >> M;
+	mat.assign(N, "");
+	for (int i = 0; i < N; ++i)
+	{
+		cin >> mat[i];
+	}
+	string pat1;
+	string pat2;
+	for (int i = 0; i < PATSIZE; ++i)
+	{
+		if (i%2 == 0)
+			pat1 += "_";
+		else
+			pat1 += "#";
+	}
+	for (int i = 0; i < PATSIZE; ++i)
+	{
+		if (i%2 == 0)
+			pat2 += "#";
+		else
+			pat2 += "_";
+	}
+	
+	maxps1.assign(PATSIZE, 0);
+	max_prefix_suffix(pat1, maxps1);
+	exist1.assign(N, vi(M, 0));
+	fill_exist_mat(exist1, pat1, maxps1);
+	//cout << pat1 << endl;
+
+	maxps2.assign(PATSIZE, 0);
+	max_prefix_suffix(pat2, maxps2);
+	exist2.assign(N, vi(M, 0));
+	fill_exist_mat(exist2, pat2, maxps2);
+	//cout << pat2 << endl;
+
+	int num_boards = 0;
+	for (int j = 0; j < M; ++j) {
+		int count = 0;
+		for (int i = 0; i < N; ++i) {
+			if ((count%2 == 0 && exist1[i][j] == 1) || (count%2 == 1 && exist2[i][j] == 1)){
+				count++;
+			} else if (exist1[i][j] == 1){
+				count = 1;
+			} else {
+				count = 0;
+			}
+			if (count == PATSIZE) {
+				num_boards++;
+				count -= 2;
+			}
+		}
+	}
+	cout << num_boards << endl;
+
+	return 0;
+}

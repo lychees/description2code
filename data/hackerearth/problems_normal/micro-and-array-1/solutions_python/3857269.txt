@@ -1,0 +1,98 @@
+import math
+from cStringIO import StringIO
+
+def show_tree(tree, total_width=33, fill=' '):
+    """Pretty-print a tree."""
+    output = StringIO()
+    last_row = -1
+    for i, n in enumerate(tree):
+        if i:
+            row = int(math.floor(math.log(i+1, 2)))
+        else:
+            row = 0
+        if row != last_row:
+            output.write('\n')
+        columns = 2**row
+        col_width = int(math.floor((total_width * 1.0) / columns))
+        output.write(str(n).center(col_width, fill))
+        last_row = row
+    print output.getvalue()
+    print '-' * total_width
+    print
+    return
+
+
+def create_tree(arr):
+    next_power_of_two = math.pow(2,math.ceil(math.log(arr.__len__(), 2)))
+    #print next_power_of_two
+    arr.extend([-1]*(int(next_power_of_two-arr.__len__())))
+    # show_tree(arr, 100)
+
+    leafCount = arr.__len__()
+
+    #Initialize tree array
+    tree= [-1] * (leafCount)
+    tree.extend(arr)
+
+    #print tree
+
+    for i in xrange (leafCount-1,0,-1):
+        #print i
+        if 2*i+1 < tree.__len__()-1:
+            #print 2*i+1, 2*i
+            tree[i] = max(tree[2*i+1], tree[2*i])
+        else:
+            tree[i] = tree[2*i]
+
+    #print tree
+    #show_tree(tree[1:], 50)
+
+    return tree, next_power_of_two
+
+def update(tree, index, value, offset, index_hash):
+    tree_index = int(index+offset-1)
+
+    index_hash[tree[tree_index]] = -1
+    index_hash[value] = index
+
+    tree[tree_index] = value
+    cur_index = tree_index
+    while cur_index>0:
+        parent_index = int(cur_index/2)
+        old_parent_value = tree[parent_index]
+        tree[parent_index] = max(tree[parent_index*2], tree[parent_index*2+1])
+        if old_parent_value == tree[parent_index]:
+            break
+        else:
+            cur_index = parent_index
+
+def retrieve(tree, value, index_hash):
+    cur_index = 1
+    prev_value = -1
+    while cur_index<tree.__len__() and tree[cur_index] >= value:
+        if 2*cur_index+1<tree.__len__() and tree[2*cur_index] < value and tree[cur_index]==tree[cur_index*2+1]:
+            cur_index = 2*cur_index+1
+            prev_value = tree[cur_index]
+            continue
+        prev_value = tree[cur_index]
+        cur_index = 2*cur_index
+
+    return index_hash[prev_value]
+
+
+N,Q = map(int, raw_input().split())
+arr = map(int, raw_input().split())
+
+index_hash = {-1:-1}
+for i in range(arr.__len__()):
+    index_hash[arr[i]] = i+1
+
+tree, offset = create_tree(arr)
+while Q>0:
+    Q-=1
+    x = map(int, raw_input().split())
+    if x[0] == 0:
+        update(tree, x[1], x[2], offset, index_hash)
+    elif x[0] == 1:
+        print retrieve(tree, x[1], index_hash)
+    #show_tree(tree[1:], 50)

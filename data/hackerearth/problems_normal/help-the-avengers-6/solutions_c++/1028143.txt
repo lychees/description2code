@@ -1,0 +1,68 @@
+#include<bits/stdc++.h>
+#define MAX   1000100
+#define FOR(i,a,b) for (int i=(a),_b=(b);i<=_b;i=i+1)
+#define REP(i,n) for (int i=0,_n=(n);i<_n;i=i+1)
+using namespace std;
+class FenwickTree {
+    private:
+    int n;
+    vector<int> v;
+    public:
+    FenwickTree() {
+        n=0;
+    }
+    FenwickTree(int n) {
+        this->n=n;
+        v.assign(n+7,0);
+    }
+    void update(int x,int d) {
+        if (x<1) return;
+        for (;x<=n;x+=x&-x) v[x]+=d;
+    }
+    int getSum(int x) const {
+        int res=0;
+        if (x>n) return (res);
+        for (;x>=1;x&=x-1) res+=v[x];
+        return (res);
+    }
+};
+bool notPrime[MAX];
+int a[MAX];
+int n,q;
+FenwickTree tree;
+void eratosthene(void) {
+    REP(i,2) notPrime[i]=true;
+    FOR(i,2,MAX-1) if (!notPrime[i]) for (int j=2*i;j<MAX;j=j+i) notPrime[j]=true;
+}
+void init(void) {
+    scanf("%d",&n);
+    FOR(i,1,n) scanf("%d",&a[i]);
+    tree=FenwickTree(n);
+    FOR(i,1,n) if (!notPrime[a[i]]) tree.update(i,1);
+}
+void change(int x,int v) {
+    int old=!notPrime[a[x]];
+    int cur=!notPrime[v];
+    tree.update(x,cur-old);
+    a[x]=v;
+}
+void process(void) {
+    scanf("%d",&q);
+    REP(zz,q) {
+        char c;
+        int x,y;
+        scanf(" %c%d%d",&c,&x,&y);
+        if (c=='C') change(x,y);
+        else printf("%d\n",tree.getSum(y)-tree.getSum(x-1));
+    }
+}
+int main(void) {
+    eratosthene();
+    int t;
+    scanf("%d",&t);
+    REP(zz,t) {
+        init();
+        process();
+    }
+    return 0;
+}

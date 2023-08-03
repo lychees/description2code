@@ -1,0 +1,84 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define mod 1000000007
+#define ll long long int
+ll dp[100100][2],bit1[100100],bit2[100100],bit3[100100],n,a[100100],vis[100100];
+ll query1(ll ind)
+{
+    ll sum=0;
+    for(;ind>=1;ind-=ind&-ind)
+    {
+        sum=(sum%mod+bit1[ind]%mod)%mod;
+    }
+    return sum;
+}
+void update1(ll pos)
+{
+    for(;pos<=n;pos+=pos&-pos)
+    {
+        bit1[pos]=(bit1[pos]%mod+1)%mod;
+    }
+}
+ll query2(ll ele)
+{
+    ll sum=0;
+    for(;ele>=1;ele-=ele&-ele)
+    {
+        sum=(sum%mod+bit2[ele]%mod)%mod;
+    }
+    return sum;
+}
+void update2(ll ele,ll c)
+{
+    ll p=dp[c][0];
+    for(;ele<=n;ele+=ele&-ele)
+    {
+        bit2[ele]=(bit2[ele]%mod+p%mod)%mod;
+    }
+}
+ll query3(ll ele)
+{
+    ll sum=0;
+    for(;ele>=1;ele-=ele&-ele)
+    {
+        sum=(sum%mod+bit3[ele]%mod)%mod;
+    }
+    return sum;
+}
+void update3(ll ele,ll c)
+{
+    ll p=dp[c][1];
+    for(;ele<=n;ele+=ele&-ele)
+    {
+        bit3[ele]=(bit3[ele]%mod+p%mod)%mod;
+    }
+}
+int main()
+{
+    ll i,pos=0,ans=0,l,h,c=0,j;
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cin>>n;
+    vector<ll> v;
+    for(i=1;i<=n;i++)
+    {
+        cin>>a[i];
+        v.push_back(a[i]);
+    }
+    sort(v.begin(),v.end());
+    for(i=1;i<=n;i++)
+    {
+        pos=lower_bound(v.begin(),v.end(),a[i])-v.begin()+1;
+        l=query1(pos)-vis[a[i]];
+        h=query1(n)-l-vis[a[i]];
+        update1(pos);
+        dp[i][1]=(l%mod+query2(pos-1)%mod)%mod;
+        dp[i][0]=((h%mod+query3(n)%mod)%mod-query3(pos)%mod+mod)%mod;
+        vis[a[i]]++;
+        update3(pos,i);
+        update2(pos,i);
+        ans=((ans%mod+dp[i][1]%mod)%mod+dp[i][0]%mod)%mod;
+    }
+    cout<<ans<<"\n";
+    return 0;
+}

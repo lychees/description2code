@@ -1,0 +1,369 @@
+#include <iostream>
+#include <cstdio>
+#include <string>
+#include <sstream> 
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <cmath>
+#include <algorithm>
+#include <cstring>
+#include <ctime>
+#include <cassert>
+using namespace std;
+#define pb push_back
+#define mp make_pair
+#define pii pair<int,int>
+#define vi vector<int>
+#define vpii vector<pii>
+#define SZ(x) ((int)(x.size()))
+#define fi first
+#define se second
+#define FOR(i,n) for(int (i)=0;(i)<(n);++(i))
+#define ALL(t) t.begin(),t.end()
+#define REP(i,a,b) for(int (i)=(a);(i)<=(b);++i)
+#define REMAX(a,b) (a)=max((a),(b));
+#define REMIN(a,b) (a)=min((a),(b));
+
+typedef long long ll;
+typedef vector<ll> Vec;
+typedef vector<Vec> Matrix;
+
+const int MOD = 1e9 + 7;
+const int MINN = 2;
+const int MAXN = 75;
+const int MINM = 1;
+const int MAXM = MAXN * (MAXN - 1) / 2;
+const int MINW = 1;
+const int MAXW = 1e5;
+
+bool in_range(int v, int a, int b)
+{
+    return v >= a && v <= b;
+}
+
+inline ll modulo(ll a, ll b) {
+      const ll result = a % b;
+        return result >= 0 ? result : result + b;
+}
+
+ll mypow(ll a, ll b)
+{
+    if(b == 0) return 1;
+    if(b % 2 == 0)
+    {
+        ll c = mypow(a, b / 2);
+        return modulo(c * c, MOD);
+    }
+    return modulo(a * mypow(a, b - 1), MOD);
+}
+
+ll mod_rev(ll a)
+{
+    return mypow(a, MOD - 2);
+}
+
+ll div_mod(ll a, ll b)
+{
+    return modulo(a * mod_rev(b), MOD);
+}
+
+void print_matrix(Matrix& m, int n)
+{
+    FOR(i, n)
+    {
+        FOR(j, n) 
+        {
+            if(m[i][j] >= 0) cout << " ";
+            cout << m[i][j] << " ";
+        }
+        cout << endl;
+    }
+}
+
+Matrix empty_matrix(int n)
+{
+    Matrix m(n, Vec(n, 0));
+    return m;
+}
+
+Vec multiply(const Vec& v, int n, ll c)
+{
+    Vec res(n);
+    FOR(i, n) 
+    {
+        res[i] = modulo(v[i] * c, MOD);
+    }
+    return res;
+}
+
+Vec subtract(const Vec& a, const Vec& b, int n)
+{
+    assert(n <= a.size());
+    assert(n <= b.size());
+    Vec res(n);
+    FOR(i, n)
+    {
+        res[i] = modulo(a[i] - b[i], MOD);
+    }
+    return res;
+}
+
+ll submatrix_determinant_by_gauss(Matrix& a, int n)
+{
+    assert(n <= a.size());
+    assert(n <= a[0].size());
+    ll det = 1;
+    FOR(i, n)
+    {
+        int maxpivot = a[i][i];
+        int maxpivot_index = i;
+        REP(k, i + 1, n - 1) 
+        {
+            if(a[k][i] > maxpivot)
+            {
+                maxpivot = a[k][i];
+                maxpivot_index = k;
+            }
+        }
+        if(maxpivot % MOD == 0)
+        {
+            //a is singular
+            return 0;
+        }
+        if(maxpivot_index != i)
+        {
+            swap(a[maxpivot_index], a[i]);
+            det = modulo(det * -1, MOD);
+        }
+        REP(k, i + 1, n - 1)
+        {
+            ll c = div_mod(a[k][i], a[i][i]);
+            Vec tmp = multiply(a[i], n, c);
+            a[k] = subtract(a[k], tmp, n);
+        }
+    }
+    FOR(i, n)
+    {
+        det = modulo(det * a[i][i], MOD);
+    }
+    return det;
+}
+
+
+
+//Union find
+int uf_member[MAXN];
+int uf_rank[MAXN];
+
+int uf_find(int v)
+{
+    if(uf_member[v] == v) return v;
+    int fv = uf_find(uf_member[v]);
+    uf_member[v] = fv;
+    return fv;
+}
+
+bool uf_union(int v, int u)
+{
+    int fv = uf_find(v);
+    int fu = uf_find(u);
+    
+    if(fv == fu) return false;
+    if(uf_rank[fv] < uf_rank[fu])
+    {
+        uf_member[fv] = fu;
+        uf_rank[fu] += uf_rank[fv];
+    }
+    else
+    {
+        uf_member[fu] = fv;
+        uf_rank[fv] += uf_rank[fu];
+    }
+    return true;
+}
+
+void init_uf(int n)
+{
+    FOR(i, n) uf_member[i] = i;
+    FOR(i, n) uf_rank[i] = 1;
+}
+
+vector<pii> apply_find_to_edges(const vector<pii> edges)
+{
+    vector<pii> res;
+    FOR(i, edges.size())
+    {
+        pii e = edges[i];
+        res.pb(mp(uf_find(e.fi), uf_find(e.se)));
+    }
+    return res;
+}
+
+ll res = 1;
+
+vi g[MAXN];
+bool visited[MAXN];
+
+map<int, int> component_vertices;
+vector<pii> component_edges;
+
+void dfs(int v)
+{
+    visited[v] = 1;
+    if(component_vertices.find(v) == component_vertices.end())
+    {
+        component_vertices.insert(mp(v, SZ(component_vertices)));
+    }
+    int mv = component_vertices[v];
+    FOR(i, SZ(g[v]))
+    {
+        int u = g[v][i];
+        if(component_vertices.find(u) == component_vertices.end())
+        {
+            component_vertices.insert(mp(u, SZ(component_vertices)));
+        }
+        int mu = component_vertices[u];
+        component_edges.pb(mp(mv, mu));
+        if(!visited[u])
+        {
+            dfs(u);
+        }
+    }
+}
+
+void solve(vector<pii> edges)
+{
+    set<int> vertices;
+    FOR(i, edges.size())
+    {
+        int v = edges[i].fi;
+        int u = edges[i].se;
+        g[v].pb(u);
+        g[u].pb(v);
+        vertices.insert(v);
+        vertices.insert(u);
+    }
+
+    for(auto it = vertices.begin(); it != vertices.end(); ++it)
+    {
+        int v = *it;
+        if(!visited[v])
+        {
+            component_edges.clear();
+            component_vertices.clear();
+
+            dfs(v);
+
+            int n = SZ(component_vertices);
+            Matrix m = empty_matrix(n);
+            FOR(i, component_edges.size())
+            {
+                int v = component_edges[i].fi;
+                int u = component_edges[i].se;
+                if(v == u) continue;
+                m[v][v]++;
+                m[v][u]--;
+            }
+
+            ll subres = submatrix_determinant_by_gauss(m, n - 1);
+            res *= subres;
+            res %= MOD;
+        }
+    }
+    
+    //clear up
+    for(auto it = vertices.begin(); it != vertices.end(); ++it)
+    {
+        int v = *it;
+        g[v].clear();
+        visited[v] = 0;
+    }
+}
+
+int dfs_cnt(int v)
+{
+    visited[v] = 1;
+    int res = 1;
+    FOR(i, g[v].size())
+    {
+        int u = g[v][i];
+        if(!visited[u])
+        {
+            res += dfs_cnt(u);
+        }
+    }
+    return res;
+}
+
+int main()
+{
+    int n, m;
+    scanf("%d %d", &n, &m);
+    FOR(i, n - 1)
+    {
+        int dummy_v, dummy_u;
+        scanf("%d %d", &dummy_v, &dummy_u);
+    }
+
+    assert(in_range(n, MINN, MAXN));
+    assert(in_range(m, MINM, MAXM));
+
+
+    set<pii> distinct_edges;
+    map<int, vector<pii>> edges;
+    FOR(i, m)
+    {
+        int v, u, w;
+        scanf("%d %d %d", &v, &u, &w);
+        assert(in_range(v, 1, n));
+        assert(in_range(u, 1, n));
+        assert(in_range(w, MINW, MAXW));
+        --v; --u;
+        if(u < v) swap(v, u);
+        distinct_edges.insert(mp(v, u));
+        if(edges.find(w) == edges.end())
+        {
+            edges[w] = vector<pii>();
+        }
+        edges[w].pb(mp(v, u));
+        g[v].pb(u);
+        g[u].pb(v);
+    }
+    assert(distinct_edges.size() == m);
+
+    //check if g is connected
+    int cnt = dfs_cnt(0); 
+    if(cnt < n) 
+    {
+        printf("0\n");
+        return 0;
+    }
+    FOR(i, n) visited[i] = 0;
+    FOR(i, n) g[i].clear();
+
+
+    init_uf(n);
+
+    for(auto it = edges.begin(); it != edges.end(); ++it)
+    {
+        vector<pii> tmp_edges = apply_find_to_edges(it->se);
+
+        //finding components and for each component multiply the result by the number of spanning trees of this component
+        solve(tmp_edges);
+
+
+        FOR(i, SZ(tmp_edges))
+        {
+            int v = tmp_edges[i].fi;
+            int u = tmp_edges[i].se;
+            uf_union(v, u);
+        }
+    }
+
+    printf("%d\n", (int)res);
+
+    return 0;
+}

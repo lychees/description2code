@@ -1,0 +1,131 @@
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#include<vector>
+using namespace std ;
+
+	int *parent;
+    int *rank1;
+
+
+
+	/*
+	 * Program by Indresh Gahoi
+	 * Copying here for testing purposes.
+	 */
+
+	struct Edge {
+	
+		 int u, v;
+		 int cost;
+
+	   Edge(int u, int v, int cost) {
+			this->u = u;
+			this->v = v;
+			this->cost = cost;
+		}
+
+		int operator<(const Edge &o) const {
+		  return this->cost <o.cost ;
+		}
+
+	};
+
+	  struct Point {
+	  	
+		 int id;
+	     	int x, y;
+
+		 Point(int x, int y, int id) {
+			this->x = x;
+			this->y = y;
+			this->id = id;
+
+		}
+	};
+
+	struct  xComp {
+	
+		int operator()(const Point &p1, const Point &p2) {
+
+			return p1.x < p2.x;
+		}
+	};
+struct  yComp {
+	
+		int operator()(const Point &p1, const Point &p2) {
+
+			return p1.y < p2.y;
+		}
+	};
+
+	 int findSet(int u) {
+		if (parent[u] != u)
+			parent[u] = findSet(parent[u]);
+		return parent[u];
+	}
+
+	 void unionSet(int x, int y) {
+		int px = parent[x];
+		int py = parent[y];
+		if (px != py) {
+			if (rank1[px] > rank1[py]) {
+				parent[py] = px;
+			} else if (rank1[py] > rank1[px]) {
+				parent[px] = py;
+			} else {
+				parent[px] = py;
+				++rank1[py];
+			}
+		}
+	}
+
+int main()  {
+		int N  ;
+		scanf("%d",&N);
+		vector<Point> points;
+		vector<Edge> edages ;
+		parent = new int[N];
+		rank1 = new int[N];
+		for (int i = 0; i < N; ++i) {
+			parent[i] = i;
+		}
+		int  e = 0,x,y;
+		for (int i = 0; i < N; ++i){
+			
+		   scanf("%d%d",&x,&y);
+			points.push_back(*new Point(x,
+					y, i));
+		}
+
+	  std::sort(points.begin(),points.end(), xComp());
+		for (int i = 1; i < N; ++i) {
+			edages.push_back(*new Edge(points[i - 1].id, points[i].id, points[i].x
+					- points[i - 1].x));
+		}
+		std::sort(points.begin(),points.end(), yComp());
+		for (int i = 1; i < N; ++i) {
+			edages.push_back(*new Edge(points[i - 1].id, points[i].id, points[i].y
+					- points[i - 1].y));
+		}
+		std::sort(edages.begin(),edages.end());
+		e = edages.size();
+		long long int cost = 0;
+		int edgCount = 0;
+		for (int i = 0; i < e; ++i) {
+			Edge ed = edages[i];
+
+			if (findSet(ed.u) != findSet(ed.v)) {
+				cost += ed.cost;
+				edgCount++;
+				if (edgCount == (N - 1))
+					break;
+				unionSet(ed.u, ed.v);
+
+			}
+		}
+
+	  printf("%lld\n",cost);
+	  return 0 ;
+
+	}

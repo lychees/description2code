@@ -1,0 +1,178 @@
+//O(ElogV)
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long 
+const ll MAX = 2000000;
+const ll MOD=1000000007;
+ll id[MAX],a[1002][1002];
+vector < pair < ll, pair<ll,ll> > > v;
+
+void multiply(ll F[2][2], ll M[2][2]);
+ 
+void power(ll F[2][2], ll n);
+ 
+/* function that returns nth Fibonacci number */
+ll fib(ll n)
+{
+  ll F[2][2] = {{1,1},{1,0}};
+  if (n == 0)
+    return 0;
+  power(F, n-1);
+  return F[0][0]%MOD;
+}
+ 
+/* Optimized version of power() in method 4 */
+void power(ll F[2][2], ll n)
+{
+  if( n == 0 || n == 1)
+      return;
+  ll M[2][2] = {{1,1},{1,0}};
+ 
+  power(F, n/2);
+  multiply(F, F);
+ 
+  if (n%2 != 0)
+     multiply(F, M);
+}
+ 
+void multiply(ll F[2][2], ll M[2][2])
+{
+  ll x =  ((F[0][0]%MOD*M[0][0]%MOD)%MOD + (F[0][1]%MOD*M[1][0]%MOD)%MOD)%MOD;
+  ll y =  ((F[0][0]%MOD*M[0][1]%MOD)%MOD + (F[0][1]%MOD*M[1][1]%MOD)%MOD)%MOD;
+  ll z =  ((F[1][0]%MOD*M[0][0]%MOD)%MOD + (F[1][1]%MOD*M[1][0]%MOD)%MOD)%MOD;
+  ll w =  ((F[1][0]%MOD*M[0][1]%MOD)%MOD + (F[1][1]%MOD*M[1][1]%MOD)%MOD)%MOD;
+ 
+  F[0][0] = x;
+  F[0][1] = y;
+  F[1][0] = z;
+  F[1][1] = w;
+}
+
+void initialize()
+{
+    for(ll i = 0;i < MAX;++i)
+        id[i] = i;
+    v.clear();
+}
+
+ll root(ll x)
+{
+    while(id[x] != x)
+    {
+        id[x] = id[id[x]];
+        x = id[x];
+    }
+    return x;
+}
+
+void union1(ll x, ll y)
+{
+    ll p = root(x);
+    ll q = root(y);
+    id[p] = id[q];
+}
+
+long long kruskal()
+{
+    ll x, y;
+    long long cost, minCost = 0;
+    for(ll i = 0;i <v.size();++i)
+    {
+        // Selecting edges one by one in increasing order from the beginning
+        x = v[i].second.first;
+        y = v[i].second.second;
+        cost = v[i].first;
+        // Check if the selected edge is creating a cycle or not
+        if(root(x) != root(y))
+        {
+            minCost += cost;
+            union1(x, y);
+        }    
+    }
+    return minCost;
+}
+
+bool comp(const pair< ll, pair < ll,ll > > &a, const pair< ll, pair < ll,ll > > &b)
+{
+    return a.first<b.first;
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+    
+    ll n,x,y,k1,k2,k3,k4,f1,f2,f3,f4,minCost,i,j,cnt,first_k1,sec_k1,first_k2,sec_k2,first_k3,sec_k3,first_k4,sec_k4,temp,weight;
+    cin>>n>>k1>>k2>>k3>>k4;
+    
+    initialize();
+    
+    first_k1=fib(k1-1);
+    sec_k1=fib(k1);
+    
+    first_k2=fib(k2-1);
+    sec_k2=fib(k2);
+    
+    first_k3=fib(k3-1);
+    sec_k3=fib(k3);
+    
+    first_k4=fib(k4-1);
+    sec_k4=fib(k4);
+    
+    cnt=1;
+    for(i=1;i<=n;i++)
+        for(j=1;j<=n;j++)
+        a[i][j]=cnt++;
+    
+    //Connecting row-wise
+    
+    for(i=1;i<=n;i++)
+    {
+        for(j=1;j<n;j++)
+        {
+            weight=(sec_k1%MOD+sec_k2%MOD)%MOD;
+            v.push_back(make_pair(weight,make_pair(a[i][j],a[i][j+1])));
+            
+            temp=sec_k1;
+            sec_k1=(first_k1%MOD+sec_k1%MOD)%MOD;
+            first_k1=temp;
+            
+            temp=sec_k2;
+            sec_k2=(first_k2%MOD+sec_k2%MOD)%MOD;
+            first_k2=temp;
+            
+            
+        }
+    }
+    
+    //Connecting column wise
+    
+    for(j=1;j<=n;j++)
+    {
+        for(i=1;i<n;i++)
+        {
+            weight=(sec_k3%MOD+sec_k4%MOD)%MOD;
+            v.push_back(make_pair(weight,make_pair(a[i][j],a[i+1][j])));
+            
+            temp=sec_k3;
+            sec_k3=(first_k3%MOD+sec_k3%MOD)%MOD;
+            first_k3=temp;
+            
+            temp=sec_k4;
+            sec_k4=(first_k4%MOD+sec_k4%MOD)%MOD;
+            first_k4=temp;
+            
+             
+            
+        }
+    }
+    
+    // Sort the edges in the descending order
+    sort(v.begin(),v.end(),comp);
+    
+    minCost = kruskal();
+    cout <<minCost <<"\n";
+       
+    return 0;
+}

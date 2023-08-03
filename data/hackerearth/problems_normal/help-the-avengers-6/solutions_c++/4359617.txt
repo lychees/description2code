@@ -1,0 +1,86 @@
+#include<bits/stdc++.h>
+using namespace std ;
+int sie[1000002] , n , a[32002] , q ;
+int tree[128003] ;
+void sieve () {
+    for ( int i = 2 ; i*i <= 1000000 ; i++ ) {
+        if ( sie[i] == 0 ) {
+            for ( int j = i+i ; j <= 1000000 ; j+=i )
+                sie[j] = 1 ;
+        }
+    }
+}
+
+void make_tree ( int pos , int l , int r ) {
+    if ( l == r ) {
+        tree[pos] = 0 ;
+        if ( sie[a[l]] == 0 )
+            tree[pos] = 1 ;
+        return ;
+    }
+    int mid = (l+r)/2 ;
+    make_tree ( 2*pos , l , mid ) ;
+    make_tree ( 2*pos+1 , mid+1 , r ) ;
+    tree[pos] = tree[2*pos] + tree[2*pos+1] ;
+}
+
+void update ( int pos , int l , int r , int ind , int val ) {
+    if ( l == r && l == ind ) {
+        tree[pos] = 0 ;
+        if ( sie[val] == 0 )
+            tree[pos] = 1 ;
+        return ;
+    }
+    int mid = (l+r)/2 ;
+    if ( ind <= mid )
+        update ( 2*pos , l , mid , ind , val ) ;
+    else
+        update ( 2*pos+1 , mid+1 , r , ind , val ) ;
+    tree[pos] = tree[2*pos] + tree[2*pos+1] ;
+}
+
+int query ( int pos , int l , int r , int x , int y ) {
+    if ( x > r || y < l )
+        return 0 ;
+    if ( l >= x && r <= y ) {
+        return tree[pos] ;
+    }
+    int mid = (l+r)/2 ;
+    return query ( 2*pos , l , mid , x , y )+query ( 2*pos+1 , mid+1, r , x , y ) ;
+}
+int main () {
+    sieve() ;
+    sie[1] = 1 ;
+    int t ;
+    scanf ( "%d" , &t ) ;
+    while ( t-- ) {
+        for ( int i = 0 ; i <= 128000 ; i++ ) {
+            tree[i] = 0 ;
+        }
+        scanf ( "%d" , &n ) ;
+        for ( int i = 1 ; i <= n ; i++ ) {
+            scanf ( "%d" , &a[i] ) ;
+        }
+        make_tree ( 1 , 1 , n ) ;
+        scanf ( "%d" , &q ) ;
+        while ( q-- ) {
+            char ch ;
+            int x , y ;
+            cin >> ch ;
+            scanf ( "%d %d" , &x , &y ) ;
+            if ( ch == 'C' ) {
+                if ( a[x] != y ) {
+                    if ( sie[a[x]] != sie[y] ) {
+                        a[x] = y ;
+                        update ( 1 , 1 , n , x , y ) ;
+                    }
+                }
+            }
+            else if ( ch == 'A' ) {
+                printf ( "%d\n" , query ( 1 , 1 , n , x , y ) ) ;
+            }
+        }
+        
+    }
+    return 0 ;
+}

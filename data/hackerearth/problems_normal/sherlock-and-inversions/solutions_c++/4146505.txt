@@ -1,0 +1,142 @@
+//Created By Mayur Agarwal :)
+
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <set>
+#include <algorithm>
+#include <map>
+#include <iterator>
+#include <functional>
+#include <stack>
+#include <queue>
+#include<unordered_map>
+
+#define ll long long 
+#define in(a) scanf("%lld",&a)
+#define inc(a) scanf("%c",&a)
+#define ins(a) scanf("%s", &a)
+#define pr(a) printf("%lld\n",a)
+#define prc(a) printf("%c",a)
+#define prs(a) printf("%s\n",a)
+#define fori(I,N) for(ll I=0;I<N;I++)
+#define forin(i,n) for(ll I=1;I<=N;I++)
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define ALL(X) (X).begin(), (X).end()
+#define pi   acos(-1.0)
+#define mod 1000000007
+#define SIZE 100010
+#define Blocks 317 //Sqrt(N)
+
+
+using namespace std;
+typedef pair<ll, ll>pll;
+ll n, ar[SIZE], bit[SIZE], result[SIZE];
+pll br[SIZE];
+struct node
+{
+	ll l, r, idx;
+}query[SIZE];
+bool comp(node a, node b)
+{
+	if (a.l / Blocks != b.l / Blocks)
+		return a.l / Blocks < b.l / Blocks;  //sort first according to the blocks
+	return a.r < b.r;  // if block value are same then sort acc to their R value
+}
+inline void update(ll index, ll value)
+{
+	while (index <= n)
+	{
+		bit[index] += value;
+		index += (index&-index);
+	}
+}
+inline ll read(ll index)  ////returns the value at point 'index' in the cum_frequency array 
+{
+	ll sum = 0;
+	while (index > 0)
+	{
+		sum += bit[index];
+		index -= (index&-index);
+	}
+	return sum;
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	cin >> n;
+	ll q;
+	cin >> q;
+	
+	ll answer = 0;
+	for (ll i = 1; i <= n; i++)
+	{
+		cin >> ar[i];
+		br[i].first = ar[i];
+		br[i].second = i;
+	}
+	sort(br + 1, br + n + 1);
+	for (ll i = 1; i <= n; i++)
+	{
+		ar[br[i].second] = i;   //co-ordinate compression 
+	}
+	for (ll i = 0; i < q; i++)
+	{
+		cin >> query[i].l >> query[i].r;
+		query[i].idx = i;
+	}
+	sort(query, query + q, comp);
+	ll currentL = 1, currentR = 1;
+	update(ar[1], 1);
+	for (ll i = 0; i < q; i++)
+	{
+		ll L = query[i].l, R = query[i].r;
+		
+		while (currentR < R)
+		{
+			currentR++;
+			answer += read(n) - read(ar[currentR]);
+			update(ar[currentR], 1);
+			//add(currentR);
+		}
+		while (currentL>L)
+		{
+			currentL--;
+			answer += read(ar[currentL] - 1);
+			update(ar[currentL], 1);
+		}
+		while (currentR > R )
+		{
+			answer -= read(n) - read(ar[currentR]);
+			update(ar[currentR], -1);
+			currentR--;
+		}
+		while (currentL < L)
+		{
+			answer -= read(ar[currentL] - 1);
+			update(ar[currentL], -1);
+			currentL++;
+		}
+		
+		result[query[i].idx] = answer;
+
+	}
+	
+	for (ll i = 0; i < q; i++)
+	{
+		cout << result[i] << endl;
+	}
+
+	//system("pause");
+	return 0;
+
+}

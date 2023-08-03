@@ -1,0 +1,311 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<string>
+#include<ctime>
+using namespace std;
+
+int const MOD1 = 100151                  ;
+int const MOD2 = 1e9 +9               ;
+int const P1 = 1182   ;
+int const P2 = 1187  ;
+int const N = 741;
+int const M = 492000;
+
+int a[N][N], b[N][N], n, m, x, y, deg1[M], deg2[M], invDeg1[M], invDeg2[M], cnta, cntb;
+pair<int, int> prRa[N][N], prRb[N][N], ha[N][N], hb[N][N], hashA[M], hashB[M];
+vector<int> hashesA[MOD1], hashesB[MOD1];
+
+unsigned int st, en;
+
+int bp1(int x, int d){
+	if(!d){
+		return 1;
+	}
+	if(d&1){
+		return x * 1LL * bp1(x, d-1) % MOD1;
+	}
+	int r = bp1(x, d/2);
+	return r * 1LL * r % MOD1;
+}
+
+int bp2(int x, int d){
+	if(!d){
+		return 1;
+	}
+	if(d&1){
+		return x * 1LL * bp2(x, d-1) % MOD2;
+	}
+	int r = bp2(x, d/2);
+	return r * 1LL * r % MOD2;
+}
+
+void read(){
+	scanf("%d%d",&n,&m);
+	for(int i=1;i<=n;++i){
+		for(int j=1;j<=m;++j){
+			scanf("%d",&a[i][j]);
+			//a[i][j] += 41;
+		}
+	}
+
+	scanf("%d%d",&x,&y);
+	for(int i=1;i<=x;++i){
+		for(int j=1;j<=y;++j){
+			scanf("%d",&b[i][j]);
+			//b[i][j] += 41;
+		}
+	}
+}
+
+void precalc(){
+	deg1[0] = 1;
+	invDeg1[0] = 1;
+	deg2[0] = 1;
+	invDeg2[0] = 1;
+	deg1[1] = P1;
+	deg2[1] = P2;
+	invDeg1[1] = bp1(P1, MOD1-2);
+	invDeg2[1] = bp2(P2, MOD2-2);
+	for(int i=2;i<M;++i){
+		deg1[i] = deg1[i-1] * 1LL * P1 % MOD1;
+		invDeg1[i] = invDeg1[i-1] * 1LL * invDeg1[1] % MOD1;
+		deg2[i] = deg2[i-1] * 1LL * P2 % MOD2;
+		invDeg2[i] = invDeg2[i-1] * 1LL * invDeg2[1] % MOD2;
+	}
+	//rows in a
+	for(int i=1;i<=n;++i){
+		for(int j=1;j<=m;++j){
+			prRa[i][j] = prRa[i][j-1];
+			prRa[i][j].first += deg1[j] * 1LL * a[i][j] % MOD1;
+			if(prRa[i][j].first >= MOD1){
+				prRa[i][j].first -= MOD1;
+			}
+			prRa[i][j].second += deg2[j] * 1LL * a[i][j] % MOD2;
+			if(prRa[i][j].second >= MOD2){
+				prRa[i][j].second -= MOD2;
+			}
+		}
+	}
+	//rows in b
+	for(int i=1;i<=x;++i){
+		for(int j=1;j<=y;++j){
+			prRb[i][j] = prRb[i][j-1];
+			prRb[i][j].first += deg1[j] * 1LL * b[i][j] % MOD1;
+			if(prRb[i][j].first >= MOD1){
+				prRb[i][j].first -= MOD1;
+			}
+			prRb[i][j].second += deg2[j] * 1LL * b[i][j] % MOD2;
+			if(prRb[i][j].second >= MOD2){
+				prRb[i][j].second -= MOD2;
+			}
+		}
+	}
+}
+
+void starta(int sz){
+	for(int i=sz;i<=m;++i){
+		long long curHash1 = 0;
+		long long curHash2 = 0;
+		for(int j=1;j<=sz;++j){
+			int mn1 = (sz * j - i > 0 ? deg1[sz * j - i] : invDeg1[-sz * j + i]);
+			int mn2 = (sz * j - i > 0 ? deg2[sz * j - i] : invDeg2[-sz * j + i]);
+			curHash1 += (prRa[j][i].first - prRa[j][i-sz].first) * 1LL * mn1 % MOD1;
+			curHash2 += ((prRa[j][i].second - prRa[j][i-sz].second) * 1LL * mn2) % MOD2;
+		}
+		curHash1 %= MOD1;
+		if(curHash1 < 0){
+			curHash1 += MOD1;
+		}
+		curHash2 %= MOD2;
+		if(curHash2 < 0){
+			curHash2 += MOD2;
+		}
+		ha[sz][i] = make_pair(curHash1, curHash2);
+		hashesA[curHash1].push_back(curHash2);
+		//hashA[cnta++] = ha[sz][i];
+	}
+	for(int i=sz+1;i<=n;++i){
+		for(int j=sz;j<=m;++j){
+			//first
+			int curHash1 = ha[i-1][j].first;
+			int mn11 = invDeg1[j-sz];
+			int mn12 = (sz * sz > j ? deg1[sz * sz - j] : invDeg1[-sz * sz + j]);
+			curHash1 -= ((prRa[i-sz][j].first - prRa[i-sz][j-sz].first) * 1LL * mn11 % MOD1 + MOD1) % MOD1;
+			if(curHash1 < 0){
+				curHash1 += MOD1;
+			}else{
+				if(curHash1 >= MOD1){
+					curHash1 -= MOD1;
+				}
+			}
+			curHash1 = curHash1 * 1LL * invDeg1[sz] % MOD1;
+			curHash1 += ((prRa[i][j].first - prRa[i][j-sz].first) * 1LL * mn12 % MOD1 + MOD1) % MOD1;
+			if(curHash1 >= MOD1){
+				curHash1 -= MOD1;
+			}
+			//second
+			int curHash2 = ha[i-1][j].second;
+			int mn21 = invDeg2[j-sz];
+			int mn22 = (sz * sz > j ? deg2[sz * sz - j] : invDeg2[-sz * sz + j]);
+			curHash2 -= ((prRa[i-sz][j].second - prRa[i-sz][j-sz].second) * 1LL * mn21 % MOD2 + MOD2) % MOD2;
+			if(curHash2 < 0){
+				curHash2 += MOD2;
+			}else{
+				if(curHash2 >= MOD2){
+					curHash2 -= MOD2;
+				}
+			}
+			curHash2 = curHash2 * 1LL * invDeg2[sz] % MOD2;
+			curHash2 += ((prRa[i][j].second - prRa[i][j-sz].second) * 1LL * mn22 % MOD2 + MOD2) % MOD2;
+			if(curHash2 >= MOD2){
+				curHash2 -= MOD2;
+			}
+			//
+			ha[i][j] = make_pair(curHash1, curHash2);
+			hashesA[curHash1].push_back(curHash2);
+			//hashA[cnta++] = ha[i][j];
+		}
+	}
+}
+
+void startb(int sz){
+	for(int i=sz;i<=y;++i){
+		long long curHash1 = 0;
+		long long curHash2 = 0;
+		for(int j=1;j<=sz;++j){
+			int mn1 = (sz * j - i > 0 ? deg1[sz * j - i] : invDeg1[-sz * j + i]);
+			int mn2 = (sz * j - i > 0 ? deg2[sz * j - i] : invDeg2[-sz * j + i]);
+			curHash1 += (prRb[j][i].first - prRb[j][i-sz].first) * 1LL * mn1 % MOD1;
+			curHash2 += (prRb[j][i].second - prRb[j][i-sz].second) * 1LL * mn2 % MOD2;
+		}
+		curHash1 %= MOD1;
+		if(curHash1 < 0){
+			curHash1 += MOD1;
+		}
+		curHash2 %= MOD2;
+		if(curHash2 < 0){
+			curHash2 += MOD2;
+		}
+		hb[sz][i] = make_pair(curHash1, curHash2);
+		//hashB[cntb++] = hb[sz][i];
+		if(hashesA[curHash1].size()){
+			hashesB[curHash1].push_back(curHash2);
+		}
+	}
+	for(int i=sz+1;i<=x;++i){
+		for(int j=sz;j<=y;++j){
+			//first
+			int curHash1 = hb[i-1][j].first;
+			int mn11 = invDeg1[j-sz];
+			int mn12 = (sz * sz > j ? deg1[sz * sz - j] : invDeg1[-sz * sz + j]);
+			curHash1 -= ((prRb[i-sz][j].first - prRb[i-sz][j-sz].first) * 1LL * mn11 % MOD1 + MOD1) % MOD1;
+			if(curHash1 < 0){
+				curHash1 += MOD1;
+			}else{
+				if(curHash1 >= MOD1){
+					curHash1 -= MOD1;
+				}
+			}
+			curHash1 = curHash1 * 1LL * invDeg1[sz] % MOD1;
+			curHash1 += ((prRb[i][j].first - prRb[i][j-sz].first) * 1LL * mn12 % MOD1 + MOD1) % MOD1;
+			if(curHash1 >= MOD1){
+				curHash1 -= MOD1;
+			}
+			//second
+			int curHash2 = hb[i-1][j].second;
+			int mn21 = invDeg2[j-sz];
+			int mn22 = (sz * sz > j ? deg2[sz * sz - j] : invDeg2[-sz * sz + j]);
+			curHash2 -= ((prRb[i-sz][j].second - prRb[i-sz][j-sz].second) * 1LL * mn21 % MOD2 + MOD2) % MOD2;
+			if(curHash2 < 0){
+				curHash2 += MOD2;
+			}else{
+				if(curHash2 >= MOD2){
+					curHash2 -= MOD2;
+				}
+			}
+			curHash2 = curHash2 * 1LL * invDeg2[sz] % MOD2;
+			curHash2 += ((prRb[i][j].second - prRb[i][j-sz].second) * 1LL * mn22 % MOD2 + MOD2) % MOD2;
+			if(curHash2 >= MOD2){
+				curHash2 -= MOD2;
+			}
+			//
+			hb[i][j] = make_pair(curHash1, curHash2);
+			//hashB[cntb++] = hb[i][j];
+			if(hashesA[curHash1].size()){
+			hashesB[curHash1].push_back(curHash2);
+			}
+		}
+	}
+}
+
+bool haveEq(){
+	for(int i=0;i<MOD1;++i){
+		if(hashesA[i].size() && hashesB[i].size()){
+			sort(hashesA[i].begin(), hashesA[i].end());
+			sort(hashesB[i].begin(), hashesB[i].end());
+			int cnta = hashesA[i].size();
+			int cntb = hashesB[i].size();
+			int f = 0;
+			int s = 0;
+			while(f < cnta || s < cntb){
+				if(f < cnta && s < cntb){
+					if(hashesA[i][f] == hashesB[i][s]){
+						return true;
+						break;
+					}else{
+						if(hashesA[i][f] < hashesB[i][s]){
+							++f;
+						}else{
+							++s;
+						}
+					}
+				}else{
+					break;	
+				}
+			}
+		}
+	}
+	return false;
+}
+
+bool can(int sz){
+	if(sz > n || sz > m || sz > x || sz > y){
+		return false;
+	}
+	cnta = 0;
+	cntb = 0;
+	starta(sz);
+	startb(sz);
+	return haveEq();
+}
+
+int solve(){
+	int l = 0;
+	int r = 701;
+	while(r-l>1){
+		for(int i=0;i<MOD1;++i){
+			hashesA[i].clear();
+			hashesB[i].clear();
+		}
+		int mid = (r+l)/2;
+		if(can(mid)){
+			l = mid;
+		}else{
+			r = mid;
+		}
+	}
+	return l;
+}
+
+int main(){
+#ifdef _DEBUG
+	freopen("input.txt","r",stdin);
+	freopen("output.txt","w",stdout);
+#endif
+	read();
+	precalc();
+	printf("%d\n",solve());
+
+	return 0;
+}

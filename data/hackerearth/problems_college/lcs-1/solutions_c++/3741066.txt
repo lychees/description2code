@@ -1,0 +1,106 @@
+#include "bits/stdc++.h"
+using namespace std;
+const int N = 5e5 + 5;
+const int LN = 19;
+int n;
+char str[N];
+int belong[N];
+char a[N];
+int q;
+char b[N];
+int ans[N];
+int len = 0;
+int sa[LN + 1][N];
+int finalsa[N];
+int lcp[N];
+pair < pair < int , int > , int > tmp[N];
+void build(){
+	for(int i = 1 ; i <= len ; ++i){
+		sa[0][i] = str[i] - 'a' + 1;
+	}
+	for(int lg = 1 ; lg <= LN ; ++lg){
+		for(int i = 1 ; i <= len ; ++i){
+			int x = i + (1 << (lg - 1));
+			tmp[i] = make_pair(make_pair(sa[lg - 1][i] , (x <= len) ? sa[lg - 1][x] : -1) , i);
+		}
+		sort(tmp + 1 , tmp + 1 + len);
+		int cur = 0;
+		tmp[0] = make_pair(make_pair(-2 , -2) , -2);
+		for(int i = 1 ; i <= len ; ++i){
+			cur += (tmp[i].first != tmp[i - 1].first);
+			sa[lg][tmp[i].second] = cur;
+		}
+	}
+	for(int i = 1 ; i <= len ; ++i){
+		tmp[i] = make_pair(make_pair(sa[LN][i] , -1) , i);
+	}
+	sort(tmp + 1 , tmp + 1 + len);
+	for(int i = 1 ; i <= len ; ++i){
+		finalsa[i] = tmp[i].second;
+	}
+	for(int i = 1 ; i < len ; ++i){
+		lcp[i] = 0;
+		int x = finalsa[i];
+		int y = finalsa[i + 1];
+		for(int j = LN ; j >= 0 ; --j){
+			if(sa[j][x] == sa[j][y]){
+				lcp[i] += 1 << j;
+				x += 1 << j;
+				y += 1 << j;
+			}
+		}
+	}
+	lcp[len] = 0;
+}
+int main(){
+	scanf("%d" , &n);
+	str[0] = ' ';
+	for(int i = 1 ; i <= n ; ++i){
+		scanf("%s" , a + 1);
+		int x = strlen(a + 1);
+		for(int ii = 1 ; ii <= x ; ++ii){
+			str[++len] = a[ii];
+			belong[len] = i;
+		}
+		str[++len] = '$';
+		belong[len] = -1;
+	}
+	scanf("%d" , &q);
+	for(int i = 1 ; i <= q ; ++i){
+		scanf("%s" , b + 1);
+		int x = strlen(b + 1);
+		for(int ii = 1 ; ii <= x ; ++ii){
+			str[++len] = b[ii];
+			belong[len] = i + n;
+		}
+		str[++len] = '#';
+		belong[len] = -1;
+		ans[i] = 0;
+	}
+	build();
+	int cur = 0;
+	for(int i = 1 ; i <= len ; ++i){
+		int idx = finalsa[i];
+		if(belong[idx] >= 1 && belong[idx] <= n){
+			cur = N;
+		}
+		if(belong[idx] > n){
+			ans[belong[idx] - n] = max(ans[belong[idx] - n] , cur);
+		}
+		cur = min(cur , lcp[i]);
+	}
+	cur = 0;
+	for(int i = len ; i >= 1 ; --i){
+		int idx = finalsa[i];
+		cur = min(cur , lcp[i]);
+		if(belong[idx] >= 1 && belong[idx] <= n){
+			cur = N;
+		}
+		if(belong[idx] > n){
+			ans[belong[idx] - n] = max(ans[belong[idx] - n] , cur);
+		}
+	}
+	for(int i = 1 ; i <= q ; ++i){
+		printf("%d\n" , ans[i]);
+	}
+}

@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+#define PB push_back
+#define MP make_pair
+#define LL long long
+#define N 512345
+#define INF 1000000000000ll
+#define M 1000000007
+#define F first
+#define S second
+#define sc(x) scanf("%d",&x)
+#define scl(x) scanf("%lld",&x)
+using namespace std;
+
+struct node{
+    int l, r;
+    LL sum, sumL, sumR, sumTot;
+};
+
+node st[4 * (N)];
+pair<LL, int> b[N], quer[N];
+LL a[N], ans[N];
+
+void solve(int i){
+    st[i].sumL = max(st[2 * i].sumL, st[2 * i].sumTot + st[2 * i + 1].sumL);
+    st[i].sumR = max(st[2 * i + 1].sumR, st[2 * i + 1].sumTot + st[2 * i].sumR);
+    st[i].sum = max(max(st[2 * i].sum, st[2 * i + 1].sum), st[2 * i].sumR + st[2 * i + 1].sumL);
+    st[i].sumTot = st[2 * i].sumTot + st[2 * i + 1].sumTot;
+    return;
+}
+
+void init(int i, int lt, int rt){
+    st[i].l = lt;
+    st[i].r = rt;
+    if(lt == rt){
+        st[i].sum = a[lt];
+        st[i].sumL = a[lt];
+        st[i].sumR = a[lt];
+        st[i].sumTot = a[lt];
+        return;
+    }
+    int mid = (lt + rt) / 2;
+    init(2 * i, lt, mid);
+    init(2 * i + 1, mid + 1, rt);
+    solve(i);
+}
+
+
+void upd(int i, int pos){
+    if(st[i].l == st[i].r){
+        st[i].sum = -INF;
+        st[i].sumL = -INF;
+        st[i].sumR = -INF;
+        st[i].sumTot = -INF;
+        return;
+    }
+    int mid = (st[i].l + st[i].r) / 2;
+    if(pos <= mid)
+        upd(2 * i, pos);
+    else
+        upd(2 * i + 1, pos);
+    solve(i);
+}
+
+int main(){
+    int n, t, i, j, q;
+    sc(n);sc(q);
+    for(i=1;i<=n;i++){
+        scl(a[i]);
+        b[i].F = a[i];
+        b[i].S = i;
+    }
+    sort(b + 1, b + n + 1);
+    for(i=1;i<=q;i++){
+        scl(quer[i].F);
+        quer[i].S = i;
+        ans[i] = -INF;
+    }
+
+    sort(quer + 1, quer + q + 1);
+    init(1, 1, n);
+    int idx = n;
+    for(i=q;i>=1;i--){
+        while(idx >= 1 && b[idx].F > quer[i].F){
+            upd(1, b[idx].S);
+            idx--;
+        }
+        ans[quer[i].S] = st[1].sum;
+    }
+    for(i=1;i<=q;i++){
+        if(ans[i] == -INF)
+            printf("No Solution\n");
+        else
+            printf("%lld\n",ans[i]);
+    }
+}

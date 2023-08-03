@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+#define DEZE5 100000
+#define MOD 1000000007
+
+using namespace std;
+
+struct Node {
+	int v = 0, q = 0;
+
+	Node () {}
+
+	void merge(Node a, Node b) {
+		if (b.v > a.v) {
+			v = b.v;
+			q = b.q;
+		}
+		else {
+			v = a.v;
+			q = a.q;
+			if (a.v == b.v) {
+				q += b.q;
+				q %= MOD;
+			}
+		}
+	}
+};
+
+void update_tree(int node, int start, int end, int upd, Node val, Node * tree) {
+	if (start == end)
+		tree[node].merge(tree[node], val);
+	else {
+		int mid = (start + end) >> 1;
+		if (upd > mid)
+			update_tree((node << 1) + 1, mid + 1, end, upd, val, tree);
+		else
+			update_tree(node << 1, start, mid, upd, val, tree);
+		tree[node].merge(tree[node << 1], tree[(node << 1) + 1]);
+	}
+}
+
+Node query_tree(int node, int start, int end, int l, int r, Node * tree) {
+	if (l > end || r < start || !tree[node].v)
+		return Node();
+	if (start >= l && end <= r) {
+		return tree[node];
+	}
+	int mid = (start + end) >> 1;
+	Node ans;
+	ans.merge(query_tree(node << 1, start, mid, l, r, tree), query_tree((node << 1) + 1, mid + 1, end, l, r, tree));
+	return ans;
+}
+
+int main() {
+	int n;
+	scanf("%d", &n);
+	int ma, a[n + 1], gre = 0;
+	for (int i = 1; i <= n; i++) {
+		scanf("%d", &a[i]);
+		gre = max(a[i] + DEZE5, gre);
+	}
+	Node tree[4*(gre + 1) + 1];
+	Node unary;
+	unary.v = 1;
+	unary.q = 1;
+	//memset(tree, {0, 0}, sizeof tree);
+	update_tree(1, 1, gre, DEZE5 + a[n], unary, tree);
+	for (int i = n - 1; i >= 1; i--) {
+		Node s;
+		if (a[i] > 0)
+			s = query_tree(1, 1, gre, 0, DEZE5 - a[i] - 1, tree);
+		else
+			s = query_tree(1, 1, gre, -a[i] + DEZE5 + 1, gre, tree);
+		s.v++;
+		s.q = max(1, s.q);
+		update_tree(1, 1, gre, DEZE5 + a[i], s, tree);
+	}
+	int res = 1;
+	printf("%d %d\n", tree[1].v, tree[1].q);
+}

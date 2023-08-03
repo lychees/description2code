@@ -1,0 +1,161 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+struct BellmannFordTB {
+    const int infi=1000000000;
+    const ll inf=(ll)infi*infi;
+    const int n;
+    const vector<vpii> &adj;
+    int root;
+    bool negativeCycle;
+    vll distances;
+    vi prec;
+    BellmannFordTB ( const vector<vpii> &_adj, int r ) :n ( _adj.size() ),adj ( _adj ),root ( r ),negativeCycle ( 0 ),distances ( n,inf ), prec ( n,-1 ) {
+        build ( r );
+    }
+
+    void build ( int r ) {
+        distances[r]=0;
+        deque<int> q;
+        vector<bool> inQ ( n );
+        inQ[r]=1;
+        q.push_back ( r );
+        vi visited ( n );
+        while ( q.size() ) {
+            int j=q.front();
+            q.pop_front();
+            inQ[j]=0;
+            visited[j]++;
+            if ( visited[j]>n ) {
+                negativeCycle=1;
+                return;
+            }
+            for ( pii p: adj[j] ) {
+                if ( distances[j]+p.second<distances[p.first] ) {
+                    distances[p.first]=distances[j]+p.second;
+                    prec[p.first]=j;
+                    if ( !inQ[p.first] ) {
+                        q.push_back ( p.first );
+                        inQ[p.first]=1;
+                    }
+                }
+            }
+        }
+    }
+    vi getPath ( int d ) {
+        vi p;
+        p.push_back ( d );
+        while ( d!=root ) {
+            assert(prec[d]>=0);
+            d=prec[d];
+            p.push_back ( d );
+        }
+        reverse ( all ( p ) );
+        return p;
+    }
+};
+int main() {
+    ios_base::sync_with_stdio ( false );
+    inrep {
+        int n,k;
+        cin>>n>>k;
+        vector<vpii> adj ( n );
+        rep ( i,k ) {
+            int a,b,w;
+            cin>>a>>b>>w;
+            a--;
+            b--;
+//             cout<<a<<" "<<b<<endl;
+            adj[a].push_back ( mp ( b,w ) );
+            adj[b].push_back ( mp ( a,w ) );
+        }
+        int a,b,c;
+        cin>>a>>b>>c;
+        a--;
+        b--;
+        c--;
+//         assert ( a!=b &&b!=c );
+        if ( a==b || b==c ) {
+            BellmannFordTB bf1 ( adj,a );
+            ll d1=bf1.distances[b];
+            if ( d1==bf1.inf  ) {
+                cout<<"No Train Found.\n";
+
+            } else {
+                vi p1=bf1.getPath ( b );
+                cout<<d1<<'\n';
+                for ( int &a: p1 ) a++;
+                cout<<p1;
+            }
+            continue;
+        }
+
+        BellmannFordTB bf1 ( adj,a );
+        BellmannFordTB bf2 ( adj,b );
+        ll d1=bf1.distances[b];
+
+        ll d2=bf2.distances[c];
+        ll di=d1+d2;
+        if ( d1==bf1.inf || d2==bf2.inf ) {
+            cout<<"No Train Found.\n";
+            continue;
+        }
+
+        vi p1=bf1.getPath ( b );
+
+        vi p2=bf2.getPath ( c );
+
+        vi p=p1;
+        reu ( i,1,p2.size() ) p.push_back ( p2[i] );
+        cout<<di<<'\n';
+        for ( int &a: p ) a++;
+        cout<<p;
+
+    }
+}

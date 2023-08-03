@@ -1,0 +1,147 @@
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <deque>
+#include <queue>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <functional>
+#include <utility>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstdio>
+
+using namespace std;
+
+#define REP(i,n) for((i)=0;(i)<(int)(n);(i)++)
+#define foreach(c,itr) for(__typeof((c).begin()) itr=(c).begin();itr!=(c).end();itr++)
+
+typedef long long ll;
+#define INF (1ll<<40)
+
+int lucky(ll x){
+    int ans = 0;
+    while(x > 0){
+        if(x%10 == 4 || x%10 == 7) ans++;
+        x /= 10;
+    }
+    return ans;
+}
+
+map <pair <ll, int>, int> mp1;
+
+ll func1(ll low, int x){
+    int i;
+    ll ans = INF;
+    
+    if(x < 0) return INF;
+    
+    pair <ll, int> st = make_pair(low,x);
+    if(mp1.find(st) != mp1.end()) return mp1[st];
+    
+    if(low <= 3){
+        if(x == 0) return low;
+        ans = 0;
+        REP(i,x) ans = ans * 10 + 4;
+        return mp1[st] = ans;
+    }
+    
+    REP(i,10){
+        if(i < low%10){
+            ll tmp = func1(low/10+1,x-lucky(i));
+            ans = min(ans,tmp*10+i);
+        } else {
+            ll tmp = func1(low/10,x-lucky(i));
+            ans = min(ans,tmp*10+i);
+        }
+    }
+    
+    return mp1[st] = ans;
+}
+
+ll func2(ll low, int x, int y){
+    int i;
+    ll ans = INF;
+    
+    if(x < 0 || y < 0) return INF;
+    
+    REP(i,9) if(y - x == lucky(i+1) - lucky(i)){
+        if(i < low%10){
+            ll tmp = func1(low/10+1,x-lucky(i));
+            ans = min(ans,tmp*10+i);
+        } else {
+            ll tmp = func1(low/10,x-lucky(i));
+            ans = min(ans,tmp*10+i);
+        }
+    }
+    
+    return ans;
+}
+
+ll func3(ll low, int x, int y){
+    ll ans = INF;
+    
+    int i;
+    for(i=0;;i++){
+        ll tmp = func2(low,x,y);
+        int j;
+        REP(j,i) tmp = min(tmp * 10 + 9, INF);
+        ans = min(ans,tmp);
+        
+        if(low == 0) return ans;
+        low /= 10;
+    }
+}
+
+ll func(ll low, ll high){
+    if(high/10 - low/10 >= 2){
+        ll tmp = func(low/10,high/10);
+        return tmp * 10 + low % 10;
+    }
+    
+    ll ans = INF;
+    
+    int i,j,k;
+    
+    REP(i,10){
+        j = i + (int)(high - low);
+        if(j >= 20) continue;
+        
+        int x = lucky(low) - lucky(i);
+        int y = 0;
+        if(j >= 10) y = lucky(high) - lucky(j-10);
+        
+        bool failed = false;
+        for(k=i;k<=j;k++){
+            int tmp1 = lucky(low+k-i);
+            int tmp2 = ((k >= 10) ? (y + lucky(k-10)) : (x + lucky(k)));
+            if(tmp1 != tmp2){
+                failed = true;
+                break;
+            }
+        }
+        if(failed) continue;
+        
+        ll small = (low - i + 10) / 10;
+        if(j >= 10){
+            ll tmp = func3(small,x,y);
+            ans = min(ans,tmp*10+i);
+        } else {
+            ll tmp = func1(small,x);
+            ans = min(ans,tmp*10+i);
+        }
+    }
+    
+    return ans;
+}
+
+int main(void){
+    ll a,d;
+    cin >> a >> d;
+    ll ans = func(a,a+d-1);
+    cout << ans << endl;
+    return 0;
+}

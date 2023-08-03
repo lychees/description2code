@@ -1,0 +1,105 @@
+// {{{ Headers
+// vim:filetype=cpp:foldmethod=marker:foldmarker={{{,}}}
+
+#include <cassert>
+#include <cctype>
+#include <cmath>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+
+#include <algorithm>
+#include <deque>
+#include <functional>
+#include <iterator>
+#include <list>
+#include <map>
+#include <numeric>
+#include <queue>
+#include <set>
+#include <stack>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+#include <ext/numeric>
+
+using namespace std;
+using namespace __gnu_cxx;
+// }}}
+
+typedef long long int64;
+const int INF = 0x3f3f3f3f;
+const int MOD = 1000000007;
+template <class T> inline int len (const T &a) { return a.size (); }
+
+// {{{ Matrix Class.
+struct
+matrix {
+    int R, C;
+    int64 *data;
+    matrix (int r, int c) {
+        R = c, C = c;
+        data = new int64 [R * C];
+        memset (data, 0, sizeof (data));
+        data [0] = 3; data [1] = -1, data [2] = 1, data [3] = 0;
+    }
+    matrix
+    operator * (const matrix &A) {
+        assert (C == A.R);  // Prerequisite for matrix multiplication.
+        matrix ret (R, A.C);
+        for (int i = 0; i < R; i++)
+            for (int j = 0; j < A.C; j++) {
+                ret.data [i * R + j] = 0;
+                for (int k = 0; k < C; k++) {
+                    ret.data [i * R + j] = ret.data [i * R + j] + data [i * R + k] * A.data [k * C + j];
+                    while (ret.data [i * R + j] < 0 || ret.data [i * R + j] >= MOD)
+                    	ret.data [i * R + j] = (ret.data [i * R + j] + MOD) % MOD;
+                }
+            }
+        return ret;
+    }
+    matrix
+    operator ^ (int K) {
+        if (K == 1) return (*this);
+        if (K & 1) return (*this) * ((*this) ^ (K - 1));
+        matrix ret = (*this) ^ (K / 2);
+        return ret * ret;
+    }
+    void
+    show () {
+        for (int i = 0; i < R; i++) {
+            for (int j = 0; j < C; j++) cout << data [R * i + j] << " ";
+            putchar ('\n');
+        }
+    }
+};
+// }}}
+
+int
+main () {
+#ifdef LOCALHOST
+    freopen ("test.in", "r", stdin);
+    // freopen ("test.out", "w", stdout);
+#endif
+    int T, N;
+    scanf ("%d", &T);
+    while (T--) {
+        scanf ("%d", &N);
+        N--;
+        matrix m (2, 2);
+        if (! N) printf ("1\n");
+        else {
+            m = m ^ N;
+            printf ("%lld\n", m.data [0] % MOD);
+        }
+    }
+
+    return 0;
+}

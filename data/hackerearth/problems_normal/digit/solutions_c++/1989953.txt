@@ -1,0 +1,118 @@
+#include<cstdio>
+#include<memory.h>
+#include<algorithm>
+using namespace std;
+const int MAXN = 5 *1e3 + 5;
+const int MAXL = 14;
+long long dp[MAXL][2][MAXN][(MAXL - 1) * 9 + 5];
+
+unsigned int compute_number_sum(long long n)
+{
+    unsigned int res = 0;
+
+    while (n != 0) {
+        const long long nd = n / 10;
+        res += static_cast<unsigned int>(n - 10 * nd); // equivalent to res += n % 10
+        n = nd;
+    }
+    return res;
+}
+long long count_lucky_number(long long A, long long B, long long K,
+                             unsigned int P, unsigned int Q)
+{
+    long long res = 0;
+    const long long min_i = (A + K - 1) / K * K;
+    for (long long i = min_i; i <= B; i += K) {
+        const unsigned int numberSum = compute_number_sum(i);
+        res += P <= numberSum && numberSum <= Q;
+    }
+    return res;
+}
+
+long long K;
+
+int dig[MAXL + 1] , ndig = 0;
+long long Pow[MAXL + 1];
+int X , Y;
+
+long long go(int pos , bool les , long long mod , int sum)
+{
+    long long &ans = dp[pos][les][mod][sum];
+    if(ans != -1) return ans;
+
+    ans = 0;
+    if(pos >= ndig)
+    {
+        if(mod == 0 && sum == 0)
+            return (ans = 1);
+        return (ans = 0);
+    }
+
+    if(les)
+    {
+        for(int i = 0;i < 10;i ++)
+            if(sum - i >= 0)
+                ans += go(pos + 1 , true , (mod - (i*Pow[ndig-pos-1])%K+K)%K , sum - i);
+    }
+    else
+    {
+        for(int i = 0;i < dig[pos];i ++)
+            if(sum - i >= 0)
+                ans += go(pos + 1 , true , (mod - (i*Pow[ndig-pos-1])%K+K)%K , sum - i);
+        if(sum - dig[pos] >= 0)
+            ans += go(pos + 1 , false , (mod - (dig[pos]*Pow[ndig-pos-1])%K+K)%K , sum - dig[pos]);
+    }
+    return ans;
+}
+
+long long calc(long long n)
+{
+    memset(dp , -1 , sizeof dp);
+    memset(dig , 0 , sizeof dig);
+    ndig = 0;
+
+    unsigned int res = 0;
+
+    while (n != 0) {
+        const long long nd = n / 10;
+        dig[ndig ++] = static_cast<unsigned int>(n - 10 * nd); // equivalent to res += n % 10
+        n = nd;
+    }
+    reverse(dig , dig + ndig);
+
+    long long ans = 0;
+    for(int i = ndig - 1;i > 0;i --)
+        for(int j = 1;j < 10;j ++)
+            for(int s = max(j , X);s <= Y;s ++)
+                ans += go(i + 1 , true , (K - (j*Pow[ndig-i-1]) % K) % K , s - j);
+
+
+    for(int j = 1;j < dig[0];j ++)
+        for(int s = max(j , X);s <= Y;s ++)
+            ans += go(1 , true , (K - (j*Pow[ndig-1]) % K) % K , s - j);
+
+    for(int s = max(dig[0] , X);s <= Y;s ++)
+        ans += go(1 , false , (K - (dig[0]*Pow[ndig-1])%K) %K , s - dig[0]);
+
+    return ans;
+}
+int main()
+{
+    long long A , B;
+    scanf("%lld%lld%d%d%lld" , &A , &B , &X , &Y , &K);
+
+
+    X = min(X , (MAXL - 1) * 9);
+    Y = min(Y , (MAXL - 1) * 9);
+
+    if(K > MAXN)
+        printf("%lld\n" ,count_lucky_number(A , B  , K, X , Y));
+    else
+    {
+        Pow[0] = 1ll;
+        for(int i = 1;i < MAXL;i ++)
+            Pow[i] = (Pow[i - 1]*10ll)%K;
+        printf("%lld\n" , calc(B) - calc(A - 1));
+    }
+    return 0;
+}

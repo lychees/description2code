@@ -1,0 +1,121 @@
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<vector>
+#include<algorithm>
+#include<map>
+#include<math.h>
+#include<climits>
+#include<queue>
+using namespace std;
+
+struct nod
+{
+    int t1, t2, id;
+}ar[1001000];
+
+struct node
+{
+    int n1, n2, w;
+} edge[1001000];
+
+bool operator < (node a, node b)
+{
+    return (a.w<b.w);
+}
+
+struct par
+{
+    int id, parid, count;
+} arr[101000];
+
+par find_parent(par n)
+{
+    if(n.id==n.parid)
+        return n;
+    else return (find_parent(arr[n.parid]));
+}
+
+bool comp1 (nod a, nod b)
+{
+    return (a.t1<b.t1)||((a.t1==b.t1)&&(a.t2<b.t2));
+}
+
+bool comp2 (nod a, nod b)
+{
+    return (a.t2<b.t2)||((a.t2==b.t2)&&(a.t1<b.t1));
+}
+
+int main()
+{
+    int n, m, counter;
+    long long ans=0;
+    par par1, par2;
+    scanf("%d",&n);
+    for(int i=0; i<n; i++)
+    {
+        scanf("%d%d",&(ar[i].t1), &(ar[i].t2));
+        ar[i].id=i+1;
+    }
+    sort(ar, ar+n, comp1);
+    m=0;
+    for(int i=1; i<n; i++)
+    {
+        edge[m].n1=ar[i-1].id;
+        edge[m].n2=ar[i].id;
+        edge[m].w=ar[i].t1-ar[i-1].t1;
+        m++;
+    }
+    sort(ar, ar+n, comp2);
+    for(int i=1; i<n; i++)
+    {
+        edge[m].n1=ar[i-1].id;
+        edge[m].n2=ar[i].id;
+        edge[m].w=ar[i].t2-ar[i-1].t2;
+        m++;
+    }
+
+    sort(edge, edge+m);
+    //for(int i=0; i<m; i++)
+    //  printf("%d %d %d\n",edge[i].n1, edge[i].n2, edge[i].w);
+    counter=n-1;
+    for(int i=1; i<=n; i++)
+    {
+        arr[i].id=i;
+        arr[i].parid=i;
+        arr[i].count=1;
+    }
+    int i=0;
+    while(counter)
+    {
+        par1=find_parent(arr[edge[i].n1]);
+        par2=find_parent(arr[edge[i].n2]);
+        if(par1.id==par2.id)
+        {
+            i++;
+            continue;
+        }
+        //printf("jfhjfd %d   %d\n",edge[i].n1,edge[i].n2);
+        if(par1.count<par2.count)
+        {
+            arr[par1.id].parid=par2.id;
+        }
+        else if(par1.count>par2.count)
+        {
+            arr[par2.id].parid=par1.id;
+        }
+        else
+        {
+            arr[par2.id].parid=par1.id;
+            (arr[par1.id].count)++;
+        }
+        counter--;
+        //for(int j=1; j<=n; j++)
+        //   printf("%d  %d  %d\n",arr[j].id, arr[j].parid, arr[j].count);
+        //printf("\n\n");
+        //printf("%d  ",edge[i].w);
+        ans+=(long long)(edge[i++].w);
+    }
+    printf("%lld\n",ans);
+    return 0;
+}

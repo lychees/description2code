@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+#define foru(i, a, b) for(int i = a; i <= b; ++i)
+using namespace std;
+const int MAXN = 205;
+const int oo = 1e9;
+int n, m, k, t;
+int a[MAXN][MAXN], c[MAXN][MAXN], w[MAXN][MAXN], f[MAXN][MAXN];
+int d[MAXN], trace[MAXN];
+bool avail[MAXN];
+
+void FindPath() {
+    foru(v, 0, n + 1) d[v] = oo, trace[v] = 0;
+    memset(avail, true, sizeof(avail));
+    queue <int> Q;
+    Q.push(0); d[0] = 0; avail[0] = false;
+
+    while (Q.size()) {
+        int u = Q.front(); Q.pop(); avail[u] = true;
+        foru(v, 0, n + 1)
+            if (w[u][v] > f[u][v] && d[v] > d[u] + c[u][v]) {
+                d[v] = d[u] + c[u][v];
+                trace[v] = u;
+                if (avail[v]) Q.push(v), avail[v] = false;
+            }
+    }
+}
+
+void IncFlow() {
+    if (d[t] == oo) return;
+    int v = t, delta = oo;
+    while (v > 0) {
+        int u = trace[v];
+        if (c[u][v] >= 0)
+            delta = min(delta, w[u][v] - f[u][v]);
+        else
+            delta = min(delta, f[v][u]);
+        v = u;
+    }
+
+    v = t;
+    while (v > 0) {
+        int u = trace[v];
+        if (c[u][v] >= 0) f[u][v] += delta, c[v][u] = -c[u][v];
+        else {
+            f[v][u] -= delta;
+            if (f[v][u] == 0) c[u][v] = c[v][u];
+        }
+        v = u;
+    }
+}
+
+void Solve() {
+
+}
+
+int main() {
+    //freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w", stdout);
+    int TC; scanf("%d\n", &TC);
+    while (TC--) {
+        scanf("%d%d%d", &n, &m, &k);
+        foru(i, 1, n + 1) foru(j, 1, n + 1) a[i][j] = (i == j ? 0 : 10000);
+        foru(u, 0, n + 1) foru(v, 0, n + 1) w[u][v] = c[u][v] = f[u][v] = 0;
+        while (m--) {
+            int u, v, w; scanf("%d%d%d", &u, &v, &w);
+            a[u][v] = a[v][u] = min(a[u][v], w);
+        }
+        t = n + 1;
+        foru(x, 1, n) foru(u, 1, n) foru(v, 1, n) a[u][v] = min(a[u][v], a[u][x] + a[x][v]);
+        foru(u, 1, k) foru(v, n - k + 1, n) {
+            c[u][v] = c[v][u] = a[u][v];
+            w[u][v] = w[v][u] = 1;
+        }
+
+        foru(u, 1, k) w[u][0] = w[0][u] = 1;
+        foru(u, n - k + 1, n) w[u][t] = w[t][u] = 1;
+
+        do FindPath(), IncFlow();
+        while (d[t] != oo);
+
+        int ans = 0;
+        foru(u, 1, k) foru(v, n - k + 1, n) ans += c[u][v] * f[u][v];
+        printf("%d\n", ans);
+    }
+    return 0;
+}

@@ -1,0 +1,146 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define maxn 100009 //maximum value of n+9
+#define initvalue 0//value with which segment tree should be initialized
+//or if you want to initialize from an array change only init
+
+
+ll st2[3*maxn];
+int si[3*maxn];
+int ei[3*maxn];
+
+
+
+//initializing segment tree should be called before using
+void init2(int in,int s,int e){
+	si[in] = s;
+	ei[in] = e;
+	if(s==e){st2[in] = initvalue;return;}
+	int mid = (s+e)/2;
+	init2(2*in,s,mid);
+	init2(2*in+1,mid+1,e);
+	st2[in] = max(st2[2*in],st2[2*in+1]);
+}
+
+//updates the value of array at specified index
+void update2(int pin,int in,ll va){
+	if(si[pin]==ei[pin]){st2[pin] = va;return;}
+	int mid = (si[pin]+ei[pin])/2;
+	if(in<=mid){update2(2*pin,in,va);}
+	else{update2(2*pin+1,in,va);}
+	st2[pin] = max(st2[2*pin],st2[2*pin+1]);
+}
+
+
+//return maximum of value of all the values of array from index s to e
+ll query2(int in,int s,int e){
+	if(si[in]==s&&ei[in]==e){return st2[in];}
+	int mid = (si[in]+ei[in])/2;
+	if(mid>=e){
+		return query2(2*in,s,e);
+	}
+	else if(mid<s){return query2(2*in+1,s,e);}
+	else{
+		ll one = query2(2*in,s,mid);
+		ll two = query2(2*in+1,mid+1,e);
+		return max(one,two);
+	}
+}
+
+
+ll st[3*maxn];
+
+
+
+//initializing segment tree should be called before using
+void init(int in,int s,int e){
+	si[in] = s;
+	ei[in] = e;
+	if(s==e){st[in] = initvalue;return;}
+	int mid = (s+e)/2;
+	init(2*in,s,mid);
+	init(2*in+1,mid+1,e);
+	st[in] = max(st[2*in],st[2*in+1]);
+}
+
+//updates the value of array at specified index
+void update(int pin,int in,ll va){
+	if(si[pin]==ei[pin]){st[pin] = va;return;}
+	int mid = (si[pin]+ei[pin])/2;
+	if(in<=mid){update(2*pin,in,va);}
+	else{update(2*pin+1,in,va);}
+	st[pin] = max(st[2*pin],st[2*pin+1]);
+}
+
+
+//return maximum of value of all the values of array from index s to e
+ll query(int in,int s,int e){
+	if(si[in]==s&&ei[in]==e){return st[in];}
+	int mid = (si[in]+ei[in])/2;
+	if(mid>=e){
+		return query(2*in,s,e);
+	}
+	else if(mid<s){return query(2*in+1,s,e);}
+	else{
+		ll one = query(2*in,s,mid);
+		ll two = query(2*in+1,mid+1,e);
+		return max(one,two);
+	}
+}
+
+int inp[maxn];
+vector<pair<int,int> > vec;
+
+
+int main(){
+	int t;
+	scanf("%d",&t);
+	while(t--){vec.clear();
+		int n;
+		scanf("%d",&n);
+		for(int i=0;i<n;i++){
+			int x;
+			scanf("%d",&x);
+			vec.push_back(make_pair(x,i));
+		}
+
+		sort(vec.begin(),vec.end());
+		int cou = 0;
+		int pre = -1;
+		for(int i=0;i<(int)vec.size();i++){
+			if(vec[i].first!=pre){cou++;}
+			inp[vec[i].second] = cou;
+			pre = vec[i].first;
+		}
+
+		init(1,0,n+1);//searching min
+		init2(1,0,n+1);//max
+
+		int ans = 0;
+
+		for(int i=0;i<n;i++){
+			int x = query2(1,0,inp[i]);
+			x++;
+			ans = max(ans,x);
+
+			int xx = query(1,inp[i],n+1);
+			xx++;
+			update(1,inp[i],x);
+			update2(1,inp[i],xx);
+			ans = max(ans,xx);
+		}
+
+		cout<<ans<<endl;
+
+
+
+
+
+
+
+
+	}
+
+
+}

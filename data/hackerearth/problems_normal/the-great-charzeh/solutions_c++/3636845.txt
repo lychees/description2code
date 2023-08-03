@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+struct Edge {
+    int to, rev, cap, f = 0;
+    Edge(int to, int rev, int cap) : to(to), rev(rev), cap(cap) {}
+};
+
+vector<Edge> g[10000];
+int q[10000], dist[10000], pos[10000];
+int nodes, src, dest;
+
+void addEdge(int from, int to, int cap) {
+    g[from].pb(Edge(to, (int)g[to].size(), cap));
+    g[to].pb(Edge(from, (int)g[from].size() - 1, 0));
+}
+
+bool bfs() {
+    REP(i, nodes) dist[i] = -1;
+    dist[src] = 0;
+    q[0] = src;
+    for (int qh = 0, qt = 1; qh != qt; ++qh) {
+        int v = q[qh];
+        for (Edge e : g[v]) if (e.f < e.cap && dist[e.to] == -1) {
+            dist[e.to] = dist[v] + 1;
+            q[qt++] = e.to;
+        }
+    }
+    return dist[dest] != -1;
+}
+
+int dfs(int v, int flow) {
+    if (v == dest) return flow;
+    for (int &i = pos[v]; i < (int)g[v].size(); ++i) {
+        Edge &e = g[v][i];
+        if (e.f < e.cap && dist[e.to] == dist[v] + 1) {
+            int df = dfs(e.to, min(flow, e.cap - e.f));
+            if (df > 0) {
+                e.f += df;
+                g[e.to][e.rev].f -= df;
+                return df;
+            }
+        }
+    }
+    return 0;
+}
+
+int maxFlow() {
+    int flow = 0;
+    while (bfs()) {
+        REP(i, nodes) pos[i] = 0;
+        while (int df = dfs(src, 12341234)) {
+            flow += df;
+        }
+    }
+    return flow;
+}
+
+int n, m;
+int a[300], f[600];
+vector<int> vals;
+
+int main() {
+    scanf("%d%d", &n, &m);
+    REP(i, n) scanf("%d", a + i);
+    REP(i, n + m - 1) scanf("%d", f + i);
+    REP(i, n + m - 1) vals.pb(f[i]);
+    sort(vals.begin(), vals.end());
+    vals.erase(unique(vals.begin(), vals.end()), vals.end());
+    src = 2 * n;
+    dest = src + 1;
+    nodes = dest + 1;
+    int lo = 0, hi = (int)vals.size() - 1, mid;
+    while (lo < hi) {
+        mid = (lo + hi) >> 1;
+        REP(i, nodes) g[i].clear();
+        REP(i, n) REP(j, n) if (f[a[i] + j] <= vals[mid]) {
+            addEdge(i, n + j, 1);
+        }
+        REP(i, n) {
+            addEdge(src, i, 1);
+            addEdge(n + i, dest, 1);
+        }
+        if (maxFlow() == n) {
+            hi = mid;
+        } else {
+            lo = mid + 1;
+        }
+    }
+    printf("%d\n", vals[lo]);
+    return 0;
+}

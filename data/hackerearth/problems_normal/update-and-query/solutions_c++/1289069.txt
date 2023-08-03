@@ -1,0 +1,169 @@
+/*
+***************************************************************************************************************
+
+							Author : Yash Sadhwani
+
+**************************************************************************************************************
+*/
+#include<stdio.h>
+#include<iostream>
+#include<vector>
+#include<string.h>
+#include<algorithm>
+#include<deque>
+#include<map>
+#include<set>
+#include<stdlib.h>
+#include<math.h>
+#include<queue>
+#include<functional>
+using namespace std;
+#define ll long long
+#define si(x) scanf("%d",&x)
+#define sl(x) scanf("%lld",&x)
+#define sc(x) scanf("%c",&x)
+#define vl vector<ll>
+#define vi vector<int>
+#define vvl vector< vl >
+#define vvi vector< vi >
+#define pb push_back
+#define mod 1000000007
+#define mem(x,y) memset(x,y,sizeof(x))
+#define f(i,a,b) for(int i=(a);i<(b);i++)
+#define max_int_value 2147483647
+#define max_long_value 9223372036854775807
+
+//thanks to Vinay Guthal(win_ay) for the below fast IO functions
+#define llu long long unsigned
+#define ld long
+#define F first
+#define S second
+int scan_d()    {int ip=getchar_unlocked(),ret=0,flag=1;for(;ip<'0'||ip>'9';ip=getchar_unlocked())if(ip=='-'){flag=-1;ip=getchar_unlocked();break;}for(;ip>='0'&&ip<='9';ip=getchar_unlocked())ret=ret*10+ip-'0';return flag*ret;}
+ld scan_ld()    {int ip=getchar_unlocked(),flag=1;ld ret=0;for(;ip<'0'||ip>'9';ip=getchar_unlocked())if(ip=='-'){flag=-1;ip=getchar_unlocked();break;}for(;ip>='0'&&ip<='9';ip=getchar_unlocked())ret=ret*10+ip-'0';return flag*ret;}
+ll scan_ll()    {int ip=getchar_unlocked(),flag=1;ll ret=0;for(;ip<'0'||ip>'9';ip=getchar_unlocked())if(ip=='-'){flag=-1;ip=getchar_unlocked();break;}for(;ip>='0'&&ip<='9';ip=getchar_unlocked())ret=ret*10+ip-'0';return flag*ret;}
+llu scan_llu()    {int ip=getchar_unlocked();llu ret=0;for(;ip<'0'||ip>'9';ip=getchar_unlocked());for(;ip>='0'&&ip<='9';ip=getchar_unlocked())ret=ret*10+ip-'0';return ret;}
+ 
+//end of fast input
+//fast output
+ 
+//no line break
+void print_d(int n)     {if(n<0){n=-n;putchar_unlocked('-');}int i=10;char output_buffer[10];do{output_buffer[--i]=(n%10)+'0';n/=10;}while(n);do{putchar_unlocked(output_buffer[i]);}while(++i<10);}
+void print_ld(ld n)     {if(n<0){n=-n;putchar_unlocked('-');}int i=11;char output_buffer[11];do{output_buffer[--i]=(n%10)+'0';n/=10;}while(n);do{putchar_unlocked(output_buffer[i]);}while(++i<11);}
+void print_ll(ll n)     {if(n<0){n=-n;putchar_unlocked('-');}int i=21;char output_buffer[21];do{output_buffer[--i]=(n%10)+'0';n/=10;}while(n);do{putchar_unlocked(output_buffer[i]);}while(++i<21);}
+void print_llu(llu n)     {int i=21;char output_buffer[21];do{output_buffer[--i]=(n%10)+'0';n/=10;}while(n);do{putchar_unlocked(output_buffer[i]);}while(++i<21);}
+
+
+//qsort(ww,cc,sizeof(tp),compare);
+/*int compare(const void *a,const void *b){
+	ll y=((((tp*)a)->w)-(((tp*)b)->w));
+	if(y>0)return 1;
+	else if(y==0)return 0;
+	else return -1;
+}*/
+
+#define MAXN 200010
+#define ls (node<<1)
+#define rs ((node<<1)+1)
+
+int N,M;
+ll arr[MAXN];
+
+struct nodes{
+	ll mmin,mmax;
+};
+
+nodes tree[MAXN*4];
+
+
+void build(int node,int start,int end){
+	if(start==end){
+		tree[node].mmin=arr[start];
+		tree[node].mmax=arr[start];
+		return;
+	}
+	int mid=(start+end)/2;
+	build(ls,start,mid);
+	build(rs,mid+1,end);
+	tree[node].mmax=max(tree[ls].mmax,tree[rs].mmax);
+	tree[node].mmin=min(tree[ls].mmin,tree[rs].mmin);
+}
+
+void update(int node,int start,int end,int pos,ll val){
+	if(start>end || pos<start || pos>end)return;
+	if(start==end){
+		tree[node].mmax=val;
+		tree[node].mmin=val;
+		return;
+	}
+	int mid=(start+end)/2;
+	update(ls,start,mid,pos,val);
+	update(rs,mid+1,end,pos,val);
+	tree[node].mmin=min(tree[ls].mmin,tree[rs].mmin);
+	tree[node].mmax=max(tree[ls].mmax,tree[rs].mmax);
+}
+
+nodes query(int node,int start,int end,int left,int right){
+	if(start>end || right<start || left>end){
+		nodes temp;
+		temp.mmin=max_long_value;
+		temp.mmax=-max_long_value;
+		return temp;
+	}
+	if(left<=start && right>=end)return tree[node];
+	int mid=(start+end)/2;
+	nodes aa=query(ls,start,mid,left,right);
+	nodes bb=query(rs,mid+1,end,left,right);
+	nodes ret;
+	ret.mmax=max(aa.mmax,bb.mmax);
+	ret.mmin=min(aa.mmin,bb.mmin);
+	return ret;
+}
+
+ll MMIN,MMAX,FIXED;
+int binarysearch(int start,int end){
+	if(start>end)return end;
+	int mid=(start+end)/2;
+	nodes temp=query(1,1,N,FIXED,mid);
+	if(temp.mmax<=MMAX && temp.mmin>=MMIN){
+		return binarysearch(mid+1,end);
+	}else{
+		return binarysearch(start,mid-1);
+	}
+}
+
+
+int main()
+{
+	si(N); si(M);
+	for(int i=1;i<=N;i++)sl(arr[i]);
+	build(1,1,N);
+	while(M--){
+		char type[3];
+		int x;
+		ll y;
+        scanf("%s",type);
+		x=scan_d();
+		y=scan_ll();
+        if(type[0]=='U'){
+			arr[x]=y;
+			update(1,1,N,x,y);
+		}else{
+			MMAX=arr[x]+y;
+			MMIN=arr[x]-y;
+			FIXED=x;
+			int a1=binarysearch(x,N);
+			if(a1<x){
+				printf("-1 -1\n" );
+			}else{
+				nodes temp=query(1,1,N,x,a1);
+				ll z=max(temp.mmax-arr[x],arr[x]-temp.mmin);
+				print_d(a1-x+1);
+				printf(" ");
+				print_ll(z); 
+				printf("\n");
+                //printf("%d %lld\n",a1-x+1,z );
+			}
+		}
+	}
+	return 0;
+}

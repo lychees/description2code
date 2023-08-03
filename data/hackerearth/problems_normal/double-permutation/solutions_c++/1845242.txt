@@ -1,0 +1,114 @@
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <climits>
+#include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+#include <cctype>
+#include <utility>
+#include <queue>
+#include <cmath>
+
+using namespace std;
+
+typedef pair<int, int> pii;
+typedef long long LL;
+typedef vector<int> vi;
+typedef vector<pii> vpii;
+
+#define pb push_back
+
+#define X first
+#define Y second
+
+#define MOD 1000000007
+#define MX 100005
+
+int rlt;
+int bit[MX], n, a[2 * MX], pos[MX][2], chk[MX];
+int fen[MX];
+int num[MX];
+
+void add(int pos, int x) {
+	for (; pos <= n; pos += pos & -pos) {
+		fen[pos] += x;
+	}
+}
+
+int calc(int st, int en) {
+	if (st > en) return 0;
+	if (!st) {
+		int res(0);
+		for (; en; en -= en & -en) {
+			res += fen[en];
+		}
+		return res;
+	} else {
+		return calc(0, en) - calc(0, st - 1);
+	}
+}
+
+void add1(int pos, int x) {
+	for (; pos <= n; pos += pos & -pos) {
+		num[pos] += x;
+	}
+}
+
+int calc1(int st, int en) {
+	if (st > en) return 0;
+	if (!st) {
+		int res(0);
+		for (; en; en -= en & -en) {
+			res += num[en];
+		}
+		return res;
+	} else {
+		return calc(0, en) - calc(0, st - 1);
+	}
+}
+
+int main() {
+
+	bit[0] = 1;
+	int i, j;
+	memset(pos, -1, sizeof pos);
+	for (i = 1; i < MX; i++) {
+		bit[i] = bit[i - 1] * 2 % MOD;
+	}
+	scanf("%d", &n);
+	for (i = 1; i <= 2 * n; i++) {
+		scanf("%d", a + i);
+		if (pos[a[i]][0] < 0) pos[a[i]][0] = i;
+		else pos[a[i]][1] = i;
+	}
+	for (i = 1; i <= 2 * n; i++) {
+		int x = a[i];
+		if (pos[x][0] != i) {
+			rlt += bit[n - 1];
+			
+			rlt %= MOD;
+		}
+		int l, r;
+		l = calc(1, x - 1);
+		r = calc(x + 1, n);
+		int _l, _r;
+		_l = calc1(1, x - 1);
+		_r = calc1(x + 1, n);
+		rlt += 1LL * r * bit[n - 1] % MOD;
+		
+		rlt %= MOD;
+		rlt += 1LL * _l * bit[n - 2] % MOD;
+		rlt %= MOD;
+		rlt += 1LL * _r * bit[n - 2] % MOD;
+		rlt %= MOD;
+		add(a[i], 1);
+		if (!chk[a[i]]++) add1(a[i], 1);
+	}
+	printf("%d\n", rlt);
+	return 0;
+}

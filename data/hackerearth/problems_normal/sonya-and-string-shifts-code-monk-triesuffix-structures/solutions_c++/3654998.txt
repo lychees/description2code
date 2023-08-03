@@ -1,0 +1,66 @@
+#include <bits/stdc++.h>
+
+#define readFile freopen("in.txt","r",stdin)
+#define writeFile freopen("out.txt","w",stdout)
+#define fastio ios_base::sync_with_stdio(false)
+
+using namespace std;
+
+const int N = 1000010;
+int suffArr[N], tmpSuffArr[N], rankk[N], tmpRank[N], 
+        lcp[N], plcp[N], pos[N], freq[N], lens[N],res[N], n, k, q;
+char s[2*N];
+
+void countingSort(int k){
+    int mx = max(300,n+1), acum = 0;
+    memset(freq,0,sizeof(freq));
+    for(int i = 0; i < n; i++) freq[i+k < n ? rankk[i+k] : 0]++;
+    for(int i = 0; i < mx; i++){
+        int t = freq[i];
+        freq[i] = acum;
+        acum += t;
+    }
+    for(int i = 0; i < n; i++) tmpSuffArr[freq[suffArr[i]+k < n ? rankk[suffArr[i]+k] : 0]++] = suffArr[i];
+    for(int i = 0; i < n; i++) suffArr[i] = tmpSuffArr[i];
+}
+
+void buildSuffArr(){
+    memset(suffArr,0,sizeof(suffArr)); memset(tmpSuffArr,0,sizeof(tmpSuffArr)); 
+    memset(rankk,0,sizeof(rankk)); memset(tmpRank,0,sizeof(tmpRank));
+    for(int i = 0; i < n; i++) rankk[i] = s[i], suffArr[i] = i;
+    for(int k = 1; k <= n; k<<=1){
+        countingSort(k);
+        countingSort(0);
+        int r = 1;
+        tmpRank[suffArr[0]] = r;
+        for(int i = 1; i < n; i++){
+            if(rankk[suffArr[i]]==rankk[suffArr[i-1]] && rankk[suffArr[i]+k]==rankk[suffArr[i-1]+k]) tmpRank[suffArr[i]] = r;
+            else tmpRank[suffArr[i]] = ++r;
+        }
+        for(int i = 0; i < n; i++) rankk[i] = tmpRank[i];
+    }
+}
+
+int main() {
+#ifndef ONLINE_JUDGE
+    readFile;
+#endif
+    fastio;
+    scanf("%d",&n);
+    scanf("%s",s);
+    scanf("%d",&q);
+    buildSuffArr();
+    res[0] = suffArr[0];
+    for(int i = 1; i < n; i++) res[i] = min(res[i-1],suffArr[i]);
+    while(q--){
+        int x; scanf("%d",&x);
+        int l = 0, r = n+1;
+        while(l<r){
+            int mid = (l+r)>>1;
+            if(res[mid]<=x) r = mid;
+            else l = mid+1;
+        }
+        printf("%d\n",res[l]);
+    }
+    return 0;
+}

@@ -1,0 +1,161 @@
+//Pranet Verma
+#include <bits/stdc++.h>
+using namespace std;
+const int LN = 17, MAXN = 100005;
+
+namespace DSU {
+    int par[MAXN * 2 + 4], sz[MAXN * 2 + 5];
+    void dsu_init(int n) {
+        for (int i = 1; i <= n; ++i) {
+            sz[i] = 1;
+            par[i] = i;
+        }
+    }
+    int findSet(int u) {
+        return par[u] = par[u] == u ? u : findSet(par[u]);
+    }
+    void mergeSet(int u, int v) {
+        u = findSet(u);
+        v = findSet(v);
+        assert(u != v);
+        par[v] = u;
+        sz[u] += sz[v];
+    }
+    int siz(int u) {
+        return sz[findSet(u)];
+    }
+}
+int pa[LN][MAXN], dp[LN][MAXN], dep[MAXN], st[MAXN], en[MAXN], pool;
+vector<pair<int, int> > g[MAXN];
+void dfs(int u, int p, int e) {
+    st[u] = ++pool;
+    pa[0][u] = p;
+    dp[0][u] = e;
+    dep[u] = dep[p] + 1;
+    for (auto xx : g[u]) {
+        int v = xx.first;
+        int w = xx.second;
+        if (v != p) {
+            dfs(v, u, w);
+        }
+    }
+    en[u] = pool;
+}
+int lca(int u, int v) {
+    if (dep[u] < dep[v])
+        swap(u, v);
+    int d = dep[u] - dep[v];
+    for (int i = LN - 1; i >= 0; --i) {
+        if (d & (1 << i))
+            u = pa[i][u];
+    }
+    if (u == v)
+        return u;
+    for (int i = LN - 1; i >= 0; --i) {
+        if (pa[i][u] != pa[i][v]) {
+            u = pa[i][u];
+            v = pa[i][v];
+        }
+    }   
+    return pa[0][u];
+}
+int queryMin(int u, int v) {
+    assert(v == lca(u, v));
+    int d = dep[u] - dep[v];
+    int ret = 1e9;
+    for (int i = LN - 1; i >= 0; --i) {
+        if (d & (1 << i)) {
+            ret = min(ret, dp[i][u]);
+            u = pa[i][u];
+        }
+    }
+    return ret;
+}
+int arr[MAXN * 2 + 4], id[MAXN * 2 + 4];
+bool ancestor(int p, int u) {
+    return st[p] < st[u] and en[p] >= en[u];
+}
+bool custom(int a, int b) {
+    return st[a] < st[b];
+}
+struct Edge {
+    int u, v, w;
+    bool operator < (const Edge &o) const{
+        return w > o.w;
+    }
+};
+bool isOn[MAXN];
+long long createTree(int k) {
+    sort(arr, arr + k, custom);
+    int kk = k;
+    for (int i = 0; i < kk - 1; ++i) {
+        arr[k++] = lca(arr[i], arr[i + 1]); 
+    }
+    sort(arr, arr + k, custom);
+    k = unique(arr, arr + k) - arr;
+    for(int i = 0; i < k; ++i)
+        id[arr[i]] = i + 1;
+    stack<int> s;
+    s.push(arr[0]);
+    vector<Edge> edges;
+    for (int i = 1; i < k; ++i) {
+        while(!ancestor(s.top(), arr[i])) {
+            s.pop();
+        }
+        int u = s.top();
+        int v = arr[i];
+        int w = queryMin(v, u);
+        // assert(id[u] != id[v]);
+        edges.push_back(Edge{id[u], id[v], w});
+        s.push(arr[i]);
+    }
+
+    DSU::dsu_init(k);
+    for(int i = 0; i < k; ++i) {
+        if(!isOn[arr[i]]) {
+            DSU::sz[id[arr[i]]] = 0;
+        }   
+    }
+    sort(edges.begin(), edges.end());
+    long long ans = 0;
+    for (auto e : edges) {
+        int u = e.u, v = e.v;
+        long long w = e.w;
+        ans += (w * DSU::siz(u)) * DSU::siz(v);
+        DSU::mergeSet(u, v);
+    }
+    return ans;
+}
+int save[MAXN];
+int main()
+{
+    int n;
+    scanf("%d", &n);
+    for (int i = 2; i <= n; ++i) {
+        int u, v, w;
+        scanf("%d %d %d", &u, &v, &w);
+        g[u].push_back(make_pair(v, w));
+        g[v].push_back(make_pair(u, w));
+    }     
+    dfs(1, 0, 1e9);
+    for (int j = 1; j < LN; ++j) {
+        for (int i = 1; i <= n; ++i) {
+            pa[j][i] = pa[j - 1][pa[j - 1][i]];
+            dp[j][i] = min(dp[j - 1][i], dp[j - 1][pa[j - 1][i]]);
+        }
+    }
+    int q, k;
+    scanf("%d", &q);
+    while (q--) {
+        scanf("%d", &k);
+        for(int i = 0; i < k; ++i) {
+            scanf("%d", &arr[i]);
+            save[i] = arr[i];
+            isOn[arr[i]] = 1;
+        }
+        printf("%lld\n", createTree(k));
+        for(int i = 0; i < k; ++i) {
+            isOn[save[i]] = 0;
+        }
+    }
+}

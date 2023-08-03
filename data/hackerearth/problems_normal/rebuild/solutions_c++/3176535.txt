@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int tt, n, m;
+int from[100000], to[100000], w[100000], ord[100000];
+
+inline bool cmp(const int &lhs, const int &rhs) {
+    if (w[lhs] != w[rhs]) return w[lhs] < w[rhs];
+    if (from[lhs] != from[rhs]) return from[lhs] > from[rhs];
+    return to[lhs] > to[rhs];
+}
+
+int par[50000], ra[50000];
+
+void dsuInit() {
+    REP(i, n) par[i] = i, ra[i] = 1;
+}
+
+int dsuParent(int v) {
+    if (v == par[v]) return v;
+    return par[v] = dsuParent(par[v]);
+}
+
+void dsuMerge(int u, int v) {
+    u = dsuParent(u);
+    v = dsuParent(v);
+    if (u == v) return;
+    if (ra[u] < ra[v]) swap(u, v);
+    par[v] = u;
+    ra[u] += ra[v];
+}
+
+int cnt[50000];
+
+int main() {
+    //freopen("input.txt", "r", stdin);
+    scanf("%d", &tt);
+    REP(test, tt) {
+        scanf("%d%d", &n, &m);
+        REP(i, m) {
+            scanf("%d%d%d", from + i, to + i, w + i), --from[i], --to[i];
+            if (from[i] > to[i]) swap(from[i], to[i]);
+        }
+        dsuInit();
+        REP(i, m) ord[i] = i;
+        sort(ord, ord + m, cmp);
+        LL ans = 0;
+        REP(i, n) cnt[i] = 0;
+        REP(ii, m) {
+            int i = ord[ii];
+            if (dsuParent(from[i]) != dsuParent(to[i])) {
+                dsuMerge(from[i], to[i]);
+                ++cnt[from[i]];
+                ++cnt[to[i]];
+                ans += w[i];
+            }
+        }
+        cout << ans << endl;
+        REP(i, n) printf("%d ", cnt[i]);
+        printf("\n");
+    }
+    return 0;
+}

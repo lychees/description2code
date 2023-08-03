@@ -1,0 +1,220 @@
+/*
+ * segtree.cpp
+ *
+ *  Created on: 31-Aug-2014
+ *      Author: bharathkumar
+ */
+
+
+
+
+#include <stdio.h>
+#include <iostream>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <limits.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<pair<int,int> > vii;
+typedef vector<string> vs;
+
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define sz size()
+#define ln length()
+#define all(a)  a.begin(),a.end() 
+
+#define newl printf("\n")
+#define IINF INT_MIN
+#define LINF LLONG_MIN
+#define MOD 1000000007
+
+int segt[10000000][4];
+int ar[100000];
+int n,s1,s2;
+
+int get_dist(int n){
+	bool a[10]={0};
+	while(n){
+		a[n%10] = 1;
+		n/=10;
+	}
+	int ct =0;
+	for(int i=0;i<10;i++)
+		ct += a[i];
+
+	return ct;
+}
+
+void print(int ss,int se,int id){
+	printf("%d-%d = %d %d %d %d\n",ss,se,segt[id][0],segt[id][1],segt[id][2],segt[id][3]);
+	if(ss==se)
+		return;
+	print(ss,(ss+se)/2,2*id+1);
+	print((ss+se)/2+1,se,2*id+2);
+}
+
+void update_id(int id){
+	int d1 = get_dist(segt[2*id+1][0]);
+	int d2 = get_dist(segt[2*id+2][0]);
+	if(d1>d2){
+		segt[id][0] = segt[2*id+1][0];
+		segt[id][2] = segt[2*id+1][2];
+	}
+	else if(d1<d2){
+		segt[id][0] = segt[2*id+2][0];
+		segt[id][2] = segt[2*id+2][2];
+	}
+	else{
+		segt[id][0] = segt[2*id+1][0];
+		segt[id][2] = segt[2*id+1][2] + segt[2*id+2][2];
+	}
+
+	d1 = get_dist(segt[2*id+1][1]);
+	d2 = get_dist(segt[2*id+2][1]);
+	if(d1<d2){
+		segt[id][1] = segt[2*id+1][1];
+		segt[id][3] = segt[2*id+1][3];
+	}
+	else if(d1>d2){
+		segt[id][1] = segt[2*id+2][1];
+		segt[id][3] = segt[2*id+2][3];
+	}
+	else{
+		segt[id][1] = segt[2*id+1][1];
+		segt[id][3] = segt[2*id+1][3] + segt[2*id+2][3];
+	}
+}
+
+void build_segt(int ss,int se,int id){
+	if(ss==se){
+		segt[id][1] = segt[id][0] = ar[ss];
+		segt[id][2] = segt[id][3] = 1;
+		return;
+	}
+	build_segt((int)(ss+se)/2+1,se,2*id+2);
+	build_segt(ss,(ss+se)/2,2*id+1);
+
+	update_id(id);
+}
+
+void build(){
+	build_segt(0,n-1,0);
+}
+
+void update_mm(int ss,int se,int pos,int val,int id,int op){
+	if(ss==se){
+		ll rep;
+		if(op==0)
+			rep = ((ll)segt[id][0]+val)%MOD;
+		else if(op==1)
+			rep = ((ll)segt[id][0]*val)%MOD;
+		else
+			rep = val;
+		segt[id][0] = segt[id][1] = rep;
+		return;
+	}
+
+	int m = (ss+se)/2;
+	if(pos<=m)
+		update_mm(ss,m,pos,val,2*id+1,op);
+	else
+		update_mm(m+1,se,pos,val,2*id+2,op);
+
+	update_id(id);
+}
+
+void update(int pos,int val,int op){
+	update_mm(0,n-1,pos,val,0,op);
+}
+
+void get_max(int ss,int se,int s,int e,int id){
+	if(ss>e || se<s)
+		return ;
+	if(ss>=s && se<=e){
+		int d = get_dist(segt[id][0]);
+		if(d==s1)
+			s2+=segt[id][2];
+		else if(d>s1){
+			s1 = d;
+			s2 = segt[id][2];
+		}
+		return;
+	}
+	int m = (se+ss)/2;
+
+	get_max(ss,m,s,e,2*id+1);
+	get_max(m+1,se,s,e,2*id+2);
+}
+
+void get_min(int ss,int se,int s,int e,int id){
+	if(ss>e || se<s)
+		return ;
+	if(ss>=s && se<=e){
+		int d = get_dist(segt[id][1]);
+		if(d==s1)
+			s2+=segt[id][3];
+		else if(d<s1){
+			s1 = d;
+			s2 = segt[id][3];
+		}
+		//printf("%d - %d => %d %d\n",ss,se,s1,s2);
+		return;
+	}
+	int m = (se+ss)/2;
+
+	get_min(ss,m,s,e,2*id+1);
+	get_min(m+1,se,s,e,2*id+2);
+}
+
+
+int main(){
+	cin>>n;
+	for(int i=0;i<n;i++){
+		cin>>ar[i];
+	}
+	build();
+
+	//print(0,n-1,0);
+	int q;
+	string s;
+	cin>>q;
+	while(q--){
+		ll l,r;
+		cin>>s>>l>>r;
+		r = r%MOD;
+		if(s=="MIN"){
+			s1 = 11,s2 = 0;
+			get_min(0,n-1,l-1,r-1,0);
+			cout<<s1<<" "<<s2<<endl;
+		}
+		else if(s=="MAX"){
+			s1 = 0,s2 =0;
+			get_max(0,n-1,l-1,r-1,0);
+			cout<<s1<<" "<<s2<<endl;
+		}
+		else if(s=="ADD"){
+			//rep = (l+r)%MOD;
+			update(l-1,r,0);
+		}
+		else if(s=="MUL"){
+			//rep = (l*r)%MOD;
+			update(l-1,r,1);
+			//print(0,n-1,0);
+		}
+		else if(s=="REP"){
+			//rep = (r)%MOD;
+			update(l-1,r,2);
+		}
+	}
+}

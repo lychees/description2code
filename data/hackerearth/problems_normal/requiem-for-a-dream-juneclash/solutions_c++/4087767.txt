@@ -1,0 +1,205 @@
+/*    SHUBHAM SINHA    */
+ 
+ 
+ 
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <string.h>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <list>
+#include <math.h>
+ 
+#define ll long long int
+#define maxN 100000
+#define maxVal 100000000
+#define minVal -100000000
+#define mod 1000000007LL
+ 
+#define gcd(a,b) __gcd(a,b)
+ 
+using namespace std;
+ 
+struct data
+{
+	ll sum,total,top,bottom;
+};
+
+ll n;
+vector<pair<ll,ll> > g[maxN+5];
+ll parent[maxN+5];
+ll level[maxN+5];
+ll visit[maxN+5];
+ll dp[maxN+5][20];
+data f[maxN+5][20];
+
+void dfs(ll u,ll l)
+{
+	ll i,v,w;
+	visit[u]=1;
+	level[u]=l;
+	for(i=0;i<(ll)g[u].size();i++)
+	{
+		v=g[u][i].first;
+		w=g[u][i].second;
+		if(visit[v]==0)
+		{
+			parent[v]=u;
+			f[v][0].total=f[v][0].top=f[v][0].bottom=w;
+			f[v][0].sum=w;
+			dfs(v,l+1);
+		}
+	}
+}
+
+data combine(data b,data t)
+{
+	data r;
+	r.total=b.total+t.total;
+	r.top=max(t.top,t.total+b.top);
+	r.bottom=max(t.bottom+b.total,b.bottom);
+	r.sum=max(b.top+t.bottom,max(b.sum,t.sum));
+	return r;
+}
+
+int main()
+{
+    #ifndef ONLINE_JUDGE
+    	//freopen("in.txt","r",stdin);
+    	//freopen("out.txt","w",stdout);
+    #endif
+    ll i,u,v,w,q,j,x,lca,c,d,y,ans;
+    data t,b;
+    scanf("%lld%lld",&n,&q);
+    for(i=1;i<n;i++)
+    {
+    	scanf("%lld%lld%lld",&u,&v,&w);
+    	g[u].push_back(make_pair(v,w));
+    	g[v].push_back(make_pair(u,w));
+    }
+    for(i=1;i<=n;i++)
+    {
+    	parent[i]=-1;
+    	level[i]=0;
+    	visit[i]=0;
+    	for(j=0;(1<<j)<=n;j++)
+    	{
+    		dp[i][j]=-1;
+    		f[i][j].sum=f[i][j].total=f[i][j].top=f[i][j].bottom=0;
+    	}
+    }
+    dfs(1,1);
+    for(i=1;i<=n;i++)
+    	dp[i][0]=parent[i];
+    for(j=1;(1<<j)<=n;j++)
+    {
+    	for(i=1;i<=n;i++)
+    	{
+    		x=dp[i][j-1];
+    		if(x!=-1)
+    		{
+    			dp[i][j]=dp[x][j-1];
+    			/*f[i][j].total=f[i][j-1].total+f[x][j-1].total;
+    			f[i][j].top=max(f[x][j-1].top,f[x][j-1].total+f[i][j-1].top);
+    			f[i][j].bottom=max(f[x][j-1].bottom+f[i][j-1].total,f[i][j-1].bottom);
+    			f[i][j].sum=max(max(f[i][j].top,f[i][j].bottom),f[i][j].total);
+    			f[i][j].sum=max(f[i][j].sum,max(f[i][j-1].sum,f[x][j-1].sum));
+    			f[i][j].sum=max(f[i][j].sum,f[i][j-1].top+f[x][j-1].bottom);*/
+    			f[i][j]=combine(f[i][j-1],f[x][j-1]);
+    		}
+    	}
+    }
+    while(q--)
+    {
+    	scanf("%lld%lld",&u,&v);
+    	c=u;
+    	d=v;
+    	if(level[u]<level[v])
+    		swap(u,v);
+    	x=log2(level[u]);
+    	for(i=x;i>=0;i--)
+    	{
+    		if(level[u]-(1<<i)>=level[v])
+    			u=dp[u][i];
+    	}
+    	if(u==v)
+    		lca=u;
+    	else
+    	{
+    		for(i=x;i>=0;i--)
+    		{
+    			if(dp[u][i]!=-1&&dp[u][i]!=dp[v][i])
+    			{
+    				u=dp[u][i];
+    				v=dp[v][i];
+    			}
+    		}
+    		lca=parent[u];
+    	}
+    	u=c;
+    	v=d;
+    	if(lca==u)
+    	{
+    		//ancestor of v
+    		t.sum=t.top=t.total=t.bottom=0;
+    		x=log2(level[v]);
+    		for(i=x;i>=0;i--)
+    		{
+    			if(level[v]-(1<<i)>=level[lca])
+    			{
+    				t=combine(t,f[v][i]);
+    				v=dp[v][i];
+    			}
+    		}
+    		ans=t.sum;
+    	}
+    	else if(lca==v)
+    	{
+    		//ancestor of u
+    		b.sum=b.top=b.total=b.bottom=0;
+    		x=log2(level[u]);
+    		for(i=x;i>=0;i--)
+    		{
+    			if(level[u]-(1<<i)>=level[lca])
+    			{
+    				b=combine(b,f[u][i]);
+    				u=dp[u][i];
+    			}
+    		}
+    		ans=b.sum;
+    	}
+    	else
+    	{
+    		//ancestor of u
+    		b.sum=b.top=b.total=b.bottom=0;
+    		x=log2(level[u]);
+    		for(i=x;i>=0;i--)
+    		{
+    			if(level[u]-(1<<i)>=level[lca])
+    			{
+    				b=combine(b,f[u][i]);
+    				u=dp[u][i];
+    			}
+    		}
+    		//ancestor of v
+    		t.sum=t.top=t.total=t.bottom=0;
+    		x=log2(level[v]);
+    		for(i=x;i>=0;i--)
+    		{
+    			if(level[v]-(1<<i)>=level[lca])
+    			{
+    				t=combine(t,f[v][i]);
+    				v=dp[v][i];
+    			}
+    		}
+    		swap(t.top,t.bottom);
+    		b=combine(b,t);
+    		ans=b.sum;
+    	}
+    	printf("%lld\n",ans);
+    }
+    return 0;
+}

@@ -1,0 +1,116 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+class Node {
+public:
+	Node* left;
+	Node* right;
+	Node* parent;
+	char label;
+	
+	Node () {
+		this->left = NULL;
+		this->right = NULL;
+		this->parent = NULL;
+	}
+	
+	Node(Node* parent) {
+		this->left = NULL;
+		this->right = NULL;
+		this->parent = parent;
+	}
+	
+	~Node() {
+		if(this->left) delete this->left;
+		if(this->right) delete this->right;
+	}
+};
+
+Node* buildTree(string s) {
+	Node* tree = new Node;
+	Node* current = tree;
+	
+	int length = s.length();
+	
+	for(int i = 0; i < length; i++) {
+		switch(s[i]) {
+		case '(':
+			if(s[i+1] != '.') {
+				current->left = new Node(current);
+				current = current->left;
+			}
+			break;
+			
+		case ')':
+			current = current->parent;
+			if(i + 1 < length && s[i+1] >= 'a' && s[i+1] <= 'z') {
+				current->right = new Node(current);
+				current = current->right;
+			}
+			break;
+			
+		case '.':
+			if(s[i+1] >= 'a' && s[i+1] <= 'z') {
+				current->right = new Node(current);
+				current = current->right;
+			}
+			break;
+			
+		default:
+			current->label = s[i];
+		}
+	}
+	
+	return tree;
+}
+
+void preorder(Node* node, int column, int targetColumn, vector<char>* values) {
+	if(!node)
+		return;
+		
+	if(column == targetColumn) {
+		values->push_back(node->label);
+	}
+	
+//	cout << node->label << endl;
+	
+
+	preorder(node->right, column+1, targetColumn, values);
+	preorder(node->left, column-1, targetColumn, values);
+}
+
+int main()
+{
+    int T;
+    cin >> T;
+    
+    while(T--) {
+    	int column;
+    	string s;
+    	
+    	cin >> column >> s;
+    	
+    	Node* root = buildTree(s);
+    	vector<char> col;
+    	preorder(root, 0, column, &col);
+
+    	if(col.size() == 0) {
+    		cout << "Common Gandhijee!" << endl;
+    		continue;
+    	}
+    	
+    	sort(col.begin(), col.end());
+    	for(int i = 0; i < col.size(); i++)
+    		cout << col[i];
+    		
+    	cout << endl;
+    	
+    	delete root;
+    	
+    }
+    
+    return 0;
+}

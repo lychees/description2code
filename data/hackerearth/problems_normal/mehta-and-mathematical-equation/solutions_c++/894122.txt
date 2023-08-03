@@ -1,0 +1,96 @@
+#include <bits/stdc++.h>
+#define _ ios_base::sync_with_stdio(0);cin.tie(0);
+
+using namespace std;
+
+
+#define ll long long
+#define ff first
+#define ss second
+#define mpa make_pair
+#define MOD 1000000007
+#define pb push_back
+#define lld I64d
+#define MXN 1000000
+
+int bitcnt(int mask){return __builtin_popcount(mask);}
+int SET(int N,int pos){ return N=N | (1<<pos);}
+int RESET(int N,int pos){   return N= N & ~(1<<pos);}
+int check(int N,int pos){   return (N & (1<<pos));}
+int toggle(int N,int pos){if(check(N,pos))return N=RESET(N,pos);return N=SET(N,pos);}
+void PRINTBIT(int N){   printf("("); for(int i=6;i>=1;i--)  {bool x=check(N,i);cout<<x;}    puts(")");}
+int mod(int a, int b) { return a - a/b * b;}
+
+ll N;
+vector<int> Arr;
+ll Dp[100][100][3];
+
+void brute()
+{
+	int ans = 0;
+	for(int i = 1; i <= N; ++i) {
+		for(int j = 1; j <= N; ++j) {
+			for(int k = 1; k <= N; ++k) {
+				if(i + j + k == N && (i & j & k)> 0)
+					ans++;
+			}
+		}
+	}
+	
+	printf("%d\n", ans);
+}
+
+ll rec(int pos, int carry, bool is)
+{
+	if(pos == -1)
+		return (carry == 0 && is);
+	
+	if(Dp[pos][carry][is] != -1)
+		return Dp[pos][carry][is];
+	
+	ll ans = 0;
+	
+	for(int i = 0; i <= 1; ++i) {
+		for(int j = 0; j <= 1; ++j) {
+			for(int k = 0; k <= 1; ++k) {
+				if((i + j + k + carry)%2 == Arr[pos]) {
+					ans += rec(pos - 1, (i + j + k + carry)/2, is | ((i + j + k == 3)));
+				}
+				
+				if(ans >= MOD)
+					ans %= MOD; 
+			}
+		}
+	}
+	
+	return Dp[pos][carry][is] = ans;
+}
+
+void solve()
+{
+	memset(Dp, -1, sizeof Dp);
+	
+	Arr.clear();
+	while(N) {
+		Arr.pb(N%2);
+		N >>= 1;
+	}
+	N = Arr.size();
+	reverse(Arr.begin(), Arr.end());
+	
+	ll ans = rec(N - 1, 0, 0);
+	printf("%lld\n", ans);
+}
+
+int main()
+{
+	int T;
+	scanf("%d", &T);
+	
+	while(T--) {
+		scanf("%lld", &N);
+		solve();
+	}
+	
+	return 0;
+}

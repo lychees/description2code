@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const int N = 2e5 + 7;
+const int SEG = 4 * N;
+int MOD;
+
+int sum[SEG][2], lazy[SEG], fib[N][2], pfib[N][2];
+int n, q;
+
+void shift(int v, int s, int e)
+{
+	int mid = (s + e) / 2;
+
+	lazy[2 * v] += lazy[v], lazy[2 * v] %= MOD;
+	for (int i=0; i<2; i++)
+		sum[2 * v][i] += 1LL * lazy[v] * pfib[mid - s][i] % MOD, sum[2 * v][i] %= MOD;
+
+	lazy[2 * v + 1] += lazy[v], lazy[2 * v + 1] %= MOD;
+	for (int i=0; i<2; i++)
+		sum[2 * v + 1][i] += 1LL * lazy[v] * pfib[e - mid][i] % MOD, sum[2 * v + 1][i] %= MOD;
+
+	lazy[v] = 0;
+}
+
+void merge(int v, int s, int e)
+{
+	int mid = (s + e) / 2;
+	for (int i=0; i<2; i++)
+		sum[v][i] = (1LL * sum[2 * v][i] + 1LL * sum[2 * v + 1][i] * fib[mid - s + i][i] % MOD + 1LL * sum[2 * v + 1][i ^ 1] * fib[mid - s + (i ^ 1)][i] % MOD) % MOD;
+}
+
+void fetch(int ind, int val, int s = 0, int e = n, int v = 1)
+{
+	if (e - s == 1)
+	{
+		sum[v][0] = val;
+		sum[v][1] = 0;
+		return;
+	}
+	shift(v, s, e);
+	int mid = (s + e) / 2;
+	if (ind < mid)
+		fetch(ind, val, s, mid, 2 * v);
+	else
+		fetch(ind, val, mid, e, 2 * v + 1);
+	merge(v, s, e);
+}
+
+void add(int l, int r, int val, int s = 0, int e = n, int v = 1)
+{
+	if (l <= s && e <= r)
+	{
+		for (int i=0; i<2; i++)
+			sum[v][i] += 1LL * val * pfib[e - s][i] % MOD, sum[v][i] %= MOD;
+		lazy[v] += val, lazy[v] %= MOD;
+		return;
+	}
+	if (l >= e || r <= s)
+		return;
+	shift(v, s, e);
+	int mid = (s + e) / 2;
+	add(l, r, val, s, mid, 2 * v);
+	add(l, r, val, mid, e, 2 * v + 1);
+	merge(v, s, e);
+}
+
+int get(int l, int r, int s = 0, int e = n, int v = 1)
+{
+	if (l <= s && e <= r)
+		return (1LL * sum[v][0] * (fib[s - l][0] + fib[s - l][1]) % MOD + 1LL * sum[v][1] * (fib[s - l + 1][0] + fib[s - l + 1][1]) % MOD) % MOD;
+	if (l >= e || r <= s)
+		return 0;
+	shift(v, s, e);
+	int mid = (s + e) / 2;
+	return (get(l, r, s, mid, 2 * v) + get(l, r, mid, e, 2 * v + 1)) % MOD;
+}
+
+int main()
+{
+	scanf("%d %d %d", &n, &q, &MOD);
+
+	fib[0][0] = fib[1][1] = 1;
+	for (int i=2; i<=n; i++)
+		for (int j=0; j<2; j++)
+			fib[i][j] = (fib[i-1][j] + fib[i-2][j]) % MOD;
+	for (int i=0; i<=n; i++)
+		for (int j=0; j<2; j++)
+			pfib[i+1][j] = (pfib[i][j] + fib[i][j]) % MOD;
+
+	for (int i=0; i<n; i++)
+	{
+		int t;
+		scanf("%d", &t);
+		fetch(i, t);
+	}
+
+	while (q--)
+	{
+		int t;
+		scanf("%d", &t);
+		if (t == 1)
+		{	
+			int x, v;
+			scanf("%d %d", &x, &v);
+			x--;
+			fetch(x, v);
+		}
+		else if (t == 2)
+		{
+			int l, r;
+			scanf("%d %d", &l, &r);
+			l--;
+			printf("%d\n", get(l, r));
+		}
+	}
+	return 0;
+}

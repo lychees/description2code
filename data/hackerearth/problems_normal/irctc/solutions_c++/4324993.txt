@@ -1,0 +1,123 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define mp make_pair
+#define pb push_back
+typedef long long int lli;
+vector<pair<int,lli> >G[100*1000+9];
+lli dist[100*1000+8];
+bool vis[100*1000+8];
+int pre[100*1000+8];
+int main()
+{
+    int tc;scanf("%d",&tc);
+    while(tc--)
+    {
+        int N,M;scanf("%d %d",&N,&M);
+        for(int i=1;i<=N;++i)
+            G[i].clear();
+        for(int i=0;i<M;++i)
+        {
+            int u,v;lli cost;
+            scanf("%d %d %lld",&u,&v,&cost);
+            G[u].pb(mp(v,cost));
+            G[v].pb(mp(u,cost));
+        }
+        int A,B,C;scanf("%d %d %d",&A,&B,&C);
+        //dijstra from c to b 
+        for(int i=1;i<=N;++i)
+            dist[i]=0x7fffffff;
+        memset(vis,false,sizeof vis);
+        memset(pre,0,sizeof pre);
+        dist[C]=0;
+        lli ans=0;
+        multiset<pair<lli,int> >S;
+        S.insert(mp(0,C));
+       pre[C]=C;
+        while(S.size()>0)
+        {
+            pair<lli,int>top= *S.begin();
+            S.erase(S.begin());
+            int u=top.second;
+            if(vis[u])continue;
+            vis[u]=true;
+           //if(u==B)break;
+            for(int i=0;i<(int)G[u].size();++i)
+            {
+                if(!vis[G[u][i].first] && 
+                        dist[u]+G[u][i].second<dist[G[u][i].first])
+                {
+                    dist[G[u][i].first]=dist[u]+G[u][i].second;
+                    pre[G[u][i].first]=u;
+                    S.insert(mp(dist[G[u][i].first],G[u][i].first));
+                }
+            }
+        }
+        vector<int>ord1;
+        int curr=B;
+        while(pre[curr]!=curr)
+        {
+            ord1.push_back(curr);
+            curr=pre[curr];
+        }
+        
+       // printf("dist C to B %lld\n",dist[B]);
+        if(dist[B]==0x7fffffff)
+        {
+            puts("No Train Found.");
+            continue;
+        }
+        ans+=dist[B];
+       // printf("%d");
+        //dijstra from B to A
+        for(int i=1;i<=N;++i)
+            dist[i]=0x7fffffff;
+        memset(vis,false,sizeof vis);
+        memset(pre,0,sizeof pre);
+        dist[B]=0;
+        S.clear();
+        S.insert(mp(0,B));
+        pre[B]=B;
+        while(S.size()>0)
+        {
+            pair<lli,int>top= *S.begin();
+            S.erase(S.begin());
+            int u=top.second;
+            if(vis[u])continue;
+            vis[u]=true;
+            //if(u==A)break;
+            for(int i=0;i<(int)G[u].size();++i)
+            {
+                if(!vis[G[u][i].first] && 
+                        dist[u]+G[u][i].second<dist[G[u][i].first])
+                {
+                    dist[G[u][i].first]=dist[u]+G[u][i].second;
+                    pre[G[u][i].first]=u;
+                    S.insert(mp(dist[G[u][i].first],G[u][i].first));
+                }
+            }
+        }
+        vector<int>ord2;
+        curr=A;
+        while(pre[curr]!=curr)
+        {
+            ord2.push_back(curr);
+            curr=pre[curr];
+        }
+        //printf("dist B to A %lld\n",dist[A]);
+        if(dist[A]==0x7fffffff)
+        {
+            puts("No Train Found.");
+            continue;
+        }
+        ans+=dist[A];
+        printf("%lld\n",ans);
+        for(int i=0;i<(int)ord2.size();++i)
+            printf("%d ",ord2[i]);
+      // puts("");
+        for(int i=0;i<(int)ord1.size();++i)
+            printf("%d ",ord1[i]);
+        printf("%d\n",C);
+        //puts("");
+    }
+    return 0;
+}

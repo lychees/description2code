@@ -1,0 +1,102 @@
+#include<cstdio>
+#include<cstdlib>
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<cstring>
+#include<map>
+#include<set>
+#include<stack>
+#include<queue>
+#include<string>
+#include<iterator>
+#include<string>
+#include<sstream>
+#include<cassert>
+typedef long long int LL ;
+using namespace std;
+
+char snum[105], str[105];
+string line;
+
+int Digits , Digit[11];
+pair<int , int> par[1024][1000];
+int edge[1024][1000];
+bool vis[1024][1000];
+int N ;
+
+string bfs(void){
+    queue<pair<int, int> > Q ;
+    for(int i = 0;i < (1<<Digits);i++){
+        for(int j = 0;j < N;j++){
+            vis[i][j] = false;
+        }
+    }
+    Q.push(make_pair(0,0));
+    vis[0][0] = true;
+    int smod, smask , tmask, tmod;
+    int total = (1 << Digits ) - 1;
+    pair<int, int> p ;
+    while(!Q.empty()){
+        p = Q.front();
+        smask = p.first ,smod = p.second;
+        if(smask == total && smod == 0) break;
+        Q.pop();
+        for(int i = 0;i < Digits;i++){
+            if(smask == 0 && Digit[i] == 0) continue;
+            tmask = smask | (1 << i);
+            tmod = (smod*10 + Digit[i])%N;
+            if(vis[tmask][tmod]) continue;
+            vis[tmask][tmod] = true;
+            par[tmask][tmod] = p;
+            edge[tmask][tmod] = Digit[i];
+            Q.push(make_pair(tmask,tmod));
+        }
+    }
+    if(!vis[total][0]) return "0";
+    smask = total , smod = 0 ;
+    string ans  ;
+    while(smask){
+        ans += (edge[smask][smod] + '0');
+        tmask = par[smask][smod].first;
+        tmod = par[smask][smod].second;
+        smask = tmask , smod = tmod ;
+    }
+    reverse(ans.begin(),ans.end());
+    return ans;
+}
+
+int main(){
+    int T, tnum ;
+    gets(snum);
+    T = atoi(snum);
+    while(T--){
+        gets(str);
+        line = string(str);
+        stringstream ss ;
+        ss << str;
+        Digits = 0;
+        while(ss >> tnum) Digit[Digits++] = tnum;
+        gets(snum);
+        N = atoi(snum);
+        sort(Digit,Digit+Digits);
+        string ret = bfs();
+        if(ret[0] == '0') puts("Impossible");
+        else{
+            int curr = 0 , l = ret.size();
+            string ans = "";
+            int s  = 0;
+            for(int i = 0;i < l;i++){
+                curr = curr*10 + ret[i] - '0';
+                if(curr < N) ans += '0';
+                else{
+                    ans += ('0' + (curr/N));
+                    curr %= N ;
+                }
+            }
+            for(int i = 0;i < ans.length()  && ans[i] == '0';i++)  s++;
+            cout << ret << " = " << N << " * " << ans.substr(s) << endl;
+        }
+    }
+    return 0;
+}

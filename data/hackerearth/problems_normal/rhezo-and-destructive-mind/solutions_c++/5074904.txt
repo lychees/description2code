@@ -1,0 +1,71 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define fs first
+#define sc second
+#define MAX 1005
+#define p 1000000007
+#define pb push_back
+#define mp make_pair
+typedef long long Int;
+typedef pair<Int,Int> pii;
+typedef vector<Int> vi;
+typedef vector<pii> vii;
+Int rchild,croot;//root children count, current root
+set<Int>Ap;//articulation point
+vi G[MAX];
+Int dfs_low[MAX];
+Int dfs_par[MAX];//dfs_par[i] stores parent of i th node in dfs spanning tree
+Int dfs_num[MAX],cntr=0;
+void dfs(Int src)
+{
+    dfs_num[src]=dfs_low[src]=(++cntr);
+    for (Int i=0;i<G[src].size();++i)
+    {
+        if (dfs_num[G[src][i]]==0)//tree edge
+        {
+            dfs_par[G[src][i]]=src;
+            if (src==croot)
+                ++rchild;
+            dfs(G[src][i]);
+            dfs_low[src]=min(dfs_low[src],dfs_low[G[src][i]]);
+            if (dfs_low[G[src][i]]>=dfs_num[src]&&src!=croot)
+                Ap.insert(src);
+        }
+        else if (G[src][i]!=dfs_par[src])//so as to consider only back edges and don't take in account bidirectional edges
+            dfs_low[src]=min(dfs_low[src],dfs_num[G[src][i]]);
+    }
+}
+int main()
+{
+    Int N,M;
+    cin>>N>>M;
+    for (Int i=0;i<M;++i)
+    {
+        Int u,v;
+        cin>>u>>v;
+        G[u].pb(v);
+        G[v].pb(u);
+    }
+    for (Int i=1;i<=N;++i)
+    {
+    	if (dfs_num[i]!=0)
+    		continue;
+    	rchild=0;
+    	croot=i;
+    	dfs(i);
+    	if (rchild>1)
+        	Ap.insert(i);
+    }
+    Int Q;
+    cin>>Q;
+    while (Q--)
+    {
+    	Int X;
+    	cin>>X;
+    	if (Ap.find(X)!=Ap.end())
+    		cout<<"Satisfied "<<G[X].size()<<"\n";
+    	else
+    		cout<<"Not Satisfied\n";
+    }
+    return 0;
+}

@@ -1,0 +1,209 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+struct node {
+    ll sum=0;
+    int len;
+    int left;
+    int right;
+    int nLeft;
+    int nRight;
+
+};
+ostream &operator<< ( ostream &os, node &n ) {
+    return os<<"sum: "<<n.sum<<"("<<n.left<<"*"<<n.nLeft<<"..."<<n.right<<"*"<<n.nRight<<")"<<"length: "<<n.len<<endl;
+
+}
+struct SegmentTreeRR {
+    int n;
+    int size;
+
+    vector<node> tree;
+    vi lazy;
+    SegmentTreeRR ( int _n ) {
+        n=1;
+        while ( n<_n ) n*=2;
+        size=2*n;
+        tree=vector<node> ( size );
+        lazy=vi ( n,0 );
+    }
+    bool isLeaf ( int no ) {
+        return no>=n;
+    }
+    void lazyUpdate ( int no ) {
+        int no1=2*no;
+        int no2=no1+1;
+        int len=tree[no].len/2;
+        tree[no1].len=tree[no2].len=len;
+        tree[no1].sum=tree[no2].sum=p2 ( len );
+        tree[no1].left=tree[no1].right=tree[no2].left=tree[no2].right=tree[no].left;
+        tree[no1].nLeft=tree[no1].nRight=tree[no2].nLeft=tree[no2].nRight=len;
+        if ( !isLeaf ( no1 ) ) lazy[no1]=1;
+        if ( !isLeaf ( no2 ) ) lazy[no2]=1;
+        lazy[no]=0;
+
+
+    }
+    static ll p2 ( int n ) {
+        return ( ll ) n* ( n+1 ) /2;
+
+    }
+    node merge ( const node &n1, const node &n2 ) {
+        node n;
+        n.left=n1.left;
+        n.nLeft=n1.nLeft;
+        n.right=n2.right;
+        n.nRight=n2.nRight;
+        n.sum=n1.sum+n2.sum;
+        n.len=n1.len+n2.len;
+        if ( n1.right==n2.left ) {
+            n.sum+=p2 ( n1.nRight+n2.nLeft )-p2 ( n1.nRight )-p2 ( n2.nLeft );
+            if ( n1.nLeft==n1.len ) n.nLeft+=n2.nLeft;
+            if ( n2.nRight==n2.len ) n.nRight+=n1.nRight;
+        }
+        return n;
+
+    }
+    void merge ( int no ) {
+        tree[no]=merge ( tree[2*no],tree[2*no+1] );
+
+
+    }
+    void  update ( int no, int L, int R, int l, int r , int val ) {
+        if ( l<=L && R<=r ) {
+            int len=R-L;
+            tree[no].len=len;
+            tree[no].sum=p2 ( len );
+            tree[no].left=val;
+            tree[no].right=val;
+            tree[no].nLeft=len;
+            tree[no].nRight=len;
+            if ( !isLeaf ( no ) ) lazy[no]=1;
+            return;
+        }
+
+        int s= ( L+R ) >>1;
+        if ( lazy[no] ) {
+            lazyUpdate ( no );
+        }
+
+        if ( l<s ) update ( 2*no, L,s,l,r ,val );
+        if ( r>s ) update ( 2*no+1,s,R,l,r ,val );
+        merge ( no );
+
+    }
+    void update ( int l, int r ,int v ) {
+        update ( 1,0,n,l,r,  v );
+
+    }
+    node query ( int no, int L, int R,int l , int r ) {
+        if ( l<=L && R<=r ) {
+            return tree[no];
+        }
+        assert ( !isLeaf ( no ) );
+        int s= ( L+R ) >>1;
+        if ( lazy[no] ) {
+            lazyUpdate ( no );
+        }
+
+        if ( l<s ) {
+            node val1= query ( 2*no,L,s,l,r );
+            if ( r>s ) {
+                node val2=  query ( 2*no+1,s,R,l,r );
+                val1=merge ( val1,val2 );
+            }
+            return val1;
+        } else  return  query ( 2*no+1,s,R,l,r );
+
+    }
+    ll query ( int l,int r ) {
+        return query ( 1,0,n,l,r ).sum;
+    }
+
+};
+struct query {
+    int type;
+    int l,r;
+    int val;
+};
+istream &operator>> ( istream &is, query& q ) {
+    is>>q.type>>q.l>>q.r;
+    q.l--;
+    if ( q.type==0 ) is>>q.val;
+    return is;
+}
+int main() {
+    ios_base::sync_with_stdio ( false );
+    int n,m;
+    cin>>n>>m;
+    SegmentTreeRR st ( n );
+    vi a ( n );
+
+    cin>>a;
+    rep ( i,n ) {
+        st.update ( i,i+1,a[i] );
+
+    }
+    vector<query> qq ( m );
+    cin>>qq;
+    vll r;
+    for ( query q: qq ) {
+        if ( q.type==0 ) {
+            st.update ( q.l,q.r,q.val );
+        } else {
+            ll res=st.query ( q.l,q.r );
+            r.push_back ( res );
+
+        }
+    }
+    for ( ll res: r ) cout<<res<<'\n';
+
+
+
+}

@@ -1,0 +1,182 @@
+#include <cstdio>
+
+#include <vector>
+#include <cstring>
+
+using namespace std;
+
+typedef long long llong;
+typedef vector<int> VI;
+typedef vector<VI> VVI;
+
+const int MOD = 1e9 + 7;
+
+// http://codeforces.com/blog/entry/17881?#comment-227516
+llong mod_inverse(llong a, llong m) {
+   return a < 2 ? a : ((1 - m * 1ll * mod_inverse(m % a, a)) / a % m + m) % m;
+}
+
+
+struct SegmentTreeLazyPropNode {
+   llong sum;
+   llong delay_factor;
+   SegmentTreeLazyPropNode() : sum(0), delay_factor(0) { }
+   SegmentTreeLazyPropNode operator+(const SegmentTreeLazyPropNode& R) const {
+      SegmentTreeLazyPropNode res;
+      res.sum = (sum + R.sum) % MOD;
+      res.delay_factor = 0;
+      return res;
+   }
+   void update(int L, int R, llong d) {
+      if (delay_factor)
+         delay_factor = (delay_factor * d) % MOD;
+      else
+         delay_factor = d;
+      sum = (sum * d) % MOD;
+   }
+   void propagate(SegmentTreeLazyPropNode& pL,
+                  SegmentTreeLazyPropNode& pR,
+                  int L, int R)
+   {
+      if (delay_factor) {
+         // push sum to children
+         pL.update(L, (L+R)/2, delay_factor);
+         pR.update((L+R)/2+1, R, delay_factor);
+         delay_factor = 0;
+      }
+   }
+
+};
+
+class SegmentTreeLazyProp {
+   int N;
+   vector<SegmentTreeLazyPropNode> tree;
+
+   void _preprocess(const vector<llong>& A, int node, int L, int R);
+   void _update(int p, int q, int val, int node, int L, int R);
+   SegmentTreeLazyPropNode _query(int p, int q, int node, int L, int R);
+public:
+   SegmentTreeLazyProp(const vector<llong>& A) {
+      N = A.size();
+      int NODES = 4*N;
+      tree = vector<SegmentTreeLazyPropNode>(NODES);
+      _preprocess(A, 1, 0, N-1);
+   }
+   void update(int p, int q, int val) {
+      _update(p, q, val, 1, 0, N-1);
+   }
+   SegmentTreeLazyPropNode query(int p, int q) {
+      return _query(p, q, 1, 0, N-1);
+   }
+};
+
+void SegmentTreeLazyProp::_preprocess(const vector<llong>& A, int node, int L, int R) {
+   if (L == R) {
+   // tree[node] = SegmentTreeLazyPropNode();
+      tree[node].sum = A[L];
+      return;
+   }
+
+   //compute the values in the left and right subtrees
+   _preprocess(A, 2*node, L, (L+R)/2);
+   _preprocess(A, 2*node+1, (L+R)/2+1, R);
+
+   const SegmentTreeLazyPropNode& pL = tree[2*node];
+   const SegmentTreeLazyPropNode& pR = tree[2*node+1];
+
+   // merge the first and second half of the interval
+   tree[node] = pL + pR;
+}
+
+void SegmentTreeLazyProp::_update(int p, int q, int val, 
+                                  int node, int L, int R) {
+   if (q < L || p > R) return;
+   if (p <= L && R <= q) {
+      tree[node].update(L, R, val);
+      return;
+   }
+   tree[node].propagate(tree[2*node], tree[2*node+1], L, R);
+   _update(p, q, val, 2*node, L, (L+R)/2);
+   _update(p, q, val, 2*node+1, (L+R)/2+1, R);
+   tree[node] = tree[2*node] + tree[2*node+1];
+}
+
+SegmentTreeLazyPropNode SegmentTreeLazyProp::_query(
+   int p, int q, int node, int L, int R)
+{
+   if (q < L || p > R) return SegmentTreeLazyPropNode();
+   if (p <= L && R <= q) return tree[node];
+   tree[node].propagate(tree[2*node], tree[2*node+1], L, R);
+   SegmentTreeLazyPropNode resL = _query(p, q, 2*node, L, (L+R)/2);
+   SegmentTreeLazyPropNode resR = _query(p, q, 2*node+1, (L+R)/2+1, R);
+   return resL + resR;
+}
+
+
+#define MAXN 100004
+
+int N;
+VI adj[MAXN];
+int A[MAXN];
+
+int dfs_time = -1;
+int dfs_start[MAXN];
+int dfs_end[MAXN];
+vector<llong> vis;
+void dfs(int u, int p = -1, int factor = 1) {
+   dfs_start[u] = ++dfs_time;
+   vis[ dfs_time ] = factor;
+   for (int v : adj[u]) {
+      if (v == p) continue;
+      dfs(v, u, (factor * llong(A[u])) % MOD);
+   }
+   dfs_end[u] = dfs_time;
+}
+
+int main(int argc, char* argv[]) {
+   int Q;
+   scanf("%d %d", &N, &Q);
+   for (int j = 1; j < N; ++j) {
+      int u, v;
+      scanf("%d %d", &u, &v);
+      --u, --v;
+      adj[u].push_back(v);
+      adj[v].push_back(u);
+   }
+
+   for (int u = 0; u < N; ++u)
+      scanf("%d", A+u);
+
+   vis = vector<llong>(N, 0);
+   dfs(0);
+   /*
+   for (int u = 0; u < N; ++u) {
+      fprintf(stderr, "%d: %d %d %d\n",
+              u+1, dfs_start[u], dfs_end[u], vis[ dfs_start[u] ]);
+   }
+   */
+
+   SegmentTreeLazyProp st(vis);
+
+   for (int j = 1; j <= Q; ++j) {
+      int op, v;
+      scanf("%d %d", &op, &v);
+      --v;
+      if (op == 1) {
+         int x;
+         scanf("%d", &x);
+         int delta_factor = (mod_inverse(A[v], MOD) * llong(x)) % MOD;
+         int p = dfs_start[v]+1, q = dfs_end[v];
+      //   fprintf(stderr, "Updating [%d,%d] by factor = %d\n", p, q, delta_factor);
+         st.update(p, q, delta_factor);
+         A[v] = x;
+      }
+      else {
+         int p = dfs_start[v], q = dfs_end[v];         
+         SegmentTreeLazyPropNode res = st.query(p, q);
+         printf("%lld\n", res.sum);
+      }
+   }
+
+   return 0;
+}

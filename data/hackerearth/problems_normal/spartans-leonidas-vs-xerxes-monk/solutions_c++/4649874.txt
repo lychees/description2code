@@ -1,0 +1,166 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+typedef struct _node{
+    ll max_pref;
+    ll max_suff;
+
+    ll L_end, R_end;
+
+    ll ans;
+
+}Node;
+Node null;
+Node tree[400000];
+
+ll ara[300000];
+
+ll m, n, x, y, z, q, cs = 1, T;
+
+
+Node combine(Node lft, Node rght)
+{
+    Node temp;
+
+    temp.ans = max(lft.ans, rght.ans);
+
+    if(ara[lft.R_end] < ara[rght.L_end]) temp.ans = max(temp.ans, lft.max_suff + rght.max_pref);
+
+    temp.L_end = lft.L_end;
+    temp.R_end = rght.R_end;
+
+    if(lft.ans == lft.R_end - lft.L_end + 1 && ara[lft.R_end] < ara[rght.L_end]){
+        temp.max_pref = lft.ans + rght.max_pref;
+    }
+    else temp.max_pref = lft.max_pref;
+
+
+    if(rght.ans == rght.R_end - rght.L_end + 1 && ara[lft.R_end] < ara[rght.L_end]){
+        temp.max_suff = rght.ans + lft.max_suff;
+    }
+    else temp.max_suff = rght.max_suff;
+
+    return temp;
+
+}
+
+void init(ll node, ll beg, ll end)
+{
+
+    if(beg == end){
+        tree[node].ans = tree[node].max_pref = tree[node].max_suff = 1;
+
+        tree[node].R_end = tree[node].L_end = beg;
+        return;
+    }
+
+    ll mid = (beg + end) / 2;
+    ll lft = 2 * node;
+    ll rght = 2 * node + 1;
+
+    init(lft, beg, mid);
+    init(rght, mid + 1, end);
+
+    tree[node] = combine(tree[lft], tree[rght]);
+
+}
+
+void update(ll node, ll beg, ll end, ll i, ll val)
+{
+
+    if(beg > end || beg > i || end < i) return;
+
+    if(beg == end){
+
+        ara[i] += val;
+        return;
+
+    }
+
+    ll mid = (beg + end) / 2;
+    ll lft = 2 * node;
+    ll rght = 2 * node + 1;
+
+    update(lft, beg, mid, i, val);
+    update(rght, mid + 1, end, i, val);
+
+    tree[node] = combine(tree[lft], tree[rght]);
+
+}
+
+Node query(ll node, ll beg, ll end, ll i, ll j)
+{
+
+    if(beg >= i && end <= j){
+
+
+        return tree[node];
+
+    }
+   // cout << node << ' ' << beg << ' ' << end << endl;
+
+    ll mid = (beg + end) / 2;
+    ll lft = 2 * node;
+    ll rght = 2 * node + 1;
+
+    Node p, q;
+
+    p.ans = p.max_pref = p.max_suff = q.ans = q.max_pref = q.max_suff = 0;
+
+    if(mid >= i) p = query(lft, beg, mid, i, j);
+    if(mid + 1 <= j) q = query(rght, mid + 1, end, i, j);
+
+    Node temp;
+
+
+    if(p.ans == 0){
+        temp = q;
+        temp.L_end = beg;
+        temp.R_end = end;
+
+        return temp;
+    }
+
+    if(q.ans == 0){
+        temp = p;
+        temp.L_end = beg;
+        temp.R_end = end;
+
+        return temp;
+    }
+
+    temp = combine(p, q);
+
+    return temp;
+}
+int main()
+{
+    cin >> T;
+
+    while(T--){
+
+        scanf("%lld %lld", &n, &q);
+        memset(tree, 0, sizeof(tree));
+
+        for(ll i = 1; i <= n; i++) scanf("%lld", &ara[i]);
+
+        init(1, 1, n);
+
+        for(ll i = 1; i <= q; i++){
+            ll choice, x, y;
+
+            scanf("%lld %lld %lld", &choice, &x, &y);
+            if(!choice){
+                Node t = query(1, 1, n, x, y);
+                printf("%lld\n", t.ans);
+            }
+            else{
+                update(1, 1, n, x, y);
+            }
+        }
+
+    }
+
+    return 0;
+}

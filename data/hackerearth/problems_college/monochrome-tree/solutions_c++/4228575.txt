@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define MY_LONG_MAX (((1ll<<62))|((1ll<<62)-1))
+#define MY_LONG_MIN (1ll<<63)
+using namespace std;
+ll int n;
+ll int visited[100010];
+list<ll int> l[100010];
+ll int a[100010],b[100010];//original color and required color
+ll int dp[100010][2];
+ll int mytime;
+void mydfs(ll int x)
+{
+	if(!visited[x])
+	{
+		visited[x]=mytime++;
+		list<ll int>::iterator it;
+		for(it=l[x].begin();it!=l[x].end();it++)
+		{
+			if(!visited[*it])
+			mydfs(*it);
+		}
+	}
+}
+ll int myfind(ll int index, ll int invert)
+{
+	if(dp[index][invert]==-1)
+	{
+		ll int t1,t2,ans,color;
+		color=a[index]^invert;
+		if(invert==0)
+		{
+			if(color==b[index])
+			{
+				t1=2;//inverted everything once & then just inverted this
+				t2=0;//did nothing
+				list<ll int>::iterator it;
+				for(it=l[index].begin();it!=l[index].end();it++)
+				{
+					if(visited[*it]>visited[index])//subtree rooted at this node
+					{
+						t1+=myfind(*it,1);
+						t2+=myfind(*it,0);
+					}
+				}
+				ans=min(t1,t2);
+			}
+			else
+			{
+				t1=1;//inverted this
+				t2=1;//inverted all
+				list<ll int>::iterator it;
+				for(it=l[index].begin();it!=l[index].end();it++)
+				{
+					if(visited[*it]>visited[index])//subtree rooted at this node
+					{
+						t1+=myfind(*it,0);
+						t2+=myfind(*it,1);
+					}
+				}
+				ans=min(t1,t2);
+			}
+			
+		}
+		else
+		{
+			if(color==b[index])
+			{
+				t1=2;//inverted everything once & then just inverted this
+				t2=0;//did nothing
+				list<ll int>::iterator it;
+				for(it=l[index].begin();it!=l[index].end();it++)
+				{
+					if(visited[*it]>visited[index])//subtree rooted at this node
+					{
+						t1+=myfind(*it,0);
+						t2+=myfind(*it,1);
+					}
+				}
+				ans=min(t1,t2);
+			}
+			else
+			{
+				t1=1;//inverted this
+				t2=1;//inverted all
+				list<ll int>::iterator it;
+				for(it=l[index].begin();it!=l[index].end();it++)
+				{
+					if(visited[*it]>visited[index])//subtree rooted at this node
+					{
+						t1+=myfind(*it,1);
+						t2+=myfind(*it,0);
+					}
+				}
+				ans=min(t1,t2);
+			}
+		}
+		dp[index][invert]=ans;
+	}
+	return dp[index][invert];
+}
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	memset(visited,0,sizeof(visited));
+	ll int n;
+	cin>>n;//n nodes
+	ll int i,x,y,ans;
+	for(i=0;i<=n;i++)
+	{
+		dp[i][0]=-1;dp[i][1]=-1;
+	}
+	for(i=0;i<(n-1);i++)
+	{
+		cin>>x>>y;
+		x--;y--; //0-based index
+		l[x].push_back(y);l[y].push_back(x);
+	}
+	for(i=0;i<n;i++)
+	cin>>a[i]; //original color
+	for(i=0;i<n;i++)
+	cin>>b[i]; //required color
+	mytime=1;
+	mydfs(0);//to get topological-kind of ordering - from 0 since tree is rooted at node 0
+	ans=myfind(0,0);
+	cout<<ans<<endl;
+	return 0;
+}

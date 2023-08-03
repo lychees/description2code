@@ -1,0 +1,79 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define MOD 1000000007
+
+typedef long long int lli;
+
+lli tree[20002000];
+lli A[1000005],gcdSum[1000005],ET[1000005];
+
+lli gcd_sum(lli num) {
+	for(int i=1;i<num;++i) ET[i]=i;
+	for(int i=2;i<num;++i) {
+		if(ET[i]==i) {
+			ET[i]=i-1;
+			for(int j=2*i;j<num;j+=i) ET[j]-=(ET[j]/i);
+		}
+	}
+	for(int i=1;i<num;++i)
+		for(int j=i,k=1;j<num;j+=i,++k)
+			gcdSum[j]+=(i*ET[k]);
+}
+
+void build_tree(lli node, lli start, lli end) {
+	if(start>end) return ;
+	if(start==end) {
+		tree[node]=gcdSum[A[start]];
+		return ;
+	}
+	lli mid=(start+end)/2;
+	build_tree(node*2,start,mid);
+	build_tree(node*2+1,mid+1,end);
+	tree[node]=tree[node*2]+tree[node*2+1];
+	if(tree[node]>=MOD) tree[node]%=MOD;
+}
+
+void update_tree(lli node, lli start, lli end, lli left, lli right, lli value) {
+	if(start>end || start>right || end<left) return ;
+	if(start==end) {
+		tree[node]=gcdSum[value];
+		return ;
+	}
+	lli mid=(start+end)/2;
+	update_tree(node*2,start,mid,left,right,value);
+	update_tree(node*2+1,mid+1,end,left,right,value);
+	tree[node]=tree[node*2]+tree[node*2+1];
+	if(tree[node]>=MOD) tree[node]%=MOD;
+}
+
+lli query_tree(lli node, lli start, lli end, lli left, lli right) {
+	if(start>end || start>right || end<left) return 0;
+	if(start>=left && end<=right) return tree[node];
+	lli mid=(start+end)/2;
+	lli query1=query_tree(node*2,start,mid,left,right);
+	lli query2=query_tree(node*2+1,mid+1,end,left,right);
+	return (query1+query2)%MOD;
+}
+
+int main() {
+	lli N,Q,X,Y;
+	char C;
+	scanf("%lld",&N);
+	gcd_sum(500005);
+	for(lli i=0;i<N;++i) scanf("%lld",&A[i]);
+	build_tree(1,0,N-1);
+	scanf("%lld",&Q);
+	while(Q--) {
+		cin >> C >> X >> Y;
+		--X;
+		if(C=='C') {
+			--Y;
+			printf("%lld\n",query_tree(1,0,N-1,X,Y));
+		}
+		else {
+			update_tree(1,0,N-1,X,X,Y);
+		}
+	}
+	return 0;
+}

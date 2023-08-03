@@ -1,0 +1,103 @@
+#include <iostream>
+using namespace std;
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <cstring>
+#define get getchar
+class lad{
+	public:
+	long long x,h,diff,id;
+};
+int tree[1000010];
+int MaxVal = 1000009;
+inline int scan() {
+    int n=0,s=1;
+    char p=get();
+    if(p=='-')  s=-1;
+    while((p<'0'||p>'9')&&p!=EOF&&p!='-') p=get();
+    if(p=='-') s=-1,p=get();
+    while(p>='0'&&p<='9') { n = (n<< 3) + (n<< 1) + (p - '0'); p=get(); }
+    return n*s;
+}
+int read(int idx) {
+	int sum = -1;
+	while(idx) {
+		sum = max(sum,tree[idx]);
+		idx-=(idx&-idx);
+	}
+	return sum;
+}
+ 
+void update(int idx, int val) {
+	while(idx <= MaxVal) {
+		tree[idx] = max(val,tree[idx]);
+		idx+=(idx&-idx);
+	}
+}
+vector <lad> ele,ele2;
+bool cmp(lad a, lad b) {
+	if (a.diff != b.diff)
+	  return a.diff < b.diff;
+	return a.x > b.x;
+}
+long long dist(lad a, lad b) {
+	return (a.x-b.x)*(a.x-b.x) + (a.h-b.h)*(a.h-b.h);
+}
+
+bool check(long long val) {
+	int st = 0;
+	memset(tree,0,sizeof(tree));
+	while (ele[st].id != 0)
+	  st++;
+	st++;
+	update(1,0);
+	bool flag = false;
+	for (;st < ele.size(); st++) {
+		int idx = read(ele[st].id);
+		if (idx != -1)
+		if (dist(ele2[idx],ele[st]) <= val) {
+			update(ele[st].id,ele[st].id);
+			if (ele[st].id + 1 == ele.size()) flag = true;
+		}
+		if (ele[st].id + 1 == ele.size()) {
+			break;
+		}
+	}
+	return flag;
+}
+
+int main() {
+    
+    int n; cin >> n;
+    ele.resize(n);
+    ele2.resize(n);
+	for (int i = 0; i < n; i++){
+		ele[i].x = scan();
+		ele[i].h = scan();
+		ele[i].diff = ele[i].x - ele[i].h;
+		ele[i].id = i;
+		ele2[i] = ele[i];
+	}   
+	
+	if (ele[0].diff >= ele[n-1].diff) {
+		cout << -1 << endl;
+		return 0;
+	}
+	long long lo,hi,mid;
+	lo = dist(ele[0],ele[1]), hi = dist(ele[0],ele[n-1]);
+	sort(ele.begin(),ele.end(),cmp);
+	while (lo < hi) {
+		//cout << lo << " " << hi << endl;
+		mid = lo + hi;
+		mid /= 2;
+		if (check(mid))
+		  hi = mid;
+		else
+		  lo = mid + 1;
+	}
+	
+	cout << lo << '\n';
+    
+    return 0;
+}

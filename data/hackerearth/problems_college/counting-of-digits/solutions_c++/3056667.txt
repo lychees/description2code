@@ -1,0 +1,180 @@
+//Author : pakhandi
+//
+using namespace std;
+
+#include<bits/stdc++.h>
+
+#define wl(n) while(n--)
+#define fl(i,a,b) for(int i=a; i<b; i++)
+#define rev(i,a,b) for(i=a; i>=b; i--)
+
+#define si(n) scanf("%d", &n)
+#define sll(l) scanf("%lld",&l)
+#define ss(s) scanf("%s", s)
+#define sc(c) scanf("%c", &c)
+#define sd(f) scanf("%lf", &f)
+
+#define pi(n) printf("%d\n", n)
+#define pll(l) printf("%lld\n", l)
+#define ps(s) printf("%s\n", s)
+#define pc(c) printf("%c\n", c)
+#define pd(f) printf("%lf\n", f)
+
+#define debug(x) cout<<"\n#("<<x<<")#\n"
+#define nline printf("\n")
+
+#define mem(a,i) memset(a,i,sizeof(a))
+
+#define MOD 1000000007
+#define ll long long int
+#define u64 unsigned long long int
+
+#define mclr(strn) strn.clear()
+#define ignr cin.ignore()
+#define PB push_back
+#define SZ size
+#define MP make_pair
+#define fi first
+#define sec second
+ 
+
+ 
+const int mod = 1000000007;
+ 
+struct num {
+   int x;
+   num():x(0) {}
+   num(int x):x(x) {}
+   num operator+(const num& o) const {
+      num res(x+o.x);
+      if (res.x >= mod) res.x -= mod;
+      return res;
+   }
+ 
+   num operator-(const num& o) const {
+      num res(x-o.x);
+      if (res.x < 0) res.x += mod;
+      return res;
+   }
+ 
+   num operator*(const num& o) const {
+      return num(x*(ll)o.x%mod);
+   }
+};
+ 
+num dp[110][1030][12][2][2][2];
+ 
+ 
+inline void add(num& x, num y) {
+   x = x + y;
+}
+ 
+inline int bits(int x) {
+   int res = 0;
+   while (x) res++, x&=x-1;
+   return res;
+}
+ 
+int main()
+{
+   string s; 
+   cin >> s;
+   num N(0);
+
+   int limit = s.SZ();
+   int i;
+   fl(i,0,limit)
+   {
+      N = N*num(10)+num(s[i]-'0');
+   }
+
+   vector<int> a(limit);
+
+   fl(i,0,limit)
+   {
+      a[i] = s[i] - '0';
+   }
+
+   num ans = N*(N+num(1)) * 500000004;
+   if (limit == 1) {
+      ans = num(0);
+   } else {
+      num rem = (N-num(9))*num(10);
+      rem = rem + num(9*10/2);
+      ans = ans-rem;
+   }
+   ans = ans * 10;
+ 
+ 
+   num ansadd = num(0);
+ 
+   dp[0][0][0][0][0][0] = num(1);
+
+   fl(len,0,limit)
+      fl(msk,0,1024)
+         fl(lst,0,10)
+            fl(endz,0,2)
+               fl(nonz,0,2)
+                  fl(itr,0,2)
+                  {
+                     num curmult = dp[len][msk][lst][endz][nonz][itr];
+                  if (curmult.x == 0) continue;
+             
+                  if (len == limit-1) {
+                     fl(d1,0, 10) fl(d2,0, 10) {
+                        if (!itr && d2 > a[len]) continue;
+                        if (!nonz && d1 == 0) continue;
+                        int curmask = msk;
+                        int x = d1;
+                        while (true) {
+                           curmask |= 1<<x;
+                           if (x == d2) break;
+                           ++x;
+                           if (x == 10) x = 0;
+                        }
+             
+                        if (nonz) {
+                           curmask |= 1<<lst;
+                           if (endz) curmask |= 1;
+                        }
+             
+                        if (d1 > d2) {
+                           if (!nonz) continue;
+                           assert(lst);
+                           curmask |= 1<<(lst-1);
+                           if (endz) curmask |= 1<<9;
+                        }
+                        num curadd = num(bits(curmask)) * curmult;
+                        ansadd = ansadd + curadd;
+                     }
+                     continue;
+                  }
+
+                  fl(dig,0, 10) {
+                     int tofl = itr;
+                     if (!itr && dig > a[len]) continue;
+                     if (dig < a[len]) tofl = 1;
+                     int tonz = nonz;
+                     if (dig) tonz = 1;
+                     int toendz = (dig==0);
+                     int tolst = lst;
+                     if (dig) tolst = dig;
+                     int tomsk = msk;
+                     if (dig) {
+                        if (nonz) {
+                           tomsk |= 1<<lst;
+                           if (endz) tomsk |= 1;
+                        }
+                     }
+                     add(dp[len+1][tomsk][tolst][toendz][tonz][tofl], dp[len][msk][lst][endz][nonz][itr]);
+                  }
+      }
+
+   ans = ans + ansadd;
+   printf("%d\n", ans.x);
+   return 0;
+} 
+
+/*
+   Powered by Buggy plugin
+*/

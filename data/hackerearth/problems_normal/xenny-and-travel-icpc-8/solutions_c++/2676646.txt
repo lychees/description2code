@@ -1,0 +1,169 @@
+#include<bits/stdc++.h>
+
+
+using namespace std;
+
+#define rep(i,n) for(i=0;i<n;i++)
+#define ll long long
+#define elif else if
+#define pii pair<int,int>
+#define mp make_pair
+#define pb push_back
+#define CLEAR(array, value) memset(ptr, value, sizeof(array));
+#define si(a)     scanf("%d", &a)
+#define sl(a)     scanf("%lld", &a)
+#define pi(a)     printf("%d", a)
+#define pl(a)     printf("%lld", a)
+#define pn        printf("\n")
+#define SZ(x)  (int)((x).size())
+
+#define LL long long
+#define EPS 0.000000000001
+#define MOD 1000000007
+
+template<typename T>
+T logPow(T x, LL y) {
+    T temp;
+    if(y == 0) {
+        return 1LL;
+    }
+
+    temp = logPow(x, y/2);
+    if (y%2 == 0) {
+        return temp * temp;
+    }
+    else {
+        if(y > 0) {
+            return x * temp * temp;
+        }
+        else {
+            return (temp * temp) / x;
+        }
+    }
+}
+
+LL modExp(LL base, LL exp) {
+    LL res = 1;
+    base = (base % MOD);
+    while(exp) {
+        if (exp & 1) {
+            res = (res * base) % MOD;
+        }
+        exp >>= 1;
+        base = (base * base) % MOD;
+    }
+
+    return res;
+}
+
+int readInt() {
+    int n = 0;
+    char c = 0;
+
+    while (c < 33) {
+        c = getchar_unlocked();
+    }
+    while (c > 33) {
+        n = (n * 10) + (c - '0');
+        c = getchar_unlocked();
+    }
+    return n;
+}
+
+int n;
+int road[1255][1255];
+int rail[1255][1255];
+int uroad[1255][1255];
+int urail[1255][1255];
+int dijkstra(int u, int* dist, int route[1255][1255]) {
+    for (int i = 0; i < n; ++i) {
+        dist[i] = 1e9;
+    }
+
+    priority_queue<pii,vector<pii>, greater<pii> > minPQ; 
+    dist[u] = 0;
+    minPQ.push( make_pair(0, u));
+    bool visited[1255] = {false};
+    for (int i=0;i<=1255;i++)visited[i]=false;
+    visited[u]=true;
+    while(!minPQ.empty()) 
+    {
+        auto top = minPQ.top();
+        minPQ.pop();
+        int v = top.second, d = top.first;
+            if(d <= dist[v]) 
+            {
+                  
+                  for (int i = 0; i < n; ++i) 
+                {
+                    if (i == v) 
+                    {
+                        continue;
+                    }
+
+                    if (dist[i] > dist[v] + route[v][i]) 
+                    {
+                        dist[i] = dist[v] + route[v][i];
+                        minPQ.push(make_pair(dist[i],i));
+                    }
+                }
+            }     
+    }
+    return 0;
+}
+
+int main() {
+
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+
+#ifdef LOCAL
+    freopen("/Users/Keshav/ClionProjects/Online/test.txt", "r", stdin);
+    freopen("/Users/Keshav/ClionProjects/Online/out.txt", "w", stdout);
+#endif
+
+    cin >> n;
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            int dist;
+            cin >> dist;
+            road[i][j] = dist;
+            uroad[j][i]=dist;
+        }
+    }
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            int dist;
+            cin >> dist;
+            rail[i][j] = dist;
+            urail[j][i]=dist;
+        }
+    }
+
+    int u, v;
+    cin >> u >> v;
+    u --;
+    v --;
+
+    int distURoad[1255] = {0}, distURail[1255] = {0}, distVRoad[1255] = {0}, distVRail[1255] = {0};
+    dijkstra(u, distURoad, road);
+    dijkstra(u, distURail, rail);
+    dijkstra(v, distVRail, urail);
+    dijkstra(v, distVRoad, uroad);
+
+    int ans = 1e9;
+    for (int i = 0; i < n; ++i) {
+        if (i == u || i == v) {
+            continue;
+        }
+
+        ans = min(ans, distURail[i] + distVRoad[i]);
+        ans = min(ans, distURoad[i] + distVRail[i]);
+       // cout << distURoad[i] << " " << distVRail[i] << " --- " << i << " -- \n";
+    }
+    cout << ans << endl;
+
+    return 0;
+}

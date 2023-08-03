@@ -1,0 +1,173 @@
+
+    #include <bits/stdc++.h>
+    using namespace std;
+    int maxi;
+int tree[50008];
+void initialise(long int nod,long int st,long int end){
+    if(st==end){
+        //tree[nod]=arr[st]*arr[st];
+        return;
+    }
+    long int left=2*nod;
+    long int right=left+1;
+    long int mid=(st+end)>>1;
+    initialise(left,st,mid);
+    initialise(right,mid+1,end);
+    //tree[nod]=merge(tree[left],tree[right]);
+}
+long int merge(long int l,long int r){
+    return l+r;
+}
+void update1(long int nod,long int st,long int end,long int i,long int j,long int val){
+    if(st==end){
+        tree[nod]=val*val;
+        return;
+    }
+    if(st>j||end<i){
+        return;
+    }
+    long int left=2*nod;
+    long int right=left+1;
+    long int mid=(st+end)>>1;
+    update1(left,st,mid,i,j,val);
+    update1(right,mid+1,end,i,j,val);
+    tree[nod]=merge(tree[left],tree[right]);
+}
+void update2(long int nod,long int st,long int end,long int i,long int j,long int val){
+    if(st>j||end<i){
+        return;
+    }
+    if(st==end){
+        tree[nod]=((sqrt(tree[nod])+val)*(sqrt(tree[nod])+val));
+        return;
+    }
+    
+    long int left=2*nod;
+    long int right=left+1;
+    long int mid=(st+end)>>1;
+    update2(left,st,mid,i,j,val);
+    update2(right,mid+1,end,i,j,val);
+    tree[nod]=merge(tree[left],tree[right]);
+}
+long int print(long int nod,long int st,long int end,long int i,long int j){
+    if(st>j||end<i){
+        return 0;
+    }
+    if(st>=i&&end<=j){
+        return tree[nod];
+    }
+    long int left=2*nod;
+    long int right=left+1;
+    long int mid=(st+end)>>1;
+    return print(left,st,mid,i,j)+print(right,mid+1,end,i,j);
+}
+void update(int idx,int val){
+    while(idx<=maxi){
+        tree[idx]+=val;
+        idx+=(idx&-idx);
+    }
+}
+int pos(int idx){
+    int sum=0;
+    while(idx>0){
+        sum+=tree[idx];
+        idx-=(idx&-idx);
+    }
+    return sum;
+}
+    int t;
+    int n;
+    struct node
+    {
+        int left;
+        int right;
+        int height;
+        /*bool operator <(const struct node &temp)const 
+        {
+            return left<temp.left;
+        }*/
+    };
+    vector< struct node>  arr;
+    int reached1[1031], reached2[1031];
+    int check1[1031], check2[1031];
+    int calc_area(int x1, int y1, int x2, int y2, int x3, int y3)
+{
+    return (x2 - x1)*(y3 - y1) - (x3 - x1)*(y2 - y1);
+}
+    int main(int argc, char const *argv[])
+    {
+    	cin>>t;
+    	while(t--)
+    	{
+    		cin>>n;
+            struct node temp;
+            arr.clear();
+    		for (int i = 0; i < n; i++)
+    		{
+    			cin>>temp.left>>temp.right>>temp.height;
+                arr.push_back(temp);
+    		}
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = i + 1; j < n; j++)
+                {
+                    if (arr[i].left>arr[j].left)
+                    {
+                        swap(arr[i].left,arr[j].left);
+                        swap(arr[i].right, arr[j].right);
+                        swap(arr[i].height, arr[j].height);
+                    }
+                }
+            }
+    		memset(reached1,0,sizeof(reached1));
+            memset(reached2,0,sizeof(reached2));
+            memset(check1,0,sizeof(check1));
+            memset(check2,0,sizeof(check2));
+    		for (int i=1;i<n;i++)
+    		{
+    			int pointer=i-1;
+    			for (int j=i-2; j>=0;--j)
+    			{
+    				if(calc_area(arr[j].right, arr[j].height, arr[pointer].right, arr[pointer].height, arr[i].left, 0) >= 0)
+    					pointer = j;
+    			}
+    			if (pointer!=i-1)
+    			{
+    				check1[i] = 1;
+    				reached2[pointer] = 1;
+    			}
+    		}
+    		for (int i = 0; i + 1 < n; i++)
+    		{
+    			int pointer=i+1;
+    			for (int j= i+2;j<n;j++)
+    			{
+    				if (calc_area(arr[j].left, arr[j].height,arr[pointer].left,arr[pointer].height,arr[i].right,0)<=0)
+                    {
+    					pointer = j;
+                    }
+    			}
+    			if(pointer!=i+1)
+    			{
+    				check2[i] = 1;
+    				reached1[pointer] = 1;
+    			}
+    		}
+    		for (int i = 0; i+1 < n; i++)
+    		{
+    			if (check2[i] && check1[i + 1])
+    				continue;
+    			if (reached2[i] == 0 && reached1[i + 1] == 0)
+    			{
+    				reached2[i] = 1;
+    			}
+    		}
+    		int ans = 2;
+    		for (int i = 0; i < n; i++)
+    		{
+    			ans+=reached1[i]+reached2[i];
+    		}
+    		cout<<ans<<endl;
+    	}
+    	return 0;
+    }

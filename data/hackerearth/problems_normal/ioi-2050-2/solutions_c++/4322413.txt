@@ -1,0 +1,82 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define mp make_pair
+#define me(u,v,c) mp(c,mp(u,v))
+#define pb push_back
+int N,P,M;
+vector<pair<int,int> >g[1009];
+vector<pair<int,pair<int,int> > >edges;
+int par[1009];
+int dist[1009][1008];
+bool vis[1009];
+int ctr;
+int root(int i)
+{
+    return par[i]==i?par[i]:par[i]=root(par[i]);
+}
+void merge(int a,int b)
+{
+    if(rand()%2)swap(a,b);
+    par[root(b)]=root(a);
+}
+void dfs(int curr,int len)
+{
+    dist[ctr][curr]=len;
+    vis[curr]=true;
+    for(int i=0;i<(int)g[curr].size();++i)
+    {
+        if(!vis[g[curr][i].first])
+        {
+            dfs(g[curr][i].first,len+g[curr][i].second);
+        }
+    }
+    return;
+}
+int main()
+{
+    int tc;
+    scanf("%d",&tc);
+    for(int t=1;t<=tc;++t)
+    {
+        scanf("%d %d %d",&N,&P,&M);
+        edges.clear();
+        for(int i=1;i<=N;++i)
+            g[i].clear();
+        for(int i=1;i<=N;++i)
+            par[i]=i;
+        for(int i=0;i<P;++i)
+        {
+            int u,v,cost;
+            scanf("%d %d %d",&u,&v,&cost);
+            edges.pb(me(u,v,cost));
+        }
+        sort(edges.begin(),edges.end());
+        int cnt=0;
+        for(int i=0;i<P && cnt<N-1;++i)
+        {
+            int u=edges[i].second.first;
+            int v=edges[i].second.second;
+            int cost=edges[i].first;
+                if(root(u)!=root(v))
+                {
+                    cnt++;
+                    merge(u,v);
+                    g[u].push_back(mp(v,cost));
+                    g[v].push_back(mp(u,cost));
+                }
+        }
+        for(int i=1;i<=N;++i)
+        {
+            memset(vis,false,sizeof vis);
+           ctr=i;
+            dfs(i,0);
+        }
+        printf("Case: %d\n",t);
+        for(int i=0;i<M;++i)
+        {
+            int u,v;scanf("%d %d",&u,&v);
+            printf("%d\n",dist[u][v]);
+        }
+    }
+    return 0;
+}

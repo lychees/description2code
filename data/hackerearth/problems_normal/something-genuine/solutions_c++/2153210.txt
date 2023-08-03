@@ -1,0 +1,97 @@
+/**/
+#define _USE_MATH_DEFINES
+#include<bits/stdc++.h>
+using namespace std;
+
+#define pb push_back
+#define For(i, begin, end) for (__typeof(end) i = (begin) - ((begin) > (end)); i != (end) - ((begin) > (end)); i += 1 - 2 * ((begin) > (end)))
+#define all( v ) (v).begin(),(v).end()
+template<typename T> using V = vector<T>;
+typedef long long int ll;
+typedef unsigned long long int ull;
+/***********************************************/
+/*      ____________
+ *     /            \
+ *    /  /\      /\  \
+ *   /  /  \    /  \  \
+ *   \                /
+ *    \     \___/    /
+ *     \____________/
+ */
+const ll mod = 1000000007;
+size_t N;
+struct node{
+	ull sum, lazy;
+	node * left,* right;
+	node(){
+		left = nullptr;
+		right = nullptr;
+		sum = lazy = 0;
+	}
+};
+void build(node & n,size_t L = 1,size_t R = N){
+	if(L == R){
+		return;
+	}
+	n.left = new node();
+	n.right = new node();
+	size_t md = (R+L)>>1;
+	build(*(n.left),L,md);
+	build(*(n.right),md+1,R);
+}
+void refresh(node & n,size_t L,size_t R){
+	if(n.lazy == 0 || L == R)return;
+	size_t md = (R+L)>>1;
+	n.left->sum = (n.left->sum + n.lazy*(md + 1 - L))%mod;
+	n.left->lazy += n.lazy;
+	n.right->sum = (n.right->sum + n.lazy*(R-md))%mod;
+	n.right->lazy += n.lazy;
+	n.lazy = 0;
+}
+void upd(node & n,size_t l,size_t r,size_t L = 1,size_t R = N){
+	refresh(n,L,R);
+	if(l == L && r == R){
+		n.sum = (n.sum + R + 1 - L)%mod;
+		n.lazy++;
+		return;
+	}
+	size_t md = (L+R)>>1;
+	if(l <= md)
+		upd(*(n.left),l,min(r,md),L,md);
+	if(r >= md + 1)
+		upd(*(n.right),max(l,md+1),r,md+1,R);
+	n.sum = (n.left->sum + n.right->sum)%mod;
+}
+ull qry(node & n,size_t l,size_t r,size_t L = 1,size_t R = N){
+	refresh(n,L,R);
+	if(l == L && r == R)
+		return n.sum;
+	ull res = 0;
+	size_t md = (L+R)>>1;
+	if(l <= md)
+		res += qry(*(n.left),l,min(r,md),L,md);
+	if(r >= md + 1)
+		res += qry(*(n.right),max(l,md+1),r,md+1,R);
+	return res%mod;
+}
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(nullptr);
+	cin>>N;
+	V<size_t> a(N+1);
+	For(i,1,N+1)cin>>a[i];
+	ull out = 0;
+	V<size_t> p(N+1);
+	node root = node();
+	build(root);
+	ull sum = 0;
+	For(i,1,N+1){
+		sum = (sum + 2 * qry(root,p[a[i]]+1,i) + i - p[a[i]])%mod;
+		upd(root,p[a[i]]+1,i);
+		p[a[i]] = i;
+		out = (out + sum)%mod;
+	}
+	cout<<out<<endl;
+	return 0;
+}
+/**/

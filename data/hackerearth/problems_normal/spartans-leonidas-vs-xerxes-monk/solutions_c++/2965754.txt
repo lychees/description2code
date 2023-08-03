@@ -1,0 +1,117 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+typedef pair<int,int> pii;
+#define pb push_back
+#define mp make_pair
+#define mt make_tuple
+#define eb emplace_back
+#define em push
+#define X first
+#define Y second
+#define all(v)                      v.begin(),v.end()
+#define uniq(v)                     sort(all(v));v.erase(unique(all(v)),v.end())
+#define _ ios::sync_with_stdio(false);cin.tie(0);
+#define trace1(x)                cerr << #x << ": " << x << endl;
+#define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define endl '\n'
+#define MAXN 100010
+#define MOD 1000000007
+
+struct node{
+    long long prefix,suffix,best,i,j,lmax,rmax;
+};
+long long T,N,Q,L,R,t,arr[MAXN];
+node tree[4*MAXN];
+
+node setLeaf(int i,int val){
+    node res;
+    res.best = res.prefix = res.suffix = 1;
+    res.lmax = res.rmax = val;
+    res.i = res.j = i;
+    return res;
+}
+
+node merge(node left,node right)
+	{
+		node res;
+		res.best = max(left.best,right.best);
+		if(left.rmax < right.lmax)
+			res.best = max(res.best,left.suffix + right.prefix);
+
+		res.i = left.i; res.j = right.j;
+		res.lmax = left.lmax; res.rmax = right.rmax;
+		res.prefix = left.prefix; res.suffix = right.suffix;
+		if(left.prefix == (left.j - left.i +1) && left.rmax < right.lmax)
+			res.prefix += right.prefix;
+		if(right.suffix == (right.j - right.i +1) && left.rmax < right.lmax)
+			res.suffix += left.suffix;
+		return res;
+	}
+
+void build(int low,int high,int pos){
+    if (low==high){
+        tree[pos] = setLeaf(low,arr[low]);
+        return;
+    }
+    int mid = (low+high)/2;
+
+    build(low,mid,pos*2);
+    build(mid+1,high,pos*2+1);
+
+    tree[pos] = merge(tree[pos*2],tree[pos*2+1]);
+}
+
+void update(int low,int high,int idx,int val,int pos){
+    if (low==high){
+        tree[pos].lmax+=val;
+        tree[pos].rmax+=val;
+        return;
+    }
+    int mid = (low+high)/2;
+    if (idx<=mid){
+        update(low,mid,idx,val,pos*2);
+    }
+    else {
+        update(mid+1,high,idx,val,pos*2+1);
+    }
+    tree[pos] = merge(tree[pos*2],tree[pos*2+1]);
+}
+
+node query(int low,int high,int qlow,int qhigh,int pos){
+    if (low>=qlow && high<=qhigh)
+        return tree[pos];
+
+    int mid = (low+high)/2;
+    if (qhigh<=mid)
+        return query(low,mid,qlow,qhigh,pos*2);
+    else if (qlow>mid)
+        return query(mid+1,high,qlow,qhigh,pos*2+1);
+
+    node l = query(low,mid,qlow,qhigh,pos*2);
+    node r = query(mid+1,high,qlow,qhigh,pos*2+1);
+    return merge(l,r);
+}
+
+int main()
+{_
+    int t,n,q,a,b,type;
+	cin>>t;
+	while(t--)
+	{
+		cin>>n>>q;
+		for(int i=1;i<=n;i++)
+			cin>>arr[i];
+		build(1,n,1);
+		while(q--){
+			cin>>type>>a>>b;
+			if(type == 0){
+				node ret = query(1,n,a,b,1);
+				cout<<ret.best<<endl;
+			}
+			else
+				update(1,n,a,b,1);
+		}
+	}
+}

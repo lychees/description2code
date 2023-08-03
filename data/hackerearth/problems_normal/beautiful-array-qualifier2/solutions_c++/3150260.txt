@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+ 
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <string>
+#include <cstring>
+#include <sstream>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+ 
+#define rep(i,n) for(int i=0;i<(int)(n);++i)
+#define iter(a) __typeof(a.begin())
+#define FOR(it,a) for(iter(a)it=a.begin();it!=a.end();++it)
+#define F first
+#define S second
+#define SZ(a) (int)((a).size())
+#define sz(a) SZ(a)
+#define pb push_back
+#define eb emplace_back
+#define mp make_pair
+#define ALL(a) (a).begin(),(a).end()
+using namespace std;
+ 
+typedef long long ll;
+typedef pair<int,int> PI;
+typedef pair<ll,ll> PL;
+typedef unsigned long long ull;
+ 
+#ifdef ONLINE_JUDGE
+#define PR(...) (void(0))
+#else
+#define PR(...) do{cerr << "line : " << __LINE__ << ", " << endl; pr(#__VA_ARGS__, __VA_ARGS__);}while(0)
+template<class T>
+void pr(const string& name, T t){
+  cerr << name << ": " << t << endl;
+}
+template<typename T, typename ... Types>
+void pr(const string& names, T t, Types ... rest) {
+  auto p = names.find(',');
+  cerr << names.substr(0, p) << ": " << t << ", ";
+  pr(string(names, p + 1), rest ...);
+}
+#endif
+ 
+template<class T,class U> ostream& operator<< (ostream& o, const pair<T,U>& v){return o << "(" << v.F << ", " << v.S << ")";}
+template<class T> ostream& operator<< (ostream& o, const vector<T>& v){o << "{";rep(i,SZ(v)) o << (i?", ":"") << v[i];return o << "}";}
+template<class T,class U> ostream& operator<< (ostream& o, const map<T,U>& v){o << "{";for(const auto& e : v) o << e << ", ";return o << "}";}
+template<class T,class U> ostream& operator<< (ostream& o, const unordered_map<T,U>& v){o << "{";for(const auto& e : v) o << e << ", ";return o << "}";}
+template<class T> ostream& operator<< (ostream& o, const set<T>& v){o << "{";for(const auto& e : v) o << e << ", ";return o << "}";}
+template<class T> string to_s(const T& v){ostringstream is;is << v;return is.str();}
+ 
+const int dx[]={0,1,0,-1,1,1,-1,-1,0};
+const int dy[]={1,0,-1,0,-1,1,1,-1,0};
+
+#define endl '\n'
+
+
+
+int main(int argc, char *argv[])
+{
+  ios::sync_with_stdio(0);
+  cin.tie(0);
+
+  int n, k, m;
+  cin >> n >> k >> m;
+  set<int> app;
+  rep(i, m){
+    int t;
+    cin >> t;
+    app.insert(t);
+  }
+  
+  vector<ll> out;
+
+  // if(!app.count(1)) k = min(k, 25);
+  // while(app.count(1));
+  
+  // map<int, int> mapp;
+  vector<ll> mapp(n * 100 + 300000, 1e9);
+  
+  for(int i = 1; SZ(out) < n; ++i){
+    int t = i;
+    vector<PI> divi;
+    for(int j = 2; j * j <= t; ++j){
+      if(t % j) continue;
+      int cnt = 0;
+      while(t % j == 0){
+        ++cnt;
+        t /= j;
+      }
+      divi.pb(mp(j, cnt));
+    }
+    if(t > 1) divi.pb(mp(t, 1));
+    // PR(i, divi);
+    
+    function<void(int, ll)> rec = [&](int idx, ll t){
+      mapp[i] = min(mapp[i], mapp[t] + mapp[i / t]);
+      if(idx == SZ(divi)) return;
+      for(int i = 0; i <= divi[idx].S; ++i){
+        rec(idx + 1, t);
+        t *= divi[idx].F;
+      }
+    };
+    
+    rec(0, 1);
+    if(app.count(i)) continue;
+    if(mapp[i] <= k) continue;
+    out.pb(i);
+    mapp[i] = 1;
+  }
+  
+  rep(i, n){
+    if(i) cout << ' ';
+    cout << out[i];
+  }
+  cout << endl;
+}

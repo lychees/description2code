@@ -1,0 +1,96 @@
+
+
+    #include <bits/stdc++.h>
+    using namespace std;
+    const int MAXN = 100000 + 10;
+    long long a[MAXN], val[MAXN], S[MAXN];
+    int b[MAXN];
+    int n, k, q;
+    struct node {
+        int from, to;
+        int cnt; long long sum;
+        node *left, *right;
+        node(int _from, int _to, int _cnt = 0, long long _sum = 0) {
+            from = _from; to = _to;
+            cnt = _cnt; sum = _sum;
+            left = NULL; right = NULL;
+        }
+        void update() {
+            this->cnt = this->left->cnt + this->right->cnt;
+            this->sum = this->left->sum + this->right->sum;
+        }
+    };
+    node *ST[MAXN];
+    node *build(int from, int to) {
+        node *ret = new node(from, to);
+        if (from == to) return ret;
+        int mid = (from + to) / 2;
+        ret->left = build(from, mid); ret->right = build(mid + 1, to);
+        return ret;
+    }
+    node* insert(node *x, int pos) {
+        if ((x->from > pos) || (x->to < pos)) return x;
+        if (x->from == x->to) return new node(pos, pos, x->cnt + 1, x->sum + val[pos]);
+        node* ret = new node(x->from, x->to);
+        int mid = (x->from + x->to) / 2;
+        ret->left = insert(x->left, pos); ret->right = insert(x->right, pos);
+        ret->update();
+        return ret;
+    }
+    void init() {
+        S[1] = a[1];
+        for(int i = 2; i <= n; i++) a[i] = a[i] - (long long)(k) * (i - 1), S[i] = S[i - 1] + a[i];
+        map<long long, int> my_map;
+        for(int i = 1; i <= n; i++) my_map.insert(make_pair(a[i], 0));
+        int j = 0;
+        for(map<long long, int>::iterator it = my_map.begin(); it != my_map.end(); it++) {
+            j++; it->second = j; val[j] = it->first;
+        }
+        for(int i = 1; i <= n; i++) b[i] = my_map.find(a[i])->second;
+        ST[0] = build(1, n);
+        for(int i = 1; i <= n; i++) ST[i] = NULL;
+        for(int i = 1; i <= n; i++) ST[i] = insert(ST[i - 1], b[i]);
+    }
+    pair<int, long long> calc(node *x, int l, int r) {
+        if ((x->from > r) || (x->to < l)) return make_pair(0, 0);
+        if ((x->from >= l) && (x->to <= r)) return make_pair(x->cnt, x->sum);
+        int mid = (x->from + x->to) / 2;
+        pair<int, long long> L = calc(x->left, l, r), R = calc(x->right, l, r);
+        return make_pair(L.first + R.first, L.second + R.second);
+    }
+    long long solve(int l, int r) {
+        int low = 1, high = n, m = (r - l + 2) / 2;
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            int x = calc(ST[r], 1, mid).first - calc(ST[l - 1], 1, mid).first;
+            if (x >= m) high = mid - 1; else low = mid + 1;
+        }
+        pair<int, long long> x = calc(ST[r], 1, high + 1), y = calc(ST[l - 1], 1, high + 1);
+        return val[high + 1] * (2LL * (x.first - y.first) - (r - l + 1)) + S[r] - S[l - 1] - 2LL * (x.second - y.second);
+    }
+    int main()
+    {
+        int test;
+        cin >> test;
+        assert((1 <= test) && (test <= 10));
+        while (test --) {
+            cin >> n >> k;
+            assert((1 <= n) && (n <= 100000));
+            assert((0 <= k) && (k <= 100000000));
+            for(int i = 1; i <= n; i++) {
+                scanf("%lld", &a[i]);
+                assert((-100000000 <= a[i]) && (a[i] <= 100000000));
+            }
+            init();
+            cin >> q;
+            assert((1 <= q) && (q <= 100000));
+            for(int i = 1; i <= q; i++) {
+                int l, r;
+                scanf("%d %d", &l, &r);
+                assert((1 <= l) && (l <= r) && (r <= n));
+                printf("%lld\n", solve(l, r));
+            }
+            for(int i = 0; i <= n; i++) delete ST[i];
+        }
+    }
+

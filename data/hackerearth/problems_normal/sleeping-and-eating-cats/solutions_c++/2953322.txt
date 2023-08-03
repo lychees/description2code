@@ -1,0 +1,128 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define fo(i,n) for(int i=0;i<(n);i++)
+#define MOD 1000000007
+typedef long long ll;
+
+int N, M, a[100100], qt, ql, qr;
+
+struct range {
+	int l, r, num, dirtyval;
+	bool dirty;
+	int lstreak, rstreak;
+	long long c;
+} r[400400], temp, ans;
+
+long long calc (int n) {
+	long long j = (long long) n;
+	return j*(j+1) / 2;
+}
+
+range combine (range LNODE, range RNODE) {
+	temp.l = LNODE.l;
+	temp.r = RNODE.r;
+	temp.num = LNODE.num + RNODE.num - (LNODE.r == RNODE.l);
+
+	temp.lstreak = LNODE.lstreak;
+	temp.rstreak = RNODE.rstreak;
+
+	temp.c = LNODE.c + RNODE.c;
+
+	if (LNODE.num > 1 && RNODE.num > 1 && LNODE.r == RNODE.l) {
+		temp.c += calc(LNODE.rstreak + RNODE.lstreak);
+	} else if (LNODE.r != RNODE.l) {
+		if (LNODE.num > 1) temp.c += calc(LNODE.rstreak);
+		if (RNODE.num > 1) temp.c += calc(RNODE.lstreak);
+	}
+
+	if (LNODE.num == 1 && LNODE.r == RNODE.l) temp.lstreak += RNODE.lstreak; 
+	if (RNODE.num == 1 && LNODE.r == RNODE.l) temp.rstreak += LNODE.rstreak; 
+	return temp;
+}
+
+void take (int i) {
+	r[i] = combine(r[i*2+1], r[i*2+2]);
+}
+
+void prop (int i, int sz) {
+	int dv = r[i].dirtyval;
+	r[i*2+1] = {dv, dv, 1, dv, 1, sz/2, sz/2, 0};
+	r[i*2+2] = {dv, dv, 1, dv, 1, (sz+1)/2, (sz+1)/2, 0};
+	r[i] = {dv, dv, 1, 0, 0, sz, sz, 0};
+}
+
+void init (int i, int L, int R) {
+	if (L == R-1) {
+		r[i] = {a[L], a[L], 1, 0, 0, 1, 1, 0};
+		return;
+	}
+	init(i*2+1, L, (L+R)/2);
+	init(i*2+2, (L+R)/2, R);
+	take(i);
+}
+
+void u (int i, int rs, int re, int qs, int qe, int uval) {
+	if (rs == qs && re == qe) {
+		r[i] = {uval, uval, 1, uval, 1, re-rs, re-rs, 0};
+		return;
+	}
+
+	if (r[i].dirty) prop(i, re-rs);
+
+	int mid = (rs + re) / 2;
+	if (qs < mid) {
+		u (i*2+1, rs, mid, qs, min(mid, qe), uval);
+	}
+	if (qe > mid) {
+		u (i*2+2, mid, re, max(qs, mid), qe, uval);
+	}
+	take(i);
+}
+
+range q (int i, int rs, int re, int qs, int qe) {
+	if (rs == qs && re == qe) {
+		return r[i];
+	}
+
+	if (r[i].dirty)	prop(i, re-rs);
+
+	int mid = (rs + re) / 2;
+
+	range res = {-1, 0, 0, 0, 0, 0, 0, 0};
+	range res1 = res, res2 = res;
+
+	if (qs < mid) {
+		res1 = q (i*2+1, rs, mid, qs, min(mid, qe));
+	}
+	if (qe > mid) {
+		res2 = q (i*2+2, mid, re, max(qs, mid), qe);
+	}
+
+	if (res1.l == -1) return res2;
+	if (res2.l == -1) return res1;
+	res = combine(res1, res2);
+	return res;
+}
+
+int main () {
+	scanf("%d %d", &N, &M);
+	fo(i, N) scanf("%d", &a[i]);
+	init(0, 0, N);
+	fo(i, M) {
+		scanf("%d %d %d", &qt, &ql, &qr);
+		ql--;
+		if (qt) {
+			ans = q(0, 0, N, ql, qr);
+
+			if (ans.num == 1) {
+				printf("%lld\n", calc(qr - ql));
+			} else {
+				printf("%lld\n", ans.c + calc(ans.lstreak) + calc(ans.rstreak));
+			}
+		} else {
+			scanf("%d", &qt);
+			u(0, 0, N, ql, qr, qt);
+		}
+	}
+	return 0;
+}

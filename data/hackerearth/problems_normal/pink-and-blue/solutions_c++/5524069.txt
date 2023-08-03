@@ -1,0 +1,80 @@
+#include <iostream>
+#include <vector>
+#include <fstream>
+#include <algorithm>
+#include <set>
+#include <deque>
+using namespace std;
+typedef long long ll;
+int count_divisible_range(int k, int a, int b){
+    return ((b - b%k) - (a + a%k))/k + 1;
+}
+int main()
+{
+    int n, r;
+    cin >> n >> r;
+    bool is_boy[n];
+    for (int i = 0; i < n; i++){
+        char x;
+        cin >> x;
+        if (x == 'B') is_boy[i] = true;
+        else is_boy[i] = false;
+    }
+
+    vector< vector<int> > g(n);
+    for (int i = 0; i < r; i++){
+        int a, b;
+        cin >> a >> b;
+        --a; --b;
+        g[a].push_back(b);
+        g[b].push_back(a);
+    }
+
+    //pink first = false
+    deque< pair<int,bool> > q;
+    q.push_back(make_pair(0,false));
+    vector<bool> visited(n);
+    visited[0] = true;
+    int counter = 0;
+    if (is_boy[0]) ++counter;
+
+    while (!q.empty()){
+        int cur = q.front().first;
+        bool cur_col = q.front().second;
+        bool next_col = !cur_col;
+        q.pop_front();
+
+        for (vector<int>::iterator it = g[cur].begin(); it != g[cur].end(); it++){
+            if (!visited[*it]){
+                if ((is_boy[*it] && !next_col) || (!is_boy[*it] && next_col)) ++counter;
+                q.push_back(make_pair(*it,next_col));
+                visited[*it] = true;
+            }
+        }
+    }
+    //blue first = true
+    deque< pair<int,bool> > q2;
+    q2.push_back(make_pair(0,true));
+    vector<bool> visited2(n);
+    visited2[0] = true;
+    int counter2 = 0;
+    if (!is_boy[0]) ++counter2;
+
+    while (!q2.empty()){
+        int cur = q2.front().first;
+        bool cur_col = q2.front().second;
+        bool next_col = !cur_col;
+        q2.pop_front();
+
+        for (vector<int>::iterator it = g[cur].begin(); it != g[cur].end(); it++){
+            if (!visited2[*it]){
+                if ((is_boy[*it] && !next_col) || (!is_boy[*it] && next_col)) ++counter2;
+                q2.push_back(make_pair(*it,next_col));
+                visited2[*it] = true;
+            }
+        }
+    }
+
+    cout << min(counter,counter2) << endl;
+    return 0;
+}

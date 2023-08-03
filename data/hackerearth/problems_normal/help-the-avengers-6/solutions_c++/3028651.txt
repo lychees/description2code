@@ -1,0 +1,186 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+#define MAX 1000020
+vector<ll> tree,A;
+
+bool isprime[5000002];
+
+
+void sieve()
+{
+ll i,j;
+
+for(i=2;i<=MAX;i++)
+isprime[i]=true;
+
+isprime[0]=0;
+isprime[1]=0;
+
+for(i=4;i<=MAX;i+=2)
+isprime[i]=false;
+    
+
+for(i=3;i<=MAX;i+=2)
+{
+    if(isprime[i])
+    {
+        
+        
+        for(j=i*2;j<=MAX;j+=i)
+        {
+            isprime[j]=false;
+    
+        }
+    }
+}
+
+}
+
+
+
+void build(long long node,long long start,long long end)
+{
+    
+    if(start == end)
+    {
+        // Leaf node will have a single element
+        if(isprime[A[start]])
+        tree[node]=1;
+        
+        else
+            tree[node]=0;
+    }
+    
+    else
+    {
+        long long int mid = (start + end) / 2;
+        // Recurse on the left child
+        build(2*node+1, start, mid);
+        // Recurse on the right child
+        build(2*node+2, mid+1, end);
+        
+        // Internal node will have the sum of both of its children
+        //merging
+        tree[node] = tree[2*node+1] + tree[2*node+2];
+    }
+}
+
+//point update
+void update(long long node,long long start,long long end,long long idx,long long val)
+{
+    if(start == end)
+    {
+        // Leaf node
+        A[idx] = val;
+        if(isprime[val])
+            tree[node]=1;
+        else
+            tree[node]=0;
+    }
+    else
+    {
+        long long int mid = (start + end) / 2;
+        if(start <= idx and idx <= mid)
+        {
+            // If idx is in the left child, recurse on the left child
+            update(2*node+1, start, mid, idx, val);
+        }
+        else
+        {
+            // if idx is in the right child, recurse on the right child
+            update(2*node+2, mid+1, end, idx, val);
+        }
+        // Internal node will have the sum of both of its children
+        //merging
+        tree[node] = tree[2*node+1] + tree[2*node+2];
+    }
+}
+
+//point query
+int query(long long int node,long long int start,long long int end,long long int l,long long int r)
+{
+    if(r < start or end < l)
+    {
+        // range represented by a node is completely outside the given range
+        return 0; //invalid value which won't affect the ans
+    }
+    if(l <= start and end <= r)
+    {
+        // range represented by a node is completely inside the given range
+        return tree[node];
+    }
+    // range represented by a node is partially inside and partially outside the given range
+    long long int mid = (start + end) / 2;
+    long long int p1 = query(2*node+1, start, mid, l, r);
+    long long int p2 = query(2*node+2, mid+1, end, l, r);
+    
+    //merge
+    return (p1 + p2);
+}
+
+long long int nextPowerOf2(long long int n)
+{
+    long long count = 0;
+    //First n in the below condition is for the case where n is 0
+    if (n && !(n&(n-1)))
+        return n;
+    while( n != 0)
+    {
+        n >>= 1;
+        count += 1;
+    }
+    return 1<<count;
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+int main()
+{
+    ll q,y,n,i,x,tree_size,t;
+    char type;
+    sieve();
+    cin>>t;
+    
+    while(t--) {
+    cin>>n;
+    
+    for(i=0;i<n;i++)
+    {
+        cin>>x;
+        A.push_back(x);
+    }
+    
+    tree_size=2*nextPowerOf2(n)-1;
+    tree.resize(tree_size+1);
+   
+    build(0,0,n-1);
+    
+    
+    cin>>q;
+    
+    while(q--)
+    {
+        cin>>type>>x>>y;
+        if(type=='C')
+        {
+            update(0,0,n-1,x-1,y);
+            
+            
+        }
+        else 
+        {
+            cout<<query(0,0,n-1,x-1,y-1)<<"\n";
+        }
+        
+            
+    }
+    A.clear();
+    tree.clear();
+    }
+    
+    return 0;
+}
+
+
+

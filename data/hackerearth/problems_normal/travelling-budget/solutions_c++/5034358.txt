@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+struct node{
+	int u;
+	int w;
+	int c;
+};
+node mknode(int u1,int w1,int c1){
+	node t;
+	t.u = u1;
+	t.w = w1;
+	t.c = c1;
+	return t;
+}
+
+class comp{
+public:
+	bool operator()(node l,node r){
+		return (l.w > r.w);
+	}
+};
+const int size = 508;
+const int INF = 1e9;
+
+vector<node> g[size];
+priority_queue<node,vector<node>,comp> pq;
+int dp[508][1008];
+int main(int argc, char const *argv[])
+{
+	int T;
+	scanf("%d",&T);
+	while(T--){
+		int n,m,b;
+		scanf("%d%d%d",&n,&m,&b);
+		for(int i=0;i<m;i++){
+			node t;
+			int u;
+			scanf("%d%d%d%d",&u,&t.u,&t.c,&t.w);
+			g[u].push_back(t);
+		}
+		for(int i=1;i<=n;i++){
+			for(int j=0;j<=b;j++)
+				dp[i][j] = INF;
+		}
+		for(int i=0;i<=b;i++){
+			dp[1][i] = 0;
+		}
+
+		pq.push(mknode(1,0,0));
+		while(!pq.empty()){
+			node t = pq.top();
+			pq.pop();
+
+			int sz = g[t.u].size();
+			for(int i=0;i<sz;i++){
+				node v = g[t.u][i];
+				int cost = t.c+v.c;
+				if(cost <= b && dp[v.u][cost] > dp[t.u][t.c]+v.w){
+					for(int j=cost;j<=b;j++){
+						dp[v.u][j] = min(dp[t.u][t.c]+v.w,dp[v.u][j]);
+					}
+					pq.push(mknode(v.u,dp[t.u][t.c]+v.w,cost));
+				}
+			}
+		}
+
+		int q;
+		scanf("%d",&q);
+		for(int i=0;i<q;i++){
+			int u,v;
+			scanf("%d%d",&u,&v);
+			if(dp[u][v] >= INF)
+				printf("-1\n");
+			else printf("%d\n",dp[u][v]);
+		}
+
+		for(int i=0;i<=n;i++)g[i].clear();
+	}
+	return 0;
+}

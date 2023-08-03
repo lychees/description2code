@@ -1,0 +1,122 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+ll INF = 1e15;
+const int MAXN = 1e5 + 5;
+const int LGN = 20;
+const int MAXQ = 1e5 + 5;
+const int MAXABSW = 1e9 + 9;
+
+int N, Q;
+
+struct Edge{
+    int u, v, w;
+    Edge( int _u = -1, int _v = -1, int _w = -1 ):
+        u( _u ), v( _v ), w( _w ){}
+};
+vector< Edge > G[ MAXN ];
+
+struct LCA{
+    int anc[ LGN ][ MAXN ], depth[ MAXN ];
+    ll sm[ LGN ][ MAXN ], mx[ LGN ][ MAXN ], umx[ LGN ][ MAXN ], dmx[ LGN ][ MAXN ];
+    void init(){
+        memset( anc, -1, sizeof( anc ) );
+    }
+    void dfs( int u, int fa, int dpt ){
+        depth[ u ] = dpt;
+        anc[ 0 ][ u ] = fa;
+        for( Edge &e: G[ u ] ){
+            if( e.v == fa ) continue;
+            sm[ 0 ][ e.v ] = mx[ 0 ][ e.v ] = umx[ 0 ][ e.v ] = dmx[ 0 ][ e.v ] = e.w;
+            dfs( e.v, u, dpt + 1 );
+        }
+    }
+    void preLCA(){
+        for( int i = 1; i < LGN; ++i )
+            for( int u = 1; u <= N; ++u )
+                if( anc[ i - 1 ][ u ] != -1 ){
+                    int mid = anc[ i - 1 ][ u ];
+                    anc[ i ][ u ] = anc[ i - 1 ][ mid ];
+                    if( anc[ i ][ u ] == -1 ) continue;
+                    sm[ i ][ u ] = sm[ i - 1 ][ u ] + sm[ i - 1 ][ mid ];
+                    umx[ i ][ u ] = max( umx[ i - 1 ][ mid ], sm[ i - 1 ][ mid ] + umx[ i - 1 ][ u ] );
+                    dmx[ i ][ u ] = max( dmx[ i - 1 ][ u ], sm[ i - 1 ][ u ] + dmx[ i - 1 ][ mid ] );
+                    mx[ i ][ u ] = max( mx[ i - 1 ][ u ], mx[ i - 1 ][ mid ] );
+                    mx[ i ][ u ] = max( mx[ i ][ u ], umx[ i - 1 ][ u ] + dmx[ i - 1 ][ mid ] );
+                    mx[ i ][ u ] = max( mx[ i ][ u ], max( umx[ i ][ u ], dmx[ i ][ u ] ) );
+                }
+    }
+    void preprocess(){
+        dfs( 1, -1, 0 );
+        preLCA();
+    }
+    ll query( int u, int v ){
+        ll res = -INF;
+        ll us = 0, vs = 0, uu = 0, vu = 0, ud = 0, vd = 0;
+        if( depth[ u ] < depth[ v ] ) swap( u, v );
+        int diff = depth[ u ] - depth[ v ];
+        for(int i = LGN - 1; i >= 0; --i){
+            if( diff - ( 1 << i ) >= 0 ){
+                diff -= ( 1 << i );
+                res = max( res, mx[ i ][ u ] );
+                res = max( res, uu + dmx[ i ][ u ] );
+                uu = max( umx[ i ][ u ], sm[ i ][ u ] + uu );
+                ud = max( ud, us + dmx[ i ][ u ] );
+                us += sm[ i ][ u ];
+                res = max( res, max( uu, ud ) );
+                u = anc[ i ][ u ];
+            }
+        }
+        if( u == v ) return res;
+        for(int i = LGN - 1; i >= 0; --i)
+            if( anc[ i ][ u ] != anc[ i ][ v ] ){
+                res = max( res, mx[ i ][ u ] );
+                res = max( res, uu + dmx[ i ][ u ] );
+                uu = max( umx[ i ][ u ], sm[ i ][ u ] + uu );
+                ud = max( ud, us + dmx[ i ][ u ] );
+                us += sm[ i ][ u ];
+                res = max( res, max( uu, ud ) );
+                u = anc[ i ][ u ];
+
+                res = max( res, mx[ i ][ v ] );
+                res = max( res, vu + dmx[ i ][ v ] );
+                vu = max( umx[ i ][ v ], sm[ i ][ v ] + vu );
+                vd = max( vd, vs + dmx[ i ][ v ] );
+                vs += sm[ i ][ v ];
+                res = max( res, max( vu, vd ) );
+                v = anc[ i ][ v ];
+            }
+        res = max( res, mx[ 0 ][ u ] );
+        res = max( res, uu + dmx[ 0 ][ u ] );
+        uu = max( umx[ 0 ][ u ], sm[ 0 ][ u ] + uu );
+        ud = max( ud, us + dmx[ 0 ][ u ] );
+        us += sm[ 0 ][ u ];
+        res = max( res, max( uu, ud ) );
+
+        res = max( res, mx[ 0 ][ v ] );
+        res = max( res, vu + dmx[ 0 ][ v ] );
+        vu = max( umx[ 0 ][ v ], sm[ 0 ][ v ] + vu );
+        vd = max( vd, vs + dmx[ 0 ][ v ] );
+        vs += sm[ 0 ][ v ];
+        res = max( res, max( vu, vd ) );
+
+        res = max( res, uu + vu );
+        return res;
+    }
+} lca;
+
+int main(){
+    cin >> N >> Q;
+    for( int i = 0; i < N - 1; ++i ){
+        int u, v, w; cin >> u >> v >> w;
+        G[ u ].push_back( Edge( u, v, w ) );
+        G[ v ].push_back( Edge( v, u, w ) );
+    }
+    lca.init();
+    lca.preprocess();
+    for( int i = 0; i < Q; ++i ){
+        int u, v; cin >> u >> v;
+        cout << max( 0LL, lca.query( u, v ) ) << endl;
+    }
+    return 0;
+}

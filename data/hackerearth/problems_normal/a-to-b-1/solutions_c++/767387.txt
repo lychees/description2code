@@ -1,0 +1,172 @@
+// =====================================================================================
+//       Filename:  A2B.cpp
+//    Description:  
+//        Created:  09/28/2014 10:20:38 PM
+//         Author:  BrOkEN@!
+// =====================================================================================
+
+#include<fstream>
+#include<iostream>
+#include<sstream>
+#include<bitset>
+#include<deque>
+#include<list>
+#include<map>
+#include<queue>
+#include<set>
+#include<stack>
+#include<vector>
+#include<algorithm>
+#include<iterator>
+#include<string>
+#include<cassert>
+#include<cctype>
+#include<climits>
+#include<cmath>
+#include<cstddef>
+#include<cstdio>
+#include<cstdlib>
+#include<cstring>
+#include<ctime>
+
+#define INF (1<<30)
+#define EPS 1e-9
+
+using namespace std;
+
+template< class T > inline T maxxyz(T x,T y,T z) {return max(max(x,y),z);}
+template< class T > inline T minxyz(T x,T y,T z) {return min(min(x,y),z);}
+template< class T > inline T abs(T n) { return (n < 0 ? -n : n); }
+template< class T > inline T sqrt(T x) { return x * x; }
+template< class T > inline T gcd(T a, T b) { return (b != 0 ? gcd<T>(b, a%b) : a); }
+template< class T > inline T lcm(T a, T b) { return (a / gcd<T>(a, b) * b); }
+template< class T > inline bool in_range(T x, T i, T y) { return x<=i && i<=y; }
+template< class T > inline int comp(T x, T y) { return ((x+EPS < y) ? -1 : ((x > y+EPS)?1:0)); }
+template< class T > inline bool gt(T x, T y) { return (comp(x,y)==1); }
+template< class T > inline bool lt(T x, T y) { return (comp(x,y)==-1); }
+template< class T > inline bool eq(T x, T y) { return (comp(x,y)==0); }
+
+#define typeof __typeof
+#define FOR(i,a,b) for(typeof((a)) i=(a); i <= (b) ; ++i)
+#define REV_FOR(i,a,b) for(typeof((a)) i=(a); i >= (b) ; --i)
+#define FOREACH(it,x) for(typeof((x).begin()) it=(x).begin(); it != (x).end() ; ++it)
+#define REV_FOREACH(it,x) for(typeof((x).rbegin()) it=(x).rbegin(); it != (x).rend() ; ++it)
+#define ALL(x) (x).begin(),(x).end()
+#define SIZE(x) ((int)((x).size()))
+#define SET(p, v) memset(p, v, sizeof(p))
+#define CLR(p) SET(p,0)
+#define READ(f) freopen(f, "r", stdin)
+#define WRITE(f) freopen(f, "w", stdout)
+#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
+#define PB push_back
+#define MP make_pair
+
+typedef long long __int64;
+typedef unsigned long long __uint64;
+typedef pair<int,int> II;
+typedef vector<int> VI;
+typedef vector<II> VII;
+typedef map<int,int>	MII;
+typedef map<string,int>	MSI;
+
+const int NMAX = 1e6;
+const int MOD = 1e9 + 7;
+
+typedef struct node{
+	int val;
+
+	void merge(node& l, node& r){
+		__int64 result = 1;
+		result *= l.val;
+		result *= r.val;
+		result %= MOD;
+		val = result;
+		if(val < 0)	val += MOD;
+
+	}
+
+	void setVal(int _val){
+		val = _val;
+	}
+
+} node;
+
+int A[NMAX];
+node T[NMAX<<1];
+
+void init(int Node,int i,int j){
+	if(i==j)
+		T[Node].setVal(A[i]);
+	else{
+		int m = (i+j)/2;
+		init(2*Node,i,m);
+		init(2*Node + 1,m+1,j);
+		T[Node].merge(T[2*Node],T[2*Node + 1]);
+	}
+}
+
+node range_query(int Node,int i,int j,int L,int R){
+    if(i==L && R==j){
+        return T[Node];
+    }else{
+        int m = (i+j)/2;
+        if(R<=m){
+            return range_query(2*Node,i,m,L,R);
+        }else if(L>m){
+            return range_query(2*Node+1,m+1,j,L,R);
+        }else{
+            node resultNode,left,right;
+            left = range_query(2*Node,i,m,L,m);
+            right = range_query(2*Node+1,m+1,j,m+1,R);
+            resultNode.merge(left,right);
+            return resultNode;
+        }
+    }
+}
+
+void update(int Node, int i, int j,int idx,int val) {
+// Update element with index 'idx' in the range [i,j]
+    if(i==j && i == idx) { // Update the LeafNode idx
+        T[Node].setVal(val);
+        return;
+    }else{ // Summerize Descendant Nodes Nodes
+        int m = (i+j)/2;
+        if(idx <=m)
+            update(2*Node, i, m, idx,val);
+        else
+            update(2*Node+1, m+1, j, idx,val);
+        T[Node].merge(T[2*Node],T[2*Node+1]);
+    }
+}
+
+
+
+int main(){
+	CLR(A);
+	CLR(T);
+	int N=0,M=0;
+	scanf("%d",&N);
+	FOR(i,0,N-1){
+		scanf("%d",&A[i]);
+	}
+
+	init(1,0,N-1);
+
+	scanf("%d",&M);
+	int op, id;
+
+	FOR(i,0,M-1){
+		scanf("%d%d",&op,&id);
+		id--;
+		if(op==0){
+			scanf("%d",&A[id]);
+		}else{
+			update(1,0,N-1,id,1);
+			printf("%d\n",T[1].val);	
+		}
+		update(1,0,N-1,id,A[id]);
+	}
+
+	return 0;
+}
+

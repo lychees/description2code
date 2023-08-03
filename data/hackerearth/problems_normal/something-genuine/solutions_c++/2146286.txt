@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+#define mod 1000000007
+using namespace std;
+typedef long long ll;
+
+struct node{
+    ll sum ;
+    int lazy ;
+};
+
+node tree[(1<<19)];
+
+void add(int l , int r , ll val , int p = 1 , int st = 1 , int ed = 200001){
+    if(st == ed){
+        ///cout << tree[p].sum << " & " << val << endl;
+        tree[p].sum += val;
+        return ;
+    }
+    if(st >= l && ed <= r){
+        ll x = ed - st + 1;
+        ll c = (val  * x);
+        tree[p].sum = (c + tree[p].sum);
+        tree[p].lazy += (val);
+        return;
+    }
+    int mid = (st + ed) / 2;
+    if(tree[p].lazy){
+        tree[p*2].sum = (tree[p*2].sum + ((ll)tree[p].lazy * (mid - st + 1) ) );
+        tree[p*2+1].sum = (tree[p*2+1].sum + ((ll)tree[p].lazy * (ed - mid) ) );
+        tree[p*2].lazy += tree[p].lazy;
+        tree[p*2+1].lazy += tree[p].lazy;
+        tree[p].lazy = 0;
+    }
+    if(l <= mid){
+        add(l , r , val , p*2 , st , mid);
+    }
+    if(r > mid){
+        add(l , r , val , p*2 +1 , mid+1 , ed);
+    }
+    tree[p].sum = ((ll) tree[p*2].sum  + tree[p*2+1].sum);
+}
+
+ll get_sum(int l , int r , int p = 1 , int st = 1 , int ed = 200001){
+    if(st == ed || (st >= l && ed <= r)){
+        return (tree[p].sum) ;
+    }
+    int mid = (st + ed) / 2;
+    ll ret = 0;
+    if(tree[p].lazy){
+        tree[p*2].sum = (tree[p*2].sum + ((ll)tree[p].lazy * (mid - st + 1) ) );
+        tree[p*2+1].sum = (tree[p*2+1].sum + ((ll)tree[p].lazy * (ed - mid) ) );
+        tree[p*2].lazy += tree[p].lazy;
+        tree[p*2+1].lazy += tree[p].lazy;
+        tree[p].lazy = 0;
+    }
+    if(l <= mid){
+        ret += get_sum(l , r , p*2 , st , mid);
+    }
+    if(r > mid){
+        ret += get_sum(l , r , p*2 +1 , mid+1 , ed);
+    }
+    tree[p].sum = (tree[p*2].sum  + tree[p*2+1].sum);
+    return ret;
+}
+
+int arr[200001];
+vector<queue<int> > v;
+int main(){
+    memset(tree , 0 , sizeof(tree));
+    int n , a;
+    ll sum = 0 ;
+    ll tot = 0 ;
+    ll tot2 = 0 ;
+    scanf("%d" , &n);
+    v = vector<queue<int> > (200001);
+    for(int i = 0 ;  i < n ; i++){
+        scanf("%d",&a);
+        arr[i] = a ;
+        v[a].push(i);
+        if(v[a].size() ==1){
+            sum++;
+        }
+        tot += (sum*sum);
+        add(i+1,i+1,sum);
+    }
+    sum = 0 ;
+    for(int i = 0 ; i < n ; i++){
+        //cout << tot << " "  << tot2 << endl;
+        //cout << get_sum(i+1,n) << endl;
+        //sum += get_sum(i+1 , n);
+        //sum%=mod;
+        tot2 += tot;
+        tot2 %=mod;
+        a = arr[i];
+        add(i+1 , n ,-1);
+        v[a].pop();
+        //cout <<get_sum(i+1 , n) << " " << (n-i) << endl;
+        tot -= (get_sum(i+1 , n)*2);
+        tot -= (n-i);
+        ///cout << tot << endl;
+        if(v[a].size()){
+            tot += (n - v[a].front());
+            tot += 2*get_sum(v[a].front()+1 , n);
+            add(v[a].front()+1 , n ,1);
+        }
+        //cout << tot << " &\n";
+    }
+    cout << tot2 <<  endl;
+}
+

@@ -1,0 +1,103 @@
+#include <bits/stdc++.h>
+#define SZ(X) ((int)(X).size())
+#define ALL(X) (X).begin(), (X).end()
+#define REP(I, N) for (int I = 0; I < (N); ++I)
+#define REPP(I, A, B) for (int I = (A); I < (B); ++I)
+#define PER(I, N) for (int I = (N); I >= 0; --I)
+#define PERR(I, A, B) for (int I = (A); I >= B; --I)
+#define ITR(I, A) for (__typeof((A).begin()) I=(A).begin(), _##i=(A).end(); I!=_##i; ++I)
+#define RI(X) scanf("%d", &(X))
+#define RII(X, Y) scanf("%d%d", &(X), &(Y))
+#define RIII(X, Y, Z) scanf("%d%d%d", &(X), &(Y), &(Z))
+#define DRI(X) int (X); scanf("%d", &X)
+#define DRII(X, Y) int X, Y; scanf("%d%d", &X, &Y)
+#define DRIII(X, Y, Z) int X, Y, Z; scanf("%d%d%d", &X, &Y, &Z)
+#define RS(X) scanf("%s", (X))
+#define CASET int ___T, case_n = 1; scanf("%d ", &___T); while (___T-- > 0)
+#define MP make_pair
+#define PB push_back
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define LEN(X) strlen(X)
+#define PII pair<int,int>
+#define VPII vector<pair<int,int> >
+#define PLL pair<long long,long long>
+#define F first
+#define S second
+#define LB(X) __builtin_ctz((X))
+#define ONES(X) __builtin_popcount((X))
+typedef long long LL;
+using namespace std;
+template <class T>  inline void smax(T &x,T y){ x = max((x), (y));}
+template <class T>  inline void smin(T &x,T y){ x = min((x), (y));}
+const int MOD = 1e9+7;
+const int SIZE = 2*1e6+10;
+#define LOCALTEST 0 // change this to 1 to perform localtest on "in.txt"
+struct node {
+    int next[27];
+    int ncs;
+    node() : ncs(0) {REP(i,27) next[i] = -1;}
+};
+node trie[SIZE];
+LL H[SIZE];
+int n, sz;
+string s;
+void addtrie(string &s, int idx = 0, int u = 0) {
+    //printf("idx %d, u %d\n", idx, u);
+    trie[u].ncs++;
+    if (idx >= SZ(s)) {
+        return;
+    }
+    if (trie[u].next[s[idx]-'a'] <= 0)
+        trie[u].next[s[idx]-'a'] = sz++;
+    addtrie(s, idx+1, trie[u].next[s[idx]-'a']);
+}
+void dfs(int u = 0, int h = 0) {
+    int * foo = new int[27];
+    foo[0] = trie[u].ncs;
+    REP(i,26) {
+        if (trie[u].next[i] >= 0) foo[0] -= trie[trie[u].next[i]].ncs;
+    }
+    H[h] += (LL)foo[0]*(foo[0]-1)/2;
+    int j = 1;
+    for (int i = 0; i < 26; i++) {
+        if (trie[u].next[i] >= 0) {
+            foo[j++] = trie[trie[u].next[i]].ncs;
+            //printf("string %s, %c val %d\n", s.c_str(), i+'a', foo[j-1]);
+            REP(k,j-1) {
+                H[h] += (LL)foo[j-1] * foo[k];
+                //printf("adding %lld to H[%d], j %d\n", (LL)foo[j-1] * foo[k], h, j);
+            }
+        }
+    }
+    delete [] foo;
+    REP(i,26) if (trie[u].next[i] >= 0) dfs(trie[u].next[i], h+1);
+}
+int main(){
+    if (LOCALTEST) {
+        freopen("in.txt", "r", stdin);
+        freopen("out.txt", "w", stdout);
+    }
+
+    int q;
+    while (cin >> q) {
+        sz = 1;
+        MS0(H);
+        REP(i,n) trie[i] = node();
+        string ts;
+        int ma = 0;
+        REP(i,q) {
+            cin >> ts;
+            n = SZ(ts);
+            addtrie(ts);
+            smax(ma, SZ(ts));
+        }
+
+        MS0(H);
+        dfs();
+
+        //printf("dfsed\n");
+        REP(i,ma+1) printf("%lld%c", H[i], i==ma?'\n':' ');
+    }
+    return 0;
+}

@@ -1,0 +1,80 @@
+#include<bits/stdc++.h>
+#define MAX 10000000
+#define mpr(x,y) make_pair(x,y)
+#define pb(x) push_back(x)
+#define MOD 1000000007ll
+#define INF 9223372036854775807
+#define S(x) scanf("%lld",&x)
+#define Ss(x) scanf("%s",x)
+#define Ps(x) printf("%s\n",x)
+#define P(x) printf("%lld\n",x)
+#define P_(x) printf("%lld ",x)
+#define Ps_(x) printf("%s ",x)
+#define nL printf("\n")
+using namespace std;
+typedef long long ll;
+struct node{
+	int max_val;
+};
+node combine(node a, node b){
+	node nd;
+	if(a.max_val>=b.max_val)
+		nd.max_val = a.max_val;
+	else
+		nd.max_val = b.max_val;
+	return nd;
+}
+node stree[262145];
+ll arr[100001];
+void build_seg_tree(ll id, ll st, ll en){
+	if(st==en){
+		stree[id].max_val = arr[st];
+		return;
+	}
+	ll mid = st + (en-st)/2;
+	build_seg_tree(2*id,st,mid);
+	build_seg_tree(2*id+1,mid+1,en);
+	stree[id] = combine(stree[2*id], stree[2*id+1]);
+}
+void point_update(ll id, ll st, ll en, ll idx){
+	if(st==en){
+		stree[id].max_val = arr[idx];
+		return;
+	}
+	ll mid = st + (en-st)/2;
+	if(idx<=mid)
+		point_update(2*id,st,mid,idx);
+	else
+		point_update(2*id+1,mid+1,en,idx);
+	stree[id] = combine(stree[2*id], stree[2*id+1]);
+}
+
+ll query(ll id, ll st, ll en, ll val){
+	if(val>stree[id].max_val)return -1;
+	if(st==en){
+		return st;
+	}
+	ll mid = st + (en-st)/2;
+	if(stree[2*id].max_val >= val)
+		query(2*id,st,mid,val);
+	else
+		query(2*id+1,mid+1,en,val);
+}
+
+int main(){
+	ll n,q,x,y,val;
+	S(n);S(q);
+	for(ll i=1; i<=n; i++)S(arr[i]);
+	build_seg_tree(1,1,n);
+	while(q--){
+		S(x);S(y);
+		if(x==0){
+			S(val);
+			arr[y] = val;
+			point_update(1,1,n,y);
+		}
+		else{
+			P(query(1,1,n,y));
+		}
+	}
+}

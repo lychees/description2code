@@ -1,0 +1,138 @@
+#pragma comment(linker, "/STACK:16777216")
+
+#include<stdio.h>
+#include<string.h>
+#include<math.h>
+#include<stdlib.h>
+#include<ctype.h>
+#include<iostream>
+#include<vector>
+#include<stack>
+#include<queue>
+#include<set>
+#include<map>
+#include<string>
+#include<utility>
+#include<algorithm>
+#include<list>
+using namespace std;
+
+#define pb push_back
+#define MS( a ) memset( a,0,sizeof(a))
+#define MSV( a,v ) memset( a,v,sizeof(a))
+
+#define MAX 1007
+#define MAX_B 1027
+
+typedef long long Long;
+
+char Str[MAX+7];
+vector<long> LD;
+long M;
+long Parv[MAX+7][MAX_B+7];
+long Parb[MAX+7][MAX_B+7];
+long Dig[MAX+7][MAX_B+7];;
+bool Visit[MAX+7][MAX_B+7];;
+
+bool Bfs( void )
+{
+    queue<long> qv,qb;
+    long i,u,v,bu,bv;
+    memset( Visit,0,sizeof(Visit));
+    for( i=0;i<LD.size();i++ ){
+        if( !LD[i] ) continue;
+        v = LD[i]%M;
+        bv = 1<<i;
+        Parv[v][bv] = -1;
+        Dig[v][bv] = LD[i];
+        Visit[v][bv] = true;
+        if( !v && bv==(1<<LD.size())-1 ) return true;
+        qv.push( v );
+        qb.push( bv );
+    }
+
+    while( !qv.empty()){
+        u = qv.front();
+        qv.pop();
+        bu = qb.front();
+        qb.pop();//printf("%ld %ld\n",u,bu );
+        for( i=0;i<LD.size();i++ ){
+            v = ( u*10 + LD[i] )%M;
+            bv = bu | 1<<i;
+            if( Visit[v][bv] ) continue;
+            Visit[v][bv] = true;
+            Parv[v][bv] = u;
+            Parb[v][bv] = bu;
+            Dig[v][bv] = LD[i];
+            if( !v && bv==(1<<LD.size())-1 ) return true;
+            qv.push( v );
+            qb.push( bv );
+        }
+    }
+    return false;
+}
+
+
+void Normalize( string &s )
+{
+    long i;
+    for( i=0;i<s.size();i++ ){
+        if( s[i]>'0' ) break;
+    }
+    s = s.substr( i,s.size()-i );
+}
+
+int main( void )
+{
+    long i,j,u,v,b,Icase,k=0;
+
+    //freopen("text1.txt","r",stdin );
+
+    scanf("%ld",&Icase );
+    while( Icase-- ){
+        scanf("%*c");
+        gets( Str );
+        char *p = strtok( Str," ");
+        LD.clear();
+        while( p ){
+            LD.pb( atol( p ));
+            p = strtok( NULL," ");
+        }
+        scanf("%ld",&M );
+        sort( LD.begin(),LD.end());
+
+        if( !Bfs() ){
+            printf("Impossible\n");
+            continue;
+        }
+        string Ans;
+        v = 0;
+        b = (1<<LD.size())-1;
+        while( Parv[v][b]!=-1 ){//printf("here\n");
+            Ans.pb( Dig[v][b]+'0' );
+            u = Parv[v][b];
+            b = Parb[v][b];
+            v = u;
+        }
+        Ans.pb( Dig[v][b]+'0' );
+        reverse( Ans.begin(),Ans.end());
+        Normalize( Ans );
+
+        string Mltp;
+        long Rem =0;
+        for( i=0;i<Ans.size();i++ ){
+            Rem = Rem*10 + Ans[i]-'0';
+            Mltp.pb( Rem/M + '0' );
+            Rem %= M;
+        }
+        Normalize( Mltp );
+        if( !Mltp.size() || !Ans.size() ){
+            printf("Impossible\n");
+        }
+        else{
+            cout<<Ans<<" = "<<M<<" * "<<Mltp<<endl;
+        }
+    }
+
+    return 0;
+}

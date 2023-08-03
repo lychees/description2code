@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+#include <algorithm>
+#include <functional>
+
+using namespace std;
+const int MAX = 1e4 + 5;
+int id[2][MAX], nodes, edges;
+pair <long long, pair<int, int> > p[MAX];
+
+void initialize()
+{
+	for(int k=0; k<2; ++k)
+    for(int i = 0;i < MAX;++i)
+        id[k][i] = i;
+}
+
+int root(int boss,int x)
+{
+    while(id[boss][x] != x)
+    {
+        id[boss][x] = id[boss][id[boss][x]];
+        x = id[boss][x];
+    }
+    return x;
+}
+
+bool union1(int boss, int x, int y)
+{
+    int a = root(boss,x);
+    int b = root(boss,y);
+    if(a == b)
+    	return false;
+    id[boss][a] = b;
+    return true;
+}
+struct Edge {
+	int x, y, c;
+	Edge() {}
+	Edge(int x, int y, int c):x(x),y(y),c(c){}
+	inline bool operator < (const Edge &rhs) const{
+		return c > rhs.c;
+	}
+};
+vector<Edge> V;
+int main()
+{
+	int x, y;
+    long long weight, cost, minimumCost;
+    initialize();
+    cin >> nodes >> edges;
+    int cnt=0;
+    int group[2] = {nodes,nodes};
+    for(int i = 0;i < edges;++i)
+    {
+        cin >> x >> y >> weight;
+        V.emplace_back(Edge(x,y,weight));
+    }
+    sort(V.begin(), V.end());
+    
+    for(int i=0; i<edges; ++i) {
+    	bool destroy = false;
+    	if((V[i].c &1) == 1) {
+    		if(!union1(0,V[i].x,V[i].y))
+    			destroy = true;
+    		else
+    			group[0]--;
+    	}
+    	if((V[i].c &2) == 2) {
+    		if(!union1(1,V[i].x,V[i].y))
+    			destroy=true;
+    		else
+    			group[1]--;
+    	}
+    	if(destroy)
+    		cnt++;
+    }
+    if(group[0]>1 || group[1]>1)
+    cout << "-1" << endl;
+    else
+    cout << cnt; 
+    return 0;
+}

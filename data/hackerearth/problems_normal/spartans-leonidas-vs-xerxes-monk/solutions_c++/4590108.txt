@@ -1,0 +1,142 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long a[100010];
+struct node{
+	long long lval,rval,llen,rlen,ans,lind,rind;
+};
+struct node tree[400010];
+
+void build_tree(int no,int start,int end){
+	if(start==end){
+		tree[no].llen = tree[no].rlen = tree[no].ans = 1;
+		tree[no].lval = tree[no].rval = a[start];
+		tree[no].lind = tree[no].rind = start;
+	}
+	else{
+		int mid = (start+end)/2;
+		build_tree(no*2,start,mid);
+		build_tree(no*2+1,mid+1,end);
+		tree[no].lval = tree[no*2].lval;
+		tree[no].rval = tree[no*2+1].rval;
+		if(tree[no*2].llen == (tree[no*2].rind-tree[no*2].lind+1) && tree[no*2].rval < tree[no*2+1].lval)
+		tree[no].llen = tree[no*2].llen + tree[no*2+1].llen;
+		else
+		tree[no].llen = tree[no*2].llen;
+		
+		if(tree[no*2+1].rlen == (tree[no*2+1].rind-tree[no*2+1].lind+1) && tree[no*2].rval < tree[no*2+1].lval)
+		tree[no].rlen = tree[no*2].rlen + tree[no*2+1].rlen;
+		else
+		tree[no].rlen = tree[no*2+1].rlen;
+		
+		tree[no].lind = tree[no*2].lind;
+		tree[no].rind = tree[no*2+1].rind;
+		tree[no].lval = tree[no*2].lval;
+		tree[no].rval = tree[no*2+1].rval;
+		tree[no].ans = max(tree[no*2].ans,tree[no*2+1].ans);
+		if(tree[no*2].rval < tree[no*2+1].lval)
+		tree[no].ans = max(tree[no].ans,tree[no*2+1].llen + tree[no*2].rlen);
+		
+	}
+}
+
+void update(int no,int start,int end, int ind,int val){
+	if(start==end){
+		//tree[no].llen = tree[no].rlen = tree[no].ans = 1;
+		tree[no].lval += val;
+		tree[no].rval += val;
+		//tree[no].lind = tree[no].rind = start;
+	}
+	else{
+		int mid = (start+end)/2;
+		if(ind<=mid)
+		update(no*2,start,mid,ind,val);
+		else
+		update(no*2+1,mid+1,end,ind,val);
+		
+		tree[no].lval = tree[no*2].lval;
+		tree[no].rval = tree[no*2+1].rval;
+		if(tree[no*2].llen == (tree[no*2].rind-tree[no*2].lind+1) && tree[no*2].rval < tree[no*2+1].lval)
+		tree[no].llen = tree[no*2].llen + tree[no*2+1].llen;
+		else
+		tree[no].llen = tree[no*2].llen;
+		
+		if(tree[no*2+1].rlen == (tree[no*2+1].rind-tree[no*2+1].lind+1) && tree[no*2].rval < tree[no*2+1].lval)
+		tree[no].rlen = tree[no*2].rlen + tree[no*2+1].rlen;
+		else
+		tree[no].rlen = tree[no*2+1].rlen;
+		
+		tree[no].lind = tree[no*2].lind;
+		tree[no].rind = tree[no*2+1].rind;
+		tree[no].lval = tree[no*2].lval;
+		tree[no].rval = tree[no*2+1].rval;
+		tree[no].ans = max(tree[no*2].ans,tree[no*2+1].ans);
+		if(tree[no*2].rval < tree[no*2+1].lval)
+		tree[no].ans = max(tree[no].ans,tree[no*2+1].llen + tree[no*2].rlen);
+	}
+}
+
+node find(int no,int start,int end, int l,int r){
+	if(start>=l && end<=r){
+		return tree[no];
+	}
+	else{
+		int mid=(start+end)/2;
+		if(mid>=r)
+		return find(no*2,start,mid,l,r);
+		if(l>mid)
+		return find(no*2+1,mid+1,end,l,r);
+		
+		node p1 = find(no*2,start,mid,l,r);
+		node p2 = find(no*2+1,mid+1,end,l,r);
+		node p3;
+		
+		p3.lval = p1.lval;
+		p3.rval = p2.rval;
+		if(p1.llen == (p1.rind-p1.lind+1) && p1.rval < p2.lval)
+		p3.llen = p1.llen + p2.llen;
+		else
+		p3.llen = p1.llen;
+		
+		if(p2.rlen == (p2.rind-p2.lind+1) && p1.rval < p2.lval)
+		p3.rlen = p1.rlen + p2.rlen;
+		else
+		p3.rlen = p2.rlen;
+		
+		p3.lind = p1.lind;
+		p3.rind = p2.rind;
+		p3.lval = p1.lval;
+		p3.rval = p2.rval;
+		p3.ans = max(p1.ans,p2.ans);
+		if(p1.rval < p2.lval)
+		p3.ans = max(p3.ans,p2.llen + p1.rlen);
+		return p3;
+		
+		
+	}
+}
+
+int main() {
+	int t;
+	cin >> t;
+	while(t--){
+		int n,q;
+		cin >> n >> q;
+		//memset(a,0,sizeof(a));
+		for(int i=1;i<=n;i++)
+		scanf ("%d", &a[i]);
+		
+		build_tree(1,1,n);
+		for(int i=0;i<q;i++){
+			int p,d,b;
+			cin >> p >> d >> b;
+			if(p==0){
+				cout << find(1,1,n,d,b).ans << endl;
+			}
+			else{
+				update(1,1,n,d,b);
+			}
+		}
+	}
+	return 0;
+}

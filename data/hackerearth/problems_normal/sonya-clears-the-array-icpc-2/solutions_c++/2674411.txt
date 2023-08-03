@@ -1,0 +1,50 @@
+#include <cstdio>
+#include <algorithm>
+using namespace std;
+
+const int NMAX = 510, PMAX = 2000010;
+
+int N, A[NMAX], Prime[PMAX], NextPrime[PMAX], PrevPrime[PMAX], Dp[NMAX][NMAX];
+
+int Find(int X, int Y)
+{
+    if(A[X] < A[Y])
+    {
+        int NextX = -1, NextY = -1;
+        NextY = NextPrime[A[Y]];
+        if(PrevPrime[NextY - 1]) NextX = PrevPrime[NextY - 1];
+        if(NextX < A[X]) NextX = NextY, NextY = NextPrime[NextY + 1];
+        return NextX + NextY - A[X] - A[Y];
+    }else
+    {
+        int NextX, NextY;
+        NextX = NextPrime[A[X]];
+        NextY = NextPrime[NextX + 1];
+        return NextX + NextY - A[X] - A[Y];
+    }
+}
+
+int main()
+{
+    for(int i = 2; i < PMAX; ++ i) Prime[i] = 1;
+    for(int i = 2; i < PMAX; ++ i) if(Prime[i]) for(int j = i + i; j < PMAX; j += i) Prime[j] = 0;
+
+    for(int i = 2; i < PMAX; ++ i) PrevPrime[i] = (Prime[i] ? i : PrevPrime[i - 1]);
+    for(int i = PMAX - 2; i >= 0; -- i) NextPrime[i] = (Prime[i] ? i : NextPrime[i + 1]);
+
+    scanf("%i", &N);
+    for(int i = 1; i <= N; ++ i) scanf("%i", &A[i]);
+
+    for(int L = 2; L <= N; L += 2)
+        for(int i = 1; i + L - 1 <= N; ++ i)
+        {
+            int j = i + L - 1;
+            Dp[i][j] = Dp[i + 1][j - 1] + Find(i, j) + 1;
+            for(int k = i; k <= j; ++ k)
+                if((k - i + 1) % 2 == 0 && (j - k) % 2 == 0)
+                    Dp[i][j] = min(Dp[i][j], Dp[i][k] + Dp[k + 1][j]);
+        }
+
+    printf("%i\n", Dp[1][N]);
+    return 0;
+}

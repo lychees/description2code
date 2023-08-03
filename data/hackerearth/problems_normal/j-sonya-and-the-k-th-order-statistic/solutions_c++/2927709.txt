@@ -1,0 +1,180 @@
+#include<bits/stdc++.h>
+#include <algorithm>
+#define ALL(X)        X.begin(),X.end()
+#define FOR(I,A,B)    for(int (I) = (A); (I) <= (B); (I)++)
+#define FORW(I,A,B)   for(int (I) = (A); (I) < (B);  (I)++)
+#define FORD(I,A,B)   for(int (I) = (A); (I) >= (B); (I)--)
+#define FOREACH(I,A)  for(__typeof(A.begin()) I = A.begin(); I != A.end(); ++I)
+#define CLEAR(X)      memset(X,0,sizeof(X))
+#define SIZE(X)       int(X.size())
+#define CONTAIN(A,X)  (A.find(X) != A.end())
+#define PB            push_back
+#define MP            make_pair
+#define X             first
+#define Y             second
+#include<ext/pb_ds/tag_and_trait.hpp>
+#include<ext/pb_ds/assoc_container.hpp>
+#include<ext/pb_ds/tree_policy.hpp>
+#define LBOUND(P,R,Q) ({__typeof(P) X=P,RR=(R), PP = P; while(PP<RR) {X = (PP+(RR-PP)/2); if(Q) RR = X; else PP = X+1;} PP;})
+using namespace __gnu_pbds;
+using namespace std;
+typedef signed long long slong;
+typedef long double ldouble;
+const slong INF = 1000000100;
+const ldouble Epsilon = 1e-9;
+template<typename T, typename U> ostream& operator << (ostream& os, const pair<T,U>&p) { return os << "(" << p.X << "," << p.Y << ")"; }
+template<typename T> ostream& operator << (ostream &os, const vector<T>& V) { os << "["; FORW(i,0,SIZE(V)) os << V[i] << ((i==SIZE(V)-1) ? "" : ","); return os << "]"; }
+template<typename T> ostream& operator << (ostream &os, const set<T>& S) {os << "("; FOREACH(i,S) os << *i << (*i==*S.rbegin()?"":","); return os << ")"; }
+template<typename T, typename U> ostream& operator << (ostream &os, const map<T, U>& M){os << "{"; FOREACH(i,M) os << *i << (*i.X==M.rbegin()->X?"":","); return os << "}"; }
+
+const int MAXN = 100100;
+
+vector<int> A[MAXN];
+vector<int> C[MAXN];
+
+int In[MAXN],Out[MAXN];
+
+int Od[MAXN];
+int Tim;
+void dfs(int u){
+	Od[u] = 1;
+	In[u] = ++Tim;
+	for(int e : A[u]){
+		if(Od[e] == 0){
+			dfs(e);
+			C[u].PB(e);
+		}
+	}
+	Out[u] = ++Tim;
+}
+
+/////////////
+
+typedef tree<
+	int,
+	null_type,
+	less<int>,
+	rb_tree_tag,
+	tree_order_statistics_node_update>
+		MySet;
+
+struct kth_el{	
+	
+	int L[1024*1024];
+	const static int N = 1024*1024;
+	MySet T[N*2];
+	//set<int> T2[N*2];
+	int licz=0;
+	bool innn = false;	
+	void sett(int g, int c){
+		assert(innn);
+		int a = L[g]+N;
+		L[g] = c;
+		c += N;
+		while(a){
+			T[a].erase(g);
+			a/=2;
+			T[c].insert(g);
+			c/= 2;
+		}
+	}
+
+	void init(){
+		for(int i = N-1; i > 0; i--){
+			for(int x : T[i*2]) T[i].insert(x);
+			for(int x : T[i*2+1]) T[i].insert(x);	
+		}
+		innn = true;
+	}
+
+	inline int get(int k, int a, int b){
+		int x = 1;
+		while(x < N){
+			int s = -1;			
+			if(b <= Tim)
+				s = T[x*2].order_of_key(b+1) - T[x*2].order_of_key(a);
+			else{
+				s = T[x*2].order_of_key(Tim+1) + T[x*2].order_of_key(b+1-Tim) - T[x*2].order_of_key(a); 
+			}
+			assert(s != -1);
+			if(s >= k) x *= 2;
+			else{
+				k -= s;
+				x *=2;
+				x++;
+			}
+		}
+		return x-N;
+	}
+
+}Tre;
+
+int zap(int a,int b, int k){
+	return Tre.get(k,a,b);
+}
+
+int find(int u, int v){
+	if(Out[C[u][0]] >= In[v]) return C[u][0];
+	int p = 0;
+	int k = SIZE(C[u]);
+	while(p+1 < k){
+		int m = (p+k)/2;
+		if(Out[C[u][m]] > In[v]) k = m;
+		else p = m;
+
+	}
+	//printf("%d %d %d\n",
+	return C[u][k];
+}
+
+int main() 
+{
+	int n;
+	scanf("%d",&n);
+	FOR(i,2,n){
+		int a,b;
+		scanf("%d%d",&a,&b);
+		A[a].PB(b);
+		A[b].PB(a);
+	}
+	dfs(1);
+	//Tre.init();
+	FOR(i,1,n){	
+		int xx;
+		scanf("%d", &xx);
+		Tre.T[xx+Tre.N].insert(In[i]);
+		Tre.L[In[i]] = xx;
+		//Tre.sett(In[i],xx);
+		//Tre.sett(In[i]+Tim,xx);
+	}
+	Tre.init();
+	int q;
+	scanf("%d",&q);
+	FOR(i,1,q){
+		int a;
+		scanf("%d",&a);
+		if(a == 1){
+			int u,x;
+			scanf("%d%d",&u,&x);
+			Tre.sett(In[u],x);
+			//Tre.sett(In[u]+Tim,x);
+		}
+		else{
+			int k,u,v;
+			scanf("%d%d%d",&k,&u,&v);
+			if(In[u] > In[v] or Out[u] < In[v] ){
+				printf("%d\n", zap(In[u],Out[u],k));
+			}
+			else if(u == v){
+				printf("%d\n", zap(1,Tim,k));
+				
+			}
+			else{
+				int qq = find(u,v);
+				printf("%d\n", zap(Out[qq],In[qq]+Tim-1,k));
+			}
+		}
+	}
+	return 0;
+}
+

@@ -1,0 +1,76 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define LET(x, a)  __typeof(a) x(a)
+#define TR(v, it) for(LET(it, v.begin()); it != v.end(); it++)
+#define si(x) scanf("%d",&x)
+#define F first
+#define S second
+#define PB push_back
+#define MP make_pair
+#define INF 1000000000
+#define MOD 1000000007
+#define SET(x,y) memset(x,y,sizeof(x));
+#define LL long long int
+#define ULL unsigned LL
+#define PII pair<int, int>
+#define MX 100000
+
+int a[20][20];
+int dp[(1 << 16)];
+PII pref[20][20];
+int main() {
+    int t, i, j, n, k, K;
+    string s;
+    cin >> t;
+    while (t--) {
+        cin >> n;
+        for (i = 0; i < n; i++) {
+            cin >> s;
+            for (j = 0; j < n; j++) {
+                if (s[j] <= '9')
+                    a[i][j] = (int)s[j] - (int)'0';
+                else 
+                    a[i][j] = (int)s[j] - (int)'A' + 10;
+                pref[j][i] = MP(a[i][j], i);
+            }
+        }
+    
+        for (i = 0; i < n; i++)
+            sort(pref[i], pref[i] + n);
+        cin >> s;
+        cin >> K;
+        int cmask = 0;
+        for (i = 0; i < n; i++) {
+            if (s[i] == 'Y')
+                cmask |= (1 << i);
+        }
+        memset(dp, 1, sizeof(dp));
+        int ans = dp[0];
+        dp[cmask] = 0;
+        for (i = 0; i < (1 << n); i++) {
+            for (k = 0; k < n; k++) {
+                if ((i & (1 << k)) == 0)
+                    continue;
+                if (dp[(i ^ (1 << k))]  >= MX)
+                    continue;
+                int cdp = MX;
+                for (int jj = 0; jj < n; jj++) {
+                    j = pref[k][jj].second;
+                    if (j == k || (i & (1 << j)) == 0)
+                        continue;
+                    cdp = min(cdp, dp[(i ^ (1 << k))] + a[j][k]);
+                }
+                dp[i] = min(dp[i], cdp);
+            }
+            if (__builtin_popcount(i) >= K)
+                ans = min(ans, dp[i]);
+        }
+        if (ans >= MX) {
+            printf("Poor Navkrish.\n");
+        } else {
+            cout << ans << endl;
+        }
+    }
+    return 0;
+}

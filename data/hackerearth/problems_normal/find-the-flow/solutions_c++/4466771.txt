@@ -1,0 +1,92 @@
+#include <iostream>
+#include <limits.h> //INT_MAX constant
+#include <vector>
+#include <queue>
+using namespace std;
+#define V 17
+
+bool bfs(int rGraph[V][V],int src,int sink,int path[V])
+{
+	bool visited[V];
+	for(int i=0;i<V;++i)
+		visited[i] = false;
+	queue<int> q;
+	q.push(src);
+	visited[src] = true;
+	path[src] = -1; //Src node in path doesn't have parent. That is why -1
+	
+	//Standard BFS loop
+	while(!q.empty())
+	{
+		int u = q.front();
+		q.pop();
+		for(int v=0;v<V;++v)
+		{
+			if(visited[v] == false && rGraph[u][v]!=0)
+			{
+				path[v] = u; //parent of v is u
+				q.push(v);
+				visited[v]= true;
+			}
+		}
+	}
+	return visited[sink];
+}
+int FordFulkersion(int graph[V][V],int src,int sink)
+{
+	int flow = 0; //Initialize flow to 0
+	int rGraph[V][V];
+	for(int u=0;u<V;u++)
+	{
+		for(int v=0;v<V;v++)
+		{
+			rGraph[u][v] = graph[u][v];
+		}
+	}
+	int path[V];
+	while(bfs(rGraph,src,sink,path))
+	{
+		int minFlow = INT_MAX;
+		for(int u=sink;u!=src;u=path[u])
+		{
+			minFlow = min(minFlow,rGraph[path[u]][u]);
+		}
+		flow += minFlow;
+		for(int u=sink;u!=src;u=path[u])
+		{
+			rGraph[path[u]][u] -= minFlow;
+			rGraph[u][path[u]] += minFlow;
+		}
+	}	
+	return flow;
+}
+char map(char input)
+{
+	if(input == 'S') return 0;
+	if(input == 'T') return 16;
+	return input-'A'+1;
+}
+int main()
+{
+	int n;
+	cin>>n;
+	int graph[V][V];
+	for(int u=0;u<V;++u)
+	{
+		for(int v=0;v<V;++v)
+		{
+			graph[u][v] = 0;
+		}
+	}
+	for(int i=0;i<n;++i)
+	{
+		char src,dst;
+		int value;
+		cin>>src>>dst>>value;
+		src=map(src);
+		dst=map(dst);
+		graph[src][dst] = value;
+	}
+	cout<<FordFulkersion(graph,0,16);
+	return 0;
+}

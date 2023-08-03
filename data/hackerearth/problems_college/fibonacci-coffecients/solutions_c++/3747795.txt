@@ -1,0 +1,165 @@
+#include <bits/stdc++.h>
+#define lli long long
+#define MAX 1000005
+
+using namespace std;
+
+lli M;
+
+//Code for FAST INPUT :)
+template <typename T>
+inline void fi(T *a)
+{
+    register char c=0;
+    while (c<33) c=getchar_unlocked();
+    *a=0;
+    int tmp = 0;
+    while (c>33)
+    {
+        if ( c == 45 ) tmp = 1;
+        else *a=*a*10+c-'0';
+        c=getchar_unlocked();
+    }
+    if ( tmp == 1 ) *a = 0-(*a);
+}
+
+
+struct matrix {
+	lli P[2][2];
+	matrix operator * (const matrix &A) {
+		matrix answer;
+		for ( int i = 0; i < 2; i++ ) {
+			for ( int j = 0; j < 2; j++ ) {
+				answer.P[i][j] = 0;
+				for ( int k = 0; k < 2; k++ ) {
+					answer.P[i][j] += (A.P[i][k]*P[k][j])%M;
+					if ( answer.P[i][j] >= M ) answer.P[i][j] -= M;
+				}
+			}
+		}
+		return answer;
+	}
+	matrix operator + (const matrix &A) {
+		matrix answer;
+		for ( int i = 0; i < 2; i++ ) {
+			for ( int j = 0; j < 2; j++ ) {
+				answer.P[i][j] = A.P[i][j] + P[i][j];
+				if ( answer.P[i][j] >= M ) answer.P[i][j] -= M;
+			}
+		}
+		return answer;
+	}
+} tree[4*MAX], null, identity, fib, inv_fib, FIB[MAX], INV_FIB[MAX], A[MAX];
+
+void init()
+{
+	for ( int i = 0; i < 2; i++ ) {
+		for ( int j = 0; j < 2; j++ ) {
+			null.P[i][j] = 0;
+			fib.P[i][j] = inv_fib.P[i][j] = 1;
+			if ( i != j ) identity.P[i][j] = 0;
+			else identity.P[i][j] = 1;
+		}
+	}
+	fib.P[1][1] = inv_fib.P[1][1] = 0;
+	swap(inv_fib.P[1][1], inv_fib.P[0][0]);
+	inv_fib.P[0][0] *= -1;
+	inv_fib.P[1][1] *= -1;
+	inv_fib.P[1][1] += M;
+	return;
+}
+
+void pre()
+{
+	FIB[0] = INV_FIB[0] = identity;
+	for ( int i = 1; i <= MAX - 5; i++ ) {
+		FIB[i] = FIB[i - 1]*fib;
+		INV_FIB[i] = INV_FIB[i - 1]*inv_fib;
+	}
+	return;
+}
+
+matrix combine(matrix A, matrix B)
+{
+	return A + B;
+}
+
+void build(int where, int left, int right)
+{
+	if ( left > right ) return;
+	if ( left == right ) {
+		tree[where] = A[left]*FIB[left];
+		return;
+	}
+	int mid = (left + right)/2;
+	build(where*2, left, mid);
+	build(where*2 + 1, mid + 1, right);
+	tree[where] = combine(tree[where*2], tree[where*2 + 1]);
+}
+
+void update(int where, int left, int right, int idx, matrix A)
+{
+	if ( left > right || left > idx || right < idx ) return;
+	if ( left == right ) {
+		tree[where] = A*FIB[left];
+		return;
+	}
+	int mid = (left + right)/2;
+	update(where*2, left, mid, idx, A);
+	update(where*2 + 1, mid + 1, right, idx, A);
+	tree[where] = combine(tree[where*2], tree[where*2 + 1]);
+}
+
+matrix query(int where, int left, int right, int i, int j)
+{
+	if ( left > right || left > j || right < i ) return null;
+	if ( left >= i && right <= j ) return tree[where];
+	int mid = (left + right)/2;
+	return combine(query(where*2, left, mid, i, j), query(where*2 + 1, mid + 1, right, i, j)); 
+}
+
+int main()
+{
+	int n, q, x, l, r, type;
+	fi(&n), fi(&q), fi(&M);
+	assert(n >= 1 && n <= 1000000);
+	assert(M >= 2 && M <= 1000000000);
+	assert(q >= 1 && q <= 100000);
+	init();
+	pre();
+	
+	for ( int i = 1; i <= n; i++ ) {
+		fi(&x);
+	//	assert(x >= 1 && x <= 1000000000);
+		x %= M;
+		A[i] = identity;
+		A[i].P[0][0] = A[i].P[1][1] = x;
+	}
+	
+	build(1, 1, n);
+	
+	while ( q-- ) {
+		fi(&type);
+		assert(type >= 1 && type <= 2);
+		if ( type == 1 ) {
+			fi(&l), fi(&x);
+			assert(l >= 1 && l <= n);
+	//		assert(x >= 1 && x <= 1000000000);
+			x %= M;
+			matrix X = identity;
+			X.P[0][0] = X.P[1][1] = x;
+			update(1, 1, n, l, X);
+		}
+		else {
+			fi(&l), fi(&r);
+			assert(l >= 1 && l <= n);
+			assert(r >= 1 && r <= n);
+			assert(l <= r);
+			matrix ans = query(1, 1, n, l, r);
+			ans = ans*INV_FIB[l - 1];
+			printf("%d\n", (int)ans.P[1][0]);
+		}
+	}
+	
+	return 0;
+}

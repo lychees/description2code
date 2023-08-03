@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define MAX 1000005
+
+struct trie{
+	trie *next[26];
+	int count, end;
+};
+
+long long ans[MAX];
+
+void insert(trie *root, string s){
+	for(int i=0 ; i<s.size() ; i++){
+		int index = s[i] - 'a';
+		if(root->next[index] == NULL){
+			root->next[index] = (trie *)malloc(sizeof(trie));
+			root->next[index]->count = 0;
+			root->next[index]->end = 0;
+			for(int j=0 ; j<26 ; j++)
+				root->next[index]->next[j] = NULL;
+		}
+		root = root->next[index];
+		root->count++;
+	}
+
+	root->end++;
+}
+
+void solve(trie *root, int level){
+	vector<int> cnt(26);
+	long long temp = 0;
+	for(int i=0 ; i<26 ; i++){
+		cnt[i] = 0;
+		if(root->next[i] == NULL)
+			continue;
+		solve(root->next[i], level+1);	
+		cnt[i] = root->next[i]->count;
+		temp += root->next[i]->count;
+	}	
+
+	ans[level] += 1ll * root->end * (root->end - 1);
+
+	for(int i=0 ; i<26 ; i++)
+		ans[level] += 1ll * cnt[i] * (temp - cnt[i]);
+}
+
+void search(trie *root, string s){
+	for(int i=0 ; i<s.size() ; i++){
+		int index = s[i] - 'a';
+		root = root->next[index];
+	}
+
+	int len = s.size();
+
+	ans[len] += 2ll * (root->count - root->end);
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	int n, mx = 0;
+	cin>>n;
+
+	trie *root = (trie *)malloc(sizeof(trie));
+	root->count = root->end = 0;
+	for(int i=0 ; i<26 ; i++)
+		root->next[i] = NULL;
+
+	string arr[n];
+	for(int i=0 ; i<n ; i++){
+		cin>>arr[i];
+		mx = max(mx, (int)arr[i].size());
+		insert(root, arr[i]);
+	}
+
+	solve(root, 0);
+
+	for(int i=0 ; i<n ; i++)
+		search(root, arr[i]);
+
+	for(int i=0 ; i<=mx ; i++)
+		cout<<ans[i]/2ll<<" ";
+
+	return 0;
+}

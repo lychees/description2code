@@ -1,0 +1,114 @@
+#include <algorithm>
+#include <bitset>
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <cstdio>
+#include <cstdlib>
+#include <string.h>
+#include <ctime>
+#include <iostream>
+#include <list>
+#include <map>
+#include <numeric>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+#define dbg(x) cout << #x << " = " << x << endl
+#define dbg2(x,y) cout << #x << " = " << x << ", " << #y << " = " << y << endl
+#define dbg3(x,y,z) cout << #x << " = " << x << ", " << #y << " = " << y << ", " << #z << " = " << z << endl
+
+#define out(x) cout << (x) << endl
+#define out2(x,y) cout << (x) << " " << (y) << endl
+#define out3(x,y,z) cout << (x) << " " << (y) << " " << (z) << endl
+
+const int maxN  = 100000 + 10;
+const int block = 320;
+
+int n, q, nt;
+int v[maxN], t[maxN];
+struct node {
+    int l, r, idx;
+    inline bool operator<(const node &s) const {
+        if( l / block == s.l / block )
+            return r < s.r;
+        return l / block < s.l / block;
+    }
+};
+node h[maxN]; long long ans[maxN];
+
+int bit[2][maxN], tag[2][maxN], sgn[2];
+
+int lowbit(int x) { return x & (-x); }
+
+void update(int idx, int pos) {
+    while( pos <= n ) {
+        if( tag[idx][pos] != sgn[idx] )
+            tag[idx][pos] = sgn[idx], bit[idx][pos] = 0;
+        bit[idx][pos] ++, pos += lowbit(pos);
+    }
+}
+
+int query(int idx, int pos) {
+    int res = 0;
+    while( pos > 0 ) {
+        if( tag[idx][pos] != sgn[idx] )
+            tag[idx][pos] = sgn[idx], bit[idx][pos] = 0;
+        res += bit[idx][pos]; pos -= lowbit(pos);
+    }
+    return res;
+}
+
+void calc()
+{
+    int startIndex = 0, endIndex = 0;
+    memset(tag, -1, sizeof(tag));
+    memset(bit,  0, sizeof(bit));
+    memset(sgn,  0, sizeof(sgn));
+    long long res = 0, tmp;
+    for(int i = 0; i < q; i ++) {
+        int lft = h[i].l, rht = h[i].r;
+        if( lft >= startIndex ) {
+            startIndex = (lft / block + 1) * block;
+            endIndex   = startIndex;
+            res = 0; sgn[0] ++;
+        }
+        while( endIndex <= rht ) {
+            res += query(0, n) - query(0, v[endIndex]);
+            update(0, v[endIndex]); endIndex ++;
+        }
+        tmp = res; sgn[1] ++;
+        for(int j = min(startIndex - 1, rht); j >= lft; j --) {
+            tmp += query(0, v[j] - 1) + query(1, v[j] - 1);
+            update(1, v[j]);
+        }
+        ans[ h[i].idx ] = tmp;
+    }
+}
+
+int main()
+{
+    //freopen("data.in", "r", stdin);
+    while( scanf("%d %d", &n, &q) == 2 ) {
+        for(int i = 0; i < n; t[i] = v[i], i ++)
+            scanf("%d", &v[i]);
+        nt = n; sort(t, t + nt);
+        nt = unique(t, t + nt) - t;
+        for(int i = 0; i < n; i ++)
+            v[i] = 1 + (lower_bound(t, t + nt, v[i]) - t);
+        for(int i = 0, j, k; i < q; i ++) {
+            scanf("%d %d", &j, &k);
+            h[i].l = j - 1, h[i].r = k - 1, h[i].idx = i;
+        }
+        sort(h, h + q); calc();
+        for(int i = 0; i < q; i ++)
+            printf("%lld\n", ans[i]);
+    }
+    return 0;
+}

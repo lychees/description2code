@@ -1,0 +1,115 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define REPU(i, a, b) for (int i = (a); i < (b); ++i)
+#define REPD(i, a, b) for (int i = (a); i > (b); --i)
+#define MEM(a, x) memset(a, x, sizeof(a))
+#define ALL(a) a.begin(), a.end()
+#define UNIQUE(a) a.erase(unique(ALL(a)), a.end())
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T, class U> inline T tmin(T a, U b) { return (a < b) ? a : b; }
+template<class T, class U> inline T tmax(T a, U b) { return (a > b) ? a : b; }
+template<class T, class U> inline void amax(T &a, U b) { if (b > a) a = b; }
+template<class T, class U> inline void amin(T &a, U b) { if (b < a) a = b; }
+template<class T> inline T tabs(T a) { return (a > 0) ? a : -a; }
+template<class T> T gcd(T a, T b) { while (b != 0) { T c = a; a = b; b = c % b; } return a; }
+
+struct UnionFind {
+	vector<int> par, rnk, sub;
+	int size;
+	
+	UnionFind() {}
+	
+	UnionFind(int _size) : size(_size) {
+		par.resize(size + 1); rnk.assign(size + 1, 0); sub.assign(size + 1, 1);
+		for (int i = 0; i <= size; ++i) par[i] = i;
+	}
+	
+	void init(int _size) {
+		size = _size;
+		par.resize(size + 1); rnk.assign(size + 1, 0); sub.assign(size + 1, 1);
+		for (int i = 0; i <= size; ++i) par[i] = i;
+	}
+	
+	int find(int x) {
+		if (par[x] == x) return x;
+		return par[x] = find(par[x]);
+	}
+	
+	bool join(int x, int y) {
+		x = find(x), y = find(y);
+		if (x == y) return false;
+		if (rnk[x] < rnk[y]) par[x] = y, sub[y] += sub[x];
+		else {
+			par[y] = x, sub[x] += sub[y];
+			if (rnk[x] == rnk[y]) rnk[x]++;
+		}
+		return true;
+	}
+	
+	int count(int x) { x = find(x); return sub[x]; }
+};
+
+struct E {
+    int u, v, w;
+};
+
+bool comp(const E &e1, const E &e2) {
+    return e1.w < e2.w;
+}
+
+UnionFind uf;
+
+ll mst(vector<E> &es, int n) {
+    ll ans = 0;
+    uf.init(n);
+    sort(es.begin(), es.end(), comp);
+    int ind = 0;
+    for (int i = 0; i < es.size(); ++i) {
+        if (uf.join(es[i].u, es[i].v)) {
+        	ans += es[i].w;
+        	es[ind++] = es[i];
+        }
+    }
+    return ans;
+}
+
+int X, A, C, mod;
+
+inline int getNext() {
+    X = (X * 1LL * A + C ) % mod;
+    return X;
+}
+
+int main(int argc, char *argv[]) {
+	ios_base::sync_with_stdio(false);
+	
+	int n, m, u, v, w;
+
+	cin >> n >> m >> X >> A >> C >> mod;
+	vector<E> edge(n + 100000);
+	REPU(i, 0, n) {
+		u = getNext() % n;
+		v = getNext() % n;
+		w = getNext();
+		edge[i] = (E) {u, v, w};
+	}
+	ll ans = (ll) 1e18;
+	for (int i = n; i < m;) {
+		int cnt = 0;
+		while (i < m && cnt < 100000) {
+			u = getNext() % n;
+			v = getNext() % n;
+			w = getNext();
+			edge[n + cnt] = (E) {u, v, w};
+			++i, ++cnt;
+		}
+		amin(ans, mst(edge, n));
+	}
+	cout << ans << endl;
+	
+	return 0;
+}

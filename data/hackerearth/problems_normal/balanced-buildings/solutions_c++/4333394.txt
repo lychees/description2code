@@ -1,0 +1,74 @@
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+const int X = 2505;
+
+typedef long long llong;
+int n, s, m, p, l;
+int a[X], cnt[X], srt[X];
+llong dp[X];
+llong sum[X];
+
+inline void get(int pos, int& c, llong& s) {
+	for(; pos; pos &= (pos - 1))
+		c += cnt[pos], s += sum[pos];
+}
+
+inline void upd(int pos, llong val) {
+	for(; pos <= l; pos += (pos & (-pos)))
+		++cnt[pos], sum[pos] += val;
+}
+
+llong cost(int pos) {
+	// printf("pos %d\n", pos);
+	int cl = 0, cr = 0;
+	llong sl = 0LL, sr = 0LL;
+	get(pos, cl, sl);
+	get(l, cr, sr);
+	cr -= cl;
+	sr -= sl;
+	return (1LL * cl * srt[pos - 1] - sl) * p + (sr - 1LL * cr * srt[pos - 1]) * m;
+}
+                        
+int main() {
+	scanf("%d%d%d%d", &n, &s, &m, &p);
+	for(int i = 1; i <= n; ++i) {
+		scanf("%d", a + i);
+		srt[i - 1] = a[i];
+	}
+	sort(srt, srt + n);
+	l = unique(srt, srt + n) - srt;
+	for(int i = 1; i <= n; ++i) {
+		vector<int> add;
+		int minE = int(1e9), maxE = -int(1e9);
+		for(int j = i; j <= n; ++j) {
+			int at = 1 + (lower_bound(srt, srt + l, a[j]) - srt);
+			// printf("%d: %d\n", j, at);
+			add.push_back(at);
+			upd(at, 1LL * a[j]);
+			minE = min(minE, at);
+			maxE = max(maxE, at);
+			int l = minE, r = maxE;
+			while (l + 2 < r) {
+				int m1 = (l + l + r) / 3;
+				int m2 = (l + r + r) / 3;
+				if (cost(m1) < cost(m2)) r = m2;
+				else l = m1;
+			}
+			llong rcost = cost(l);
+			for(int pos = l + 1; pos <= r; ++pos)
+				rcost = min(rcost, cost(pos));
+			// printf("%d %d: %lld\n", i, j, rcost);
+			dp[j] = max(dp[j], dp[i - 1] + 1LL * (j - i) * s - rcost);
+		}
+		sort(add.begin(), add.end());
+		add.erase(unique(add.begin(), add.end()), add.end());
+		for(int id = 0; id < (int)add.size(); ++id)
+			for(int pos = add[id]; pos < X; pos += (pos & -pos))
+				cnt[pos] = 0, sum[pos] = 0LL;
+	}
+	printf("%lld\n", dp[n]);
+	return 0;
+}

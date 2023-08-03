@@ -1,0 +1,97 @@
+// The truth is always either terrible or boring
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+typedef vector<int> vi;
+typedef vector<ll> vll;
+
+#define X first
+#define Y second
+#define rep(i,n) for(int i = 0, _n = (n); i < _n; i++)
+#define rep1(i,a,b) for(int i = a, _b = (b); i <= _b; i++)
+#define rep2(i,b,a) for(int i = b, _a = (a); i >= _a; i--)
+#define mem(a,val) memset(a, (val), sizeof a)
+#define mp make_pair
+#define mt make_tuple // remember tie & ignore
+#define eb emplace_back
+#define all(c) (c).begin(), (c).end()
+#define uni(c) c.resize(distance(c.begin(), unique(all(c))))
+#define tr(c,it) for(__typeof(c.begin()) it = c.begin(); it != c.end(); ++it)
+#define cases int __t; cin >> __t; rep1(_t,1,__t)
+#define case(ans) "Case #" << _t << ": " << ans << "\n"
+#define cout(d) cout << fixed << setprecision(d)
+#define err(x) cerr << #x << " = " << x << '\n'
+const int mod = 1e9 + 7;
+
+struct nod {
+    ll l, r, sz;
+    nod() {};
+    nod(int x) {
+        l = r = x;
+        sz = 1;
+    }
+};
+
+const int N = 10 + 1e5;
+int n;
+int arr[N];
+nod tree[N << 1];
+ll k[N];
+inline nod combine(nod a, nod b) {
+    // Put the logic
+    nod ans;
+    ans.l = a.l + k[a.sz] * b.l;
+    ans.sz = a.sz + b.sz;
+    ans.r = b.r + k[b.sz] * a.r;
+    return ans;
+}
+inline void build() {
+    for(int i = n; i--; )
+        tree[n + i] = nod(arr[i]);
+    for(int i = n; --i; )
+        tree[i] = combine(tree[i << 1], tree[i << 1 | 1]); 
+}
+inline void update(int pos, int value) {
+    tree[n + pos] = nod(value); // tree[n + pos] = combine(tree[n + pos], nod(value));
+    for(int i = n + pos; i >>= 1; )
+        tree[i] = combine(tree[i << 1], tree[i << 1 | 1]);
+}
+inline nod query(int l, int r) {
+    nod ansl(0), ansr(0);
+    for(l += n, r += n + 1; l < r; l >>= 1, r >>= 1) {
+        if(l & 1) ansl = combine(ansl, tree[l++]);
+        if(r & 1) ansr = combine(tree[--r], ansr);
+    }
+    return combine(ansl, ansr);
+}
+
+int main() {
+//    ios_base::sync_with_stdio(false); cin.tie(NULL);
+//    freopen("input.txt", "r", stdin);
+//    freopen("output.txt", "w", stdout);
+    k[0] = 1; rep(i,N) if(i) k[i] = k[i-1] * 257;
+    
+    int q; string s;
+    cin >> n >> q >> s;
+    rep(i,n) arr[i] = s[i] - 'a';
+    build();
+    
+    nod temp;
+    int type, l, r;
+    rep(i,q) {
+        cin >> type;
+        if(type) {
+            cin >> l >> r;
+            temp = query(l-1, r-1);
+            if(temp.l == temp.r) cout << "Yes\n";
+            else cout << "No\n";
+        }
+        else {
+            cin >> l >> s;
+            update(l-1, s[0] - 'a');
+        }
+    }
+    return 0;
+}

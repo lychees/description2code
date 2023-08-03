@@ -1,0 +1,97 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+vector<int> v[1000000];
+vector<int> order[1000000];
+int tin[1000000];
+int h[1000000];
+int tout[1000000];
+int jump[100010][21];
+int timer;
+int n,x,y,m;
+
+bool is_p(int x,int y)
+{
+    return tin[x]<=tin[y] && tout[x]>=tout[y];
+}
+
+int lca(int x,int y)
+{
+    if(is_p(x,y))
+        return x;
+    if(is_p(y,x))
+        return y;
+    for(int i=20;i>=0;i--)
+        if(jump[x][i])
+        {
+            if(!is_p(jump[x][i],y))
+                x=jump[x][i];
+        }
+    return jump[x][0];
+}
+
+void dfs(int x,int p)
+{
+    h[x]=h[p]+1;
+    tin[x]=++timer;
+    jump[x][0]=p;
+    for(int i=1;i<=20;i++)
+        jump[x][i]=jump[jump[x][i-1]][i-1];
+    for(int i=0;i<v[x].size();i++)
+    {
+        int to=v[x][i];
+        if(to==p)
+            continue;
+        dfs(to,x);
+    }
+    tout[x]=timer;
+}
+
+int dist(int x,int y)
+{
+    int a=lca(x,y);
+    return h[x]+h[y]-h[a]-h[a];
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cin>>n>>m;
+    for(int i=1;i<=n;i++)
+    {
+        int c;
+        cin>>c;
+        order[c].push_back(i);
+    }
+    for(int i=1;i<n;i++)
+    {
+        cin>>x>>y;
+        v[x].push_back(y);
+        v[y].push_back(x);
+    }
+    dfs(1,0);
+    for(int i=1;i<=m;i++)
+    {
+        if(order[i].size()==1)
+        {
+            cout<<"0 ";
+            continue;
+        }
+        int mx=0;
+        int nx=1;
+        for(int j=1;j<order[i].size();j++)
+        {
+            int cur=dist(order[i][0],order[i][j]);
+            if(cur>mx)
+            {
+                mx=cur;
+                nx=j;
+            }
+        }
+        mx=0;
+        for(int j=0;j<order[i].size();j++)
+            mx=max(mx,dist(order[i][j],order[i][nx]));
+        cout<<mx<<' ';
+    }
+}

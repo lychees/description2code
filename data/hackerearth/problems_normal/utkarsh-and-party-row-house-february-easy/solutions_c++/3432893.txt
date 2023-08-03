@@ -1,0 +1,131 @@
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#include<cmath>
+#define gc getchar
+#define ll long long
+#define MAX 100002
+using namespace std;
+struct segment{
+    ll a;//A[i]
+    ll b;//A[i]*i
+    segment()
+    {
+        a=b=0;
+    }
+};
+segment st[MAX*3];
+
+int x, y, index;
+ll A[MAX], diff;
+segment update(int l, int r, int i)
+{
+    if(l>index||r<index)
+    {
+        return st[i];
+    }
+    if(l==r)
+    {
+        st[i].a+=diff;
+        st[i].b+=diff*l;
+        return st[i];
+    }
+    segment x, y;
+    int mid=(l+r)/2;
+    x=update(l, mid, 2*i+1);
+    y=update(mid+1, r, 2*i+2);
+    st[i].a=x.a+y.a;
+    st[i].b=x.b+y.b;
+    return st[i];
+}
+segment get_max(int l, int r, int i)
+{
+    if(r<x||l>y)
+    {
+        segment temp;
+        return temp;
+    }
+    if(l>=x&&r<=y)
+    {
+        return st[i];
+    }
+    segment p, q, ans;
+    int mid=(l+r)/2;
+    p=get_max(l, mid, 2*i+1);
+    q=get_max(mid+1, r, 2*i+2);
+    ans.a=p.a+q.a;
+    ans.b=p.b+q.b;
+    return ans;
+}
+segment constructSegment(int l, int r, int i)
+{
+
+    if(l==r)
+    {
+        st[i].a=A[l];
+        st[i].b=A[l]*l;
+        return st[i];
+    }
+    int mid=(l+r)/2;
+    segment x, y;
+    x=constructSegment(l, mid, 2*i+1);
+    y=constructSegment(mid+1, r, 2*i+2);
+    st[i].a=x.a+y.a;
+    st[i].b=x.b+y.b;
+    return st[i];
+}
+int main()
+{
+    int n, i, sum, q, ch, k, le, re;
+    ll var, val;
+    segment ans;
+    scanf("%d %d", &n, &q);
+    for(i=0;i<n;i++)
+        scanf("%lld", &A[i]);
+    constructSegment(0, n-1, 0);
+    while(q--)
+    {
+        scanf("%d", &ch);
+        if(ch==1)
+        {
+            scanf("%d%d%d", &k, &le, &re);
+            if(k>=re)
+            {
+                x=le-1;
+                y=re-1;
+                k--;
+                ans=get_max(0, n-1, 0);
+                var=-ans.b+(ans.a)*(k);
+            }
+            else if(k<=le)
+            {
+                x=le-1;
+                y=re-1;
+                k--;
+                ans=get_max(0, n-1, 0);
+                var=ans.b+(ans.a)*(-k);
+            }
+            else
+            {
+                k--;
+                x=k;
+                y=re-1;
+                ans=get_max(0, n-1, 0);
+                var=ans.b+(ans.a)*(-k);
+                x=le-1;
+                y=k;
+                ans=get_max(0, n-1, 0);
+                var=var-ans.b+(ans.a)*(k);
+            }
+            printf("%lld\n", var);
+        }
+        else
+        {
+            scanf("%d %lld", &index, &val);
+            diff=val;
+            index--;
+            A[index]+=val;
+            update(0, n-1, 0);
+        }
+    }
+}

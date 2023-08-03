@@ -1,0 +1,93 @@
+
+#include<bits/stdc++.h>
+
+using namespace std;
+
+#define si(x) scanf("%d",&x)
+#define sll(x) scanf("%lld",&x)
+#define pri(x) printf("%d",x)
+#define pll(x) printf("%lld",x)
+#define sstr(s) scanf("%s",s)
+#define nl printf("\n")
+#define ll long long int
+#define pii pair<int,int>
+#define pLL pair<ll,ll>
+#define vi vector<int>
+#define pb push_back
+#define mp make_pair
+#define fr first
+#define se second
+#define mod 1000000007
+
+int a[500005];
+
+struct node {
+    int val;
+    node *left, *right;
+    node(int v, node *l, node *r) {
+	val = v;
+	left = l;
+	right = r;
+    }
+    node *insert(int v, int idx);
+};
+
+node* node::insert(int v, int idx) {
+    if(idx<0) {
+	return new node(this->val+1,NULL,NULL);
+    }
+    if(v&(1<<idx)) {
+	return new node(this->val+1,this->left,this->right->insert(v,idx-1));
+    }
+    else {
+	return new node(this->val+1,this->left->insert(v,idx-1),this->right);
+    }
+}
+
+node *trie[500005];
+node *null = new node(0,NULL,NULL);
+
+int query(node *a, node *b, int x, int idx) {
+    if(idx<0) {
+	return 0;
+    }
+    if(x&(1<<idx)) {
+	if(b->left->val - a->left->val > 0) {
+	    return (1<<idx)+query(a->left,b->left,x,idx-1);
+	}
+	else {
+	    return query(a->right,b->right,x,idx-1);
+	}
+    }
+    else {
+	if(b->right->val - a->right->val > 0) {
+	    return (1<<idx)+query(a->right,b->right,x,idx-1);
+	}
+	else {
+	    return query(a->left,b->left,x,idx-1);
+	}
+    }
+}
+
+int main()
+{
+    null->left = null->right = null;
+    int n,q; si(n); si(q);
+    for(int i=1;i<=n;++i) {
+	si(a[i]);
+    }
+    trie[0] = null;
+    for(int i=1;i<=n;++i) {
+	trie[i] = trie[i-1];
+	trie[i] = trie[i]->insert(a[i],19);
+    }
+    while(q--) {
+	int l,r,x; si(l); si(r); si(x);
+	node *a, *b;
+	a = trie[l-1];
+	b = trie[r];
+	int ans = query(a,b,x,19);
+	printf("%d\n",ans);
+    }
+    return 0;
+}

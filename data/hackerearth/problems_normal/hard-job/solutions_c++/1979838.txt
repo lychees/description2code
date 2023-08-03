@@ -1,0 +1,175 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+struct node{
+	int sum;
+};
+struct ele{ // element
+	int val;
+};
+class segtree{
+public:
+	node ele_to_node(ele a){
+		node ret;
+		ret.sum=a.val;
+		return ret;
+	}
+	node merge(node l,node r){
+		node ret;
+		ret.sum=l.sum+r.sum;
+		return ret;
+	}
+	vector<node> sgt;
+	vector<ele> arr;
+	int n,S,E;
+	void init(int N,int s,int e){
+		n=N;
+		sgt.resize(4*N+4);
+		arr.resize(N+4);
+		S=s;
+		E=e;
+	}
+	void set(int i,ele a){
+		arr[i]=a;
+	}
+	void _build(int nd,int l, int r){
+		if(l==r){
+			sgt[nd]=ele_to_node(arr[l]);
+			return;
+		}
+		int m=(r+l)/2;
+		_build(2*nd,l,m);
+		_build(2*nd+1,m+1,r);
+		sgt[nd]=merge(sgt[2*nd],sgt[2*nd+1]);
+	}
+	node _query(int nd,int l,int r,int s,int e){
+		if(s<=l && r<=e){
+			return sgt[nd];
+		}
+		bool ok=false;
+		node ret;
+		int m=(r+l)/2;
+		if(s<=m){
+			ret=_query(2*nd,l,m,s,e);
+			ok=true;
+		}
+		if(m+1<=e){
+			if(!ok){
+				ret=_query(2*nd+1,m+1,r,s,e);
+			} else {
+				ret=merge(ret,_query(2*nd+1,m+1,r,s,e));
+			}
+		}
+		return ret;
+	}
+	void _update(int nd,int l,int r,int ind,ele val){
+		if(l==r){
+			arr[l]=val;
+			sgt[nd]=ele_to_node(arr[l]);
+			return;
+		}
+		int m=(r+l)/2;
+		if(ind<=m){
+			_update(2*nd,l,m,ind,val);
+		} else {
+			_update(2*nd+1,m+1,r,ind,val);
+		}
+		sgt[nd]=merge(sgt[2*nd],sgt[2*nd+1]);
+	}
+	void build(){
+		_build(1,S,E);
+	}
+	void update(int index,ele value){
+		_update(1,S,E,index,value);
+	}
+	node query(int from,int to){
+		return _query(1,S,E,from,to);
+	}
+};
+
+segtree mid,lft,rgt;
+int N,Q;
+int cur_lft=1,cur_rgt=1;
+int ind[500500];
+int ty[500500]; // 0- middle     1- left  2- right
+int tmp;
+int x;
+char c;
+int calc(int ind){
+	return min(ind-1,N-ind);
+}
+long long sol=0;
+int main(){
+	cin.sync_with_stdio(false);
+	cout.sync_with_stdio(false);
+	cin>>N>>Q;
+	mid.init(N,1,N);
+	lft.init(Q,1,Q);
+	rgt.init(Q,1,Q);
+	for(int i=1;i<=Q;i++){
+		ele gg;
+		gg.val=0;
+		lft.set(i,gg);
+		rgt.set(i,gg);
+	}
+	lft.build();
+	rgt.build();
+	for(int i=1;i<=N;i++){
+		cin>>tmp;
+		ele dd;
+		dd.val=1;
+		mid.set(i,dd);
+		ind[tmp]=i;
+		ty[tmp]=0;
+	}
+	mid.build();
+	for(int h=1;h<=Q;h++){
+		cin>>x>>c;
+		if(ty[x]==0){
+			int g=lft.query(1,Q).sum;
+			if(ind[x]-1>0)
+				g+=mid.query(1,ind[x]-1).sum;
+			sol+=calc(g+1);
+			ele gg;
+			gg.val=0;
+			mid.update(ind[x],gg);
+		}
+		if(ty[x]==1){
+			int g=0;
+			if(ind[x]+1<=Q)
+				g+=lft.query(ind[x]+1,Q).sum;
+			sol+=calc(g+1);
+			ele dd;
+			dd.val=0;
+			lft.update(ind[x],dd);
+		}
+		if(ty[x]==2){
+			int g=0;
+			g+=lft.query(1,Q).sum;
+			g+=mid.query(1,N).sum;
+			if(ind[x]-1>0)
+				g+=rgt.query(1,ind[x]-1).sum;
+			sol+=calc(g+1);
+			ele dd;
+			dd.val=0;
+			rgt.update(ind[x],dd);
+		}
+		if(c=='l'){
+			ty[x]=1;
+			ind[x]=cur_lft;
+			cur_lft++;
+			ele yy;
+			yy.val=1;
+			lft.update(ind[x],yy);
+		} else {
+			ty[x]=2;
+			ind[x]=cur_rgt;
+			cur_rgt++;
+			ele yy;
+			yy.val=1;
+			rgt.update(ind[x],yy);
+		}
+	}
+	cout<<sol<<endl;
+}

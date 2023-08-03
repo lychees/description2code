@@ -1,0 +1,106 @@
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <string>
+#include <algorithm>
+using namespace std;
+#define SZ(x) ( (int) (x).size() )
+#define dbg(x) cerr << #x << " = " << x << endl;
+#define mp make_pair
+#define pb push_back
+#define fi first
+#define se second
+typedef long long ll;
+typedef pair<int, int> pii;
+// const int INF = 1e9;
+const int MAX_N = 1e5 + 10;
+
+int T, N;
+int A[MAX_N];
+// compact trie implementation
+int tnxt[MAX_N * 32][2];
+int tsize[MAX_N * 32];
+int triesize;
+
+int newnode(){
+  int n = ++triesize;
+  tsize[n] = 0;
+  tnxt[n][0] = tnxt[n][1] = 0;
+  return n;
+}
+
+void add(int x) {
+  int n = 0, i = 30;
+  tsize[n]++;
+  while(i >= 0){
+    int& r = tnxt[n][(x >> i) & 1];
+    if(r == 0)
+      r = newnode();
+    n = r;
+    i --;
+    tsize[n]++;
+  }
+}
+
+
+// a ^ b <= x
+ll query(int b, int x){
+  int n = 0, i = 30;
+  ll res = 0;
+  while(i >= 0){
+    int p = (b >> i) & 1;
+    int q = (x >> i) & 1;
+    // p ^ p == 0
+    if(q == 1 && tnxt[n][p])
+      res += tsize[tnxt[n][p]];
+    if((n = tnxt[n][p ^ q]) == 0)
+      return res;
+    i --;
+  }
+  // for the numbers that are equal
+  res += tsize[n];
+  return res;
+}
+
+ll solve(int L, int R){
+  int s = 0;
+  ll res = 0;
+  triesize = -1;
+  memset(tnxt, 0 , sizeof tnxt);
+  memset(tsize, 0, sizeof tsize);
+  
+  newnode();
+  add(s);
+  for(int i = 0; i < N; i++){
+    s ^= A[i];
+    // printf("i=%d %lld\n", i, query(s, x));
+    res += query(s, R);
+    if(L - 1 >= 0)
+      res -= query(s, L - 1);
+    add(s);
+  }
+  return res;
+}
+
+int main(){
+  int Q;
+  scanf("%d", &T);
+  while(T--){
+    scanf("%d", &N);
+    for(int i = 0; i < N; i++)
+      scanf("%d", A + i);
+    scanf("%d", &Q);
+    while(Q--){
+      int i, j;
+      scanf("%d%d", &i, &j);
+      printf("%lld\n", solve(i, j));
+    }
+  }
+  return 0;
+}

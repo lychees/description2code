@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN = 300 + 3;
+const int MAXM = 8e4 + 4;
+const int MAXW = 1e9 + 9;
+typedef long long ll;
+typedef pair< int, int > pii;
+typedef pair< ll, int > pli;
+const ll INF = 1e16;
+
+struct Edge{
+    int u, v, w, p;
+    Edge( int _u = -1, int _v = -1, int _w = -1, int _p = 0 ) :
+        u( _u ), v( _v ), w( _w ), p( _p ){}
+};
+
+clock_t start;
+
+int N, M;
+vector< Edge > G[ MAXN ];
+
+int can_start[ MAXN ];
+
+struct State{
+    ll dis;
+    int u, v, p;
+    State( ll _d, int _u, int _v, int _p ) :
+        dis( _d ), u( _u ), v( _v ), p( _p ){}
+    bool operator < ( const State &oth ) const{
+        if( dis != oth.dis ) return dis > oth.dis;
+        if( p != oth.p ) return p > oth.p;
+        if( u != oth.u ) return u < oth.u;
+        return v < oth.v;
+    }
+};
+
+ll ans[ MAXN ][ MAXN ];
+ll dp[ MAXN ][ MAXN ][ 100 ];
+int inq[ MAXN ][ MAXN ][ 100 ];
+
+void solve(){
+	for( int i = 1; i <= N; ++i )
+		for( int j = 1; j <= N; ++j )
+			for( int k = 0; k < 100; ++k )
+				dp[ i ][ j ][ k ] = 1e16;
+    memset( ans, -1, sizeof( ans ) );
+    for( int i = 1; i <= N; ++i )
+        ans[ i ][ i ] = 0,
+        dp[ i ][ i ][ 0 ] = 0;
+    queue< State > pq;
+    for( int i = 1; i <= N; ++i )
+        if( can_start[ i ] )
+            pq.push( State( 0, i, i, 0 ) ),
+            inq[ i ][ i ][ 0 ] = 1;
+    // map< State, ll > dp;
+    // set< State > vis;
+    // int cnt = 0;
+    while( !pq.empty() ){ // && ( float )( clock() - start ) / CLOCKS_PER_SEC < 1.89 ){
+        int u = pq.front().u;
+        int v = pq.front().v;
+        int p = pq.front().p;
+        ll d = dp[ u ][ v ][ p ];
+        pq.pop();
+        // cout << u << " " << v << " " << p << " " << d << endl;
+        inq[ u ][ v ][ p ] = 0;
+        // if( dp[ State( 0, u, v, p ) ] != d ) continue;
+        if( p == 0 ){
+            if( ans[ u ][ v ] == -1 || ans[ u ][ v ] > d )
+                ans[ u ][ v ] = d;
+        }
+        for( Edge &e : G[ v ] ){
+        	// ++cnt;
+        	// if( cnt > 3300000 ) break;
+            if( p + e.p < 0 ) continue;
+            if( p + e.p > 7 ) continue;
+            if( dp[ u ][ e.v ][ p + e.p ] > d + e.w ){
+            	dp[ u ][ e.v ][ p + e.p ] = d + e.w;
+            	if( !inq[ u ][ e.v ][ p + e.p ] )
+            		inq[ u ][ e.v ][ p + e.p ] = 1,
+            		pq.push( State( 0, u, e.v, p + e.p ) );
+            }
+            /*State ste = State( 0, u, e.v, p + e.p );
+            auto it = dp.find( ste );
+            if( it == dp.end() )
+            	pq.push( State( d + e.w, u, e.v, p + e.p ) ),
+            	dp[ ste ] = d + e.w;
+            else if( it->second > d + e.w )
+            	pq.push( State( d + e.w, u, e.v, p + e.p ) ),
+            	it->second = d + e.w;*/
+        }
+        // ++cnt;
+    }
+    for( int i = 1; i <= N; ++i )
+        for( int j = 1; j <= N; ++j )
+            printf( "%lld%c", ans[ i ][ j ], j == N ? '\n' : ' ' );
+}
+
+int main(){
+    start = clock();
+    // ios::sync_with_stdio( false );
+    scanf( "%d%d", &N, &M ); // cin >> N >> M;
+    int u, v, w; char p[ 3 ]; 
+    for( int i = 0; i < M; ++i ){
+        scanf( "%d%d%d", &u, &v, &w ); // cin >> u >> v >> w;
+        scanf( "%s", p );
+        G[ u ].push_back( Edge( u, v, w, p[ 0 ] == '(' ? 1 : -1 ) );
+        if( p[ 0 ] == '(' ) can_start[ u ] = 1;
+    }
+    solve();
+    return 0;
+}

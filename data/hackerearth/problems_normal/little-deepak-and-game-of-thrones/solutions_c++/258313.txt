@@ -1,0 +1,151 @@
+#include <iostream>
+#include<bits/stdc++.h>
+#include <vector>
+using namespace std;
+struct Rectangle
+{
+    int x[2], y[2];
+    Rectangle(int x1, int y1, int x2, int y2) {
+        x[0] = x1;
+        y[0] = y1;
+        x[1] = x2;
+        y[1] = y2;
+    };
+    void print(void) {
+        cout << "Rect: " << x[0] << " " << y[0] << " " << x[1] << " " << y[1] << " " << endl;
+    };
+};
+vector<Rectangle *>::iterator bin_search(vector<Rectangle *> &list, int begin, int end, Rectangle *rec)
+{
+    int mid = (begin + end) / 2;
+    if(list[mid]->y[0] == rec->y[0]) {
+        if(list[mid]->y[1] == rec->y[1])
+            return list.begin() + mid;
+        else if(list[mid]->y[1] < rec->y[1]) {
+            if(mid == end)
+                return list.begin() + mid + 1;
+            return bin_search(list, mid + 1, mid, rec);
+        } else {
+            if(mid == begin)
+                return list.begin() + mid;
+            return bin_search(list, begin, mid - 1, rec);
+        }
+    } else if(list[mid]->y[0] < rec->y[0]) {
+        if(mid == end) {
+            return list.begin() + mid + 1;
+        }
+        return bin_search(list, mid + 1, end, rec);
+    } else {
+        if(mid == begin) {
+            return list.begin() + mid;
+        }
+        return bin_search(list, begin, mid - 1, rec);
+    }
+}
+// add rect to rects
+void add_rec(Rectangle *rect, vector<Rectangle *> &rects)
+{
+    if(rects.size() == 0) {
+        rects.push_back(rect);
+    } else {
+        vector<Rectangle *>::iterator it = bin_search(rects, 0, rects.size() - 1, rect);
+        rects.insert(it, rect);
+    }
+}
+// remove rec from rets
+void remove_rec(Rectangle *rect, vector<Rectangle *> &rects)
+{
+    vector<Rectangle *>::iterator it = bin_search(rects, 0, rects.size() - 1, rect);
+    rects.erase(it);
+}
+// calculate the total vertical length covered by rectangles in the active set
+int vert_dist(vector<Rectangle *> as)
+{
+    int n = as.size();
+    int totallength = 0;
+    int start, end;
+    int i = 0;
+    while(i < n) {
+        start = as[i]->y[0];
+        end = as[i]->y[1];
+        while(i < n && as[i]->y[0] <= end) {
+            if(as[i]->y[1] > end) {
+                end = as[i]->y[1];
+            }
+            i++;
+        }
+        totallength += end - start;
+    }
+    return totallength;
+}
+bool mycomp1(Rectangle* a, Rectangle* b)
+{
+    return (a->x[0] < b->x[0]);
+}
+bool mycomp2(Rectangle* a, Rectangle* b)
+{
+    return (a->x[1] < b->x[1]);
+}
+long long findarea(vector<Rectangle *> rects)
+{
+    vector<Rectangle *> start = rects;
+    vector<Rectangle *> end = rects;
+    sort(start.begin(), start.end(), mycomp1);
+    sort(end.begin(), end.end(), mycomp2);
+    // active set
+    vector<Rectangle *> as;
+    int n = rects.size();
+    long long totalarea = 0;
+    int current = start[0]->x[0];
+    int next = 0;
+    int i = 0, j = 0;
+    // big loop
+    while(j < n) {
+        // add all recs that start at current
+        while(i < n && start[i]->x[0] == current) {
+            // add start[i] to AS
+            add_rec(start[i], as);
+            i++;
+        }
+        // remove all recs that end at current
+        while(j < n && end[j]->x[1] == current) {
+            // remove end[j] from AS
+            remove_rec(end[j], as);
+            j++;
+        }
+        // find next event x
+        if(i < n && j < n) {
+            if(start[i]->x[0] <= end[j]->x[1]) {
+                next = start[i]->x[0];
+            } else {
+                next = end[j]->x[1];
+            }
+        } else if(j < n) {
+            next = end[j]->x[1];
+        }
+        // distance to next event
+        int horiz = next - current;
+        // figure out vertical dist
+        int vert = vert_dist(as);
+        totalarea += (long long)vert * (long long)horiz;
+        current = next;
+    }
+    return totalarea;
+}
+int main()
+{
+    int t;
+    cin >> t;
+    while(t--)
+    {
+        int m,i,x1,y1,x2,y2;
+        vector<Rectangle *> rects;
+        cin >> m;
+        for(i=0; i<m; i++)
+        {
+            cin >> x1 >> y1 >> x2 >> y2;
+            rects.push_back(new Rectangle(x1,y1,x2,y2));
+        }
+        printf("%lld\n", findarea(rects));;
+    }
+}

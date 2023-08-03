@@ -1,0 +1,104 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define s(n) scanf("%d", &n);
+#define sll(n) scanf("%lld", &n);
+#define p(n) printf("%d\n", n)
+#define pll(n) printf("%lld\n", n)
+#define MOD 1000000007
+#define mp make_pair 
+#define pb push_back
+
+#define MAXN 100010
+#define L 17
+vector <int> g[MAXN];
+int tin[MAXN], tout[MAXN], cnt=0, up[MAXN][L], dep[MAXN];
+void dfs(int v, int p)
+{
+	int i;
+	tin[v] = cnt;
+	cnt++;
+	up[v][0] = p;
+	for(i=1; i<L; i++)
+		up[v][i] = up[up[v][i-1]][i-1];				/*stores parents level-wise in up[vertex][level] matrix*/
+	for(i=0; i<g[v].size(); i++)
+	{
+		int vv = g[v][i];
+		if(vv == p)
+			continue;
+		dep[vv] = dep[v]+1;
+		dfs(vv, v);
+	}
+	tout[v] = cnt;
+}
+bool upper(int a, int b)
+{
+	if(tin[a]<=tin[b] && tout[a]>=tout[b])
+		return true;
+	else	
+		return false;
+}
+int lca(int a, int b)
+{
+	if(upper(a,b))
+		return a;
+	if(upper(b,a))
+		return b;
+	int i = L-1;
+/*	while(upper(up[a][i],b))
+		i--;
+	i++;
+	return up[a][i];	
+*/
+	for(i=L-1; i >= 0; i--)
+	{
+		if(!upper(up[a][i], b))
+			a = up[a][i];
+	}
+	return up[a][0];
+}
+int get_dist(int a, int b)
+{
+	return (dep[a] + dep[b] - 2*dep[lca(a,b)]);
+}
+vector<int> occ[MAXN];
+int c[MAXN];
+int main()
+{
+	int i,j,t,n,m,e,v,x,y,q;
+	s(v)s(m);
+	for(i=1; i<=v; i++)
+	{
+		s(c[i]);
+		occ[c[i]].pb(i);
+	}
+	for(i=0; i<v-1; i++)
+	{
+		s(x) s(y);
+		g[x].pb(y);
+		g[y].pb(x);
+	}
+	dfs(1,1);
+//	printf("%d %d %d\n", get_dist(1,3), get_dist(2,3), get_dist(1,2));
+	for(i=1; i<=m ;i++)
+	{
+		int dis,st = occ[i][0];
+		int mv=-1, maxi = -1;
+		for(j=0; j<occ[i].size(); j++)
+		{
+			dis = get_dist(st,occ[i][j]);
+			if(dis > maxi)
+				mv=occ[i][j], maxi=dis;
+		}
+//		p(maxi);
+		st=mv, maxi=-1;
+		for(j=0; j<occ[i].size(); j++)
+		{
+			dis = get_dist(st,occ[i][j]);
+			if(dis > maxi)
+				mv=occ[i][j], maxi=dis;
+		}	
+		printf("%d ", maxi);
+	}
+	return 0;
+}

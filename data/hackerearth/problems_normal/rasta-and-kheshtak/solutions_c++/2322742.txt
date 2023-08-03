@@ -1,0 +1,101 @@
+/**
+ *    author:  enot.1.10, Vladimir Smykalov (enot.1.10@gmail.com)
+ *    created: 15.08.2015 09:56:20       
+**/
+#include <bits/stdc++.h>
+
+#define forn(i, n) for(int i = 0 ; (i) < (n) ; ++i)
+#define eprintf(...) fprintf(stderr, __VA_ARGS__),fflush(stderr)
+
+using namespace std;
+
+typedef long long ll;
+typedef double dbl;
+
+const int inf = (int)1.01e9;
+const dbl eps = 1e-9;
+
+/** --- main part --- **/
+
+#define TASK "a"
+
+#define pb push_back
+#define sz(a) ((int)(a).size())
+#define all(a) (a).begin(),a.end()
+typedef vector<int> vi;
+
+
+
+const int maxn = 710;
+
+const ll P = 239;
+const ll Q = 311;
+
+ll Pn[maxn], Qn[maxn];
+
+int a[2][maxn][maxn];
+ll h[2][maxn][maxn];
+int n[2], m[2];
+
+ll get(int fl, int x1, int y1, int x2, int y2)
+{
+    return h[fl][x2][y2] - h[fl][x1][y2] * Qn[x2 - x1] - h[fl][x2][y1] * Pn[y2 - y1] + h[fl][x1][y1] * Pn[y2 - y1] * Qn[x2 - x1];
+}
+
+bool can(int T)
+{
+    //eprintf("start %d\n", T);
+    vector<ll> v[2];
+    forn(_, 2)
+    {
+        for (int i = 0; i <= n[_] - T; ++i) for (int j = 0; j <= m[_] - T; ++j)
+        {
+            ll H = get(_, i, j, i + T, j + T);
+            //eprintf("_ = %d, i = %d, j = %d --> H = %I64d\n", _, i, j, H);
+            v[_].pb(H);
+        }
+        sort(all(v[_]));
+    }
+    int i = 0, j = 0;
+    while (i < sz(v[0]) && j < sz(v[1]))
+    {
+        if (v[0][i] < v[1][j]) ++i;
+        else if (v[0][i] > v[1][j]) ++j;
+        else return true;
+    }
+    return false;
+}
+
+int main()
+{
+    #ifdef home
+        assert(freopen(TASK".in", "r", stdin));
+        assert(freopen(TASK".out", "w", stdout));
+    #endif
+    Pn[0] = 1;
+    for (int i = 1; i < maxn; ++i) Pn[i] = Pn[i - 1] * P;
+    Qn[0] = 1;
+    for (int i = 1; i < maxn; ++i) Qn[i] = Qn[i - 1] * Q;
+    forn(_, 2)
+    {
+        scanf("%d%d", &n[_], &m[_]);
+        forn(i, n[_]) forn(j, m[_]) scanf("%d", &a[_][i][j]);
+        forn(i, n[_]) forn(j, m[_])
+        {
+            h[_][i + 1][j + 1] = a[_][i][j] + P * h[_][i + 1][j] + Q * h[_][i][j + 1] - P * Q * h[_][i][j];
+        }
+    }
+    int L = 0, R = min(min(n[0], n[1]), min(m[0], m[1]));
+    while (L < R)
+    {
+        int M = (L + R + 1) >> 1;
+        if (can(M)) L = M;
+        else R = M - 1;
+    }
+    printf("%d\n", L);
+    #ifdef home
+        eprintf("Time: %d ms\n", (int)(clock() * 1000. / CLOCKS_PER_SEC));
+    #endif
+    return 0;
+}
+ 

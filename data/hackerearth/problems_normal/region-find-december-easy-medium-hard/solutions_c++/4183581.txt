@@ -1,0 +1,71 @@
+#include <iostream>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include <vector>
+#include <string>
+#include <map>
+#include <set>
+#include <queue>
+#include <algorithm>
+#define lli long long int
+#define pb push_back
+#define mod 1000000007
+#define pii pair<int,int>
+
+using namespace std;
+int arr[1505];
+int vis[1505];
+vector<int > adj[1505];
+map<int, vector<int> > mm;
+int curr=0;
+lli dp[1505];
+int done[1505];
+void dfs(int x,int val){
+    vis[x]=curr;
+    lli ret=1;
+    for(int i=0;i<adj[x].size();i++){
+        int y=adj[x][i];
+        if((arr[y] > val && vis[y]!=curr) || (arr[y]==val && done[y]==0 && vis[y]!=curr)){ // if adjacent node has greater value and is not visited OR
+        // adj node has same value and dfs was not called for it.
+            dfs(y,val);
+            ret = (ret * (dp[y]+1)%mod)%mod; // main dp logic -- number of ways to select a region is product of (no of ways you can choose region in child +1 (for none selection) ) 
+        }
+    }
+    dp[x]=ret;
+}
+int main()
+{
+    int t,n,i,j,a,b,c,q;
+    cin>>n;
+    for(i=1;i<=n;i++){
+        cin>>arr[i];
+        mm[arr[i]].pb(i);    // push node number i in the map of arr[i].
+    }
+    for(i=0;i<n-1;i++){ 	// create adjancency list
+        cin>>a>>b;
+        adj[a].pb(b);
+        adj[b].pb(a);
+    }
+    cin>>q;
+
+    while(q--){
+        cin>>a;
+        memset(done,0,sizeof(done));
+        vector<int> vec = mm[a]; 
+        lli ans = 0;
+        for(i=0;i<vec.size();i++){  // for all nodes having value 'a' find the number of regions
+            curr++;                 // curr is just used for marking the visited array,
+           							// instead of using memset each time
+            int x= vec[i];
+            done[x]=1;             // to mark if already covered in previous dfs then dont visit again.
+            dfs(x,a);
+            ans = (ans + dp[x])%mod;
+
+        }
+        cout<<ans<<endl;
+    }
+
+    return 0;
+}
+

@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef pair<int,int> PII;
+vector<vector<PII>> adj;
+vector<int> width;
+vector<int> path;
+struct order {
+	 bool operator() (PII const &a, PII const &b) {
+	 	if(a.first>b.first)return true;
+	 	else if(a.first<b.first)return false;
+	 	else return a.second<b.second;
+	 }
+};
+void initialize(int n) {
+	adj.resize(n);
+	width.resize(n,0);
+	path.resize(n,2);
+}
+void add_edge(int u, int v, int c) {
+	adj[u-1].push_back(make_pair(c,v-1));
+	adj[v-1].push_back(make_pair(c,u-1));
+}
+void max_width_algo(int s, int d) {
+	priority_queue<PII, vector<PII>, order> pq;
+	pq.push(make_pair(s-1,INT_MAX));
+	path[s-1] = s-1;
+	width[s-1] = INT_MAX;
+	while(!pq.empty()) {
+		PII u = pq.top();
+		pq.pop();
+		if(u.second>=width[u.first])for(auto it : adj[u.first]) {
+			int cost = it.first;
+			int target = it.second;
+			if(width[target]<min(width[u.first],cost)) {
+				width[target] = min(width[u.first],cost);
+				path[target] = u.first;
+				pq.push(make_pair(target,width[target]));
+				//cout<<"node: "<<target<<" cost: "<<width[target]<<endl;
+			}
+		}
+	}
+}
+void printpath(int d) {
+	if(path[d]!=d)printpath(path[d]);
+	printf("%d ",d+1);
+}
+int main() {
+	int n,r;
+	scanf("%d%d",&n,&r);
+	initialize(n);
+	while(r--) {
+		int u,v,c;
+		scanf("%d%d%d",&u,&v,&c);
+		add_edge(u,v,c);
+	}
+	int s,d,p;
+	scanf("%d%d%d",&s,&d,&p);
+	max_width_algo(s, d);
+	printpath(d-1);
+	int trip = width[d-1]-1;
+	printf("\n%d\n",(p/trip) + ((p%trip)?1:0));
+	return 0;
+}

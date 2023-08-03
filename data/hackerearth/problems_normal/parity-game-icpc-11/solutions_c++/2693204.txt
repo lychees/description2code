@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define PII pair <int, int>
+#define MAXN 115000
+#define MAXN2 405
+int SOURCE = 0; 
+int SINK = 110005;   
+int cc = 0;
+int findv [MAXN];
+int leng [MAXN];
+int len [MAXN]; 
+int level [MAXN2];  
+vector <int> edges [MAXN2]; 
+int ans = 1e9;  
+int fastmin(int x, int y) { return (((y-x)>>(32-1))&(x^y))^x; }
+void addedge (int a, int b, int c, bool x = true)
+{
+    findv [cc] = b; 
+    leng [cc]=c; 
+    len[cc] = c; 
+    edges[a].push_back(cc);
+    cc++;
+    if (x) addedge (b, a, c, false);
+}
+bool bfs () 
+{
+    memset (level, -1, sizeof (level)); 
+    level [SOURCE] = 0; 
+    queue <int> qu; 
+    qu.push(SOURCE);
+    while (qu.size())
+    {
+        int t = qu.front();
+        qu.pop(); 
+        for (int y : edges[t])
+        {
+            if (leng[y]==0) continue; 
+            int nextnode = findv[y]; 
+            if (level [nextnode]==-1){
+                level[nextnode] = level[t]+1; 
+                qu.push(nextnode);
+            }   
+        } 
+    }
+    return level[SINK]!=-1; 
+}
+int dfs (int node, int f)
+{
+    if (node==SINK) return f; 
+    for (int g : edges[node])
+    {
+        if (level[findv[g]] > level[node])
+        {
+            if (leng[g]==0) continue; 
+            int r = dfs (findv[g], fastmin(f,leng[g]));
+            if (r){
+                leng[g]-=r;  
+                leng[g^1]+=r; 
+                return r; 
+            }
+        }
+    }
+    return 0; 
+}
+int push_flow ()
+{
+    int ans = 0;
+    while (bfs())   
+    {
+        while (true)
+        {
+            int k = dfs(SOURCE, INT_MAX);
+            if (k) ans+=k;
+            else break; 
+        }
+    }
+    return ans; 
+}
+int main()
+{
+	ios_base::sync_with_stdio(0); 
+    int n, q; scanf("%d %d",&n,&q); 
+    for (int g=0; g<q; g++){
+    	int a, b; scanf("%d %d",&a,&b); 
+    	addedge (a-1, b, 1);
+	}
+	// 0 -> 2
+	// 1 -> 2
+	// 2 -> 3 
+	for (int g=1; g<=n; g++){
+ 		SINK = g; 
+		int T = push_flow(); 
+		if (T < ans) ans = T; 
+		if (ans == 0) break; 
+		memcpy (leng, len, sizeof(len)); 
+	}
+	printf("%d", ans); 
+    return 0; 
+}

@@ -1,0 +1,65 @@
+//
+//  Something Genuine.cpp
+//  
+//
+//  Created by Farbod Yadegarian on 2015-07-19.
+//
+//
+
+#include <stdio.h>
+#include <iostream>
+using namespace std;
+const long long MOD = 1e9 + 7;
+const int MAXN = 2 * 1e5 + 5;
+long long ans = 0;
+long long sqr[6 * MAXN] , sum[6 * MAXN] , marked[6 * MAXN];
+int lst[MAXN];
+
+void shift(int node , int b , int e)
+{
+    if(marked[node])
+    {
+        long long s = marked[node];
+        marked[node] = 0;
+        long long len1 = ((b + e) / 2 - b + 1);
+        long long len2 = (e - (b + e) / 2);
+        sqr[2 * node] = (sqr[2 * node] + len1 * s * s + 2ll * s * sum[2 * node]) % MOD;
+        sqr[2 * node + 1] = (sqr[2 * node + 1] + len2 * s * s + 2ll * s * sum[2 * node + 1]) % MOD;
+        sum[2 * node] = (sum[2 * node] + s * len1) % MOD;
+        sum[2 * node + 1] = (sum[2 * node + 1] + s * len2) % MOD;
+        marked[2 * node] += s;
+        marked[2 * node+ 1] += s;
+    }
+}
+void update(int node , int b , int e ,int p , int q)
+{
+    if(p <= b && q >= e)
+    {
+        sqr[node] = (sqr[node] + (e - b + 1) + 2ll * sum[node]) % MOD;
+        sum[node] = (sum[node] + (e - b + 1)) % MOD;
+        marked[node] ++;
+        return;
+    }
+    if(p > e || q < b) return;
+    shift(node , b , e);
+    update(2 * node , b , (b + e) /2  , p , q);
+    update(2 * node + 1 , (b + e)/2 + 1 , e , p , q);
+    sum[node] = (sum[2 * node] + sum[2 * node + 1]) % MOD;
+    sqr[node] = (sqr[2 * node] + sqr[2 * node + 1]) % MOD;
+}
+
+int main()
+{
+    int n;
+    cin >> n;
+    for(int i = 1;i <= n;i ++)
+    {
+        int a;
+        cin >> a;
+        update(1 , 1 , n , lst[a] + 1 , i);
+        lst[a] = i;
+        ans = (ans + sqr[1]) % MOD;
+    }
+    cout << ans << endl;
+    return 0;
+}

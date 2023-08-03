@@ -1,0 +1,143 @@
+using namespace std;
+#include<bits/stdc++.h>
+
+#define BG begin()
+#define ED end()
+#define st first
+#define nd second
+#define PB push_back
+#define PF push_front
+#define FOR(i,a,b) for (int i=a;i<b;i++)
+#define FORE(i,a,b) for (int i=a;i<=b;i++)
+#define FORD(i,a,b) for (int i=a;i>=b; i--)
+#define ri(n)({\
+    int neg=0;\
+    n=0;\
+    char ch;\
+    for(ch=getchar(); ch<'0' || ch>'9'; ch=getchar()) if (ch=='-') neg=1-neg;\
+    n=ch-48;\
+    for(ch=getchar(); ch>='0' && ch<='9'; ch=getchar()) n=(n<<3)+(n<<1)+ch-48;\
+    if (neg) n=-n;\
+})
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<ll,ll> LL;
+const ll INF=1000000000+7;
+const double esp=1e-13;
+const double pi=3.141592653589;
+
+struct node{
+    ll MAX,MIN;
+    ll slMAX,slMIN;
+};
+
+string s;
+ll n,q;
+ll a[100000+10],u,v;
+node t[500000+10];
+
+ll scs(ll n){
+    ll sl=0;
+    bool f[15];
+    memset(f,false,sizeof(f));
+    if (n==0) f[0]=1;
+    while (n){
+        f[n%10]=true;
+        n/=10;
+    }
+    FORE(i,0,9) sl+=f[i];
+    return sl;
+}
+
+void xuli(int k, int a, int b){
+    if (t[a].MAX>t[b].MAX){
+            t[k].MAX=t[a].MAX;
+            t[k].slMAX=t[a].slMAX;
+    }
+    else if (t[a].MAX<t[b].MAX){
+            t[k].MAX=t[b].MAX;
+            t[k].slMAX=t[b].slMAX;
+    }
+    else{
+        t[k].MAX=t[a].MAX;
+        t[k].slMAX=t[a].slMAX+t[b].slMAX;
+    }
+}
+
+void xuli2(int k, int a, int b){
+    if (t[a].MIN<t[b].MIN){
+            t[k].MIN=t[a].MIN;
+            t[k].slMIN=t[a].slMIN;
+    }
+    else if (t[a].MIN>t[b].MIN){
+            t[k].MIN=t[b].MIN;
+            t[k].slMIN=t[b].slMIN;
+    }
+    else{
+        t[k].MIN=t[a].MIN;
+        t[k].slMIN=t[a].slMIN+t[b].slMIN;
+    }
+}
+
+void build(int k, int l, int r,int i){
+    if (l==i && i==r){
+        t[k].MAX=t[k].MIN=scs(a[l]);
+        t[k].slMAX=t[k].slMIN=1;
+        return;
+    }
+    int m=(l+r)/2;
+    if (i<=m) build(k*2,l,m,i);
+    else build(k*2+1,m+1,r,i);
+    xuli(k,k*2,k*2+1);
+    xuli2(k,k*2,k*2+1);
+}
+
+LL getMAX(int k, int l, int r, int i, int j){
+    if (i>r || j<l) return LL((ll)0,-INF);
+    if (i<=l && r<=j) return LL( t[k].slMAX, t[k].MAX );
+    int m=(l+r)/2;
+    LL t1=getMAX(k*2,l,m,i,j);
+    LL t2=getMAX(k*2+1,m+1,r,i,j);
+    if (t1.nd==t2.nd) return LL(t1.st+t2.st,t1.nd);
+    else if (t1.nd>t2.nd) return t1;
+    else return t2;
+}
+
+LL getMIN(int k, int l, int r, int i, int j){
+    if (i>r || j<l) return LL((ll)0,INF);
+    if (i<=l && r<=j) return LL( t[k].slMIN, t[k].MIN );
+    int m=(l+r)/2;
+    LL t1=getMIN(k*2,l,m,i,j);
+    LL t2=getMIN(k*2+1,m+1,r,i,j);
+    if (t1.nd==t2.nd) return LL(t1.st+t2.st,t1.nd);
+    else if (t1.nd<t2.nd) return t1;
+    else return t2;
+}
+
+int main(){
+  //  freopen("distinct-digits-ii-1.inp", "r", stdin);
+  //  freopen("distinct-digits-ii-1.out", "w", stdout);
+    cin >> n;
+    FORE(i,1,n) cin >> a[i];
+    FORE(i,1,n) build(1,1,n,i);
+    cin >> q;
+    while (q--){
+        cin >> s >> u >> v;
+        if (s[1]=='D'){
+            a[u]=(a[u]+v)%INF;
+            build(1,1,n,u);
+        }
+        else if (s[1]=='U'){
+            a[u]=a[u]*v%INF;
+            build(1,1,n,u);
+        }
+        else if (s[1]=='E'){
+            a[u]=v;
+            build(1,1,n,u);
+        }
+        else
+        if (s[1]=='A') printf("%lld %lld\n", getMAX(1,1,n,u,v).nd, getMAX(1,1,n,u,v).st );
+        else printf("%lld %lld\n", getMIN(1,1,n,u,v).nd, getMIN(1,1,n,u,v).st );
+    }
+}

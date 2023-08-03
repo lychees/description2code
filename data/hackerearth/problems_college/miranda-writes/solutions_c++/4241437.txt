@@ -1,0 +1,74 @@
+#include<stdio.h>
+#include<iostream>
+#include<math.h>
+#include<vector>
+#include<map>
+#include<string>
+#include<string.h>
+#include<algorithm>
+#include<set>
+#define PI acos(-1.0)
+#define SZ 100000007
+#define Fi(a,n) for(int i=a;i<n;i++)
+#define Fj(a,n) for(int j=a;j<n;j++)
+#define Fk(a,n) for(int k=a;k<n;k++)
+#define ri(a) scanf("%d",&a)
+#define pb push_back
+#define mp make_pair
+using namespace std;
+typedef vector<int> vi;
+typedef vector<vi > vii;
+typedef long long ll;
+typedef vector<ll> vll;
+int bitcnt(int N) {
+    int c = 0;
+    while(N){c++; N&=(N-1);}
+    return c;
+}
+int solve_tsp(vii& g, vi& junc, int K, int mask, int fin, vii& dp) {
+    if(bitcnt(mask)==2) {
+        if(dp[mask][fin] == SZ) {
+            int u = 0, v = 0;
+            Fi(0, K)
+                if((1<<i)&mask) {
+                    if(u)v = junc[i];
+                    else u = junc[i];
+                }
+            dp[mask][fin] = g[u][v];
+            //printf("%d %d %d\n", u, v, g[u][v]);
+        }
+        return dp[mask][fin];
+    }
+    if(dp[mask][fin] == SZ) {
+	    Fi(1, K) {
+	        if(i==fin)
+	            continue;
+	        if(mask & (1<<i)) {
+	            //printf("HERE %d %d\n", i, fin);
+	            dp[mask][fin] = min(dp[mask][fin], solve_tsp(g, junc, K, mask^(1<<fin), i, dp) + g[junc[i]][junc[fin]]);
+	        }
+	    }
+    }
+    //printf("M%d %d %d\n", mask, fin, dp[mask][fin]);
+    return dp[mask][fin];
+}
+int main()
+{
+    int N, M, K, u, v, c;
+    vi junc;
+    ri(N);ri(M);ri(K);
+    vii g(N+1, vi(N+1, SZ));
+    Fi(0, M) {
+        ri(u);ri(v);ri(c);
+        g[u][v] = c;
+        g[v][u] = c;
+    }
+    Fk(1, N+1)Fi(1, N+1)Fj(1, N+1)g[i][j] = min(g[i][j], g[i][k] + g[k][j]);
+    junc.resize(K+2);
+    junc[0] = 1; junc[K+1] = N;
+    Fi(1, K+1)ri(junc[i]);
+    K += 2;
+    vii dp((1<<K), vi(K, SZ));
+    printf("%d\n", solve_tsp(g, junc, K, (1<<K)-1, K-1, dp));
+    return 0;
+}

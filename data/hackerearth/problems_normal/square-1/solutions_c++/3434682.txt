@@ -1,0 +1,58 @@
+#include <stdio.h>
+#include <math.h>
+
+#define NMAX 1111
+#define UEPS 1e-16
+#define MAX_STEPS 32
+
+long double r[NMAX], u[NMAX], x, y, ans, xmin, xmax, ymin, ymax, dx, dy, umid;
+int N, i;
+
+long double F(long double urot) {
+	xmin = ymin = 1e30; xmax = ymax = -1e30;
+	for (i = 1; i <= N; i++) {
+		x = r[i] * cosl(u[i] + urot);
+		y = r[i] * sinl(u[i] + urot);
+		if (x < xmin) xmin = x;
+		if (x > xmax) xmax = x;
+		if (y < ymin) ymin = y;
+		if (y > ymax) ymax = y;
+	}
+	dx = xmax - xmin; dy = ymax - ymin;
+	if (dx >= dy) return dx;
+	return dy;
+}
+
+void BinarySearch(long double uli, long double uls) {
+	while (fabs(uls - uli) > UEPS) {
+		umid = (uli + uls) / 2;
+		long double f1 = F(umid), f2 = F(umid + UEPS);
+		if (f1 < ans) ans = f1;
+		if (f2 < ans) ans = f2;
+		if (f1 <= f2) uls = umid;
+		else uli = umid;
+	}
+}
+
+int main() {
+//	freopen("x.txt", "r", stdin);
+	scanf("%d", &N);
+	xmin = ymin = 1e30; xmax = ymax = -1e30;
+	for (i = 1; i <= N; i++) {
+		scanf("%Lf %Lf", &x, &y);
+		u[i] = atan2l(y, x);
+		r[i] = sqrtl(x * x + y * y);
+		if (x < xmin) xmin = x;
+		if (x > xmax) xmax = x;
+		if (y < ymin) ymin = y;
+		if (y > ymax) ymax = y;
+	}
+	dx = xmax - xmin; dy = ymax - ymin;
+	if (dx >= dy) ans = dx;
+	else ans = dy;
+	long double pip2 = acosl(0.0); 
+	for (int step = 0; step < MAX_STEPS; step++)
+		BinarySearch(step * pip2 / MAX_STEPS, (step + 1) * pip2 / MAX_STEPS);
+	printf("%.4Lf\n", ans);
+	return 0;
+}

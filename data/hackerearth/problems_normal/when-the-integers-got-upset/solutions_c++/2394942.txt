@@ -1,0 +1,62 @@
+
+#include<algorithm>
+#include<iostream>
+#include<string>
+#include<cstdio>
+#include<cstring>
+#include<queue>
+
+#include<map>
+
+using namespace std;
+#define INF 10000000
+
+int a[15],p[15];
+int n;
+
+int memo[1<<13][15][15];
+
+int solve(int mask, int j, int k){
+
+	if(__builtin_popcount(mask) == n) return 0;
+	
+	if(memo[mask][j][k] != -1) return memo[mask][j][k];
+	
+	int ans = INF;
+	
+	for(int i = 0; i < n; i++){
+		if((mask & (1<<i)) == 0){
+			int cost = 0;
+			int bits = __builtin_popcount(mask);
+			if(bits == 0){
+				ans = min(ans,solve(mask | 1<<i,i,k)+cost);
+			}else if(bits == 1){
+				ans = min(ans,solve(mask | 1<<i,j,i)+cost);
+			}
+			else{
+				cost = (a[i]^a[k]^a[j])*p[bits];
+				//cout << "cost: " << cost << endl;
+				ans = min(ans,solve(mask | 1<<i,k,i)+cost);
+			}
+			
+		}
+	}
+	return memo[mask][j][k] = ans;
+}
+
+int main(){
+
+    int t; cin >> t;
+    while( t-- ){
+        cin >> n;
+        
+
+        for(int i = 0; i < n; i++)cin >> a[i];
+        for(int i = 0; i < n; i++)cin >> p[i];
+
+        if(n < 3){cout << 0 << endl; continue;}
+        memset(memo, -1 , sizeof memo);
+        cout << solve(0,0,0) << endl;
+    }
+
+}

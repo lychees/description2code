@@ -1,0 +1,87 @@
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+#include <iostream>
+#include <set>
+#include <map>
+#include <iomanip>
+#include <string>
+#include <string.h>
+#include <cstdlib>
+#include <bitset>
+#include <cmath>
+#define X first
+#define Y second
+#define mp make_pair
+#define pb push_back
+typedef long long ll;
+using namespace std;
+const int N = 14, BORD = 5000;
+int P, Q;
+long long A, B;
+long long K;
+long long dp[N + 1][N*9 + 9][BORD][2];
+int numb[N*2];
+long long solve(long long x) {
+    memset(dp, 0, sizeof(dp) );
+    for (int i = N ; i > 0; i--) {
+        numb[i] = x % 10;
+        x /= 10;
+    }
+    dp[0][0][0][0] = 1;
+    for (int i = 0; i < N; i++) {
+        for (int sum = 0; sum <= i*9; sum++) {
+            for (int mod = 0; mod < K; mod++) {
+                long long cur;
+                //0
+                cur = dp[i][sum][mod][0];
+                for (int dig = 0; dig < numb[i + 1]; dig++) {
+                    int nxtsum = sum + dig;
+                    int nxtmod = (mod * 10 + dig) % K;
+                    dp[i + 1][nxtsum][nxtmod][1] += cur;
+                }
+                dp[i + 1][sum + numb[i + 1] ][ (mod * 10 + numb[i + 1]) % K ][0] += cur;
+                //1
+                cur = dp[i][sum][mod][1];
+                for (int dig = 0; dig < 10; dig++) {
+                    int nxtsum = sum + dig;
+                    int nxtmod = (mod * 10 + dig) % K;
+                    dp[i + 1][nxtsum][nxtmod][1] += cur;
+                }
+            }
+        }
+    }
+    long long res = 0;
+    for (int i = P; i <= min(N*9, Q); i++) {
+        res += dp[N][i][0][0];
+        res += dp[N][i][0][1];
+    }
+    return res;
+}
+int digSum(long long x) {
+    int res = 0;
+    while (x > 0) {
+        res += x % 10;
+        x /= 10;
+    }
+    return res;
+}
+int main() {
+    cin>>A>>B>>P>>Q>>K;
+    if (K >= BORD) {
+        long long ans = 0;
+        for (long long i = K; i <= B; i += K) {
+            if (i < A) {
+                continue;
+            }
+            int sum = digSum(i);
+            if (sum >= P && sum <= Q) {
+                ans++;
+            }
+        }
+        cout<<ans<<endl;
+        return 0;
+    }
+    cout<<solve(B) - solve(A - 1)<<endl;
+    return 0;
+}

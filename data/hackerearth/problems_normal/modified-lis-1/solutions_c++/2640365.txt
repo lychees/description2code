@@ -1,0 +1,104 @@
+#include <bits/stdc++.h>
+#define endl '\n'
+
+using namespace std;
+
+const int MOD = (1e9) + 7;
+const int SIZE = 1<<17;
+
+struct max_tree {
+private:
+	vector <int> a;
+	int n;
+
+public:
+	void initialize(int k) {
+		n=k;
+		a.assign(n+1,0);
+	}
+	
+	void update(int pos, int val) {
+		for(;pos<=n;pos+=pos&(-pos)) a[pos]=max(a[pos],val);
+	}
+	
+	int query(int pos) {
+		int ans=0;
+		for(;pos>=1;pos-=pos&(-pos)) {
+			ans=max(ans,a[pos]);
+		}
+		return ans;
+	}
+};
+
+struct sum_tree {
+private:
+	unordered_map <int, int> a;
+	int n;
+
+public:	
+	void update(int pos, int val) {
+		for(;pos<SIZE;pos+=pos&(-pos)) a[pos]=(a[pos]+val)%MOD;
+	}
+	
+	int query(int pos) {
+		int ans=0;
+		for(;pos>=1;pos-=pos&(-pos)) {
+			ans=(ans+a[pos]);
+			ans%=MOD;
+		}
+		return ans;
+	}
+};
+
+int n,a[1<<17];
+max_tree it0,it1;
+int dp[1<<17],k;
+sum_tree t1[1<<17],t0[1<<17];
+int ans;
+int cnt[1<<17];
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	int i;
+	
+	cin>>n;
+	for(i=1;i<=n;i++) cin>>a[i];
+	
+	it0.initialize(1e5);
+	it1.initialize(1e5);
+	
+	for(i=1;i<=n;i++) {
+		if(a[i]<0) {
+			dp[i]=1+it0.query(a[i]*(-1)-1);
+			it1.update(a[i]*(-1),dp[i]);
+		}
+		else {
+			dp[i]=1+it1.query(a[i]-1);
+			it0.update(a[i],dp[i]);
+		}
+		k=max(k,dp[i]);
+	}
+	
+	for(i=1;i<=n;i++) {
+		if(dp[i]==1) {
+			cnt[i]=1;
+			if(a[i]<0) t1[dp[i]].update(a[i]*(-1),cnt[i]);
+			else t0[dp[i]].update(a[i],cnt[i]);
+		}
+		else if(a[i]<0) {
+			cnt[i]=t0[dp[i]-1].query(a[i]*(-1)-1);
+			t1[dp[i]].update(a[i]*(-1),cnt[i]);
+		}
+		else {
+			cnt[i]=t1[dp[i]-1].query(a[i]-1);
+			t0[dp[i]].update(a[i],cnt[i]);
+		}
+		
+		if(dp[i]==k) ans+=cnt[i],ans%=MOD;
+	}
+	
+	cout<<k<<' '<<ans<<endl;
+	
+	return 0;
+};

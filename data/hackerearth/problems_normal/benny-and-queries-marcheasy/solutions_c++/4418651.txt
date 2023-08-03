@@ -1,0 +1,206 @@
+#include <algorithm>
+#include <assert.h>
+#include <bitset>
+// #include <bits/stdc++.h>
+#include <cmath>
+#include <complex>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <deque>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <list>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <utility>
+#include <vector>
+ 
+#define f first
+#define s second
+#define ll long long
+#define ld long double
+#define pb push_back
+#define files1 freopen("input.txt","r",stdin)
+#define files2 freopen("output.txt","w",stdout)
+#define files files1;files2
+#define mp make_pair
+#define fast_io ios_base::sync_with_stdio(0);cin.tie(0)
+#define vi vector<int>
+#define pii pair<int,int>
+#define endl '\n'
+
+using namespace std;
+ 
+void bad(string mes = "Impossible"){cout << mes;exit(0);}
+template<typename ... T> void shit(T& ... x){}
+template<typename ... T> void dec(T& ... x){shit(--x...);}
+template<typename ... T> void inc(T& ... x){shit(++x...);}
+#include <unordered_map>
+#include <unordered_set>
+
+template<typename T>
+string bin(T x, int st = 2){
+    string ans = "";
+    while (x > 0){
+        ans += char('0' + x % st);
+        x /= st;
+    }
+    reverse(ans.begin(), ans.end());
+    return ans.empty() ? "0" : ans;
+}
+
+template<typename T>
+T input(){
+    T ans = 0, m = 1;
+    char c = ' ';
+    while (!((c >= '0' && c <= '9') || c == '-'))
+        c = getchar();
+    if (c == '-')
+        m = -1, c = getchar();
+    while (c >= '0' && c <= '9'){
+        ans = ans * 10 + (c - '0'), c = getchar();
+    }
+    return ans * m;
+}
+
+template<typename T>
+void read(T& a) {
+    a = input<T>();
+}
+
+template<typename T>
+void read(T& a, T& b) {
+    read(a), read(b);
+}
+
+template<typename T>
+void read(T& a, T& b, T& c) {
+    read(a, b), read(c);
+}
+
+template<typename T>
+void read(T& a, T& b, T& c, T& d) {
+    read(a, b), read(c, d);
+}
+ 
+const int inf = 1e9;
+const double eps = 1e-9;
+const int maxn = 5e5 + 3, base = 1073676287;
+const int sigm = 26;
+const ll llinf = 1e18 + 1;
+
+template<typename T>
+T binpow(T n, T s)
+{
+    if (s <= 0)
+        return 1LL;
+    if (s % 2 == 0){
+        T b = binpow(n, s / 2);
+        return ( 1LL * b * b ) % base;
+    } else {
+        return (1LL* binpow(n, s - 1) * n) % base;
+    }
+}
+
+struct node
+{
+    node * ind[2];
+    int thRighest;
+
+    node() {
+        thRighest = -1;
+        ind[0] = ind[1] = NULL;
+    }
+};
+
+typedef node * nd;
+
+nd root = new node();
+
+void add(int& a, int pos) {
+    nd in = root;
+    for (int i = 30; i >= 0; i--) {
+        int to = (a & (1 << i)) != 0;
+        if (in->ind[to] == NULL)
+            in->ind[to] = new node();
+        in = in->ind[to];
+        in->thRighest = pos;
+    }
+}
+
+int findKek(int l, int x) {
+    nd in = root;
+    int ans = 0;
+
+    for (int i = 30; i >= 0; i--) {
+        int to = ((x & (1 << i)) != 0) ^ 1;
+        nd goingTo = in->ind[to];
+        if (goingTo == NULL || goingTo->thRighest < l)
+            to ^= 1;
+        else
+            ans += 1 << i;
+        in = in->ind[to];
+    }
+
+    return ans;
+}
+
+int arr[maxn], ans[maxn];
+
+struct query
+{
+    int l, r, x, ind;
+    query() {}
+
+    query(int l, int r, int x, int ind):l(l), r(r), x(x), ind(ind){}
+
+    bool operator < (const query& T) const{
+        return r < T.r;
+    }
+};
+
+vector<query> allKek;
+
+int main() {
+    int n, q;
+
+    read(n, q);
+
+    for (int i = 0; i < n; i++) {
+        read(arr[i]);
+    }
+
+
+    for (int i = 0; i < q; i++) {
+        int l, r, x;
+        read(l, r, x);
+        l--, r--;
+        allKek.push_back(query(l, r, x, i));
+    }
+
+    sort(allKek.begin(), allKek.end());
+    int pos = -1;
+
+    for (int i = 0; i < allKek.size(); i++) {
+        int l, r, x, j;
+            l = allKek[i].l;
+            r = allKek[i].r;
+            x = allKek[i].x;
+            j = allKek[i].ind;
+        while (pos + 1 <= r)
+            add(arr[pos + 1], pos + 1), pos++;
+        ans[j] = findKek(l, x);
+    }
+
+    for (int i = 0; i < q; i++)
+        cout << ans[i] << endl;
+    return 0;
+}

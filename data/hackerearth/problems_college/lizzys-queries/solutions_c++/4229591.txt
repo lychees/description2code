@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define M 1000003
+#define ull unsigned long long
+
+char S[100005];
+ull powerM[100005];
+
+struct node {
+    int countx;
+	ull pre;
+	ull suff;
+} tree[400005];
+
+struct node getHash(int left, int right, int L, int R, int root)
+{
+	if(left>right || left>R || right<L)
+	{
+		struct node waste;
+		waste.countx = 0;
+		return waste;
+	}
+	
+	if(left>=L && right<=R)
+		return tree[root];
+	
+	int mid = (left+right)/2;
+	
+	struct node x = getHash(left, mid, L, R, root*2);
+	struct node y = getHash(mid+1, right, L, R, root*2+1);
+	
+	if(x.countx && y.countx)
+	{
+		x.pre = x.pre*powerM[y.countx] + y.pre;
+		x.suff = y.suff*powerM[x.countx] + x.suff;
+		x.countx += y.countx;
+		
+		return x;
+	}
+	
+	if(x.countx)
+		return x;
+	
+	return y;
+}
+
+void update(int left, int right, int x, int val, int root)
+{
+	if(left>right || right<x || left>x)
+		return;
+	
+	if(left==right && right==x)
+	{
+		tree[root].pre = tree[root].suff = val;
+		return;
+	}
+	
+	int mid = (left+right)/2;
+	
+	update(left, mid, x, val, root*2);
+	update(mid+1, right, x, val, root*2+1);
+	
+	tree[root].pre = tree[root*2].pre*powerM[right-mid] + tree[root*2+1].pre;
+	tree[root].suff = tree[root*2+1].suff*powerM[mid-left+1] + tree[root*2].suff;
+}
+
+void build(int left, int right, int root)
+{
+	if(left>right)
+		return;
+	
+	if(left==right)
+	{
+		tree[root].pre = tree[root].suff = (int)S[left];
+		tree[root].countx = 1;
+		return;
+	}
+	
+	int mid = (left+right)/2;
+	
+	build(left, mid, root*2);
+	build(mid+1, right, root*2+1);
+	
+	tree[root].pre = tree[root*2].pre*powerM[right-mid] + tree[root*2+1].pre;
+	tree[root].suff = tree[root*2+1].suff*powerM[mid-left+1] + tree[root*2].suff;
+	tree[root].countx = tree[root*2].countx + tree[root*2+1].countx;
+}
+
+int main()
+{
+    int N, Q;
+    scanf("%d %d", &N, &Q);
+    
+    powerM[0] = 1;
+    
+    for(int i=1; i<=100000; i++)
+        powerM[i] = powerM[i-1]*M;
+    
+    scanf(" %s", S);
+    
+    build(0, N-1, 1);
+    
+    while(Q--)
+    {
+    	int q;
+    	scanf("%d", &q);
+    	
+    	if(q)
+    	{
+    		int L, R;
+    		scanf("%d %d", &L, &R);
+    		
+    		struct node hashX = getHash(0, N-1, L-1, R-1, 1);
+    		
+    		if(hashX.pre==hashX.suff)
+    			printf("Yes\n");
+    		else
+    			printf("No\n");
+    	}
+    	else
+    	{
+    		int i;
+    		char x;
+    		scanf("%d %c", &i, &x);
+    		
+    		update(0, N-1, i-1, (int)x, 1);
+    	}
+    }
+    
+    return 0;
+}

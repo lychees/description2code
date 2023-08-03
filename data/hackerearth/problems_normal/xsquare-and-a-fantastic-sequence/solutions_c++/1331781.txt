@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int N, M;
+vector<int> adj[100001];
+char A[100002];
+char B[100002];
+bool seen[100001];
+vector<int> members;
+int cnt[26];
+int cnt2[26];
+char ans[100002];
+
+void dfs(int u)
+{
+    members.push_back(u);
+    seen[u]=true;
+    for(auto& v: adj[u])
+        if(!seen[v])
+            dfs(v);
+}
+
+void solve()
+{
+    scanf("%d%d", &N, &M);
+    for(int i=1; i<=N; i++)
+        adj[i].clear(), seen[i]=false;
+    scanf("%s%s", A+1, B+1);
+    int a, b;
+    for(int i=0; i<M; i++)
+    {
+        scanf("%d%d", &a, &b);
+        adj[a].push_back(b);
+        adj[b].push_back(a);
+    }
+    for(int i=1; i<=N; i++)
+        if(!seen[i])
+        {
+            members.clear();
+            dfs(i);
+            sort(members.begin(), members.end());
+            memset(cnt, 0, sizeof cnt);
+            memset(cnt2, 0, sizeof cnt2);
+            for(auto& it: members)
+                cnt[A[it]-'a']++, cnt2[B[it]-'a']++;
+            int k=0;
+            for(int j=0; j<26; j++)
+                k+=min(cnt[j], cnt2[j]);
+            for(auto& it: members)
+            {
+                for(int j=0; j<26; j++)
+                    if(cnt[j]>0)
+                    {
+                        if(j+'a'==B[it])
+                        {
+                            k--;
+                            cnt[j]--;
+                            cnt2[j]--;
+                            ans[it]=j+'a';
+                            break;
+                        }
+                        int nk=k;
+                        nk-=min(cnt[j], cnt2[j]);
+                        nk-=min(cnt[B[it]-'a'], cnt2[B[it]-'a']);
+                        cnt[j]--;
+                        cnt2[B[it]-'a']--;
+                        nk+=min(cnt[j], cnt2[j]);
+                        nk+=min(cnt[B[it]-'a'], cnt2[B[it]-'a']);
+                        if(k==nk)
+                        {
+                            ans[it]=j+'a';
+                            break;
+                        }
+                        cnt[j]++;
+                        cnt2[B[it]-'a']++;
+                    }
+            }
+        }
+    int ans2=0;
+    for(int i=1; i<=N; i++)
+        ans2+=ans[i]==B[i];
+    printf("%d\n", ans2);
+    ans[N+1]='\0';
+    puts(ans+1);
+}
+
+int main()
+{
+    int T;
+    scanf("%d", &T);
+    while(T--)
+        solve();
+    return 0;
+}

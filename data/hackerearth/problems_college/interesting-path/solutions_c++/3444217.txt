@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define s(x) scanf("%d", &x)
+#define sl(x) scanf("%lld", &x)
+#define mp make_pair
+#define pb push_back
+#define ll long long int
+#define mod 1000000007
+
+int seg[4005];
+int a[1005];
+
+void C_S_T(int l, int r, int ind)
+{
+    if (l == r) {
+        seg[ind] = INT_MAX;
+        return;
+    }
+    int m = (l+r)/2;
+    int p = 2*ind+1;
+    int q = p+1;
+    C_S_T(l, m, p);
+    C_S_T(m+1, r, q);
+    seg[ind] = INT_MAX;
+}
+
+void update(int i, int val, int l, int r, int ind)
+{
+    if (l <= i && i <= r) {
+        if (l == r) {
+            seg[ind] = val;
+            return;
+        }
+        int m = (l+r)/2;
+        int p = 2*ind+1;
+        int q = p+1;
+        update(i, val, l, m, p);
+        update(i, val, m+1, r, q);
+        seg[ind] = min(seg[p], seg[q]);
+    }
+}
+
+int get_min(int x, int y, int l, int r, int ind)
+{
+    if (r < x || y < l)
+        return INT_MAX;
+    if (x <= l && r <= y)
+        return seg[ind];
+    int m = (l+r)/2;
+    int p = 2*ind+1;
+    int q = p+1;
+    return min(get_min(x, y, l, m, p), get_min(x, y, m+1, r, q));
+}
+
+int main()
+{
+    int t, n, tmp, i;
+    s(t);
+    while (t--) {
+        s(n);
+        assert(1 <= n && n <= 1000);
+        for (i = 1; i <= n; ++i)
+            s(a[i]);
+        C_S_T(1, n, 0);
+        update(n, 0, 1, n, 0);
+        for (i = n-1; i > 0; --i) {
+            tmp = get_min(i+1, min(n, i+a[i]), 1, n, 0);
+            update(i, tmp+1, 1, n, 0);
+        }
+        printf("%d\n", get_min(1, 1, 1, n, 0));
+    }
+    return 0;
+}

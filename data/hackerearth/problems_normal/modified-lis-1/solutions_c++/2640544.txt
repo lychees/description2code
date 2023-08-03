@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define all(X) (X).begin(),(X).end()
+#define tr(c,i) for(typeof((c).begin()) i = (c).begin(); i != (c).end(); i++)
+#define s(a) scanf("%d", &a)
+#define MOD 1000000007
+
+int N,i,j,T,a[100000+100];
+vector<pair<int,int>> v;
+pair<int,int> tree[400000+400][2];
+
+pair<int,int> combine(pair<int,int> a, pair<int,int> b)
+{
+    pair<int,int> ret = a;
+    if(a.first == b.first) ret.second = (ret.second + b.second) % MOD;
+    else ret = max(a, b);
+    return ret;
+}
+
+void update(int x, pair<int,int> val, int f, int v = 1, int l = 1, int r = N)
+{    
+    if(l == r && l == x)
+    {
+        tree[v][f] = combine(tree[v][f], val);
+        return; 
+    }
+    int mid = (l + r) / 2;
+    if(x <= mid) update(x, val, f, 2*v, l, mid);
+    else         update(x, val, f, 2*v+1, mid+1, r);
+    tree[v][f] = combine(tree[2*v][f], tree[2*v+1][f]);
+}
+
+pair<int,int> query(int s, int e, int f, int v = 1, int l = 1, int r = N)
+{    
+    if(l == s && r == e) return tree[v][f];
+    int mid = (l + r) / 2;
+    pair<int,int> ans = {0, 0};
+    if(s <= mid) ans = query(s, min(e,mid), f, 2*v, l, mid);
+    if(mid+1 <= e) ans = combine(ans, query(max(mid+1,s), e, f, 2*v+1, mid+1, r));
+    return ans;
+}
+int main()
+{
+    s(N);
+    for(i = 0; i < N; i++){ s(a[i]); v.pb(mp(abs(a[i]), i)); }
+    sort(all(v));    
+    for(i = 0; i < N; i = j)
+    {
+        for(j = i+1; j < N && v[i].first == v[j].first; j++);
+        vector<tuple<int,int,int,int>> upd;
+        for(int k = i; k < j; k++)
+        {
+            int f = (a[v[k].second] > 0 ? 0 : 1);
+            pair<int,int> x = {0, 0};
+            if(v[k].second) x = query(1, v[k].second, 1 - f);
+            upd.pb(make_tuple(v[k].second+1, x.first+1, x.second+(x.first==0), f));
+        }
+        for(auto x : upd)
+            update(get<0>(x), mp(get<1>(x), get<2>(x)), get<3>(x));
+    }
+    pair<int,int> ans = combine(tree[1][0], tree[1][1]);
+    printf("%d %d\n", ans.first, ans.second);
+    
+    return 0;
+}

@@ -1,0 +1,112 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define f first
+#define s second
+#define mp make_pair
+#define pb push_back
+#define ll long long
+#define mod 1000000007LL
+#define pii pair<int,int>
+vector< pair< pii , pii > >query;
+int a[1000111];
+const int block=300;
+ll ans[1000111];
+bool cmp(pair< pii , pii > a,pair< pii , pii > b)
+{
+    if(a.f.f/block!=b.f.f/block)
+        return a.f.f/block<b.f.f/block;
+    return a.f.s<b.f.s;
+}
+ll cnt[1000111];
+ll answer;
+void add(int i)
+{
+    ll c=cnt[a[i]];
+    answer-=(c*c);
+    cnt[a[i]]++;
+    c=cnt[a[i]];
+    answer+=(c*c);
+}
+void rem(int i)
+{
+    ll c=cnt[a[i]];
+    answer-=(c*c);
+    cnt[a[i]]--;
+    c=cnt[a[i]];
+    answer+=(c*c);
+}
+int main()
+{
+    int n,q,i,j;
+    scanf("%d",&n);
+    for(i=0;i<n;i++)
+        scanf("%d",&a[i]);
+    scanf("%d",&q);
+    for(i=0;i<q;i++)
+    {
+        int l1,l2,r1,r2;
+        scanf("%d %d %d %d",&l1,&r1,&l2,&r2);
+        l1--;
+        l2--;
+        r1--;
+        r2--;
+        if(l2<l1)
+            swap(l1,l2),swap(r1,r2);
+        if(l2<=r1)
+        {
+            if(r2<=r1)
+            {
+                if(l1<=r2)
+                query.pb(mp(mp(l1,r2),mp(i,1)));
+                if(l2<=r1)
+                query.pb(mp(mp(l2,r1),mp(i,1)));
+                if(l1<=l2-1)
+                query.pb(mp(mp(l1,l2-1),mp(i,-1)));
+                if(r2+1<=r1)
+                query.pb(mp(mp(r2+1,r1),mp(i,-1)));
+            }
+            else
+            {
+                if(l1<=r2)
+                query.pb(mp(mp(l1,r2),mp(i,1)));
+                if(l2<=r1)
+                query.pb(mp(mp(l2,r1),mp(i,1)));
+                if(l1<=l2-1)
+                query.pb(mp(mp(l1,l2-1),mp(i,-1)));
+                if(r1+1<=r2)
+                query.pb(mp(mp(r1+1,r2),mp(i,-1)));
+            }
+        }
+        else
+        {
+            if(l1<=r2)
+            query.pb(mp(mp(l1,r2),mp(i,1)));
+            if(r1+1<=l2-1)
+            query.pb(mp(mp(r1+1,l2-1),mp(i,1)));
+            if(l1<=l2-1)
+            query.pb(mp(mp(l1,l2-1),mp(i,-1)));
+            if(r1+1<=r2)
+            query.pb(mp(mp(r1+1,r2),mp(i,-1)));
+        }
+    }
+    sort(query.begin(),query.end(),cmp);
+    answer=0LL;
+    for(i=query[0].f.f;i<=query[0].f.s;i++)
+        add(i);
+    ans[query[0].s.f]+=(answer*query[0].s.s);
+    int cl=query[0].f.f;
+    int cr=query[0].f.s;
+    //printf("%d %d %d %d %lld\n",query[0].f.f,query[0].f.s,query[0].s.f,query[0].s.s,answer);
+    for(i=1;i<query.size();i++)
+    {
+        while(cl>query[i].f.f)add(cl-1),cl--;
+        while(cr<query[i].f.s)add(cr+1),cr++;
+        while(cl<query[i].f.f)rem(cl),cl++;
+        while(cr>query[i].f.s)rem(cr),cr--;
+        ans[query[i].s.f]+=(answer*query[i].s.s);
+        //printf("%d %d %d %d %lld\n",query[i].f.f,query[i].f.s,query[i].s.f,query[i].s.s,answer);
+    }
+    for(i=0;i<q;i++)
+        printf("%lld\n",ans[i]/2LL);
+    return 0;
+}

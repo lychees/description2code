@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define N 100
+#define LL long long int
+#define MOD 1000000007
+
+int n, m, nm;
+int dp[N][N];
+LL x[N][N], w[N][N], adj[N][N];
+
+int get(string s){
+	set<string> ds;
+	int i, j, k, l;
+	l = s.length();
+	for(i = 0; i < l; i++){
+		string p = "";
+		for(j = i; j < l; j++){
+			p += s[j];
+			for(k = i; k <= j; k++){
+				if(s[k] != s[j + i - k]){
+					break;
+				}
+			}
+			if(k > j){
+				ds.insert(p);
+			}
+		}	
+	}
+	return ds.size();
+}
+
+void copy(LL x[N][N], LL y[N][N]){
+	int i, j;
+	for(i = 0; i < nm; i++){
+		for(j = 0; j < nm; j++){
+			x[i][j] = y[i][j];
+		}
+	}
+}
+
+void mul(LL x[N][N], LL y[N][N], LL z[N][N]){
+	int i, j, k;
+	for(i = 0; i < nm; i++){
+		for(j = 0; j < nm; j++){
+			w[i][j] = 0;
+		}
+	}
+	for(k = 0; k < nm; k++){
+		for(i = 0; i < nm; i++){
+			for(j = 0; j < nm; j++){
+				w[i][j] += x[i][k] * y[k][j];
+				w[i][j] %= MOD;
+			}
+		}
+	}
+	copy(z, w);
+}
+
+void power(LL d){
+	int i, j;
+	for(i = 0; i < nm; i++){
+		for(j = 0; j < nm; j++){
+			x[i][j] = (i == j ? 1 : 0);
+		}
+	}
+	while(d > 0){
+		if(d & 1){
+			mul(x, adj, x);
+		}
+		d /= 2;
+		mul(adj, adj, adj);
+	}
+	copy(adj, x);
+}
+
+int main()
+{
+	int i, j, a, b, x1, x2, y1, y2, c, d;
+	string s;
+    cin>>n>>m;
+    nm = n * m;
+    for(i = 0; i < n; i++){
+    	for(j = 0; j < m; j++){
+    		cin>>s;
+    		dp[i][j] = get(s);
+    		//cout<<dp[i][j]<<" ";
+    		adj[i * m + j][i * m + j] = 1;
+    	}
+    	//cout<<endl;
+    }
+    cin>>c;
+    while(c--){
+    	cin>>x1>>y1>>x2>>y2;
+    	a = x1 * m + y1;
+    	b = x2 * m + y2;
+    	adj[a][b]++;
+    	adj[b][a]++;
+    }
+    cin>>d;
+    power(d);
+    for(i = 0; i < nm; i++){
+    	for(j = 0; j < nm; j++){
+    		//cout<<adj[i][j]<<" ";
+    	}
+    	//cout<<endl;
+    }
+    for(i = 0; i < nm; i++){
+    	LL ans = 0;
+    	for(j = 0; j < nm; j++){
+    		ans += adj[i][j] * dp[j / m][j % m];
+    		ans %= MOD;
+    	}
+    	cout<<ans;
+    	printf(i % m == m - 1 ? "\n" : " ");
+    }
+    return 0;
+}

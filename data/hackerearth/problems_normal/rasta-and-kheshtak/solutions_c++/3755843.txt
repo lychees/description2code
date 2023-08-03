@@ -1,0 +1,148 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<unordered_map>
+#include<unordered_set>
+//#include<quadmath.h>
+using namespace std;
+int n;
+int m;
+int x;
+int y;
+int a[703][703];
+const unsigned long long int HASH_MOD = 1000000009LL;
+const unsigned long long int MAXX = 703 * 703 * 10;
+unsigned long long int pp[MAXX+1];  //pow of HASH_MOD
+class st{
+public:
+	unsigned long long int v[703][703];
+	int N;
+	int M;
+	unsigned long long int get_hash(int row, int i, int j){
+		if (i == 0){
+			return v[row][j]*pp[MAXX-i];
+		}
+		long long int T = v[row][j] - v[row][i - 1];
+		T *= pp[MAXX - i];
+		return T;
+	}
+	deque<unsigned long long int> k;
+	void compute(int len, vector<unsigned long long int> &hash){
+		for (int j = 0; j <= M - len; j++){
+			k.clear();
+			unsigned long long int T = 0;
+			for (int i = 0; i < N; i++){
+				k.push_back(get_hash(i, j, j + len - 1)*pp[i*len]);
+				T += k.back();
+				if (k.size() > len){
+					T -= k.front();
+					k.pop_front();
+				}
+				if (k.size() == len){
+					hash.push_back(T*pp[MAXX - len*(i - len + 1)]);
+				}
+			}
+			k.clear();
+		}
+		sort(hash.begin(), hash.end());
+		hash.erase(unique(hash.begin(), hash.end()), hash.end());
+	}
+	void insert(int row, int col, unsigned long long int val){
+		v[row][col] = pp[col] * val;
+		if (col){
+			v[row][col] += v[row][col - 1];
+		}
+	}
+};
+vector<unsigned long long int> V;
+st A;
+st B;
+vector<unsigned long long int> h1;
+vector<unsigned long long int> h2;
+bool ok(int len){
+	if (len == 0){
+		return true;
+	}
+	h1.clear();
+	h2.clear();
+	A.compute(len, h1);
+	B.compute(len, h2);
+	if (h1.size() > h2.size()){
+		swap(h1, h2);
+	}
+	for (int i = 0; i < h1.size(); i++){
+		if (binary_search(h2.begin(), h2.end(), h1[i])){
+			return true;
+		}
+	}
+	return false;
+}
+int main(){
+	scanf("%d%d", &n, &m);
+	pp[0] = 1LL;
+	for (int i = 1; i <= MAXX; i++){
+		pp[i] = pp[i - 1];
+		pp[i] *= HASH_MOD;
+	}
+	for (int i = 0; i < n; i++){
+		for (int j = 0; j < m; j++){
+			int val;
+			scanf("%d", &val);
+			A.insert(i, j, val);
+		}
+	}
+	int x;
+	int y;
+	scanf("%d%d", &x, &y);
+	for (int i = 0; i < x; i++){
+		for (int j = 0; j < y; j++){
+			int val;
+			scanf("%d", &val);
+			B.insert(i, j, val);
+		}
+	}
+	A.N = n;
+	A.M = m;
+	B.N = x;
+	B.M = y;
+	int mint = 0;
+	int maxt = min(n, min(m, min(x, y)));
+	while (mint + 1 < maxt){
+		int mid = (mint + maxt) >> 1;
+		if (ok(mid)){
+			mint = mid;
+		}
+		else{
+			maxt = mid - 1;
+		}
+	}
+	if (ok(maxt)){
+		printf("%d\n", maxt);
+	}
+	else{
+		printf("%d\n", mint);
+	}
+	return 0;
+}

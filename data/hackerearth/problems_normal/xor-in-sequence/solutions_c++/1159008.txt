@@ -1,0 +1,108 @@
+#include <bits/stdc++.h>
+
+typedef long long ll;
+
+const int N = (int)1e5 + 123;
+
+using namespace std;
+
+struct Trie {
+    int pr, sum;
+	int next[2];
+	Trie() {
+		pr = -1;
+		sum = 0;
+		next[0] = next[1] = -1;
+	}
+} g[N * 32];
+
+int sz;
+
+void add(int x) {
+//	cout << " add " << x << endl;
+    int now = 1;
+	for (int i = 29; i >= 0; i--) {
+		bool to = (x & (1 << i)) > 0;
+		if (g[now].next[to] == -1)
+			g[now].next[to] = ++sz,
+			g[sz].pr = now;
+		now = g[now].next[to];
+	}
+	while(now > 0) {
+		g[now].sum++;
+//		cerr << now << " sum " << g[now].sum << endl;
+		now = g[now].pr;
+	}
+}
+
+int what(int x, int y) {
+    int now = 1, res = 0;
+//  cout << x << ' ' << y << " and\n";
+	for (int i = 29; i >= 0; i--) {
+//	    cout << res << endl;
+		if ((y & (1 << i)) > 0) {
+//		    cout << "f\n";
+			bool to = (x & (1 << i)) > 0;
+			to ^= 1;
+			if (g[now].next[to] == -1)
+				return res;
+			now = g[now].next[to];
+		}
+		else {
+//		    cout << "s\n";
+			bool to = (x & (1 << i)) > 0;
+//			cout << " bitx " << to << endl;
+			int f = g[now].next[(to ^ 1)];
+//			cout << " ff " << f;
+			if (f != -1)
+				res += g[f].sum;
+			f = g[now].next[to];
+//			cout << " ss " << f << endl;
+			if (f == -1)
+				return res;
+			now = f;
+		}
+	}
+	res += g[now].sum;
+	return res;
+}
+
+int t;
+int n;
+int a[N];
+int m;
+int l[20], r[20];
+ll ans[20];
+
+void solve() {
+	scanf("%d", &n);
+	for (int i = 1; i <= n; i++)
+		scanf("%d", &a[i]);
+	scanf("%d", &m);
+	for (int i = 1; i <= m; i++)
+		scanf("%d%d", &l[i], &r[i]),
+		ans[i] = 0;
+	sz = 1;
+	for (int i = 1; i <= n * 30; i++)
+		g[i].pr = g[i].next[0] = g[i].next[1] = -1,
+		g[i].sum = 0;
+	add(0);
+	int pref = 0;
+	for (int i = 1; i <= n; i++) {
+		pref ^= a[i];
+		for (int j = 1; j <= m; j++)
+			ans[j] += what(pref, l[j]) - what(pref, r[j] + 1);
+		add(pref);
+	}
+	for (int i = 1; i <= m; i++)
+		printf("%lld\n", ans[i]);
+}
+
+int main() {
+//	freopen("input.txt","r",stdin);
+//	freopen("output.txt","w",stdout);
+	scanf("%d", &t);
+	while(t--)
+		solve();
+	return 0;
+}

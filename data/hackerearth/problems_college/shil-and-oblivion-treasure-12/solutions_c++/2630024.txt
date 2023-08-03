@@ -1,0 +1,218 @@
+#include <algorithm>
+#include <iostream>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <string>
+#include <vector>
+#include <cstdio>
+#include <ctime>
+#include <cmath>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <map>
+#include <set>
+#include <new>
+#define mp make_pair
+#define MATH_DEFINES
+#define pb push_back
+#define pf push_front
+#define F first
+#define S second
+#define ll long long
+#define MS0(a) memset((a),0,sizeof(a))
+#define MS1(a) memset((a),-1,sizeof(a))
+#define fname ""
+#define ed cout<<endl
+#define sz size()
+#define eps 1e-11
+using namespace std;
+const int N = 10050;
+const int M = 1005;
+const int mod = (int)1000000007;
+vector <int> t[N + N + N + N];
+int n, q, l, r, a[N], type, primes;
+int cnt[M], number[M];
+ll ans;
+int binpow(int a, int b)
+{
+	ll res = 1;
+	ll aa = a;
+	while (b)
+	{
+		if ((b & 1))
+		{
+			res = (1ll * res * aa) % mod;
+		}
+		aa = (1ll * aa * aa) % mod;
+		b >>= 1;
+	}
+	return (res % mod);
+}
+void precalc()
+{
+	int counter = 0;
+	for (int i = 2; i <= 1000; i ++)
+	{
+		bool prime = 1;
+		for (int j = 2; j * j <= i; j ++)
+		{
+			if (i % j == 0)
+			{
+				prime = 0;
+			}
+		}
+		if (prime)
+		{
+			++ primes;
+			++ counter;
+			number[i] = counter;
+			cnt[counter] = i;
+		}
+	}
+}
+void assign(int v, int f)
+{
+	t[v].clear();
+	t[v].resize(primes + 5);
+	int i = 2;
+	while (i * i <= f)
+	{
+		if (f % i == 0)
+		{
+			int counter = 0;
+			while (f % i == 0)
+			{
+				f /= i;
+				++ counter;
+			}
+			t[v][number[i]] = max(counter, t[v][number[i]]);
+		}
+		++ i;
+	}
+	if (f > 1)
+	{
+		t[v][number[f]] = max(t[v][number[f]], 1);
+	}
+}
+vector<int> merge(vector <int> a, vector <int> b)
+{
+	vector <int> c;
+	c = b;
+	int n = a.size() - 5;
+	assert (n == primes);
+//	exit(0);
+	for (int i = 1; i <= n; i ++)
+	{
+		c[i] = max(c[i], a[i]);
+//		cout << i << "\n";
+	}
+	return c;
+}
+void build(int v, int tl, int tr)
+{
+	if (tl > tr)
+	{
+		return;
+	}
+	if (tl == tr)
+	{
+		assign(v, a[tl]);
+/*		cout << v << " ";
+		cout << a[tl] << "\n";
+		for (int i = 1; i <= primes;i ++)
+		{
+			if (t[v][i])
+			{
+				cout << cnt[i] << " " << i << " " << t[v][i] << "\n";
+			}
+		}
+		cout << "\n"; */
+		return;
+	}
+	int tm = (tl + tr) / 2;
+	build(v + v, tl, tm);
+	build(v + v + 1, tm + 1, tr);
+	t[v] = merge(t[v + v], t[v + v + 1]);
+/*	cout << v << " ";
+	cout << a[tl] << "\n";
+	for (int i = 1; i <= primes;i ++)
+	{
+		if (t[v][i])
+		{
+			cout << cnt[i] << " " << i << " " << t[v][i] << "\n";
+		}
+	}
+	cout << "\n";   */
+}
+void update(int v, int tl, int tr, int pos, int val)
+{
+	if (tl > tr || tl > pos || tr < pos)
+	{
+		return;
+	}
+	if (tl == tr)
+	{
+		assign(v, val);
+		return;
+	}
+	int tm = (tl + tr) / 2;
+	update(v + v, tl, tm, pos, val);
+	update(v + v + 1, tm + 1, tr, pos, val);
+	t[v] = merge(t[v + v], t[v + v + 1]);
+}
+vector<int> get(int v, int tl, int tr, int l, int r)
+{
+	if (tl > tr || tl > r || tr < l)
+	{
+		vector <int> a;
+		a.resize(primes + 5);
+		return a;
+	}
+	if (tl >= l && tr <= r)
+	{
+		return t[v];
+	}
+	int tm = (tl + tr) / 2;
+	return merge(get(v + v, tl, tm, l, r), get(v + v + 1, tm + 1, tr, l, r));
+}
+int main()
+{
+	ios_base::sync_with_stdio(0);cin.tie(NULL);
+//	freopen(fname".in","r",stdin);
+//	freopen(fname".out","w",stdout);
+	precalc();
+	cin >> n;
+	for (int i = 1; i <= n; i ++)
+	{
+		cin >> a[i];
+	}
+	build(1, 1, n);
+//	return 0;
+	cin >> q;
+	for (int i = 1; i <= q;i ++)
+	{
+		cin >> type >> l >> r;
+		if (type == 1)
+		{
+			update(1, 1, n, l, r);
+		}
+		else
+		{
+			vector <int> a;
+			ans = 1;
+			a = get(1, 1, n, l, r);
+			for (int i = 1; i <= primes;i ++)
+			{
+//				cout << cnt[i] << " " << a[i] << " " << binpow(cnt[i], a[i]) << "\n";
+				ans = (ans * binpow(cnt[i], a[i])) % mod;
+//				ans %= mod;
+			}
+			cout << ans << "\n";
+		}
+	}
+ 	return 0;
+}

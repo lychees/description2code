@@ -1,0 +1,127 @@
+#include <bits/stdc++.h>
+
+#define pb push_back
+#define fi first
+#define se second
+#define all(v) v.begin(), v.end()
+
+using namespace std;
+using ll = int64_t;
+
+int n;
+vector<ll> costs;
+vector<vector<int>> g;
+map<pair<ll, ll>, vector<ll>> cache;
+
+ll thx_lopatin(vector<vector<ll>> a, int n, int m) {
+  vector<ll> u (n+1), v (m+1), p (m+1), way (m+1);
+  for (int i=1; i<=n; ++i) {
+    p[0] = i;
+    int j0 = 0;
+    vector<ll> minv (m+1, 1e12);
+    vector<char> used (m+1, false);
+    do {
+      used[j0] = true;
+      ll i0 = p[j0],  delta = 1e12,  j1;
+      for (int j=1; j<=m; ++j)
+        if (!used[j]) {
+          ll cur = a[i0][j]-u[i0]-v[j];
+          if (cur < minv[j])
+            minv[j] = cur,  way[j] = j0;
+          if (minv[j] < delta)
+            delta = minv[j],  j1 = j;
+        }
+      for (int j=0; j<=m; ++j)
+        if (used[j])
+          u[p[j]] += delta,  v[j] -= delta;
+        else
+          minv[j] -= delta;
+      j0 = j1;
+    } while (p[j0] != 0);
+    do {
+      int j1 = way[j0];
+      p[j0] = p[j1];
+      j0 = j1;
+    } while (j0);
+  }
+  return -v[0];
+}
+
+ll get_matching(const vector<vector<ll>>& matching_costs, int forbidden_color) {
+  int m = n - 1;
+  int n = matching_costs.size();
+
+  if (forbidden_color == -1)
+    assert(n <= m);
+  else
+    assert(n < m);
+
+  vector<vector<ll>> a(n + 1, vector<ll>(m + 1, 1e12));
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < m; j++) {
+      if (j != forbidden_color) {
+        a[i + 1][j + 1] = matching_costs[i][j];
+      }
+    }
+  }
+
+  return thx_lopatin(a, n, m);
+}
+
+vector<ll> dfs(int u, int parent) {
+  auto it = cache.find({u, parent});
+  if (it != cache.end())
+    return it->second;
+
+  vector<ll> results(n - 1, 0);
+
+  vector<vector<ll>> child_results;
+  for (int v : g[u]) {
+    if (v != parent) {
+      child_results.push_back(dfs(v, u));
+    }
+  }
+
+
+  for (int parent_color = 0; parent_color < n - 1; parent_color++) {
+    results[parent_color] = get_matching(child_results, (parent != -1) ? parent_color : -1);
+    if (parent != -1) 
+      results[parent_color] += costs[parent_color];
+  }
+
+  cache[{u, parent}] = results;
+
+  return results;
+}
+
+void solve() {
+  cin >> n;
+
+  costs.resize(n - 1);
+  for (int i = 0; i < n - 1; i++)
+    cin >> costs[i];
+
+  g.assign(n, vector<int>());
+  for (int i = 1; i < n; i++) {
+    int u, v;
+    cin >> u >> v; --u, --v;
+    g[u].pb(v); g[v].pb(u);
+  }
+
+  cache.clear();
+  vector<ll> reses = dfs(0, -1);
+  ll res = 1e18;
+  for (ll c : reses)
+    res = min(res, c);
+  cout << res << endl;
+}
+
+int main() {
+  int tests;
+  cin >> tests;
+  for (int t = 1; t <= tests; t++) {
+    solve();
+  }
+  return 0;
+}

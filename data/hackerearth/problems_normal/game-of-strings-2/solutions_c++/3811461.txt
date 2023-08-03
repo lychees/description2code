@@ -1,0 +1,105 @@
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int K;
+vector<int> maxps;
+
+void max_prefix_sufix(string& pat) {
+	int n = pat.size();
+	maxps.assign(n, 0);
+	int j=0;
+	for (int i = 1; i < n; ++i)
+	{
+		while(j>=0 && pat[i]!=pat[j]) {
+			if (j==0)
+				j = -1;
+			else
+				j = maxps[j-1];
+		}
+		j++;
+		maxps[i] = j;
+	}
+}
+
+void solve(string& text) {
+	int n = text.size();
+	max_prefix_sufix(text);
+	int index_current_max = n-1;
+	int current_max = maxps[n-1];
+	bool found = false;
+	while(!found && current_max>0) {
+		string pat = text.substr(0,current_max);
+		int m = current_max;
+		// search in text
+		int j = 0;
+		for (int i = 1; i < n; ++i)
+		{
+			while(j>=0 && text[i]!=pat[j]) {
+				if (j==0)
+					j = -1;
+				else
+					j = maxps[j-1];
+			}
+			j++;
+			if (j == m) {
+				if (i <= K) {
+					found = true;
+					cout << pat << endl;
+					break;
+				} else {
+					break;
+				}
+			}
+		}
+		current_max = maxps[current_max-1];
+		while(current_max > K)
+			current_max = maxps[current_max-1];
+	}
+	if (!found) {
+		cout << "Puchi is a cheat!" << endl;
+	}
+}
+
+void solve2(string& text) {
+	int n = text.size();
+	max_prefix_sufix(text);
+	int index_current_max = n-1;
+	int current_max = maxps[n-1];
+	while(current_max > K)
+			current_max = maxps[current_max-1];
+	bool found = false;
+	while(!found && current_max>0) {
+		// search in text
+		for (int i = K; i >=current_max; i--)
+		{
+			if (maxps[i] == current_max) {
+				found = true;
+				cout << text.substr(0, current_max) << endl;
+				break;
+			}
+		}
+		current_max = maxps[current_max-1];
+	}
+	if (!found) {
+		cout << "Puchi is a cheat!" << endl;
+	}
+}
+
+
+// Game of Strings 
+int main()
+{
+	int T;
+	string text;
+	cin >> T;
+	while(T--) {
+		cin >> text;
+		cin >> K;
+		K--;
+		solve2(text);
+	}
+
+	return 0;
+}

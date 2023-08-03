@@ -1,0 +1,122 @@
+#include <cstdio>
+
+#define MAX 1003
+
+using namespace std;
+
+int di[] = { 0, 1, 0, -1 };
+int dj[] = { 1, 0, -1, 0 };
+
+typedef struct node
+{
+	int u, v;
+	struct node *next;
+
+	node(int u, int v)
+	{
+		this->u = u;
+		this->v = v;
+		next = NULL;
+	}
+
+}node;
+
+
+class Queue
+{
+private:
+	node *f, *r;
+
+public:
+	Queue()
+	{
+		f = r = NULL;
+	}
+
+	void push(int u, int v)
+	{
+		node *n = new node(u, v);
+		if (!f) f = n;
+		else r->next = n;
+		r = n;
+	}
+
+	node* pop()
+	{
+		node  *v = new node(f->u, f->v);
+		node *t = f;
+		f = f->next;
+		if (!f) r = NULL;
+		delete t;
+		return v;
+	}
+
+	bool isEmpty()
+	{
+		return f == NULL;
+	}
+};
+
+
+bool graph[MAX][MAX];
+Queue q;
+
+
+int main()
+{
+	int n, m, queries, u, v;
+	scanf("%d%d%d", &n, &m, &queries);
+
+	int ans = 0;
+
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < m; j++)
+		{
+			scanf("%d", &graph[i][j]);
+			if (graph[i][j]) ans++;
+		}
+	}
+
+	for (int i = 0; i < queries; i++)
+	{
+		scanf("%d%d", &u, &v);
+
+		int des = 0;
+		int x = u-1, y = v-1;
+
+		if (graph[x][y])
+        {
+
+            q.push(x, y);
+            //visited[x][y] = true;
+            //graph[x][y] = 0;
+
+            while (!q.isEmpty())
+            {
+                node *t = q.pop();
+                u = t->u, v = t->v;
+                delete t;
+
+                if (graph[u][v])
+                {
+                    graph[u][v] = 0;
+                    des++;
+                    for (int k = 0; k < 4; k++)
+                    {
+                        int nx = u + di[k];
+                        int ny = v + dj[k];
+
+                        if (nx >= 0 && nx < n && ny >= 0 && ny < m && graph[nx][ny])
+                            q.push(nx, ny);
+                    }
+                }
+            }
+        }
+
+		ans -= des;
+		printf("%d\n", ans);
+	}
+
+	return 0;
+}

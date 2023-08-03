@@ -1,0 +1,185 @@
+
+#include<stdio.h>
+#define gc getchar_unlocked
+#define pc putchar_unlocked
+int st[401100][2];
+int lazy[401100];
+ 
+int min(int a,int b)
+{
+     if(a>b)
+          return b;
+     else 
+          return a;
+}
+ 
+inline void si(int *p)
+{    int x =0,neg=0;
+     char c=gc();
+     //  if(c=='-'){ neg=-1; printf("bb") ;} 
+     while((c<'0'|| c>'9') && c!='-')
+          c=gc();
+     if(c=='-') {neg=1; c=gc();} 
+     for(;c>='0' && c<='9';c=gc())
+     {
+          x=x*10+c-48;
+     }
+     if(neg==1)         
+          x=-1*x;
+ 
+     *p=x;
+}
+ 
+inline void pn(int n)
+{
+     int i=0;
+     char ch[20];
+     if(n<0)
+          if(n==0) pc('0');
+          else
+               pc('-'),n=n*(-1);
+ 
+     while(n>0)
+     {  ch[i]=n%10 +'0';
+          n=n/10;
+          i++;
+     }
+ 
+     while(i>0)
+     { 
+          pc(ch[i-1]);
+          i--;
+     }
+    // pc(' ');
+}
+ 
+ 
+void b_t(int *a,int in,int s,int e)  // build tree
+{
+     if(s>e)
+          return;
+ 
+     if(s==e)
+     {
+          st[in][0]=e-s+1;
+          st[in][1]=0;
+          return;
+     }
+ 
+     b_t(a,2*in,s,(s+e)/2);
+     b_t(a,2*in+1,1+(s+e)/2,e);
+ 
+     st[in][0]=(st[2*in][0]+st[2*in+1][0]);
+     st[in][1]=st[2*in][1]+st[2*in+1][1];
+}
+ 
+int query(int *a,int in,int s,int e,int i,int j)   //query
+{ // printf("in=%d s=%d e=%d \n",in,s,e);
+     int tmp;
+     if(lazy[in]!=0)
+     {
+          tmp=st[in][1];
+          st[in][1]=st[in][0];
+          st[in][0]=tmp;
+ 
+          if(s!=e)
+          {
+               lazy[2*in]^=1;//lazy[in];
+               lazy[2*in+1]^=1;//lazy[in];
+          }
+          lazy[in]^=1;
+     }
+ 
+     if(s>e || s>j || e<i)
+     {    
+          return 0;
+     }
+ 
+     if(s>=i && e<=j)
+     {
+          return st[in][1];
+     }
+ 
+     int rl = query(a,2*in,s,(s+e)/2,i,j);
+     int rr= query(a,2*in+1,1+(s+e)/2,e,i,j);
+ 
+    // printf("fin =%d\n",rr+rl);
+     return rl+rr;
+}
+ 
+void update(int *a,int in,int s,int e,int i,int j)
+{ // printf("in=%d s=%d e=%d \n",in,s,e);
+     int temp;
+ 
+     if(lazy[in]!=0)
+     {
+          temp=st[in][0];
+          st[in][0]=st[in][1];
+          st[in][1]=temp;
+          //ct-=e-s+1;
+          if(s!=e)
+          {
+               lazy[2*in]^=1; 
+               lazy[2*in+1]^=1;
+          }
+          lazy[in]^=1;
+         //printf("if \n"); 
+     }
+ 
+     if(s>e || s>j || e<i)
+          return;
+     if(s>=i && e<=j)
+     { 
+          temp=st[in][0];
+          st[in][0]=st[in][1];
+          st[in][1]=temp;
+ 
+          if(s!=e)          
+          {
+               lazy[2*in]^=1; 
+               lazy[2*in+1]^=1;
+          }
+ 
+    //     printf("subset \n");
+          return;
+     }
+ 
+     update(a,2*in,s,(s+e)/2,i,j);
+     update(a,2*in+1,1+(s+e)/2,e,i,j);
+     
+     st[in][1]=st[2*in][1]+st[2*in+1][1];
+     st[in][0]=st[2*in][0]+st[2*in+1][0];
+}
+ 
+ 
+int main (){
+     int n,q,i,a[100111],l,r,ans,t,val,i1;
+     si(&n),si(&q);
+ 
+ 
+     b_t(a,1,1,n);
+ 
+     for(i1=0;i1<q;i1++)
+     {
+          si(&t);
+          if(t==1)
+          { 
+               si(&l),si(&r);
+               l++; r++;
+               ans=query(a,1,1,n,l,r);
+               printf("%d\n",ans);
+          }
+ 
+          else if(t==0)      
+          {
+               scanf("%d%d",&l,&r);
+               l++; r++;
+             update(a,1,1,n,l,r);
+ 
+          }
+ 
+     }
+ 
+     return 0;
+}
+ 

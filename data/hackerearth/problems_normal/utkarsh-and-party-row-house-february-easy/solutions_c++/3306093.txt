@@ -1,0 +1,101 @@
+#include<bits/stdc++.h>
+using namespace std;
+static long long seg[100001*3],a[100001],seg1[3*100001];
+long long build(int s,int e,int ind){
+	if(s==e){
+		seg[ind]=a[s]*(s+1);
+		return seg[ind];
+	}
+	int mi=(s+e)/2;
+	seg[ind]=build(s,mi,2*ind+1)+build(mi+1,e,2*ind+2);
+	return seg[ind];
+}
+long long query(int s,int e,int ind,int qs,int qe){
+	if(qs>e||qe<s)
+	   return 0;
+	if(s>=qs&&e<=qe){
+		return seg[ind];
+	}
+	int mi=(s+e)/2;
+	return query(s,mi,2*ind+1,qs,qe)+query(mi+1,e,2*ind+2,qs,qe);
+}
+long long update(int s,int e,int ind,int qs,int qe){
+	if(qs>e||qe<s)
+	   return seg[ind];
+	if(s>=qs&&e<=qe){
+		//printf("%d\n",s);
+		seg[ind]=a[s]*(s+1);
+		return seg[ind];
+	}
+	int mi=(s+e)/2;
+	return (seg[ind]=update(s,mi,2*ind+1,qs,qe)+update(mi+1,e,2*ind+2,qs,qe));
+}
+long long build1(int s,int e,int ind){
+	if(s==e){
+		seg1[ind]=a[s];
+		return seg1[ind];
+	}
+	int mi=(s+e)/2;
+	seg1[ind]=build1(s,mi,2*ind+1)+build1(mi+1,e,2*ind+2);
+	return seg1[ind];
+}
+long long  query1(int s,int e,int ind,int qs,int qe){
+	if(qs>e||qe<s)
+	   return 0;
+	if(s>=qs&&e<=qe){
+		return seg1[ind];
+	}
+	int mi=(s+e)/2;
+	return query1(s,mi,2*ind+1,qs,qe)+query1(mi+1,e,2*ind+2,qs,qe);
+}
+long long update1(int s,int e,int ind,int qs,int qe){
+	if(qs>e||qe<s)
+	   return seg1[ind];
+	if(s>=qs&&e<=qe){
+	//	printf("%d\n",s);
+		seg1[ind]=a[s];
+		return seg1[ind];
+	}
+	int mi=(s+e)/2;
+	return (seg1[ind]=update1(s,mi,2*ind+1,qs,qe)+update1(mi+1,e,2*ind+2,qs,qe));
+}
+int main(){
+	int n,q;
+	scanf("%d %d",&n,&q);
+	for(int i=0;i<n;i++)
+	scanf("%lld",&a[i]);
+	build(0,n-1,0);
+	build1(0,n-1,0);
+	while(q--){
+		int ty;
+		//printf("Main %d\n",seg[26]);
+		scanf("%d",&ty);
+		if(ty==1){
+			int a1,b,c;
+			scanf("%d %d %d",&a1,&b,&c);
+			long long ans=0;
+			if(a1<b){
+				ans=query(0,n-1,0,b-1,c-1)-query1(0,n-1,0,b-1,c-1)*(a1);
+				//printf("q=%lld\n",query(0,n-1,0,b-1,c-1));
+			}
+			else
+			if(a1>c){
+				ans=(-query(0,n-1,0,b-1,c-1)+query1(0,n-1,0,b-1,c-1)*(a1));
+				//printf("%d\n",(c-b+1)*a1);
+			//	printf("q1=%lld\n",query1(0,n-1,0,b-1,c-1));
+			}
+			else {
+				ans=query(0,n-1,0,a1,c-1)-query1(0,n-1,0,a1,c-1)*(a1);
+				ans+=-query(0,n-1,0,b-1,a1-2)+query1(0,n-1,0,b-1,a1-2)*(a1);
+			}
+			printf("%lld\n",ans);
+		} else {
+			int a1,b;
+			scanf("%d %d",&a1,&b);
+			a[a1-1]+=b;
+			update(0,n-1,0,a1-1,a1-1);
+			update1(0,n-1,0,a1-1,a1-1);
+		}
+	}
+	return 0;
+}

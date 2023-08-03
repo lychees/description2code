@@ -1,0 +1,136 @@
+#include <bits/stdc++.h>
+using namespace std;
+int suffixrank[22][100009];
+int sa[1000001];
+typedef struct stuple
+{
+    int fhalf,shalf,oindex;
+}stuple;
+bool cmp(const stuple& a,const stuple& b)
+{
+    if(a.fhalf^b.fhalf)
+    {
+        return(a.fhalf<b.fhalf);
+    }
+    return(a.shalf<b.shalf);
+}
+map<int,int> m;
+void sarray(char s[],int n)
+{
+    int i,stp,cnt,currrank;
+    for(i=0;i<n;i++)
+    {
+        suffixrank[0][i]=s[i];
+    }
+    stuple l[n+2];
+    for(stp=1,cnt=1;cnt<n;cnt*=2,stp++)
+    {
+        for(i=0;i<n;i++)
+        {
+            l[i].oindex=i;
+            l[i].fhalf=suffixrank[stp-1][i];
+            l[i].shalf=i+cnt<n?suffixrank[stp-1][i+cnt]:-1;
+        }
+        sort(l,l+n,cmp);
+        suffixrank[stp][l[0].oindex]=0;
+        for(currrank=0,i=1;i<n;i++)
+        {
+            if((l[i].fhalf^l[i-1].fhalf)||(l[i].shalf^l[i-1].shalf))
+                currrank++;
+            suffixrank[stp][l[i].oindex]=currrank;
+        }
+    }
+    //int pos=ceil(log(n)/log(2));
+    for(i=0;i<n;i++)
+     {
+     	sa[i]=l[i].oindex;
+     	m[l[i].oindex] = i;
+     }
+}
+int lcp(int i,int j,int n)
+{
+    int stp,ans=0;
+    for(stp=ceil(log(n)/log(2));(stp>=0)&&(i<n)&&(j<n);stp--)
+    {
+        if(suffixrank[stp][i]==suffixrank[stp][j])
+        {
+            ans+=1<<stp;
+            i+=1<<stp;
+            j+=1<<stp;
+        }
+    }
+    return ans;
+}
+vector<int> dp(1000001);
+void cal(int n)
+{
+	pair<int,int> p;
+	int i;
+	for( i=1;i<n;i++)
+	{
+		dp[i-1] = lcp(sa[i-1],sa[i],n);
+		//cout << dp[i-1] << "\n";
+	}
+}
+vector<int> tree(4000000);
+void build(int node,int a,int b)
+{
+	if(a==b)
+	{
+		tree[node]=dp[a];
+		return;
+	}
+	int mid=(a+b)/2;
+	build(node*2,a,mid);
+	build(node*2+1,mid+1,b);
+	tree[node]=min(tree[node*2],tree[node*2+1]);
+}
+int query(int node,int a,int b,int i,int j)
+{
+	if((a>b)||(i>b)||(a>j))
+		return 1000000;
+	if((a>=i)&&(b<=j))
+		return tree[node];
+		int mid=(a+b)/2;
+	int q1=query(node*2,a,mid,i,j);
+	int q2=query(node*2+1,mid+1,b,i,j);
+	return min(q1,q2);
+	
+}
+int main() {
+    int i,t,n, q, x, y, ans;
+    char s[1000009];
+    ios::sync_with_stdio(false);
+     cin >> n >> q;
+     cin >> s;
+      sarray(s,n);
+      cal(n);
+      build(1,0,n-1);
+        while( q--)
+        {
+        	cin >> x >> y;
+        	x--;
+        	y--;
+        	if( x^y)
+        	{
+        		 ans = 1000000;
+        		x=m[x];
+        		y=m[y];
+        		//cout << x <<" "<< y << "\n";
+        		int mini,maxi;
+        		mini=min(x,y);
+        		maxi=max(x,y);
+        		x=mini;
+        		y=maxi;
+        		ans=query(1,0,n-1,x,y-1);
+        		//cout < "\n";
+        	}
+        	else
+        	{
+        		ans = n-x;
+        	}
+        	cout << ans <<"\n";
+        }
+ 
+    return 0;
+}

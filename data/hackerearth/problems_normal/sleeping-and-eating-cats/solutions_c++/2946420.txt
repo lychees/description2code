@@ -1,0 +1,190 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<unordered_set>
+#include<unordered_map>
+using namespace std;
+int n;
+int m;
+#define MAX 100002
+struct st {
+	bool all;
+	int cl;
+	int cr;
+	long long int sl;
+	long long int sr;
+	int lazy;
+	long long int rang;
+	long long int way;
+	st() {
+		all = false;
+		lazy = -1;
+		way = 0;
+		rang = 0;
+	}
+};
+st seg[MAX * 4];
+void update(int b) {
+	if (seg[b].lazy == -1) {
+		return;
+	}
+	seg[b].all = true;
+	seg[b].cl = seg[b].cr = seg[b].lazy;
+	seg[b].sl = seg[b].sr = seg[b].rang;
+	if (b * 2 + 2 < MAX * 4) {
+		seg[b * 2 + 1].lazy = seg[b * 2 + 2].lazy = seg[b].lazy;
+	}
+	seg[b].lazy = -1;
+	seg[b].way = (long long int)(seg[b].rang)*(long long int)(seg[b].rang - 1) / 2LL;
+	seg[b].way += (long long int)(seg[b].rang);
+	return;
+}
+////
+st merge(st a, st b) {
+	if (a.rang == 0) {
+		return b;
+	}
+	if (b.rang == 0) {
+		return a;
+	}
+	st r;
+	r.cl = a.cl;
+	r.cr = b.cr;
+	r.way = a.way + b.way;
+	r.rang = a.rang + b.rang;
+	if (a.all&&b.all) {
+		if (a.cl == b.cl) {
+			r.all = true;
+			r.way += a.rang*b.rang;
+			r.sl = r.sr = a.rang+b.rang;
+		}
+		else {
+			r.all = false;
+			r.sl = a.rang;
+			r.sr = b.rang;
+		}
+		return r;
+	}
+	if (a.all) {
+		if (a.cl == b.cl) {
+			r.sl = a.rang + b.sl;
+			r.way += a.sl*b.sl;
+		}
+		else {
+			r.sl = a.rang;
+		}
+		r.sr = b.sr;
+		return r;
+	}
+	if (b.all) {
+		if (a.cr == b.cl) {
+			r.sr = a.sr + b.rang;
+			r.way += a.sr*b.rang;
+		}
+		else {
+			r.sr = b.rang;
+		}
+		r.sl = a.sl;
+		return r;
+	}
+	if (a.cr == b.cl) {
+		r.way += a.sr*b.sl;
+	}
+	r.sl = a.sl;
+	r.sr = b.sr;
+	return r;
+}
+int a[MAX];
+inline void init(int b, int l, int r) {
+	seg[b].rang = r - l;
+	if (l + 1 == r) {
+		seg[b].cl = seg[b].cr = a[l];
+		seg[b].sl = seg[b].sr = 1;
+		seg[b].all = true;
+		seg[b].way = 1;
+		return;
+	}
+	init(b * 2 + 1, l, (l + r) >> 1);
+	init(b * 2 + 2, (l + r) >> 1, r);
+	seg[b] = merge(seg[b * 2 + 1], seg[b * 2 + 2]);
+	return ;
+}
+inline st q(int b, int l, int r,int ll,int rr) {
+	update(b);
+	if (ll <= l&&r <= rr) {
+		return seg[b];
+	}
+	if (rr <= l || r <= ll) {
+		return st();
+	}
+	st R=merge(q(b * 2 + 1, l, (l + r) >> 1, ll, rr), q(b * 2 + 2, (l + r) >> 1, r, ll, rr));
+	seg[b] = merge(seg[b * 2 + 1], seg[b * 2 + 2]);
+	return R;
+}
+inline void add(int b, int l, int r, int ll, int rr,int x) {
+	update(b);
+	if (ll <= l&&r <= rr) {
+		seg[b].lazy = x;
+		update(b);
+		return;
+	}
+	if (r <= ll || rr <= l) {
+		return;
+	}
+	add(b * 2 + 1, l, (l + r) >> 1, ll, rr, x);
+	add(b * 2 + 2, (l + r) >> 1, r, ll, rr, x);
+	seg[b] = merge(seg[b * 2 + 1], seg[b * 2 + 2]);
+	return;
+}
+int main() {
+	scanf("%d%d", &n, &m);
+	for (int i = 0;i < n;i++) {
+		scanf("%d", &a[i]);
+	}
+	init(0, 0, n);
+	while (m--) {
+		int ty;
+		scanf("%d", &ty);
+		if (ty == 0) {
+			int l, r;
+			scanf("%d%d", &l, &r);
+			l--;
+			r--;
+			int c;
+			scanf("%d", &c);
+			add(0, 0, n, l, r+1, c);
+		}
+		else {
+			int l, r;
+			scanf("%d%d", &l, &r);
+			l--;
+			r--;
+			st ans = q(0, 0, n, l, r + 1);
+			printf("%lld\n", ans.way);
+		}
+	}
+	return 0;
+}
+////

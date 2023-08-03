@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ms(s, n) memset(s, n, sizeof(s))
+#define FOR(i, a, b) for(int i = (a); i < (b); i++)
+#define FORd(i, a, b) for(int i = (a) - 1; i >= (b); i--)
+#define sz(a) int((a).size())
+typedef long long ll;
+typedef unsigned long long ull;
+typedef long double ld;
+typedef pair<int, int> pi;
+typedef vector<int> vi;
+typedef vector<pi> vii;
+ll gcd(ll a, ll b) {ll r; while (b != 0) {r = a % b; a = b; b = r;} return a;}
+ll lcm(ll a, ll b) {return a / gcd(a, b) * b;}
+#define EPS 1e-9
+const int mod = (int) 1e9 + 7;
+const int INF = (int) 1e9;
+const ll LINF = (ll) 1e18;
+const ld PI = 2 * acos(0);
+
+int n, l, r, x;
+vi v;
+int f[1 << 10];
+int g[1 << 10];
+int fac[110];
+
+int ex(int n, int k) {
+	if (!k) return 1;
+	if (k & 1) return 1LL * n * ex(n, k - 1) % mod;
+	int t = ex(n, k >> 1);
+	return 1LL * t * t % mod;
+}
+
+int binomal(int a, int b) {
+	int res = 1;
+	FOR(i, 0, a) res = 1LL * res * (b - i) % mod;
+	return 1LL * res * fac[a] % mod;
+}
+
+void solve() {
+	fac[0] = 1; FOR(i, 1, 110) fac[i] = 1LL * i * fac[i - 1] % mod;
+	FOR(i, 0, 110) fac[i] = ex(fac[i], mod - 2);
+	int T; cin>>T;
+	while (T--) {
+		cin>>n>>l>>r>>x;
+		ms(f, 0); ms(g, 0); v.clear();
+		for (int i = 2; 1LL * i * i <= x; i++) {
+			if (x % i != 0) continue;
+			int t = 1; while (x % i == 0) {t *= i; x /= i;}
+			v.push_back(t);
+		}
+		if (x > 1) v.push_back(x);
+		FOR(i, 0, 1 << sz(v)) {
+			int cur = 1;
+			FOR(j, 0, sz(v)) if (i & (1 << j)) cur *= v[j];
+			g[i] = r / cur - (l - 1) / cur;
+		}
+		FOR(i, 0, 1 << sz(v)) {
+			FOR(j, 0, i + 1) if ((i & j) == j) {
+				int cur = 1;
+				if (__builtin_popcount(j) & 1) f[i] -= g[j]; else f[i] += g[j];
+			}
+		}
+		ll ans = 0;
+		FOR(i, 0, 1 << sz(v)) {
+			if (__builtin_popcount(i) & 1) {
+				ans -= binomal(n, n + f[i] - 1);
+				ans += mod; ans %= mod;
+			}
+			else {
+				ans += binomal(n, n + f[i] - 1);
+				ans %= mod;
+			}
+		}
+		cout<<ans<<"\n";
+	}
+}
+
+int main() {
+	ios_base::sync_with_stdio(0); cin.tie(NULL);
+#ifdef _LOCAL_
+	freopen("in.txt", "r", stdin); //freopen("out.txt", "w", stdout);
+#endif
+	solve();
+#ifdef _LOCAL_
+	//printf("\nTime elapsed: %dms", 1000 * clock() / CLOCKS_PER_SEC);
+#endif
+	return 0;
+}
+

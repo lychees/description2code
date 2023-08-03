@@ -1,0 +1,236 @@
+//HackerEarth--Update and Query
+#include<bits/stdc++.h>
+#define MAX 200005
+
+using namespace std;
+
+typedef long long int lli;
+
+struct node{
+	
+	lli Max,Min;
+	
+	node(){
+		
+		Max=-10000000000000;
+		Min=10000000000000;	
+		
+	}
+	
+	void makeLeaf(lli val){		Max=val;Min=val;	}
+	
+	void merge(struct node lhs,struct node rhs){
+		
+		Max=max(lhs.Max,rhs.Max);
+		Min=min(lhs.Min,rhs.Min);
+		
+	}
+	
+};
+
+lli ok=0;
+node Tree[4*MAX];
+lli Array[MAX];    
+
+lli xabs(lli num){
+	
+	if(num<0) return -1*num;
+	else return num;
+	
+}
+    
+void makeTree(lli ,lli ,lli );
+struct node query(lli ,lli ,lli ,lli ,lli );
+void update(lli ,lli ,lli ,lli ,lli ,lli );    
+    
+int main(void){
+	
+	lli totalElements,queries,idx,start,mid,C,val,i,end;
+	char queryType[10];
+	
+//	freopen("in.txt","r",stdin);
+//	freopen("out.txt","w",stdout);
+	
+	scanf("%lld%lld",&totalElements,&queries);
+	
+	//cout<<"\nTotal number of elements are "<<totalElements<<" ans queries are "<<queries;
+	
+
+	for(i=0;i<totalElements;i++){
+		
+	
+	  scanf("%lld",&Array[i]);
+      
+    //  if(i==98333) cout<<"\nWE have "<<Array[i];
+   
+    }
+
+	makeTree(0,0,totalElements-1);  
+	i=0;
+//	while(1);
+	while(queries--){
+		
+		scanf("%s",queryType);
+	
+		i++;
+		if(queryType[0]=='U'){
+		
+		  scanf("%lld%lld",&idx,&val);
+		  
+		  //cin>>idx>>val;
+		  idx--;
+		  update(0,0,totalElements-1,idx,idx,val);			
+		  Array[idx]=val;	 
+			 
+		}
+		
+		else{
+			
+		//	cout<<"\nThis is query number "<<i;
+		//	cout<<"\nNow in query section.";
+			
+			scanf("%lld%lld",&idx,&C);
+								
+			idx--;
+						
+			//cout<<"\nValue of idx "<<idx<<" and value of C is "<<C;			
+						
+			lli maxAllowed=Array[idx]+C,minAllowed=Array[idx]-C;
+				
+			start=idx;end=totalElements-1;
+			
+		//	cout<<"\nMax allowed is "<<maxAllowed<<" and minAllowed is "<<minAllowed;
+										
+			if(!(Array[idx]<=maxAllowed&&minAllowed<=Array[idx])){
+							
+				printf("-1 -1\n");
+				continue;
+				
+			}
+			
+			while(start!=end&&start<=end){
+				
+				mid=(start+end)/2;
+												
+				node temp=query(0,0,totalElements-1,idx,mid);
+										
+				if(temp.Max<=maxAllowed&&minAllowed<=temp.Min){//we now try to extend the last index
+				    
+					start=mid;	
+			        
+			        if(mid==totalElements-1) break;
+			        
+			        node temp=query(0,0,totalElements-1,idx,mid+1);
+			        			        
+			        if(!(temp.Max<=maxAllowed&&minAllowed<=temp.Min)) break;
+			        else start++;
+					    
+				}
+				
+				else end=mid-1;
+								
+				mid=(start+end)/2;
+				
+				
+			}
+				
+						
+			lli length=start-idx+1,Z;
+			val=10000000000000;
+			
+			node temp=query(0,0,totalElements-1,idx,start);
+					
+			Z=xabs(Array[idx]-temp.Min);
+			
+			if(Array[idx]-Z<=temp.Min&&Array[idx]+Z>=temp.Max)
+			  val=min(val,Z);
+			
+			Z=xabs(Array[idx]-temp.Max);
+			
+			if(Array[idx]-Z<=temp.Min&&Array[idx]+Z>=temp.Max)
+			  val=min(val,Z);
+			
+			if(start==idx) val=0;
+			
+			printf("%lld %lld\n",length,val);
+			
+								
+		}
+			
+	//cout<<"\nIN MAIN "<<Tree[259956].Max<<" and "<<Tree[259956].Min<<"\n";	
+	} 
+	
+	return 0;
+	
+}   
+
+void makeTree(lli idx,lli assStart,lli assEnd){
+	
+	if(assStart==assEnd){
+		
+		if(assStart==98333){
+			
+		//	cout<<"\nWHile making "<<Array[assStart];
+			
+		}
+		
+		Tree[idx].makeLeaf(Array[assStart]);
+		return;
+		
+	}
+	
+	lli mid=(assStart+assEnd)/2;
+	
+	makeTree(2*idx+1,assStart,mid);
+	makeTree(2*idx+2,mid+1,assEnd);
+		
+    Tree[idx].merge(Tree[2*idx+1],Tree[2*idx+2]);	
+	
+		
+}   
+
+struct node query(lli idx,lli assStart,lli assEnd,lli s,lli e){
+	
+	if(assStart>assEnd||assStart>e||s>assEnd)//out of range
+	  return node();
+
+	if(assStart>=s&&assEnd<=e){
+	  	  
+	  return Tree[idx];
+    
+	}
+	lli mid=(assStart+assEnd)/2;
+	
+	struct node ans,v1,v2;
+	
+	v1=query(2*idx+1,assStart,mid,s,e);
+	v2=query(2*idx+2,mid+1,assEnd,s,e);
+	
+	ans.merge(v1,v2);
+	
+//	if(ok)
+//	cout<<"\nFrom a range of "<<assStart<<" to "<<assEnd<<" we return max and min as "<<ans.Max<<" and "<<ans.Min;
+	
+	return ans;
+	
+}   
+
+void update(lli idx,lli assStart,lli assEnd,lli s,lli e,lli newVal){
+	
+	if(assStart>assEnd||assStart>e||s>assEnd) return;
+	
+	if(assStart>=s&&assEnd<=e){
+		
+		Tree[idx].makeLeaf(newVal);
+		return;
+		
+	}
+	
+	lli mid=(assStart+assEnd)/2;
+	
+	update(2*idx+1,assStart,mid,s,e,newVal);
+	update(2*idx+2,mid+1,assEnd,s,e,newVal);
+	
+	Tree[idx].merge(Tree[2*idx+1],Tree[2*idx+2]);		
+	
+}

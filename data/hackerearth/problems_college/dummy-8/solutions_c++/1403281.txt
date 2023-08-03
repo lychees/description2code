@@ -1,0 +1,124 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int, int> pi;
+const int MOD = 1000000007;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define foru(i, a, b) for (int i = (a); i <= (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define ford(i, a, b) for (int i = (a); i >= (b); --i)
+#define sz(a) ((int) a.size())
+#define pb(a) push_back(a)
+#define mp(a, b) make_pair(a, b)
+#define mem(a) memset(a, 0, sizeof(a))
+#define all(a) a.begin(), a.end()
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void add_max(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void add_min(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {if (b == 0) return a; return gcd(b, a % b);}
+
+const int N = 101;
+int INF = (int) 1E6;
+int m, n;
+string s[N];
+bool e[N][N][4];
+int dst[N][N][4];
+int gx, gy, sx, sy;
+int dx[] = {1, 0, -1, 0};
+int dy[] = {0, 1, 0, -1};
+typedef pair<int, pair<int, int> > P;
+
+inline int thash(int x, int y) {
+    return N * x + y;
+}
+
+void init() {
+    repu(i, 0, m) repu(j, 0, n) {
+        if (s[i][j] == 'S' || s[i][j] == 'G' || s[i][j] == '.') {
+            int ind = i + 1;
+            while (ind < m && s[ind][j] == '.') ind++;
+            if (ind < m) {
+                if (s[ind][j] == '^') e[i][j][0] = true;
+                if (s[ind][j] == '<') e[i][j][1] = true;
+                if (s[ind][j] == 'v') e[i][j][2] = true;
+                if (s[ind][j] == '>') e[i][j][3] = true;
+            }
+            ind = i - 1;
+            while (ind >= 0 && s[ind][j] == '.') ind--;
+            if (ind >= 0) {
+                if (s[ind][j] == 'v') e[i][j][0] = true;
+                if (s[ind][j] == '>') e[i][j][1] = true;
+                if (s[ind][j] == '^') e[i][j][2] = true;
+                if (s[ind][j] == '<') e[i][j][3] = true;
+            }
+            ind = j + 1;
+            while (ind < n && s[i][ind] == '.') ind++;
+            if (ind < n) {
+                if (s[i][ind] == '<') e[i][j][0] = true;
+                if (s[i][ind] == 'v') e[i][j][1] = true;
+                if (s[i][ind] == '>') e[i][j][2] = true;
+                if (s[i][ind] == '^') e[i][j][3] = true;
+            }
+            ind = j - 1;
+            while (ind >= 0 && s[i][ind] == '.') ind--;
+            if (ind >= 0) {
+                if (s[i][ind] == '>') e[i][j][0] = true;
+                if (s[i][ind] == '^') e[i][j][1] = true;
+                if (s[i][ind] == '<') e[i][j][2] = true;
+                if (s[i][ind] == 'v') e[i][j][3] = true;
+            }
+        }
+    }
+}
+
+int main(int argc, char *argv[]) {
+    ios_base::sync_with_stdio(false);
+    int ntest;
+    cin >> ntest;
+    foru(t, 1, ntest) {
+        cin >> m >> n;
+        repu(i, 0, m) {
+            cin >> s[i];
+            repu(j, 0, n) {
+                if (s[i][j] == 'G') {
+                    gx = i; gy = j; s[i][j] = '.';
+                }
+                if (s[i][j] == 'S') {
+                    sx = i; sy = j; s[i][j] = '.';
+                }
+            }
+        }
+        mem(e);
+        init();
+        repu(i, 0, m) repu(j, 0, n) repu(k, 0, 4) dst[i][j][k] = INF;
+        dst[sx][sy][0] = 0;
+        priority_queue<P, vector<P>, greater<P> > que;
+        que.push(P(0, pi(thash(sx, sy), 0)));
+        while (!que.empty()) {
+            P p = que.top(); que.pop();
+            int nx = p.second.first / N, ny = p.second.first % N;
+            if (p.first > dst[nx][ny][p.second.second]) continue;
+            repu(i, 0, 4) {
+                int tx = nx + dx[i], ty = ny + dy[i];
+                if (tx < 0 || tx >= m || ty < 0 || ty >= n || s[tx][ty] != '.') continue;
+                int tm = (p.first + 1) % 4;
+                if (!e[tx][ty][tm] && dst[tx][ty][tm] > p.first + 1) {
+                    dst[tx][ty][tm] = p.first + 1;
+                    que.push(P(dst[tx][ty][tm], pi(thash(tx, ty), tm)));
+                }
+            }
+        }
+        int ans = INF;
+        repu(i, 0, 4) add_min(ans, dst[gx][gy][i]);
+        if (ans == INF) printf("Case #%d: impossible\n", t);
+        else printf("Case #%d: %d\n", t, ans);
+    }
+        
+    return 0;
+}

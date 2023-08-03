@@ -1,0 +1,145 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define base 193
+using namespace std;
+ll int n,m,k;
+string s,t;//maximise occurence of s2 in s1
+ll int p[210][210],h[210];
+ll int r[210],pp[210];//Rabin karp array
+ll int dp[205][205][505];
+ll int min_dist(char x,char y)
+{
+	ll int a,b;
+	ll int i,t1=0,t2=0;
+	a=x-'a';
+	b=y-'a';
+	while(1)
+	{
+		if(a==b)
+		break;
+		else
+		{
+			a=(a-1+26)%26;
+			t1++;
+		}
+	}
+	a=x-'a';
+	b=y-'a';
+	while(1)
+	{
+		if(a==b)
+		break;
+		else
+		{
+			a=(a+1)%26;
+			t2++;
+		}
+	}
+	//~ cout<<x<<" "<<y<<" "<<t1<<" "<<t2<<endl;
+	return min(t1,t2);
+}
+ll int myfind(ll int index,ll int last,ll int cost)
+{
+	if(dp[index][last][cost]==-1)
+	{
+		ll int ans,t1,t2;
+		if(index==m)
+		ans=0ll;
+		else
+		{
+			t1=myfind(index+1,last,cost);//exclusion
+			if((index-n+1)<=last)
+			{
+				if((index+n-1)<m && h[index-last])
+				{
+					if((p[index][n-1]-p[index][last+(n-1)])<=cost)
+					t2=1ll+myfind(index+1,index,cost-(p[index][n-1]-p[index][last+(n-1)]));
+					else
+					t2=0;
+				}
+				else
+				t2=0;
+			}
+			else
+			{
+				if((index+n-1)<m && p[index][n-1]<=cost)
+				{
+					t2=1ll+myfind(index+1,index,cost-p[index][n-1]);
+				}
+				else
+				t2=0;
+			}
+			ans=max(t1,t2);
+		}
+		dp[index][last][cost]=ans;
+	}
+	return dp[index][last][cost];
+}
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	memset(h,0,sizeof(h));
+	ll int i,j,x,t1,t2,len,mc,prev,prev2,ans;
+	cin>>n>>m>>k;
+	cin>>s>>t;
+	if(n>m)
+	ans=0;
+	else
+	{
+		for(i=0;i<205;i++)
+		{
+			for(j=0;j<205;j++)
+			{
+				for(x=0;x<505;x++)
+				dp[i][j][x]=-1;//not yet been calculated
+			}
+		}
+		for(i=0;i<(m-n+1);i++)
+		{
+			x=i;mc=0;t1=0;prev=0;
+			for(j=0;j<n;j++)
+			{
+				if(t.at(x)!=s.at(j))
+				{
+					prev+=min_dist(t.at(x),s.at(j));
+				}
+				p[i][t1]=prev;
+				t1++;
+				x++;
+				
+			}
+			//~ cout<<p[i]<<endl;
+		}
+		prev=0;prev2=1;
+		for(i=0;i<n;i++)
+		{
+			prev=(prev * base)+s.at(i);
+			r[i]=prev;
+			pp[i]=prev2;
+			prev2*=base;
+		}
+		pp[i]=prev2;
+		for(i=n-1;i>0;i--)
+		{
+			len=(n-i);
+			t1=r[len-1];
+			t2=r[n-1]-(r[i-1]*pp[len]);
+			//~ cout<<t1<<" "<<t2<<endl;
+			if(t1==t2)
+			{
+				h[i]=1;
+				//~ cout<<i<<endl;
+			}
+		}
+		h[0]=1;
+		ans=0;
+		for(i=0;i<(m-n+1);i++)
+		{
+			if(k>=p[i][n-1])
+			ans=max(ans,1ll+myfind(i+1,i,k-p[i][n-1]));
+		}
+	}
+	cout<<ans<<endl;
+	return 0;
+}

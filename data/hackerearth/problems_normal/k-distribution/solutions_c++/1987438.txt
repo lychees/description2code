@@ -1,0 +1,77 @@
+#include <algorithm>
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <cmath>
+#include <ctime>
+#include <queue>
+#include <set>
+#include <bitset>
+#include <map>
+
+using namespace std;
+
+typedef long long ll;
+typedef long double ld;
+typedef unsigned long long ull;
+typedef unsigned long ul;
+
+const double PI = acos(-1);
+const ld EPS = 1e-6;
+
+const int maxN = 105;
+const int maxK = 100500;
+
+const int P = (int)1e9 + 7;
+
+void add(int & x, int y) {
+    x += y;
+    if (x >= P) x -= P;
+}
+
+int n, k, a[maxN];
+int f[maxN][maxK][2];
+
+void go(int pref, ll curPrefSum, ll sum, int key, int fval) {
+    if (key == 0) {
+        if (sum >= k) {
+            go(pref, curPrefSum, curPrefSum - sum, 1, fval);
+            return;
+        }
+        add(f[pref][sum][key], fval);
+        return;
+    }
+    if (sum >= k) sum = k;
+    add(f[pref][sum][key], fval);
+}
+
+int main () {
+    srand(time(0));
+    //freopen("input.txt", "r", stdin);
+
+    cin >> n >> k;
+
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];
+    }
+
+    ll curPrefSum = 0;
+
+    f[0][0][0] = 1;
+
+    for (int pref = 1; pref <= n; pref++) {
+        curPrefSum += a[pref];
+        for (int sum = 0; sum <= k; sum++) {
+            for (int key = 0; key < 2; key++) {
+                go(pref, curPrefSum, sum + a[pref], key, f[pref - 1][sum][key]);
+                go(pref, curPrefSum, sum, key, f[pref - 1][sum][key]);
+            }
+        }
+    }
+
+    int res = f[n][k][1];
+
+    cout << res << "\n";
+
+}

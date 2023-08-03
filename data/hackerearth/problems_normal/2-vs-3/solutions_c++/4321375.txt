@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+
+char str[100005];
+int tree[400005];
+int p[100005];
+
+void pre_compute(){
+    p[0] = 1;
+    for(int i= 1;i < 100005; i++){
+        p[i] = (p[i-1]*2)%3;
+    }
+}
+
+
+void build_tree(int node, int start, int end){
+    if(start > end)
+        return;
+    if(start==end){
+        tree[node] = str[start]-'0';
+        return;
+    }
+    int mid = (start+end)/2;
+    build_tree(2*node, start, mid);
+    build_tree(2*node+1, mid+1, end);
+    tree[node] = ((tree[2*node]*p[end-mid])%3 + tree[2*node+1])%3;
+}
+
+void update(int node, int start, int end, int idx){
+    if(start > end)
+        return;
+    if(start==end){
+        tree[node] = 1;
+        return;
+    }
+    int mid = (start+end)/2;
+    if(idx <= mid){
+        update(2*node, start, mid, idx);
+    }else{
+        update(2*node+1, mid+1, end, idx);
+    }
+    tree[node] = ((tree[2*node]*p[end-mid])%3 + tree[2*node+1])%3;
+}
+
+int query(int node, int start, int end, int l, int r){
+    if(start > end || start > r || end < l)
+        return 0;
+    if(start >= l && end <= r){
+        return (tree[node]*p[r-end])%3;
+    }
+    int mid = (start+end)/2;
+    int a = query(2*node, start, mid, l, r);
+    int b = query(2*node+1, mid+1, end, l, r);
+    return (a+b)%3;
+}
+
+
+int main(){
+    pre_compute();
+    int n;
+    scanf("%d", &n);
+    scanf("%s", str);
+    build_tree(1, 0, n-1);
+    int q;
+    scanf("%d", &q);
+    while(q--){
+        int n1;
+        scanf("%d", &n1);
+        if(n1==0){
+            int l, r;
+            scanf("%d%d", &l, &r);
+            cout<<query(1, 0, n-1, l, r)<<endl;
+        }else{
+            int idx;
+            scanf("%d", &idx);
+            update(1, 0, n-1, idx);
+        }
+    }
+    return 0;
+}

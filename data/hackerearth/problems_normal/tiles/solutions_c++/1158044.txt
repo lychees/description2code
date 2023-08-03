@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int BASE = int(1e9) + 7;
+
+struct Matrix
+{
+  long long a[66][66];
+  int sz;
+  
+  Matrix(int sz) 
+  {
+    this -> sz = sz;
+    memset(a, 0, sizeof a);
+  }
+  
+  Matrix operator * (Matrix u) const
+  {
+    Matrix res(sz);
+    for (int i = 0; i < sz; i++)
+      for (int j = 0; j < sz; j++)
+        for (int k = 0; k < sz; k++)
+          res.a[i][j] = (res.a[i][j] + a[i][k] * u.a[k][j]) % BASE;
+    return res;
+  }
+};
+
+int valid(int mask)
+{
+  vector <int> bits;
+  for (int i = 0; i < 6; i++)
+    if (mask >> i & 1)
+      bits.push_back(i);
+  for (int i = 0; i < int(bits.size()); i += 2)
+    if (bits[i] + 1 != bits[i + 1])
+      return 0;
+  return 1;
+}  
+
+int main()
+{
+  ios::sync_with_stdio(0);
+  int test, m, n;
+  cin >> test;
+  while (test--)
+  {
+    cin >> m >> n;
+    vector <Matrix> matrix;
+    matrix.push_back(Matrix(1 << m));
+    for (int i = 0; i < 1 << m; i++)
+    {
+      matrix[0].a[i][0] = 1;
+      for (int j = 0; j < m; j++)
+        for (int k = 1; k < 1 << (j + 1); k++)
+        {
+          if ((k >> j & 1) && !(i >> j & 1)) 
+            matrix[0].a[i][k] += matrix[0].a[i][k ^ 1 << j];
+          if (j > 0 && (k >> j & 1) && (k >> (j - 1) & 1)) 
+            matrix[0].a[i][k] += matrix[0].a[i][k ^ 1 << j ^ 1 << (j - 1)];
+        }
+    }
+    
+    for (int i = 0; i < 19; i++) matrix.push_back(matrix[i] * matrix[i]);
+    Matrix ans(1 << m);
+    for (int i = 0; i < 1 << m; i++) ans.a[0][i] = valid(i);
+    
+    n--;
+    for (int i = 19; i >= 0; i--)
+      if (n >= 1 << i)
+      {
+        ans = ans * matrix[i];
+        n ^= 1 << i;
+      }
+      
+    long long finalAns = 0;
+    for (int i = 0; i < 1 << m; i++) finalAns = (finalAns + ans.a[0][i]) % BASE;
+    cout << finalAns << endl;
+  }
+}

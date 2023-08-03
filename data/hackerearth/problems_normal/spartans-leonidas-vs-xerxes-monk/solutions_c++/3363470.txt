@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+const long long mod = 1e9 + 7;
+const double eps = 1e-15;
+const double PI = atan(1.0);
+#define readFile freopen("input","r",stdin)
+#define writeFile freopen("output","w",stdout)
+#define fastIO ios::sync_with_stdio(0),cin.tie(0),cout.tie(0)
+typedef pair<long long,long long> ii;
+typedef unsigned long long ULL;
+const int N = 100001;
+
+struct Node{
+    long long pref,suf,pval,sval,len,best;
+    Node(){}
+    Node(long long val){
+        pref = suf = len = best = 1;
+        pval = sval = val;
+    }
+    Node merge(Node n1){
+        Node n = Node();
+        n.pval = this->pval;
+        n.sval = n1.sval;
+        n.pref = this->pref;
+        n.suf = n1.suf;
+        n.len = this->len+n1.len;
+        long long temp= 0;
+        if (this->sval<n1.pval){
+            temp = this->suf + n1.pref;
+            if (this->pref == this->len) n.pref += n1.pref;
+            if (n1.suf == n1.len) n.suf += this->suf;
+        }
+        n.best = max(n1.best,max(this->best,temp));
+        return n;
+    }
+};
+
+Node tree[N*4];
+long long arr[N];
+int t,n,m;
+int c,a;
+long long b;
+
+void build(int node,int l,int r){
+    if (l==r){
+        tree[node] = Node(arr[l]);
+        return;
+    }
+    int mid = (l+r)>>1;
+    build(node<<1,l,mid);
+    build(node<<1|1,mid+1,r);
+    tree[node] = tree[node<<1].merge(tree[node<<1|1]);
+}
+
+void update(int node,int l,int r,int idx,long long val){
+    if (l==r){
+        tree[node].pval+=val;
+        tree[node].sval+=val;
+        return;
+    }
+    int mid = (l+r)>>1;
+    if (idx<=mid) update(node<<1,l,mid,idx,val);
+    else update(node<<1|1,mid+1,r,idx,val);
+    tree[node] = tree[node<<1].merge(tree[node<<1|1]);
+}
+
+Node query(int node,int l,int r,int ll,int rr){
+    if (l>=ll && r<=rr) return tree[node];
+    int mid = (l+r)>>1;
+    if (rr<=mid) return query(node<<1,l,mid,ll,rr);
+    if (ll>mid) return query(node<<1|1,mid+1,r,ll,rr);
+    return query(node<<1,l,mid,ll,rr).merge(query(node<<1|1,mid+1,r,ll,rr));
+}
+
+
+int main(){
+#ifndef ONLINE_JUDGE
+    readFile; 
+    writeFile;
+#endif
+    fastIO;
+    cin>>t;
+    while (t--){
+        cin>>n>>m;
+        for(int i=1;i<=n;i++) cin>>arr[i];
+        build (1,1,n);
+        while (m--){
+            cin>>c>>a>>b;
+            if (!c){
+                cout<<query(1,1,n,a,b).best<<"\n";
+            }
+            else update(1,1,n,a,b);
+        }
+    }
+}

@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+#define INF    (long long int)1e9
+using namespace std;
+
+int par[100001];
+int vis[100001];
+long long int dis[100001];
+long long int djk(vector<pair<int,int> > (&v)[100001], priority_queue<pair<long long int,int>, vector<pair<long long int,int> >, greater<pair<long long int,int> > > q, int dest, int n) {
+    memset(par, 0, sizeof(par));
+    memset(vis, 0, sizeof(vis));
+    for (int i = 0; i <= n; i++)dis[i] = INF;
+    dis[q.top().second]=0;
+    par[q.top().second]=-1;
+    while(!q.empty()) {
+        pair<long long int, int> no = q.top();q.pop();
+        if (!vis[no.second]) {
+            vis[no.second] = 1;
+            for (int i = 0; i < v[no.second].size(); i++) {
+                if (v[no.second][i].second+dis[no.second]<dis[v[no.second][i].first]) {
+                    par[v[no.second][i].first] = no.second;
+                    dis[v[no.second][i].first] = v[no.second][i].second+dis[no.second];
+                    q.push(make_pair(v[no.second][i].second+dis[no.second],v[no.second][i].first));
+                }
+            }
+        }
+    }
+    return dis[dest];
+}
+
+int main()
+{
+    // freopen("1input.txt", "r", stdin);
+    int t;
+    cin >> t;
+    while (t--) {
+        int n, k, a, b;long long int d;
+        cin >> n >> k;
+        vector<pair<int,int> > v[100001];
+        while (k--) {
+            cin >> a >> b >> d;
+            v[a].push_back(make_pair(b, d));
+            v[b].push_back(make_pair(a, d));
+        }
+        cin >> a >> b >> d;
+        priority_queue<pair<long long int,int>, vector<pair<long long int,int> >, greater<pair<long long int,int> > > q1, q2;
+        q1.push(make_pair(0, a));
+        vector<int> pt1, pt2;
+        long long int a1 = djk(v, q1, b, n);
+        if (a1 != INF) {
+            int bn = b;
+            while (bn != -1) {
+                pt1.push_back(bn);
+                bn = par[bn];
+            }
+        }
+        q2.push(make_pair(0, b));
+        long long int a2 = djk(v, q2, d, n);
+        if (a2 != INF) {
+            while (d != -1) {
+                pt2.push_back(d);
+                d = par[d];
+            }
+        }
+        if (a1 == INF || a2 == INF) {
+            cout << "No Train Found." << endl;
+        } else {
+            cout << a1 + a2 << endl;
+            for (int i = pt1.size() - 1; i >= 0; i--)cout << pt1[i] << " ";
+            for (int i = pt2.size() - 2; i >= 0; i--)cout << pt2[i] << " ";
+            cout << endl;
+        }
+    }
+    return 0;
+}
+

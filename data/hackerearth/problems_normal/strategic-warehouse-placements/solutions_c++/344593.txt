@@ -1,0 +1,105 @@
+#include <iostream>
+#include <fstream>
+#include <cstdio>
+#include <climits>
+#include <vector>
+#include <map>
+#include <list>
+#include <deque>
+#include <stack>
+#include <set>
+#include <string>
+#include <cstring>
+#include <algorithm>
+#include <bitset>
+#include <cmath>
+
+using namespace std;
+
+#define ll long long
+#define vt vector
+
+map<ll,vector<ll> > adj;
+map<ll,ll> neigh;
+
+bool flg=true;
+ll ans=LLONG_MAX;
+
+bool check(vector<ll> combi)
+{
+	vector<ll> minset;
+	map<ll,bool> flag;
+	for(ll i=0;i<combi.size();i++)
+	{
+		ll s = combi[i];
+		if(flag[s]==false)
+		{
+			minset.push_back(s);
+			flag[s]=true;
+		}
+		for(ll j=0;j<adj[s].size();j++)
+		{
+			ll c = adj[s][j];
+			if(flag[c]==false)
+			{
+				minset.push_back(c);
+				flag[c]=true;
+			}
+		}
+	}
+	if(minset.size()==adj.size())
+		return true;
+	else
+		return false;
+}
+
+void combine(vector<pair<ll,ll> > set,ll size,vector<ll>& work,ll p)
+{
+	if(work.size()==size&&flg)
+	{
+		if(check(work))
+		{
+			flg=false;
+			ans = min(ans,size);
+			return;
+		}
+	}
+	else if(flg)
+	{
+		for(ll i=p;i<set.size();i++)
+		{
+			if(flg)
+			{
+				work.push_back(set[i].first);
+				combine(set,size,work,i+1);
+				work.erase(work.end()-1);
+			}
+		}
+	}
+}
+
+int main()
+{
+	ll n,m,s,e;
+	cin>>n>>m;
+	while(m--)
+	{
+		scanf("%d %d",&s,&e);
+		adj[s-1].push_back(e-1);
+		adj[e-1].push_back(s-1);
+		neigh[s-1]++;
+		neigh[e-1]++;
+	}
+	ll mx=0;
+	vector< pair<ll,ll> > vec(neigh.begin(),neigh.end());
+	for(ll i=0;i<=vec.size();i++)
+	{
+		vector<ll> t;
+		combine(vec,i,t,0);
+	}
+	if(ans==2)
+		cout << 2 << endl;
+	else
+		cout << 3 << endl;
+	return 0;
+}

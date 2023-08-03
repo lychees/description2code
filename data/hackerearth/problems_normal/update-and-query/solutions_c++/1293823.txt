@@ -1,0 +1,99 @@
+#define _USE_MATH_DEFINES
+#include <algorithm>
+#include <cstdio>
+#include <functional>
+#include <iostream>
+#include <cfloat>
+#include <climits>
+#include <cstring>
+#include <cmath>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <time.h>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> i_i;
+typedef pair<ll, int> ll_i;
+typedef pair<double, int> d_i;
+typedef pair<ll, ll> ll_ll;
+typedef pair<double, double> d_d;
+struct edge { int u, v, w; };
+
+ll MOD = 1000000007;
+ll _MOD = 1000000009;
+double EPS = 1e-10;
+
+struct segment_tree_min {
+	int n; vector<int> v;
+	segment_tree_min(int _n) {
+		for (n = 1; n < _n; n *= 2);
+		v = vector<int>(n * 2 - 1, INT_MAX);
+	}
+	void set(int i, int x) {
+		int k = i + n - 1;
+		v[k] = x;
+		while (k > 0) {
+			k = (k - 1) / 2;
+			v[k] = min(v[k * 2 + 1], v[k * 2 + 2]);
+		}
+	}
+	int _get(int i, int j, int k, int l, int r) {
+		if (r <= i || j <= l) return INT_MAX;
+		if (i <= l && r <= j) return v[k];
+		int vl = _get(i, j, k * 2 + 1, l, (l + r) / 2);
+		int vr = _get(i, j, k * 2 + 2, (l + r) / 2, r);
+		return min(vl, vr);
+	}
+	int get(int i, int j) { return _get(i, j, 0, 0, n); }
+	int _lb(int i, int x, int k, int l, int r) {
+		if (i == l && v[k] < INT_MAX && v[k] >= x) return r;
+		if (r - l == 1) return l;
+		int m = (l + r) / 2;
+		if (i < m) return _lb(i, x, k * 2 + 1, l, m);
+		else return _lb(i, x, k * 2 + 2, m, r);
+	}
+	int lb(int i, int x) {
+		int j = _lb(i, x, 0, 0, n);
+		if (i == j) return i;
+		else return lb(j, x);
+	}
+};
+
+int main() {
+	int N, M; cin >> N >> M;
+	segment_tree_min st1(N), st2(N);
+	for (int i = 0; i < N; i++) {
+		int A; //A = 0;
+		scanf("%d", &A);
+		st1.set(i, A);
+		st2.set(i, -A);
+	}
+	while (M--) {
+		char c; int X, Y;
+		//c = 'Q'; X = 1; Y = 1000000000;
+		scanf(" %c%d%d", &c, &X, &Y);
+		if (c == 'U') {
+			st1.set(X - 1, Y);
+			st2.set(X - 1, -Y);
+		}
+		else if (c == 'Q') {
+			int A = st1.get(X - 1, X);
+			int i1 = st1.lb(X - 1, A - Y);
+			int i2 = st2.lb(X - 1, -A - Y);
+			int i = min(N, min(i1, i2));
+			int mini = st1.get(X - 1, i);
+			int maxi = -st2.get(X - 1, i);
+			int Z = max(A - mini, maxi - A);
+			int l = i - (X - 1);
+			if (l == 0) printf("-1 -1\n");
+			else printf("%d %d\n", l, Z);
+		}
+	}
+}

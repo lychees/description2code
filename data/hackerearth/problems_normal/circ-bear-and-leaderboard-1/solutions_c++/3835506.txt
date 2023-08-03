@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+
+typedef long long ll;
+#define MP make_pair
+#define A first
+#define B second
+
+template<class Node_CItr, class Node_Itr, class Cmp_Fn, class _Alloc>
+struct my_node_update {
+    typedef pair<ll,int> metadata_type;
+
+    pair<ll,int> order_of_key(pair<ll,int> x) {
+        pair<ll,int> ans;
+        auto it = node_begin();
+        while (it!=node_end()) {
+            auto l = it.get_l_child();
+            auto r = it.get_r_child();
+            if (Cmp_Fn()(x,**it)) {
+                it = l;
+            } else {
+            	ans.A+=(**it).A;
+            	ans.B+=1;
+                if (l!=node_end()) {
+                	ans.A+=l.get_metadata().A;
+                	ans.B+=l.get_metadata().B;
+                }
+                it = r;
+            }
+        }
+        return ans;
+    }
+
+    void operator()(Node_Itr it, Node_CItr end_it) {
+        auto l = it.get_l_child();
+        auto r = it.get_r_child();
+        pair<ll,int> res = MP((**it).A,1);
+        if (l!=end_it) {
+        	res.A+=l.get_metadata().A;
+        	res.B+=l.get_metadata().B;
+        }
+        if (r!=end_it) {
+        	res.A+=r.get_metadata().A;
+        	res.B+=r.get_metadata().B;
+        }
+        const_cast<pair<ll,int>&>(it.get_metadata()) = res;
+    }
+
+    virtual Node_CItr node_begin() const = 0;
+    virtual Node_CItr node_end() const = 0;
+};
+
+typedef tree<pair<ll,int>,null_type,less<pair<ll,int> >,rb_tree_tag,my_node_update> BBST;
+
+int n,q;
+ll score[500013];
+BBST has;
+
+int main() {
+	scanf("%d%d",&n,&q);
+	for (int i=1;i<=n;i++) has.insert(MP(0,i));
+	ll ans = 0;
+	while (q--) {
+		int i,b;
+		scanf("%d%d",&i,&b);
+		has.erase(MP(-score[i],i));
+		auto it = has.order_of_key(MP(-score[i],0));
+		ans-=score[i]*(it.B+1);
+		it = has.order_of_key(MP(-score[i],n+1));
+		score[i]+=b;
+		auto it2 = has.order_of_key(MP(-score[i],n+1));
+		ans-=it.A-it2.A;
+		it2 = has.order_of_key(MP(-score[i],0));
+		ans+=score[i]*(it2.B+1);
+		has.insert(MP(-score[i],i));
+		printf("%lld\n",ans);
+	}
+
+    return 0;
+}

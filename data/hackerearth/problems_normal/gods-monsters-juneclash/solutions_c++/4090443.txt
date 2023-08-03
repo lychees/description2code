@@ -1,0 +1,143 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <iostream>
+#include <set>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <complex>
+#include <map>
+#include <queue>
+using namespace std;
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<ll> vl;
+typedef vector<vl> vvl;
+typedef vector<vi> vvi;
+typedef vector<double> vd;
+typedef pair<int, int> pii;
+typedef pair<double, double> pdd;
+typedef vector<pii> vii;
+typedef vector<string> vs;
+const int mod = 1000000007;
+
+vvi mul(const vvi & x, const vvi & y) {
+  int n = x.size();
+  vvi res(n, vi(n));
+  for (int i = 0; i < n; ++i) for (int j = 0; j < n; ++j) {
+    ll s = 0;
+    for (int l = 0; l < n; ++l) s += x[i][l]*(ll)y[l][j];
+    res[i][j] = s % mod;
+  }
+  return res;
+}
+
+vvi mpow(vvi x, ll n) {
+  int k = x.size();
+  vvi res(k, vi(k));
+  for (int i = 0; i < k; ++i) res[i][i] = 1;
+  while (n) {
+    if (n & 1) res = mul(res, x);
+    x = mul(x, x);
+    n /= 2;
+  }
+  return res;
+}
+
+vvi A(2, vi(2, 1));
+pii f(ll i) {
+  vvi x = mpow(A, i);
+  return pii(x[0][0], x[1][0]);
+}
+
+ll mpow(ll x, ll n) {
+  ll res = 1;
+  while (n) {
+    if (n & 1) res = res * x % mod;
+    x = x * x % mod;
+    n /= 2;
+  }
+  return res;
+}
+
+ll inv(ll x) {
+  return mpow(x, mod-2);
+}
+
+void out(vl x) {
+  for (int i = 0; i < x.size(); ++i) cerr << x[i] << ' ';
+  cerr << endl;
+}
+
+void out(vvl x) {
+  for (auto v : x) out(v);
+  cerr << endl;
+}
+
+bool g(vvl x) {
+  int s = 0;
+  for (int j = 0; j+1 < x[0].size() && s < x.size(); ++j) {
+    for (int i = s; i < x.size(); ++i) if (x[i][j]) {
+      x[s].swap(x[i]);
+      break;
+    }
+    if (!x[s][j]) continue;
+    ll invx = inv(x[s][j]);
+    x[s][j] = 1;
+    for (int i = j + 1; i < x[s].size(); ++i) x[s][i] = x[s][i]*invx % mod;
+    for (int i = s + 1; i < x.size(); ++i) if (x[i][j]) {
+      ll mul = x[i][j];
+      x[i][j] = 0;
+      for (int t = j + 1; t < x[i].size(); ++t) x[i][t] = (x[i][t] - mul*x[s][t]) % mod;
+    }
+    ++s;
+  }
+//  out(x);
+  for (int i = 0; i < x.size(); ++i) {
+    bool zero = 1;
+    for (int j = 0; j + 1 < x[i].size(); ++j) if (x[i][j]) {
+    	zero = 0;
+    }
+    if (zero && x[i].back()) return 0;
+  }
+  return 1;
+}
+
+int main() {
+  A[0][0] = 0;
+//  for (int i = 0; i < 10; ++i) cerr << i << ' ' << f(i) << endl;
+  int n;
+  cin >> n;
+  vl rw(n), c(n), v(n);
+  vvl x(n, vl(5));
+  for (int i = 0; i < n; ++i) {
+    scanf("%lld%lld%lld", &rw[i], &c[i], &v[i]);
+    x[i].back() = v[i];
+    pii rf = f(rw[i]), cf = f(c[i]);
+    x[i][0] = rf.first*(ll)cf.first % mod; //11
+    x[i][1] = rf.first*(ll)cf.second % mod; //12
+    x[i][2] = rf.second*(ll)cf.first % mod; //21
+    x[i][3] = rf.second*(ll)cf.second % mod; //22
+  }
+  int l = 0, r = n+1;
+  while (r - l > 1) {
+    int k = (r + l) / 2;
+    vvl y = x;
+    y.resize(k);
+    if ((g(y))) {
+      l = k;
+    } else {
+      r = k;
+    }
+  }
+  for (int i = 0; i < n; ++i) {
+    if (i >= l) printf("0");
+    else printf("1");
+  }
+  printf("\n");
+  return 0;
+}

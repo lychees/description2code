@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+int n, m, k;
+string s, t;
+int lps[202];
+int LCP[202][26];
+bool vis[202][202][502];
+int dp[202][202][502];
+//Calculates the longest common prefix of the string A[0, n - 2] and string A[1, n - 1].
+int cal(string A, int len)
+{
+	lps[0] = 0;
+	int match = 0;
+	for ( int i = 1; i < len; i++ ) {
+		while ( A[i] != A[match] && match > 0 ) match = lps[match - 1];
+		match += (A[i] == A[match]);
+		lps[i] = match;
+	}
+	return lps[len - 1];
+}
+//LCP[i][p] denotes the lps[] array computed above for the prefix of length i appended with char p.
+void pre()
+{
+	string s_prefix = "";
+	
+	for ( char p = 'a'; p <= 'z'; p++ ) LCP[0][p - 'a'] = cal(s_prefix + p, 1);
+	
+	for ( int i = 0; i < n; i++ ) {
+		s_prefix += s[i];
+		for ( char p = 'a'; p <= 'z'; p++ ) LCP[i + 1][p - 'a'] = cal(s_prefix + p, i + 2);
+	}
+	
+	return;
+}
+int f(int idx, int match, int cost)
+{
+	if ( idx == m ) return 0;
+	if ( vis[idx][match][cost] ) return dp[idx][match][cost];
+	vis[idx][match][cost] = true;
+	int ans = 0;
+	
+	for ( char p = 'a'; p <= 'z'; p++ ) {
+		int dis = abs(p - t[idx]);
+		if ( p < t[idx] ) dis = min(dis, p - 'a' + 'z' - t[idx] + 1);
+		else dis = min(dis, t[idx] - 'a' + 'z' - p + 1);
+		if ( cost + dis <= k ) {
+			if ( p == s[match] ) {
+				if ( match == n - 1 ) ans = max(ans, 1 + f(idx + 1, LCP[n - 1][p - 'a'], cost + dis));
+				else ans = max(ans, f(idx + 1, match + 1, cost + dis));
+			}
+			ans = max(ans, f(idx + 1, LCP[match][p - 'a'], cost + dis));
+		}
+	}
+	
+	dp[idx][match][cost] = ans;
+	return ans;
+}
+int main()
+{
+	cin >> n >> m >> k;
+	
+	assert(n >= 1 && n <= 200);
+	assert(m >= 1 && m <= 200);
+	assert(k >= 0 && k <= 500);
+	
+	cin >> s >> t;
+	
+	assert((int)s.size() == n);
+	assert((int)t.size() == m);
+	
+	for ( int i = 0; i < n; i++ ) assert(s[i] >= 'a' && s[i] <= 'z');
+	for ( int i = 0; i < m; i++ ) assert(t[i] >= 'a' && t[i] <= 'z');
+	
+	pre();
+	
+	cout << f(0,0,0) << endl;
+	
+	return 0;
+}

@@ -1,0 +1,92 @@
+#include <iostream>
+#include <cstdlib>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <sstream>
+#include <map>
+#include <cctype>
+#include <cmath>
+#include <utility>
+using namespace std;
+
+typedef pair<int,int> ii;
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<ii> vii;
+typedef vector<ll> vl;
+
+#define UNVISITED -1
+#define EXPLORED 1
+#define VISITED 2
+
+bool cycle;
+void graphCheck(int u, vector<vector<int>> &adjList, vector<int> &dfs_num, vector<int> &dfs_parent){
+	dfs_num[u] = EXPLORED;
+	for(auto &adj : adjList[u]){
+		if(dfs_num[adj] == UNVISITED){
+			dfs_parent[adj] = u;
+			graphCheck(adj, adjList, dfs_num, dfs_parent);
+		}
+		else if(dfs_num[adj] == EXPLORED){
+			if(adj != dfs_parent[u]){
+				cycle = true;
+				return;
+			}
+				
+		}
+	}
+	dfs_num[u] = VISITED;
+}
+
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	
+	int t;
+	cin>>t;
+	
+	while(t--){
+		int n,m;
+		cin>>n>>m;
+		vii edges;
+		for(int i=0; i<m; ++i){
+			int a,b;
+			cin>>a>>b;
+			edges.push_back({a,b});
+		}
+		
+		
+		vector<vector<int>> adjList(n+1);
+		vector<bool> cover(n+1, false);
+		for(int i=0; i<(n-1); ++i){
+			int en;
+			cin>> en;
+			ii edge = edges[en-1];
+			adjList[edge.first].push_back(edge.second);
+			adjList[edge.second].push_back(edge.first);
+			cover[edge.first] = cover[edge.second] = true;
+		}
+		
+		bool isst = true;
+		for(int i=1; i<=n; ++i){
+			if(!cover[i]){
+				isst = false;
+				break;
+			}
+		}
+		
+		if(!isst){
+			cout<<"NO\n";
+		}	
+		else{
+			vi dfs_num(n+1, UNVISITED);
+			vi dfs_parent(n+1, 0);
+			cycle = false;
+			graphCheck(adjList[1][0], adjList, dfs_num, dfs_parent);
+			cycle ? cout<<"NO\n" : cout<<"YES\n";
+		}
+	}
+	
+	return 0;
+}

@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long int64;
+
+int n, q;
+char str[10000005];
+int64 resp[1000005];
+
+typedef struct no{
+    struct no *key[28];
+    int64 ans;
+}node;
+ 
+node *inicializa(){
+    node *T = new(node);
+    for( int i = 0; i <= 26; i++ ) T->key[i] = NULL;
+    T->ans = 0;
+    return T;
+}
+ 
+void insert(node *trie, char *palavra){
+    int pos = 0, i = 0;
+    node *p;
+    p = trie;
+    while(palavra[i] != '\0'){
+        pos = palavra[i] - 'a';
+        p->ans++;
+        if(!p->key[pos]) p->key[pos] = inicializa();
+        p = p->key[pos];
+        i++;
+    }
+    if (!p->key[26]) p->key[26] = inicializa();
+    p->ans++;
+    p->key[26]->ans++;
+}
+ 
+void solve(node *trie, int lcp){
+    int64 qtd = 0LL;
+    for( int i = 0; i <= 26; i++ ){
+    	if( trie->key[i] ){
+    		for( int j = i+1; j <= 26; j++ ){
+    			if( trie->key[j] ){
+	    			qtd += (trie->key[i]->ans * trie->key[j]->ans);
+	    		}
+	    	}
+    	}
+    }
+    if( trie->key[26] && trie->ans == trie->key[26]->ans ){
+    	qtd = (trie->ans *(trie->ans-1LL)); 
+    	qtd >>= 1LL;
+    }
+    else if( trie->key[26] ){
+    	qtd += (trie->key[26]->ans *(trie->key[26]->ans-1LL)) >> 1LL;
+    }
+    resp[lcp] += qtd;
+    for( int i = 0; i < 26; i++ ){
+    	if( trie->key[i] ){
+    		solve(trie->key[i], lcp+1);
+    	}
+    }
+}
+
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin >> n;
+    int L = 0;
+    node *trie = inicializa();
+    for( int i = 0; i < n; i++ ){
+        cin >> str;
+        L = max(L, (int)strlen(str));
+        insert(trie,str);
+    }
+    solve(trie, 0);
+    for( int i = 0; i <= L; i++ ){
+    	if( i ) cout << " ";
+    	cout << resp[i];
+    }
+    cout << '\n';
+    return 0;
+}

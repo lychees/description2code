@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+#define pb push_back
+#define ff first
+#define ss second
+#define ll long long
+#define ld long double
+#define LF '\n'
+#define mod 1000000007
+#define PI 3.14159265359
+#define strend string::npos
+#define VI vector<int>
+#define getcx getchar_unlocked
+#define VLL vector<long long>
+#define PII pair<int, int> 
+#define PDD pair<long double, long double> 
+#define mclear(p, x) memset(p, x, sizeof(p))
+ 
+typedef pair<pair<int, int>, ll> PIII; 
+typedef vector<vector<int> > matrixInt;
+typedef vector<vector<PII> > matrixPII;
+typedef vector<vector<bool> > matrixBool;
+template<class T> inline void umax(T &a, T b) { if(a<b) a = b; }
+template<class T> inline void umin(T &a, T b) { if(a>b) a = b; }
+template<class T> inline T max(T a, T b, T c) { return max(a, max(b, c)); }
+template<class T> inline T min(T a, T b, T c) { return min(a, min(b, c)); }
+
+#define MAXN 100005
+
+static int FFT_N;
+typedef complex<double> base;
+vector<base> w;
+ 
+void init_fft(long long n)
+{
+    FFT_N  = n;
+    w.resize(n);
+    double ang = 2 * PI / n;
+    for(int i = 0; i < n; i++)
+        w[i] = base( cos(i * ang), sin(i * ang));
+}
+void fft (vector<base> & a)
+{
+    long long n = (long long) a.size();
+    if (n == 1)  return;
+    long long aadha = n >> 1;
+    vector<base> even (aadha),  odd (aadha);
+    for (int i=0, j=0; i<n; i+=2, ++j)
+    {
+        even[j] = a[i];
+        odd[j] = a[i+1];
+    }
+    fft (even), fft (odd);
+    for (int i=0, fact = FFT_N/n; i < aadha; ++i)
+    {
+        base temp =  odd[i] * w[i * fact];
+        a[i] =  even[i] + temp;
+        a[i+aadha] = even[i] - temp;
+    }
+}
+vector<int> mul (const vector<int> & a, const vector<int> & b)
+{
+    vector<base> aaa (a.begin(), a.end()),  bbb (b.begin(), b.end());
+    vector<int> res;
+    int n = 1;
+    while (n < 2*max (a.size(), b.size()))  n <<= 1;
+    aaa.resize (n),  bbb.resize (n);
+ 
+    init_fft(n);
+    fft (aaa),  fft (bbb);
+    for (size_t i=0; i<n; ++i)
+        aaa[i] = conj( aaa[i] * bbb[i]);
+    fft (aaa);
+    res.resize (n);
+    for (size_t i=0; i<n; ++i)
+    {
+        res[i] = (int) (aaa[i].real() / n + 0.5);
+        res[i]%=mod;
+    }
+    return res;
+}
+
+int main(int argc, char *argv[])
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    //freopen("in", "r", stdin);
+    //freopen("out", "w", stdout);
+    
+    int n, ans = 0;
+    cin >> n;
+
+    vector<int> poly_a, poly_b, nums;
+
+    poly_a.resize(MAXN);
+    poly_b.resize(MAXN);
+    nums.resize(n);
+
+    for (int i = 0; i < n; i++)
+        cin >> nums[i];
+
+    sort(nums.rbegin(), nums.rend());
+    bool repeatednums = false;
+    for (int i = 0; i < n; i++)
+    {
+        if (poly_a[nums[i]])
+            ans = 1;
+        poly_a[nums[i]] = 1;
+        poly_b[nums[0]-nums[i]] = 1;
+    }
+
+    auto res = mul(poly_a, poly_b);
+    for (int i = nums[0] + 1; i < res.size(); i++)
+        if (res[i] != 0)
+            ans++;
+    cout << ans << LF;
+    return 0;
+}

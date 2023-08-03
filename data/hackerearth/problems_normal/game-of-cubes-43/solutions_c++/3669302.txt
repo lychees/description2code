@@ -1,0 +1,273 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <limits.h>
+#define valid(y, x, H, W)   (y>=0 && y<H && x>=0 && x<W)
+using namespace std;
+
+typedef pair<int, int> ii;
+typedef vector<int> vi;
+typedef vector<bool> vb;
+typedef vector<ii> vii;
+typedef vector<vi> vvi;
+
+class UnionFind
+{
+private:
+	vi rank, size_set, p;
+	int num_sets;
+public:
+	UnionFind(int N) { num_sets = N; rank.assign(N, 0); size_set.assign(N,1);
+		p.assign(N, 0); for (int i = 0; i < N; ++i) { p[i] = i; } };
+	int find_set(int i) { return (i==p[i]) ? i : p[i]=find_set(p[i]);};
+	void union_set(int i, int j) {
+		int y = find_set(i), x = find_set(j);
+		if(y==x) return;
+		num_sets--;
+		if(rank[x] > rank[y]) { p[y]=x; size_set[x] += size_set[y];
+		} else { p[x]=y; size_set[y]+=size_set[x]; 
+				if (rank[x]==rank[y]) rank[y]++; 
+		}
+	};
+	bool same_set(int i, int j) { return find_set(i)==find_set(j); };
+	int get_set_size(int i) {  return size_set[find_set(i)]; };
+	int get_num_sets() { return num_sets; };
+};
+
+vvi mat;
+
+void print_mat(int H, int W)
+{
+	for (int i = 0; i < H; ++i)
+	{
+		for (int j = 0; j < W; ++j)	
+		{
+			if ( mat[i][j] == 0)
+				cout << ".";
+			else
+				cout << "x";
+		}
+		cout << endl;
+	}
+}
+
+void print_matdel(int H, int W, int ydel, int xdel)
+{
+	for (int i = 0; i < H; ++i)
+	{
+		for (int j = 0; j < W; ++j)	
+		{
+			if (i == ydel && j == xdel)
+					cout << "O";
+			else if ( mat[i][j] == 0)
+				cout << ".";
+			else
+				cout << "x";
+		}
+		cout << endl;
+	}
+}
+
+void print_matval(int H, int W)
+{
+	for (int i = 0; i < H; ++i)
+	{
+		for (int j = 0; j < W; ++j)	
+		{
+			cout << mat[i][j];
+			if (j<W-1) cout << " ";
+		}
+		cout << endl;
+	}
+}
+
+void update_map(int H, int W, int ncubes)
+{
+	// compute components
+	UnionFind uf(ncubes);
+	// enumerate points
+	int count = 1;
+	for (int i = 0; i < H; ++i)
+	{
+		for (int j = 0; j < W; ++j)
+		{
+			if(mat[i][j] > 0)
+			{
+				mat[i][j] = count;
+				count++;
+			}
+		}
+	}
+	
+	set<int> roots;
+	int nnh = 4;
+	vii displ;
+	int ny, nx;
+	displ.push_back(make_pair(-1, 0));
+	displ.push_back(make_pair(0, 1));
+	displ.push_back(make_pair(1, 0));
+	displ.push_back(make_pair(0, -1));
+	// perform union_sets
+	for (int i = 0; i < H; ++i)
+	{
+		for (int j = 0; j < W; ++j)
+		{
+			if (mat[i][j] > 0)
+			{
+				
+				for (int k = 0; k < nnh; ++k)
+				{
+					ny = i + displ[k].first;
+					nx = j + displ[k].second;
+					if(valid(ny, nx, H, W) && mat[ny][nx]>0)
+					{
+						uf.union_set(mat[i][j]-1, mat[ny][nx]-1);
+					}
+				}
+			}
+		}	
+	}
+	// store roots in a set
+	for (int i = 0; i < ncubes; ++i)
+	{
+		if(i==uf.find_set(i))
+			roots.insert(i);
+	}
+	// find air components
+	set<int> roots_ground;
+	for (int j = 0; j < W; ++j)
+	{
+		if (mat[H-1][j] > 0)
+			roots_ground.insert(uf.find_set(mat[H-1][j]-1));
+	}
+
+	set<int> air_roots;
+	map<int, int> mp_air;
+	int k = 0;
+	for (set<int>::iterator it = roots.begin(); it!=roots.end(); it++)
+	{
+		if(roots_ground.find(*it)==roots_ground.end())
+		{
+			air_roots.insert(*it);
+			mp_air[*it] = k;
+			k++;
+		}
+	}
+	// If exist at least one component that is not touching the ground run gravity
+	vi min_steps_comp(air_roots.size(), INT_MAX);
+	if (air_roots.size()> 0)
+	{
+		// compute number of steps
+		for (int i = 0; i < H; ++i)
+		{
+			for (int j = 0; j < W; ++j)
+			{
+				if (mat[i][j] > 0)
+				{
+					int root = uf.find_set(mat[i][j]-1);
+					// find min number of steps to move down from any point in the air component
+					if(air_roots.find(root)!=air_roots.end())
+					{
+						int dist_to_diff =  0;
+						int r = i+1;
+						
+						for (; r < H; ++r)
+						{
+							if(mat[r][j] > 0)
+							{
+								int root_other = uf.find_set(mat[r][j]-1);
+								if (air_roots.find(root_other)==air_roots.end())  break;
+							}	
+							dist_to_diff++;
+						}
+						if (dist_to_diff < min_steps_comp[mp_air[root]])
+							min_steps_comp[mp_air[root]] = dist_to_diff;
+					}
+				}
+			}
+		}
+		// run gravity
+		int steps = 1;
+		for (int i = H-1; i >= 0; i--)
+		{
+			for (int j = 0; j < W; ++j)
+			{
+				if (mat[i][j] > 0)
+				{
+					int root = uf.find_set(mat[i][j]-1);
+					if (air_roots.find(root) != air_roots.end())
+					{
+						steps = min_steps_comp[mp_air[root]];
+						if (i+steps < H)
+						{
+							mat[i+steps][j] = mat[i][j];
+							mat[i][j] = 0;
+						} 
+					}
+				}
+			}
+		}
+
+	}
+}
+
+
+
+// Game of Cubes 
+int main()
+{
+	int H, W, Q, row, ncubes;
+	cin >> H >> W;
+	mat.assign(H,vi());
+	char ch;
+	ncubes = 0;
+	cin.read(&ch, sizeof(ch)); // \n
+	for (int i = 0; i < H; ++i)
+	{
+		mat[i].assign(W, 0);
+		for (int j = 0; j < W; ++j)
+		{
+			cin.read(&ch, sizeof(ch));
+			if (ch == 'x')
+			{
+				mat[i][j] = 1;
+				ncubes++;
+			}
+		}
+		cin.read(&ch, sizeof(ch));
+	}
+	// read queries
+	cin >> Q;
+	vi queries(Q);
+	for (int i = 0; i < Q; ++i)
+	{
+		cin >> queries[i];
+	}
+	//Q = 7;	
+	for (int i = 0; i < Q; ++i)
+	{
+		row = (H-1)-(queries[i]-1);
+		int col = -1;
+		int j;
+		if(i%2==0)
+		{
+			j = 0;
+			while(j < W) { if (mat[row][j]>0) break; j++; }
+			if (j < W) col = j;
+		} else {
+			j = W -1;
+			while(j >= 0) { if (mat[row][j]>0) break; j--; }
+			if (j >= 0) col = j;
+		}
+		// if exist cube in the arrow trayectory
+		if (col >= 0)
+		{
+			// delete point
+			mat[row][col] = 0;
+			ncubes--;
+			update_map(H, W, ncubes);
+		} 
+	}
+	print_mat(H, W);
+}

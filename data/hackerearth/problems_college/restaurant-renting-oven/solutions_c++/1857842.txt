@@ -1,0 +1,131 @@
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+using namespace std;
+ 
+int n, m;
+int rq1[102], rq2[102], rco[102];
+int ava[55];
+ 
+vector<int> va, vb, capa, cost, flow, out[108];
+ 
+int nsz, rcnt;
+void rebro(int a, int b, int cap, int cos) {
+	va.push_back(a);
+	vb.push_back(b);
+	capa.push_back(cap);
+	cost.push_back(cos);
+	out[a].push_back(rcnt++);
+}
+ 
+int obrat(int r) {
+	if (r%2==0) return r+1;
+	return r-1;
+}
+ 
+void solve() {
+	int k=ava[0];
+	for (int i=1; i<m; i++) k=max(k, ava[i]);
+	
+	// setup
+	nsz=m+3; rcnt=0;
+	va.clear();
+	vb.clear();
+	capa.clear();
+	cost.clear();
+	for (int i=0; i<nsz; i++) out[i].clear();
+ 
+	// zadanie
+	for (int r=0; r<n; r++) {
+		rebro( rq1[r]+1, rq2[r]+1, 1, -rco[r] );
+		rebro( rq2[r]+1, rq1[r]+1, 0, rco[r]);
+	}
+	
+	// krab iz K
+	for (int i=1; i<nsz; i++) {
+		rebro( i-1, i, k, 0 );
+		rebro( i, i-1, 0, 0 );
+	}
+ 
+	// dostupno
+	int blkCost = 1001*n, blkTotal=0;
+	for (int u=1; u<=k; u++) {
+		int s=0;
+		while (s<m) {
+			while (s<m && ava[s]>=u) s++;
+			if (s<m) {
+				int f=s;
+				while (f<m && ava[f]<u) f++;
+				// fw
+				rebro( s+1, f+1, 1, -blkCost );
+				rebro( f+1, s+1, 0,  blkCost );
+				blkTotal++;
+				s=f;
+			}	else break;
+		}
+	}
+	
+	// podkrutit' flow
+	flow.resize(rcnt);
+	for (int r=0; r<rcnt; r++) flow[r]=0;
+	
+	// potok
+	int qua=0, rez=0, zzt, big=1<<30;
+	int tmx98[2][55], *cstCur=tmx98[0], *cstPre=tmx98[1], bef[55], reb[55];
+	
+	while (qua<k) {
+		// path
+		cstCur[0]=0;
+		for (int i=1; i<nsz; i++) cstCur[i]=big;
+		for (int i=1; i<nsz; i++) { // prohodes
+			swap(cstCur, cstPre);
+			for (int v=1; v<nsz; v++) cstCur[v]=cstPre[v];
+			for (int a=0; a<nsz; a++) if (cstCur[a]<big) {
+				for (int ir=0; ir<out[a].size(); ir++) {
+					int r=out[a][ir], b=vb[r];
+					if (capa[r] > flow[r] && cstCur[b] > (zzt=cstCur[a] + cost[r]) ) {
+						cstCur[b] = zzt;
+						bef[b]=a;
+						reb[b]=r;
+					}
+				}
+			}
+		}
+		
+		// imeem put'
+		if (cstCur[nsz-1] < big) {
+			int amo=k-qua, s, f=nsz-1, r;
+			while (f) {
+				s = bef[f];
+				r = reb[f];
+				amo = min(amo, capa[r]-flow[r]);
+				f = s;
+			}
+			qua += amo;
+			
+			f=nsz-1;
+			while (f) {
+				s = bef[f];
+				r = reb[f];
+				rez += amo * cost[r];
+				flow[r] += amo;
+				flow[obrat(r)] -= amo;
+				f = s;
+			}
+		} else break;
+	}
+	
+	printf("%d\n", -rez - blkCost * blkTotal);
+}
+ 
+main() {
+	int ntc;
+	scanf("%d", &ntc);
+	while (ntc--) {
+		scanf("%d%d", &n, &m);
+		for (int i=0; i<n; i++) scanf("%d%d%d", rq1+i, rq2+i, rco+i);
+		for (int i=0; i<m; i++) scanf("%d", ava+i);
+		solve();
+	}
+} 
+ 

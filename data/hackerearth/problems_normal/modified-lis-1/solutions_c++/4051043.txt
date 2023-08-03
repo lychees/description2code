@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+//#define int long long int
+using namespace std;
+typedef pair<int,int> pii;
+
+const int N=100001;
+const int M=N<<3;
+const int md=1000000007;
+
+pii pos[M],neg[M];
+
+void merg(pii &a,pii b,pii c){
+    a=max(b,c);
+    if(b.first==c.first) a.second=(b.second+c.second)%md;
+}
+void add(int &a,int b)
+{
+    a+=b;
+    if(a>=md) a-=md;
+}
+void update(int s,int e,int l,int r,int i,int j,int v,pii *tr){
+    if(s>r ||s>e || e<l) return ;
+    if(s==e){
+        int p=tr[i].first;
+        if(p>j) return;
+        else if(p==j){
+            add(tr[i].second,v);
+        }
+        else{
+            tr[i]={j,v};
+        }
+    return ;
+    }
+    int mid=(s+e)>>1;
+    update(s,mid,l,r,i*2,j,v,tr);
+    update(mid+1,e,l,r,i*2+1,j,v,tr);
+    merg(tr[i],tr[i*2],tr[i*2+1]);
+}
+
+pii query(int s,int e,int l,int r,int i,pii *tr){
+    if(s>e || s>r || l>e) return {0,0};
+    if(l<=s && e<=r) return tr[i];
+    int mid=(s+e)>>1;
+    pii a=query(s,mid,l,r,i*2,tr);
+    pii b=query(mid+1,e,l,r,i*2+1,tr);
+    pii ret;
+    merg(ret,a,b);
+    return ret;
+}
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int n,a;
+    cin>>n;
+    for(int i=1;i<=n;i++){
+        cin>>a;
+        int sin=(a>0);
+        if(!sin) a=-a;
+        pii ret ;
+        ret=query(1,N-1,1,a-1,1,sin?neg:pos);
+        if(ret.second==0){
+            ++ret.second;
+        }
+        ++ret.first;
+        update(1,N-1,a,a,1,ret.first,ret.second,sin?pos:neg);
+    }
+    pii Ans;
+    Ans={-1,-1};
+    merg(Ans,pos[1],neg[1]);
+    cout<<Ans.first<<" "<<Ans.second<<endl;
+    return 0;
+}

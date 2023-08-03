@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define mod 1000000007
+
+long long f[1000002];
+long long pow(int a, int b, int MOD)
+{
+    long long x=1,y=a; 
+    while(b > 0)
+    {
+        if(b%2 == 1)
+        {
+            x=(x*y);
+            if(x>MOD) x%=MOD;
+        }
+        y = (y*y);
+        if(y>MOD) y%=MOD; 
+        b /= 2;
+    }
+    return x;
+}
+ 
+
+long long InverseEuler(int n, int MOD)
+{
+    return pow(n,MOD-2,MOD);
+}
+ 
+long long SmallC(int n, int r, int MOD)
+{
+    long long x=InverseEuler(f[r], MOD) * InverseEuler(f[n-r], MOD);
+    if(x>MOD) x%=MOD;
+    x=f[n]*x;
+    if(x>MOD) x%=MOD;
+    return x;
+}
+long long Lucas(int n, int m, int p)
+{
+    if (n==0 && m==0) return 1;
+    int ni,mi;
+    if(n>p)
+    ni = n % p;
+    else
+    ni=n;
+    if(m>p)
+    mi = m % p;
+    else
+    mi=m;
+    if (mi>ni) return 0;
+    return Lucas(n/p, m/p, p) * SmallC(ni, mi, p);
+}
+ 
+long long C(int n, int r, int MOD)
+{
+    return Lucas(n, r, MOD);
+}
+char a[1000006],b[1000006];
+int main()
+{
+	//vector<long long> f(n + 1,1);
+	f[0]=f[1]=1;
+    for (int i=2; i<=1000000;i++)
+        {
+        	f[i]= (f[i-1]*i);
+        	if(f[i]>mod) f[i]%=mod;
+        }	
+	int t,i;
+	scanf("%d",&t);
+	while(t--)
+	{
+		a[0]='\n';
+		b[0]='\n';
+		scanf("%s",a);
+		scanf("%s",b);
+		int c1[26]={0},c2[26]={0};
+		for(i=0;i<=25;i++)
+		c1[i]=c2[i]=0;
+		int l1=strlen(a),l2=strlen(b);
+		for(int i=0;i<l1;i++)
+		{
+			c1[a[i]-'a']++;
+		}
+		for(int i=0;i<l2;i++)
+		c2[b[i]-'a']++;
+		long long ans=1;
+		for(int i=0;i<26;i++)
+		{
+			if(c2[i]>c1[i])
+			{
+				ans=0;
+				break;
+			}
+			ans=ans*C(c1[i],c2[i],mod);
+			if(ans>mod)ans%=mod;
+			ans=ans*f[c2[i]];
+			if(ans>mod)ans%=mod;
+		}
+		printf("%lld\n",ans);
+	}
+}

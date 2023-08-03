@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+#define _ ios_base::sync_with_stdio(false);cin.tie(0);
+using namespace std;
+#define pb push_back
+#define pob pop_back
+#define pf push_front
+#define pof pop_front
+#define mp make_pair
+#define all(a) a.begin(),a.end()
+#define bitcnt(x) __builtin_popcountll(x)
+#define MOD 1000000000007
+#define MAXN 500005
+typedef unsigned long long int uint64;
+typedef long long int int64;
+
+struct node{
+	int64 segsum,bespref,bessuf,bessum;
+	node(){
+		segsum=-MOD;
+		bespref=-MOD;
+		bessuf=-MOD;
+		bessum=-MOD;
+	}
+	void merge(node &l,node &r){
+		segsum=l.segsum+r.segsum;
+		bessum=max(l.bessum,max(r.bessum,(l.bessuf+r.bespref)));
+		bespref=max(l.bespref,l.segsum+r.bespref);
+		bessuf=max(r.bessuf,r.segsum+l.bessuf);
+	}
+};
+node tree[4*MAXN];
+void mergeup(int pos){
+	while(pos>=1){
+		tree[pos].merge(tree[2*pos],tree[2*pos+1]);
+		pos=pos/2;
+	}
+}
+void update(int pos,int val){
+		tree[pos].segsum=val;
+		tree[pos].bessum=val;
+		tree[pos].bespref=val;
+		tree[pos].bessuf=val;
+		mergeup(pos/2);
+}
+int64 ans[500005];
+int main(){
+	int n,q,i,val;
+	cin>>n>>q;
+	int h=ceil(log2(n));
+	h=(1<<h);
+	
+	for(i=h;i<n+h;i++){
+		tree[i].segsum=-MOD;
+		tree[i].bessum=-MOD;
+		tree[i].bespref=-MOD;
+		tree[i].bessuf=-MOD;
+	}
+	
+	for(i=h-1;i>0;i--)
+	tree[i].merge(tree[2*i],tree[2*i+1]);
+	
+	set<pair<int,int> >s;
+	set<pair<int,int> >::iterator it;
+	for(i=0;i<n;i++){
+		scanf("%d",&val);
+		s.insert(mp(val,i));
+	}
+	vector<pair<int,int> >v;
+	for(i=0;i<q;i++){
+		scanf("%d",&val);
+		v.pb(mp(val,i));
+	}
+	sort(all(v));
+	for(i=0;i<v.size();i++){
+		val=v[i].first;
+		for(it=s.begin();it!=s.end();){
+			if(it->first>val)
+			break;
+			update(it->second+h,it->first);
+			it++;
+			s.erase(s.begin());
+		}
+		ans[v[i].second]=tree[1].bessum;
+	}
+	for(i=0;i<v.size();i++){
+		if(ans[i]==-MOD){
+			printf("No Solution\n");
+		}
+		else{
+			printf("%lld\n",ans[i]);
+		}
+	}
+	return 0;
+}

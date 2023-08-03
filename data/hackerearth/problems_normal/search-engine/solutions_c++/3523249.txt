@@ -1,0 +1,63 @@
+#include<iostream>
+#include<string>
+#include <utility>
+#include <algorithm>
+using namespace std;
+typedef std::pair<int, string> pair_array;
+struct trie
+{
+int weight;
+trie *children[26];
+};
+trie* getNode(int w)
+{
+	trie* root = new trie();
+	root->weight = w;
+	for(int i=0; i<26; i++) root->children[i] = NULL;
+	return root;
+}
+void insert(trie* root, string str, int w)
+{
+	trie* local;
+	local = root;
+	local->weight = w;
+	for(unsigned int i=0; i<str.length(); i++)
+	{
+		if(!local->children[str[i]-'a'])
+			local->children[str[i]-'a'] = getNode(w);
+		local = local->children[str[i]-'a'];
+	}
+}
+int query(trie* root, string str)
+{
+	trie* local = root;
+	for(unsigned int i=0; i<str.length(); i++)
+	{
+		if(!local->children[str[i]-'a'])
+			return -1;
+		local = local->children[str[i] - 'a'];
+	}
+	if(local!=NULL)
+		return local->weight;
+	return -1;
+}
+
+int main()
+{
+	trie* mainroot = getNode(0);
+	int n,q; cin >> n >> q;
+    pair_array* P = new pair_array[n];
+    for(int i=0; i<n; i++){
+    	string str; int k;
+    	cin >> str >> k;
+    	P[i] = make_pair(k,str);
+    }
+    std::sort(P, P+n);
+	for(int i=n-1; i>=0; i--)
+		insert(mainroot, P[i].second, P[i].first);
+	while(q--){
+    	string local_str; cin >> local_str;
+		cout << query(mainroot,local_str) << endl;
+	}
+	return 0;
+}

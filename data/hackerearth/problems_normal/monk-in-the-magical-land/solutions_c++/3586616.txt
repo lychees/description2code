@@ -1,0 +1,138 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+#define endl '\n'
+#define pb push_back
+#define mp make_pair
+#define all(x) (x).begin(),(x).end()
+#define F first
+#define S second
+#define rep(i, a, b) for(int i=a;i<b;++i)
+#define SZ(x) ((int)(x).size())
+ 
+typedef vector<int> VI;
+typedef long long LL;
+typedef pair<int,int> PII;
+ 
+template<typename TH>
+void debug_vars(const char* data, TH head){
+	cerr << data << "=" << head << "\n";
+}
+ 
+template<typename TH, typename... TA>
+void debug_vars(const char* data, TH head, TA... tail){
+	while(*data != ',') cerr << *data++;
+	cerr << "=" << head << ",";
+	debug_vars(data+1, tail...);
+}
+ 
+int n, m, k;
+const int MAX = 110;
+//int dp[25][1<<21];
+
+map< pair<int, pair<int, string > >, int > dp;
+ 
+int X[MAX];
+int C[MAX];
+int Z[MAX];
+ 
+int gcd(int a, int b){
+    return (b == 0) ? a : gcd(b, a % b);
+}
+ 
+int solve(int q, int mask, bitset<101> livre){
+    if(q >= k) return 0;
+    
+    pair<int, pair<int, string > > P = mp(q, mp(mask, livre.to_string()));    
+    
+    if(dp.count(P) > 0) return dp[P];
+    
+    //if(dp[q][mask] != -1) return dp[q][mask];
+    
+    int idx = -1;
+    rep(i, 0, n){
+        if(mask & 1 << i){
+            idx = i;
+            break;
+        }    
+    }
+    
+    if(idx == -1) return 0;
+    
+    bitset<101> used = livre;
+    int acc = 0;
+    rep(j, 0, m){
+        if(gcd(X[idx], C[j]) != 1 && used[j]){
+            acc += Z[j];
+            used[j] = 0;
+        }
+    }
+    
+    //return dp[q][mask] = max(solve(q, mask & ~(1 << idx), livre), solve(q+1, mask & ~(1 << idx), used) + acc);
+    return dp[P] = max(solve(q, mask & ~(1 << idx), livre), solve(q+1, mask & ~(1 << idx), used) + acc);
+           
+}
+ 
+int main(){
+	ios::sync_with_stdio(false); cin.tie(0);
+    
+    int T;
+    
+    cin>>T;
+    
+    rep(inst, 0, T){
+        cin>>n>>m>>k;
+        
+        //memset(dp, -1, sizeof(dp));
+        dp.clear();
+        
+        /*rep(i, 0, n){
+            rep(j, 0, n){
+                cout<<dp[i][j]<<" ";
+            }
+            cout<<endl;
+        }
+        cout<<endl;*/
+        
+        rep(i, 0, n){
+            cin>>X[i];
+        }
+        
+        rep(i, 0, m){
+            cin>>C[i];
+        }
+        
+        rep(i, 0, m){
+            cin>>Z[i];
+        }
+        
+        
+        int mask = 0;
+        rep(i, 0, n){
+            mask |= 1<<i;
+        }
+        
+        
+        bitset<101> livre;
+        livre.set();
+        
+        cout<<solve(0, mask, livre)<<endl;
+        
+    }
+ 
+	return 0;
+}
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

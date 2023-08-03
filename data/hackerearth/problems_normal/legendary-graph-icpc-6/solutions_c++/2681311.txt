@@ -1,0 +1,150 @@
+//Pranet Verma
+#include <bits/stdc++.h>
+using namespace std;
+long long A,B,C,D,E;
+const int mod=1e9+7,N=1e6+5,SZ=N*5;
+int P[N],Q[N],root[N],pa[N],n;
+vector<int> component[N];
+unsigned int tree[SZ],LEFT[SZ],RIGHT[SZ],lazy[SZ],pool;
+int qst(int u,int l,int r,int x,int y)
+{
+    if(x>r || y<l)
+        return 0;
+    if(x<=l && r<=y)
+        return tree[u];
+    int m=(l+r)>>1;
+    LEFT[u]?:LEFT[u]=++pool;
+    RIGHT[u]?:RIGHT[u]=++pool;
+
+    if(lazy[u])
+        {
+            unsigned int x=lazy[u];
+            lazy[LEFT[u]]+=x;
+            tree[LEFT[u]]+=x*(m-l+1);
+            lazy[RIGHT[u]]+=x;
+            tree[RIGHT[u]]+=x*(r-m);
+            lazy[u]=0;
+        }
+    int ret=(qst(LEFT[u],l,m,x,y)+qst(RIGHT[u],m+1,r,x,y));
+    if(ret>=mod)
+        ret-=mod;
+    return ret;
+}   
+void update(int u,int l,int r,int x,int y)
+{
+    if(x>r || y<l)
+        return;
+    if(x<=l && r<=y)
+        {
+            tree[u]+=(r-l+1);
+            lazy[u]+=1;
+            return;
+        }
+    int m=(l+r)>>1;
+    LEFT[u]?:LEFT[u]=++pool;
+    RIGHT[u]?:RIGHT[u]=++pool;
+    if(lazy[u])
+        {
+            unsigned int x=lazy[u];
+            lazy[LEFT[u]]+=x;
+            tree[LEFT[u]]+=x*(m-l+1);
+            lazy[RIGHT[u]]+=x;
+            tree[RIGHT[u]]+=x*(r-m);
+            lazy[u]=0;
+        }
+    update(LEFT[u],l,m,x,y);
+    update(RIGHT[u],m+1,r,x,y);
+    tree[u]=(tree[LEFT[u]]+tree[RIGHT[u]]);
+    if(tree[u]>=mod)
+        tree[u]-=mod;
+}
+int fs(int u)
+{
+    return pa[u]=(pa[u]==u?u:fs(pa[u]));
+}
+const int LIM=7200;
+int ms(int u,int v)
+{
+    u=fs(u);
+    v=fs(v);
+    if(component[u].size()>component[v].size())
+        swap(u,v);
+    pa[u]=v;
+    if(component[v].size()<=LIM)
+    {
+        for(int i=0;i<component[u].size();++i)
+        {
+            int w=component[u][i];
+            component[v].push_back(w);
+        }
+        if(component[v].size()>LIM)
+        {
+            root[v]=++pool;
+            for(int i=0;i<component[v].size();++i)
+            {
+                int w=component[v][i];
+                update(root[v],1,1000000,P[w],Q[w]);
+            }   
+        }
+    }
+    else
+    {
+        for(int i=0;i<component[u].size();++i)
+        {
+            int w=component[u][i];
+            component[v].push_back(w);
+            update(root[v],1,1000000,P[w],Q[w]);
+        }
+    }
+}
+#define randInt2(F,MIN,MAX) F=(A*C+B*D+E)%mod;A=B;B=F;F=(F%(MAX-MIN+1)+MIN);
+int par,U,V,X,Y,Z;
+unsigned int temp=0;
+int main()
+{
+    int T;
+    scanf("%d%d",&n,&T);
+    scanf("%lld%lld%lld%lld%lld",&A,&B,&C,&D,&E);
+    for(int i=1;i<=n;++i)
+    {
+        randInt2(P[i],1,1000000);
+        randInt2(Q[i],P[i],1000000);
+        pa[i]=i;
+        component[i].push_back(i);
+    }
+
+    int ans=0;
+    for(int i=1;i<=T;++i)
+    {
+        randInt2(par,1,2);
+        if(par==1)
+        {
+            randInt2(U,1,n);
+            randInt2(V,1,n);
+            if(fs(U)!=fs(V))
+                ms(U,V);
+        }
+        else
+        {
+            randInt2(X,1,1000000);
+            randInt2(Y,X,1000000);
+            randInt2(Z,1,n);
+            Z=fs(Z);
+            if(component[Z].size()<=LIM)
+            {
+                temp=0;
+                for(int j=0;j<component[Z].size();++j)
+                {
+                    int u=component[Z][j];
+                    int x=(X>P[u]?X:P[u]);
+                    int y=(Y<Q[u]?Y:Q[u]);
+                    temp+=y-x+1>0?y-x+1:0;
+                }
+                ans=(ans+(long long)i*temp)%mod;
+            }
+            else
+                ans=(ans+(long long)i*qst(root[Z],1,1000000,X,Y))%mod;
+        }
+    }
+    printf("%d\n",ans);
+}

@@ -1,0 +1,57 @@
+#include <iostream>
+#include <vector>
+#include <set>
+using namespace std;
+
+const int MaxVal = 100005;
+int tree[MaxVal+1];
+int read(int idx){
+    int sum = 0;
+    while (idx > 0){
+        sum += tree[idx];
+        idx -= (idx & -idx);
+    }
+    return sum;
+}
+
+void update(int idx ,int val){
+    while (idx <= MaxVal){
+        tree[idx] += val;
+        idx += (idx & -idx);
+    }
+}
+
+long long N, K;
+vector<vector<int> > tr;
+vector<int> anc;
+long long solve(int i)
+{
+	long long V = K/i;
+	if (V > MaxVal) V = MaxVal-1;
+	long long res = read(V);
+	update(i,1);
+	for (int j = 0; j < tr[i].size(); j++)
+	{
+		res += solve(tr[i][j]);
+	}
+	update(i, -1);
+	return res;
+}
+
+int main()
+{
+    cin>>N>>K;
+    tr = vector<vector<int> > (N+1);
+    for (int i = 0; i < MaxVal; i++) tree[i] = 0;
+    set<int> root;
+    for (int i = 1; i <= N; i++) root.insert(i);
+    for (int i = 1; i < N; i++)
+    {
+    	int S, D;
+    	cin>>S>>D;
+    	root.erase(D);
+    	tr[S].push_back(D);
+    }
+    cout<<solve(*(root.begin()))<<endl;
+    return 0;
+}

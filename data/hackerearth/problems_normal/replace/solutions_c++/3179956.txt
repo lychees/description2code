@@ -1,0 +1,136 @@
+#include <bits/stdc++.h>
+
+#define FO(i,a,b) for (int i = (a); i < (b); i++)
+#define sz(v) int(v.size())
+
+using namespace std;
+
+namespace MF {
+    const int N = 20005, M = 40005;
+    int f[N], e[2*M], c[2*M], fl[2*M], nxt[2*M], ce;
+    int n, s, t;
+    int Q[N], lvl[N];
+    int le[N];
+
+    void init(int _n) {
+        n = _n+2; s = _n; t = _n+1; ce = 0;
+        FO(i,0,n) f[i]=-1;
+    }
+
+    void add(int a, int b, int cap) {
+        nxt[ce]=f[a]; f[a]=ce; e[ce]=b; fl[ce]=0; c[ce]=cap; ce++;
+        nxt[ce]=f[b]; f[b]=ce; e[ce]=a; fl[ce]=0; c[ce]=0; ce++;
+    }
+
+    bool bfs() {
+        FO(i,0,n) lvl[i]=-1;
+        int qi = 1;
+        Q[0] = s; lvl[s] = 0;
+        FO(i,0,qi) {
+            int x=Q[i];
+            le[x]=f[x];
+            for (int j=f[x];j>=0;j=nxt[j]) if (c[j]-fl[j]>0) {
+                int y=e[j];
+                if (lvl[y]==-1) {
+                    lvl[y]=lvl[x]+1;
+                    Q[qi++]=y;
+                }
+            }
+        }
+        return lvl[t]!=-1;
+    }
+
+    int aug(int cu, int cf) {
+        if (cu == t) return cf;
+        for (int &i=le[cu];i>=0;i=nxt[i]) if (c[i]-fl[i]>0) {
+            int x=e[i];
+            if (lvl[x]!=lvl[cu]+1) continue;
+            int rf = aug(x,min(cf,c[i]-fl[i]));
+            if (rf>0) {
+                fl[i]+=rf;
+                fl[i^1]-=rf;
+                return rf;
+            }
+        }
+        lvl[cu]=-1;
+        return 0;
+    }
+
+    int mf() {
+        int tot = 0;
+        while (bfs())
+            for (int x=aug(s,1e9);x;x=aug(s,1e9)) tot+=x;
+        return tot;
+    }
+}
+
+typedef unsigned long long ull;
+
+vector<int> u[20005];
+ull hsh[20005];
+ull rv[200005];
+int cnd;
+
+void rd(int i) {
+    while (getchar() == '{') {
+        u[i].push_back(++cnd);
+        rd(cnd);
+    }
+}
+
+int chsh(int i) {
+    int dep = 0;
+    vector<ull> v;
+    for (int j : u[i]) {
+        dep = max(dep, 1+chsh(j));
+        v.push_back(hsh[j]);
+    }
+    while (rv[dep] % 2 == 0) rv[dep] = rand();
+    sort(v.begin(),v.end());
+    ull ch = '{';
+    for (ull x : v) {
+        ch = ch * rv[dep] + x;
+    }
+    ch = ch * rv[dep] + '}';
+    hsh[i] = ch;
+    return dep;
+}
+
+void bt(int i) {
+    for (int j : u[i]) {
+        MF::add(hsh[i], hsh[j], 1e9);
+        bt(j);
+    }
+}
+
+vector<ull> al;
+map<int,int> tl;
+
+int main() {
+    int t; scanf("%d", &t);
+    FO(z,0,t) {
+        cnd = 0;
+        FO(i,0,20005) u[i].clear();
+        al.clear();
+        tl.clear();
+
+        scanf(" %*c");
+        rd(0);
+        chsh(0);
+
+        FO(i,1,cnd+1) al.push_back(hsh[i]);
+        sort(al.begin(),al.end()); al.resize(unique(al.begin(),al.end())-al.begin());
+        FO(i,1,cnd+1) hsh[i] = lower_bound(al.begin(), al.end(), hsh[i])-al.begin();
+
+        MF::init(sz(al));
+
+        for (int i : u[0]) tl[hsh[i]] += 1;
+        for (auto x : tl) MF::add(MF::s, x.first, x.second);
+        FO(x,0,sz(al)) if (!tl.count(x)) MF::add(x, MF::t, 1);
+
+        for (int i : u[0]) bt(i);
+
+        printf("%d\n", MF::mf());
+    }
+}
+

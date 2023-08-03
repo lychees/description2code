@@ -1,0 +1,156 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define long long long
+
+struct SegNode {
+        long score, val;
+        SegNode* left, *right;
+        SegNode(SegNode* left, SegNode* right, long score) {
+            this->left = left;
+            this->right = right;
+            this->score = score ;
+            this->val = 0;
+        }
+        
+    };
+
+struct SegTreeA {
+        SegNode* head;
+        const long MAX = 500000000000LL;
+        const long MIN = 0L;
+        
+        SegTreeA () {
+            head = new SegNode(0, 0, 0);
+        }
+        
+        void update(SegNode* root, long b, long e, long pos, long val) {
+            if(b > e) return;
+            if(b == e) {
+                root->score = b;
+                root->val += b * val;
+                return;
+            }
+            long mid = (b + e) / 2;
+            if(root->left == 0) {
+                root->left = new SegNode(0, 0, 0);
+            }
+            if(root->right == 0) {
+                root->right = new SegNode(0, 0, 0);
+            }
+            if(pos <= mid) {
+                update(root->left, b, mid, pos, val);
+            } else {
+                update(root->right, mid + 1, e, pos, val);
+            }
+            root->val = root->left->val + root->right->val;
+        }
+        
+        void update(long pos, long val) {
+            update(this->head, MIN, MAX, pos, val);
+        }
+        
+        long query(SegNode* root, long b, long e, long l, long r) {
+            if(b > e || b > r || e < l) {
+                return 0;
+            }
+            if(b >= l && e <= r) {
+                return root->val;
+            }
+            long res = 0;
+            long mid = (b + e) / 2;
+            if(root->left != 0) {
+                res += query(root->left, b, mid, l, r);
+            }
+            if(root->right != 0) {
+                res += query(root->right, mid + 1, e, l, r);
+            }
+            return res;
+        }
+        
+        long query(long l, long r) {
+            return query(this->head, MIN, MAX, l, r);
+        }
+    };
+    
+struct SegTreeW {
+        SegNode* head;
+        long MAX = 500000000000L;
+        long MIN = 0L;
+        
+        SegTreeW () {
+            head = new SegNode(0, 0, 0);
+        }
+        
+        void update(SegNode* root, long b, long e, long l, long r, long val) {
+            if(b > e || b > r || e < l) {
+                return;
+            }
+            if(b >= l && e <= r) {
+                root->val += val;
+                return;
+            }
+            long mid = (b + e) / 2;
+            if(root->left == 0) {
+                root->left = new SegNode(0, 0, 0);
+            }
+            if(root->right == 0) {
+                root->right = new SegNode(0, 0, 0);
+            }
+            update(root->left, b, mid, l, r, val);
+            update(root->right, mid + 1, e, l, r, val);
+        }
+        
+        void update(long l, long r, long val) {
+            update(this->head, MIN, MAX, l, r, val);
+        }
+        
+        long query(SegNode* root, long b, long e, long pos) {
+            if(b == e) {
+                return root->val;
+            }
+            long res = root->val;
+            long mid = (b + e) / 2;
+            if(pos <= mid && root->left != 0) {
+                res += query(root->left, b, mid, pos);
+            } else if(pos > mid && root->right != 0) {
+                res += query(root->right, mid + 1, e, pos);
+            }
+            return res;
+        }
+        
+        long query(long pos) {
+            return query(this->head, MIN, MAX, pos);
+        }
+    };
+
+const int N = 500005;
+long pts[N];
+SegTreeA a;
+SegTreeW w;
+
+int main()
+{
+  int n, q;
+  scanf("%d %d", &n, &q);
+  
+  long ans = 0;
+  a.update(0, n);
+  w.update(w.MIN, w.MAX, 1);
+  
+        for(int i = 0; i < q ; ++i) {
+            int aa, bb;
+            scanf("%d %d", &aa, &bb);
+            long x = pts[aa];
+            long y = x + bb;
+            pts[aa] = y;
+            ans += -x * (w.query(x) + 1) + a.query(x, y - 1) + y * w.query(y);
+            printf("%lld\n", ans);
+            
+            a.update(y, 1);
+            a.update(x, -1);
+            w.update(x, y - 1, 1);
+        }
+        return(0);
+}

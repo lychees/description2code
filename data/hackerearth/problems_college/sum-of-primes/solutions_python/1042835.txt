@@ -1,0 +1,94 @@
+import bisect,math
+
+l =[]
+
+def primes_upto(limit):
+    is_prime = [False] * 2 + [True] * (limit - 1) 
+    for n in range(int(limit**0.5 + 1.5)): # stop at ``sqrt(limit)``
+        if is_prime[n]:
+            for i in range(n*n, limit+1, n):
+                is_prime[i] = False
+    return [i for i, prime in enumerate(is_prime) if prime]
+    
+def iprimes_upto(limit):
+    is_prime = [False] * 2 + [True] * (limit - 1)
+    for n in xrange(int(limit**0.5 + 1.5)): # stop at ``sqrt(limit)``
+        if is_prime[n]:
+            for i in range(n * n, limit + 1, n): # start at ``n`` squared
+                is_prime[i] = False
+    for i in xrange(limit + 1):
+        if is_prime[i]: yield i
+        
+        
+def iprimes2(limit):
+    yield 2
+    if limit < 3: return
+    lmtbf = (limit - 3) // 2
+    buf = [True] * (lmtbf + 1)
+    for i in range((int(limit ** 0.5) - 3) // 2 + 1):
+        if buf[i]:
+            p = i + i + 3
+            s = p * (i + 1) + i
+            buf[s::p] = [False] * ((lmtbf - s) // p + 1)
+    for i in range(lmtbf + 1):
+        if buf[i]: yield (i + i + 3)
+        
+        
+def primes235(limit):
+    yield 2; yield 3; yield 5
+    if limit < 7: return
+    modPrms = [7,11,13,17,19,23,29,31]
+    gaps = [4,2,4,2,4,6,2,6,4,2,4,2,4,6,2,6] # 2 loops for overflow
+    ndxs = [0,0,0,0,1,1,2,2,2,2,3,3,4,4,4,4,5,5,5,5,5,5,6,6,7,7,7,7,7,7]
+    lmtbf = (limit + 23) // 30 * 8 - 1 # integral number of wheels rounded up
+    lmtsqrt = (int(limit ** 0.5) - 7)
+    lmtsqrt = lmtsqrt // 30 * 8 + ndxs[lmtsqrt % 30] # round down on the wheel
+    buf = [True] * (lmtbf + 1)
+    for i in range(lmtsqrt + 1):
+        if buf[i]:
+            ci = i & 7; p = 30 * (i >> 3) + modPrms[ci]
+            s = p * p - 7; p8 = p << 3
+            for j in range(8):
+                c = s // 30 * 8 + ndxs[s % 30]
+                buf[c::p8] = [False] * ((lmtbf - c) // p8 + 1)
+                s += p * gaps[ci]; ci += 1
+    for i in range(lmtbf - 6 + (ndxs[(limit - 7) % 30])): # adjust for extras
+        if buf[i]: yield (30 * (i >> 3) + modPrms[i & 7])
+            
+def process():
+	global l
+#	eratosthenes(1000000,l)
+	l = list(primes235(1000001))
+
+
+
+def is_prime(n):
+    if n == 2:
+        return "YES"
+    if n%2 == 0 or n <= 1:
+        return "NO"
+    sqr = int(math.sqrt(n)) + 1
+    for divisor in xrange(3, sqr, 2):
+        if n%divisor == 0:
+            return "NO"
+    return "YES"
+	
+def solve():
+	global l
+	length = len(l)
+	[m,n] = [int(x) for x in raw_input().split()]
+	idx = bisect.bisect_left(l,m)
+	s = 0
+	while idx<length and l[idx]<=n:
+		s += l[idx]
+		idx += 1
+	
+	print is_prime(s)
+	
+	
+def main():
+	process()
+	for _ in xrange(int(raw_input())):
+		solve()
+
+main()

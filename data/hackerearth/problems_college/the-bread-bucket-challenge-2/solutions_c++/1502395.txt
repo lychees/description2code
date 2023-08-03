@@ -1,0 +1,145 @@
+//#pragma comment(linker,"/STACK:100000000000,100000000000")
+
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+#include <string>
+#include <cstring>
+#include <vector>
+#include <cmath>
+#include <map>
+#include <stack>
+#include <set>
+#include <iomanip>
+#include <queue>
+#include <map>
+#include <functional>
+#include <list>
+#include <sstream>
+#include <ctime>
+#include <climits>
+#include <bitset>
+#include <list>
+#include <cassert>
+#include <complex>
+
+using namespace std;
+
+/* Constants begin */
+const long long inf = 2e18 + 7;
+const long long mod = 1e9 + 7;
+const double eps = 1e-9;
+const double PI = 2*acos(0.0);
+const double E = 2.71828;
+/* Constants end */
+
+/* Defines begin */
+#define pb push_back
+#define mp make_pair
+#define ll long long
+#define double long double
+#define F first
+#define S second
+#define all(a) (a).begin(),(a).end()
+#define forn(i, n) for (int (i)=0; (i)<(n); ++(i))
+#define random (rand()<<16|rand())
+#define sqr(x) (x)*(x)
+#define base complex<double>
+/* Defines end */
+
+int t;
+int n;
+int cost[25][25];
+char mt[25][25];
+char woke[25];
+int cost1[(1<<16)+2][25];
+int mem[(1<<16)+2];
+int f[(1<<16)+2];
+int k;
+int timer;
+
+int dfs(int mask, int cnt) {
+    if(mem[mask] == timer){
+        return f[mask];
+    }
+    mem[mask] = timer;
+    if(cnt >= k) {
+        return f[mask] = 0;
+    }
+    f[mask] = -1;
+    for(int i = 0; i < n; ++i) {
+        if(~mask & (1 << i)) {
+            int nmask = mask | (1<<i);
+            if (mem[nmask]!=timer){
+                for (int j = 0; j < n; ++j) {
+                    cost1[nmask][j] = min(cost1[mask][j], cost[i][j]);
+                }
+            }
+            int now = dfs(nmask, cnt + 1);
+            if (now == -1) continue;
+            if (f[mask] == -1)
+                f[mask] = now + cost1[mask][i];
+            else
+                f[mask] = min(f[mask], now + cost1[mask][i]);
+        }
+    }
+    return f[mask];
+}
+
+void Solve() {
+    scanf("%d\n", &n);
+    for (int i = 0; i < n; ++i) {
+        gets(mt[i]);
+        for (int j = 0; j < n; ++j) {
+            cost[i][j] = (isdigit(mt[i][j]) ? mt[i][j] - '0' : mt[i][j] - 'A' + 10);
+        }
+    }
+    gets(woke);
+
+    scanf("%d", &k);
+    int mask = 0;
+    int cnt = 0;
+    bool first = true;
+
+    for (int i = 0; i < n; ++i) {
+        if (woke[i] == 'Y') {
+            mask |= 1<<i;
+            ++cnt;
+        }
+    }
+
+    for (int i = 0; i < n; ++i) {
+        if (woke[i] == 'Y') {
+            if (first) {
+                for (int j = 0; j < n; ++j) {
+                    cost1[mask][j] = cost[i][j];
+                }
+            } else {
+                for (int j = 0; j < n; ++j) {
+                    cost1[mask][j] = min(cost1[mask][j], cost[i][j]);
+                }
+            }
+            first = false;
+        }
+    }
+    int num = dfs(mask, cnt);
+    if(num == -1 || !cnt) {
+        puts("Poor Navkrish.");
+    } else {
+        printf("%d\n", num);
+    }
+}
+
+int main(void) {
+    #ifdef nobik
+        freopen("input.txt", "rt", stdin);
+        freopen("output.txt", "wt", stdout);
+    #endif
+    scanf("%d", &t);
+    for (int i = 0; i < t; ++i) {
+        timer = i + 1;
+        Solve();
+    }
+    return 0;
+}

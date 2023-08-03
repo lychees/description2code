@@ -1,0 +1,83 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const int N = (int)1e5 + 6, md = (int)1e9 + 7;
+int a[123], can[N], f[35*N][2], up = 30;
+
+void pre()
+{
+	memset(f, -1, sizeof(f));
+	int sz = 1;
+	for (int x = 1; x < N; x++)
+	{
+		if (!can[x]) continue;
+		int cur = 0;
+		for (int i = up; i >= 0; i--)
+		{
+			int cu = (x >> i & 1);
+			int nxt = f[cur][cu];
+			if (nxt < 0) nxt = f[cur][cu] = sz++;
+			assert(sz < 35*N);
+			cur = nxt;
+		}
+	}
+}
+
+int go(int x)
+{
+	int cur = 0, ret = 0;
+	for (int i = up; i >= 0; i--)
+	{
+		int cu = (x >> i & 1);
+		if (~f[cur][cu]) cur = f[cur][cu], ret = ret*2 + cu;
+		else cur = f[cur][cu^1], ret = ret*2 + (cu^1);
+	}
+	return ret;
+}
+
+int main()
+{
+	int n; scanf("%d", &n);
+	for (int i = 0; i < n; i++) scanf("%d", a+i);
+	sort(a, a + n);
+
+	can[0] = 1;
+	int mx = 0;
+	for (int i = 0; i < n; i++)
+		for (int j = mx; j >= 0; j--)
+			if (can[j])
+			{
+				can[j+a[i]] += can[j];
+				if (can[j+a[i]] >= md) can[j+a[i]] -= md;
+				mx = max(mx, j+a[i]);
+			}
+	pre();
+
+	int q; scanf("%d", &q);
+	while (q--)
+	{
+		int x; scanf("%d", &x);
+		int num = go(x);
+		printf("%d %d\n", num, can[num]);
+	}
+	return 0;
+}

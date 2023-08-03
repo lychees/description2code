@@ -1,0 +1,145 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+const int MOD=1000000007;
+const int MAXN=5005;
+int modPow ( ll b, int e ) {
+    ll res=1;
+    while ( e ) {
+        if ( e&1 ) res=res*b%MOD;
+        b=b*b%MOD;
+        e>>=1;
+
+    }
+    return res;
+}
+int modInv ( int a ) {
+    return modPow ( a,MOD-2 );
+}
+
+vll facs ( MAXN );
+vll invfacs ( MAXN );
+void initFacs() {
+    facs[0]=1;
+    invfacs[0]=1;
+    reu ( i,1,MAXN ) {
+        facs[i]=facs[i-1]*i%MOD;
+        invfacs[i]=modInv ( facs[i] );
+    }
+}
+int bino ( int n,int k ) {
+    return facs[n]*invfacs[k]%MOD*invfacs[n-k]%MOD;
+}
+int main() {
+    initFacs();
+    ios_base::sync_with_stdio ( false );
+    int n,k;
+    cin>>n>>k;
+    string s;
+    cin>>s;
+    vector<bool> isVowel ( n );
+    int nv=0;
+    string vowels = "aeiouy";
+
+    for ( int i = 0; i < n; i++ ) // indices 0, 1, ..., n-1
+        for ( int j = 0; j < 6; j++ )
+            if ( s[i] == vowels[j] ) {
+                isVowel[i] = true;
+                nv++;
+            }
+
+
+    vector<vi> dp ( 4,vi ( n+1 ) );
+    dp[0][0]=1;
+    rep ( i,n ) {
+        vector<vi> dpn ( 4,vi ( n+1 ) );
+        if ( isVowel[i] ) {
+            rep ( k,i+1 ) {
+                dpn[3][k]=dp[3][k];
+                rep ( j,3 ) {
+                    dpn[0][k]= ( dpn[0][k]+dp[j][k] ) %MOD;
+
+                }
+            }
+        } else {
+            rep ( k,i+1 ) {
+                dpn[3][k+1]=dp[3][k];
+                rep ( j,3 ) {
+                    dpn[0][k+1]= ( dpn[0][k+1]+dp[j][k] ) %MOD;
+
+                }
+                rep ( j,3 ) {
+                    dpn[j+1][k]= ( dpn[j+1][k]+dp[j][k] ) %MOD;
+                }
+                dpn[3][k]= ( dpn[3][k]+dp[3][k] ) %MOD;
+            }
+
+        }
+//         cout<<dpn<<endl;
+        swap ( dp,dpn );
+    }
+//     cout<<dp<<endl;
+    ll su=0;
+    rep ( i,n ) {
+        if ( i>k || k-i>nv ) continue;
+        int nc=n-nv-i;
+//         cout<<i<<" "<<nc<<endl;
+        ll s=0;
+        if ( nc>n-nc ) {
+            rep ( j,4 ) s+=dp[j][i];
+        } else {
+            s=dp[3][i];
+        }
+//         cout<<s<<endl;
+        s=s*bino ( nv, k-i ) %MOD;
+        su+=s;
+    }
+    cout<<su%MOD<<endl;
+
+}

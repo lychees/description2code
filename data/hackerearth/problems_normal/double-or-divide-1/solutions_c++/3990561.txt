@@ -1,0 +1,127 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+
+#define PII       pair<int,int>
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+#define cin(x)    scanf("%d",&x)
+#define MOD		1000000007
+#define EPS		1E-10
+
+#define MAXN	1000000
+bool marker[MAXN + 1] = {0};
+int lpf[MAXN + 1] = {0};
+void sieve(int limit = MAXN)
+{
+	for(int i = 2; i <= limit; i++) marker[i] = true, lpf[i] = i;
+	for(int i = 2; i <= limit; i++)
+	{
+		if(!marker[i]) continue;
+		if(1LL*i*i > limit) continue;
+		int j = i*i;
+		while(j<=limit)
+		{
+			marker[j] = 0;
+			lpf[j] = min(lpf[j],i);
+			j += i;
+		}
+	}
+}
+
+int getBest(int N)
+{
+	int highest = 0, num = 0;
+	while(N > 1)
+	{
+		int currentctr = 0;
+		int currentnum = lpf[N];
+		while(lpf[N] == currentnum)
+		{
+			N /= lpf[N];
+			currentctr += 1;
+		}
+		if(currentctr > highest)
+		{
+			highest = currentctr;
+			num = currentnum;
+		}
+	}
+	return num;
+}
+
+int check(int i)
+{
+	if(i == 1) return 1;
+	int P = getBest(i);
+	P = P%i;
+	if(P%2 == 0) return 0;
+	else return 1;
+}
+
+vector<int> arr;
+int go[1000000];
+int change[1000000];
+
+int main()
+{
+	sieve();
+	int N,L;
+	cin(N);
+	cin(L);
+	arr.resize(N);
+	for(int i = 0; i < N; i++)
+		cin(arr[i]);
+	sort(all(arr));
+
+	for(int i = 0; i < N; i++)
+	{
+		int j = 0;
+		while((1 << j) <= arr[i])
+			j += 1;
+		go[i] = j;
+	}
+
+	int divPos = 0, mulPos = N - 1;
+	for(int i = 1; i <= L; i++)
+	{
+		int ok = check(i);
+		//cout << i << " " << ok << endl;
+		if(ok)
+			change[mulPos] += 1;
+		else
+			change[divPos] -= 1;
+		if(change[divPos] + go[divPos] == 0)
+			divPos += 1;
+
+		if(divPos > mulPos) break;
+	}
+
+	multiset<int> P;
+	for(int i = 0; i < N; i++)
+	{
+		while(change[i] < 0)
+		{
+			assert(arr[i] > 0);
+			arr[i] /= 2;
+			change[i] += 1;
+		}
+		while(change[i] > 0)
+		{
+			arr[i] *= 2;
+			arr[i] %= MOD;
+			change[i] -= 1;
+		}
+		if(arr[i] > 0)
+			P.insert(arr[i]);
+	}
+
+	cout << sz(P) << "\n";
+	for(int a: P)
+		cout << a << " ";
+	return 0;
+}

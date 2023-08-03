@@ -1,0 +1,92 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int nax = 5e5 + 15;
+vector<int> w[nax];
+int val[nax]; // -1 or 1 (from the input)
+int subtree[nax]; // size of subtree
+bool forbid[nax]; // cut off (outside of the current centroid-tree)
+int path_val[nax]; // sum of val[i] on the path from centroid
+int tmp_so_far[2 * nax];
+int * so_far = tmp_so_far + nax; // under already processed children, count paths with each sum
+long long answer[nax];
+int dfs_subtrees(int a, int par) {
+	subtree[a] = 1;
+	for(int b : w[a]) if(!forbid[b] && b != par)
+		subtree[a] += dfs_subtrees(b, a);
+	return subtree[a];
+}
+void dfs_count_path_val(int a, int par) {
+	for(int b : w[a]) if(!forbid[b] && b != par) {
+		path_val[b] = path_val[a] + val[b];
+		dfs_count_path_val(b, a);
+	}
+}
+long long dfs_to_answer(int a, int par, vector<int> & gather_all) {
+	gather_all.push_back(a);
+	long long paths = 0;
+	// path_val[i] + X == -2
+	paths += so_far[-2-path_val[a]];
+	// path_val[i] + X == -1
+	paths += so_far[-1-path_val[a]];
+	for(int b : w[a]) if(!forbid[b] && b != par)
+		paths += dfs_to_answer(b, a, gather_all);
+	answer[a] += paths;
+	return paths;
+}
+void centroid(int a) {
+	int here_n = dfs_subtrees(a, -1);
+	while(true) {
+		int memo_a = a;
+		for(int b : w[a]) if(!forbid[b])
+			if(subtree[b] < subtree[a] && subtree[b] >= (1+here_n) / 2) {
+				a = b;
+				break;
+			}
+		if(memo_a == a) break;
+	}
+	path_val[a] = 0; // we don't count val[a] right now
+	dfs_count_path_val(a, -1);
+	for(int rep = 0; rep < 2; ++rep) {
+		for(int i = -(here_n+3); i <= (here_n+3); ++i)
+			so_far[i] = 0;
+		if(rep == 0) ++so_far[val[a]]; // only once consider a path from centroid (root)
+		reverse(w[a].begin(), w[a].end());
+		for(int child : w[a]) if(!forbid[child]) {
+			vector<int> gather_all;
+			// 1) add to the answer paths started in some already processed child
+			answer[a] += dfs_to_answer(child, a, gather_all) * rep;
+			// 2) consider starting paths here
+			for(int v : gather_all) {
+				++so_far[val[a] + path_val[v]];
+				if(rep == 0 && (path_val[v] == -1 || path_val[v] == 0))
+					++answer[a];
+			}
+		}
+	}
+	forbid[a] = true;
+	for(int child : w[a])
+		if(!forbid[child])
+			centroid(child);
+}
+	
+int main() {
+	int n, x;
+	scanf("%d%d", &n, &x);
+	for(int i = 0; i < n - 1; ++i) {
+		int a, b;
+		scanf("%d%d", &a, &b);
+		w[a].push_back(b);
+		w[b].push_back(a);
+	}
+	for(int i = 1; i <= n; ++i) {
+		int tmp;
+		scanf("%d", &tmp);
+		val[i] = (tmp >= x) ? 1 : -1;
+	}
+	centroid(1);
+	long long best = 0;
+	for(int i = 1; i <= n; ++i) if(val[i] == -1)
+		best = max(best, answer[i]);
+	printf("%lld\n", best);
+	return 0;
+}

@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+bool coprime_dp[162][1458];
+long long count_coprime_dp[19][162][14580];
+int num[19];
+int n;
+
+
+long long count_coprime(int idx, int sum, int sum2)
+{
+        if(idx == -1){
+                return coprime_dp[sum][sum2];
+        }
+        if(count_coprime_dp[idx][sum][sum2] != -1){
+                return count_coprime_dp[idx][sum][sum2];
+        }
+        long long count = 0;
+        for(int i = 0; i <= 9; i++){
+                count += count_coprime(idx - 1, sum + i, sum2 + i * i);
+        }
+        count_coprime_dp[idx][sum][sum2] = count;
+        return count;
+}
+
+long long counter(int idx, int sum, int sum2){
+        if(idx == n){
+                return coprime_dp[sum][sum2];
+        }
+
+        long long count = 0;
+        for(int i = 0; i < num[idx]; i++){
+                count += count_coprime(n - idx - 2, sum + i, sum2 + i * i);
+        }
+        count += counter(idx+1, sum + num[idx], sum2 + num[idx] * num[idx]);
+        return count;
+}
+
+void parse_ll_to_array(long long value)
+{
+        stringstream ss;
+        ss.clear();
+        ss << value;
+        string s = ss.str();
+        for(n = 0; n < (int)s.size(); n++){
+                num[n] = s[n] - 48;
+        }
+}
+
+int main(int argc, char *argv[])
+{
+        long long T, L, R;
+        string input;
+
+        memset(count_coprime_dp, -1, sizeof(count_coprime_dp));
+
+        for(int i = 0; i < 18*9; i++){
+                for(int j = 0; j < 18*81; j++){
+                        coprime_dp[i][j] = (__gcd(i, j) == 1);
+                }
+        }
+        cin >> T;
+        while(T--){
+                cin >> L >> R;
+
+                parse_ll_to_array(R);
+                long long count_r = counter(0, 0, 0);
+
+                parse_ll_to_array(L-1);
+                long long count_l = counter(0, 0, 0);
+                cout << (count_r - count_l) << endl;
+        }
+        return 0;
+}

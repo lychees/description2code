@@ -1,0 +1,136 @@
+#include <iostream>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include <vector>
+#include<stack>
+#include<set>
+#include<limits.h>
+#include <queue>
+#include <map>
+#include <cstdlib>
+#include <algorithm>
+//psyduck
+#define ll long long
+#define S(x) scanf("%d",&x)
+#define Sf(x) scanf("%f",&x)
+#define Slf(x) scanf("%lf",&x)
+#define Sl(x) scanf("%lld",&x)
+#define P(x)  printf("%d\n", x)
+#define Pf(x)  printf("%f\n", x)
+#define Plf(x)  printf("%lf\n", x)
+#define Pl(x)  printf("%lld\n", x)
+#define mem(x,i) memset(x,i,sizeof(x))
+#define mod 1000000007
+using namespace std;
+
+void dba(ll int debug_array[],int n){
+    for (int i = 1; i <= n; i++)cout << debug_array[i]<<" ";
+    cout << endl;
+}
+void db2a(ll int debug2d[100][100],int n, int m)
+{
+    for (int i = 1; i <= n; i++)
+        for(int j = 1; j <= m; j++)
+            cout << debug2d[i][j];
+        cout << endl;
+}
+void construction(ll int node, ll int b, ll int e);
+void update(ll int node, ll int b, ll int e, ll int idx, ll int diff);
+ll int a[100005];
+ll int seg1[400005];
+ll int seg2[400005];
+ll int l,r;
+pair<ll int, ll int> query(ll int node, ll int b, ll int e);
+int main()
+{
+    ll int n,q,i,type,idx,diff,k;
+    Sl(n);Sl(q);
+
+    for (i = 1; i <= n; i++){
+        Sl(a[i]);
+    }
+    construction(1,1,n);
+  //  dba(seg1,13);
+  //  dba(seg2,13);
+    while(q--){
+        Sl(type);
+        if(type == 2){
+            Sl(idx);Sl(diff);
+            a[idx] = a[idx] + diff;
+            update(1,1,n,idx,diff);
+            //dba(seg1,13);
+            //dba(seg2,13);
+        }
+        else {
+            Sl(k);Sl(l);Sl(r);
+            if(k > r || k < l){
+                pair<ll int,ll int>p;
+                p = query(1,1,n);
+                ll int x = k*p.first;
+                ll int y = p.second;
+                Pl(abs(x-y));
+            }
+            else {
+                pair<ll int,ll int>p;
+                ll int lo,hi;
+                lo = l;hi = r;
+                l = lo;r = k-1;
+                p = query(1,1,n);
+                ll int x = k*p.first;
+                ll int y = p.second;
+                ll int ans = abs(x-y);
+               // cout << ans<<endl;
+                l = k+1;
+                r = hi;
+               // cout << l<<" "<<r<<endl;
+                p = query(1,1,n);
+                x = k*p.first;
+                y = p.second;
+                ans = ans + abs(x-y);
+                Pl(ans);
+            }
+        }
+    }
+}
+void construction(ll int node, ll int b, ll int e)
+{
+    if(b == e){
+        seg1[node] = a[b];
+        seg2[node] = a[b]*b;
+    }
+    else {
+        ll int mid = (b+e)/2;
+        construction(2*node,b,mid);
+        construction(2*node+1,mid+1,e);
+        seg1[node] = seg1[2*node] + seg1[2*node+1];
+        seg2[node] = seg2[2*node] + seg2[2*node+1];
+    }
+}
+void update(ll int node, ll int b, ll int e, ll int idx, ll int diff)
+{
+    if(idx > e ||idx < b){
+        return ;
+    }
+    seg1[node] = seg1[node] + diff;
+    seg2[node] = seg2[node] + idx*diff;
+    if(b != e){
+        ll int mid = (b+e)/2;
+        update(2*node,b,mid,idx,diff);
+        update(2*node+1,mid+1,e,idx,diff);
+    }
+}
+pair<ll int, ll int> query(ll int node, ll int b, ll int e)
+{
+    if(b >= l && e <= r){
+        return make_pair(seg1[node],seg2[node]);
+    }
+    if(b > r || e < l){
+        return make_pair(0,0);
+    }
+    pair<ll,ll>p1,p2;
+    ll int mid = (b+e)/2;
+    p1 = query(2*node,b,mid);
+    p2 = query(2*node+1,mid+1,e);
+    return make_pair(p1.first+p2.first, p1.second+p2.second);
+}

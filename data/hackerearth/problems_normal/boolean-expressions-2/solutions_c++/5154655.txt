@@ -1,0 +1,75 @@
+#include <iostream>
+#include<string.h>
+#define MOD 1000000009
+using namespace std;
+ 
+char str[301],op[301];
+long long int dpf[301][301],dpt[301][301];
+int main()
+{
+	cin>>str;
+	cin>>op;
+	int len = strlen(str);
+	for(int i=0;i<len;i++)
+	{
+		if(str[i] == '1')
+		{
+			dpt[i][i] = 1;
+			dpf[i][i] = 0;
+		}
+		else
+		{
+			dpf[i][i] = 1;
+			dpt[i][i] = 0;
+		}
+		
+	}
+		for(int k=1;k<len;k++)
+		{
+			for(int i=0,j=k;j<len;i++,j++)
+			{
+				dpt[i][j] = 0;
+				dpf[i][j] = 0;
+				for(int m=0;m<k;m++)
+				{
+					int l = i+m;
+					long long int til = (dpt[i][l]%MOD + dpf[i][l]%MOD)%MOD;
+					long long int tlj = (dpt[l+1][j]%MOD + dpf[l+1][j]%MOD)%MOD;
+					
+					if(op[l]=='a')
+					{
+						dpt[i][j] = (dpt[i][j]%MOD + (dpt[i][l]%MOD * dpt[l+1][j]%MOD)%MOD)%MOD;
+						dpf[i][j] = (dpf[i][j]%MOD + ((til%MOD*tlj%MOD)%MOD - (dpt[i][l]%MOD*dpt[l+1][j]%MOD)%MOD)%MOD)%MOD;
+						if(dpf[i][j]<0)
+							dpf[i][j]+=MOD;
+					}
+					if(op[l]=='x')
+					{
+						dpt[i][j] = (dpt[i][j]%MOD + ((dpt[i][l]%MOD * dpf[l+1][j]%MOD)%MOD + (dpf[i][l]%MOD * dpt[l+1][j]%MOD)%MOD)%MOD)%MOD;
+						dpf[i][j] =(dpf[i][j]%MOD + ((dpt[i][l]%MOD * dpt[l+1][j]%MOD)%MOD + (dpf[i][l]%MOD * dpf[l+1][j]%MOD)%MOD)%MOD)%MOD;
+					}
+					if(op[l]=='o')
+					{
+						dpt[i][j] = (dpt[i][j]%MOD + ((til%MOD*tlj%MOD)%MOD - (dpf[i][l]%MOD*dpf[l+1][j]%MOD)%MOD)%MOD)%MOD;
+						if(dpt[i][j]<0)
+							dpt[i][j]+=MOD;
+						dpf[i][j] = (dpf[i][j]%MOD + (dpf[i][l]%MOD*dpf[l+1][j]%MOD)%MOD)%MOD;
+					}
+				}
+			}
+		}
+		int q;
+		cin>>q;
+		while(q--)
+		{
+			int a,b;
+			char str[6];
+			cin>>a>>b>>str;
+			if(str[0]=='t')
+				cout<<dpt[a-1][b-1];
+			else
+				cout<<dpf[a-1][b-1];
+			cout<<endl;
+		}
+    return 0;
+}

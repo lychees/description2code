@@ -1,0 +1,108 @@
+#include<bits/stdc++.h>
+#define For(i,n) for(int i=0;i<n;i++)
+#define ll long long
+#define N 100000
+using namespace std;
+
+int n;
+int st[4*N];
+bool prime[1000001];
+void check()
+{
+ memset(prime, true, sizeof(prime));
+ prime[1]=false;
+ prime[0]=false;
+    for (int p=2; p*p<=1000000; p++)
+    {
+        // If prime[p] is not changed, then it is a prime
+        if (prime[p] == true)
+        {
+            // Update all multiples of p
+            for (int i=p*2; i<=1000000; i += p)
+                prime[i] = false;
+        }
+    }
+}
+
+
+void build(int *a,int idx,int s,int e)
+{
+  if(s==e)
+    {st[idx] = prime[a[s]];
+      return;}
+ int mid = (s+e)/2;
+ int c =2*idx+1;
+ build(a,c,s,mid);
+ build(a,c+1,mid+1,e);
+st[idx] = st[c] + st[c+1];
+}
+
+void update(int i,char val,int s,int e,int idx)
+{
+ if(i<s || i>e)
+    return;
+ if(s==e)
+ {
+   st[idx]=val;
+   return;
+ }
+ int mid = (s+e)/2;
+ int c = 2*idx+1;
+ if(i<=mid)
+    update(i,val,s,mid,c);
+ else
+    update(i,val,mid+1,e,c+1);
+ st[idx] = st[c] + st[c+1];
+}
+
+int query(int l,int r,int s,int e,int idx)
+{
+ if(l<=s && e<=r)
+ {  return st[idx];}
+ if(e<l || r<s)
+    return 0;
+ int mid= (s+e)/2;
+  return query(l,r,s,mid,2*idx+1) + query(l,r,mid+1,e,2*idx+2);
+
+}
+
+int main()
+{ int t;
+  check();
+  cin>>t;
+ while(t--)
+ {int n,q;
+ cin>>n;
+ int a[n];
+ For(i,n)
+  cin>>a[i];
+ cin>>q;
+ build(a,0,0,n-1);
+ while(q--)
+ {
+  char c;
+  int x,y;
+  cin>>c>>x>>y;
+  if(c=='C')
+  {
+    if(prime[a[x-1]])
+    {
+       if(!prime[y])
+            update(x-1,0,0,n-1,0);
+    }
+    else
+    {
+       if(prime[y])
+        update(x-1,1,0,n-1,0);
+    }
+    a[x-1]=y;
+  }
+  else
+  {
+    cout<<query(x-1,y-1,0,n-1,0)<<endl;
+  }
+ }
+ }
+ return 0;
+
+}

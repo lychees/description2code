@@ -1,0 +1,136 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+
+ll m, n, x, y, z, p, q;
+struct _node{
+    ll odds;
+    ll evens;
+} tree[400000];
+string str;
+
+void init(ll node, ll beg, ll end)
+{
+
+    if(beg == end){
+        tree[node].evens = 0;
+        if(str[beg] == '0') tree[node].odds = 0;
+        else tree[node].odds = 1;
+
+        //cout << beg << ' ' << end << ' ' ;
+      //  cout << "odds : " << tree[node].odds << " evens : " << tree[node].evens << endl;
+        return;
+    }
+
+    ll mid = (beg + end) / 2;
+    ll left = 2 * node;
+    ll rght = 2 * node + 1;
+
+    init(left, beg, mid);
+    init(rght, mid + 1, end);
+
+    tree[node].evens = tree[rght].evens;
+    tree[node].odds = tree[rght].odds;
+
+    ll temp = end - mid;
+
+    if(temp % 2 == 0){
+        tree[node].evens += tree[left].evens;
+        tree[node].odds += tree[left].odds;
+    }
+    else{
+        tree[node].evens += tree[left].odds;
+        tree[node].odds += tree[left].evens;
+    }
+
+
+    //cout << beg << ' ' << end << ' ' ;
+    //cout << "odds : " << tree[node].odds << " evens : " << tree[node].evens << endl;
+
+}
+
+void update(ll node, ll beg, ll end, ll i)
+{
+    if(beg > end || beg > i || end < i) return;
+
+    if(beg == end){
+        if(str[i] == '0'){
+            str[i] = '1';
+            tree[node].odds = 1;
+        }
+        return;
+    }
+
+    ll mid = (beg + end) / 2;
+    ll left = 2 * node;
+    ll rght = 2 * node + 1;
+
+    update(left, beg, mid, i);
+    update(rght, mid + 1, end, i);
+
+    tree[node].evens = tree[rght].evens;
+    tree[node].odds = tree[rght].odds;
+
+    ll temp = end - mid;
+
+    if(temp % 2 == 0){
+        tree[node].evens += tree[left].evens;
+        tree[node].odds += tree[left].odds;
+    }
+    else{
+        tree[node].evens += tree[left].odds;
+        tree[node].odds += tree[left].evens;
+    }
+
+}
+
+ll query(ll node, ll beg, ll end, ll i, ll j)
+{
+    if(beg > end || beg > j || end < i) return 0;
+
+    if(beg >= i && end <= j){
+        ll temp = j - end;
+        if(temp % 2 == 0){
+            ll p = (tree[node].odds + 2 * tree[node].evens) % 3;
+            return p;
+        }
+        else{
+            ll p = (tree[node].evens + 2 * tree[node].odds) % 3;
+            return p;
+        }
+    }
+
+    ll mid = (beg + end) / 2;
+    ll left = 2 * node;
+    ll rght = 2 * node + 1;
+
+    ll p = 0, q = 0;
+
+    p = query(left, beg, mid, i, j);
+    q = query(rght, mid + 1, end, i, j);
+
+    return (p + q) % 3;
+}
+
+int main()
+{
+    cin >> n >> str >> q;
+
+    str = " " + str;
+
+    init(1, 1, n);
+
+    for(int i = 0; i < q; i++){
+
+        scanf("%lld %lld", &x, &y);
+        if(x){
+            update(1, 1, n, y + 1);
+        }
+        else{
+            scanf("%lld", &z);
+            printf("%lld\n", (query(1, 1, n, y + 1, z + 1) % 3));
+        }
+    }
+
+    return 0;
+}

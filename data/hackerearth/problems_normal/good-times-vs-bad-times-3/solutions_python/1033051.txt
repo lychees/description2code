@@ -1,0 +1,59 @@
+from fractions import gcd
+PRIMES = [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59]
+
+def isTimeBad(timeParts):	
+	for p in PRIMES:		
+		if timeParts[0] % p == 0 and timeParts[1] % p == 0 and timeParts[2] % p == 0:
+			return True
+
+def countTimes(timeParts):
+	count = (23 - timeParts[0])*3600 + (59 - timeParts[1])*60 + (59 - timeParts[2]) + 1
+	return count
+
+def getTimeToIndex(timeParts):
+	return timeParts[0]*3600 + timeParts[1]*60 + timeParts[2]
+
+def getNextTimeParts(timeParts):
+	newTimeParts = None
+	if timeParts == [23, 59, 59]:
+		return newTimeParts
+	newTimeParts = [timeParts[0], timeParts[1], timeParts[2]+1]
+	if newTimeParts[2]== 60:
+		newTimeParts[2] = 0
+		newTimeParts[1] += 1
+		if newTimeParts[1]== 60:
+			newTimeParts[1] = 0
+			newTimeParts[0] += 1		
+	return newTimeParts
+
+	
+	
+
+N = int(raw_input())
+GOOD_TIMES = [0]*86400
+timeParts = [0, 0, 0]
+for i in range(len(GOOD_TIMES)):	
+	if isTimeBad(timeParts):
+		GOOD_TIMES[i] = 1		
+	timeParts = getNextTimeParts(timeParts)
+
+temp = GOOD_TIMES[-1]
+for i in range(len(GOOD_TIMES)-1, -1, -1):
+	if GOOD_TIMES[i]:
+		temp +=1
+	GOOD_TIMES[i] = temp	
+
+for i in range(N):
+	timePartsSTr = raw_input()
+	timeParts = timePartsSTr.split(' ')
+	timeParts = [int(i) for i in timeParts]
+	totalCount = countTimes(timeParts)
+	totalBad = 0
+	totalGood = 0
+	startIndex = getTimeToIndex(timeParts)		
+	totalBad = GOOD_TIMES[startIndex]
+	totalGood = totalCount - totalBad
+	divisor = 1
+	if totalGood != 0 and totalBad != 0:
+		divisor = gcd(totalGood,totalBad)
+	print str(totalBad/divisor) + ':' + str(totalGood/divisor)

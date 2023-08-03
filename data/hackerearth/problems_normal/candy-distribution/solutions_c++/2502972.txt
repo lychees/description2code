@@ -1,0 +1,105 @@
+#include <map>
+#include <unordered_map>
+#include <iostream>
+#include <vector>
+#include <cmath>
+#define MOD 1000000007
+using namespace std;
+
+long n;
+
+// memoized[6] = 3 means answer to 6 is 3
+unordered_map<long,long> memoized;
+
+unordered_map<long,vector<long>> fmemoized;
+
+vector<long> factors( long n ) {
+	
+	if( fmemoized.find(n) != fmemoized.end() ) {
+		return fmemoized[n];
+		cout << n << " fmemoized" << endl;
+	}
+	
+	vector<long> fact;
+	
+	for( int i = 2; i <= sqrt(n); i++ ) {
+		if( (n/i)*(i) == n ) {
+			fact.push_back( i );
+		}
+	}
+	
+	long fsize = fact.size();
+	
+	for( int i = 0; i < fsize; i++ ) {
+		if( fabs(sqrt(n) - fact[i]) > 0.000001 )
+			fact.push_back( n / fact[i] );
+	}
+		
+	fact.push_back( n );
+	
+	fmemoized[n] = fact;
+	
+	return fact;
+	
+}
+
+long fastpow( long n, long k ) {
+	
+	if( k == 0 )
+		return 1;
+	if( k == 1 )
+		return n % MOD;
+		
+	long mid = fastpow( n, k/2 );
+	
+	// if odd, else even
+	if( k%2 )
+		return (((mid * mid) % MOD ) * n) % MOD;
+	else
+		return (mid * mid) % MOD;
+	
+}
+
+long findfor( long n ) {
+
+	if( memoized.find(n) != memoized.end() ) {
+//		cout << n << " memoized" << endl;
+		return memoized[n];
+	}
+
+	long count = 0;
+
+	n--;
+
+	// divide n into i piles of n/i candies
+	for( long i : factors(n) ) {
+		
+		if( (n/i) <= 2 )
+			count = (count+1) % MOD;
+		else		
+			count += (long)fastpow(findfor(n/i),i) % MOD;
+	}
+	
+	count %= MOD;
+	
+	memoized[n+1] = count;
+	
+	return count;
+}
+
+int main()
+{
+    cin >> n;
+
+	memoized[1] = 1;
+	memoized[2] = 1;
+
+	cout << findfor(n) % MOD;
+
+//	cout << endl;
+
+//	for( pair<long,long> i : memoized )
+//		cout << i.first << " ";
+
+    return 0;
+}

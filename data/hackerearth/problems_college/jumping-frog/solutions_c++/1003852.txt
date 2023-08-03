@@ -1,0 +1,138 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii;
+typedef long long ll; typedef vector<long long> vl; typedef pair<long long,long long> pll; typedef vector<pair<long long,long long> > vpll;
+typedef vector<string> vs; typedef long double ld;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+template<typename Weight_>
+struct WeightedTo {
+	typedef int Vertex; typedef Weight_ Weight;
+	Vertex to; Weight w;
+	WeightedTo() { }
+	WeightedTo(Vertex to_, Weight w_): to(to_), w(w_) { }
+	Weight getWeight() const { return w; }
+};
+template<typename To_>
+struct StaticGraph {
+	typedef To_ To;
+	typedef typename To::Vertex Vertex;
+	typedef std::pair<Vertex,To> Edge;
+	typedef const To *const_iterator;
+ 
+	void init(int n_, const std::vector<Edge> &edges) {
+		n = n_; int m = edges.size();
+		tos.resize(m+1); offsets.resize(n+1);
+		for(int e = 0; e < m; e ++) offsets[edges[e].first] ++;
+		for(int v = 1; v <= n_; v ++) offsets[v] += offsets[v-1];
+		for(int e = 0; e < m; e ++)
+			tos[-- offsets[edges[e].first]] = edges[e].second;
+	}
+	int numVertices() const { return n; }
+	int numEdges() const { return tos.size() - 1; }
+ 
+	inline const_iterator edgesBegin(int v) const { return &tos[offsets[v]]; }
+	inline const_iterator edgesEnd(int v) const { return &tos[offsets[v+1]]; }
+private:
+	int n;
+	std::vector<To> tos;
+	std::vector<int> offsets;
+};
+typedef StaticGraph<WeightedTo<int> > Graph;
+
+template<int MaxWeight, typename Dist>
+void smallWeightDijkstra(const Graph &g, int s, vector<Dist> &dist) {
+	int n = g.numVertices();
+	dist.assign(n, numeric_limits<Dist>::max());
+	vector<bool> vis(n);
+	vector<Graph::Vertex> qs[MaxWeight + 1];
+	Dist d = 0; int di = 0;
+	qs[di].push_back(s); dist[s] = 0;
+	int qsize = 1;
+	while(qsize > 0) {
+		vector<Graph::Vertex> &q = qs[di];
+		while(!q.empty()) {
+			int v = q.back(); q.pop_back(); qsize --;
+			if(vis[v]) continue;
+			vis[v] = true;
+			assert(dist[v] == d);
+			for(Graph::const_iterator it = g.edgesBegin(v), et = g.edgesEnd(v); it != et; ++ it) {
+				if(dist[it->to] > d + it->getWeight()) {
+					dist[it->to] = d + it->getWeight();
+					int ei = di + it->getWeight();
+					if(ei >= MaxWeight + 1) ei -= MaxWeight + 1;
+					qs[ei].push_back(it->to);
+					qsize ++;
+				}
+			}
+		}
+		d ++;
+		if(++ di == MaxWeight + 1) di = 0;
+	}
+}
+
+int main() {
+	int N;
+	scanf("%d", &N);
+	const int K = 101;
+	vector<int> color(N);
+	rep(i, N) scanf("%d", &color[i]);
+	vector<Graph::Edge> edges;
+	rep(i, N-1)
+		edges.push_back(Graph::Edge(i+1, Graph::To(i, 1)));
+	rep(i, N)
+		edges.push_back(Graph::Edge(i, Graph::To(N + color[i], 0)));
+	rep(i, N)
+		edges.push_back(Graph::Edge(N + color[i], Graph::To(i, 1)));
+	Graph g; g.init(N + K, edges);
+	vector<int> distS, distM;
+	int Q;
+	scanf("%d", &Q);
+	rep(ii, Q) {
+		int S, M, E;
+		scanf("%d%d%d", &S, &M, &E);
+		smallWeightDijkstra<1>(g, S, distS);
+		smallWeightDijkstra<1>(g, M, distM);
+		if(distS[M] == numeric_limits<int>::max() || distM[E] == numeric_limits<int>::max()) {
+			puts("-1");
+		}else {
+			int ans = distS[M] + distM[E];
+			printf("%d\n", ans);
+		}
+	}
+	return 0;
+}
+

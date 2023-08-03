@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define MOD 1000000007
+using namespace std;
+
+const ll MAX = 1e18 + 20;
+struct segnode
+{
+	ll l,r,b;
+	segnode* left, *right;
+	bool lazy;
+	segnode(){ l=r=b=lazy=0;left=right=NULL;}
+	segnode(ll x,ll y){
+		l=x,r=y,b=0,lazy=0,left=right=NULL;
+	}
+	
+	inline void lef(){
+		if(l==r || left!=NULL) return;
+		ll mid= (l+r)/2;
+		left=new segnode(l,mid);
+	}
+	inline void rig(){
+		if(l==r || right!=NULL) return;
+		ll mid= (l+r)/2;
+		right=new segnode(mid+1,r);
+	}
+	inline void invert(bool f){
+		if(!f) return;
+		lazy=!lazy;
+		b=r-l+1-b;
+	}
+	void prop(){
+		lef();rig();
+		left->invert(lazy);
+		right->invert(lazy);
+		lazy=false;
+	}
+	void update(ll x,ll y){
+		if(x>r || y<l) return;
+		if(x<=l && y>=r){
+			invert(true);
+			return;
+		}
+		prop();
+		left->update(x,y);
+		right->update(x,y);
+		b=left->b+right->b;
+	}
+	ll query(ll x,ll y)
+	{
+		if(x>r || y<l) return 0;
+		if(x<=l && y>=r) return b;
+		prop();
+		return left->query(x,y)+right->query(x,y);
+	}
+	
+};
+segnode rows,cols;
+int main()
+{
+    int n,t,tt;
+    scanf("%d",&n);
+    ll l,r,x,y;
+    ll last_ans=0;
+    rows=segnode(1,MAX);
+    cols=segnode(1,MAX);
+    while(n--)
+    {
+    	scanf("%d",&t);
+    	if(t==1)
+    	{
+    		scanf("%d %lld %lld",&tt,&l,&r);
+    		l^=last_ans;
+    		r^=last_ans;
+    		if(tt==0) rows.update(l,r);
+    		else cols.update(l,r);
+    	}
+    	else {
+    		scanf("%lld %lld %lld %lld",&l,&r,&x,&y);
+    		l^=last_ans;
+    		r^=last_ans;
+    		x^=last_ans;
+    		y^=last_ans;
+    		long long br=rows.query(l,r),bc=cols.query(x,y);
+    		long long wr=r-l+1-br,wc=y-x+1-bc;
+    		br%=MOD;bc%=MOD;wr%=MOD;wc%=MOD;
+    		last_ans=((br*wc)%MOD+(bc*wr)%MOD)%MOD;
+    		printf("%lld\n",last_ans);
+    	}
+    }
+    return 0;
+}

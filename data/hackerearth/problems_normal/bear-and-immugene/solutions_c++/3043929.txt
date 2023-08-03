@@ -1,0 +1,142 @@
+#include <bits/stdc++.h>
+// iostream is too mainstream
+#include <cstdio>
+// bitch please
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <list>
+#include <cmath>
+#include <iomanip>
+#include <time.h>
+#define dibs reserve
+#define OVER9000 1234567890
+#define ALL_THE(CAKE,LIE) for(auto LIE =CAKE.begin(); LIE != CAKE.end(); LIE++)
+#define tisic 47
+#define soclose 1e-8
+#define chocolate win
+// so much chocolate
+#define patkan 9
+#define ff first
+#define ss second
+#define abs(x) ((x < 0)?-(x):x)
+#define uint unsigned int
+#define dbl long double
+#define pi 3.14159265358979323846
+using namespace std;
+// mylittledoge
+
+#ifdef DONLINE_JUDGE
+	// palindromic tree is better than splay tree!
+	#define lld I64d
+#endif
+
+long long mod =1000000007;
+
+struct mat {
+	long long e[5][5];
+	mat() {}
+	mat(int n) {
+		for(int i =0; i < 25; i++) e[i/5][i%5] =0;
+		for(int i =0; i < 5; i++) e[i][i] =n;}
+	};
+
+mat prod(mat &A, mat &B) {
+	mat ret(0);
+	for(int i =0; i < 5; i++) for(int j =0; j < 5; j++) {
+		for(int k =0; k < 5; k++) ret.e[i][j] +=A.e[i][k]*B.e[k][j];
+		ret.e[i][j] %=mod;}
+	return ret;}
+
+struct node {
+	int z,k;
+	int son[2];
+	mat M;
+	};
+
+struct intervalac {
+	vector<node> T;
+
+	void constI(int akt, vector<mat> &V) {
+		node n =T[akt];
+		if(n.z == n.k-1) {
+			T[akt].M =V[n.z];
+			return;}
+		for(int i =0; i < 2; i++) {
+			if(i == 0) n.k =(n.z+n.k)/2;
+			else {n.z =n.k; n.k =T[akt].k;}
+			T[akt].son[i] =T.size();
+			T.push_back(n);
+			constI(T.size()-1,V);}
+		T[akt].M =prod(T[T[akt].son[0]].M,T[T[akt].son[1]].M);
+		}
+
+	intervalac(int N, vector<mat> &V) {
+		node n;
+		n.z =0, n.k =N;
+		n.son[0] =n.son[1] =-1;
+		n.M =mat(1);
+		T.resize(1,n);
+		constI(0,V);}
+
+	void upd(int akt, int pos, mat &val) {
+		node n =T[akt];
+		if(n.z == n.k-1) {
+			T[akt].M =val;
+			return;}
+		if((n.z+n.k)/2 > pos) upd(n.son[0],pos,val);
+		else upd(n.son[1],pos,val);
+		T[akt].M =prod(T[n.son[0]].M,T[n.son[1]].M);}
+	};
+
+int main() {
+	cin.sync_with_stdio(0);
+	cin.tie(0);
+	cout << fixed << setprecision(10);
+	int N,Q;
+	char ch[1000000+tisic];
+	scanf(" %d %d %s",&N,&Q,ch);
+	string s =(string)ch;
+
+	vector<mat> V(N,mat(0));
+	for(int i =0; i < N; i++) {
+		int c =(s[i] == 'A')?0:(s[i] == 'C')?1:(s[i] == 'G')?2:3;		
+		for(int j =0; j < 4; j++) if(j != c) V[i].e[j+1][j+1] =1;
+		V[i].e[0][0] =2;
+		V[i].e[0][c+1] =mod-1;
+		V[i].e[c+1][0] =1;}
+
+	intervalac I(N,V);
+
+	for(int q =0; q < Q; q++) {
+		int x;
+		scanf(" %d %s",&x,ch);
+		s[--x] =ch[0];
+		V[x] =mat(0);
+		int c =(s[x] == 'A')?0:(s[x] == 'C')?1:(s[x] == 'G')?2:3;		
+		for(int j =0; j < 4; j++) if(j != c) V[x].e[j+1][j+1] =1;
+		V[x].e[0][0] =2;
+		V[x].e[0][c+1] =mod-1;
+		V[x].e[c+1][0] =1;
+		I.upd(0,x,V[x]);
+		long long ans =I.T[0].M.e[0][0];
+		if(ans < 0) ans +=mod;
+		cout << ans << "\n";}
+/*
+	vector<long long> P(N+2,0);
+	P[1] =0;
+	int last[] ={0,0,0,0};
+	for(int i =0; i < N; i++) {
+		int c =(s[i] == 'A')?0:(s[i] == 'C')?1:(s[i] == 'G')?2:3;
+		P[i+2] =(2*P[i+1]-P[last[c]])%mod;
+		last[c] =i+1;}
+	cout << P[N+1] << "\n";
+*/	return 0;}
+
+// look at my code
+// my code is amazing

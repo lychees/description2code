@@ -1,0 +1,84 @@
+// hackerearth file
+#include<bits/stdc++.h>
+#include<math.h>
+#include<cmath>
+using namespace std;
+#define pb push_back
+#define mp make_pair
+#define sz(_vvv) (int)(_vvv.size())
+#define all(_v) (_v).begin(),(_v).end()
+#define gi(x) scanf("%d",&x)
+#define gl(x) scanf("%ld",&x)
+#define gll(x) scanf("%64d",&x)
+#define pii pair<int,int>
+typedef long long ll;
+const ll MOD = 1e9+7;
+const int INF = 0x7f7f7f7f;
+const double eps = 1e-6;
+
+const int maxn = 200010;
+int p[22][maxn];
+struct suffix {
+	int left_half;
+	int right_half;
+	int idx;
+};
+
+suffix l[maxn];
+bool cmp (const suffix& a,const suffix& b) {
+	if(a.left_half == b.left_half) return a.right_half < b.right_half;
+	return a.left_half < b.left_half;
+}
+
+int compute_lcp(int x,int y,int len,int step) {
+	int ret = 0;
+	if(x == y) return len - x;
+	for (int k = step - 1; k >= 0 and x < len and y < len; k --) {
+		if(p[k][x] == p[k][y]) {
+			ret += 1 << k;
+			x += 1 << k;
+			y += 1 << k;
+		}
+	}
+	return ret;
+}
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	
+    string s; cin >> s;
+	reverse(all(s));
+
+	int len = sz(s);
+
+	for (int i = 0; i < len; i ++) p[0][i] = s[i] - 'a';
+	
+	int step,cnt;
+	for (step = 1,cnt = 1; cnt < len; step ++,cnt *= 2) {
+		for (int i = 0; i < len; i ++) {
+			l[i].left_half = p[step - 1][i];
+			l[i].right_half = (i + cnt < len) ? p[step - 1][i + cnt] : -1;
+			l[i].idx = i;
+		}
+
+		sort(l,l + len,cmp);
+
+		p[step][l[0].idx] = 0;
+		for (int i = 1,curr_rank = 0; i < len; i ++) {
+			if(l[i].left_half != l[i - 1].left_half or l[i].right_half != l[i - 1].right_half)
+				++ curr_rank;
+			p[step][l[i].idx] = curr_rank;
+		}
+	}
+
+	// for (int i = 0; i < len; i ++) cout << p[step - 1][i] << ' ';
+	// cout << "\n";
+	
+	int q; cin >> q;
+	while (q --) {
+		int x; cin >> x;
+		cout << compute_lcp(0,len - x,len,step) << "\n";
+	}
+	
+	return 0;
+}

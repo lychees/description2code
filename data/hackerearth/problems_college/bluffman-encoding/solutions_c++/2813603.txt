@@ -1,0 +1,196 @@
+#include<iostream>
+#include<cstdio>
+#include<string.h>
+#include<math.h>
+#include<stdlib.h>
+#include<limits.h>
+#include<map>
+#include<string>
+using namespace std;
+map< string, char> m;
+struct Node{
+   int freq;
+   char ch;
+   struct Node *left_child, *right_child;
+};
+
+struct Tree{
+   int cap;
+   int siz;
+   struct Node **arr;
+};
+
+struct Node *create_newNode(char ch, int freq)
+{
+    struct Node *temp_node = (struct Node*)malloc(sizeof(struct Node));
+    temp_node ->left_child = 0;
+    temp_node->right_child = 0;
+    temp_node->freq = freq;
+    temp_node->ch = ch;
+    return temp_node;
+}
+
+struct Tree* createTree(int cap)
+{
+    struct Tree* temp_tree = (struct Tree*)malloc(sizeof(struct Tree));
+    temp_tree->siz = 0;
+    temp_tree->arr = (struct Node**)malloc(cap*sizeof(struct Node*));
+    temp_tree->cap = cap;
+    return temp_tree;
+}
+
+void swap_node(struct Node **node_a, struct Node** node_b)
+{
+   struct Node *temp = *node_a;
+   *node_a = *node_b;
+   *node_b = temp;
+}
+
+void maxHeapiy(struct Tree *tree, int id)
+{
+    int largest = id;
+    int left = 2*id + 1;
+    int right = 2*id + 2;
+    if( (left < tree->siz) && ( (tree->arr[left]->freq > tree->arr[largest]->freq) ||
+                            ((tree->arr[left]->freq == tree->arr[largest]->freq) && (tree->arr[left]->ch > tree->arr[largest]->ch) )))
+                                largest = left;
+
+    if( (right < tree->siz) && ( (tree->arr[right]->freq > tree->arr[largest]->freq) ||
+                            ((tree->arr[right]->freq == tree->arr[largest]->freq) && (tree->arr[right]->ch > tree->arr[largest]->ch))))
+                                largest = right;
+    if(largest != id)
+    {
+        swap_node(&tree->arr[largest], &tree->arr[id]);
+        maxHeapiy(tree, largest);
+    }
+}
+int isSizeOne(struct Tree *tree)
+{
+    return (tree->siz == 1);
+}
+struct Node* extractMax(struct Tree *tree)
+{
+    struct Node *temp = tree->arr[0];
+    tree->arr[0] = tree -> arr[tree->siz-1];
+    --tree->siz;
+    maxHeapiy(tree,0);
+    return temp;
+}
+void insertMaxHeap(struct Tree *tree , struct Node *node)
+{
+    ++tree->siz;
+    int i = tree->siz-1;
+    while(i && ((node->freq >  tree->arr[(i - 1)/2]->freq) ||
+                ((node->freq ==  tree->arr[(i - 1)/2]->freq)) && (node->ch >  tree->arr[(i - 1)/2]->ch)))
+    {
+        tree->arr[i] = tree->arr[(i-1)/2];
+        i = (i-1)/2;
+    }
+    tree->arr[i] = node;
+}
+
+void buildMaxHeap(struct Tree *tree)
+{
+    int n = tree->siz-1;
+    for(int i=(n-1)/2; i>=0; i--)
+        maxHeapiy(tree, i);
+}
+void store(int arr[], int n)
+{
+
+
+}
+int isLeaf(struct Node* root)
+{
+    return (!(root->left_child) && !(root->right_child));
+}
+
+struct Tree* createAndBuildMaxHeap(char data[], int freq[], int siz)
+{
+    struct Tree *tree = createTree(siz);
+    for(int i=0; i<siz; i++)
+        tree->arr[i] = create_newNode(data[i],freq[i]);
+    tree->siz = siz;
+    buildMaxHeap(tree);
+    return tree;
+}
+struct Node *buildBluffmanTree(char data[], int freq[], int siz)
+{
+   struct Node *left, *right, *top;
+   struct Tree *tree = createAndBuildMaxHeap(data, freq, siz);
+   while(!isSizeOne(tree))
+   {
+       left = extractMax(tree);
+       right = extractMax(tree);
+       top = create_newNode('$', left->freq + right->freq);
+       top->left_child = left;
+       top->right_child = right;
+       insertMaxHeap(tree, top);
+   }
+   return extractMax(tree);
+}
+void storeCode(struct Node *root, string s)
+{
+   string tmp_s = s;
+   if(root->left_child)
+   {
+       tmp_s += '1';
+       storeCode(root->left_child, tmp_s);
+   }
+   tmp_s = s;
+   if(root->right_child)
+   {
+       tmp_s += '0';
+       storeCode(root->right_child, tmp_s);
+   }
+   if(isLeaf(root))
+       m.insert(make_pair(tmp_s,root->ch));
+}
+
+int main()
+{
+  int t,n, freq[2000];
+  char data[2000];
+  scanf("%d",&t);
+  while(t--)
+  {
+      scanf("%d",&n);
+      m.clear();
+      for(int i=0; i<n; i++)
+        {
+            getchar();
+            scanf("%c %d",&data[i],&freq[i]);
+            freq[i]++;
+        }
+      getchar();
+      string name;
+      char s[20001];
+      scanf("%s",s);
+      name = s;
+
+      struct Node *root = buildBluffmanTree(data, freq, n);
+      storeCode(root,"");
+      map<string, char>::iterator it;
+//      for(it = m.begin(); it!= m.end(); ++it)
+//        cout<<it->first<<"  "<<it->second<<"\n";
+      int len = strlen(s);
+      int j = 0;
+      while(j < len)
+      {
+        for(it = m.begin(); it!= m.end(); ++it)
+        {
+            string cd = it->first;
+            int tmp_len = cd.length();
+            string tmp_str = name.substr(j, tmp_len);
+            if(tmp_str.compare(cd) == 0)
+            {
+                cout<<it->second;
+                j += tmp_len;
+                break;
+            }
+        }
+      }
+      printf("\n");
+  }
+  return 0;
+}

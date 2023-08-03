@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define inf 100000001
+
+int tmpN, tmpK;
+int SP[404][404], A[404][404], B[18], dp[16][(1<<15)+5];
+
+int solve(int i, int mask, int target)
+{
+	if(mask==target)
+	{
+		if(mask)
+			return SP[B[i]][tmpN];
+		
+		return SP[i][tmpN];
+	}
+	
+	if(dp[i][mask]!=-1)
+		return dp[i][mask];
+	
+	int ans = inf;
+	
+	for(int j=0; j<tmpK; j++)
+	{
+		if(mask&(1<<j))
+			continue;
+		
+		if(mask)
+			ans = min(ans, SP[B[i]][B[j]] + solve(j, mask+(1<<j), target));
+		else
+			ans = min(ans, SP[i][B[j]] + solve(j, mask+(1<<j), target));
+	}
+	
+	return dp[i][mask] = ans;
+}
+
+int main()
+{
+    int N, M, K;
+    scanf("%d %d %d", &N, &M, &K);
+    
+    tmpN = N;
+    tmpK = K;
+    
+    for(int i=1; i<=M; i++)
+    {
+    	int x, y, z;
+    	scanf("%d %d %d", &x, &y, &z);
+    	
+    	A[x][y] = A[y][x] = z;
+    }
+    
+    for(int i=0; i<K; i++)
+    	scanf("%d", &B[i]);
+    
+    for(int i=1; i<=N; i++)
+    	for(int j=1; j<=N; j++)
+    	{
+    		if(i!=j)
+    			SP[i][j] = inf;
+    		if(A[i][j])
+    			SP[i][j] = A[i][j];
+    	}
+    	
+    for(int k=1; k<=N; k++)
+    	for(int i=1; i<=N; i++)
+    		for(int j=1; j<=N; j++)
+    			SP[i][j] = min(SP[i][j], SP[i][k] + SP[k][j]);
+    
+    memset(dp, -1, sizeof(dp));
+    
+    printf("%d\n", solve(1, 0, (1<<K)-1));
+    
+    return 0;
+}

@@ -1,0 +1,75 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+using namespace std;
+
+const int MOD=1000000007;
+long long N;
+int A[3][3];
+
+struct matrix
+{
+    int data[9][9];
+};
+
+matrix mul(matrix a, matrix b)
+{
+    matrix c;
+    for(int i=0; i<9; i++) for(int j=0; j<9; j++)
+    {
+        c.data[i][j]=0;
+        for(int k=0; k<9; k++)
+            c.data[i][j]=(c.data[i][j]+1LL*a.data[i][k]*b.data[k][j])%MOD;
+    }
+    return c;
+}
+
+matrix transition[3][10000];
+matrix base;
+
+void _main()
+{
+    memset(base.data, 0, sizeof base.data);
+    scanf("%lld", &N);
+    for(int i=0; i<3; i++)
+        for(int j=0; j<3; j++)
+            scanf("%d", A[i]+j), base.data[i*3+j][0]=A[i][j];
+    base=mul(transition[0][1], base);
+    N--;
+    for(int i=0; N; i++)
+    {
+        base=mul(transition[i][N%10000], base);
+        N/=10000;
+    }
+    for(int i=0; i<3; i++)
+        for(int j=0; j<3; j++)
+            printf("%d%c", base.data[i*3+j][0], " \n"[j==2]);
+}
+
+int main()
+{
+    for(int t=0; t<3; t++)
+        for(int i=0; i<9; i++)
+            for(int j=0; j<9; j++)
+                transition[t][0].data[i][j]=i==j;
+    for(int x=0; x<3; x++)
+        for(int y=0; y<3; y++)
+            for(int i=0; i<3; i++)
+                for(int j=0; j<3; j++)
+                    transition[0][1].data[x*3+y][i*3+j]=abs(i-x)+abs(j-y)+abs(i+j-x-y);
+    for(int i=2; i<10000; i++)
+        transition[0][i]=mul(transition[0][i-1], transition[0][1]);
+    for(int t=1; t<3; t++)
+    {
+        transition[t][1]=mul(transition[t-1][9999], transition[t-1][1]);
+        for(int i=2; i<10000; i++)
+            transition[t][i]=mul(transition[t][i-1], transition[t][1]);
+    }
+    int TEST;
+    scanf("%d", &TEST);
+    while(TEST--)
+        _main();
+    return 0;
+}

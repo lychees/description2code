@@ -1,0 +1,189 @@
+/*
+Author :: MD. Musfiqur Rahman Sanim
+Aust cse 28th Batch
+ID:11.02.04.097
+*/
+
+
+//{ Template
+using namespace std;
+//{ headers
+#include<bits/stdc++.h>
+//}
+//{ Loops
+#define forab(i,a,b) for (__typeof(b) i = (a); i <= (b); ++i)
+#define rep(i,n) forab (i, 0, (n) - 1)
+#define For(i,n) forab (i, 1, n)
+#define rofba(i,a,b) for (__typeof(b) i = (b); i >= (a); --i)
+#define per(i,n) rofba (i, 0, (n) - 1)
+#define rof(i,n) rofba (i, 1, n)
+#define forstl(i,s) for (__typeof ((s).end ()) i = (s).begin (); i != (s).end (); ++i)
+//}
+//{ Floating-points
+#define EPS 1e-7
+#define abs(x) (((x) < 0) ? - (x) : (x))
+#define zero(x) (abs (x) < EPS)
+#define equal(a,b) (zero ((a) - (b)))
+#define PI 2*acos (0.0)
+//}
+typedef long long int64;
+typedef unsigned long long int64u;
+#define memo(a,v) memset(a,v,sizeof(a))
+#define all(a) a.begin(),a.end()
+#define db double
+#define pb push_back
+#define eb emplace_back
+#define pii pair<int ,int >
+#define NL puts("")
+#define ff first
+#define ss second
+//{
+//Intput_Output
+#define gc getchar
+#define II ({ int a; read(a); a;})
+#define IL ({ int64 a; read(a);  a;})
+#define ID ({ db a; scanf("%lf",&a);  a;})
+#define IC ({ char a; scanf("%c",&a);  a;})
+#define IS ({ string a; cin >> a;  a;})
+#define OC printf("Case %d:",cs);
+//}
+//}
+#define _stl(x) {__stl_print__(x);}
+#define __(args...) {dbg,args; cerr<<endl;}
+template<class T>inline bool read(T &x){int c=gc();int sgn=1;while(~c&&c<'0'|c>'9'){if(c=='-')sgn=-1;c=gc();}for(x=0;~c&&'0'<=c&&c<='9';c=gc())x=x*10+c-'0';x*=sgn;return ~c;}
+struct debugger{template<typename T> debugger& operator , (const T& v){cerr<<v<<"    "; return *this; }}dbg;
+template <class T> void __stl_print__ (T &x) { // for all STL containers
+    cerr << "["; forstl (i, x) cerr << (i != x.begin () ? ", " : "") << *i; cerr << "]" << endl;
+}
+template <class T, class U> inline T max (T &a, U &b)
+{
+    return a > b ? a : b;
+}
+template <class T, class U> inline T min (T &a, U &b)
+{
+    return a < b ? a : b;
+}
+template <class T, class U> inline T swap (T &a, U &b)
+{
+    T tmp = a;
+    a = b;
+    b = tmp;
+}
+//int dx[]={1,0,-1,0};int dy[]={0,1,0,-1}; //4 Direction
+//int dx[]={1,1,0,-1,-1,-1,0,1};int dy[]={0,1,1,1,0,-1,-1,-1};//8 Direction
+//int dx[]={2,1,-1,-2,-2,-1,1,2};int dy[]={1,2,2,1,-1,-2,-2,-1};//Knight Direction
+//int dx[6]={2,1,-1,-2,-1,1};int dy[6]={0,1,1,0,-1,-1}; //Hexagonal Direction
+
+const int64 INF = (1ll)<<50;
+const int mx = 1e6 + 7;
+const int mod = 1000000007 ;
+const db pi = PI;
+int EQ(double d) {
+    if ( fabs(d) < EPS ) return 0;
+    return d > EPS ? 1 : -1 ;
+}
+
+char str [mx];
+int N, stp, mv, SA [mx], LCP [mx], tmp [mx];
+int sum [mx], cnt [mx], c [mx], rnk [22][mx];
+
+inline bool cmp (const int &a, const int &b) { return str [a] < str [b]; }
+
+bool isEqual (int u, int v) {
+    if (!stp) return str [u] == str [v];
+    if (rnk [stp - 1][u] != rnk [stp - 1][v]) return false;
+    int a = u + mv < N ? rnk [stp - 1][u + mv] : -1;
+    int b = v + mv < N ? rnk [stp - 1][v + mv] : -1;
+    return a == b;
+}
+
+void update () {
+    for (int i = 0; i < N; ++i) sum [i] = 0;
+    for (int nk = 0, i = 0; i < N; ++i) {
+        SA [i] = tmp [i];
+        if (i && !isEqual (SA [i], SA [i - 1])) {
+            rnk [stp][SA [i]] = ++nk;
+            sum [nk + 1] = sum [nk];
+        } else rnk [stp][SA [i]] = nk;
+        ++sum [nk + 1];
+    }
+}
+
+void Sort () {
+    for (int i = 0; i < N; ++i) cnt [i] = 0;
+    memset (tmp, -1, sizeof tmp);
+    for (int i = 0; i < mv; ++i) {
+        int idx = rnk [stp - 1][N - i - 1];
+        int x = sum [idx];
+        tmp [x + cnt [idx]] = N - i - 1;
+        ++cnt [idx];
+    }
+
+    for (int i = 0; i < N; ++i) {
+        int idx = SA [i] - mv;
+        if (idx < 0) continue;
+        idx = rnk [stp - 1][idx];
+        int x = sum [idx];
+        tmp [x + cnt [idx]] = SA [i] - mv;
+        ++cnt [idx];
+    }
+    update ();
+    return;
+}
+
+void kasaiLCP () {
+    for (int i = 0; i < N; ++i) c [SA [i]] = i;
+    LCP [0] = 0;
+    for (int i = 0, h = 0; i < N; ++i) if (c[i] > 0) {
+            int j = SA [c [i] - 1];
+            while (i + h < N && j + h < N && str [i + h] == str [j + h]) ++h;
+            LCP [c [i]] = h;
+            if (h > 0) --h;
+        }
+}
+
+void suffixArray () {
+    N = strlen (str);
+    for (int i = 0; i < N; ++i) tmp [i] = i;
+    sort (tmp, tmp + N, cmp);
+    stp = 0;
+    update ();
+    ++stp;
+    for (mv = 1; mv < N; mv <<= 1) {
+        Sort ();
+        ++stp;
+    }
+    --stp;
+    for (int i = 0; i <= stp; i++)  rnk [i][N] = -1;
+    kasaiLCP();
+}
+
+int lcp (int u, int v) {
+    int ret = 0;
+    for (int i = stp; i >= 0; --i) if (rnk [i][u] == rnk [i][v]) ret += 1 << i, u += 1 << i, v += 1 << i;
+    return ret;
+}
+
+
+int main() {
+#ifdef Sanim
+	//geting WA check int64 & int64u
+    freopen ("in.txt", "r", stdin);
+    // freopen ("output.txt", "w", stdout);
+#endif
+    int n = II,k = II;
+    scanf("%s",str);
+    if(n == 1){
+        cout << k << endl;
+        return 0;
+    }
+    suffixArray();
+    int ans = 0;
+    rep(i,k){
+        if(i+n-1<k){
+            int tmp = lcp(SA[i],SA[i+n-1]);
+            ans = max(ans,tmp);
+        }else break;
+    }
+    cout << ans << endl;
+}

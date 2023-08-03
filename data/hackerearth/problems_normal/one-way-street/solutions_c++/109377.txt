@@ -1,0 +1,117 @@
+// iHaala Madrid - A Gunner
+#include<iostream>
+#include<vector>
+#include<queue>
+#include<algorithm>
+#include<map>
+#include<stack>
+#include<stdio.h>
+#include<math.h>
+#include<string>
+#include<assert.h>
+#include<stdlib.h>
+#define MAXN 10010
+#define LOGMAXN 15
+using namespace std;
+
+int N, T[MAXN],L[MAXN],P[MAXN][LOGMAXN];
+vector<int> v[MAXN];
+
+void Preprocess(){
+      int i, j;
+   
+  //we initialize every element in P with -1
+      for (i = 0; i < N; i++)
+          for (j = 0; 1 << j < N; j++)
+              P[i][j] = -1;
+   
+  //the first ancestor of every node i is T[i]
+      for (i = 0; i < N; i++)
+          P[i][0] = T[i];
+   
+  //bottom up dynamic programing
+      for (j = 1; 1 << j < N; j++)
+         for (i = 0; i < N; i++)
+             if (P[i][j - 1] != -1)
+                 P[i][j] = P[P[i][j - 1]][j - 1];
+}
+
+int query(int p, int q){
+      int tmp, log, i;
+   
+  //if p is situated on a higher level than q then we swap them
+      if (L[p] < L[q])
+          tmp = p, p = q, q = tmp;
+  
+  //we compute the value of [log(L[p)]
+      for (log = 1; 1 << log <= L[p]; log++);
+      log--;
+   
+  //we find the ancestor of node p situated on the same level
+  //with q using the values in P
+      for (i = log; i >= 0; i--)
+          if (L[p] - (1 << i) >= L[q])
+              p = P[p][i];
+   
+      if (p == q)
+          return p;
+   
+  //we compute LCA(p, q) using the values in P
+      for (i = log; i >= 0; i--)
+          if (P[p][i] != -1 && P[p][i] != P[q][i])
+              p = P[p][i], q = P[q][i];
+   
+      return T[p];
+}
+
+void FillLevelsAndParents(int q,int l,int p){
+	L[q]=l;
+	T[q]=p;
+	for(int i=0;i<v[q].size();i++)
+		if(v[q][i]!=p)
+			FillLevelsAndParents(v[q][i],l+1,q);
+}
+
+int main(){
+	int t,i,j,x,y,q,k;
+	
+	scanf("%d",&t);
+	
+	while(t--){
+		scanf("%d",&N);
+		
+		for(i=0;i<N;i++)	v[i].clear();
+		
+		for(i=0;i<(N-1);i++){
+			scanf("%d%d",&x,&y);
+			x--,y--;						
+			v[x].push_back(y);
+			v[y].push_back(x);
+		}
+		
+		FillLevelsAndParents(0,0,-1);
+		Preprocess();
+		
+		scanf("%d",&q);
+		
+		while(q--){
+			scanf("%d%d",&x,&y);
+			x--,y--;
+			k=query(x,y);
+			
+			i=0;
+			if(k==x){
+				i=1 + 2*( L[y] - L[x] -1 );
+			}else if(k==y){
+				i=2*( L[x] - L[y] );
+			}else{
+				i=2*( L[x] - L[k] ) + 1 + 2*( L[y] - L[k] -1 );
+			}
+			//printf("%d ",k);
+			printf("%d\n",i);
+		}
+		
+	}
+	
+	return 0;
+}

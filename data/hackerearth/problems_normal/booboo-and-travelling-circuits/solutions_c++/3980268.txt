@@ -1,0 +1,198 @@
+//Created By Mayur Agarwal :)
+
+#include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <set>
+#include <algorithm>
+#include <map>
+#include <iterator>
+#include <functional>
+#include <queue>
+
+#define ll long long
+#define ind(a) scanf("%d",&a)
+#define in(a) scanf("%lld",&a)
+#define inc(a) scanf("%c",&a)
+#define ins(a) scanf("%s",a)
+#define pr(a) printf("%lld\n",a)
+#define debug(x) cout << #x << " = " << x << endl
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define pb push_back
+#define ff first
+#define ss second
+#define SIZE 20010
+const ll mod = 1000000003;
+
+using namespace std;
+typedef pair<ll, ll>pll;
+
+bool prime[SIZE];
+ll factor[SIZE];
+ll dp[2][SIZE];
+pll foo[SIZE];
+ll A[10001], B[10001];
+ll S[SIZE], W[SIZE];
+inline void sieve()
+{
+    factor[1] = 1;
+    prime[0] = prime[1] = 1;
+    for (int i = 2; i <= 10001; i++)
+    {
+        if (prime[i] == 0)
+        {
+            factor[i] = i;
+            for (int j = i * i; j <= 10101; j += i)
+            {
+                prime[j] = 1;
+                if (factor[j] == 0)
+                {
+                    factor[j] = i;
+                }
+            }
+        }
+    }
+}
+
+int main()
+{
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w", stdout);
+#endif
+    ios_base::sync_with_stdio(0); cin.tie(0);
+
+    ll N, M;
+    ll P, Q, R, X, Y, Z, SS, WW;
+    cin >> N >> M >> SS >> P >> Q >> R  >> WW >> X >> Y >> Z;
+
+    S[0] = SS;
+    W[0] = WW;
+
+    sieve();
+    for (int j = 1; j <= M; j++)
+    {
+        dp[1][j] = 1e15;
+        foo[factor[j]].ff = factor[j];
+        foo[factor[j]].ss = factor[j] * 2;
+        S[j] = (((P * S[j - 1]) % mod * S[j - 1]) % mod + (Q * S[j - 1]) % mod + R) % mod;
+        A[j] = S[j];
+        W[j] = (((X * W[j - 1]) % mod * W[j - 1]) % mod + (Y * W[j - 1]) % mod + Z) % mod;
+        B[j] = W[j];
+        if (j == M)
+        {
+            S[0] = S[M];
+            W[0] = W[M];
+        }
+        //cout << S[j] << " ";
+    }
+    //cout << endl;
+    ll next = 0, prev = 0, cur = 0;
+    for (int i = 2; i <= N; i++)
+    {
+        for (int j = 2; j <= M; j++)
+        {
+            ll temp1 = foo[factor[j]].ff;
+            ll temp2 = foo[factor[j]].ss;
+            if (dp[cur][temp1] + B[temp1] > dp[cur][j] + B[j])
+            {
+                foo[factor[j]].ss = foo[factor[j]].ff;
+                foo[factor[j]].ff = j;
+            }
+            else if (temp1 != j && dp[cur][temp1] + B[temp1] == dp[cur][j] + B[j])
+            {
+                foo[factor[j]].ss = j;
+            }
+            else
+            {
+                if (temp2 <= M && temp2 != j && dp[cur][temp2] + B[temp2] > dp[cur][j] + B[j])
+                {
+                    foo[factor[j]].ss = j;
+                }
+            }
+        }
+        cur = 1 - cur;
+        prev = 1 - cur;
+
+        for (int j = 1; j <= M; j++)
+        {
+            if (j != 1)
+                dp[cur][1] = min(dp[cur][1], dp[prev][j] + B[j]);
+            else
+                dp[cur][1] = min(dp[cur][1], dp[prev][j] + A[j]);
+        }
+        for (int j = 2; j <= M; j++)
+        {
+            dp[cur][j] = (dp[prev][j] + A[j]);
+            ll temp1 = foo[factor[j]].ff;
+            ll temp2 = foo[factor[j]].ss;
+
+            if (temp1 != j)
+            {
+                dp[cur][j] = min(dp[cur][j], dp[prev][temp1] + B[temp1]);
+            }
+            else if (temp1 == j)
+            {
+                if (temp2 != j && temp2 <= M && temp2 > 0)
+                {
+                    dp[cur][j] = min(dp[cur][j], dp[prev][temp2] + B[temp2]);
+                }
+            }
+        }
+        for (int j = 1; j <= M; j++)
+        {
+            S[j] = (((P * S[j - 1]) % mod * S[j - 1]) % mod + (Q * S[j - 1]) % mod + R) % mod;
+            A[j] = S[j];
+            W[j] = (((X * W[j - 1]) % mod * W[j - 1]) % mod + (Y * W[j - 1]) % mod + Z) % mod;
+            B[j] = W[j];
+            if (j == M)
+            {
+                S[0] = S[M];
+                W[0] = W[M];
+            }
+            ll temp1 = foo[factor[j]].ff;
+            ll temp2 = foo[factor[j]].ss;
+            temp1 = factor[j];
+            temp2 = factor[j] * 2;
+            dp[prev][j] = 1e15;
+        }
+        // for (int j = 1; j <= M; j++)
+        // {
+        //     // ll temp1 = foo[factor[j]].ff;
+        //     // ll temp2 = foo[factor[j]].ss;
+        //     // if (dp[cur][temp1] + B[temp1] > dp[cur][j] + B[j])
+        //     // {
+        //     //     foo[factor[j]].ss = foo[factor[j]].ff;
+        //     //     foo[factor[j]].ff = j;
+        //     // }
+        //     // else if (temp1 != j && dp[cur][temp1] + B[temp1] == dp[cur][j] + B[j])
+        //     // {
+        //     //     foo[factor[j]].ss = j;
+        //     // }
+        //     // else
+        //     // {
+        //     //     if (temp2 <= M && temp2 != j && dp[cur][temp2] + B[temp2] > dp[cur][j] + B[j])
+        //     //     {
+        //     //         foo[factor[j]].ss = j;
+        //     //     }
+        //     // }
+        //     // //cout << S[j] << " ";
+        //     // //cout << dp[cur][j] << " ";
+
+        // }
+        // //cout << endl;
+        // //cout << endl;
+        // //cout << endl;
+    }
+    ll ans = 1e18;
+    for (int i = 1; i <= M; i++)
+    {
+        ans = min(ans, dp[cur][i]);
+    }
+    cout << ans << endl;
+    return 0;
+}

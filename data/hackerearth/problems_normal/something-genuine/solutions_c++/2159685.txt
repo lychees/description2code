@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+#define NMAX 200050
+#define MOD  1000000007
+#define rf freopen("inp.in","r",stdin)
+ 
+using namespace std;
+ 
+int N;
+long long ST[NMAX << 2];
+long long LAZY[NMAX << 2];
+long long A[NMAX];
+long long L[NMAX]; // Last Index of A[i]
+long long ans = 0 , cur = 0;
+ 
+void push(int l , int r , int node){
+	
+	if(LAZY[node] != 0){
+		ST[node] += (r-l+1)*LAZY[node];
+		if( l != r){
+			LAZY[node+node] += 	LAZY[node];
+			LAZY[node+node+1] += LAZY[node];
+		}
+		LAZY[node] = 0;
+	}
+ 
+}
+ 
+long long query(int node , int l , int r, int qs , int qe){
+	
+	push(l,r,node);
+	if( l > qe or r < qs) return 0;
+	if( l >= qs and r <= qe) return ST[node];
+	int lc = node << 1 , rc = lc|1 , mid = (l+r)>>1;
+	return query(lc,l,mid,qs,qe) + query(rc,mid+1,r,qs,qe);
+ 
+}
+ 
+void update(int node , int l , int r , int qs , int qe , long long val){
+	
+	push(l,r,node);
+	
+	if( l > qe or r < qs)return;
+	
+	if( l >= qs and r <= qe){
+		ST[node] += (r-l+1)*val;
+		if( l != r){
+			LAZY[node << 1] += val;
+			LAZY[ (node << 1) + 1] += val;
+		}
+		return;
+	}
+ 
+	int lc = node << 1 , rc = lc|1 , mid = (l+r)>>1;
+	update(lc,l,mid,qs,qe,val);
+	update(rc,mid+1,r,qs,qe,val);
+	ST[node] = ST[lc] + ST[rc];
+}
+ 
+int main(){
+	
+	cin >> N;
+	
+	for(int i = 1 ; i <= N ; i++) cin >> A[i];
+	
+	for(int i = 1 ; i <= N ; i++){
+		long long prev = L[ A[i] ];
+		cur = ( cur + 2 * query(1,1,N,prev+1,i)) + (i-prev) % MOD;
+		ans = (ans + cur) % MOD;
+		update(1,1,N,prev+1,i,1);
+		L [ A[i] ] = i;
+	}
+ 
+	cout << ans << endl;
+}

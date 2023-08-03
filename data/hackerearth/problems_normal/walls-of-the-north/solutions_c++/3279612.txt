@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ull unsigned long long
+#define ill long long int
+#define pii pair<int,int>
+#define pb(x) push_back(x)
+#define mp(x, y) make_pair(x, y)
+#define F(i,a,n) for(i=(a);i<(n);++i)
+#define FD(i,a,n) for(int i=(a);i>=(n);--i)
+#define FE(it,x) for(it=x.begin();it!=x.end();++it)
+#define V(x) vector<x>
+#define S(x) scanf("%d",&x)
+#define Sl(x) scanf("%lld",&x)
+#define M(x,i) memset(x,i,sizeof(x))
+#define all(x) x.begin(), x.end()
+#define rall(x) x.rbegin(), x.rend()
+#define debug(i,sz,x) F(i,0,sz){cout<<x[i]<<" ";}cout<<endl
+#define fr first
+#define se second
+/* Relevant code begins here */
+#define MOD 1000000007
+struct node {
+    int count;
+}a[2][500000];
+int arr[100005];
+int tmp[100005];
+void update(int tid, int root, int left, int right, int i, int val)
+{
+    if (left == right) {
+        a[tid][root].count = max(a[tid][root].count, val);
+        return;
+    }
+    int mid = (left+right)/2;
+    if (i <= mid) {
+        update(tid, root<<1, left, mid, i, val);
+    } else {
+        update(tid, (root<<1)+1, mid+1, right, i, val);
+    }
+    a[tid][root].count = max(a[tid][root<<1].count, a[tid][(root<<1)+1].count);
+}   
+ 
+int query(int tid, int root, int left, int right, int i, int j)
+{
+    if (i > right || j < left)
+        return 0;
+    if (left >= i && right <= j) {
+        return a[tid][root].count;
+    }
+    return max(query(tid, 2*root, left, (left + right)/2, i, j), query(tid, 2*root + 1, (left + right)/2 + 1, right, i, j));
+}
+int main()
+{
+    int t;
+    /*freopen("Input7.txt","r",stdin);
+    freopen("Output7.txt","w",stdout);*/
+    S(t);
+    while (t--) {
+        M(a, 0);
+        int n, ans, i;
+        S(n);
+        F(i, 0, n) {
+            S(arr[i]);
+            tmp[i] = arr[i];
+        }
+        sort(tmp, tmp+n);
+        
+        F(i, 0, n) {
+            int r = lower_bound(tmp, tmp+n, arr[i]) - tmp;
+            arr[i] = r;
+        }
+        ans = 0;
+        F(i, 0, n) {
+            int x = query(0, 1, 0, n-1, 0, arr[i]) + 1;
+            int y = query(1, 1, 0, n-1, arr[i], n-1) + 1;
+            // ans = max(ans, query(1, 0, n-1, 0, arr[i]) + 1);
+            // ans = max(ans, query(1, 0, n-1, arr[i], n-1) + 1);
+            update(1, 1, 0, n-1, arr[i], x);
+            update(0, 1, 0, n-1, arr[i], y);
+        }
+        ans = max(query(0, 1, 0, n-1, 0, n-1), query(1, 1, 0, n-1, 0, n-1));
+        printf("%d\n", ans);
+    }
+    return 0;
+}

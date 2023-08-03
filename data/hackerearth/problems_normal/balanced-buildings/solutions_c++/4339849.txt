@@ -1,0 +1,73 @@
+#include "bits/stdc++.h"
+using namespace std;
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+static const int INF = 0x3f3f3f3f; static const long long INFL = 0x3f3f3f3f3f3f3f3fLL;
+typedef vector<int> vi; typedef pair<int, int> pii; typedef vector<pair<int, int> > vpii; typedef long long ll;
+template<typename T, typename U> static void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> static void amax(T &x, U y) { if(x < y) x = y; }
+
+struct FenwickTree {
+	typedef ll T;
+	vector<T> v;
+	void init(int n) { v.assign(n, T()); }
+	void add(int i, T x) {
+		for(; i < (int)v.size(); i |= i + 1) v[i] += x;
+	}
+	T sum(int i) const {	//[0, i)
+		T r = T();
+		for(-- i; i >= 0; i = (i & (i + 1)) - 1) r += v[i];
+		return r;
+	}
+	T sum(int left, int right) const {	//[left, right)
+		return sum(right) - sum(left);
+	}
+};
+
+int main() {
+	int n; int S; int M; int P;
+	while(~scanf("%d%d%d%d", &n, &S, &M, &P)) {
+		vector<int> xs(n);
+		for(int i = 0; i < n; ++ i)
+			scanf("%d", &xs[i]);
+		vi values = xs;
+		sort(values.begin(), values.end());
+		values.erase(unique(values.begin(), values.end()), values.end());
+		int X = (int)values.size();
+		vector<ll> dp(n + 1, -INFL);
+		dp[0] = 0;
+		FenwickTree ft0, ft1;
+		rep(i, n) {
+			amax(dp[i + 1], dp[i]);
+			ft0.init(X);
+			ft1.init(X);
+			ll sum1 = 0;
+			rer(j, i + 1, n) {
+				int k = (int)(lower_bound(values.begin(), values.end(), xs[j - 1]) - values.begin());
+				ft0.add(k, 1);
+				ft1.add(k, values[k]);
+				sum1 += values[k];
+				if(j == i + 1) continue;
+				int lo = 0, up = X - 1;
+				ll cost = INFL;
+				while(up - lo >= 0) {
+					int mid = (lo + up) / 2;
+					ll cnt = ft0.sum(mid), cnt2 = (j - i) - cnt;
+					ll sum = ft1.sum(mid), sum2 = sum1 - sum;
+					ll cost1 = (ll)P * (cnt * values[mid] - sum);
+					ll cost2 = (ll)M * (sum2 - cnt2 * values[mid]);
+					amin(cost, cost1 + cost2);
+					if((ll)P * cnt <= (ll)M * cnt2)
+						lo = mid + 1;
+					else
+						up = mid - 1;
+				}
+				amax(dp[j], dp[i] + (ll)S * (j - i - 1) - cost);
+			}
+		}
+		ll ans = dp[n];
+		printf("%lld\n", ans);
+	}
+	return 0;
+}

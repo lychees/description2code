@@ -1,0 +1,97 @@
+#include<stdio.h>
+#include<iostream>
+#include<list>
+#include<algorithm>
+#include<vector>
+#include<queue>
+#include<limits.h>
+using namespace std;
+#define NIL -1
+int n;
+int tt;
+int compo;
+enum color{WHITE,GRAY,BLACK};
+vector<int> Q;
+struct node
+{
+	color cc;
+	int pred;
+	int d;
+	int f;
+};
+node s[100004];
+typedef vector<list<int> > graph;
+int good=INT_MAX;
+//----------------------
+void generate_graph(graph &g)
+{
+	cin>>n;
+	g.assign(n+1,list<int>());
+	int e;
+	cin>>e;
+	while(e--)
+	{
+		int a,b;
+		cin>>a>>b;
+		g[a].push_back(b);
+		g[b].push_back(a);
+	}
+}
+//----------------------
+void DFS_VISIT(graph &g,int u)
+{
+	tt+=1;
+	s[u].d=tt;
+	s[u].cc=GRAY;
+	if(good == INT_MAX) 
+	 good = u;
+	else if(g[u].size()>g[good].size())
+	   good = u;
+	else if(g[u].size() == g[good].size() && u < good)
+	   good = u;
+	for(list<int>::const_iterator i=g[u].begin();i!=g[u].end();i++)
+	{
+		if(s[*i].cc==WHITE)
+		{
+			s[*i].pred=u;
+			DFS_VISIT(g,*i);
+		}
+	}
+	s[u].cc=BLACK;
+	tt+=1;
+	s[u].f=tt;
+}		
+//----------------------
+void DFS(graph& g)
+{
+	for(int i=1;i<=n;i++)
+	{
+		s[i].cc=WHITE;
+		s[i].d=0;
+		s[i].pred=NIL;
+	}
+	tt=0;
+	for(int i=1;i<=n;i++)
+	{
+		if(s[i].cc==WHITE)
+		{
+			compo++;
+		DFS_VISIT(g,i);
+		Q.push_back(good);
+		good = INT_MAX;
+		}
+	}
+}
+//------------------------
+int main()
+{
+	graph g;	
+	generate_graph(g);
+	DFS(g);
+	cout<<compo<<endl;
+	sort(Q.begin(),Q.end());
+	for( vector<int>::iterator i = Q.begin() ; i != Q.end(); i++)
+	 cout<< *i<<" ";
+	cout<<endl;
+}
+

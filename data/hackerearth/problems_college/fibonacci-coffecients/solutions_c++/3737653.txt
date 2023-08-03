@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int T = (1<<18);
+long long int MOD,fibo[2*T],A[2*T];
+struct node
+{
+	long long int val[2][2];
+	int len;
+};
+node seg[2*T];
+node seg_merge(node &p1, node &p2)
+{
+	node ret;
+	int l1 = p1.len, l2 = p2.len;
+	ret.len = l1 + l2;
+	long long int temp[][2] = {{fibo[l1+1],fibo[l1]},{fibo[l1],fibo[l1-1]}};
+	for (int i = 0; i < 2; ++i)
+		for (int j = 0; j < 2; ++j)
+		{
+			ret.val[i][j] = p1.val[i][j];
+			for (int k = 0; k < 2; ++k)
+				ret.val[i][j] = (ret.val[i][j] + temp[i][k]*p2.val[k][j])%MOD;
+		}
+	return ret;
+}
+node que(int root, int lm, int rm, int u, int v)
+{
+	if(u <= lm && rm <= v)
+		return seg[root];
+	int m = (lm+rm)/2;
+	if(u <= m)
+	{
+		node v1 = que(2*root, lm, m, u, v);
+		if(m < v)
+		{
+			node v2 = que(2*root+1, m+1, rm, u, v);
+			return seg_merge(v1,v2);
+		}
+		return v1;
+	}
+	return que(2*root+1, m+1, rm, u, v);
+}
+void pt_upd(int pos, long long int val)
+{
+	for (int i = 0; i < 2; ++i)
+		for (int j = 0; j < 2; ++j)
+			seg[pos].val[i][j] = val;
+	seg[pos].val[1][1] = 0;
+	pos/=2;
+	while(pos)
+	{
+		seg[pos] = seg_merge(seg[2*pos],seg[2*pos+1]);
+		pos/=2;
+	}
+}
+int main()
+{
+	int n,m;
+	scanf("%d %d %lld", &n, &m, &MOD);
+	//
+	fibo[1] = fibo[2] = 1;
+	for (int i = 3; i < 2*T; ++i)
+		fibo[i] = (fibo[i-1] + fibo[i-2])%MOD;
+	for (int i = 2*T-1; i >= 1; --i)
+		if(i >= T)
+			seg[i].len = 1;
+		else
+			seg[i].len = 2*seg[2*i].len;
+	//
+	for (int i = 1; i <= n; ++i)
+	{
+		scanf("%lld", &A[i]);
+		A[i]%=MOD;
+		pt_upd(T+i,A[i]);
+	}
+	while(m--)
+	{
+		int ch;
+		scanf("%d", &ch);
+		if(ch == 1)
+		{
+			int l;
+			scanf("%d", &l);
+			scanf("%lld", &A[l]);
+			A[l]%=MOD;
+			pt_upd(T+l,A[l]);
+		}
+		else
+		{
+			int l,r;
+			scanf("%d %d", &l, &r);
+			node temp = que(1, T, 2*T-1, T+l, T+r);
+			printf("%lld\n", temp.val[0][1]%MOD);
+		}
+	}
+	return 0;
+}

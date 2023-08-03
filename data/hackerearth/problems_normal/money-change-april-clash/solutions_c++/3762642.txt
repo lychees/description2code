@@ -1,0 +1,103 @@
+#include <cstdio>
+#include <cmath>
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <cassert>
+#include <string>
+#include <cstring>
+#include <queue>
+
+using namespace std;
+
+#define rep(i,a,b) for(int i = a; i < b; i++)
+#define S(x) scanf("%d",&x)
+#define S2(x,y) scanf("%d%d",&x,&y)
+#define P(x) printf("%d\n",x)
+#define all(v) v.begin(),v.end()
+#define FF first
+#define SS second
+
+typedef long long int LL;
+typedef pair<int, int > pii;
+typedef vector<int > vi;
+
+const int mod = 1000000009;
+const int N = 101;
+
+int n,k;
+int W[10];
+int A[N];
+
+int dp[1<<10][5001];
+int memo[N][1<<10];
+vector<int > G[1<<10];
+
+void pre() {
+  memset(dp, 0, sizeof(dp));
+  dp[0][0] = 1;
+  rep(i,1,1<<k) {
+    int idx = 0;
+    while(!((i>>idx)&1)) idx++;
+    if((i & (i - 1)) == 0) {
+      for(int l = W[idx]; l < 5001; l += W[idx]) dp[i][l] = 1;
+      continue;
+    }
+    rep(j,0,5001) if(j > W[idx]) {
+      dp[i][j] = dp[i - (1<<idx)][j-W[idx]] + dp[i][j-W[idx]];;
+      if(dp[i][j] >= mod) dp[i][j] -= mod;
+    }
+  }
+}
+
+bool good(int mask, int stuffing) {
+  int a,b;
+  a = b = -1;
+  rep(i,0,10) if((stuffing >> i) & 1) {
+    if(a == -1) a = i;
+    b = i;
+  }
+
+  rep(i,a+1,b) if((mask>>i)&1){
+    return false;
+  }
+
+  return true;
+}
+
+int solve(int idx, int mask) {
+  // printf("%d %d\n",idx, mask);
+  if(idx == n) return 1;
+
+  int &res = memo[idx][mask];
+  if(res != -1) return res;
+
+  res = 0;
+  rep(j,0,G[mask].size()) {
+    int i = G[mask][j];
+    // printf("yaha %d %d %d %d\n",i,idx,W[idx],dp[i][W[idx]]);
+    res += dp[i][A[idx]] * 1LL * solve(idx + 1, mask | i) % mod;
+    if(res >= mod) res -= mod;
+  }
+
+  return res;
+}
+
+int main() {
+  rep(i,0,1<<10) rep(j,0,1<<10) if(good(i,j)) {
+    G[i].push_back(j);
+  }
+  int t;
+  S(t);
+  while(t--) {
+    S2(n,k);
+    rep(i,0,k) S(W[i]);
+    pre();
+    rep(i,0,n) S(A[i]);
+    memset(memo, -1, sizeof(memo));
+    P(solve(0,0));
+  }
+  return 0;
+}

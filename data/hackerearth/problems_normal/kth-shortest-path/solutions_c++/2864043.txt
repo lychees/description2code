@@ -1,0 +1,114 @@
+#include <iostream>
+#include <map>
+#include <vector>
+#include <string>
+#include <climits>
+#include <algorithm>
+
+using namespace std;
+
+#define KMAX 101
+
+int main()
+{
+    //cout << "Hello World!" << endl;
+    int T;
+    cin>>T;
+    while(T--){
+    	int m, n;
+    	cin>>m;
+    	cin>>n;
+    	
+    	vector<vector<int> > mat(m, vector<int>(n, -1));
+    	string str;
+    	for(int i=0; i<m; ++i){
+    		for(int j=0; j<n; ++j){
+    			cin>>str;
+    			if(str=="##"){
+    				mat[i][j]=INT_MIN;
+    			}
+    			else{
+    				mat[i][j]=stoi(str);
+    			}
+    		}
+    	}
+    	
+    	vector<vector<vector<int> > > sol(m, vector<vector<int>>(n));
+    	for(int i=0; i<m; ++i){
+    		for(int j=0; j<n; ++j){
+    			if(i==0 && j==0){
+    				sol[0][0].push_back(mat[0][0]);
+    			}
+    			else if(mat[i][j]!=INT_MIN){
+    				if(i>0 && j>0){
+    					vector<int>  vec1 = sol[i-1][j];
+    					vector<int> vec2 = sol[i][j-1];
+    					int k1=0;
+    					int k2=0;
+    				
+    					while(k1<vec1.size() && k2<vec2.size() && sol[i][j].size()<KMAX){
+    						if(vec1[k1]<=vec2[k2]){
+    							sol[i][j].push_back(vec1[k1]+mat[i][j]);
+    							++k1;
+    						}
+    						else{
+    							sol[i][j].push_back(vec2[k2]+mat[i][j]);
+    							++k2;
+    						}
+    					}
+    					
+    					while(k1<vec1.size() && sol[i][j].size()<KMAX){
+    						sol[i][j].push_back(vec1[k1]+mat[i][j]);
+    						++k1;
+    					}
+    					
+    					while(k2<vec2.size() && sol[i][j].size()<KMAX){
+    						sol[i][j].push_back(vec2[k2]+mat[i][j]);
+    						++k2;
+    					}
+    				}
+    				else if(i>0){
+    					vector<int> vec1 = sol[i-1][j];
+    					int k1=0;
+    					while(k1<vec1.size() && sol[i][j].size()<KMAX){
+    						sol[i][j].push_back(vec1[k1]+mat[i][j]);
+    						++k1;
+    					}
+    				}
+    				else if(j>0){
+    					vector<int> vec2 = sol[i][j-1];
+    					int k2=0;
+    					while(k2<vec2.size() && sol[i][j].size()<KMAX){
+    						sol[i][j].push_back(vec2[k2]+mat[i][j]);
+    						++k2;
+    					}
+    				}
+    				
+    			}
+    		}
+    	}
+    	int q;
+    	cin>>q;
+    	while(q--){
+    		int tx, ty, k;
+    		cin>>tx;
+    		cin>>ty;
+    		cin>>k;
+    		if(mat[tx][ty]==INT_MIN){
+    			cout<<"Obstacle"<<endl;
+    		}
+    		else{
+    			if(sol[tx][ty].size()<k){
+    				cout<<"Not so many paths"<<endl;
+    			}
+    			else{
+    				sort(sol[tx][ty].begin(), sol[tx][ty].end());
+    				cout<<sol[tx][ty][k-1]<<endl;
+    			}
+    		}
+    	}
+    	
+    }
+    
+    return 0;
+}

@@ -1,0 +1,99 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define sd(x) scanf("%d",&x)
+#define slld(x) scanf("%lld",&x)
+#define ss(x) scanf("%s",x)
+#define mod 1000000007
+#define bitcount __builtin_popcountll
+#define ll long long
+int prime[1000005];
+int arr[1000005];
+int tree[3000005];
+int n,q;
+void buildtree(int node, int l, int r)
+{
+	if(l==r)
+	{
+		tree[node]=arr[l];
+		return;
+	}
+	buildtree(node*2,l,(l+r)/2);
+	buildtree(node*2+1,(l+r)/2+1,r);
+	tree[node]=tree[node*2]+tree[node*2+1];
+}
+void update(int node, int l, int r, int val, int pos)
+{
+	if(l==r&&l==pos)
+	{
+		tree[node]=val;
+		return;
+	}
+	else if(pos>r||pos<l)
+		return ;
+	update(node*2,l,(l+r)/2,val,pos);
+	update(node*2+1,(l+r)/2+1,r,val,pos);
+	tree[node]=tree[node*2]+tree[node*2+1];
+}
+int query(int node, int l, int r, int i, int j)
+{
+	if(l>=i&&r<=j)
+		return tree[node];
+	else if(l>j||r<i)
+		return 0;
+	int x=query(node*2,l,(l+r)/2,i,j);
+	int y=query(node*2+1,(l+r)/2+1,r,i,j);
+	return x+y;
+}
+int main()
+{
+	int i,j,k;
+	char c;
+	prime[1]=1;
+	for(i=2;i<=1000000;i++)
+	{
+		if(prime[i]==0)
+		{
+			for(j=2*i;j<=1000000;j+=i)
+				prime[j]=1;
+		}
+		
+	}
+	int t,x,y;
+	sd(t);
+	while(t--)
+	{
+		sd(n);
+		for(i=1;i<=n;i++)
+		{
+			sd(j);
+			if(prime[j]==1)
+				arr[i]=0;
+			else
+			{
+				arr[i]=1;
+				//printf("%d\n",i);
+			}
+		}
+		buildtree(1,1,n);
+		sd(q);
+		while(q--)
+		{
+			c=getchar();
+			c=getchar();
+			if(c=='A')
+			{
+				sd(x);
+				sd(y);
+				int ans=query(1,1,n,x,y);
+				printf("%d\n", ans);
+			}
+			else if(c=='C')
+			{
+				sd(x);
+				sd(y);
+				update(1,1,n,1-prime[y],x);
+			}
+		}
+	}
+	return 0;
+}

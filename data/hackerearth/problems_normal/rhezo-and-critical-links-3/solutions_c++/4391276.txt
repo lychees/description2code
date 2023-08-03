@@ -1,0 +1,94 @@
+#include<stdio.h>
+#include<vector>
+#include<math.h>
+#include<queue>
+#include<algorithm>
+#include<string.h>
+#define MAX 100009
+using namespace std;
+int visit[MAX]={0};
+int visit2[MAX]={0};
+vector<int> g[MAX];
+queue<int> q;
+int low[MAX]={0};
+int disc[MAX]={0};
+int parent[MAX];
+int tim=0;
+int ans=0;
+int n,p;
+int ConnectedNodes(int start)
+{
+	int count=0;
+	q.push(start);
+	while(!q.empty())
+	{
+		int u=q.front();
+		q.pop();
+		if(visit[u])
+		continue;
+		count++;
+		visit[u]=1;
+		int size=g[u].size();
+		for(int i=0;i<size;i++)
+		{
+			int v=g[u][i];
+			if(!visit[v])
+			q.push(v);
+		}
+	}
+	return count;
+}
+int dfs(int start,int c)
+{
+	int size=g[start].size();
+	disc[start]=low[start]=++tim;
+	visit2[start]=1;
+	int child=1;
+	for(int i=0;i<size;i++)
+	{
+		int v=g[start][i];
+		if(v==parent[start])
+		continue;
+		if(!visit2[v])
+		{
+			parent[v]=start;
+			int sub_size=dfs(v,c);
+			child=child+sub_size;
+			low[start]=min(low[start],low[v]);
+			if(low[v]>disc[start] && abs(c-2*sub_size)<p)
+			ans++;
+		}
+		else
+		{
+			low[start]=min(low[start],disc[v]);
+		}
+	}
+	return child;
+}
+int main()
+{
+	int m,i,count,x,u,v;
+	scanf("%d %d %d",&n,&m,&p);
+	for(i=1;i<=m;i++)
+	{
+		scanf("%d %d",&u,&v);
+		g[u].push_back(v);
+		g[v].push_back(u);
+	}
+	for(i=1;i<=n;i++)
+	{
+		visit[i]=0;
+		parent[i]=i;
+	}
+	for(i=1;i<=n;i++)
+	{
+		if(!visit[i])
+		{
+			count=ConnectedNodes(i);
+			//printf("---%d\n",count);
+			x=dfs(i,count);
+		}
+	}
+	printf("%d\n",ans);
+	return 0;
+}

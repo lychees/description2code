@@ -1,0 +1,93 @@
+#include <iostream>
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <vector>
+using namespace std;
+#define MAXN 500100
+#define LL long long
+
+int N, M;
+int P[MAXN], POS[MAXN];
+
+int aint[3 * 3 * MAXN];
+
+void update(int node, int L, int R, int pos) {
+    if (L == R) {
+        aint[node] = 1;
+
+        return;
+    }
+
+    int mid = (L + R) / 2;
+    if (pos <= mid) update(2*node, L, mid, pos);
+    else            update(2*node+1, mid+1, R, pos);
+
+    aint[node] = aint[2*node] + aint[2*node+1];
+}
+
+int sum = 0;
+void query(int node, int L, int R, int qL, int qR) {
+    if (qL > R)
+        return;
+
+    if (qL <= L && R <= qR) {
+        sum += aint[node];
+
+        return;
+    }
+
+    int mid = (L + R) / 2;
+    if (qL <= mid)  query(2*node, L, mid, qL, qR);
+    if (mid < qR)   query(2*node+1, mid+1, R, qL, qR);
+}
+
+int main() {
+	ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    cin >> N >> M;
+
+    int L = M + 2;
+    int R = M + N + 1;
+
+    int AINT_LEFT = 1;
+    int AINT_RIGHT = N + 2*M + 3;
+
+    for (int i = 1; i <= N; i++) {
+        cin >> P[i];
+        POS[P[i]] = M + 1 + i;
+    }
+
+    LL sol = 0;
+    int nr;
+    char op;
+
+    while (M --) {
+        cin >> nr >> op;
+
+        sum = 0;
+        query(1, AINT_LEFT, AINT_RIGHT, POS[nr]+1, R);
+
+        int toRight = R - POS[nr] - sum;
+        int toLeft = N - toRight - 1;
+        sol += min(toLeft, toRight);
+
+        // cout << L << " " << R << " : " << POS[nr] << " " << sum << " -> " << min(toLeft, toRight) << endl;
+
+        update(1, AINT_LEFT, AINT_RIGHT, POS[nr]);
+
+        if (op == 'r') {
+            R ++;
+            POS[nr] = R;
+
+        } else {
+            L --;
+            POS[nr] = L;
+        }
+    }
+
+    cout << sol << '\n';
+
+    return 0;
+}

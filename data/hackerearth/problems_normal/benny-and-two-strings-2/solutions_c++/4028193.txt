@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+
+#define pb push_back
+#define f first
+#define s second
+#define mp make_pair
+#define sz(a) int((a).size())
+#ifdef _WIN32
+#  define I64 "%I64d"
+#else
+#  define I64 "%lld"
+#endif
+#define fname "."
+#define pp pop_back
+
+typedef long long ll;
+typedef long double ld;
+typedef unsigned long long ull;
+
+const int MAX_N = (int)2e5 + 123;
+const double eps = 1e-6;
+const int inf = (int)1e9 + 123;
+
+using namespace std;
+
+int n, m, k;
+string a, b;
+
+int dp[202][202][202];
+
+int pi[202][26];
+int p[405];
+
+int cost(int a, int b) {
+	if (a > b)
+		swap(a, b);
+	return min(b - a, 26 + a - b);
+}
+
+int main() {
+	#ifdef Nick
+	freopen(fname"in", "r", stdin);
+	freopen(fname"out", "w", stdout);
+	#endif
+	ios_base :: sync_with_stdio(NULL), cin.tie(NULL);		
+	cin >> n >> m >> k >> a >> b;
+	string nw = a + '#' + a;
+
+	for (int i = 1; i < sz(a); i++) {
+		int j = p[i - 1];
+		while(j > 0 && nw[j] != nw[i])
+			j = p[j - 1];
+		if (nw[j] == nw[i])
+			j++;
+		p[i] = j;
+	}
+	for (int i = sz(a) + 1; i <= sz(nw); i++) {
+		for (int alp = 0; alp < 26; alp++) {
+			int j = p[i - 1];
+			while(j > 0 && nw[j] != char(alp + 'a')) {
+				j = p[j - 1];
+			}
+			if (nw[j] == char(alp + 'a'))
+				j++;
+			pi[i - sz(a) - 1][alp] = j;
+		}
+		p[i] = i - sz(a);
+	}
+
+	if (n > m) {
+		cout << 0;
+		return 0;
+	}
+
+	for (int i = 0; i <= m; i++)
+		for (int j = 0; j <= sz(b); j++)
+			for (int k = 0; k <= sz(b); k++)
+				dp[i][j][k] = inf;
+	
+	dp[0][0][0] = 0;
+
+	for (int i = 1; i <= sz(b); i++) {
+		for (int cnt = 0; cnt <= sz(b); cnt++)
+			for (int Pi = 0; Pi <= m; Pi++) {
+				if (dp[i - 1][cnt][Pi] > k)
+					continue;
+				for (int nx = 0; nx < 26; nx++) {
+				  int npi = pi[Pi][nx];
+					dp[i][cnt + (npi == sz(a))][npi] = min(dp[i][cnt + (npi == sz(a))][npi], dp[i - 1][cnt][Pi] + cost(b[i - 1] - 'a', nx));
+				}
+			}
+	}
+	int ans = 0;
+	for (int cnt = 0; cnt <= sz(b); cnt++)
+		for (int Pi = 0; Pi <= m; Pi++)
+			if (dp[sz(b)][cnt][Pi] <= k)
+				ans = max(ans, cnt);
+	cout << ans;					
+	return 0;
+}

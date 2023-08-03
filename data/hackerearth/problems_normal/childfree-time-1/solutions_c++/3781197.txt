@@ -1,0 +1,137 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define endl '\n'
+#define pb push_back
+#define mp make_pair
+#define all(x) (x).begin(),(x).end()
+#define F first
+#define S second
+#define rep(i, a, b) for(int i=a;i<b;++i)
+#define SZ(x) ((int)(x).size())
+
+typedef vector<int> VI;
+typedef long long LL;
+typedef pair<int,int> PII;
+
+template<typename TH>
+void debug_vars(const char* data, TH head){
+	cerr << data << "=" << head << "\n";
+}
+
+template<typename TH, typename... TA>
+void debug_vars(const char* data, TH head, TA... tail){
+	while(*data != ',') cerr << *data++;
+	cerr << "=" << head << ",";
+	debug_vars(data+1, tail...);
+}
+
+const int MAX = 1000010;
+const long long int NINF = -LLONG_MAX;
+vector<bool> mark;
+vector<bool> mark_topo;
+vector<long long int> dist;
+vector<PII> G[MAX];
+vector<PII> GR[MAX];
+vector<int> degree;
+stack<int> P;
+int N;
+
+void topo_sort(int x){
+	mark_topo[x] = true;
+
+	rep(i, 0, SZ(G[x])){
+		if(!mark_topo[G[x][i].first]){
+			topo_sort(G[x][i].first);
+		}
+	}
+	P.push(x);
+}
+
+long long int maxDist(){
+	long long answer = NINF;
+
+	mark.assign(N, false);
+
+	//rep(i, 0, N){ //Starting in each node
+		//if(degree[i] != 0 || mark[i]) continue;
+
+		//mark[i] = true;
+
+		mark_topo.assign(N, false);	
+		dist.assign(N, 0);
+
+		//Topological sort
+		rep(i, 0, N){
+			if(!mark_topo[i])
+			 	topo_sort(i);	
+		}
+
+		while(!P.empty()){
+			int u = P.top(); P.pop();
+
+			rep(j, 0, SZ(GR[u])){
+				PII front = GR[u][j];
+
+				int d = front.second, v = front.first;
+
+				//mark[v] = true;
+
+				if(dist[u] < dist[v] + d + 2){
+					dist[u] = dist[v] + d + 2;
+					if(dist[u] > answer)
+						answer = dist[u];
+				}
+			}
+		}
+
+		//debug_vars("i, answer", i, answer);
+	//}
+
+	return answer;
+}
+
+int main(){
+	ios::sync_with_stdio(false); cin.tie(0);
+
+	int M;
+
+	cin>>N>>M;
+
+	degree.assign(N, 0);
+
+	int u, v, w;
+	rep(i, 0, M){
+		cin>>u>>v>>w;
+		u--; v--; 
+
+		G[u].pb(mp(v, w));
+		GR[v].pb(mp(u, w));
+	}
+
+	cout<<maxDist()<<endl;
+
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

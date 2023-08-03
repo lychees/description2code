@@ -1,0 +1,123 @@
+///==================================================///
+///                HELLO WORLD !!                    ///
+///                  IT'S ME                         ///
+///               BISHAL GAUTAM                      ///
+///         [ bsal.gautam16@gmail.com ]              ///
+///==================================================///
+#include<bits/stdc++.h>
+#define X first
+#define Y second
+#define mpp make_pair
+#define nl printf("\n")
+#define SZ(x) (int)(x.size())
+#define pb(x) push_back(x)
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+///---------------------
+#define S(a) scanf("%d",&a)
+#define P(a) printf("%d",a)
+#define SL(a) scanf("%lld",&a)
+#define S2(a,b) scanf("%d%d",&a,&b)
+#define SL2(a,b) scanf("%lld%lld",&a,&b)
+///------------------------------------
+#define all(v) v.begin(),v.end()
+#define CLR(a) memset(a,0,sizeof(a))
+#define SET(a) memset(a,-1,sizeof(a))
+#define fr(i,a,n) for(int i=a;i<=n;i++)
+using namespace std;
+typedef long long ll;
+///==========CONSTANTS=============///
+///  Digit     0123456789012345678 ///
+#define MX     200004
+#define inf    1000000010
+#define MD     1000000007LL
+#define eps    1e-9
+///===============================///
+
+ll nd[(4*MX)+2],mk[(4*MX)+2];
+bool fg[(4*MX)+2];
+ll pw[MX+2],pre[MX+2];
+
+void Upd(int id,int l,int r,int q1,int q2, ll bg) {
+    if(l==q1 && r==q2) {
+        nd[ id ]=( nd[id]+ bg*pre[ (q2-q1) ] )%MD;
+        mk[ id ]=( mk[id]+bg )%MD;
+        fg[ id ]=1;
+        return;
+    }
+    int md=(l+r)>>1,lft=(id<<1),rgt=(lft+1);
+    if( fg[id]!=0 ) {
+        ll bgg=mk[ id ];
+        ll tp=(bgg*(pw[md-l+1]))%MD;
+        nd[ lft ]=( nd[lft]+ bgg*pre[ (md-l) ] )%MD;
+        nd[ rgt ]=( nd[rgt]+ tp*pre[ (r-md-1) ] )%MD;
+        mk[rgt]=(mk[rgt]+tp)%MD;
+        mk[lft]=(mk[lft]+bgg)%MD;
+        mk[id]=fg[id]=0;
+        fg[lft]=fg[rgt]=1;
+    }
+    if( q2<=md ) Upd(lft,l,md,q1,q2,bg);
+    else if(q1>md )Upd(rgt,md+1,r,q1,q2,bg);
+    else {
+        ll tp=(bg*(pw[md-q1+1]))%MD;
+        Upd(lft,l,md,q1,md,bg);
+        Upd(rgt,md+1,r,md+1,q2,tp);
+    }
+    nd[ id ]=( nd[lft]+nd[ rgt ] )%MD;
+}
+
+ll Qry(int id,int l,int r,int q1,int q2) {
+    if( l==q1 && r==q2 ) return nd[id];
+    int md=(l+r)>>1,lft=(id<<1),rgt=(lft+1);
+    if( fg[id]!=0 ) {
+        ll bgg=mk[ id ];
+        ll tp=(bgg*(pw[md-l+1]))%MD;
+        nd[ lft ]=( nd[lft]+ bgg*pre[ (md-l) ] )%MD;
+        nd[ rgt ]=( nd[rgt]+ tp*pre[ (r-md-1) ] )%MD;
+        mk[rgt]=(mk[rgt]+tp)%MD;
+        mk[lft]=(mk[lft]+bgg)%MD;
+        mk[id]=fg[id]=0;
+        fg[lft]=fg[rgt]=1;
+    }
+    nd[ id ]=( nd[lft]+nd[ rgt ] )%MD;
+    if( q2<=md ) return Qry(lft,l,md,q1,q2);
+    else if(q1>md ) return Qry(rgt,md+1,r,q1,q2);
+    else {
+        ll xx=Qry(lft,l,md,q1,md);
+        ll yy=Qry(rgt,md+1,r,md+1,q2);
+        return (xx+yy)%MD;
+    }
+}
+
+int ar[MX+2];
+ll dp[MX+2];
+int main() {
+    int n,q;
+    pw[0]=pre[0]=1;
+    for(int i=1; i<=MX; i++) {
+        pw[i]=(pw[i-1]*2LL)%MD;
+        pre[i]=(pw[i]+pre[i-1])%MD;
+    }
+    S(n);
+    fr(i,1,n)S(ar[i]);
+    dp[0]=0;
+    fr(i,1,n)dp[i]=(dp[i-1]+(ll)ar[i])%MD;
+    CLR(nd);
+    CLR(mk);
+    CLR(fg);
+    S(q);
+    while(q--) {
+        int op,l,r;
+        S(op);
+        S2(l,r);
+        if(op==0) { /// Add 2^1 to l th element,2^2 to the (l+1)th element...
+            Upd(1,1,n,l,r,2LL);
+        } else { /// Sum of all the elements in range[l,r].
+            ll ans=Qry(1,1,n,l,r);
+            ans=(ans+dp[r]-dp[l-1]+MD)%MD;
+            printf("%lld\n",ans%MD);
+        }
+    }
+    return 0;
+}
+

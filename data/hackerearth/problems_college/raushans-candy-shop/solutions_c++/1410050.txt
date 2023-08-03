@@ -1,0 +1,76 @@
+#include <algorithm>
+#include <iostream>
+#include <map>
+#include <cassert>
+
+typedef long long llint;
+
+void count_candy(const std::string& s, const llint lo, const llint hi, llint &n_spearmint, llint &n_coconut) {
+  n_spearmint = 0;
+  n_coconut = 0;
+  for (llint i=lo; i<hi; i++) {
+    auto c = s.at(i);
+    if (c == 'S') n_spearmint++;
+    else if (c == 'C') n_coconut++;
+  }
+}
+
+/* 2 Coconut 1 Spearmint */
+void fill_sum(const std::string&s, std::vector<llint>& cum_spearmint, std::vector<llint>& cum_coconut, std::vector<llint>& diff) {
+  llint n_spearmint = 0;
+  llint n_coconut = 0;
+  for (llint i=0; i<s.size(); i++) {
+    auto c = s.at(i);
+    if (c == 'S') n_spearmint++;
+    else if (c == 'C') n_coconut++;
+    cum_spearmint[i+1] = n_spearmint;
+    cum_coconut[i+1] =   n_coconut;
+
+    diff[i+1]       =    2*n_spearmint - n_coconut;
+  }
+}
+
+bool is_good(const llint n_spearmint, const llint n_coconut) {
+  return 2*n_spearmint == n_coconut;
+}
+
+int main() {
+  llint N;
+  std::cin >> N;
+  
+  std::string s;
+  std::cin >> s;
+
+  std::vector<llint> cum_spearmint (N+1, 0);
+  std::vector<llint> cum_coconut   (N+1, 0);
+  std::vector<llint> diff          (N+1, 0);
+  fill_sum(s, cum_spearmint, cum_coconut, diff);
+  std::sort(std::begin(diff), std::end(diff));
+
+  llint ns = 0;
+  bool is_first = true;
+  llint  n_cur;
+  llint prev;
+  for (auto c : diff) {
+    if (is_first) {
+      is_first = false;
+      prev = c;
+      n_cur = 1;
+      continue;
+    }
+
+    if (c == prev) {
+      n_cur++;
+      continue;
+    }
+
+    if (c != prev) {
+      ns += n_cur*(n_cur-1)/2;
+      n_cur = 1;
+      prev = c;
+      continue;
+    }
+  }
+  ns += n_cur*(n_cur-1)/2;
+  std::cout << ns << '\n';
+}

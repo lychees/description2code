@@ -1,0 +1,105 @@
+#include <algorithm>
+#include <bitset>
+#include <cassert>
+#include <cmath>
+#include <complex>
+#include <cstdio>
+#include <cstdlib>
+#include <string.h>
+#include <ctime>
+#include <iostream>
+#include <list>
+#include <map>
+#include <numeric>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <vector>
+#include <fstream>
+//#define _LOCAL_
+#ifdef _LOCAL_
+#include "testlib.h"
+/* rnd */
+#endif
+
+using namespace std;
+
+template<class T> inline T cabs(const T &x) { return x > 0 ? x : (-x); }
+template<class T> inline T gcd(const T &x, const T &y) { return (y == 0) ? x : gcd(y, x % y); }
+template<class T> inline T sgn(const T &x) { return (x > 0) - (x < 0); }
+template<class T> inline T cmin(const T &x, const T &y) { return (x < y) ? x : y; }
+template<class T> inline T cmax(const T &x, const T &y) { return (x > y) ? x : y; }
+
+#define dbg(x) cout << #x << " = " << (x) << endl
+#define dbg2(x,y) cout << #x << " = " << (x) << ", " << #y << " = " << (y) << endl
+#define dbg3(x,y,z) cout << #x << " = " << (x) << ", " << #y << " = " << (y) << ", " << #z << " = " << (z) << endl
+#define dbg4(x,y,z,w) cout << #x << " = " << (x) << ", " << #y << " = " << (y) << ", " << #z << " = " << (z) << ", " << #w << " = " << w << endl
+
+#define out(x) cout << (x) << endl
+#define out2(x,y) cout << (x) << " " << (y) << endl
+#define out3(x,y,z) cout << (x) << " " << (y) << " " << (z) << endl
+#define out4(x,y,z,w) cout << (x) << " " << (y) << " " << (z) << " " << (w) << endl
+
+const int maxN = 100000 + 10;
+
+struct node {
+    int u, v, w;
+    inline bool operator<(const node &s) const {
+        if( w != s.w )
+            return w < s.w;
+        if( cmin(u, v) != cmin(s.u, s.v) )
+            return cmin(u, v) > cmin(s.u, s.v);
+        return cmax(u, v) > cmax(s.u, s.v);
+    }
+    inline void in() { scanf("%d %d %d", &u, &v, &w); }
+};
+node tree[maxN]; int n, m;
+
+int fat[maxN];
+
+void init() {
+    for(int i = 0; i <= n; i ++) fat[i] = i;
+}
+int find(int x) {
+    if( fat[x] == x )
+        return x;
+    fat[x] = find(fat[x]);
+    return fat[x];
+}
+bool merge(int x, int y) {
+    int fx = find(x), fy = find(y);
+    if( fx == fy )
+        return 0;
+    if( fx < fy ) fat[fx] = fy;
+    else fat[fy] = fx;
+    return 1;
+}
+
+int deg[maxN];
+
+int main()
+{
+    int nt;
+    scanf("%d", &nt);
+    for(; nt > 0; nt --) {
+        scanf("%d %d", &n, &m);
+        for(int i = 0; i < m; i ++) tree[i].in();
+        sort(tree, tree + m);
+        memset(deg, 0, sizeof(deg));
+        long long cost = 0;
+        init();
+        for(int i = 0; i < m; i ++) {
+            if( merge(tree[i].u, tree[i].v) ) {
+                cost += tree[i].w;
+                deg[ tree[i].u ] ++;
+                deg[ tree[i].v ] ++;
+            }
+        }
+        printf("%lld\n", cost);
+        for(int i = 1; i <= n; i ++)
+            printf("%d%c", deg[i], (i == n) ? '\n' : ' ');
+    }
+    return 0;
+}

@@ -1,0 +1,109 @@
+/* Man Mohan Mishra aka m17
+   IIIT - Allahabad */
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <climits>
+#include <cstdlib>
+#include <cctype>
+#include <iostream>
+#include <algorithm>
+#include <utility>
+#include <string>
+#include <vector>
+#include <map>
+#include <list>
+#include <stack>
+#include <queue>
+#include <set>
+#include <iterator>
+
+#define MOD 1000000007
+#define INF 1000000000000000000
+#define PI acos(-1)
+
+using namespace std;
+
+long long GCD (long long a,long long b) {
+	if (b == 0) return a;
+	return(a % b == 0 ? b : GCD(b,a % b));
+}
+
+long long POW (long long base,long long exp) {
+	long long val;
+	val = 1;
+	while (exp > 0) {
+		if (exp % 2 == 1) {
+			val = (val * base) % MOD;
+		}
+		base = (base * base) % MOD;
+		exp = exp / 2;
+	}
+	return val;
+}
+
+long long R[1000005];
+long long p[1000005];
+
+void init () {
+	int i,exp,v1,v2;
+	p[0] = 1;
+	for (i = 1; i <= 1000000; i++) {
+		p[i] = (p[i - 1] * 2) % MOD;
+	}
+	R[0] = 1;
+	R[1] = 1;
+	R[2] = 1;
+	R[3] = R[4] = 3;
+	R[5] = R[6] = 15;
+	R[7] = R[8] = R[9] = R[10] = 105;
+	for (i = 11; i <= 1000000; i++) {
+		exp = i / 4 + (i % 4 != 0);
+		v1 = i / 5 + (i % 5 != 0);
+		v2 = i / 10 + (i % 10 != 0);
+		R[i] = (R[v1] * R[v2]) % MOD;
+		R[i] = (R[i] * p[exp]) % MOD;
+	}
+}
+
+long long solve (int n) {
+	int exp,v1,v2;
+	long long res;
+	if (n <= 1000000) {
+		return R[n];
+	}
+	exp = n / 4 + (n % 4 != 0);
+	v1 = n / 5 + (n % 5 != 0);
+	v2 = n / 10 + (n % 10 != 0);
+	res = (solve(v1) * solve(v2)) % MOD;
+	res = (res * POW(2LL,(long long)exp)) % MOD;
+	return res;
+}
+
+int main()
+{
+	int t;
+	scanf("%d",&t);
+	init();
+	while (t --) {
+		int n,i,j;
+		long long r,v1,v2,val,ans;
+		scanf("%d",&n);
+		r = solve(n);
+		ans = -1;
+		for (i = 1; i <= 5; i++) {
+			for (j = 1; j <= 5; j++) {
+				if (GCD(i,j) != 1) {
+					continue;
+				}
+				v1 = (r * i) % MOD;
+				v2 = r * j;
+				val = POW(v1,v2);
+//				printf("%lld %lld -- %lld\n",v1,v2,ans);
+				ans = max(ans,val);
+			}
+		}
+		printf("%lld\n",ans);
+	}
+	return 0;
+}

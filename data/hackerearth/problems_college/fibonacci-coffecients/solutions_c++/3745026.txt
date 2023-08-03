@@ -1,0 +1,115 @@
+#include<bits/stdc++.h>
+using namespace std;
+int n, q, mod;
+int a[200005];
+
+int tree[800005][2][2];
+int len[800005];
+int X[200005][2][2];
+
+void merge(int dst[2][2], int src1[2][2], int src2[2][2], int &dlen, int len1,
+		int len2) {
+	int C[2][2] = { { 0, 0 }, { 0, 0 } };
+	for (int k = 0; k < 2; k++)
+		for (int i = 0; i < 2; i++)
+			for (int j = 0; j < 2; j++) {
+				C[i][j] += (src2[i][k] * 1LL * X[len1][k][j]) % mod;
+				if (C[i][j] >= mod)
+					C[i][j] -= mod;
+			}
+	for (int i = 0; i < 2; i++)
+		for (int j = 0; j < 2; j++) {
+			dst[i][j] = src1[i][j] + C[i][j];
+			if (dst[i][j] >= mod)
+				dst[i][j] -= mod;
+		}
+	dlen = len1 + len2;
+}
+
+void init(int node, int left, int right) {
+	if (left == right) {
+		tree[node][0][0] = a[left];
+		tree[node][1][1] = a[left];
+		len[node] = 1;
+		return;
+	}
+	int mid = (left + right) >> 1;
+	init(node << 1, left, mid);
+	init((node << 1) + 1, mid + 1, right);
+	merge(tree[node], tree[node << 1], tree[(node << 1) + 1], len[node],
+			len[node << 1], len[(node << 1) + 1]);
+}
+
+void update(int ind, int val, int node, int left, int right) {
+	if (ind < left || right < ind)
+		return;
+	if (left == right) {
+		tree[node][0][0] = val;
+		tree[node][1][1] = val;
+		return;
+	}
+	int mid = (left + right) >> 1;
+	update(ind, val, node << 1, left, mid);
+	update(ind, val, (node << 1) + 1, mid + 1, right);
+	merge(tree[node], tree[node << 1], tree[(node << 1) + 1], len[node],
+			len[node << 1], len[(node << 1) + 1]);
+}
+
+void get(int x, int y, int node, int left, int right, int arr[2][2], int &length) {
+	if (y < left || right < x)
+		return;
+	if (x <= left && right <= y) {
+		for (int i = 0; i < 2; i++)
+			for (int j = 0; j < 2; j++)
+				arr[i][j] = tree[node][i][j];
+		length = len[node];
+		return;
+	}
+	int mid = (left + right) >> 1;
+	int A[2][2] = {{0, 0}, {0, 0}}, len1 = 0;
+	get(x, y, node << 1, left, mid, A, len1);
+	int B[2][2] = {{0, 0}, {0, 0}}, len2 = 0;
+	get(x, y, (node << 1) + 1, mid + 1, right, B, len2);
+	merge(arr, A, B, length, len1, len2);
+}
+
+int main() {
+	ios::sync_with_stdio(false);
+	scanf("%d%d%d", &n, &q, &mod);
+	for (int i = 0; i < n; i++)
+		scanf("%d", a + i);
+	
+	X[0][0][0] = X[0][1][1] = 1;
+	X[1][0][0] = 1;
+	X[1][0][1] = 1;
+	X[1][1][0] = 1;
+	for (int lvl = 2; lvl <= 200000; lvl++) {
+		for (int k = 0; k < 2; k++)
+			for (int i = 0; i < 2; i++)
+				for (int j = 0; j < 2; j++) {
+					X[lvl][i][j] += (X[lvl - 1][i][k] * 1LL * X[1][k][j]) % mod;
+					if (X[lvl][i][j] >= mod)
+						X[lvl][i][j] -= mod;
+				}
+	}
+
+	init(1, 0, n - 1);
+	while (q--) {
+		int type; scanf("%d", &type);
+		if (type == 1) {
+			int ind, val; scanf("%d%d", &ind, &val);
+			--ind;
+			update(ind, val, 1, 0, n - 1);
+		}
+		else {
+			int L, R; scanf("%d%d", &L, &R);
+			--L; --R;
+			int ans[2][2] = {{0, 0}, {0, 0}};
+			int len;
+			get(L, R, 1, 0, n - 1, ans, len);
+			printf("%d\n", ans[0][0]);
+		}
+	}
+
+	return 0;
+}

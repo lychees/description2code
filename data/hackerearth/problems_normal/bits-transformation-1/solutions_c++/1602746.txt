@@ -1,0 +1,66 @@
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<string>
+#include<cstring>
+using namespace std;
+
+typedef long long LL;
+typedef vector<int> VI;
+
+#define REP(i,n) for(int i=0, i##_len=(n); i<i##_len; ++i)
+#define EACH(i,c) for(__typeof((c).begin()) i=(c).begin(),i##_end=(c).end();i!=i##_end;++i)
+
+template<class T> inline void amin(T &a, const T &b) { if (a>b) a=b; }
+template<class T> inline void amax(T &a, const T &b) { if (a<b) a=b; }
+
+int INF;
+int T, X, Y, Z, W;
+int N;
+string A, B;
+VI one, zero;
+char buf[2011];
+int memo[2011][2011]; // [i][j] := A[i], B's j-th 1
+
+int rec(const int I, const int J) {
+    if (I == N) return 0;
+    int &ret = memo[I][J];
+    if (ret != INF) return ret;
+
+    int g, pos;
+    // -> 0
+    if (I-J < (int)zero.size()) {
+        g = (A[I] == '0'? 0: (A[I] == '1'? Y: Z));
+        pos = zero[I-J];
+        amin(ret, g + max(0, (I-pos)*W) + rec(I+1, J));
+    }
+
+    // -> 1
+    if (J < (int)one.size()) {
+        g = (A[I] == '0'? X: (A[I] == '1'? 0: Z));
+        pos = one[J];
+        amin(ret, g + max(0, (I-pos)*W) + rec(I+1, J+1));
+    }
+    return ret;
+}
+
+int main() {
+    scanf("%d", &T);
+    memset(&INF, 0x3f, sizeof INF);
+    REP ($, T) {
+        scanf("%d%d%d%d%d",&N, &X, &Y, &Z, &W);
+        scanf("%s", buf); A = string(buf);
+        scanf("%s", buf); B = string(buf);
+
+        memset(memo, 0x3f, sizeof memo);
+        one.clear(); zero.clear();
+        REP (i, N) {
+            if (B[i] == '0') zero.push_back(i);
+            else one.push_back(i);
+        }
+        int ans = rec(0, 0);
+        printf("%d\n", ans);
+    }
+    return 0;
+}

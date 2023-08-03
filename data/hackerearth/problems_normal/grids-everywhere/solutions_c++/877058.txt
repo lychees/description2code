@@ -1,0 +1,137 @@
+#include<stdio.h>
+#include<iostream>
+#include<string.h>
+#include<queue>
+#include<algorithm>
+#include<string>
+#include<map>
+#include<set>
+#include<fstream>
+#include<cmath>
+#include<iomanip>
+#include<time.h>
+#include<stack>
+using namespace std;
+#define ll long long
+#define ull unsigned long long
+#define inf 2000000007
+#define mod 1000000007
+#define pii pair<int,int>
+#define vi vector<int>
+#define VS vector<string>
+#define all(x) x.begin(),x.end()
+#define mp make_pair
+#define pb push_back
+#define x first
+#define y second
+#define N 1010
+#define pi 3.14159265358979323846
+#define DBG(vari) cerr<<#vari<<"="<<(vari)<<endl;
+#define FOREACH(i,t) for(__typeof(t.begin()) i=t.begin();i!=t.end();i++)
+
+struct node
+{
+	int v,c,next;
+}g[10010];
+int cnt,head[88],cur[88],d[88],x[44],y[44],p[44][44],s,t;
+void add(int a,int b,int c)
+{
+	g[cnt].v=b,g[cnt].c=c,g[cnt].next=head[a],head[a]=cnt++;
+	g[cnt].v=a,g[cnt].c=0,g[cnt].next=head[b],head[b]=cnt++;
+}
+bool bfs()
+{
+	for(int i=0;i<=t;i++)d[i]=-1,cur[i]=head[i];
+	queue<int>q;q.push(s);d[s]=0;
+	while(!q.empty())
+	{
+		int u=q.front();q.pop();
+		for(int i=head[u];i+1;i=g[i].next)
+		{
+			int j=g[i].v;
+			if(d[j]==-1&&g[i].c>0)
+			d[j]=d[u]+1,q.push(j);
+		}
+	}
+	return d[t]>=0;
+}
+int dfs(int u,int t,int lim)
+{
+	if(u==t||lim==0)return lim;
+	int f;
+	for(int &i=cur[u];i+1;i=g[i].next)
+	{
+		int j=g[i].v;
+		if(d[j]==d[u]+1&&(f=dfs(j,t,min(lim,g[i].c))))
+		{
+			g[i].c-=f,g[i^1].c+=f;
+			return f;
+		}
+	}
+	return 0;
+}
+int dinic()
+{
+	int ans=0;
+	while(bfs())
+	{
+		while(1){
+		int f=dfs(s,t,inf);
+		if(f==0)break;
+		ans+=f;
+		}
+	}
+	return ans;
+}
+int main()
+{
+    //freopen("input.txt","r",stdin);
+    //freopen("output.txt","w",stdout);
+    int i,T,k,j,m=0,ca=0,n;
+    scanf("%d",&T);
+	while(T--)
+	{
+		scanf("%d%d",&n,&m);
+		s=n+m,t=s+1;cnt=0;
+		memset(head,-1,sizeof(head));
+		for(i=0;i<n;i++)
+		{
+			x[i]=cnt;
+			scanf("%d",&j),j-=m;
+			add(s,i,j);
+		}
+		for(i=0;i<m;i++)
+		{
+			y[i]=cnt;
+			scanf("%d",&j),j-=n;
+			add(i+n,t,j);
+		}
+		for(i=0;i<n;i++)
+		for(j=0;j<m;j++)
+		{
+			p[i][j]=cnt;
+			add(i,j+n,4);
+		}
+		int ans=dinic();
+		//DBG(ans)
+		for(i=0;i<n;i++)
+		{
+			for(j=0;j<m;j++)
+			{
+				k=p[i][j];
+				int mv=4-g[k].c;g[k].c=g[k^1].c=0;
+				if(mv>0)
+				{
+					g[x[i]].c+=mv,g[y[j]].c+=mv;
+					int t=dinic();
+					int le=mv-t;
+					g[x[i]].c-=le,g[y[j]].c-=le;
+					printf("%d ",le+1);
+				}
+				else printf("1 ");
+			}
+			puts("");
+		}
+	}
+    return 0;
+}

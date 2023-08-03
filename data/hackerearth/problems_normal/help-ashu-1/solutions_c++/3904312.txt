@@ -1,0 +1,116 @@
+#include <iostream>
+#include <stdio.h>
+#include <algorithm>
+#include <cmath>
+#include <vector>
+#include <cstdlib>
+#include <utility>
+#include <memory.h>
+#include <cassert>
+#include <iterator>
+#include <bitset>
+#include <iomanip>
+#include <complex>
+#include <queue>
+#include <ctime>
+#include <deque>
+#include <stack>
+#include <set>
+#include <map>
+using namespace std;
+#define num long long int
+#define pb push_back
+#define pi pair<num,num>
+
+num a[100001],tree[400010];
+
+void build(num node,num start,num end)
+{
+	if(start==end)
+	{
+		if(a[start]%2==0)
+			tree[node]=1;
+		else
+			tree[node]=0;
+	}
+	else
+	{
+		num mid=(start+end)/2;
+		build(2*node+1,start,mid);
+		build(2*node+2,mid+1,end);
+		tree[node]=tree[2*node+1]+tree[2*node+2];
+	}
+}
+
+num query(num node,num start,num end,num l,num r)
+{
+	if(r<start || l>end)
+	{
+		return 0;
+	}
+	if(l<=start && end<=r)
+		return tree[node];
+	num mid=(start+end)/2;
+	num r1=query(2*node+1,start,mid,l,r);
+	num r2=query(2*node+2,mid+1,end,l,r);
+	return r1+r2;
+
+}
+
+void update(num node,num start,num end,num p,num val)
+{
+	if(start==end)
+	{
+		tree[node]+=val;
+	}
+	else{
+	num mid=(start+end)/2;
+	if(start<=p and p<=mid)
+		update(2*node+1,start,mid,p,val);
+	else
+		update(2*node+2,mid+1,end,p,val);
+	tree[node]=tree[2*node+1]+tree[2*node+2];
+	}
+}
+
+int main(){
+
+	num n,q,t,l,r,p,x;
+	cin>>n;
+	for(num i=0;i<n;i++)
+		cin>>a[i];
+	build(0,0,n);
+	cin>>q;
+	while(q--){
+		cin>>t;
+		if(t==0)
+		{
+			cin>>p>>x;
+			num val=0;
+			if((a[p-1]-x)%2==0)
+			{
+				val=0;
+			}
+			else
+			{
+				if(x%2==0)
+					val=1;
+				else
+					val=-1;
+			}
+			update(0,0,n,p-1,val);
+			a[p-1]=x;
+		}
+		else if(t==1)
+		{
+			cin>>l>>r;
+			cout<<query(0,0,n,l-1,r-1)<<endl;
+		}
+		else
+		{
+			cin>>l>>r;
+			cout<<r-l+1-query(0,0,n,l-1,r-1)<<endl;
+		}
+	}
+	return 0;
+}

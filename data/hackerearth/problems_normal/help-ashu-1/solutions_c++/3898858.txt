@@ -1,0 +1,100 @@
+/* 
+ * File:   main.cpp
+ * Author: Maala
+ *
+ * Created on May 12, 2016, 10:02 AM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+typedef long long ll;
+#define SI 1e6+100
+#define fi first
+#define se second
+#define pb push_back
+#define D(x,y) cerr<<x<<" "<<y<<endl;
+int a[200000];
+ll odd[500000], even[500000];
+void build(int node, int l, int r) {
+    if (l == r) {
+        if (a[l] % 2 == 0)
+            even[node]++;
+        else odd[node]++;
+        return ;
+    }
+    int mid = (l + r) >> 1;
+    build(node * 2, l, mid);
+    build(node * 2 + 1, mid + 1, r);
+    even[node] = even[node * 2 + 1] + even[node * 2];
+    odd[node] = odd[node * 2 + 1] + odd[node * 2];
+}
+
+ll qu(int node, int l, int r, int lbo, int rbo, int qq) {
+    if (l > rbo || r < lbo)return 0;
+    //cout<<l<<" "<<r<<endl;
+    if (lbo <= l && r <= rbo) {
+      //  cout<<11111<<endl;
+        if (qq == 1)
+            return even[node];
+        return odd[node];
+    } 
+        int mid = (l + r) >> 1;
+        return qu(node * 2, l, mid, lbo, rbo, qq) + qu(node * 2 + 1, mid + 1, r, lbo, rbo, qq);
+}
+
+void update(int node, int l, int r, int ind, int val, int ev) {
+    if (l == r && l == ind) {
+        if (ev) {
+            if (a[l] % 2 != 0) {
+                odd[node]--;
+                even[node]++;
+            }
+            a[l] = val ;
+        }
+        if (!ev) {
+            if (a[l] % 2 == 0) {
+                odd[node]++;
+                even[node]--;
+            }
+            a[l] = val ;
+        }
+        return ;
+    }
+    int mid = (l + r) >> 1;
+    if( ind >= l && ind <= mid )
+    update(node * 2, l, mid, ind, val, ev);
+    if( ind >= mid+1 && ind <= r )
+    update(node * 2 + 1, mid+1, r, ind, val, ev);
+    even[node] = even[node * 2 + 1] + even[node * 2];
+    odd[node] = odd[node * 2 + 1] + odd[node * 2];
+}
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    for (int i = 1; i <= n; ++i) cin >> a[i];
+    int m;
+    build(1, 1, n);
+    scanf("%d", &m);
+    int q, aa, b;
+    while (m--) {
+        scanf("%d%d%d", &q, &aa, &b);
+        if (q == 0) {
+            int f;
+            if( b % 2 == 0 )f = 1 ;
+            else f = 0 ;
+         //   f = ((b % 2 == 0) ? 1 : 0);
+            update(1, 1, n, aa, b, f);
+            a[aa] = b;
+        }
+        if (q == 1) {
+            printf("%lld\n", qu(1, 1, n, aa, b, 1));
+        }
+        if (q == 2) {
+            printf("%lld\n", qu(1, 1, n, aa, b, 2));
+        }
+    }
+    return 0;
+}
+

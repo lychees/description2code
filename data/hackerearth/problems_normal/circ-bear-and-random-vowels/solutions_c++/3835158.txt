@@ -1,0 +1,148 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <limits.h>
+#include <vector>
+#include <stdlib.h>
+#include <algorithm>
+#include <memory.h>
+#include <string.h>
+#include <math.h>
+#include <string>
+#include <algorithm>
+#include <functional>
+#include <cassert>
+#include <map>
+#include <set>
+#include <list>
+
+using namespace std;
+typedef long long lli;
+typedef vector<int> vi;
+typedef vector<lli> vli;
+typedef pair<int, int> pii;
+typedef vector<pii> vpii;
+typedef long double ld;
+
+const int INF = 0x3f3f3f3f;
+const lli LINF = 0x3f3f3f3f3f3f3f3f;
+
+//#define _LOCAL_DEBUG_
+#ifdef _LOCAL_DEBUG_
+#define eprintf(...) fprintf(stderr,__VA_ARGS__)
+#else
+#define eprintf(...) 
+#endif
+
+#pragma region Modular Arithmetic
+const int MOD = int(1e9) + 7;
+inline int add(const int a, const int b, const int mod = MOD) { return (a + b >= mod) ? (a + b - mod) : (a + b); }
+inline int sub(const int a, const int b, const int mod = MOD) { return (a - b < 0) ? (a - b + mod) : (a - b); }
+inline void inc(int &a, const int b, const int mod = MOD) { a = add(a, b, mod); }
+inline int negate(const int a, const int mod = MOD) { return mod - a; }
+inline int mul(const int a, const int b, const int mod = MOD) { return (a * 1ll * b) % mod; }
+int binPow(int b, int p, const int mod = MOD) {
+	int r = 1;
+	while (p) {
+		if (p & 1)
+			r = mul(r, b, mod);
+		b = mul(b, b, mod);
+		p >>= 1;
+	}
+	return r;
+}
+int inv(const int a, const int mod = MOD) {   // assuming that MOD is prime (Fermat's little theorem)
+	int res = binPow(a, mod - 2, mod);
+	return res;
+}
+inline int dvd(const int a, const int b, const int mod = MOD) { return mul(a, inv(b, mod), mod); } // b != 0
+inline void rAdd(int &a, const int b, const int mod = MOD) { int tmp = (a + b >= mod) ? (a + b - mod) : (a + b); a = tmp; }
+#pragma endregion
+
+const int MAX = 3010;
+char s[MAX];
+int n, k;
+
+int isVowel[MAX];
+int dp[MAX][MAX][2][2];
+int f[MAX];
+int rf[MAX];
+
+int C(int n, int k) {
+	return mul(f[n], mul(rf[n - k], rf[k]));
+}
+
+void clear() {
+	memset(isVowel, 0, sizeof(isVowel));
+	memset(dp, 0, sizeof(dp));
+}
+
+bool check(char c) {
+	return c == 'a' || c == 'e' || c == 'u' || c == 'y' || c == 'i' || c == 'o';
+}
+
+void solve() {
+	scanf("%s", s);
+	for (int i = 0; i < n; i++) isVowel[i] = check(s[i]);
+
+	dp[0][0][0][0] = 1;
+	for (int len = 1; len <= n; len++) {
+		for (int nUsed = 0; nUsed <= k; nUsed++) {
+			for (int prev1 = 0; prev1 < 2; prev1++) {
+				for (int prev2 = 0; prev2 < 2; prev2++) {
+					if (isVowel[len - 1]) { // vowel pos
+						rAdd(dp[len][nUsed][0][prev1], dp[len - 1][nUsed][prev1][prev2]);
+					}
+					else { // consonant pos
+						if (nUsed)
+							rAdd(dp[len][nUsed][0][prev1], dp[len - 1][nUsed - 1][prev1][prev2]);
+						if (!(prev1 && prev2))
+							rAdd(dp[len][nUsed][1][prev1], dp[len - 1][nUsed][prev1][prev2]);
+					}
+				}
+			}
+		}
+	}
+
+	int nw = 0;
+	for (int i = 0; i < n; i++) nw += isVowel[i];
+
+	int nSimple = 0;
+	for (int nUsed = 0; nUsed <= k; nUsed++) {
+		if (nw + nUsed < n - nw - nUsed) continue;
+		int tmp = 0;
+		for (int prev1 = 0; prev1 < 2; prev1++) {
+			for (int prev2 = 0; prev2 < 2; prev2++) {
+				rAdd(tmp, dp[n][nUsed][prev1][prev2]);
+			}
+		}
+		int nComb = C(nw, k - nUsed);
+		tmp = mul(tmp, nComb);
+		rAdd(nSimple, tmp);
+	}
+
+	int nTotal = C(n, k);
+
+	int nHard = sub(nTotal, nSimple);
+	printf("%d\n", nHard);
+}
+
+void precalc() {
+	f[0] = 1;
+	for (int i = 1; i < MAX; i++) f[i] = mul(f[i - 1], i);
+	for (int i = 0; i < MAX; i++) rf[i] = dvd(1, f[i]);
+}
+
+int main() {
+	precalc();
+#ifdef _LOCAL_VAN
+	freopen("in.txt", "r", stdin);
+#endif
+	while (scanf("%d%d", &n, &k) == 2) {
+		clear();
+		solve();
+#ifndef _LOCAL_VAN
+		return 0;
+#endif
+	}
+	return 0;
+}

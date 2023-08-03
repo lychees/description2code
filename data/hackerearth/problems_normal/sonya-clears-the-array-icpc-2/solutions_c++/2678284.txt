@@ -1,0 +1,78 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define quer 664580
+#define range 1001001
+#define sqt 1002
+#define ifc(x) (flag[x>>6]&(1<<((x>>1)&31)))
+#define isc(x) (flag[x>>6]|=(1<<((x>>1)&31)))
+int flag[range>>6], primes[quer];
+int dp[550][550], prime[range];
+map<int, int> mp;
+void sieve()
+{
+	int i, j, k;
+	for(i=3; i<sqt; i+=2)
+		if(!ifc(i))
+			for(j=i*i,k=i<<1; j<range; j+=k)
+				isc(j);
+				primes[1]=2;
+	for(i=3,j=2; i<range&&j<quer; i+=2)
+		if(!ifc(i)){
+            mp[i] = j;
+            primes[j++] = i;
+		}
+    mp[2] = 1;
+    int cnt = 1;
+    for(int i = 1; i <= range; i++){
+        if(i == primes[cnt]){
+            prime[i] = i;
+            cnt++;
+        }
+        else
+            prime[i] = primes[cnt];
+    }
+}
+int getopt(int a, int b){
+    if(a < b){
+        int idx = mp[prime[b]];
+        if(idx != 1 && a <= primes[idx - 1]){
+            return 1 + (primes[idx-1] + primes[idx] - a - b);
+        }
+        else{
+            return 1 + (primes[idx] + primes[idx + 1] - a - b);
+        }
+    }
+    else{
+        int idx = mp[prime[a]];
+        return 1 + (primes[idx] + primes[idx + 1] - a - b);
+    }
+}
+int arr[550];
+int main(){
+    int n, m, l;
+    sieve();
+    scanf("%d", &n);
+    if(n==0){
+        cout << 0 <<endl;
+        return 0;
+    }
+    for(int i = 0; i < n; i++)
+        scanf("%d", &arr[i]);
+    for(int i = 0; i < n; i++)
+        for(int j = i + 1; j < n; j++)
+            dp[i][j] = 1000000001;
+
+    for(int i = 2; i <= n; i+=2){
+        for(int j = 0; j + i <= n; j++){
+            for(int k = j + 1; k < j + i; k+=2){
+                if(k == (j + i - 1)){
+                    dp[j][j + i - 1] = min(dp[j][j + i - 1], dp[j + 1][j + i - 2] + getopt(arr[j], arr[j + i - 1]));
+                }
+                else{
+                    dp[j][j + i - 1] = min(dp[j][j + i - 1], dp[j][k] + dp[k + 1][j + i - 1]);
+                }
+            }
+        }
+    }
+    cout << dp[0][n-1] << endl;
+}

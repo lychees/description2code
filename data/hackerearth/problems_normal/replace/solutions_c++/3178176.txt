@@ -1,0 +1,152 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int t;
+
+char wcz[1000007];
+
+int n;
+
+int pacze;
+vector <int> graf[1000007];
+
+int m;
+map < vector <int> , int > mapa;
+int hasz[1000007];
+vector <int> hasze[1000007];
+
+int flow;
+int ile[1000007];
+
+vector < pair <int,int> > sie[1000007];
+
+bitset <20007> bylo;
+bitset <20007> pus;
+
+int rob()
+{
+    n++;
+    int v=n;
+    graf[v].clear();
+    pacze++;
+    while(wcz[pacze]!='}')
+    {
+        graf[v].push_back(rob());
+    }
+    pacze++;
+    return v;
+}
+
+int dfs(int v, int u)
+{
+    bylo[v]=1;
+    if (ile[v]<0)
+    {
+        for (int i=0; i<sie[v].size(); i++)
+        {
+            if (sie[v][i].first!=u)
+            continue;
+            sie[v][i].second++;
+            break;
+        }
+        ile[v]++;
+        return 1;
+    }
+    for (int i=0; i<sie[v].size(); i++)
+    {
+        if (!sie[v][i].second)
+        continue;
+        if (!bylo[sie[v][i].first] && dfs(sie[v][i].first, v))
+        {
+            sie[v][i].second--;
+            for (int j=0; j<sie[v].size(); j++)
+            {
+                if (sie[v][j].first!=u)
+                continue;
+                sie[v][j].second++;
+                break;
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int szuk()
+{
+    bylo&=pus;
+    int ret=0;
+    for (int i=1; i<m; i++)
+    {
+        if (!bylo[i] && ile[i]>0 && dfs(i, 0))
+        {
+            ret++;
+            ile[i]--;
+        }
+    }
+    return ret;
+}
+
+int main()
+{
+    scanf("%d", &t);
+    while(t--)
+    {
+        scanf("%s", wcz);
+        pacze=0;
+        n=0;
+        rob();
+        mapa.clear();
+        m=0;
+        for (int i=n; i; i--)
+        {
+            hasze[i].clear();
+            for (int j=0; j<graf[i].size(); j++)
+            {
+                hasze[i].push_back(hasz[graf[i][j]]);
+            }
+            sort(hasze[i].begin(), hasze[i].end());
+            if (!mapa[hasze[i]])
+            {
+                m++;
+                mapa[hasze[i]]=m;
+                ile[m]=0;
+                sie[m].clear();
+                if (i!=1)
+                {
+                    for (int j=0; j<hasze[i].size(); j++)
+                    {
+                        if (j && hasze[i][j]==hasze[i][j-1])
+                        {
+                            continue;
+                        }
+                        sie[m].push_back(make_pair(hasze[i][j], 1000000));
+                        sie[hasze[i][j]].push_back(make_pair(m, 0));
+                    }
+                }
+            }
+            hasz[i]=mapa[hasze[i]];
+        }
+        flow=0;
+        for (int i=0; i<hasze[1].size(); i++)
+        {
+            ile[hasze[1][i]]++;
+        }
+        for (int i=1; i<m; i++)
+        {
+            if (!ile[i])
+            {
+                ile[i]--;
+            }
+        }
+        while(1)
+        {
+            int pam=szuk();
+            if (!pam)
+            break;
+            flow+=pam;
+        }
+        printf("%d\n", flow);
+    }
+    return 0;
+}

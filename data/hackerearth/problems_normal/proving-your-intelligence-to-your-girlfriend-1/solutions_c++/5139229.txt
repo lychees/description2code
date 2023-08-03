@@ -1,0 +1,183 @@
+#include<bits/stdc++.h>
+#define pii pair<long long,long long>
+#define fi first
+#define se second
+#define mp make_pair
+#define vpi vector< pii >
+#define pb push_back
+#define ll long long int
+#define mod 1000000007
+#define gcd(a,b) __gcd(a,b)
+#define sf(n) scanf("%lld",&(n))
+#define pf(n) printf("%lld\n",(n))
+#define setbits(n) __builtin_popcount((n))
+#define pq priority_queue
+using namespace std;
+ll a[2][2] = { { 1, 1 }, { 1, 0 } };
+ll b[2][2] = { { 1, 1 }, { 1, 0 } };
+ll arr[1005][1005];
+struct node
+{
+	ll a, b, c;
+} edges[3000005];
+
+ll parent[1000005];
+bool comp(node a, node b)
+{
+	return a.c<b.c;
+}
+
+void ini()
+{
+	for (ll i = 0; i <= 1000005; i++)
+		parent[i] = i;
+}
+ll root(ll a)
+{
+	while (a != parent[a])
+	{
+		parent[a] = parent[parent[a]];
+		a = parent[a];
+	}
+	return a;
+}
+void uni(ll a, ll b)
+{
+	ll p = root(a);
+	ll q = root(b);
+	parent[p] = q;
+}
+ll kruskal(ll index1)
+{
+	ll mincost = 0;
+	//cout<<index1<<endl;
+	for (ll i = 0; i<index1; i++)
+	{
+		ll a = edges[i].a;
+		ll b = edges[i].b;
+		ll c = edges[i].c;
+		if (root(a) != root(b))
+		{
+			uni(a, b);
+			mincost += c;
+		}
+	}
+	// cout<<mincost<<endl;
+	return mincost;
+}
+void mul(ll d[2][2])
+{
+	ll c[2][2];
+	memset(c, 0, sizeof(c));
+	for (ll i = 0; i<2; i++)
+	{
+		for (ll j = 0; j<2; j++)
+		{
+			for (ll k = 0; k<2; k++)
+				c[i][j] = (c[i][j] % mod + (a[i][k] % mod*d[k][j] % mod) % mod) % mod;
+		}
+	}
+	for (ll i = 0; i<2; i++)
+	{
+		for (ll j = 0; j<2; j++)
+		{
+			a[i][j] = c[i][j];
+		}
+	}
+}
+void pow(ll n)
+{
+	if (n == 0 || n == 1)
+		return;
+	pow(n / 2);
+	mul(a);
+	if (n % 2 != 0)
+		mul(b);
+}
+void reg()
+{
+	for (ll i = 0; i<2; i++)
+	{
+		for (ll j = 0; j<2; j++)
+		{
+			a[i][j] = b[i][j];
+		}
+	}
+}
+int main()
+{
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+	ll index1 = 0;
+	ll n; ll k1, k2, k3, k4;
+	cin >> n >> k1 >> k2 >> k3 >> k4;
+	pow(k1 - 1);
+	ll a1 = a[1][0] % mod;
+	ll b1 = (a[0][0] % mod + a[0][1] % mod) % mod;
+	reg();
+	pow(k2 - 1);
+	ll a2 = a[1][0] % mod;
+	ll b2 = (a[0][0] % mod + a[0][1] % mod) % mod;
+	reg();
+	pow(k3 - 1);
+	ll a3 = a[1][0] % mod;
+	ll b3 = (a[0][0] % mod + a[0][1] % mod) % mod;
+	reg();
+	pow(k4 - 1);
+	ll a4 = a[1][0] % mod;
+	ll b4 = (a[0][0] % mod + a[0][1] % mod) % mod;
+	reg();
+	ini();
+	//cout<<a1<<" "<<a2<<" "<<a3<<" "<<a4<<endl;
+	//cout<<b1<<" "<<b2<<" "<<b3<<" "<<b4<<endl;
+	ll c1 = (b1 - a1 + mod) % mod;
+	ll c2 = (b2 - a2 + mod) % mod;
+	ll c3 = (b3 - a3 + mod) % mod;
+	ll c4 = (b4 - a4 + mod) % mod;
+	if (k1 == 1)
+		a1 = 0;
+	if (k2 == 1)
+		a2 = 0;
+	if (k3 == 1)
+		a3 = 0;
+	if (k4 == 1)
+		a4 = 0;
+	ll c = 0;
+	for (ll i = 0; i<n; i++)
+	{
+		for (ll j = 0; j<n - 1; j++)
+		{
+			edges[index1].a = i*n + j + 1;
+			edges[index1].b = i*n + j + 2;
+			// cout<<c1<<" "<<c2<<" "<<a1<<" "<<a2<<endl;
+			edges[index1].c = (c1 + c2) % mod;
+			index1++;
+			ll tmp1 = a1; ll tmp2 = a2;
+			a1 = c1; a2 = c2;
+			c1 = (c1 + tmp1) % mod;
+			c2 = (c2 + tmp2) % mod;
+		}
+	}
+	//cout<<index1<<endl;
+
+	for (ll i = 0; i<n; i++)
+	{
+		for (ll j = 0; j<n - 1; j++)
+		{
+
+			edges[index1].a = n*j + i + 1;
+			edges[index1].b = n*(j + 1) + i + 1;
+			//   cout<<c3<<" "<<c4<<" "<<a3<<" "<<a4<<endl;
+			edges[index1].c = (c3 + c4) % mod;
+			index1++;
+			ll tmp3 = a3; ll tmp4 = a4;
+			a3 = c3; a4 = c4;
+			c3 = (c3 + tmp3) % mod;
+			c4 = (c4 + tmp4) % mod;
+		}
+	}
+	//  for(ll i=0;i<index1;i++)
+	// cout<<edges[i].a<<" "<<edges[i].b<<" "<<edges[i].c<<endl;
+	sort(edges, edges + index1, comp);
+	cout << kruskal(index1) << "\n";
+}

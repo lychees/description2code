@@ -1,0 +1,79 @@
+#include <iostream>
+using namespace std;
+
+string str;
+int p[100005];
+void construct_tree(int tree[],int st,int ed,int pos){
+	if(st==ed){
+		tree[pos]=str[st]-'0';
+	}
+	else{
+		int mid=(st+ed)/2;
+		construct_tree(tree,st,mid,2*pos+1);
+		construct_tree(tree,mid+1,ed,2*pos+2);
+		tree[pos]=((tree[2*pos+1]*p[ed-mid])+tree[2*pos+2])%3;
+	}
+}
+int query(int tree[],int ql,int qr,int low,int high,int pos){
+	if(ql<=low && qr>=high){
+		return (tree[pos]*p[qr-high])%3;
+	}
+	if(ql>high || qr<low){
+		return 0;
+	}
+	int mid=(low+high)/2;
+	int p1=query(tree,ql,qr,low,mid,2*pos+1);
+	int p2=query(tree,ql,qr,mid+1,high,2*pos+2);
+	return (p1+p2)%3;
+}
+void modify(int tree[],int i,int low,int high,int pos){
+	if(low==high){
+		tree[pos]=1;
+		str[i]='1';
+	}
+	else{
+		int mid=(low+high)/2;
+		if(i>=low && i<=mid){
+			modify(tree,i,low,mid,2*pos+1);
+		}
+		else{
+			modify(tree,i,mid+1,high,2*pos+2);
+		}
+		tree[pos]=((tree[2*pos+1]*p[high-mid])+tree[2*pos+2])%3;
+	}
+}
+int findnextpower(int val){
+	int n=1;
+	while(n<val){
+		n=n<<1;
+	}
+	return n;
+}
+int main()
+{	
+	int n,q;
+    cin>>n;
+    int index;
+    int tree[2*findnextpower(n)-1];
+    cin>>str;
+    cin>>q;
+    p[0]=1;
+    for(int i=1;i<=100000;i++){
+    	p[i]=(p[i-1]*2)%3;
+    }
+    construct_tree(tree,0,str.length()-1,0);
+    for(int i=0;i<q;i++){
+    	int type,l,r;
+    	cin>>type;
+    	if(type==0){
+    		cin>>l;
+    		cin>>r;
+    		cout<<query(tree,l,r,0,str.length()-1,0)<<endl;
+    		
+    	}
+    	if(type==1){
+    		cin>>index;
+    		modify(tree,index,0,str.length()-1,0);
+    	}
+    }
+}

@@ -1,0 +1,293 @@
+
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#include<utility>
+#include<set>
+#include<map>
+#include<queue>
+#include<vector>
+#include<string>
+#include<cstring>
+#include<unordered_map>
+#include<cassert>
+#include<cmath>
+
+//code by cl3488
+//https://www.hackerearth.com/problem/algorithm/upgrade/description/
+//APPROACH 1: Treap and HLD
+//Approach 2 (later): Link-Cut tree.
+
+#define ri(X) scanf("%d", &(X))
+#define rii(X, Y) scanf("%d%d", &(X), &(Y))
+#define riii(X, Y, Z) scanf("%d%d%d", &(X), &(Y), &(Z))
+#define dri(X) int (X); scanf("%d", &X)
+#define drii(X, Y) int X, Y; scanf("%d%d", &X, &Y)
+#define driii(X, Y, Z) int X, Y, Z; scanf("%d%d%d", &X, &Y, &Z)
+#define pb push_back
+#define mp make_pair
+#define rep(i, s, t) for ( int i=(s) ; i <(t) ; i++)
+#define fill(x, v) memset (x, v, sizeof(x))
+#define why(d) cerr << (d) << "!\n"
+#define whisp(X, Y) cerr << (X) << " " << (Y) << "#\n"
+#define exclam cerr << "!!\n"
+typedef long long ll;
+using namespace std;
+typedef pair<int, int> pii;
+const ll inf = (ll)1e9 + 70;
+const ll mod = 1e9 + 7;
+const int maxn = 1e5 + 1000;
+int n;
+
+//first, a min-treap.
+ll val[maxn]; ll sum[maxn];
+int sz[maxn];
+int ch[maxn][2];
+int pr[maxn];
+bool rev[maxn];
+
+void update(int p){
+	if (p == 0)return;
+	sum[p] = sum[ch[p][0]] + val[p] + sum[ch[p][1]];
+	sz[p] = sz[ch[p][0]] + 1 + sz[ch[p][1]];
+}
+void access(int p){
+	if (p == 0) return;
+
+	if (!rev[p]) return;
+	rev[ch[p][0]] = !rev[ch[p][0]];
+	rev[ch[p][1]] = !rev[ch[p][1]];
+	swap(ch[p][0], ch[p][1]);
+	rev[p] = false;
+}
+pii split(int p, int k){///left subtree will have exactly k elements.
+	access(p);
+	if (p == 0) return pii(0, 0);
+	if (k <= sz[ch[p][0]]){//I like this way better.  You could have a third case, though...
+		pii x = split(ch[p][0], k);
+		ch[p][0] = x.second;
+		update(p);
+		return pii(x.first, p);
+	}
+	else{
+		pii x = split(ch[p][1], k - sz[ch[p][0]] - 1);
+		ch[p][1] = x.first;
+		update(p);
+		return pii(p, x.second);
+	}
+}
+
+int join(int p, int q){
+	access(p); access(q);
+	if (p == 0) return q;
+	if (q == 0) return p;
+	if (pr[p] < pr[q]){
+		ch[p][1] = join(ch[p][1], q);
+		update(p);
+		return p;
+	}
+	else{
+		ch[q][0] = join(p, ch[q][0]);
+		update(q);
+		return q;
+	}
+}
+
+ll myval[maxn];
+vector<int> adj[maxn];
+
+//HLD, one last time.
+vector<int> chh[maxn];
+int depth[maxn]; int jump[maxn][20]; int pa[maxn]; int szz[maxn];
+void dfs(int v){
+	depth[v] = depth[pa[v]] + 1;
+	jump[v][0] = pa[v];
+	rep(i, 1, 20){
+		jump[v][i] = jump[jump[v][i - 1]][i - 1];
+	}
+	szz[v] = 1;
+	for (int u : adj[v]){
+		if (u == pa[v]) continue;
+		chh[v].push_back(u);
+		pa[u] = v;
+		dfs(u);
+		szz[v] += szz[u];
+	}
+}
+int LCA(int a, int b){
+	if (depth[a] > depth[b]) swap(a, b);
+	for (int i = 19; i >= 0; i--){
+		if (depth[jump[b][i]] >= depth[a]) b = jump[b][i];
+	}
+	if (a == b)return a;
+	for (int i = 19; i >= 0; i--){
+		if (jump[a][i] != jump[b][i]) a = jump[a][i], b = jump[b][i];
+	}
+	return pa[a];
+}
+int tt = -1;
+int above[maxn];
+int dfsnum[maxn];
+vector<int> order;
+void hlddfs(int v){
+	tt++; dfsnum[v] = tt;
+	order.push_back(v);
+	if (v == 1 || chh[pa[v]][0] != v){
+		above[v] = v;
+	}
+	else{
+		above[v] = above[pa[v]];
+	}
+	if (szz[v] == 1) return;
+	int e = 0;
+	rep(i, 0, chh[v].size()){
+		if (szz[chh[v][i]] > szz[chh[v][e]]) e = i;
+	}
+	swap(chh[v][0], chh[v][e]);
+	for (int u : chh[v]){
+		hlddfs(u);
+	}
+}
+
+vector<pii> climb;
+void perform(int a, int c){
+	climb.clear();
+	while (a != c){
+		if (a == above[a]){
+			int next = pa[a];
+			climb.push_back(pii(a, a));
+			a = next;
+		}
+		else{
+			int next = above[a]; if (depth[next] < depth[c]) next = c;
+			climb.push_back(pii(a, chh[next][0]));
+			a = next;
+		}
+	}
+}
+
+//void printt(int p){
+//	access(p);
+//	if (p == 0) return;
+//	printt(ch[p][0]);
+//	cout << val[p] << " ";
+//	printt(ch[p][1]);
+//}
+
+int main(){
+	if (fopen("input.txt", "r")) freopen("input.txt", "r", stdin);
+	cin >> n; dri(Q);
+	rep(i, 1, n + 1){
+		dri(t); myval[i] = t;
+	}
+	rep(i, 1, n){
+		drii(a, b);
+		adj[a].push_back(b); adj[b].push_back(a);
+	}
+	dfs(1);
+	hlddfs(1);
+	//now, build yourself a treap.
+	int root = 0;
+	for (int i : order){//associate the vertex with its node in the treap.
+		sz[i] = 1; val[i] = myval[i]; pr[i] = rand(); sum[i] = myval[i];
+		root = join(root, i);
+	}
+	//printt(root);
+	rep(q, 0, Q){
+		string type; cin >> type;
+		if (type == "S"){
+			ll ans = 0;
+			//sum, so direction doesn't matter!
+			drii(a, b);
+			int c = LCA(a, b);
+			//STAGE 1: a to c, inclusive
+			perform(a, c); climb.push_back(pii(c, c));
+			for (pii x : climb){
+				int i = dfsnum[x.second]; int j = dfsnum[x.first];
+				pii g = split(root, i);
+				pii h = split(g.second, j - i + 1);
+				ans += sum[h.first];
+				root = join(g.first, join(h.first, h.second));
+			}
+			//STAGE 2: from b to c, excluding c
+			perform(b, c);
+			for (pii x : climb){//identical to above.
+				int i = dfsnum[x.second]; int j = dfsnum[x.first];
+				pii g = split(root, i);
+				pii h = split(g.second, j - i + 1);
+				ans += sum[h.first];
+				root = join(g.first, join(h.first, h.second));
+			}
+			cout << ans << "\n";
+		}
+		else{
+			drii(a, b); int c = LCA(a, b);
+			vector<int> coord; coord.push_back(0); coord.push_back(n);
+			vector<pii> pathup; vector<pii> pathdown;
+			perform(a, c); climb.push_back(pii(c, c));
+			for (pii x : climb){
+				pathup.push_back(pii(dfsnum[x.second], dfsnum[x.first] + 1));
+				coord.push_back(dfsnum[x.second]); coord.push_back(dfsnum[x.first] + 1);
+			}
+			perform(b, c); reverse(climb.begin(), climb.end());
+			for (pii x : climb){
+				pathdown.push_back(pii(dfsnum[x.second], dfsnum[x.first] + 1));
+				coord.push_back(dfsnum[x.second]); coord.push_back(dfsnum[x.first] + 1);
+			}
+			sort(coord.begin(), coord.end()); int k = unique(coord.begin(), coord.end()) - coord.begin();
+			vector<int> pieces;
+			map<pii, int> M;
+			for (int i = k - 2; i >= 0; i--){
+				pii e = split(root, coord[i]);
+				pieces.push_back(e.second);
+				M[pii(coord[i], coord[i + 1])] = i;
+				root = e.first;
+			}
+			reverse(pieces.begin(), pieces.end());
+			//assert(root == 0);
+			for (pii x : pathup){
+				int g = pieces[M[x]];
+				//assert(g != 0);
+				rev[g] = true;
+				access(g);
+				root = join(root, g);
+			}
+			for (pii x : pathdown){
+				int g = pieces[M[x]];
+				//assert(g != 0);
+				root = join(root, g);
+			}
+			
+			rev[root] = true;
+			access(root);
+			for (pii x : pathup){
+				pii e = split(root, x.second - x.first);
+				//why(x.second - x.first);
+				//printt(e.first); cout << endl;
+				root = e.second;
+				rev[e.first] = true;
+				access(e.first);
+				pieces[M[x]] = e.first;
+			}
+			for (pii x : pathdown){
+				pii e = split(root, x.second - x.first);
+				//why(x.second - x.first);
+				//printt(e.first); cout << endl;
+				root = e.second;
+				pieces[M[x]] = e.first;
+			}
+			//for (int i : pieces){
+			//	printt(i); cout << "\n";
+			//}
+			//assert(root == 0);
+			for (int g : pieces){
+				root = join(root, g);
+			}
+			//printt(root); cout << "\n";
+		}
+	}
+	return 0;
+}

@@ -1,0 +1,76 @@
+#include<bits/stdc++.h>
+#define oo 			0xBADC0DE
+#define s(n)			scanf("%d",&n)
+#define sl(n) 			scanf("%lld",&n)
+#define sf(n) 			scanf("%lf",&n)
+#define fill(a,v) 		memset(a, v, sizeof a)
+#define ull 			unsigned long long
+#define ll 				long long
+#define bitcount 		__builtin_popcount
+#define all(x) 			x.begin(), x.end()
+#define pb( z ) 		push_back( z )
+#define gcd				__gcd
+
+#define FOR(i,n) for (int i=0; i < (n); i++)
+
+using namespace std;
+
+int runs;
+int n, m;
+int x[11], d[11];
+int C[302][302];
+const int mod = 1000000007;
+
+int dp2[11][301][101];
+int solve2(int dim, int moves, int pos) {
+	if (pos > d[dim] || pos <= 0) {
+		return 0;
+	}
+	if (moves == 0) {
+		return 1;
+	}
+	int &ret = dp2[dim][moves][pos];
+	if (~ret)
+		return ret;
+	ret = 0;
+	ret = (solve2(dim, moves-1, pos+1) + solve2(dim, moves-1, pos-1)) % mod;
+	return ret;
+}
+
+int dp[11][301];
+int solve(int dim, int moves) {
+	if (dim == n)
+		return moves == 0 ? 1 : 0;
+	int &ret = dp[dim][moves];
+	if (~ret)
+		return ret;
+	ret = 0;
+	for (int use=0; use <= moves; use++) {
+		ll ways = C[moves][use];
+		ways *= solve(dim+1, moves-use); ways %= mod;
+		ways *= solve2(dim, use, x[dim]); 
+		ret = (ret + ways) % mod;
+	}
+	return ret;
+}
+void prec() {
+	C[0][0] = 1;
+	for (int n=1; n < 302; n++) {
+		C[n][0] = C[n][n] = 1;
+		for (int k=1; k < n; k++) {
+			C[n][k] = ( C[n-1][k] + C[n-1][k-1] ) % mod;
+		}
+	}
+}
+int main(int argc, char** argv) {
+	prec();	
+	s(runs);
+	while (runs-- > 0) {
+		s(n); s(m);
+		for (int i=0; i < n; i++) s(x[i]);
+		for (int i=0; i < n; i++) s(d[i]);
+		fill(dp, -1); fill(dp2, -1);
+		printf("%d\n", solve(0, m));
+	}
+	return 0;
+}

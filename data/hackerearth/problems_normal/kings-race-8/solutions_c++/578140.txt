@@ -1,0 +1,69 @@
+#include <map>
+#include <set>
+#include <list>
+#include <cmath>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <vector>
+#include <cstdio>
+#include <string>
+#include <cassert>
+#include <climits>
+#include <sstream>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define PB push_back
+#define MP make_pair
+#define SZ(v) ((int)(v).size())
+#define abs(x) ((x) > 0 ? (x) : -(x))
+#define FOREACH(e,x) for(__typeof(x.begin()) e=x.begin();e!=x.end();++e)
+typedef long long LL;
+
+const int MAXN = 1000000 + 6;
+int N, K;
+int A[MAXN], D[MAXN];
+
+int maxDis(int height) {
+	int lo = 0, hi = K - 1, ret = -1;
+	while (lo <= hi) {
+		int mid = (lo + hi) >> 1;
+		if (height >= D[mid]) {
+			ret = mid;
+			lo = mid + 1;
+		} else hi = mid - 1;
+	}
+	return ret;
+}
+
+int main() {
+#ifndef ONLINE_JUDGE
+	freopen("in.txt", "r", stdin);
+#endif
+	int ts;
+	scanf("%d", &ts);
+	while (ts--) {
+		scanf("%d%d", &N, &K);
+		for (int i = 0; i < N; i++)
+			scanf("%d", &A[i]);
+		for (int i = 0; i < K; i++) {
+			int x;
+			scanf("%d", &x);
+			D[i] = i == 0 ? x : max(D[i - 1], x);
+		}
+		int ret = 0, mx = -1;
+		for (int i = 0; i < N; i++) {
+			int temp = maxDis(A[i]);
+			if (temp > mx) {
+				mx = temp;
+				ret = i;
+			}
+		}
+		printf("%d\n", ret);
+	}
+	return 0;
+}
+

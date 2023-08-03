@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long 
+vector<ll> a;
+vector<ll> st;
+
+int isprime(ll n)
+{
+	ll i;
+	if(n==1 || n==0)
+	return 0;
+	if(n==2)
+	return 1;
+	for(i=2;i<=int(sqrt(n));i++)
+	{
+		if(n%i==0)
+			return 0;
+	}
+	
+	return 1;
+}
+void build(ll node,ll start,ll end)
+{
+    if(start==end)
+    {
+        if(isprime(a[start]))
+        st[node]=1;
+        else
+        st[node]=0;
+    }
+    else{
+        ll mid=(end-start)/2+start;
+        build(2*node+1,start,mid);
+        build(2*node+2,mid+1,end);
+        st[node]=st[2*node+1]+st[2*node+2];
+    }
+}
+
+void update(ll node,ll start,ll end,ll idx,ll val)
+{
+    if(start==end)
+    {   //a[idx]=val;
+        if(isprime(val))
+        st[node]=1;
+        else
+        st[node]=0;
+    }
+    else
+    {   ll mid=(end-start)/2+start;
+    
+        if(start<=idx && idx<=mid)
+        {
+            update(2*node+1,start,mid,idx,val);
+        }
+        else
+        {
+            update(2*node+2,mid+1,end,idx,val);
+        }
+        st[node]=st[2*node+1]+st[2*node+2];
+    }
+}
+
+ll query(ll node,ll start,ll end,ll l,ll r)
+{
+    if(l<=start and end<=r)
+    {
+        return st[node];
+    }
+    
+    if(r<start or l>end)
+    {
+        return 0;
+    }
+    
+    ll mid=(end-start)/2+start;
+    ll p1=query(2*node+1,start,mid,l,r);
+    ll p2=query(2*node+2,mid+1,end,l,r);
+    return (p1+p2);
+}
+
+int main()
+{
+    ll n,t,i,x,l,r,q;
+    char e;
+    scanf("%lld",&t);
+    while(t--)
+    {
+    	scanf("%lld",&n);
+    	a.resize(n);
+    	st.resize(4*n);
+    	for(i=0;i<n;i++)
+    		scanf("%lld",&a[i]);
+    	build(0,0,n-1);
+    	scanf("%lld",&q);
+    	i=0;
+    	while(q--)
+    	{
+    		cin>>e;
+    		scanf("%lld%lld",&l,&r);
+    		if((int) e==65)
+    		{
+    			printf("%lld\n",query(0,0,n-1,l-1,r-1));
+    		}
+    		else
+    		{
+    			update(0,0,n-1,l-1,r);
+    		}
+    	}
+    }
+    return 0;
+}

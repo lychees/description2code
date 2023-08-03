@@ -1,0 +1,103 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define pi pair<ll,ll>
+#define pb push_back
+#define f first
+#define s second
+#define rep(i,n) for(int i=0;i<n;i++)
+int dp[100011][20];
+struct ele{
+	ll pref,suf,sum,ans;
+	ele(){};
+	ele(ll a,ll b,ll c,ll d) {
+		pref=a;
+		suf=b;
+		sum=c;
+		ans=d;
+	}
+};
+ele sdp[100011][20];
+int d[100011];
+vector<pi>g[100011];
+void dfs(int v,int p,ll cost) {
+	dp[v][0]=p;
+	sdp[v][0]=ele(max(cost,0LL),max(cost,0LL),cost,max(cost,0LL));
+	d[v]=d[p]+1;
+	for(auto x:g[v]){
+		if(x.f!=p){
+			dfs(x.f,v,x.s);
+		}
+	}
+}
+
+ele merge(ele a,ele b) {
+
+	ll pref = max(a.pref,a.sum + b.pref);
+	ll suf = max(b.suf,b.sum + a.suf);
+	ll sum = a.sum+b.sum;
+	ll ans = max({a.ans,b.ans,pref,suf,sum});
+	ans=max(ans,a.suf+b.pref);
+	return {pref,suf,sum,ans};
+
+}
+int lca(int u,int v) {
+	if(d[u]<d[v]) swap(u, v);
+	int diff = d[u] - d[v];
+	rep(i,20){
+		if(diff&(1<<i)) u = dp[u][i];
+	}
+	if(u!=v) {
+		for(int i=19;i>=0;i--){
+			if(dp[u][i]!=dp[v][i]) {
+				u=dp[u][i];
+				v=dp[v][i];
+			}
+		}
+		u=dp[u][0];
+	}
+	return u;
+}
+ele calc(int u,int L) {
+	ele e={0,0,0,0};
+	int diff = d[u]-d[L];
+	rep(i,20) {
+		if(diff&(1<<i)){
+			e=merge(e,sdp[u][i]);
+			u=dp[u][i];
+		}
+	}
+	return e;
+}
+int main(){
+	int n,q;
+	cin >> n >> q;
+	int u,v,w;
+	rep(i,n-1) {
+		cin >> u >> v >> w;
+		g[u].pb({v, w});
+		g[v].pb({u, w});
+	}
+	dfs(1,0,0);
+	rep(j,20){
+		for(int i=1;i<=n;i++){
+			if(dp[i][j]!=0){
+				dp[i][j+1] = dp[dp[i][j]][j];
+				sdp[i][j+1] = merge(sdp[i][j],sdp[dp[i][j]][j]);
+			}
+		}
+	}
+	while(q--) {
+		
+		cin >> u >> v;
+		int L = lca(u,v);
+		
+		ele f1 = calc(u,L);
+		ele f2 = calc(v,L);
+		
+		ll ans = max(f1.ans,f2.ans);
+		ans=max(ans,f1.suf+f2.suf);
+		
+		cout<< ans <<"\n";
+	}
+}

@@ -1,0 +1,99 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int uli;
+const int mx=1e5+10;
+int c[mx];
+bool centroid[mx];
+vector<int>g[mx];
+int sz[mx];
+int total;
+int center=-1;
+int ans[mx];
+void dfs(int u,int pu){
+   sz[u]=1;
+   for(int i=0;i<int(g[u].size());i++){
+      int v=g[u][i];
+      if(v!=pu && !centroid[v]){
+         dfs(v,u);
+         sz[u]+=sz[v];
+      }
+   }
+   bool ok=true;
+   for(int i=0;i<int(g[u].size());i++){
+      int v=g[u][i];
+      if(!centroid[v]){
+         int sv=sz[v];
+         if(v==pu)sv=total-sz[u];
+         if(sv>total/2)ok=false;
+      }
+   }
+   if(ok)center=u;
+}
+void go(int u,int pu,int lyr,vector<pair<int,int> >&d){
+   d.push_back(make_pair(c[u],lyr));
+   for(int i=0;i<int(g[u].size());i++){
+      int v=g[u][i];
+      if(v!=pu && !centroid[v]){
+         go(v,u,lyr+1,d);
+      }
+   }
+}
+void solve(int u,int cnt){
+   total=cnt;
+   dfs(u,u);
+   int o=center;
+   centroid[o]=true;
+   vector<pair<int,int> >d;
+   vector<int>szs;
+   for(int i=0;i<int(g[o].size());i++){
+      int u=g[o][i];
+      if(!centroid[u]){
+         szs.push_back(sz[u]);
+         vector<pair<int,int> >du;
+         go(u,u,1,du);
+         sort(du.begin(),du.end());
+         int s=du.size();
+         for(int i=0;i<s;){
+            int ci=du[i].first;
+            while(i<s && du[i].first==ci)i++;            
+            d.push_back(make_pair(ci,du[i-1].second));
+         }
+      }
+   }
+   for(int i=0,ii=0;i<int(g[o].size());i++){
+      int u=g[o][i];
+      if(!centroid[u])
+         solve(u,szs[ii++]);      
+   }
+   d.push_back(make_pair(c[o],0));
+   sort(d.begin(),d.end());
+   int s=d.size();
+//   cout<<"process centroid "<<o+1<<endl;
+//   for(int i=0;i<s;i++)cout<<d[i].first<<"("<<d[i].second<<") ";cout<<endl;
+   for(int i=0;i<s;){
+      int ci=d[i].first;
+      int l=i;
+      while(i<s && d[i].first==ci)i++;            
+      if(i-1!=l){
+         ans[ci]=max(ans[ci], d[i-1].second+d[i-2].second);
+      }
+   }
+}
+int main(){
+   int n,m,u,v;
+   scanf("%d %d",&n,&m);
+   for(int i=0;i<n;i++)scanf("%d",c+i);
+   for(int i=0;i<n-1;i++){
+      scanf("%d %d",&u,&v);
+      --u,--v;
+      g[u].push_back(v);
+      g[v].push_back(u);
+   }
+   solve(0,n);
+   for(int i=1;i<=m;i++){
+      printf("%d ",ans[i]);
+   }
+   printf("\n");
+   return 0;
+}
+

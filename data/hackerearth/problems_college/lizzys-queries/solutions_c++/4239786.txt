@@ -1,0 +1,228 @@
+#include<bits/stdc++.h>
+#include <math.h>
+using namespace std;
+
+template< class T > inline T _abs(const T n) { return (n < 0 ? -n : n); }
+template< class T > inline T _max(const T a, const T b) { return (!(a < b) ? a : b); }
+template< class T > inline T _min(const T a, const T b) { return (a < b ? a : b); }
+template< class T > inline void _setmax(T &a, const T b) { if(a < b) a = b; }
+template< class T > inline void _setmin(T &a, const T b) { if(b < a) a = b; }
+template< class T > inline T _sqr(const T x) { return x * x; }
+
+const double EPS = 1e-9;
+const double PI = acos(-1.0);
+const int INF = 0x7f7f7f7f;
+const int TMAX = 1 << 18;
+string str;
+#define MOD 1000000007
+#define MAX 100007
+#define pr 31
+#define ll long long
+#define rep2(i,a,b) for(int i = a; i < b; i++)
+#define rep1(i,n) for(int i = 0; i < n; i++)
+#define repll2(i,a,b) for(ll i = a; i < b; i++)
+#define repll1(i,n) for(ll i = 0; i < n; i++)
+#define slld(t) scanf("%lld",&t)
+#define sld(t) scanf("%ld",&t)
+#define sd(t) scanf("%d",&t)
+#define pd(t) printf("%d\n",t)
+#define plld(t) printf("%lld\n",t)
+#define pcc pair<char,char>
+#define pii pair< int, int >
+#define psi pair< string, int >
+#define pll pair<ll,ll>
+#define tr(container,it) for(typeof(container.begin()) it=container.begin();it!=container.end();it++)
+#define mp(a,b) make_pair(a,b)
+#define F first
+#define S second
+#define pb1(x) push_back(x);
+#define pb2(x) pop_back(x);
+/*
+
+#define gc getchar_unlocked
+inline void read(int &x){
+
+        x=0;
+        register char c=gc();
+        for(;c<'0' || c>'9';c=gc());
+         for(;c>='0' && c<='9';c=gc())
+          x=(x<<3)+(x<<1)+(c-'0');
+      }
+inline void write(int x){
+
+         register char buffor[35];
+         register int i=0;
+         do{
+               buffor[i++]=(x%10)+'0';
+               x/=10;
+            } while(x);
+           i--;
+            while(i>=0) putchar_unlocked(buffor[i--]);
+            putchar_unlocked('\n');
+       }
+*/
+ll pwArr[100001];
+
+void construct_tree(string s,ll segTreeF[],ll segTreeR[],ll low,ll high,ll pos)
+{
+	if(low==high)
+	{
+		segTreeF[pos]=(ll)s[low];
+		segTreeR[pos]=(ll)s[low];
+		return;
+	}
+	ll mid=(low+high)/2;
+	construct_tree(s,segTreeF,segTreeR,low,mid,2*pos+1);
+	construct_tree(s,segTreeF,segTreeR,mid+1,high,2*pos+2); 
+	segTreeF[pos]=(segTreeF[2*pos+1]+(segTreeF[2*pos+2]*(pwArr[mid-low+1]))%MOD)%MOD;
+	segTreeR[pos]=(segTreeR[2*pos+2]+(segTreeR[2*pos+1]*(pwArr[high-mid]))%MOD)%MOD;
+	//segTreeR[pos]=(segTreeR[2*pos+2]+(segTreeR[2*pos+1]*(pwArr[high-mid]))%MOD)%MOD;
+}
+void update(string s,ll segTreeF[],ll segTreeR[],ll ind,ll ch,ll low,ll high,ll pos)
+{
+//	ll pr1=(ll)str[ind];
+//	ll cr1=(ll)ch;
+ll mid=(low+high)/2;
+//cout<<"inside_update "<<mid<<" "<<low<<" "<<high<<" "<<ind<<" "<<pos<<" "<<ch<<endl;
+	//exit(0);
+	if(low==high)
+	{
+		segTreeF[pos]=ch;
+		segTreeR[pos]=ch;
+		return;
+	}
+	else if(ind<=mid)
+	{
+		update(s,segTreeF,segTreeR,ind,ch,low,mid,2*pos+1);//exit(0);
+	}
+	else
+	update(s,segTreeF,segTreeR,ind,ch,mid+1,high,2*pos+2);
+	segTreeF[pos]=(segTreeF[2*pos+1]+(segTreeF[2*pos+2]*(pwArr[mid-low+1]))%MOD)%MOD;
+	segTreeR[pos]=(segTreeR[2*pos+2]+(segTreeR[2*pos+1]*(pwArr[high-mid]))%MOD)%MOD;
+}
+ll critical(ll a,ll b)
+{
+	if(a<b)
+	return 0;
+	else
+	return a-b;
+}
+pair<bool,ll> rangMinQuerryF(ll *segTree,ll qlow,ll qhigh,ll low,ll high,ll pos)
+{
+	pair<bool,ll>po;
+	if(qlow<=low&&qhigh>=high)
+	{
+		po.F=true;
+		po.S=segTree[pos];
+		return po;
+	}
+	else if(qlow>high||qhigh<low)
+	{
+		po.F=false;
+		po.S=0;
+		return po;
+	}
+	po.F=false;
+	ll mid=(low+high)/2;
+	pair<bool,ll>poL=rangMinQuerryF(segTree,qlow,qhigh,low,mid,2*pos+1);
+	pair<bool,ll>poR=rangMinQuerryF(segTree,qlow,qhigh,mid+1,high,2*pos+2);
+	if(poL.F)
+	{
+		po.S=((poL.S+poR.S*(pwArr[mid-low+1]))%MOD)%MOD;
+		return po;
+	}
+	po.S=((poL.S+poR.S*(pwArr[critical(mid+1,qlow)]))%MOD)%MOD;
+	return po;
+}
+pair<bool,ll> rangMinQuerryR(ll segTree[],ll qlow,ll qhigh,ll low,ll high,ll pos)
+{//cout<<"insideR "<<low<<" "<<qlow<<" "<<qhigh<<" "<<high<<" "<<pos<<" "<<segTree[pos]<<endl;
+	pair<bool,ll>po;
+	if(qlow<=low&&qhigh>=high)
+	{//cout<<"inside_if1 "<<low<<" "<<high<<" "<<pos<<endl;
+		po.F=true;
+		po.S=segTree[pos];
+		//cout<<po.first<<" "<<po.second<<" "<<segTree[pos]<<endl;
+		return po;
+	}
+	else if(qlow>high||qhigh<low)
+	{//cout<<"inside_else_if2 "<<low<<" "<<high<<" "<<pos<<endl;
+		po.F=false;
+		po.S=0;//cout<<po.first<<" "<<po.second<<endl;
+		return po;
+	}
+	po.F=false;
+	ll mid=(low+high)/2;
+	pair<bool,ll>poL=rangMinQuerryR(segTree,qlow,qhigh,low,mid,2*pos+1);
+	pair<bool,ll>poR=rangMinQuerryR(segTree,qlow,qhigh,mid+1,high,2*pos+2);
+	if(poR.F)
+	{//cout<<"inside_else_out_if4 "<<low<<" "<<high<<" "<<pos<<endl;
+		po.S=((poR.S+poL.S*(pwArr[high-mid]))%MOD)%MOD;//cout<<po.first<<" "<<po.second<<endl;
+		return po;
+	}//cout<<"inside_out_5 "<<low<<" "<<high<<" "<<pos<<endl;
+	
+	po.S=((poR.S+poL.S*(pwArr[critical(qhigh,mid)]))%MOD)%MOD;//cout<<po.first<<" "<<po.second<<" "<<poR.S<<" "<<poL.S<<" "<<pwArr[qhigh-mid]<<endl;
+	return po;
+}
+ll segF[1000000];
+ll segR[1000000];
+int main()
+{
+	
+	ll n,q,siz,qi,y,x;
+	char ch;
+	
+	slld(n);
+	slld(q);
+	pwArr[0]=1;
+	rep2(i,1,n)
+	{
+		pwArr[i]=pwArr[i-1]*pr;
+		pwArr[i]%=MOD;
+	}
+	cin>>str;
+	construct_tree(str,segF,segR,0,n-1,0);	
+	
+	for(ll i=0;i<q;i++)
+	{//cout<<"querry_start ";
+		slld(qi);
+		slld(x);
+		if(qi)
+		{//cout<<"indise_qurry1  ";
+			slld(y);
+			x--;
+			y--;
+			if(y-x>0)
+			{//cout<<"inside_if_main "<<x<<" "<<y<<endl;
+				pair<bool,ll>po1,po2;
+				if((x+y)%2==0)
+		    	{
+		    		ll mid=(x+y)/2;
+		    		po1=rangMinQuerryF(segF,x,mid-1,0,n-1,0);
+		        	po2=rangMinQuerryR(segR,mid+1,y,0,n-1,0);
+	    		}
+	    		else
+	    		{
+	    			ll mid=(x+y)/2;
+	    			po1=rangMinQuerryF(segF,x,mid,0,n-1,0);
+	    			
+		        	po2=rangMinQuerryR(segR,mid+1,y,0,n-1,0);//cout<<"else_amin "<<po1.second<<" "<<po2.F<<endl;
+	    		}
+	    		if(po1.S==po2.S)
+	    		{
+	    			printf("Yes\n");
+				}
+				else
+				printf("No\n");
+			}
+			else
+			printf("Yes\n");
+		}
+		else
+		{//cout<<"querr0 ";
+			x--;
+			cin>>ch;
+			ll c1=ch;
+			update(str,segF,segR,x,c1,0,n-1,0);	
+		}
+	}
+}

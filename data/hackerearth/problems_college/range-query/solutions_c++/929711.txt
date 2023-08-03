@@ -1,0 +1,91 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+template <typename value_type> class SegTree {
+    vector<vector<value_type> > segtree;
+    int range;
+    value_type def;
+
+    bool IN(int i, int j, int x, int y)
+    {
+        return (i >= x && j <= y)? 1: 0;
+    }
+    bool OUT(int i, int j, int x, int y)
+    {
+        return (j < x || i > y)? 1: 0;
+    }
+    void merge_sorted(int current, int left, int right)
+    {
+        int left_size = segtree[left].size();
+        int right_size = segtree[right].size();
+        int i = 0, j = 0;
+        while (i < left_size || j < right_size) {
+            if (j >= right_size || (i < left_size && segtree[left][i] < segtree[right][j])) {
+                segtree[current].push_back(segtree[left][i]);
+                i++;
+            } else {
+                segtree[current].push_back(segtree[right][j]);
+                j++;
+            }
+        }
+    }
+
+    void _construct(int node, int ll, int ul, vector<value_type> &array)
+    {
+        if (ll == ul) {// demarc that this is a leaf node
+            segtree[node].push_back(array[ll]);
+            return;
+        } else {
+            _construct(node*2+1, ll, (ll + ul) / 2, array);
+            _construct(node*2+2, (ll + ul) / 2 + 1, ul, array);
+            merge_sorted(node, node * 2 + 1, node * 2 + 2);
+        }
+    }
+
+    value_type _query_equal(int node, int ll, int ul, int i, int j, value_type k)
+    {
+            if (OUT(ll, ul, i, j))
+                return def;
+            if (IN(ll, ul, i, j))
+               return upper_bound(segtree[node].begin(), segtree[node].end(), k) - lower_bound(segtree[node].begin(), segtree[node].end(), k);
+            value_type left = _query_equal(2*node+1, ll, (ll+ul)/2, i, j, k);
+            value_type right = _query_equal(2*node+2, (ll+ul)/2 + 1, ul, i, j, k);
+            return left + right;
+    }
+
+    public:
+     SegTree(vector<value_type> &array)
+     {
+        range = array.size();
+        def = 0;
+        segtree.resize(4*array.size());
+        _construct(0, 0, range - 1, array);
+     }
+
+     value_type query_equal(int i, int j, value_type k)
+     {
+            return _query_equal(0, 0, range - 1, i, j, k);
+     }
+};
+
+int main()
+{
+    ios::sync_with_stdio(false);
+    int n;
+    cin >> n;
+    vector<long long> a(n);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    SegTree<long long> S(a);
+    int q;
+    cin >> q;
+    while (q--) {
+        int i, j, k;
+        cin >> i >> j >> k;
+        cout << S.query_equal(i, j, k) << endl;
+    }
+}

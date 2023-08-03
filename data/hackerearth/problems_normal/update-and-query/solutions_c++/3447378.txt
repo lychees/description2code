@@ -1,0 +1,84 @@
+#include <iostream>
+#include <memory.h>
+using namespace std;
+const int maxN=2*1e5;
+int mx[4*maxN], mn[4*maxN], A[maxN];
+
+void build(int v,int l,int r) {
+    if (l==r)
+        mx[v]=mn[v]=A[l];
+    else {
+        int m=(l+r)/2;
+        build(2*v,l,m);
+        build(2*v+1, m+1,r);
+        mx[v]=max(mx[2*v],mx[2*v+1]);
+        mn[v]=min(mn[2*v],mn[2*v+1]);
+    }
+}
+
+void upd(int v,int l,int r,int pos,int val) {
+    if (l==r)
+        mx[v]=mn[v]=val;
+    else {
+        int m=(l+r)/2;
+        if (pos<=m)
+            upd(2*v,l,m,pos,val);
+        else
+            upd(2*v+1,m+1,r,pos,val);
+        mx[v]=max(mx[2*v],mx[2*v+1]);
+        mn[v]=min(mn[2*v],mn[2*v+1]);
+    }
+}
+
+pair<int,int> minmax(int v,int l,int r,int lp,int rp) {
+    if (lp>rp || l>r)
+        return {2e9,-2e9};
+    if (l==lp && r==rp)
+        return {mn[v],mx[v]};
+    int m=(l+r)/2;
+    pair<int,int> left=minmax(2*v,l,m,lp,min(m,rp)),
+                  right=minmax(2*v+1,m+1,r,max(lp,m+1),rp);
+    return {min(left.first,right.first),max(left.second,right.second)};
+}
+
+int main() {
+    int N, M;
+    ios_base::sync_with_stdio(false);
+    cin>>N>>M;
+    for (int i=0;i<4*maxN;i++)
+        mn[i]=-2e9;
+    for (int i=0;i<N;i++)
+        cin>>A[i];
+    build(1,0,N-1);
+    for (int i=0;i<M;i++) {
+        char ch; int x,y;
+        cin>>ch>>x>>y; x--;
+        if (ch=='U')
+            upd(1,0,N-1,x,y),
+            A[x]=y;
+        else {
+            if (y<0) {
+                cout<<"-1 -1\n";
+                continue;
+            }
+            int lb=A[x]-y, rb=A[x]+y;
+            int l=x, r=N-1;
+            while (l<r) {
+                int m=(l+r)/2;
+                pair<int,int> res=minmax(1,0,N-1,l,m),res2=minmax(1,0,N-1,l,m+1);
+                if (lb<=res.first && res.second<=rb && !(lb<=res2.first && res2.second<=rb))
+                    break;
+                if (lb<=res.first && res.second<=rb)
+                    l=m+1;
+                else
+                    r=m-1;
+            }
+            int pos=(l+r)/2;
+            pair<int,int> res=minmax(1,0,N-1,x,pos);
+            cout<<pos-x+1<<" "<<max(abs(A[x]-res.first),abs(A[x]-res.second))<<"\n";
+        }
+        
+    }
+    return 0;
+}
+

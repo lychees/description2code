@@ -1,0 +1,123 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define pb push_back
+long long int  tree[5000005];
+long long int  a[100005],b[1000005];
+long long int  timer=0;
+long long int  start[100005];
+long long int  finsh[100005];
+vector<long long int > v[100005];
+void bulid(long long int  s,long long int  e,long long int  idx)
+{
+    if(s==e)
+    {
+        tree[idx]=b[s];
+        return;
+    }
+    if(s<e)
+    {
+        long long int  m=(s+e)/2;
+        bulid(s,m,2*idx);
+        bulid(m+1,e,2*idx+1);
+        tree[idx]=tree[2*idx]+tree[2*idx+1];
+        return;
+    }
+}
+void update(long long int  s,long long int  e,long long int  s1,long long int  e1,long long int  idx,long long int  val)
+{
+    if(s>e || s>e1 || e<s1)
+        return;
+    if(s==s1 && e==e1)
+    {
+        tree[idx]=val;
+        return;
+    }
+    if(s<e)
+    {
+        long long int  m=(s+e)/2;
+        update(s,m,s1,e1,2*idx,val);
+        update(m+1,e,s1,e1,2*idx+1,val);
+        tree[idx]=tree[2*idx]+tree[2*idx+1];
+        return;
+    }
+}
+long long int  query(long long int  s,long long int  e,long long int  s1,long long int  e1,long long int  idx)
+{
+    if(s>e || s>e1 || e<s1)
+        return 0;
+
+    if(s1<=s && e1>=e)
+        return tree[idx];
+
+    if(s<e)
+    {
+        long long int  m=(s+e)/2;
+        long long int  x=query(s,m,s1,e1,2*idx);
+        long long int  y=query(m+1,e,s1,e1,2*idx+1);
+        return x+y;
+    }
+}
+long long int  vis[100005],id=0;
+void dfs(long long int  s)
+{
+    //cout<<s<<endl;
+    vis[s]=1;
+    b[id++]=a[s];
+    start[s]=timer;
+   // timer++;
+    for(long long int  i=0;i<v[s].size();i++)
+    {
+        long long int  x=v[s][i];
+        if(!vis[x])
+        {
+        timer++;
+        dfs(x);
+        }
+    }
+    finsh[s]=timer;
+    //cout<<s<<"   start->  "<<start[s]<<"   finish->  "<<finsh[s]<<endl;
+    return;
+}
+
+int  main()
+{
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+   //freopen("tyty.txt","w",stdout);
+    long long int  n,m,i,j,k,l;
+    cin>>n>>m;
+    for(i=0;i<n;i++)
+        cin>>a[i];
+
+    long long int  x,y;
+    for(i=0;i<n-1;i++)
+    {
+        cin>>x>>y;
+        x--;
+        y--;
+        v[x].pb(y);
+        v[y].pb(x);
+    }
+    dfs(0);
+    bulid(0,n-1,1);
+    for(i=0;i<m;i++)
+    {
+        char q;
+        cin>>q;
+        if(q=='Q')
+        {
+            cin>>x;
+            x--;
+            //cout<<start[x]<<"   "<<finsh[x]<<endl;
+            cout<<query(0,n-1,start[x],finsh[x],1)<<endl;
+        }
+        else
+        {
+            cin>>x>>y;
+            x--;
+            //cout<<start[x]<<"   "<<finsh[x]<<endl;
+            update(0,n-1,start[x],start[x],1,y);
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+ 
+#define FO(i,a,b) for (int i = (a); i < (b); i++)
+#define sz(v) int(v.size())
+ 
+#define MOD 1000000007
+ 
+using namespace std;
+ 
+pair<int,int> F[10005][11][11];
+int pw[10005];
+int k;
+ 
+pair<int,int> f(int n, int i, int p) {
+    if (p > k) return {pw[n],0};
+    else return F[n][i][p];
+}
+ 
+char s[10005];
+ 
+int main() {
+    pw[0] = 1;
+    FO(i,1,10005) pw[i] = 10ll * pw[i-1] % MOD;
+    scanf("%d", &k);
+    FO(n,0,10005) FO(i,0,k+1) FO(p,0,k+1) {
+        if (n == 0) {
+            if (i+p > k) {
+                F[n][i][p] = {1,0};
+            } else {
+                F[n][i][p] = {0,i+p};
+            }
+        } else {
+            pair<int,int> r(0,i);
+            for (int d = 0; d <= 9; d++) {
+                int cp = p + (d == 4 || d == 7);
+                r.first += f(n-1,r.second,cp).first;
+                r.second = f(n-1,r.second,cp).second;
+                if (r.first >= MOD) r.first -= MOD;
+            }
+            F[n][i][p] = r;
+        }
+    }
+    scanf("%s", s);
+    int n = strlen(s);
+    int p = 0;
+    pair<int,int> r(0,0);
+    FO(i,0,n) {
+        int d;
+        for (d = 0; d < s[i]-'0'; d++) {
+            int cp = p + (d == 4 || d == 7);
+            r.first += f(n-1-i,r.second,cp).first;
+            r.second = f(n-1-i,r.second,cp).second;
+            if (r.first >= MOD) r.first -= MOD;
+        }
+        p = p + (d == 4 || d == 7);
+    }
+    r.first += f(0,r.second,p).first;
+    if (r.first >= MOD) r.first -= MOD;
+    printf("%d\n", r.first);
+}

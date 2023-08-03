@@ -1,0 +1,55 @@
+#include<cstdio>
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<map>
+#include<set>
+#include<utility>
+#include<numeric>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll MAXN = 1e5 + 10;
+
+ll n, q, from[MAXN], to[MAXN], w[MAXN], ed[MAXN], par[MAXN];
+ll ans[MAXN];
+map<ll, ll>	mp[MAXN];
+
+bool cmpe(ll e1, ll e2){return w[e1] < w[e2];}
+ll get_par(ll v){return par[v]==v?v:par[v] = get_par(par[v]);}
+
+int main(){
+	scanf("%lld", &n);
+	for (ll i = 0; i < n - 1; i++)
+		scanf("%lld %lld %lld", &from[i], &to[i], &w[i]), from[i]--, to[i]--;
+	iota(ed, ed + n - 1, 0);
+	sort(ed, ed + n - 1, cmpe);
+	iota(par, par + n, 0);
+	scanf("%lld", &q);
+	for (ll i = 0; i < q; i++){
+		ll sz;	scanf("%lld", &sz);
+		while (sz--){
+			ll u;	scanf("%lld", &u), u--;
+			mp[u][i]++;
+		}
+	}
+
+	for (ll i = n-2; i >= 0; i--){
+		ll e = ed[i];
+		ll p1 = get_par(from[e]), p2 = get_par(to[e]);
+		if (mp[p1].size() < mp[p2].size())	swap(p1, p2);
+
+		for (auto x:mp[p2]){
+			ans[x.first] += x.second * mp[p1][x.first] * w[e];
+			mp[p1][x.first] += x.second;
+		}
+		mp[p2].clear();
+		par[p2] = p1;
+	}
+
+	for (ll i = 0; i < q; i++)
+		printf("%lld\n", ans[i]);
+	return	0;
+}

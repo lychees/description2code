@@ -1,0 +1,147 @@
+#include <bits/stdc++.h>
+#define gcd         __gcd
+#define bitcount    __builtin_popcountll
+#define rep(i,j,n)  for(i=j;i<n;i++)
+#define tr(it,c)    for(auto it=(c).begin();it!=(c).end();it++)
+#define pb          push_back
+#define mp          make_pair
+#define hell        1000000007
+#define uset        unordered_set
+#define umap        unordered_map
+#define ft          first
+#define sc          second
+using namespace std;
+typedef pair<int,int> pi;
+typedef long long ll;
+
+template <class T> T& get(T &n) {
+    cin>>n;
+    return n;
+}
+#define PI M_PI
+template<class ld> class FFT_Module_Complex{
+    typedef complex<ld> cld;
+    bool ispowerof2(int x){
+        return !(x&(x-1));
+    }
+    int nextpowerof2(int x){
+        return 1<<(int(log2(x))+1);
+    }
+    cld nthroot(int n){
+        ld rad=2*PI/n;
+        return cld(cos(rad),sin(rad));
+    }
+public:
+    FFT_Module_Complex(){
+    }
+    void fft(const vector<cld> &v,cld w,vector<cld> &f,vector<cld> &t,int idx=0,int diff=1){
+        int i,N=v.size();
+        if(idx+diff>=N){
+            f[idx]=v[idx];
+            return;
+        }
+        int diff_2=diff<<1;
+        int M=N/diff_2;
+        cld w2=w*w;
+        fft(v,w2,t,f,idx,diff_2);
+        fft(v,w2,t,f,idx+diff,diff_2);
+        cld x=1;
+        rep(i,0,M){
+            f[idx+diff*i]=(t[idx+diff_2*i]+x*t[idx+diff+diff_2*i]);
+            f[idx+diff*(i+M)]=(t[idx+diff_2*i]-x*t[idx+diff+diff_2*i]);
+            x=x*w;
+        }
+    }
+    void polynomial_multiply(vector<cld> &a,vector<cld> &b,vector<cld> &output){
+        vector<cld> t1,t2;
+        int n=a.size(),m=n,i;
+        if(!ispowerof2(n)) m<<=1;
+        m=nextpowerof2(m);
+        a.resize(m);b.resize(m);
+        t1.resize(m);t2.resize(m);output.resize(m);
+        fill(a.begin()+n, a.end(), 0);
+        fill(b.begin()+n, b.end(), 0);
+        cld w=nthroot(m);
+        fft(a,w,t1,output);
+        fft(b,w,t2,output);
+        rep(i,0,m)
+            t1[i]=(t1[i]*t2[i]);
+        cld w_inv=ld(1)/w;
+        fft(t1,w_inv,output,t2);
+        ld inv_m=ld(1)/m;
+        rep(i,0,m){
+            output[i]=(output[i]*inv_m);
+        }
+        //Resizing original vectors
+        output.resize(n+n);
+        a.resize(n);
+        b.resize(n);
+    }
+    void print(vector<int> &a){
+        tr(it,a){
+            cerr<<*it<<' ';
+        }
+        cerr<<endl;
+    }
+    int solve(vector<int> &a){
+        int i;
+        sort(a.begin(), a.end());
+        int N=a.size();
+        vector<int> b(N),c(N);
+        rep(i,0,N){
+            b[i]=a[i]+a[N-1];
+        }
+        rep(i,0,N){
+            c[i]=a[N-1]-a[i];
+        }
+        sort(c.begin(), c.end());
+//        print(a);
+//        print(b);
+//        print(c);
+        int m=b[N-1];
+//        cerr<<"m="<<m<<endl;
+        vector<cld> p1(m+1,cld(0,0)),p2(m+1,cld(0,0)),p3;
+        rep(i,0,m+1){
+            if(binary_search(b.begin(), b.end(),i)){
+//                cerr<<"1:"<<i<<endl;
+                p1[i]=cld(1,0);
+            }
+            if(binary_search(c.begin(), c.end(),i)){
+//                cerr<<"2:"<<i<<endl;
+                p2[i]=cld(1,0);
+            }
+        }
+        ll ans=0;
+        polynomial_multiply(p1,p2,p3);
+        rep(i,0,m){
+//            cerr<<p3[i].real()<<' ';
+            if(p3[i].real()>1e-6){
+                ans++;
+            }
+        }
+//        cerr<<endl;
+        return ans;
+    }
+};
+
+int main() {
+    int T,N,i,j;
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    cout.tie(0);
+    get(N);
+    vector<int> a(N);
+    rep(i,0,N){
+        cin>>a[i];
+    }
+    FFT_Module_Complex<double> f;
+    int ans=f.solve(a);
+    rep(i,1,N)
+        if(a[i]==a[i-1]){
+            ans++;
+            break;
+        }
+    cout<<ans<<endl;
+    return 0;
+}
+

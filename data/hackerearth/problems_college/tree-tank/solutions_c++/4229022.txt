@@ -1,0 +1,83 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+vector<pair<int,ll int> > adj[100001];
+static ll int count1[100001],total[100001],tree[100001],max_free=0,mohib[100001],desendent[100001];
+ll int calc(int cur,int pr,ll int capacity,int no){
+	ll int count = 1;
+	tree[no]++;
+	for(int i=0;i<adj[cur].size();i++){
+		if(adj[cur][i].first==pr)
+			continue;
+		if(adj[cur][i].second>capacity){
+			tree[max_free+1] = 0;
+			calc(adj[cur][i].first,cur,capacity,++max_free);
+		} else {
+			count += calc(adj[cur][i].first,cur,capacity,no);
+			desendent[cur] += desendent[adj[cur][i].first] + count1[adj[cur][i].first];
+		}
+	}
+	count1[cur] = count;
+	//printf("main = %d %lld\n",cur,desendent[cur]);
+	return count;
+}
+long long ans = 0ll;
+void dfs(int cur,int pr,int no,ll int capacity,long long baaki_na,int freq){
+	if(mohib[no]==-1)
+		mohib[no] = desendent[cur] + baaki_na;
+	else
+		mohib[no] = min(mohib[no],desendent[cur]+baaki_na);
+	//printf("mohib = %d %lld\n",cur,desendent[cur]+baaki_na);
+	for(int i=0;i<adj[cur].size();i++){
+		if(adj[cur][i].first==pr)
+			continue;
+		if(adj[cur][i].second>capacity){
+			dfs(adj[cur][i].first,cur,++max_free,capacity,0ll,0);
+		} else {
+			long long add = desendent[cur] - desendent[adj[cur][i].first] - count1[adj[cur][i].first] + count1[cur]-count1[adj[cur][i].first];
+			//printf("%d %d %lld %d\n",cur,adj[cur][i].first,add,freq);
+			dfs(adj[cur][i].first,cur,no,capacity,baaki_na+freq+add,count1[cur]-count1[adj[cur][i].first]+freq);
+		}
+	}
+}
+long long solve(ll int capacity){
+	max_free = 0;
+	for(int i=0;i<100001;i++)
+		tree[i] = count1[i] = 0,mohib[i] = -1 * 1LL,desendent[i]=0ll;
+	calc(1,-1,capacity,0);
+	ans = 0;
+	max_free = 0;
+	dfs(1,-1,0,capacity,0ll,0);
+	for(int i=0;i<100001;i++){
+		if(mohib[i]!=-1)
+			ans+=mohib[i];
+	}
+	//printf("%lld\n",ans);
+	return ans;
+}
+int main(){
+	int n;
+	long long k;
+	scanf("%d %lld",&n,&k);
+	int ma = 0;
+	for(int i=0;i<n-1;i++){
+		int a,b;
+		long long c;
+		scanf("%d %d %lld",&a,&b,&c);
+		adj[a].push_back(make_pair(b,c));
+		adj[b].push_back(make_pair(a,c));
+	}
+	long long int lo=1,hi= 1e9,last=1e9;
+	while(lo<=hi){
+		long long mi = (lo+hi)>>1;
+		//printf("%lld %lld\n",mi,solve(mi));
+		if(solve(mi)<=k){
+			last = mi;
+			lo = mi+1;
+		} else {
+			hi = mi-1;
+		}
+	}
+	printf("%lld\n",last);
+	return 0;
+}

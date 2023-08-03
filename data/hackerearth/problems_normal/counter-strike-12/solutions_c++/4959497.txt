@@ -1,0 +1,72 @@
+#include <cstdio>
+#include <cmath>
+#include <climits>
+#include <vector>
+#include <utility>
+using namespace std;
+
+struct Node {
+    Node *ch[4]{};
+    ~Node() { for (int i = 0; i < 4; ++i) if (ch[i]) delete ch[i]; }
+
+    bool search(int x, int y, int d, int ub) {
+        int lx = x < 0 ? -x : x < ub ? 0 : x - (ub - 1);
+        int ly = y < 0 ? -y : y < ub ? 0 : y - (ub - 1);
+        if (lx + ly > d) return false;
+        if (ub == 1) return true;
+        ub >>= 1;
+        if (ch[0] && ch[0]->search(x,      y,      d, ub)) return true;
+        if (ch[1] && ch[1]->search(x,      y - ub, d, ub)) return true;
+        if (ch[2] && ch[2]->search(x - ub, y     , d, ub)) return true;
+        if (ch[3] && ch[3]->search(x - ub, y - ub, d, ub)) return true;
+        return false;
+    }
+};
+
+struct QuadTree {
+    int ub;
+    Node root;
+
+    void add(int x, int y) {
+        Node *p = &root;
+        for (int i = ub >> 1; i; i >>= 1) {
+            int e = (bool(x & i) << 1) + bool(y & i);
+            if (!p->ch[e]) p->ch[e] = new Node;
+            p = p->ch[e];
+        }
+    }
+
+    bool search(int x, int y, int d) {
+        return root.search(x, y, d, ub);
+    }
+};
+
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        int n, m, d, lb = INT_MAX, ub = INT_MIN;
+        scanf("%d%d%d", &n, &m, &d);
+        vector<pair<int, int>> a(n);
+        for (int i = 0; i < n; ++i) {
+            scanf("%d%d", &a[i].first, &a[i].second);
+            if (a[i].first > ub) ub = a[i].first;
+            if (a[i].first < lb) lb = a[i].first;
+            if (a[i].second > ub) ub = a[i].second;
+            if (a[i].second < lb) lb = a[i].second;
+        }
+        QuadTree tree{1 << (ilogb(ub - lb) + 1), {}};
+        for (int i = 0; i < n; ++i)
+            tree.add(a[i].first - lb, a[i].second - lb);
+        int inRange = 0;
+        for (int i = 0; i < m; ++i) {
+            int x, y;
+            scanf("%d%d", &x, &y);
+            if (inRange <= m >> 1 && inRange + m - i > m >> 1)
+                inRange += tree.search(x - lb, y - lb, d);
+        }
+        if (inRange > m >> 1) printf("YES\n");
+        else printf("NO\n");
+    }
+    return 0;
+}

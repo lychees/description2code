@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+#define MP make_pair
+#define PB push_back
+#define LL long long
+#define FI first
+#define SE second
+#define R(i,n) for(int i=0;i<n;i++)
+#define F(i,a,b) for(int i=a;i<b;i++)
+#define FD(i,n) for(int i=n-1;i>=0;i--)
+#define ALL(x) (x).begin(), (x).end()
+#define SZ(x) ((int)(x).size())
+#define PII pair<int,int>
+#define VI vector<int>
+template<class C> void mini(C&a4, C b4){a4=min(a4,b4);}
+template<class C> void maxi(C&a4, C b4){a4=max(a4,b4);}
+
+template<class TH> void _dbg(const char *sdbg, TH h){cerr<<sdbg<<"="<<h<<"\n";}
+template<class TH, class... TA> void _dbg(const char *sdbg, TH h, TA... a){
+  while(*sdbg!=',')cerr<<*sdbg++;cerr<<"="<<h<<","; _dbg(sdbg+1,a...);
+}
+
+#ifdef LOCAL
+#define debug(...) _dbg(#__VA_ARGS__, __VA_ARGS__)
+#define debugv(C) {for(auto&c:C)cerr<<c<<",";cerr<<endl;}
+#else
+#define debug(...) (__VA_ARGS__)
+#define debugv(C) {}
+#define cerr if(0) cout
+#endif
+const int C = 5;
+const int MAX = 1<<20;
+const int P = 1e9 + 7;
+struct mac{
+  int t[C][C];
+  void ust(int a){
+    R(i,C)R(j,C)t[i][j] = i==j || i==a;
+  }
+  void ilo(mac& a, mac& b){
+    R(i,C)R(j,C){
+      LL pom = 0;
+      R(k,C)pom += a.t[i][k] * 1ll * b.t[k][j];
+      t[i][j]= pom % P;
+    }
+  }
+  int get_res(){
+    LL res=0;
+    R(i,C)res += t[i][C-1];
+    return res%P;
+  }
+}dp[MAX*2 + 10];
+int mapa[300];
+int n,q;
+string z;
+int main(){
+  ios_base::sync_with_stdio(0);
+  cin.tie(0);
+  cout<<fixed<<setprecision(11);
+  mapa['A'] = 0;
+  mapa['C'] = 1;
+  mapa['G'] = 2;
+  mapa['T'] = 3;
+  cin >> n >> q;
+  cin >> z;
+  int nn = 1;while(nn <= n)nn*=2;
+  R(i,nn){
+    if(i < n){
+      dp[i+nn].ust(mapa[z[i]]);
+    }else
+      dp[i+nn].ust(-1);
+  }
+  FD(i,nn){
+    dp[i].ilo(dp[i*2],dp[i*2+1]);
+  }
+  R(i,q){
+    int a;
+    char b;
+    cin >> a >> b;
+    a+=nn-1;
+    dp[a].ust(mapa[b]);
+    do{
+      a/=2;
+      dp[a].ilo(dp[a*2],dp[a*2+1]);
+    }while(a!=1);
+    cout << dp[1].get_res() << "\n";
+  }
+}

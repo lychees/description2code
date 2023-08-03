@@ -1,0 +1,223 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef long int ld;
+typedef pair<int,int > pii;
+typedef pair<int,pii > piii;
+//input
+#define sc1(x) scanf("%d",&x);
+#define sc2(x,y) scanf("%d%d",&x,&y);
+#define sc3(x,y,z) scanf("%d%d%d",&x,&y,&z);
+
+/*
+#define sc1(x) scanf("%lld",&x);
+#define sc2(x,y) scanf("%lld%lld",&x,&y);
+#define sc3(x,y,z) scanf("%lld%lld%lld",&x,&y,&z);
+*/
+
+#define pb push_back
+#define mp make_pair
+#define ini(x,val) memset(x,val,sizeof(x));
+
+#define fs first
+#define sc second
+
+//some constants
+#define MOD 1000000007
+#define inf 99999999
+#define linf 99999999999999999ll	//long long inf
+#define PI 3.1415926535897932384626
+const int eps=0.000000000000001 ;
+
+#define gcd __gcd
+#define tr(container, it)  for(typeof(container.begin()) it = container.begin(); it != container.end(); it++) 
+#define PrintCont(cont) {printf("\n----------------\n");\
+for(typeof(cont.begin()) it = cont.begin();it!=cont.end();++it) cout<<*it<<" ";printf("\n----------------\n");}
+#define all(v) v.begin(),v.end()
+
+#define debug(x) cout<<#x<<" :: "<<x<<"\n";
+#define debug2(x,y) cout<<#x<<" :: "<<x<<"\t"<<#y<<" :: "<<y<<"\n";
+#define debug3(x,y,z) cout<<#x<<" :: "<<x<<"\t"<<#y<<" :: "<<y<<"\t"<<#z<<" :: "<<z<<"\n";
+
+#define LIM 100005
+
+typedef vector<int> VD;
+typedef vector<VD> VVD;
+typedef vector<int> VI;
+
+int yo;
+int MinCostMatching(const VD cost[], VI &Lmate, VI &Rmate) {
+  int n = yo;
+
+  // construct dual feasible solution
+  VD u(n);
+  VD v(n);
+  for (int i = 0; i < n; i++) {
+    u[i] = cost[i][0];
+    for (int j = 1; j < n; j++) u[i] = min(u[i], cost[i][j]);
+  }
+  for (int j = 0; j < n; j++) {
+    v[j] = cost[0][j] - u[0];
+    for (int i = 1; i < n; i++) v[j] = min(v[j], cost[i][j] - u[i]);
+  }
+  
+  // construct primal solution satisfying complementary slackness
+  Lmate = VI(n, -1);
+  Rmate = VI(n, -1);
+  int mated = 0;
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (Rmate[j] != -1) continue;
+      if (fabs(cost[i][j] - u[i] - v[j]) < 1e-10) {
+        Lmate[i] = j;
+        Rmate[j] = i;
+        mated++;
+        break;
+      }
+    }
+  }
+  
+  VD dist(n);
+  VI dad(n);
+  VI seen(n);
+  
+  // repeat until primal solution is feasible
+  while (mated < n) {
+    
+    // find an unmatched left node
+    int s = 0;
+    while (Lmate[s] != -1) s++;
+    
+    // initialize Dijkstra
+    fill(dad.begin(), dad.end(), -1);
+    fill(seen.begin(), seen.end(), 0);
+    for (int k = 0; k < n; k++) 
+      dist[k] = cost[s][k] - u[s] - v[k];
+    
+    int j = 0;
+    while (true) {
+      
+      // find closest
+      j = -1;
+      for (int k = 0; k < n; k++) {
+        if (seen[k]) continue;
+        if (j == -1 || dist[k] < dist[j]) j = k;
+      }
+      seen[j] = 1;
+      
+      // termination condition
+      if (Rmate[j] == -1) break;
+      
+      // relax neighbors
+      const int i = Rmate[j];
+      for (int k = 0; k < n; k++) {
+        if (seen[k]) continue;
+        const int new_dist = dist[j] + cost[i][k] - u[i] - v[k];
+        if (dist[k] > new_dist) {
+          dist[k] = new_dist;
+          dad[k] = j;
+        }
+      }
+    }
+    
+    // update dual variables
+    for (int k = 0; k < n; k++) {
+      if (k == j || !seen[k]) continue;
+      const int i = Rmate[k];
+      v[k] += dist[k] - dist[j];
+      u[i] -= dist[k] - dist[j];
+    }
+    u[s] += dist[j];
+    
+    // augment along path
+    while (dad[j] >= 0) {
+      const int d = dad[j];
+      Rmate[j] = Rmate[d];
+      Lmate[Rmate[j]] = j;
+      j = d;
+    }
+    Rmate[j] = s;
+    Lmate[s] = j;
+    
+    mated++;
+  }
+  
+  int value = 0;
+  for (int i = 0; i < n; i++)
+    value += cost[i][Lmate[i]];
+  
+  return value;
+}
+int adj[250][250];
+int main(int argc, char const *argv[])
+{
+	
+	int t,i,j;
+	sc1(t);
+
+	while(t--)
+	{
+
+		for(i=0;i<205;++i)
+		{
+			for(j=0;j<205;++j)
+
+				{adj[i][j]=inf;
+					if(i==j)adj[i][j]=0;
+				}
+		}
+		int n,m,k;
+		sc3(n,m,k);
+		yo=k;
+		for(i=0;i<m;++i)
+		{
+			int u,v,c;
+
+			sc3(u,v,c);
+			u--,v--;
+			adj[u][v]=min(adj[u][v],c);
+			adj[v][u]=min(adj[v][u],c);
+		}
+		for(int k=0;k<n;++k)
+		{
+			for(i=0;i<n;++i)
+			{
+				for(j=0;j<n;++j)
+				{
+					if(adj[i][j]>adj[i][k]+adj[k][j])
+					{
+						adj[i][j] = adj[i][k]+adj[k][j];
+					}
+				}
+			}
+		}
+		// printf("\n----------------\n");
+		// for(i=0;i<n;++i)
+		// {
+		// 	for(j=0;j<n;++j)
+		// 	{
+		// 		printf("%d ",adj[i][j]);
+		// 	}
+		// 	printf("\n");
+		// }
+		// printf("\n----------------\n");
+		VD cost[250];
+		for(i=0;i<k;++i)
+		{
+			for(j=n-k;j<n;++j)
+			{
+				adj[i][j]=min(adj[i][j],10000);
+				cost[i].pb(adj[i][j]);
+			}
+		}
+
+		VI Lmate,Rmate;
+		printf("%d\n",MinCostMatching(cost,Lmate,Rmate));
+
+		
+
+
+	}
+
+	return 0;
+}

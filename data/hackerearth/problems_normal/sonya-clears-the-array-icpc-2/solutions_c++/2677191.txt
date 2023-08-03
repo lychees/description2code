@@ -1,0 +1,123 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool primes[2000001];
+int arr[501];
+long long dp[501][501];
+vector  < int > primelist;
+int hashesmaller[2000001],hashebigger[20000001];
+
+long long int solve(int x,int y)
+{
+	if(x>y)
+	 return 0;
+	 
+	if(x==y) return 1LL*1234567*1234567;
+	
+	if(dp[x][y]!=-1)
+	 return dp[x][y];
+	
+	//Now remove i and j
+	dp[x][y]=1LL*1234567*1234567;
+	for(int i=x; i<=x; i++)
+	{
+		for(int j=i+1; j<=y; j++)
+		{
+			int justsmallerj=hashesmaller[j];
+			int justbiggeri=hashebigger[i];
+			
+			int p=arr[i],q=arr[j];
+			
+			if(p==1 && q==2)
+			{
+				dp[x][y]=min(dp[x][y],3+solve(x,i-1)+solve(i+1,j-1)+solve(j+1,y));
+				continue;
+			}
+			
+			int adder=0;
+			
+			if(q<=p)
+			{
+				adder+=(primes[p]==0)?0:(hashebigger[p]-p);
+				if(primes[p]==1)
+				 p=hashebigger[p];
+			    adder+=hashebigger[p]-q;
+			    q=hashebigger[p];
+			    dp[x][y]=min(dp[x][y],1+adder+solve(x,i-1)+solve(i+1,j-1)+solve(j+1,y));
+			}
+			else
+			{
+			   
+			   if(p>hashesmaller[q])
+			   {
+			   	 if(primes[p]==1)
+			   	 {
+			   	    adder+=hashebigger[p]-p;
+			   	    p=hashebigger[p];
+			   	 }
+			   }
+			   
+			   else
+			   {
+			   	adder+=hashesmaller[q]-p;
+			   	p=hashesmaller[q];
+			   }
+			   
+			   if(primes[q]==1)
+			   {
+			     adder+=hashebigger[q]-q;
+			     q=hashebigger[q];
+			   }
+			   
+			   while(p>=q)
+			   {
+			   	 adder+=hashebigger[q]-q;
+			   	 q=hashebigger[q];
+			   }
+			   assert(primes[p]==0 && primes[q]==0);
+			   dp[x][y]=min(dp[x][y],1+adder+solve(x,i-1)+solve(i+1,j-1)+solve(j+1,y));	
+			}
+			//cout<<adder<<" "<<i<<" "<<j<<" "<<x<<" "<<y<<" "<<p<<" "<<q<<endl;
+		}
+	}
+	
+	return dp[x][y];
+}
+
+int main()
+{
+   memset(dp,-1,sizeof dp);
+   primes[1]=1;
+   for(int i=2; i*i<=2000000; i++)
+   {
+   	if(primes[i]==0)
+   	  for(int j=i*i; j<=2000000; j+=i)
+   	   primes[j]=1;
+   }
+   
+   for(int i=2; i<=2000000; i++) if(primes[i]==0) primelist.push_back(i);
+   hashebigger[1]=2;
+   
+   for(int i=1; i<primelist.size(); i++)
+   {
+   	  for(int j=primelist[i]-1; j>=primelist[i-1]; j--)
+   	  {
+   	   hashebigger[j]=primelist[i];
+   	   if(j!=primelist[i-1])
+   	    hashesmaller[j]=primelist[i-1];
+   	  }
+   	  hashesmaller[primelist[i]]=primelist[i-1];
+   }
+   
+   for(int i=primelist[primelist.size()-1]; i<=2000000; i++)
+    hashesmaller[i]=primelist[primelist.size()-1];
+   
+   int n;
+   scanf("%d",&n);
+   
+   for(int i=1; i<=n; i++)
+    scanf("%d",&arr[i]);
+    
+   printf("%lld\n",solve(1,n));
+   return 0;
+}

@@ -1,0 +1,139 @@
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+#include <queue>
+#include <cmath>
+#include <iostream>
+#include <set>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <bits/stdc++.h>
+
+using namespace std;
+#define FOR(i,s,e) for (int i=(s); i<(e); i++)
+#define FOE(i,s,e) for (int i=(s); i<=(e); i++)
+#define FOD(i,s,e) for (int i=(s); i>=(e); i--)
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair(x,y)
+#define debug(args...) {vector<string> _v = split(#args, ','); err(_v.begin(), args); puts("");}
+#define LL long long
+#define ULL unsigned long long
+#define eps 1e-9
+#define pi acos(-1.0)
+#define df(s) {freopen("s.in", "r", stdin); freopen("s.out", "w", stdout);}
+LL max(LL a,LL b){if (a>b){return a;} else {return b;}}
+LL min(LL a,LL b){if (a<b){return a;} else {return b;}}
+
+vector<string> split(const string& s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c))
+		v.emplace_back(x);
+	return move(v);
+}
+
+void err(vector<string>::iterator it) {}
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << ", ";
+	err(++it, args...);
+}
+
+template<typename T>
+struct number_iterator : std::iterator<random_access_iterator_tag, T>{
+	T v;
+	number_iterator(T _v) : v(_v) {}
+	operator T&(){return v;}
+	T operator *() const {return v;}
+};
+template <typename T>
+struct number_range {
+	T b,e;
+	number_range(T b, T e):b(b),e(e){}
+	number_iterator<T> begin(){return b;}
+	number_iterator<T> end(){return e;}
+};
+
+template<typename T> number_range<T> range(T e) {return number_range<T>(1, e + 1);}
+
+template<typename T> number_range<T> range(T b, T e) {return number_range<T>(b, e + 1);}
+
+int n, af[300001], c[300001],b[300001];
+
+#define K 500001
+int l[K], r[K], a[K][2], h;
+
+void build(int u, int lb, int rb){
+	a[u][0] = a[u][1] = 0;
+	if (lb == rb) return;
+	build(l[u] = ++h, lb, (lb + rb) / 2);
+	build(r[u] = ++h, (lb + rb) / 2 + 1, rb);
+}
+
+void update(int u, int lb, int rb, int ty, int tar, int val){
+	a[u][ty] = max(a[u][ty], val);
+	if (lb == rb) return;
+	int mid = (lb + rb) / 2;
+	if (mid >= tar) update(l[u], lb, mid, ty, tar, val);
+	else update(r[u], mid + 1, rb, ty, tar, val);
+}
+
+int query(int u, int lb, int rb, int lq, int rq, int ty){
+	if (lb >= lq && rb <= rq) return a[u][ty];
+	int mid = (lb + rb) / 2, s1 = 0, s2 = 0;
+	if (mid >= lq) s1 = query(l[u], lb, mid, lq, rq, ty);
+	if (mid < rq) s2 = query(r[u], mid + 1, rb, lq, rq, ty);
+	return max(s1, s2);
+}
+
+void solve(){
+	scanf("%d", &n);
+	FOE(i, 1, n) scanf("%d", &af[i]);
+//	printf("OK\n");
+	FOE(i, 1, n) b[i] = af[i];
+	sort(b + 1, b + n + 1);
+//	printf("ok\n");
+	int id = 1;
+	FOE(i, 1, n){
+		c[i] = id;
+		if (i != n && b[i] != b[i+1]) id++;
+	}
+
+	FOE(i, 1, n) {
+		int low = 1, high = n;
+		while (low <= high){
+			int mid = (low + high) / 2;
+			if (b[mid] == af[i]){
+				low = high + 1;
+				af[i] = c[mid];
+			} else if (b[mid] > af[i]) high = mid - 1;
+			else low = mid + 1;
+		}
+	}
+	h = 0;
+//	printf("ok3\n");
+	build(h, 1, n);
+//	printf("OK!\n");	
+	int res = 0;
+	FOE(i, 1, n){
+//		printf("af[i] = %d\n", af[i]);
+		int ty1 = query(0, 1, n, 1, af[i], 0) + 1;
+		res = max(res, ty1);
+		int ty2 = query(0, 1, n, af[i], n, 1) + 1;
+		res = max(res, ty2);
+//		printf("%d %d\n", ty1, ty2);
+		update(0, 1, n, 1, af[i], ty1);
+		update(0, 1, n, 0, af[i], ty2);
+	}
+	printf("%d\n", res);
+		
+}
+
+int main(){
+	int t;
+	scanf("%d", &t);
+	while (t--) solve();
+    return 0;
+}

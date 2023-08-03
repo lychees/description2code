@@ -1,0 +1,328 @@
+#include<iostream>	//------------------------------------------------------------//
+#include<cstdio>    //  ___  ___ _____ ______                                     //
+#include<algorithm> //  |  \/  |/  ___|| ___ \     This C++ Template Belongs to   //
+#include<cmath>     //  | .  . |\ `--. | |_/ /        Manish Singh Bisht          //
+#include<vector>    //  | |\/| | `--. \| ___ \       http://fb.me/manish05        //
+#include<set>       //  | |  | |/\__/ /| |_/ /    Email: manish_05@ymail.com      //
+#include<map>       //  \_|  |_/\____/ \____/                                     //
+#include<functional>//------------------------------------------------------------//
+#include<string>
+#include<cstring>
+#include<bitset>
+#include<cstdlib>
+#include<queue>
+#include<utility>
+#include<fstream>
+#include<sstream>
+
+#include<stack>
+#include<cstdio>
+#include<ctime>
+         
+
+using namespace std;
+#define gc getchar_unlocked
+#define MEM(a,b) memset(a,(b),sizeof(a))
+#define FOR(i,n) for(int i=(0);i<(n);i++)
+#define TR(v,it) for(typeof(v.begin()) it(v.begin()) ; it != v.end() ; it++)
+#define SZ(v) ((int)(v.size()))
+#define CLEAR(a) memset((a),0,sizeof(a))
+#define S(n) scanf("%d", &n)
+#define P(k) printf("%d\n", k)
+#define fastS(n) scanint(&n)
+#define pb push_back
+#define mp make_pair
+#define ll long long
+#define VI vector<int>
+#define PII pair<int, int>
+#define ft first
+#define sd second
+#define all(a) a.begin(),a.end()
+#define lb lower_bound
+#define ub upper_bound
+#define inf (1<<30)
+#define PNL printf("\n")
+#define md 1000000007
+#define bigger(a,b) (a>b?a:b)
+#define smaller(a,b) (a<b?a:b)
+#define positive(a) (bigger(a,-a))
+#define fastS(x) scanint(&x)
+#define MAX 1000005
+/*
+void scanint(int *x)                
+{
+    register int c = gc();
+    *x = 0;
+    for(;(c<48 || c>57);c = gc());
+    for(;c>47 && c<58;c = gc()) {*x = (*x<<1) + (*x<<3) + c - 48;  }
+}
+*/
+ll modPow(ll a,ll b)
+{ll x;
+    for(x=1;b>0;b/=2,a=(a*a)%md)
+        if(b%2==1)
+                x=(x*a)%md;
+  return x%md;
+}
+
+string convertInt(int number){stringstream ss;ss << number;return ss.str();}
+int convertString(string s){int num;stringstream sstr(s);sstr>>num;return num;}
+int gcd(int a, int b){ return b?gcd(b,a%b):a; }
+
+int const MAXN = 1000000 + 5;
+ 
+struct node {
+    int st;
+    int en;
+    int mid;
+    int value;
+};
+ 
+node T[4][4 * MAXN];
+int L[4][4 * MAXN];
+void update(int,int,int,int,node*,int*){};
+void init_tree(int, int, int, node*, int*){};
+int query(int, int, int, node*, int*){};
+void init__tree(int index, int left, int right,node *tree,int *lazy) {
+ 
+    tree[index].st = left, tree[index].en = right;
+    tree[index].mid = (tree[index].st + tree[index].en) >> 1;
+ 
+    if (tree[index].st != tree[index].en) {
+        init_tree(2 * index, left, tree[index].mid,tree,lazy);
+        init_tree(2 * index + 1, tree[index].mid + 1, right,tree,lazy);
+    }
+ 
+    tree[index].value = lazy[index] = 0;
+}
+ 
+int getValue(int index,node *tree,int *lazy) {
+    return tree[index].value + (lazy[index] * (int) (tree[index].en - tree[index].st + 1));
+}
+ 
+void refresh(int index,node *tree,int *lazy) {
+    lazy[2 * index] += lazy[index];
+    lazy[2 * index + 1] += lazy[index];
+    lazy[index] = 0;
+}
+struct student{int MXX,N,E,W,S;};
+student SEGMENT_TREE[3*MAX];
+int positive[3*MAX],negative[3*MAX];
+student combine_student(student left,student right)
+{
+    student res;
+    res.N = left.N + right.N;
+    res.E = left.E + right.E;
+    res.W = left.W + right.W;
+    res.S = left.S + right.S;
+    res.MXX = max(res.N,max(res.E,max(res.W,res.S)));
+    return res;
+}
+student make_student(int val)
+{
+    student res;
+    res.E = res.MXX = val;
+    res.N = res.W = res.S = 0;
+    return res;
+}
+void INIT_SEGMENT_TREE(int node,int b,int e)
+{
+    if(b==e)
+    {
+        SEGMENT_TREE[node] = make_student(1);
+        return ;
+    }
+    int mid = (b+e)/2;
+    INIT_SEGMENT_TREE(2*node,b,mid);
+    INIT_SEGMENT_TREE(2*node+1,mid+1,e);
+    SEGMENT_TREE[node] = combine_student(SEGMENT_TREE[2*node],SEGMENT_TREE[2*node+1]);
+}
+void Update(int index, int left, int right, int value,node *tree,int *lazy) {
+ 
+    if (tree[index].st >= left && tree[index].en <= right) {
+        lazy[index] += value;
+        return;
+    }
+    if (tree[index].st > right || tree[index].en < left)
+        return;
+    if (tree[index].st < left || tree[index].en > right) {
+        refresh(index,tree,lazy);
+        update(2 * index, left, right, value,tree,lazy);
+        update(2 * index + 1, left, right, value,tree,lazy);
+        tree[index].value = getValue(2 * index,tree,lazy) + getValue(2 * index + 1,tree,lazy);
+    }
+}
+ 
+int query(int x,int index, int left, int right,node *tree,int *lazy) {
+    if (tree[index].st >= left && tree[index].en <= right)
+        return getValue(index,tree,lazy);
+    if (tree[index].st > right || tree[index].en < left)
+        return 0;
+    int result = 0;
+    if (tree[index].st < left || tree[index].en > right) {
+        refresh(index,tree,lazy);
+        result = query(2 * index, left, right,tree,lazy) + query(2 * index + 1, left, right,tree,lazy);
+        tree[index].value = getValue(2 * index,tree,lazy) + getValue(2 * index + 1,tree,lazy);
+    }
+    return result;
+}
+ 
+ 
+ /*
+int sm[4][6 * 1000000],cS[4][6 * 1000000];
+
+int query(int node, int l, int r, int a, int b,int *childSum,int *sum){
+    if(l > b || r < a) return 0;
+    
+    int ret = (min(b,r) - max(a,l) + 1) * sum[node];
+    
+    if(a <= l && r <= b) ret += childSum[node];
+    else{
+        int mi = (l + r) >> 1;
+        
+        ret += query(2 * node + 1,l,mi,a,b,childSum,sum) + query(2 * node + 2,mi + 1,r,a,b,childSum,sum);
+    }
+    return ret;
+}
+
+void update(int node, int l, int r, int a, int b, int x,int *childSum,int *sum){
+    if(l > b || r < a) return;
+    
+    if(a <= l && r <= b) sum[node] += x;
+    else{
+        int mi = (l + r) >> 1;
+        
+        update(2 * node + 1,l,mi,a,b,x,childSum,sum);
+        update(2 * node + 2,mi + 1,r,a,b,x,childSum,sum);
+        
+        childSum[node] = childSum[2 * node + 1] + childSum[2 * node + 2] + (mi - l + 1) * sum[2 * node + 1] + (r - mi) * sum[2 * node + 2];
+    }
+}*/
+
+
+void build_positive(int node,int k)
+{
+    int rotate = k%4;
+    int tN = SEGMENT_TREE[node].N,tE = SEGMENT_TREE[node].E,tW = SEGMENT_TREE[node].W,tS = SEGMENT_TREE[node].S;
+ 
+    if(rotate == 1)
+    {
+        SEGMENT_TREE[node].E = tN ; SEGMENT_TREE[node].W = tS;
+        SEGMENT_TREE[node].N = tW ; SEGMENT_TREE[node].S = tE;
+    }
+    if(rotate == 2)
+    {
+        SEGMENT_TREE[node].E = tW ; SEGMENT_TREE[node].W = tE;
+        SEGMENT_TREE[node].N = tS ; SEGMENT_TREE[node].S = tN;
+    }
+    else if(rotate == 3)
+    {
+        SEGMENT_TREE[node].E = tS ; SEGMENT_TREE[node].W = tN;
+        SEGMENT_TREE[node].N = tE ; SEGMENT_TREE[node].S = tW;
+    }
+}
+
+void build_negative(int node,int k)
+{
+    int rotate = k%4;
+    int tN = SEGMENT_TREE[node].N,tE = SEGMENT_TREE[node].E,tW = SEGMENT_TREE[node].W,tS = SEGMENT_TREE[node].S;
+    if(rotate == 1)
+    {
+        SEGMENT_TREE[node].E = tS ; SEGMENT_TREE[node].W = tN;
+        SEGMENT_TREE[node].N = tE ; SEGMENT_TREE[node].S = tW;
+    }
+    if(rotate == 2)
+    {
+        SEGMENT_TREE[node].E = tW ; SEGMENT_TREE[node].W = tE;
+        SEGMENT_TREE[node].N = tS ; SEGMENT_TREE[node].S = tN;
+    }
+    else if(rotate == 3)
+    {
+        SEGMENT_TREE[node].E = tN ; SEGMENT_TREE[node].W = tS;
+        SEGMENT_TREE[node].N = tW ; SEGMENT_TREE[node].S = tE;
+    }
+}
+
+void init(int node,int b,int e)
+{
+	positive[2*node] += positive[node];
+    positive[2*node+1] += positive[node];
+    negative[2*node] += negative[node];
+    negative[2*node+1] += negative[node];
+    int mid = (b+e)/2;
+    build_positive(2*node,positive[node]);
+    build_positive(2*node+1,positive[node]);
+    build_negative(2*node,negative[node]);
+    build_negative(2*node+1,negative[node]);
+    positive[node]=0;
+    negative[node]=0;
+}
+void update(int node,int b,int e,int i,int j,int  k,int f)
+{
+    if(i>e || j<b)
+        return ;
+    if(b>=i && e<=j) 
+    {
+        if(f == 0)
+        {
+            build_positive(node,k);
+            positive[node] += (k%4);
+        }
+        else 
+        {
+            build_negative(node,k);
+            negative[node] += (k%4);
+        }
+    }
+    else
+    {
+        init(node,b,e);
+        int mid=(b+e)/2;
+        update(2*node,b,mid,i,j,k,f);
+        update(2*node+1,mid+1,e,i,j,k,f);
+        SEGMENT_TREE[node] = combine_student(SEGMENT_TREE[2*node],SEGMENT_TREE[2*node+1]);
+    }
+
+}
+student query(int node,int b,int e,int i,int j)
+{
+    if(i>e || j<b)
+        return make_student(0);
+    if(b>=i && e<=j)
+        return SEGMENT_TREE[node];
+    init(node,b,e);
+    int mid=(b+e)/2;
+    return combine_student(query(2*node,b,mid,i,j) , query(2*node+1,mid+1,e,i,j));
+
+}
+
+
+int main()
+{
+	int n,m;
+	
+    int l,r,k;
+    char c;
+	cin>>n>>m;
+    CLEAR(positive);
+    CLEAR(negative);
+    INIT_SEGMENT_TREE(1,1,n);	
+	while(m--){
+    	cin>>c>>l>>r;
+    	/*ll cunt[4];
+    	for(int i=1;i<=n;i++){
+    		cunt[i]=query(1, l - 1, r - 1,T[i],L[i]);
+    		cout<<query(1, l - 1, r - 1,T[i],L[i])<<endl;
+    	}*/
+    	
+    	if(c=='A' || c=='C'){
+    		cin>>k;
+    		k%=4;
+    		if(k==0)continue;
+    		update(1,1,n,l,r,k,c=='A');    		
+    	}else{
+    		cout<<query(1,1,n,l,r).MXX<<endl;
+    	}
+    }
+    return 0;
+}

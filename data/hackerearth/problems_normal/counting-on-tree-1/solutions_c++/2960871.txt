@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+#define MAX 100005
+#define M 1000000007
+#define lli long long
+
+using namespace std;
+
+int p;
+int A[MAX];
+vector <int> v[MAX];
+vector <int> childs[MAX];
+int sz;
+lli dp[MAX][102];
+lli C[102];
+lli ans;
+
+void dfs(int curr, int prev)
+{
+	dp[curr][A[curr]] = 1;
+	for ( int i = 0; i < (int)v[curr].size(); i++ ) {
+		if ( v[curr][i] == prev ) continue;
+		dfs(v[curr][i], curr);
+		for ( int j = 0; j <= p; j++ ) {
+			C[j] = 0;
+			for ( int k = 0; k <= j; k++ ) {
+				C[j] = (C[j] + (dp[curr][k]*dp[v[curr][i]][j-k])%M);
+				if ( C[j] >= M ) C[j] -= M;
+			}
+		}
+		for ( int j = 0; j <= p; j++ ) dp[curr][j] = C[j];
+	}
+	ans += dp[curr][p];
+	if ( ans >= M ) ans -= M;
+	dp[curr][0]++;
+	if ( dp[curr][0] >= M ) dp[curr][0] -= M;
+}
+
+int main()
+{
+	int t,x,y,n;
+	cin >> t;
+	while ( t-- ) {
+		cin >> n >> p;
+		ans = 0;
+		for ( int i = 0; i < n; i++ ) cin >> A[i];
+		for ( int i = 0; i < n; i++ ) {
+			v[i].clear();
+			for ( int j = 0; j <= p; j++ ) dp[i][j] = 0;
+		}
+		for ( int i = 0; i < n-1; i++ ) {
+			cin >> x >> y;
+			x--, y--;
+			v[x].push_back(y);
+			v[y].push_back(x);
+		}
+		dfs(0,-1);
+		cout << ans << endl;
+	}
+	return 0;
+}

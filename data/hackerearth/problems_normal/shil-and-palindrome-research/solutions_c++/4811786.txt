@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+#include <iostream>
+
+using namespace std;
+
+struct bt{
+	int x[28];
+	bt(){
+		for (int i = 0 ; i < 26 ; i++) x[i] = 0;
+	}
+}bit[100005];
+
+char s[100005];
+int n,m;
+
+void update(int i, char idr, char ida){
+	for (; i <= n ; i += i&(-i)){
+		bit[i].x[ida-'a']++;
+		bit[i].x[idr-'a']--;
+	}
+}
+
+int sub(struct bt a, struct bt b){
+	struct bt ret;
+	for (int i = 0 ; i < 26 ; i++){
+	//	cout << a.x[i] << endl;
+		ret.x[i] = a.x[i]-b.x[i];
+	}
+	int odd=0, flag = 1;
+	for (int i = 0 ; i < 26 ; i++){
+		//cout << ret.x[i] << endl;
+		if (ret.x[i] % 2 != 0 ) odd++;
+		if (odd == 2){
+			flag = 0;
+			break;
+		}
+	}
+	return flag;
+}
+
+struct bt add(struct bt a, struct bt b){
+	struct bt ret;
+	for (int i = 0 ; i < 26 ; i++){
+		ret.x[i] = a.x[i] + b.x[i];
+	}
+	return ret;
+}
+
+struct bt query(int i){
+	struct bt ret;
+	for (; i > 0 ; i -= i&(-i)){
+		ret = add(ret, bit[i]);
+	}
+	return ret;
+}
+
+int main ()
+{
+	scanf ("%d %d",&n,&m);
+	scanf ("%s",s);
+	for (int i = 1 ; i <= n ; i++)
+	{
+		char v = s[i-1];
+		int j = i;
+		for (; j <= n ; j += j&(-j)){
+			bit[j].x[v-'a']++;
+		}
+	}
+	while (m--){
+		int q,l,r;
+		char c;
+		scanf ("%d",&q);
+		switch (q)
+		{
+			case 1: scanf ("%d %c",&l,&c);
+				update (l,s[l-1],c);
+				s[l-1] = c;
+				break;
+
+			case 2: scanf ("%d %d",&l,&r);
+				if (sub(query(r), query(l-1)) == 1) printf ("yes\n");
+				else printf ("no\n");
+				break;
+		}
+	}
+
+	return 0;
+}

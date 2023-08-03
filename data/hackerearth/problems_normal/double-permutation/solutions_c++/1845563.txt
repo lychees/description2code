@@ -1,0 +1,67 @@
+#include<iostream>
+
+#define int long long
+
+using namespace std;
+
+const int MAXN = 200005, mod = 1e9 + 7;
+int a[MAXN], fr[MAXN], p[MAXN];
+bool mark[MAXN];
+const int SEG = 4 * MAXN;
+int sum[SEG];
+int n;
+
+void set(int p, int x = 1, int l = 0, int r = n)
+{
+	if(l == r - 1)
+	{
+		sum[x]++;
+		return;
+	}
+	int mid = (l + r) / 2;
+	if(p < mid)
+		set(p, 2 * x, l, mid);
+	else
+		set(p, 2 * x + 1, mid, r);
+	sum[x] = sum[2 * x] + sum[2 * x + 1];
+}
+
+int get(int ql, int qr, int x = 1, int l = 0, int r = n)
+{
+	if(ql == qr)
+		return 0;
+	if(ql <= l && r <= qr)
+		return sum[x];
+	int mid = (l + r) / 2, ans = 0;
+	if(ql < mid)
+		ans = get(ql, qr, 2 * x, l, mid);
+	if(qr > mid)
+		ans = ans + get(ql, qr, 2 * x + 1, mid, r);
+	return ans;
+}
+
+main()
+{
+	cin >> n;
+	p[0] = 1;
+	for(int i = 1; i < 2 * n; i++)
+		p[i] = p[i - 1] * 2 % mod;
+	for(int i = 0; i < 2 * n; i++)
+	{
+		cin >> a[i];
+		a[i]--;
+		if(!mark[a[i]])
+			fr[i] = true;
+		mark[a[i]] = true;
+	}
+	int ans = 0;
+	for(int i = 2 * n - 1; i >= 0; i--)
+	{
+		set(a[i]);
+		int mr = get(a[i] + 1, n);
+		int ls = (2 * n - 1 - i) - mr - fr[i];
+		ans = (ans + 3 * p[n - 2] * ls + p[n - 1] * fr[i] + p[n - 2] * mr) % mod;
+	}
+	cout << ans << endl;
+	return 0;
+}

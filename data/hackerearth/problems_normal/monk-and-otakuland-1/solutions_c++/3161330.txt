@@ -1,0 +1,164 @@
+#include <bits/stdc++.h>
+#define lidx seg[2*idx+1]
+#define ridx seg[2*idx+2]
+#define lc 2*idx+1
+#define rc 2*idx+2
+using namespace std;
+
+int n,m;
+int a[200010];
+struct st{
+int o;
+int z;
+};
+
+string str;
+st seg[800000];
+int lazy[800000];
+
+void build(int idx,int s,int e)
+{
+    if(s==e)
+    {
+        a[s]==1?seg[idx].o=1:seg[idx].z=1;
+        return ;
+    }
+
+    int mid=(s+e)/2;
+    build(lc,s,mid);
+    build(rc,mid+1,e);
+
+    seg[idx].o=ridx.o+lidx.o;
+    seg[idx].z=ridx.z+lidx.z;
+}
+
+void upd(int idx,int s,int e,int l,int r)
+{
+    int temp;
+    if(lazy[idx]==1)
+    {
+        temp=seg[idx].o;
+            seg[idx].o=seg[idx].z;
+            seg[idx].z=temp;
+           // cout<<"flipped in lazy on idx"<<idx<<" s & e" <<s<<e<<endl;
+            if(s!=e)
+            {
+                lazy[lc]=(lazy[lc]+1)%2;
+                lazy[rc]=(lazy[rc]+1)%2;
+            }
+        lazy[idx]=0;
+    }
+    if(s>r || e<l)
+    {
+        return ;
+    }
+    if(s>=l && e<=r)
+    {
+        temp=seg[idx].o;
+        seg[idx].o=seg[idx].z;
+        seg[idx].z=temp;
+        //cout<<"flipped idx"<<idx<<" s & e" <<s<<e<<endl;
+        if(s!=e)
+            {
+                lazy[lc]=(lazy[lc]+1)%2;
+                lazy[rc]=(lazy[rc]+1)%2;
+            }
+        return ;
+    }
+    int mid=(s+e)/2;
+    upd(lc,s,mid,l,r);
+    upd(rc,mid+1,e,l,r);
+
+    seg[idx].o=lidx.o+ridx.o;
+    seg[idx].z=lidx.z+ridx.z;
+}
+st qq(int idx,int s,int e,int l,int r)
+{
+    int temp;
+    st s1,s2,ans;
+    ans.o=0;
+    ans.z=0;
+    if(lazy[idx]==1)
+    {
+        temp=seg[idx].o;
+            seg[idx].o=seg[idx].z;
+            seg[idx].z=temp;
+            if(s!=e)
+            {
+                lazy[lc]=(lazy[lc]+1)%2;
+                lazy[rc]=(lazy[rc]+1)%2;
+            }
+        lazy[idx]=0;
+    }
+    if(s>r || e<l)
+    {
+        return ans;
+    }
+    if(s>=l && e<=r)
+    {
+        return seg[idx];
+    }
+
+    int mid=(s+e)/2;
+    s1=qq(lc,s,mid,l,r);
+    s2=qq(rc,mid+1,e,l,r);
+
+    ans.o=s1.o+s2.o;
+    ans.z=s1.z+s2.z;
+
+    return ans;
+}
+int main()
+{
+    int i,j,l,flg,x,y,z;
+
+    //freopen("input.txt","r",stdin);
+    cin>>n>>m;
+
+    cin>>str;
+
+    l=str.length();
+
+    for(i=0;i<l;i++)
+    {
+        if(str[i]=='>')
+            a[i]=1;
+        else
+            a[i]=0;
+    }
+
+    build(0,0,l-1);
+
+    while(m--)
+    {
+        cin>>x>>y>>z;
+
+        if(x==1)
+        {
+            upd(0,0,l-1,y-1,z-2);
+        }
+        else if(x==2)
+        {
+            flg=0;
+            if(y>z)
+            {
+                flg=1;
+                x=y;
+                y=z;
+                z=x;
+            }
+            st ans=qq(0,0,l-1,y-1,z-2);
+
+            if(flg==0)
+            {
+                cout<<z-y-ans.o<<endl;
+            }
+            else
+            {
+                cout<<z-y-ans.z<<endl;
+            }
+        }
+    }
+
+
+}

@@ -1,0 +1,200 @@
+#include <iostream>
+#include <string>
+#include <cstdlib>
+#include <cstdio>
+#include <string>
+#include <cstring>
+#include <cmath>
+#include <set>
+#include <functional>
+#include <algorithm>
+#include <climits>
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <stack>
+#include <queue>
+#include <vector>
+//#include <bits/stdc++.h>
+
+using namespace std;
+
+//memset
+#define MEMSET_INF 127 // about 2B
+#define set0(a) memset(a,0,sizeof(a));
+#define setminus1(a) memset(a,-1,sizeof(a));
+#define setinf(a) memset(a,MEMSET_INF,sizeof(a));
+
+//stl
+#define mp make_pair
+#define pb push_back
+#define pc(x) putchar_unlocked(x);
+#define gc() getchar_unlocked();
+
+//Loops
+#define REP(i,n) for(int i = 0;i < (int)(n); i++)
+#define REP1(i,a,b) for(int i = (int)(a);i <= (int)(b); i++)
+#define REPMAP(i,mm) for(auto i = mm.begin();i !=mm.end(); i++)
+
+//modulo
+#define mod %
+#define NUM 1000000007
+
+//#define morethanonetestcases
+//#define testing
+
+//limits
+#ifndef LONG_LONG_MAX
+#define LONG_LONG_MAX	9223372036854775807LL
+#endif
+#ifndef LONG_LONG_MIN
+#define LONG_LONG_MIN	(-LONG_LONG_MAX-1)
+#endif
+#ifndef INT_MAX
+#define INT_MAX		2147483647
+#endif
+#ifndef INT_MIN
+#define INT_MIN		(-INT_MAX-1)
+#endif
+#ifndef M_PI
+#define M_PI   3.14159265358979323846264338327950288
+#endif
+
+#define LMAX LONG_LONG_MAX
+#define LMIN LONG_LONG_MIN
+#define IMAX INT_MAX
+#define IMIN INT_MIN
+#define PI M_PI
+#define EPS 1e-6
+
+//trace
+#define trace1(x)                cerr << #x << ": " << x << endl;
+#define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+
+//typedef
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int, int> ii;
+typedef vector<ii> vii;
+typedef set<int> si;
+typedef map<string, int> msi;
+typedef map<int, int> mii;
+
+vector<int> vec[100];
+vector<ll> anss[100];
+
+void scanintneg( int &x)
+
+{
+    register int c = getchar_unlocked();
+    x = 0;
+    int neg = 0;
+    for(;((c<48 || c>57) && c != '-');c = getchar_unlocked());
+    if(c=='-') {neg=1;c=getchar_unlocked();}
+    for(;c>47 && c<58;c = getchar_unlocked()) {x = (x<<1) + (x<<3) + c - 48;}
+    if(neg) x=-x;
+}
+
+
+
+inline void writeint (int n)
+  {
+      int N = n, rev, count = 0;
+      rev = N;
+      if (N == 0) { putchar_unlocked('0'); putchar_unlocked('\n'); return ;}
+      while ((rev % 10) == 0) { count++; rev /= 10;} //obtain the count of the number of 0s
+      rev = 0;
+      while (N != 0) { rev = (rev<<3) + (rev<<1) + N % 10; N /= 10;}  //store reverse of N in rev
+      while (rev != 0) { putchar_unlocked(rev % 10 + '0'); rev /= 10;}
+      while (count--) putchar_unlocked('0');
+  }
+
+
+ll dp[105][1005];
+ll getans(int n, int m){
+	if(n == -1 || m == 0)
+		return 0;
+	if(dp[n][m] != -1e16)
+		return dp[n][m];
+	ll ans = getans(n-1,m);
+
+	int limit = min((int)(anss[n].size()),m);
+
+	for(int i =1; i <=limit; i++){
+		ll ans1 = anss[n][i-1] + getans(n-1,m-i);
+		ans = max(ans1,ans);
+	}
+
+	dp[n][m] = ans;
+	return ans;
+}
+
+void solve(){
+
+	int n,m;
+	scanintneg(n);
+	scanintneg(m);
+	REP(i,n){
+		int x;
+		scanintneg(x);
+		ll mx = 0;
+		while(x--){
+			int y;
+			scanintneg(y);
+			vec[i].pb(y);
+			mx = max(mx, (ll)y);
+		}
+
+		anss[i].pb(mx);
+		int size = vec[i].size();
+		for(int j =2; j <=min(size,m);j++){
+			ll sum = 0;
+			int k;
+			for(k = 0; k <j;k++)	sum += (ll)vec[i][k];
+			ll maxsum = sum;
+			for(; k <size; k++){
+				sum += (ll)vec[i][k];
+				sum -= (ll)vec[i][k-j];
+				maxsum = max(maxsum,sum);
+			}
+			anss[i].pb(maxsum);
+		}
+	}
+	for(int i =0; i <105; i++){
+		for(int j =0; j <1005;j++){
+			dp[i][j] = -1e16;
+		}
+	}
+
+	cout<<getans(n-1,m);
+
+}
+
+int main(){
+
+//	cin.sync_with_stdio(0);
+//	cout.sync_with_stdio(0);
+#ifdef testing
+	freopen("input.txt","r",stdin);
+#endif
+
+
+//	freopen("output.txt","w",stdout);
+
+#ifdef morethanonetestcases
+	int TC;
+	cin>>TC;
+#else
+	int TC = 1;
+#endif
+	for(int ZZ=1;ZZ<=TC;ZZ++){
+//		cout<<"Case #"<<ZZ<<": ";
+		solve();
+//		cout<<endl;
+	}
+	return 0;
+}

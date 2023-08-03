@@ -1,0 +1,140 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+const int MOD=1000000003;
+ll S,P,Q,R;
+ll W,X,Y,Z;
+int n,m;
+void genA ( vi &A ) {
+    rep ( i,m ) {
+        S= ( P*S%MOD*S+Q*S+R ) %MOD;
+        A[i+1]=S;
+
+    }
+}
+void genB ( vi &B ) {
+    rep ( i,m ) {
+        W = ( X * W%MOD * W + Y * W + Z ) %MOD;
+        B[i+1]=W;
+    }
+}
+struct Sieve {
+    vi sieve;
+    vi primes;
+    Sieve ( int maxn ) :sieve ( maxn,-1 ) {
+
+        for ( ll i=2; i<maxn; i++ ) {
+            if ( sieve[i]<0 ) {
+                int ind=primes.size();
+                primes.push_back ( i );
+                sieve[i]=ind;
+
+                if ( i*i<maxn ) {
+                    for ( ll n=i*i; n<maxn; n+=i )
+                        sieve[n]=ind;
+                }
+            }
+        }
+    }
+    int minFactor ( int n ) {
+        int mfac=INF;
+        while ( n>1 ) {
+            int ind=sieve[n];
+            int fac=primes[ind];
+            mfac=min ( mfac,fac );
+            while ( n%fac==0 ) n/=fac;
+        }
+        return mfac;
+    }
+
+};
+int main() {
+    ios_base::sync_with_stdio ( false );
+
+    cin>>n>>m;
+    cin>>S>>P>>Q>>R;
+    cin>>W>>X>>Y>>Z;
+    vi A ( m+1 ),B ( m+1 );
+    vll dists ( m+1 );
+    vi mpf ( m+1 );
+    Sieve s ( m+1 );
+//     map<int,pair<pll,pll>> mpfD0;
+    reu ( i,1,m+1 ) {
+        mpf[i]=s.minFactor ( i );
+//         mpfD0[mpf[i]]=mp ( mp ( INFL,-1 ),mp ( INFL,-1 ) );
+    }
+    rep ( i,n-1 ) {
+        vector<pair<pll,pll>> mpfD(m+1,mp ( mp ( INFL,-1 ),mp ( INFL,-1 ) ));
+        genA ( A );
+        genB ( B );
+        ll Done=INFL;
+        reu ( j,2,m+1 ) {
+            ll d=dists[j]+B[j];
+            pair<pll,pll> &p=mpfD[mpf[j]];
+            if ( d<p.first.first ) {
+                swap ( p.first,p.second );
+                p.first=mp ( d,j );
+            } else if ( d<p.second.first ) {
+                p.second=mp ( d,j );
+            }
+            Done=min(Done,d);
+        }
+        dists[1]=min(Done,dists[1]+A[1]);
+        reu(j,2,m+1){
+               pair<pll,pll> &p=mpfD[mpf[j]];
+               ll d1;
+               if(p.first.second==j)d1=p.second.first;
+               else d1=p.first.first;
+               dists[j]=min(d1,dists[j]+A[j]);
+        }
+    }
+    ll minD=INFL;
+    reu(j,1,m+1)minD=min(minD,dists[j]);
+    cout<<minD<<endl;
+}

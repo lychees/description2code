@@ -1,0 +1,83 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+#define set_bits(x) __builtin_popcount(x)
+#define sc1ll(x) scanf("%lld",&x)
+#define sc2ll(x,y) scanf("%lld%lld",&x,&y)
+#define sc3ll(x,y,z) scanf("%lld%lld%lld",&x,&y,&z)
+vector<ll> arr(56);
+vector<ll> prime_arr;
+ll dp[55][(1<<15)+7];
+void make_prime_arr()
+{
+    bool flag;
+    for(ll i=2;i<=50;i++)
+    {
+        flag=true;
+        for(ll j=2;(j*j)<=i;j++)
+        {
+            if(i%j==0)
+            {
+                flag=false;
+                break;
+            }
+        }
+        if(flag)
+            prime_arr.push_back(i);
+    }
+}
+void find_largest_subset(ll num,ll limit)
+{
+    ll mask,mask2,mask3,i,j,k,ans=0;
+    for(i=1;i<=num;i++)
+    {
+        mask=0;
+        for(j=0;j<prime_arr.size();j++)//this sets all prime numbers bits to 1..so set the mask
+        {
+            if(arr[i]%prime_arr[j]==0)
+                mask=mask | (1<<j);
+        }
+        if(i==1)//if there is only one number present, so it is largest subset
+        {
+            dp[i][mask]=1;
+            continue;
+        }
+
+        for(mask2=0;mask2<(limit-1);mask2++)//recursion for all subsets, that checks whether there is any mask2 same as mask
+        {
+            bool flag=true;
+            for(j=0;j<=15;j++)
+            {
+                if( ((1<<j)&mask) && ((1<<j)&mask2) )//if there is any mask2 bit is same as mask bit, then this subset is not included
+                {
+                    flag=false;//a different mask2 is required, so make it false
+                    break;
+                }
+            }
+
+            if(flag==true)//if mask2 has all bits different from the mask subset, then include this subset{mask2}.
+            {
+                mask3=( mask | mask2 );//make a different subset from this subset mask and mask2.
+                dp[i][mask3]=max(dp[i][mask3],1+dp[i-1][mask2]);
+                ans=max(ans,dp[i][mask3]);
+            }
+            dp[i][mask2]=max(dp[i][mask2],dp[i-1][mask2]);//if there is already a mask available which has same prime bits
+        }
+    }
+    cout<<ans<<endl;
+}
+int main()
+{
+    ll test,i,j,a,b,minn,maxx,num,limit;
+    make_prime_arr();
+    limit=1<<15;
+    sc1ll(test);
+    while(test--)
+    {
+        memset(dp, 0, sizeof(dp));
+        sc1ll(num);
+        for(i=1;i<=num;i++)
+            sc1ll(arr[i]);
+        find_largest_subset(num,limit);
+    }
+}

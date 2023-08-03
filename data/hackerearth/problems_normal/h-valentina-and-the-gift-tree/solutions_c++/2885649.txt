@@ -1,0 +1,148 @@
+#include <bits/stdc++.h>
+#define pb push_back
+#define sqr(x) (x)*(x)
+#define sz(a) int(a.size())
+#define reset(a,b) memset(a,b,sizeof(a))
+#define oo 1000000000000000007ll
+
+using namespace std;
+
+typedef pair<int,int> pii;
+typedef long long ll;
+
+const int maxn=100007;
+const int maxq=500007;
+int d[maxn],parent[maxn][17],g[maxn];
+int n,q;
+vector<int> e[maxn];
+ll ans[maxq][2];
+vector<pii> query[maxn];
+
+void dfs1(int u, int p){
+    for(int i=0; i<sz(e[u]); ++i){
+        int v=e[u][i];
+        if(v==p) continue;
+        parent[v][0]=u;
+        d[v]=d[u]+1;
+        dfs1(v,u);
+    }
+}
+
+
+int lca(int u, int v){
+    if(d[u]>d[v]) swap(u,v);
+    for(int k=0; k<17; ++k) if((d[v]-d[u])>>k&1) v=parent[v][k];
+    if(v==u) return u;
+    for(int k=16; k>=0; --k) if(parent[u][k]!=parent[v][k]){
+        u=parent[u][k];
+        v=parent[v][k];
+    }
+    return parent[u][0];
+}
+
+struct ITNode{
+    ll sum, vl, vr, v;
+}IT[maxn*4];
+
+void updateNode(int i, int l, int r){
+    if(l==r) return;
+    IT[i].sum = IT[i*2].sum + IT[i*2+1].sum;
+    IT[i].vl = max(IT[i*2].vl, IT[i*2].sum + IT[i*2+1].vl);
+    IT[i].vr = max(IT[i*2+1].vr, IT[i*2+1].sum + IT[i*2].vr);
+    IT[i].v = max(IT[i*2].vr + IT[i*2+1].vl, max(IT[i*2].v, IT[i*2+1].v));
+}
+
+void update(int i, int l, int r, int p, int v){
+    if(p<l || p>r) return;
+    if(l==r){
+        IT[i].v = IT[i].sum = IT[i].vl = IT[i].vr = v;
+        return;
+    }
+    int mid=(l+r)/2;
+    update(i*2,l,mid,p,v); update(i*2+1,mid+1,r,p,v);
+    updateNode(i,l,r);
+}
+
+ll IT_vr, IT_ret, IT_sum;
+void get(int i, int l, int r, int s, int f){
+    if(f<l || r<s) return;
+    if(s<=l && r<=f){
+        IT_ret = max(IT_ret, max(IT[i].v, IT_vr + IT[i].vl));
+        IT_vr = max(IT_vr + IT[i].sum, IT[i].vr);
+        return;
+    }
+    int mid=(l+r)/2;
+    get(i*2,l,mid,s,f); get(i*2+1,mid+1,r,s,f);
+}
+
+ll get(int l, int r){
+    IT_vr = 0;
+    IT_ret = -oo;
+    get(1,1,n,l,r);
+    return IT_ret;
+}
+
+void getL(int i, int l, int r, int s, int f){
+    if(f<l || r<s) return;
+    if(s<=l && r<=f){
+        IT_ret = max(IT_ret, IT_sum + IT[i].vl);
+        IT_sum += IT[i].sum;
+        return;
+    }
+    int mid=(l+r)/2;
+    getL(i*2,l,mid,s,f); getL(i*2+1,mid+1,r,s,f);
+}
+
+ll getL(int l, int r){
+    IT_sum=0;
+    IT_ret = -oo;
+    getL(1,1,n,l,r);
+    return IT_ret;
+}
+
+void dfs2(int u, int p){
+    update(1,1,n,d[u],g[u]);
+    for(int i=0; i<sz(query[u]); ++i){
+        pii p=query[u][i];
+        int id=p.first, h=p.second;
+        ans[id][0] = max(ans[id][0], get(h,d[u]));
+        ans[id][1] += getL(h,d[u]);
+    }
+    for(int i=0; i<sz(e[u]); ++i){
+        int v=e[u][i];
+        if(v==p) continue;
+        dfs2(v,u);
+    }
+}
+
+int main(){
+//    freopen("input.txt","r",stdin);
+
+    scanf("%d",&n);
+    for(int i=1; i<=n-1; ++i){
+        int u,v;
+        scanf("%d%d",&u,&v);
+        e[u].pb(v); e[v].pb(u);
+    }
+
+    d[1]=1;
+    dfs1(1,-1);
+    for(int k=1; k<17; ++k) for(int u=1; u<=n; ++u) parent[u][k]=parent[parent[u][k-1]][k-1];
+
+    for(int i=1; i<=n; ++i) scanf("%d",&g[i]);
+
+    scanf("%d",&q);
+    for(int i=1; i<=q; ++i){
+        int u,v;
+        scanf("%d%d",&u,&v);
+        int r=lca(u,v);
+        if(d[u]<d[v]) swap(u,v);
+        query[u].pb(pii(i,d[r]));
+        if(v!=r) query[v].pb(pii(i,d[r]+1));
+        ans[i][0]=-oo;
+    }
+    dfs2(1,-1);
+    for(int i=1; i<=q; ++i) printf("%lld\n",max(ans[i][0],ans[i][1]));
+}
+
+

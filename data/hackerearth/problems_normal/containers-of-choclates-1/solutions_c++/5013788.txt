@@ -1,0 +1,86 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <utility>
+#include <cstring>
+using namespace std;
+
+int main()
+{
+    int t, n, a, b, team1, team2, ans;
+    scanf("%d", &t);
+    for (int i = 0; i < t; i++)
+	{
+		vector< vector<int> > graph(100000);
+		int visit[100000], present[100000];
+		memset(present, 0, sizeof(present));
+		memset(visit, 0, sizeof(visit));
+		team1 = team2 = ans = 0;
+		scanf("%d", &n);
+		for (int j = 0; j < n; j++)
+		{
+			scanf("%d %d", &a, &b);
+			present[a] = present[b] = 1;
+			graph[a].push_back(b);
+			graph[b].push_back(a);
+		}
+		queue<int> q;
+		for (int j = 1; j < 100000; j++)
+			if (present[j] == 1)
+			{
+				q.push(j);
+				present[j] = 0;
+				break;
+			}	
+		visit[q.front()] = 1;
+		team1++;
+		while (true)
+		{
+			while (!q.empty())
+			{
+				int temp = q.front(); q.pop();
+				for (int j = 0; j < graph[temp].size(); j++)
+				{
+					if (visit[graph[temp][j]] != 0)
+						continue;
+					else
+					{
+						if (visit[temp] == 1)
+						{
+							visit[graph[temp][j]] = 2;
+							q.push(graph[temp][j]);
+							team2++;
+						}
+						else
+						{
+							visit[graph[temp][j]] = 1;
+							q.push(graph[temp][j]);
+							team1++;
+						}
+					}
+				}
+			}
+			ans += max(team1, team2);
+			int s = -1;
+			for (int j = 0; j < 100000; j++)
+				if (present[j] == 1 and visit[j] == 0)
+				{
+					s = j;
+					present[j] = 0;
+					break;
+				}
+			if (s == -1)
+				break;
+			else
+			{
+				q.push(s);
+				team1 = team2 = 0;
+				team1++;
+				visit[s] = 1;
+			}
+		}
+		
+		cout<<"Case "<<i+1<<": "<<ans<<"\n";
+	}
+}

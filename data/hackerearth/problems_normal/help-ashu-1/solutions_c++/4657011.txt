@@ -1,0 +1,79 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int64_t ar[100005],tree[300005];
+
+void build(int64_t node,int64_t s,int64_t e)
+{
+    if(s==e)
+    {
+        tree[node]=ar[s]%2;
+    }
+    else
+    {
+        int64_t mid=(s+e)/2;
+        build(2*node,s,mid);
+        build(2*node+1,mid+1,e);
+        tree[node]=tree[2*node]+tree[2*node+1];
+    }
+}
+
+void update(int64_t node,int64_t s,int64_t e,int64_t idx,int64_t val)
+{
+    if(s==e)
+    {
+        ar[idx]=val;
+        tree[node]=val%2;
+    }
+    else
+    {
+        int64_t mid=(s+e)/2;
+        if(s<=idx && mid>=idx)
+            update(2*node,s,mid,idx,val);
+        else
+            update(2*node+1,mid+1,e,idx,val);
+        tree[node]=tree[2*node]+tree[2*node+1];
+    }
+}
+
+int64_t query(int64_t node,int64_t s,int64_t e,int64_t l,int64_t r)
+{
+    if(r<s || e<l)
+        return 0;
+    if(l<=s && e<=r)
+        return tree[node];
+    int64_t mid=(s+e)/2;
+    int64_t q1=query(2*node,s,mid,l,r);
+    int64_t q2=query(2*node+1,mid+1,e,l,r);
+    return q1+q2;
+}
+
+int main()
+{
+    int64_t n,i,q,a,b,c;
+    cin >> n ;
+    for(i=1;i<=n;i++)
+        cin >> ar[i];
+    build(1,1,n);
+    cin >> q ;
+    while(q--)
+    {
+        cin >> a >> b >> c ;
+        if(a==0)
+        {
+            update(1,1,n,b,c);
+        }
+        else
+        {
+            int64_t ans=query(1,1,n,b,c);
+            if(a==1)
+                cout << c-b+1-ans << endl ;
+            else if(a==2)
+                cout << ans << endl ;
+        }
+        /*for(i=1;i<=16;i++)
+        cout << tree[i] << " ";
+        cout << endl ;*/
+    }
+    return 0;
+}

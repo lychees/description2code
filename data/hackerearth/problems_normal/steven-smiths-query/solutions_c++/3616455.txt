@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define mod 1000000007
+#define upperlimit 1000100
+#define INF 1e18
+#define eps 1e-8
+#define endl '\n'
+#define mp make_pair
+#define pb push_back
+#define pcc pair<char,char>
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define tr(container,it) for(typeof(container.begin()) it=container.begin();it!=container.end();it++)
+#define F first
+#define S second
+
+using namespace std;
+
+ll gcd(ll n1,ll n2){
+	if(n1%n2==0)return n2;
+	return gcd(n2,n1%n2);
+}
+ll powmod(ll base,ll exponent)
+{
+	ll ans=1;
+	while(exponent){
+		if(exponent&1)ans=(ans*base)%mod;
+		base=(base*base)%mod;
+		exponent/=2;
+	}
+	return ans;
+}
+vector < pair < pii , int > > arr;
+int answer[upperlimit+1];
+int rev[upperlimit+1];
+bool cmp( pair < pii , int > a, pair < pii , int > b){
+	if(a.F.F!=b.F.F)return a.F.F<b.F.F;
+	return a.F.S<b.F.S;
+}
+int segtree[4*upperlimit+1];
+int query(int node,int i,int j,int l,int r){
+	if(i>j||i>r||j<l)return 0;
+	if(i>=l&&j<=r)return segtree[node];
+	int mid=(i+j)>>1;
+	int q1=query(2*node,i,mid,l,r);
+	int q2=query(2*node+1,mid+1,j,l,r);
+	return (q1+q2);
+}
+void update(int node,int i,int j,int ind){
+	if(i>j)return;
+	if(i==j&&i==ind){
+		segtree[node]++;
+		return;
+	}
+	int mid=(i+j)>>1;
+	if(ind>mid)update(2*node+1,mid+1,j,ind);
+	else update(2*node,i,mid,ind);
+	segtree[node]=(segtree[2*node]+segtree[2*node+1]);
+}
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	int i,j,n;
+	int a,b;
+	cin>>n;
+	for(i=0;i<n;i++){
+		cin>>a>>b;
+		arr.pb(mp(mp(a,b),i));
+	}
+	sort(arr.begin(),arr.end(),cmp);
+	for(i=0;i<n;i++){
+        rev[arr[i].S]=i;
+	}
+	for(i=0;i<n;i++){
+		answer[i]=query(1,1,upperlimit,1,arr[i].F.S);
+		update(1,1,upperlimit,arr[i].F.S);
+	}
+	for(i=1;i<n;i++){
+        if(arr[i].F.F==arr[i-1].F.F&&arr[i].F.S==arr[i-1].F.S)answer[i]=answer[i-1];
+	}
+	for(i=0;i<n;i++){
+		cout<<answer[rev[i]]<<endl;
+	}
+
+	return 0;
+}

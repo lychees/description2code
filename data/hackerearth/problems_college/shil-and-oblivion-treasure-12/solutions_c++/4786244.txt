@@ -1,0 +1,140 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+
+const int MAX  = 1e4 + 4;
+const int MAX2 = 1e3 + 3;
+const int LIM  = 33000;
+const int SIZE = 170;
+const int MOD  = 1e9 + 7;
+
+#define inchar      getchar_unlocked
+
+template<typename T> void inPos(T &x){x=0;register T c=inchar();while(((c<48)||(c>57))&&(c!='-'))c=inchar();bool neg=false;if(c=='-')neg=true;for(;c<48||c>57;c=inchar());for(;c>47&&c<58;c=inchar())x=(x<<3)+(x<<1)+(c&15);if(neg)x=-x;}
+
+int seg[LIM][SIZE];
+int low[MAX2];
+int point[MAX2];
+int primes[SIZE];
+int a[MAX];
+
+int mod(int a, int b) {
+    LL temp = (LL)a * b;
+    if (temp >= MOD) {
+        return temp % MOD;
+    }
+    return temp;
+}
+
+int power(int a, int b) {
+    int res = 1, y = a;
+    while (b) {
+        if (b&1) {
+            res = mod(res, y);
+        }
+        y = mod(y, y);
+        b >>= 1;
+    }
+    return res;
+}
+
+int sieve() {
+    int idx = 0;
+    for(int i=2; i<MAX2; ++i) {
+        if (low[i] == 0) {
+            low[i] = i;
+            point[i] = idx;
+            primes[idx++] = i;
+            for(int j=i*i; j<MAX2; j+=i) {
+                if (!low[j]) low[j] = i;
+            }
+        }
+    }
+    return idx;
+}
+
+void update(int t, int i, int j, int l, int val, int idx) {
+    if (i==j) {
+        seg[t][idx] += val;
+        return ;
+    }   
+    int mid = (i+j)/2;
+    if (l <= mid) {
+        update(t*2, i, mid, l, val, idx);
+    }
+    else {
+        update(t*2+1, mid+1, j, l, val, idx);
+    }
+    seg[t][idx] = max(seg[t*2][idx], seg[t*2+1][idx]);
+}
+
+int query(int t, int i, int j, int l, int r, int idx) {
+    if (j < l || i > r) {
+        return 0;
+    }
+    if (l <= i && j <= r) {
+        return seg[t][idx];
+    }
+    int mid = (i+j)/2;
+    return max(query(t*2, i, mid, l, r, idx), query(t*2+1, mid+1, j, l, r, idx));
+}
+
+int main() {
+    #ifndef ONLINE_JUDGE
+        freopen("inp.txt", "r", stdin);
+    #endif
+    int up = sieve();
+    int n;
+    inPos(n);
+    for(int l=1; l<=n; ++l) {
+        inPos(a[l]);
+        int store = a[l];
+        while(a[l] != 1) {
+            int val = low[a[l]];
+            int cnt = 0;
+            while(a[l] % val == 0) {
+                a[l] /= val;
+                cnt += 1;
+            }
+            update(1, 1, n, l, cnt, point[val]);
+        }
+        a[l] = store;
+    }
+    int q, l, r, type;
+    inPos(q);
+    while(q--) {
+        inPos(type), inPos(l), inPos(r);
+        if (type == 1) {
+            while(a[l] != 1) {
+                int val = low[a[l]];
+                int cnt = 0;
+                while(a[l] % val == 0) {
+                    a[l] /= val;
+                    cnt += 1;
+                }
+                update(1, 1, n, l, -cnt, point[val]);
+            }
+            int store = r;
+            a[l] = r;
+            while(a[l] != 1) {
+                int val = low[a[l]];
+                int cnt = 0;
+                while(a[l] % val == 0) {
+                    a[l] /= val;
+                    cnt += 1;
+                }
+                update(1, 1, n, l, cnt, point[val]);
+            }
+            a[l] = store;
+        }
+        else {
+            int ans = 1;
+            for(int i=0; i<up; ++i) {
+                int x = query(1, 1, n, l, r, i);
+                ans = mod(ans, power(primes[i], x));
+            }
+            printf("%d\n", ans);
+        }
+    }
+}

@@ -1,0 +1,151 @@
+/*********************************************************************\
+   |--\        ---       /\        |-----------| -----   /-------|    |
+   |   \        |       /  \       |               |    /             |
+   |    \       |      /    \      |               |   |              |
+   |     \      |     /      \     |               |   |----|         |
+   |      \     |    / ------ \    |-------|       |        |-----|   |
+   |       \    |   /          \   |               |              |   |
+   |        \   |  /            \  |               |              /   |
+  ---        -------            ------           ----- |---------/    |
+                                                                      |
+    codeforces = nfssdq  ||  topcoder = nafis007                      |
+    mail = nafis_sadique@yahoo.com || nfssdq@gmail.com                |
+    IIT,Jahangirnagar University(41)                                  |
+                                                                      |
+**********************************************************************/
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define xx         first
+#define yy         second
+#define pb         push_back
+#define mp         make_pair
+#define LL         long long
+#define inf        INT_MAX/3
+#define mod        1000000007ll
+#define PI         acos(-1.0)
+#define linf       (1ll<<60)-1
+#define FOR(I,A,B) for(int I = (A); I < (B); ++I)
+#define REP(I,N)   FOR(I,0,N)
+#define ALL(A)     ((A).begin(), (A).end())
+#define set0(ar)   memset(ar,0,sizeof ar)
+#define vsort(v)   sort(v.begin(),v.end())
+#define setinf(ar) memset(ar,126,sizeof ar)
+
+//cout << fixed << setprecision(20) << p << endl;
+
+template <class T> inline T bigmod(T p,T e,T M){
+    LL ret = 1;
+    for(; e > 0; e >>= 1){
+        if(e & 1) ret = (ret * p) % M;
+        p = (p * p) % M;
+    } return (T)ret;
+}
+template <class T> inline T gcd(T a,T b){if(b==0)return a;return gcd(b,a%b);}
+template <class T> inline T modinverse(T a,T M){return bigmod(a,M-2,M);}
+
+int P[30][500001], N, stp, cnt;
+char A[100001], cc;
+
+struct info {
+    int nr[2], p;
+    bool operator < ( const info &b ) const {
+        return nr[0] == b.nr[0] ? ( nr[1] < b.nr[1] ) : ( nr[0] < b.nr[0] );
+    }
+} L[500001];
+
+void suffixArray() {
+//    for( int i = 0; i < N; i++ ) P[0][i] = A[i] - 'a';
+    for( stp = 1, cnt = 1; cnt >> 1 < N; ++stp, cnt <<= 1 ) {
+        for( int i = 0; i < N; i++ ) {
+            L[i].nr[0] = P[stp - 1][i];
+            L[i].nr[1] = i + cnt < N ? P[stp - 1][i + cnt] : -1;
+            L[i].p = i;
+        }
+        sort(L, L + N);
+        for ( int i = 0; i < N; i++ )
+            P[stp][L[i].p] = i > 0 && L[i].nr[0] == L[i - 1].nr[0] && L[i].nr[1] == L[i - 1].nr[1] ? P[stp][L[i - 1].p] : i;
+    }
+}
+
+int lcp(int x, int y) {
+    int k, ret = 0;
+    if(x == y) return N - x;
+    for( k = stp - 1; k >= 0 && x < N && y < N; k-- ) if(P[k][x] == P[k][y])
+        x += 1 << k, y += 1 << k, ret += 1 << k;
+    return ret;
+}
+
+int ar[500001], st[2][1001], len[2][1001], id[500001];
+int ed[1001], res[1001];
+string s;
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n; cin >> n;
+    int cc = 0;
+    REP(i, n){
+        cin >> s;
+        len[0][i] = s.size();
+        st[0][i] = cc;
+        REP(j, s.size()){
+            ar[cc++] = s[j] - 'a' + 400000;
+            id[cc-1] = i+1;
+        }
+        ar[cc++] = i;
+    }
+
+    int tot = cc;
+    int m; cin >> m;
+    REP(i, m){
+        cin >> s;
+        len[1][i] = s.size();
+        st[1][i] = cc;
+        REP(j, s.size()){
+            ar[cc++] = s[j] - 'a' + 400000;
+            id[cc-1] = i+1;
+        }
+        ed[i] = cc;
+        ar[cc++] = i+n;
+    }
+
+    N = cc;
+    REP(i, N) P[0][i] = ar[i];
+    suffixArray();
+
+//    REP(i, N) cout << L[i].p << " ";
+//    cout << endl;
+
+    int last = N+1;
+
+    for(int i = N-1; i >= 0; i--){
+        if(L[i].p < tot){
+            if(ar[L[i].p] < 300000) continue;
+            last = L[i].p;
+            continue;
+        }
+        if(ar[L[i].p] < 300000 || last > N) continue;
+        int v = lcp(L[i].p, last);
+        int p = id[L[i].p]-1, lft = ed[p] - L[i].p;
+        v = min(v, lft);
+//        cout << L[i].p << " " << last << " " << v << " " << p << " " << ed[p] << endl;
+        res[p] = max(res[p], v);
+    }
+
+    last = N+1;
+
+    REP(i, N){
+        if(L[i].p < tot){
+            if(ar[L[i].p] < 300000) continue;
+            last = L[i].p;
+            continue;
+        }
+        if(ar[L[i].p] < 300000 || last > N) continue;
+        int v = lcp(L[i].p, last);
+        int p = id[L[i].p]-1, lft = ed[p] - L[i].p;
+        v = min(v, lft);
+        res[p] = max(res[p], v);
+    }
+
+    REP(i, m) cout << res[i] << endl;
+}

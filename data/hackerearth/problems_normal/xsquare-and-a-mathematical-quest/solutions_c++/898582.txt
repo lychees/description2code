@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+#define M 1000000007
+using namespace std;
+vector < pair<long long, long long> > v;
+int n;
+long long dp[1000002][5][5];
+bool vis[1000002][5][5];
+long long f(int idx, long long val, int take)
+{
+	if ( idx == n ) {
+		if ( val == take ) return 1;
+		return 0;
+	}
+	if ( vis[idx][val][take] ) return dp[idx][val][take];
+	vis[idx][val][take] = true;
+	long long ans = 0, pro;
+	for ( int i = 0; i <= v[idx].second; i++ ) {
+		if ( i == 0 ) pro = 1;
+		else pro = (pro*v[idx].first)%4;
+		ans = (ans + f(idx+1,(pro*val)%4,take))%M;
+	}
+	dp[idx][val][take] = ans;
+	return ans;
+}
+int main()
+{
+	long long x,t;
+	cin >> n;
+	map <long long, long long> m;
+	map <long long, long long> :: iterator it;
+	for ( int i = 0; i < n; i++ ) {
+		cin >> x;
+		t = (long long)sqrt(x);
+		for ( long long j = 2; j <= t; j++ ) {
+			while ( x%j == 0 ) {
+				x /= j;
+				m[j]++;
+			}
+			if ( x == 1 ) break;
+		}
+		if ( x != 1 ) m[x]++;
+	}
+	for ( it = m.begin(); it != m.end(); it++ ) v.push_back(make_pair(((*it).first)%4,(*it).second));
+	n = (int)v.size();
+	long long ans = (f(0,1,1)%M - f(0,1,3)%M)%M;
+	while ( ans < 0 ) ans += M;
+	ans = (4LL*ans)%M;
+	cout << ans << endl;
+	return 0;
+}

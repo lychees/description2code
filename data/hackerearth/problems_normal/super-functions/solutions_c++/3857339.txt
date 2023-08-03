@@ -1,0 +1,244 @@
+#include <bits/stdc++.h>
+
+#define ford(i, n) for(int i = (int)(n) - 1; i >= 0; i--)
+#define forn(i, n) for(int i = 0; i < (int)(n); i++)
+#define for1(i, n) for(int i = 1; i <= (int)(n); i++)
+#define all(x) (x).begin(), (x).end()
+#define pb push_back
+#define mp make_pair
+#define prev asdfsdf
+#define x first
+#define y second
+
+using namespace std;
+typedef long double ld;
+typedef long long ll;
+typedef pair<int, int> PII;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef long long i64;
+typedef unsigned long long ull;
+
+template<class T>
+bool remin(T &a, const T &b) {
+    if (a > b) {
+        a = b;
+        return true;
+    }
+    return false;
+}
+
+template<class T>
+bool remax(T &a, const T &b) {
+    if (a < b) {
+        a = b;
+        return true;
+    }
+    return false;
+}
+
+int nxt() {
+    int x;
+    scanf("%d", &x);
+    return x;
+}
+
+ll gcd(ll a, ll b) {
+    a = abs(a);
+    b = abs(b);
+    while (b) {
+        a %= b;
+        swap(a, b);
+    }
+    return a;
+}
+
+
+typedef ll ptdata;
+
+struct pt {
+    ptdata x, y;
+
+    pt() { }
+
+    pt(ptdata x, ptdata y) : x(x), y(y) { }
+
+    pt operator-(const pt &r) const {
+        return pt(x - r.x, y - r.y);
+    }
+
+    pt operator+(const pt &r) const {
+        return pt(x + r.x, y + r.y);
+    }
+
+    pt operator*(const ld &r) const {
+        return pt(x * r, y * r);
+    }
+
+    ptdata sqlen() const {
+        return abs(x * x + y * y);
+    }
+
+    ld len() const {
+        return sqrtl(sqlen());
+    }
+
+    bool operator<(const pt &r) const {
+        if (x != r.x) return x < r.x;
+        return y < r.y;
+    }
+
+    bool operator==(const pt &r) const {
+        return x == r.x && y == r.y;
+    }
+};
+
+ptdata cross(const pt &l, const pt &r) {
+    return l.x * r.y - l.y * r.x;
+}
+
+ptdata dot(const pt &l, const pt &r) {
+    return l.x * r.x + l.y * r.y;
+}
+
+
+ll pwmod(ll a, ll n, ll mod) {
+    ll ret = 1;
+    while (n) {
+        if (n & 1) ret = ret * a % mod;
+        a = a * a % mod;
+        n >>= 1;
+    }
+    return ret;
+}
+
+template<typename T>
+inline T sqr(T x) {
+    return x * x;
+}
+
+
+bool remin(ll &x, ll y) {
+    if (x > y) {
+        x = y;
+        return 1;
+    }
+    return 0;
+}
+
+
+const int N = 100 * 1000 + 10;
+int lp[N];
+vector<int> pr;
+vector<int> divs[N];
+int mu[N];
+int phi[N];
+
+const ll mod = 1000 * 1000 * 1000 + 7;
+
+long long sum(ll q, ll n) {
+    if (q == 0) return 0;
+    if (q == 1) {
+        return n % mod;
+    }
+    return (pwmod(q, n, mod) - 1) * (pwmod((q + mod - 1) % mod, mod - 2, mod)) % mod * q % mod;
+}
+
+ll solve1(int n) {
+    ll ans = 0;
+    for (int d : divs[n]) {
+        ans += sum(pwmod(n, d, mod), n / d) * phi[d] % mod;
+    }
+    ans %= mod;
+    if (ans < 0) ans += mod;
+    return ans;
+}
+
+ll solve2(int n) {
+    ll ans = 0;
+    for (int d : divs[n]) {
+        ans += sum(pwmod(2, d, mod), n / d) * phi[d] % mod;
+    }
+    ans %= mod;
+    ans *= pwmod(2, n, mod);
+    ans %= mod;
+    if (ans < 0) ans += mod;
+    return ans;
+}
+
+ll solve3(int n) {
+    ll ans = 0;
+    for (int d : divs[n]) {
+        ans += sum(pwmod(n, d, mod), n / d) * phi[d] % mod;
+    }
+    ans %= mod;
+    ans *= phi[n];
+    ans %= mod;
+    ans *= pwmod(n, mod - 2, mod);
+    ans %= mod;
+    if (ans < 0) ans += mod;
+    return ans;
+}
+
+inline void solve(int test = 0) {
+    phi[0] = 1;
+    phi[1] = 1;
+    mu[1] = 1;
+    for (int i=2; i<N; ++i) {
+        if (lp[i] == 0) {
+            lp[i] = i;
+            pr.push_back (i);
+        }
+        int d = i / lp[i];
+        if (lp[i] == lp[d]) {
+            phi[i] = phi[d] * lp[i];
+            mu[i] = 0;
+        } else {
+            phi[i] = phi[d] * (lp[i] - 1);
+            mu[i] = -mu[d];
+        }
+        for (int j=0; j<(int)pr.size() && pr[j]<=lp[i] && i*pr[j] < N; ++j)
+            lp[i * pr[j]] = pr[j];
+    }
+    for (int i = 1; i < N; ++i) {
+        for (int j = i; j < N; j += i) {
+            divs[j].pb(i);
+        }
+    }
+
+    int q;
+    cin >> q;
+    forn(i, q) {
+        int t;
+        cin >> t;
+        int n;
+        cin >> n;
+        if (t == 1) {
+            cout << solve1(n) << "\n";
+        }
+        if (t == 2) {
+            cout << solve2(n) << "\n";
+        }
+        if (t == 3) {
+            cout << solve3(n) << "\n";
+        }
+    }
+}
+
+
+int main() {
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w", stdout);
+#endif
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+
+    int t = 1;
+    //cin >> t;
+    forn(i, t)
+        solve();
+
+    cerr << "Time " << clock() / (double) CLOCKS_PER_SEC << endl;
+    return 0;
+}

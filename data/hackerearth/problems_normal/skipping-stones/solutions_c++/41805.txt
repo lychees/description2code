@@ -1,0 +1,77 @@
+#include <iostream>
+#include<vector>
+
+using namespace std;
+
+unsigned int n,L,D;
+double* prob = NULL;
+vector<unsigned int> dist;
+double *bestProb = NULL;
+
+double findBestProb(double best, unsigned int distCovered,size_t index)
+{
+	if(index == dist.size() -1 || distCovered + L > D)
+	{
+		return best;
+	}
+	
+	if(bestProb[index] != 0.0)
+		return best*bestProb[index];
+	
+	double bestTemp = 0.0, bestMin = 0.0;
+	size_t i = index+1;
+	for(auto it = dist.begin() + i; it != dist.end(); it++,i++)
+	{
+		if(*it - distCovered <= L)
+		{
+			bestTemp = findBestProb(best*prob[i], *it, i);
+			if(bestTemp > bestMin)
+			{
+				bestMin = bestTemp;
+				bestProb[index] = bestMin/best;
+			}
+		}
+		else
+			break;
+	}
+	
+	return bestMin;
+
+}
+
+int main()
+{
+	cin>>n;
+	cin>>L;
+	cin>>D;
+	prob = new double[n+1];
+	bestProb = new double[n+1];
+	double p;
+	prob[0] = 1.0;
+	bestProb[0] = 0.0;
+	for(unsigned int temp = 1; temp <= n; temp++)
+	{
+		cin>>p;
+		prob[temp] = p;
+		bestProb[temp] = 0.0;
+	}	
+	
+	dist.reserve(n+1);
+	unsigned int d;
+	dist.push_back(0);
+	for(unsigned int temp = n; temp >0; temp--)
+	{
+		cin>>d;
+		dist.push_back(d);
+	}
+
+	double best = findBestProb(1.0,0,0);
+	if(best == 0.0)
+		cout<<"IMPOSSIBLE"<<endl;
+	else
+	{
+		std::cout.precision(6);
+		std::cout.setf( std::ios::fixed, std:: ios::floatfield );
+		cout<<best<<endl;
+	}
+}

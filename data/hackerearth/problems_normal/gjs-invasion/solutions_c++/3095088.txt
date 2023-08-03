@@ -1,0 +1,66 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+using namespace std;
+
+typedef long long ll;
+const int N = 17;
+const int M = 1 << N;
+ll dp[M];
+ll ans[N];
+int rev[M];
+
+void solve(int n)
+{
+	rev[0] = 0;
+	for (int mask = 1; mask < (1 << n); mask++)
+	{
+		int k = 0;
+		while(((mask >> k) & 1) == 0) k++;
+		rev[mask] = rev[mask ^ (1 << k)] ^ (1 << (n - 1 - k));
+	}
+	for (int i = 0; i < (1 << n); i++)
+		dp[i] = 0;
+	dp[0] = 1;
+	for (int mask = 0; mask < (1 << n) - 1; mask++)
+	{
+		for (int k = 0; k < n; k++)
+		{
+			if ((mask >> k) & 1) continue;
+			int pc = __builtin_popcount(mask);
+			if (pc == k) continue;
+			dp[mask | (1 << k)] += dp[mask];
+		}
+	}
+	for (int mask = 0; mask < (1 << n) - 1; mask++)
+	{
+		for (int k = 0; k < n; k++)
+		{
+			if ((mask >> k) & 1) continue;
+			int pc = __builtin_popcount(mask);
+			if (pc == k) continue;
+			pc = __builtin_popcount(mask & ((1 << n) - (1 << k)));
+			int nmask = ((1 << n) - 1) ^ (mask | (1 << k));
+			nmask = rev[nmask];
+			ans[n] += pc * dp[mask] * dp[nmask];
+		}
+	}
+	return;
+}
+
+int main()
+{
+	for (int i = 1; i < N; i++)
+		solve(i);
+	int t;
+	scanf("%d", &t);
+	while(t--)
+	{
+		int n;
+		scanf("%d", &n);
+		printf("%lld\n", ans[n]);
+	}
+	
+    return 0;
+}

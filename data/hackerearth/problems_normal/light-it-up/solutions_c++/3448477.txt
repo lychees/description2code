@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("clash.inp","r",stdin)
+#define OUTPUT freopen("clash.out","w",stdout)
+#define FOR(i,l,r) for(auto i=(l);i<=(r);i++)
+#define REP(i,l,r) for(auto i=(l);i<(r);i++)
+#define FORD(i,l,r) for(auto i=(l);i>=(r);i--)
+#define REPD(i,l,r) for(auto i=(l);i>(r);i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+
+const int inf=1e9;
+const int MOD=1e9+7;
+const int N=1e3+10;
+
+int n,pens[N],asel[N],cov[N][N];
+struct info{
+    int x1,x2,height;
+    info (int _x1=0,int _x2=0,int _height=0){
+        x1=_x1;x2=_x2;height=_height;
+    }
+};
+info a[N];
+bool comp(info a,info b){
+    return a.x1<b.x1;
+}
+ii operator -(ii a,ii b){
+    return ii(a.X-b.X,a.Y-b.Y);
+}
+int operator %(ii a,ii b){
+    return 1LL*a.X*b.Y-1LL*a.Y*b.X;
+}
+int CCW(ii a,ii b,ii c){
+    int v=(b-a)%(c-a);
+    return v;
+}
+
+void prepare(){
+    scanf("%d",&n);
+    FOR(i,1,n){
+        int x,y,z;
+        scanf("%d%d%d",&x,&y,&z);
+        a[i]=info(x,y,z);
+    }
+    sort(a+1,a+n+1,comp);
+    FOR(i,1,n){
+        ii best=ii(a[i].x1,a[i].height),root=best;
+        cov[i][i]=1;
+        FORD(j,i-1,1){
+            cov[i][j]=CCW(ii(a[j].x2,0),best,root)>=0;
+            ii cur=ii(a[j].x1,a[j].height);
+            if (CCW(cur,best,root)>=0) best=cur;
+        }
+        best=ii(a[i].x2,a[i].height),root=best;
+        FOR(j,i+1,n){
+            cov[i][j]=(CCW(ii(a[j].x1,0),best,root)<=0);
+            ii cur=ii(a[j].x2,a[j].height);
+            if (CCW(cur,best,root)<=0) best=cur;
+        }
+    }
+//    FOR(i,1,n) cout<<a[i].x1<<" "<<a[i].x2<<" "<<a[i].height<<'\n';
+//    FOR(i,1,n)
+//        FOR(j,1,n) cout<<cov[i][j]<<" \n"[j==n];
+}
+int solve(){
+    int ans=2,stop=0,ptop=0;
+    REP(i,1,n){
+        bool rcov=0;
+        FOR(j,1,stop) rcov|=cov[asel[j]][i+1];
+        if (rcov){
+            pens[++ptop]=i;
+            continue;
+        }
+        ans++;
+        if (a[i].height>=a[i+1].height) asel[++stop]=i;
+        else {
+            int tptop=ptop;
+            ptop=0;
+            FOR(j,1,tptop) if (!cov[i+1][pens[j]])
+                pens[++ptop]=pens[j];
+        }
+    }
+    FORD(i,n,2) if (cov[i][pens[ptop]]){
+        ans++;
+        int tptop=ptop;
+        ptop=0;
+        FOR(j,1,tptop) if (!cov[i][pens[j]])
+            pens[++ptop]=pens[j];
+    }
+    return ans;
+}
+int main(){
+    int test;
+    scanf("%d",&test);
+    while (test--){
+        prepare();
+        cout<<solve()<<'\n';
+    }
+}

@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef unsigned long long ULL;
+
+ULL mulmod(ULL a, ULL b, ULL c){
+	ULL x = 0,y = a%c;
+
+	while(b>0){
+		if(b&1) x = (x+y)%c;
+		y = (y<<1)%c;
+		b >>= 1;
+	}
+
+	return x;
+}
+
+ULL pow(ULL a, ULL b, ULL c){
+	ULL x = 1, y = a;
+
+	while(b>0){
+		if(b&1) x = mulmod(x,y,c);
+		y = mulmod(y,y,c);
+		b >>= 1;
+	}
+
+	return x;
+}
+
+bool miller_rabin(ULL p, int it){
+	if(p<2) return false;
+	if(p==2) return true;
+	if((p&1)==0) return false;
+
+	ULL s = p-1;
+	while(s%2==0) s >>= 1;
+
+	while(it--){
+		ULL a = rand()%(p-1)+1,temp = s;
+		ULL mod = pow(a,temp,p);
+
+		if(mod==-1 || mod==1) continue;
+
+		while(temp!=p-1 && mod!=p-1){
+			mod = mulmod(mod,mod,p);
+			temp <<= 1;
+		}
+
+		if(mod!=p-1) return false;
+	}
+
+	return true;
+}
+ int ar[200006];
+void update(int n){
+  int i;
+  for(i=n-1;i>=0;i-=(i&(-i))){
+  	ar[i]+=1;
+  	if(i==0)break;
+  }
+}
+int query(int n){
+int i,res=0;
+  for(i=n;i<=200000;i+=(i&(-i))){
+  	res+=ar[i];
+  }	
+  return res;
+}
+int main(){
+   int n,i,j;
+  // int arr[1000006];
+   ULL res=0;
+   //int*arr=(int*)calloc(sizeof(int),1000006);
+   scanf("%d",&n);
+   
+   int*a = (int*)calloc(sizeof(int),n+10);
+   int*b = (int*)calloc(sizeof(int),n+10);
+   for(i=0;i<n;i++)scanf("%d",&a[i]);
+   for(i=0;i<n;i++)scanf("%d",&b[i]);
+   for(i=0;i<n;i++){
+   	res+=query(b[i]);
+   	update(a[i]);
+   }
+   //printf("%lld",res);
+   printf("%s\n",miller_rabin(res,18)? "MAGIC INVERSION" : "SIMPLE INVERSION");
+   
+   return 0;
+}

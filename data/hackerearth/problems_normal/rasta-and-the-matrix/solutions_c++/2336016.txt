@@ -1,0 +1,170 @@
+#pragma comment(linker, "/STACK:102400000,102400000")
+#include <iostream>
+#include <stdio.h>
+#include <algorithm>
+#include <string.h>
+#include <vector>
+#include <map>
+#include <queue>
+#include <set>
+#include <cmath>
+#include <fstream>
+#include <assert.h>
+#include <complex>
+using namespace std;
+#define vi vector<int>
+#define pii pair<int,int>
+#define pb push_back
+#define mp make_pair
+#define all(x) x.begin(),x.end()
+#define inf 1000000009
+#define mod 1000000007
+#define x first
+#define y second
+#define pi acos(-1.0)
+#define DBG(x) cerr<<(#x)<<"="<<x<<"\n";
+#define FOREACH(it,x) for(__typeof(x.begin()) it=x.begin();it!=x.end();it++)
+#define ull unsigned long long
+#define ll long long
+#define N 100005
+
+inline void Min(int &a,int b){if(a>b)a=b;}
+inline void Max(int &a,int b){if(a<b)a=b;}
+inline void add(ll &a,ll b){a+=b;}
+
+struct tree{
+    struct node{
+        ll a,b,cut;
+        int lt,rt,v;
+        void init(ll len){
+            a=lt=rt=v=cut=0;
+            b=len;
+        }
+    }t[N<<4];
+    int sz;
+    void init(){sz=0;t[0].init(0);}
+    int new_tree(ll w){
+        ++sz;
+        t[sz].init(w);
+        return sz;
+    }
+    void down(int p,ll l,ll r){
+        if(t[p].v){
+            ll m=t[p].cut;
+            if(!t[p].lt)t[p].lt=new_tree(m-l+1);
+            if(!t[p].rt)t[p].rt=new_tree(r-m);
+            int x=t[p].lt,y=t[p].rt;
+            t[x].v^=1,swap(t[x].a,t[x].b);
+            t[y].v^=1,swap(t[y].a,t[y].b);
+            t[p].v=0;
+        }
+    }
+    void up(int p){
+        int x=t[p].lt,y=t[p].rt;
+        t[p].a=t[x].a+t[y].a;
+        t[p].b=t[x].b+t[y].b;
+    }
+    void upd(int p,ll l,ll r,ll x,ll y){
+        if(p==0)return;
+        if(l==x&&r==y){
+            //cerr<<l<<" "<<r<<"??\n";
+            t[p].v^=1;swap(t[p].a,t[p].b);
+            return;
+        }
+        ll &m=t[p].cut;
+        if(m==0){
+            if(rand()&1)m=x;
+            else m=y;
+            if(x==y){
+                if(m==l)m++;
+                if(m==r)m--;
+            }
+            t[p].lt=new_tree(m-l+1);
+            t[p].rt=new_tree(r-m);
+        }
+        down(p,l,r);
+        if(y<=m){
+            //if(!t[p].lt)t[p].lt=new_tree(m-l+1);
+            upd(t[p].lt,l,m,x,y);
+        }
+        else if(x>m){
+            //if(!t[p].rt)t[p].rt=new_tree(r-m);
+            upd(t[p].rt,m+1,r,x,y);
+        }
+        else{
+            upd(t[p].lt,l,m,x,m);
+            upd(t[p].rt,m+1,r,m+1,y);
+        }
+        up(p);
+    }
+    ll query(int p,ll l,ll r,ll x,ll y){
+        if(p==0||l>r)return 0;
+        //cerr<<t[p].v<<" "<<l<<" "<<r<<" "<<x<<" "<<y<<"...\n";
+        if(l==x&&r==y){
+            
+            return t[p].a;
+        }
+        ll &m=t[p].cut,ans=0;
+        if(m==0){
+            if(rand()&1)m=x;
+            else m=y;
+            if(x==y){
+                if(m==l)m++;
+                if(m==r)m--;
+            }
+            t[p].lt=new_tree(m-l+1);
+            t[p].rt=new_tree(r-m);
+        }
+        down(p,l,r);
+        if(y<=m){
+            //if(!t[p].lt)t[p].lt=new_tree(m-l+1);
+            ans=query(t[p].lt,l,m,x,y);
+        }
+        else if(x>m){
+            //if(!t[p].rt)t[p].rt=new_tree(r-m);
+            ans=query(t[p].rt,m+1,r,x,y);
+        }
+        else ans=query(t[p].lt,l,m,x,m)+query(t[p].rt,m+1,r,m+1,y);
+        up(p);
+        return ans;
+    }
+}T[2];
+const ll M=1e18;
+int main()
+{
+    //freopen("A.in","r",stdin);
+    //freopen("1.txt","w",stdout);
+    int m,i,j,k,n,ca=0;
+    scanf("%d",&n);ll ans=0,l,r,x,y;
+    for(i=0;i<2;i++)
+    T[i].init(),T[i].new_tree(M);
+    while(n--){
+        scanf("%d",&k);
+        if(k==1){
+            cin>>x>>l>>r;
+            l^=ans,r^=ans;
+            if(l>r)swap(l,r);
+            assert(l>=1);
+            //cerr<<l<<" "<<r<<"\n";
+            T[x].upd(1,1,M,l,r);
+        }
+        else{
+            cin>>l>>r>>x>>y;
+            l^=ans,r^=ans;x^=ans,y^=ans;
+            if(l>r)swap(l,r);if(x>y)swap(x,y);
+            assert(l>=1&&x>=1);
+            //cerr<<l<<" "<<r<<" "<<x<<" "<<y<<"\n";
+            ll a=T[0].query(1,1,M,l,r)%mod;
+            //DBG(a)
+            ll b=T[1].query(1,1,M,x,y)%mod;
+            //DBG(b)
+            ll w=(r-l+1)%mod,h=(y-x+1)%mod;
+            ans=a*h+b*w;
+            ans-=2LL*a*b;
+            ans%=mod;
+            if(ans<0)ans+=mod;
+            printf("%lld\n",ans);
+        }
+    }
+    return 0;
+}

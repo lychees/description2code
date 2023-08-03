@@ -1,0 +1,157 @@
+/****************************
+*  Author- Advitiya Brijesh *
+*  PIE @ MNNIT Allahabad    *
+*  Username-asymptote_      *
+*                           *
+****************************/
+// WA TLE MLE RE IDLE and counting...
+#include<bits/stdc++.h>
+using namespace std;
+//      std macros
+typedef long long ll;
+typedef vector<list<ll> > vli;
+typedef vector<ll > vi;
+typedef vector<pair<ll,ll> > vpll;
+typedef vector<pair<int,int> > vpii;
+typedef pair<int ,int> pii;
+//      dereference
+#define F first
+#define S second
+#define pb push_back
+#define mp make_pair
+#define in insert
+#define pu push
+#define fr front
+//      loops
+#define rep(i,n) for(int i=0;i<n;++i)
+#define REP(i,a,b) for(int i=a;i<=b;++i)
+#define PER(i,b,a) for(int i=b;i>=a;--i)
+#define all(X) (X).begin(), (X).end()
+//      I/O
+#define dsd(X) int (X); scanf("%d", &X)
+#define dsd2(X, Y) int X, Y; scanf("%d%d", &X, &Y)
+#define dsd3(X, Y, Z) int X, Y, Z; scanf("%d%d%d", &X, &Y, &Z)
+#define sd(n) scanf("%d",&n)
+#define sld(n) scanf("%ld",&n)
+#define sll(n) scanf("%lld",&n)
+#define sc(n) scanf("%c",&n)
+#define ss(n) scanf("%s",n)
+#define oll(n) printf("%lld\n",n)
+//      set values
+#define mset(n,k) memset(n,k,sizeof(n))
+ll INV2=500000004;
+ll INV6=166666668;
+//modular expo
+ll power(ll a,ll b, ll c){
+    ll x=1,y=a;
+    while(b>0){
+        if(b&1)
+            x=(x*y)%c;
+        y=(y*y)%c;
+        b/=2;
+    }
+    return x%c;
+}
+//perfect numbers till 10^6 6, 28, 496, 8128
+int dx[]={0,-1,0,1};
+int dy[]={-1,0,1,0};//clockwise from left
+int n,q,MAX=1e5+5;
+ll suf[4*(100005)],pre[4*(100005)],B=29,MOD=1e9+9;
+string s;
+void build(int node,int st,int en){
+    if(st==en){
+        suf[node]=pre[node]=s[st]-'a';
+    }
+    else{
+        int mid=st+(en-st)/2;
+        build(2*node,st,mid);
+        build(2*node+1,mid+1,en);
+        ll fr=pre[2*node];
+        fr=(fr + ( power(B,mid-st+1,MOD)*pre[2*node+1] )%MOD )%MOD;
+        ll re=suf[2*node+1];
+        re=(re + (power(B,en-mid,MOD)*suf[2*node] )%MOD )%MOD;
+        pre[node]=fr;
+        suf[node]=re;
+    }
+}
+void update(int node,int st,int en,int idx,char ch){
+    if(st>en || idx>en || idx<st)
+        return;
+    if(st==idx && idx==en){
+        pre[node]=suf[node]=ch-'a';
+    }
+    else{
+        int mid=st+(en-st)/2;
+        update(2*node,st,mid,idx,ch);
+        update(2*node+1,mid+1,en,idx,ch);
+        ll fr=pre[2*node];
+        fr=(fr + ( power(B,mid-st+1,MOD)*pre[2*node+1] )%MOD )%MOD;
+        ll re=suf[2*node+1];
+        re=(re + (power(B,en-mid,MOD)*suf[2*node] )%MOD )%MOD;
+        pre[node]=fr;
+        suf[node]=re;
+    }
+
+}
+struct tree
+{
+    ll a,b,c;
+}ans;
+bool check(int st,int en,int l,int r){
+    if(st>en || l>en || r<st)
+        return 0;
+    return 1;
+}
+tree query(int node,int st,int en,int l,int r){
+    if(st>=l && en<=r){
+        ans.a=pre[node],ans.b=suf[node],ans.c=en-st+1;
+        return ans;
+    }
+    int mid=st+(en-st)/2;
+    tree v1,v2,tmp;
+    tmp.a=tmp.b=tmp.c=-1;
+    if(check(st,mid,l,r)){
+        v1=query(2*node,st,mid,l,r);
+        tmp=v1;
+    }
+    if(check(mid+1,en,l,r)){
+        v2=query(2*node+1,mid+1,en,l,r);
+        if(tmp.a==-1)
+            tmp=v2;
+        else{
+            ll fr=v1.a;
+            fr=(fr + (power(B,v1.c,MOD)*v2.a )%MOD )%MOD;
+            ll re=v2.b;
+            re=(re + (power(B,v2.c,MOD)*v1.b )%MOD )%MOD;
+            tmp.a=fr,tmp.b=re,tmp.c=v1.c+v2.c;
+        }
+    }
+    return tmp;
+}
+int main(){
+  //freopen("lucky.in","r",stdin);
+  //freopen("lucky.out","w",stdout);
+    sd(n),sd(q);
+    cin>>s;
+    build(1,0,n-1);
+    while(q--){
+        int ty,l,r;
+        char ch;
+        sd(ty);
+        if(ty==1){
+            sd(l),sd(r);
+            l--,r--;
+            tree val=query(1,0,n-1,l,r);
+            if(val.a==val.b)
+                printf("Yes\n");
+            else
+                printf("No\n");
+        }
+        else{
+            sd(l),cin>>ch;
+            l--;
+            update(1,0,n-1,l,ch);
+        }
+    }
+
+return 0;}

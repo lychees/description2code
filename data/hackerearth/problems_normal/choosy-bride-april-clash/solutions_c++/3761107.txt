@@ -1,0 +1,165 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define N 250010
+#define Max(a, b) ((a) > (b) ? (a) : (b))
+#define Min(a, b) ((a) < (b) ? (a) : (b))
+#define oo (1LL << 62)
+
+void input(int &x) {
+    x = 0;
+    bool tp = false;
+    char c = getchar();
+    while(c <= 32) c = getchar();
+    if(c == '-') {
+        c = getchar();
+        tp = true;
+    }
+    while(c > 32) x = x * 10 + (c ^ 48), c = getchar();
+    if(tp) x = -x;
+}
+
+typedef long long ll;
+
+int n, q, B;
+ll A[N];
+ll vl[555][555], vr[555][555], a[555];
+int cl[555], cr[555];
+
+void deal(int i, int l, int r) {
+    ll tp = - oo;
+    cl[i] = cr[i] = 0;
+    for(int j = l; j < r; j ++) {
+        if(tp <= A[j]) {
+            vl[i][cl[i] ++] = A[j];
+            tp = A[j];
+        }
+    }
+    tp = - oo;
+    for(int j = r - 1; j >= l; j --) {
+        if(tp <= A[j]) {
+            vr[i][cr[i] ++] = A[j];
+            tp = A[j];
+        }
+    }
+}
+
+void build() {
+    int l = 0;
+    for(int i = 0; i < B; i ++) {
+        if(l >= n) break;
+        int r = Min(l + B, n);
+        a[i] = 0;
+        deal(i, l, r);
+        l = r;
+    }
+}
+
+void update(int l, int r, int x) {
+    int i = l / B;
+    int k = min((i + 1) * B - 1, r);
+    for(int j = l; j <= k; j ++) A[j] += x;
+    k = min((i + 1) * B, n);
+    if(a[i]) {
+        for(int j = i * B; j < k; j ++) A[j] += a[i];
+        a[i] = 0;
+    }
+    deal(i, i * B, k);
+    if(r / B == l / B) return;
+    for(int j = i + 1; (j + 1) * B <= r; j ++) a[j] += x;
+    i = r / B;
+    for(int j = i * B; j <= r; j ++) A[j] += x;
+    k = min((i + 1) * B, n);
+    if(a[i]) {
+        for(int j = i * B; j < k; j ++) A[j] += a[i];
+        a[i] = 0;
+    }
+    deal(i, i * B, k);
+}
+
+int queryL(int l, int r) {
+    int rt = 0;
+    int i = l / B;
+    int k = min((i + 1) * B - 1, r);
+    ll tp = - oo;
+    for(int j = l; j <= k; j ++) {
+        if(tp <= A[j]) {
+            rt ++;
+            tp = A[j];
+        }
+    }
+    tp += a[i];
+    if(l / B == r / B) return rt;
+    for(int j = i + 1; (j + 1) * B <= r; j ++) {
+        int k = lower_bound(vl[j], vl[j] + cl[j], tp - a[j]) - vl[j];
+        if(k < cl[j]) {
+            rt += cl[j] - k;
+            tp = vl[j][cl[j]-1] + a[j];
+        }
+    }
+    i = r / B;
+    for(int j = i * B; j <= r; j ++) {
+        if(tp <= A[j] + a[i]) {
+            tp = A[j] + a[i];
+            rt ++;
+        }
+    }
+    return rt;
+}
+
+int queryR(int l, int r) {
+    int rt = 0;
+    int i = r / B;
+
+    int k = max(i * B, l);
+    ll tp = - oo;
+    for(int j = r; j >= k; j --) {
+        if(tp <= A[j]) {
+            rt ++;
+            tp = A[j];
+        }
+    }
+    tp += a[i];
+    if(l / B == r / B) return rt;
+    for(int j = i - 1; j * B > l; j --) {
+        int k = lower_bound(vr[j], vr[j] + cr[j], tp - a[j]) - vr[j];
+        if(k < cr[j]) {
+            rt += cr[j] - k;
+            tp = vr[j][cr[j]-1] + a[j];
+        }
+    }
+    i = l / B;
+    for(int j = (i + 1) * B - 1; j >= l; j --) {
+        if(tp <= A[j] + a[i]) {
+            tp = A[j] + a[i];
+            rt ++;
+        }
+    }
+    return rt;
+}
+
+int main() {
+    int T;
+    input(T);
+    while(T --) {
+        input(n); input(q);
+        B = sqrt(n) * 2;
+        for(int x, i = 0; i < n; i ++) {
+            input(x); A[i] = x;
+        }
+        build();
+        while(q --) {
+            int type, l, r, x;
+            input(type); input(l); input(r);
+            l --; r --;
+            if(type == 1) {
+                if(l <= r) printf("%d\n", queryL(l, r));
+                else printf("%d\n", queryR(r, l));
+            } else {
+                input(x);
+                if(x != 0) update(l, r, x);
+            }
+        }
+    }
+    return 0;
+}

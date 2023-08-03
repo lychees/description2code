@@ -1,0 +1,92 @@
+ #include<bits/stdc++.h>
+
+#define ll long long
+#define mp make_pair
+#define pi pair<int,int>
+#define pli pair<ll,ll>
+#define pb push_back
+
+const double EPS = 1e-24;
+const ll MOD = 1000000007ll;
+const double PI = 3.14159265359;
+int INF = 2147483645;
+
+template <class T>T Max2(T a,T b){return a<b?b:a;}
+template <class T>T Min2(T a,T b){return a<b?a:b;}
+template <class T>T Max3(T a,T b,T c){return Max2(Max2(a,b),c);}
+template <class T>T Min3(T a,T b,T c){return Min2(Min2(a,b),c);}
+template <class T>T Max4(T a,T b,T c,T d){return Max2(Max2(a,b),Max2(c,d));}
+template <class T>T Min4(T a,T b,T c,T d){return Min2(Min2(a,b),Max2(c,d));}
+
+using namespace std;
+
+string smallest_A(string &str) {
+    reverse(str.begin(), str.end());    
+ 
+    static string::size_type freq[26];
+    static vector<string::size_type> positions[26];
+    static typename vector<string::size_type>::size_type next_to_use[26];
+ 
+    for (string::size_type i = 0; i < str.size(); i++) {
+        freq[str[i]-'a']++;
+        positions[str[i]-'a'].push_back(i);
+    }
+ 
+    for (size_t i = 0; i < sizeof(freq)/sizeof(*freq); i++) {
+        freq[i] /= 2;
+        next_to_use[i] = 0;
+    }
+ 
+    vector<string::size_type> needs(str.size());
+    static string::size_type freq_seen[26];
+    for (string::size_type i = 1; i <= str.size(); i++) {
+ 
+        string::size_type j = str.size()-i;
+        unsigned hash = str[j]-'a';
+ 
+        needs[j] = freq[hash]-freq_seen[hash];
+        freq_seen[hash] = min(freq_seen[hash]+1, freq[hash]);
+    }
+ 
+    string res;
+ 
+    string::size_type next_bottleneck = 0;
+    string::size_type last_pos = 0;
+    static string::size_type written[26];
+ 
+    while (res.size() != str.size()/2) {
+ 
+        while (!(written[str[next_bottleneck]-'a'] < needs[next_bottleneck]))
+            next_bottleneck++;    
+ 
+        string::size_type next_char = 0;
+        while (written[next_char] == freq[next_char] ||
+               positions[next_char][next_to_use[next_char]] > next_bottleneck)
+            next_char++;
+ 
+        string::size_type str_pos = positions[next_char][next_to_use[next_char]];
+ 
+        while (last_pos != str_pos) {
+            next_to_use[str[last_pos]-'a']++;
+            last_pos++;
+        }
+ 
+        do {
+            res.push_back(next_char+'a');
+            written[next_char]++;
+            next_to_use[next_char]++;
+        } while (written[next_char] < needs[str_pos]);
+ 
+        last_pos = str_pos+1;
+ 
+    }
+ 
+    return res;
+}
+ 
+int main(void) {
+    string str;
+    cin>>str;
+    cout <<smallest_A(str);
+    return 0;
+}

@@ -1,0 +1,213 @@
+/*
+*/
+ 
+//#pragma comment(linker, "/STACK:16777216")
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <complex>
+#include <math.h>
+#include <set>
+#include <vector>
+#include <map>
+#include <queue>
+#include <stdio.h>
+#include <stack>
+#include <algorithm>
+#include <list>
+#include <ctime>
+#include <memory.h>
+#include <ctime> 
+ 
+#define y0 sdkfaslhagaklsldk
+#define y1 aasdfasdfasdf
+#define yn askfhwqriuperikldjk
+#define j1 assdgsdgasghsf
+#define tm sdfjahlfasfh
+#define lr asgasgash
+ 
+#define eps 1e-11
+//#define M_PI 3.141592653589793
+#define bs 1000003
+#define bsize 256
+#define right adsgasgadsg
+#define free adsgasdg
+#define move dadsgasdg
+
+using namespace std;
+
+long n,tests;
+long t,a[1<<20],ts;
+long k,sum[1<<20];
+pair<long, long> tp;
+long l,r;
+long L,R;
+long mid,ans;
+vector<long> vec[1<<20],ps[1<<20];
+
+void build(long v,long l,long r)
+{
+ vec[v].clear();
+ ps[v].clear();
+ 
+ if (l==r)
+ {
+  vec[v].push_back(a[l]);
+  ps[v].push_back(a[l]);
+  return;
+ }
+ long mid=l+r;
+ mid/=2;
+ build(v*2,l,mid);
+ build(v*2+1,mid+1,r);
+ long ps1,ps2;
+ ps1=ps2=0;
+ while (ps1<vec[v*2].size()||ps2<vec[v*2+1].size())
+ {
+  if (ps1==vec[v*2].size())
+  {
+   vec[v].push_back(vec[v*2+1][ps2]);++ps2;
+  }
+  else if (ps2==vec[v*2+1].size())
+  {
+   vec[v].push_back(vec[v*2][ps1]);++ps1;
+  }
+  else if (vec[v*2][ps1]<vec[v*2+1][ps2])
+  {
+   vec[v].push_back(vec[v*2][ps1]);++ps1;
+  }
+  else
+  {
+   vec[v].push_back(vec[v*2+1][ps2]);++ps2;
+  }
+ }
+ long long ts=0;
+ for (int i=0;i<vec[v].size();i++)
+ {
+  ts+=vec[v][i];
+  ps[v].push_back(ts);
+ }
+}
+
+pair<long, long long> get(long v,long long lim)
+{
+ if (vec[v][0]>lim)
+  return make_pair(0,0);
+ if (vec[v][vec[v].size()-1]<=lim)
+  return make_pair(vec[v].size(),ps[v].back());
+  
+ long l,r;
+ l=0;
+ r=vec[v].size()-1;
+ while (l<r)
+ {
+  long mid=l+r+1;
+  mid/=2;
+  if (vec[v][mid]<=lim)l=mid;
+  else r=mid-1;
+ }
+// cout<<v<<"   "<<lim<<" "<<l+1<<" "<<ps[v][l]<<endl;
+ 
+ return make_pair(l+1,ps[v][l]);
+}
+
+pair<long, long long> solve(int v,int tl,int tr,int l,int r,long long lim)
+{
+/* cout<<v<<" "<<tl<<" "<<tr<<" "<<l<<" "<<r<<" "<<lim<<endl;
+ 
+ for (int i=0;i<vec[v].size();i++)
+  {
+   cout<<vec[v][i]<<" ^ ";
+  }
+  cout<<endl;
+  */
+// cin.get();
+ if (l>r)return make_pair(0,0);
+ if (tl==l&&tr==r)
+ {
+  return get(v,lim);
+ }
+ int tm=tl+tr;
+ tm/=2;
+ pair<int, long> p1,p2;
+ p1=solve(v*2,tl,tm,l,min(r,tm),lim);
+ p2=solve(v*2+1,tm+1,tr,max(l,tm+1),r,lim);
+ p1.first+=p2.first;
+ p1.second+=p2.second;
+ return p1;
+}
+
+vector<long> vals;
+
+int main(){
+//freopen("lattice.in","r",stdin);
+//freopen("lattice.out","w",stdout);
+//freopen("C:/input.txt","r",stdin);
+//freopen("C:/output.txt","w",stdout);
+ios_base::sync_with_stdio(0);
+//cin.tie(0);
+
+//cin>>tests;
+scanf("%lld",&tests);
+for (;tests;--tests)
+{
+// cin>>n>>k;
+ scanf("%lld%lld",&n,&k);
+ for (int i=0;i<n;i++)
+ {
+     long tt;
+     scanf("%lld",&tt);
+  a[i]=tt-k*i;
+  sum[i]=a[i];
+  if (i)sum[i]+=sum[i-1];
+ }
+ 
+ vals.clear();
+ for (int i=0;i<n;i++)
+  vals.push_back(a[i]);
+ sort(vals.begin(),vals.end());
+ 
+ build(1,0,n-1);
+ /*
+ for (int i=0;i<vec[1].size();i++)
+  {
+   cout<<vec[1][i]<<" ^ ";
+  }
+  cout<<endl;
+  */
+ long qq;
+ scanf("%lld",&qq);
+// cin>>qq;
+ 
+ for (;qq;--qq)
+ {
+//  cin>>l>>r;
+  scanf("%lld%lld",&l,&r);
+  --l;
+  --r;
+  L=0;
+  R=vals.size()-1;
+  while (L<R)
+  {
+   mid=L+R;
+   mid/=2;
+   tp=solve(1,0,n-1,l,r,vals[mid]);
+   if (tp.first<=(r-l+1)/2)L=mid+1;
+   else R=mid;
+  /// cout<<L<<" "<<R<<" "<<mid<<" "<<tp.first<<" "<<tp.second<<endl;
+  }   
+  
+  L=vals[L];
+  tp=solve(1,0,n-1,l,r,L);
+  //cout<<L<<"^"<<tp.first<<" "<<tp.second<<endl;
+  ts=sum[r];
+  if (l)ts-=sum[l-1];
+  
+  ans=(L)*tp.first-tp.second;// inc
+  ans+=(ts-tp.second)-(L)*(r-l+1-tp.first);//dec
+  printf("%lld\n",ans);
+ }
+}
+
+cin.get();cin.get();
+return 0;}

@@ -1,0 +1,61 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define in(x) scanf("%d", &x)
+#define out(x) printf("%d", x)
+#define pn printf("\n")
+int arr[100100], bit[2][100100];
+int n;
+struct node{
+	int val, i;	
+};
+node a[101000];
+
+bool compare(node a, node b){
+	return a.val < b.val;
+}
+
+void update(int index, int x, int val){
+	while(x <= n){
+		bit[index][x]=max(bit[index][x], val);
+		x+=(x&(-x));
+	}
+}
+
+int query(int  index, int x){
+	int ret = 0;
+	while(x){
+		ret = max(ret, bit[index][x]);
+		x-=(x&(-x));
+	}
+	return ret;
+}
+
+int main(){
+	int t;in(t);
+	while(t--){
+		in(n);
+		for(int i=0; i<n; i++){
+			bit[0][i]=bit[1][i]=0;
+			in(a[i].val);
+			a[i].i=i;
+		}
+		bit[0][n]=bit[1][n]=0;
+		sort(a, a+n, compare);
+		int cnt = 1;
+		arr[a[0].i]=cnt;
+		for(int i=1; i<n; i++){
+			if(a[i].val != a[i-1].val)cnt++;
+			arr[a[i].i]=cnt;
+		}
+		int ans=0;
+		for(int i=0; i<n; i++){
+			int val1 = query(0, arr[i]);
+			int val2 = query(1, n-arr[i]+1);
+			ans = max(ans, max(val1+1, val2+1));
+			update(0, arr[i], val2+1);
+			update(1, n-arr[i]+1, val1+1);
+		}
+		out(ans);pn;
+	}
+	return 0;
+}

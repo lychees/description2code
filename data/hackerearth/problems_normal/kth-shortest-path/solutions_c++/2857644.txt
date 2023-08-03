@@ -1,0 +1,90 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+#define INF 2000
+#define pb push_back
+int A[105][105];
+vector<int> dp[105][105];
+int main()
+{
+	int t;
+	int m,n,q,a,b,k;
+	cin>>t;
+	
+	while(t--)
+	{
+		cin>>m>>n;
+		for(int i=0;i<m;i++)
+			for(int j=0;j<n;j++)
+			{
+				string s;
+				cin>>s;
+				if(s[0]=='#')
+					A[i][j]=INF;
+				else
+					A[i][j]=stoi(s);
+			}
+		for(int i=0;i<m;i++)
+			for(int j=0;j<n;j++)
+				dp[i][j].clear();	
+		dp[0][0].pb(A[0][0]);
+	
+		for(int i=1;i<n;i++)
+			if(A[0][i]!=INF&&dp[0][i-1].size()>0)
+				dp[0][i].pb(dp[0][i-1][0]+A[0][i]);
+		for(int i=1;i<m;i++)
+			if(A[i][0]!=INF&&dp[i-1][0].size()>0)
+				dp[i][0].pb(dp[i-1][0][0]+A[i][0]);	
+		for(int i=1;i<m;i++)
+			for(int j=1;j<n;j++)
+			{
+				if(A[i][j]!=INF)
+				{
+					int s1=dp[i-1][j].size();
+					int s2=dp[i][j-1].size();
+					int idx1=0;
+					int idx2=0;
+					int c=0;
+					while((idx1<s1||idx2<s2)&&(c<=101))
+					{
+						if(idx2==s2)
+						{
+							dp[i][j].pb(dp[i-1][j][idx1]+A[i][j]);
+							idx1++;
+						}
+						else if(idx1==s1)
+						{
+							dp[i][j].pb(dp[i][j-1][idx2]+A[i][j]);
+							idx2++;
+						}
+						else
+						{
+							if(dp[i][j-1][idx2]>dp[i-1][j][idx1])
+							{
+								dp[i][j].pb(dp[i-1][j][idx1]+A[i][j]);
+								idx1++;
+							}
+							else
+							{
+								dp[i][j].pb(dp[i][j-1][idx2]+A[i][j]);
+								idx2++;
+							}
+						}
+						c++;
+					}
+				}
+			}
+		cin>>q;
+		while(q--)
+		{
+			cin>>a>>b>>k;
+			if(A[a][b]==INF)
+				cout<<"Obstacle\n";
+			else if(dp[a][b].size()<k)
+				cout<<"Not so many paths\n";
+			else cout<<dp[a][b][k-1]<<"\n"; 
+		}
+	}
+	
+}
+

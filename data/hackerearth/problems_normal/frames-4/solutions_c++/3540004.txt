@@ -1,0 +1,120 @@
+#include<iostream>
+#include<vector>
+using namespace std;
+
+int f[20000];
+char q;
+int a[2021][2021];
+int l[2021][2021];
+int r[2021][2021];
+int d[2021][2021];
+int u[2021][2021];
+int n,m;
+vector<int> v[2021][2021];
+
+void up(int x,int y)
+{
+    while(x<=5001)
+    {
+        f[x]+=y;
+        x=(x|(x+1));
+    }
+}
+
+int get(int x)
+{
+    int res=0;
+    while(x>0)
+    {
+        res+=f[x];
+        x=(x&(x+1))-1;
+    }
+    return res;
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cin>>n>>m;
+    for(int i=1;i<=n;i++)
+        for(int j=1;j<=m;j++)
+        {
+            cin>>q;
+            if(q=='0')
+            {
+                a[i][j]=1;
+                u[i][j]=1+u[i-1][j];
+                l[i][j]=1+l[i][j-1];
+            }
+        }
+    for(int i=n;i>0;i--)
+        for(int j=m;j>0;j--)
+            if(a[i][j])
+            {
+                d[i][j]=1+d[i+1][j];
+                r[i][j]=1+r[i][j+1];
+            }
+    long long ans=0;
+    for(int i=1;i<=n;i++)
+    {
+        for(int j=0;j<=10000;j++)
+            f[j]=0;
+        int x=i;
+        int y=1;
+        int base=5000;
+        for(int cur_base=base;;cur_base--)
+        {
+            if(x>n || y>m)
+                break;
+            for(int j=0;j<v[x][y].size();j++)
+                up(v[x][y][j],-1);
+            if(a[x][y]==0)
+            {
+                x++;
+                y++;
+                continue;
+            }
+            int current_max=min(u[x][y],l[x][y]);
+            ans+=1+get(cur_base+current_max-1);
+            up(cur_base,1);
+            int current_down_max=min(d[x][y],r[x][y]);
+            int xx=x+current_down_max;
+            int yy=y+current_down_max;
+            v[xx][yy].push_back(cur_base);
+            x++;
+            y++;
+        }
+    }
+    for(int j=2;j<=m;j++)
+    {
+        for(int i=0;i<=10000;i++)
+            f[i]=0;
+        int x=1;
+        int y=j;
+        int base=5000;
+        for(int cur_base=base;;cur_base--)
+        {
+            if(x>n || y>m)
+                break;
+            for(int j=0;j<v[x][y].size();j++)
+                up(v[x][y][j],-1);
+            if(a[x][y]==0)
+            {
+                x++;
+                y++;
+                continue;
+            }
+            int current_max=min(u[x][y],l[x][y]);
+            ans+=1+get(cur_base+current_max-1);
+            up(cur_base,1);
+            int current_down_max=min(d[x][y],r[x][y]);
+            int xx=x+current_down_max;
+            int yy=y+current_down_max;
+            v[xx][yy].push_back(cur_base);
+            x++;
+            y++;
+        }
+    }
+    cout<<ans<<"\n";
+}

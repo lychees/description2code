@@ -1,0 +1,115 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define fi first
+#define se second
+#define pb push_back
+#define mp make_pair
+
+
+typedef long long ll;
+typedef double dbl;
+typedef vector<int> vi;
+typedef pair<int, int> pi;
+
+class graphal
+{
+  public:
+    int n;
+    vector <int> * ed;
+    graphal(int n){
+      this->n=n;
+      ed = new vector<int>[n];
+    }
+    ~graphal(){ delete[] ed; }
+    void add(int a, int b){ ed[a].pb(b);ed[b].pb(a); }
+};
+class lca {
+  const graphal *g;
+  static const int L=21;
+  int n, timer;
+  int *tin, *tout, **up, *h;
+  public:
+    lca(const graphal &g, const int &n){
+      this->g=&g;
+      this->n=n;
+      tin=new int[n]();
+      tout=new int[n]();
+      h=new int[n]();
+      up=new int*[n];
+      for(int i=0;i<n;i++)up[i]=new int[L]();
+      timer=0;
+    }
+    ~lca(){
+      delete[] tin;
+      delete[] tout;
+      delete[] h;
+      for(int i=0;i<n;i++)delete[] up[i];
+      delete[] up;
+    }
+    void dfs(int v=0, int p=0){
+      tin[v]=timer++;
+      up[v][0]=p;
+      for(int i=1;i<L;i++)up[v][i]=up[up[v][i-1]][i-1];
+      for(int to:g->ed[v]){
+        if(to==p)continue;
+        h[to]=h[v]+1;
+        dfs(to,v);
+      }
+      tout[v]=timer++;
+    }
+    bool isa(int a, int b){ return (tin[a]<=tin[b] && tout[a]>=tout[b]); }
+    int getlca(int a, int b){
+      if(isa(a,b))return a;
+      if(isa(b,a))return b;
+      for(int i=L-1;i>=0;i--){
+        if(!isa(up[a][i],b))a=up[a][i];
+      }
+      return up[a][0];
+    }
+    int dist(int a, int b){ return h[a]+h[b]-2*h[getlca(a,b)]; }
+};
+int main() {
+  int n,m,a,b,t;
+  vi *c;
+  scanf("%d %d", &n,&m);
+  c=new vi[m]();
+  graphal g(n);
+  for(auto i=0;i<n;i++){
+    scanf("%d",&a);
+    a--;
+    c[a].pb(i);
+  }
+  for(auto i=0;i<n-1;i++){
+    scanf("%d %d",&a,&b);
+    a--,b--;
+    g.add(a,b);
+  }
+  lca la(g,n);
+  la.dfs();
+  for(auto i=0;i<m;i++){
+    if(c[i].size()==1){
+      printf("0 ");
+      continue;
+    }
+    b=-1;
+    for(auto j:c[i]){
+      t=la.dist(c[i][0],j);
+      if(t>b){
+        b=t;
+        a=j;
+      }
+    }
+    b=-1;
+    for(auto j:c[i]){
+      t=la.dist(a,j);
+      if(t>b){
+        b=t;
+      }
+    }
+    printf("%d ",b);
+  }
+  printf("\n");
+  return 0;
+}

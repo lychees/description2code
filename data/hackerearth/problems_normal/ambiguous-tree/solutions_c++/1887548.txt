@@ -1,0 +1,104 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int uli;
+
+const int mx=1e5+10;
+const int mxl=20;
+vector<int>g[mx];
+bool vis[mx];
+int f[mxl][mx];
+int lyr[mx];
+uli sz[mx];
+uli h[mx];
+
+void dfs(int u){
+   vis[u]=true;
+   sz[u]=1;
+   for(int i=0;i<int(g[u].size());i++){
+      int v=g[u][i];
+      if(!vis[v]){
+         f[0][v]=u;
+         lyr[v]=1+lyr[u];        
+         dfs(v);
+         sz[u]+=sz[v];
+      }
+   }  
+}
+void dp(int u){
+   int pu=f[0][u];
+   uli v=(sz[pu]-sz[u]);
+   h[u]=h[pu]+v*(v-1);
+   vis[u]=true;
+   for(int i=0;i<int(g[u].size());i++){
+      int v=g[u][i];
+      if(!vis[v]){
+         dp(v);
+      }
+   }
+}
+int bfu,bfv;
+int lca(int u,int v){
+   for(int l=mxl-1;l>=0;l--)
+      if(lyr[u]<=lyr[f[l][v]]-1)
+         v=f[l][v];
+   if(lyr[u]!=lyr[v]){
+      bfv=v;
+      v=f[0][v];
+   }
+   if(u==v)return u;
+   for(int l=mxl-1;l>=0;l--)
+      if(f[l][u]!=f[l][v])
+         u=f[l][u],v=f[l][v];
+   bfu=u,bfv=v;
+   return f[0][u];
+}
+int main(){
+//   freopen("data5.in","r",stdin);
+//   freopen("data5.out","w",stdout);
+   int n,u,v,q;
+   scanf("%d",&n);
+   for(int i=0;i<n-1;i++){
+      scanf("%d %d",&u,&v);
+      u--,v--;
+      g[u].push_back(v);
+      g[v].push_back(u);
+   }
+   memset(vis,false,sizeof vis);
+   f[0][0]=0;
+   lyr[0]=0;
+   dfs(0);
+   memset(vis,false,sizeof vis);
+   dp(0);
+
+   for(int l=1;l<mxl;l++)
+      for(int i=0;i<n;i++)
+         f[l][i]=f[l-1][f[l-1][i]];
+   scanf("%d",&q);
+
+   while(q--){
+      scanf("%d %d",&u,&v);      
+      if(u==v){
+         puts("0");
+         continue;
+      }
+      uli ans=0;
+      u--,v--;
+      if(lyr[u]>lyr[v])swap(u,v);
+      int x=lca(u,v);
+      if(x==u){
+         ans=sz[v]*(sz[v]-1)+h[v]-h[bfv];         
+         ans+=(uli(n)-sz[bfv])*(uli(n)-sz[bfv]-1);
+      }
+      else{
+         uli lft=sz[u]*(sz[u]-1)+h[u]-h[bfu];         
+         uli rht=sz[v]*(sz[v]-1)+h[v]-h[bfv];         
+         uli rem=(uli(n)-sz[bfu]-sz[bfv]);
+         rem=rem*(rem-1);
+         ans=lft+rht+rem;
+      }
+      ans=uli(n)*uli(n-1)-ans;     
+      ans>>=1;
+      printf("%lld\n",ans);
+   }
+   return 0;
+}

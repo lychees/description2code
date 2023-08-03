@@ -1,0 +1,97 @@
+#include<iostream>
+#define ull unsigned long long
+ 
+bool Possible(ull data[],ull n,ull m, ull leastTimeRequired) //CHECKS IF IT IS POSSIBLE TO SOLVE ALL PROBLEMS IN  'leastTimeRequired' TIME
+{
+	ull GroupSize=0,NumGroups=1;
+	ull i=0; //iterator
+	ull smallestRequired=1e18; //smallest diff required to decrease num groups
+	ull check;
+	while(1)
+	{
+		//if groupsize is less than or equal to LeastTimeRequired after adding latest item
+	if (GroupSize+data[i]<=leastTimeRequired)
+		{
+		//add the Current item into Group
+		GroupSize+=data[i];
+		//move the iterator
+		i+=1;
+		}
+	//else if there isn't any space for item
+	else
+	{
+		check=((GroupSize+data[i])-leastTimeRequired);
+		if(check<smallestRequired)
+		smallestRequired=check;
+		//Empty Group
+		GroupSize=0;
+		//Count The Next Group
+		NumGroups+=1;
+	}
+ 
+	//if Number of groups exceed the time limit
+	if ((NumGroups>m))
+	{	
+		//if leastTimeRequired isn't really the least amount of time required
+		return 0;
+	}
+	// else if last element has been added and numgroups <= m
+	else if ((NumGroups<=m) & (i==n))			//if the least time is satisfactory
+		return 1;
+	}	
+}
+ 
+int main()
+{
+	ull n,m;
+	std::cin>>n>>m;
+	ull data[100000],sum=0,largest=0;
+ 
+	for(int i=0;i<n;i++)	
+	{
+	std::cin>>data[i];		//read data
+	sum+=data[i];			//generate sum of all elements
+	largest=data[i]>largest?data[i]:largest;	//get the largest element
+	}
+ 
+	ull leastTimeRequired=sum/m;	//get the least amount of time required to solve the problems (this isn't exactly the answer but the lower bound)
+	leastTimeRequired=largest>leastTimeRequired?largest:leastTimeRequired;	//if largest value is greater than leastTime required then leastTimeRequired=largest
+	ull mostTimeRequired=leastTimeRequired*2;
+ 
+ 
+	while(!Possible(data, n, m, mostTimeRequired)) // Work your way up to get the upper bound!
+	{
+		mostTimeRequired*=2;
+	}
+ 
+	ull lastMostRequired=mostTimeRequired; //store it ( because higher bound can go up and we don't want that ) [refer to line 76]
+ 
+	while(true)
+	{
+		bool LL=Possible(data, n, m, leastTimeRequired);
+		bool LH=Possible(data, n, m, mostTimeRequired);
+		if (!LH)	// If HIGH bound (mostTimeRequired) isn't sufficient 
+		{
+			leastTimeRequired=mostTimeRequired; // update lower bound to high bound (obvious)
+			mostTimeRequired=lastMostRequired;  // helps in reducing iterations ( don't know how? check line 67)
+		}
+		else if(!LL&LH)		//if lower bound isn't sufficient, but High bound is...
+		{
+			lastMostRequired=mostTimeRequired; // store the high bound because its currently the least
+			if(mostTimeRequired-leastTimeRequired==1) // IF (BINGO)
+			{
+			std::cout<<mostTimeRequired;	//Print it and exit loop
+			break;
+			}
+			mostTimeRequired=(leastTimeRequired+mostTimeRequired)/2; // Update higher bound
+		}
+		else if(LL) // If lower bound has become sufficient
+		{
+		if(!Possible(data, n, m, leastTimeRequired-1)) // check if its what we need
+			{
+			std::cout<<leastTimeRequired; //JACKPOT!
+			break; //exit the loop
+			}
+		}		
+	}
+}

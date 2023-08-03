@@ -1,0 +1,113 @@
+#include <iostream>
+#include <stdio.h>
+#include <string.h>
+#include <map>
+#include <set>
+#include <vector>
+#include <string>
+#include <algorithm>
+
+#define MOD 1000000007
+#define SWAP(a,b) {a=(a)^(b);b = (a)^(b);a= (a)^(b);}
+
+using namespace std;
+inline long long minOf(long long x, long long y){return (x<y?x:y);}
+inline long long maxOf(long long x, long long y){return (x>y?x:y);}
+inline long long mabs(long long x){return (x<0?-x:x);}
+
+typedef pair<long long, long long> Pair;
+
+Pair bikes[270], bikers[270];
+
+vector< pair<long long, Pair> > edges;
+
+bool comp(pair<long long, Pair> i, pair<long long, Pair> j){
+	return i.first < j.first;
+}
+
+
+typedef vector<int> VI;
+typedef vector<VI> VVI;
+
+bool w[260][260];
+
+bool FindMatch(int i, VI &mr, VI &mc, VI &seen, int n, int m) {
+	for (int j = 0; j < m; j++) {
+		if (w[i][j] && !seen[j]) {
+			seen[j] = true;
+			if (mc[j] < 0 || FindMatch(mc[j], mr, mc, seen, n, m)) {
+				mr[i] = j;
+				mc[j] = i;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+int BipartiteMatching(VI &mr, VI &mc, int n, int m) {
+	mr = VI(n, -1);
+	mc = VI(m, -1);
+
+	int ct = 0;
+	for (int i = 0; i < n; i++) {
+		VI seen(m);
+		if (FindMatch(i, mr, mc, seen,n,m)) ct++;
+	}
+	return ct;
+}
+
+long long dmat[270][270];
+bool isValid(long long idx, int n, int m, int k){
+
+	for(int i = 0;i<n;i++){
+		for(int j = 0;j<m;j++){
+			if(dmat[i][j] <= idx)
+				w[i][j] = true;
+			else
+				w[i][j] = false;
+		}
+	}
+	VI mr,mc;
+	int ret = BipartiteMatching(mr, mc, n, m);
+	if(ret >= k)
+		return true;
+	return false;
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	long long n,m,k,dist;
+	cin >> n >> m >> k;
+	for(int i = 0;i<n;i++)
+		cin >> bikers[i].first >> bikers[i].second;
+	for(int i = 0;i<m;i++)
+		cin >> bikes[i].first >> bikes[i].second;
+	long long x,y;
+	for(int i = 0; i< n;i++){
+		for(int j = 0;j<m;j++){
+			x = (long long)(bikers[i].first-bikes[j].first);
+			y = (long long)(bikers[i].second-bikes[j].second);
+			x = x*x;
+			y = y*y;
+			dist =  x+y;
+			edges.push_back( pair<long long, Pair> (dist, Pair(i,j)));
+			dmat[i][j] = dist;
+		}
+	}
+	sort(edges.begin(), edges.end(), comp);
+	long long ans=0;
+	long long lo = 0LL, hi = edges.size()-1,mid;
+	while(lo < hi){
+		mid = (lo+hi)/2;
+		if(isValid(edges[mid].first,(int)n,(int)m,(int)k)){
+			ans = edges[mid].first;
+			hi =mid;
+		}
+		else
+			lo = mid+1;
+	}
+	cout << ans << endl;
+	return 0;
+}

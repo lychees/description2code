@@ -1,0 +1,89 @@
+#include <iostream>
+#include <stdio.h>
+#include <string>
+#include <vector>
+#include <complex>
+#include <algorithm>
+#include <math.h>
+using namespace std;
+
+#define fore(i, l, r) for(int i = l; i < r; i++)
+#define forn(i, n) fore(i, 0, n)
+#define pb push_back
+#define mp make_pair
+#define x first
+#define y second
+
+typedef complex<double> cd;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef long long ll;
+
+const int L = 500005;
+cd A[L], B[L], Y[L];
+
+cd twidleFactor(double theta){
+  return cd(cos(theta), sin(theta));
+}
+
+void fft(cd *A, cd *Y, int n, int k, int dir){
+  if (n == 1) {
+    Y[0] = A[0];
+  }
+  else {
+    cd w = 1, wn = twidleFactor(dir * 2.0 * M_PI / n);
+    n >>= 1;
+    fft(A, Y, n, k << 1, dir);
+    fft(A + k, Y + n, n, k << 1, dir);
+    forn(i, n){
+      cd t = w * Y[i + n];
+      Y[i + n] = Y[i] - t;
+      Y[i] = Y[i] + t;
+      w *= wn;
+    }
+  }
+}
+
+int main(){
+  int n;
+  scanf("%d", &n);
+  int arr[n];
+  forn(i, n) scanf("%d", &arr[i]);
+  int N = (1 << 18);
+  int rep[N];
+  forn(i, N){
+    B[i] = A[i] = cd(0, 0);
+    rep[i] = 0;
+  }
+  forn(i, n){
+    A[arr[i]] = cd(1, 0);
+    rep[arr[i]]++;
+    B[100000 - arr[i]] = cd(1, 0);
+  }
+  
+  int ind = 0;
+  forn(i, N) 
+    if (rep[i] > 1) {
+      ind = 1;
+      break;
+    }
+  
+  fft(A, Y, N, 1, 1);
+  forn(i, N){
+    A[i] = Y[i];
+  }
+  fft(B, Y, N, 1, 1);
+  forn(i, N){
+    A[i] *= Y[i];
+  }
+  
+  fft(A, Y, N, 1, -1);
+  ll count = 0;
+  forn(i, N){
+    int temp = (ll)(real(Y[i])/(N*1.0) + 0.5);
+    if (temp != 0) count++;
+  }
+  count = count >> 1;
+  count += ind;
+  printf("%lld\n", count);
+}

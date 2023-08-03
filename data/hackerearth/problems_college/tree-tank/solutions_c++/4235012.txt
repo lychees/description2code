@@ -1,0 +1,139 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int N;
+long long K;
+
+queue<int> Q;
+vector<int> X[100005];
+int edge[100005][3], visit[100005], sizex[100005];
+
+int getSize(int i, int par)
+{
+	int ans = 1;
+	
+	for(int j=0; j<X[i].size(); j++)
+		if(X[i][j]!=par)
+			ans += getSize(X[i][j], i);
+	
+	return sizex[i] = ans;
+}
+
+pair<int, int> searchCentroid(int i, int par, int target)
+{
+	pair<int, int> x = make_pair(1000003, 0);
+	
+	if(sizex[i]>=target)
+		x = make_pair(sizex[i], i);
+	
+	for(int j=0; j<X[i].size(); j++)
+		if(X[i][j]!=par)
+		{
+			pair<int, int> y = searchCentroid(X[i][j], i, target);
+			
+			if(y.first<x.first)
+				x = y;
+		}
+	
+	return x;
+}
+
+int get_centroid(int i)
+{
+	sizex[i] = getSize(i, -1);
+	pair<int, int> centroid = searchCentroid(i, -1, (sizex[i]+1)/2);
+	
+	return centroid.second;
+}
+
+long long get_sum(int i)
+{
+	int lvl = 0;
+	long long ans = 0;
+	Q.push(i);
+	
+	while(!Q.empty())
+	{
+		int k = Q.size();
+		
+		for(int j=0; j<k; j++)
+		{
+			int x = Q.front();
+			Q.pop();
+			
+			if(visit[x])
+				continue;
+			
+			visit[x] = 1;
+			ans += lvl;
+			
+			for(int k=0; k<X[x].size(); k++)
+				if(!visit[X[x][k]])
+					Q.push(X[x][k]);
+		}
+		
+		lvl++;
+	}
+	
+	return ans;
+}
+
+int func(int lim)
+{
+	for(int i=1; i<=N; i++)
+		X[i].clear();
+	
+	for(int i=1; i<N; i++)
+		if(edge[i][2]<=lim)
+		{
+			X[edge[i][0]].push_back(edge[i][1]);
+			X[edge[i][1]].push_back(edge[i][0]);
+		}
+	
+	long long ans = 0;
+	memset(visit, 0, sizeof(visit));
+	
+	for(int i=1; i<=N; i++)
+	{
+		if(!visit[i])
+		{
+			int centroid = get_centroid(i);
+			ans += get_sum(centroid);
+		}
+	}
+	
+	if(ans>K)
+		return 0;
+	
+	return 1;
+}
+
+int solve(int left, int right)
+{
+	int mid = (left+right)/2;
+	
+	if(!func(mid))
+		return solve(left, mid-1);
+	
+	if((mid+right)/2==mid)
+	{
+		if(func(right))
+			return right;
+		
+		return mid;
+	}
+	
+	return solve(mid, right);
+}
+
+int main()
+{
+    scanf("%d %lld", &N, &K);
+    
+    for(int i=1; i<N; i++)
+    	scanf("%d %d %d", &edge[i][0], &edge[i][1], &edge[i][2]);
+    
+    printf("%d\n", solve(0, 1000000000));
+    
+    return 0;
+}

@@ -1,0 +1,139 @@
+#include<iostream>
+#include<cstdio>
+#include<algorithm>
+#include<vector>
+#include<set>
+#include<map>
+#include<string>
+#include<string.h>
+#include<cstring>
+#include<stack>
+#include<queue>
+#include<cassert>
+#include<cmath>
+#include<sstream>
+
+using namespace std;
+
+#define LL long long int 
+#define PII pair<short int,short int> 
+#define PB push_back
+#define MP make_pair
+#define INF 1000000000
+int a[100];
+char s[1000];
+int len;
+short int vis[(1<<11)][1000];
+char remdig[(1<<11)][1000];
+PII prevcomp[(1<<11)][1000];
+int cid = 5;
+string bfs(int req,int mult){
+    cid ++;
+    queue<pair<int,int> > q;
+    int i,cmod,nmod,cdig,ndig,fl;
+    string ret = "";
+    for(i=1;i<=9;i++){
+        if ( (req & (1<<i)) == 0 ) continue;
+        cmod = i%mult;
+        cdig = (req&(~(1<<i)));
+        if(vis[cmod][cdig] == cid) continue;
+        q.push(MP(cmod,cdig));
+        vis[cmod][cdig] = cid;
+        remdig[cmod][cdig] = i;
+        prevcomp[cmod][cdig] = MP(-1,-1);
+        if(req == (1<<i) && i%mult == 0){
+            ret += (char)(i+'0');
+            return ret;
+        }
+    }
+    fl=0;
+    while(!q.empty()){
+       cmod = q.front().first;
+       cdig = q.front().second;
+       q.pop();
+       for(i=0;i<=9;i++){
+            if ( (req & (1<<i)) == 0 ) continue;
+            nmod = (cmod*10 + i) % mult;
+            ndig = (cdig & (~(1<<i)));
+            if(vis[nmod][ndig] != cid){
+                q.push(MP(nmod,ndig));
+                remdig[nmod][ndig] = i;
+                prevcomp[nmod][ndig] = MP(cmod,cdig);
+                vis[nmod][ndig] = cid;
+                if(ndig == 0 && nmod ==0 ){
+                    fl=1;
+                    break;
+                }
+            }
+       }
+       if(fl)
+           break;
+    }
+    if(fl==0)
+        return "Impossible";
+    cmod = nmod;
+    cdig = ndig;
+    PII nxt;
+    while( cmod != -1 ){
+       ret += (char) ('0' + remdig[cmod][cdig]);
+       nxt = prevcomp[cmod][cdig];
+       cmod = nxt.first;
+       cdig = nxt.second;
+    }
+    reverse(ret.begin(),ret.end());
+    return ret;
+}
+string divd(string &a,int b){
+    int car = 0;
+    int st = 0;
+    string ans="";
+    int i;
+    for(i=0;i<a.size();i++){
+        car *= 10;
+        car += (a[i]-'0');
+        if ( car >= b ){
+            ans += (char) (car/b +'0');
+            car %= b;
+            st = 1;
+        }
+        else if ( st == 1 )
+            ans += "0";
+    }
+    return ans;
+}
+int main(){
+    int x,t,len,num,req,i;
+    scanf("%d",&t);
+    LL retn;
+    string ret;
+    vector<int> digs;
+    while(t--){
+        scanf(" %[^\n]",s);
+        stringstream ss(s);
+        len=0;
+        req=0;
+        digs.clear();
+        while((ss>>x)){
+            if((req&(1<<x))==0)
+                digs.PB(x);
+            req |= (1<<x);
+        }
+        sort(digs.begin(),digs.end());
+        scanf("%d",&num);
+        if ( num == 0 ){
+            printf("0 = 0 * ");
+            for(i=0;i<digs.size();i++)
+                printf("%d",digs[i]);
+            printf("\n");
+            continue;
+        }
+        ret = bfs(req,num);
+        if(ret == "Impossible"){
+            cout<<ret<<endl;
+            continue;
+        }
+        printf("%s = %d * %s\n",ret.c_str(),num,divd(ret,num).c_str());
+    }
+
+	return 0;
+}

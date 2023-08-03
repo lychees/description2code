@@ -1,0 +1,169 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define REPU(i, a, b) for (int i = (a); i < (b); ++i)
+#define REPD(i, a, b) for (int i = (a); i > (b); --i)
+#define MEM(a, x) memset(a, x, sizeof(a))
+#define ALL(a) a.begin(), a.end()
+#define UNIQUE(a) a.erase(unique(ALL(a)), a.end())
+#define DEBUG(x) cout << #x << ":" << x << endl
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) { return (a < b) ? a : b; }
+template<class T> inline T tmax(T a, T b) { return (a > b) ? a : b; }
+template<class T> inline void amax(T &a, T b) { if (b > a) a = b; }
+template<class T> inline void amin(T &a, T b) { if (b < a) a = b; }
+template<class T> inline T tabs(T a) { return (a > 0) ? a : -a; }
+template<class T> T gcd(T a, T b) { while (b != 0) { T c = a; a = b; b = c % b; } return a; }
+
+const int N = 100005;
+int n, a[N];
+
+struct Node {
+    int lazy, lb, rb, cnt_lb, cnt_rb;
+	ll tot;
+	bool good;
+	Node() : lazy(0), lb(-1), rb(-1), cnt_lb(0), cnt_rb(0), tot(0), good(false) {}
+};
+
+struct SegmentTree {
+    vector<Node> seg;
+    
+    SegmentTree(int _n) {
+        int tn = 1;
+        while (tn <= _n) tn = tn << 1;
+        seg.resize(tn << 1);
+    }
+    
+    inline void lazy_evaluate(int ind, int len) {
+        if (seg[ind].lazy) {
+			seg[ind].good = true;
+			seg[ind].lb = seg[ind].rb = seg[ind].lazy;
+			seg[ind].cnt_lb = seg[ind].cnt_rb = len;
+			seg[ind].tot = 0;
+			if (len > 1) {
+            	int c1 = ind << 1, c2 = c1 | 1;
+            	seg[c1].lazy = seg[c2].lazy = seg[ind].lazy;
+        	}
+		}
+        seg[ind].lazy = 0;
+    }
+    
+    inline void update_node(Node &dst, const Node &src1, const Node &src2) {
+		if (src1.lb == -1) {
+			dst = src2; return;
+		}
+		if (src2.lb == -1) {
+			dst = src1; return;
+		}
+		dst.tot = dst.lazy = 0;
+		dst.good = false;
+		dst.lb = src1.lb, dst.rb = src2.rb;
+		dst.cnt_lb = src1.cnt_lb;
+		dst.cnt_rb = src2.cnt_rb;
+		if (src1.good && src2.good) {
+			if (src1.rb == src2.lb) {
+				dst.good = true;
+				dst.cnt_lb = dst.cnt_rb = src1.cnt_lb + src2.cnt_rb;
+			}
+		}
+		else if (src1.good && !src2.good) {
+			dst.tot = src2.tot;
+			if (src1.rb == src2.lb) dst.cnt_lb += src2.cnt_lb;
+			else dst.tot += src2.cnt_lb * 1LL * (src2.cnt_lb + 1) / 2;
+		}
+		else if (!src1.good && src2.good) {
+			dst.tot = src1.tot;
+			if (src1.rb == src2.lb) dst.cnt_rb += src1.cnt_rb;
+			else dst.tot += src1.cnt_rb * 1LL * (src1.cnt_rb + 1) / 2;
+		}
+		else {
+			dst.tot = src1.tot + src2.tot;
+			if (src1.rb == src2.lb) dst.tot += (src1.cnt_rb + src2.cnt_lb) * 1LL * (src1.cnt_rb + src2.cnt_lb + 1) / 2;
+			else dst.tot += (src1.cnt_rb * 1LL * (src1.cnt_rb + 1) + src2.cnt_lb * 1LL * (src2.cnt_lb + 1)) / 2;
+		}
+    }
+    
+    void build_tree(int ind, int s, int e) {
+        if (e - s == 1) {
+            seg[ind].lazy = 0; seg[ind].good = true;
+			seg[ind].lb = seg[ind].rb = a[s];
+			seg[ind].cnt_lb = seg[ind].cnt_rb = 1;
+			seg[ind].tot = 0;
+            return;
+        }
+        int c1 = ind << 1, c2 = c1 | 1, m = (s + e) >> 1;
+        build_tree(c1, s, m);
+        build_tree(c2, m, e);
+        update_node(seg[ind], seg[c1], seg[c2]);
+    }
+    
+    void update(int ind, int s, int e, int ss, int ee, int val) {
+		lazy_evaluate(ind, e - s);
+		if (s >= ee || e <= ss) return;
+        int c1 = ind << 1, c2 = c1 | 1, m = (s + e) >> 1;
+		if (s >= ss && e <= ee) {
+			seg[ind].good = true;
+			seg[ind].lb = seg[ind].rb = val;
+			seg[ind].cnt_lb = seg[ind].cnt_rb = e - s;
+			seg[ind].tot = seg[ind].lazy = 0;
+			if (e - s > 1) {
+				seg[c1].lazy = seg[c2].lazy = val;
+			}
+            return;
+        }
+        update(c1, s, m, ss, ee, val);
+		update(c2, m, e, ss, ee, val);
+        update_node(seg[ind], seg[c1], seg[c2]);
+    }
+    
+    Node query(int ind, int s, int e, int ss, int ee) {
+		lazy_evaluate(ind, e - s);
+		if (s >= ee || e <= ss) return Node();
+        if (s >= ss && e <= ee) return seg[ind];
+        int c1 = ind << 1, c2 = c1 | 1, m = (s + e) >> 1;
+		if (m >= ee) return query(c1, s, m, ss, ee);
+		else if (m <= ss) return query(c2, m, e, ss, ee);
+		else {
+			Node vl = query(c1, s, m, ss, ee);
+			Node vr = query(c2, m, e, ss, ee);
+			Node ret;
+			update_node(ret, vl, vr);
+			return ret;
+		}
+    }
+};
+
+int main(int argc, char *argv[]) {
+	ios_base::sync_with_stdio(false);
+	
+	int m, id, l, r, c;
+	ll ret;
+	
+	cin >> n >> m;
+	REPU(i, 0, n) cin >> a[i];
+	
+	SegmentTree st(n);
+	st.build_tree(1, 0, n);
+	
+	REPU(i, 0, m) {
+		cin >> id >> l >> r;
+		--l;
+		if (id == 0) {
+			cin >> c;
+			st.update(1, 0, n, l, r, c);
+		}
+		else {
+			Node node = st.query(1, 0, n, l, r);
+			if (node.good) ret = node.cnt_lb * 1LL * (node.cnt_lb + 1) / 2;
+			else {
+				ret = node.tot + (node.cnt_lb * 1LL * (node.cnt_lb + 1) + node.cnt_rb * 1LL * (node.cnt_rb + 1)) / 2;
+			}
+			printf("%lld\n", ret);
+		}
+	}
+	
+	return 0;
+}

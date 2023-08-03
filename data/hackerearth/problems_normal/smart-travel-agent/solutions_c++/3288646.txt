@@ -1,0 +1,90 @@
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+
+using namespace std;
+
+#define INF 200000000
+
+int N, R;
+int AdjMat[101][101];
+int parent[101][101];
+
+void FloydWarshall()
+{
+    for (int i = 1; i <= N; i++)
+    {
+        for (int j = 1; j <= N; j++)
+        {
+            parent[i][j] = i;
+        }
+    }
+
+    for (int k = 1; k <= N; k++)
+    {
+        for (int i = 1; i <= N; i++)
+        {
+            for (int j = 1; j <= N; j++)
+            {
+                if (AdjMat[i][j] < min(AdjMat[i][k], AdjMat[k][j]))
+                {
+                    AdjMat[i][j] = min(AdjMat[i][k], AdjMat[k][j]);
+                    parent[i][j] = parent[k][j];
+                }
+            }
+        }
+    }
+}
+
+void printPath(int i, int j)
+{
+    if (i != j)
+        printPath(i, parent[i][j]);
+
+    cout << j << " ";
+}
+
+int main()
+{
+    int src, dest, tourists;
+
+    cin >> N >> R;
+
+    for (int i = 1; i <= N; i++)
+    {
+        for (int j = 1; j <= N; j++)
+        {
+            if (i == j)
+                AdjMat[i][j] = 0;
+            else
+                AdjMat[i][j] = -INF;
+        }
+    }
+
+    for (int i = 0; i < R; i++)
+    {
+        int u, v, w;
+
+        cin >> u >> v >> w;
+
+        AdjMat[u][v] = w;
+        AdjMat[v][u] = w;
+    }
+
+    FloydWarshall();
+
+    cin >> src >> dest >> tourists;
+
+    int ans;
+
+    if (src == dest)
+        ans = 1;
+    else
+        ans = ceil((float)tourists / (AdjMat[src][dest] - 1));
+
+    printPath(src, dest);
+
+    cout << endl << ans;
+
+    return 0;
+}

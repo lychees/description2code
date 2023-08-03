@@ -1,0 +1,152 @@
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <map>
+#include <vector>
+#include <math.h>
+#include <algorithm>
+using namespace std;
+
+struct nod{
+	long long sm;
+	long long l;
+	long long r;
+	long long mx;
+};
+
+nod merge(nod a,nod b){
+	nod ret;
+	ret.sm=a.sm+b.sm;
+	ret.l=max(a.l,a.sm+b.l);
+	ret.r=max(b.r,b.sm+a.r);
+	ret.mx=max(max(a.mx,b.mx),a.r+b.l);
+	return ret;
+}
+int n;
+vector<int> adj[100100];
+int a,b;
+int lvl[100100];
+int pa[100100];
+int kh[20][100100];
+
+nod dp[20][100100];
+long long arr[100100];
+
+
+nod kth_dp(int nd,int k){
+	nod ret;
+	bool is=false;
+	int cnt=0;
+	while(k>0){
+		if(k%2){
+			if(!is){
+				is=true;
+				ret=dp[cnt][nd];
+			} else {
+				ret=merge(ret,dp[cnt][nd]);
+			}
+			nd=kh[cnt][nd];
+		}
+		k/=2;
+		cnt++;
+	}
+	return ret;
+}
+
+int kth(int nd,int k){
+	int cnt=0;
+	while(k>0){
+		if(k%2){
+			nd=kh[cnt][nd];
+		}
+		k/=2;
+		cnt++;
+	}
+	return nd;
+}
+int lca(int a,int b){
+	if(lvl[a]>lvl[b]){
+		swap(a,b);
+	}
+	b=kth(b,lvl[b]-lvl[a]);
+	if(a==b)return a;
+	for(int i=19;i>=0;i--){
+		if(kh[i][a]!=kh[i][b]){
+			a=kh[i][a];
+			b=kh[i][b];
+		}
+	}
+	return pa[a];
+}
+void dfs(int nd,int p,int l){
+	lvl[nd]=l;
+	pa[nd]=p;
+	for(int i=0;i<adj[nd].size();i++){
+		int ch=adj[nd][i];
+		if(ch==p)continue;
+		dfs(ch,nd,l+1);
+	}
+}
+int main(){
+	//cin>>n;
+	scanf("%d",&n);
+	for(int i=2;i<=n;i++){
+		//cin>>a>>b;
+		scanf("%d %d",&a,&b);
+		adj[a].push_back(b);
+		adj[b].push_back(a);
+	}
+	for(int i=1;i<=n;i++){
+		//cin>>arr[i];
+		scanf("%lld",&arr[i]);
+	}
+	dfs(1,1,1);
+	for(int i=1;i<=n;i++){
+		kh[0][i]=pa[i];
+	}
+	for(int j=1;j<20;j++){
+		for(int i=1;i<=n;i++){
+			kh[j][i]=kh[j-1][kh[j-1][i]];
+		}
+	}
+	for(int i=1;i<=n;i++){
+		dp[0][i].sm=arr[i];
+		dp[0][i].l=arr[i];
+		dp[0][i].r=arr[i];
+		dp[0][i].mx=arr[i];
+	}
+	for(int j=1;j<20;j++){
+		for(int i=1;i<=n;i++){
+			
+			int _a=i;
+			int _b=kh[j-1][i];
+			dp[j][i]=merge(dp[j-1][_a],dp[j-1][_b]);
+		}
+	}
+	int q;
+	//cin>>q;
+	scanf("%d",&q);
+	while(q--){
+		//cin>>a>>b;
+		scanf("%d %d",&a,&b);
+		int ll=lca(a,b);
+		if(a==ll){
+			nod t=kth_dp(b,lvl[b]-lvl[ll]+1);
+			//cout<<t.mx<<endl;
+			printf("%lld\n",t.mx);
+		} else if(b==ll){
+			nod t=kth_dp(a,lvl[a]-lvl[ll]+1);
+			//cout<<t.mx<<endl;
+			printf("%lld\n",t.mx);
+
+		} else {
+			nod t1,t2;
+			t1=kth_dp(a,lvl[a]-lvl[ll]+1);
+			t2=kth_dp(b,lvl[b]-lvl[ll]);
+			swap(t2.l,t2.r);
+			t1=merge(t1,t2);
+			//cout<<t1.mx<<endl;
+			printf("%lld\n",t1.mx);
+		}
+	}
+}

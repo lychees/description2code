@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+const int N = 100100;
+
+vector<pair<int, int>> G[N];
+ll K[N];
+ll sp[N];
+
+int n, m, s;
+
+void dijkstra() {
+    sp[s] = 0;
+    set<pair<ll, ll>> q;
+    q.insert({0, s});
+    while(!q.empty()) {
+        auto top = q.begin();
+        ll w = top->first;
+        ll v = top->second;
+        q.erase(top);
+        for(auto& p : G[v]) {
+            int u = p.first;
+            int e = p.second;
+            if(sp[u] == -1 || sp[u] > w + e) {
+                if(sp[u] != -1) {
+                    q.erase(q.find({sp[u], u}));
+                }
+                sp[u] = w+e;
+                q.insert({sp[u], u});
+            }
+        }
+    }
+}
+
+
+int main() {
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "r", stdin);
+#endif
+
+    cin >> n >> m >> s;
+    s--;
+    for(int i=0; i<n; ++i) {
+        scanf("%d", K+i);
+    }
+
+    for(int i=0; i<m; ++i) {
+        int u,v,w;
+        scanf("%d %d %d", &u, &v, &w);
+        u--, v--;
+        G[u].push_back({v, w});
+        G[v].push_back({u, w});
+    }
+
+    fill_n(sp, n, -1);
+
+    dijkstra();
+
+    ll sum1 = 0;
+    ll sumK = 0;
+    for(int i=0; i<n; ++i) {
+        if(sp[i]!=-1) {
+            sum1 += sp[i] * K[i];
+            sumK += K[i];
+        }
+    }
+
+    for(int i=0; i<n; ++i) {
+        if(sp[i] != -1) {
+            cout << sum1 - sp[i]*K[i] + (sumK-K[i])*sp[i] << " ";
+        }
+        else {
+            cout << 0 << " ";
+        }
+    }
+
+
+    return 0;
+}

@@ -1,0 +1,166 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+typedef long long ll;
+struct Edge {
+  ll fr, to, cost;
+
+  bool operator<(const Edge& e) const {
+    return cost > e.cost;
+  }
+};
+const ll MOD = ll(1e9) + 7;
+const ll INF = MOD;
+const ll MAX = 100008;
+const ll SQRT = 150;
+const ll LOG = 17;
+ll dsu[MAX], cnt[MAX];
+vector<pair<ll, ll>> adj[MAX];
+ll par[LOG][MAX], len[LOG][MAX], dep[MAX];
+
+ll findset(ll x) {
+  return dsu[x] < 0 ? x : dsu[x] = findset(dsu[x]);
+}
+
+void unite(ll a, ll b) {
+  a = findset(a);
+  b = findset(b);
+  if (a != b) {
+    if (dsu[a] < dsu[b]) {
+      dsu[b] = a;
+      cnt[a] += cnt[b];
+    } else {
+      if (dsu[a] == dsu[b]) {
+        --dsu[b];
+      }
+      dsu[a] = b;
+      cnt[b] += cnt[a];
+    }
+  }
+}
+
+ll get_len(ll a, ll b) {
+  if (dep[a] < dep[b]) {
+    swap(a, b);
+  }
+  ll res = INF;
+  for (ll i = LOG - 1; i >= 0; --i) {
+    if (dep[par[i][a]] >= dep[b]) {
+      res = min(res, len[i][a]);
+      a = par[i][a];
+    }
+  }
+  if (a == b) {
+    return res;
+  }
+  for (ll i = LOG - 1; i >= 0; --i) {
+    if (par[i][a] != par[i][b]) {
+      res = min(res, len[i][a]);
+      res = min(res, len[i][b]);
+      a = par[i][a];
+      b = par[i][b];
+    }
+  }
+  res = min(res, len[0][a]);
+  res = min(res, len[0][b]);
+  return res;
+}
+
+void dfs(ll at) {
+  for (const auto& e : adj[at]) {
+    if (e.first == par[0][at]) {
+      continue;
+    }
+    par[0][e.first] = at;
+    len[0][e.first] = e.second;
+    dep[e.first] = dep[at] + 1;
+    dfs(e.first);
+  }
+}
+
+void solve(ll test_num) {
+  (void) test_num;
+  ll N;
+  cin >> N;
+  vector<Edge> edges(N - 1);
+  for (ll e = 0, a, b, c; e < N - 1; ++e) {
+    cin >> a >> b >> c;
+    edges[e] = {a,b,c};
+    adj[a].push_back( { b, c });
+    adj[b].push_back( { a, c });
+  }
+  sort(edges.begin(), edges.end());
+  par[0][1] = 1;
+  len[0][1] = INF;
+  dep[1] = 0;
+  dfs(1);
+  for (ll j = 0; j + 1 < LOG; ++j) {
+    for (ll v = 1; v <= N; ++v) {
+      par[j + 1][v] = par[j][par[j][v]];
+      len[j + 1][v] = min(len[j][v], len[j][par[j][v]]);
+    }
+  }
+  ll Q;
+  cin >> Q;
+  for (ll qq = 0, size; qq < Q; ++qq) {
+    static ll nodes[MAX];
+    cin >> size;
+    for (ll i = 0; i < size; ++i) {
+      cin >> nodes[i];
+    }
+    ll res = 0;
+    if (size <= SQRT - 500) {
+      for (ll a = 0; a < size; ++a) {
+        for (ll b = a + 1; b < size; ++b) {
+          res += get_len(nodes[a], nodes[b]);
+        }
+      }
+    } else {
+      memset(dsu, -1, sizeof(dsu));
+      memset(cnt, 0, sizeof(cnt));
+      for (ll i = 0; i < size; ++i) {
+        cnt[nodes[i]] = 1;
+      }
+      for (const auto& e : edges) {
+        res += e.cost * cnt[findset(e.fr)] * cnt[findset(e.to)];
+        unite(e.fr, e.to);
+      }
+    }
+    cout << res << endl;
+  }
+}
+
+void solve() {
+#ifdef AZN
+//make_case();
+  double start_t = (double) clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr  );
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  ll T = 1;
+//  cin >> T;
+  for (ll t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << fixed << setprecision(3) << "Took: " << (((double) clock() - start_t) / CLOCKS_PER_SEC)
+      << endl;
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

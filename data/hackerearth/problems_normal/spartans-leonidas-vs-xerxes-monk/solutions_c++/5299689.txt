@@ -1,0 +1,130 @@
+#include <bits/stdc++.h>
+#define rep(i,n) for(int i=0;i<n;i++)
+#define FOR(i,a,b) for(int i=a;i<b;i++)
+#define rz resize
+#define pb push_back
+#define fi first
+#define se second
+
+//#define MAX 1000002
+ 
+using namespace std;
+ 
+typedef long long int ll;
+  
+typedef long long int ll;
+typedef pair<int,int> pii;
+typedef vector<int> vi;
+typedef vector<ll> vll;
+typedef vector<pii> vpii;
+typedef vector<vector<int> > vvi;
+
+/*ll modpow(ll a,ll b)
+{
+  ll ans = 1;
+  while(b) {
+    if (b&1) ans=(ans*a)%MOD;
+    a=(a*a)%MOD;
+    b>>=1;
+  }
+  if (ans<0) ans+=MOD;
+  return ans;
+}
+*/
+
+struct node{
+  ll pref,suff,ans,L,R,Lval,Rval;
+};
+
+typedef struct node data;
+const int MAX = 100005;
+data Seg[4*MAX];
+ll A[MAX];
+
+data merge(data a,data b)
+{
+  data res; 
+  res.ans = max(a.ans,b.ans);
+  if (a.Rval < b.Lval)res.ans = max(res.ans,a.suff+b.pref);
+
+  res.L = a.L,res.R = b.R;
+  res.Lval = a.Lval,res.Rval = b.Rval;
+  res.pref = a.pref,res.suff=b.suff;
+
+  if (a.pref == (a.R-a.L+1) and a.Rval<b.Lval)res.pref+=b.pref;
+  if (b.suff == (b.R-b.L+1) and a.Rval<b.Lval)res.suff+=a.suff;
+
+  return res;
+}
+
+data make_data(ll val,int pos)
+{
+  data res;
+  res.ans = res.suff = res.pref = 1;
+  res.Rval = res.Lval = val;
+  res.L = res.R = pos;
+  return res;
+}
+
+void build(int start,int end,int node)
+{
+  if (start == end){
+    Seg[node] = make_data(A[start],start); 
+    return ;
+  }
+  int mid = (start+end)>>1;
+  build(start,mid,node<<1);
+  build(mid+1,end,(node<<1)+1);
+  
+  Seg[node] = merge(Seg[node<<1],Seg[(1+(node<<1))]);
+}
+
+data query(int start,int end,int node,int l,int r)
+{
+  // if (start>end or start >r or end<l)return make_data(0,0);
+  if (start>=l and end<=r)return (Seg[node]);
+  int mid = (start+end)>>1;
+  if (r <= mid)return query(start,mid,node<<1,l,r);
+  if (l>mid) return query(mid+1,end,(node<<1)+1,l,r);
+  return merge(query(start,mid,node<<1,l,r),query(mid+1,end,(node<<1)+1,l,r));
+}
+
+void update(int start,int end,int pos,ll val,int node)
+{
+  if (start == end){Seg[node].Lval+=val;Seg[node].Rval+=val;return ;}
+  else {
+    int mid = (start+end)>>1;
+    if (start<=pos and pos<=mid)update(start,mid,pos,val,node<<1);
+    else update(mid+1,end,pos,val,(node<<1)+1);
+    Seg[node] = merge(Seg[node<<1],Seg[(node<<1)+1]);
+  }
+}
+
+int main()
+{
+  ios::sync_with_stdio(false);cin.tie(NULL);
+  cout.tie(NULL); 
+
+  int t;cin>>t;
+  while(t--) {
+    int N;
+    cin>>N;
+    int Q;cin>>Q;
+    rep(i,N){cin>>A[i+1];};//cout<<A[2]<<"\n";
+    build(1,N,1); 
+    // FOR(i,1,2*N+2)cout<<i<<" "<<Seg[i]<<endl;
+    while(Q--) {
+      ll ty,l,r;
+      cin>>ty;
+      if (ty==0) {
+        cin>>l>>r;
+        data res = query(1,N,1,l,r);
+        cout<<res.ans<<endl;
+      }
+      else {
+        cin>>l>>r;
+        update(1,N,l,r,1);
+      }
+    }
+  }
+}   

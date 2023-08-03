@@ -1,0 +1,114 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <list>
+#include <cassert>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define EPS 1e-9
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii;
+typedef long long ll; typedef vector<long long> vl; typedef pair<long long,long long> pll; typedef vector<pair<long long,long long> > vpll;
+typedef vector<string> vs; typedef long double ld;
+template<typename T, typename U> inline void amin(T &x, U y) { if(x > y) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+struct UnionFind {
+	static const int MAXN = 8 * 8;
+	typedef char Index;
+	Index data[MAXN];
+	void init(int size_) { memset(data, -1, size_ * sizeof(*data)); }
+	bool unionSet(int x, int y) {
+		x = root(x); y = root(y);
+		if (x != y) {
+			if (data[y] < data[x]) swap(x, y);
+			data[x] += data[y]; data[y] = x;
+		}
+		return x != y;
+	}
+	inline bool findSet(int x, int y) { return root(x) == root(y); }
+	inline int root(int x) { return data[x] < 0 ? x : data[x] = root(data[x]); }
+	inline int size(int x) { return -data[root(x)]; }
+};
+
+
+int H, W, K;
+char bar[8][9];
+bool b[8][8], vis[8][8];
+UnionFind uf;
+int ans = 0;
+
+bool check(int i, int j, bool t) {
+	if(i > 0 && j > 0) {
+		if(b[i][j-1] == t && b[i-1][j] == t && b[i-1][j-1] == t) return false;
+	}
+	uf.init(H * W);
+	rep(y, H) rep(x, W) {
+		int k = y * W + x;
+		bool t = b[y][x], u = vis[y][x];
+		if(y+1 < H && (!u || !vis[y+1][x] || t == b[y+1][x])) uf.unionSet(k, k + W);
+		if(x+1 < W && (!u || !vis[y][x+1] || t == b[y][x+1])) uf.unionSet(k, k + 1);
+	}
+	int components = 0;
+	rep(k, H*W) if(uf.root(k) == k) components ++;
+	if(i == H-1 && j == W-1) {
+		if(components > 2) return false;
+	}else {
+		if(components > 2) return false;
+	}
+	return true;
+}
+
+void dfs(int i, int j, int x) {
+	if(j == W) return dfs(i+1, 0, x);
+	if(i == H) {
+		if(abs(x - (H * W - x)) > K) return;
+		ans ++;
+		return;
+	}
+	vis[i][j] = true;
+	if(bar[i][j] != 'D') {
+		b[i][j] = false;
+		if(check(i, j, false)) dfs(i, j+1, x+1);
+	}
+	if(bar[i][j] != 'T') {
+		b[i][j] = true;
+		if(check(i, j, true)) dfs(i, j+1, x);
+	}
+	vis[i][j] = false;
+}
+
+int main() {
+	scanf("%d%d%d", &H, &W, &K);
+	rep(i, H) scanf("%s", bar[i]);
+	mset(b, 0); mset(vis, 0);
+	ans = 0;
+	dfs(0, 0, 0);
+	cout << ans << endl;
+	return 0;
+}

@@ -1,0 +1,209 @@
+//Coder: Balajiganapathi
+//Created at 2014-07-26-23.26.53
+
+#include <algorithm>
+#include <bitset>
+#include <deque>
+#include <cassert>
+#include <cctype>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <list>
+#include <map>
+#include <numeric>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <utility>
+#include <vector>
+
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int,int> pi;
+typedef vector<string> vs;
+
+#define st          first
+#define se          second
+#define all(x)      (x).begin(), (x).end()
+#define ini(a, v)   memset(a, v, sizeof(a))
+#define re(i,s,n)  	for(int i=s;i<(n);++i)
+#define fr(i,n)     re(i,0,n)
+#define tr(i,x)     for(typeof(x.begin()) i=x.begin();i!=x.end();++i)
+#define pu          push_back
+#define mp          make_pair
+#define sz(x)       (int)(x.size())
+#define inf			2000000009
+
+void multiply(ll F[2][2], ll M[2][2]);
+
+void power(ll F[2][2], ll n);
+
+/* function that returns nth Fibonacci number */
+ll fib(ll n)
+{
+  ll F[2][2] = {{1,1},{1,0}};
+  if (n == 0)
+    return 0;
+  power(F, n-1);
+  return F[0][0];
+}
+
+/* Optimized version of power() in method 4 */
+void power(ll F[2][2], ll n)
+{
+  if( n == 0 || n == 1)
+      return;
+  ll M[2][2] = {{1,1},{1,0}};
+
+  power(F, n/2);
+  multiply(F, F);
+
+  if (n%2 != 0)
+     multiply(F, M);
+}
+const int mod = 1000000007;
+void multiply(ll F[2][2], ll M[2][2])
+{
+  ll x =  F[0][0]*M[0][0] + F[0][1]*M[1][0];
+  ll y =  F[0][0]*M[0][1] + F[0][1]*M[1][1];
+  ll z =  F[1][0]*M[0][0] + F[1][1]*M[1][0];
+  ll w =  F[1][0]*M[0][1] + F[1][1]*M[1][1];
+
+  F[0][0] = x % mod;
+  F[0][1] = y % mod;
+  F[1][0] = z % mod;
+  F[1][1] = w % mod;
+}
+
+const int mx = 1003 * 1003;
+int cnt, id[mx], sz[mx];
+class UF    {
+public:
+	// Create an empty union find data structure with N isolated sets.
+    UF(int N)   {
+        cnt = N;
+        for(int i=0; i<N; i++)	{
+            id[i] = i;
+	    sz[i] = 1;
+	}
+    }
+    ~UF()	{
+
+    }
+	// Return the id of component corresponding to object p.
+    int find(int p)	{
+        int root = p;
+        while (root != id[root])
+            root = id[root];
+        while (p != root) {
+            int newp = id[p];
+            id[p] = root;
+            p = newp;
+        }
+        return root;
+    }
+	// Replace sets containing x and y with their union.
+    void merge(int x, int y)	{
+        int i = find(x);
+        int j = find(y);
+        if (i == j) return;
+
+		// make smaller root point to larger one
+        if   (sz[i] < sz[j])	{
+		id[i] = j;
+		sz[j] += sz[i];
+	} else	{
+		id[j] = i;
+		sz[i] += sz[j];
+	}
+        cnt--;
+    }
+	// Are objects x and y in the same set?
+    bool connected(int x, int y)    {
+        return find(x) == find(y);
+    }
+	// Return the number of disjoint sets.
+    int count() {
+        return cnt;
+    }
+};
+
+pair<int, pi> edges[4 * mx];
+
+int main() {
+	int n;
+	scanf("%d", &n);
+	ll k1, k2, k3, k4;
+	scanf("%lld %lld %lld %lld", &k1, &k2, &k3, &k4);
+	//--k1; --k2; --k3; --k4;
+	int cnt = 0;
+	int c = 0;
+	int f1k1 = fib(k1), f2k1 = fib(k1 + 1);
+	int f1k2 = fib(k2), f2k2 = fib(k2 + 1), tmp;
+
+	fr(i, n) {
+		fr(j, n - 1) {
+			if(++c <= 2) {
+				edges[cnt++] = mp((fib(k1++) + fib(k2++)) % mod, mp(n * i + j, n * i + j + 1));
+			} else {
+				tmp = (f1k1 + f2k1) % mod;
+				f1k1 = f2k1;
+				f2k1 = tmp;
+
+				tmp = (f1k2 + f2k2) % mod;
+				f1k2 = f2k2;
+				f2k2 = tmp;
+
+				edges[cnt++] = mp((f2k1 + f2k2) % mod, mp(n * i + j, n * i + j + 1));
+			}
+		}
+	}
+
+	c = 0;
+	f1k1 = fib(k3), f2k1 = fib(k3 + 1);
+	f1k2 = fib(k4), f2k2 = fib(k4 + 1);
+	fr(j, n) {
+		fr(i, n - 1) {
+			if(++c <= 2) {
+				edges[cnt++] = mp((fib(k3++) + fib(k4++)) % mod, mp(n * i + j, n * (i + 1) + j));
+			} else {
+				tmp = (f1k1 + f2k1) % mod;
+				f1k1 = f2k1;
+				f2k1 = tmp;
+
+				tmp = (f1k2 + f2k2) % mod;
+				f1k2 = f2k2;
+				f2k2 = tmp;
+
+				edges[cnt++] = mp((f2k1 + f2k2) % mod, mp(n * i + j, n * (i + 1) + j));
+			}
+		}
+	}
+	sort(edges, edges + cnt);
+	//cout << cnt << endl;
+
+	ll ans = 0;
+	UF u(n * n);
+	fr(i, cnt) {
+		int a = edges[i].se.st, b = edges[i].se.se;
+		//cout << edges[i].st << " " << a << " " << b << endl;
+		if(!u.connected(a, b)) {
+			u.merge(a, b);
+			ans += edges[i].st;
+		}
+	}
+
+	cout << ans << endl;
+
+
+	return 0;
+}

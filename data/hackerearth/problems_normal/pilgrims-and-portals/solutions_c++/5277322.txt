@@ -1,0 +1,88 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <functional>
+#include <map>
+#define lli long long int
+#define INF 1000000000000000000ll
+using namespace std;
+vector<vector<pair<int, int> > > adjList(101);
+lli dist[101];
+bool vis[101];
+int vertices, edges,shrines;
+void findMST(int source)
+{
+	int cost, par,sz,node,c;
+	priority_queue < pair<lli, int>, vector<pair<lli, int> >, greater<pair<lli, int> > > pr;
+	pr.push(make_pair(0, source));
+	dist[source] = 0;
+	pair<lli, int> temp;
+	while (!pr.empty())
+	{
+		temp = pr.top();
+		cost = temp.first;
+		par = temp.second;
+		pr.pop();
+		if (dist[par] < cost)
+			continue;
+		if (par <= shrines)
+		{
+			vis[par] = true;
+			sz = adjList[par].size();
+			for (int i = 0; i < sz;i++)
+			{
+				node = adjList[par][i].first;
+				c = adjList[par][i].second;
+				if (!vis[node] && dist[node]>c)
+				{
+					dist[node] = c;
+					pr.push(make_pair(c, node));
+				}
+			}
+		}
+		else
+		{
+			sz = adjList[par].size();
+			for (int i = 0; i < sz; i++)
+			{
+				node = adjList[par][i].first;
+				c = adjList[par][i].second;
+				if (!vis[node] && dist[node]>dist[par] + c)
+				{
+					dist[node] = dist[par] + c;
+					pr.push(make_pair(dist[node], node));
+				}
+			}
+		}
+	}
+}
+
+
+int main()
+{
+	int t,u,v,weight;
+	long long int cost=0;
+	cin >> t;
+	for (int k = 1; k <= t; k++)
+	{
+		cin >> vertices >> edges >> shrines;
+		for (int i = 1; i <= vertices; i++)
+		{
+			vis[i] = false;
+			dist[i] = INF;
+			adjList[i].clear();
+		}
+		for (int i = 1; i <= edges; i++)
+		{
+			cin >> u >> v >> weight;
+			adjList[u].push_back(make_pair(v, weight));
+			adjList[v].push_back(make_pair(u, weight));
+		}
+		findMST(1);
+		cost = 0;
+		for (int i = 0; i <= shrines; i++)
+			cost += dist[i];
+		cout << cost << endl;
+	}
+	return 0;
+}

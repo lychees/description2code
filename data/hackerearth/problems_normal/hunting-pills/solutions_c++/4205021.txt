@@ -1,0 +1,137 @@
+#include <iostream>
+#include <algorithm>
+#include <utility>
+#include <cstring>
+#include <string.h>
+#include <queue>
+#include <set>
+#include <map>
+#include <math.h>
+#include <stdio.h>
+#include <vector>
+#include <functional>
+#include <bitset>
+#include <iomanip>
+#define ll long long
+#define pi acos(-1.0)
+#define pb push_back
+#define MS0(ar) memset(ar,0,sizeof ar)
+#define MS1(ar) memset(ar,-1,sizeof ar)
+#define ff first
+#define ss second
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define ind(a) scanf("%d",&a)
+#define inf(a) scanf("%lf",&a)
+#define inl(a) scanf("%lld",&a)
+#define ins(a) scanf("%s",a)
+#define pd(a) printf("%d\n",a)
+#define pl(a) printf("%lld\n",a);
+#define bitcnt(x) __builtin_popcountll(x)
+#define mod 1000000007
+const int MAX = 100000 + 10;
+using namespace std;
+bool vis[MAX];
+int comp[MAX];
+vector<int>v[MAX], v1[MAX], Q, v2[MAX], gr[MAX];
+int ans[MAX], dp[MAX];
+int scc = 1, res, sz[MAX];
+int val[MAX];
+void dfs1(int x)
+{
+    vis[x] = 1;
+    for (int i = 0; i < v[x].size(); i++)
+    {
+        int cur = v[x][i];
+        if (!vis[cur])
+            dfs1(cur);
+    }
+    Q.pb(x);
+}
+// scc graph bc :P
+void dfs2(int x)
+{
+    vis[x] = 0;
+    comp[x] = scc;
+    sz[scc] += val[x];
+    for (int i = 0; i < v1[x].size(); i++)
+    {
+        int cur = v1[x][i];
+        if (vis[cur])
+        {
+            dfs2(cur);
+        }
+    }
+}
+void reset()
+{
+    scc = 1;
+    Q.clear();
+    for (int i = 0; i < MAX; i++)
+    {
+        vis[i] = 0;
+        v[i].clear();
+        comp[i] = 0;
+        sz[i] = 0;
+    }
+}
+int main()
+{
+
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+#ifndef ONLINE_JUDGE
+    freopen("../input.txt", "r", stdin);
+    //freopen("../output.txt","w",stdout);
+#endif
+    int t, n, m, x, y;
+    cin >> t;
+    while (t--)
+    {
+        cin >> n >> m;
+        for (int i = 0; i < n; i++)
+            cin >> val[i];
+        for (int j = 0; j < m; j++)
+        {
+            cin >> x >> y;
+            v[x].pb(y);
+            v1[y].pb(x);
+        }
+        for (int i = 0; i < n; i++)
+        {
+            if (!vis[i])
+                dfs1(i);
+        }
+        for (int i = (int)(Q.size() - 1); i >= 0; i--)
+        {
+            if (vis[Q[i]])
+            {
+                dfs2(Q[i]);
+                scc++;
+            }
+        }
+        for (int i = 0; i < MAX; i++)
+            v1[i].clear();
+        // get new graph of scc
+        for (int i = 0; i <n; i++)
+        {
+            x = comp[i];
+            for (int j = 0; j < v[i].size(); j++)
+            {
+                y = comp[v[i][j]];
+                if (x != y)
+                {
+                    //cout << x << " " << y << endl;
+                    v2[x].pb(y);
+                    //cout << x << " ---> " << y << endl;
+                }
+            }
+        }
+        int ans = 0;
+        for (int i = 1; i < scc; i++)
+            ans = max(ans,sz[i]);
+        cout << ans << endl;
+        reset();
+    }
+    return 0;
+}

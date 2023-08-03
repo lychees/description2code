@@ -1,0 +1,176 @@
+//HackerEarth--Troubling Triplets
+#include<bits/stdc++.h>
+
+using namespace std;
+
+typedef long long int lli;
+
+struct node{
+	
+	vector<lli> sorted;
+	
+	void makeLeaf(lli val){	sorted.push_back(val);	}
+	
+	void merge(struct node &lhs,struct node &rhs){
+		
+		lli i=0,j=0;
+		
+		while(i<lhs.sorted.size()&&j<rhs.sorted.size()){
+			
+			if(lhs.sorted[i]<rhs.sorted[j]){
+				
+				sorted.push_back(lhs.sorted[i]);
+				i++;
+				
+			}
+			
+			else{
+				
+				sorted.push_back(rhs.sorted[j]);
+				j++;				
+				
+			}  
+						
+		}
+		
+		while(i<lhs.sorted.size())	
+			sorted.push_back(lhs.sorted[i++]);
+		
+		while(j<rhs.sorted.size())
+		    sorted.push_back(rhs.sorted[j++]);
+		
+	}
+	
+	lli find(lli k){
+		
+		lli start=0,end=sorted.size()-1,mid;
+		
+		//here we are lloking for the last occurence of zero in the sorted array of 0's and 1's
+		//assume all the elements of the array which are smaller or greater than the given element k as zero
+		// ans all others as 1
+		//Test case :- 
+		//0 0 0 0 0 0 0 1 1 1 1 1 1
+		//1 1 1 1 1 1 1 1 1		  
+		while(start<=end){
+			
+			mid=(start+end)/2;
+						
+			if(sorted[mid]<=k){
+				
+				if(mid==sorted.size()-1) return sorted.size();
+				
+				if(sorted[mid+1]<=k) start=mid+1;
+				
+				else return mid+1;
+				
+			}
+			
+			else end=mid-1;
+		
+		}
+		
+		return 0;
+		
+	}
+		
+};
+
+struct node Tree[8005];
+lli Array[2001];
+void makeTree(lli ,lli ,lli );
+lli query(lli ,lli ,lli ,lli ,lli ,lli );
+
+
+
+lli brute(lli start,lli end,lli k){
+	
+	lli i,count=0;
+	
+	for(i=start;i<=end;i++)
+	  if(Array[i]<=k) count++;
+	
+	return count;
+	
+	
+}
+
+int main(void){
+	
+	lli n,k,i,j;
+	lli ans=0;
+	
+	cin>>n>>k;
+	
+	for(i=0;i<n;i++)
+	  cin>>Array[i];
+	
+	
+	makeTree(0,0,n-1);
+	for(i=0;i<n;i++){
+		
+		for(j=i+1;j<n;j++){
+						
+			lli reqdProd=Array[i]*Array[j];
+			
+			if(reqdProd>k) continue;
+			
+			reqdProd=k/reqdProd;
+			
+			lli ret=query(0,0,n-1,j+1,n-1,reqdProd);//,ret2=brute(j+1,n-1,reqdProd);
+			/*
+			Getting Wrong Anwer for :- 
+			7 103
+            3 8 9 1 2 12 7
+			*/
+			
+					
+			ans+=ret;
+						 		
+		}	
+		
+	}
+	
+	cout<<ans<<"\n";
+	
+	return 0;
+	
+}
+
+void makeTree(lli idx,lli assStart,lli assEnd){
+	
+	if(assStart==assEnd){
+		
+		Tree[idx].makeLeaf(Array[assStart]);
+		return;
+		
+	}
+	
+	lli mid=(assStart+assEnd)/2;
+	
+	makeTree(2*idx+1,assStart,mid);
+	makeTree(2*idx+2,mid+1,assEnd);
+	
+	Tree[idx].merge(Tree[2*idx+1],Tree[2*idx+2]);
+	
+}
+
+lli query(lli idx,lli assStart,lli assEnd,lli s,lli e,lli k){
+	
+	if(assStart>assEnd||assStart>e||s>assEnd)// out of range
+	  return 0;
+	
+	if(assStart>=s&&assEnd<=e){
+	  
+	  lli ret=Tree[idx].find(k);	   
+	   return ret;
+	   
+	}
+    lli mid=(assStart+assEnd)/2;
+	lli v1=0,v2=0;	
+	
+	v1=query(2*idx+1,assStart,mid,s,e,k);
+	v2=query(2*idx+2,mid+1,assEnd,s,e,k);
+	
+	return v1+v2;
+
+}   

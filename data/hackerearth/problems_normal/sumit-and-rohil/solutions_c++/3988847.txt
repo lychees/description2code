@@ -1,0 +1,95 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <map>
+using namespace std;
+typedef map<int, vector<string> > omap;
+
+void display_name_map(omap name_map)
+{
+    for(auto key : name_map)
+    {
+        cout << "key = " << key.first << " : ";
+        for(string s : key.second)
+        {
+            cout << s << " ";
+        }
+        cout << endl;
+    }
+}
+bool isanagram(string s1, string s2)
+{
+    int letters[26] = {0};
+    for(auto c : s1)
+    {
+        letters[(int)c-97]++;
+    }
+    for(auto c : s2)
+    {
+        letters[(int)c-97]--;
+    }
+    if( all_of(begin(letters),end(letters),[](int i){
+                return !i;
+                }) )
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
+}
+int check_anagrams(vector<string> names)
+{
+    //int flagged[names_size] = {0};
+    vector<int> flagged(names.size(),0);
+    int pivot;
+    int groups = 0;
+    while(any_of( flagged.begin(), flagged.end(), [](bool i){
+                return !i;
+                } ))
+    {
+        groups++;
+        pivot = distance( flagged.begin(), find_if( flagged.begin(), flagged.end(),  [](int i){ return i == 0; } ) );
+        flagged[pivot] = 1;
+        for(int i=1; i<names.size() && flagged[i] == 0; i++)
+        {
+            if( isanagram(names[pivot],names[i]) )
+            {
+                flagged[i] = 1;
+            }
+        }
+    }
+    return groups;
+}
+int main()
+{
+    int n;
+    cin >> n;
+    vector<string> names;
+    string s;
+    while(n > 0)
+    {
+        cin >> s;
+        names.push_back(s);
+        n--;
+    }
+    char first,last;
+    omap name_map;
+    for(auto e : names)
+    {
+        first = e.at(0)*99;
+        last = e.at(e.length()-1)*999;
+        name_map[first+last].push_back(e);
+    }
+    int groups = 0;
+    for(auto key : name_map)
+    {
+        groups += check_anagrams(key.second);
+    }
+    //display_name_map(name_map);
+    cout << groups << endl;
+    return 0;
+}

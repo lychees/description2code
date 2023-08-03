@@ -1,0 +1,115 @@
+#include <iostream>
+#include <string.h>
+#include <stdio.h>
+#include <vector>
+#include <algorithm>
+#include <map>
+#include <set>
+#include <cmath>
+#include <queue>
+#include <stack>
+#define S(n) scanf("%d",&n)
+#define Sll(n) scanf("%lld",&n)
+#define Sl(n) scanf("%ld",&n)
+#define ll long long
+#define li long int
+#define mod 1000000007
+
+using namespace std;
+struct node {
+    ll x;
+    ll y;
+};
+ll gcd(ll a, ll b)
+{
+    return b == 0 ? a : a > b ? gcd(b, a%b) : gcd(a, b%a);
+}
+
+
+ll factorial[200010];
+
+ll pow(ll a, ll b)
+{
+	if(b == 0) {
+		return a;
+	}
+	else {
+		ll t = pow(a, b/2);
+		if(b %2 == 0) {
+			return t*t;
+		} else {
+			return t*t*a;
+		}
+	}
+}
+ll inverse(ll a, ll b)
+{
+	ll g = b;
+	ll f = 0;
+	ll e = 1;
+	ll j;
+	ll q;
+	// count
+	if (b == 1) return 1;
+	while (a > 1) {
+		q = a / b;
+		j = b, b = a % b, a = j;
+		j =f, f = e - q * f, e = j;
+	}
+	if (e < 0) e += g;
+	return e;
+}
+vector <ll> adj[100005];
+ll binomial(ll i, ll j)
+{
+    ll a = inverse(factorial[i - j], mod);
+    ll b = inverse(factorial[j], mod);
+    return (((factorial[i] * a) % mod) * b) % mod;
+}
+
+int main()
+{
+    ll i, j, n, temp, m, k;
+    factorial[0] = 1;
+    for(i = 1;i < 200010; ++i){
+        factorial[i] = (factorial[i - 1] * i) % mod;
+    }
+    
+    ll t = 0;
+   
+    scanf("%lld", &n);
+    for(i = 0;i < n; i++){
+        scanf("%lld", &m);
+        for(j = 0;j < m; j++){
+            scanf("%lld", &temp);
+            adj[i].push_back(temp);
+        }
+        sort(adj[i].begin(), adj[i].end());
+        t = t + m;
+    }
+    ll a = 1;
+    for(i = 0;i < n; i++){
+        ll temp = binomial(t, adj[i].size());
+        k = 0;
+        
+		vector <ll> temp_vec;
+        // for counting for each row
+		while(k < adj[i].size()){
+            ll current = 1;
+            ll fg = adj[i][k];
+            k += 1;
+            while(k < adj[i].size() && fg == adj[i][k]){
+                k += 1;
+                current = current + 1;
+            }
+            temp_vec.push_back(current);
+        }
+        for(j = 0;j < temp_vec.size(); j++){
+            temp = (temp * factorial[temp_vec[j]]) % mod;
+        }
+        t = t - adj[i].size();
+        a = (temp * a) % mod;
+    }
+    printf("%lld\n", a);
+    return 0;
+}

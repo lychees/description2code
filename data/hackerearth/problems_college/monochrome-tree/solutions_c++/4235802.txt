@@ -1,0 +1,75 @@
+#include<stdio.h>
+#include<iostream>
+#include<math.h>
+#include<vector>
+#include<map>
+#include<string>
+#include<string.h>
+#include<algorithm>
+#include<set>
+#define PI acos(-1.0)
+#define SZ 1000007
+#define Fi(a,n) for(int i=a;i<n;i++)
+#define Fj(a,n) for(int j=a;j<n;j++)
+#define Fk(a,n) for(int k=a;k<n;k++)
+#define ri(a) scanf("%d",&a)
+#define pb push_back
+#define mp make_pair
+using namespace std;
+typedef vector<int> vi;
+typedef vector<vi > vii;
+typedef long long ll;
+typedef vector<ll> vll;
+struct node{
+    int match_c, mismatch_c;
+    node(){match_c=0; mismatch_c=0;}
+    node(int m, int msc) : match_c(m), mismatch_c(msc){}
+};
+vi cost, icost;
+node traverse(vii& g, vi& curr, vi& gf, vi& visit, int v) {
+    int mismatch = 0, match = 0, m = curr[v]==gf[v]?0:1;
+    visit[v] = 1;
+    Fi(0, g[v].size()) {
+        if(!visit[g[v][i]]) {
+            node t = traverse(g, curr, gf, visit, g[v][i]);
+            match += t.match_c;
+            mismatch += t.mismatch_c;
+            cost[v] += min(cost[g[v][i]], icost[g[v][i]]);
+            icost[v] += min(icost[g[v][i]]-1, cost[g[v][i]]+1);
+        }
+    }
+    icost[v]++;
+    if(m){
+        mismatch++;
+        cost[v]++;
+    } else {
+        match++;
+        icost[v]++;
+    }
+	cost[v] = min(cost[v], mismatch);
+	icost[v] = min(icost[v], 1+match);
+    return node(match, mismatch);
+}
+int main()
+{
+    int N, u, v;
+    ri(N);
+    cost = vi(N+1, 0); icost = vi(N+1, 0);
+    vi curr(N+1, 0), gf(N+1, 0);
+    vii g(N+1, vi());
+    Fi(0, N-1) {
+        ri(u); ri(v);
+        g[u].pb(v);
+        g[v].pb(u);
+    }
+    Fi(1, N+1) {
+        ri(curr[i]);
+    }
+    Fi(1, N+1) {
+        ri(gf[i]);
+    }
+    vi visit(N+1, 0);
+    node t = traverse(g, curr, gf, visit, 1);
+    printf("%d\n", min(cost[1], icost[1]));
+    return 0;
+}

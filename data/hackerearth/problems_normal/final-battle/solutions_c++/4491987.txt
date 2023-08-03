@@ -1,0 +1,191 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define FOR(i, a, b) for (int i = (a); i <= (b); i++)
+#define FORD(i, a, b) for (int i = (a); i >= (b); i--)
+#define REP(i, n) FOR(i, 0, (int)(n) - 1)
+#define REPD(i, n) FOR(i, (int)(n) - 1, 0)
+#define VAL(x) cout << #x << " = " << (x) << endl
+#define mp make_pair
+#define pb push_back
+#define ft first
+#define sd second
+#define sz(x) ((int)(x).size())
+#define all(x) (x).begin(), (x).end()
+#define y0 yy0
+#define y1 yy1
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int, int> pii;
+
+const int MOD = 1e9 + 7;
+const int N = 75;
+
+int m[N][N], parent[N], rk[N];
+
+// Dsu
+
+void makeSet(int v) {
+	parent[v] = v;
+	rk[v] = 0;
+}
+
+int findSet(int v) {
+	return (v == parent[v]) ? v : parent[v] = findSet(parent[v]);
+}
+
+void unionSets(int a, int b) {
+    a = findSet(a);
+    b = findSet(b);
+    if (a != b) {
+        if (rk[a] < rk[b])
+            swap(a, b);
+        parent[b] = a;
+		if (rk[a] == rk[b])
+			rk[a]++;
+	}
+}
+
+// Inverse
+
+int binPow(int x, int k) {
+    int res = 1;
+    while (k) {
+        if (k & 1)
+            res = (res * 1ll * x) % MOD;
+        x = (x * 1ll * x) % MOD;
+        k >>= 1;
+    }
+    return res;
+}
+
+int getInv(int x) {
+    return binPow(x, MOD - 2);
+}
+
+// Gauss
+
+int det(int n) {
+    for (int i = 1; i < n; i++) {
+        int t = -1;
+        for (int j = i; j < n; j++)
+            if (m[j][i] > 0) {
+                t = j;
+                break;
+            }
+        if (t == -1)
+            break;
+        for (int j = i; j < n; j++)
+            swap(m[i][j], m[t][j]);
+        int inv = getInv(m[i][i]);
+        for (int j = i + 1; j < n; j++) {
+            int val = (m[j][i] * 1ll * inv) % MOD;
+            for (int k = i; k < n; k++)
+                m[j][k] = (m[j][k] + MOD - (m[i][k] * 1ll * val) % MOD) % MOD;
+        }
+    }
+    int res = 1;
+    for (int i = 1; i < n; i++)
+        res = (res * 1ll * m[i][i]) % MOD;
+    REP(i, n)
+        REP(j, n)
+            m[i][j] = 0;
+    return res;
+}
+
+// dfs
+
+vi g[N];
+bool used1[N], used2[N];
+vi now;
+int nv[N];
+
+void dfs1(int v) {
+    used1[v] = 1;
+    now.pb(v);
+    REP(i, sz(g[v])) {
+        int u = g[v][i];
+        if (!used1[u])
+            dfs1(u);
+    }
+}
+
+void dfs2(int v) {
+    used2[v] = 1;
+    int vv = nv[v];
+    m[vv][vv] = sz(g[v]);
+    REP(i, sz(g[v])) {
+        int u = g[v][i];
+        int uu = nv[u];
+        m[vv][uu] = (m[vv][uu] + MOD - 1) % MOD;
+        if (!used2[u])
+            dfs2(u);
+    }
+}
+
+int main() {
+    // freopen("input.txt", "r", stdin);
+    int n, q;
+    cin >> n >> q;
+    REP(i, n - 1) {
+        int u, v;
+        cin >> u >> v;
+    }
+    vector< pair<int, pii> > e;
+    REP(i, q) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        u--, v--;
+        e.pb(mp(w, mp(u, v)));
+    }
+    sort(all(e));
+    REP(i, n)
+        makeSet(i);
+    int res = 1;
+    for (int i = 0; i < q; ) {
+        int val = e[i].ft;
+        vi t;
+        while (i < q && e[i].ft == val) {
+            int u = e[i].sd.ft;
+            int v = e[i].sd.sd;
+            v = findSet(v);
+            u = findSet(u);
+            if (u != v) {
+                g[u].push_back(v);
+                g[v].push_back(u);
+                t.pb(u);
+                t.pb(v);
+            }
+            i++;
+        }
+        REP(j, sz(t)) {
+            int v = t[j];
+            if (!used1[v]) {
+                dfs1(v);
+                REP(k, sz(now))
+                    nv[now[k]] = k;
+                dfs2(v);
+                int val = det(sz(now));
+                res = (res * 1ll * val) % MOD;
+                REP(k, sz(now))
+                    unionSets(now[0], now[k]);
+                now.clear();
+            }
+        }
+        REP(j, sz(t)) {
+            int v = t[j];
+            g[v].clear();
+            used1[v] = used2[v] = 0;
+        }
+    }
+    int root = findSet(0);
+    REP(i, n)
+        if (findSet(i) != root) {
+            cout << 0 << endl;
+            return 0;
+        }
+    cout << res << endl;
+    return 0;
+}

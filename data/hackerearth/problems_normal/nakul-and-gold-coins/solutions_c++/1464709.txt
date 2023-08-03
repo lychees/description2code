@@ -1,0 +1,138 @@
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
+#include <algorithm>
+#include <stack>
+#include <math.h>
+#include <queue>
+
+#define ll long long int
+#define maxn 100000
+#define sieve_max 1000000
+
+using namespace std;
+
+int scan_d(){ int ip=getchar_unlocked(), ret=0, flag = 1; for(; ip<'0' || ip>'9'; ip=getchar_unlocked())if(ip=='-'){flag=-1; ip=getchar_unlocked(); break;}for(; ip>='0' && ip<='9'; ip=getchar_unlocked())ret=ret*10+ip-'0'; return flag*ret;}
+ll scan_ll(){int ip=getchar_unlocked(), flag = 1; ll ret = 0; for(; ip<'0'||ip>'9'; ip=getchar_unlocked())if(ip=='-'){flag=-1; ip=getchar_unlocked(); break;}for(; ip>='0' && ip<='9'; ip=getchar_unlocked())ret = ret*10+ip-'0'; return flag*ret;}
+ 
+void print_d(int n){if(n<0){n=-n; putchar_unlocked('-');}int i=10; char output_buffer[10]; do{output_buffer[--i]=(n%10)+'0'; n/=10;}while(n); do{putchar_unlocked(output_buffer[i]);}while(++i<10);}
+void print_ll(ll n){if(n<0){n=-n; putchar_unlocked('-');}int i=21; char output_buffer[21]; do{output_buffer[--i]=(n%10)+'0'; n/=10;}while(n); do{putchar_unlocked(output_buffer[i]);}while(++i<21);}
+
+int dx[] = {1, -1, 0, 0};
+int dy[] = {0, 0, 1, -1};
+
+int sieve[sieve_max+5];
+vector <int> primes;
+
+/* Function to calculate sieve and the vector of primes upto sieve_max. */
+void calc_sieve()
+{
+    for(int i=0; i<=sieve_max; i++)
+        sieve[i] = 0;
+
+    sieve[0] = sieve[1] = 1;
+
+    for(int i=2; i<=sieve_max; i++)
+    {
+        if(sieve[i]==0)
+        {
+            primes.push_back(i);
+            for(int j=i+i; j<=sieve_max; j=j+i)
+                sieve[j]++;
+        }
+    }
+}
+
+vector <int> golds[80000];
+
+int find_greater_index(int value, int start, int end, int index)
+{
+	if(end<start)
+		return -1;
+
+	if(end-start<=1)
+	{
+		if(golds[index][start]>=value)
+			return start;
+
+		if(golds[index][end]>=value)
+			return end;
+
+		return -1;
+	}
+
+	int mid = (start+end)/2;
+
+	if(golds[index][mid]>=value)
+		return find_greater_index(value, start, mid, index);
+
+	return find_greater_index(value, mid+1, end, index);
+}
+
+int find_smaller_index(int value, int start, int end, int index)
+{
+	if(end<start)
+		return -1;
+
+	if(end-start<=1)
+	{
+		if(golds[index][end]<=value)
+			return end;
+
+		if(golds[index][start]<=value)
+			return start;
+
+		return -1;
+	}
+
+	int mid = (start+end)/2;
+
+	if(golds[index][mid+1]<=value)
+		return find_smaller_index(value, mid+1, end, index);
+
+	return find_smaller_index(value, start, mid, index);
+}
+
+int main()
+{
+	
+	calc_sieve();
+
+	for(int i=0; i<primes.size(); i++)
+	{
+		for(int j=i+1; j<primes.size(); j++)
+		{
+			if(primes[i]*primes[j]>100000000)
+				break;
+
+			golds[i].push_back(primes[i]*primes[j]);
+		}
+	}
+	
+	int t;
+	cin>>t;
+	while(t--)
+	{
+		int l, r;
+		l = scan_d(); r= scan_d();
+		ll ans = 0;
+
+		for(ll i=0; i<primes.size() && primes[i]*primes[i+1]<=r; i++)
+		{
+			//cout<<i<<" "<<primes[i]<<endl;
+			int left = find_greater_index(l, 0, golds[i].size()-1, i);
+			//cout<<"here\n";
+			int right = find_smaller_index(r, 0, golds[i].size()-1, i);
+
+			if(left>=0 && right>=0 && right-left+1>=0)
+				ans += right-left+1;
+		}
+
+		print_d(ans);
+		printf("\n");
+	}
+
+	return 0;
+}

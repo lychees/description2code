@@ -1,0 +1,183 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define MAX_N 100005
+#define MAX_Q 500005
+
+typedef long long Long;
+typedef unsigned long long Ulong;
+
+vector<int> T[MAX_N];
+int N,Q;
+
+inline void add_edge(int x,int y) {
+  T[x-1].push_back(y-1);
+  T[y-1].push_back(x-1);
+}
+
+int P[MAX_N],L[MAX_N],ssz[MAX_N];
+void dfs(int s) {
+  ssz[s] = 1;
+  for (int i=0; i<T[s].size(); i++) {
+    if (P[T[s][i]] == -1) {
+      L[T[s][i]] = L[s]+1;
+      P[T[s][i]] = s;
+      dfs(T[s][i]);
+      ssz[s] += ssz[T[s][i]];
+    }
+  }
+}
+
+int chHead[MAX_N],pos[MAX_N];
+int chId[MAX_N],bptr=0,chptr=0;
+Long G[MAX_N],arr[MAX_N];
+
+void heavy_light_decompose(int cur) {
+  if (chHead[chptr]==-1) {
+    chHead[chptr] = cur;
+  }
+  chId[cur] = chptr;
+  pos[cur] = bptr;
+  arr[bptr++] = G[cur];
+
+  int spch=-1, spsz=-1;
+  for (int i=0; i<T[cur].size(); i++) {
+    if (T[cur][i] != P[cur]) {
+      if (ssz[T[cur][i]] >= spsz) {
+        spch = T[cur][i];
+        spsz = ssz[T[cur][i]];
+      }
+    }
+  }
+  if (spch != -1) heavy_light_decompose(spch);
+  for (int i=0; i<T[cur].size(); i++) {
+    if (T[cur][i] != P[cur] and T[cur][i] != spch) {
+      ++chptr;
+      heavy_light_decompose(T[cur][i]);
+    }
+  }
+}
+
+void launch_hld() {
+  fill (chHead,chHead+N,-1);
+  fill (P,P+N, -1);
+  P[0] = 0;
+  L[0] = 0; dfs(0);
+  heavy_light_decompose(0);
+}
+
+int lca(int x,int y) {
+  while (chId[x] != chId[y]) {
+    int hx = chHead[chId[x]], hy = chHead[chId[y]];
+    if (L[hx] > L[hy]) x = P[hx];
+    else y = P[hy];
+  }
+  return L[x] > L[y] ? y : x;
+}
+
+struct Node {
+  Long nodeSum,bestPrefix;
+  Long bestSuffix,bestSum;
+}ST[MAX_N*4];
+
+#define INF (1ll<<54)
+
+Node sentinel = {.nodeSum = 0, .bestPrefix = -INF,
+                 .bestSuffix = -INF,.bestSum = -INF };
+
+inline void merge_nodes(Node& Left,Node& Right,Node& mergedNode) {
+  if (Left.bestSum == -INF) {
+    mergedNode = Right;
+  }else if (Right.bestSum == -INF) {
+    mergedNode = Left;
+  }else {
+    mergedNode.nodeSum = Left.nodeSum + Right.nodeSum;
+    mergedNode.bestPrefix = max(Left.bestPrefix,Left.nodeSum+Right.bestPrefix);
+    mergedNode.bestSuffix = max(Right.bestSuffix,Right.nodeSum+Left.bestSuffix);
+    mergedNode.bestSum = max(Left.bestSuffix + Right.bestPrefix,
+                             max(Left.bestSum, Right.bestSum));
+  }
+}
+
+void construct(int node,int left,int right) {
+  if (left > right) return;
+  if (left == right) {
+    ST[node] = {.nodeSum = arr[left],
+                .bestPrefix = arr[left],
+                .bestSuffix = arr[left],
+                .bestSum = arr[left]
+               };
+    return;
+  }
+  int mid = (left+right)/2;
+  construct(2*node,left,mid);
+  construct(2*node+1,mid+1,right);
+  merge_nodes(ST[2*node],ST[2*node+1],ST[node]);
+}
+
+Node query_seg_tree(int node,int left,int right,int i,int j) {
+  if (left > right or right < i or left > j) return sentinel;
+  if (i <= left and right <= j) return ST[node];
+
+  int mid = (left+right)/2;
+  Node lq = query_seg_tree(2*node,left,mid,i,j);
+  Node rq = query_seg_tree(2*node+1,mid+1,right,i,j);
+
+  Node merged;
+  merge_nodes(lq,rq,merged);
+  return merged;
+}
+
+Node query_till_lca(int x,int l) {
+  Node result, temp, qres;
+  result = sentinel;
+  while (chId[x] != chId[l]) {
+    qres = query_seg_tree(1,0,bptr-1,pos[chHead[chId[x]]],pos[x]);
+    merge_nodes(qres,result,temp);
+    result = temp;
+    x = P[chHead[chId[x]]];
+  }
+  if (x != l) {
+    qres = query_seg_tree(1,0,bptr-1,pos[l]+1,pos[x]);
+    merge_nodes(qres,result,temp);
+    result = temp;
+  }
+  return result;
+}
+
+Long query(int x,int y) {
+  x--; y--;
+  int m = lca(x,y);
+
+  Node xres = query_till_lca(x,m);
+  Node yres = query_till_lca(y,m);
+  swap(yres.bestPrefix,yres.bestSuffix);
+
+  Node mres = query_seg_tree(1,0,bptr-1,pos[m],pos[m]);
+
+  Node result,temp;
+  merge_nodes(yres,mres,result);
+  merge_nodes(result,xres,temp);
+
+  return temp.bestSum;
+}
+
+int main() {
+  scanf("%d",&N);
+  int a,b;
+  for (int i=0; i<N-1; i++) {
+    scanf("%d%d",&a,&b);
+    add_edge(a,b);
+  }
+  for (int i=0; i<N; i++)
+    scanf("%lld",&G[i]);
+
+  launch_hld();
+  construct(1,0,bptr-1);
+  scanf("%d",&Q);
+  for (int i=0; i<Q; i++) {
+    scanf("%d%d",&a,&b);
+    printf("%lld\n",query(a,b));
+  }
+  return 0;
+}

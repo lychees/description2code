@@ -1,0 +1,173 @@
+#include<iostream>
+#include<cstdio>
+#include<cmath>
+#include<vector>
+#include<map>
+#include<set>
+#include<algorithm>
+#include<list>
+#include<cstring>
+#include<stack>
+#include<queue>
+using namespace std;
+#define ll long long
+#define vi vector<int>
+#define vii vector<vi >
+#define pp pair<int,int>
+#define pb push_back
+#define mp make_pair
+#define ppl pair<ll,ll>
+#define vl vector<ll>
+#define vll vector<vl >
+#define vb vector<bool>
+#define llu unsigned ll
+#define all(c) c.begin(),c.end()
+#define mod 1000000007
+#define sc scanf
+#define pf printf
+ll power(ll a,ll b)
+{
+	if(!b)
+		return 1;
+	if(b==1)
+		return a;
+	ll temp=power(a,b/2);
+	temp=(temp*temp);
+	if(b&1)
+		temp=(temp*a);
+	return temp;
+}
+
+int n, mleft, mright, bsize;
+
+ll curr_ans;
+typedef struct node
+{
+	int l, r, in;
+}node;
+
+class comp
+{
+	public:
+		bool operator()( const node& a, const node& b)
+		{
+			if((a.l/bsize) ^ (b.l/bsize))
+			{
+				return( (a.l/bsize) < (b.l/bsize));
+			}
+			else
+				return ( a.r < b.r);
+		}
+};
+ll bit[100001];
+int v[100001];
+void update( int index, int val)
+{
+	while( index <= n)
+	{
+		bit[index] += val;
+		index += (index)&(-index);
+	}
+}
+
+ll query( int index)
+{
+	ll sum = 0;
+	while( index > 0)
+	{
+		sum += bit[index];
+		index -= (index)&(-index);
+	}
+	return sum;
+}
+void update_range( int u, int v, int val)
+{
+	update( u, val);
+	update( v+1, -val);
+}
+void add_elem( int val, int type)
+{
+	update_range( val, n, 1);
+	if( type == 1) // for right addition
+	{
+		curr_ans += query(n) - query(val);
+	}
+	else // for left addition
+		curr_ans += query( val-1);
+}
+
+void remov_elem( int val, int type)
+{
+	if( type == 1) // for removal
+	{
+		curr_ans -= query(n) - query(val);
+	}
+	else // for left removal
+		curr_ans -= query( val-1);
+	update_range( val, n, -1);
+}
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	int i , q, l, r, c;
+	cin >> n >> q;
+	bsize = sqrt(n);
+	//bit.resize( n+2);
+	map<int,int> m;
+	map<int,int>::iterator it;
+	for( i=0;i<n;i++ )
+	{
+		cin >>v[i];
+		m[v[i] ]++;
+	}
+	c = 1;
+	for( it=m.begin();it!=m.end();it++ )
+	{
+		it->second = c;
+		c++;
+	}
+	for( i=0;i<n;i++ )
+	{
+		v[i] = m[ v[i]];
+	}
+	node qr[q];
+	for( i=0;i<q;i++ )
+	{
+		cin >> l >> r;
+		l--;
+		r--;
+		qr[i].l = l;
+		qr[i].r = r;
+		qr[i].in = i;
+	}
+	sort( qr, qr+q, comp() );
+	curr_ans = 0;
+	mleft = 0;
+	mright = -1;
+	ll ans[q];
+	for( i=0;i<q;i++ )
+	{
+		l = qr[i].l;
+		r = qr[i].r;
+		while( mright < r)
+		{
+			add_elem( v[++mright], 1);
+		}
+		while( mright > r)
+		{
+			remov_elem( v[mright--], 1);
+		}
+		while( mleft< l)
+		{
+			remov_elem( v[mleft++], 2);
+		}
+		while( mleft > l)
+		{
+			add_elem( v[--mleft], 2);
+		}
+		ans[ qr[i].in] = curr_ans;
+	}
+	for( i=0;i<q;i++ )
+		cout << ans[i] << "\n";
+    return 0;
+}

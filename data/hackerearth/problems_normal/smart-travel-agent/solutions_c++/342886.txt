@@ -1,0 +1,154 @@
+//  Created by UJJWAL CHHIBBER on 23/6/14.
+//  Copyright (c) 2014 UJJWAL CHHIBBER. All rights reserved.
+// SmartTravelAgent.cpp
+#include <iostream>
+#include <cmath>
+#include <cstdlib>
+#include <list>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+#define gc getchar_unlocked
+#define rd readInt()
+#define gc getchar_unlocked
+typedef long long ll;
+inline int readInt(){
+    int n = 0, c = gc(), f = 1;
+    while(c != '-' && (c < '0' || c > '9')) c = gc();
+    if(c == '-') f = -1, c = gc();
+    while(c >= '0' && c <= '9')
+        n = (n<<3) + (n<<1) + c - '0', c = gc();
+    return n * f;
+}
+int ma = INT32_MIN;
+typedef struct x{
+    int v;
+    int w;
+}x;
+//int cost[1001][1001];
+int ta[100010];
+int pa[100010];
+int a,p;
+void copy_path(){
+    int i;
+    for(i=0;i<a;++i)
+        pa[i] = ta[i];
+    p = a;
+}
+void diff_copy_path(){
+    int i =0, j=0;
+    int flag;
+    while(i<a && j<p)
+    {
+        if(ta[i] == pa[j]) {  i++; j++; continue;}
+        else{
+        if(ta[i] < pa[j] ) flag = 1;
+        else 
+            break;
+        }
+        i++; j++;
+    }
+    if(i == a && j < p) flag = 1;
+    if(flag == 1)
+        for(i=0;i<a;++i)
+            pa[i] = ta[i];
+    p = a;
+    
+        
+}
+void print_path(){
+    int i;
+    for(i=0;i<p;++i)
+        cout<<pa[i]<<" ";
+    cout<<endl;
+}
+
+class Graph{
+    int V;
+    list<x> *adj;
+    
+public:
+    Graph(int y){ V = y; adj = new list<x>[V]; }
+    void addEdge(int u,int v,int w){
+        x xx;
+        xx.v = v;
+        xx.w = w;
+        adj[u].push_back(xx);
+        xx.v = u;
+        adj[v].push_back(xx);
+    }
+    int smart_travel(int s,int d,int t);
+    void dfs(x xx,bool visited[],int s,int d,int j);
+};
+void Graph::dfs(x xx, bool visited[], int s,int d, int j){
+    int i = xx.v;
+    int w = xx.w;
+    ta[a] = i;
+    a++;
+    if(i == d){
+        if(w < j) j = w;
+        if(j > ma)
+        {  ma = j; copy_path();}
+        else if(j == ma){
+                diff_copy_path();
+        }
+    }
+    if(w< j) j = w;
+
+    visited[i] = true;
+    list<x>::iterator k;
+    
+    for(k=adj[i].begin();k!=adj[i].end();++k){
+        if(visited[(*k).v] == false){
+            dfs((*k), visited, i, d, j);
+        }
+    
+    }
+    visited[i] = false;
+    a--;
+}
+bool comp(const int& num1, const int& num2)
+{ return num1 < num2; }
+int Graph::smart_travel(int s,int d,int t){
+    
+    int j,i;
+   // for(i=0;i<V;++i)
+     //   sort(adj[i].begin(),adj[i].end(),comp);
+    
+    bool visited[V+1];
+    for(i=1;i<=V;++i) visited[i] = false;
+    
+    visited[s] = true;
+    
+    ta[0] = s;
+    a = 1;
+    list<x>::iterator k;
+    for(k=adj[s].begin();k!=adj[s].end();++k){
+        
+        if(visited[(*k).v] == false){
+            j  = INT32_MAX;
+            dfs((*k),visited,s,d,j);
+          
+        }
+    }
+    
+    print_path();
+   // cout<<t<<" "<<ma<<endl;
+    return ceil(t*1.0/(ma-1));
+}
+int main()
+{
+    
+    int u,v,w,n,r,s,d,t,i;
+    n = rd; r = rd;
+    Graph G(n+1);
+    for(i=0;i<r;++i){
+        u = rd; v = rd; w = rd;
+        G.addEdge(u, v,w);
+    }
+    s = rd; d = rd; t = rd;
+    
+    cout<<G.smart_travel(s, d, t)<<endl;
+    
+    return 0;
+}

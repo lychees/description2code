@@ -1,0 +1,132 @@
+#include <iostream>
+#include <math.h>
+#include <vector>
+#include <algorithm>
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <set>
+#include <map>
+#include <stack>
+#include <queue>
+#include <tuple>
+#include <time.h>
+
+using namespace std;
+
+#define vec vector
+#define ALL(x) (x).begin(), (x).end()
+#define mp make_pair
+#define mt make_tuple 
+
+typedef long long ll;
+typedef double ld;
+typedef unsigned long long ull;
+
+const ll inf = 1000000000ll;
+const ll inf64 = inf * inf;
+const ll base = inf + 7;
+const ld pi = 3.1415926535897932384626433832795;
+
+struct DAWG {
+    struct vertex {
+        map< char, int > next;
+        int link, len, isClone, cnt, vis;
+		vertex() {
+			link = -1;
+			len = 0;
+			isClone = 0;
+			cnt = 0;
+			vis = 0;
+		}
+    };
+    vec< vertex > a;
+    int last, sz;
+
+    DAWG() {
+        a.clear();
+		last = -1;
+		sz = 0;
+    }
+
+    void add(const char & c) {
+        int cur = sz++;
+        a[cur].len = a[last].len + 1;
+        int p;
+        for(p = last;p != -1 && !a[p].next.count(c);p = a[p].link) {
+            a[p].next[c] = cur;
+        }
+
+        if(p == -1) {
+            a[cur].link = 0;
+        }else {
+            int q = a[p].next[c];
+            if(a[p].len + 1 == a[q].len) {
+                a[cur].link = q;
+            }else {
+                int clone = sz++;
+                a[clone].len = a[p].len + 1;
+                a[clone].next = a[q].next;
+                a[clone].link = a[q].link;
+				a[clone].isClone = 1;
+                for(;p != -1 && a[p].next[c] == q;p = a[p].link) {
+                    a[p].next[c] = clone;
+                }
+                a[q].link = a[cur].link = clone;
+            }
+        }
+        last = cur;
+    }
+
+    void buildDAWG(string s) {
+        a.clear();
+        a.resize(2 * (int)s.size() + 1);
+        last = sz = 0;
+        a[0].len = 0;
+        a[0].link = -1;
+        sz++;
+        for(auto i : s) add(i);
+    }
+
+	int ask(int k) {
+		for(int i = 1;i < sz;i++) {
+			if(!a[i].isClone) a[i].cnt = 1;
+		}
+		vec< pair< int, int > > tmp;
+		for(int i = 0;i < sz;i++) tmp.push_back(mp(a[i].len, i));
+		sort(tmp.rbegin(), tmp.rend());
+		for(int i = 0;i < sz;i++) {
+			int v = tmp[i].second;
+			int v_lnk = a[v].link;
+			if(v_lnk != -1) a[v_lnk].cnt += a[v].cnt;
+		}
+		int ans = 0;
+		for(int i = 0;i < sz;i++) {
+			if(a[i].cnt >= k) ans = max(ans, a[i].len);
+		}
+		return ans;
+	}
+};
+
+bool solve() {
+	
+	int k, n;
+	cin >> k >> n;
+	string s;
+	cin >> s;
+
+	DAWG a;
+	a.buildDAWG(s);
+
+	cout << a.ask(k) << '\n';
+
+    return true;
+}
+
+int main() {
+
+	//while(solve());
+    solve();
+
+    return 0;
+}

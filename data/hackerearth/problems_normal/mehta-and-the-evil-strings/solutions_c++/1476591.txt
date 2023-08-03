@@ -1,0 +1,179 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+#define N 16
+#define MOD ((ui)(1e9)+7) //Bug 1: forgot brackets in macro 1e9
+typedef unsigned long long ul;
+typedef unsigned long long ui; //bug 4(after submit) not int - 3* 10^9 is overflow for 32 bit - h x
+typedef vector<ui> vu;
+typedef vector<vu> vvu;
+
+#define DBG(x) cout<<#x<<"="<<x<<"\t";
+void matrixMul(const vvu& a, const vvu& b, vvu& c)
+{
+	int i,j,k;
+	for(i=0;i<N;i++)
+	for(j=0;j<N;j++)
+	{
+		c[i][j]=0;
+	for(k=0;k<N;k++)
+	{
+	c[i][j] += (a[i][k]*b[k][j])%MOD;
+	c[i][j] = c[i][j]%MOD;
+	}
+	}
+}
+void matrixMul(const vvu& a, const vu& b, vu& c)
+{
+	int i,k;
+	for(i=0;i<N;i++)
+	{
+	c[i]=0;
+	for(k=0;k<N;k++)
+	{
+		c[i] += (a[i][k]*b[k])%MOD;
+		c[i] = c[i]%MOD;
+	}
+	}
+}
+
+void power(const vvu& a, ul n, vvu& b)
+{
+	int i,j;
+	if(n==0)
+	{
+	for(i=0;i<N;i++)
+	for(j=0;j<N;j++)
+	if(i==j) 
+		b[i][j]=1;
+	else
+		b[i][j]=0;
+	return;
+	}
+	if(n==1)
+	{
+	for(i=0;i<N;i++)
+	for(j=0;j<N;j++)
+	b[i][j]=a[i][j];
+	return;
+	}
+	vvu t(N, vu(N,0));
+	power(a,n/2,t);
+	if(n%2==0)
+		matrixMul(t,t,b);
+	else
+	{
+		vvu c(N, vu(N,0));
+		matrixMul(t,t,c);
+		matrixMul(c,a,b);
+	}	
+}
+
+ui h[(int)1e5+2][N];
+ui compute1(ul n)
+{
+	ui ans = 0;
+	int i;
+	for(i=1;i<N;i++)
+	{
+//	if(i!=13) //2^5^7 == 0
+		ans = (ans + h[n][i])%MOD;
+	}
+	return ans;
+}
+int toggle(int i, int k)
+{
+	int a = i;
+	if(k==2)
+		a = ((~(i&1))&1) | (i&2) | (i&4) | (i&8);
+	else if(k==3)
+		a = (i&1) | ((~(i&2))&2) | (i&4) | (i&8);
+	else if(k==5)
+		a = (i&1) | (i&2) | ((~(i&4))&4) | (i&8);
+	else if(k==7)
+		a = (i&1) | (i&2) | (i&4) | ((~(i&8))&8);
+	else if(k==6)
+		a = ((~(i&1))&1) | ((~(i&2))&2) | (i&4) | (i&8);
+	
+	return a;
+}
+void FillHTable()
+{
+#define x h[1]
+	x[0]=3; //not 4 as 0 is not allowed; not x[15] bug 2 and 3
+	x[1]=2;
+	x[2]=x[4]=x[8]=x[3]=1;
+#undef x
+	int i,j;
+	for(i=1;i<(int)1e5;i++)
+	for(j=0;j<N;j++)
+	{
+		ui *p;
+		p = &h[i+1][j]; *p = (*p + (3*h[i][j])%MOD )%MOD;
+		p = &h[i+1][toggle(j,2)]; *p = (*p + (2*h[i][j])%MOD )%MOD;
+		p = &h[i+1][toggle(j,3)]; *p = (*p + h[i][j])%MOD;
+		p = &h[i+1][toggle(j,5)]; *p = (*p + h[i][j])%MOD;
+		p = &h[i+1][toggle(j,7)]; *p = (*p + h[i][j])%MOD;
+		p = &h[i+1][toggle(j,6)]; *p = (*p + h[i][j])%MOD;
+	}	
+}
+
+vu x(N,0);
+vvu c(N, vu(N,0));
+ui compute2(ul n)
+{
+	vvu b(N, vu(N,0)); 
+	vu y(N,0);
+	if(n!=1)
+	{
+	power(c,n-1,b);
+	matrixMul(b,x,y);
+	}
+	else
+		y = x;
+	ul ans = 0;
+	int i;
+	for(i=1;i<N;i++)
+//	if(i!=13) //2^5^7 == 0
+		ans = (ans+y[i])%MOD;
+	return ans;
+}
+void FillCTable()
+{
+	x[0]=3; x[1]=2;
+	x[2]=x[4]=x[8]=x[3]=1;
+	int j;
+	for(j=0;j<N;j++)
+	{
+		c[j][j] = 3;
+		c[toggle(j,2)][j] = 2;
+		c[toggle(j,3)][j] = 1;
+		c[toggle(j,5)][j] = 1;
+		c[toggle(j,7)][j] = 1;
+		c[toggle(j,6)][j] = 1;
+	}
+}
+
+int main()
+{
+	int t;
+	ul n;
+	cin>>t;
+	int kase=2;
+	if(t>10) 
+	{
+		kase = 1; //log n algorithm will time out due to large number of test cases
+		FillHTable();
+	}
+	else
+		FillCTable();
+	while(t--)
+	{
+		cin>>n;
+		cout<< (ui)((kase == 1)? compute1(n): compute2(n))<<endl;
+	}
+		
+	return 0;
+}
+	

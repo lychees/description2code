@@ -1,0 +1,150 @@
+#include <iostream>
+#include <fstream>
+#include <map>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <set>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <bitset>
+
+using namespace std;
+
+const long long MAXN = 1000LL * 1000 * 1000 * 1000 * 1000 * 1000;
+
+struct tree {
+
+	struct node {
+		node() :l(NULL), r(NULL), black(0), push(false) {
+		}
+
+		node *l;
+		node *r;
+		long long black;
+		bool push;
+	};
+
+	node* root = new node;
+
+	void createChildren(node *cur, long long tl, long long tm, long long tr) {
+		if (cur->l == NULL) {
+			cur->l = new node;
+			cur->r = new node;
+		}		
+	}
+
+	void update(node *cur, long long tl, long long tr, long long l, long long r) {
+		if (l > r) {
+			return;
+		}
+
+		if (l == tl && r == tr) {
+			cur->black = tr - tl + 1 - cur->black;
+			cur->push = !cur->push;
+		}
+		else {
+			long long tm = (tl + tr) / 2;
+			createChildren(cur, tl, tm, tr);
+			if (cur->push) {
+				push(cur, tl, tr);
+			}
+
+			update(cur->l, tl, tm, l, min(r, tm));
+			update(cur->r, tm + 1, tr, max(tm + 1, l), r);
+			cur->black = cur->l->black + cur->r->black;
+		}
+	}
+
+	void push(node *cur, long long tl, long long tr) {
+		long long tm = (tl + tr) / 2;
+		cur->l->black = tm - tl + 1 - cur->l->black;
+		cur->r->black = tr - tm - cur->r->black;
+		cur->l->push = !cur->l->push;
+		cur->r->push = !cur->r->push;
+		cur->push = false;
+	}
+
+	long long query(node *cur, long long tl, long long tr, long long l, long long r) {
+		if (l > r) {
+			return 0;
+		}
+
+		if (tl == l && tr == r) {
+			return cur->black;
+		}
+
+		long long tm = (tl + tr) / 2;
+		createChildren(cur, tl, tm, tr);
+		if (cur->push) {
+			push(cur, tl, tr);
+		}
+		return query(cur->l, tl, tm, l, min(r, tm)) + query(cur->r, tm + 1, tr, max(l, tm + 1), r);
+	}
+
+public:
+	void update(long long l, long long r) {
+		update(root, 1, MAXN, l, r);
+	}
+
+	long long query(long long l, long long r) {
+		return query(root, 1, MAXN, l, r);
+	}
+};
+
+long long mod = 1000 * 1000 * 1000 + 7;
+
+
+
+int main() {
+	ios_base::sync_with_stdio(false);
+	//ifstream cin("input.txt");
+	//ofstream cout("output.txt");
+
+	tree f[2];
+
+	long long lastAns = 0;
+
+	long long n;
+	cin >> n;
+	for (long long i = 0; i < n; i++) {
+		long long q;
+		cin >> q;
+		if (q == 1) {
+			long long x, l, r;
+			cin >> x >> l >> r;
+			l ^= lastAns;
+			r ^= lastAns;
+			f[x].update(l, r);
+		}
+		else {
+			long long l, r, x, y;
+			cin >> l >> r >> x >> y;
+			l ^= lastAns;
+			r ^= lastAns;
+			x ^= lastAns;
+			y ^= lastAns;
+			long long b1 = f[0].query(l, r);
+			long long b2 = f[1].query(x, y);
+			long long w1 = r - l + 1 - b1;
+			long long w2 = y - x + 1 - b2;
+
+			b1 %= mod;
+			b2 %= mod;
+			w1 %= mod;
+			w2 %= mod;
+
+			long long ans = b1 * w2 + b2 * w1;
+			ans %= mod;
+
+			lastAns = ans;
+
+			cout << ans << endl;
+		}
+	}
+
+	//system("pause");
+	return 0;
+}

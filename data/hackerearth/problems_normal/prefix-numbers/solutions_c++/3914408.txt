@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+
+#define pii pair<int, int>
+
+#define pb push_back
+#define mp make_pair
+
+#define f first
+#define s second
+
+using namespace std;
+
+typedef long long ll;
+typedef long double ld;
+
+const int N = (int) 1e6 + 7;
+const int MOD = (int) 1e9 + 7;
+
+ll n;
+
+int get(int x, int y, int z) {
+  return x * 9 * 7 + y * 9 + z;
+}
+
+unsigned int g[252][252];
+unsigned int t[252][252];
+unsigned int res[252][252];
+
+inline int square() {
+  for (int i = 0; i < 252; i++) {
+    for (int j = 0; j < 252; j++) {
+      t[i][j] = 0;
+      for (int k = 0; k < 252; k++) {
+        t[i][j] += g[i][k] * g[k][j];
+      }
+    }
+  }
+  memcpy(g, t, sizeof t);
+}
+
+inline int multiply() {
+  for (int i = 0; i < 252; i++) {
+    for (int j = 0; j < 252; j++) {
+      t[i][j] = 0;
+      for (int k = 0; k < 252; k++) {
+        t[i][j] += res[i][k] * g[k][j];
+      }
+    }
+  }
+  memcpy(res, t, sizeof t);
+}
+
+int main() {
+  #ifdef LOCAL
+    freopen("in", "r", stdin);
+  #endif // LOCAL
+
+  //4,9,7
+  cin >> n;
+  unsigned int ans = 0;
+  for (int a = 0; a < 4; a++) {
+    for (int b = 0; b < 7; b++) {
+      for (int c = 0; c < 9; c++) {
+        for (int put = 1; put < 10; put++) {
+          int u = (a * 10 + put) % 4;
+          int v = (b * 10 + put) % 7;
+          int w = (c * 10 + put) % 9;
+          bool good = 0;
+          if (put < 3 || put == 5) {
+            good = 1;
+          } else if (put == 3) {
+            good = (w % 3 == 0);
+          } else if (put == 4) {
+            good = (u == 0);
+          } else if (put == 6) {
+            good = (w % 3 == 0);
+          } else if (put == 7) {
+            good = (v == 0);
+          } else if (put == 8) {
+            good = (a == 0);
+          } else if (put == 9) {
+            good = (w == 0);
+          }
+          if (good) {
+            g[get(a, b, c)][get(u, v, w)] = 1;
+          }
+        }
+      }
+    }
+  }
+  for (int i = 0; i < 252; i++)
+    res[i][i] = 1;
+  while (n) {
+    if (n & 1) multiply();
+    n >>= 1;
+    square();
+  }
+  for (int j = 0; j < 252; j++)
+    ans += res[0][j];
+  cout << ans;
+  return 0;
+}

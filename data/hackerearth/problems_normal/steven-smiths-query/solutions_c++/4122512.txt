@@ -1,0 +1,66 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+using namespace std;
+#define N 1000010
+class BIT
+{
+	vector<int> data;
+	public:
+	BIT(int sz=N):data(sz){}
+	int query(int idx)
+	{
+		int ans=0;
+		while(idx)
+		{
+			ans+=data[idx];
+			idx&=idx-1;
+		}
+		return ans;
+	}
+	void update(int idx,int delta)
+	{
+		while(idx<data.size())
+		{
+			data[idx]+=delta;
+			idx+=idx&-idx;
+		}
+	}
+};
+int main()
+{
+    int n;
+    scanf("%d",&n);
+    vector<pair<int,int>> arr(n);
+    vector<int> ans(n);
+    for(int i=0;i<n;++i) scanf("%d%d",&arr[i].first,&arr[i].second);
+    vector<int> si(n);
+    for(int i=0;i<n;++i) si[i] = i;
+    sort(si.begin(),si.end(),[&arr](int l,int r)
+    {
+    	return arr[l]<arr[r];
+    });
+    BIT bt,bt1;
+    bt1.update(arr[si[0]].second,1);
+    for(int i=1;i<n;++i)
+    {
+    	if(arr[si[i]].first!=arr[si[i-1]].first)
+    	{
+    		int j = i-1;
+    		int k = arr[si[j]].first;
+    		while(j>=0 && arr[si[j]].first==k)
+    		{
+    			bt1.update(arr[si[j]].second,-1);
+    			bt.update(arr[si[j]].second,1);
+    			--j;
+    		}
+    	}
+    	ans[si[i]] = bt.query(arr[si[i]].second)+bt1.query(arr[si[i]].second-1);
+    	bt1.update(arr[si[i]].second,1);
+    }
+    for(int i=0;i<n;++i)
+    {
+    	printf("%d\n",ans[i]);
+    }
+    return 0;
+}

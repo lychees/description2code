@@ -1,0 +1,122 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MAX 100005
+#define ll long long int
+ll arr[MAX];
+struct node
+{
+		int s,e,l;
+};
+struct bnode
+{
+		struct node left,right,maxp;
+} st[MAX*4];
+struct bnode rest;
+struct bnode merg(struct bnode n1, struct bnode n2)
+{
+		struct bnode res;
+		int resl = 0;
+		if(arr[n1.right.e] < arr[n2.left.s])
+		{
+				resl = n1.right.l + n2.left.l;
+		}
+		if(resl >= max(n1.maxp.l,n2.maxp.l))
+		{
+				res.maxp.l = resl;
+				res.maxp.s = n1.right.s;
+				res.maxp.e = n2.left.e;
+				res.left = n1.left;
+				res.right = n2.right;
+		}
+		else if(n1.maxp.l > max(resl,n2.maxp.l))
+		{
+				res.maxp = n1.maxp;
+				res.left = n1.left;
+				res.right = n2.right;
+		}
+		else
+		{
+				res.maxp = n2.maxp;
+				res.left = n1.left;
+				res.right = n2.right;
+		}
+		if(res.left.s == res.maxp.s) res.left = res.maxp;
+		if(res.right.e == res.maxp.e) res.right = res.maxp;
+		return res;
+ 
+}
+void build(int si, int ss, int se)
+{
+		if(ss > se) return;
+		if(ss == se)
+		{
+				struct node p;
+				p.s = p.e = ss;
+				p.l = 1;
+				st[si].left = st[si].right = st[si].maxp = p;
+				return;
+		}
+		int mid = (ss+se)>>1;
+		build(si*2,ss,mid);
+		build(si*2+1,mid+1,se);
+		st[si] = merg(st[si*2],st[si*2+1]);
+}
+struct bnode query(int si, int ss, int se, int qs, int qe)
+{
+		struct bnode res;
+		res.maxp.s = res.maxp.e = res.maxp.l = INT_MAX;
+		res.left = res.right = res.maxp;
+		if(ss > se || qs > se || qe < ss) return res;
+		if(qs <= ss && se <= qe) return st[si];
+		int mid = (ss+se)>>1;
+		if(qe <= mid) return query(si*2,ss,mid,qs,qe);
+		else if(qs > mid) return query(si*2+1,mid+1,se,qs,qe);
+		struct bnode n1 = query(si*2,ss,mid,qs,qe);
+		struct bnode n2 = query(si*2+1,mid+1,se,qs,qe);
+		if(n1.maxp.l == rest.maxp.l) return n2;
+		if(n2.maxp.l == rest.maxp.l)  return n1;
+		return merg(n1,n2);
+}
+void update(int si, int ss, int se, int pos, int val)
+{
+		if(ss > se || pos > se || pos < ss) return;
+		if(ss == se)
+		{
+				arr[ss] += val;
+				return;
+		}
+		int mid = (ss+se)>>1;
+		if(pos <= mid) update(si*2,ss,mid,pos,val);
+		else if(pos > mid) update(si*2+1,mid+1,se,pos,val);
+		st[si] = merg(st[si*2],st[si*2+1]);
+}
+int main()
+{
+		int t;
+		rest.maxp.s = rest.maxp.e = rest.maxp.l = INT_MAX;
+		rest.left = rest.right = rest.maxp;
+		cin>>t;
+		while(t--)
+		{
+				int n,q;
+				//cin>>n>>q;
+				scanf("%d %d",&n,&q);
+				int i;
+				for(i=1;i<=n;++i)
+						scanf("%lld",arr+i);
+				build(1,1,n);
+				ll a,b,c;
+				while(q--)
+				{
+						//cin>>a>>b>>c;
+						scanf("%lld %lld %lld",&a,&b,&c);
+						if(a) update(1,1,n,b,c);
+						else printf("%d\n",query(1,1,n,b,c).maxp.l);
+						//if(a == 0) printf("%d\n",query(1,1,n,b,c).maxp.l);
+						//for(i=b;i<=c;++i)
+						//		cout<<arr[i]<<" ";
+						//cout<<endl;
+ 
+				}
+		}
+}

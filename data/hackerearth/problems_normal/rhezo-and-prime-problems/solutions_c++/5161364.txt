@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int N = 1e4 + 10;
+
+int a[N], cs[N], t[N];
+
+const int MAXN = 1e4;
+bool is_prime[MAXN + 1];
+int prime[MAXN + 1];
+bool idx[MAXN + 1];
+int psz;
+
+void sieve() {
+	fill(is_prime, is_prime + MAXN + 1, true);
+	int c = -1;
+	is_prime[0] = false;
+	is_prime[1] = false;
+	for (int i = 0; i * i <= MAXN; ++i) {
+		if (is_prime[i] == true) {
+			for (int j = i * i; j <= MAXN; j += i) {
+				is_prime[j] = false;
+			}
+		}
+	}
+	for (int i = 0; i <= MAXN; i++) {
+		if (is_prime[i] == true) {
+			prime[++c] = i;
+		}
+		idx[i] = c;
+	}
+	psz = c + 1;
+}
+
+const int inf = 1e9;
+int fenw[N];
+int esz = N - 1;
+
+void modify(int x, int v) {
+	while (x <= esz) {
+		if (v > fenw[x]) fenw[x] = v;
+		x = (x | (x - 1)) + 1;
+	}
+}
+
+int find_max(int x) {
+	int v = -inf;
+	while (x > 0) {
+		if (fenw[x] > v) v = fenw[x];
+		x &= x - 1;
+	}
+	return v;
+}
+
+int main() {
+	sieve();
+	fill(fenw, fenw + N, 0);
+	int n;
+	scanf("%d", &n);
+	for (int i = 0; i < n; i++) {
+		scanf("%d", &a[i]);
+	}
+	cs[0] = 0;
+	for (int i = 1; i <= n; i++) {
+		cs[i] = cs[i - 1] + a[i - 1];
+	}
+	fill(t, t + N, 0);
+	for (int times = 1; times <= 10; times++) {
+		for (int i = 0; prime[i] - 1 < n; i++) {
+			int p = prime[i];
+			for (int l = 0; l + p - 1 < n; l++) {
+				int r = l + p - 1;
+				int prev = 0;
+				if (l > 1) {
+					prev = find_max(l - 1);
+				} 
+				t[r] = max(t[r], prev + cs[r + 1] - cs[l]);
+				modify(r + 1, t[r]);
+			}
+		}
+	}
+	int res = 0;
+	for (int i = 0; i < n; i++) {
+		res = max(res, t[i]);
+	}
+	printf("%d\n", res);
+	return 0;
+}

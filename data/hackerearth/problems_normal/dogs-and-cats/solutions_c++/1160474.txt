@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define FOR(i,a,b) for(int i=(a),_b=(b); i<=_b; i++)
+#define FORD(i,a,b) for(int i=(a),_b=(b); i>=_b; i--)
+#define REP(i,a) for(int i=0,_a=(a); i<_a; i++)
+#define EACH(it,a) for(__typeof(a.begin()) it = a.begin(); it != a.end(); ++it)
+#define SZ(S) ((int) ((S).size()))
+
+#define DEBUG(x) { cout << #x << " = " << x << endl; }
+#define PR(a,n) { cout << #a << " = "; FOR(_,1,n) cout << a[_] << ' '; cout << endl; }
+#define PR0(a,n) { cout << #a << " = "; REP(_,n) cout << a[_] << ' '; cout << endl; }
+
+const long long MOD = 1000003;
+long long d, c, n;
+long long gt[MOD], inv_gt[MOD];
+
+long long power(long long x, int k) {
+    if (k == 0) return 1;
+    if (k == 1) return x % MOD;
+    long long mid = power(x, k >> 1);
+    mid = mid * mid % MOD;
+
+    if (k & 1) return mid * x % MOD;
+    else return mid;
+}
+
+void init() {
+    gt[0] = 1;
+    FOR(i,1,MOD-1) gt[i] = (gt[i-1] * i) % MOD;
+    FOR(i,0,MOD-1) inv_gt[i] = power(gt[i], MOD - 2);
+}
+
+long long C(long long n, long long k) {
+    if (n < k) return 0;
+    return gt[n] * inv_gt[k] * inv_gt[n-k] % MOD;
+}
+
+long long lucas(long long n, long long k) {
+    vector<int> rep_n, rep_k;
+    while (n || k) {
+        rep_n.push_back(n % MOD); n /= MOD;
+        rep_k.push_back(k % MOD); k /= MOD;
+    }
+    long long res = 1;
+    REP(i,rep_n.size())
+        res = (res * C(rep_n[i], rep_k[i])) % MOD;
+    return res;
+}
+
+long long get(long long sum, long long k) {
+    if (sum < k) return 0;
+    long long res = 0;
+    FOR(x,0,k) {
+        if (sum - x*n >= k) {
+            if (x % 2 == 0) {
+                res = (res + lucas(k, x) * lucas(sum - x*n - 1, k - 1)) % MOD;
+            }
+            else {
+                res = (res - lucas(k, x) * lucas(sum - x*n - 1, k - 1)) % MOD;
+                if (res < 0) res += MOD;
+            }
+        }
+    }
+    return res;
+}
+
+int main() {
+    ios :: sync_with_stdio(false); cin.tie(NULL);
+    cout << (fixed) << setprecision(6);
+    int ntest; cin >> ntest;
+    init();
+    while (ntest--) {
+        cin >> d >> c >> n;
+        cout << get((n+1) * c, c+d) << endl;
+    }
+    return 0;
+}
+

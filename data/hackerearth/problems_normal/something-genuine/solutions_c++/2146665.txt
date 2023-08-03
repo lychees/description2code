@@ -1,0 +1,77 @@
+#include <bits/stdc++.h>
+#define MOD 1000000007
+
+using namespace std;
+
+#define rep(i, a, b) for(int i = (a); i < int(b); ++i)
+#define rrep(i, a, b) for(int i = (a) - 1; i >= int(b); --i)
+#define trav(it, v) for(typeof((v).begin()) it = (v).begin(); it != (v).end(); ++it)
+#define all(v) (v).begin(), (v).end()
+
+typedef double fl;
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef vector<pii> vpi;
+
+int a[200005];
+int pre[200005];
+
+struct Node{
+	Node *lChild, *rChild;
+	Node* parent;
+	ll sum1, sum2;
+	int l, r, m;
+
+	Node(int _l, int _r, Node* _parent){
+		l=_l;
+		r=_r;
+		parent=_parent;
+		sum1=0;
+		sum2=0;
+		if(r > l+1){
+			m=l+(r-l)/2;
+			lChild = new Node(l,m,this);
+			rChild = new Node(m,r,this);
+		}
+	}
+
+	ll update(int L, int R, ll add){
+		if(R <= l || L >= r)
+			return 0;
+		if(L <= l && R >= r){
+			ll ret = 2*((add+sum1)*(r-l)+sum2)+r-l;
+			sum1 += 1;
+			return ret % MOD;
+		}
+		sum2 += min(r,R)-max(l,L);
+		ll ret=0;
+		if(lChild != NULL){
+			ret += lChild->update(L, R, add+sum1);
+			ret += rChild->update(L, R, add+sum1);
+		}
+		return ret;
+	}
+};
+
+Node* root;
+ll add=0;
+ll ans=0;
+
+int main(){
+	int N;
+	scanf("%d", &N);
+	ll ans=0;
+	rep(i,0,N){
+		scanf("%d", a+i);
+	}
+	root = new Node(0,N,NULL);
+	rep(i,0,N){
+		add += root->update(pre[a[i]], i+1, 0);
+		add %= MOD;
+		ans += add;
+		ans %= MOD;
+		pre[a[i]]=i+1;
+	}
+	cout << ans << endl;
+}

@@ -1,0 +1,118 @@
+
+#include <bits/stdc++.h>
+
+#define FOR(i,a,b) for(int i=(a),_b=(b); i<=_b; i++)
+#define FORD(i,a,b) for(int i=(a),_b=(b); i>=_b; i--)
+#define REP(i,a) for(int i=0,_a=(a); i<_a; i++)
+#define EACH(it,a) for(__typeof(a.begin()) it = a.begin(); it != a.end(); ++it)
+
+#define DEBUG(x) { cout << #x << " = "; cout << (x) << endl; }
+#define PR(a,n) { cout << #a << " = "; FOR(_,1,n) cout << a[_] << ' '; cout << endl; }
+#define PR0(a,n) { cout << #a << " = "; REP(_,n) cout << a[_] << ' '; cout << endl; }
+
+#define sqr(x) ((x) * (x))
+using namespace std;
+
+const int MN = 111;
+int m, n;
+char a[MN][MN];
+bool visited[MN][MN];
+
+const int di[] = {-1,1,0,0};
+const int dj[] = {0,0,-1,1};
+
+pair<int,int> qu[111*111];
+
+void print() {
+    FOR(i,1,m) {
+        FOR(j,1,n) cout << a[i][j];
+        cout << '\n';
+    }
+}
+
+bool bfs(int u, int v) {
+    int first = 1, last = 1;
+    qu[1] = make_pair(u, v);
+    visited[u][v] = true;
+
+    bool good = false;
+    int ln = 1;
+    while (first <= last) {
+        int u = qu[first].first, v = qu[first].second; ++first;
+        ln = max(ln, u);
+
+        REP(dir,4) {
+            int uu = u + di[dir], vv = v + dj[dir];
+            if (uu < 1 || uu > m || vv < 1 || vv > n) continue;
+            if (a[uu][vv] == '.') continue;
+            if (visited[uu][vv]) continue;
+
+            visited[uu][vv] = true;
+            qu[++last] = make_pair(uu, vv);
+        }
+    }
+    while (ln < m) {
+        FOR(i,1,last) a[qu[i].first][qu[i].second] = '.';
+
+        bool ok = false;
+        FOR(i,1,last)
+            if (a[qu[i].first + 1][qu[i].second] == 'x') {
+                ok = true;
+                break;
+            }
+        if (ok) {
+            FOR(i,1,last)
+                a[qu[i].first][qu[i].second] = 'x';
+            break;
+        }
+
+        FOR(i,1,last) {
+            ++qu[i].first;
+            a[qu[i].first][qu[i].second] = 'x';
+        }
+    }
+    return ln < m;
+}
+
+void gravity() {
+    bool bad = true;
+    while (bad) {
+        bad = false;
+        memset(visited, false, sizeof visited);
+        FOR(i,1,m) FOR(j,1,n) if (a[i][j] == 'x' && !visited[i][j]) {
+            bad = bad || bfs(i, j);
+        }
+    }
+}
+
+int main() {
+    ios :: sync_with_stdio(false);
+    while (cin >> m >> n) {
+        FOR(i,1,m) FOR(j,1,n) cin >> a[i][j];
+        FOR(j,1,n) a[m+1][j] = 'x';
+        gravity();
+
+        int q; cin >> q;
+        REP(turn,q) {
+            int i; cin >> i;
+            i = m - i + 1;
+            if (turn % 2 == 0) {
+                FOR(j,1,n) if (a[i][j] == 'x') {
+                    a[i][j] = '.';
+                    break;
+                }
+            }
+            else {
+                FORD(j,n,1) if (a[i][j] == 'x') {
+                    a[i][j] = '.';
+                    break;
+                }
+            }
+            gravity();
+        }
+        print();
+        cout << endl;
+    }
+    return 0;
+}
+

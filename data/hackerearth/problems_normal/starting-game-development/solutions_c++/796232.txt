@@ -1,0 +1,80 @@
+#include <iostream>
+using namespace std;
+#include<cstring>
+#include<cstdlib>
+#include<algorithm>
+
+class Game
+{
+	int Nsize, Msize, Qsize, **M, **Q, *level;
+public:
+	Game();
+	void displayLevels();
+	void getLevels();
+};
+
+Game::Game()
+{
+	cin >> Nsize >> Msize >> Qsize;
+	if((Nsize < 1) or (Nsize > 100) or (Msize < 1) or (Msize > 5000) or (Qsize < 1) or (Qsize > 5000))
+		throw "Exception: Values out of range";
+	M = new int*[Nsize];
+	for(int i = 0; i<Nsize; i++)
+		M[i] = new int[Msize];
+	
+	Q = new int*[Qsize];
+	for(int i = 0; i<Qsize; i++)
+		Q[i] = new int[Nsize];
+	
+	level = new int[Qsize];
+	
+	for(int lineno = 0; lineno < (Nsize+Qsize); lineno++)
+		if(lineno < Nsize)
+			for(int j = 0; j < Msize; j++)
+				cin >> M[lineno][j];
+		else
+			for(int j = 0; j < Nsize; j++)
+				cin >> Q[lineno-Nsize][j];
+}
+
+void Game::getLevels()
+{
+	int *up;
+	int lev;
+	for(int i = 0; i<Qsize; i++)
+	{
+		level[i] = Msize;
+		up = NULL;
+		for(int j = 0; j < Nsize; j++)
+		{
+			up = upper_bound(M[j], M[j]+(Msize-1), Q[i][j]);
+			lev = up - M[j];
+			if((lev == Msize-1) and (*up <= Q[i][j]))
+				++lev;
+			if(lev < level[i])
+			{
+				level[i] = lev;
+			}
+		}
+	}
+}
+
+void Game::displayLevels()
+{
+	for(int i = 0; i < Qsize; i++)
+			cout << level[i] << endl;
+}
+
+int main()
+{	
+	try
+	{
+		Game game;
+		game.getLevels();
+		game.displayLevels();
+	}
+	catch(const char* exc)
+	{
+		cout << exc << endl;
+	}
+}

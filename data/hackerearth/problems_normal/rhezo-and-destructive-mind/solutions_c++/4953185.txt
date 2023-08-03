@@ -1,0 +1,130 @@
+
+#include<bits/stdc++.h>
+using namespace std;
+#define forn(i, n)  for(int i = 0;i<n;i++)
+#define for1(i, n)  for(int i = 1;i<=n;i++)
+#define FORE(it, u) for(__typeof((u).begin()) it= (u).begin();it!= (u).end();it ++)
+#define WHITE  0
+#define BLACK 1
+#define GREY  -1
+typedef vector<int> vi;
+const int N = 105;
+
+class Arti
+{
+public:
+    int n;
+    ///data for each vertices
+
+    int Time;
+    int discover[N], finish[N], col[N], low[N];
+    bool arti[N];
+    vector<vector<int> > adj;
+    vector<pair<int,int> > bridge;
+
+    void init(vector<vector<int> > & has, int _n)
+    {
+        n = _n;
+        adj = has;
+    }
+
+    void dfsVisit(int u, int p)
+    {
+        discover[u] = ++Time;
+        low[u] = Time + 1;
+        col[u] = -1;///gray
+
+        int socon = 0;
+
+        FORE(it, adj[u])
+        {
+            int v = *it;
+        //  cout<< u << " " << v << endl;
+            if(v == p) continue;
+            if(col[v] == WHITE)
+            {
+               // cout<<"u " << u << " " << v << endl;
+                dfsVisit(v, u);
+                ///check khop
+                if(u!= p && low[v] >= discover[u])
+                {
+                    arti[u] = true;
+                }
+                else if(u == p)
+                {
+                    socon ++;
+                    if(socon == 2) arti[u] = true;
+                }
+                low[u] = min(low[u], low[v]);
+                ///check cau
+
+                if(low[v] >= discover[v])
+                {
+                    bridge.push_back(make_pair(min(u, v), max(u, v)) );
+                }
+            }
+            else low[u] = min(low[u], discover[v]);
+        }
+        col[u] = BLACK;
+    }
+
+    void dfs()
+    {
+        for1(i, n)
+        {
+            if(col[i] == 0)
+            {
+                dfsVisit(i, i);
+            }
+        }
+    }
+    vector<int>  process(vector<vector<int> > &has, int _n)
+    {
+        vector<int> res;
+        init(has, _n);
+        memset(arti, false, sizeof arti);
+        memset(col, 0, sizeof col);
+        Time = 0;
+        dfs();
+        for1(i, n) if(arti[i] == true) res.push_back(i);
+        sort(bridge.begin(), bridge.end());
+        return res;
+    }
+};
+
+int main()
+{
+   // freopen("articulation.cpp","r",stdin);
+    int n, m;
+    cin >> n >> m;
+
+    vector<vector<int> > g;
+    g.assign(n + 1, vector<int>() );
+    for1(i, m)
+    {
+        int u, v;
+        cin >> u >> v;
+
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    Arti check;
+    vector<int> ans = check.process(g, n);
+
+    int q;
+    cin >> q;
+    while(q --)
+    {
+        int x;
+        cin >> x;
+        if(check.arti[x]) cout<< "Satisfied " << g[x].size() << endl;
+        else cout<<"Not Satisfied" << endl;
+    }
+
+}
+
+
+
+
+
+

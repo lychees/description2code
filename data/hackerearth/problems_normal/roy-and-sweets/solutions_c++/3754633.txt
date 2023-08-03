@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+using namespace std;
+vector<pair<int,int> >S;
+int segtree[4000000];
+void Build(int l,int r,int arr[],int pos)
+{
+	if(l==r)
+	{
+		segtree[pos]=arr[l];
+		return;
+	}
+	int mid=(l+r)/2;
+	Build(l,mid,arr,2*pos);
+	Build(mid+1,r,arr,2*pos+1);
+	segtree[pos]=max(segtree[2*pos],segtree[2*pos+1]);
+}
+long long int query(int l,int r,int start,int end,int pos,int arr[])
+{
+	if(l<=start&&r>=end)
+	return segtree[pos];
+	int mid=(start+end)/2;
+	if(r<=mid)
+	return query(l,r,start,mid,2*pos,arr);
+	else if(l>mid)
+	return query(l,r,mid+1,end,2*pos+1,arr);
+	return max(query(l,r,start,mid,2*pos,arr),query(l,r,mid+1,end,2*pos+1,arr));
+}
+int main()
+{
+    ios_base::sync_with_stdio(0);
+    int n,s,q,i,g,l,mid,r;
+    cin>>n;
+    for(i=0;i<n;i++)
+    {
+    	cin>>s>>q;
+    	S.push_back({s,q});
+    }
+    sort(S.begin(),S.end());
+    cin>>g;
+    int arr[g];
+    int qty[n];
+    for(i=0;i<n;i++)
+    qty[i]=S[i].second;
+    Build(0,n-1,qty,1);
+    //cout<<"Fucked\n";
+    unsigned long long int R=0;
+    for(i=0;i<g;i++)
+    {
+    	cin>>arr[i];
+    	l=0,r=n-1;
+    	while(l<r)
+    	{
+    		//cout<<"Stuck\n";
+    		mid=(l+r)/2;
+    		if(S[mid].first>=arr[i])
+    		r=mid;
+    		else
+    		l=mid+1;
+    	}
+    	//cout<<"The lower bound is "<<r<<" "<<S[r].first<<"\n";
+    	//cout<<"querying "<<r<<" "<<n-1<<"\n";
+    	//cout<<<<"\n";
+    	R+=100*(query(r,n-1,0,n-1,1,qty)/arr[i]);
+    }
+    cout<<R<<"\n";
+    
+    return 0;
+}

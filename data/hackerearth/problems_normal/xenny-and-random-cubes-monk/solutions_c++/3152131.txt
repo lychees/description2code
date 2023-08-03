@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+#define ll long long int
+#define M 1000000007
+using namespace std;
+vector<vector<ll> > dp(1025,vector<ll>(11,-1));
+vector<vector<ll> >Cub(11,vector<ll>(27,0));
+//memset(Cub,0,sizeof(Cub));
+//memset(dp,-1,sizeof(dp));
+int n,k;
+string s;
+ll sum=0;
+ll Recur(int m,int p)
+{
+	if(dp[m][p]!=-1)
+	return dp[m][p];
+	if(p==k-1)
+	{
+		dp[m][p]=0;
+		for(int j=9;j>=0;j--)
+		{
+			if((m&(1<<j))&&Cub[j][(int)(s[p]-'a')])
+			{
+			dp[m][p]=Cub[j][(int)(s[p]-'a')];
+			break;
+			}
+		}
+		return dp[m][p];
+	}
+	else
+	{
+		dp[m][p]=0;
+		for(int i=9;i>=0;i--)
+		{
+			if((m&(1<<i))&&Cub[i][(int)(s[p]-'a')])
+			{
+				int m1=m^(1<<i);
+				ll temp=Recur(m1,p+1);
+				dp[m][p]=(dp[m][p]+Cub[i][(int)(s[p]-'a')]*temp)%M;
+			}
+		}
+		return dp[m][p];
+	}
+	
+}
+int main()
+{
+    cin>>n>>k;
+    for(int i=0;i<n;i++)
+    {
+    	for(int j=1;j<=6;j++)
+    	{
+    	char c;
+    	cin>>c;
+    	Cub[i][(int)(c-'a')]++;
+    	}
+    }
+    cin>>s;
+    int t=1;
+    for(int i=1;i<(1<<n);i++)
+    {
+    	int cnt=0;
+    	for(int j=0;j<t;j++)
+    	{
+    		if(i&(1<<j))
+    			cnt++;
+    	}
+    	if(i==(1<<t)-1)
+    		t++;
+    	if(cnt!=k)
+    		continue;
+    	dp[i][0]=0;
+    	for(int j=9;j>=0;j--)
+    	{
+    		if((i&(1<<j))&&Cub[j][(int)(s[0]-'a')])
+    		{
+    			int p=i^(1<<j);
+    			ll temp=Recur(p,1);
+    			dp[i][0]=(dp[i][0]+Cub[j][(int)(s[0]-'a')]*temp)%M;
+    		}
+    	}
+    	sum=(sum+dp[i][0])%M;
+    }
+    cout<<sum<<endl;
+}

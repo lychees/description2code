@@ -1,0 +1,135 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+
+#define f first
+#define s second
+#define pb push_back
+#define mp make_pair
+#define SET(a,b) memset(a,b,sizeof(a))
+#define ll long long int
+#define printl(x) printf("%lld\n",x)
+#define print(x) printf("%d\n",x)
+#define printLL(x) printf("%I64d\n",x)
+#define sc(x) scanf("%d",&x)
+#define scl(x) scanf("%lld",&x)
+#define DEBUG(x) cout << '>' << #x << ':' << x << endl;
+
+inline bool EQ(double a, double b) { return fabs(a - b) < 1e-9; }
+
+struct node {
+	int l,r;
+	bool lazy;
+};
+struct node NILLL;
+#define MAXN 200010
+string str;
+struct node ST[4*MAXN];
+void buildTree(int node, int start, int end) {
+	ST[node].lazy=false;
+	if(start==end) {
+		if(str[start]=='<') {
+			ST[node].l=1;
+			ST[node].r=0;
+		}
+		else {
+			ST[node].l=0;
+			ST[node].r=1;
+		}
+		return;
+	}
+	int mid=(start+end)>>1;
+	buildTree(2*node,start,mid);
+	buildTree(2*node+1,mid+1,end);
+	ST[node].l=ST[2*node].l+ST[2*node+1].l;
+	ST[node].r=ST[2*node].r+ST[2*node+1].r;
+}
+void update(int node, int start, int end, int qs, int qe) {
+	if(start>end)
+		return;
+	if(ST[node].lazy) {
+		int temp;
+		temp=ST[node].l;
+		ST[node].l=ST[node].r;
+		ST[node].r=temp;
+		ST[node].lazy=false;
+		if(start!=end) {
+			ST[2*node].lazy^=true;
+			ST[2*node+1].lazy^=true;
+		}
+	}
+	if(qs>end||qe<start||start>end)
+		return;
+	if(start>=qs&&end<=qe) {
+		int temp;
+		temp=ST[node].l;
+		ST[node].l=ST[node].r;
+		ST[node].r=temp;
+		if(start!=end) {
+			ST[2*node].lazy^=true;
+			ST[2*node+1].lazy^=true;
+		}
+		return;
+	}
+	int mid=(start+end)>>1;
+	update(2*node,start,mid,qs,qe);
+	update(2*node+1,mid+1,end,qs,qe);
+	ST[node].l=ST[2*node].l+ST[2*node+1].l;
+	ST[node].r=ST[2*node].r+ST[2*node+1].r;
+}
+
+struct node query(int node, int start, int end, int qs, int qe) {
+	if(start>end)
+		return NILLL;
+	if(ST[node].lazy) {
+		int temp;
+		temp=ST[node].l;
+		ST[node].l=ST[node].r;
+		ST[node].r=temp;
+		ST[node].lazy=false;
+		if(start!=end) {
+			ST[2*node].lazy^=true;
+			ST[2*node+1].lazy^=true;
+		}
+	}
+	if(qs>end||qe<start||start>end)
+		return NILLL;
+	if(start>=qs&&end<=qe)
+		return ST[node];
+	int mid=(start+end)>>1;
+	struct node temp3 = query(2*node,start,mid,qs,qe);
+	struct node temp2=query(2*node+1,mid+1,end,qs,qe);
+	struct node temp4;
+	temp4.l=temp2.l+temp3.l;
+	temp4.r=temp2.r+temp3.r;
+	ST[node].l=ST[2*node].l+ST[2*node+1].l;
+	ST[node].r=ST[2*node].r+ST[2*node+1].r;
+	return temp4;
+}
+int main() {
+	int n,m,que,lf,rt;
+	NILLL.l=0;
+	NILLL.r=0;
+	sc(n);sc(m);
+	cin>>str;
+	buildTree(1,0,n-2);
+	while(m--) {
+		sc(que);sc(lf);sc(rt);
+		if(que==1) {
+			update(1,0,n-2,lf-1,rt-2);
+		}
+		else {
+			if(lf<=rt) {
+				struct node ans=query(1,0,n-2,lf-1,rt-2);
+				printf("%d\n",ans.l);
+			}
+			else {
+				swap(lf,rt);
+				struct node ans=query(1,0,n-2,lf-1,rt-2);
+				printf("%d\n",ans.r);
+			}
+		}
+	}
+	return 0;
+}

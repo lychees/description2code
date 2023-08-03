@@ -1,0 +1,127 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define DEBUG(x)    cerr << #x << " = " << x << endl
+#define INPUT       freopen("Data.inp", "r", stdin)
+#define OUTPUT      freopen("Data.out", "w", stdout)
+
+typedef long long LL;
+typedef pair<int, int> II;
+typedef vector<int> VI;
+
+string Next() {
+    string S; cin >> S;
+    return S;
+}
+int NextInt() {
+    int n; scanf("%d", &n);
+    return n;
+}
+LL NextLong() {
+    LL n;
+    #ifdef _WIN32
+        scanf("%I64d", &n);
+    #else
+        scanf("%lld", &n);
+    #endif
+    return n;
+}
+
+const int N     = (int) 4e2 + 10;
+const int INF   = (int) 0x3f3f3f3f;
+int n, m, k, w[N][N];
+int c[N][N], f[N][N], p[N][N];
+int d[N], r[N];
+int s, t;
+
+void Add(int u, int v, int x) {
+    c[u][v] = c[v][u] = 1;
+    f[u][v] = f[v][u] = 0;
+    p[u][v] = p[v][u] = x;
+}
+
+int Sign(int x) {
+    if (x >= 0) return 1;
+    return -1;
+}
+
+bool Find() {
+    memset(d, INF, sizeof d); d[s] = 0;
+    bool flag;
+    do {
+        flag = true;
+        for (int u = 0; u < n; ++u)
+        for (int v = 0; v < n; ++v) if (c[u][v] > f[u][v]) {
+            if (d[v] > d[u] + p[u][v] * Sign(f[u][v])) {
+                d[v] = d[u] + p[u][v] * Sign(f[u][v]);
+                r[v] = u;
+                flag = false;
+            }
+        }
+    } while (flag == false);
+    return d[t] != INF;
+}
+
+void Augment() {
+    int d = INF;
+    for (int v = t; v != s; v = r[v]) {
+        int u = r[v];
+        if (f[u][v] >= 0) d = min(d, c[u][v] - f[u][v]); else d = min(d, -f[u][v]);
+    }
+    for (int v = t; v != s; v = r[v]) {
+        int u = r[v];
+        f[u][v] += d;
+        f[v][u] -= d;
+    }
+}
+
+int main() {
+    #ifdef LOCAL
+        INPUT;
+        OUTPUT;
+    #endif
+
+    int TC = NextInt();
+    while (TC--) {
+        n = NextInt(); m = NextInt(); k = NextInt();
+        for (int i = 1; i <= n; ++i) {
+            for (int j = 1; j <= n; ++j) w[i][j] = INF;
+            w[i][i] = 0;
+        }
+        while (m--) {
+            int u = NextInt(), v = NextInt(), t = NextInt();
+            w[u][v] = min(w[u][v], t);
+            w[v][u] = min(w[v][u], t);
+        }
+
+        for (int t = 1; t <= n; ++t)
+            for (int i = 1; i <= n; ++i)
+                for (int j = 1; j <= n; ++j)
+                    w[i][j] = min(w[i][j], w[i][t] + w[t][j]);
+        for (int i = 1; i <= n; ++i)
+            for (int j = 1; j <= n; ++j)
+                w[i][j] = min(w[i][j], 10000);
+
+        s = 0; t = 2 * k + 1;
+        memset(c, 0, sizeof c);
+        memset(f, 0, sizeof f);
+        memset(p, 0, sizeof p);
+        for (int i = 1; i <= k; ++i)
+            for (int j = 1; j <= k; ++j)
+                Add(i, j + k, w[i][n - k + j]);
+        for (int i = 1; i <= k; ++i) {
+            Add(s, i, 0);
+            Add(i + k, t, 0);
+        }
+        n = 2 * k + 2;
+
+        int ans = 0;
+        while (Find()) Augment();
+        for (int i = 0; i < n; ++i)
+            for (int j = 0; j < n; ++j)
+                if (f[i][j] > 0) ans += f[i][j] * p[i][j];
+        printf("%d\n", ans);
+    }
+
+    return 0;
+}

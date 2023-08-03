@@ -1,0 +1,103 @@
+#include<iostream>
+using namespace std;
+#include<bits/stdc++.h>
+int main()
+{
+	int t, m, n;
+	cin >> t;
+	while (t--)
+	{
+		string s;
+		cin >> m >> n;
+		int A[m + 1][n + 1], B[m + 1][n + 1];
+		vector<int> dp[101][101];
+
+		for (int i = 0; i<m; i++)
+		{
+			for (int j = 0; j<n; j++)
+			{
+				dp[i][j].clear();
+				B[i][j] = 1;
+				cin >> s;
+				if (s == "##")
+				{
+					B[i][j] = 0;
+					A[i][j] = -1;
+				}
+				else
+				{
+					B[i][j] = 1;
+					stringstream ss;
+					ss.clear();
+					ss << s;
+					ss >> A[i][j];
+				}
+			}
+		}
+
+		if (B[0][0])
+			dp[0][0].push_back(A[0][0]);
+		for (int i = 1; i<m; i++)
+		{
+			if (B[i][0] && dp[i - 1][0].size()>0)
+				dp[i][0].push_back(A[i][0] + dp[i - 1][0][0]);
+		}
+		for (int i = 1; i<n; i++)
+		{
+			if (B[0][i] && dp[0][i - 1].size()>0)
+				dp[0][i].push_back(A[0][i] + dp[0][i - 1][0]);
+		}
+
+		for (int i = 1; i<m; i++)
+		{
+			for (int j = 1; j<n; j++)
+			{
+				int x = dp[i - 1][j].size();
+				int y = dp[i][j - 1].size();
+				int x1 = 0;
+				int y1 = 0;
+				int count = 0;
+				while ((x1<x || y1<y) && count<101)
+				{
+					if (x1 == x && B[i][j])
+					{
+						dp[i][j].push_back(A[i][j] + dp[i][j - 1][y1]);
+						y1++;
+					}
+					else if (y1 == y && B[i][j])
+					{
+						dp[i][j].push_back(A[i][j] + dp[i - 1][j][x1]);
+						x1++;
+					}
+					else if (B[i][j])
+					{
+						if (dp[i - 1][j][x1]>dp[i][j - 1][y1])
+						{
+							dp[i][j].push_back(A[i][j] + dp[i][j - 1][y1]);
+							y1++;
+						}
+						else
+						{
+							dp[i][j].push_back(A[i][j] + dp[i - 1][j][x1]);
+							x1++;
+						}
+					}
+					count++;
+				}
+			}
+		}
+		int q, tx, ty, k;
+		cin >> q;
+		while (q--)
+		{
+			cin >> tx >> ty >> k;
+			if (!B[tx][ty])
+				cout << "Obstacle" << endl;
+			else if (k>dp[tx][ty].size())
+				cout << "Not so many paths" << endl;
+			else
+				cout << dp[tx][ty][k - 1] << endl;
+		}
+	}
+	return 0;
+}

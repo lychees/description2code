@@ -1,0 +1,62 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+#define MOD 1000000007LL
+const int maxn = 1e4 + 4;
+char s[maxn], t[maxn];
+
+typedef long long ll;
+ll f[maxn][4][4][4][4], g[4][4][4][4], Pow = 1;
+int mp[maxn];
+bool ok[maxn];
+int pr[] = { 2, 3, 5, 7 }, p[4];
+void factorize(int n) {
+	for (int i = 0; i < 4; ++i) p[i] = 0;
+	for (int i = 0; i < 4; ++i)
+		while (n % pr[i] == 0) {
+			++p[i];
+			n /= pr[i];
+		}
+}
+int main() {
+	//   freopen("input.txt","r",stdin);
+	scanf("%s%s", t, s);
+	mp[0] = -1;
+	int S = strlen(s), T = strlen(t);
+	for (int i = 0, j = -1; i < T;) {
+		while (j > -1 && t[i] != t[j]) j = mp[j];
+		mp[++i] = ++j;
+	}
+	for (int i = 0, j = 0; i < S;) {
+		while (j > -1 && s[i] != t[j]) j = mp[j];
+		++i; ++j;
+		if (j >= T) {
+			ok[i - T + 1] = 1;
+			j = mp[j];
+		}
+	}
+	f[0][0][0][0][0] = 1;
+	for (int i = 1; i <= S; ++i) {
+		memset(g, 0, sizeof g);
+		if (ok[i]) {
+			factorize(i);
+			if (p[0] == 0 && p[1] == 0 && p[2] == 0 && p[3] == 0) Pow = Pow * 2 % MOD;
+			else
+				for (int _2 = 0; _2 <= 3; ++_2)
+					for (int _3 = 0; _3 <= 2; ++_3)
+						for (int _5 = 0; _5 <= 1; ++_5)
+							for (int _7 = 0; _7 <= 1; ++_7) {
+								int a = min(3, p[0] + _2),
+									b = min(2, p[1] + _3),
+									c = min(1, p[2] + _5),
+									d = min(1, p[3] + _7);
+								g[a][b][c][d] = (g[a][b][c][d] + f[i - 1][_2][_3][_5][_7]) % MOD;
+							}
+		}
+		for (int a = 0; a < 4; ++a)
+			for (int b = 0; b < 4; ++b)
+				for (int c = 0; c <4; ++c)
+					for (int d = 0; d < 4; ++d) f[i][a][b][c][d] = (g[a][b][c][d] + f[i - 1][a][b][c][d]) % MOD;
+	}
+	printf("%lld\n", Pow*f[S][3][2][1][1] % MOD);
+}

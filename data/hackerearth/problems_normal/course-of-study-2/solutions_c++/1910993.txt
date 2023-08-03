@@ -1,0 +1,126 @@
+#include<iostream>
+#include<set>
+#include<algorithm>
+using namespace std;
+#define modulo 1000000007
+long long int n[1000000], r[1000000];
+
+long long int mypower(long long int base, long long int pow, long long int local_modulo)
+{
+    long long int result = 1;
+    if (pow==0) {
+        return result;
+    }
+    while (pow>0) {
+        if (pow%2) {
+            result = (result*base)%local_modulo;
+            if (result<0) {
+                result+=local_modulo;
+            }
+        }
+        pow/=2;
+        base=(base*base)%local_modulo;
+        if (base<0) {
+            base+=local_modulo;
+        }
+    }
+    return (result<0) ? result+local_modulo : result;
+}
+
+long long int take_modulo(long long int val)
+{
+    if (val<0) {
+        val+=modulo;
+    }
+    return val;
+}
+
+long long int inverse_modulo(long long int val, long long int local_modulo)
+{
+    return mypower(val, local_modulo-2, local_modulo);
+}
+
+long long int n_c_r(long long int up, long long int down, long long int local_modulo)
+{
+    long long int numerator = (n[up-down+1]*inverse_modulo(n[up+1], local_modulo))%local_modulo;
+    long long int denominator = r[down];
+    numerator = (numerator*inverse_modulo(denominator, local_modulo))%modulo;
+    if (numerator<0) {
+        numerator+=modulo;
+    }
+    return numerator;
+}
+int fill(long long int rep[], long long int loc_rep[], long long int c, long long int cnt)
+{
+    int loc_cnt = 1;
+    for (int i=1; i<c; i++) {
+        if (loc_rep[i] == loc_rep[i-1]) {
+            loc_cnt++;
+        }
+        else
+        {
+            if (loc_cnt>1) {
+                rep[++cnt] = loc_cnt;
+            }
+            loc_cnt=1;
+        }
+    }
+    if (loc_cnt>1) {
+        rep[++cnt] = loc_cnt;
+    }
+    return cnt;
+}
+
+void setup()
+{
+    r[0] = r[1] = 1;
+    n[100007] = 100007;
+    for (int i=100006; i>0; i--) {
+        n[i] = (i*n[i+1])%modulo;
+        if (n[i]<0) {
+            n[i]+=modulo;
+        }
+    }
+    
+    for (int i = 2; i <= 100007; i++) {
+        r[i] = (i*r[i-1])%modulo;
+        if (r[i]<0) {
+            r[i]+=modulo;
+        }
+    }
+    n[0] = n[1];
+}
+int main()
+{
+    long long int f,c,d, maxa=0, sum=0, res=1;
+    cin>>f;
+    long long int ar[f], rep[100000], cnt=-1, loc_rep[100000];
+    setup();
+    for (int i = 0; i < f; i++) {
+        cin>>c;
+        for (int j = 0; j < c; j++) {
+            cin>>loc_rep[j];
+        }
+        sort(loc_rep, loc_rep+c);
+        cnt = fill(rep, loc_rep, c, cnt);
+        ar[i]=c;
+        sum +=ar[i];
+        maxa = max(ar[i], maxa);
+    }
+    
+    n[0]=1;r[0]=1;
+    for (int i=0; i<f; i++) {
+        res = (res*n_c_r(sum, ar[i], modulo))%modulo;
+        if (res<0) {
+            res+=modulo;
+        }
+        sum -= ar[i];
+    }
+    for (int i = 0; i<=cnt; i++) {
+        res = (res*r[rep[i]])%modulo;
+        if (res<0) {
+            res+=modulo;
+        }
+    }
+    cout<<res;
+}

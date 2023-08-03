@@ -1,0 +1,68 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int N = 1e7 + 10;
+const int md = 1e9 + 7;
+
+pair <int, int> pa1[N], pa2[N];
+
+inline void add(int &a, int b) {
+	a += b;
+	if (a >= md) {
+		a -= md;
+	}
+}
+
+inline int mul(int a, int b) {
+	return (long long) a * b % md;
+}
+
+template <typename T>
+void sel_sort(T arr[], int n, int k) { 
+	int r = min(k, n - 1);
+	for (int i = 0; i < r; i++)  {
+		int pos = i;
+		for (int j = i + 1; j < n; j++) {
+			if (arr[j] < arr[pos])  {
+				pos = j;
+			}
+		}
+		swap(arr[pos], arr[i]); 
+	}
+}
+
+int main() {
+	int a, b, c;
+	scanf("%d %d %d", &a, &b, &c);
+	int n;
+	scanf("%d", &n);
+	pa1[0].first = mul(a, c);
+	// A[i - 1] * a * (b * (c + 1) + c);
+	int x1 = mul(b, c + 1);
+	add(x1, c);
+	x1 = mul(x1, a);
+	for (int i = 1; i < n; i++) {
+		pa1[i].first = mul(pa1[i - 1].first, x1);
+		pa1[i].second = i;
+	}
+	pa2[0].first = mul(b, c);
+	// A[i - 1] * b * (a * (c + 1) + c);
+	int x2 = mul(a, c + 1);
+	add(x2, c);
+	x2 = mul(x2, b);
+	for (int i = 1; i < n; i++) {
+		pa2[i].first = mul(pa2[i - 1].first, x2);
+		pa2[i].second = i;
+	}
+	sel_sort(pa1, n, 2);
+	sel_sort(pa2, n, 2);
+	int res = 0;
+	if (pa1[0].second == pa2[0].second) {
+		res = min(pa1[0].first + pa2[1].first, pa1[1].first + pa2[0].first);
+	} else {
+		res = pa1[0].first + pa2[0].first;
+	}
+	printf("%d\n", res);
+	return 0;
+}

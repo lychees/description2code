@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define MOD 1000000007
+
+long long A[5][5], X[5][5], dp[32][5][5];
+
+long long mod(long long N)
+{
+	if(N>=MOD)
+		N %= MOD;
+		
+	return N;
+}
+
+void multiply(long long P[][5], long long Q[][5], long long Z[][5])
+{
+	long long R[5][5];
+	
+	for(int i=0; i<5; i++)
+		for(int j=0; j<5; j++)
+		{
+			R[i][j] = 0;
+			
+			for(int k=0; k<5; k++)
+				R[i][j] = mod(R[i][j] + mod(P[i][k]*Q[k][j]));
+		}
+			
+	for(int i=0; i<5; i++)
+		for(int j=0; j<5; j++)
+			Z[i][j] = R[i][j];
+}
+
+long long solve(long long N, long long a, long long b, long long c, long long d, long long e)
+{
+	int k = 1;
+	
+	while(N)
+	{
+		if(N%2)
+		{
+			long long R[5] = {a, b, c, d, e};
+			a = b = c = d = e = 0;
+			
+			for(int i=0; i<5; i++)
+				a = mod(a + R[i]*dp[k][0][i]);
+			for(int i=0; i<5; i++)
+				b = mod(b + R[i]*dp[k][1][i]);
+			for(int i=0; i<5; i++)
+				c = mod(c + R[i]*dp[k][2][i]);
+			for(int i=0; i<5; i++)
+				d = mod(d + R[i]*dp[k][3][i]);
+			for(int i=0; i<5; i++)
+				e = mod(e + R[i]*dp[k][4][i]);
+		}
+		
+		N /= 2;
+		k++;
+	}
+	
+	return a;
+}
+
+int main()
+{
+    long long a, b, c, d, e, f, F0, F1, G0, G1;
+    scanf("%lld %lld %lld %lld %lld %lld %lld %lld %lld %lld", &a, &b, &c, &d, &e, &f, &F0, &F1, &G0, &G1);
+    
+    int Q;
+    scanf("%d", &Q);
+    
+    long long X0 = mod(mod(e*F0) + mod(f*G0));
+    long long X1 = mod(mod(e*(F0+F1)) + mod(f*(G0+G1)));
+    
+    X[0][0] = 1, X[0][1] = mod(c*f), X[0][2] = mod(b*e), X[0][3] = mod(a*e), X[0][4] = mod(d*f);
+    X[1][1] = c, X[1][4] = d;
+    X[2][1] = 1;
+    X[3][2] = b, X[3][3] = a;
+    X[4][3] = 1;
+    
+    for(int i=0; i<5; i++)
+    	for(int j=0; j<5; j++)
+    		dp[1][i][j] = X[i][j];
+    
+    for(int i=2; i<32; i++)
+    	multiply(dp[i-1], dp[i-1], dp[i]);
+    
+    while(Q--)
+    {
+    	int N;
+    	scanf("%d", &N);
+    	
+    	if(N==0)
+    	{
+    		printf("%lld\n", X0);
+    		continue;
+    	}
+    	
+    	if(N==1)
+    	{
+    		printf("%lld\n", X1);
+    		continue;
+    	}
+    	
+    	printf("%lld\n", solve(N-1, X1, G1, G0, F1, F0));
+    }
+    
+    return 0;
+}

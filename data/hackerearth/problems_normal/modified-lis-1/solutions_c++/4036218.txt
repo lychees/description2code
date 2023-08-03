@@ -1,0 +1,64 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define FOR(i, a, b) for(int i = (a), _b = (b); i <= _b; ++i)
+#define FORD(i, a, b) for(int i = (a), _b = (b); i >= _b; --i)
+#define REP(i, a) for (int i = 0, _a = (a); i < _a; ++i)
+#define sqr(x) ((x) * (x))
+#define SZ(x) ((int)x.size())
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> ii;
+
+struct data { int k; ll d; };
+
+const int N = 1e5+5;
+const ll base = 1e9+7;
+int n, a[N];
+data t[2][N]; //0/1 <=> positive/negative
+
+void update(data bit[], int idx, data val) {
+    while (idx <= 1e5) {
+        if (bit[idx].k < val.k) bit[idx].k = val.k, bit[idx].d = val.d % base;
+        else if (bit[idx].k == val.k) bit[idx].d = (bit[idx].d + val.d) % base;
+        idx += idx & -idx;
+    }
+}
+
+data getbit(data bit[], int idx) {
+    data ans;
+    ans.k = ans.d = 0;
+    while (idx) {
+        if (bit[idx].k > ans.k) ans.k = bit[idx].k, ans.d = bit[idx].d % base;
+        else if (bit[idx].k == ans.k) ans.d = (ans.d + bit[idx].d) % base;
+        idx -= idx & -idx;
+    }
+    ++ans.k;
+    if (ans.d == 0) ans.d = 1;
+    return ans;
+}
+
+void Solve() {
+    FOR(i, 1, n) {
+        if (a[i] > 0) {
+            data tmp = getbit(t[1], a[i] - 1);
+            update(t[0], a[i], tmp);
+        } else {
+            data tmp = getbit(t[0], (-a[i]) - 1);
+            update(t[1], -a[i], tmp);
+        }
+    }
+    data tmp1 = getbit(t[0], 1e5), tmp2 = getbit(t[1], 1e5);
+    --tmp1.k; --tmp2.k;
+    if (tmp1.k > tmp2.k) printf("%d %lld", tmp1.k, tmp1.d);
+    else if (tmp1.k < tmp2.k) printf("%d %lld", tmp2.k, tmp2.d);
+    else printf("%d %lld", tmp1.k, (tmp1.d + tmp2.d) % base);
+}
+
+int main() {
+    scanf("%d", &n);
+    FOR(i, 1, n) scanf("%d", &a[i]);
+    Solve();
+    return 0;
+}

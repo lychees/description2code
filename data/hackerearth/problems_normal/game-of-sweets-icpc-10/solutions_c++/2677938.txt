@@ -1,0 +1,92 @@
+/*
+  Beautiful Codes are MUCH better than 'Shorter' ones !
+user  : triveni
+date  : 05/10/2015
+time  : 00:01:42
+*/
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define      pii               std::pair<int,int>
+#define      vi                std::vector<int>
+#define      mp(a,b)           make_pair(a,b)
+#define      pb(a)             push_back(a)
+#define      each(it,s)        for(auto it = s.begin(); it != s.end(); ++it)
+#define      rep(i, n)         for(int i = 0; i < (n); ++i)
+#define      fill(a)           memset(a, 0, sizeof (a))
+#define      sortA(v)          sort(v.begin(), v.end())
+#define      sortD(v)          sort(v.begin(), v.end(), greater<auto>())
+#define      X                 first
+#define      Y                 second
+
+typedef long long LL;
+const int MAXN = 100000;
+
+typedef complex <long double> pt;
+
+// ACKNOWLEDGEMENT:
+// copied from https://www.codechef.com/viewplaintext/7404952
+// this is solution to https://www.codechef.com/JULY15/problems/EASYEX
+// DFT code is from codechef user xorfire
+void DFT(vector <pt>& a, bool inv)
+{
+	int n = a.size();
+	for (int i = 1, j = 0; i < n; i++)
+	{
+		int bit = n >> 1;
+		for (; j >= bit; bit >>= 1) j -= bit;
+		j += bit;
+		if (i < j) swap(a[i], a[j]);
+	}
+	for (int len = 2; len <= n; len <<= 1)
+	{
+		long double ang = 2 * M_PI / len * (inv ? -1 : 1);
+		pt wlen(cos(ang), sin(ang));
+		for (int i = 0; i < n; i += len)
+		{
+			pt w(1);
+			for (int j = 0; j < len/2; j++, w *= wlen)
+			{
+				pt u = a[i+j], v = a[i+j+len/2] * w;
+				a[i+j] = u + v, a[i+j+len/2] = u - v;
+			}
+		}
+	}
+	if(inv) for(int i = 0; i < a.size(); ++i)
+	a[i].real((LL)(a[i].real() + 0.5) / n);
+}
+
+int main()
+{
+	int n;
+	const int twop = (1 << 18);
+	int twop1 = MAXN;
+	vector<pt> a((twop), 0);
+	vector<pt> b((twop), 0);
+	cin >> n;
+	set<int> sst;
+	bool f = 0;
+	rep(i, n){
+		int x;
+		scanf("%d", &x);
+		if(sst.find(x) != sst.end()) f = 1;
+		else sst.insert(x);
+		assert(x >= 0 && x <= MAXN);
+		if(a[x].real() == 0) a[x] += 1;
+		if(b[twop1 - x].real() == 0) b[twop1 - x] += 1;
+	}
+	DFT(a, 0);
+	DFT(b, 0);
+	rep(i, a.size()) a[i] *= b[i];
+	DFT(a, 1);
+	n = a.size();
+	set<int> st;
+	for(int i = 0; i < n; ++i){
+		LL cof = a[i].real();
+		if(cof > 0 && i != twop1) st.insert(abs(i - twop1));
+	}
+	int aaa = st.size() + f;
+	cout << aaa << endl;
+	return 0;
+}

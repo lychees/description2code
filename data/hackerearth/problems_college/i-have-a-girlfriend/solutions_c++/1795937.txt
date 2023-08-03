@@ -1,0 +1,120 @@
+#include <iostream>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cassert>
+#include <ctime>
+#include <sstream>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <string>
+#include <vector>
+#include <queue>
+#include <stack>
+#include <map>
+#include <set>
+
+using namespace std;
+
+#define f first
+#define s second
+#define pb push_back
+#define mp make_pair
+#define ll long long
+#define pii pair < int, int >
+#define pll pair < long long, long long>
+#define ull unsigned long long
+#define y1 stupid_cmath
+#define left stupid_left
+#define right stupid_right
+#define vi vector <int>
+#define sz(a) (int)a.size()
+#define forit(it, s) for(__typeof(s.begin()) it = s.begin(); it != s.end(); it++)
+#define all(a) a.begin(), a.end()
+#define sqr(x) ((x) * (x))
+
+const int inf = (int)1e9;
+const int mod = inf + 7;
+const double eps = 1e-9;
+const double pi = acos(-1.0);
+
+int n, k;
+string s;
+int ans[1001000], pr[1001000], dp[1001000], z[1001000];
+
+void add(int l, int r) {
+    if(l > r) return;
+    ans[l]++;
+    ans[r+1]--;
+}
+
+int main(){
+    
+    scanf("%d %d\n", &n, &k);
+    getline(cin, s);
+    
+    for(int i = 1; i < n; i++) {
+        int j = pr[i-1];
+        while(j > 0 && s[i] != s[j]) {
+            j = pr[j-1];
+        }
+        if(s[i] == s[j]) ++j;
+        pr[i] = j;
+    }
+    
+    for(int i = 1, l = 0, r = 0; i < n; i++) {
+        if(i <= r) {
+            z[i] = min(r - i + 1, z[i-l]);
+        }
+        while(i + z[i] < n && s[z[i]] == s[i + z[i]]) z[i]++;
+        if(i + z[i] - 1 > r) {
+            l = i, r = i + z[i] - 1;
+        }
+    }
+    
+    memset(dp, -1, sizeof dp);
+    
+    for(int i = 0; i < n; i++) {
+        int len = (i + 1) - pr[i];
+        if((i + 1) % len == 0) {
+            dp[i] = len;
+        } else dp[i] = (i + 1);
+    }
+    
+    for(int i = 1; i < n; i++) {
+        int len = i + 1;
+        int cnt = len / dp[i];
+        if(cnt % k == 0) {
+            int lenAB = cnt / k * dp[i];
+            int nlen = min(z[i + 1], lenAB);
+            add(i+1, i + 1 + nlen - 1);
+        }
+    }
+    
+    if(k == 1) add(0, 0);
+    
+    for(int i = 1; i < n; i++) {
+        int len = i + 1;
+        int cnt = len / dp[i];
+        if(cnt % k == 0) add(i, i);
+        if(cnt % (k + 1) == 0) add(i, i);
+    }
+    
+    int sum = 0;
+    
+    for(int i = 0; i < n; i++) {
+        sum += ans[i];
+        ans[i] = sum;
+    }
+    
+    
+    for(int i = 0; i < n; i++) {
+        if(ans[i]) printf("1");
+        else printf("0");
+    }
+    printf("\n");
+        
+    return 0;
+}

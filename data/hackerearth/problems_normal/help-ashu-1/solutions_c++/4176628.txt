@@ -1,0 +1,138 @@
+//@nottocode
+#include<bits/stdc++.h>
+using namespace std;
+
+struct node
+{
+	int evencount;
+	int oddcount;
+};
+
+int arr[100010];
+struct node tree[1000100];
+
+void build(int node,int start,int end)
+{
+	if(start==end)
+	{
+		if(arr[start]%2)
+		{
+			tree[node].evencount=0;
+			tree[node].oddcount=1;
+		}
+		else
+		{
+			tree[node].evencount=1;
+			tree[node].oddcount=0;
+		}
+
+		return ;
+	}
+
+	int mid=(start+end)/2;
+	build(2*node,start,mid);
+	build(2*node+1,mid+1,end);
+
+	//tree[node].val=tree[2*node].val+tree[2*node+1].val;
+	tree[node].oddcount=tree[2*node].oddcount+tree[2*node+1].oddcount;
+	tree[node].evencount=tree[2*node].evencount+tree[2*node+1].evencount;
+
+	return ;
+}
+
+void update(int node,int start,int end,int idx,int val)
+{
+	if(start==end)
+	{
+		//tree[node].val=val;
+		if(val&1)
+		{
+			tree[node].evencount=0;
+			tree[node].oddcount=1;
+		}
+		else
+		{
+			tree[node].evencount=1;
+			tree[node].oddcount=0;
+		}
+
+		return ;
+	}
+
+	int mid=(start+end)/2;
+	
+	if(idx<=mid)
+		update(2*node,start,mid,idx,val);
+	else if(idx>mid)
+		update(2*node+1,mid+1,end,idx,val);
+
+	//tree[node].val=tree[2*node].val+tree[2*node+1].val;
+	tree[node].oddcount=tree[2*node].oddcount+tree[2*node+1].oddcount;
+	tree[node].evencount=tree[2*node].evencount+tree[2*node+1].evencount;
+	
+	return ;		
+}
+
+int query(int node,int start,int end,int l,int r,int q)
+{
+	if(l<=start&&r>=end)
+	{
+		if(q==1)
+			return tree[node].evencount;
+		else
+			return tree[node].oddcount;	
+	}
+
+	int mid=(start+end)/2;
+
+	if(r<=mid)
+		{
+			int p1=query(2*node,start,mid,l,r,q);
+			return p1;
+		}
+	else if(l>mid)
+		{
+			int p2=query(2*node+1,mid+1,end,l,r,q);
+			return p2;
+		}	
+	else
+		{
+			int p1=query(2*node,start,mid,l,r,q);
+			int p2=query(2*node+1,mid+1,end,l,r,q);
+
+			return p1+p2;
+		}	
+}
+
+int main(void)
+{
+	int n,q;
+	cin >> n;
+	for(int i=1;i<=n;i++)
+		cin >> arr[i];
+
+	//cout << "hi " << endl;
+	build(1,1,n);
+	//cout << "fuck you" << endl;
+	
+	//for(int i=1;i<=13;i++)
+	//	cout << tree[i].evencount << " " << tree[i].oddcount << endl; 
+
+
+	cin >> q;
+
+	for(int i=1;i<=q;i++)
+	{
+		int x,y,z;
+		cin >> x >> y >> z;
+
+		if(x==0)
+			update(1,1,n,y,z);
+		else
+			{	int ans=query(1,1,n,y,z,x);
+				cout << ans << endl;
+			}
+	}	
+
+	return 0;
+}

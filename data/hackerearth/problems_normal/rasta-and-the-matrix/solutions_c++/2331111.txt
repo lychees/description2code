@@ -1,0 +1,151 @@
+#include <iostream>
+#include <cmath>
+#include <math.h>
+#include <vector>
+#include <algorithm>
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <set>
+#include <map>
+#include <stack>
+#include <queue>
+
+using namespace std;
+
+#define vec vector
+#define ALL(x) (x).begin(), (x).end()
+#define mp make_pair
+
+typedef long long ll;
+typedef unsigned long long ull;
+
+const ll inf = 1000000000ll;
+const ll inf64 = inf * inf;
+const ll base = inf + 7;
+
+struct Node {
+	ll sum;
+	int delt;
+	Node *l, *r;
+
+	Node() {
+		sum = delt = 0;
+		l = r = 0;
+	}
+};
+
+void push(Node *v, ll tl, ll tr) {
+	ll tm = (tl + tr) >> 1;
+	if(v->delt) {
+		if(!v->l) v->l = new Node();
+		if(!v->r) v->r = new Node();
+		v->l->delt ^= 1;
+		v->l->sum = (tm - tl + 1 - v->l->sum);
+		v->l->sum = (v->l->sum % base + base) % base;
+
+		v->r->delt ^= 1;
+		v->r->sum = (tr - tm - v->r->sum);
+		v->r->sum = (v->r->sum % base + base) % base;
+
+		v->delt = 0;
+	}
+}
+
+ll get_sum(Node *v) {
+	return (v?v->sum : 0);
+}
+
+void pushup(Node *& v) {
+	v->sum = (get_sum(v->l) + get_sum(v->r)) % base;
+}
+
+struct SegTree {
+	Node *root;
+
+	SegTree() {
+		root = 0;
+	}
+
+	void update(Node *& v, ll tl, ll tr, ll l, ll r) {
+		if(!v) v = new Node();
+		if(l <= tl && tr <= r) {
+			v->delt ^= 1;
+			v->sum = (tr - tl + 1 - v->sum);
+			v->sum = (v->sum % base + base) % base;
+		}else {
+			ll tm = (tl + tr) >> 1;
+			push(v, tl, tr);
+			if(l <=  tm) update(v->l, tl, tm, l, r);
+			if(r > tm) update(v->r, tm + 1, tr, l, r);
+			pushup(v);
+		}
+	} 
+	
+	void update(ll l, ll r) {
+		update(root, 1, inf64, l, r);
+	}
+
+	ll get(Node *& v, ll tl, ll tr, ll l, ll r) {
+		if(!v) v = new Node();
+		if(l <= tl && tr <= r) return v->sum;
+		else {
+			ll tm = (tl + tr) >> 1;
+			push(v, tl, tr);
+			ll ans = 0;
+			if(l <= tm) ans = (ans + get(v->l, tl, tm, l, r)) % base;
+			if(r > tm) ans = (ans + get(v->r, tm + 1, tr, l, r)) % base;
+			pushup(v);
+			return ans;
+		}
+	}
+
+	ll get(ll l, ll r) {
+		return get(root, 1, inf64, l, r);
+	}
+} t[2];
+
+bool solve() 
+{
+	ll lastAns = 0; 
+
+	int n, ty;
+	ll x, y, l, r, c1, c2;
+
+	scanf("%d", &n);
+
+	while(n--) {
+		scanf("%d", &ty);
+
+		if(ty == 1) {
+			scanf("%lld %lld %lld", &x, &l, &r);
+			l ^= lastAns;
+			r ^= lastAns;
+			if(l <= r) t[x].update(l, r);
+		}else {
+			scanf("%lld %lld %lld %lld", &l, &r, &x, &y);
+			l ^= lastAns;
+			r ^= lastAns;
+			x ^= lastAns;
+			y ^= lastAns;
+			lastAns = 0;
+			if(l <= r && x <= y) {
+				c1 = t[0].get(l, r);
+				c2 = t[1].get(x, y);
+				lastAns = c1 * ((y - x + 1 - c2) % base) + c2 * ((r - l + 1 - c1) % base);
+				lastAns %= base;
+			}
+			printf("%lld\n", lastAns);
+		}
+	}
+
+	return true;
+}
+
+int main() {
+
+	//while(solve());
+	solve();    
+
+	return 0;
+}

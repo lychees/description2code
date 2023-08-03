@@ -1,0 +1,203 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <bits/stdc++.h>
+#define MAX_CHAR 27
+ using namespace std;
+struct SuffixTreeNode {
+    struct SuffixTreeNode *children[MAX_CHAR];
+    struct SuffixTreeNode *suffixLink;
+    int start;
+    int *end;
+    int suffixIndex;
+};
+ 
+typedef struct SuffixTreeNode Node;
+ 
+char str[1000003]; //Input string
+Node *root = NULL; 
+Node *lastNewNode = NULL;
+Node *activeNode = NULL;
+ 
+int activeEdge = -1;
+int activeLength = 0;
+ 
+int remainingSuffixCount = 0;
+int leafEnd = -1;
+int *rootEnd = NULL;
+int *splitEnd = NULL;
+int size = -1; 
+
+Node *newNode(int start, int *end)
+{
+    Node *node =(Node*) malloc(sizeof(Node));
+    int i;
+    for (i = 0; i < MAX_CHAR; i++)
+          node->children[i] = NULL;
+ 
+    node->suffixLink = root;
+    node->start = start;
+    node->end = end;
+ 
+    node->suffixIndex = -1;
+    return node;
+}
+ 
+int edgeLength(Node *n) {
+    return *(n->end) - (n->start) + 1;
+}
+ 
+int walkDown(Node *currNode)
+{
+    if (activeLength >= edgeLength(currNode))
+    {
+        activeEdge += edgeLength(currNode);
+        activeLength -= edgeLength(currNode);
+        activeNode = currNode;
+        return 1;
+    }
+    return 0;
+}
+ 
+void extendSuffixTree(int pos)
+{
+    leafEnd = pos;
+    remainingSuffixCount++;
+    lastNewNode = NULL;
+    //Add all suffixes (yet to be added) one by one in tree
+    while(remainingSuffixCount > 0) {
+ 
+        if (activeLength == 0)
+            activeEdge = pos; //APCFAL
+ 		int ch;
+ 		if(str[activeEdge] == '$')
+ 		ch = 26;
+ 		else
+ 		ch = str[activeEdge]-'a';
+ 		
+        if (activeNode->children[ch] == NULL)
+        {
+            activeNode->children[ch] = newNode(pos, &leafEnd);
+ 
+            if (lastNewNode != NULL)
+            {
+                lastNewNode->suffixLink = activeNode;
+                lastNewNode = NULL;
+            }
+        }
+        else
+        {
+            Node *next = activeNode->children[ch];
+            if (walkDown(next))//Do walkdown
+            {
+                continue;
+            }
+            if (str[next->start + activeLength] == str[pos])
+            {
+                if(lastNewNode != NULL && activeNode != root)
+                {
+                    lastNewNode->suffixLink = activeNode;
+                    lastNewNode = NULL;
+                }
+                activeLength++;
+                break;
+            }
+            splitEnd = (int*) malloc(sizeof(int));
+            *splitEnd = next->start + activeLength - 1;
+ 			
+ 			int ch2;
+ 			if(str[activeEdge] == '$')
+ 			ch2 = 26;
+ 			else
+ 			ch2 = str[activeEdge]-'a';
+            
+            Node *split = newNode(next->start, splitEnd);
+            activeNode->children[ch2] = split;
+ 			
+ 			int ch1;
+ 			if(str[pos] == '$')
+ 			ch1 = 26;
+ 			else
+ 			ch1 = str[pos]-'a';
+            
+            split->children[ch1] = newNode(pos, &leafEnd);
+            next->start += activeLength;
+            
+            int ch3;
+            if(str[next->start] == '$')
+ 			ch3 = 26;
+ 			else
+ 			ch3 = str[next->start]-'a';
+            
+           	split->children[ch3] = next;
+            if (lastNewNode != NULL)
+            {
+                lastNewNode->suffixLink = split;
+            }
+            lastNewNode = split;
+        }
+        remainingSuffixCount--;
+        if (activeNode == root && activeLength > 0) //APCFER2C1
+        {
+            activeLength--;
+            activeEdge = pos - remainingSuffixCount + 1;
+        }
+        else if (activeNode != root) //APCFER2C2
+        {
+            activeNode = activeNode->suffixLink;
+        }
+    }
+}
+int dfs(Node *nod,int &len,int k,int label){
+	int c,i,e,f=0;
+	c = 0;
+//	cout<<"shubha,m";
+	for(i=0;i<=26;i++){
+		if(nod->children[i] != NULL){
+//			cout<<i+1<<",";
+			e = dfs(nod->children[i],len,k,label+edgeLength(nod->children[i]));
+			c += e;
+			f = 1;
+		}
+	}
+	if(f == 0){
+		c = 1;
+		if(k == 1 && len < label-1){
+			len = label-1;
+		}
+//		cout<<c<<" )) ";
+		return c;
+	}
+	else{
+		if(c >= k && len < label){
+			len = label;
+		}
+//		cout<<c<<" (( ";
+		return c;
+	}
+}
+void buildSuffixTree(int n)
+{
+    int i;
+    rootEnd = (int*) malloc(sizeof(int));
+    *rootEnd = - 1;
+    root = newNode(-1, rootEnd);
+    activeNode = root; 
+    for (i=0; i<n; i++)
+        extendSuffixTree(i);
+}
+int main()
+{
+	int k,n,len = 0;
+	k = 2;
+	cin>>str;
+	n = strlen(str);
+//	cout<<str<<" ";
+	str[n] = '$';
+	str[n+1] = '\0';
+//	cout<<str<<" ";
+	buildSuffixTree(n+1);
+	dfs(root,len,k,0);
+	cout<<len;
+    return 0;
+}

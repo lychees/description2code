@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long int
+
+map <pair<int,int>,int> ma;
+priority_queue <pair<ll,int> , vector <pair<ll,int> >, greater<pair<ll,int> > > pq;
+vector <int> edge[100010];
+int visited[100010];
+int k[100010];
+ll ks[100010];
+ll dist[100010];
+ll ans[100010];
+
+void dijkstra(int src)
+{
+    pair <int,int> te;
+    pair<ll,int> p;
+    int i;
+    ll z;
+    p.first = 0LL;
+    p.second = src;
+    pq.push(p);
+
+    while (!pq.empty()) {
+        p = pq.top();
+        pq.pop();
+
+        if (visited[p.second] == 1)
+            continue;
+
+        dist[p.second] = p.first;
+        visited[p.second] = 1;
+        //cout <<p.first<<" "<<p.second<<endl;
+
+        for (i = 0; i < edge[p.second].size(); i++) {
+            te = make_pair(p.second, edge[p.second][i]);
+            z = p.first + ma[te];
+            if (!visited[edge[p.second][i]] && (z < dist[edge[p.second][i]] || dist[edge[p.second][i]] == -1)) {
+                pq.push(make_pair(z,edge[p.second][i]));
+                dist[edge[p.second][i]] = z;
+               // cout <<p.second<<" "<<edge[p.second][i]<<" "<<ma[te]<<" "<<z<<endl;
+            }
+        }
+    }
+
+}
+
+int main()
+{
+    int n,m,s,i,x,y,w;
+    pair<int,int> p;
+    ll tk,tks;
+    scanf("%d %d %d", &n, &m, &s);
+
+    for (i = 1; i <= n; i++) {
+        scanf("%d", &k[i]);
+        dist[i] = -1LL;
+    }
+
+    while (m--) {
+        scanf("%d %d %d", &x, &y, &w);
+
+        edge[x].push_back(y);
+        edge[y].push_back(x);
+
+        p = make_pair(x,y);
+        if (!ma.count(p)) {
+            ma[p] = w;
+            ma[make_pair(p.second,p.first)] = w;
+        }
+        ma[p] = min(ma[p],w);
+        p = make_pair(p.second,p.first);
+        ma[p] = min(ma[p],w);
+    }
+    //cout <<"hello "<<ma[make_pair(6,9)]<<" "<<ma[make_pair(1,3)]<<endl;
+    dijkstra(s);
+
+    tk = 0LL;
+    tks = 0LL;
+
+    for (i = 1; i <= n; i++) {
+        if (dist[i] != -1) {
+            //cout <<i<<" "<<dist[i]<<endl;
+            ks[i] = k[i] * dist[i];
+            tk = tk + k[i];
+            tks = tks + ks[i];
+        }
+    }
+
+    for (i = 1; i <= n; i++) {
+        ans[i] = 0LL;
+        if (dist[i] != -1) {
+            ans[i] = dist[i] * (tk - k[i]);
+            ans[i] = ans[i] + (tks - ks[i]);
+        }
+    }
+
+    for (i = 1; i < n; i++) {
+        printf("%lld ", ans[i]);
+    }
+    printf("%lld\n", ans[i]);
+
+    return 0;
+
+}

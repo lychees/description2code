@@ -1,0 +1,77 @@
+#include <iostream>
+#include <vector>
+#include <limits.h>
+using namespace std;
+ 
+struct Node {
+	Node() : parent(INT_MAX) {}
+	int parent;
+	vector<int> childs;
+};
+ 
+int GetParent(vector<Node> &graph, int i) {
+	if(graph[i].parent == INT_MAX) return i;
+	return GetParent(graph, graph[i].parent);
+}
+ 
+void InitGraph(vector<Node> &graph) {
+	int k;
+	cin >> k;
+	for(int i = 1; i <= k ; ++i) {
+	    int s, d;
+	    cin >> s >> d;
+	    if(s < d) swap(s, d);
+	    int p1 = GetParent(graph, s);
+	    int p2 = GetParent(graph, d);
+	    if(p1 < p2) {
+	    	graph[p1].childs.push_back(p2);
+	    	graph[p2].parent = p1;
+	    }
+	    else if(p1 > p2) {
+	    	graph[p2].childs.push_back(p1);
+	    	graph[p1].parent = p2;
+	    }
+	}
+}
+ 
+int Traverse(vector<Node> &graph, int i) {
+	int ret = 1;
+	for(auto child : graph[i].childs) {
+		ret += Traverse(graph, child);
+	}
+	return ret;
+}
+ 
+void CreateGroup(vector<Node> &graph, vector<int> &group) {
+	for(int i = 0; i < graph.size(); ++i) {
+		if(graph[i].parent == INT_MAX) {
+		//	cerr << "parent = "<< i << endl;
+			group.push_back(Traverse(graph, i));
+		}
+	}
+}
+ 
+unsigned long long GetPossibilites(int num) {
+	unsigned long long ret = 1;
+	for(unsigned long long i = 2; i <= (unsigned long long)num; ++i) {
+		ret = ((ret % 1000000007) * i) % 1000000007;
+	}
+	//cerr << "ret = " << ret << endl;
+	return ret;
+}
+ 
+int main()
+{
+	int n, k;
+	cin >> n;
+	vector<Node> graph(n);
+	InitGraph(graph);
+	vector<int> group;
+	CreateGroup(graph, group);
+	unsigned long long ret = 1;
+	for(auto size : group) {
+		ret =  ((ret % 1000000007 ) * GetPossibilites(size)) % 1000000007;
+	}
+	cout << ret;
+    return 0;
+}

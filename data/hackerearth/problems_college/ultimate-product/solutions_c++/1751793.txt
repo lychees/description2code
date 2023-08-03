@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define gc getchar_unlocked
+ 
+void s_i(int &x)
+{
+    register int c = gc();
+    x = 0;
+    for(;(c<48 || c>57);c = gc());
+    for(;c>47 && c<58;c = gc()) {x = (x<<1) + (x<<3) + c - 48;}
+}
+ 
+ 
+bool visited[100005];
+ 
+struct Node{
+	int value;
+	Node * next;
+	Node(int x):value(x){}
+};
+ 
+Node * node[100005] = {NULL};
+ 
+stack<int> st;
+ 
+int dfs(int i) {
+	int count = 1, top;
+	st.push(i);
+    visited[i] = true;
+	while(!st.empty()) {
+		top = st.top();
+		while(node[top]!=NULL && visited[node[top]->value])
+			node[top] = node[top]->next;
+		if(node[top] == NULL)
+			st.pop();
+		else {
+			st.push(node[top]->value);
+			count++;
+            visited[node[top]->value] = true;
+		}
+	}
+	return count;
+}
+ 
+int main()
+{
+	Node * ptr;
+    int mod = 1000000007;
+	int n, k, i;
+	int source[100005];
+	int dest[100005];
+	cin>>n>>k;
+    for(i = 0; i < k; i++) {
+    	s_i(source[i]);
+    	s_i(dest[i]);
+    }
+    for(i = 0; i < k; i++) {
+    	ptr = node[source[i]];
+    	node[source[i]] = new Node(dest[i]);
+    	node[source[i]]->next = ptr;
+    	ptr = node[dest[i]];
+    	node[dest[i]] = new Node(source[i]);
+    	node[dest[i]]->next = ptr;
+    }
+    long long value = 1;
+    int count;
+    for(i = 1; i <= n; i++ ) {
+    	if(!visited[i]) {
+    		count = dfs(i);
+    		while(count > 0) {
+    			value = (value * count) % mod;
+    			count--;
+    		}
+    	}
+    }
+    cout<<value<<endl;
+    return 0;
+}

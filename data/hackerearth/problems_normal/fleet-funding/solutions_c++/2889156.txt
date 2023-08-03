@@ -1,0 +1,246 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+template<int MOD>
+struct ModInt {
+	static const int Mod = MOD;
+	unsigned x;
+	ModInt(): x(0) { }
+	ModInt(signed sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	ModInt(signed long long sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	int get() const { return (int)x; }
+	
+	ModInt &operator+=(ModInt that) { if((x += that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator-=(ModInt that) { if((x += MOD - that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator*=(ModInt that) { x = (unsigned long long)x * that.x % MOD; return *this; }
+	ModInt &operator/=(ModInt that) { return *this *= that.inverse(); }
+	
+	ModInt operator+(ModInt that) const { return ModInt(*this) += that; }
+	ModInt operator-(ModInt that) const { return ModInt(*this) -= that; }
+	ModInt operator*(ModInt that) const { return ModInt(*this) *= that; }
+	ModInt operator/(ModInt that) const { return ModInt(*this) /= that; }
+	
+	ModInt inverse() const {
+		signed a = x, b = MOD, u = 1, v = 0;
+		while(b) {
+			signed t = a / b;
+			a -= t * b; std::swap(a, b);
+			u -= t * v; std::swap(u, v);
+		}
+		if(u < 0) u += Mod;
+		ModInt res; res.x = (unsigned)u;
+		return res;
+	}
+
+	bool operator==(ModInt that) const { return x == that.x; }
+	bool operator!=(ModInt that) const { return x != that.x; }
+	ModInt operator-() const { ModInt t; t.x = x == 0 ? 0 : Mod - x; return t; }
+};
+typedef ModInt<1000000007> mint;
+
+typedef mint Num;
+typedef vector<Num> Vec;
+typedef vector<Vec> Mat;
+ 
+Num determinant(Mat A) {
+	if(A.empty()) return 1;
+	int n = A.size(), m = A[0].size();
+	Num det = 1;
+	vector<char> used(n, 0);
+	rep(j, m) {
+		int i = 0;
+		while(i < n && (used[i] || A[i][j] == Num()))
+			i ++;
+		if(i == n)
+			return Num();
+		det *= A[i][j];
+		if(i != j) det = -det;
+		used[i] = true;
+		rep(k, n) if(!used[k]) {
+			Num coef = A[k][j] / A[i][j];
+			rep(l, m)
+				A[k][l] -= A[i][l] * coef;
+		}
+	}
+	return det;
+}
+
+struct Polynomial {
+	typedef mint Coef; typedef Coef Val;
+	vector<Coef> coef;	//... + coef[2] x^2 + coef[1] x + coef[0]
+	Polynomial() {}
+	explicit Polynomial(int n): coef(n) {}
+	static Polynomial One() {
+		Polynomial r(1);
+		r.coef[0] = 1;
+		return r;
+	}
+	bool iszero() const { return coef.empty(); }
+	int degree1() const { return coef.size(); }	//degree + 1
+	int resize(int d) { if(degree1() < d) coef.resize(d); return d; }
+	const Coef operator[](int i) const {
+		return i >= degree1() ? Coef() : coef[i];
+	}
+	void canonicalize() {
+		int i = coef.size();
+		while(i > 0 && coef[i-1] == Coef()) i --;
+		coef.resize(i);
+	}
+
+	static Polynomial interpolate(const vector<pair<Coef,Val> > &points) {
+		int n = points.size();
+		vector<Coef> dp(n+1);
+		dp[0] = 1;
+		rep(i, n) for(int j = i; j >= 0; j --) {
+			dp[j+1] += dp[j];
+			dp[j] *= -points[i].first;
+		}
+		Polynomial r(n);
+		rep(i, n) {
+			Coef den = 1;
+			rep(j, n) if(i != j)
+				den *= points[i].first - points[j].first;
+			Coef iden = (Coef)1 / den, minus = 0;
+			for(int j = n-1; j >= 0; j --) {
+				minus = dp[j+1] + minus * points[i].first;
+				r.coef[j] += minus * iden * points[i].second;
+			}
+		}
+		r.canonicalize();
+		return r;
+	}
+};
+
+
+struct Xor128 {
+	unsigned x, y, z, w;
+	Xor128(): x(123456789), y(362436069), z(521288629), w(88675123) { }
+
+	//[0, 2^32)
+	unsigned operator()() {
+		unsigned t = x ^ (x << 11);
+		x = y; y = z; z = w;
+		return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
+	}
+	//[0, 2^64)
+	unsigned long long nextLL() {
+		unsigned x = (*this)();
+		unsigned y = (*this)();
+		return (unsigned long long)x << 32 | y;
+	}
+	//[0, n)
+	unsigned operator()(unsigned n) {
+		unsigned mask = calculateMask(n - 1), x;
+		do {
+			x = (*this)() & mask;
+		}while(x >= n);
+		return x;
+	}
+	//[0, n)
+	signed int operator()(signed int n) { return (*this)((unsigned int)n); }
+	//[L, U]
+	signed int operator()(signed int L, signed int U) {
+		return L + (*this)(U - L + 1);
+	}
+	//[0, n)
+	unsigned long long operator()(unsigned long long n) {
+		unsigned long long mask = calculateMask(n - 1), x;
+		do {
+			x = (*this).nextLL() & mask;
+		}while(x >= n);
+		return x;
+	}
+	//[0, n)
+	signed long long operator()(signed long long n) { return (*this)((unsigned long long)n); }
+	//[L, U]
+	signed long long operator()(signed long long L, signed long long U) {
+		return L + (*this)(U - L + 1);
+	}
+private:
+
+	static unsigned calculateMask(unsigned v) {
+		v |= v >> 1; v |= v >> 2; v |= v >> 4; v |= v >> 8; v |= v >> 16;
+		return v;
+	}
+	static unsigned long long calculateMask(unsigned long long v) {
+		v |= v >> 1; v |= v >> 2; v |= v >> 4; v |= v >> 8; v |= v >> 16;
+		v |= v >> 32;
+		return v;
+	}
+};
+
+int main() {
+	Xor128 xor128;
+	int n, m;
+	while(~scanf("%d%d", &n, &m)) {
+		vector<tuple<int,int,int> > products(m);
+		rep(i, m) {
+			int a, b, c;
+			scanf("%d%d%d", &a, &b, &c), -- a, -- b;
+			products[i] = make_tuple(a, b, c);
+		}
+		const int C = 10;
+		int D = n * C;
+		string ans(D + 1, '0');
+		rep(trials, 3) {
+			vector<mint> coefs(m);
+			rep(i, m)
+				coefs[i].x = xor128(mint::Mod);
+			vector<pair<mint,mint> > points(D+1);
+			rer(d, 0, D) {
+				mint point = d + 1;
+				vector<mint> powers(C+1);
+				powers[0] = 1;
+				rep(i, C) powers[i+1] = powers[i] * point;
+				Mat A(n, Vec(n));
+				rep(i, m) {
+					int a, b, c;
+					tie(a, b, c) = products[i];
+					A[a][b] += coefs[i] * powers[c];
+				}
+				mint det = determinant(A);
+				points[d] = make_pair(point, det);
+			}
+			Polynomial poly = Polynomial::interpolate(points);
+			rer(i, 0, D)
+				if(poly[i] != mint())
+					ans[i] = '1';
+		}
+		puts(ans.c_str());
+	}
+	return 0;
+}

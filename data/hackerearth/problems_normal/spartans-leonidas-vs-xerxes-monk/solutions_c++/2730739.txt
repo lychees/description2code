@@ -1,0 +1,161 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+long long A[100005];
+int tree[400005], pre[400005], suff[400005];
+
+struct node
+{
+	int ans, prefix, suffix, len;
+};
+
+struct node create_node()
+{
+	struct node tmp;
+	
+	tmp.ans = tmp.prefix = tmp.prefix = -1;
+	tmp.len = 0;
+	
+	return tmp;
+}
+
+struct node get_ans(int left, int right, int L, int R, int root)
+{
+	if(left>right || left>R || right<L)
+		return create_node();
+	
+	if(left>=L && right<=R)
+	{
+		struct node ptr = create_node();
+		
+		ptr.ans = tree[root];
+		ptr.prefix = pre[root];
+		ptr.suffix = suff[root];
+		ptr.len = right-left+1;
+		
+		return ptr;
+	}
+	
+	int mid = (left+right)/2;
+	
+	struct node ptr1 = get_ans(left, mid, L, R, root*2);
+	struct node ptr2 = get_ans(mid+1, right, L, R, root*2+1);
+	
+	struct node ptr = create_node();
+	
+	ptr.ans = max(ptr1.ans, ptr2.ans);
+	
+	if(A[mid]<A[mid+1])
+		ptr.ans = max(ptr.ans, ptr1.suffix + ptr2.prefix);
+	
+	ptr.prefix = ptr1.prefix;
+	
+	if(ptr.prefix==ptr1.len && A[mid]<A[mid+1])
+		ptr.prefix = max(ptr.prefix, ptr.prefix+ptr2.prefix);
+	
+	ptr.suffix = ptr2.suffix;
+	
+	if(ptr.suffix==ptr2.len && A[mid]<A[mid+1])
+		ptr.suffix = max(ptr.suffix, ptr.suffix+ptr1.suffix);
+	
+	ptr.len = ptr1.len + ptr2.len;
+	
+	return ptr;
+}
+
+void update(int left, int right, int x, long long Y, int root)
+{
+	if(left>right || left>x || right<x)
+		return;
+	
+	if(left==right && right==x)
+	{
+		A[left]+= Y;
+		return;
+	}
+	
+	int mid = (left+right)/2;
+	
+	update(left, mid, x, Y, root*2);
+	update(mid+1, right, x, Y, root*2+1);
+	
+	tree[root] = max(tree[root*2], tree[root*2+1]);
+	
+	if(A[mid]<A[mid+1])
+		tree[root] = max(tree[root], suff[root*2] + pre[root*2+1]);
+	
+	pre[root] = pre[root*2];
+	
+	if(pre[root]==mid-left+1 && A[mid]<A[mid+1])
+		pre[root]+= pre[root*2+1];
+	
+	suff[root] = suff[root*2+1];
+	
+	if(suff[root]==right-mid && A[mid]<A[mid+1])
+		suff[root]+= suff[root*2];
+}
+
+void build(int left, int right, int root)
+{
+	if(left>right)
+		return;
+	
+	if(left==right)
+	{
+		tree[root] = pre[root] = suff[root] = 1;
+		return;
+	}
+	
+	int mid = (left+right)/2;
+	
+	build(left, mid, root*2);
+	build(mid+1, right, root*2+1);
+	
+	tree[root] = max(tree[root*2], tree[root*2+1]);
+	
+	if(A[mid]<A[mid+1])
+		tree[root] = max(tree[root], suff[root*2] + pre[root*2+1]);
+	
+	pre[root] = pre[root*2];
+	
+	if(pre[root]==mid-left+1 && A[mid]<A[mid+1])
+		pre[root]+= pre[root*2+1];
+	
+	suff[root] = suff[root*2+1];
+	
+	if(suff[root]==right-mid && A[mid]<A[mid+1])
+		suff[root]+= suff[root*2];
+}
+
+int main()
+{
+    int T;
+    scanf("%d", &T);
+    
+    while(T--)
+    {
+    	int N, Q;
+    	scanf("%d %d", &N, &Q);
+    	
+    	for(int i=1; i<=N; i++)
+    		scanf("%lld", &A[i]);
+    	
+    	build(1, N, 1);
+    	
+    	while(Q--)
+    	{
+    		int q, x, y;
+    		scanf("%d %d %d", &q, &x, &y);
+    		
+    		if(q)
+    			update(1, N, x, (long long)y, 1);
+    		else
+    		{
+    			struct node ptr = get_ans(1, N, x, y, 1);
+    			printf("%d\n", ptr.ans);
+    		}
+    	}
+    }
+    
+    return 0;
+}

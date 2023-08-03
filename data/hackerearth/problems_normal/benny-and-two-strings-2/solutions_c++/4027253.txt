@@ -1,0 +1,114 @@
+/* no greedy easy life */
+
+#include <cstring>
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <stack>
+#include <bitset>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cassert>
+#include <cstdlib>
+#include <queue>
+#include <ctime>
+
+#define pii pair<int, int>
+  
+#define pb push_back
+#define mp make_pair
+  
+#define f first
+#define s second
+  
+using namespace std;
+
+typedef long long ll;
+typedef double ld;
+
+typedef vector<int> vi;
+
+const double EPS = 1e-9;
+const double PI = acos(-1);
+  
+const int MOD = (int) 1e9 + 7;
+const int MAXN = (int) 1e3 + 7;
+
+int n, m, k;
+int dp[201][201][201];
+int p[201];
+int state[201][201];
+
+string s;
+string t;
+
+int f(char x, char y) {
+  int d = abs(x - y);
+  return min(d, 26 - d);
+}
+
+int main() {
+  #ifdef LOCAL
+  freopen("in", "r", stdin);
+  //freopen("out", "w", stdout);
+  #endif
+
+  ios_base::sync_with_stdio(0);
+
+  cin >> n >> m >> k;
+  cin >> s;
+  cin >> t;
+
+  string g = s + "#" + t;
+  for (int i = 1; i < n; i++) {
+    int j = p[i - 1];
+    while (j > 0 && g[i] != g[j])
+      j = p[j - 1];
+    if (g[i] == g[j]) ++j;
+    p[i] = j;
+  }
+  for (int i = 0; i <= n; i++) {
+    for (char put = 'a'; put <= 'z'; put++) {
+      int j = i;
+      while (j > 0 && g[j] != put)
+        j = p[j - 1];
+      if (g[j] == put)
+        j++;
+      state[i][put] = j;
+    }
+  }
+  for (int i = 0; i <= m; i++) {
+    for (int occur = 0; occur <= m; occur++) {
+      for (int last = 0; last <= n; last++) {
+        dp[i][occur][last] = MOD;
+      }
+    }
+  }
+  dp[0][0][0] = 0;
+  int ans = 0;
+  for (int i = 0; i <= m; i++) {
+    for (int occur = 0; occur <= m; occur++) {
+      for (int last = 0; last <= n; last++) {
+        if (dp[i][occur][last] > k) continue;
+        ans = max(ans, occur);
+        if (i == m)
+          continue;
+        for (char put = 'a'; put <= 'z'; put++) {
+          int new_kmp = state[last][put];
+          dp[i + 1][occur + (new_kmp == n)][new_kmp] = min(dp[i + 1][occur + (new_kmp == n)][new_kmp], dp[i][occur][last] + f(put, t[i]));
+        }
+      }
+    }
+  }
+  cout << ans;
+  return 0;
+}

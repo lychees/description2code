@@ -1,0 +1,51 @@
+#include <bits/stdc++.h>
+#define FOR(x,N) for(int x = 0; x < N; x++)
+#define ll long long
+#define ALL(a) (a).begin(), (a).end()
+using namespace std;
+
+struct O {
+    vector<int> pos, nxt;
+};
+
+vector<O> t;
+
+void init(){
+    t.push_back(O{vector<int>(),vector<int>(2)});
+}
+
+void add(int n, int I){
+    int i = 0;
+    for(int x = (1<<19); x; x >>= 1){
+        bool bit = x & n;
+        if(!t[i].nxt[bit]){
+            t[i].nxt[bit] = t.size();
+            t.push_back(O{vector<int>(),vector<int>(2)});
+        }
+        i = t[i].nxt[bit];
+        t[i].pos.push_back(I);
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(false); cin.tie(0); cout.tie(0);
+    init();
+    int N, Q, tmp; cin >> N >> Q;
+    FOR(x,N) cin >> tmp, add(tmp,x+1);
+    FOR(x,Q) {
+        int L, R, X; cin >> L >> R >> X;
+        int i = 0, ans = 0;
+        for(int x = (1<<19); x; x >>= 1){
+            bool bit = (x & X) == 0, change = false;
+            
+            if(!t[i].nxt[bit]) bit = !bit, change = true;
+            else{
+                auto it = lower_bound(ALL(t[t[i].nxt[bit]].pos), L);
+                if(it == t[t[i].nxt[bit]].pos.end() || *it > R) bit = !bit, change = true;
+            }
+            ans |= change ? 0 : x;
+            i = t[i].nxt[bit];
+        }
+        cout << ans << '\n';
+    }
+}

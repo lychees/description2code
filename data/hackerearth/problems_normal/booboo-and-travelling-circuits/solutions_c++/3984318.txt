@@ -1,0 +1,163 @@
+#include <iostream>
+#include<bits/stdc++.h>
+using namespace std;
+int main()
+{
+    try
+    {
+    int n ;
+    int m ;
+    long long mod = 1000000003 ;
+    cin>>n ;
+    cin>>m ;
+    vector<vector<long long> > a(n+1, std::vector<long long>(m+1));
+    vector<vector<long long> > b(n+1, std::vector<long long>(m+1));
+    long long s ;
+    long long p ;
+    long long q ;
+    long long r ;
+    cin>>s ;
+    cin>>p ;
+    cin>>q ;
+    cin>>r ;
+	for(long long i = 0; i<(n*m); i++)
+	{
+	    s = ((((p*s)%mod)*s)%mod + (q*s)%mod + (r)%(mod))%mod ;
+	    a[(i/m) + 1][(i%m) + 1] = s ;
+    }
+    cin>>s ;
+    cin>>p ;
+    cin>>q ;
+    cin>>r ;
+    for(long long i = 0; i<(n*m); i++)
+	{
+	    s = ((((p*s)%mod)*s)%mod + (q*s)%mod + (r)%(mod))%mod ;
+	    b[(i/m) + 1][(i%m) + 1] = s ;
+    }
+    int prime[10001] ;
+    int fac[10001] ; 
+    std::fill_n(prime, 10001, 1);
+    std::fill_n(fac, 10001, -1);
+    for(int i=2; i*i<=10000; i++)
+    {
+        if (prime[i])
+        {
+            for (int j=i*i; j<=10000; j+=i)
+            {
+                if(prime[j])
+            	{
+            		prime[j] = 0;
+            		fac[j] = i ;
+            	}
+            }
+        }
+    }
+    for(int i = 2; i<=10000 ; i++)
+    {
+    	if(fac[i]==-1)
+    	{
+    		fac[i] = i ;
+    	}
+    }
+    long long dp2[m+1] ;
+    long long dp1[m+1] ;
+    for(int i = 1 ; i<=m ; i++)
+	{
+	    dp2[i] = 0;
+    }
+    long long min1 [m+1] ;
+    	long long min2 [m+1] ;
+    	long long v1[m+1] ;
+    	std::fill_n(min1, m+1, -1);
+    	std::fill_n(min2, m+1, -1);
+    	for(int i = 2 ; i<=m ; i++)
+    	{
+    		if(min1[fac[i]]==-1)
+    		{
+    			min1[fac[i]] = 0 ;
+    			v1[fac[i]] = i ;
+    		}
+    		else if(min2[fac[i]]==-1)
+    		{
+    			min2[fac[i]] = 0 ;
+    		}
+    	}
+    	for(int i = (n-1) ; i>=1 ; i--)
+    	{
+    		for(int j = 1 ; j<=m ; j++)
+    		{
+    			if(j==1)
+    			{
+    				dp1[j] = dp2[1]+a[i][j] ;
+    			}
+    			else
+    			{
+    				dp1[j] = b[i][j]+ dp2[1] ;
+    				if(j==v1[fac[j]]&& min2[fac[j]]!=-1)
+    				{
+    					dp1[j] = min(dp1[j],b[i][j]+min2[fac[j]]) ;
+    				}
+    				else if(j!=v1[fac[j]])
+    				{
+    					dp1[j] = min(dp1[j],b[i][j]+min1[fac[j]]) ;
+    				}
+    				dp1[j] = min(dp1[j],dp2[j]+a[i][j]) ;
+    			}
+    		}
+    		std::fill_n(min1, m+1, -1);
+    		std::fill_n(min2, m+1, -1) ;
+        	for(int j = 2 ; j<=m ; j++)
+        	{
+        		if(min1[fac[j]]==-1)
+        		{
+        			min1[fac[j]] = dp1[j] ;
+        			v1[fac[j]] = j ;
+        		}
+        		else if(min1[fac[j]]!=-1&&min2[fac[j]]==-1)
+        		{
+        			if(dp1[j]<min1[fac[j]])
+        			{
+        				min1[fac[j]] = dp1[j] ;
+        				v1[fac[j]] = j ;
+        			}
+        			else
+        			{
+        				min2[fac[j]] = dp1[j] ;
+        			}
+        		}
+        		else
+        		{
+        			if(dp1[j]<min1[fac[j]])
+        			{
+        				min2[fac[j]] = min1[fac[j]] ;
+        				min1[fac[j]] = dp1[j] ;
+        				v1[fac[j]] = j ;
+        			}
+        			else if(dp1[j]==min1[fac[j]])
+        			{
+        				min2[fac[j]] = dp1[j] ;
+        			}
+        			else if(dp1[j]<min2[fac[j]])
+        			{
+        				min2[fac[j]] = dp1[j] ;
+        			}
+        		}
+        	}
+        	for(int j = 1 ; j<=m ; j++)
+        	{
+        	    dp2[j] = dp1[j] ;
+        	}
+    	}
+    	long long ans = dp2[1] ;
+    	for(int i = 1 ; i<=m ; i++)
+    	{
+    		ans = min(ans,dp2[i]) ;
+    	}
+    	cout<<ans ;
+    }
+    catch(const char* msg)
+    {
+        cerr<<msg<<endl ;
+    }
+	return 0;
+}

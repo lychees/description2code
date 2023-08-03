@@ -1,0 +1,86 @@
+#include <bits/stdc++.h> 
+
+using namespace std;
+
+typedef long long ll; 
+typedef pair<int, int> pii;
+
+#define REP(i,n) for(int(i)=0;(i)<(int)(n);(i)++)
+
+long long invs[3][730];
+int ps[3] = {719,5,2};
+int a[3][321][321];
+int b[3][321][321];
+int c[321];
+int d[321];
+int zero[3];
+
+void precompute_inv(long long *r, int up_to, int mod) {
+	int m = mod;
+	r[1] = 1; 
+	for (int i=2; i<=up_to; ++i) r[i] = (m - (m/i) * r[m%i] % m) % m;
+}
+
+int n,q;
+
+int main() {
+	REP(i,3) precompute_inv(invs[i], ps[i]-1, ps[i]);
+	scanf("%d %d", &n,&q);
+	REP(i,n) REP(j,n) {
+		scanf("%d", &a[2][i][j]);
+		REP(k,3) a[k][i][j] = a[2][i][j] % ps[k];
+	}
+
+	REP(k,3) REP(i,n) REP(j,n) b[k][i][j] = (i==j);
+
+	REP(k,3) {
+		int nxt = 0;
+		REP(i,n) {
+			int idx = -1;
+			for (int j = nxt; j < n; j++) if (a[k][j][i]) {
+				idx=j; break;
+			}
+			//printf("idx=%d\n", idx);
+			if (idx == -1) continue;
+			REP(j,n) {
+				swap(a[k][idx][j], a[k][nxt][j]);
+				swap(b[k][idx][j], b[k][nxt][j]);
+			}
+			int mult = invs[k][a[k][nxt][i]];
+			REP(j,n) {
+				a[k][nxt][j] = (a[k][nxt][j] * mult) % ps[k];
+				b[k][nxt][j] = (b[k][nxt][j] * mult) % ps[k];
+			}
+			for (int ot = nxt+1; ot < n; ot++) {
+				mult = a[k][ot][i];
+				REP(j,n) {
+					a[k][ot][j] = (a[k][ot][j] - a[k][nxt][j]*mult) % ps[k];
+					if (a[k][ot][j] < 0) a[k][ot][j] += ps[k];
+					b[k][ot][j] = (b[k][ot][j] - b[k][nxt][j]*mult) % ps[k];
+					if (b[k][ot][j] < 0) b[k][ot][j] += ps[k];
+				}
+			}
+
+			//REP(i,n) {REP(j,n) printf("%d ", a[k][i][j]); printf("\n");}
+			nxt++;
+		}
+
+		zero[k]=nxt;
+		//printf("zero %d = %d\n", k,zero[k]);
+	}
+
+	REP(it,q) {
+		memset(d,0,sizeof(d));
+		REP(i,n) scanf("%d", &c[i]);
+
+		bool ok = true;
+		REP(k,3) {
+			REP(i, n) {
+				d[i] = 0;
+				REP(j, n) d[i] = (d[i] + c[j]*b[k][i][j]) % ps[k];
+				if (zero[k] <= i && d[i]) ok = false;
+			}
+		}
+		printf("%s\n", ok ? "Yes" : "No");
+	}
+}

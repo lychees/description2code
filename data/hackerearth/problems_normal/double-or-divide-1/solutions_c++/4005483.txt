@@ -1,0 +1,67 @@
+#include <iostream>
+#include <stdio.h>
+#include <map>
+#include <vector>
+#include <utility>
+#include <math.h>
+#include <algorithm>
+#include <assert.h>
+using namespace std;
+#define MAXN 500005
+#define MOD 1000000007LL
+typedef long long ll;
+ll A[MAXN], flag[MAXN], primes[MAXN];
+ll factor[MAXN], pwr[MAXN], total;
+bool check(ll N) {
+    map<pair<ll, ll>, ll> mp;
+    ll z = N;
+    for(int i = 0; i < total && (primes[i] * primes[i] <= N); i++) {
+        if(N % primes[i] == 0) {
+            int cnt = 0;
+            while(N % primes[i] == 0) cnt++, N /= primes[i];
+            mp[make_pair(-cnt, primes[i])] = 1;
+        }
+    }
+    if(N > 1) mp[make_pair(-1, N)] = 1;
+    map<pair<ll, ll>, ll > :: iterator it = mp.begin();
+    ll num = (it -> first).second;
+    //cout << z << " " << num << endl;
+    return ((num % z) & 1LL);
+}
+int main() {
+    ll N, L; scanf("%lld %lld", &N, &L);
+    for(int i = 0; i < N; i++) scanf("%lld", &A[i]);
+    int LMT = sqrtl(L + 1);
+    for(int i = 3; i <= LMT; i += 2) {
+        if(!flag[i]) for(int j = i * i, k = i << 1LL; j <= L; j += k) flag[j] = 1;
+    }
+    total = 0; primes[total++] = 2;
+    for(int i = 3; i <= L; i += 2) if(!flag[i]) primes[total++] = i;
+
+
+    pwr[0] = 1; for(int i = 1; i < MAXN; i++) { pwr[i] = pwr[i - 1] << 1LL; if(pwr[i] >= MOD) pwr[i] %= MOD;}
+    sort(A, A + N); for(int i = 0; i < N; i++) factor[i] = 0;
+    for(int i = 3; i <= L; i++) flag[i] = check(i);
+    flag[1] = 1; ll cnt = 0, curr = 0;
+    for(int i = 1; i <= L; i++) {
+        if(curr >= N) break;
+        if(flag[i]) factor[N - 1]++;
+        else {
+            if(factor[curr] > 0) factor[curr]--;
+            else {
+                A[curr] = A[curr] / 2;
+                if(A[curr] <= 0) curr++;
+            }
+        }
+    }
+    if(curr >= N) {
+        printf("0\n");
+    } else {
+        printf("%lld\n", N - curr);
+        for(int i = curr; i < N; i++) {
+            if(factor[i] < 0) assert(0);
+            else printf("%lld ", (pwr[factor[i]] * A[i]) % MOD);
+        }
+        printf("\n");
+    }
+}

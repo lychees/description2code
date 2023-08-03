@@ -1,0 +1,180 @@
+//#define MYDEBUG
+#define _CRT_SECURE_NO_WARNINGS
+#define TASK "C-small-attempt0"
+#pragma comment(linker, "/STACK:536870912")
+#include <cstdio>
+#include <iostream>
+#include <iomanip> 
+#include <cmath>
+#include <ctime>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <set>
+#include <map>
+#include <string>
+#include <functional>
+#include <cassert>
+#include <bitset>
+#include <unordered_set>
+#include <unordered_map>
+#include <random>
+
+const int MOD = 1000000007;
+const int INF = 1000000001;
+const int MAXN = 100010;
+const long double EPS = 1e-6;
+const int HASH_POW = 29;
+const long double PI = acos(-1.0);
+
+using namespace std;
+
+void my_return(int code)
+{
+#ifdef MYDEBUG
+	cout << "\nTime = " << fixed << setprecision(3) << double(clock()) / CLOCKS_PER_SEC << endl;
+#endif
+	exit(code);
+}
+
+int n, q, k, id[500010], delta[500010];
+long long lst[500010], cur[500010];
+
+int find_score(long long score)
+{
+	int ll = -1, rr = k;
+	while (ll + 1 < rr)
+	{
+		int mid = (ll + rr) / 2;
+		if (lst[mid] >= score)
+			ll = mid;
+		else
+			rr = mid;
+	}
+	return ll;
+}
+
+int cnt[2000010];
+long long sum[2000010];
+
+void add_part(int v, int tl, int tr, int pos)
+{
+	if (tl == tr)
+	{
+		++cnt[v];
+		sum[v] += lst[pos];
+	}
+	else
+	{
+		int mid = (tl + tr) / 2;
+		if (pos <= mid)
+			add_part(2 * v, tl, mid, pos);
+		else
+			add_part(2 * v + 1, mid + 1, tr, pos);
+		cnt[v] = cnt[2 * v] + cnt[2 * v + 1];
+		sum[v] = sum[2 * v] + sum[2 * v + 1];
+	}
+}
+
+void del_part(int v, int tl, int tr, int pos)
+{
+	if (tl == tr)
+	{
+		--cnt[v];
+		sum[v] -= lst[pos];
+	}
+	else
+	{
+		int mid = (tl + tr) / 2;
+		if (pos <= mid)
+			del_part(2 * v, tl, mid, pos);
+		else
+			del_part(2 * v + 1, mid + 1, tr, pos);
+		cnt[v] = cnt[2 * v] + cnt[2 * v + 1];
+		sum[v] = sum[2 * v] + sum[2 * v + 1];
+	}
+}
+
+int count(int v, int tl, int tr, int l, int r)
+{
+	if (l > r)
+		return 0;
+	if (tl == l && tr == r)
+		return cnt[v];
+	int mid = (tl + tr) / 2;
+	return count(2 * v, tl, mid, l, min(r, mid)) + count(2 * v + 1, mid + 1, tr, max(mid + 1, l), r);
+}
+
+long long sum_score(int v, int tl, int tr, int l, int r)
+{
+	if (l > r)
+		return 0;
+	if (tl == l && tr == r)
+		return sum[v];
+	int mid = (tl + tr) / 2;
+	return sum_score(2 * v, tl, mid, l, min(r, mid)) + sum_score(2 * v + 1, mid + 1, tr, max(mid + 1, l), r);
+}
+
+int main()
+{
+	cin.sync_with_stdio(0);
+	cin.tie(0);
+	mt19937 mt_rand(time(0));
+#ifdef MYDEBUG
+	freopen("input.txt", "r", stdin);
+	freopen("output.txt", "w", stdout);
+#else
+	/*freopen(TASK".in", "rt", stdin);
+	freopen(TASK".out", "wt", stdout);*/
+	/*freopen("input.txt", "rt", stdin);
+	freopen("output.txt", "wt", stdout);*/
+#endif
+
+	scanf("%d %d", &n, &q);
+	for (int i = 0; i < q; ++i)
+		scanf("%d %d", &id[i], &delta[i]);
+	
+	set <long long> score;
+	score.insert(0);
+	for (int i = 0; i < q; ++i)
+	{
+		cur[id[i]] += delta[i];
+		score.insert(cur[id[i]]);
+	}
+	k = score.size();
+	for (int i = k - 1; i >= 0; --i)
+	{
+		lst[i] = *score.begin();
+		score.erase(score.begin());
+	}
+
+	long long ans = 0;
+	for (int i = 1; i <= n; ++i)
+		cur[i] = 0;
+	for (int i = 1; i <= n; ++i)
+		add_part(1, 0, k - 1, k - 1);
+	for (int x = 0; x < q; ++x)
+	{
+		int _old, _new;
+		_old = find_score(cur[id[x]]);
+		cur[id[x]] += delta[x];
+		_new = find_score(cur[id[x]]);
+
+		int old_place = count(1, 0, k - 1, 0, _old - 1) + 1;
+		ans -= lst[_old] * 1ll * old_place;
+		int new_place = count(1, 0, k - 1, 0, _new - 1) + 1;
+		ans += lst[_new] * 1ll * new_place;
+
+		del_part(1, 0, k - 1, _old);
+		long long tmp = sum_score(1, 0, k - 1, _new + 1, _old);
+		ans += tmp;
+		add_part(1, 0, k - 1, _new);
+
+		printf("%lld\n", ans);
+	}
+
+	my_return(0);
+}

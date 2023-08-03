@@ -1,0 +1,106 @@
+// Three Types.cpp : Defines the entry point for the console application.
+//
+
+#include <map>
+#include <set>
+#include <vector>
+#include <iostream>
+
+using namespace std;
+
+int N, M;
+char mat[1001][1001];
+map<int, vector<pair<int,int>>> graph;
+set<int> visited;
+bool connected;
+bool nodes_visited[1001];
+
+void init() {
+	connected = true;
+	for (int i = 1; i <= N; i++) {
+		for (int j = 1; j <= N; j++) {
+			mat[i][j] = 'N';
+		}
+	}
+}
+
+int ans() {
+	if (!connected)
+		return -1;
+	int count = 0;
+	for (int i = 1; i <= N; i++) {
+		for (int j = i + 1; j <= N; j++) {
+			if (mat[i][j] == 'U')
+				count++;
+		}
+	}
+	return M - count;
+}
+
+pair<int, int> get_pair(int road_type) {
+	set<int>::iterator itr = visited.begin();
+	bool found = false;
+	pair<int, int> p(-1, -1);
+	while (itr != visited.end()) {
+		vector<pair<int,int>>::iterator n_itr = graph[*itr].begin();
+		while (n_itr != graph[*itr].end()) {
+			if (!nodes_visited[(*n_itr).first] && (*n_itr).second == 3) {
+				return pair<int, int>(*itr, (*n_itr).first);
+			}
+			if (!found && !nodes_visited[(*n_itr).first] && (*n_itr).second == road_type) {
+				found = true;
+				p = pair<int, int>(*itr, (*n_itr).first);
+			}
+			n_itr++;
+		}
+		itr++;
+	}
+	return p;
+}
+void init_nodes() {
+	for (int i = 0; i < 1001; i++)
+		nodes_visited[i] = false;
+}
+void solution(int road_type) {
+	int size;
+	
+	visited.insert(1);
+	nodes_visited[1] = true;
+	
+	set<int>::iterator itr = visited.begin();
+	while (true) {
+		size = visited.size();
+		pair<int,int> p = get_pair(road_type);
+		if (p.first == -1)
+			break;
+		else {
+			visited.insert(p.second);
+			nodes_visited[p.second] = true;
+			mat[p.first][p.second] = 'U';
+			mat[p.second][p.first] = 'U';
+		}
+	}
+	if (visited.size() != N)
+		connected = false;
+	visited.clear();
+	init_nodes();
+}
+
+
+
+int main() {
+	cin >> N >> M;
+	init();
+	for (int i = 0; i < M; i++) {
+		int a, b, c;
+		cin >> a >> b >> c;
+		graph[a].push_back(pair<int, int>(b, c));
+		graph[b].push_back(pair<int, int>(a, c));
+		mat[a][b] = 'P';
+		mat[b][a] = 'P';
+	}
+	solution(1);
+	solution(2);
+	cout << ans();
+	return 0;
+}

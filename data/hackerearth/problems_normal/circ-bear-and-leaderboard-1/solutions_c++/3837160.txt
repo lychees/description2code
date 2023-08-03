@@ -1,0 +1,153 @@
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+#include <climits>
+#include <cctype>
+#include <utility>
+#include <queue>
+#include <cmath>
+#include <complex>
+using namespace std;
+
+typedef long long LL;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+typedef vector<PII> VPII;
+typedef pair<LL, LL> PLL;
+typedef pair<int, LL> PIL;
+typedef pair<LL, int> PLI;
+typedef double DB;
+
+#define pb push_back
+#define mset(a, b) memset(a, b, sizeof a)
+#define all(x) (x).begin(), (x).end()
+#define bit(x) (1 << (x))
+#define bitl(x) (1LL << (x))
+#define sqr(x) ((x) * (x))
+#define sz(x) ((int)(x.size()))
+#define cnti(x) (__builtin_popcount(x))
+#define cntl(x) (__builtin_popcountll(x))
+#define clzi(x) (__builtin_clz(x))
+#define clzl(x) (__builtin_clzll(x))
+#define ctzi(x) (__builtin_ctz(x))
+#define ctzl(x) (__builtin_ctzll(x))
+
+#define X first
+#define Y second
+
+#define Error(x) cout << #x << " = " << x << endl
+
+template <typename T, typename U> 
+inline void chkmax(T& x, U y) {
+	if (x < y) x = y;
+}
+
+template <typename T, typename U>
+inline void chkmin(T& x, U y) {
+	if (y < x) x = y;
+}
+
+struct Treap {
+	Treap *L, *R, *P;
+	int pri, size;
+	LL val, sum;
+	Treap(LL val): P(NULL), L(NULL), R(NULL), pri(rand()), size(1), val(val), sum(val) {}
+	Treap() {}
+	void up() {
+		size = 1; sum = val;
+		if (L != NULL) size += L -> size, sum += L -> sum;
+		if (R != NULL) size += R -> size, sum += R -> sum;
+	}
+}*root;
+ 
+Treap* merge(Treap *a,Treap *b) {
+	if (a == NULL) return b;
+	if (b == NULL) return a;
+	if (a -> pri >= b -> pri) {a -> R = merge(a -> R, b); a -> up(); return a;}
+	else						{b -> L = merge(a, b -> L); b -> up(); return b;}
+}
+ 
+void splitlwr(Treap *u, LL k, Treap *&a, Treap *&b) {
+	if (u == NULL) {
+		a = NULL, b = NULL;
+		return;
+	}
+	if (k <= u -> val) {b = u; splitlwr(u -> L, k, a, u -> L);}
+	else		  {a = u; splitlwr(u -> R, k, u -> R, b);}
+	u->up();
+}
+
+void splitupr(Treap *u, LL k, Treap *&a, Treap *&b) {
+	if (u == NULL) {
+		a = NULL, b = NULL;
+		return;
+	}
+	if (k < u -> val) {b = u; splitupr(u -> L, k, a, u -> L);}
+	else		  {a = u; splitupr(u -> R, k, u -> R, b);}
+	u->up();
+}
+void splitsize(Treap *u, int k, Treap *&a, Treap *&b) {
+	if (k <= 0)		 {a = NULL; b = u;  return;}
+	if (k >= u -> size) {a = u; b = NULL; return;}
+	const int uls = u -> L != NULL ? u -> L -> size : 0;
+	if (k <= uls) {b = u; splitsize(u -> L, k, a, u -> L);}
+	else		  {a = u; splitsize(u -> R, k - uls - 1, u -> R, b); }
+	u->up();
+}
+const int MAXN = 555555;
+LL a[MAXN];
+LL ans = 0;
+
+void process(LL pre, LL now) {
+	Treap *a, *b, *c, *d, *e;
+	splitlwr(root, pre, a, b);
+	int s;
+	splitupr(b, pre, d, e);
+	if (e == NULL) s = 0; else s = e -> size;
+	ans -= (s + 1) * pre;
+	b = merge(d, e);
+
+	splitsize(b, 1, c, b);
+	splitupr(b, now, d, e);
+	if (e == NULL) s = 0; else s = e -> size;
+	ans += now * (s + 1);
+	b = merge(d, new Treap(now));
+	b = merge(b, e);
+	splitlwr(b, now, d, e);
+	if (d != NULL) ans += d -> sum;
+	b = merge(d, e);
+	root = merge(a, b);
+}
+
+void Print(Treap *p) {
+	if (p == NULL) return;
+	Print(p -> L);
+	printf(" %lld", p -> val);
+	Print(p -> R);
+}
+
+int main() {
+	
+	int n, q;
+	scanf("%d%d", &n, &q);
+	for (int i = 0; i < n; i++) {
+		root = merge(root, new Treap(0));
+	}
+	while (q--) {
+		int u, v;
+		//Print(root);puts("");
+		scanf("%d%d", &u, &v);
+		process(a[u], a[u] + v);
+		a[u] += v;
+		printf("%lld\n", ans);
+		//Print(root);puts("");
+	}
+	return 0;
+}

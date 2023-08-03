@@ -1,0 +1,274 @@
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <algorithm>
+#include <map>
+#include <set>
+#include <bitset>
+#include <cmath>
+#include <string>
+#include <cstdlib>
+#include <vector>
+
+#define X first
+#define Y second
+#define mp make_pair
+#define sqr(x) ((x) * (x))
+#define Rep(i, n) for(int i = 0; i<(n); i++)
+#define foreach(it, n) for(__typeof(n.begin()) it = n.begin(); it != n.end(); it++)
+
+using namespace std;
+typedef long long LL;
+typedef pair<int, int> pii;
+
+#define esp 1e-8
+#define N 400010
+
+struct Edge {
+    int to;
+    Edge *next;
+};
+
+struct Graph {
+    int ecnt;
+    vector<Edge> edges;
+    vector<Edge*> mat;
+    void reset(int n = 0, int m = 0) {
+        ecnt = 0;
+        mat = vector<Edge*>(n);
+        edges = vector<Edge>(m*2);
+    }
+    void link(int A, int B) {
+        edges[ecnt].to = B;
+        edges[ecnt].next = mat[A];
+        mat[A] = &edges[ecnt++];
+
+        edges[ecnt].to = A;
+        edges[ecnt].next = mat[B];
+        mat[B] = &edges[ecnt++];
+    }
+};
+
+struct BCC {
+    int n, nbcc, ncnt;
+    Graph graph;
+    int depth, stack[N], stackSize;
+    int low[N], dev[N], belong[N], isCutNode[N];
+    int id[N*2], fa[N*2];
+    void dfs(int x) {
+        low[x] = dev[x] = depth++;
+        stack[stackSize++] = x;
+        for (Edge *p = graph.mat[x]; p; p = p->next) {
+            int to = p->to;
+            if (dev[to] == -1) {
+                dfs(to);
+                low[x] = min(low[x], low[to]);
+                if (low[to] >= dev[x]) {
+                    isCutNode[x] = true;
+                    while (true) {
+                        stackSize--;
+                        belong[stack[stackSize]] = nbcc;
+                        if (stack[stackSize] == to) break;
+                    }
+                    fa[nbcc] = x;
+                    nbcc++;
+                }
+            }
+            else low[x] = min(low[x], dev[to]);
+        }
+    }
+    void trajan() {
+        memset(dev, -1, sizeof dev);
+        memset(isCutNode, false, sizeof isCutNode);
+        depth = 0;
+        nbcc = 0;
+        dfs(0);
+        ncnt = nbcc;
+        belong[0] = -1;
+        Rep(i, n) 
+            if (isCutNode[i]) {
+                fa[ncnt] = belong[i];
+                id[i] = ncnt++;
+            }
+            else id[i] = belong[i];
+        Rep(i, nbcc) fa[i] = id[fa[i]];
+    }
+}bcc;
+
+int n, m, q;
+int val[N];
+set<pii> nodeVal[N];
+
+struct Segtree {
+    int left[N*4], right[N*4], key[N*4];
+    void build(int l, int r, int step) {
+        left[step] = l, right[step] = r;
+        if (l == r) return;
+        int mid = l + r >> 1;
+        build(l, mid, step * 2);
+        build(mid + 1, r, step * 2 + 1);
+    }
+    void update(int pos, int val, int step) {
+        if (left[step] == right[step]) key[step] = val;
+        else {
+            int mid = left[step] + right[step] >> 1;
+            update(pos, val, step * 2 + (pos <= mid ? 0 : 1));
+            key[step] = min(key[step*2], key[step*2+1]);
+        }
+    }
+    int ask(int l, int r, int step) {
+        if (left[step] == l && right[step] == r) return key[step];
+        else {
+            int mid = left[step] + right[step] >> 1;
+            if (r <= mid) return ask(l, r, step * 2);
+            else if (mid < l) return ask(l, r, step * 2 + 1);
+            else return min(ask(l, mid, step * 2),
+                            ask(mid + 1, r, step * 2 + 1));
+        }
+    }
+} segtree;
+
+struct Tree {
+    int n, root;
+    int dev[N], pos[N], son[N], size[N], top[N], inPos[N];
+    int fa[N];
+    Graph graph;
+    void dfsA(int x, int father, int depth) {
+        dev[x] = depth;
+        size[x] = 1;
+        son[x] = -1;
+        for (Edge *p = graph.mat[x]; p; p = p->next) {
+            int to = p->to;
+            if (to == father) continue;
+            dfsA(to, x, depth + 1);
+            fa[to] = x;
+            size[x] += size[to];
+            if (son[x] == -1 || size[to] > size[son[x]]) 
+                son[x] = to;
+        }
+    }
+    void dfsB(int x, int father, int tp, int &nn) {
+        top[x] = tp;
+        inPos[nn] = x;
+        pos[x] = nn++;
+        if (son[x] != -1) dfsB(son[x], x, tp, nn);
+        for (Edge *p = graph.mat[x]; p; p = p->next) {
+            int to = p->to;
+            if (to == father || son[x] == to) continue;
+            dfsB(to, x, to, nn);
+        }
+    }
+
+    void build() {
+        dfsA(root, -1, 0);
+        int n = 0;
+        dfsB(root, -1, root, n);
+        fa[root] = root;
+    }
+
+    int lca(int u, int v) {
+        while (top[u] != top[v]) {
+            if (dev[top[u]] > dev[top[v]]) swap(u, v);
+            v = fa[top[v]];
+        }
+        return dev[u] < dev[v] ? u : v;
+    }
+
+    int ask(int u, int v) {
+        int ans = 0x7fffffff;
+        while (top[u] != top[v]) {
+            if (dev[top[u]] > dev[top[v]]) swap(u, v);
+//          printf("%d %d %d\n", pos[top[v]], pos[v], segtree.ask(pos[top[v]], pos[v], 1));
+            ans = min(ans, segtree.ask(pos[top[v]], pos[v], 1));
+//          printf("%d %d %d\n", v, top[v], fa[top[v]]);
+            v = fa[top[v]];
+        }
+//      puts("out");
+        if (dev[u] > dev[v]) swap(u, v);
+//      printf("%d %d %d\n", pos[u], pos[v], segtree.ask(pos[u], pos[v], 1));
+        ans = min(ans, segtree.ask(pos[u], pos[v], 1));
+        return ans;
+    }
+}tree;
+
+int main() {
+    scanf("%d%d%d", &n, &m, &q);
+    Rep(i, n) scanf("%d\n", &val[i]);
+    bcc.graph.reset(n, m);
+    bcc.n = n;
+    while (m --) {
+        int x, y;
+        scanf("%d%d", &x, &y);
+        x--, y--;
+        bcc.graph.link(x, y);
+//      printf("%d %d\n", x, y);
+    }
+    bcc.trajan();
+//  puts("ok");
+
+    tree.n = bcc.ncnt;
+    tree.graph.reset(bcc.ncnt, bcc.ncnt - 1);
+    for (int i = 0; i < bcc.ncnt; i++)
+        if (bcc.fa[i] != -1) tree.graph.link(i, bcc.fa[i]);
+    tree.root = bcc.id[0];
+    tree.build();
+
+    for (int i = 0; i < n; i++) {
+//      printf("i %d id %d %d\n", i, bcc.id[i], val[i]);
+        nodeVal[bcc.id[i]].insert(mp(val[i], i));
+        if (bcc.isCutNode[i] && bcc.fa[bcc.id[i]] != -1) {
+//          printf("i %d id %d %d\n", i, bcc.fa[bcc.id[i]], val[i]);
+            nodeVal[bcc.fa[bcc.id[i]]].insert(mp(val[i], i));
+        }
+    }
+
+//  printf("%d\n", tree.n);
+    segtree.build(0, tree.n - 1, 1);
+    Rep(i, tree.n) {
+        segtree.update(tree.pos[i], nodeVal[i].begin()->X, 1);
+    }
+//  printf("test %d\n", segtree.ask(1, 1, 1));
+//  printf("test %d\n", segtree.ask(0, 1, 1));
+//  printf("test %d\n", segtree.ask(0, 0, 1));
+//  puts("ok");
+    while (q --) {
+        char tmp[5];
+        int a, b;
+        scanf("%s%d%d", tmp, &a, &b);
+        if (tmp[0] == 'C') {
+            a --;
+//          printf("C %d(%d) %d\n", a, bcc.id[a], b);
+            int id = bcc.id[a];
+            nodeVal[id].erase(nodeVal[id].find(mp(val[a], a)));
+            nodeVal[id].insert(mp(b, a));
+            segtree.update(tree.pos[id], nodeVal[id].begin()->X, 1);
+            if (bcc.isCutNode[a] && bcc.fa[id] != -1) {
+                id = bcc.fa[id];
+                nodeVal[id].erase(nodeVal[id].find(mp(val[a], a)));
+                nodeVal[id].insert(mp(b, a));
+                segtree.update(tree.pos[id], nodeVal[id].begin()->X, 1);
+            }
+            val[a] = b;
+//          printf("!%d %d\n", nodeVal[id].begin()->X, tree.pos[id]);
+        }
+        else {
+            a--, b--;
+            if (a == b) {
+                printf("%d\n", val[a]);
+                continue;
+            }
+//          printf("ask %d(%d) %d(%d)\n", a, bcc.id[a], b, bcc.id[b]);
+            a = bcc.id[a];
+            b = bcc.id[b];
+            int ans = tree.ask(a, b);
+//          printf("%d\n", ans);
+            int c = tree.lca(a, b);
+            if (c < bcc.nbcc) {
+//              printf("exadd %d %d\n", bcc.fa[c], nodeVal[bcc.fa[c]].begin()->X);
+                ans = min(ans, nodeVal[bcc.fa[c]].begin()->X);
+            }
+            printf("%d\n", ans);
+        }
+    }
+    return 0;
+}

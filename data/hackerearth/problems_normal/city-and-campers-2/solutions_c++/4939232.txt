@@ -1,0 +1,95 @@
+#include <iostream>
+#include <vector>
+#include <set>
+#include <algorithm>
+#include <limits>
+using namespace std;
+class UnionFind{
+private:
+  vector<long long> Arr;
+  vector<long long> sz;
+  vector<long long> szCount;
+  long long N;
+  long long max_size;
+public:
+  UnionFind(long long _N):  Arr(_N, 0), sz(_N, 0), szCount(_N+1, 0), N(_N){
+    initialize();
+  }
+  void initialize(){
+    for(long long i = 0;i<N;i++){
+      Arr[ i ] = i ;
+      sz[ i ] = 1;
+    }
+    szCount[1] = N;
+    max_size = 1;
+  }
+ 
+  bool weighted_union(long long A,long long B){
+    long long root_A = root(A);
+    long long root_B = root(B);
+    if(root_A == root_B) {
+    	return false;
+    }
+    szCount[sz[root_A]]--;
+    szCount[sz[root_B]]--;
+    
+    if(sz[root_A] < sz[root_B ]){
+    	swap(root_A, root_B);
+    }
+    Arr[ root_B ] = Arr[root_A];
+    sz[root_A] += sz[root_B];
+    szCount[sz[root_A]]++;
+    max_size = max(max_size, sz[root_A]);
+    return true;
+  }
+  long long root (long long i){
+    while(Arr[ i ] != i){
+      Arr[ i ] = Arr[ Arr[ i ] ] ; 
+      i = Arr[ i ]; 
+    }
+    return i;
+  }
+
+  long long getDiff(){
+  	if(max_size == N){
+  		return 0;
+  	}
+  	long long minDiff = N;
+  	int i = 1;
+  	while(szCount[i] == 0) i++;
+  	while(i < max_size){
+  		if(szCount[i] > 1){
+  			return 0;
+  		}
+  		int j = i+1;
+  		while(j < max_size && szCount[j] == 0) j++;
+  		long long diff = j -i;
+  		minDiff = min(minDiff, diff);
+  		i = j;
+  	}
+  	/*for(int k = 0; k < 10; k++){
+  		cout << szCount[k] << "|";
+  	}
+  	cout << max_size << endl;*/
+  	return minDiff;
+  }
+};
+int main()
+{
+	long long N, Q;
+	cin >> N >> Q;
+	UnionFind uf(N);
+	long long currG = 0;
+	
+	while(Q-- > 0){
+		long long a,b;
+		cin >>a>>b;
+		bool isMerge = uf.weighted_union(a, b);
+		if(isMerge){
+			currG = uf.getDiff();
+		}
+		cout << currG << endl;
+	}
+    
+    return 0;
+}

@@ -1,0 +1,150 @@
+/*akash and gcd1*/
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long int
+vector<ll> sieve(1000005,1);
+vector<ll> seg_tree(2000007,0);
+vector<ll> arr(1000005);
+vector<ll> fun_arr(500002,0);
+vector<ll> pr_arr;
+#define modulus_value 1000000007
+ll mod_rec(ll num,ll pow)
+{
+    if(pow==0)
+        return 1;
+    else if(pow==1)
+        return num;
+    else if(pow%2==0)//if mod_rec is even
+        return mod_rec((num*num)%modulus_value,pow/2);
+    else//if mod_rec is odd
+        return (num*mod_rec((num*num)%modulus_value,pow/2))%modulus_value;
+}
+void made_sieve()
+{
+    sieve[0]=0,sieve[1]=0;
+    fun_arr[0]=0;fun_arr[1]=1;fun_arr[2]=3;
+    pr_arr.push_back(2);
+    for(ll i=4;i<=500000;i+=2)
+        sieve[i]=0;
+    for(ll i=3;i<=500000;i=i+2)
+    {
+        if(sieve[i]==1)
+        {
+            fun_arr[i]=(2*i)-1;
+            pr_arr.push_back(i);
+            for(ll j=i+i;j<=500000;j+=i)//here limit can be set to 1000 if needed in case of time exceeds
+                sieve[j]=0;
+        }
+    }
+}
+void fun_calc(ll limit)
+{
+    ll num,total,k,temp,j,fact,cnt,ans,val,pw_val;
+    fun_arr[0]=0;fun_arr[1]=1;
+    for(ll i=2;i<=limit;i++)
+    {
+        if(fun_arr[i]!=0)
+            continue;
+        k=0,temp=i,total=1;
+        for(j=pr_arr[k];( (k<pr_arr.size()) && (j*j<=temp) );j=pr_arr[++k] )//it calculates the number of divisors efficiently
+        {
+            cnt=0;
+            while((temp%j)==0)
+            {
+                cnt++;
+                temp=temp/j;
+            }
+            if(cnt==1)
+                total=((total%modulus_value)*(fun_arr[j]%modulus_value))%modulus_value;
+            else if(cnt>1)
+            {
+                pw_val=mod_rec(j,cnt-1);
+                val=( ((j%modulus_value)*(fun_arr[pw_val]%modulus_value))%modulus_value + ( pw_val * (j-1)%modulus_value)%modulus_value)%modulus_value;
+                total=((total%modulus_value)*(val%modulus_value))%modulus_value;
+            }
+        }
+        if(temp!=1)
+            total=((total%modulus_value)*(fun_arr[temp]%modulus_value))%modulus_value;
+        fun_arr[i]=total;
+    }
+}
+void BUILD_SEG_TREE(ll ti,ll ss,ll se)
+{
+    if(ss>se)
+        return;
+    if(ss==se)
+    {
+        seg_tree[ti]=fun_arr[arr[ss]]%modulus_value;
+        if(seg_tree[ti]<0)
+            seg_tree[ti]+=modulus_value;
+        return;
+    }
+    ll mid=(ss+se)/2;
+    BUILD_SEG_TREE(ti*2,ss,mid);
+    BUILD_SEG_TREE(ti*2+1,mid+1,se);
+    seg_tree[ti]=(seg_tree[ti*2]%modulus_value+seg_tree[ti*2+1]%modulus_value)%modulus_value;
+}
+void UP_SEG_TREE(ll ti,ll ss,ll se,ll index,ll diff)
+{
+    if(index>se||index<ss)
+        return;
+    seg_tree[ti]=((seg_tree[ti]%modulus_value)+(diff%modulus_value))%modulus_value;
+    if(ss!=se)
+    {
+        ll mid=(ss+se)/2;
+        UP_SEG_TREE(ti*2,ss,mid,index,diff);
+        UP_SEG_TREE(ti*2+1,mid+1,se,index,diff);
+    }
+}
+ll final_val;
+ll FIND_RANGE_SUM(ll ti,ll ss,ll se,ll qs,ll qe)
+{
+    if((ss>se)||(qs>se)||(qe<ss))
+        return 0;
+    if((qs<=ss)&&(qe>=se))
+        return seg_tree[ti];
+    ll mid=(ss+se)/2;
+    ll left=FIND_RANGE_SUM(ti*2,ss,mid,qs,qe);
+    ll right=FIND_RANGE_SUM(ti*2+1,mid+1,se,qs,qe);
+    final_val=(left%modulus_value+right%modulus_value)%modulus_value;
+    if(final_val<0)
+        final_val+=modulus_value;
+    return final_val;
+}
+
+int main()
+{
+    char q;
+    ll i,num,total,k,temp,j,fact,test,a,b,cnt,second_num,ans,qs,qe,val,diff,new_val;
+    made_sieve();
+    fun_calc(500000);
+    cin>>num;
+    for(i=0;i<num;i++)
+        cin>>arr[i];
+    cin>>test;
+    BUILD_SEG_TREE(1,0,num-1);
+    while(test--)
+    {
+        cin>>q;
+        if(q=='U')
+        {
+            cin>>i>>new_val;
+            i-=1;
+
+            diff = fun_arr[new_val] - fun_arr[arr[i]];
+
+            arr[i] = new_val;
+
+            UP_SEG_TREE(1,0,num-1,i,diff);
+        }
+        else
+        {
+            cin>>qs>>qe;
+            qs-=1;qe-=1;
+            ans=FIND_RANGE_SUM(1,0,num-1,qs,qe);
+            ans+=modulus_value;
+            ans=ans%modulus_value;
+            cout<<ans<<endl;
+        }
+    }
+}

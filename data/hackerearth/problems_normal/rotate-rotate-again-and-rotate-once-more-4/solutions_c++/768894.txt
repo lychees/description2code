@@ -1,0 +1,182 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MAX(a,b,c,d) max(a,max(b,max(c,d)));
+struct node{
+	int n;
+	int w;
+	int e;
+	int s;
+	int maX;
+};
+#define mAX 3000031
+node tree[mAX];
+int clock_p[mAX];
+int anti_p[mAX];
+node add(node left, node right)
+{
+	node res;
+	res.n = left.n + right.n;
+	res.e= left.e + right.e;
+	res.w= left.w + right.w;
+	res.s = left.s +right.s;
+	res.maX = max(res.n,max(res.e,max(res.w,res.s)));
+	return res;
+}
+node make_data(int val) 
+ {
+  node res;
+  res.e = res.maX = val;
+  res.n = res.w = res.s = 0; 
+  return res;
+ }
+void initialize(int node, int b, int e)
+{
+	if(b>e)return;
+	if(b==e)
+	 {
+	 	//cout<<node<<" "<<b<<" "<<e<<endl;
+	 	//nodes.push_back(node);
+	 	//maxnode=max(node,maxnode);
+	 	tree[node] = make_data(1);
+	 	return;
+	 }
+	 else
+	 {
+	 	initialize(node*2,b,(b+e)/2);
+	 	initialize(node*2+1,(b+e)/2 +1,e);
+	    tree[node] = add(tree[2*node],tree[2*node+1]);
+	 }
+}
+void clockwise(int node, int k)
+{
+	int move = k%4;
+	int t_n=tree[node].n;int t_e= tree[node].e;int t_w = tree[node].w;int t_s=tree[node].s;
+	if(move == 1) 
+   { 
+    tree[node].e = t_n ;
+	tree[node].w = t_s; 
+	tree[node].n = t_w ; 
+	tree[node].s = t_e;
+   }
+   if(move == 2)
+   {
+    tree[node].e = t_w ;
+	tree[node].w = t_e;
+	tree[node].n = t_s ;
+	tree[node].s = t_n; 
+	}
+	else if(move == 3) 
+	{
+	 tree[node].e = t_s ; 
+	 tree[node].w = t_n;
+	 tree[node].n = t_e ;
+	 tree[node].s = t_w; 
+	}
+	//tree[node].maX = max(tree[node].n,max(tree[node].e,max(tree[node].w,tree[node].s)));
+}
+ void anticlockwise(int node,int k)
+  {
+   int move = k%4;
+   int t_n = tree[node].n,t_e = tree[node].e,t_w = tree[node].w,t_s = tree[node].s;
+   if(move == 1)
+   { tree[node].e = t_s ;
+     tree[node].w = t_n;
+	 tree[node].n = t_e ;
+	 tree[node].s = t_w;
+   }
+   if(move == 2)
+   {
+    tree[node].e = t_w ;
+	tree[node].w = t_e;
+	tree[node].n = t_s ;
+	tree[node].s = t_n; 
+   }
+   else if(move == 3)
+    {
+	 tree[node].e = t_n ;
+	 tree[node].w = t_s;
+	 tree[node].n = t_w ;
+	 tree[node].s = t_e; 
+	 }
+	 //tree[node].maX = max(tree[node].n,max(tree[node].e,max(tree[node].w,tree[node].s)));
+}
+void updatechild(int node)
+{
+	clock_p[2*node] += clock_p[node];
+	clock_p[2*node+1] += clock_p[node];
+	anti_p[2*node] += anti_p[node];
+	anti_p[2*node+1] += anti_p[node];
+	clockwise(2*node,clock_p[node]);
+	clockwise(2*node+1 , clock_p[node]);
+	anticlockwise(2*node,anti_p[node]);
+	anticlockwise(2*node+1,anti_p[node]);
+	clock_p[node]=0;
+	anti_p[node]=0;
+}
+void update(int node, int b, int e, int i, int j, int modify, int dir)
+{
+	if(i>e || j<b )return;
+	if(b>=i && e<=j)
+	{
+	  if(dir==1)
+	  {
+	  	anticlockwise(node,modify);
+	  	anti_p[node] += (modify%4);
+	  }	
+	  else
+	  {
+	  	clockwise(node,modify);
+	  	clock_p[node] += (modify%4);
+	  }
+	}
+	else
+	{
+		updatechild(node);
+		update(2*node, b, (b+e)/2, i, j, modify,dir);
+		update(2*node+1,(b+e)/2 +1,e,i,j,modify,dir);
+		tree[node] =add(tree[2*node],tree[2*node+1]);
+	}
+}
+node query(int nod, int b, int e, int i, int j)
+{
+	if(i>e || j<b ) return make_data(0);
+	if(b>=i && e<=j)return tree[nod];
+	updatechild(nod);
+	return add(query(nod*2, b, (b+e)/2, i ,j),query(2*nod+1,(b+e)/2 +1, e,i,j));
+}
+int main()
+{
+	
+	//ios::sync_with_stdio(false);
+	//freopen("testcases.txt","w+",stdout);
+	//freopen("myanswer.txt","r+",stdin);
+	int n,m,l,r,k;
+	memset(clock_p,0,sizeof(clock_p));
+	memset(anti_p,0,sizeof(anti_p));
+	char ch;
+	cin>>n>>m;
+	initialize(1,1,n);
+	for(int i=0;i<m;i++)
+	{
+		cin>>ch;
+		if(ch=='C')
+		{
+			cin>>l>>r>>k;
+			//if(k%4!=0)
+			update(1,1,n,l,r,k,0);
+		}
+		else if(ch=='A')
+		{
+			cin>>l>>r>>k;
+			//if(k%4!=0)
+			update(1,1,n,l,r,k,1);
+		}
+		else
+		{
+			cin>>l>>r;
+			node q = query(1,1,n,l,r);
+			cout<<q.maX<<endl;
+		}
+	}
+	
+}

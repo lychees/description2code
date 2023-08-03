@@ -1,0 +1,79 @@
+#include <iostream>
+#include <vector>
+#define modval 1000000007
+using namespace std;
+vector<bool> vis;
+vector<bool> vis1;
+struct gnode{
+    long long key;
+    vector<int> children;
+};
+class graph{
+    public:
+    int nodes;
+    vector<gnode> gnodes;
+    graph(int k){
+    	nodes = k;
+        int i=0;
+        for(;i<nodes;i++){
+        	long long x;
+        	cin>>x;
+        	gnode temp;
+        	temp.key = x;
+        	gnodes.push_back(temp);
+        	vis.push_back(false);
+        	vis1.push_back(false);
+        }
+    }
+    long long dfs(int n,long long k){
+        if(gnodes[n].key<k)
+        	return 1;
+        long long p = 1;
+        vector<int>::iterator it;
+        for(it = gnodes[n].children.begin();it!=gnodes[n].children.end();it++){
+            if(vis[*it]==false){
+                vis[*it] = true;
+                p *= dfs(*it,k);
+                p %= modval;
+            }
+        }
+        //if(gnodes[n].key == k)
+        	//return (p*2)%modval;
+        return (p+1)%modval;
+    }
+    void add_node(int c, int k){
+        gnodes[c].children.push_back(k);
+        gnodes[k].children.push_back(c);
+    }
+};
+int main()
+{
+	int n,i,j,x,y;
+	cin>>n;
+	graph g(n);
+	for(i=1;i<n;i++){
+		cin>>x>>y;
+		g.add_node(x-1,y-1);
+	}
+	int q;
+	cin>>q;
+	for(j = 0;j<q;j++){
+		cin>>x;
+		long long ans = 0;
+		fill(vis.begin(),vis.end(),false);
+		fill(vis1.begin(),vis1.end(),false);
+		for(i=0;i<n;i++){
+			if(g.gnodes[i].key==x){
+			if(vis1[i]==false){
+				vis1[i] = true;
+				vis = vis1;
+				ans += g.dfs(i,x) %modval;
+				ans --;
+				ans %= modval;
+			}
+			}
+		}
+		cout<<ans<<endl;
+	}
+	return 0;
+}

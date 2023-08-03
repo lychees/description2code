@@ -1,0 +1,220 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#define MOD 1000000007
+
+
+using namespace std;
+
+typedef long long int ll;
+typedef vector <int> VI;
+
+VI stree[40006];
+int arr[10006];
+
+vector <int> primes;
+int nprimes;
+
+void sieve(int n)
+{
+	int s[n+1];
+	int i,j;
+	for(i=0;i<=n;i++)
+	{
+		s[i]=1;
+	}
+	s[1]=0;
+	for(i=1;i<=n;i++)
+	{
+		if(s[i])
+		{
+			j=i*i;
+			for(;j<=n;j+=i)
+			{
+				s[j]=0;
+			}
+		}
+	}
+	nprimes=0;
+	for(i=2;i<=n;i++)
+	{
+		if(s[i])
+		{
+			primes.push_back(i);
+			nprimes++;
+		}
+	}
+}
+
+VI merge(VI &l,VI &r)
+{
+	int i;
+	VI c;
+	for(i=0;i<nprimes;i++)
+	{
+		c.push_back(max(l[i],r[i]));
+	}
+	return c;
+}
+
+void create(int node, int l, int r)
+{
+	if(l>r)
+	return;
+	if(l==r)
+	{
+		int i;
+		stree[node].clear();
+		stree[node].resize(nprimes);
+		for(i=0;i<nprimes;i++)
+		{
+			stree[node][i]=0;
+			int temp=arr[l];
+			while(temp!=0 && temp%primes[i]==0)
+			{
+				stree[node][i]++;
+				temp=temp/primes[i];
+			}
+		}
+		return;
+	}
+	int lc=node*2,rc=node*2+1,mid=(l+r)/2;
+	
+	create(lc,l,mid);
+	create(rc,mid+1,r);
+	stree[node]=merge(stree[lc],stree[rc]);
+}
+
+ll pow1(int a,int b)
+{
+	if(b==0)
+	return 1l;
+	if(b==1)
+	return (ll)a;
+	ll ans=pow1(a,b/2);
+	ans=ans*ans;
+	ans=ans%MOD;
+	if(b%2==0)
+	{
+		return ans;
+	}
+	return (ans*a)%MOD;
+}
+
+ll val(int node)
+{
+	int i;
+	ll ans=1l;
+	for(i=0;i<nprimes;i++)
+	{
+		ans=ans*pow1(primes[i],stree[node][i]);
+		ans=ans%MOD;
+	}
+	return ans;
+}
+
+ll gcd(ll a, ll b)
+{
+	if(b==0)
+	return a;
+	return gcd(b,a%b);
+}
+
+ll lcm(ll a, ll b)
+{
+	ll g=gcd(a,b);
+	ll ans=a*b/g;
+	ans=ans%MOD;
+	return ans;
+}
+
+	
+VI query(int l,int r,int node,int l1,int rr)
+{
+	if(l>=l1 && r<=rr)
+	{
+		return stree[node];
+	}
+	if(l>rr || r<l1 || l>r)
+	{
+		VI temp(nprimes);
+		int i;
+		for(i=0;i<nprimes;i++)
+		temp[i]=0;
+		return temp;
+	}
+	int mid=(l+r)/2;
+	VI a=query(l,mid,node*2,l1,rr);
+	VI b=query(mid+1,r,node*2+1,l1,rr);
+	VI c=merge(a,b);
+	return c;
+}
+
+void update(int l, int r, int node, int ind, int newval)
+{
+	if(l==r)
+	{
+		int i;
+		stree[node].clear();
+		stree[node].resize(nprimes);
+		for(i=0;i<nprimes;i++)
+		{
+			stree[node][i]=0;
+			int temp=newval;
+			while(temp!=0 && temp%primes[i]==0)
+			{
+				stree[node][i]++;
+				temp=temp/primes[i];
+			}
+		}
+		return;
+	}
+	int lc=2*node,rc=2*node+1, mid=(l+r)/2;
+	if(ind<=mid)
+	update(l,mid,lc,ind,newval);
+	else
+	update(mid+1,r,rc,ind,newval);
+	stree[node]=merge(stree[lc],stree[rc]);
+}
+
+int main()
+{
+	int n,i,q;
+	sieve(1000);
+	//printf("a\n");
+	scanf("%d",&n);
+	for(i=0;i<n;i++)
+	{
+		scanf("%d",&arr[i]);
+	}
+	
+	create(1,0,n-1);
+	//printf("b\n");
+	scanf("%d",&q);
+	while(q--)
+	{
+		int ch,a,b;
+		scanf("%d%d%d",&ch,&a,&b);
+		if(ch==1)
+		{
+			arr[a-1]=b;
+			update(0,n-1,1,a-1,b);
+			//printf("c\n");
+		}
+		else
+		{
+			VI temp=query(0,n-1,1,a-1,b-1);
+			ll ans=1l;
+			for(i=0;i<nprimes;i++)
+			{
+				ans=ans*pow(primes[i],temp[i]);
+				ans=ans%MOD;
+			}
+			printf("%lld\n",ans);
+		}
+	}
+	return 0;
+}

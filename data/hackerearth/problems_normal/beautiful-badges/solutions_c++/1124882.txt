@@ -1,0 +1,106 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+#define SIZE 2048
+int n, qts[2][1024];
+
+typedef struct { int b, p, C, F; } are;
+
+are M[5000000];
+int pQ, visited[SIZE];;
+int TTv, TTe; // Timestamp para visited[] e enfilered[]
+int p[SIZE], patu[SIZE];
+int dist[SIZE], Q[SIZE], Qini, Qfim;
+int enfilered[SIZE];
+
+
+void add(int a, int b, int C) {
+    M[pQ] = (are){b,p[a],C,0}; p[a] = pQ++;
+    M[pQ] = (are){a,p[b],0,0}; p[b] = pQ++;
+}
+
+bool bfs(int ini, int fim) {
+    TTe++;
+    Qini = Qfim = 0;
+    Q[Qini++] = ini;
+    dist[ini] = 0;
+    enfilered[ini] = TTe;
+    while (Qini != Qfim) {
+        int u = Q[Qfim++];
+        for (int i=p[u];i!=-1;i=M[i].p) if (enfilered[M[i].b] != TTe and M[i].C - M[i].F > 0) {
+            Q[Qini++] = M[i].b;
+            enfilered[M[i].b] = TTe;
+            dist[M[i].b] = dist[u] + 1;
+        }
+    }
+    return (enfilered[fim] == TTe);
+}
+
+
+int dfs(int u, int fim, int menor) {
+    if (u == fim) return menor;
+    visited[u] = TTv;
+    for (int &i=patu[u];i!=-1;i=M[i].p) if (visited[M[i].b] != TTv and dist[M[i].b] == dist[u] + 1 and enfilered[M[i].b]==TTe and M[i].C-M[i].F>0) {
+        int x = dfs(M[i].b,fim,min(menor, M[i].C-M[i].F));
+        if (x > 0) {
+            M[i].F += x;
+            M[i^1].F -= x;
+            return x;
+        }
+    }
+    return 0;
+}
+
+
+
+int main() {
+
+    memset(enfilered,0,sizeof(enfilered)); TTe=0;
+    memset(visited,0,sizeof(visited));TTv=0;
+    while(scanf("%d",&n) != EOF) {
+        memset(qts,0,sizeof(qts));
+        for (int i=0;i<n;i++) {
+            int c, d;
+            scanf("%d %d",&c,&d);
+            if (c==1)
+                qts[0][d]++;
+            else
+                qts[1][d]++;
+        }
+        memset(p,0xff,sizeof(p));
+        pQ=0;
+        for (int i=1;i<=1000;i++)
+            for (int j=1;j<=1000;j++)
+                if ( ((double)i)*(sqrt(2.0)/2.0) < (double)j and
+                     (double)j < ((double)i)*sqrt(2.0) )
+                    add(i,1000+j,0x3f3f3f3f);
+        for (int i=1;i<=1000;i++) if (qts[0][i])
+            add(0,i,qts[0][i]);
+        for (int j=1;j<=1000;j++) if (qts[1][j])
+            add(1000+j, 2001, qts[1][j]);
+
+        n = 2002;
+
+        int tot = 0;
+        while (bfs(0,n-1)) {
+            for (int i=0;i<n;i++) patu[i] = p[i];
+            while (1) {
+                TTv++;
+                int t = dfs(0,n-1,0x3f3f3f3f);
+                if (t > 0)
+                    tot += t;
+                else
+                    break;
+            }
+        }
+
+
+        printf("%d\n",tot);
+    }
+
+    return 0;
+}

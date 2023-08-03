@@ -1,0 +1,207 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <bitset>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii;
+typedef long long ll; typedef vector<long long> vl; typedef pair<long long,long long> pll; typedef vector<pair<long long,long long> > vpll;
+typedef vector<string> vs; typedef long double ld;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+template<int MOD>
+struct ModInt {
+	static const int Mod = MOD;
+	unsigned x;
+	ModInt(): x(0) { }
+	ModInt(signed sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	ModInt(signed long long sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	int get() const { return (int)x; }
+	
+	ModInt &operator+=(ModInt that) { if((x += that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator-=(ModInt that) { if((x += MOD - that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator*=(ModInt that) { x = (unsigned long long)x * that.x % MOD; return *this; }
+	
+	ModInt operator+(ModInt that) const { return ModInt(*this) += that; }
+	ModInt operator-(ModInt that) const { return ModInt(*this) -= that; }
+	ModInt operator*(ModInt that) const { return ModInt(*this) *= that; }
+};
+typedef ModInt<1000000007> mint;
+
+struct Matrix {
+	typedef mint Num;
+	vector<vector<Num> > v, w;
+	Matrix() {}
+	Matrix(int n, int m): v(n, vector<Num>(m)) { }
+	inline int height() const { return (int)v.size(); }
+	inline int width() const { return (int)v[0].size(); }
+	inline Num& at(int i, int j) { return v[i][j]; }
+	inline const Num& at(int i, int j) const { return v[i][j]; }
+	static Matrix identity(int n) {
+		Matrix A(n, n);
+		rep(i, n) A.at(i, i) = 1;
+		return A;
+	}
+	inline static Matrix identity(const Matrix& A) { return identity(A.height()); }
+	Matrix& operator*=(const Matrix& B) {
+		int n = height(), m = B.width(), p = B.height();
+		assert(p == width());
+		w.assign(n, vector<Num>(m, 0));
+		rep(i, n) rep(j, m) {
+			Num x = 0;
+			rep(k, p) x += at(i, k) * B.at(k, j);
+			w[i][j] = x;
+		}
+		v.swap(w);
+		return *this;
+	}
+};
+Matrix operator^(const Matrix& t, ll k) {
+	Matrix A = t, B = Matrix::identity(t);
+	while(k) {
+		if(k & 1) B *= A;
+		A *= A;
+		k >>= 1;
+	}
+	return B;
+}
+
+template<unsigned p>
+struct RollingHash {
+	int n;
+	vector<unsigned long long> pow, phash;
+	RollingHash(const char *s, int n_): n(n_), pow(n+1), phash(n+1) {
+		pow[0] = 1; phash[0] = 0;
+		rep(i, n) {
+			phash[i+1] = s[i] + phash[i] * p;
+			pow[i+1] = pow[i] * p;
+		}
+	}
+	unsigned long long h(int i) const {
+		return phash[i];
+	}
+	unsigned long long h(int i, int j) const {
+		return h(j) - h(i) * pow[j - i];
+	}
+};
+
+
+typedef char Alpha;
+
+std::vector<int> getDiameters(const Alpha *str, int n) {
+	std::vector<int> diameters(n * 2 - 1);
+	int center = 0, right = 0;
+	for(int i = 0; i < n * 2 - 1; i ++) {
+		int maxp = std::min(i + 1, n * 2 - 1 - i);
+		int p = right > i ? std::min(right - i, diameters[2 * center - i]) : 0;
+		if((i + p) % 2 == 0) p ++;
+		while(p < maxp && str[(i + p + 1) / 2] == str[(i - p - 1) / 2]) p += 2;
+			p = std::min(p, maxp);
+			if(i + p > right) {
+				center = i;
+				right = i + p;
+			}
+		diameters[i] = p;
+	}
+	return diameters;
+}
+
+int countDistinctSubpalindromes(const char *s, int n) {
+	vector<int> diameters = getDiameters(s, n);
+	vector<pii> v;
+	rep(i, n * 2 - 1) {
+		int d = diameters[i];
+		if(d == 0) continue;
+		int left = (i - d + 1) / 2, right = left + d;
+		v.pb(mp(-right, left));
+	}
+	sort(all(v));
+	vector<int> maximal(n+1, INF);
+	{	int left = INF, right = n;
+		rep(i, v.size()) {
+			int r = -v[i].first;
+			while(r < right) {
+				maximal[right] = min(maximal[right], left);
+				right --; left ++;
+			}
+			left = min(left, v[i].second);
+			maximal[right] = min(maximal[right], left);
+		}
+	}
+	set<pair<unsigned long long,unsigned long long> > hashes;
+	RollingHash<1000000007> h1(s, n);
+	RollingHash<1000000009> h2(s, n);
+	rer(i, 0, n) {
+		int left = maximal[i];
+		if(left >= i) continue;
+		pair<unsigned long long,unsigned long long> h = mp(h1.h(left, i), h2.h(left, i));
+//		if(!hashes.count(h)) cerr << string(s+left, s+i) << endl;
+		hashes.insert(h);
+	}
+	return hashes.size();
+}
+
+int main() {
+	int h, w;
+	scanf("%d%d", &h, &w);
+	int n = h * w;
+	Matrix b(1, n);
+	rep(i, n) {
+		char buf[20];
+		scanf("%s", buf);
+		b.at(0, i) = countDistinctSubpalindromes(buf, strlen(buf));
+	}
+	int C;
+	scanf("%d", &C);
+	Matrix A(n, n);
+	rep(i, n) A.at(i, i) = 1;
+	rep(i, C) {
+		int x1, y1, x2, y2;
+		scanf("%d%d%d%d", &x1, &y1, &x2, &y2);
+		int a = x1 * w + y1, b = x2 * w + y2;
+		A.at(a, b) += 1;
+		A.at(b, a) += 1;
+	}
+	long long D;
+	cin >> D;
+	A = A ^ D;
+	b *= A;
+	rep(y, h) {
+		rep(x, w) {
+			if(x != 0) putchar(' ');
+			int i = y * w + x;
+			printf("%d", b.at(0, i).get());
+		}
+		puts("");
+	}
+	return 0;
+}

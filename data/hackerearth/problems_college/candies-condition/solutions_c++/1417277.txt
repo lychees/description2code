@@ -1,0 +1,163 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#define PI 3.14159265359
+using namespace std;
+int t;
+#define MAX 200001
+int seg[MAX*4];
+vector<int> seg2[MAX * 4];
+int a[MAX];
+map<int,int> seg22[MAX*4];
+map<int,int>::iterator ite;
+//bool use[1001];
+map<int,int> v[1001];
+inline void init(int b, int l, int r){
+	seg22[b].clear();
+	if (l + 1 == r){
+		seg22[b] = v[a[l]];
+		return;
+	}
+	init(b * 2 + 1, l, (l + r) / 2);
+	init(b * 2 + 2, (l + r) / 2, r);
+	seg22[b]=seg22[b*2+1];
+	for(ite=seg22[b*2+2].begin();ite!=seg22[b*2+2].end();ite++){
+		if(seg22[b].count((*ite).first)){
+			seg22[b][(*ite).first]=max(seg22[b][(*ite).first],(*ite).second);
+		}
+		else{
+			seg22[b][(*ite).first]=(*ite).second;
+		}
+	}
+	return;
+}
+inline void add(int b, int l, int r, int ll, int x){
+	if (ll < l || r <= ll){
+		return;
+	}
+	if (l + 1 == r){
+		seg22[b] = v[x];
+		return;
+	}
+	add(b * 2 + 1, l, (l + r) / 2, ll, x);
+	add(b * 2 + 2, (l + r) / 2, r, ll, x);
+	seg22[b]=seg22[b*2+1];
+	for(ite=seg22[b*2+2].begin();ite!=seg22[b*2+2].end();ite++){
+		if(seg22[b].count((*ite).first)){
+			seg22[b][(*ite).first]=max(seg22[b][(*ite).first],(*ite).second);
+		}
+		else{
+			seg22[b][(*ite).first]=(*ite).second;
+		}
+	}
+	return;
+}
+map<int,int> del;
+map<int,int> ans;
+inline map<int,int> q(int b, int l, int r, int ll, int rr){
+	if (rr <= l || r <= ll){
+		return del;
+	}
+	if (l + 1 == r){
+		return seg22[b];
+	}
+	if(ll<=l&&r<=rr){
+		return seg22[b];
+	}
+	map<int,int> rrr = q(b * 2 + 1, l, (l + r) / 2, ll, rr);
+	map<int,int> r2 = q(b * 2 + 2, (l + r) / 2, r, ll, rr);
+	for(ite=r2.begin();ite!=r2.end();ite++){
+		if(rrr.count((*ite).first)){
+			rrr[(*ite).first]=max(rrr[(*ite).first],(*ite).second);
+		}
+		else{
+			rrr[(*ite).first]=(*ite).second;
+		}
+	}
+	return rrr;
+}
+int use[10001];
+int u_s;
+int countt[10001];
+#define MOD 1000000007
+int main(){
+	scanf("%d", &t);
+	int c2=0;
+	for (int i = 2; i < 1001; i++){
+		if (use[i] == false){
+			use[i] = true;
+			for (int j = i; j < 1001; j += i){
+				int k = j;
+				c2=0;
+				while (k%i == 0){
+					c2++;
+					k /= i;
+				}
+				if(c2){
+				v[j][i]=c2;
+				}
+				use[j] = true;
+			}
+		}
+	}
+	u_s=3;
+	while (t--){
+		int n;
+		scanf("%d", &n);
+		for (int i = 0; i < n; i++){
+			scanf("%d", &a[i]);
+		}
+		init(0, 0, n);
+		int qq;
+		scanf("%d", &qq);
+		while (qq--){
+			int ty;
+			scanf("%d", &ty);
+			if (ty == 0){
+				int aa, bb;
+				scanf("%d%d", &aa, &bb);
+				aa--;
+				add(0, 0, n, aa, bb);
+			}
+			else{
+				int aa, bb;
+				scanf("%d%d", &aa, &bb);
+				aa--;
+				ans = q(0, 0, n, aa,bb);
+				long long int in=1LL;
+				for(ite=ans.begin();ite!=ans.end();ite++){
+					int ccc=(*ite).second;
+					while(ccc){
+						in*=(*ite).first;
+						in%=MOD;
+						ccc--;
+					}
+				}
+				printf("%lld\n",in);
+			}
+		}
+	}
+	return 0;
+}

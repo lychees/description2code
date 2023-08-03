@@ -1,0 +1,100 @@
+/*input
+1
+10
+6 3 7 2 1 2 9 5 5 8
+*/
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <functional>
+#include <math.h>
+#include <string.h>
+#include <utility>
+#include <algorithm>
+#include <iomanip>
+#include <stack>
+#include <queue>
+#include <set>
+#include <map>
+#include <stdlib.h>
+#include <list>
+#include <assert.h>
+using namespace std;
+#define sp ' '
+#define endl '\n'
+#define fi first
+#define se second
+#define mp make_pair
+
+int n;
+int a[55];
+int dp[55][(1 << 15) + 5];
+vector<int> prime;
+int ans = 0;
+
+void pre_process()
+{
+	for (int i = 2; i <= 50; i++)
+	{
+		for (int j = 2; j <= sqrt(i); j++)
+			if (i % j == 0)
+				goto x;
+		prime.push_back(i);
+x:;
+	}
+}
+
+bool getbit(int x, int y)
+{
+	return (x & (1 << y));
+}
+
+int main()
+{
+	pre_process();
+	int T;
+	cin >> T;
+	while (T--)
+	{
+		ans = 0;
+		memset(dp, 0, sizeof(dp));
+		cin >> n;
+		for (int i = 1; i <= n; i++)
+			cin >> a[i];
+		for (int i = 1; i <= n; i++)
+		{
+			int mask = 0;
+			for (int j = 0; j < prime.size(); j++)
+				if (a[i] % prime[j] == 0)
+					mask = mask | (1 << j);
+			if (i == 1)
+			{
+				dp[1][mask] = 1;
+				continue;
+			}
+			for (int mask2 = 0; mask2 < (1 << 15) - 1; mask2++)
+			{
+				int mask3;
+				bool check = true;
+				for (int j = 0; j <= 15; j++)
+				{
+					if (getbit(mask, j) && getbit(mask2, j))
+					{
+						check = false;
+						break;
+					}
+				}
+				if (check)
+				{
+					mask3 = mask | mask2;
+					dp[i][mask3] = max(dp[i][mask3], dp[i - 1][mask2] + 1);
+					ans = max(ans, dp[i][mask3]);
+				}
+				dp[i][mask2] = max(dp[i][mask2], dp[i - 1][mask2]);
+			}
+			// cout << i << sp << ans << endl;
+		}
+		cout << ans << endl;
+	}
+
+}

@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+#define LL long long
+#define ULL unsigned long long
+#define FOR(i,a,b) for(int i=a;i<=b;i++)
+#define FO(i,a,b) for(int i=a;i<b;i++)
+#define FORD(i,a,b) for(int i=a;i>=b;i--)
+#define FOD(i,a,b) for(int i=a;i>b;i--)
+#define FORV(i,a) for(typeof(a.begin()) i = a.begin(); i != a.end(); i++)
+#define fi first
+#define se second
+#define pb push_back
+#define mp make_pair
+#define debug cout << "YES" << endl
+
+using namespace std;
+
+typedef pair<int,int>II;
+template<class T> int getbit(T s, int i) { return (s >> i) & 1; }
+
+const long double PI = 2*acos(0.0);
+const long double eps = 1e-15;
+const int infi = 1e9;
+const LL Linfi = (LL) 1e18;
+const LL MOD = 1000000007;
+#define maxn 100005
+
+int n, m = 0;
+LL k;
+LL a[200], w[200];
+LL dp[105][maxn];
+
+LL power(int a, int p){
+    if(p == 0) return 1;
+    if(p == 1) return a;
+    LL ans = power(a, p/2);
+    ans = (ans*ans) % MOD;
+    if(p%2 == 1) ans = (ans*a) % MOD;
+    return ans;
+}
+
+void solve(){
+    sort(a+1, a+n+1);
+    FOR(i,1,n) if(a[i] < k) w[++m] = a[i];
+    LL ans = 0, sum = 0;
+    FOR(i,1,n) sum += a[i];
+    LL minn = min(k, sum-k);
+    if(2*k > sum) { cout << 0 << endl; return; }
+
+    memset(dp, 0, sizeof(dp));
+    //FOR(i,1,m) cout << w[i] << " "; cout << endl;
+    FOR(i,1,m) FOR(j,1,k){
+        dp[i][j] = (dp[i][j] + dp[i-1][j]) % MOD;
+        if(j == w[i]) { dp[i][w[i]]++; continue; }
+        if(j >= w[i] && dp[i-1][j-w[i]] >= 0) dp[i][j] = (dp[i][j] + dp[i-1][j-w[i]]) % MOD;
+    }
+
+    FOR(j,1,minn-1) if(dp[m][j] > 0) ans = (ans + dp[m][j]) % MOD;
+
+    ans = (ans*2 + 2) % MOD;
+    LL tmp = power(2, n); //cout << tmp << endl;
+    ans = (MOD + tmp-ans) % MOD;
+    if(ans < 0) ans += MOD;
+
+    cout << ans << endl;
+}
+
+int main(){
+    ios::sync_with_stdio(false);
+    #ifndef ONLINE_JUDGE
+    freopen("test.in","r",stdin);
+    //freopen("test.out","w",stdout);
+    #endif
+	cin >> n >> k;
+    FOR(i,1,n) cin >> a[i];
+
+    solve();
+
+    return 0;
+}
+

@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep1(i, begin, end) for (__typeof(begin) i = (begin) - ((begin) > (end)); i != (end) - ((begin) > (end)); i += 1 - 2 * ((begin) > (end)))
+#define rep2(i, begin, end) for (__typeof(begin) i = (begin); i != (end) + 1 - 2 * ((begin) > (end)); i += 1 - 2 * ((begin) > (end)))
+#define mem(a, x) memset(a, x, sizeof(a))
+#define all(a) a.begin(), a.end()
+#define count_bits(x) __builtin_popcount(x)
+#define count_bitsll(x) __builtin_popcountll(x)
+#define least_bits(x) __builtin_ffs(x)
+#define least_bitsll(x) __builtin_ffsll(x)
+#define most_bits(x) 32 - __builtin_clz(x)
+#define most_bitsll(x) 64 - __builtin_clz(x)
+
+vector<string> split(const string &s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c)) v.push_back(x);
+	return v;
+}
+
+#define error(args...) { vector<string> _v = split(#args, ','); err(_v.begin(), args); }
+
+void err(vector<string>::iterator it) {}
+
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << '\n';
+	err(++it, args...);
+}
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {while (b != 0) {T c = a; a = b; b = c % b;} return a;}
+
+const int N = 100001;
+int n, m, f[30][2];
+vector<int> pos, G[N];
+string s[2];
+bool vis[N];
+
+void dfs(int v) {
+	vis[v] = 1;
+	pos.push_back(v);
+	rep1(i, 0, G[v].size()) {
+		int u = G[v][i];
+		if (!vis[u]) dfs(u);
+	}
+}
+
+int main(int argc, char *argv[]) {
+    ios_base::sync_with_stdio(false);
+    int ntest, l, r;
+    string ans;
+    cin >> ntest;
+    while (ntest--) {
+    	cin >> n >> m;
+    	cin >> s[0] >> s[1];
+    	rep1(i, 0, n) G[i].clear();
+    	rep1(i, 0, m) {
+    		cin >> l >> r;
+    		--l, --r;
+    		G[l].push_back(r);
+    		G[r].push_back(l);
+    	}
+    	mem(vis, 0);
+    	ans.assign(n, '-');
+    	int res = 0;
+    	rep1(i, 0, n) {
+    		if (!vis[i]) {
+    			pos.clear();
+    			dfs(i);
+    			mem(f, 0);
+    			sort(all(pos));
+    			rep1(j, 0, pos.size()) {
+    				f[s[0][pos[j]] - 'a'][0]++;
+    				f[s[1][pos[j]] - 'a'][1]++;
+    			}
+    			rep1(j, 0, pos.size()) {
+    				int ind = s[1][pos[j]] - 'a';
+    				if (f[ind][0] >= f[ind][1]) {
+    					f[ind][1]--; f[ind][0]--;
+    					ans[pos[j]] = s[1][pos[j]];
+    					res++;
+    				}
+    				else {
+    					int tot = 0;
+    					rep1(k, 0, 30) {
+    						if (f[k][0] > f[k][1]) {
+    							f[k][0]--; tot = k;
+    							break;
+    						}
+    					}
+    					if (tot < ind || !f[ind][0]) {
+    						ans[pos[j]] = 'a' + tot;
+    						f[ind][1]--;
+    					}
+    					else {
+    						ans[pos[j]] = s[1][pos[j]], res++;
+    						f[ind][1]--; f[ind][0]--; f[tot][0]++;
+    					}
+    				}
+    			}
+    		}
+    	}
+    	cout << res << "\n" << ans << "\n";
+    }
+    return 0;
+}

@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define maxn 100009
+
+
+ll n;
+vector<pair<ll,ll> >  adjlist[maxn];
+ll color[maxn];
+ll totalweight;
+ll degree[maxn];
+
+
+
+struct ts{
+	ll first;
+	pair<ll,ll> second;
+	ts(ll a,ll b,ll c){first = a;second.first = b; second.second = c;};
+};
+
+bool operator <(const ts &a, const ts &b){
+	if(a.first<b.first)return true;
+	if(a.first==b.first){
+		ll m1 = min(a.second.first,a.second.second);
+		ll M1 = max(a.second.first,a.second.second);
+		ll m2 = min(b.second.first,b.second.second);
+		ll M2 = max(b.second.first,b.second.second);
+		if(m1>m2)return true;
+		if(m1==m2&&M1>M2)return true;
+	}
+	return false;
+}
+
+
+
+set<ts>st;
+
+
+
+
+
+
+int getcolor(int i){
+	if(color[i]==i)return i;
+	return color[i] = getcolor(color[i]);
+}
+
+
+
+void kruskal(){
+	totalweight = 0;
+	for(int i=0;i<n+3;i++)color[i] = i;
+	for(ll i=1;i<=n;i++){
+		for(ll j=0;j<(ll)adjlist[i].size();j++){
+			//if(i<adjlist[i][j].first) --if it is undirected graph this helps to avoid insertion of same edge two times
+				st.insert(ts(adjlist[i][j].second,i,adjlist[i][j].first));
+		}
+	}
+	ll c = 0;
+	while(!st.empty()){
+		ts  temp = *st.begin();
+		st.erase(st.begin());
+		int u = temp.second.first;
+		int v = temp.second.second;
+		int uc = getcolor(u);
+		int vc = getcolor(v);
+		if(uc!=vc){
+			color[uc] = vc;
+			c++;
+			totalweight += temp.first;
+			degree[v]++;
+			degree[u]++;
+		}
+		if(c==n-1)break;
+	}
+}
+
+int main(){
+		int t;
+		scanf("%d",&t);
+		while(t--){
+			scanf("%lld",&n);
+			for(ll i=0;i<n+4;i++){adjlist[i].clear();degree[i] =0;}
+			st.clear();
+			ll m;
+			cin>>m;
+			for(ll i=0;i<m;i++){
+				ll a,b,c;
+				cin>>a>>b>>c;
+				adjlist[a].push_back(make_pair(b,c));
+				adjlist[b].push_back(make_pair(a,c));
+			}
+			kruskal();
+			cout<<totalweight<<endl;
+			for(int i=1;i<=n;i++){cout<<degree[i]<<" ";}cout<<endl;
+		}
+
+
+
+
+}

@@ -1,0 +1,79 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+#define MAXN 1000010
+
+typedef long long int64;
+typedef unsigned long long uint64;
+
+char str[MAXN];
+int S, n, k;
+const uint64 C = 5381ULL;
+uint64 MOD = (1e9) + 7;
+vector <uint64>v;
+uint64 poww[MAXN], L[MAXN];
+
+void powwB(){
+    poww[0] = 1ULL;
+    for(int i = 1; i < MAXN; i++) poww[i] = (poww[i-1]*73LL);
+    char c = 'a';
+    for(int i = 0; i <= 26; i++ ){ v.push_back(c-'a'); c++; }
+    random_shuffle (v.begin(),v.end());
+}
+  
+void Lcalc(){
+    L[0] = C;
+    int i;
+    for( i = 0; str[i] != '\0'; i++ ) L[i+1] = (L[i] * 73LL + v[str[i]-'a']);
+}
+
+uint64 calc_hash(int a, int b){
+    return ((L[b] - (L[a] * poww[b-a])));
+}
+
+bool check(int mid){
+    if( mid == 1 ){
+        int qt[30];
+        int ans = 0;
+        memset(qt, 0, sizeof(qt));
+        for( int i = 0; i < n; i++ ){
+            qt[str[i]-'a']++;
+            ans = max(ans, qt[str[i]-'a']);
+        }
+        return ans >= k;
+    }
+    else{
+        unordered_map < uint64, uint64 > mapa;
+        for( int i = 0; i+mid <= n; i++ ){
+            uint64 hh = calc_hash(i, i+mid);
+            mapa[hh]++;
+            if( mapa[hh] >= k ) return true;
+        }
+        return false;
+    }
+}
+
+int main(){
+    ios::sync_with_stdio(false);
+    scanf("%d %d",&k, &n);
+    getchar();
+    gets(str);
+    S = strlen(str);
+    powwB();
+    Lcalc();
+    if( k == 1 ) cout << n << '\n';
+    else{
+        int lo = 0, hi = n, mid, ans = 0;
+        while( lo <= hi ){
+            mid = (lo + hi) >> 1;
+            if( check(mid) ){
+                ans = max(ans, mid);
+                lo = mid+1;
+            }
+            else hi = mid-1;
+        }
+        cout << ans << '\n';
+    }
+    
+    return 0;
+}

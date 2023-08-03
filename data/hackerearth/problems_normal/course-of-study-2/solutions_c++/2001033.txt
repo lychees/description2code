@@ -1,0 +1,81 @@
+#include <cstdio>
+#include <algorithm>
+#define M  1000000007
+
+using namespace std ;
+
+int fast_pow(long long base, long long n)
+{
+    if(!n)
+        return 1 ;
+    if(n == 1)
+        return base ;
+    long long half = fast_pow(base, n/2) ;
+    if( !(n&1) )
+        return (half * half) % M ;
+    return ( ( (half * half) % M ) * base ) % M ;
+}
+
+int findMMI(long long n)
+{
+    return fast_pow(n, M-2) ;
+}
+
+long long fact[100001] ;
+
+int nCr(int n, int r)
+{
+    long long num = fact[n] ;
+    long long den = (fact[n-r] * fact[r] ) % M ;
+    long long MMIDen = findMMI(den) ;
+    return (num * MMIDen) % M ;
+}
+
+int main()
+{
+    int i, j, n, k, m[100001], x[100001], count ;
+    fact[0] = 1 ;
+    long long total = 0 ;
+    long long C = 1 ;
+    for(i = 1 ; i <= 100000 ; i++)
+    {
+        fact[i] = (fact[i-1] * i ) % M ;
+    }
+
+    scanf("%d",&n) ;
+    for(i = 0 ; i < n ; i++)
+    {
+        scanf("%d",&m[i]) ;
+        total += m[i] ;
+        for(j = 0 ; j < m[i] ; j++)
+            scanf("%d",&x[j]) ;
+        sort(x, x + m[i]) ;
+        k = 0 ;
+        count = 1 ;
+
+        while(1)
+        {
+            if(k >= m[i]-1)
+                break ;
+            while(k < m[i]-1 && x[k] == x[k+1] ) {count++ ; k++ ;}
+
+            if(count > 1)
+                C = (C * fact[count] ) % M ;
+            k++ ;
+            count = 1 ;
+        }
+    }
+
+    C = (C * nCr(total, m[0]) ) % M ;
+    total -= m[0] ;
+
+    for(i = 1 ; i < n-1 ; i++)
+    {
+        C = (C * nCr(total, m[i]) ) % M ;
+        total -= m[i] ;
+        
+    }
+
+    printf("%lld",C) ;
+    return 0 ;
+}

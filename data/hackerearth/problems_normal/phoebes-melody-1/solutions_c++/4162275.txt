@@ -1,0 +1,196 @@
+#include<iostream>
+#include<limits.h>
+#include<vector>
+
+using namespace std;
+
+class melody
+{public:
+	int size;
+	int K;
+	vector<int> arr;
+	vector<int> lpar,rpar;
+	
+	melody(int size);
+	void calculateParent();
+	void printVector(vector<int> vec1);
+	int test();
+};
+
+
+melody::melody(int size1)
+{
+	size=size1;
+//	cout<<"Enter K\n";
+	cin>>K;
+	arr=*(new vector<int>(size));
+	lpar=*(new vector<int>(size));
+	rpar=*(new vector<int>(size));
+	
+//	cout<<"Enter elemen of array\n";
+	
+	for(int i=0;i<size;i++)
+		cin>>arr[i];
+}
+
+void melody::calculateParent()
+{
+	lpar[0]=-1;	//0 signifes 
+	for(int i=1;i<size;i++)	//i='0' is alredy set
+	{
+			int ce=arr[i];
+
+			int peindex=i-1;
+//			for(int i=0;i<K;i++)
+//				lpar[i]=-1;
+			
+			while(1)
+			{
+				if(peindex < 0)
+				{
+					lpar[i]=-1;
+					break;
+				}
+				int pe=arr[peindex];
+		//		cout<<arr[i]<<"\t"<<peindex<<" "<<pe<<endl;
+				if(pe < ce)
+				{
+					lpar[i]=peindex;
+					break;
+				}
+				else peindex=lpar[peindex];
+			}
+		}//lpar precalculation ends here
+		
+		
+			rpar[size-1]=-1;	//0 signifes 
+//		for(int i=size-1; i> size-K-1;i--)
+//			rpar[i]=-1;
+			
+	for(int i=size-2;i>=0;i--)	//i-1 already handled
+	{
+			int ce=arr[i];
+
+			int peindex=i+1;
+			
+			while(1)
+			{
+				if(peindex < 0)
+				{
+					rpar[i]=-1;
+					break;
+				}
+				int pe=arr[peindex];
+			///	cout<<arr[i]<<"\t"<<peindex<<" "<<pe<<endl;
+				if(pe < ce)
+				{
+					rpar[i]=peindex;
+					break;
+				}
+				else peindex=rpar[peindex];
+			}
+		}//lpar precalculation ends here
+		
+	//	cout<<"Printing the lpar data calculated\n";
+	//	printVector(lpar);
+		
+	//	cout<<"Printing the rpar precalculated data\n";
+	//	printVector(rpar);
+		
+		//doing 
+	}
+
+int melody::test()
+{
+	calculateParent();
+	int ans=0;
+	
+//	cout<<"inside test()\n";
+	for(int i=0;i<size;i++)
+	{
+		int lc=0,rc=0;
+		int ce=arr[i];
+		
+		int lindex;
+		lindex=i-K;
+		while(1)
+		{
+			if(lindex <0 )
+			{
+				lc=INT_MAX;break;	//INT_MAX mean the lc doesnt exist
+			}
+			
+			if(arr[lindex] < ce)
+			{
+				lc=i-lindex;
+				break;
+			}
+			
+			if(lpar[lindex]==-1)	//theres no element on left satifying the property
+			{
+				lc=INT_MAX;
+				break;
+			}
+			else lindex=lpar[lindex];	//Note the K has no role here!!!, as the lindex=i-K setting will put that K distance aprat
+			//notice that lpar[0] is set to -1
+		}	//lc CALCULATION COMPLETES HERE
+		
+		int rindex=i+K;
+		while(1)
+		{
+			if(rindex >=size)
+			{
+				rc=INT_MAX;
+				break;
+			}
+			
+			if(arr[rindex] < ce)
+			{
+				rc=rindex-i;
+				break;
+			}
+			
+			if(rpar[rindex]==-1)
+			{
+				rc=INT_MAX;
+				break;
+			}
+			else rindex=rpar[rindex];
+		}	//rc CALCULTION ENDS HERE
+		
+
+		if(lc == INT_MAX && rc == INT_MAX) ans=ans+0;
+		else ans=ans+min(lc,rc);
+	}
+	return ans;
+}
+
+int main()
+{
+	//	FILE *InputF;
+	//InputF=freopen("test.txt","r+",stdin);
+	//REDIRECTING THE STANDARD INOUT FILE FROM input1.txt
+	
+	int NTest;
+	cin>>NTest;
+	
+	for(int i=0;i<NTest;i++)
+	{
+	//	cout<<"Enter size\n";
+		int size;
+		cin>>size;
+		melody ob1(size);
+		int ans=ob1.test();
+		
+	//	cout<<"THE ANSWER IS\t"<<ans<<endl;
+	cout<<ans<<endl;
+	}
+}
+
+void melody::printVector(vector<int> vec1)
+{
+	for(auto k:vec1)
+		cout<<k<<" ";
+	
+	cout<<endl;
+}

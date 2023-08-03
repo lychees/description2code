@@ -1,0 +1,197 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n;
+
+long long inf;
+
+int p1, p2;
+vector <int> graf[100007];
+
+long long tab[100007];
+
+int n1;
+
+vector <int> jump[1000007];
+
+int odl[100007];
+
+int l, p;
+
+int mie[1000007];
+
+int q;
+long long wyn[1000007];
+pair <int,int> zap[1000007];
+long long maxl[1000007];
+long long maxp[1000007];
+
+vector <int> w[1000007];
+
+long long naj[1000007];
+long long cal[1000007];
+long long lew[1000007];
+long long pra[1000007];
+
+long long u;
+
+int potenga(int v)
+{
+    for (int i=1; 1; i<<=1)
+    {
+        if (i>=v)
+        {
+            return i;
+        }
+    }
+}
+
+void dfs(int v, int oj)
+{
+    jump[v].push_back(oj);
+    while(jump[v].back())
+    {
+        l=jump[v].back();
+        p=jump[v].size()-1;
+        jump[v].push_back(jump[l][min( p , (int) jump[l].size()-1 )]);
+    }
+    for (int i=0; i<graf[v].size(); i++)
+    {
+        if (graf[v][i]==oj)
+        continue;
+        odl[graf[v][i]]=odl[v]+1;
+        dfs(graf[v][i], v);
+    }
+}
+
+int lca(int a, int b)
+{
+    for (int i=20; i>=0; i--)
+    {
+        if (jump[a].size()>i && odl[jump[a][i]]>=odl[b])
+        {
+            a=jump[a][i];
+        }
+    }
+    for (int i=20; i>=0; i--)
+    {
+        if (jump[b].size()>i && odl[jump[b][i]]>=odl[a])
+        {
+            b=jump[b][i];
+        }
+    }
+    for (int i=20; i>=0; i--)
+    {
+        if (jump[a].size()>i && jump[b].size()>i && jump[a][i]!=jump[b][i])
+        {
+            a=jump[a][i];
+            b=jump[b][i];
+        }
+    }
+    if (a!=b)
+    {
+        a=jump[a][0];
+    }
+    return a;
+}
+
+void pisz(int v, long long war)
+{
+    v+=n1-1;
+    naj[v]=war;
+    cal[v]=war;
+    lew[v]=war;
+    pra[v]=war;
+    v>>=1;
+    while(v)
+    {
+        cal[v]=cal[(v<<1)]+cal[(v<<1)^1];
+
+        naj[v]=-inf;
+        naj[v]=max(naj[v], naj[(v<<1)]);
+        naj[v]=max(naj[v], naj[(v<<1)^1]);
+        naj[v]=max(naj[v], pra[(v<<1)]+lew[(v<<1)^1]);
+
+        lew[v]=lew[(v<<1)];
+        lew[v]=max(lew[v], cal[(v<<1)]+lew[(v<<1)^1]);
+
+        pra[v]=pra[(v<<1)^1];
+        pra[v]=max(pra[v], cal[(v<<1)^1]+pra[(v<<1)]);
+
+        v>>=1;
+    }
+}
+
+pair <long long, pair <long long,long long> > czyt(int v, int a, int b, int graa, int grab, int cel)
+{
+    if (a>=graa && b<=grab)
+    {
+        wyn[cel]=max(wyn[cel], naj[v]);
+        return make_pair(cal[v] , make_pair(lew[v], pra[v]));
+    }
+    if (a>grab || b<graa)
+    {
+        return make_pair(0, make_pair(-inf, -inf));
+    }
+    pair <long long, pair <long long,long long> > reta=czyt((v<<1), a, (a+b)>>1, graa, grab, cel);
+    pair <long long, pair <long long,long long> > retb=czyt((v<<1)^1, (a+b+2)>>1, b, graa, grab, cel);
+    wyn[cel]=max(wyn[cel], reta.second.second+retb.second.first);
+    return make_pair(reta.first+retb.first, make_pair( max(reta.second.first, reta.first+retb.second.first) , max(retb.second.second, retb.first+reta.second.second) ));
+}
+
+void dfs2(int v, int oj)
+{
+    pisz(odl[v], tab[v]);
+    for (int i=0; i<w[v].size(); i++)
+    {
+        l=w[v][i];
+        u=czyt(1, 1, n1, odl[lca(zap[l].first, zap[l].second)], odl[v], l).second.first;
+        if (v==zap[l].first)
+        maxl[l]=u;
+        else
+        maxp[l]=u;
+    }
+    for (int i=0; i<graf[v].size(); i++)
+    {
+        if (graf[v][i]==oj)
+        continue;
+        dfs2(graf[v][i], v);
+    }
+}
+
+int main()
+{
+    inf=1000000000;
+    inf*=inf;
+    scanf("%d", &n);
+    for (int i=1; i<n; i++)
+    {
+        scanf("%d%d", &p1, &p2);
+        graf[p1].push_back(p2);
+        graf[p2].push_back(p1);
+    }
+    for (int i=1; i<=n; i++)
+    {
+        scanf("%lld", &tab[i]);
+    }
+    odl[1]=1;
+    dfs(1, 0);
+    n1=potenga(2*n+2);
+    scanf("%d", &q);
+    for (int i=1; i<=q; i++)
+    {
+        scanf("%d%d", &zap[i].first, &zap[i].second);
+        w[zap[i].first].push_back(i);
+        w[zap[i].second].push_back(i);
+        maxl[i]=-inf;
+        maxp[i]=-inf;
+        wyn[i]=-inf;
+    }
+    dfs2(1,0);
+    for (int i=1; i<=q; i++)
+    {
+        wyn[i]=max(wyn[i], maxl[i]+maxp[i]-tab[lca(zap[i].first,zap[i].second)]);
+        printf("%lld\n", wyn[i]);
+    }
+    return 0;
+}

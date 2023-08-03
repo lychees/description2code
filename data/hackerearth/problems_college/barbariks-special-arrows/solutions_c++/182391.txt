@@ -1,0 +1,117 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+#define VVI vector< vector<int> >
+#define MAXN 10000
+#define PB push_back
+ 
+map< int, int > rowi, coli;
+int par[MAXN], row[MAXN], col[MAXN];
+bool vis[MAXN];
+queue<int> Q;
+VVI graph, adj;
+ 
+void PrintGraph(){
+    for(int i = 0;i < graph.size();i++){
+        for(int j = 0;j < graph[i].size();j++){
+            cout<<graph[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+}
+ 
+inline bool FindAugPath(){
+    //PrintGraph();
+    int n = adj.size() - 2;
+    int i,u,v;
+    for(i = 0;i <= n + 1;i++){
+        vis[i] = false;
+    }
+    vis[0] = true;
+    Q.push(0);
+    par[0] = -1;
+    while(!Q.empty()){
+        u = Q.front();
+        Q.pop();
+        for(i = adj[u].size() - 1;i >= 0;--i){
+            v = adj[u][i];
+            if(vis[v] == false && graph[u][v] == 1){
+                Q.push(v);
+                par[v] = u;
+                vis[v] = true;
+            }
+        }
+    }
+    if(vis[n + 1] == false){
+        return false;
+    }
+    v = n + 1;
+    while(v != 0){
+        graph[par[v]][v] = 0;
+        graph[v][par[v]] = 1;
+        v = par[v];
+    }
+    return true;
+}
+ 
+inline int MaxFlow(){
+    int nopaths = 0;
+    while(true){
+        if(FindAugPath() == false){
+            break;
+        }
+        nopaths++;
+    }
+    return nopaths;
+}
+ 
+void Solve(){
+    int n, r, c, rc = 0, cc = 0;
+    cin>>n;
+    rowi.clear();
+    coli.clear();
+    adj.clear();
+    graph.clear();
+    for(int i = 0;i < n;i++){
+        scanf("%d%d",&r,&c);
+        if(rowi.find(r) == rowi.end()){
+            rowi[r] = ++rc;
+        }
+        if(coli.find(c) == coli.end()){
+            coli[c] = ++cc;
+        }
+        row[i] = rowi[r];
+        col[i] = coli[c];
+    }
+    graph.resize(rc + cc + 2);
+    adj.resize(rc + cc + 2);
+    for(int i = 0;i < rc + cc + 2;i++){
+        graph[i].resize(cc + rc + 2, 0);
+        adj[i].clear();
+    }
+    for(int i = 0;i < n;i++){
+        adj[row[i]].PB(rc + col[i]);
+        adj[rc + col[i]].PB(row[i]);
+        graph[row[i]][col[i] + rc] = 1;
+    }
+    for(int i = 1;i <= rc;i++){
+        graph[0][i] = 1;
+        adj[0].PB(i);
+    }
+    for(int i = rc + 1;i <= cc + rc;i++){
+        graph[i][rc + cc + 1] = 1;
+        adj[i].PB(rc + cc + 1);
+    }
+    cout<<MaxFlow()<<endl;
+}
+ 
+int main()
+{
+    int t;
+    cin>>t;
+    while(t--){
+        Solve();
+    }
+    return 0;
+}

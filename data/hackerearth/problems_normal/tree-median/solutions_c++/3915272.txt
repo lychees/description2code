@@ -1,0 +1,188 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <iostream>
+#include <set>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <complex>
+#include <map>
+#include <queue>
+#include<sys/resource.h>
+using namespace std;
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<ll> vl;
+typedef vector<vl> vvl;
+typedef vector<vi> vvi;
+typedef vector<double> vd;
+typedef pair<int, int> pii;
+typedef pair<double, double> pdd;
+typedef vector<pii> vii;
+typedef vector<string> vs;
+
+vvi gr;
+vi rm, sz, type, bal;
+vl add, sumadd;
+//ll res = 0;
+int c0;
+const int zero = 300002;
+const int N = 2*zero+1;
+int sumall[N];
+/*int fen[N];
+
+void add_fen(int i, int val) {
+  for (; i < N; i |= (i+1))
+    fen[i] += val;
+}
+
+int sum(int i) {
+  int s = 0;
+  for (; i >= 0; i = (i & (i + 1)) - 1)
+    s += fen[i];
+  return s;
+}*/
+
+void dfs_sz(int v, int p) {
+  sz[v] = 1;
+  for (int i = 0; i < gr[v].size(); ++i) {
+    int nv = gr[v][i];
+    if (nv == p || rm[nv]) continue;
+    dfs_sz(nv, v);
+    sz[v] += sz[nv];
+  }
+}
+
+int find_center(int v) {
+  dfs_sz(v, -1);
+  int tot = sz[v], p = -1;
+  while (true) {
+    bool ok = 1;
+    for (int i = 0; i < gr[v].size(); ++i) {
+      int nv = gr[v][i];
+      if (rm[nv] || nv == p) continue;
+      if (sz[nv] > tot/2) {
+        ok = 0;
+        p = v;
+        v = nv;
+      }
+    }
+    if (ok) return v;
+  }
+}
+
+void dfs_bal(int v, int p) {
+  if (rm[v]) return;
+  bal[v] = bal[p] + type[v];
+  ++sumall[bal[v]+zero];
+//  add_fen(bal[v]+zero, 1);
+  for (int nv : gr[v]) {
+    if (nv == p) continue;
+    dfs_bal(nv, v);
+  }
+}
+
+void dfs_clear(int v, int p) {
+  if (rm[v]) return;
+  --sumall[bal[v]+zero];
+//  add_fen(bal[v]+zero, -1);
+  for (int nv : gr[v]) {
+    if (nv == p) continue;
+    dfs_clear(nv, v);
+  }
+}
+
+int cur_center;
+void dfs_calc(int v, int p) {
+  if (rm[v]) return;
+  int maxneg = zero - 1 - type[cur_center] - bal[v];
+//  res += sum(N-1) - sum(maxneg);
+  int cnt_add = sumall[maxneg] + sumall[maxneg-1];
+  sumadd[v] = cnt_add;
+  add[cur_center] += cnt_add;
+  if (bal[v] + type[cur_center] == -1 || bal[v] + type[cur_center] == -2) ++add[cur_center];
+//  cerr << "center: " << cur_center+1 << ' ' << v+1 << ' ' << cnt_add << endl;
+  for (int nv : gr[v]) {
+    if (nv == p || rm[nv]) continue;
+    dfs_calc(nv, v);
+    sumadd[v] += sumadd[nv];
+  }
+  add[v] += 2*sumadd[v];
+//  cerr << "middle: " << cur_center+1 << ' ' << v+1 << ' ' << 2*sumadd[v] << endl;
+}
+
+void run(int v) {
+  //  cerr << v << ' ' << res << endl;
+  //  dfs_sz(v, -1);
+  cur_center = v;
+  bal[v] = 0;
+  for (int nv : gr[v]) dfs_bal(nv, v);
+  for (int nv : gr[v]) {
+    dfs_clear(nv, v);
+    dfs_calc(nv, v);
+    dfs_bal(nv, v);
+  }
+  for (int nv : gr[v]) dfs_clear(nv, v);
+}
+
+void push_centroid(int v) {
+  //cerr << v+1 << endl;
+  run(v);
+  rm[v] = 1;
+  for (int i = 0; i < gr[v].size(); ++i) {
+    int nv = gr[v][i];
+    if (rm[nv]) {
+      continue;
+    }
+    int c = find_center(nv);
+    push_centroid(c);
+  }
+}
+
+void centroid() {
+  c0 = find_center(0);
+  push_centroid(c0);
+}
+
+int main() {
+  struct rlimit lim;
+  lim.rlim_cur = lim.rlim_max = 200 << 20; // 200MB
+  setrlimit(RLIMIT_STACK, &lim);
+  int n,x;
+  cin >> n >> x;
+  gr.clear();
+  gr.resize(n);
+  rm.assign(n, 0);
+  add.assign(n, 0);
+  sumadd.assign(n, 0);
+  bal.assign(n, 0);
+  type.assign(n, 0);
+  sz.assign(n, 0);
+  for (int i = 0; i < n-1; ++i) {
+    int a, b;
+    scanf("%d%d", &a, &b);
+    --a; --b;
+    gr[a].push_back(b);
+    gr[b].push_back(a);
+  }
+  for (int i = 0; i < n; ++i) {
+    int b;
+    scanf("%d", &b);
+    if (b >= x) type[i] = 1;
+    else type[i] = -1;
+  }
+  dfs_sz(0, -1);
+  sumall[zero] = 1;
+  centroid();
+  ll ma = 0;
+  for (int i = 0; i < n; ++i) if (type[i] == -1) {
+//    cerr << i + 1 << ' ' << add[i] << endl;
+    ma = max(ma, add[i] / 2);
+  }
+  cout << ma << endl;
+  return 0;
+}

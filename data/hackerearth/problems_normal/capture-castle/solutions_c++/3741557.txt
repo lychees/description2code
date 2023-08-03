@@ -1,0 +1,183 @@
+#include <iostream>
+using namespace std;
+
+int row, col;
+int array_matrix[105][105];
+int row_cast, col_cast;
+int time1;	
+int visiblity[105][105];
+int inqueue[105][105];
+int maxTime = 99999999;
+int queue_xy[2*105*105];
+int matrix_calc[105][105];
+bool checkBound( int x, int y)
+{
+	if(x < 1 || y < 1 || x > row || y > col)
+		return false;
+	return true;
+}
+
+int first = 0, last = 0;
+
+void sendNearItemsToQueue(int x, int y)
+{
+	if(checkBound(x+1,y) && inqueue[x+1][y] == 0)
+	{
+		inqueue[x+1][y] = 2;
+		queue_xy[last] = x+1;
+		queue_xy[last+1] = y;
+		last+=2;
+	}
+	if(checkBound(x-1,y) && inqueue[x-1][y] == 0)
+	{
+		inqueue[x-1][y] = 2;
+		queue_xy[last] = x-1;
+		queue_xy[last+1] = y;
+		last+=2;
+	}
+	if(checkBound(x,y+1) && inqueue[x][y+1] == 0)
+	{
+		inqueue[x][y+1] = 2;
+		queue_xy[last] = x;
+		queue_xy[last+1] = y+1;
+		last+=2;
+	}
+	if(checkBound(x,y-1) && inqueue[x][y-1] == 0 )
+	{
+		
+		inqueue[x][y-1] = 2;
+		queue_xy[last] = x;
+		queue_xy[last+1] = y-1;
+		last+=2;
+	}	
+}
+
+void updateMatrix(int x, int y)
+{
+	sendNearItemsToQueue(x,y);
+	if(checkBound(x+1,y)) {
+		int val = array_matrix[x+1][y] + matrix_calc[x][y];
+		if(matrix_calc[x+1][y]!=0)
+		{
+			if(val < matrix_calc[x+1][y] ) {
+				matrix_calc[x+1][y] = val;
+				updateMatrix(x+1,y);
+			}
+		}
+		 else
+			matrix_calc[x+1][y] = val;
+				
+	}	
+
+	if(checkBound(x-1,y)) {
+		if(matrix_calc[x-1][y] !=0) {
+			int val = array_matrix[x-1][y] + matrix_calc[x][y];
+			if (val <  matrix_calc[x-1][y] ) {
+				matrix_calc[x-1][y] = val;
+				updateMatrix(x-1,y);
+			}
+		} else
+		{
+			matrix_calc[x-1][y] = array_matrix[x-1][y] + matrix_calc[x][y];
+		}
+	}
+
+	if(checkBound(x,y+1)) {
+		
+			if (matrix_calc[x][y+1]!=0) {
+				if (matrix_calc[x][y+1] > (array_matrix[x][y+1] + matrix_calc[x][y])) {
+					matrix_calc[x][y+1] = array_matrix[x][y+1] + matrix_calc[x][y];
+				updateMatrix(x,y+1);
+				}
+			} else{
+				matrix_calc[x][y+1] = array_matrix[x][y+1] + matrix_calc[x][y];
+			}
+	}
+
+	if(checkBound(x,y-1)) {
+		if(matrix_calc[x][y-1]!=0) {
+			if (matrix_calc[x][y-1] > (array_matrix[x][y-1] + matrix_calc[x][y])) {
+				matrix_calc[x][y-1] = array_matrix[x][y-1] + matrix_calc[x][y];	
+				updateMatrix(x,y-1);
+			}
+		} else
+		{
+			matrix_calc[x][y-1] = array_matrix[x][y-1] + matrix_calc[x][y];	
+		}
+	}
+}
+void findMin(int start1, int end1, int *pos_x, int *pos_y)
+{
+	int cost = 999999;
+
+	for(int i = 0; i<end1;i+=2)
+	{
+		int xp =  queue_xy[i];
+		int yp =  queue_xy[i+1];
+		if(visiblity[xp][yp] != 1)
+		{
+			if(array_matrix[xp][yp] < cost) {	
+				cost = array_matrix[xp][yp];
+				*pos_x = xp;
+				*pos_y = yp;
+			}
+		}	
+	}
+}
+
+
+void applyBFS(int x, int y)
+{
+	first = 0, last = 0;	
+	queue_xy[last] = x;
+	queue_xy[last+1] = y;
+	last+=2;
+	matrix_calc[1][1] = array_matrix[1][1];
+	inqueue[1][1] = 1;
+	int counter = 1;
+	while( counter <= (row*col))
+	{
+		int pos_x,pos_y;
+		findMin(first, last, &pos_x, &pos_y);
+		updateMatrix(pos_x,pos_y);
+		visiblity[pos_x][pos_y] = 1;
+		counter++;
+	
+	}
+	
+}
+
+
+int main()
+{
+  //freopen("input.txt", "r", stdin);
+	int tc;
+	cin >> tc;
+	for(int t = 0 ;  t< tc; t++) 
+	{
+		cin >> row >> col; 
+		for(int i = 1; i<= row; i++)
+			for(int j = 1; j<= col; j++)
+				cin >> array_matrix[i][j];
+
+		cin >> row_cast >> col_cast >> time1;
+		for(int i = 1; i<= row; i++)
+			for(int j = 1; j<= col; j++)
+			{
+				inqueue[i][j] = 0;
+				matrix_calc[i][j] = 0;
+				visiblity[i][j] = 0;
+			}
+
+		applyBFS(1,1);
+		
+		maxTime = matrix_calc[row_cast][col_cast];
+		if(maxTime <= time1) {
+			cout << "YES" << endl;
+			cout << time1 - maxTime << endl;
+		} else
+			cout << "NO"<<endl;
+		
+	}    
+return 0;
+}

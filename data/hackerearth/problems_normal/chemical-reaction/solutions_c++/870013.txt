@@ -1,0 +1,105 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <string>
+#include <limits.h>
+
+using namespace std;
+
+class node{
+public:
+	int l;
+	int r;
+	int numValid;
+	node(int s,int e,int nv){
+		l=s;
+		r=e;
+		numValid=nv;
+	}
+	node(){}
+
+};
+
+vector<node> treeArr;
+
+void buildTree(int curr, int l, int r){
+	node temp(l,r,r-l+1);
+	treeArr[curr]=temp;
+	if(l!=r){
+		int temp=(l+r)/2;
+		buildTree(2*curr+1,l,temp);
+		buildTree(2*curr+2,temp+1,r);
+	}
+}
+
+int updateTree(int curr,int index){
+	//cout<<"ll "<<curr<<" "<<index<<endl;
+	if(treeArr[curr].l==treeArr[curr].r){
+		treeArr[curr].numValid=0;
+		int temp=(curr-1)/2;
+		while(1){
+			treeArr[temp].numValid--;
+			if(temp==0)
+				break;
+			temp=(temp-1)/2;
+		}
+		return treeArr[curr].l;
+	}
+	if(treeArr[2*curr+1].numValid>=index){
+		return updateTree(2*curr+1,index);
+	}
+	else{
+		return updateTree(2*curr+2,index-treeArr[2*curr+1].numValid);
+	}
+
+}
+int main(){
+	int t;
+	cin>>t;
+
+	while(t--){
+		int n;
+		cin>>n;
+
+		vector<char*> elements(n);
+		vector<int> times(n);
+
+		for(int i=0;i<n;i++){
+			char* cur;
+			cur = new char(12);
+			scanf("%s",cur);
+			elements[i]=cur;
+		}
+
+		for(int i=0;i<n;i++){
+			scanf("%d",&times[i]);
+		}
+
+		treeArr.clear();
+
+		int prod=1;
+		while(prod<n){
+			prod*=2;
+		}
+
+		treeArr.resize(2*prod-1);
+
+		buildTree(0,0,n-1);
+
+		//cout<<"lplp "<<treeArr[1].l<<" "<<treeArr[1].r<<" "<<treeArr[1].numValid<<endl;
+		int maxTimes=0;
+		for(int i=0;i<n-1;i++){
+			int temp;
+			scanf("%d",&temp);
+			int index=updateTree(0,temp);
+			//cout<<index<<endl;
+			maxTimes=max(maxTimes,times[index]);
+			printf("%s %d\n",elements[index],maxTimes);
+		}
+		int index=updateTree(0,1);
+		maxTimes=max(maxTimes,times[index]);
+		printf("%s %d\n",elements[index],maxTimes);
+
+
+	}
+}

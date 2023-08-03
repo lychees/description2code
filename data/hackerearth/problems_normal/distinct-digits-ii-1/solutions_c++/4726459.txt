@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+using namespace std;
+int tree[12][4*100005];
+int a[100005],dis[100005];
+char str[5];
+typedef long long ll;
+void update(int in, int v, int lo, int hi, int pos, int val)
+{
+	if(lo==hi)
+	{
+		tree[in][v] = val;
+		return;
+	}
+	int mid = (lo + hi)/2;
+	if(pos <= mid)update(in, 2*v, lo, mid, pos, val);
+	else update(in, 2*v+1, mid+1, hi, pos, val);
+	tree[in][v] = tree[in][2*v] + tree[in][2*v+1];
+	//printf("%d %d %d %d is %d\n",in,v,lo,hi,tree[in][v]);
+}
+int query(int in, int v, int lo, int hi, int l, int r)
+{
+	if(l>r)return 0;
+//	printf("query %d %d %d %d %d %d\n",in,v,lo,hi,l,r);
+    if(lo==l && hi==r){
+    //    printf("whole segment answer is %d\n",tree[in][v]);
+        return tree[in][v];
+    }
+	int mid = (lo + hi)/2;
+	if(l>mid)return query(in, 2*v+1, mid+1, hi, l, r);
+	if(r<=mid)return query(in, 2*v, lo, mid, l, r);
+	return query(in, 2*v, lo, mid, l, min(mid,r)) + query(in, 2*v+1, mid+1, hi, max(mid+1,l),r);
+}
+int main()
+{
+    //cout << "Hello World!" << endl;
+    int n,cur,i,in,x,y;
+    ll hi = 1000000007;
+    scanf("%d",&n);
+    for(i=0;i<n;i++)
+    {
+    	scanf("%d",&a[i]);
+    	set<int> s;
+    	cur = a[i];
+    	while(1)
+    	{
+    		s.insert(cur%10);
+    		cur/=10;
+    		if(cur==0)break;
+    	}
+    	dis[i] = s.size();
+    	update(dis[i], 1, 0, n-1, i, 1);
+    }
+    int q,ans;
+    scanf("%d",&q);
+    while(q--)
+    {
+    	scanf("%s%d%d",&str,&x,&y);
+    	x--;
+    	//for(i=1;i<10;i++)
+    	//printf("over tree is %d\n",tree[i][1]);
+    	if(str[0]=='M' && str[1] == 'A')
+    	{
+    		y--;
+    		//printf("max query %d %d\n",x,y);
+    		for(i=9;i>0;i--)
+    		{
+    			 ans = query(i,1,0,n-1,x,y);
+    			if(ans)break;
+    		}
+    		printf("%d %d\n",i,ans);
+    	}
+    	else if(str[0] == 'M' && str[1] == 'I')
+    	{
+    		y--;	
+    		for(i=1;i<10;i++)
+    		{
+    			 ans = query(i,1,0,n-1,x,y);
+               // printf("min answer is %d\n",ans);
+    			if(ans)break;
+    		}
+          //  printf("hence result is %d\n",ans);
+    		printf("%d %d\n",i,ans);
+    	}
+    	else {
+    			in = dis[x];
+    		//	printf("update %d %d 0\n",x , in);
+    	update(in, 1, 0, n-1, x, 0);
+    		if(str[0]=='A')
+    	{
+    	a[x] = (a[x] + y)%hi;
+    	}
+    		else if(str[0]=='M')
+    		{
+    	a[x] = (a[x] *(ll) y)%hi;
+    		}
+    		else {
+    	a[x] = y%hi;
+    		}
+    		cur = a[x];
+    		set<int> s;
+    	while(1)
+    	{
+    		s.insert(cur%10);
+    		cur/=10;
+    		if(cur==0)break;
+    	}
+    	dis[x] = s.size();
+    //	printf("update %d %d as %d\n",dis[x], x,1);
+    	update(dis[x], 1, 0, n-1, x, 1);
+    	}
+    }
+    return 0;
+}

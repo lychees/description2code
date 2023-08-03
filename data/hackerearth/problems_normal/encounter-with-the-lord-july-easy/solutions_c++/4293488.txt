@@ -1,0 +1,82 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int t,n,m,l,x,y,c,in_queue[2005],f,mf,ans,p[2005];
+int jarak[2005][2005],cost[2005][2005],dist[2005],res[2005][2005];
+
+void augment(int v, int mn){
+	if (!v){
+//		cout << v;
+		f=mn; return;
+	}else if (p[v]!=-1){
+		augment(p[v],min(mn,res[p[v]][v]));
+//		cout << " " << v;
+		res[p[v]][v]-=f; res[v][p[v]]+=f;
+	}
+}
+
+int main(){
+	ios::sync_with_stdio(0); cin.tie(0);
+	cin >> t;
+	while (t--){
+		cin >> n >> m >> l;
+		for (int i=1;i<=n;i++){
+			for (int j=1;j<=n;j++)
+			jarak[i][j]=(i==j?0:1000000000);
+		}
+		while (m--){
+			cin >> x >> y >> c;
+			jarak[x][y]=jarak[y][x]=min(jarak[x][y],c);
+		}
+		for (int k=1;k<=n;k++){
+			for (int i=1;i<=n;i++){
+				for (int j=1;j<=n;j++){
+					jarak[i][j]=min(jarak[i][j],
+					jarak[i][k]+jarak[k][j]);
+				}
+			}
+		}
+//		for (int i=1;i<=n;i++){
+//			for (int j=1;j<=n;j++){
+//				cout << i << " " << j << " " <<
+//				jarak[i][j] << "\n";
+//			}
+//		}
+		memset(res,0,sizeof(res));
+		memset(cost,0,sizeof(cost));
+		for (int i=1;i<=l;i++){
+			res[0][i]=res[3*l+i][4*l+1]=1000000000;
+			res[i][l+i]=res[2*l+i][3*l+i]=1;
+			for (int j=1;j<=l;j++){
+				res[l+i][2*l+j]=1000000000;
+				cost[l+i][2*l+j]=jarak[i][n-l+j];
+				cost[2*l+j][l+i]=-jarak[i][n-l+j];
+			}
+		}
+		mf=ans=0;
+		while (1){
+			f=0;
+			for (int i=0;i<=4*l+1;i++){
+				dist[i]=1000000000; p[i]=-1;
+			}
+			queue<int> q; q.push(0); dist[0]=0;
+			while (!q.empty()){
+				int u=q.front(); q.pop();
+				in_queue[u]=0;
+				for (int v=0;v<=4*l+1;v++){
+					if (dist[u]+cost[u][v]<dist[v]&&res[u][v]){
+						dist[v]=dist[u]+cost[u][v]; p[v]=u;
+						if (!in_queue[v]){
+							q.push(v); in_queue[v]=1;
+						}
+					}
+				}
+			}
+			augment(4*l+1,1000000000);
+			if (!f) break; mf+=f;
+			ans+=min(10000,dist[4*l+1]);
+//			cout << "\n";
+		}
+		cout << ans+(l-mf)*10000 << "\n";
+	}
+}

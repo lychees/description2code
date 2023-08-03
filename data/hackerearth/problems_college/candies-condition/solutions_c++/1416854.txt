@@ -1,0 +1,107 @@
+#define _USE_MATH_DEFINES
+#include <algorithm>
+#include <cstdio>
+#include <functional>
+#include <iostream>
+#include <cfloat>
+#include <climits>
+#include <cstring>
+#include <cmath>
+#include <map>
+#include <queue>
+#include <random>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <time.h>
+#include <vector>
+using namespace std;
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> i_i;
+typedef pair<ll, int> ll_i;
+typedef pair<double, int> d_i;
+typedef pair<ll, ll> ll_ll;
+typedef pair<double, double> d_d;
+struct edge { int u, v, w; };
+
+ll MOD = 1000000007;
+ll _MOD = 1000000009;
+double EPS = 1e-10;
+int INF = INT_MAX / 2;
+
+struct segment_tree_max {
+	int n; vector<int> v;
+	segment_tree_max(int _n) {
+		for (n = 1; n < _n; n *= 2);
+		v = vector<int>(n * 2 - 1, 0);
+	}
+	void set(int i, int x) {
+		int k = i + n - 1;
+		v[k] = x;
+		while (k > 0) {
+			k = (k - 1) / 2;
+			v[k] = max(v[k * 2 + 1], v[k * 2 + 2]);
+		}
+	}
+	int _get(int i, int j, int k, int l, int r) {
+		if (r <= i || j <= l) return 0;
+		if (i <= l && r <= j) return v[k];
+		int vl = _get(i, j, k * 2 + 1, l, (l + r) / 2);
+		int vr = _get(i, j, k * 2 + 2, (l + r) / 2, r);
+		return max(vl, vr);
+	}
+	int get(int i, int j) { return _get(i, j, 0, 0, n); }
+};
+
+int main() {
+	vector<bool> p(1001, true);
+	p[0] = p[1] = false;
+	for (int i = 2; i <= 1000; i++)
+		if (p[i])
+			for (int j = i * 2; j <= 1000; j += i)
+				p[j] = false;
+	vector<int> ps;
+	for (int i = 0; i <= 1000; i++)
+		if (p[i])
+			ps.push_back(i);
+	int n = ps.size();
+	vector< vector<int> > a(1001, vector<int>(n));
+	for (int i = 1; i <= 1000; i++)
+		for (int j = 0; j < n; j++) {
+			int p = ps[j];
+			for (int x = i; x % p == 0; x /= p)
+				a[i][j]++;
+		}
+	int T; cin >> T;
+	while (T--) {
+		int N; cin >> N;
+		vector<segment_tree_max> st(n, segment_tree_max(N));
+		for (int i = 0; i < N; i++) {
+			int A; scanf("%d", &A);
+			for (int j = 0; j < n; j++)
+				st[j].set(i, a[A][j]);
+		}
+		int Q; cin >> Q;
+		while (Q--) {
+			int x, y, z;
+			cin >> x >> y >> z;
+			if (x == 0) {
+				for (int j = 0; j < n; j++)
+					if (y >= 1 && y <= N)
+						st[j].set(y - 1, a[z][j]);
+			}
+			else if (x == 1) {
+				ll ans = 1;
+				for (int j = 0; j < n; j++) {
+					int k = st[j].get(y - 1, z);
+					while (k--)
+						ans = ans * ps[j] % MOD;
+				}
+				cout << ans << endl;
+			}
+		}
+	}
+}

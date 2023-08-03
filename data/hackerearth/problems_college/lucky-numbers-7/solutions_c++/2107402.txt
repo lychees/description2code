@@ -1,0 +1,173 @@
+#include<cstdio>
+#include<algorithm>
+using namespace std;
+typedef long long LL;
+LL ten[20],a,b,l,ans=(LL)1<<40;
+LL lp,rp,mp,mt;
+int ls,rs,ms;
+int calc(LL x){
+	int y=0;
+	for(;x;x/=10)
+		if(x%10==4||x%10==7)++y;
+	return y;
+}
+void askl(){
+	lp=a;ls=-1;
+	int j=-1;
+	for(int i=0;ten[i]<=a;++i){
+		int y=a%ten[i+1];
+		if((y/ten[i]==4||y/ten[i]==7)&&a+ten[i]-y%ten[i]<=b)
+			j=i,lp=a+ten[i]-y%ten[i],ls=0;
+	}
+	for(int i=j-1;i>=0;--i)
+		if(a%ten[i+1]/ten[i]<9){
+			ls=a%ten[i+1]/ten[i]<8?i+1:i;
+			break;;
+		}
+	if(ls>=0)for(;ten[ls]<lp-a;++ls);		
+}
+void askr(){
+	rp=a+l;rs=-1;
+	int j=-1;
+	for(int i=0;ten[i]<=b;++i){
+		int y=b%ten[i+1];
+		if((y/ten[i]==4||y/ten[i]==7)&&b-y%ten[i]>a)
+			j=i,rp=b-y%ten[i],rs=0;
+	}
+	for(int i=j-1;i>=0;--i)
+		if(b%ten[i+1]/ten[i]>0){
+			rs=b%ten[i+1]/ten[i]>3?i+1:i;
+			break;
+		}
+	if(rs>=0)for(;ten[rs]<b+1-rp;++rs);			
+}
+int checkl(LL x){
+	if(!x)return 99;
+	int y=0;
+	for(;x%10==0;x/=10)++y;
+	return x%10==4||x%10==7?y:-1;
+}
+int checkr(LL x){
+	if(!x)return 99;
+	int y=0;
+	for(;x%10==0;x/=10)++y;
+	return x%10==5||x%10==8?y:-1;
+}
+void askm(){
+	mp=lp+1;ms=-1;
+	for(int i=lp+1,j=0;i<rp;i+=ten[j]){
+		int k=checkl(i);
+		if(k>=j){
+			if(k>j||ms<0){
+				mp=i;ms=k;
+				mt=0;
+			}
+			else if(!mt)mt=i-mp;
+			j=k; 
+		}
+	}
+}
+LL next(LL x,int y,int z){
+	for(int i=0;;++i){
+		int dx=x/ten[i]%10,w=calc(x);
+		if(w>y)x+=ten[i],w=calc(x);
+		if(w+i+1==y&&dx<7){
+			++w;
+			if(dx<4)x+=(4-dx)*ten[i];
+			else x+=(7-dx)*ten[i];
+		}
+		if(w<=y&&w+i>=y){
+			for(int j=0;j<y-w;++j)x+=4*ten[j];
+			break;
+		}
+		x=(x/ten[i+1]+1)*ten[i+1];
+	}
+	if(z){
+		int w=x;
+		for(;w%10==9;w/=10);
+		if(w%10==3||w%10==4||w%10==6||w%10==7)
+			x=next(x/10+1,y,0)*10;
+	}
+	return x;
+}
+void init(){
+	scanf("%I64d%I64d",&a,&l);
+	b=a+l-1;
+	ten[0]=1;
+	for(int i=1;i<=12;++i)
+		ten[i]=ten[i-1]*10;
+	askl();askr();askm();
+}
+void make(int x){
+	for(int i=0;i<=9;++i){
+		LL y=ms<0?i:(i*10+x)*ten[ms];
+		LL ml=(y-mp+lp+ten[ms+2])%ten[ms+2];
+		LL mr=(y+rp-mp)%ten[ms+2];
+		int z=ml>y||mr<y,w=0;
+		if(mp<rp){
+			if(i>=4&&i<=7){
+				if(z)continue;
+				if(i>4&&i<7&&(ml<5*ten[ms+1]||mr>7*ten[ms+1]))continue;
+				if(i==4&&(ml<4*ten[ms+1]||mr>5*ten[ms+1]))continue;
+				if(i==7&&(ml<7*ten[ms+1]||mr>8*ten[ms+1]))continue;
+			}
+			if(i>=0&&i<=3){
+				if(ml>y&&ml<8*ten[ms+1])continue;
+				if(mr>4*ten[ms+1]||mr<y)continue;
+			}
+			if(i>=8&&i<=9){
+				if(ml>y||ml<8*ten[ms+1])continue;
+				if(mr>4*ten[ms+1]&&mr<y)continue;
+			}
+		}
+		if(~ls){
+			int tl=checkr(ml);
+			if(tl<ls)continue;
+			if(tl==99)w=-1;
+		}
+		if(~rs){
+			int tl=checkl(mr);
+			if(tl<rs)continue;
+			if(tl==99)w=1;
+		}
+		if(w)
+			for(int j=ms+2;ten[j]<=b*100;++j)
+				for(int k=0;k<2;++k){
+				int flag=0;LL tp;
+					if(w<0&&j>=ls){
+						flag=1;
+						tp=((k?5:8)*ten[j]-lp+a+ten[j+1])%ten[j+1];
+					}
+					if(w>0&&j>=rs){
+						flag=1;
+						tp=((k?4:7)*ten[j]-rp+a+ten[j+1])%ten[j+1];
+					}
+					if(flag){
+						LL ts=a/ten[j+1]+(a%ten[j+1]>=tp);
+						int tn=calc(a)-calc(tp);
+						if(tn>=0)ans=min(ans,next(ts,tn,0)*ten[j+1]+tp);
+					}
+				}
+		else{
+			LL tp=(y-mp+a+ten[ms+2])%ten[ms+2];
+			LL ts=a/ten[ms+2]+(a%ten[ms+2]>=tp);
+			int tn=calc(a)-calc(tp);
+			if(tn>=0)ans=min(ans,next(ts,tn,z)*ten[ms+2]+tp);
+		}
+	}
+}
+void work(){
+	if(!mt)
+		if(ms<0)make(0);
+		else{
+			if(mp-lp<=3*ten[ms]&&rp-mp<=7*ten[ms])make(7);
+			if(rp-mp<=3*ten[ms]&&mp-lp<=7*ten[ms])make(4);
+		}
+	else make(mt/ten[ms]==3?4:7);
+	printf("%I64d\n",ans);
+}
+int main(){
+	init();
+	work();
+	return 0;
+}

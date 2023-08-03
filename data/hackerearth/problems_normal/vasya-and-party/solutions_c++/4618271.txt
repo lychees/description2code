@@ -1,0 +1,55 @@
+#include <bits/stdc++.h>
+
+
+const uint64_t M = 1000000007;
+const int maxn = 100000, maxm = 100000;
+int kl[maxn];
+std::multimap<int, int> graph;
+int n = 0, m = 0;
+
+std::pair<int, int> dfs(int start, std::vector<bool>& found) {
+	found[start] = true;
+	std::pair<int, int> ans = {kl[start], 1};
+
+	auto its = graph.equal_range(start);
+	for (auto i = its.first ; i != its.second ; i = std::next(i)) {
+		if (!found[i->second]) {
+			auto dans = dfs(i->second, found);
+			if (dans.first > ans.first) {
+				ans = dans;
+			} else if (dans.first == ans.first) {
+				ans = {dans.first, dans.second + ans.second};
+			}
+		}
+	}
+
+	return ans;
+}
+
+int main () {
+	std::cin >> n >> m;
+
+	for (int i = 0 ; i < n ; i += 1) {
+		std::cin >> kl[i];
+	}
+
+	for (int i = 0 ; i < m ; i += 1) {
+		int a = 0, b = 0;
+		std::cin >> a >> b;
+		graph.emplace(a - 1, b - 1);
+		graph.emplace(b - 1, a - 1);
+	}
+
+	std::vector<bool> found(n);
+	uint64_t ans = 1;
+
+	for (int i = 0 ; i < n ; i += 1) {
+		if (!found[i]) {
+			auto p = dfs(i, found);
+			// std::cout << i << " " << p.first << " " << p.second << '\n';
+			ans = (ans * p.second) % M;
+		}
+	}
+
+	std::cout << ans << '\n';
+}

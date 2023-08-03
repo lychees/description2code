@@ -1,0 +1,181 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+using namespace std;
+
+bool prime[10001];
+int lpf[10001];
+vector<int> G[10001];
+int N,M;
+
+void SieveGraphBuild()
+{
+	fill_n(prime+1,M,1);
+
+    lpf[1] = 1;
+    for (int i = 1; i <= M; i++)
+		G[1].push_back(i);
+
+    lpf[2] = 2;
+    G[2].push_back(2);
+    for (int i = 4; i <= M; i += 2)
+    {
+        prime[i] = 0;
+        lpf[i] = 2;
+        G[2].push_back(i);
+    }
+
+	for (int i = 3; i <= M; i += 2)
+		if (prime[i])
+        {
+		    lpf[i] = i;
+            G[i].push_back(i);
+			for (int j = i*i; j <= M; j += i)
+			{
+				if (prime[j] == 0) continue;
+				lpf[j] = i;
+				prime[j] = 0;
+				G[i].push_back(j);
+			}
+		}
+}
+
+void PrintGraph()
+{
+    for (int i = 1; i <= M; i++)
+    {
+        cout << "from " << i << ": \n";
+        for (int j = 0; j < G[lpf[i]].size(); j++)
+            cout << G[lpf[i]][j] << " ";
+        cout << "\n";
+    }
+}
+
+long long S0,P,Q,R;
+long long W0,X,Y,Z;
+int A[2001][10001];
+int B[2001][10001];
+
+const long long Mod = 1000000003;
+
+void Build_Matrix_A()
+{
+    long long S1;
+    for(int i = 0; i < (N*M); i++)
+    {
+        S1 = P * S0;
+        if (S1 >= Mod) S1 %= Mod;
+        S1 *= S0;
+        if (S1 >= Mod) S1 %= Mod;
+        if (Q * S0 >= Mod)
+            S1 += Q * S0 % Mod;
+        else S1 += Q * S0;
+        if (S1 >= Mod)
+            S1 -= Mod;
+        S1 += R;
+        if (S1 >= Mod)
+            S1 -= Mod;
+        S0 = S1;
+        A[(i/M) + 1][(i%M) + 1] = S0;
+    }
+
+    /*for (int i = 1; i <= N; i++)
+    {
+        for (int j = 1; j <= M; j++)
+            cout << A[i][j] << " ";
+        cout << "\n";
+    }*/
+}
+
+void Build_Matrix_B()
+{
+    long long W1;
+    for(int i = 0; i < (N*M); i++)
+    {
+        W1 = X * W0;
+        if (W1 >= Mod) W1 %= Mod;
+        W1 *= W0;
+        if (W1 >= Mod) W1 %= Mod;
+        if (Y * W0 >= Mod)
+            W1 += Y * W0 % Mod;
+        else W1 += Y * W0;
+        if (W1 >= Mod)
+            W1 -= Mod;
+        W1 += Z;
+        if (W1 >= Mod)
+            W1 -= Mod;
+        W0 = W1;
+        B[(i/M) + 1][(i%M) + 1] = W0;
+    }
+
+    /*for (int i = 1; i <= N; i++)
+    {
+        for (int j = 1; j <= M; j++)
+            cout << B[i][j] << " ";
+        cout << "\n";
+    }*/
+}
+
+long long dp[2][10001];
+const long long inf = 100000000000001;
+long long Min1[10001];
+long long Min2[10001];
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+
+	cin >> N >> M;
+    cin >> S0 >> P >> Q >> R;
+    cin >> W0 >> X >> Y >> Z;
+
+    if (N == 1)
+    {
+        cout << 0;
+        return 0;
+    }
+
+    SieveGraphBuild();
+    Build_Matrix_A();
+    Build_Matrix_B();
+
+    int p = 1;
+    for (int i = 2; i <= N; i++)
+    {
+        fill_n(Min1+1,M,-1);
+        fill_n(Min2+1,M,-1);
+        long long MinForAll = -1;
+        for (int j = 2; j <= M; j++)
+        {
+            if (Min1[lpf[j]] == -1 || dp[p][j] + B[i-1][j] < dp[p][Min1[lpf[j]]] + B[i-1][Min1[lpf[j]]])
+            {
+                Min2[lpf[j]] = Min1[lpf[j]];
+                Min1[lpf[j]] = j;
+                if (dp[p][Min1[lpf[j]]] + B[i-1][Min1[lpf[j]]] < dp[p][MinForAll] + B[i-1][MinForAll] || MinForAll == -1)
+                    MinForAll = Min1[lpf[j]];
+            }
+            else if (Min2[lpf[j]] == -1 || dp[p][j] + B[i-1][j] < dp[p][Min2[lpf[j]]] + B[i-1][Min2[lpf[j]]])
+            {
+                Min2[lpf[j]] = j;
+            }
+        }
+        p ^= 1;
+        for (int j = 1; j <= M; j++)
+        {
+            dp[p][j] = inf;
+            if (j == 1) dp[p][j] = min(dp[p^1][j] + A[i-1][1],dp[p^1][MinForAll] + B[i-1][MinForAll]);
+            else if (Min2[lpf[j]] == -1)
+                dp[p][j] = dp[p^1][j] + A[i-1][j];
+            else if (Min1[lpf[j]] == j)
+                dp[p][j] = min(dp[p^1][j] + A[i-1][j],dp[p^1][Min2[lpf[j]]] + B[i-1][Min2[lpf[j]]]);
+            else dp[p][j] = min(dp[p^1][j] + A[i-1][j],dp[p^1][Min1[lpf[j]]] + B[i-1][Min1[lpf[j]]]);
+        }
+    }
+
+    long long Best = inf;
+    for (int i = 1; i <= M; i++)
+        Best = min(Best,dp[p][i]);
+
+    cout << Best;
+
+}

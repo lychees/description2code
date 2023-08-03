@@ -1,0 +1,40 @@
+from operator import add, mul
+
+def read_ints():
+	return map(int, raw_input().split())
+
+def sum(it):
+	return reduce(add, it, 0)
+	
+def getpow(a, x, mod):
+	if x == 0:
+		return 1
+	t = getpow(a, x / 2, mod)
+	if x % 2 == 0:
+		return t * t % mod
+	return t * t * a % mod
+
+def main():
+	T = read_ints()[0]
+	for t in xrange(T):
+		N, K = read_ints()
+		arrays = [read_ints() for i in xrange(K)]
+		A = [sum(t) for t in zip(*arrays)]
+		
+		MOD = (10 ** 9) + 7
+		minP = (MOD + 1, 0)
+		maxP = (-1, N + 1)
+		for mask in xrange(1, 2**N):
+			arr = [x for (i, x) in enumerate(A) if (mask&(2**i))]
+			ln = len(arr)
+			# What happens when the numerator is not divisible by X(=ln here)?
+			prod = reduce(mul, arr, 1) % MOD * getpow(ln, MOD - 2, MOD) % MOD
+			if prod > maxP[0] or (prod == maxP[0] and ln < maxP[1]):
+				maxP = (prod, ln)
+			if prod < minP[0] or (prod == minP[0] and ln > maxP[1]):
+				minP = (prod, ln)
+		
+		ret = (maxP[0] ^ minP[0], maxP[1] ^ minP[1])
+		print ret[0], ret[1]
+
+main()

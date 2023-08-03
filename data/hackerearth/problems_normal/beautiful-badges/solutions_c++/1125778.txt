@@ -1,0 +1,77 @@
+//Author: Gilberto A. dos Santos
+//Website: http://www.hackerearth.com/brasil-national-programming-challenge/algorithm/beautiful-badges/
+
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int BLUE = 1, YELLOW = 2;
+const int MAX = 1001;
+
+int n;
+int b[MAX], y[MAX];
+
+bool can(int i, int l) {
+  return i*i < 2*l*l;
+}
+
+void down_blue(int ib, int& ret) {
+  for (int i = (ib/2); i < MAX && b[ib] && can(i,ib); i++) {
+    if (!y[i] || !(2*i*i > ib*ib))
+      continue;
+    int p = min(b[ib],y[i]);
+    b[ib] -= p, y[i] -= p;
+    ret += p;
+  }
+}
+
+void down_yellow(int iy, int& ret) {
+  for (int i = (iy/2); i < MAX && y[iy] && can(i,iy); i++) {
+    if (!b[i] || !(2*i*i > iy*iy))
+      continue;
+    int p = min(y[iy],b[i]);
+    y[iy] -= p, b[i] -= p;
+    ret += p;
+  }
+}
+
+int main() {
+  memset(b, 0, sizeof b);
+  memset(y, 0, sizeof y);
+  
+  scanf("%d",&n);
+  for (int i = 0; i < n; i++) {
+    int c, d;
+    scanf("%d %d",&c, &d);
+    if (c == BLUE)
+      b[d]++;
+    else
+      y[d]++;
+  }
+
+  int ret = 0;
+
+  int ib = 1, iy = 1;
+  while(ib < MAX && iy < MAX) {
+    if (!b[ib] && !y[iy]) {
+      ib++; iy++;
+      continue;
+    }
+    if (b[ib] && y[iy]) {
+      if (ib < iy)
+        down_blue(ib++, ret);
+      else
+        down_yellow(iy++, ret);
+    } else if (b[ib])
+      down_blue(ib++, ret);
+    else
+      down_yellow(iy++, ret);
+  }
+
+  printf("%d\n",ret);
+  
+}

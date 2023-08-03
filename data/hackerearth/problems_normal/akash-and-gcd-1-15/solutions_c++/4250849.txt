@@ -1,0 +1,111 @@
+#include <bits/stdc++.h>
+#define LIM 500001
+#define MAXN 1000001
+#define MOD 1000000007
+using namespace std;
+typedef long long LL;
+
+bool sieve[LIM];
+vector<int> plst;
+
+int phi[LIM];
+LL F[LIM];
+
+void recurse(int n, int p, int pi)
+{
+	int pr = plst[pi];
+	while ((LIM - 1) / n >= pr)
+	{
+		n *= pr;
+		phi[n] = p * (pr - 1);
+		p *= pr;
+		for (int i = pi + 1; i < plst.size() && (LIM - 1) / n >= plst[i]; i++)
+			recurse(n, phi[n], i);
+	} 
+}
+
+LL arr[MAXN];
+LL bit[MAXN];
+
+void update(int ind, int N, LL new_val, LL old_val)
+{
+	while (ind <= N)
+	{
+		bit[ind] += (new_val - old_val + MOD);
+		bit[ind] %= MOD;
+		ind += (ind & -ind);
+	}
+}
+
+LL query(int ind)
+{
+	LL ret = 0;
+	while (ind)
+	{
+		ret += bit[ind];
+		ret %= MOD;
+		ind -= ind & -ind;
+	}
+	return ret;
+}
+
+int main()
+{
+	int N, Q, X, Y;
+	char t[2];
+	
+	memset(sieve, true, sizeof(sieve));
+	memset(F, 0, sizeof(F));
+	sieve[0] = sieve[1] = false;
+	for (register int i = 2; i * i < LIM; i++)
+	{
+		if (!sieve[i])
+			continue;
+		for (register int j = i * i; j < LIM; j += i)
+			sieve[j] = false;
+	}
+	for (register int i = 2; i < LIM; i++)
+	{
+		if (sieve[i])
+			plst.push_back(i);
+	}
+	
+	phi[1] = 1;
+	for (int i = 0; i < plst.size(); i++)
+		recurse(1, 1, i);
+	
+	for (int i = 1; i < LIM; i++)
+	{
+		for (int j = i; j < LIM; j += i)
+		{
+			F[j] += LL(i) * LL(phi[j / i]);
+			F[j] %= MOD;
+		}
+	}
+		
+	scanf("%d", &N);
+	memset(bit, 0, sizeof(bit));
+	for (int i = 1; i <= N; i++)
+	{
+		scanf("%lld", arr + i);
+		arr[i] = F[arr[i]];
+		update(i, N, arr[i], 0);
+	}
+	
+	scanf("%d", &Q);
+	while (Q--)
+	{
+		scanf("%s%d%d", t, &X, &Y);
+		if (t[0] == 'C')
+		{
+			printf("%lld\n", (query(Y) - query(X - 1) + MOD) % MOD);
+		}
+		else
+		{
+			update(X, N, F[Y], arr[X]);
+			arr[X] = F[Y];
+		}
+	}
+	
+	return 0;
+}

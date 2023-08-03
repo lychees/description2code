@@ -1,0 +1,139 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define ll long long int
+#define pb push_back
+#define sd(x) scanf("%d",&x)
+#define slld(x) scanf("%I64d",&x)
+#define F first
+#define S second
+#define maxn 403005
+#define mod 1000000007
+
+string S;
+int sa[maxn], pos[maxn], tmp[maxn], lcp[maxn], N, gap, freq[maxn],t[4*maxn];
+ 
+bool Sufcmp(int i, int j){
+	if(pos[i] != pos[j]){
+		return pos[i] < pos[j];
+	}
+	i += gap; j += gap;
+	return (i < N && j < N) ? pos[i] < pos[j] : i > j;
+}
+ 
+void buildSA(){
+	N = S.size();
+	for(int i = 0; i < N; i++){
+		sa[i] = i;
+		pos[i] = S[i];
+	}
+	tmp[0] = 0;
+	for(gap = 1; ; gap = (gap << 1)){
+		sort(sa, sa + N, Sufcmp);
+		for(int i = 0; i < N-1; i++) tmp[i+1] = tmp[i] + Sufcmp(sa[i], sa[i+1]);
+		for(int i = 0; i < N; i++) pos[sa[i]] = tmp[i];
+		if(tmp[N-1] == N-1) break;
+	}
+}
+ 
+void buildLCP(){
+	N = S.size();
+	lcp[0] = 0;
+	for(int i = 0, k = 0; i < N; i++){
+		if(pos[i] != N-1){
+			for(int j = sa[pos[i]+1]; S[i+k] == S[j+k]; )
+				k++;
+			lcp[pos[i]+1] = k;
+			if(k) k--;
+		}
+	}
+}
+
+void build(int node,int a,int b){
+	if(a==b){
+		t[node]=lcp[a];
+		return;
+	}
+	int mid=(a+b)/2;
+	build(2*node,a,mid);
+	build(2*node+1,mid+1,b);
+	t[node]=min(t[2*node],t[2*node+1]);
+	return;
+}
+
+int query(int node,int a,int b,int l,int r){
+	if(l>b||a>r||a>b)return mod;
+	if(a>=l&&b<=r)return t[node];
+	int mid=(a+b)/2;
+	return min(query(2*node,a,mid,l,r),query(2*node+1,mid+1,b,l,r));
+}
+
+int pre[maxn],suf[maxn],ans[maxn];
+map<int,int>m;
+int main(){
+	string s;
+	S="";
+	int n,q;
+	int tot=0;
+	cin>>n;
+	rep(i,n){
+		cin>>s;
+		S+='$'+s;
+		tot+=1+s.size();
+	}
+	S+='#';
+	tot++;
+	int cur=tot;
+
+	cin>>q;
+	rep(i,q){
+		cin>>s;
+		S+=s+'@';
+		for(int j=cur;j<=cur+s.size();j++)m[j]=i+1;
+		cur+=1+s.size();
+		tot+=1+s.size();
+	}
+	buildSA();
+	buildLCP();
+
+	int prev=0;
+	rep(i,tot){
+		if(m[sa[i]]==0){
+			prev=i;
+			pre[i]=i;
+		}
+		else{
+			pre[i]=prev;
+		}
+	}
+
+	int sufi=mod;
+	for(int i=tot-1;i>=0;i--){
+		if(m[sa[i]]==0){
+			sufi=i;
+			suf[i]=i;
+		}
+		else{
+			suf[i]=sufi;
+		}
+	}
+
+
+	build(1,0,tot-1);
+	
+
+	for(int i=0;i<tot;i++){
+		if(m[sa[i]]==0)continue;
+		int num=m[sa[i]];
+		ans[num]=max(ans[num],query(1,0,tot-1,pre[i]+1,i));
+		if(suf[i]!=mod)ans[num]=max(ans[num],query(1,0,tot-1,i+1,suf[i]));
+	}
+
+	
+
+	for(int i=1;i<=q;i++){
+		cout<<ans[i]<<endl;
+	}
+	
+	return 0;
+}

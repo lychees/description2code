@@ -1,0 +1,85 @@
+#include <iostream>
+#include <ctime>
+#include <cstdlib>
+#include <unordered_set>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+using namespace std;
+
+const int MOD = 1e9 + 7;
+int n, m;
+int parent[1003], color[1010];
+int dp[1010][1010];
+int order[1010];
+int rowsum[1010];
+int nextsum[1010];
+int nnext[1010];
+
+int solve()
+{
+    memset(dp, 0, sizeof(dp));
+    memset(rowsum, 0, sizeof(rowsum));
+    int root = 0;
+    cin >> n >> m;
+    for(int i = 1; i <= n; i++) {
+        cin >> parent[i] >> color[i];
+        if(parent[i] == 0)
+            root = i;
+        else
+            nnext[parent[i]] = i;
+    }
+
+    order[0] = root;
+    for(int i = 1; i < n; i++) {
+        order[i] = nnext[order[i - 1]];
+    }
+
+    for(int i = 0; i < n; i++)
+        order[i] = color[order[i]];
+
+    dp[0][0] = 1;
+    rowsum[0] = 1;
+
+    for(int i = 0; i < n; i++) {
+        int cr = order[i];
+
+        for(int len = 1; len <= m; len++) {
+            nextsum[len] = rowsum[len] - dp[len][cr];
+            dp[len][cr] = rowsum[len - 1];
+            nextsum[len] += dp[len][cr];
+            if(dp[len][cr] == 0)
+                break;
+        }
+
+        for(int len = 1; len <= m; len++) {
+            rowsum[len] = nextsum[len];
+            if(nextsum[len] == 0)
+                break;
+            nextsum[len] = 0;
+            while(rowsum[len] < 0)
+                rowsum[len] += MOD;
+            while(rowsum[len] >= MOD)
+                rowsum[len] -= MOD;
+        }
+    }
+
+    int ans = 0;
+    for(int len = 1; len <= m; len++) {
+        ans += rowsum[len];
+        if(ans >= MOD)
+            ans -= MOD;
+    }
+    return ans;
+}
+
+int main()
+{
+    int t;
+    cin.sync_with_stdio(false);
+    cin >> t;
+    for(int i = 0; i < t; i++)
+        cout << solve() << "\n";
+    return 0;
+}
+

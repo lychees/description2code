@@ -1,0 +1,105 @@
+#include<cstdio>
+#include<cstring>
+#include<cctype>
+#include<stack>
+#include<algorithm>
+#include<vector>
+#include<map>
+using namespace std;
+int C;
+vector<char> v;
+char arr[10002];
+
+char s[10002];
+struct node {
+	node(char a,node *L,node *R):ch(a),left(L),right(R){}
+	char ch;
+	node *left,*right;
+};
+
+node * create_tree(int x,int y)
+{
+//	strncpy(s,arr+x,y-x+1);
+//	s[y-x+1]=0;
+
+//	printf("DEBUG: (%d,%d):%s # %s\n",x,y,s,arr+y+1);
+	
+	if(arr[y]!=')' || arr[y]=='\0') return NULL;
+	if(x>y) return NULL;
+	if(arr[x]==')' || arr[x]=='.') return create_tree(x+1,y);
+	node *tmp = new node('.',NULL,NULL);
+	if(isalpha(arr[x])) {
+		tmp->ch=arr[x];
+		int i;
+		int lvl=0;
+		for(i=x+2;i<=y;i++) {
+			if(arr[i]=='(') lvl++;
+			if(arr[i]==')' && (lvl==1)) break;
+			if(arr[i]==')') lvl--;
+		}
+
+	//	printf("i is %d,%c\n",i,arr[i+1]);
+
+		if(isalpha(arr[x+2])) {
+			tmp->left=create_tree(x+2,i);
+			tmp->right=create_tree(i,y);
+			return tmp;
+		}
+		else if(arr[x+2]=='.') { tmp->left=NULL;
+			if(arr[x+3]=='.'){  tmp->right=NULL; return tmp; }
+			else if(isalpha(arr[x+3])) {
+				tmp->right=create_tree(x+3,y);
+				return tmp;
+			}
+		}
+		if(i<y && isalpha(arr[i+1])) {
+			tmp->right=create_tree(i+1,y);
+			return tmp;
+		}
+		else if(i<y && arr[i+1]=='.') { tmp->right=NULL;
+			return tmp;
+		} else if(i<y && arr[i]==')')
+		{
+			tmp->right=create_tree(i+1,y);
+			return tmp;
+		}
+	}
+
+
+	return tmp;
+}
+
+void print_Tree(node *tmp,int col)
+{
+	if(tmp==NULL) return;
+	if(col==C) v.push_back(tmp->ch);
+
+//	printf("%c : col=%d\n",tmp->ch,col);
+
+	print_Tree(tmp->left,col-1);
+	print_Tree(tmp->right,col+1);
+}
+
+
+
+int main()
+{
+	int T;
+	scanf(" %d",&T);
+	while(T--){
+		int x,i,col;
+		scanf(" %d %s",&col,arr+1);
+		v.clear();
+		C=col;
+		int len=strlen(arr+1);
+		node *t=create_tree(1,len);
+		print_Tree(t,0);
+		sort(v.begin(),v.end());
+		if(v.size()==0) printf("Common Gandhijee!\n");
+		else { 
+			for(i=0;i<v.size();i++) printf("%c",v[i]);
+			printf("\n");
+		}
+	}
+	return 0;
+}

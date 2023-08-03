@@ -1,0 +1,104 @@
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <unordered_map>
+#include <tuple>
+#include <cassert>
+
+using namespace std;
+
+typedef long long LL;
+vector<int> cache_nostreak;
+vector<int> cache_streak;
+vector<int> cache_instreak;
+
+const LL M = 1000000007;
+
+int gN, gT, gK;
+
+int make_key(std::pair<int, int> a) {
+  assert(a.second >=0 && a.second <= (gT + 1));
+  assert(a.first >=0 && a.first <= (gN + 1));
+  return a.second * (gN + 1) + a.first;
+}
+
+int make_key(std::pair<std::pair<int, int>, int> a) {
+  int sec = a.second - gK + 1;
+  assert (sec == 0 || sec == 1);
+  return make_key(a.first) * 2 + sec;
+}
+
+
+#define CACHE_INIT(CACHE, KEY)				\
+  int key=make_key(make_pair KEY);			\
+  auto& cache = CACHE;					\
+  int vvv = cache[key];					\
+  if (vvv != -1) return vvv
+
+#define CACHE_RETURN(RESULT) do { LL result=(RESULT)%M; assert(result >= 0); cache[key]=(int)result; return result; } while(0)
+
+LL d_streak(int N, int T, int Cp);
+LL d(int N, int T, int Cp);
+LL d_instreak(int N, int T);
+
+LL L, C;
+
+LL d_nostreak(int N, int T, int Cp) {
+  if(N < 0) return 0;
+  if(T < 0) return 0;
+  if(N == 0) 
+    return T > 0 ? 0 : 1;
+  
+  CACHE_INIT(cache_nostreak, (make_pair(N, T), Cp));
+  LL val1 = ((d_nostreak(N-1, T, C) - d(N-L, T, C-1) +
+	      d_streak(N-1, T, C-1)) % M);
+  val1 += M;
+  val1 %= M;
+  CACHE_RETURN(Cp * val1);
+}
+
+LL d_streak(int N, int T, int Cp) {
+  if(N < 0) return 0;
+  if(T < 0) return 0;
+  if(N == 0) 
+    return 0;
+
+  CACHE_INIT(cache_streak, (make_pair(N, T), Cp));
+  LL val1 = d_instreak(N-L, T-1);
+  //cout << Cp << " " << val1 << endl;
+  LL val = Cp * val1;
+  val %= M;
+  CACHE_RETURN(val);
+}
+
+
+LL d_instreak(int N, int T) {
+  if(N < 0) return 0;
+  if(T < 0) return 0;
+  if(N == 0) 
+    return (T > 0) ? 0 : 1;
+
+  CACHE_INIT(cache_instreak, (N, T));
+  CACHE_RETURN(d_instreak(N-1, T-1) + d(N, T, C-1));
+}
+
+LL d(int N, int T, int Cp) {
+  return (d_streak(N, T, Cp) + d_nostreak(N, T, Cp)) % M;
+}
+
+int main() {
+  ios_base::sync_with_stdio(0);
+
+  int N, T, K;
+  cin >> N >> L >> T >> K;
+  cache_instreak.resize((N + 1) * (T + 1), -1);
+  gN = N;
+  gT = T;
+  gK = K;
+  cache_streak.resize((N + 1) * (T + 1) * 2, -1);
+  cache_nostreak.resize((N + 1) * (T + 1) * 2, -1);
+  C = K;
+
+  cout << d(N, T, K) % M << endl;
+}

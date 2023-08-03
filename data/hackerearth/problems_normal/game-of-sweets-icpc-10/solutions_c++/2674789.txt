@@ -1,0 +1,71 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef complex<double> cd;
+const double PI = 3.1415926535;
+ 
+const int M = 18;
+int n, m, len = (1<<M); vector<int> ans;
+cd bags[1<<M]; cd aux[1<<M];
+cd p[1<<M]; bool had[1<<M];
+cd bags2[1<<M];
+ 
+void fft(bool inv) {
+    cd y;
+    for (int i = M-1; i >= 0; --i) {
+        int l = (1<<i);
+        for (int j = 0; j < (1<<i); ++j) {
+            for (int k = 0; k < (1<<(M-1-i)); ++k) {
+                y = (!inv) ? p[k*l] : cd(1.0, 0.0)/p[k*l];
+                aux[j+k*l] = bags[j+2*k*l]+y*bags[j+l+2*k*l];
+                aux[j+k*l+(1<<(M-1))] = bags[j+2*k*l]-y*bags[j+l+2*k*l];
+            }
+        }
+       
+        memcpy(bags, aux, sizeof(bags));
+    }
+   
+    if (inv)
+        for (int i = 0; i < (1<<M); ++i)
+            bags[i] /= (1<<M);
+}
+ 
+int main() {
+    ios_base::sync_with_stdio(0); cin.tie(0); cout.tie(0);
+    cin >> n; int ct = 0;
+    memset(had, 0, sizeof(had));
+   
+    for (int i = 0; i < n; ++i) {
+        int x; cin >> x; bags[x] = cd(1.0, 0.0); if (had[x] == true)
+        	ct = 2;
+        	
+        had[x] = true; bags2[100000-x] = cd(1.0, 0.0);
+    }
+   
+    for (int i = 0; i < (1<<M); ++i)
+        p[i] = cd(cos(2*PI*i/len), sin(2*PI*i/len));
+   
+ 
+    fft(false);
+ 
+    for (int i = 0; i < (1<<M); ++i) {
+        swap(bags2[i], bags[i]);
+    }
+ 
+    fft(false);
+    for (int i = 0; i < (1<<M); ++i)
+        bags[i] *= bags2[i];
+ 
+    fft(true);
+   
+    for (int i = 0; i < (1<<M); ++i) {
+        if (i == 100000)
+            continue;
+ 
+        if (bags[i].real() > 0.5) {
+            ++ct;
+        }
+    }
+   
+    cout << ct/2 << endl;
+}

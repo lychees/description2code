@@ -1,0 +1,156 @@
+#include<iostream>
+#include<cstdio>
+#include<vector>
+#include<map>
+#include<set>
+#include<algorithm>
+#include<list>
+#include<cstring>
+#include<stack>
+#include<queue>
+using namespace std;
+#define ll long long
+#define vi vector<int>
+#define vii vector<vi >
+#define pp pair<int,int>
+#define pb push_back
+#define mp make_pair
+#define ppl pair<ll,ll>
+#define vl vector<ll>
+#define vll vector<vl >
+#define llu unsigned ll
+#define all(c) c.begin(),c.end()
+#define mod 1000000007
+#define sc scanf
+#define pf printf
+ll power(ll a,ll b)
+{
+	if(!b)
+		return 1;
+	if(b==1)
+		return a;
+	ll temp=power(a,b/2);
+	temp=(temp*temp);
+	if(b&1)
+		temp=(temp*a);
+	return temp;
+}
+void uniond(int x,int y,vi& rank,vi& root)
+{
+	if(rank[x]>rank[y])
+		root[y]=x;
+	else
+		root[x]=y;
+	if(rank[x]==rank[y])
+		rank[y]++;
+}
+int find(vi& root,int i)
+{
+	while(i^root[i])
+		i=root[i];
+	return i;
+}
+class graph
+{
+	vi *adj;
+	public:
+		graph(int v)
+		{
+			adj=new vi[v];
+		}
+		void add_edge(int u,int v)
+		{
+			adj[u].pb(v);
+			adj[v].pb(u);
+		}
+		void dfs(int v,vector<bool>& visited)
+		{
+			vi::iterator it;
+			visited[v]=true;
+			for(it=adj[v].begin();it!=adj[v].end();it++)
+			{
+				if(!visited[*it])
+				{
+					dfs(*it,visited);
+				}
+			}
+		}
+};
+int main()
+    {
+		int i,n,m,a,b,c,cnt,x,y,t;
+		ll ans,k;
+		vi eval;
+		t=1;
+		while(t--)
+		{
+			sc("%d%d",&n,&m);
+			sc("%lld",&k);
+			graph g(n);
+			vector<bool> visited(n);
+			vi root(n);
+			vi rank(n);
+			for(i=0;i<n;i++)
+				root[i]=i;
+			vector<pair<int,pp > > e(m);
+			for(i=0;i<m;i++)
+			{
+				sc("%d%d%d",&a,&b,&c);
+				a--;
+				b--;
+				g.add_edge(a,b);
+				e[i].first=c;
+				e[i].second.first=a;
+				e[i].second.second=b;
+			}
+			ans=0;
+			g.dfs(0,visited);
+			for(i=1;i<n;i++)
+			{
+				if(!visited[i])
+				{
+					ans=-1;
+					break;
+				}
+			}
+			int req;
+			if(!ans)
+			{
+			sort(e.begin(),e.end());
+			cnt=0;
+			ans=0;
+			i=0;
+			while((cnt)^(n-1))
+			{
+				x=find(root,e[i].second.first);
+				y=find(root,e[i].second.second);
+				root[e[i].second.first]=x;
+				root[e[i].second.second]=y;
+				if(x^y)
+				{
+					eval.pb(e[i].first);
+					ans+=e[i].first;
+					cnt++;
+					uniond(x,y,rank,root);
+				}
+				i++;
+			}
+			req=0;
+			i=n-2;
+		//	cout<<ans<<"\n";
+			while((i>=0)&&(ans>k))
+			{
+				ans-=eval[i];
+				ans++;
+				i--;
+				req++;
+			}
+			if(ans>k)
+				req=-1;
+			}
+			else
+				req=-1;
+			pf("%d",req);
+		}
+    return 0;
+}

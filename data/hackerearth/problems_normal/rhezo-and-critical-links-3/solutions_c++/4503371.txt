@@ -1,0 +1,104 @@
+#include<bits/stdc++.h>
+#include<algorithm>
+using namespace std;
+#define fr(i,a,b) for(int i=a;i<b;i++)
+#define frn(i,a,b) for(int i=a;i>b;i--)
+#define si(x) scanf("%d",&x)
+#define sll(x)  scanf("%lld",&x)
+#define pln printf("\n")
+#define pi(x) printf("%d",x)
+#define pll(x) printf("%lld",x)
+#define mp make_pair
+#define pb push_back
+#define x first
+#define y second
+typedef long long ll;
+ll MOD=1000000007;
+ll pw(ll a,ll b){
+  ll r=1;
+  while(b>0){
+     if(b&1){
+       r=(r*a)%MOD;
+        }
+     b=b>>1;
+     a=(a*a)%MOD;
+  }
+return (r)%MOD;
+}
+int n,m,p;
+vector<int>g[101010];
+int vis[101010]={};
+int sz[101010]={};
+int lowest_lvl[101010]={};
+int discovery[101010]={};
+int parent[101010]={};
+
+int tme=0;
+int valid_edge=0;
+void dfs(int u){
+  vis[u]=1;
+  sz[u]++;
+  fr(i,0,g[u].size()){
+   int v;
+     v=g[u][i];
+     if(!vis[v]){
+       parent[v]=u;
+         dfs(v);
+       sz[u]+=sz[v];
+     }
+  }
+}
+void fun(int u,int root){
+  lowest_lvl[u]=discovery[u]=++tme;
+  vis[u]=1;
+  int subtree=0,diff;
+  fr(i,0,g[u].size()){
+   int v;
+     v=g[u][i];
+     if(v==parent[u])continue;
+     if(!vis[v]){
+        subtree++;
+          fun(v,root);
+         lowest_lvl[u]=min(lowest_lvl[u],lowest_lvl[v]);
+         if(lowest_lvl[v]>discovery[u]){
+            diff=abs(sz[v]-(sz[root]-sz[v]));
+            if(diff<=p){
+              valid_edge++;
+            }
+         }
+     }
+     else {
+       lowest_lvl[u]=min(lowest_lvl[u],discovery[v]);
+     }
+  }
+}
+
+int main(){
+   si(n),si(m),si(p);
+   int u,v;
+   fr(i,0,m){
+      si(u),si(v);
+      g[u].pb(v);
+      g[v].pb(u);
+   }
+   int ans=0;
+   fr(i,1,n+1){
+       if(!vis[i]){
+         parent[i]=0;
+         dfs(i);
+       }
+   }
+   memset(vis,0,sizeof(vis));
+   fr(i,1,n+1){
+       if(!vis[i]){
+          fun(i,i);
+       }
+   }
+  /* fr(i,1,n+1){
+     printf("index=%d sz=%d parent=%d vis[]=%d lowest_lvl[]=%d disc=%d\n",i,sz[i],parent[i],vis[i],lowest_lvl[i],discovery[i]);
+   }*/
+
+ pi(valid_edge);pln;
+
+return 0;
+}

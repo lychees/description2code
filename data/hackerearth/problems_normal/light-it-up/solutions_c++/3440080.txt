@@ -1,0 +1,228 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+struct Solve {
+    int n;
+    vi lP ;
+    vi rP ;
+    vi h ;
+    vector<vi> enlights;
+    vector<vi> enlighted;
+    vector<bool> taken;
+    Solve() {
+        cin>>n;
+        lP=vi ( n );
+        rP=vi ( n );
+        h=vi ( n );
+        vi lP2 ( n );
+        vi rP2 ( n );
+        vi h2 ( n );
+        rep ( i,n ) {
+            cin>>lP2[i]>>rP2[i]>>h2[i];
+            assert ( lP2[i]>0 &&rP2[i]>0 &&h2[i]>0 );
+
+        }
+        vpii o2;
+        rep ( i,n ) o2.push_back ( mp ( lP2[i],i ) );
+        sort ( all ( o2 ) );
+
+        int lst=-1;
+        rep ( i,n ) {
+
+            lP[i]=lP2[o2[i].second];
+            rP[i]=rP2[o2[i].second];
+            h[i]=h2[o2[i].second];
+
+            assert ( lP[i]>lst );
+            lst=lP[i];
+        }
+    }
+
+    vi lghtPos;
+    vi lghtH ;
+
+    vector<bool>isLeft;
+    void compInvDep() {
+        enlighted=vector<vi> ( 2*n );
+        rep ( i,enlights.size() ) {
+            for ( int k: enlights[i] ) enlighted[k].push_back ( i );
+
+        }
+    }
+    void compDep() {
+        taken=vector<bool> ( n-1 );
+        lghtPos=vi ( n-1 );
+        lghtH=vi ( n-1 );
+
+        isLeft=vector<bool> ( n-1 );
+
+        reu ( i,1,n ) {
+            if ( h[i]>h[i-1] ) {
+                lghtH[i-1]=h[i];
+                lghtPos[i-1]=lP[i];
+                isLeft[i-1]=1;
+
+            } else {
+                lghtH[i-1]=h[i-1];
+                lghtPos[i-1]=rP[i-1];
+
+            }
+        }
+
+        rep ( i,n-1 ) {
+            vi current;
+            current.push_back ( i+1 );
+            current.push_back ( n+i );
+            ll h0=lghtH[i];
+            ll p0=lghtPos[i];
+            ll dh=1;
+            ll dp=0;
+            if ( isLeft[i] ) {
+                for ( int j=i; j>=0; j-- ) {
+                    int r=rP[j];
+                    int l=lP[j];
+                    if ( h0*dp<=dh* ( p0-r ) ) {
+                        current.push_back ( n+j );
+                    }
+                    if ( h[j]>=h0 ) break;
+
+                    ll dh2=h0-h[j];
+                    ll dp2=p0-l;
+                    if ( dh2*dp<dh*dp2 ) {
+                        dh=dh2;
+                        dp=dp2;
+                    }
+                }
+            } else {
+                for ( int j=i+1; j<n; j++ ) {
+                    if ( h0*dp<=dh* ( lP[j]-p0 ) ) {
+                        current.push_back ( j );
+                    }
+                    if ( h[j]>=h0 ) break;
+                    ll dh2=h0-h[j];
+                    ll dp2=rP[j]-p0;
+                    if ( dh2*dp<dh*dp2 ) {
+                        dh=dh2;
+                        dp=dp2;
+                    }
+
+                }
+            }
+            enlights.push_back ( current );
+        }
+        rep ( i, enlights.size() ) {
+            sort ( all ( enlights[i] ) );
+            enlights[i].resize ( unique ( all ( enlights[i] ) )-enlights[i].begin() );
+
+        }
+        compInvDep();
+//         cout<<"----------"<<endl<<enlights<<"-----------"<<endl<<"---------"<<endl<<enlighted<<"-----------"<<endl<<endl;
+    }
+    int runOrdered ( int lgtsoFar, vector<bool> &I ) {
+
+
+        vpii order ( n-1 );
+        rep ( i,n-1 ) {
+            if ( !taken[i] )
+                order[i]=mp ( -lghtH[i],i );
+        }
+
+        sort ( all ( order ) );
+
+        rep ( ind,n-1 ) {
+            bool used=0;
+            int i=order[ind].second;
+            for ( int j: enlights[i] ) {
+                if ( !I[j] ) I[j]=used=1;
+            }
+
+
+            if ( used ) lgtsoFar++;
+        }
+        return lgtsoFar;
+    }
+    int run1() {
+        compDep();
+        vector<bool> I ( 2*n );
+        I[0]=I[2*n-1]=1;
+        int lgCnt=2;
+
+        int zCount=0;
+        rep ( i,enlighted.size() ) {
+            if ( I[i] ) continue;
+            vi &v= enlighted[i] ;
+//             if ( v.empty() ) {
+//                 assert ( i==0 || i== ( int ) enlighted.size()-1 );
+//                 zCount++;
+//             }
+            if ( v.size() ==1 ) {
+                if ( !taken[v[0]] ) {
+                    lgCnt++;
+//                     cout<<"took light "<<i<<" "<<v[0]<<endl;
+                    taken[v[0]]=1;
+                }
+                for ( int k: enlights[v[0]] ) I[k]=1;
+//                 I[i]=1;
+            }
+
+        }
+//         assert ( zCount==2 );
+        return  runOrdered ( lgCnt,I );
+    }
+};
+int main() {
+    ios_base::sync_with_stdio ( false );
+    inrep {
+        Solve s;
+        int res=s.run1();
+
+        cout<<res<<endl;
+
+    }
+}

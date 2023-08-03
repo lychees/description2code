@@ -1,0 +1,107 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+#define sd(x) scanf("%d", &x)
+#define boost ios_base::sync_with_stdio(false);
+#define mp make_pair
+#define pb push_back
+#define all(a) a.begin(), a.end()
+#define f first
+#define s second
+ 
+typedef pair<int, int> pii;
+typedef long long ll;
+ 
+const int mod = 1000000009;
+const int inf = 50000000;
+const int maxn = 100;
+const int maxk = 10;
+const int maxval = 5005;
+ 
+int n, k, w[maxk], c[maxn];
+vector<int> valid[1<<maxk];
+ll dp1[1<<maxk][maxval], dp2[1<<maxk][maxn];
+ 
+ll solve1(int mask, int val)
+{
+	if(!val)
+		return (mask==0);
+	if(!mask)
+		return 0;
+	if(dp1[mask][val]!=-1)
+		return dp1[mask][val];
+	int i, lsb;
+	for(i=0; i<k; i++){
+		if(mask&(1<<i)){
+			lsb = i;
+			break;
+		}
+	}
+	ll ret = 0;
+	if(w[lsb]<=val){
+		ret = (ret + solve1(mask, val-w[lsb]))%mod;
+		ret = (ret + solve1(mask^(1<<lsb), val-w[lsb]))%mod;
+	}
+	return dp1[mask][val] = ret;
+}
+ 
+ll solve2(int mask, int curn)
+{
+	if(curn>=n)
+		return 1;
+	if(dp2[mask][curn]!=-1)
+		return dp2[mask][curn];
+	ll ret = 0, x, y;
+	for(auto it:valid[mask]){
+		x = solve1(it, c[curn]);
+		y = solve2(mask|it, curn+1);
+		ret = (ret + (x*y)%mod)%mod;
+	}
+	return dp2[mask][curn] = ret;
+}
+ 
+int main()
+{
+	//freopen("i.txt", "r", stdin);
+	//freopen("o.txt", "w", stdout);
+	int t, i, j, mask, lsb, msb, p;
+	scanf("%d", &t);
+	while(t--){
+		memset(dp1, -1, sizeof(dp1));
+		memset(dp2, -1, sizeof(dp2));
+		scanf("%d%d", &n, &k);
+		for(mask=0; mask<(1<<k); mask++){
+			valid[mask].clear();
+			for(i=1; i<(1<<k); i++){
+				lsb = -1;
+				for(j=0; j<k; j++){
+					if(i&(1<<j)){
+						if(lsb==-1)
+							lsb = j;
+						msb = j;
+					}
+				}
+				p = 1;
+				for(j=0; j<k; j++){
+					if(mask&(1<<j)){
+						if(j>lsb && j<msb){
+							p = 0;
+							break;
+						}
+					}
+				}
+				if(p)
+					valid[mask].pb(i);
+			}
+		}
+		for(i=0; i<k; i++)
+			scanf("%d", &w[i]);
+		for(i=0; i<n; i++)
+			scanf("%d", &c[i]);
+		ll ans = solve2(0, 0);
+		printf("%lld\n", ans);	
+	}
+	
+	return 0;
+}

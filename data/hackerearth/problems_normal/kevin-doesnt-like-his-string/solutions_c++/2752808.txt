@@ -1,0 +1,147 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+int main() {
+    int n, k, pre[26], suf[26], cur, before, after, all = 0;
+    stack<int> r[26];
+    string s;
+    memset(pre, 0, sizeof(pre));
+    memset(suf, 0, sizeof(suf));
+    cin >> n >> k >> s;
+    if (k == 1) {
+        cout << s;
+        return 0;
+    }
+    for (int i = 0; i < n; ++i) {
+        suf[s[i] - 'a']++;
+        r[s[i] - 'a'].push(i);
+    }
+    for (int i = 0; i < 26; ++i) {
+        if (suf[i] > 0) {
+            all++;
+        }
+    }
+    if (all <= 1) {
+        cout << s;
+        return 0;
+    }
+    for (int i = 0; i < n; ++i) {
+        if (k == 0) {
+            break;
+        }
+        if (s[i] == '*') {
+            before = -1;
+            for (int j = 0; j < 26; ++j) {
+                if (pre[j] > 0) {
+                    before = j;
+                    break;
+                }
+            }
+            after = -1;
+            for (int j = 0; j < 26; ++j) {
+                if (suf[j] > 0) {
+                    after = j;
+                    break;
+                }
+            }
+            if (before != -1 && after != -1) {
+                if (before <= after) {
+                    pre[before]--;
+                    s[i] = (char) before + 'a';
+                } else {
+                    suf[after]--;
+                    s[i] = (char) after + 'a';
+                    k--;
+                    int j= r[after].top();
+                    r[after].pop();
+                    s[j] = '*';
+                }
+            } else if (before != -1) {
+                pre[before]--;
+                s[i] = (char) before + 'a';
+            } else if (after != -1) {
+                suf[after]--;
+                s[i] = (char) after + 'a';
+                k--;
+                int j= r[after].top();
+                r[after].pop();
+                s[j] = '*';
+            }
+
+            continue;
+        }
+        cur = s[i] - 'a';
+        suf[cur]--;
+        before = -1;
+        for (int j = 0; j < cur; ++j) {
+            if (pre[j] > 0) {
+                before = j;
+                break;
+            }
+        }
+
+        if (k == 1) {
+            if (before != -1) {
+                pre[before]--;
+                s[i] = (char) before + 'a';
+                pre[cur]++;
+                k--;
+            }
+            continue;
+        }
+        after = -1;
+        for (int j = 0; j < cur; ++j) {
+            if (suf[j] > 0) {
+                after = j;
+                break;
+            }
+        }
+
+        if (before != -1 && after != -1) {
+            if (before <= after) {
+                pre[before]--;
+                s[i] = (char) before + 'a';
+                pre[cur]++;
+                k--;
+            } else {
+                suf[after]--;
+                pre[cur]++;
+                s[i] = (char) after + 'a';
+                k -= 2;
+                int j= r[after].top();
+                r[after].pop();
+                s[j] = '*';
+            }
+        } else if (before != -1) {
+            pre[before]--;
+            s[i] = (char) before + 'a';
+            pre[cur]++;
+            k--;
+        } else if (after != -1) {
+            suf[after]--;
+            pre[cur]++;
+            s[i] = (char) after + 'a';
+            k -= 2;
+            int j= r[after].top();
+            r[after].pop();
+            s[j] = '*';
+        }
+
+    }
+    for (int i = 0; i < n; ++i) {
+        if (s[i] != '*') {
+            continue;
+        }
+        for (int j = 0; j < 26; ++j) {
+            if (pre[j] > 0) {
+                s[i] = (char) (j + 'a');
+                pre[j]--;
+                break;
+            }
+        }
+    }
+
+    cout << s;
+    return 0;
+}

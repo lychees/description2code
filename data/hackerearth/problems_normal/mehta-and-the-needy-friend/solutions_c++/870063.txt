@@ -1,0 +1,186 @@
+#include <stack>
+#include <cstdio>
+#include <cctype>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
+#include <cmath>
+#include <climits>
+#include <iostream>
+#include <vector>
+#include <map>
+#include <list>
+#include <queue>
+#include <algorithm>
+#include <limits>
+#include <bitset>
+using namespace std;
+
+//Shorthands
+typedef vector<int> vi;
+typedef pair<int, int> ii;
+typedef vector<vi> vvi;
+typedef vector<ii> vii;
+typedef long long ll;
+typedef vector<ll> vll;
+#define sd(x) scanf("%d", &x)
+#define sl(x) scanf("%lld", &x)
+#define For(i, j, k) for (int i = j; i <= k; i++)
+#define Ford(i, j, k) for (int i = j; i >= k; i--)
+#define sz(a) int((a).size())
+#define rsz resize
+#define pb push_back
+#define all(c) (c).begin(),(c).end()
+#define tr(c,i) for(auto i = (c).begin(); i != (c).end(); i++)
+#define present(c,x) ((c).find(x) != (c).end())
+#define abs(x) (((x) > 0) ? (x) : (-(x)))
+#define mp make_pair
+
+//DEBUG
+#define trace(x) cerr << #x << ": " << x << endl;
+#define trace2(x, y) cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z) cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define trace4(a, b, c, d) cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+#define track(a) cerr << #a << ": "; for (auto tmp: a) cerr << tmp << " "; cerr << endl;
+#define trackp(a) cerr << #a << ": "; for (auto tmp: a) cerr << "(" << tmp.first << ", " << tmp.second << "), "; cerr << endl;
+
+#define MOD 1000000007
+#define INF ie15
+
+long long power(long long n,int m)
+{
+    if (m == 0) return 1;
+    long long x = pow(n,m/2);
+    if(m % 2 == 0)
+               return (x*x);
+    else
+               return (((x*x))*n);
+}
+
+
+
+void input()
+{
+    #ifndef ONLINE_JUDGE
+        string file = "input.txt";
+        freopen(file.c_str(), "r", stdin);
+    #endif // ONLINE_JUDGE
+}
+
+void output()
+{
+    #ifndef ONLINE_JUDGE
+        freopen("output.txt", "w", stdout);
+    #endif // ONLINE_JUDGE
+}
+
+string tostring(ll a)
+{
+    if (a == 0) return "0";
+    int digcnt = 0;
+    ll tmp = a;
+    //trace(tmp);
+    while (tmp) {
+        digcnt++;
+        tmp /= 10;
+    }
+    digcnt--;
+    //trace(digcnt);
+    string s;
+    ll ten = 1;
+    for (int i = 0; i < digcnt; i++)
+        ten *= 10;
+    //trace(ten);
+    for (int i = digcnt; i >= 0; i--) {
+        s.pb(a / ten + '0');
+        a %= ten;
+        ten /= 10;
+    }
+    return s;
+}
+
+int f[][4] = {
+{0, 0, 0, 0},
+{0, 0, 0, 0},
+{1, 0, 0, 0},
+{0, 1, 0, 0},
+{0, 0, 0, 0},
+{0, 0, 1, 0},
+{1, 1, 0, 0},
+{0, 0, 0, 1},
+{1, 0, 0, 0},
+{0, 0, 0, 0},
+};
+
+bool exist[25][5][5][5][5][5][5];
+ll dp[25][5][5][5][5][5][5];
+
+
+ll solve(string s, int n, bool bound, int used, int tw, int th, int fv, int sv)
+{
+
+    if (n == s.size()) {
+        if (!(tw & 1) && !(th & 1) && !(fv & 1) && !(sv & 1)) {
+            if (used) return 1;
+            else return 0;
+        }
+        else return 0;
+    }
+    if (!exist[n][bound][used][tw][th][fv][sv]) {
+        //trace3(n, bound, used);
+        //trace4(tw, th, fv, sv);
+
+        ll ways = 0;
+        if (!bound) {
+            if (!used) ways += solve(s, n+1, false, false, tw, th, fv, sv);
+            for (int i = 1; i <= 9; i++)
+                ways += solve(s, n+1, false, true, tw^f[i][0], th^f[i][1], fv^f[i][2], sv^f[i][3]);
+        } else {
+            if (!used && s[n] == '0') ways += solve(s, n+1, true, false, tw, th, fv, sv);
+            else if (!used && s[n] != '0') ways += solve(s, n+1, false, false, tw, th, fv, sv);
+            for (int i = 1; i < s[n] - '0' && i <= 9; i++)
+                ways += solve(s, n+1, false, true, tw^f[i][0], th^f[i][1], fv^f[i][2], sv^f[i][3]);
+
+            int i = s[n] - '0';
+            if (i > 0 && i <= 9) ways += solve(s, n+1, true, true, tw^f[i][0], th^f[i][1], fv^f[i][2], sv^f[i][3]);
+        }
+        dp[n][bound][used][tw][th][fv][sv] = ways;
+        exist[n][bound][used][tw][th][fv][sv] = true;
+    }
+    return dp[n][bound][used][tw][th][fv][sv];
+}
+
+
+int main()
+{
+    //cout << solve("100", 0, true, false, 0, 0, 0, 0) << endl;
+
+    ios::sync_with_stdio(false);
+    int t;
+    cin >> t;
+    while (t--) {
+        ll A, B, K;
+        cin >> A >> B >> K;
+        ll low = A, high = B, ans = -1;
+        string s = tostring(A-1);
+        memset(exist, 0, sizeof(exist));
+        s = "0" + s;
+        ll acnt = solve(s, 0, true, false, 0, 0, 0, 0);
+        //trace(acnt);
+        while (low <= high) {
+            memset(exist, 0, sizeof(exist));
+            ll mid = low + (high - low)/2;
+            string mid_str = tostring(mid);
+            mid_str = "0" + mid_str;
+            ll count = solve(mid_str, 0, true, false, 0, 0, 0, 0) - acnt;
+            //trace4(low, high, mid, count);
+            if (count >= K) {
+                ans = mid, high = mid - 1;
+            } else if (count < K){
+                low = mid + 1;
+            }
+        }
+        cout << ans << endl;
+    }
+}
+

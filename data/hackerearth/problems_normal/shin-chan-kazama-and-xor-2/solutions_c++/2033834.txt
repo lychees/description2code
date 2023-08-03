@@ -1,0 +1,134 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+struct node {
+    int l;
+    int r;
+    int x;
+    int idx;
+    node() { }
+    node(int l, int r, int x, int idx)
+    {
+        this->l = l;
+        this->r = r;
+        this->x = x;
+        this->idx = idx;
+    }
+};
+
+int fin_cnt;
+
+struct trie {
+    int pos[2];
+    int cnt;
+    trie() {
+    	pos[0] = pos[1] = -1;
+    	cnt = 0;
+    }
+}tree[15*1000005];
+
+node Q[50004];
+pair <int, int> ans[50004];
+int A[1000005];
+int n;
+int blocks;
+int tot;
+
+bool cmp(node p1, node p2)
+{
+    if ( p1.l/blocks != p2.l/blocks ) return (p1.l/blocks < p2.l/blocks);
+    return (p1.r < p2.r);
+}
+
+void add(int idx, int num, int where)
+{
+    tree[where].cnt++;
+    if ( idx == -1 ) return;
+    int bit_set = ((num&(1<<idx)) > 0);
+    if ( tree[where].pos[bit_set] == -1 ) {
+        tot++;
+        tree[where].pos[bit_set] = tot;
+    }
+    add(idx-1, num, tree[where].pos[bit_set]);
+}
+
+void rem(int idx, int num, int where)
+{
+    tree[where].cnt--;
+    if ( idx == -1 ) return;
+    int bit_set = ((num&(1<<idx)) > 0);
+    rem(idx-1, num, tree[where].pos[bit_set]);
+    if ( tree[tree[where].pos[bit_set]].cnt <= 0 ) tree[where].pos[bit_set] = -1;
+}
+
+void add(int idx)
+{
+    add(29,A[idx],0);
+}
+
+void rem(int idx)
+{
+    rem(29,A[idx],0);
+}
+
+int f(int idx, int num, int where)
+{
+    if ( idx == -1 ) {
+    	fin_cnt = tree[where].cnt;
+    	return 0;
+    }
+    int set_bit = ((num&(1<<idx)) > 0);
+    if ( tree[where].pos[set_bit] == -1 ) set_bit ^= 1;
+    return (1<<idx)*(set_bit) + f(idx-1, num, tree[where].pos[set_bit]);
+}
+
+int main()
+{
+    int q,x,y,z,L=0,R=0,tot=0;
+    cin >> n;
+    blocks = (int)(sqrt(n));
+    for ( int i = 0; i < n; i++ ) {
+    	cin >> A[i];
+    	assert(A[i] >= 0 && A[i] <= 1000000000);
+    }
+    cin >> q;
+    for ( int i = 0; i < q; i++ ) {
+        cin >> x >> y >> z;
+        x--, y--;
+        Q[i] = node(x,y,z,i);
+    }
+    
+    sort(Q, Q+q, cmp);
+
+
+    add(0);
+    for(int i = 0; i < q; ++i){
+        int st = Q[i].l, en = Q[i].r;
+        //cerr << st << " " << en << " " << L << " " << R << endl;
+        while(R > en){
+            //cerr << R << " removed\n";
+            rem(R);
+            --R;
+        }
+        while(R < en){
+            ++R;
+            //cerr << R << " added\n";
+            add(R);
+        }
+        while(L > st){
+            --L;
+            //cerr << L << " added\n";
+            add(L);
+        }
+        while(L < st){
+            //cerr << L << " removed\n";
+            rem(L);
+            ++L;
+        }
+        ans[Q[i].idx].first = f(29,Q[i].x,0);
+        ans[Q[i].idx].second = fin_cnt;
+    }
+    for ( int i = 0; i < q; i++ ) cout << ans[i].first << " " << ans[i].second << endl;
+    return 0;
+}

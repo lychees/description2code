@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+using namespace std;
+const long long mod = 1e9 + 7;
+const double eps = 1e-15;
+const double PI = atan(1.0);
+#define readFile freopen("input","r",stdin)
+#define writeFile freopen("output","w",stdout)
+#define fastIO ios::sync_with_stdio(0),cin.tie(0),cout.tie(0)
+typedef pair<long long,long long> ii;
+typedef unsigned long long ULL;
+const int N = 200001;
+const int MOD = 1e9+7;
+
+int tree[N*4],lazy[N*4];
+int arr[N];
+
+void build(int node,int l,int r){
+    if (l==r){
+        tree[node] = arr[l];
+        return;
+    }
+    int mid = (l+r)>>1;
+    build(node<<1,l,mid);
+    build(node<<1|1,mid+1,r);
+    tree[node] = tree[node<<1]+tree[node<<1|1];
+}
+
+void update(int node,int l,int r,int ll,int rr){
+    if (lazy[node]){
+        tree[node] = r-l+1 - tree[node];
+        if (l!=r){
+            lazy[node<<1] = !lazy[node<<1];
+            lazy[node<<1|1] = !lazy[node<<1|1];
+        }
+        lazy[node] = 0;
+    }
+    if (l>rr || r<ll) return;
+    if (l>=ll && r<=rr){
+        tree[node] = r-l+1 - tree[node];
+        if (l!=r){
+            lazy[node<<1] = !lazy[node<<1];
+            lazy[node<<1|1] = !lazy[node<<1|1];
+        }
+        return;
+    }
+    int mid = (l+r)>>1;
+    update(node<<1,l,mid,ll,rr);
+    update(node<<1|1,mid+1,r,ll,rr);
+    tree[node] = tree[node<<1]+tree[node<<1|1];
+}
+
+int query(int node,int l,int r,int ll,int rr){
+    if (lazy[node]){
+        tree[node] = r-l+1 - tree[node];
+        if (l!=r){
+            lazy[node<<1] = !lazy[node<<1];
+            lazy[node<<1|1] = !lazy[node<<1|1];
+        }
+        lazy[node] = 0;
+    }
+    if (l>rr || r<ll) return 0;
+    if (l>=ll && r<=rr) return tree[node];
+    int mid = (l+r)>>1;
+    int m1 = query(node<<1,l,mid,ll,rr);
+    int m2 = query(node<<1|1,mid+1,r,ll,rr);
+    return m1+m2;
+}
+int n,m,t,a,b;
+char c;
+
+int main(){
+#ifndef ONLINE_JUDGE
+    readFile; 
+//    writeFile;
+#endif
+    fastIO;
+    cin>>n>>m;
+    for(int i=1;i<n;i++) {
+        cin>>c; arr[i] = (c=='>');
+    }
+    n--;
+    build(1,1,n);
+    while (m--){
+        cin>>t>>a>>b;
+        if (t==1){
+            update(1,1,n,a,b-1);
+            continue;
+        }
+        if (a==b) cout<<0<<"\n";
+        else if (a<b){
+            cout<<b-a-query(1,1,n,a,b-1)<<"\n";
+        }
+        else cout<<query(1,1,n,b,a-1)<<"\n";
+    }
+}

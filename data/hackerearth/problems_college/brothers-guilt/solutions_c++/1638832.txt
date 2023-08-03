@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define debug(args...) fprintf(stderr,args)
+
+typedef long long lint;
+typedef pair<int,int> pii;
+typedef pair<lint,lint> pll;
+
+const int INF = 0x3f3f3f3f;
+const lint LINF = 0x3f3f3f3f3f3f3f3fll;
+const int MAXN = 110;
+
+string s1,s2,virus;
+int dp[MAXN][MAXN][MAXN];
+int f[MAXN];
+
+struct state {
+    int nx,ny,nz;
+    state(int a,int b,int c) { nx = a;ny = b;nz = c; }
+    state(){};
+} st[MAXN][MAXN][MAXN];
+
+int go(int i,int j,int k) {
+    if(i == s1.size() || j == s2.size()) return 0;
+    if(dp[i][j][k] != -1) return dp[i][j][k];
+    int &best = dp[i][j][k];
+    if(go(i+1,j,k) > go(i,j+1,k)) {
+        best = go(i+1,j,k);
+        st[i][j][k] = state(i+1,j,k);
+    }
+    else {
+        best = go(i,j+1,k);
+        st[i][j][k] = state(i,j+1,k);
+    }
+    if(s1[i] != s2[j]) return best;
+    int cur = k;
+    while(cur>0 && virus[cur] != s1[i]) cur = f[cur];
+    if(cur == 0 && virus[cur] != s1[i]) {
+        if(1 + go(i+1,j+1,0) > best) {
+            best = 1+go(i+1,j+1,0);
+            st[i][j][k] = state(i+1,j+1,cur);
+        }
+    }
+    else if(cur < virus.size()-1) {
+        if(1+go(i+1,j+1,cur+1) > best) {
+            best = 1+go(i+1,j+1,cur+1);
+            st[i][j][k] = state(i+1,j+1,cur+1);
+        }
+    }
+    return best;
+}
+
+void kmp(string p) {
+    int len = p.size();
+    f[0] = f[1] = 0;
+    for(int a=2;a<=len;++a) {
+        int now = f[a-1];
+        while(1) {
+            if(p[now] == p[a-1]) {
+                f[a] = now+1;
+                break;
+            }
+            if(now==0) {
+                f[a] = 0;
+                break;
+            }
+            now = f[now];
+        }
+    }
+}
+
+int main() {
+    cin >> s1 >> s2 >> virus;
+    kmp(virus);
+    memset(dp,-1,sizeof(dp));
+    int ans = go(0,0,0);
+    if(ans == 0) printf("0\n");
+    else {
+        string s = "";
+        int x=0,y=0,z=0;
+        while(x < s1.size() && y < s2.size()) {
+            int nx = st[x][y][z].nx, ny = st[x][y][z].ny, nz = st[x][y][z].nz;
+            if(nx>x && ny>y) s += s1[x];
+            x = nx; y = ny; z = nz;
+        }
+       cout<<s.size();
+    }
+    return 0;
+}

@@ -1,0 +1,216 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+vi lows ( 100 );
+int nBF2 ( ll x ) {
+    int i=2;
+    while ( x%i==0 ) i++;
+    if ( i>x ) return 1;
+    return 1+nBF2 ( i );
+
+}
+void fillLows() {
+    reu ( i,1,100 ) lows[i]=nBF2 ( i );
+
+}
+
+ll bF ( ll a, ll b ) {
+    fillLows();
+//     cout<<lows<<endl;
+    ll su=0;
+    for ( ll x=a; x<b+1; x++ ) {
+        int i=2;
+        while ( x%i==0 ) i++;
+        if ( i>x ) {
+            su++;
+            continue;
+        }
+        su+=1+lows[i];
+
+    }
+    return su;
+}
+struct Sieve {
+    vi sieve;
+    vi primes;
+    Sieve ( int maxn ) :sieve ( maxn,-1 ) {
+
+        for ( ll i=2; i<maxn; i++ ) {
+            if ( sieve[i]<0 ) {
+                int ind=primes.size();
+                primes.push_back ( i );
+                sieve[i]=ind;
+
+                if ( i*i<maxn ) {
+                    for ( ll n=i*i; n<maxn; n+=i )
+                        sieve[n]=ind;
+                }
+            }
+        }
+    }
+    vi getUniqueIndizes ( int n ) {
+        vi res;
+        while ( n>1 ) {
+            int ind=sieve[n];
+            int fac=primes[ind];
+            res.push_back ( ind );
+
+            while ( n%fac==0 ) n/=fac;
+        }
+        return res;
+    }
+    vi getIndizes ( int n ) {
+        vi res;
+        while ( n>1 ) {
+            res.push_back ( sieve[n] );
+            n/=primes[sieve[n]];
+        }
+        return res;
+    }
+    vi getUniqueFactors ( int n ) {
+        vi res=getUniqueIndizes ( n );
+        rep ( i,res.size() ) res[i]=primes[res[i]];
+        return res;
+
+    }
+    vi getFactors ( int n ) {
+        vi res=getIndizes ( n );
+        rep ( i,res.size() ) res[i]=primes[res[i]];
+        return res;
+    }
+    map<int,int> getFactorMap ( int n ) {
+        vi v=getFactors ( n );
+        map<int,int> m;
+        for ( int k: v ) m[k]++;
+        return m;
+    }
+};
+ll BOUND=INFL;
+ll cntDis ( ll a, ll b, ll q ) {
+    ll w= ( b+1-a ) /q;
+    ll r= ( b+1-a ) %q;
+    if ( b%q<r ) w++;
+    return w;
+}
+ll solve ( ll a, ll b ) {
+    Sieve s ( 1000 );
+    fillLows();
+    ll cp;
+    ll res=0;
+    map<int,int >cMap;
+    vll magic= {0,0};
+    reu ( i,2,100 ) {
+        map<int,int> nMap=s.getFactorMap ( i );
+        bool fail=0;
+        for ( pii p: nMap ) {
+            if ( p.second>cMap[p.first] ) cMap[p.first]=p.second;
+
+        }
+        cp=1;
+        for ( pii p:cMap ) {
+            int n=p.second;
+            int q=p.first;
+            rep ( i,n ) {
+                if ( BOUND/q<cp ) fail=1;
+                cp*=q;
+
+            }
+
+        }
+        if ( fail ) break;
+        magic.push_back ( cp );
+    }
+//     cout<<magic;
+    
+    int d=2;
+    while ( a<100 ) {
+        res+=lows[a];
+        a++;
+
+    }
+    ll remaining=b-a+1;
+    while ( remaining ) {
+        ll q=magic[d];
+        ll dtb=cntDis ( a,b,q );
+        assert ( dtb<=remaining );
+//           cout<<"for "<<q<<": "<<(remaining-dtb)<<" * "<<lows[d]<<"="<<(remaining-dtb)*lows[d]<<endl;
+        res+= ( remaining-dtb ) * ( lows[d]+1 );
+
+        remaining=dtb;
+        d++;
+    }
+
+    return res;
+}
+void testDis2() {
+    reu ( i,3,100 ) reu ( j,i,100 ) {
+        reu ( k,3,12 ) {
+            int a1=cntDis ( i,j,k );
+            int a2=0;
+            reu ( l,i,j+1 ) if ( l%k==0 ) a2++;
+            assert ( a1==a2 );
+            cout<<i<<" "<<j<<" "<<k<<endl;
+        }
+
+    }
+
+}
+int main() {
+    ios_base::sync_with_stdio ( false );
+
+//     reu ( i,1,10 ) reu ( j,i,12 ) {
+//         cout<<i<<" "<<j<<" "<< cntDis ( i,j,3 ) <<endl;
+//
+//     }
+//     return 0;
+    ll a,b;
+    cin>>a>>b;
+    cout<<solve ( a,b ) <<endl;
+
+}

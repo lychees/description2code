@@ -1,0 +1,89 @@
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<string>
+#include<cstring>
+using namespace std;
+
+typedef long long LL;
+typedef vector<int> VI;
+
+#define REP(i,n) for(int i=0, i##_len=(n); i<i##_len; ++i)
+#define EACH(i,c) for(__typeof((c).begin()) i=(c).begin(),i##_end=(c).end();i!=i##_end;++i)
+#define eprintf(s...) fprintf(stderr, s)
+
+template<class T> inline void amin(T &a, const T &b) { if (b<a) a=b; }
+template<class T> inline void amax(T &a, const T &b) { if (a<b) a=b; }
+
+typedef int Cost; // (>), (+), INF, ZERO=Cost()
+const Cost INF = 1<<29;
+typedef vector<vector<Cost> > Mat;
+
+struct Dijkstra {
+    vector<Cost> len;
+    vector<int> prev;
+    Dijkstra(const Mat &M, int s=0) {
+	int N = M.size();
+	len.assign(N, INF);
+	len[s] = Cost();
+	prev.resize(N, -1);
+	vector<int> vs(N);
+	for (int i=0; i<N; i++) vs[i] = i;
+	for (; vs.size();) {
+	    int p=0;
+	    for (int i=0; i<(int)vs.size(); i++) if (len[vs[p]] > len[vs[i]]) p = i;
+	    int w = vs[p];
+	    vs[p] = vs.back(); vs.pop_back();
+	    for (int i=0; i<N; i++) {
+		if (len[i] > len[w] + M[w][i]) {
+		    len[i] = len[w] + M[w][i];
+		    prev[i] = w;
+		}
+	    }
+	}
+    }
+    vector<int> pathTo(int goal) { // [s, ..., g]
+	vector<int> v;
+	for (int x=goal; x!=-1; x=prev[x]) v.push_back(x);
+	reverse(v.begin(), v.end());
+	return v;
+    }
+};
+
+
+int N;
+Mat A, B;
+int S, T;
+int main() {
+    scanf("%d", &N);
+    A = B = Mat(N, VI(N));
+    REP (i, N) REP (j, N) scanf("%d", &A[i][j]);
+    REP (i, N) REP (j, N) scanf("%d", &B[i][j]);
+    REP (i, N) A[i][i] = B[i][i] = INF;
+    scanf("%d%d", &S, &T);
+    S--; T--;
+    
+    VI lenAS = Dijkstra(A, S).len;
+    VI lenBS = Dijkstra(B, S).len;
+    REP (i, N) {
+	for (int j=i+1; j<N; j++) {
+	    swap(A[i][j], A[j][i]);
+	    swap(B[i][j], B[j][i]);
+	}
+    }
+    VI lenAT = Dijkstra(A, T).len;
+    VI lenBT = Dijkstra(B, T).len;
+
+    int ans = INF;
+    REP (i, N) if (i != S && i != T) {
+	amin(ans, lenAS[i] + lenBT[i]);
+	amin(ans, lenBS[i] + lenAT[i]);
+    }
+
+    printf("%d\n", ans);
+    
+    
+    
+    return 0;
+}

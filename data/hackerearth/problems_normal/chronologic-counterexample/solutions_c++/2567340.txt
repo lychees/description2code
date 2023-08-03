@@ -1,0 +1,93 @@
+#include <iostream>
+#include <iomanip>
+#include <stdio.h>
+#include <set>
+#include <vector>
+#include <map>
+#include <cmath>
+#include <algorithm>
+#include <memory.h>
+#include <string>
+#include <sstream>
+#include <cstdlib>
+#include <ctime>
+#include <cassert>
+
+using namespace std;
+
+typedef long long LL;
+typedef pair<int,int> PII;
+
+#define MP make_pair
+#define PB push_back
+#define FF first
+#define SS second
+
+#define FORN(i, n) for (int i = 0; i <  (int)(n); i++)
+#define FOR1(i, n) for (int i = 1; i <= (int)(n); i++)
+#define FORD(i, n) for (int i = (int)(n) - 1; i >= 0; i--)
+#define FOREACH(i, c) for (typeof((c).begin()) i = (c).begin(); i != (c).end(); i++)
+
+#define MOD 1000000007
+#define INF 2000000000
+
+const int MAXN = 55;
+int l[MAXN], r[MAXN], res[MAXN], tmp[MAXN];
+
+int n, m;
+
+set<int> sleft;
+
+bool sorted(int p[]) { FOR1(i, n) { if (p[i] != i) return false; } return true; }
+void simulate(int p[]) { FOR1(i, m) sort(p + l[i], p + r[i] + 1); }
+
+int main() {
+    cin >> n >> m;
+
+    FOR1(i, n) {
+        sleft.insert(i);
+        tmp[i] = n + 1 - i;
+    }
+
+    FOR1(i, m) cin >> l[i] >> r[i];
+
+    simulate(tmp);
+
+    if (sorted(tmp)) {
+        cout << "All ok!" << endl;
+        return 0;
+    }
+
+    for (int nleft = n; nleft >= 1; nleft--) {
+        //cout << "NLEFT " << nleft << endl;
+
+        int irem = -1;
+
+        for (set<int>::iterator i = sleft.begin(); i != sleft.end(); i++) {
+            memcpy(tmp, res, sizeof res);
+            tmp[n - nleft + 1] = *i;
+
+            int tidx = n;
+
+            for (set<int>::iterator j = sleft.begin(); j != sleft.end(); j++) {
+                if (*j != *i) {
+                    tmp[tidx--] = *j;
+                }
+            }
+
+            //cout << "TMP "; FOR1(j, n) cout << tmp[j] << " "; cout << endl;
+
+            simulate(tmp);
+            if (!sorted(tmp)) {
+                res[n - nleft + 1] = *i;
+                irem = *i;
+                break;
+            }
+        }
+
+        sleft.erase(irem);
+    }
+
+    FOR1(i, n) cout << res[i] << " "; cout << endl;
+    return 0;
+}

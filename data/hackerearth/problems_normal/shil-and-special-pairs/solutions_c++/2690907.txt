@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+#define endl '\n'
+
+using namespace std;
+
+template <typename T>
+struct fenwick_tree {
+private:
+	int n;
+	vector <T> a;
+
+public:
+	void initialize(int k) {
+		n=k;
+		a.assign(n+1,0);
+	}
+	
+	void update(int pos, T val) {
+		for(;pos<=n;pos+=pos&(-pos)) a[pos]+=val;
+	}
+
+	T query(int pos) {
+		T ans=0;
+		for(;pos>=1;pos-=pos&(-pos)) ans+=a[pos];
+		return ans;
+	}
+	
+	T get(int from, int to) {
+		return query(to)-query(from-1);
+	}
+};
+
+template <typename T, typename MAX=int>
+struct dynamic_fenwick_tree {
+private:
+	MAX n;
+	unordered_map <MAX, T> a;
+
+public:
+	void initialize(MAX k) {
+		n=k;
+		a.clear();
+	}
+
+	void update(MAX pos, T val) {
+		for(;pos<=n;pos+=pos&(-pos)) a[pos]+=val;
+	}
+
+	T query(MAX pos) {
+		T ans=0;
+		for(;pos>=1;pos-=pos&(-pos)) ans+=a[pos];
+		return ans;
+	}
+	
+	T get(MAX from, MAX to) {
+		return query(to)-query(from-1);
+	}
+};
+int sq;
+struct query {
+	int l,r,idx;
+	bool operator <(const query &a) const {
+		if(l/sq!=a.l/sq) return l<a.l;
+		else return r<a.r;
+	}
+};
+
+query queries[1<<17];
+int n,q,d;
+int a[1<<17];
+long long its[1<<17],ans;
+int l,r;
+int cnt[1<<17];
+
+void add(int t) {
+	int i;
+	for(i=t-d;i<=t+d;i++) if(i>=1 && i<=n) ans+=cnt[i];
+	++cnt[t];
+}
+
+void rem(int t) {
+	int i;
+	--cnt[t];
+	for(i=t-d;i<=t+d;i++) if(i>=1 && i<=n) ans-=cnt[i];
+}
+
+int main() {
+	//ios_base::sync_with_stdio(false);
+	//cin.tie(NULL);
+	int i;
+	
+	scanf("%d %d %d", &n, &q, &d);
+	sq=sqrt(n);
+	
+	for(i=1;i<=n;i++) scanf("%d", &a[i]);
+	
+	for(i=1;i<=q;i++) {
+		scanf("%d %d", &queries[i].l, &queries[i].r);
+		queries[i].idx=i;
+	}
+	
+	sort(queries+1,queries+1+q);
+	l=queries[1].l;
+	r=queries[1].r;
+	
+	for(i=l;i<=r;i++) add(a[i]);
+	for(i=1;i<=q;i++) {
+		while(l<queries[i].l) rem(a[l]),++l;
+		while(l>queries[i].l) --l,add(a[l]);
+		while(r<queries[i].r) ++r,add(a[r]);
+		while(r>queries[i].r) rem(a[r]),--r;
+		its[queries[i].idx]=ans+queries[i].r-queries[i].l+1;
+	}
+	
+	for(i=1;i<=q;i++) printf("%lld\n", its[i]);
+	
+	return 0;
+}

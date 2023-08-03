@@ -1,0 +1,193 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+template<typename T> struct FenwickTree {
+    const int nmax;
+    int n;
+    vector<T> vec;
+
+    FenwickTree ( int _n ) :nmax ( _n+1 ),n ( _n ),vec ( nmax ) {
+    }
+    void reset(){
+     fill(all(vec),0);   
+    }
+    T read ( int idx ) {
+        idx++;
+        T sum = 0;
+        while ( idx > 0 ) {
+            sum += vec[idx];
+            idx -= ( idx & -idx );
+        }
+        return sum;
+    }
+    void add ( int idx ,T val ) {
+        idx++;
+        while ( idx <nmax ) {
+            vec[idx] += val;
+            idx += ( idx & -idx );
+        }
+    }
+
+    void addRange ( int l,int r, T val ) {
+        add ( l,val );
+        add ( r,-val );
+
+    }
+
+    void clear() {
+        fill ( all ( vec ),0 );
+    }
+};
+typedef FenwickTree<ll> Fenwick;
+struct DFSSort {
+    const int n;
+    const vector<vi> &adj;
+    vi start,end;
+    vi depth;
+    DFSSort ( const vector<vi> &_adj, int root=0 ) :n ( _adj.size() ),adj ( _adj ),start ( n ),end ( n ),depth ( n ) {
+        build ( root );
+    }
+    int _cnt=0;
+    
+    void build ( int r ) {
+        _cnt=0;
+        build ( r,-1,0 );
+    }
+    int build ( int no,int p, int d ) {
+        start[no]=_cnt++;
+        depth[no]=d;
+        int e=_cnt;
+        for ( int j: adj[no] ) {
+            if ( j==p ) continue;
+            e=build ( j,no ,d+1 );
+        }
+        end[no]=e;
+        return e;
+    }
+    bool isParent ( int x, int y ) {
+        int n2=start[y];
+        if ( start[x]<n2 &&n2<end[x] ) return 1;
+        return 0;
+
+    }
+};
+int main() {
+    ios_base::sync_with_stdio ( false );
+    int n,m;
+    cin>>n>>m;
+    vector<vi> adj ( n );
+    reu ( i,1,n ) {
+        int p;
+        cin>>p;
+        p--;
+        adj[i].push_back ( p );
+        adj[p].push_back ( i );
+    }
+    vector<vi> fact ( m );
+    rep ( i,n ) {
+        int f;
+        cin>>f;
+        f--;
+        fact[f].push_back ( i );
+    }
+    vll thres ( m );
+    cin>>thres;
+    int q;
+    cin>>q;
+    vector<pair<int,pll>> qu ( q );
+    DFSSort dfs ( adj );
+    rep ( i,q ) {
+        cin>>qu[i].first>>qu[i].second.first>>qu[i].second.second;
+        qu[i].first--;
+        qu[i].second.first-=qu[i].second.second*dfs.depth[qu[i].first];
+    }
+    vector<vector<pair<int,pii>>> state ( q+1 );
+    int mi=0;
+    int ma=q+1;
+    int s= ( mi+ma ) >>1;
+    rep ( i,m ) state[s].push_back ( mp ( i,mp ( mi,ma ) ) );
+    vi res ( m );
+     Fenwick con ( n ),lin ( n );
+     bool added=1;
+    while(added) {
+        added=0;
+       con.reset(); lin.reset();
+        rep ( t,q ) {
+            pair<int,pll> que=qu[t];
+            int s=dfs.start[que.first];
+            int e=dfs.end[que.first];
+            con.addRange ( s,e,que.second.first );
+            lin.addRange ( s,e,que.second.second );
+            for ( const pair<int,pii> p:state[t+1] ) {
+                int mi=p.second.first;
+                int ma=p.second.second;
+                ll su=0;
+                for ( int f: fact[p.first] ) su+=con.read ( dfs.start[f] ) +dfs.depth[f]*lin.read ( dfs.start[f] );
+                if ( su<thres[p.first] ) mi=t+1;
+                else ma=t+1;
+                if ( ma-mi<=1 ) res[p.first]=ma;
+                else {
+                    added=1;
+                    state[ ( ma+mi ) >>1].push_back ( mp ( p.first,mp ( mi,ma ) ) );
+                }
+            }
+            state[t+1].clear();
+
+        }
+
+    }
+    for(int t: res){
+        if(t==q+1)cout<<"rekt\n";
+        else cout<<t<<'\n';
+    }
+
+
+
+
+}

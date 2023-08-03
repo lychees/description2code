@@ -1,0 +1,117 @@
+#include <iostream>
+using namespace std;
+struct ele {
+	char x;
+	int f;
+};
+void merge(ele *array, int start, int mid, int end) {
+	ele aux[end-start+1];
+	int i=start, j=mid+1, k=0;
+	while(i<=mid && j<=end) {
+		if(array[i].f < array[j].f) {
+			aux[k++] = array[i++];
+		}
+		else if(array[i].f > array[j].f) {
+			aux[k++] = array[j++];
+		}
+		else {
+			if(array[i].x < array[j].x) {
+				aux[k++] = array[i++];
+			}
+			else {
+				aux[k++] = array[j++];
+			}
+		}
+	}
+	while(i<=mid) aux[k++] = array[i++];
+	while(j<=end) aux[k++] = array[j++];
+	for(i=start, k=0;i<=end;i++, k++) {
+		array[i] = aux[k];
+	}
+}
+void sort(ele *array, int start, int end) {
+	if(start < end) {
+		int mid = (start + end) / 2;
+		sort(array, start, mid);
+		sort(array, mid+1, end);
+		merge(array, start, mid, end);
+	}
+}
+
+void assignCodes(ele *array, string *codes1, int n) {
+	string codes[n];
+	int i;
+	for(i=0;i<n;i++) codes[i] = "";
+	i=n-2;
+	while(i>=0) {
+		codes[i] += "0";
+		for(int j=i+1;j<n;j++) {
+			codes[j] += "1";
+		}
+		i--;
+	}
+	//for(i=0;i<n;i++) cout<<codes[i]<<" ";
+	//cout<<endl;
+	char temp;
+	int j, k;
+	for(i=0;i<n;i++) {
+		j = 0;
+		k = codes[i].length()-1;
+		while(j<k) {
+			temp = codes[i][j];
+			codes[i][j] = codes[i][k];
+			codes[i][k] = temp;
+			j++;
+			k--;
+		}
+	}
+	for(i=0;i<26;i++) codes1[i] = "";
+	for(i=0;i<n;i++) {		
+		codes1[array[i].x-'a'] += codes[i];
+		//cout<<i<<" "<<(array[i].x-'a')<<" "<<codes[i]<<" "<<codes1[array[i].x-'a']<<endl;
+	}
+}
+int search(string curr, string *codes) {
+	for(int i=0;i<26;i++) {
+		if(codes[i].compare(curr) == 0) return i;
+	}
+	return -1;
+}
+int main()
+{
+	int t, n;
+	string s;
+	cin>>t;
+	while(t--) {
+		cin>>n;
+		ele array[n];
+		for(int i=0;i<n;i++) {
+			cin>>array[i].x>>array[i].f;
+		}
+		s.clear();
+		cin>>s;
+		sort(array, 0, n-1);
+		string codes[26];
+		assignCodes(array, codes, n);
+		/*
+		for(int i=0;i<26;i++) {
+			cout<<(char)('a'+i)<<" "<<codes[i]<<endl;
+		}
+		*/
+		// now solve
+		string output, curr;
+		output = "";
+		curr = "";
+		int len = s.length();
+		int pos;
+		for(int i=0;i<len;i++) {
+			curr += s[i];
+			if((pos = search(curr, codes)) != -1) {
+				output += ((char)('a'+pos));
+				curr = "";
+			}
+		}
+		cout<<output<<endl;
+	}
+    return 0;
+}

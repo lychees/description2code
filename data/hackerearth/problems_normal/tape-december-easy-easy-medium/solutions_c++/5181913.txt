@@ -1,0 +1,83 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<vector>
+#include<bitset>
+#include<map>
+#include<queue>
+#include<stack>
+#include<set>
+#include<cmath>
+#include<algorithm>
+#include<utility>
+#include<climits>
+#include<sstream>
+
+using namespace std;
+
+#define nl printf("\n")
+#define space printf(" ")
+
+#define mem(x,val) memset(x,val,sizeof(x))
+#define rite(x) freopen(x,"w",stdout)
+#define read(x) freopen(x,"r",stdin)
+
+typedef long long ll;
+typedef unsigned long long ull;
+
+int main() {
+//    read("in.txt");
+// rite("out.txt");
+    int n,d,k;
+    cin >> n >> k >> d;
+    ll sum[n+1],a[n+1];
+    vector<int>nonzero;//index of nonzeros, will be sorted in inc order by the time u process the input
+    int i,j;
+    sum[0] = 0;
+    for(i = 1 ; i <=  n; ++i) {
+        cin >> a[i];
+        if (a[i] != 0) nonzero.push_back(i);
+        sum[i] = sum[i-1] + a[i];
+        }
+//    for( i = 0 ; i <= n ; ++i) printf("%3d",sum[i]);
+//    cout << endl;
+    bool possible = true;
+    int act = 0,p1,last,sinterval;
+
+    for(i = 1 ; i <= n - k + 1; ++i) {
+        sinterval = sum[i+k-1] - sum[i-1];
+//        cout << i << " " << sinterval;
+        if (sinterval == 0) {
+            possible = false;
+            break;
+            }
+        else if (sinterval < d) {
+            last = i + k - 1;
+            if (nonzero.size() > 0) {// finding the index of the first non-zero element with reference to the end of the sub-array
+                p1 = upper_bound(nonzero.begin(),nonzero.end(),i+k-1) - nonzero.begin();//find first non-zero with index larger i+k-1(a[i+k-1] is the last element in the sub-array)
+                //p1 will never be 0 since the sum of all elements in the subarray > 0--> there must be one non-zero element
+                p1 -= 1;
+                last = nonzero[p1];//index of the last non-zero element closest to the end of the sub-array
+                }
+            for(j = last; j < min(last+k,n+1); ++j) {//augment the sub-array[last,last+k-1] such that each non-zero is larger than equal to k
+                //we don't care about the value of R(the number all the elements in the sub-array are multiplied by) as long the value of the  smallest non-zero element will be at = d after the augmentation
+                //--> add d to all non-zero elements
+
+                if (a[j] > 0) sum[j] = sum[j-1] + d;
+                else sum[j] = sum[j-1];
+                }
+            for(j = last + k ; j < n + 1; ++j) {
+                sum[j] = sum[j-1] + a[j];
+                }
+//            cout << " " << last << endl;
+//            for( i = 0 ; i <= n ; ++i) printf("%3d",sum[i]);
+//            cout << endl;
+            act += 1;// you have augmented an sub-array
+            }
+        }
+    if (possible) cout << act << endl;
+    else cout << -1 << endl;
+
+    return 0;
+    }

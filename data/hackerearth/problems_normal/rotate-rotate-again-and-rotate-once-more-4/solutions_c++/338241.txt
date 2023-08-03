@@ -1,0 +1,153 @@
+#include <iostream>
+#include <fstream>
+#include <cstdio>
+#include <climits>
+#include <vector>
+#include <map>
+#include <list>
+#include <deque>
+#include <stack>
+#include <set>
+#include <string>
+#include <cstring>
+#include <algorithm>
+#include <bitset>
+#include <cmath>
+
+using namespace std;
+
+#define ll long long
+#define vt vector
+
+ll Log2(double n)
+{
+	return log(n)/log((double)(2));
+}
+
+typedef struct pt
+{
+	ll d[4];
+	ll rot;
+	pt()
+	{
+		for(ll i=0;i<4;i++)
+			d[i]=0;
+		rot=0;
+	}
+}pt;
+
+vector<pt> tree;
+
+void build(ll node,ll l,ll r)
+{
+	if(l>r)
+		return;
+	else
+	{
+		if(l==r)
+		{
+			tree[node].d[0]=1;
+		}
+		else
+		{
+			build(2*node,l,(l+r)/2);
+			build(2*node+1,((l+r)/2)+1,r);
+			pt temp;
+			for(ll i=0;i<4;i++)
+				temp.d[i] = tree[2*node].d[i]+tree[2*node+1].d[i];
+			tree[node] = temp;
+		}
+	}
+}
+
+pt tf(pt a,ll rot)
+{
+	pt temp;
+	temp.rot=a.rot;
+	for(ll i=0;i<4;i++)
+	{
+		ll t=i+rot;
+		while(t<0)
+			t+=4;
+		t %= 4;
+		temp.d[t] += a.d[i];
+	}
+	return temp;
+}
+
+pt comb(pt a,pt b)
+{
+	pt temp;
+	for(ll i=0;i<4;i++)
+		temp.d[i] = a.d[i]+b.d[i];
+	return temp;
+}
+
+pt update(ll node,ll b,ll e,ll l,ll r,ll rot)
+{
+	if(b>e)
+		return pt();
+	if(b>r||e<l)
+	{
+		return tree[node];
+	}
+	if(b>=l&&e<=r)
+	{
+		tree[node].rot+=rot;
+		tree[node] = tf(tree[node],rot);
+		return tree[node];
+	}
+	else
+	{
+		pt t1,t2;
+		t1 = update(2*node,b,(b+e)/2,l,r,rot);
+		t2 = update(2*node+1,((b+e)/2)+1,e,l,r,rot);
+		pt t = comb(t1,t2);
+		t.rot = tree[node].rot;
+		tree[node] = tf(t,tree[node].rot);
+		return tree[node];
+	}
+}
+
+pt query(ll node,ll b,ll e,ll l,ll r)
+{
+	if(b>e||b>r||e<l)
+		return pt();
+	if(b>=l&&e<=r)
+		return tree[node];
+	pt p1 = query(2*node,b,(b+e)/2,l,r);
+	pt p2 = query(2*node+1,((b+e)/2)+1,e,l,r);
+	pt p = comb(p1,p2);
+	return tf(p,tree[node].rot);
+}
+
+int main()
+{
+	ll n,m,l,r,k;
+	string t;
+	cin>>n>>m;
+	ll sz=2*(1<<(Log2(n)+1));
+	tree.assign(sz,pt());
+	build(1,0,n-1);
+	while(m--)
+	{
+		cin>>t;
+		if(t=="C")
+		{
+			scanf("%lld %lld %lld",&l,&r,&k);
+			update(1,0,n-1,l-1,r-1,k);
+		}
+		else if(t=="A")
+		{
+			scanf("%lld %lld %lld",&l,&r,&k);
+			update(1,0,n-1,l-1,r-1,-k);
+		}
+		else
+		{
+			scanf("%lld %lld",&l,&r);
+			pt ans = query(1,0,n-1,l-1,r-1);
+			cout << max(ans.d[0],max(ans.d[1],max(ans.d[2],ans.d[3]))) << endl;
+		}
+	}
+	return 0;
+}

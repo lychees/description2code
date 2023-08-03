@@ -1,0 +1,117 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+struct tree
+{
+    int lmax;
+    int rmax;
+    int max;
+}st[400000];
+void build(long long int a[],int start,int end,int cur)
+{
+    if(start==end)
+    {
+        st[cur].lmax=st[cur].rmax=st[cur].max=1;
+        return ;
+    }
+    int mid=(start+end)/2;
+    build(a,start,mid,cur*2+1);
+    build(a,mid+1,end,cur*2+2);
+    if(st[cur*2+1].lmax==mid-start+1 && a[mid]<a[mid+1])
+        st[cur].lmax=st[cur*2+1].lmax+st[cur*2+2].lmax;
+    else
+        st[cur].lmax=st[cur*2+1].lmax;
+    if(st[cur*2+2].rmax==end-mid && a[mid]<a[mid+1])
+        st[cur].rmax=st[cur*2+2].rmax+st[cur*2+1].rmax;
+    else
+        st[cur].rmax=st[cur*2+2].rmax;
+    st[cur].max=max(st[cur*2+1].max,st[cur*2+2].max);
+    if(a[mid]<a[mid+1])
+        st[cur].max=max(st[cur].max,st[cur*2+1].rmax+st[cur*2+2].lmax);
+}
+
+tree query(long long int a[],int start,int end,int qstart,int qend,int cur)
+{   //if(qstart==0)
+      //  cout<<qstart<<" "<<qend<<"\n";
+    if(qstart==start && qend==end)
+        return st[cur];
+    int mid=(start+end)/2;
+    if(qstart>mid)
+        return query(a,mid+1,end,qstart,qend,cur*2+2);
+    if(qend<=mid)
+        return query(a,start,mid,qstart,qend,cur*2+1);
+    tree x,x1,x2;
+    //cout<<qstart<<" "<<qend<<"\n";
+    x1=query(a,start,mid,qstart,mid,cur*2+1);
+    //cout<<"x";
+    x2=query(a,mid+1,end,mid+1,qend,cur*2+2);
+    //cout<<"y";
+    if(x1.lmax==mid-start+1 && a[mid]<a[mid+1])
+        x.lmax=x1.lmax+x2.lmax;
+    else
+        x.lmax=x1.lmax;
+    if(x2.rmax==end-mid && a[mid]<a[mid+1])
+        x.rmax=x2.rmax+x1.rmax;
+    else
+        x.rmax=x2.rmax;
+    x.max=max(x1.max,x2.max);
+    if(a[mid]<a[mid+1])
+        x.max=max(x.max,x1.rmax+x2.lmax);
+    return x;
+}
+
+void update(long long int a[],int start,int end,int pos,long long int val,int cur)
+{
+    if(pos<start || pos>end)
+        return ;
+    if(pos==start && start==end)
+    {
+        st[cur].lmax=st[cur].rmax=st[cur].max=1;
+        return ;
+    }
+    int mid=(start+end)/2;
+    if(pos<=mid)
+        update(a,start,mid,pos,val,cur*2+1);
+    else
+        update(a,mid+1,end,pos,val,cur*2+2);
+    if(st[cur*2+1].lmax==mid-start+1 && a[mid]<a[mid+1])
+        st[cur].lmax=st[cur*2+1].lmax+st[cur*2+2].lmax;
+    else
+        st[cur].lmax=st[cur*2+1].lmax;
+    if(st[cur*2+2].rmax==end-mid && a[mid]<a[mid+1])
+        st[cur].rmax=st[cur*2+2].rmax+st[cur*2+1].rmax;
+    else
+        st[cur].rmax=st[cur*2+2].rmax;
+    st[cur].max=max(st[cur*2+1].max,st[cur*2+2].max);
+    if(a[mid]<a[mid+1])
+        st[cur].max=max(st[cur].max,st[cur*2+1].rmax+st[cur*2+2].lmax);
+}
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    int t;
+    cin>>t;
+    while(t--)
+    {
+        int n,q;
+        cin>>n>>q;
+        long long int a[n],i;
+        for(i=0;i<n;i++)
+            cin>>a[i];
+        build(a,0,n-1,0);
+        while(q--)
+        {
+            int c,x;
+            long long int y;
+            cin>>c>>x>>y;
+            if(c==0)
+                cout<<query(a,0,n-1,x-1,y-1,0).max<<"\n";
+            else
+            {
+                a[x-1]+=y;
+                update(a,0,n-1,x-1,y,0);
+            }
+        }
+    }
+}

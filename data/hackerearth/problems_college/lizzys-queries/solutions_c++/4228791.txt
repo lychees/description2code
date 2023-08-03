@@ -1,0 +1,177 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+//#define TRACE
+#ifdef TRACE
+#define TR(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+  cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+  const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define TR(...)
+#endif
+
+typedef unsigned long long LL;
+typedef vector < int >     VI;
+typedef pair < int,int >   II;
+typedef vector < II >      VII;
+
+#define MOD                1000000007
+#define EPS                1e-12
+#define PB                 push_back
+#define MP                 make_pair
+#define F                  first 
+#define S                  second
+#define ALL(v)             v.begin(),v.end()
+#define SZ(a)              (int)a.size()
+#define FILL(a,b)          memset(a,b,sizeof(a))
+#define SI(n)              scanf("%d",&n)
+#define SLL(n)             scanf("%lld",&n)
+#define PLLN(n)            printf("%lld\n",n)
+#define PIN(n)             printf("%d\n",n)
+#define REP(i,j,n)         for(LL i=j;i<n;i++)
+#define PER(i,j,n)         for(LL i=n-1;i>=j;i--)
+#define endl               '\n'
+#define fast_io            ios_base::sync_with_stdio(false);cin.tie(NULL)
+
+/***** HASHING *****/
+
+const int N = 2e5+11 , MOD1 = 999999929 , MOD2 = 999999937;
+
+LL p1[N] , p2[N];
+unordered_set <LL> hashTable;
+
+inline void init(LL x1 , LL x2 , LL M1 , LL M2) {
+  p1[0] = p2[0] = 1;
+  REP(i,1,N)
+    p1[i] = (p1[i-1] * x1) % M1 , p2[i] = (p2[i-1] * x2) % M2;
+}
+
+inline void AddCharToHash(LL &Hash , char c , int pos) {
+  LL ret1 = (Hash<<32LL)>>32LL;
+  LL ret2 = Hash>>32LL;
+  ret1 = (ret1 + LL(c - 'a' + 1) * p1[pos]) % MOD1;
+  ret2 = (ret2 + LL(c - 'a' + 1) * p2[pos]) % MOD2;
+  Hash = ret1 + (ret2 << 32LL);
+}
+
+inline void AddHashToHash(LL &Hash , LL HashToBeAdded , int pos) {
+  LL ret1 = (Hash<<32LL)>>32LL;
+  LL ret2 = Hash>>32LL;
+  LL x = (HashToBeAdded<<32LL)>>32LL;
+  LL y = HashToBeAdded>>32LL;
+  ret1 = (ret1 + x * p1[pos]) % MOD1;
+  ret2 = (ret2 + y * p2[pos]) % MOD2;
+  Hash = ret1 + (ret2 << 32LL);
+}
+
+inline LL Hash(string s) {
+  LL ret1 = 0;
+  REP(i,0,SZ(s))
+    ret1 = (ret1 + LL(s[i] - 'a' + 1) * p1[i]) % MOD1;
+  LL ret2 = 0;
+  REP(i,0,SZ(s))
+    ret2 = (ret2 + LL(s[i] - 'a' + 1) * p2[i]) % MOD2;
+  LL z = ret1 + (ret2 << 32LL);
+  return z;
+}
+
+inline void Replace(LL &Hash , char prev , char cur , int pos) {
+  LL ret1 = (Hash<<32LL)>>32LL;
+  LL ret2 = Hash>>32LL;
+  LL plus = (p1[pos] * LL(cur - 'a' + 1)) % MOD1;
+  LL minus = (p1[pos] * LL(prev - 'a' + 1)) % MOD1;
+  ret1 = (ret1 + plus - minus + MOD1) % MOD1;
+  plus = (p2[pos] * LL(cur - 'a' + 1)) % MOD2;
+  minus = (p2[pos] * LL(prev - 'a' + 1)) % MOD2;
+  ret2 = (ret2 + plus - minus + MOD2) % MOD2;
+  Hash = ret1 + (ret2 << 32LL);
+}
+
+typedef struct segment{
+  LL seedha , ulta;
+  int len;
+}segment;
+
+segment st[4*N] , zero;
+string s;
+
+inline segment merge_tree(segment s1 , segment s2){
+  segment ret;
+  ret.seedha = s1.seedha , ret.ulta = s2.ulta;
+  ret.len = s1.len + s2.len;
+  AddHashToHash(ret.seedha , s2.seedha , s1.len);
+  AddHashToHash(ret.ulta , s1.ulta , s2.len);
+  return ret;
+}
+void make_tree(int l,int h,int root){
+    if(l==h){
+      st[root].seedha = st[root].ulta = 0;
+      st[root].len = 1;
+      AddCharToHash(st[root].seedha , s[l] , 0);
+      AddCharToHash(st[root].ulta , s[l] , 0);
+      return;
+    }
+    int mid=(l+h)/2,c1=2*root+1,c2=2*root+2;
+    make_tree(l,mid,c1);
+    make_tree(mid+1,h,c2);
+    st[root] = merge_tree(st[c1] , st[c2]);
+}
+void update_tree(int pos,char x,int l,int h,int root){
+    if(pos<l || pos>h || l>h)return;
+    if(pos==l  && l==h){
+      st[root].seedha = st[root].ulta = 0;
+      AddCharToHash(st[root].seedha , x , 0);
+      AddCharToHash(st[root].ulta , x , 0);
+      return;
+    }
+    int mid=(l+h)/2,c1=2*root+1,c2=2*root+2;
+    update_tree(pos,x,l,mid,c1);
+    update_tree(pos,x,mid+1,h,c2);
+    st[root] = merge_tree(st[c1] , st[c2]);
+}
+segment query_tree(int ql,int qh,int l,int h,int root){
+    if(ql<=l && qh>=h){
+        return st[root];
+    }
+    int mid=(l+h)/2,c1=2*root+1,c2=2*root+2;
+    if(qh <= mid || mid+1 > h) return query_tree(ql,qh,l,mid,c1);
+    if(ql > mid || mid < l) return query_tree(ql,qh,mid+1,h,c2);
+    segment q1=query_tree(ql,qh,l,mid,c1);
+    segment q2=query_tree(ql,qh,mid+1,h,c2);
+    return merge_tree(q1 , q2);
+}
+
+
+int main() {
+  init(31,37,MOD1,MOD2);
+  zero.seedha = zero.ulta = 0;
+  fast_io;
+  int n , q;
+  cin >> n >> q;
+  cin >> s;
+  make_tree(0 , n-1 , 0);
+  while(q --) {
+    int type; cin >> type;
+    if(type == 0) {
+      int pos; cin >> pos; pos --;
+      string a; cin >> a;
+      update_tree(pos , a[0] , 0 , n-1 , 0);
+    }
+    else {
+      int l , r; cin >> l >> r; l-- , r--;
+      segment Q = query_tree(l , r , 0 , n-1 , 0);
+      TR(Q.seedha , Q.ulta);
+      if(Q.seedha == Q.ulta)
+        cout << "Yes\n";
+      else
+        cout << "No\n";
+    }
+  }
+  return 0;
+}

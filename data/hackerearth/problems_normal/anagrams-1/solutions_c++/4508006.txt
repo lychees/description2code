@@ -1,0 +1,186 @@
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <vector>
+using namespace std;
+class Anagrams {
+    string A, B;
+    vector<int> alph;
+
+public:
+    Anagrams(string a, string b)
+    {
+    	A = a;
+    	B = b;
+    	alph.resize(26);
+    	for (int i = 0; i < 26; i++)
+    	{
+    		alph[i] = 0;
+    	}
+    }
+
+    string Solve()
+    {
+    	renderIN();
+
+    	if(areAnagrams())
+    	{
+    		return "YES";
+    	}
+
+    	if(A.length() == B.length())
+    	{
+    		return "NO LUCK";
+    	}
+		
+		return findPalindrome();
+
+    }
+
+    string findPalindrome()
+    {
+    	int sum = 0;
+    	int odds = 0;
+    	string::iterator itA = A.begin(), itB = B.begin();
+
+		while(itA != A.end())
+		{
+			alph[*itA-97]++;
+			itA++;
+		}
+		while(itB != B.end())
+		{
+			alph[*itB-97]--;
+			itB++;
+		}
+
+    	for (vector<int>::iterator it = alph.begin(); it != alph.end(); it++)
+    	{
+    		*it = abs(*it);
+    		if((*it)%2 == 1) odds++;
+			sum += *it;
+    	}
+
+    	if(odds > 1)
+    	{
+    		return "NO LUCK";
+    	}
+		
+		string concat = "";
+    	
+    	if(sum == 1)
+    	{
+			for (vector<int>::iterator it = alph.begin(); it != alph.end(); it++)
+	    	{
+	    		if(*it != 0) 
+	    		{
+	    			return concat + (char)((it-alph.begin())+97);
+	    		}
+	    	}    		
+    	}
+
+    	
+    	int ii = 0;
+		for (int i = 0; i < 26; i++)
+    	{
+   			while(alph[i] > 1)
+   			{
+   				concat.insert(concat.begin()+ii, (char)i+97);
+   				concat.insert(concat.end()-ii, (char)i+97);
+   				ii++;
+   				alph[i] -= 2;
+   			}
+    	}
+
+    	if(odds == 1)
+    	{
+			for (int i = 0; i < 26; i++)
+	    	{
+	    		if(alph[i] != 0)
+	    		{
+	    			concat.insert(concat.begin()+ii, (char)i+97);
+	    		}
+	    	}
+    	}
+
+    	return concat;
+    }
+	
+	bool areAnagrams()
+	{
+		if(A.length() != B.length())
+		{
+			return false;
+		}
+
+		string::iterator itA = A.begin(), itB = B.begin();
+
+		while(itA != A.end())
+		{
+			alph[*itA-97]++;
+			alph[*itB-97]--;
+			itA++;
+			itB++;
+		}
+
+		for (vector<int>::iterator it = alph.begin(); it != alph.end(); it++)
+		{
+			if(*it != 0) 
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+    void renderIN()
+    {
+    	string::iterator it;
+    	it = A.begin();
+    	while(it != A.end())
+    	{
+    		if(*it < 91 && *it > 64)
+    		{
+    			*it += 32;
+    		}
+    		else if(*it > 122 || *it < 97)
+    		{
+    			A.erase(it);
+    			it--;
+    		}
+    		it++;
+    	}
+    	it = B.begin();
+    	while(it != B.end())
+    	{
+    		if(*it < 91 && *it > 64)
+    		{
+    			*it += 32;
+    		}
+    		else if(*it > 122 || *it < 97)
+    		{
+    			B.erase(it);
+    			it--;
+    		}
+    		it++;
+    	}
+    }
+};
+
+int main()
+{
+	int T;
+	string A, B;
+	Anagrams *ana;
+	cin >> T;
+	cin.ignore();
+	while(T--)
+	{
+		getline(cin, A);
+		getline(cin, B);
+		ana = new Anagrams(A, B);
+		cout << ana->Solve() << endl;
+	}
+    return 0;
+}

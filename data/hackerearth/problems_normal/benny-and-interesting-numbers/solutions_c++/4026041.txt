@@ -1,0 +1,123 @@
+// Time erodes gratitude more quickly than it does beauty!
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+typedef vector<int> vi;
+typedef vector<ll> vll;
+
+#define X first
+#define Y second
+#define rep(i,n) for(int i = 0, _n = (n); i != _n; i++)
+#define rep1(i,a,b) for(int i = a, _b = (b); i <= _b; i++)
+#define rep2(i,b,a) for(int i = b, _a = (a); i >= _a; i--)
+#define mem(a,val) memset(a, (val), sizeof a)
+#define mp make_pair
+#define mt make_tuple
+#define eb emplace_back
+#define all(c) (c).begin(), (c).end()
+#define uni(c) c.resize(distance(c.begin(), unique(all(c))))
+#define fix(c,sz_val...) c.clear(); c.resize(sz_val);
+#define tr(c,it) for(__typeof(c.begin()) it = c.begin(); it != c.end(); ++it)
+#define cases int t; cin >> t; rep1(_t,1,t)
+#define case(ans) "Case #" << _t << ": " << ans << "\n"
+#define cout(d) cout << fixed << setprecision(d)
+#define io ios_base::sync_with_stdio(false); cin.tie(NULL);
+#define err(x) cerr << #x << " = " << x << '\n'
+const int mod = 1e9 + 7;
+
+const int lim = 1e7 + 1e4;
+int np(0), prime[lim/10];
+bool isprime[lim + 1];
+void primes(int N = lim) {
+    memset(isprime, true, sizeof isprime);
+    isprime[0] = isprime[1] = false;
+	rep1(i,2,N)
+	{
+		if(isprime[i]) prime[++np] = i;
+		rep1(j,1,np)
+		{
+			if(i*prime[j] > N)    break;
+			isprime[ i*prime[j] ] = false;
+			if(i%prime[j] == 0)   break;
+		}
+	}
+	isprime[1] = true;
+}
+
+inline ll mul(ll a, ll b, ll m) {
+    long double temp = a;
+    temp *= b;
+    a *= b;
+    b = temp / m;
+    a -= b * m;
+    return ((a % m) + m) % m;
+}
+
+inline ll pwr(ll a, ll n, ll m) {
+    ll ans(1);
+    while(n) {
+        if(n & 1) ans = mul(ans, a, m);
+        n >>= 1;
+        a = mul(a, a, m);
+    }
+    return ans;
+}
+
+bool isp_miller(ll p) {
+    // Checks whether p is prime. Needs pwr() and mul(). O(times * log p)
+    if(p < 2) return false;
+    if(p == 2) return true;
+    if(p%2 == 0) return false;
+    // write p-1 = s * 2 * 2 * .. * 2
+    ll s = p - 1;
+    while(!(s & 1)) s >>= 1;
+    
+    int times = 50;
+    rep(i, times) {
+        ll a = rand() % (p-1) + 1, temp = s;
+        ll val = pwr(a, temp, p);
+        while(temp != p-1 && val != 1 && val != p-1) {
+            val = mul(val, val, p);
+            temp <<= 1;
+        }
+        if(val != p-1 && temp%2 == 0)
+            return false;
+    }
+    return true;
+}
+
+bool primality(ll x) {
+    if(x > lim) return isp_miller(x);
+    return isprime[x];
+}
+
+bool normality(ll x, int it) {
+    if(primality(x)) return true;
+    ll y = sqrt(x);
+    if(y*y == x) return false;
+    
+    y = pow(x,0.35);
+    while(prime[it] <= y) {
+        if(x % prime[it] == 0) {
+            x /= prime[it];
+            if(x % prime[it] == 0) return false;
+            else return normality(x, it+1);
+        }
+        it++;
+    }
+    return true;
+}
+
+int main() {
+//    freopen("input.txt", "r", stdin);
+//    freopen("output.txt", "w", stdout);
+    primes();
+    cases {
+        ll x; cin >> x;
+        if(normality(x,1)) cout << "Yes\n";
+        else cout << "No\n";
+    }
+    return 0;
+}

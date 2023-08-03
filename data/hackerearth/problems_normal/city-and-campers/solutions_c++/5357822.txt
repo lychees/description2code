@@ -1,0 +1,123 @@
+#include <iostream>
+#include <algorithm>
+#include <climits>
+#include <set>
+class UF
+{
+    int32_t *id, cnt, *sz,*abc;
+    std::multiset<int32_t> mymultiset;
+    std::multiset<int>::iterator it;
+    public:
+        UF(int32_t N)
+        {
+            cnt = N;
+            id = new int32_t[N];
+            sz = new int32_t[N];
+            abc= new int32_t[N];
+            for(int32_t i=0; i<N; i++)
+            {
+                id[i] = i;
+                sz[i] = 1;
+                abc[i] = 1;
+            }
+
+            for(int32_t i=0;i<N;i++)
+                mymultiset.insert(1);
+        }
+        ~UF()
+        {
+            delete [] id;
+            delete [] sz;
+        }
+        int32_t find(int32_t p)
+        {
+            int32_t root = p;
+            while (root != id[root])
+                root = id[root];
+            while (p != root)
+            {
+                int32_t newp = id[p];
+                id[p] = root;
+                p = newp;
+            }
+            return root;
+        }
+        void merge(int32_t x, int32_t y)
+        {
+            int32_t i = find(x);
+            int32_t j = find(y);
+            if (i == j) return;
+            if (sz[i] < sz[j])
+            {
+                it=mymultiset.find (abc[j]);
+                mymultiset.erase(it);
+                it=mymultiset.find (abc[i]);
+                mymultiset.erase(it);
+                id[i] = j;
+                sz[j] += sz[i];
+                abc[j]+=abc[i];
+                abc[i]=abc[j];
+                mymultiset.insert(abc[j]);
+                mymultiset.insert(abc[i]);
+            }
+            else
+            {
+                it=mymultiset.find (abc[j]);
+                mymultiset.erase(it);
+                it=mymultiset.find (abc[i]);
+                mymultiset.erase(it);
+                id[j] = i;
+                sz[i] += sz[j];
+                abc[i]+=abc[j];
+                abc[j]=abc[i];
+                mymultiset.insert(abc[j]);
+                mymultiset.insert(abc[i]);
+            }
+            cnt--;
+        }
+        bool connected(int32_t x, int32_t y)
+        {
+            return find(x) == find(y);
+        }
+        int32_t count()
+        {
+            return cnt;
+        }
+        int32_t mainfunc(int n)
+        {
+            int32_t queries;
+            std::cin>>queries;
+            while(queries--)
+            {
+                int32_t x,y;
+                std::cin>>x>>y;
+                x--;
+                y--;
+                if(!connected(x,y))
+                    merge(x,y);
+                if(count()>1)
+                    std::cout<<maximum_size()-minimum_size()<<"\n";
+                else std::cout<<0<<"\n";
+            }
+            return 0;
+        }
+        int32_t maximum_size()
+        {
+            it= mymultiset.end();
+            ++it;
+            return *it;
+        }
+        int32_t minimum_size()
+        {
+            it= mymultiset.begin();
+            return *it;
+        }
+};
+int main()
+{
+    int32_t n;
+    std::cin>>n;
+    UF obj(n);
+    obj.mainfunc(n);
+    return 0;
+}

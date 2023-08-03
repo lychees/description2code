@@ -1,0 +1,117 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <iostream>
+#include <set>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <complex>
+#include <map>
+#include <queue>
+using namespace std;
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<ll> vl;
+typedef vector<vl> vvl;
+typedef vector<vi> vvi;
+typedef vector<double> vd;
+typedef pair<int, int> pii;
+typedef pair<double, double> pdd;
+typedef vector<pii> vii;
+typedef vector<string> vs;
+
+vvi gr;
+int pr[17][100001];
+vi sz,in,out;
+vl dyn;
+int T;
+
+ll c2(ll x) {
+	return x*(x-1)/2;
+}
+
+void dfs0(int v, int p) {
+	in[v] = T++;
+	pr[0][v] = p;
+	for (int i = 0; i < gr[v].size(); ++i) if (gr[v][i] != p) {
+		dfs0(gr[v][i], v);
+		sz[v] += sz[gr[v][i]];
+	}
+	out[v] = T++;
+}
+
+bool ispr(int v, int p) {
+	return in[p] <= in[v] && out[p] >= out[v];
+}
+
+int pre(int u, int v) {
+	assert(ispr(u, v));
+	for (int t = 16; t >= 0; --t) if (ispr(pr[t][u], v) && pr[t][u] != v)
+		u = pr[t][u];
+	return u;
+}
+
+int lca(int u, int v) {
+	if (ispr(u, v)) return v;
+	for (int t = 16; t >= 0; --t) if (!ispr(u, pr[t][v])) {
+		v = pr[t][v];
+	}
+	return pr[0][v];
+}
+
+void dfs1(int v, int p) {
+	for (int i = 0; i < gr[v].size(); ++i) if (gr[v][i] != p) {
+		dyn[gr[v][i]] = dyn[v] + c2(sz[v] - sz[gr[v][i]]);
+		dfs1(gr[v][i], v);
+	}
+}
+
+int main() {
+    int n, Q;
+    cin >> n;
+    gr.resize(n);
+    sz.assign(n, 1);
+    dyn.assign(n, 0);
+    in.assign(n, 1);
+    out.assign(n, 1);
+    for (int i = 0; i < n-1; ++i) {
+    	int a,b;
+    	cin >> a >> b;
+    	--a; --b;
+    	gr[a].push_back(b);
+    	gr[b].push_back(a);
+    }
+    dfs0(0, 0);
+    for (int t = 1; t < 17; ++t) for (int i = 0; i < n; ++i) pr[t][i] = pr[t-1][pr[t-1][i]];
+    dfs1(0, 0);
+    cin >> Q;
+    for (int q = 0; q < Q; ++q) {
+    	int u,v;
+    	cin >> u >> v;
+    	--u; --v;
+    	if (u == v) {
+    		cout << 0 << endl;
+    		continue;
+    	}
+    	int c = lca(u, v);
+    	ll res = c2(n);
+    	if (v == c) swap(u, v);
+    	res -= c2(sz[v]);
+    	int v1 = pre(v, c);
+    	res -= dyn[v] - dyn[v1];
+    	if (u != c) {
+    		res -= c2(sz[u]);
+    		int u1 = pre(u, c);
+    		res -= dyn[u] - dyn[u1];
+    		res -= c2(n - sz[v1] - sz[u1]);
+    	} else {
+    		//cerr << u << ' ' << v << ' ' << v1 << ' ' << dyn[v] << ' ' << dyn[v1] << endl;
+    		res -= c2(n - sz[v1]);
+    	}
+    	cout << res << endl;
+    }
+}

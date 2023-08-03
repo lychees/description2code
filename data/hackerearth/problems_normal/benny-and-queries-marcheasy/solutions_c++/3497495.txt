@@ -1,0 +1,62 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+int const N = 6e5 + 10;
+int const DEPTH = 21;
+
+namespace trie {
+	struct node {
+		int cnt;
+		int nxt[2];
+		node(int c=0):cnt(c) { nxt[0] = nxt[1] = 0; }
+	} f[N*21];
+	int next_node = 1;
+	int root[N];
+
+	int insert(int r, int x, int d) {
+		int cur = next_node++;
+		f[cur] = f[r];
+		++f[cur].cnt;
+		if (d >= 0) {
+			int b = x >> d & 1;
+			f[cur].nxt[b] = insert(f[r].nxt[b], x, d-1);
+		}
+		return cur;
+	}
+
+	int query(int l, int r, int x, int d) {
+		if (d < 0) return 0;
+		int b = x >> d & 1, c = b ^ 1;
+		if (f[f[r].nxt[c]].cnt - f[f[l].nxt[c]].cnt > 0) {
+			return (c << d) + query(f[l].nxt[c], f[r].nxt[c], x, d-1);
+		}
+		return (b << d) + query(f[l].nxt[b], f[r].nxt[b], x, d-1);
+	}
+}
+
+int main() {
+
+    #ifdef VSP4
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+    #endif // VSP4
+
+    int N, M, i, l, r, x, n = 1;
+
+    scanf("%d %d\n", &N, &M);
+    for (i = 0; i < N; i++)
+    {
+        scanf("%d", &x);
+        trie::root[n] = trie::insert(trie::root[n-1], x, DEPTH);
+        ++n;
+    }
+
+    for (i = 0; i < M; i++)
+    {
+        scanf("%d%d%d", &l, &r, &x);
+        int t = trie::query(trie::root[l-1], trie::root[r], x, DEPTH);
+        printf("%d\n", t^x);
+    }
+
+    return 0;
+}

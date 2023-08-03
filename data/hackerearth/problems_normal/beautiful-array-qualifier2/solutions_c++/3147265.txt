@@ -1,0 +1,76 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int uli;
+const int mx=5e5;
+vector<int>divs[mx];
+vector<int>d;
+int g[mx];
+int f[2][210][22];
+int idx[mx];
+
+int can(int c,int K){
+   K=min(K,20);
+   if(d.empty())return false; 
+   int n=d.size();
+   int nd=divs[c].size();
+
+   memset(f,0,sizeof f);
+   f[0][0][0]=1;
+   int rw=0;
+   for(int i=0;i<n;i++){
+      rw^=1;
+      for(int x=0;x<nd;x++){
+         int y=divs[c][x];
+         for(int k=0;k<=K;k++){
+            f[rw][x][k]=f[rw^1][x][k];
+            if(f[rw][x][k])continue;
+            f[rw][x][k]=0;
+            if(d[i]==1){
+               if(y==1)f[rw][x][k]=1;
+               continue;
+            }
+            if(k>0 && y%d[i]==0){
+               int nx=idx[y/d[i]];
+               f[rw][x][k]|=f[rw][nx][k-1];
+            }
+         }
+      }
+   }
+   return f[rw][nd-1][K];
+}
+int main(){
+//   freopen("data.in","r",stdin);
+   int md=0;
+   for(int i=1;i<mx;i++)
+      for(int j=i;j<mx;j+=i){
+         divs[j].push_back(i);
+         md=max(md,int(divs[j].size()));
+      }
+
+   int n,m,k,v;
+   set<int>b;
+   scanf("%d %d %d",&n,&k,&m);
+   for(int i=0;i<m;i++){
+      scanf("%d",&v);
+      b.insert(v);
+   }
+   int c=1;
+   for(int it=0;it<n;it++){
+      while(true){
+         if(b.count(c)){c++;continue;}
+         d.clear();
+         for(int i=0;i<int(divs[c].size());i++){
+            idx[divs[c][i]]=i;
+            if(g[divs[c][i]])
+               d.push_back(divs[c][i]);
+         }
+         if(can(c,k))c++;
+         else break;
+      }
+      g[c]=1;
+      if(it!=0)printf(" ");
+      printf("%d",c++);
+   }
+   return 0;
+}
+

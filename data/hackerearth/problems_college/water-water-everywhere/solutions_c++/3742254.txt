@@ -1,0 +1,161 @@
+#include "bits/stdc++.h"
+using namespace std;
+const int N = 1e5 + 5;
+const int LN = 17;
+int n;
+int a , b , c;
+vector < pair < int , int > > v[N];
+int q;
+int k;
+int arr[N + N];
+int parent[N];
+int sz[N];
+int dp[LN][N];
+int val[LN][N];
+int depth[N];
+int tin[N];
+int timer = 0;
+int tout[N];
+int comp[N];
+void dfs(int node , int parent){
+	dp[0][node] = parent;
+	depth[node] = depth[parent] + 1;
+	tin[node] = ++timer;
+	for(auto it : v[node]){
+		if(it.first != parent){
+			val[0][it.first] = it.second;
+			dfs(it.first , node);
+		}
+	}
+	tout[node] = timer;
+}
+inline bool isanc(int up , int down){
+	return (tin[up] <= tin[down]) && (tout[up] >= tout[down]);
+}
+inline int lca(int a , int b){
+	if(depth[a] < depth[b]){
+		swap(a , b);
+	}
+	int dif = depth[a] - depth[b];
+	for(int i = 0 ; i < LN ; ++i){
+		if(dif & (1 << i)){
+			a = dp[i][a];
+		}
+	}
+	if(a != b){
+		for(int i = LN - 1 ; i >= 0 ; --i){
+			if(dp[i][a] != dp[i][b]){
+				a = dp[i][a];
+				b = dp[i][b];
+			}
+		}
+		a = dp[0][a];
+	}
+	return a;
+}
+inline int minval(int a , int b){
+	if(depth[a] < depth[b]){
+		swap(a , b);
+	}
+	int mnval = 1e9;
+	int dif = depth[a] - depth[b];
+	for(int i = 0 ; i < LN ; ++i){
+		if(dif & (1 << i)){
+			mnval = min(mnval , val[i][a]);
+			a = dp[i][a];
+		}
+	}
+	if(a != b){
+		for(int i = LN - 1 ; i >= 0 ; --i){
+			if(dp[i][a] != dp[i][b]){
+				mnval = min(mnval , val[i][a]);
+				mnval = min(mnval , val[i][b]);
+				a = dp[i][a];
+				b = dp[i][b];
+			}
+		}
+		mnval = min(mnval , val[0][a]);
+		mnval = min(mnval , val[0][b]);
+	}
+	return mnval;
+}
+int find(int node){
+	if(parent[node] == node){
+		return node;
+	}
+	return parent[node] = find(parent[node]);
+}
+pair < int , pair < int , int > > edges[N];
+int ori[N];
+void solve(){
+	for(int i = 1 ; i <= k ; ++i){
+		ori[i] = arr[i];
+	}
+	sort(arr + 1 , arr + 1 + k , [](int a , int b){
+		return tin[a] < tin[b];
+	});
+	int sz = k;
+	for(int i = 1 ; i < k ; ++i){
+		arr[++sz] = lca(arr[i] , arr[i + 1]);
+	}
+	sort(arr + 1 , arr + 1 + sz);
+	sz = unique(arr + 1 , arr + 1 + sz) - arr - 1;
+	for(int i = 1 ; i <= sz ; ++i){
+		comp[arr[i]] = i;
+	}
+	sort(arr + 1 , arr + 1 + sz , [](int a , int b){
+		return tin[a] < tin[b];
+	});
+	stack < int > s;
+	s.push(arr[1]);
+	for(int i = 2 ; i <= sz ; ++i){
+		while(!isanc(s.top() , arr[i])){
+			s.pop();
+		}
+		int weight = minval(arr[i] , s.top());
+		edges[i - 1] = make_pair(weight , make_pair(comp[s.top()] , comp[arr[i]]));
+		s.push(arr[i]);
+	}
+	sort(edges + 1 , edges + sz);
+	for(int i = 1 ; i <= sz ; ++i){
+		parent[i] = i;
+		::sz[i] = 0;
+	}
+	for(int i = 1 ; i <= k ; ++i){
+		::sz[comp[ori[i]]] = 1;
+	}
+	long long ans = 0;
+	for(int i = sz - 1 ; i >= 1 ; --i){
+		int x = edges[i].second.first;
+		int y = edges[i].second.second;
+		int a = find(x);
+		int b = find(y);
+		ans += 1LL * ::sz[a] * ::sz[b] * edges[i].first;
+		::sz[a] += ::sz[b];
+		parent[b] = a;
+	}
+	printf("%lld\n" , ans);
+}
+int main(){
+	scanf("%d" , &n);
+	for(int i = 1 ; i < n ; ++i){
+		scanf("%d %d %d" , &a , &b , &c);
+		v[a].emplace_back(make_pair(b , c));
+		v[b].emplace_back(make_pair(a , c));
+	}
+	dfs(1 , 0);
+	for(int i = 1 ; i < LN ; ++i){
+		for(int j = 1 ; j <= n ; ++j){
+			dp[i][j] = dp[i - 1][dp[i - 1][j]];
+			val[i][j] = min(val[i - 1][j] , val[i - 1][dp[i - 1][j]]);
+		}
+	}
+	scanf("%d" , &q);
+	while(q--){
+		scanf("%d" , &k);
+		for(int i = 1 ; i <= k ; ++i){
+			scanf("%d" , arr + i);
+		}
+		solve();
+	}
+}

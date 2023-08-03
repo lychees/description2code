@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+#define MAX 100007
+using namespace std;
+
+int seg[4*MAX],n;
+char ar[MAX];
+
+int power(int a,int b){
+    int res = 1, val = a%3;
+    while(b){
+        if(b%2) res = (res*val)%3;
+        val = (val*val)%3;
+        b/=2;
+    }
+    return res%3;
+}
+
+
+void build(int node,int l,int r){
+    if(l==r){
+        if((int)ar[l]-48) seg[node] = power(2,n-l-1);
+        else seg[node] = 0;
+        return;
+    }
+    int mid = l+(r-l)/2;
+    build(2*node+1,l,mid);
+    build(2*node+2,mid+1,r);
+    seg[node] = (seg[2*node+1]+seg[2*node+2])%3;
+}
+
+void update(int node,int i,int j,int idx){
+    if(i==j){
+        ar[idx] = '1';
+        seg[node] = power(2,n-idx-1);
+        return;
+    }
+    int mid = i+(j-i)/2;
+    if(i<=idx&&idx<=mid) update(2*node+1,i,mid,idx);
+    else update(2*node+2,mid+1,j,idx);
+    seg[node] = (seg[2*node+1]+seg[2*node+2])%3;
+}
+
+int query(int node,int i,int j,int l,int r){
+    if(r<i||j<l)
+        return 0;
+    if(l<=i&&r>=j)
+        return seg[node];
+    int mid = i+(j-i)/2;
+    return (query(2*node+1,i,mid,l,r) + query(2*node+2,mid+1,j,l,r))%3;
+}
+
+int main(){
+    int q,type,l,r,sm,ans;
+    cin>>n;
+    cin>>ar;
+    cin>>q;
+    build(0,0,n-1);
+    while(q--){
+        cin>>type;
+        if(type==0){
+            cin>>l>>r;
+            sm = query(0,0,n-1,l,r);
+            ans = (sm*power(2,n-r-1))%3;
+            cout<<ans<<"\n";
+        }
+        else{
+            cin>>l;
+            update(0,0,n-1,l);
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, from, to) for (int i = from; i < (to); ++i)
+#define trav(a, x) for (auto& a : x)
+#define all(x) x.begin(), x.end()
+#define sz(x) (int)(x).size()
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+void PR(vi &v) { trav(x, v) cout << x << ' '; cout << endl; }
+
+struct Node {
+	int time = -10;
+	int par = -10;
+	int lo = -10;
+	bool seen = false;
+};
+vector<Node> nodes;
+vector<vi> ed;
+bool dfs(int at, int par, int& time) {
+	Node& n = nodes[at];
+	if (n.seen) return false;
+	n.seen = 1;
+	n.par = par;
+	n.time = time++;
+	n.lo = n.time;
+	trav(x, ed[at]) {
+		if (x == par) continue;
+		bool c = dfs(x, at, time);
+		if (c)
+			n.lo = min(n.lo, nodes[x].lo);
+		else
+			n.lo = min(n.lo, nodes[x].time);
+	}
+	return true;
+}
+
+bool is_bridge(int a, int b) {
+	Node& n = nodes[b];
+	if (n.par != a) return false;
+	if (n.lo != n.time) return false;
+	return true;
+}
+
+int main() {
+	cin.sync_with_stdio(false);
+	cin.exceptions(cin.failbit);
+	int N, valid, invalid;
+	cin >> N >> valid >> invalid;
+	auto index = [&](int a, int b) {
+		return a * (N+1) + b;
+	};
+	int N2 = index(N,N)+1;
+	ed.resize(N2);
+	auto adde = [&](int b, int w, int b2, int w2) {
+		ed[index(b,w)].push_back(index(b2,w2));
+		ed[index(b2,w2)].push_back(index(b,w));
+	};
+	rep(i,0,valid) {
+		int b, w, db, dw;
+		cin >> b >> w >> db >> dw;
+		int b2 = b + db;
+		int w2 = w + dw;
+		adde(b,w,b2,w2);
+	}
+	string type;
+	vi no1(N2), no2 = no1, value(N2);
+	rep(i,0,invalid) {
+		int b, w;
+		cin >> b >> w >> type;
+		(type == "BLACK" ? no1 : no2)[index(b,w)] = 1;
+	}
+	rep(b,0,N+1) {
+		rep(w,0,N+1) {
+			if (b < N && !no1[index(b,w)])
+				adde(b,w,b+1,w);
+			if (w < N && !no2[index(b,w)])
+				adde(b,w,b,w+1);
+			value[index(b,w)] = b*w;
+		}
+	}
+	adde(0,0,N,N);
+
+	nodes.assign(N2, Node{});
+	int time = 0;
+	dfs(0, -1, time);
+
+	int res = -1;
+	rep(i,0,N2) {
+		// if (ed[i].size() == 1)
+		trav(j, ed[i]) {
+			if (is_bridge(i, j))
+				res = max(res, value[i] + value[j]);
+		}
+	}
+
+	cout << res << endl;
+}

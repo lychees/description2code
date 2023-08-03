@@ -1,0 +1,119 @@
+#include <cstdint>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+struct scores {
+	uint32_t low;
+	int32_t low_ind1;
+	int32_t low_ind2;
+	uint32_t next;
+	int32_t next_ind1;
+	int32_t next_ind2;
+
+	scores(uint32_t low, int32_t low_ind)
+		: low(low), low_ind1(low_ind), low_ind2(-1), next(UINT32_MAX), next_ind1(-1), next_ind2(-1) {}
+		
+	bool update(uint32_t val, int32_t index) {
+		if (val < low) {
+			next = low;
+			next_ind1 = low_ind1;
+			if (low_ind2 != -1) {
+				next_ind2 = low_ind2;
+			}
+			low = val;
+			low_ind1 = index;
+			low_ind2 = -1;
+			return true;
+		}
+		
+		if (val == low) {
+			if (low_ind2 == -1) {
+				low_ind2 = index;
+			}
+			return true;
+		}
+		
+		if (val < next) {
+			next = val;
+			next_ind1 = index;
+			next_ind2 = -1;
+			return true;
+		}
+		
+		if (val == next) {
+			if (next_ind2 == -1) {
+				next_ind2 = index;
+			}
+		}
+		return false;
+	}
+};
+
+ostream& operator<<(ostream& os, const scores& s) {
+	os << "(" << s.low << "," << s.low_ind1 << "," << s.low_ind2 << "),(" <<
+		s.next << "," << s.next_ind1 << "," << s.next_ind2 << ")" << endl;
+	return os;
+}
+
+void test() {
+	scores t(100, 0);
+	t.update(75, 1);
+	cout << t << endl;
+	t.update(110, 2);
+	cout << t << endl;
+	t.update(100, 3);
+	cout << t << endl;
+	t.update(75, 4);
+	cout << t << endl;
+	t.update(50, 5);
+	cout << t << endl;
+}
+
+int main()
+{
+	//test();
+
+	uint64_t a; cin >> a;
+	uint64_t b; cin >> b;
+	uint64_t c; cin >> c;
+	int ncount; cin >> ncount;
+
+	uint64_t m = 1000000007;
+	uint64_t ab = (a * b) % m;
+	uint64_t ac = (a * c) % m;
+	uint64_t bc = (b * c) % m;
+	uint64_t abc = (ab * c) % m;
+
+    vector<uint64_t> va(2);
+    vector<uint64_t> vb(2);
+    va[0] = ac;
+    vb[0] = bc;
+    scores ascores(ac, 0);
+    scores bscores(bc, 0);
+
+    for (int i = 1; i < ncount; ++i) {
+		{
+	    	uint64_t last_a = va[(i-1) & 1];
+			va[i & 1] = ((last_a * abc) % m + (last_a * ab) % m + (last_a * ac) % m) % m;
+			ascores.update(va[i & 1], i);
+		}
+
+		{
+			uint64_t last_b = vb[(i-1) & 1];
+			vb[i & 1] = ((last_b * abc) % m + (last_b * ab) % m + (last_b * bc) % m) % m;
+			bscores.update(vb[i & 1], i);
+		}
+    }
+    
+    if (ascores.low_ind1 != bscores.low_ind1) {
+    	cout << ascores.low + bscores.low << endl;
+    } else {
+    	uint32_t score1 = ascores.low + bscores.next;
+    	uint32_t score2 = ascores.next + bscores.low;
+    	cout << (score1 < score2 ? score1 : score2) << endl;
+    }
+    
+    return 0;
+}

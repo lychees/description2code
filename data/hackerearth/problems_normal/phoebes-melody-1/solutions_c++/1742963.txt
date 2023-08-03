@@ -1,0 +1,101 @@
+#include<bits/stdc++.h>
+using namespace std;
+int t;
+int n;
+#define MAX 200002
+int a[MAX];
+int sp[20][MAX];
+int l22[MAX];
+int ge(int l,int r){
+	int len=r-l+1;
+	int l2=l22[len];
+	return min(sp[l2][l],sp[l2][r-(1<<l2)+1]);
+}
+int main(){
+	scanf("%d", &t);
+	int countt=0;
+	int vall=1;
+	for(int i=0;i<MAX;i++){
+		l22[i]=log2(i);
+	}
+	while (t--){
+		int n, k;
+		scanf("%d%d", &n, &k);
+		for (int i = 0; i < n; i++){
+			scanf("%d", &a[i]);
+			sp[0][i]=a[i];
+		}
+		for(int i=1;i<20;i++){
+			for(int j=0;j+(1<<(i-1))<n;j++){
+				sp[i][j]=min(sp[i-1][j],sp[i-1][j+(1<<(i-1))]);
+			}
+		}
+		int m = n + 1;
+		long long int ans = 0;
+		for (int i = 0; i < n; i++){
+			int mintt = INT_MAX;
+			if (i + k < n){
+				int mint = i + k;
+				int maxt = n-1;
+				if(ge(i+k,n-1)>a[i]){
+					goto f;
+				}
+				while (mint + 1 < maxt){
+					int mid = (mint + maxt) / 2;
+					int val=ge(i+k,mid);
+					if (val < a[i]){
+						maxt = mid;
+					}
+					else{
+						mint = mid;
+					}
+				}
+				if (mint != maxt){
+					int val=ge(i+k,mint);
+					if (val < a[i]){
+						maxt = mint;
+					}
+					else{
+						mint = maxt;
+					}
+				}
+				if (maxt != n){
+					mintt = mint - i;
+				}
+			}
+			f:;
+			if (i - k >= 0){
+				int mint = 0;
+				int maxt = i-k;
+				while (mint + 1 < maxt){
+					int mid = (mint + maxt) / 2;
+					int val=ge(mid,i-k);
+					if (val < a[i]){
+						mint = mid;
+					}
+					else{
+						maxt = mid;
+					}
+				}
+				if (mint != maxt){
+					int val=ge(maxt,i-k);
+					if (val < a[i]){
+						mint = maxt;
+					}
+					else{
+						maxt = mint;
+					}
+				}
+				if (ge(mint, i-k) < a[i]){
+					mintt = min(mintt, i - mint);
+				}
+			}
+			if (mintt == INT_MAX){
+				mintt = 0;
+			}
+			ans += (long long int)(mintt);
+		}
+		printf("%lld\n", ans);
+	}
+	return 0;
+}

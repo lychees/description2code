@@ -1,0 +1,66 @@
+#include <iostream>
+#include <array>
+using namespace std;
+
+using ull = unsigned long long;
+constexpr ull mod = 1000000007ull;
+
+array<ull, 100001> factorial;
+array<ull, 100001> ifactorial;
+
+ull powm(ull x, ull n) {
+	ull res = 1;
+	while (n) {
+		if (n % 2)
+			res = (res * x) % mod;
+		x = (x * x) % mod;
+		n /= 2;
+	}
+	return res;
+}
+
+ull inversem(ull x) {
+	return powm(x, mod - 2);
+}
+
+void prepare() {
+	ull f = 1;
+	factorial[0] = f;
+	for (unsigned i = 1; i <= 100000; ++i) {
+		f = (f * i) % mod;
+		factorial[i] = f;
+	}
+	f = inversem(f);
+	ifactorial[100000] = f;
+	for (unsigned i = 100000; i > 0; --i) {
+		f = (f * i) % mod;
+		ifactorial[i - 1] = f;
+	}
+}
+
+ull binom(ull n, ull m) {
+	ull res = factorial[n];
+	res = (res * ifactorial[m]) % mod;
+	res = (res * ifactorial[n - m]) % mod;
+	return res;
+}
+
+ull ans(ull m, ull n, ull c) {
+	if (c == 0 && n == m)
+		return 1;
+	if (m + 1 < c || n < c + m || c == 0)
+		return 0;
+	return (binom(m + 1, c) * binom(n - m - 1, c - 1)) % mod;
+}
+
+int main() {
+	prepare();
+	int t;
+	cin >> t;
+	while (t--) {
+		ull n, m, c;
+		cin >> n >> m >> c;
+		cout << ans(m, n, c) << '\n';
+	}
+    return 0;
+}

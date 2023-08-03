@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+#define vec vector
+#define sz(c) int(c.size())
+#define FOR(i, a, b) for (int i = a; i < (b); ++i)
+#define DOWN(i, a, b) for(int i = (a) - 1; i >= (b); --i)
+using namespace std;
+const char eol = '\n';
+typedef long long int64;
+typedef pair<int,int> pii;
+typedef vec<int> vi;
+
+struct BIT {
+  int n;
+  vi f;
+
+  BIT(int N): n(N), f(N) {
+  }
+
+  void add(int pos, int val) {
+    for (int i = pos; i < n; i |= i + 1)
+      f[i] += val;
+  }
+
+  int sum(int pos) {
+    int res = 0;
+    for (int i = pos; i >= 0; i &= i + 1, --i)
+      res += f[i];
+    return res;
+  }
+
+  int sum(int l, int r) {
+    if (l > r) return 0;
+    return sum(r) - sum(l - 1);
+  }
+};
+
+int const mod = 1e9 + 7;
+
+int madd(int a, int b) {
+  if (a + b >= mod) return a + b - mod; else return a + b;
+}
+
+int mmul(int a, int b) {
+  return int(int64(a) * b % mod);
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(0);
+  cout << fixed << setprecision(10);
+
+  int n;
+  cin >> n;
+  vi a(2 * n);
+  FOR(i, 0, 2 * n) {
+    cin >> a[i];
+    a[i] -= 1;
+  }
+
+  vi p2(n + 1);
+  p2[0] = 1;
+  FOR(i, 1, n + 1) p2[i] = 2 * p2[i - 1] % mod;
+
+  BIT f0(n);
+  BIT f1(n);
+
+  int res = 0;
+  FOR(i, 0, 2 * n) {
+    res = madd(res, mmul(f0.sum(0,     a[i] - 1),  p2[n - 2]));
+    //cerr << res << endl;
+    res = madd(res, mmul(f0.sum(a[i],  a[i]    ),  p2[n - 1]));
+    //cerr << res << endl;
+    res = madd(res, mmul(f0.sum(a[i] + 1, n - 1), p2[n - 1]));
+    //cerr << res << endl;
+    res = madd(res, mmul(f1.sum(0,        a[i]),  p2[n - 1]));
+    //cerr << res << endl;
+    res = madd(res, mmul(f1.sum(a[i] + 1, n - 1), p2[n]));
+    //cerr << res << endl;
+
+    res = madd(res, mmul(f0.sum(a[i] + 1, n - 1), p2[n - 2]));
+    res = madd(res, mmul(f1.sum(a[i] + 1, n - 1), p2[n - 1]));
+    //cerr << res << endl;
+
+    if (f0.sum(a[i], a[i])) {
+      f0.add(a[i], -1);
+      f1.add(a[i], +1);
+    } else {
+      f0.add(a[i], +1);
+    }
+
+    //cerr << res << endl;
+    //cerr << endl;
+  }
+
+  cout << res << eol;
+
+  return 0;
+}

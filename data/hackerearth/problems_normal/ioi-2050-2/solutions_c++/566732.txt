@@ -1,0 +1,149 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define scan(t) scanf("%d",&t)
+#define ft first
+#define sd second
+#define mp make_pair
+#define pb push_back
+#define all(x) x.begin(),x.end()
+
+inline void inp(int &a)
+{
+        register int c;
+        a = 0;
+	do c = getchar_unlocked(); while(c < '0');
+	do{
+		a = (a << 1) + (a << 3) + c - '0';
+		c = getchar_unlocked();
+
+	}while(c >= '0');
+
+}
+
+inline void print(int a)
+{
+	
+	char s[11];
+	int t = -1;
+ 
+	do{
+		s[++t] = a % 10 + '0';
+		a /= 10;
+	}while(a > 0);
+ 
+	while(t >= 0)putchar_unlocked(s[t--]);
+	putchar_unlocked('\n');
+
+}
+
+bool cmp (const pair<pair<int,int > ,int> &a, const pair<pair<int,int> ,int> &b){
+
+	return a.sd<b.sd;
+}
+
+int DSU[1005],R[1005];
+
+void initialise(int n){
+
+	for(int i=1;i<=n;i++){
+		DSU[i]=i;
+		R[i]=0;
+	}
+}
+
+int find(int idx){
+
+	if(idx!=DSU[idx]){
+		DSU[idx]=find(DSU[idx]);
+	}
+	return DSU[idx];
+}
+
+void _union(int px,int py){
+	
+	if(R[px]<R[py]){
+		DSU[px]=py;
+	}else{
+		DSU[py]=px;
+		if(R[px]==R[py])
+			R[px]++;
+	}
+}
+
+int main(){
+	int t;
+	inp(t);
+	vector<vector<pair<int,int> > > G;
+	for(int tt=1;tt<=t;++tt){
+		int n,m,q;
+		inp(n),inp(m),inp(q);
+		G.resize(n+1);
+		vector<pair<pair<int,int>,int > > A(m);
+		initialise(n);
+		for(int i=0;i<m;i++){
+			inp(A[i].ft.ft);
+			inp(A[i].ft.sd);
+			inp(A[i].sd);			
+		}
+		sort(all(A),cmp);
+		for(int i=0;i<m;i++){
+			int px=find(A[i].ft.ft);
+			int py=find(A[i].ft.sd);
+			if(px!=py){
+				_union(px,py);
+				G[A[i].ft.ft].push_back(mp(A[i].ft.sd,A[i].sd));
+				G[A[i].ft.sd].push_back(mp(A[i].ft.ft,A[i].sd));
+			}
+		}
+
+		A.resize(q);
+		int d[q];
+		for(int i=0;i<q;i++){
+			inp(A[i].ft.ft);
+			inp(A[i].ft.sd);
+			A[i].sd=i;		
+		}
+
+		sort(A.begin(),A.end());
+		int j=0;
+		vector<int> cost(n+1);
+		pair<int,int> t;
+		int vtx,cst,src,c;
+		priority_queue<pair<int,int> , vector<pair<int,int> > , greater<pair<int,int> > > Q;
+		bool V[n+1];
+		while(j<q)
+		{
+			src=A[j].ft.ft;
+			memset(V,0,sizeof(V));
+			while(!Q.empty()) Q.pop();
+			Q.push(mp(0,src));
+			fill(all(cost),INT_MAX);
+			cost[src]=0;
+			while(!Q.empty()){
+				t=Q.top();
+				Q.pop();
+				vtx=t.sd;
+				cst=t.ft;
+				if(V[vtx]) continue;
+				V[vtx]=1;
+				for(int i=0;i<G[vtx].size();i++){
+					c=cst+G[vtx][i].sd;					
+					if(cost[G[vtx][i].ft] > c ){
+						cost[G[vtx][i].ft]=c;
+						Q.push(mp(cost[G[vtx][i].ft],G[vtx][i].ft));						
+					}	
+				}				
+			}
+			while(j<q&&A[j].ft.ft==src){
+				d[A[j].sd]=cost[A[j].ft.sd];
+				j++;
+			}
+		}
+		printf("Case: %d\n",tt);
+		int i=0;
+		while(i<q)
+			print(d[i++]);
+		for(int i=1;i<=n;i++) G[i].clear();
+	}
+	return 0;
+}

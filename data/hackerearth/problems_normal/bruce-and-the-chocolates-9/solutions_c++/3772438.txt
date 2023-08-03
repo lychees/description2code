@@ -1,0 +1,150 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+
+struct Hungarian {
+    static constexpr int MAX_VALUE=INF;
+
+    int solveMax ( const vector<vi> &gain ) {
+        int n=gain.size();
+        int m=gain[0].size();
+        vector<vi> cost2 ( n,vi ( m ) );
+        int maxc=-INF;
+        rep ( i,n ) rep ( j,n ) {
+            maxc=max ( maxc,gain[i][j] );
+        }
+        rep ( i,n ) rep ( j,n ) {
+            cost2[i][j]=maxc-gain[i][j];
+        }
+        int ans=solveMin ( cost2 );
+        return m*maxc-ans;
+
+    }
+
+    vi matchingR;
+    int solveMin ( const vector<vi> &cost ) {
+        int n=cost.size();
+        int m=cost[0].size();
+        matchingR =vi ( m,-1 );
+        vi pL ( n ),pR ( m ),min ( m ),back ( m );
+        int ans = 0;
+        for ( int i = 0; i < n; i++ ) {
+            fill ( all ( min ), MAX_VALUE );
+            for ( int ci = i, cj = -1;; ci = matchingR[cj] ) {
+                int delta = MAX_VALUE;
+                int nj = -1;
+                for ( int j = 0; j < m; j++ ) {
+                    if ( min[j] < 0 ) {
+                        continue;
+                    }
+                    int v = cost[ci][j] - pL[ci] - pR[j];
+                    if ( v < min[j] ) {
+                        min[j] = v;
+                        back[j] = cj;
+                    }
+                    if ( min[j] < delta ) {
+                        delta = min[j];
+                        nj = j;
+                    }
+                }
+                cj = nj;
+                pL[i] += delta;
+                for ( int j = 0; j < m; j++ ) {
+                    if ( min[j] < 0 ) {
+                        pR[j] -= delta;
+                        pL[matchingR[j]] += delta;
+                    } else
+                        min[j] -= delta;
+
+                }
+                ans += delta;
+                if ( matchingR[cj] < 0 ) {
+                    while ( back[cj] >= 0 ) {
+                        matchingR[cj] = matchingR[back[cj]];
+                        cj = back[cj];
+                    }
+                    matchingR[cj] = i;
+                    break;
+                }
+                min[cj] = -1;
+            }
+        }
+        return ans;
+    }
+};
+int main() {
+    ios_base::sync_with_stdio ( false );
+    inrep {
+        int n,m;
+        cin>>n>>m;
+        vi choc ( n-1 );
+        cin>>choc;
+        int p=n/2;
+        vector<vi> mat ( p,vi ( p ) );
+        rep ( i,m ) {
+            int u,v;
+            cin>>u>>v;
+            u--;
+            v--;
+            if ( u&1 ) swap ( u,v );
+
+            int u2=u/2,v2=v/2;
+            mat[u2][v2]=__gcd ( choc[u],choc[v] );
+
+
+
+        }
+        Hungarian h;
+        int res=h.solveMax ( mat );
+        cout<<res<<'\n';
+
+    }
+
+
+}

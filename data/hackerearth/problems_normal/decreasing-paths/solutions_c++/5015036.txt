@@ -1,0 +1,80 @@
+                #include<bits/stdc++.h>
+                using namespace std;
+                typedef long long ll;
+                #define forn(i, n) for(ll i = 0; i < n; i ++)
+                #define for1(i, n) for(ll i = 1;i <= n;i ++)
+                #define FOR(i, a, b) for(ll i = a; i<=b;i++)
+
+                const ll N = 1005;
+                ll f[N * N];
+                ll a[N][N];
+                ll n;
+
+                ll dx[4] = {0, 0, -1, 1};
+                ll dy[4] = {-1, 1, 0, 0};
+                ///data for toposort
+                ll Hash(ll i,ll j) { return (i - 1) * n + j; }
+
+                ll col[N * N];
+                vector<ll> topo;
+                vector<ll> g[N * N];
+
+                void dfs(ll u)
+                {
+                    col[u] = -1;
+                    forn(i, g[u].size())
+                    {
+                        ll v = g[u][i];
+                        if(col[v] == 0)
+                        {
+                            dfs(v);
+                        }
+                    }
+                    col[u] = 1;
+                    topo.push_back(u);
+                }
+                const int MOD = 1e9 + 7;
+                void go(ll u)
+                {
+                    forn(i, g[u].size())
+                    {
+                        ll v = g[u][i];
+                        f[v] += f[u];
+                        f[v]%=MOD;
+                    }
+                }
+
+                int main()
+                {
+                    //freopen("test.inp","r",stdin);
+                    ios_base:: sync_with_stdio(false);
+                    cin >> n;
+                    for1(i, n) for1(j, n) cin >> a[i][j];
+                    for1(i, n) for1(j, n)
+                    {
+                        forn(k, 4)
+                        {
+                            ll xx = i + dx[k];
+                            ll yy = j + dy[k];
+                            if(min(xx,yy)<1||max(xx,yy)>n) continue;
+                            if(a[xx][yy] < a[i][j])
+                            {
+                                g[Hash(i, j)].push_back(Hash(xx,yy));
+                            }
+                        }
+                    }
+                    for1(i, n * n) if(col[i] == 0) dfs(i);
+                    reverse(topo.begin(), topo.end());
+
+                    for1(i, n * n) f[i] = 1;
+                    memset(col,0, sizeof col);
+                    long long ans = 0;
+
+                    for(ll i = 0; i < topo.size(); i ++)
+                    {
+                        go(topo[i]);
+                        ans += f[topo[i]];
+                        ans%=MOD;
+                    }
+                    cout<< ans << endl;
+                }

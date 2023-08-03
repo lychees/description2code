@@ -1,0 +1,120 @@
+#include <iostream>
+#include <climits>
+using namespace std;
+#define N (1<<18)
+
+pair<int, int> sgt[(1 << 19) + 10];
+void update(int idx, int n)
+{
+	sgt[N + idx].first = sgt[N + idx].second = n;
+	int j = N + idx;
+	while (j>1)
+	{
+		j /= 2;
+		sgt[j].first = min(sgt[j * 2].first, sgt[j * 2 + 1].first);
+		sgt[j].second = max(sgt[j * 2].second, sgt[j * 2 + 1].second);
+	}
+}
+int query_min(int nd, int lo, int hi, int l, int r, int num)
+{
+	if (lo == hi)
+	{
+		if (sgt[nd].first <= num) return lo;
+		else return INT_MAX;
+	}
+	if (l <= lo && r >= hi&&sgt[nd].first>num) return INT_MAX;
+	int m = (lo + hi) / 2;
+	int ans = INT_MAX;
+	if (l <= m)
+	{
+		ans = query_min(nd * 2, lo, m, l, r, num);
+	}
+	if (ans<INT_MAX) return ans;
+	if (r>m) ans = query_min(nd * 2 + 1, m + 1, hi, l, r, num);
+	return ans;
+}
+int query_max(int nd, int lo, int hi, int l, int r, int num)
+{
+	if (lo == hi)
+	{
+		if (sgt[nd].first >= num) return lo;
+		else return INT_MAX;
+	}
+	if (l <= lo && r >= hi&&sgt[nd].second<num) return INT_MAX;
+	int m = (lo + hi) / 2;
+	int ans = INT_MAX;
+	if (l <= m)
+	{
+		ans = query_max(nd * 2, lo, m, l, r, num);
+	}
+	if (ans<INT_MAX) return ans;
+	if (r>m) ans = query_max(nd * 2 + 1, m + 1, hi, l, r, num);
+	return ans;
+}
+pair<int, int> range(int l, int r)
+{
+	--l, ++r;
+	pair<int, int> ans{ INT_MAX, INT_MIN };
+	l += N, r += N;
+	while (l^r ^ 1)
+	{
+		if (~l & 1)
+		{
+			ans.first = min(ans.first, sgt[l ^ 1].first);
+			ans.second = max(ans.second, sgt[l ^ 1].second);
+		}
+		if (r & 1)
+		{
+			ans.first = min(ans.first, sgt[r ^ 1].first);
+			ans.second = max(ans.second, sgt[r ^ 1].second);
+		}
+		l >>= 1, r >>= 1;
+	}
+	return ans;
+
+}
+int main()
+{
+	int n, m;
+	scanf("%d%d", &n, &m);
+	for (int i = 1; i <= n; ++i)
+	{
+		scanf("%d", &sgt[N + i].first);
+		sgt[N + i].second = sgt[N + i].first;
+	}
+	for (int i = N - 1; i>0; --i)
+	{
+		sgt[i].first = min(sgt[i * 2].first, sgt[i * 2 + 1].first);
+		sgt[i].second = max(sgt[i * 2].second, sgt[i * 2 + 1].second);
+	}
+	while (m--)
+	{
+		char c;
+		scanf(" %c", &c);
+		if (c == 'U')
+		{
+			int x, y;
+			scanf("%d%d", &x, &y);
+			update(x, y);
+		}
+		else
+		{
+			int x, c;
+			scanf("%d%d", &x, &c);
+			int v = sgt[N + x].first;
+			int ans = min(query_min(1, 0, N - 1, x, n, v - c - 1), query_max(1, 0, N - 1, x, n, v + c + 1));
+			if (ans == INT_MAX)
+			{
+				ans = n + 1;
+			}
+			ans -= x;
+			if (ans == 0) printf("-1 -1\n");
+			else
+			{
+				auto rg = range(x, x + ans - 1);
+				printf("%d %d\n", ans, max(abs(rg.first - sgt[N + x].first), abs(rg.second - sgt[N + x].first)));
+			}
+		}
+	}
+	return 0;
+}

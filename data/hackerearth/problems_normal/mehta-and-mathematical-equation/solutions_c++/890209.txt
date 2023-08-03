@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long LL;
+
+const int MAXN = (int) 1e6 + 5;
+
+const LL mod = 1000000007LL;
+
+LL n;
+vector<int> dig;
+
+
+LL memo[62][2][62];
+
+LL dp(int id, int isGood, int carry) {
+    LL &res = memo[id][isGood][carry];
+    if (res == -1) {
+        res = 0;
+        if (id == dig.size()) {
+            if (isGood && carry == 0) {
+                res = 1;
+            }
+        } else {
+            for (int xbit = 0; xbit < 2; xbit++) {
+                for (int ybit = 0; ybit < 2; ybit++) {
+                    for (int zbit = 0; zbit < 2; zbit++) {
+                        int currentBit = (carry + xbit + ybit + zbit) % 2;
+                        int newCarry = (carry + xbit + ybit + zbit) / 2;
+                        int newGood = isGood;
+                        if (xbit == 1 && ybit == 1 && zbit == 1) {
+                            newGood = true;
+                        }
+                        if (currentBit == dig[id]) {
+                            res += dp(id + 1, newGood, newCarry);
+                            if (res >= mod) {
+                                res -= mod;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return res;
+}
+
+vector<int> getDigits(LL n) {
+    vector<int> a;
+    if (n == 0) {
+        a.push_back(0);
+    }
+    while (n) {
+        if (n & 1) {
+            a.push_back(1);
+        } else {
+            a.push_back(0);
+        }
+        n /= 2;
+    }
+    //reverse(a.begin(), a.end());
+    return a;
+}
+
+int main() {
+    //#define DEBUG
+#ifdef DEBUG
+    freopen("in.txt", "r", stdin);
+#endif // DEBUG
+
+    int T;
+    cin >> T;
+    while (T--) {
+        cin >> n;
+        dig = getDigits(n);
+        memset(memo, -1, sizeof(memo));
+        cout << dp(0, 0, 0) << endl;
+    }
+
+    return 0;
+}
+

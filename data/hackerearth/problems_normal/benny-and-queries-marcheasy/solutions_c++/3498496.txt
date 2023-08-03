@@ -1,0 +1,165 @@
+/*input
+5 3
+1 2 3 4 5
+1 1 1
+3 4 2
+2 5 1
+*/
+ 
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define ll int
+#define PII pair<ll, ll>
+#define f first
+#define s second
+#define F(i,a,b) for(ll i = (ll)(a); i <= (ll)(b); i++)
+#define RF(i,a,b) for(ll i = (ll)(a); i >= (ll)(b); i--)
+#define inf LLONG_MAX
+#define mod 1000000007
+#define MAXN 100005
+#define pb(x) push_back(x)
+ 
+ll n, q, x, l, r, ch, val;
+int Brr[]={1, 2, 4,	8, 	16, 32,	64,	128, 256, 512,	1024, 2048, 4096, 8192,	16384,	32768,	65536,	131072,	262144,
+						524288,	1048576, 2097152, 4194304,	8388608, 16777216,	33554432,	67108864, 134217728,
+						268435456, 	536870912};
+ll ans[5*MAXN];
+int brr[20];
+typedef struct node node_t;
+struct node
+{
+    int l,r;
+    node_t *left;
+    node_t *right;
+};
+ 
+node_t *getNode() //void in place of arguments
+{
+    node_t *pNode = NULL;
+    pNode = (node_t *)malloc(sizeof(node_t));
+ 
+    if(pNode)
+    {
+        pNode->l = 0;
+        pNode->r = 0;
+        pNode->left = NULL;
+        pNode->right = NULL;
+    }
+    return pNode;
+}
+ 
+int *binary(int num, int arr[20])
+{
+	int i=19;
+	while(num>0)
+	{
+		arr[i--] = num%2;
+		num/=2;
+	}
+	return arr;
+}
+ 
+void insert(node_t *root, int num, int pos)
+{
+	int arr[20]={0};
+	int *A = binary(num, arr);
+	for(int i=0;i<20;i++)
+	{
+		if(*(A+i))
+		{
+            root->r=max(root->r,pos);
+            if(root->right == NULL)
+                root->right = getNode();
+            root = root->right;
+        }
+        else
+        {
+            root->l=max(root->l,pos);
+            if(root->left == NULL)
+                root->left = getNode();
+            root = root->left;
+        }
+	}
+}
+ 
+int query(node_t *root, int pos, int x)
+{
+	int arr[20]={0};
+	int *A = binary(x, arr);
+	int res = 0;
+	for(int i=0;i<20;i++)
+	{
+        if(*(A+i))
+        {
+			if(root->left != NULL && root->l>=pos)
+			{	res+=brr[i];
+				root = root->left;
+			}
+			else if(root->right && root->r>=pos)
+				root = root->right;
+		}
+        else
+        {
+           	if(root->right != NULL && root->r>=pos)
+			{	res+=brr[i];
+				root = root->right;
+			}
+			else if(root->left && root->l>=pos)
+           		root = root->left;
+        }
+	}
+	return res;
+}
+ 
+vector < pair < PII, PII > > arr;
+int main() 
+{
+
+	//freopen("inp.txt","r",stdin);
+	//freopen("out.txt","w",stdout);
+	F(i,0,19)
+	{
+		brr[i]=Brr[19-i];
+		//cout<<brr[i]<<" ";
+	}
+
+	//scanf("%d %d",&n,&q);
+	cin>>n>>q;
+	F(i,1,n)
+	{
+		//scanf("%d",&x);
+		cin>>x;
+		arr.push_back({{i,0},{x,0}});
+	}
+	F(i,1,q)
+	{
+		scanf("%d %d %d",&l,&r,&x);
+		arr.push_back({{r,i},{l,x}});
+	}
+	sort(arr.begin(),arr.end());
+	ll sz=arr.size();
+	node_t *root;
+	root = getNode();
+
+	F(i,0,sz-1)
+	{
+		l=arr[i].s.f;
+		r=arr[i].f.f;
+		ch=arr[i].f.s;
+		val=arr[i].s.s;
+		if(ch==0)
+		{
+			insert(root,l,r);
+		}
+		else
+		{
+			ans[ch]=query(root,l,val);
+			//if(ch==1977)
+				//cout<<l<<" "<<r<<" "<<ch<<" "<<val<<endl;
+		}
+	}
+	F(i,1,q)
+		printf("%d\n",ans[i]);
+	return 0;
+}

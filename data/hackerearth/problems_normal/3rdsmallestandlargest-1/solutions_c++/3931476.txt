@@ -1,0 +1,201 @@
+#include<iostream>
+#include<algorithm>
+#include<string>
+#include<vector>
+using namespace std;
+
+vector<string> nirvana;
+
+void permutations(string s, int n, string prefix, int length)
+{
+	//cout << s << "\t" << n << "\t" << prefix << "\t" << length << endl;
+	if (length == 1)
+	{
+		nirvana.push_back(prefix + s);
+	}
+	else
+	{
+		for (int i = 0; i < n; ++i)
+		{
+			string temp = s;
+			temp.erase(i, 1);
+			permutations(temp, n - 1, prefix + s[i], length - 1);
+		}
+	}
+}
+
+int consider_characters_start(string& s)
+{
+	bool possible = false;
+	string::iterator p = s.begin();
+	char curr;
+	int unique = 0, count = 1;
+	while (p != (s.end() - 1))
+	{
+		curr = *p;
+		p++;
+		count++;
+		if (curr != *p)
+		{
+			if (unique == 0)
+				unique += 2;
+			else
+				unique++;
+		}
+		if (count >= 3)
+		{
+			if ((count - unique) != count)
+			{
+				possible = true;
+				break;
+			}
+		}
+	}
+	if (possible)
+		return count;
+	else
+		return -1;
+}
+
+int consider_characters_end(string& s)
+{
+	bool possible = false;
+	string::iterator p = s.end() - 1;
+	char curr;
+	int unique = 0, count = 1;
+	while (p != s.begin())
+	{
+		curr = *p;
+		p--;
+		count++;
+		if (curr != *p)
+		{
+			if (unique == 0)
+				unique += 2;
+			else
+				unique++;
+		}
+		if (count >= 3)
+		{
+			if ((count - unique) != count)
+			{
+				possible = true;
+				break;
+			}
+		}
+	}
+	if (possible)
+		return count;
+	else
+		return -1;
+}
+
+bool sort_desc(int i, int j)
+{
+	return i > j;
+}
+
+int main()
+{
+	int T;
+	cin >> T;
+	for (int t = 0; t < T; ++t)
+	{
+		string s;
+		cin >> s;
+
+		if (s.length() < 3)
+		{
+			cout << "Not possible!" << endl;
+			continue;
+		}
+
+		sort(s.begin(), s.end());
+		string s_x = s;
+
+		int start_count = consider_characters_start(s);
+		int end_count = consider_characters_end(s);
+		if (start_count == -1 || end_count == -1)
+		{
+			cout << "Not possible!" << endl;
+			continue;
+		}
+		int count;
+
+		// 3'RD SMALLEST NUMBER
+		if (end_count == 3)
+		{
+			// PREFIX
+			for (int i = 0; i < (s.length() - end_count); ++i)
+				cout << s[i];
+
+			permutations(s.substr(s.length() - end_count), end_count, "", end_count);
+			sort(nirvana.begin(), nirvana.end());
+
+			// SUFFIX
+			count = 0;
+			for (int i = 1; i < nirvana.size(); ++i)
+			{
+				if (nirvana.at(i) != nirvana.at(i - 1))
+				{
+					if (count == 0)
+						count += 2;
+					else
+						count++;
+				}
+				if (count == 3)
+				{
+					cout << nirvana.at(i) << " ";
+					break;
+				}
+			}
+			nirvana.clear();
+		}
+		else
+		{
+			s.replace(s.length() - end_count + 2, 1, s.substr(s.length() - end_count, 1));
+			s.replace(s.length() - end_count, 1, s.substr(s.length() - end_count + 1, 1));
+			cout << s << " ";
+		}
+
+		// 3'RD LARGEST NUMBER
+		if (start_count == 3)
+		{
+
+			// SUFFIX
+			for (int i = s_x.length() - 1; i >= start_count; --i)
+				cout << s_x[i];
+
+			permutations(s_x.substr(0, start_count), start_count, "", start_count);
+			sort(nirvana.begin(), nirvana.end());
+
+			// PREFIX
+			count = 0;
+			for (int i = nirvana.size() - 1; i > 0; --i)
+			{
+				if (nirvana.at(i) != nirvana.at(i - 1))
+				{
+					if (count == 0)
+						count += 2;
+					else
+						count++;
+				}
+				if (count == 3)
+				{
+					cout << nirvana.at(i - 1) << endl;
+					break;
+				}
+			}
+			nirvana.clear();
+		}
+		else
+		{
+			s_x.replace(start_count - 3, 1, s_x.substr(start_count - 1, 1));
+			s_x.replace(start_count - 1, 1, s_x.substr(start_count - 2, 1));
+			for (int i = s_x.length() - 1; i >= 0; --i)
+				cout << s_x[i];
+			cout << endl;
+		}
+	}
+	return 0;
+}

@@ -1,0 +1,208 @@
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+#include <climits>
+#include <cctype>
+#include <utility>
+#include <queue>
+#include <cmath>
+#include <complex>
+using namespace std;
+
+typedef long long LL;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+typedef vector<PII> VPII;
+typedef pair<LL, LL> PLL;
+typedef pair<int, LL> PIL;
+typedef pair<LL, int> PLI;
+typedef double DB;
+
+#define pb push_back
+#define mset(a, b) memset(a, b, sizeof a)
+#define all(x) (x).begin(), (x).end()
+#define bit(x) (1 << (x))
+#define bitl(x) (1LL << (x))
+#define sqr(x) ((x) * (x))
+#define sz(x) ((int)(x.size()))
+#define cnti(x) (__builtin_popcount(x))
+#define cntl(x) (__builtin_popcountll(x))
+#define clzi(x) (__builtin_clz(x))
+#define clzl(x) (__builtin_clzll(x))
+#define ctzi(x) (__builtin_ctz(x))
+#define ctzl(x) (__builtin_ctzll(x))
+
+#define X first
+#define Y second
+
+#define Error(x) cout << #x << " = " << x << endl
+
+template <typename T, typename U> 
+inline void chkmax(T& x, U y) {
+	if (x < y) x = y;
+}
+
+template <typename T, typename U>
+inline void chkmin(T& x, U y) {
+	if (y < x) x = y;
+}
+typedef unsigned int uint;
+#define MT_N 624
+#define MT_M 397
+#define MT_MSB 0x80000000U
+#define MT_LS31B 0x7FFFFFFFU
+#define MT_A 2567483615U
+
+class MersenneTwister {
+	uint twistory[MT_N];
+	int pos;
+public:
+	MersenneTwister(uint seed = 0) {
+		twistory[0] = seed;
+		for (int i = 1; i < MT_N; i++) twistory[i] = 1812433253U * (twistory[i - 1] ^ (twistory[i - 1] >> 30)) + i;
+		pos = 0;
+	}
+	void reset(uint seed = 0) {
+		twistory[0] = seed;
+		for (int i = 1; i < MT_N; i++) twistory[i] = 1812433253U * (twistory[i - 1] ^ (twistory[i - 1] >> 30)) + i;
+		pos = 0;
+	}
+	void generate(void) {
+		uint tmp; int i;
+		for (i = 0; i < MT_N - MT_M;i++) {
+			tmp = (twistory[i] & MT_MSB) + (twistory[i + 1] & MT_LS31B);
+			twistory[i] = twistory[i + MT_M] ^ (tmp >> 1) ^ (MT_A & -(int)(tmp & 1));
+		}
+		for (; i < MT_N - 1; i++) {
+			tmp = (twistory[i] & MT_MSB) + (twistory[i + 1] & MT_LS31B);
+			twistory[i] = twistory[i + MT_M - MT_N] ^ (tmp >> 1) ^ (MT_A & -(int)(tmp & 1));
+		}
+		tmp = (twistory[i] & MT_MSB) + (twistory[0] & MT_LS31B);
+		twistory[i] = twistory[MT_M - 1] ^ (tmp >> 1) ^ (MT_A & -(int)(tmp & 1));
+	}
+	inline uint rand_unsigned() {
+		if (!pos) generate();
+		uint ans = twistory[pos++];
+		pos &= -(pos != 624); // if (pos == 624) pos = 0;
+		ans ^= ans >> 11;
+		ans ^= (ans << 7) & 2636928640U;
+		ans ^= (ans << 15) & 4022730752U;
+		ans ^= ans >> 18;
+		return ans;
+	}
+	inline double next_double() {
+		return next_int(32768) / 32768.0;
+	}
+	inline int rand_signed() {
+		return rand_unsigned() >> 1;
+	}
+	inline int next_int(int n) {
+		return rand_unsigned() % n; // close enough
+	}
+	inline int next_int(int a, int b) {
+		return rand_unsigned() % (b - a + 1) + a; // close enough
+	}
+}rnd;
+
+const int INF = 1e9;
+const LL base = 2e9 + 1;
+
+struct HashMap {
+	static const int MOD = 99983;
+	int head[MOD], next[4444], num;
+	LL edge[4444];
+	int val[4444];
+	HashMap() {init();}
+	void init() {
+		num = 0;
+		memset(head, -1, sizeof head);
+	}
+	void Insert(LL v) {
+		
+		int rem = v % MOD;
+		for (int i = head[rem]; ~i; i = next[i]) {
+			if (edge[i] == v) {
+				val[i]++;
+				return;
+			}
+		}
+		edge[num] = v;
+		val[num] = 1;
+		next[num] = head[rem];
+		head[rem] = num++;
+	}
+	int get(LL v) {
+		int rem = v % MOD;
+		for (int i = head[rem]; ~i; i = next[i]) {
+			if (edge[i] == v) return val[i];
+		}
+		return 0;
+	}
+	void Insert(PII v) {
+		v.X += INF;
+		v.Y += INF;
+		LL cur = 1LL * v.X * base + v.Y;
+		Insert(cur);
+	}
+	int get(PII v) {
+		v.X += INF;
+		v.Y += INF;
+		LL cur = 1LL * v.X * base + v.Y;
+		return get(cur);
+	}
+}M;
+
+PII reduce(PII u) {
+	PII ret = u;
+	int g = __gcd(ret.X, ret.Y);
+	ret.X /= g, ret.Y /= g;
+	if (ret.X < 0) {
+		ret.X = -ret.X, ret.Y = -ret.Y;
+	} else if (ret.X == 0) {
+		if (ret.Y < 0) {
+			ret.Y = -ret.Y;
+		}
+	}
+	return ret;
+}
+
+PII a[3005];
+int n;
+
+int main() {
+	
+	scanf("%d", &n);
+//	srand(time(0));
+//	rnd.reset(rand());
+//	n = 3000;
+	for (int i = 0; i < n; i++) {
+		scanf("%d%d", &a[i].X, &a[i].Y);
+//		a[i].X = rnd.next_int(-INF, INF);
+//		a[i].Y = rnd.next_int(-INF, INF);
+		M.Insert(reduce(a[i]));
+	}
+	LL ans = 0;
+	for (int i = 0; i < n; i++) {
+		
+		for (int j = 0; j < i; j++) {
+			PII tmp = PII(a[i].X + a[j].X, a[i].Y + a[j].Y);
+			if (!tmp.X && !tmp.Y) continue;
+			if (1LL * tmp.X * a[i].X + 1LL * tmp.Y * a[i].Y == 0) ans--;
+			if (1LL * tmp.X * a[j].X + 1LL * tmp.Y * a[j].Y == 0) ans--;
+			swap(tmp.X, tmp.Y);
+			tmp.X = -tmp.X;
+			PII x = reduce(tmp);
+			if (abs(x.X) > INF || abs(x.Y) > INF) continue;
+			ans += M.get(reduce(tmp));
+		}
+	}
+	printf("%lld\n", ans * 2);
+	return 0;
+}

@@ -1,0 +1,303 @@
+#include <iostream>
+
+#include <vector>
+#include <string>
+#include <cstring>
+#include <algorithm>
+#include <map>
+#include <cctype>
+
+#include <iomanip>
+
+using namespace std;
+
+class SuffixArray {
+   struct CmpLtFirstChar {
+      const char *str;
+      CmpLtFirstChar(char *_str) : str(_str) {}
+   // CmpLtFirstChar(const string& _s) : str(_s.c_str()) {}
+      bool operator() (const int x, const int y) const {
+         return str[x] < str[y];
+      }
+   };
+public:
+   int N;
+
+   // INPUT string
+   char *str;
+
+   // OUTPUT:
+   // pos = The suffix array. Contains the N suffixes of str sorted in
+   //       lexicographical order.  Each suffix is represented as a single
+   //       integer (the position of str where it starts).
+   // rank = The inverse of the suffix array.
+   //        rank[i] = the index of the suffix str[i..n) in the pos array.
+   //        (In other words,  rank[i] = k <=> pos[k] = i)
+   //        With this array, you can compare two suffixes in O(1):
+   //        Suffix str[i..N) is smaller than str[j..n) IFF rank[i] < rank[j]
+   // lcp_len[i] = length of longest common prefix of suffix str[pos[i]..N)
+   //              and suffix str[pos[i-1]..N);   lcp_len[0] = 0
+
+   int *pos;
+   int *rank;
+   int *lcp_len;
+
+   SuffixArray(int _N);
+   SuffixArray(const char *s);
+   SuffixArray(const string& S);
+   SuffixArray(const SuffixArray& sa);
+   ~SuffixArray();
+
+   SuffixArray& operator=(SuffixArray);
+
+   // O(n log n) - Manber and Myers suffix sort algorithm
+   void suffix_sort();
+
+   // O(n) longest common prefix algorithm
+   void build_lcp();
+
+   int find(const char *s) const;
+};
+
+SuffixArray::SuffixArray(int _N)
+   : N(_N+1), str(new char[N]), pos(NULL), rank(NULL), lcp_len(NULL) {
+   str[0] = 0;
+}
+
+SuffixArray::SuffixArray(const char *s)
+   : N ((s ? strlen(s) : 0)+1), str(new char[N]),
+     pos(NULL), rank(NULL), lcp_len(NULL) {
+   memcpy(str, s, N * sizeof(char));
+}
+
+SuffixArray::SuffixArray(const string& S)
+   : N(S.size()+1), str(new char[N]),
+     pos(NULL), rank(NULL), lcp_len(NULL) {
+   memcpy(str, S.c_str(), N * sizeof(char));
+}
+
+SuffixArray::~SuffixArray() {
+   delete[] str;
+   delete[] pos;
+   delete[] rank;
+   delete[] lcp_len;
+}
+
+SuffixArray::SuffixArray(const SuffixArray& sa)
+   : N(sa.N), str(new char[sa.N]),
+     pos(sa.pos ? new int[sa.N] : NULL),
+     rank(sa.rank ? new int[sa.N] : NULL),
+     lcp_len(sa.lcp_len ? new int[sa.N] : NULL) {
+   memcpy(str, sa.str, N * sizeof(char));
+   if (sa.pos) memcpy(pos, sa.pos, N * sizeof(int));
+   if (sa.rank) memcpy(rank, sa.rank, N * sizeof(int));
+   if (sa.lcp_len) memcpy(lcp_len, sa.lcp_len, N * sizeof(int));
+}
+
+// copy-swap idiom
+// http://www.cplusplus.com/articles/y8hv0pDG/
+SuffixArray& SuffixArray::operator=(SuffixArray tmp) {
+   swap( N, tmp.N );
+
+   swap( str, tmp.str );
+   swap( pos, tmp.pos );
+   swap( rank, tmp.rank );
+   swap( lcp_len, tmp.lcp_len );
+   return *this;
+}
+
+void SuffixArray::suffix_sort() {
+   N = strlen(str) + 1;
+   delete[] pos;
+   delete[] rank;
+   pos = new int[N];
+   rank = new int[N];
+   for (int i = 0; i < N; ++i)
+      pos[i] = i;
+
+   // sort suffixes according to their first characters
+   std::sort(pos, pos + N, CmpLtFirstChar(str));
+
+   bool *bh  = new bool[N];
+   bool *b2h = new bool[N];
+   int *cnt = new int[N];
+   int *nxt = new int[N];
+   memset(b2h, 0, N*sizeof(bool));
+
+   bh[0] = true;
+   for (int i = 1; i < N; ++i)
+      bh[i] = str[pos[i]] != str[pos[i-1]];
+
+   for (int h = 1; h < N; h <<= 1) {
+      // bh[i] == false if the first h characters of pos[i-1] == the first h characters of pos[i]
+      int buckets = 0;
+      for (int i = 0; i < N; ) {
+         int j = i + 1;
+         for (; j < N && !bh[j]; ++j);
+         nxt[i] = j;
+         buckets++;
+         i = j;
+      }
+      if (buckets == N) break;
+
+      // Suffixes are separated in buckets containing strings starting with the same h characters
+      for (int i = 0; i < N; i = nxt[i]) {
+         cnt[i] = 0;
+         for (int j = i; j < nxt[i]; ++j)
+            rank[pos[j]] = i;
+      }
+
+      cnt[rank[N - h]]++;
+      b2h[rank[N - h]] = true;
+
+      for (int i = 0; i < N; i = nxt[i]) {
+         for (int j = i; j < nxt[i]; ++j) {
+            int s = pos[j] - h;
+            if (s >= 0) {
+               int head = rank[s];
+               rank[s] = head + cnt[head]++;
+               b2h[rank[s]] = true;
+            }
+         }
+         for (int j = i; j < nxt[i]; ++j) {
+            int s = pos[j] - h;
+            if (s >= 0 && b2h[rank[s]]) {
+               for (int k = rank[s]+1; k < N && !bh[k] && b2h[k]; ++k)
+                  b2h[k] = false;
+            }
+         }
+      }
+
+      for (int i = 0; i < N; ++i) {
+         pos[rank[i]] = i;
+         if (b2h[i])
+            bh[i] = true;
+      }
+   }
+
+   for (int i = 0; i < N; ++i)
+      rank[pos[i]] = i;
+
+   delete[] cnt;
+   delete[] nxt;
+   delete[] b2h;
+   delete[] bh;
+}
+
+void SuffixArray::build_lcp() {
+// Precondition: suffix_sort() has been called
+// suffix_sort();
+   delete[] lcp_len;
+   lcp_len = new int[N];
+   lcp_len[0] = 0;
+   for (int i = 0, h = 0; i < N; ++i) {
+      if (rank[i] > 0) {
+         int j = pos[rank[i]-1];
+         for (; i + h < N && j + h < N && str[i+h] == str[j+h]; ++h);
+         lcp_len[rank[i]] = h;
+         if (h > 0)
+            --h;
+      }
+   }
+}
+
+#define MAXN 1004
+int N;
+string str[MAXN];
+
+#define MAXQ 1004
+int Q;
+string query_str[MAXQ];
+int ans[MAXQ];
+
+void solve() {
+   string S;
+   for (int i = 0; i < N; ++i) {
+      S += str[i];
+      S += '#';
+   }
+
+   const int query_start_pos = S.size();
+
+   map<int, int> pos2query_id;
+   for (int j = 0; j < Q; ++j) {
+      pos2query_id[ S.size() ] = j;
+      S += query_str[j];
+      S += '$';
+   }
+
+   SuffixArray sa(S);
+   sa.suffix_sort();
+   sa.build_lcp();
+
+/*
+   for (int i = 0; i < sa.N; i++) {
+      cerr << setw(4) << i << ": " << setw(2) << sa.lcp_len[i] << "  ";
+      cerr << '"';
+      cerr << sa.str + sa.pos[i];
+      cerr << '"' << '\n';
+   }
+   cerr << '\n';
+*/
+
+   int k;
+   // find first suffix of non-query strings
+   k = 0;
+   while (sa.pos[k] >= query_start_pos ||
+          !isalpha(sa.str[ sa.pos[k] ]))
+      ++k;
+   //cerr << k << endl;
+   for (int len = sa.N; k < sa.N; ++k) {
+      if (sa.pos[k] < query_start_pos) {
+         len = sa.N;
+      }
+      else {
+         len = min(len, sa.lcp_len[k]);
+         auto it = pos2query_id.upper_bound( sa.pos[k] );
+         --it;
+         const int qid = it->second;
+         ans[qid] = max(ans[qid], len);
+      }
+   }
+
+   // find last suffix of non-query strings
+   k = sa.N-1;
+   while (sa.pos[k] >= query_start_pos)
+      --k;
+   //cerr << k << endl;
+
+   for (int len = sa.lcp_len[k]; isalpha( sa.str[ sa.pos[k] ] ); --k) {
+      if (sa.pos[k] < query_start_pos) {
+         len = sa.lcp_len[k];
+      }
+      else {
+         auto it = pos2query_id.upper_bound( sa.pos[k] );
+         --it;
+         const int qid = it->second;
+         ans[qid] = max(ans[qid], len);
+         len = min(len, sa.lcp_len[k]);
+      }
+   }
+
+
+   for (int j = 0; j < Q; ++j)
+      cout << ans[j] << '\n';
+
+}
+
+int main(int argc, char* argv[]) {
+   ios_base::sync_with_stdio(false); 
+   cin.tie(NULL);
+
+   cin >> N;
+   for (int i = 0; i < N; ++i)
+      cin >> str[i];
+
+   cin >> Q;
+   for (int i = 0; i < Q; ++i)
+      cin >> query_str[i];
+
+   solve();
+
+   return 0;
+}

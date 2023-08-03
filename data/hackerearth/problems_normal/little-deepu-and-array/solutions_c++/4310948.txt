@@ -1,0 +1,89 @@
+#include<bits/stdc++.h>
+#define M 1000000007
+using namespace std;
+int n , a[100002] ;
+
+struct node {
+    int data ;
+}tree[400008] , lazy[400008];
+
+void make ( int pos , int l , int r ) {
+    if ( l == r ) {
+        tree[pos].data = a[l] ;
+        return ;
+    }
+    int mid = (l+r)/2 ;
+    make ( 2*pos , l , mid ) ;
+    make ( 2*pos + 1 , mid+1 , r ) ;
+    tree[pos].data = min ( tree[2*pos].data , tree[2*pos+1].data ) ;
+}
+
+void update ( int pos , int l , int r , int x ) {
+    if ( lazy[pos].data > 0 ) {
+        tree[pos].data -= lazy[pos].data ;
+        if ( l == r ) {
+            a[l] -= lazy[pos].data ;
+            lazy[pos].data = 0 ;
+    	}
+        else { 
+        lazy[2*pos].data += lazy[pos].data ;
+        lazy[2*pos+1].data += lazy[pos].data ;
+        lazy[pos].data = 0 ; }
+    }
+    if ( tree[pos].data > x ) {
+        tree[pos].data -= 1 ;
+        if ( l == r ) {
+            a[l] -= 1 ;
+            return ;
+    	}
+        lazy[2*pos].data += 1 ;
+        lazy[2*pos+1].data += 1 ;
+        return ;
+    }
+    if ( l == r )
+        return ;
+    update ( 2*pos , l , (l+r)/2 ,  x ) ;
+    update ( 2*pos+1 , ((l+r)/2)+1 , r , x ) ;
+}
+void uptodate ( int pos , int l , int r ) {
+    if ( l == r ) {
+        a[l] -= lazy[pos].data ;
+        return ;
+    }
+    if ( lazy[pos].data > 0 ) {
+        tree[pos].data -= lazy[pos].data ;
+        if ( l == r ) {
+            a[l] -= lazy[pos].data ;
+            lazy[pos].data = 0 ;
+    	}
+    	else {
+        lazy[2*pos].data += lazy[pos].data ;
+        lazy[2*pos+1].data += lazy[pos].data ;
+        lazy[pos].data = 0 ;}
+    }
+    int mid = (l+r)/2 ;
+    if ( l != r ) {
+    	uptodate ( 2*pos , l , mid ) ;
+    	uptodate ( 2*pos+1 , mid+1 , r ) ;
+	}
+}
+int main () {
+    scanf ( "%d" , &n ) ;
+    for ( int i = 0 ; i < n ; i++ ) {
+        scanf ( "%d" , &a[i] ) ;
+    }
+    make ( 1 , 0 , n-1 ) ;
+    int m ;
+    scanf ( "%d" , &m ) ;
+    for ( int i = 0 ; i < m ; i++ ) {
+        int x ;
+        scanf ( "%d" , &x ) ;
+        update ( 1 , 0 , n-1 , x ) ;
+    }
+    uptodate ( 1 , 0 , n-1 ) ;
+    for ( int i = 0 ; i < n ; i++ ) {
+    	printf ( "%d " , a[i] ) ;
+    }
+    printf ( "\n" ) ;
+    return 0;
+}

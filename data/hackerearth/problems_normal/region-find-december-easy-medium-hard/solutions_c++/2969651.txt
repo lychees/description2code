@@ -1,0 +1,127 @@
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <string>
+#include <cstdlib>
+#include <vector>
+#include <map>
+#include <set>
+#include <queue>
+#include <cassert>
+#include <climits>
+#include <ctime>
+using namespace std;
+
+typedef long long     ll;
+typedef double        dbl;
+
+#define X             first
+#define Y             second
+#define mp            make_pair
+#define pb            push_back
+#define sz(x)         static_cast<int>((x).size())
+#define all(x)        x.begin(),x.end()
+
+#ifdef ROMCHELA
+#    define D(x)          cout<<#x<<" = "<<(x)<<endl
+#    define Ds()          cout<<"------------"<<endl
+#    define eprintf(...)  printf(__VA_ARGS__);
+#else
+#    define D(c)             ((void)0)
+#    define Ds(x)            ((void)0)
+#    define eprintf(...)     ((void)0)
+#endif
+
+const int maxn = 1e4 + 10;
+const int mod = 1e9 + 7;
+int cnt = 0;
+ll answer;
+vector<int> g[maxn], comp;
+int w[maxn];
+bool used[maxn], mark[maxn];
+int k;
+
+bool dfs(int v, int p = -1) {
+  used[v] = true;
+  bool ans = w[v] == k;
+  for (int i = 0; i < sz(g[v]); i++) {
+    int next = g[v][i];
+    if (next != p && mark[next]) {
+      ans |= dfs(next, v);
+    }
+  }
+  comp.pb(v);
+  return ans;
+}
+
+ll calc(int v, int p = -1) {
+  ll res = 1;
+  for (int i = 0; i < sz(g[v]); i++) {
+    int next = g[v][i];
+    if (next != p && mark[next]) {
+      res = (res * (calc(next, v) + 1)) % mod;
+    }
+  }
+  return res;
+}
+
+int main() {
+#ifdef ROMCHELA
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+#endif
+
+  int n;
+  scanf("%d", &n);
+  for (int i = 0; i < n; i++)
+    scanf("%d", &w[i]);
+  for (int i = 0; i < n - 1; i++) {
+    int x, y;
+    scanf("%d%d", &x, &y);
+    x--, y--;
+    g[x].pb(y);
+    g[y].pb(x);
+  }
+
+  int Q;
+  scanf("%d", &Q);
+  while (Q--) {
+    scanf("%d", &k);
+    for (int i = 0; i < n; i++) {
+       mark[i] = w[i] >= k;
+       used[i] = false;
+    }
+    
+    answer = 0;
+    for (int i = 0; i < n; i++) {
+      if (!used[i]) {
+        cnt = 0;
+        comp.clear();
+        bool flag = dfs(i);
+        if (!flag) continue;
+        
+        /*for (int q = 0; q < sz(comp); q++)
+          printf("%d ", comp[q]);
+        puts("");*/
+
+        for (int j = 0; j < sz(comp); j++) {
+          int v = comp[j];
+          if (w[v] == k) {
+            answer = answer + calc(v);
+            if (answer >= mod)
+              answer -= mod;
+            mark[v] = false;
+          }
+        }
+      }
+    }
+   
+    printf("%lld\n", answer);
+  }
+
+#ifdef ROMCHELA
+  cerr << "\nTIME ELAPSED: " << 1. * clock() / CLOCKS_PER_SEC << " sec\n";
+#endif
+  return 0;
+}

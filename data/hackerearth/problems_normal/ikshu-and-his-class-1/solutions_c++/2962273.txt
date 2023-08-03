@@ -1,0 +1,81 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+#define MAXN 100005
+#define MOD 1000000007
+using namespace std;
+
+vector<long long> roditelj(MAXN),dubina(MAXN),koliko(MAXN),faktorijel(MAXN);
+
+void setuj()
+{
+    for(int i=0;i<MAXN;i++)
+    {
+        roditelj[i] = i;
+        dubina[i] = 1;
+        koliko[i] = 1;
+    }
+    faktorijel[0] = 1;
+    for(int i=1;i<MAXN;i++)
+    {
+        faktorijel[i] = (faktorijel[i-1]*i)%MOD;
+        if(!faktorijel[i])faktorijel[i]+=MOD;
+    }
+
+}
+
+int pronadi(int cvor)
+{
+    if(roditelj[cvor]==cvor)return cvor;
+    else
+    {
+        int proba = pronadi(roditelj[cvor]);
+        roditelj[cvor] = proba;
+        return proba;
+    }
+}
+
+void spoji(int a,int b)
+{
+    int roditelja = pronadi(a);
+    int roditeljb = pronadi(b);
+
+    if(roditelja == roditeljb)return;
+    if(dubina[roditelja]>=dubina[roditeljb])
+    {
+        roditelj[roditeljb] = roditelja;
+        koliko[roditelja] += koliko[roditeljb];
+        if(dubina[roditelja]==dubina[roditeljb])
+            dubina[roditelja]++;
+    }
+    else
+    {
+        koliko[roditeljb] += koliko[roditelja];
+        roditelj[roditelja] = roditeljb;
+    }
+
+}
+
+int main()
+{
+    setuj();
+    int n,m; cin >> n >> m;
+    for(int i=0;i<m;i++)
+    {
+        int a,b;
+        scanf("%d%d",&a,&b);
+        spoji(a,b);
+    }
+
+    long long res = 1;
+    for(int i=0;i<n;i++)
+        if(roditelj[i] == i)//jedan set
+        {
+            res*= faktorijel[koliko[i]];
+            res%=MOD;
+            if(!res)res+=MOD;
+        }
+    cout << res << endl;
+    return 0;
+}

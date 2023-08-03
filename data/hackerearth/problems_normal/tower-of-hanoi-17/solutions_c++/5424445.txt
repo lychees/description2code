@@ -1,0 +1,56 @@
+#include<cstdio>
+#include<algorithm>
+#include<vector>
+#include<iostream>
+using namespace std;
+vector<pair<long long, long long> > disk;
+long long n, dp[201];
+bool comp(const pair<long long, long long> &a, const pair<long long, long long> &b) {
+	if(a.first==b.first) {
+		return a.second>b.second;
+	}
+	return a.first>b.first;
+}
+long long solve(long long index) {
+	// cout<<index<<"\n";
+	long long i, res = 0;
+	for(i=index+1; i<n; i++) {
+		if(dp[i] && disk[i].first<disk[index].first && disk[i].second<disk[index].second) {
+			// cout<<"dp "<<dp[i]<<"\n";
+			res = max(res, dp[i]);
+		}
+		else if(disk[i].first<disk[index].first && disk[i].second<disk[index].second) {
+			dp[i] = solve(i);
+			res = max(res, dp[i]);
+		}
+	}
+	// cout<<"index "<<index<<", return "<<res + disk[index].second<<"\n";
+	return res + disk[index].second;
+}
+int main() {
+	// freopen("in.txt", "r", stdin);
+	long long t, i, r, h, ans;
+	scanf("%lld", &t);
+	while(t--) {
+		disk.clear();
+		scanf("%lld", &n);
+		ans = 0;
+		for(i=0;i<n;i++) {
+			scanf("%lld%lld", &r, &h);
+			disk.push_back(make_pair(r,h));
+			dp[i]=0;
+		}
+		sort(disk.begin(), disk.end(), comp);
+		for(i=0;i<n;i++) {
+			// cout<<disk[i].first<<" "<<disk[i].second<<"\n";
+			if(!dp[i]) {
+				dp[i] = solve(i);
+			}
+		}
+		for(i=0;i<n;i++) {
+			ans = max(ans, dp[i]);
+		}
+		printf("%lld\n", ans);
+	}
+	return 0;
+}

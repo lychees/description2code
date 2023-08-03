@@ -1,0 +1,64 @@
+#include <iostream>
+#include <algorithm>
+#include <cassert>
+#include <queue>
+#define MAXN 2510
+
+using namespace std;
+
+int n;
+long long s,m,p;
+int h[MAXN];
+long long a[MAXN][MAXN];
+long long dp[MAXN];
+
+int main() {
+    cin >> n >> s >> m >> p;
+    for (int i = 0; i < n; i++) {
+        cin >> h[i];
+    }
+
+    for (int i = 0; i < n; i++) {
+        priority_queue<int> l, r;
+        long long lsum = 0, rsum = 0;
+        l.push(h[i]);
+        lsum += h[i];
+        for (int j = i + 1; j < n; j++) {
+            if (h[j] < l.top()) {
+                l.push(h[j]);
+                lsum += h[j];
+                while (((int)r.size() + 1) * m - ((int)l.size() - 1) * p < 0) {
+                    int x = l.top();
+                    l.pop();
+                    lsum -= x;
+                    rsum += x;
+                    r.push(-x);
+                }
+            } else {
+                r.push(-h[j]);
+                rsum += h[j];
+                while ((int)l.size() * p - (int)r.size() * m < 0) {
+                    int x = -r.top();
+                    r.pop();
+                    rsum -= x;
+                    lsum += x;
+                    l.push(x);
+                }
+            }
+
+            a[i][j] = s * (j - i);
+            long long x = l.top();
+            a[i][j] -= p * ((int)l.size() * x - lsum);
+            a[i][j] -= m * (rsum - (int)r.size() * x);
+        }
+    }
+
+    for (int i = 0; i < n; i++) {
+        dp[i] = a[0][i];
+        for (int j = 0; j < i; j++) {
+            dp[i] = max(dp[i], dp[j] + a[j+1][i]);
+        }
+    }
+
+    cout << dp[n-1] << '\n';
+}

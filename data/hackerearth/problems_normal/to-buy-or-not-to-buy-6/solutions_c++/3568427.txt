@@ -1,0 +1,63 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int MAXN = 1e3+10;
+vector<int> adj[MAXN];
+int C[MAXN][MAXN];
+int dsu[MAXN];
+bool vis[MAXN];
+int findRoot(int idx) {
+	if(dsu[idx]==idx) return idx;
+	return dsu[idx]=findRoot(dsu[idx]);
+}
+int cc;
+void DFS(int s) {
+	vis[s]=true;
+	for(int i=0;i<(int)adj[s].size();i++) {
+		if(!vis[adj[s][i]] and C[s][adj[s][i]]<cc) DFS(adj[s][i]);
+	}
+}
+int main() {
+	int t;
+	cin>>t;
+	while(t--) {
+		int n,k;
+		scanf("%d%d",&n,&k);
+		vector< pair<int, pair<int,int> > > v;
+		for(int i=1;i<=n;i++) {
+			adj[i].clear();
+			dsu[i]=i;
+		}
+		for(int i=1;i<=k;i++) {
+			int x,y,z;
+			scanf("%d%d%d",&x,&y,&z);
+			v.push_back(make_pair(z,make_pair(x,y)));
+			C[x][y]=C[y][x]=z;
+		}
+		sort(v.begin(),v.end());
+		for(int i=0;i<(int)v.size();i++) {
+			int ver1=v[i].second.first;
+			int ver2=v[i].second.second;
+			int ver11=findRoot(ver1);
+			int ver22=findRoot(ver2);
+			if(ver11==ver22) continue;
+			adj[ver1].push_back(ver2);
+			adj[ver2].push_back(ver1);
+			dsu[ver1]=ver2;
+		}
+		int q;
+		int cnt=0;
+		scanf("%d",&q);
+		for(int i=0;i<q;i++) {
+			int x,y;
+			scanf("%d%d",&x,&y);
+			cc=C[x][y];
+			for(int j=1;j<=n;j++) vis[j]=false;
+			DFS(x);
+			if(!vis[y]) cnt++;
+		}
+		int g=__gcd(cnt,q);
+		cnt/=g;
+		q/=g;
+		printf("%d/%d\n",cnt,q);
+	}
+}

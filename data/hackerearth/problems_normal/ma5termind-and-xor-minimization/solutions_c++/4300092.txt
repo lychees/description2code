@@ -1,0 +1,125 @@
+//Sinha Saab
+//NARUTO Fan
+
+
+
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <string.h>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <list>
+#include <math.h>
+
+#define ll long long int
+#define maxN 100
+#define maxVal (int)100000
+#define minVal -100000000
+#define mod 1000000007LL
+
+#define gcd(a,b) __gcd(a,b)
+
+using namespace std;
+
+struct trie
+{
+	struct trie * left, * right;
+};
+struct trie * root;
+int a[maxN+5];
+ll dp[maxVal+5]={0};
+
+struct trie * makeNode()
+{
+	struct trie * v;
+	v=(struct trie *)malloc(sizeof(struct trie));
+	if(v)
+		v->left=v->right=NULL;
+	return v;
+}
+
+void insert(int n)
+{
+	int i,p;
+	struct trie * v=root;
+	for(i=30;i>=0;i--)
+	{
+		p=n&(1<<i);
+		if(p==0)
+		{
+			if(!v->left)
+				v->left=makeNode();
+			v=v->left;
+		}
+		else
+		{
+			if(!v->right)
+				v->right=makeNode();
+			v=v->right;
+		}
+	}
+}
+
+int query(int n)
+{
+	int i,p,ans=0;
+	struct trie * v=root;
+	for(i=30;i>=0;i--)
+	{
+		p=n&(1<<i);
+		if(p==0)
+		{
+			if(v->left)
+				v=v->left;
+			else
+			{
+				v=v->right;
+				ans|=(1<<i);
+			}
+		}
+		else
+		{
+			if(v->right)
+			{
+				v=v->right;
+				ans|=(1<<i);
+			}
+			else
+				v=v->left;
+		}
+	}
+	return ans;
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    #ifndef LOCAL_SYS
+        //freopen("in.txt","r",stdin);
+        //freopen("out.txt","w",stdout);
+    #endif
+    int n,q,x,i,j;
+    scanf("%d",&n);
+    for(i=0;i<n;i++)
+    	scanf("%d",&a[i]);
+    dp[0]=1;
+    for(i=0;i<n;i++)
+    	for(j=maxVal;j>=a[i];j--)
+			dp[j]=(dp[j]+dp[j-a[i]])%mod;
+	dp[0]--;
+	root=makeNode();
+	for(i=1;i<=maxVal;i++)
+		if(dp[i])
+			insert(i);
+	scanf("%d",&q);
+	while(q--)
+	{
+		scanf("%d",&x);
+		printf("%d %lld\n",query(x),dp[query(x)]);
+	}
+    return 0;
+}

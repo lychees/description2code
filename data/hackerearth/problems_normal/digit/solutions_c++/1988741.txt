@@ -1,0 +1,132 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+typedef long long ll;
+const int MOD = int(1e9) + 7;
+queue<tuple<int, int, int, bool> > que; //(digit, sum, mod, les)
+unordered_map<ll, ll> dp;
+
+inline ll get_hash(int A, int B, int C, bool D) {
+  return ll(A) << 55 | ll(B) << 45 | ll(C) << 30 | D;
+}
+
+void enq(const tuple<int, int, int, bool>& to, const ll cnt) {
+  const ll ha = get_hash(get<0>(to), get<1>(to), get<2>(to), get<3>(to));
+  if (!dp.count(ha)) {
+    dp[ha] = cnt;
+    que.push(to);
+  } else
+    dp[ha] += cnt;
+}
+
+ll bfs(const ll U, const int X, const int Y, const int K) {
+  const int LE = 1;
+  const int EQ = 0;
+  vector<int> dig;
+  dig.clear();
+  dp.clear();
+  for (ll t = U; t > 0; t /= 10)
+    dig.push_back(t % 10);
+  reverse(dig.begin(), dig.end());
+  for (int d = 0; d <= dig[0]; d++) {
+    que.push(make_tuple(1, d, d % K, d < dig[0]));
+    dp[get_hash(get<0>(que.back()), get<1>(que.back()), get<2>(que.back()), get<3>(que.back()))]++;
+  }
+  ll res = 0;
+  while (!que.empty()) {
+    const tuple<int, int, int, bool> at = que.front();
+    que.pop();
+    const int i = get<0>(at), sum = get<1>(at), mod = get<2>(at), les = get<3>(at);
+    const ll ha = get_hash(i, sum, mod, les);
+    const ll cnt = dp[ha];
+    //pln(i, sum, mod, les, cnt);
+    if (sum > Y)
+      continue;
+    if (i == (int) dig.size()) {
+      if (mod == 0 && X <= sum && sum <= Y && les == LE) {
+        res += cnt;
+        //pln("YES");
+        //pln(i, sum, mod, les, cnt);
+      }
+
+    } else {
+      for (int d = 0; d < 10; d++) {
+        if (les == LE) {
+          enq(make_tuple(i + 1, sum + d, (10 * mod + d) % K, LE), cnt);
+        } else {
+          if (d < dig[i])
+            enq(make_tuple(i + 1, sum + d, (10 * mod + d) % K, LE), cnt);
+          else if (d == dig[i])
+            enq(make_tuple(i + 1, sum + d, (10 * mod + d) % K, EQ), cnt);
+        }
+      }
+    }
+  }
+  return res;
+}
+
+int dig_sum(ll x) {
+  int res = 0;
+  while (x > 0) {
+    res += x % 10;
+    x /= 10;
+  }
+  return res;
+}
+
+ll go(ll U, int X, int Y, ll K) {
+//< U
+  ll res = 0;
+  if (U / K < 70000000) {
+    for (ll i = 0; i < U; i += K) {
+      const int sum = dig_sum(i);
+      if (X <= sum && sum <= Y)
+        res++;
+    }
+  } else {
+    res = bfs(U, X, Y, K);
+  }
+  return res;
+}
+
+void solve(int test_num) {
+  ll A, B, K;
+  int X, Y;
+  cin >> A >> B >> X >> Y >> K;
+  const ll res = go(B + 1, X, Y, K) - go(A, X, Y, K);
+  cout << res << endl;
+}
+
+void solve() {
+#ifdef AZN
+  double start_t = clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr);
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+  int T = 1;
+//scanf("%d", &T);
+//cin >> T;
+  for (int t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << "Took: " << ((clock() - start_t) / CLOCKS_PER_SEC);
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

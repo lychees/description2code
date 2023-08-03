@@ -1,0 +1,95 @@
+#include <iostream>
+#include <set>
+
+using namespace std;
+
+int parent[100005];
+int size[100005];
+int n;
+int ht[100005];
+
+int find_root(int i){
+	while(i!=parent[i]){
+		parent[i]=parent[parent[i]];
+		i=parent[i];
+	}
+	return i;
+}
+
+int max_size=1;
+
+void merge(int x,int y){
+	int root_x=find_root(x);
+	int root_y=find_root(y);
+	
+	if(root_x==root_y)
+		return;
+	
+	int size_root_x=size[root_x];
+	int size_root_y=size[root_y];
+//	cout<<size_root_x<<size_root_y<<endl;
+	
+	ht[size_root_x]--;
+	ht[size_root_y]--;
+	ht[size_root_x+size_root_y]++;
+//	cout<<ht[size_root_x]<<ht[size_root_y]<<ht[size_root_x+size_root_y]<<endl;
+	parent[root_y]=root_x;
+	size[root_x]+=size[root_y];
+	
+	if((size_root_x+size_root_y)>max_size)
+		max_size=size_root_x+size_root_y;
+}
+
+void print_ans(int x,int y){
+	merge(x,y);
+	
+	int i=1,j,min_diff=n+1;
+	
+	while(ht[i]==0){
+		i++;
+	}
+	if(i==max_size){
+		cout<<"0"<<endl;
+		return;
+	}
+	
+	while(i<=(max_size-1)){
+		if(ht[i]>1){
+			cout<<"0"<<endl;
+			return;
+		}
+		int j=i+1;
+		
+		while(ht[j]==0)
+			j++;
+			
+		if((j-i)<min_diff)
+			min_diff=j-i;
+		
+		i=j;
+	}
+	//cout<<ht[1]<<ht[2]<<endl;
+	cout<<min_diff<<endl;
+}
+
+int main(){
+	int q;
+	cin>>n>>q;
+	
+	int i;
+	
+	for(i=1;i<=n;i++){
+		parent[i]=i;
+		size[i]=1;
+	}
+	ht[1]=n;
+	
+	while(q--){
+		int x,y;
+		cin>>x>>y;
+		
+		print_ans(x,y);
+	}
+	
+	return 0;
+}

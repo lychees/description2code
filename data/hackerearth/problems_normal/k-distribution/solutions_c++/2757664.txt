@@ -1,0 +1,78 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+#define MAX 105
+#define MOD 1000000007
+
+int n, k;
+int a[MAX];
+long long prefix[MAX];
+
+long long dp1[101][100001], dp2[101][100001];
+bool exist1[101][100001], exist2[101][100001];
+
+long long power(int n, int m) {
+	if (m == 0) return 1;
+	long long  p = power(n, m/2);
+	p *= p;
+	p %= MOD;
+	if (m & 1) 
+		p *= n;
+	p %= MOD;
+	return p;
+}
+
+long long solve2(int i, int w) {
+	if (w >= k) {
+		return power(2, n-i);
+	}
+	if (i == n) {
+		return 0;
+	}
+	if (!exist2[i][w]) {
+		long long answer = solve2(i+1, w);
+		answer += solve2(i+1, w+a[i]);
+		answer %= MOD;
+		dp2[i][w] = answer;
+		exist2[i][w] = answer;
+	}
+	return dp2[i][w];
+}
+
+long long solve(int i, int w) {
+	if (w >= k) {
+		long long sumSoFar = (prefix[i-1] - w);
+		if (sumSoFar >= k) {
+			return power(2, n-i);
+		} else {
+			return solve2(i, sumSoFar);
+		}
+	}
+
+	if (i == n) {
+		return 0;
+	}
+
+	if (!exist1[i][w]) {
+		long long answer = 0;
+		answer += solve(i+1, w);
+		answer += solve(i+1, w+a[i]); 
+		answer %= MOD;
+		dp1[i][w] = answer;
+		exist1[i][w] = true;
+	}
+	return dp1[i][w];
+}
+
+int main() {
+	cin >> n >> k;
+	for (int i = 0; i < n; i++) {
+		cin >> a[i];
+		prefix[i] = a[i];
+		if (i > 0) prefix[i] += prefix[i-1];
+	}
+	long long ways = solve(0, 0);
+	cout << ways << endl;
+}

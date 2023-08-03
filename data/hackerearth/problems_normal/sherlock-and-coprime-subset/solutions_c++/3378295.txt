@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+#define pb push_back
+using namespace std;
+
+int pr[55];
+vector<int> vec[55];
+map<int,int> mp;
+int ha[55],arr[55],n;
+
+int seive(){
+	for(int i=2;i<=50;i++){
+		if(pr[i]==1)	continue;
+		vec[i].pb(i);
+		for(int j=2*i;j<=50;j+=i){
+			pr[j]=1;
+			vec[j].pb(i);
+		}
+	}
+	int co =0;
+	for(int i=2;i<=50;i++){
+		if(pr[i]==0)
+			mp[i]=co++;
+	}
+	for(int i=2;i<=50;i++){
+		int temp =0;
+		for(int j=0;j<vec[i].size();j++){
+			temp=temp|(1<<(mp[vec[i][j]]));
+		}
+		ha[i]=temp;
+	}
+	// for(int i=2;i<=50;i++){
+	// 	cout<<ha[i]<<"\n";
+	// }
+	return 0;
+}
+
+int dp[55][1<<16];
+
+int solve(int idx,int mask){
+	if(idx==n)	return 0;
+	if(dp[idx][mask]!=-1)	return dp[idx][mask];
+	int ans = solve(idx+1,mask);// do not take this number
+	if((mask&ha[arr[idx]])==0){
+		ans = max(ans,solve(idx+1,mask|ha[arr[idx]])+1);// take this number if u can 
+	}
+	return dp[idx][mask]=ans;
+}
+
+int main()
+{
+	seive();
+	int t;
+	cin>>t;
+	while(t--){
+		cin>>n;
+		memset(dp,-1,sizeof(dp));
+		for(int i=0;i<n;i++)	cin>>arr[i];
+		sort(arr,arr+n);
+		int ans = 0;
+		for(int i=0;i<n;i++){
+			if(arr[i]!=1){
+				ans = i;
+				break;
+			}
+		}
+		ans += solve(ans,0);
+		cout<<ans<<"\n";
+	}
+    return 0;
+}

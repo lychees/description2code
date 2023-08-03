@@ -1,0 +1,136 @@
+#include<stdio.h>
+#include<iostream>
+#include<cstring>
+#include<vector>
+#include<unordered_set>
+#include<cmath>
+
+using namespace std;
+
+int factorial(int num)
+{
+	if(num == 0 || num == 1)
+		return 1;
+	else
+		return num*factorial(num-1);
+}
+
+int main (int argc, char **argv)
+{
+	int iInput=0;
+	cin>>iInput;
+
+	vector<int> ViDigitPowers;
+	ViDigitPowers.resize(10);
+
+	for (int digit=0;digit<10;++digit)
+		ViDigitPowers[digit]=digit*digit;
+	
+	int uiA2Digit1Seq[]={1,7,10,13,19,23,28,31,32,44,49,68,70,79,82,86,91,94,97};
+	unordered_set<int> USiMySet;
+	USiMySet.insert(uiA2Digit1Seq,uiA2Digit1Seq+19);
+
+	unsigned long uiLimit=(unsigned long)pow((double)10,iInput);
+	
+	unsigned long ui1SeqCount=1;
+	
+	/* START - Looping for numbers without the reverse numbers.*/
+	int iSize=iInput-1;
+	int AiInput[iInput];
+	/* Initialise the array to 0. */
+	for(int iCount=0;iCount<iInput;++iCount)
+	{
+		AiInput[iCount]=0;
+	}
+	AiInput[iSize]=1;
+	
+	int iPos=iSize;
+	bool bPos;
+	while(true)
+	{
+		//cout<<AiInput[0]<<","<<AiInput[1]<<","<<AiInput[2]<<","<<AiInput[3]<<"--"<<iPos<<endl;
+		unsigned long number=0;
+		unsigned long fact=1;
+		for(int iCount=iSize;iCount>=0;iCount--)
+		{
+			number += fact*AiInput[iCount];
+			fact *= 10;
+		}
+		//cout << number << endl;
+		
+		unsigned long iVal=number;
+
+		while(true)
+		{
+			if(iVal>97)
+			{
+				unsigned long sum = 0;
+				while(iVal)
+				{
+					sum+=ViDigitPowers[iVal%10];
+					iVal/=10;
+				}
+				iVal=sum;
+			}
+			else
+			{
+				if(USiMySet.count(iVal))
+				{
+					int AiCheckOccurences[10];
+					memset(AiCheckOccurences,0,sizeof(AiCheckOccurences));
+					
+					for(int iCount=0;iCount<iInput;++iCount)
+						AiCheckOccurences[AiInput[iCount]] += 1;
+					
+					unsigned long iResult=factorial(iInput);
+					
+					for(int iCount=0;iCount<10;++iCount)
+					{
+						if(AiCheckOccurences[iCount]!=0)
+							iResult/=factorial(AiCheckOccurences[iCount]);
+					}
+					ui1SeqCount+=iResult;
+				}
+				break;
+			}
+		}
+		
+		/* Reached the end. */
+		if(AiInput[0]==9)
+		{
+			break;
+		}
+		else if(AiInput[iPos]==9)
+		{
+			int iPrev=iPos-1;
+			if(iPrev>=0)
+			{
+				bPos=false;
+				int iPrevVal=AiInput[iPrev]+1;
+				if(iPrevVal==9)
+				{
+					--iPos;
+					bPos=true;
+				}
+				for(int iCount=iSize;iCount>=iPrev;--iCount)
+				{
+					AiInput[iCount]=iPrevVal;
+				}
+			}
+
+			if(iPrev==0||!bPos)iPos=iSize;
+		}
+		else
+		{
+		/* Incrementing logic. */
+			if(AiInput[iSize]<9)AiInput[iSize]+=1;
+		}
+	}
+	
+	/* END - Looping for numbers without the reverse numbers.*/
+	
+	//cout<<uiLimit<<endl;
+	cout<<(uiLimit-ui1SeqCount)<<" "<<ui1SeqCount<<endl;
+
+	return 0;
+}

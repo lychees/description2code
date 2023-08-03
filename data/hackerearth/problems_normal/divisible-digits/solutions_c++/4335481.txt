@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+
+int n;
+ll P,x[12],y[12];
+const ll M=1e9+7;
+ll dp[2048],dp2[2048];
+ll mulmk[1<<22];
+ll fact[1<<20],inv[1<<20];
+ll choose[12][1<<20];
+
+ll cmm(int mask,int idx,int evalat,int et) {
+	if(evalat<=0) return 0;
+	if(idx==n) return choose[et][et+evalat-1];
+
+	int lmask=(mask>>idx>>idx)&3;
+	if(lmask==0) return cmm(mask,idx+1,evalat,et+1)-cmm(mask,idx+1,evalat-y[idx],et+1); //lt
+	if(lmask==1) return cmm(mask,idx+1,evalat-y[idx],et); //eq
+	assert(lmask!=3);
+	return cmm(mask,idx+1,evalat,et+1); //all
+}
+
+int main() {
+	cin>>n>>P; for(int i=0;i<n;i++) cin>>x[i];
+
+	for(int x=0;x<P+30;x++) choose[0][x]=1;
+	for(int a=1;a<=n;a++) {
+		for(int x=0;x<a;x++) choose[a][x]=0;
+		choose[a][a]=1;
+		for(int x=a+1;x<P+30;x++) {
+			choose[a][x]=choose[a-1][x-1]+choose[a][x-1];
+			if(choose[a][x]>=M) choose[a][x]-=M;
+		}
+	}
+
+	ll ans=1;
+	for(int i=0;i<n;i++) ans*=x[i]+1, ans%=M;
+
+	for(int m=(1<<n);--m>=0;) dp[m]=1;
+	bool nonz=true;
+	for(;nonz;) {
+		nonz=false;
+		for(int i=0;i<n;i++) {
+			y[i]=x[i]%P, x[i]/=P;
+			if(x[i]) nonz=true;
+		}
+
+		for(int mm=(1<<n<<n);--mm>=0;) {
+			if(mm&(mm<<1)&0xAAAAAA) continue;
+			mulmk[mm]=cmm(mm,0,P,0);
+			mulmk[mm]%=M;
+			if(mulmk[mm]<0) mulmk[mm]+=M;
+		}
+
+		for(int m=(1<<n);--m>=0;) dp2[m]=dp[m], dp[m]=0;
+		for(int m=(1<<n);--m>=0;) {
+			for(int m2=(1<<n);--m2>=0;) {
+				if(m2&m) continue;
+				int mk=0,mp=0;
+				for(int i=n;--i>=0;) {
+					if((m>>i)&1) {
+						mp|=1<<i;
+						mk|=1<<i<<i<<1;
+					} else if ((m2>>i)&1) {
+						mk|=1<<i<<i;
+					} else {
+						mp|=1<<i;
+					}
+				}
+				//printf("dep for %d on (%d over %d) - valued at %lld*%lld\n",m,mk,mp,mulmk[mk],dp2[mp]);
+				dp[m]+=dp2[mp]*mulmk[mk];
+				dp[m]%=M;
+			}
+		}
+
+
+	}
+	ans+=M-dp[0];
+	ans%=M;
+	cout<<ans<<endl;
+}

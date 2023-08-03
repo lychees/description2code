@@ -1,0 +1,193 @@
+#include <cstdio>
+#include <cassert>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+#define INLINE   inline __attribute__ ((always_inline))
+
+struct BufferedReader {
+	const static int buf_size = 1 << 12;
+	char buf[buf_size];
+	int len, pos;
+	FILE *in;
+
+	BufferedReader() {
+		in = stdin;
+		len = pos = 0;
+	}
+	
+	INLINE int getChar() {
+		if (pos == len)
+			pos = 0, len = fread(buf, 1, buf_size, in);
+		if (pos == len)
+			return -1;
+		return buf[pos++];
+	}
+
+	INLINE int readUint() {
+		register int c;
+		for(c = getChar(); c < 48 || c > 57; c = getChar());
+		register int t = c - 48;
+		for(c = getChar(); c > 47 && c < 58; c = getChar())
+			t = (t << 1) + (t << 3) + c - 48;
+		return t;
+	}
+
+   	INLINE int readInt() {
+		register int c;
+		bool neg = false;
+		for(c = getChar(); c < 48 || c > 57; c = getChar())
+			if (c == '-') neg = !neg;
+		register int t = c - 48;
+		for(c = getChar(); c > 47 && c < 58; c = getChar())
+			t = (t << 1) + (t << 3) + c - 48;
+		return (neg ? -t : t);
+	}                      
+} in;
+
+struct BufferedWriter {
+	const static int buf_size = 1 << 12;
+	char buf[buf_size], dig[24];
+	int pos;
+	FILE *out;
+
+	BufferedWriter() {
+		out = stdout;
+		pos = 0;
+	}
+
+	INLINE void writeChar(int x) {
+		if (pos == buf_size)
+			fwrite(buf, 1, buf_size, out), pos = 0;
+		buf[pos++] = x;
+	}
+
+	INLINE void writeInt(long long x) {
+		if (x < 0) {writeChar('-'); x = -x;}
+		if (x == 0) {writeChar('0'); return;}
+		register int n = 0;
+		for(n = 0; x; x /= 10)
+			dig[n++] = '0' + x % 10;
+		for(; --n >= 0; writeChar(dig[n]));
+	}
+
+	INLINE void flush() {
+		if (pos)
+			fwrite(buf, 1, pos, stdout), pos = 0;
+	}
+} out;
+
+typedef long long ll;
+const int N = int(1e5) + 10;
+
+struct Edge {
+	int v, w;
+	Edge(int v, int w) : v(v), w(w){}
+};
+vector<Edge> g[N];
+
+struct Data {
+	ll sum, best, best1, best2;
+	Data() {
+		sum = best = best1 = best2 = 0LL;
+	}
+};
+
+Data operator + (const Data &a, const Data &b){
+	Data res;
+	res.sum = a.sum + b.sum;
+	res.best = max(max(a.best, b.best), a.best2 + b.best1);
+	res.best1 = max(a.best1, a.sum + b.best1);
+	res.best2 = max(b.best2, b.sum + a.best2);
+	res.best = max(res.best, max(res.best1, res.best2));
+	return res;
+}
+
+int par[N][18];
+Data up[N][18], down[N][18];
+int h[N];
+
+void dfs(int u, int p) {
+	if (u) {
+		for(int i = 1; i < 18; ++i) {
+			par[u][i] = par[par[u][i - 1]][i - 1];
+			int imd = par[u][i - 1];
+			up[u][i] = up[u][i - 1] + up[imd][i - 1];
+			down[u][i] = down[imd][i - 1] + down[u][i - 1];
+		}
+	}
+	for(auto it : g[u]) 
+	if (it.v != p){
+		h[it.v] = h[u] + 1;
+		par[it.v][0] = u;
+		Data tmp;
+		tmp.sum = it.w;
+		tmp.best = tmp.best1 = tmp.best2 = 1LL * max(0, it.w);
+		up[it.v][0] = down[it.v][0] = tmp;
+		dfs(it.v, u);
+	}
+}
+
+ll calc(const vector<Data> &v) {
+	Data ans;
+	for(auto d : v) {
+		ans = ans + d;
+//		printf("d: %lld %lld %lld %lld\n", d.sum, d.best, d.best1, d.best2);
+//		printf("a: %lld %lld %lld %lld\n", ans.sum, ans.best, ans.best1, ans.best2);
+	}
+	return max(0LL, ans.best);
+}
+
+ll lca(int u, int v) {
+	if (u == v) return 0LL;
+	if (h[u] < h[v]) swap(u, v);
+	vector<Data> du, dv;
+	for(int i = 17; i >= 0; --i) {
+		int uu = par[u][i];
+		if (h[uu] >= h[v]) {
+			du.emplace_back(up[u][i]);
+			u = uu;
+		}
+	}
+//	printf("aft: %d %d\n", u, v);
+	for(int i = 17; i >= 0; --i)
+		if (par[u][i] != par[v][i]) {
+			du.emplace_back(up[u][i]);
+			dv.emplace_back(down[v][i]);
+			u = par[u][i];
+			v = par[v][i];
+		}
+	if (u != v) {
+		du.emplace_back(up[u][0]);
+		dv.emplace_back(down[v][0]);
+	}	       
+	for(int i = (int)dv.size() - 1; i >= 0; --i)
+		du.emplace_back(dv[i]);
+	return calc(du);
+}
+
+int main() {
+	int n = in.readUint();
+	int q = in.readUint();
+	for(int i = 1; i < n; ++i) {
+		int u = in.readUint() - 1;
+		int v = in.readUint() - 1;
+		int w = in.readInt();
+		g[u].emplace_back(Edge(v, w));
+		g[v].emplace_back(Edge(u, w));
+	}
+//	return 0;
+	dfs(0, -1);
+	while (q--) {
+		int u = in.readUint() - 1;
+		int v = in.readUint() - 1;
+//		printf("%d %d\n", u, v);
+		ll res = lca(u, v);
+		out.writeInt(res);
+		out.writeChar('\n');
+	}
+	out.flush();
+	return 0;
+}

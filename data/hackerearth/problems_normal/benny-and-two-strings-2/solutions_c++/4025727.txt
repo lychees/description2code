@@ -1,0 +1,71 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <iostream>
+#include <set>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <complex>
+#include <map>
+using namespace std;
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<ll> vl;
+typedef vector<vl> vvl;
+typedef vector<vi> vvi;
+typedef vector<double> vd;
+typedef pair<int, int> pii;
+typedef pair<double, double> pdd;
+typedef vector<pii> vii;
+typedef vector<string> vs;
+
+int dist(char a, char b) {
+	if (a > b) swap(a, b);
+	int res = b-a;
+	return min(res, 26 - res);
+}
+
+int main() {
+    int n,m,k;
+    cin >> n >> m >> k;
+    string s, t;
+    cin >> s >> t;
+    if (n > m) {
+    	cout << 0 << endl;
+    	return 0;
+    }
+    vvi c(m - n + 1, vi(n + 1));
+    for (int b = 0; b < c.size(); ++b) {
+    	c[b][0] = 0;
+    	for (int i = 0; i < n; ++i) {
+    		c[b][i+1] = c[b][i] + dist(s[i], t[i + b]);
+    	}
+    }
+    vvi d(c.size(), vi(c.size() + 1, 1e9));
+    for (int i = 0; i < c.size(); ++i) {
+    	d[i][1] = c[i].back();
+    }
+    for (int i = 0; i < d.size(); ++i) {
+    	vi good;
+    	for (int j = i + 1; j < c.size(); ++j) {
+    		bool ok = 1;
+    		for (int t = j; t < i + n; ++t) if (s[t - j] != s[t - i]) {
+    			ok = 0; break;
+    		}
+    		if (ok) good.push_back(j);
+    	}
+    	for (int j = 1; j + 1 < d[i].size(); ++j) if (d[i][j] <= k) {
+    		for (int nx : good) {
+    			d[nx][j + 1] = min(d[nx][j + 1], d[i][j] + c[nx][min(n, nx - i)]);
+    		}
+    	}
+    }
+    int res = 0;
+    for (int i = 0; i < d.size(); ++i) for (int j = 0; j < d[i].size(); ++j) if (d[i][j] <= k) res = max(res, j);
+    cout << res << endl;
+    return 0;
+}

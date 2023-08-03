@@ -1,0 +1,162 @@
+        #include<iostream>
+        #include<string.h>
+        #include<limits.h>
+        #include<vector>
+        #include<algorithm>
+        #include<queue>
+        #include<string>
+        #include<math.h>
+        #include<set>
+        #include<stack>
+        #include<stdlib.h>
+        using namespace std;
+        
+        int comp(const void* a, const void* b)
+        {
+        	int *p = (int*)a;
+        	int *q = (int*)b;
+        	
+        	return(*p - *q);
+		}
+        
+        int root(int* array,int x)
+        {
+        	while(array[x] != x)
+        	{
+        		array[x] = array[array[x]];
+        		x = array[x];
+			}
+			return x;
+		}
+        
+        void dounion(int* array,int* size,vector<int>* sizeStore,int a, int b)
+        {
+        	int p = root(array,a);
+        	int q = root(array,b);
+        	
+        	if(p != q)
+        	{
+				if(size[p] >= size[q])
+				{
+					auto itr = find(sizeStore[size[q]].begin(),sizeStore[size[q]].end(),q);
+					if(itr != sizeStore[size[q]].end())
+					{
+						sizeStore[size[q]].erase(itr);
+					}
+					
+					itr = find(sizeStore[size[p]].begin(),sizeStore[size[p]].end(),p);
+					if(itr != sizeStore[size[p]].end())
+					{
+						sizeStore[size[p]].erase(itr);
+					}
+					
+					array[q] = array[p];
+					size[p] += size[q];
+					sizeStore[size[p]].push_back(p);
+				}
+				else
+				{
+					auto itr = find(sizeStore[size[p]].begin(),sizeStore[size[p]].end(),p);
+					if(itr != sizeStore[size[p]].end())
+					{
+						sizeStore[size[p]].erase(itr);
+					}
+					
+					itr = find(sizeStore[size[q]].begin(),sizeStore[size[q]].end(),q);
+					if(itr != sizeStore[size[q]].end())
+					{
+						sizeStore[size[q]].erase(itr);
+					}
+					
+					array[p] = array[q];
+					size[q] += size[p];
+					sizeStore[size[q]].push_back(q);
+				}
+        	}
+		}
+       
+       void initialize(int* array, int* size,vector<int>* sizeStore, int n)
+       {
+       		for(int i = 1; i<=n; i++)
+       		{
+       				array[i] = i;
+				size[i] = 1;
+				sizeStore[1].push_back(i);	
+		}
+	}
+       
+        int main()
+        {
+        		int n,q;
+				cin>>n>>q;
+				
+				vector<int> * sizeStore = new vector<int>[n+1];
+				
+				int* array = new int[n+1];
+				int* size = new int[n+1];
+				
+				initialize(array,size,sizeStore,n);
+				
+				int min = INT_MAX;
+				bool flag = false;
+				
+				int numParrents = n;
+				
+				while(q--)
+				{
+					min = INT_MAX;
+					int a,b;
+					cin>>a>>b;
+					if(root(array,a) != root(array,b))
+					numParrents--;
+					dounion(array,size,sizeStore,a,b);
+					
+					if(numParrents == 1)
+						{
+							cout<<"0"<<endl;
+							continue;
+						}
+					
+					int i;
+					for(i = 1; i< n; i++)
+					{
+						
+						
+						if(sizeStore[i].size() >= 2)
+						{
+							cout<<"0"<<endl;
+							flag = true;
+							break;
+						}
+						
+						if(sizeStore[i].size() == 0)
+						continue;
+						else
+						{
+							int j;
+							for(j = i+1;j<=n;j++)
+							{
+								if(sizeStore[j].size() == 0)
+								continue;
+								else
+								{
+									int diff = j-i;
+									if(min > diff)
+									min = diff;
+								}
+							}
+						}
+						
+					}
+					if(flag)
+					{
+						flag = false;
+						continue;
+					}
+					
+					cout<<min<<endl;
+				}
+				
+                return 0;
+        }
+        

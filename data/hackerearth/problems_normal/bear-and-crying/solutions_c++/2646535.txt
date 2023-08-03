@@ -1,0 +1,166 @@
+#if 1
+#include <functional>
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <iomanip>
+#include <sstream>
+#include <numeric>
+#include <string>
+#include <vector>
+#include <bitset>
+#include <queue>
+#include <stack>
+#include <map>
+#include <set>
+#include <cstdlib>
+#include <cassert>
+#include <cstring>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <list>
+
+using namespace std;
+
+typedef long long LL;
+typedef long double LD;
+typedef pair<int, int> pii;
+
+const LD eps = 1e-9;
+const LD pi = acos(-1.0);
+const LL inf = 1e+9;
+
+#define mp make_pair
+#define pb push_back
+#define X first
+#define Y second
+
+#define dbg(x) { cerr << #x << " = " << x << endl; }
+
+// extended template
+#pragma comment(linker, "/STACK:36777216")
+typedef vector<int> vi;
+typedef vector<vi> vvi;
+
+#define forn(i, n) for (int i = 0; i < n; ++i)
+#define all(a) (a).begin(), (a).end()
+#define rall(a) (a).rbegin(), (a).rend()
+
+template<typename T> istream & operator >> (istream &, vector<T> &);
+template<typename T> ostream & operator << (ostream &, const vector<T> &);
+
+#define START clock_t _clock = clock();
+#define END cerr << endl << "time: " << (clock() - _clock) / LD(CLOCKS_PER_SEC) << endl;
+
+#define NAME "cell"
+#define MODULE 1000000007
+
+int pow(int u, int v){
+	if (v == 0) return 1;
+	if (v == 1) return u;
+	int x = pow(u, v / 2);
+	x = (LL(x) * x) % MODULE;
+	if (v % 2 == 1) x = (LL(x) * u) % MODULE;
+	return x;
+}
+
+void solve(){
+	vi m(100001);
+	m[0] = 1;
+	for (int i = 1; i < m.size(); i++)
+		m[i] = (LL(m[i - 1]) * 2) % MODULE;
+	
+	string s;
+	cin >> s;
+	/*
+	forn(i, 1000){
+		if (rand() % 2 == 1) s += ';';
+		else s += '_';
+	}
+	*/
+	while (!s.empty() && s[s.length() - 1] == '_') s.pop_back();
+	if (s == ""){
+		cout << 0 << endl;
+		return;
+	}
+	int j = 0;
+	while (j < s.length() && s[j] == '_') j++;
+	if (j == s.length()){
+		cout << 0 << endl;
+		return;
+	}
+	s = s.substr(j, s.length() - j);
+	vi a;
+
+	a.pb(1);
+	for (int i = 1; i < s.length(); i++){
+		if (s[i] == s[i - 1]) a[a.size() - 1]++;
+		else a.pb(1);
+	}
+	if (a.size() == 1){
+		cout << 0 << endl;
+		return;
+	}
+
+	/*
+	int res1 = 0;
+	for (int i = 0; i < a.size() - 1; i += 2){
+		int cc = 0;
+		for (int j = i + 1; j < a.size(); j += 2){
+			cc += a[j];
+			res1 = (res1 + (((LL(m[cc] - 1 + MODULE) * a[j + 1]) % MODULE) * a[i]) % MODULE) % MODULE;
+		}
+	}
+	cout << res1 << endl;
+	*/
+	vi b = a;
+	b[0] = 0;
+	for (int i = 1; i < b.size(); i++)
+		if (i % 2 == 1) b[i] = b[i - 1];
+		else b[i] = b[i - 1] + b[i];
+
+
+	int ss = 0, cnt = 0;;
+	for (int i = 1; i < a.size(); i += 2){
+		cnt += a[i];
+		ss = (ss + (LL(m[cnt]) * a[i + 1]) % MODULE) % MODULE;
+	}
+	int res = 0;
+	for (int i = 0; i < a.size() - 1; i += 2){
+		res = ((res + LL(a[i]) * ss) % MODULE - (LL(a[i]) * (b[b.size() - 1] - b[i + 1])) % MODULE + MODULE) % MODULE;
+		ss = (ss - (LL(a[i + 2]) * m[a[i + 1]]) % MODULE + MODULE) % MODULE;
+		ss = (ss * LL(pow(m[a[i + 1]], MODULE - 2))) % MODULE;
+	}
+	cout << res << endl;
+}
+
+
+int main()
+{
+    //START
+    //freopen(NAME ".in", "r", stdin); freopen(NAME ".out", "w", stdout);
+    //freopen("in.txt", "r", stdin); // freopen("output.txt", "w", stdout);
+    ios_base::sync_with_stdio(false);
+
+	solve();
+
+    //END                             
+    return 0;
+}
+/*******************************************
+*******************************************/
+
+template<typename T> istream & operator >> (istream &is, vector<T> &v)
+{
+    forn(i, v.size())
+        is >> v[i];
+    return is;
+}
+template<typename T> ostream & operator << (ostream &os, const vector<T> &v)
+{
+    forn(i, v.size())
+        os << v[i] << " ";
+    return os;
+}
+#endif

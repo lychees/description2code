@@ -1,0 +1,163 @@
+#include<bits/stdc++.h>
+#include<stdio.h>
+using namespace std;
+
+#define N 1000009
+
+int a[N];
+
+int lazy[4 * N];
+
+void updateinactualarray(int node , int start , int End , int l ,int r)
+{
+int mid;
+    if(lazy[node] != 0)
+    {
+        if(start != End )
+        {
+            lazy[2 *node] += lazy[node];
+            lazy[2 * node + 1] += lazy[node];
+        }
+        else
+        {
+            a[start] += lazy[node];
+
+        }
+        lazy[node] = 0;
+    }
+    if(r< start || l> End)
+    return;
+    if(r >= End && l <= start)
+    {
+        if(start != End)
+        {
+            lazy[2 * node] += 1;
+            lazy[2 * node + 1] += 1;
+        }
+        else
+        {
+            a[start] += 1;
+        }
+        return;
+    }
+    mid = (start + End)/2;
+    updateinactualarray(2 * node , start ,mid,l ,r);
+    updateinactualarray(2 * node + 1 , mid + 1 , End , l , r);
+    return;
+}
+
+int isamiddlenode(int node , int start , int End)
+{
+    stack<int> s;
+    while(!s.empty())
+    {
+    s.pop();
+    }
+    while(node > 1)
+    {
+        s.push(node);
+        node = node/2;
+    }
+
+    int x;
+int l = start;
+   int r = End;
+
+    while(!s.empty())
+    {
+        x = s.top();
+        if((x % 2 == 0))
+        {
+            l = l;
+            r = (l+r)/2;
+        }
+        else
+        {
+            l = ((l + r)/ 2) + 1;
+            r = r;
+        }
+        s.pop();
+    }
+    if(l == r)
+    return l;
+    else
+    return -100;
+}
+int main()
+{
+
+int n;
+cin>>n;
+
+for(int i = 0 ; i < n ; i ++)
+{
+    a[i] = 0;
+}
+
+int m;
+cin>>m;
+int l ,r;
+
+while(m--)
+{
+    scanf("%d%d",&l,&r);
+    updateinactualarray(1 , 0 ,n-1 ,l-1,r-1);
+//    cout<<"----------------------------"<<endl;
+//    for(int i = 1; i <  4 * n; i++)
+//    {
+//        cout<<lazy[i]<<" ";
+//    }
+//    cout<<endl;
+//    for(int i = 0 ; i < n ; i ++)
+//    {
+//        cout<<a[i]<<" ";
+//    }
+//    cout<<endl;
+}
+int y;
+for(int i = 1 ; i < (4 * n);i++)
+{
+    if(lazy[i] != 0)
+    {
+        y = isamiddlenode(i , 0 , n-1);
+
+        if(y < 0)
+        {
+            lazy[2 * i] += lazy[i];
+            lazy[2 * i + 1] += lazy[i];
+            lazy[i] = 0;
+        }
+        else
+        {
+            a[y] += lazy[i];
+            lazy[i] = 0;
+        }
+    }
+}
+
+//cout<<"----------------------------"<<endl;
+//    for(int i = 1; i <  4 * n; i++)
+//    {
+//        cout<<lazy[i]<<" ";
+//    }
+//    cout<<endl;
+//    for(int i = 0 ; i < n ; i ++)
+//    {
+//        cout<<a[i]<<" ";
+//    }
+//    cout<<endl;
+sort(a ,a +n);
+
+int q;
+cin>>q;
+int x;
+int ans;
+while(q--)
+{
+    scanf("%d",&x);
+    ans = lower_bound(a , a+ n ,x) - a;
+    printf("%d\n", n- ans);
+}
+
+return 0;
+}

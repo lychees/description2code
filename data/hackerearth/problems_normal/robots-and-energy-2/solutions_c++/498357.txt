@@ -1,0 +1,120 @@
+#include <iostream>
+#include <stdio.h>
+#include <string>
+#include <string.h>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+const int MAXN = 12;
+const int MAXM = 102;
+const int MOD = (int)(1e9) + 7;
+
+struct matrix {
+    int a[MAXM][MAXM];
+    void clear() {
+        memset(a, 0, sizeof(a));
+    }
+};
+
+matrix a, b;
+int n, m, N;
+
+int distinct_palindrome(string s) {
+    bool palin[12][12];
+    memset(palin, false, sizeof(palin));
+    for(int i = s.length() - 1; i >= 0; i--) {
+        palin[i][i] = true;
+        if ((i + 1 < s.length()) && (s[i] == s[i + 1])) palin[i][i + 1] = true;
+        for(int j = i + 2; j < s.length(); j++) {
+            palin[i][j] = ((s[i] == s[j]) && (palin[i + 1][j - 1]));
+        }
+    }
+    vector <string> candidates;
+    for(int i = 0; i < s.length(); i++) {
+        string t = "";
+        for(int j = i; j < s.length(); j++) {
+            t += s[j];
+            if (palin[i][j]) candidates.push_back(t);
+        }
+    }
+    if (candidates.size() == 0) return(0);
+    sort(candidates.begin(), candidates.end());
+    int ret = 1;
+    for(int i = 1; i < candidates.size(); i++) {
+        if (candidates[i] != candidates[i - 1]) ret++;
+    }
+    return(ret);
+}
+
+int new_index(int x, int y) {
+    return (m * x + y + 1);
+}
+
+matrix matrix_mutiply(matrix a, matrix b) {
+    matrix c;
+    for(int i = 1; i <= N; i++) {
+        for(int j = 1; j <= N; j++) {
+            c.a[i][j] = 0;
+            for(int k = 1; k <= N; k++) {
+                c.a[i][j] = (c.a[i][j] + ((long long)(a.a[i][k]) * b.a[k][j]) % MOD) % MOD;
+            }
+        }
+    }
+    return(c);
+}
+
+void print(matrix a) {
+    for(int i = 1; i <= N; i++) {
+        for(int j = 1; j <= N; j++) {
+            cout << a.a[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+}
+
+int main()
+{
+    //freopen("input.txt", "r", stdin);
+
+    cin >> n >> m;
+    N = n * m;
+    for(int i = 0; i <n; i++) {
+        for(int j = 0; j < m; j++) {
+            string s;
+            cin >> s;
+            a.a[1][new_index(i, j)] = distinct_palindrome(s);
+        }
+    }
+    for(int i = 1; i <= N; i++) b.a[i][i]++;
+    int c;
+    cin >> c;
+    for(int i = 0; i < c; i++) {
+        int x, y, u, v;
+        cin >> x >> y >> u >> v;
+        b.a[new_index(u, v)][new_index(x, y)]++;
+        b.a[new_index(x, y)][new_index(u, v)]++;
+    }
+    matrix bb = b;
+    int t;
+    cin >> t;
+    int bi[50];
+    int l = 0;
+    while (t > 0) {
+        l++; bi[l] = t % 2;
+        t = t / 2;
+    }
+    for(int i = l - 1; i >= 1; i--) {
+        bb = matrix_mutiply(bb, bb);
+        if (bi[i] == 1) bb = matrix_mutiply(bb, b);
+    }
+    a = matrix_mutiply(a, bb);
+    for(int i = 1; i <= n; i++) {
+        for(int j = 1; j <= m; j++) {
+            cout << a.a[1][(i - 1) * m + j] << " ";
+        }
+        cout << endl;
+    }
+}

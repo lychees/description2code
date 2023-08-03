@@ -1,0 +1,160 @@
+/**/
+#include<bits/stdc++.h>
+using namespace std;
+/***********************************************/
+/*      ____________
+ *     /            \
+ *    /  /\      /\  \
+ *   /  /  \    /  \  \
+ *   \                /
+ *    \     \___/    /
+ *     \____________/
+ */
+const long long mod = 1000000007;
+struct node{
+	int lc,rc,lzc;
+	long long res,cl,cr;
+	node * left, * right;
+	node(){
+		lc = cr = cl = rc = res = lzc = 0;
+		left = nullptr;
+		right = nullptr;
+	}
+};
+vector<int> a;
+void build(node &n,int l = 0,int r = a.size()-1){
+	if(l == r){
+		n.cl = n.cr = n.res = 1;
+		n.lc = n.rc = a[l];
+		return;
+	}
+	n.left = new node();
+	n.right = new node();
+	int md = (l+r)>>1;
+	build(*(n.left),l,md);
+	build(*(n.right),md+1,r);
+	n.res = n.left->res + n.right->res;
+	n.lc = n.left->lc;
+	n.cl = n.left->cl;
+	n.rc = n.right->rc;
+	n.cr = n.right->cr;
+	if(n.left->rc == n.right->lc){
+		n.res += n.left->cr * n.right->cl;
+		if(n.left->cr == md - l + 1){
+			n.cl += n.right->cl;
+		}
+		if(n.right->cl == r - md){
+			n.cr += n.left->cr;
+		}
+	}
+}
+void re(node & n,long long l,long long r){
+	if(l == r || n.lzc == 0)
+		return;
+	long long md = (l+r)>>1ll;
+	n.left->res = (md - l + 1)* (md - l + 2) / 2;
+	n.left->lc = n.left->rc = n.left->lzc = n.lzc;
+	n.left->cr = n.left->cl = md - l + 1;
+
+	n.right->res = (r - md) * (r - md + 1) / 2;
+	n.right->lc = n.right->rc = n.right->lzc = n.lzc;
+	n.right->cr = n.right->cl = r - md;
+
+	n.lzc = 0;
+}
+void upd(node & n,int l,int r,int c,int L = 0,int R = a.size()-1){
+	re(n,L,R);
+	if(l == L && r == R){
+		n.lc = n.rc = n.lzc = c;
+		n.cr = n.cl = R - L + 1;
+		n.res = n.cr * (n.cr + 1) /2;
+		return;
+	}
+	int md = (L+R)>>1;
+	if(l <= md)upd(*(n.left),l,min(r,md),c,L,md);
+	if(r > md)upd(*(n.right),max(l,md+1),r,c,md+1,R);
+	n.res = n.left->res + n.right->res;
+	n.lc = n.left->lc;
+	n.cl = n.left->cl;
+	n.rc = n.right->rc;
+	n.cr = n.right->cr;
+	if(n.left->rc == n.right->lc){
+		n.res += n.left->cr * n.right->cl;
+		if(n.left->cr == md - L + 1){
+			n.cl += n.right->cl;
+		}
+		if(n.right->cl == R - md){
+			n.cr += n.left->cr;
+		}
+	}
+}
+struct qu{
+	long long res,cl,cr;
+	int l,r;
+	qu(){
+		res = cl = cr = l = r = 0;
+	}
+	qu(long long _res,long long _cl,long long _cr,int _l,int _r){
+		res = _res;
+		cl = _cl;
+		cr = _cr;
+		l = _l;
+		r = _r;
+	}
+};
+qu get(node & n,int l,int r,int L = 0,int R = a.size()-1){
+	re(n,L,R);
+	if(l == L && r == R){
+		return {n.res,n.cl,n.cr,n.lc,n.rc};
+	}
+	qu res,q1,q2;
+	int md = (L+R)>>1;
+	if(l <= md)q1 = get(*(n.left),l,min(r,md),L,md);
+	if(r > md)q2 = get(*(n.right),max(l,md+1),r,md+1,R);
+
+	if(l <= md && r <= md){
+		res = q1;
+	}else if(l > md && r > md){
+		res = q2;
+	}else if(l <= md && r > md){
+		assert(q1.res > 0 && q2.res > 0);
+		res.res = q1.res + q2.res;
+		res.l = q1.l;
+		res.cl = q1.cl;
+		res.r = q2.r;
+		res.cr = q2.cr;
+		if(q1.r == q2.l){
+			res.res += q1.cr * q2.cl;
+			if(q1.cr == min(r,md) - l + 1){
+				res.cl += q2.cl;
+			}
+			if(q2.cl == r - max(l,md+1) + 1){
+				res.cr += q1.cr;
+			}
+		}
+	}
+	return res;
+}
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(nullptr);
+
+	int n,m,t,l,r,c;
+	cin>>n>>m;
+	a.resize(n);
+	for(int i = 0;i < n;i++)cin>>a[i];
+	node root = node();
+	build(root);
+	while(m--){
+		cin>>t>>l>>r;
+		l--,r--;
+		if(t == 0){
+			cin>>c;
+			upd(root,l,r,c);
+		}else if(t == 1){
+			cout<<get(root,l,r).res<<'\n';
+		}
+	}
+	return 0;
+}
+/**/

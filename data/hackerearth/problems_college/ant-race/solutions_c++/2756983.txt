@@ -1,0 +1,125 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef map<int,int> mi;
+
+#define si(a) scanf("%d",&a)
+#define siii(a,b,c) scanf("%d %d %d",&a,&b,&c)
+#define nl printf("\n");
+#define pi(a) printf("%d\n",a)
+#define pb push_back
+#define mp make_pair
+#define all(c) (c).begin(),(c).end()
+#define f(i,a,b) for(i=a;i<b;i++)
+#define rf(i,a,b) for(i=a;i>=b;i--)
+#define clr(x,a) memset(x,a,sizeof(x))
+#define MAX 1000100
+#define MOD 1000000007
+
+int n,m,a[MAX],b[MAX],in[MAX],pre[MAX],mk[MAX];
+
+struct Node{
+    int data;
+    struct Node* left;
+    struct Node* right;
+    Node(int val){
+        data=val;
+    }
+};
+
+Node *build(int in[], int pre[], int n, int offset) {
+  assert(n >= 0);
+  if (n == 0) return NULL;
+  int rootVal = pre[0];
+  int i = mk[rootVal]-offset;
+  Node *root = new Node(rootVal);
+  root->left = build(in, pre+1, i, offset);
+  root->right = build(in+i+1, pre+i+1, n-i-1, offset+i+1);
+  return root;
+}
+
+int level(Node *root,int k,int lv){
+    if(root==NULL)
+        return -1;
+    if(root->data==k)
+        return lv;
+    int l = level(root->left, k, lv+1);
+    return (l != -1)? l : level(root->right, k, lv+1);
+
+}
+
+Node *findDistUtil(Node* root, int n1, int n2, int &d1, int &d2,
+                   int &dist, int lvl)
+{
+    if (root == NULL) return NULL;
+    if (root->data == n1)
+    {
+         d1 = lvl;
+         return root;
+    }
+    if (root->data == n2)
+    {
+         d2 = lvl;
+         return root;
+    }
+    Node *left_lca  = findDistUtil(root->left, n1, n2, d1, d2, dist, lvl+1);
+    Node *right_lca = findDistUtil(root->right, n1, n2, d1, d2, dist, lvl+1);
+    if (left_lca && right_lca)
+    {
+        dist = d1 + d2 - 2*lvl;
+        return root;
+    }
+    return (left_lca != NULL)? left_lca: right_lca;
+}
+
+
+int findDistance(Node *root, int n1, int n2)
+{
+    int d1 = -1, d2 = -1, dist;
+    Node *lca = findDistUtil(root, n1, n2, d1, d2, dist, 1);
+
+    if (d1 != -1 && d2 != -1)
+        return dist;
+
+    if (d1 != -1)
+    {
+        dist = level(lca, n2, 0);
+        return dist;
+    }
+
+    if (d2 != -1)
+    {
+        dist = level(lca, n1, 0);
+        return dist;
+    }
+
+    return -1;
+}
+
+int main(){
+    int r,k,i,c=0,x=0,y=0,j,t,l,z,x1=0,y1=0;
+    ll ans=0;string p;
+    si(t);
+    while(t--){
+    si(n);
+    f(i,0,n)
+        si(in[i]);
+    f(i,0,n)
+        si(pre[i]);
+    siii(x,y,z);
+    f(i,0,n)
+        mk[in[i]]=i;
+    Node* start=build(in,pre,n,0);
+    x1=findDistance(start,x,y);
+    y1=findDistance(start,z,y);
+    if(x1<y1)
+        printf("FIRST\n");
+    else
+        printf("SECOND\n");
+    }
+    return 0;
+}

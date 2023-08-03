@@ -1,0 +1,132 @@
+#include "bits/stdc++.h"
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef double dbl;
+
+using namespace std;
+
+#ifdef LOCAL
+#include "debug.h"
+#define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define Print(...) (void)42;
+#define eprintf(...) (void)42;
+#endif
+
+int n, m;
+vector<pair<int, int> > g[100005];
+ll d[100005];
+vector<pair<ll, int> > total;
+vector<ll> sum;
+int S;
+ll ans[100005];
+int k[100005];
+
+ll get (int l, int r) {
+	if (l > r)
+		return 0ll;
+	ll res = sum[r];
+	if (l)
+		res -= sum[l - 1];
+	return res;
+}
+
+struct cmp {
+	bool operator () (int a, int b) const {
+		if (d[a] != d[b])
+			return d[a] < d[b];
+		return a < b;
+	}
+};
+
+set<int, cmp> q;
+
+void dijkstra (int v) {
+	fill (d, d + n + 1, 1e15);
+	d[v] = 0;
+	q.insert (v);
+
+	while (q.size ()) {
+		v = *q.begin ();
+		q.erase (q.begin ());
+
+		for (int i = 0; i < (int) g[v].size (); i++) {
+			int to = g[v][i].first;
+			int add = g[v][i].second;
+
+			if (d[to] > d[v] + add) {
+				q.erase (to);
+				d[to] = d[v] + add;
+				q.insert (to);
+			}
+		}
+	}
+}
+
+void load () {
+	scanf ("%d %d %d", &n, &m, &S);
+	for (int i = 1; i <= n; i++) {
+		scanf ("%d", &k[i]);
+	}
+	for (int i = 0, a, b, c; i < m; i++) {
+		scanf ("%d %d %d", &a, &b, &c);
+		g[a].push_back (make_pair (b, c));
+		g[b].push_back (make_pair (a, c));
+	}
+}
+
+void solve () {
+	dijkstra (S);
+	
+	ll SSS = 0;
+
+	for (int i = 1; i <= n; i++) {
+		if (d[i] > 1e12)
+			continue;
+		total.push_back (make_pair (d[i] * k[i], i));
+		SSS += k[i];
+	}
+
+	int N = (int) total.size ();
+	sum.resize (N);
+	sum[0] = total[0].first;
+
+	for (int i = 1; i < N; i++) {
+		sum[i] = sum[i - 1] + total[i].first;
+	}
+
+	for (int i = 0; i < N; i++) {
+		int v = total[i].second;
+		ans[v] = get (0, i - 1) + get (i + 1, N - 1);
+		ans[v] += d[v] * (SSS - k[v]);
+	}
+}
+
+int main () {
+#ifdef LOCAL
+	freopen ("file.in", "r", stdin);
+	freopen ("file.out", "w", stdout);
+#endif 
+
+#ifdef TIMER
+	timer Tm;
+	Tm.start ();
+#endif
+
+	ios_base :: sync_with_stdio (false);
+	
+	load ();
+	solve ();
+
+	for (int i = 1; i <= n; i++) {
+		cout << ans[i] << ' ';
+	}
+		
+#ifdef TIMER
+	Tm.stop ();
+	Tm.print_time (stderr);
+#endif
+
+	return 0;
+}

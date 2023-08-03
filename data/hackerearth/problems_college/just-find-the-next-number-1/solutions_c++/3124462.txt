@@ -1,0 +1,59 @@
+#include<iostream>
+using namespace std;
+
+
+bool check(int n)
+{
+    int state;
+
+    if(n%2==0)
+        state=2;
+    else
+        state=1;
+
+    n=n/2;
+
+    while(n)
+    {
+        int temp=n%2;
+
+        if(state==1)
+        {
+            if(temp==1)
+                return false;
+            else
+                state=2;
+        }
+        else
+        {
+            if(temp==1)
+                state=1;
+        }
+
+        n=n/2;
+    }
+
+    return true;
+}
+
+
+int main()
+{
+    int t;
+    cin>>t;
+
+    while(t--)
+    {
+        int n;
+        cin>>n;
+
+        for(int i=n;;i++)
+        {
+            if(check(i))
+            {
+                cout<<i<<endl;
+                break;
+            }
+        }
+    }
+}

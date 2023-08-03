@@ -1,0 +1,211 @@
+#include<bits/stdc++.h>
+
+#define xx first
+#define yy second
+#define LL long long
+#define inf 100000000000000000ll
+#define pb push_back
+#define all(v) v.begin(),v.end()
+#define pi acos(-1)
+#define clr(a,b) memset(a,b,sizeof a)
+#define bclr(a) memset(a,false,sizeof a)
+#define pii pair<int,int>
+#define MOD 1000000007
+#define EPS 1e-10
+#define MP make_pair
+#define MX 100005
+
+using namespace std;
+
+struct Edge{
+    int from,to,prev;
+    Edge(){}
+    Edge(int _from,int _to,int _prev){
+        from=_from,to=_to,prev=_prev;
+    }
+};
+
+struct data{
+    LL mx,lft,rgt,sum;
+    data(){}
+    data(LL a,LL b,LL c,LL d){
+        lft=a,mx=b,sum=c,rgt=d;
+    }
+};
+
+int last[MX],NE;
+Edge edge[3*MX];
+
+void addEdge(int u,int v){
+    edge[NE]=Edge(u,v,last[u]);
+    last[u]=NE++;
+}
+
+void init(int n){
+    for(int i=0;i<=n;i++) last[i]=-1;
+    NE=0;
+}
+
+int child[MX],level[MX],par[MX],hold[MX];
+int st[MX],tt=1;
+LL ar[MX],cost[MX];
+
+void dfs(int x,int p,int d){
+    level[x]=d;
+    child[x]=1;
+    par[x]=p;
+    st[x]=tt++;
+    for(int i=last[x];i!=-1;i=edge[i].prev){
+        int adj=edge[i].to;
+        if(adj!=p){
+            dfs(adj,x,d+1);
+            child[x]+=child[adj];
+        }
+    }
+}
+
+int head[MX],chainID[MX],actualPos[MX],chainNo=1,cnt=1;
+
+void HLD(int now,int p){
+    if(head[chainNo]==0) head[chainNo]=now;
+    chainID[now]=chainNo;
+    actualPos[now]=cnt;
+    cost[cnt++]=ar[now];
+    int mxnode=-1,mx=-1;
+    for(int i=last[now];i!=-1;i=edge[i].prev){
+        int adj=edge[i].to;
+        if(adj==p) continue;
+        if(child[adj]>mx){
+            mx=child[adj];
+            mxnode=adj;
+        }
+    }
+    if(mxnode!=-1) HLD(mxnode,now);
+    for(int i=last[now];i!=-1;i=edge[i].prev){
+        int adj=edge[i].to;
+        if(adj==p || adj==mxnode) continue;
+        chainNo++;
+        HLD(adj,now);
+    }
+    return;
+}
+
+int LCA(int x,int y){
+    while(chainID[x]!=chainID[y]){
+        int chainX=chainID[x],chainY=chainID[y];
+        int HX=head[chainX],HY=head[chainY];
+        if(level[HX]>level[HY]) x=par[HX];
+        else y=par[HY];
+    }
+    if(actualPos[x]<actualPos[y]) return x;
+    else return y;
+}
+
+data seg[4*MX];
+
+data update(data L,data R){
+    data ret;
+    LL sum=L.sum + R.sum;
+    LL mx=max(sum,max(L.mx,R.mx));
+    LL lsum=L.lft;
+    LL rsum=R.rgt;
+    mx=max(mx,L.rgt+R.lft);
+    mx=max(mx,L.rgt+R.sum);
+    mx=max(mx,L.sum+R.lft);
+    lsum=max(lsum,L.sum+R.lft);
+    rsum=max(rsum,L.rgt+R.sum);
+    ret=data(lsum,mx,sum,rsum);
+    return ret;
+}
+
+void build(int indx,int st,int ed){
+    if(st==ed){
+        seg[indx]=data(cost[st],cost[st],cost[st],cost[st]);
+        return;
+    }
+    int mid=(st+ed)/2,L=indx*2,R=L+1;
+    build(L,st,mid);
+    build(R,mid+1,ed);
+    seg[indx]=update(seg[L],seg[R]);
+}
+
+data query(int indx,int st,int ed,int s,int e){
+    if(s>e) return data(0,-inf,0,0);
+    if(s==st && e==ed) return seg[indx];
+    int mid=(st+ed)/2,L=indx*2,R=L+1;
+    if(e<=mid) return query(L,st,mid,s,e);
+    else if(s>mid) return query(R,mid+1,ed,s,e);
+    else{
+        data X=query(L,st,mid,s,mid);
+        data Y=query(R,mid+1,ed,mid+1,e);
+        return update(X,Y);
+    }
+}
+
+data queryHLD(int x,int y,int f){
+    if(x==y){
+        if(f) return data(cost[actualPos[x]],cost[actualPos[x]],cost[actualPos[x]],cost[actualPos[x]]);
+        else return data(0,-inf,0,0);
+    }
+    int ychainID=chainID[y];
+    data ans=data(0,-inf,0,0);
+    int ok=0;
+    while(true){
+        int xchainID=chainID[x];
+        if(xchainID==ychainID){
+            if(f) return update(query(1,1,cnt,actualPos[y],actualPos[x]),ans);
+            else return update(query(1,1,cnt,actualPos[y]+1,actualPos[x]),ans);
+        }
+        int headNode=head[xchainID];
+        data get=query(1,1,cnt,actualPos[headNode],actualPos[x]);
+        ans=update(get,ans);
+        x=par[headNode];
+    }
+    return ans;
+}
+
+int main(){
+    int n;
+    scanf("%d",&n);
+    init(n);
+    for(int i=0;i<n-1;i++){
+        int u,v;
+        scanf("%d%d",&u,&v);
+        addEdge(u,v);
+        addEdge(v,u);
+    }
+    for(int i=1;i<=n;i++) scanf("%lld",&ar[i]);
+    cnt=1;
+    dfs(1,-1,1);
+    HLD(1,-1);
+    cnt--;
+    build(1,1,cnt);
+    int q;
+    scanf("%d",&q);
+    for(int i=0;i<q;i++){
+        int u,v;
+        scanf("%d%d",&u,&v);
+        int lca=LCA(u,v);
+        data X = queryHLD(u,lca,1);
+        data Y = queryHLD(v,lca,0);
+
+        LL ans=max(X.mx,Y.mx);
+        ans=max(ans,X.lft+Y.sum);
+        ans=max(ans,Y.lft+X.sum);
+        ans=max(ans,X.sum+Y.sum);
+        ans=max(ans,X.lft+Y.lft);
+        printf("%lld\n",ans);
+    }
+    return 0;
+}
+
+/*
+6
+1 2
+3 1
+1 4
+4 5
+4 6
+-1 2 2 -2 5 8
+
+*/

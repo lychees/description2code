@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+const int MAXN = 1e5 + 9;
+ 
+typedef long long LL;
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+ 
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+#define MOD       1000000007
+#define TC()      int tc; scanf("%d",&tc); while(tc--)
+#define tr(C,it)  for(typeof(C.begin()) it=C.begin(); it!=C.end(); it++)
+ 
+LL T1[MAXN];
+LL T2[MAXN];
+LL A[MAXN];
+ 
+int N,Q,K,L,R,type;
+LL S;
+ 
+inline LL query(LL *tree,int pos){
+	LL ret = 0;
+	for(;pos > 0;pos -= (pos & (-pos)))
+		ret += tree[pos];
+	return ret;
+}
+ 
+inline void update(LL *tree,int pos,LL val){
+	for(;pos < MAXN;pos += (pos & (-pos)))
+		tree[pos] += val;
+}
+ 
+int main(){
+	scanf("%d %d",&N,&Q);
+	for(int i = 1;i <= N;++i){
+		scanf("%lld",&A[i]);
+		update(T1,i,A[i]);
+		update(T2,i,i * A[i]);
+	}
+	while(Q--){
+		scanf("%d",&type);
+		if(type == 1){
+			scanf("%d %d %d",&K,&L,&R);
+			LL ans = 0;
+			// K ... L ... R
+			if(K <= L){
+				LL l = query(T1,R) - query(T1,L - 1);
+				LL r = query(T2,R) - query(T2,L - 1);
+				ans = r - l * 1LL * K;
+			} else if(K > L && (K <= R)){
+				LL l = query(T1,R) - query(T1,K - 1);
+				LL r = query(T2,R) - query(T2,K - 1);
+				ans = r - l * 1LL * K;
+				l = query(T1,K) - query(T1,L - 1);
+				r = query(T2,K) - query(T2,L - 1);
+				ans += l * 1LL * K - r;								
+			} else {
+				LL l = query(T1,R) - query(T1,L - 1);
+				LL r = query(T2,R) - query(T2,L - 1);
+				ans = l * 1LL * K - r;				
+			}
+			printf("%lld\n",ans);
+		} else {
+			scanf("%d %lld",&K,&S);
+			update(T1,K,S);
+			update(T2,K,K*1LL*S);
+		}
+	}
+	return 0;
+}

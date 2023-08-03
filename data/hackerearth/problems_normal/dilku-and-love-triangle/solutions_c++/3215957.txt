@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define MAX 500005
+#define LOGN 20
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+
+int cnt[MAX], tree[MAX], strt[MAX], en[MAX], timer, level[MAX];
+vector<int> graph[MAX];
+int dp[LOGN][MAX];
+
+void update(int idx, int val){
+	while(idx<MAX){
+		tree[idx] += val;
+		idx += (idx & -idx);
+	}
+}
+
+int query(int idx){
+	int sum = 0;
+	while(idx>0){
+		sum += tree[idx];
+		idx -= (idx & -idx);
+	}
+	return sum;
+}
+
+int query(int a, int b){
+	return query(b) - query(a-1);
+}
+
+void dfs0(int v){
+	strt[v] = ++timer;
+	for(int i=0 ; i<graph[v].size() ; i++){
+		int u = graph[v][i];	
+		if(u != dp[0][v]){
+			dp[0][u] = v;
+			level[u] = level[v] + 1;
+			dfs0(u);
+		}
+	}
+	en[v] = timer;
+}
+
+void preprocess(int n){
+	dp[0][1] = 1;
+	dfs0(1);
+	for(int i=1 ; i<LOGN ; i++)
+		for(int j=1 ; j<=n ; j++)
+			dp[i][j] = dp[i-1][dp[i-1][j]];
+}
+
+int lca(int a, int b){
+	if(level[a]>level[b])
+		swap(a, b);
+	int d = level[b] - level[a];
+	for(int i=0 ; i<LOGN ; i++)
+		if(d & (1<<i))
+			b = dp[i][b];
+	if(a == b)
+		return a;
+	for(int i=LOGN-1 ; i>=0 ; i--)
+		if(dp[i][a] != dp[i][b])
+			a = dp[i][a], b = dp[i][b];
+	return dp[0][a];
+}
+
+int main(){
+	int n, q;
+	scanf("%d %d", &n, &q);
+
+	for(int i=0 ; i<n-1 ; i++){
+		int a, b;
+		scanf("%d %d", &a, &b);
+
+		graph[a].pb(b), graph[b].pb(a);
+	}	
+
+	preprocess(n);
+
+	for(int i=0 ; i<q ; i++){
+		int t, a, b;
+		scanf("%d", &t);
+
+		if(t == 1){
+			scanf("%d %d", &a, &b);
+			int x = lca(a, b);
+			update(strt[a], +1), update(strt[b], +1);
+			update(strt[x], -2);
+			cnt[x]++;
+		} else {
+			scanf("%d", &a);
+			printf("%d\n", query(strt[a], en[a]) + cnt[a]);
+		}
+	}
+	
+	return 0;
+}

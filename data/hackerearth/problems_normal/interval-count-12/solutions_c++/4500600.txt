@@ -1,0 +1,131 @@
+#include<vector>
+#include<iostream>
+#include<algorithm>
+#include<cstring>
+#include<sstream>
+
+using namespace std;
+
+#define FOR1(i,a,b)              for(long long i=a;i<b;i++)
+#define REP(i,n)                FOR1(i,0,n)
+#define mod 1000000007
+
+
+inline void fastint(int &num) {
+	register int char1 = getchar();
+	num = 0;
+	for(; (char1<48 || char1>57); char1 = getchar());
+	for(; char1>47 && char1<58; char1 = getchar()) {
+		num= (num<<1) + (num<<3) + char1 - 48;
+	}
+}
+
+long long int computModpower(long long int x,long long int y, long long int z) {
+	long long int r = 1, i = y, j = x%z;
+	while(i) {
+		if(i & 1) r = r*j%z;
+		j = j * j % z;
+		i = i/2;
+	}
+	return r;
+}
+inline void fastlli(long long int &num) {
+	register int char2 = getchar();
+	num = 0;
+	int neg = 0;
+	for(; ((char2<48 || char2>57) && char2 != '-'); char2 = getchar());
+	if(char2=='-') {
+		neg=1;
+		char2=getchar();
+	}
+	for(; char2>47 && char2<58; char2 = getchar()) {
+		num = (num<<1) + (num<<3) + char2 - 48;
+	}
+	if(neg) num=-num;
+}
+
+
+
+
+char *op, output[65536];
+inline void inItFastInputOutput() {
+	op = output;
+}
+
+void findSieve(vector<int>& prime1,int n) {
+	prime1.resize(n+1);
+	prime1[0]=1;
+	prime1[1]=1;
+	for(long long i=2; i<=n; i++) {
+		if(!prime1[i]) {
+			prime1[i]=i;
+			for(long long j=i; j*i<=n; j++) {
+				if(!prime1[j*i])prime1[j*i]=i;
+			}
+		}
+	}
+}
+int main() {
+	inItFastInputOutput();
+	int t, num;
+	long long l,r;
+	fastint(t);
+	vector<int> allprimes;
+	findSieve(allprimes, 1001);
+	while(t--) {
+	
+		fastint(num);
+	
+		fastlli(l);
+		fastlli(r);
+		long long nums[num];
+		REP(i,num)
+		fastlli(nums[i]);
+		long long result = 0;
+		REP(i, 1<<num) {
+			int primes[1001] = {0};
+			vector<int> primefactors;
+			int count = 0;
+			REP(j , num) {
+				if(i & (1<<j)) {
+					long long numb = nums[j];
+					while(numb > 1) {
+						int prim = allprimes[numb];
+						int prc = 0;
+						while(allprimes[numb]==prim) {
+							numb/=prim;
+							prc++;
+						}
+						if(primes[prim]<prc)
+							primes[prim] = prc;
+						if(find(primefactors.begin(), primefactors.end(), prim) == primefactors.end()) {
+							primefactors.push_back(prim);
+						}
+					}
+					count++;
+				}
+			}
+			long long val = 1;
+			sort(primefactors.begin(), primefactors.end());
+			REP(j, primefactors.size()) {
+				long long a = val;
+				long long b = computModpower(primefactors[j], primes[primefactors[j]], mod);
+				val = a * b;
+				if (a != 0 && val / a != b) {
+					val = -1;
+					break;
+				}
+			}
+			if(val == -1 || count == 0)
+				continue;
+			long long addi = (r/val) - ((l-1)/val);
+			if(count%2==0) {
+				result-=addi;
+			} else {
+				result+=addi;
+			}
+		}
+		cout<<result<<endl;
+	}
+	return 0;
+}

@@ -1,0 +1,120 @@
+#include <iostream>
+#include <cstdio>
+#include <climits>
+
+#define MAX 1002
+#define INF INT_MAX
+
+typedef struct node
+{
+	int x, y;
+	struct node *next;
+
+	node(int i, int j)
+	{
+		x = i;
+		y = j;
+		next = NULL;
+	}
+
+}node;
+
+class Queue
+{
+private:
+	node *f, *r;
+
+public:
+	Queue()
+	{
+		f = r = NULL;
+	}
+
+	void push(int x, int y)
+	{
+		node *n = new node(x, y);
+		if (!f) f = n;
+		else r->next = n;
+		r = n;
+	}
+
+	node* pop()
+	{
+		node *n = new node(f->x, f->y);
+		node *t = f;
+		f = f->next;
+		if (!f) r = NULL;
+		delete t;
+		return n;
+	}
+
+	bool isEmpty()
+	{
+		return f == NULL;
+	}
+};
+
+int dx[] = { 0, 1, 0, -1 };
+int dy[] = { 1, 0, -1, 0 };
+
+int grid[MAX][MAX];
+int dist[MAX][MAX];
+
+Queue q;
+
+int main()
+{
+	int t, m, n, tx, ty, time;
+
+	scanf("%d", &t);
+	while (t--)
+	{
+		scanf("%d%d", &m, &n);
+		for (int i = 1; i <= m; i++)
+		{
+			for (int j = 1; j <= n; j++)
+			{
+				scanf("%d", &grid[i][j]);
+				dist[i][j] = INF;
+			}
+		}
+		scanf("%d%d%d", &tx, &ty, &time);
+
+		dist[1][1] = grid[1][1];
+		q.push(1, 1);
+
+		while (!q.isEmpty())
+		{
+			node *temp = q.pop();
+			int x = temp->x, y = temp->y;
+			delete temp;
+
+			if (dist[x][y] != INF)
+			{
+				for (int k = 0; k < 4; k++)
+				{
+					int nx = x + dx[k];
+					int ny = y + dy[k];
+
+					if (nx > 0 && nx <= m && ny > 0 && ny <= n)
+					{
+						if (dist[nx][ny] > dist[x][y] + grid[nx][ny])
+						{
+							dist[nx][ny] = dist[x][y] + grid[nx][ny];
+							q.push(nx, ny);
+						}
+					}
+				}
+			}
+		}
+
+		if (dist[tx][ty] <= time)
+			printf("YES\n%d\n", time - dist[tx][ty]);
+		else
+			printf("NO\n");
+
+	}
+
+	return 0;
+}
+

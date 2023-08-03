@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int n, q;
+int w[400][400], a[700][700], d[400], s[400];
+
+int Pow(int base, int n, int mo)
+{
+    if (n == 0) return 1;
+    if (n == 1) return base % mo;
+    int tmp = Pow(base, n >> 1, mo);
+    tmp = (long long)tmp * tmp % mo;
+    if (n & 1) tmp = (long long)tmp * base % mo;
+    return tmp;
+}
+
+vector<vector<int> >  gauss(int mo)
+{
+	int cnt = 0;
+	for (int i = 1; i <= n; ++i)
+	{
+		for (int j = 1; j <= n; ++j)
+			a[i][j] = w[i][j] % mo;
+		for (int j = n + 1; j <= 2 * n; ++j)
+			a[i][j] = 0;
+		a[i][n + i] = 1;
+	}
+	for (int i = 1; i <= n; ++i)
+	{
+		for (int j = cnt + 1; j <= n; ++j)
+			if (a[j][i])
+			{
+				++cnt;
+				for (int k = 1; k <= n * 2; ++k)
+					swap(a[j][k], a[cnt][k]);
+				break;
+			}
+		if (!a[cnt][i]) continue;	
+		int inv = Pow(a[cnt][i], mo - 2, mo);
+		for (int j = cnt + 1; j <= n; ++j)
+			if (a[j][i])
+			{
+				int c = a[j][i] * inv % mo;
+				for (int k = i; k <= n * 2; ++k)
+					a[j][k] -= a[cnt][k] * c, a[j][k] = (a[j][k] % mo + mo) % mo;
+			}
+	}
+	vector<vector<int> > res;
+	for (int i = 1; i <= n; ++i)
+	{
+		vector<int> tmp;
+		for (int j = 1; j <= n; ++j)
+			tmp.push_back(a[i][j + n]);
+		res.push_back(tmp);
+	}
+	vector<int> tmp;
+	tmp.push_back(cnt);
+	res.push_back(tmp);
+	return res;
+}
+
+const int mo[] = {2, 5, 719};
+vector<vector<int> > v[3];
+
+int main(int argc, char *argv[])
+{
+	scanf("%d%d", &n, &q);
+	for (int i = 1; i <= n; ++i)
+		for (int j = 1; j <= n; ++j)
+			scanf("%d", &w[i][j]);
+	for (int k = 0; k < 3; ++k)
+		v[k] = gauss(mo[k]);
+	for (int i = 0; i < q; ++i)
+	{
+		int ans = true;
+		for (int j = 1; j <= n; ++j) 
+			scanf("%d", &s[j]);
+		for (int j = 0; j < 3; ++j)
+		{
+			for (int x = v[j][n][0]; x < n; ++x)
+			{
+				int t = 0;
+				for (int y = 0; y < n; ++y)
+					t += v[j][x][y] * s[y + 1], t %= mo[j];
+				if (t) ans = false;
+			}
+		}
+		puts(ans ? "Yes" : "No");
+	}
+	return 0;
+}

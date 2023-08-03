@@ -1,0 +1,240 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <utility>
+#include <queue>
+#include <algorithm>
+
+using namespace::std;
+
+int dA[] = {1, -1, 0, 0};
+int dB[] = {0, 0, 1, -1};
+
+void cell(int x1, int y1, int x2, int y2, int &x, int &y)
+{
+	if (x1 == x2)
+	{
+		if (y1 > y2)
+		{
+			x = x1 - 1;
+			y = y2;
+		}
+		else
+		{
+			x = x1;
+			y = y1;
+		}
+	}
+	else
+	{
+		if (x1 > x2)
+		{
+			x = x2;
+			y = y1;
+		}
+		else
+		{
+			x = x1;
+			y = y1 - 1;
+		}
+	}
+}
+
+int main()
+{
+	int T;
+	scanf("%d", &T);
+
+	for (int t = 0; t < T; t++)
+	{
+		int N, M;
+		scanf("%d", &N);
+		scanf("%d", &M);
+
+		vector<vector<int> > A(N, vector<int>(M, 0));
+		for (int i = 0; i < N; i++)
+		{
+			for (int j = 0; j < M; j++)
+			{
+				while (true)
+				{
+					char ch;
+					scanf("%c", &ch);
+
+					if (ch >= 'a' && ch <= 'z')
+					{
+						A[i][j] = ch - 'a';
+						break;
+					}
+				}
+			}
+		}
+
+		vector<vector<int> > B(N, vector<int>(M, -1));
+		vector<vector<int> > C(N + 1, vector<int>(M + 1, -1));
+		vector<pair<int, int> > tmp;
+
+		tmp.reserve(N * M);
+
+		int cnt = 0;
+		bool ok = true;
+		for (int i = 0; i < N; i++)
+		{
+			if (!ok)
+				break;
+
+			for (int j = 0; j < M; j++)
+			{
+				if (!ok)
+					break;
+
+				if (B[i][j] != -1)
+					continue;
+
+				tmp.clear();
+				B[i][j] = cnt;
+				tmp.push_back(make_pair(i, j));
+
+				queue<pair<int, int> > q;
+				q.push(make_pair(i, j));
+
+				while (!q.empty())
+				{
+					pair<int, int> x = q.front();
+					q.pop();
+
+					for (int k = 0; k < 4; k++)
+					{
+						pair<int, int> y;
+						y.first = x.first + dA[k];
+						y.second = x.second + dB[k];
+
+						if ((y.first < 0) || (y.second < 0) || (y.first >= N) || (y.second >= M))
+							continue;
+
+						if (B[y.first][y.second] != -1)
+							continue;
+
+						if (A[y.first][y.second] != A[i][j])
+							continue;
+
+						B[y.first][y.second] = cnt;
+						tmp.push_back(y);
+						q.push(y); 
+					}					
+				}
+
+				// create outer boundary
+				pair<int, int> prev(i, j);
+				pair<int, int> curr(i, j + 1);
+
+				C[i][j] = cnt;
+				C[i][j + 1] = cnt;
+
+				//std::cout << i << "  " << j << std::endl;
+				//std::cout << i << "  " << (j + 1) << std::endl;
+
+				while (true)
+				{
+					int x = curr.first;
+					int y = curr.second;
+
+					int dx = prev.first - curr.first;
+					int dy = prev.second - curr.second;
+
+					int dx1 = -dy;
+					int dy1 = dx;
+
+					int x1 = x + dx1;	
+					int y1 = y + dy1;
+
+					int dx2 = -dx;
+					int dy2 = -dy;
+
+					int x2 = x + dx2;
+					int y2 = y + dy2;
+
+					int dx3 = dy;
+					int dy3 = -dx;
+
+					int x3 = x + dx3;
+					int y3 = y + dy3;
+
+					int xc, yc;
+					int xr, yr;
+
+					cell(x, y, x2, y2, xc, yc);
+					if (xc < 0 || yc < 0 || xc >= N || yc >= M || B[xc][yc] != cnt)
+					{
+						xr = x1;
+						yr = y1;
+					}	
+					else
+					{
+						cell(x, y, x3, y3, xc, yc);
+						if (xc < 0 || yc < 0 || xc >= N || yc >= M || B[xc][yc] != cnt)
+						{
+							xr = x2;
+							yr = y2;
+						}
+						else
+						{
+							xr = x3;
+							yr = y3;
+						}
+					}	
+				
+					//std::cout << xr << "  " << yr << std::endl;
+	
+					if (xr == i && yr == j)
+						break;
+
+					prev = curr;
+
+					C[xr][yr] = cnt;
+					curr.first = xr;
+					curr.second = yr;
+				}
+
+				for (int k = 0; k < tmp.size(); k++)
+				{
+					int x = tmp[k].first;
+					int y = tmp[k].second;
+
+					for (int l = 0; l < 4; l++)
+					{
+						int x1 = x + dA[l];
+						int y1 = y + dB[l];
+
+						if (x1 < 0 || y1 < 0 || x1 >= N || y1 >= M)
+							continue;
+
+						if (B[x1][y1] == cnt)
+							continue;
+
+						int x2 = max(x, x1);
+						int y2 = max(y, y1);
+
+						if (C[x2][y2] != cnt)
+						{
+							//std::cout << "hey  " << l << " : " << x << "  " << y << "  " << x1 << "  " << y1 << "  -->  " << x2 << "  " << y2 << std::endl;
+
+							ok = false;
+							break;
+						}
+					}
+				}
+
+				cnt++;
+			}
+		}
+
+		if (ok)
+			printf("YES\n");
+		else
+			printf("NO\n");
+
+	}
+
+	return 0;
+}

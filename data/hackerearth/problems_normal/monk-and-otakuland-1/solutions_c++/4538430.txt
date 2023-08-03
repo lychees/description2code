@@ -1,0 +1,146 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef struct node
+{
+	int fwd;
+	int back;
+}node;
+int a[200001];
+node st[4*200001];
+int lazy[4*200001];
+void merge(node &s,node &p,node &q)
+{
+	s.fwd=p.fwd+q.fwd;
+	s.back=p.back+q.back;
+	return ;
+}
+void build(int idx,int ss,int se)
+{
+	if(ss==se)
+	{
+		if(a[ss]==1)
+		{
+		st[idx].back=0;
+		st[idx].fwd=1;
+		}
+		else
+		{
+			st[idx].back=1;
+			st[idx].fwd=0;
+		}
+		return;
+	}
+	int mid=(ss+se)>>1;
+	build(2*idx,ss,mid);
+	build(2*idx+1,mid+1,se);
+	merge(st[idx],st[2*idx],st[2*idx+1]);
+}
+node s1;
+node query(int idx,int ss,int se,int l,int r)
+{
+	if(lazy[idx]!=0)
+	{
+		swap(st[idx].fwd,st[idx].back);
+		if(ss!=se)
+		{
+		lazy[2*idx]^=1;
+		lazy[2*idx+1]^=1;
+		}
+		lazy[idx]=0;
+	}
+	if(r<ss || l>se)
+	{
+		return s1;
+	}
+	if(l<=ss && r>=se)
+	{
+		return st[idx];
+	}
+	int mid=(ss+se)>>1;
+	node p=query(2*idx,ss,mid,l,r);
+	node q=query(2*idx+1,mid+1,se,l,r);
+	node res;
+	merge(res,p,q);
+	return res;
+}
+void update(int idx,int ss,int se,int l,int r)
+{
+	if(lazy[idx]==1)
+	{
+		swap(st[idx].back,st[idx].fwd);
+		if(ss!=se)
+		{
+		
+		lazy[2*idx]^=1;
+		lazy[2*idx+1]^=1;
+		}
+		lazy[idx]=0;
+	}
+	if(r<ss || l>se)
+	{
+		return ;
+	}
+	if(l<=ss && r>=se)
+	{
+		swap(st[idx].back,st[idx].fwd);
+		if(ss!=se)
+		{
+		
+		lazy[2*idx]^=1;
+		lazy[2*idx+1]^=1;
+		}
+		return;
+	}
+	int mid=(ss+se)>>1;
+	update(2*idx,ss,mid,l,r);
+	update(2*idx+1,mid+1,se,l,r);
+
+	merge(st[idx],st[2*idx],st[2*idx+1]);
+	return ;
+}
+int main()
+{
+	node x;
+	char ch;
+	int n,m,type,l,r,flag=0,i;
+	cin>>n>>m;
+	for(i=1;i<=n-1;i++)
+	{
+		cin>>ch;
+		if(ch=='>')
+		a[i]=1;
+		else
+		a[i]=0;
+	}
+	build(1,1,n-1);
+	/*for(i=1;i<13;i++)
+	{
+		cout<<i<<" "<<st[i].fwd<<" "<<st[i].back;
+		cout<<"\n";
+	}
+	cout<<"done";*/
+	while(m--)
+	{
+		flag=0;
+		cin>>type>>l>>r;
+		if(l>r)
+		flag=1;
+			if(l>r)
+			swap(l,r);
+			r--;
+		if(type==1)
+		{
+			update(1,1,n-1,l,r);
+		}
+		if(type==2)
+		{
+			x=query(1,1,n-1,l,r);
+			if(flag==1)
+			cout<<x.fwd;
+			else
+			cout<<x.back;
+			cout<<"\n";
+		}
+	}
+	return 0;
+}

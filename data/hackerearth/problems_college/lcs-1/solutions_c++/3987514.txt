@@ -1,0 +1,178 @@
+//  O_o  =>  -_-
+//
+//  Created by shikhar thakur
+//
+
+#include <bits/stdc++.h>
+
+#define ll long long
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define gcd(a,b) __gcd(a,b)
+#define fillm(v,val) memset(v,val,sizeof(v))
+#define NL "\n"
+#define pll pair<ll,ll>
+#define _iosync ios_base::sync_with_stdio(false);cin.tie(0);
+const ll mod = 1000000007ll;
+const double pi = acos(-1.0);
+
+using namespace std;
+
+#define maxn 1000010
+string S;
+int pos[maxn], SA[maxn]; //output
+int lcp[maxn];
+int cnt[maxn], nxt[maxn]; //internal
+bool bh[maxn], b2h[maxn];
+
+bool smaller_first_char(int a, int b)
+{
+	return S[a] < S[b];
+}
+
+void buildSA(int n) // n = length of S
+{
+	for (int i = 0; i < n; ++i)
+		SA[i] = i;
+	sort(SA, SA + n, smaller_first_char);
+	for (int i = 0; i < n; ++i)
+	{
+		bh[i] = i == 0 || S[SA[i]] != S[SA[i - 1]];
+		b2h[i] = false;
+	}
+	for (int h = 1; h < n; h <<= 1)
+	{
+		int buckets = 0;
+		for (int i = 0, j; i < n; i = j)
+		{
+			j = i + 1;
+			while (j < n && !bh[j]) j++;
+			nxt[i] = j;
+			buckets++;
+		}
+		if (buckets == n) break; // We are done! Lucky bastards!
+		for (int i = 0; i < n; i = nxt[i])
+		{
+			cnt[i] = 0;
+			for (int j = i; j < nxt[i]; ++j)
+				pos[SA[j]] = i;
+		}
+		cnt[pos[n - h]]++;
+		b2h[pos[n - h]] = true;
+		for (int i = 0; i < n; i = nxt[i])
+		{
+			for (int j = i; j < nxt[i]; ++j)
+			{
+				int s = SA[j] - h;
+				if (s >= 0)
+				{
+					int head = pos[s];
+					pos[s] = head + cnt[head]++;
+					b2h[pos[s]] = true;
+				}
+			}
+			for (int j = i; j < nxt[i]; ++j)
+			{
+				int s = SA[j] - h;
+				if (s >= 0 && b2h[pos[s]])
+					for (int k = pos[s] + 1; !bh[k] && b2h[k]; k++)
+						b2h[k] = false;
+			}
+		}
+		for (int i = 0; i < n; ++i)
+		{
+			SA[pos[i]] = i;
+			bh[i] |= b2h[i];
+		}
+	}
+	for (int i = 0; i < n; ++i)
+		pos[SA[i]] = i;
+}
+
+void buildLCP(int N) // LCP of ith and i+1th in SA[]
+{
+	for (int i = 0, k = 0; i < N; ++i)
+		if (pos[i] != N - 1)
+		{
+			for (int j = SA[pos[i] + 1]; S[i + k] == S[j + k];)
+				++k;
+			lcp[pos[i]] = k;
+			if (k)
+				--k;
+		}
+}
+
+char buf[maxn];
+int L[maxn], R[maxn], res[maxn];
+vector<int> Qsize;
+
+int main()
+{
+	S = "";
+	int n, sz = 0;
+	cin >> n;
+	for (int i = 1; i <= n; i++)
+	{
+		scanf("%s", &buf);
+		string tmp(buf);
+		S += tmp;
+		S += 'A';
+		int l = strlen(buf) + 1;
+		sz += l;
+	}
+	int q;
+	cin >> q;
+	for (int i = 1; i <= q; i++)
+	{
+		scanf("%s", &buf);
+		string tmp(buf);
+		S += tmp;
+		S += 'B';
+		int l = strlen(buf) + 1;
+		Qsize.pb(l - 1);
+	}
+	n = S.length();
+	buildSA(n);
+	buildLCP(n);
+
+	if (SA[0] < sz)
+		L[0] = mod;
+	else
+		L[0] = 0;
+	for (int i = 1; i < n; i++)
+	{
+		if (SA[i] < sz)
+			L[i] = mod;
+		else
+			L[i] = min(L[i - 1], lcp[i - 1]);
+	}
+
+	if (SA[n - 1] < sz)
+		R[n - 1] = mod;
+	else
+		R[n - 1] = 0;
+	for (int i = n - 1; i >= 0; i--)
+	{
+		if (SA[i] < sz)
+			R[i] = mod;
+		else
+			R[i] = min(R[i + 1], lcp[i]);
+	}
+
+	for (int i = 0; i < n; i++)
+		res[SA[i]] = max(L[i], R[i]);
+
+	int idx = sz;
+	for (int i = 1; i <= q; i++)
+	{
+		int tmp = Qsize[i - 1];
+		int ans = 0;
+		for (int j = idx; j < (idx + tmp); j++)
+			ans = max(ans, res[j]);
+		cout << ans << NL;
+		idx += (tmp + 1);
+	}
+	return 0;
+}

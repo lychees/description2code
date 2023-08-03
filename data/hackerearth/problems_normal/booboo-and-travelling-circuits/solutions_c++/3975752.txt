@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int gr[10010]={};
+int a[2001][10010],b[2001][10010];
+long long mi[10010];
+long long mj[10010];
+long long gm[10010][4];
+
+int main() {
+	gr[1]=1;
+	for(long long i=2;i<10010;i++)
+		if(gr[i]==0){
+			gr[i]=i;
+			for(long long j=i*i;j<10010;j+=i)
+				if(gr[j]==0) gr[j]=i;
+		}
+	//cout<<gr[21]<<"\n";
+	int n,m,p,q,r,s0,x,y,z,w0;
+	cin>>n>>m>>s0>>p>>q>>r>>w0>>x>>y>>z;
+	long long pr=s0;
+	for(long long i=0; i<n*m;i++){
+		a[i/m+1][i%m+1]=(p*((pr*pr)%1000000003)+q*pr+r)%1000000003;
+		pr=a[i/m+1][i%m+1];
+	}
+	pr=w0;
+	for(long long i=0; i<n*m;i++){
+		b[i/m+1][i%m+1]=(x*((pr*pr)%1000000003)+y*pr+z)%1000000003;
+		pr=b[i/m+1][i%m+1];
+	}
+	if(n==1) cout<<0;
+	else{
+		for(int i=1;i<=m;i++)
+			{mi[i]=min(a[n-1][i],b[n-1][i]);
+				//cout<<mi[i]<<"\n";
+			}
+		for(long long i=n-2;i>=1;i--){
+			for(long long j=1;j<=m;j++) {gm[gr[j]][0]=mi[1]; gm[gr[j]][2]=1e18; gm[j][1]=1; gm[j][3]=-1; }
+			for(long long j=2;j<=m;j++) {
+				if(gm[gr[j]][0]>=mi[j]){ 
+					gm[gr[j]][3]=gm[gr[j]][1];
+					gm[gr[j]][2]=gm[gr[j]][0];
+					gm[gr[j]][1]=j;
+					gm[gr[j]][0]=mi[j];
+				}
+				else if(gm[gr[j]][2]>=mi[j]){ 
+					gm[gr[j]][3]=j;
+					gm[gr[j]][2]=mi[j];
+				}
+			}
+
+			for(long long j=1;j<=m;j++){
+				long long temp1=mi[j]+a[i][j];
+				//cout<<temp1<<"\n";
+				long long temp2=1e18;
+				if(j!=gm[gr[j]][1])temp2=gm[gr[j]][0]+b[i][j];
+				else if(j==gm[gr[j]][1]&&gm[gr[j]][3]!=-1) temp2=gm[gr[j]][2]+b[i][j];
+				//cout<<temp2<<"\n";
+				mj[j]=min(temp1,temp2);
+				//cout<<mj[j]<<"\n";
+
+			}
+			for(int j=1;j<=m;j++) (mi[j]=mj[j]);
+		}
+
+		long long ans=mi[1];
+		for(long long i=2;i<=m;i++) if(mi[i]<ans)ans=mi[i];
+		cout<<ans;
+
+	}
+	return 0;
+}

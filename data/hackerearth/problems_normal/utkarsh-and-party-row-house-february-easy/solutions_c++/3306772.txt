@@ -1,0 +1,81 @@
+#include<bits/stdc++.h>
+#define rep(i,start,lim) for(i=start;i<=lim;i++)
+using namespace std;
+long long a[100005],st1[400005],st2[400005];
+long long x,y;
+void construct(long long low,long long high,long long pos)
+{
+	if(low==high)
+	{
+		st1[pos]=a[low]*low,st2[pos]=a[low];
+		return;
+	}
+	long long mid=(low+high)/2;
+	construct(low,mid,2*pos+1);
+	construct(mid+1,high,2*pos+2);
+	st1[pos]=st1[2*pos+1]+st1[2*pos+2],st2[pos]=st2[2*pos+1]+st2[2*pos+2];
+	return ;
+}
+long long getsum1(long long low,long long high,long long pos)
+{
+	if(x<=low && y>=high)
+		return st1[pos];
+	if(x>high||y<low)
+		return 0;
+	long long mid=(high+low)/2;
+	return getsum1(low,mid,2*pos+1)+getsum1(mid+1,high,2*pos+2);
+}
+long long getsum2(long long low,long long high,long long pos)
+{
+	if(x<=low && y>=high)
+		return st2[pos];
+	if(x>high||y<low)
+		return 0;
+	long long mid=(high+low)/2;
+	return getsum2(low,mid,2*pos+1)+getsum2(mid+1,high,2*pos+2);
+}
+void update(long long low,long long high,long long pos)
+{
+	if(x<low||x>high) return;
+	if(low==high)
+	{
+		st1[pos]=a[low]*low;
+		st2[pos]=a[low];
+		return;
+	}
+	long long mid=(low+high)/2;
+	update(low,mid,2*pos+1),update(mid+1,high,2*pos+2);
+	st1[pos]=st1[2*pos+1]+st1[2*pos+2];
+	st2[pos]=st2[2*pos+1]+st2[2*pos+2];
+}
+int main()
+{
+	long long ans,type,k,s,i,n,q,temp;
+	cin>>n>>q;
+	rep(i,1,n) cin>>a[i];
+	construct(1,n,0);
+	while(q--)
+	{
+		cin>>type;
+		if(type==1)
+		{
+			cin>>k>>x>>y;
+			if(k<=x && k<=y)
+				cout<<getsum1(1,n,0)-k*getsum2(1,n,0)<<endl;	
+			else if(k>=y && k>=x)
+				cout<<k*getsum2(1,n,0)-getsum1(1,n,0)<<endl;
+			else
+			{
+				ans=0,temp=y;
+				y=k-1;
+				ans+=(getsum2(1,n,0)*k-getsum1(1,n,0));
+				x=k+1,y=temp;
+				ans+=(getsum1(1,n,0)-getsum2(1,n,0)*k);
+				cout<<ans<<endl;
+			}
+		}
+		if(type==2)
+			cin>>x>>s,a[x]+=s,update(1,n,0);
+	}
+	return 0;
+}

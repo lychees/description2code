@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+
+#define left (node << 1)
+#define right ((node << 1) + 1)
+#define mid (L + R)/2
+vector<int> A, tree;
+int N, Q;
+
+void build(int node, int L, int R)
+{
+    if(L == R)
+        tree[node] = A[L];
+    else
+    {
+        build(left, L, mid);
+        build(right, mid + 1, R);
+        tree[node] = tree[left] + tree[right];
+    }
+}
+
+int query(int node, int L, int R, int rangeL, int rangeR)
+{
+    if(L > rangeR || R < rangeL) return 0;
+    if(L >= rangeL && R <= rangeR) return tree[node];
+    return query(left, L, mid, rangeL, rangeR) + query(right, mid+1, R, rangeL, rangeR);
+}
+
+void update(int node, int L, int R, int val, int pos)
+{
+    if(pos < L || pos > R) return;
+    tree[node] += val - A[pos];
+    if(L == R) return;
+    update(left, L, mid, val, pos);
+    update(right, mid+1, R, val, pos);
+}
+
+int main()
+{
+    int i, x, y, z;
+    cin >> N;
+    for(i = 0; i < N; i++)
+    {
+        cin >> x;
+        A.push_back(x%2);
+    }
+    tree.assign(4*N, 0);
+    build(1, 0, N-1);
+    cin >> Q;
+    for(i = 0; i < Q; i++)
+    {
+        cin >> x;
+        if(x == 0)
+        {
+            cin >> y >> z;
+            y--;
+            update(1, 0, N-1, z%2, y);
+            A[y] = z%2;
+        }
+        else if(x == 1)
+        {
+            cin >> y >> z;
+            y--; z--; if(y > z) swap(y,z);
+            cout << z - y + 1 - query(1, 0, N-1, y, z) << "\n";
+        }
+        else
+        {
+            cin >> y >> z;
+            y--; z--; if(y > z) swap(y,z);
+            cout << query(1, 0, N-1, y, z) << "\n";
+        }
+    }
+}

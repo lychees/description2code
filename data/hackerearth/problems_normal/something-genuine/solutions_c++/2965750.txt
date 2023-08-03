@@ -1,0 +1,181 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+struct node {
+    ll su=0;
+    ll suSq=0;
+    int n=0;
+};
+struct SegmentTreeRR {
+    int n;
+    int size;
+
+    vector<node> tree;
+    vi lazy;
+    SegmentTreeRR ( int _n ) {
+        n=1;
+        while ( n<_n ) n*=2;
+        size=2*n;
+        tree=vector<node> ( size );
+        lazy=vi ( n,0 );
+    }
+    bool isLeaf ( int no ) {
+        return no>=n;
+    }
+    void lazyUpdate ( int no ) {
+        int no1=2*no;
+        int no2=no1+1;
+        ll x=lazy[no];
+        node &n1=tree[no1];
+        node &n2=tree[no2];
+        int l=tree[no].n/2;
+        n1.n=l;
+        n2.n=l;
+        n1.suSq+=2*n1.su*x+l*x*x;
+        n1.su+=l*x;
+        n2.suSq+=2*n2.su*x+l*x*x;
+        n2.su+=l*x;
+        if ( !isLeaf ( no1 ) ) lazy[no1]+=x;
+        if ( !isLeaf ( no2 ) ) lazy[no2]+=x;
+        lazy[no]=0;
+
+
+    }
+    static ll p2 ( int n ) {
+        return ( ll ) n* ( n+1 ) /2;
+
+    }
+    node merge ( const node &n1, const node &n2 ) {
+        node n;
+        n.suSq=n1.suSq+n2.suSq;
+        n.su=n1.su+n2.su;
+        n.n=n1.n+n2.n;
+        return n;
+
+    }
+    void merge ( int no ) {
+        tree[no]=merge ( tree[2*no],tree[2*no+1] );
+
+
+    }
+    void  update ( int no, int L, int R, int l, int r , int val ) {
+        if ( l<=L && R<=r ) {
+            int len=R-L;
+            tree[no].n=len;
+            tree[no].suSq+=2*tree[no].su*val+val*val*len;
+            tree[no].su+=len*val;
+            if ( !isLeaf ( no ) ) lazy[no]+=val;
+            return;
+        }
+
+        int s= ( L+R ) >>1;
+        if ( lazy[no] ) {
+            lazyUpdate ( no );
+        }
+
+        if ( l<s ) update ( 2*no, L,s,l,r ,val );
+        if ( r>s ) update ( 2*no+1,s,R,l,r ,val );
+        merge ( no );
+
+    }
+    void update ( int l, int r ,int v ) {
+        update ( 1,0,n,l,r,  v );
+
+    }
+    node query ( int no, int L, int R,int l , int r ) {
+        if ( l<=L && R<=r ) {
+            return tree[no];
+        }
+        assert ( !isLeaf ( no ) );
+        int s= ( L+R ) >>1;
+        if ( lazy[no] ) {
+            lazyUpdate ( no );
+        }
+
+        if ( l<s ) {
+            node val1= query ( 2*no,L,s,l,r );
+            if ( r>s ) {
+                node val2=  query ( 2*no+1,s,R,l,r );
+                val1=merge ( val1,val2 );
+            }
+            return val1;
+        } else  return  query ( 2*no+1,s,R,l,r );
+
+    }
+    ll query ( int l,int r ) {
+        return query ( 1,0,n,l,r ).suSq;
+    }
+
+};
+const int MOD=1000000007;
+int main() {
+    ios_base::sync_with_stdio ( false );
+    int n;
+    cin>>n;
+    SegmentTreeRR st ( n );
+    vi a ( n );
+    cin>>a;
+    map<int,int> cLast;
+    vi last ( n,-1 );
+    rep ( i,n ) {
+        int x=a[i];
+        if ( cLast.count ( x ) ) {
+            last[i]=cLast[x];
+        }
+        cLast[x]=i;
+    }
+    unsigned long long  tot=0;
+    rep ( i,n ) {
+        int b=last[i]+1;
+        st.update(b,i+1,1);
+        tot=(tot+st.query(0,i+1))%MOD;
+
+    }
+    cout<<tot<<endl;
+}

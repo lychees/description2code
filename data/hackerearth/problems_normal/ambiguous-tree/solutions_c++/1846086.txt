@@ -1,0 +1,143 @@
+#include <bits/stdc++.h>
+#define vec vector
+#define sz(c) int(c.size())
+#define FOR(i, a, b) for (int i = a; i < (b); ++i)
+#define DOWN(i, a, b) for(int i = (a) - 1; i >= (b); --i)
+using namespace std;
+const char eol = '\n';
+typedef long long int64;
+typedef pair<int,int> pii;
+typedef vec<int> vi;
+typedef vec<int64> vi64;
+
+int const LOG = 18;
+
+int n;
+vec<vi> adj;
+vi dep;
+vi64 sub;
+vec<vi> up;
+vec<vi64> dup;
+
+void dfs(int v, int p = -1, int d = 0) {
+  dep[v] = d;
+  sub[v] = 1;
+  for (int u : adj[v]) {
+    if (u == p) continue;
+    dfs(u, v, d + 1);
+    sub[v] += sub[u];
+  }
+}
+
+void build(int v, int p = -1) {
+  if (p != -1) {
+    up[v][0] = p;
+    int64 t = sub[p] - sub[v];
+    dup[v][0] = t * (t - 1) / 2;
+  }
+  FOR(i, 0, LOG - 1) {
+    if (up[v][i] == -1) continue;
+    int u = up[v][i];
+    if (up[u][i] != -1) {
+      up[v][i + 1] = up[u][i];
+      dup[v][i + 1] = dup[v][i] + dup[u][i];
+    }
+  }
+
+  for (int u : adj[v]) {
+    if (u != p) build(u, v);
+  }
+}
+
+int lca(int u, int v) {
+  if (dep[u] > dep[v]) swap(u, v);
+  DOWN(i, LOG, 0) {
+    int t = up[v][i];
+    if (t != -1 && dep[t] >= dep[u]) v = t;
+  }
+
+  if (u == v) return u;
+
+  DOWN(i, LOG, 0) {
+    if (up[u][i] != up[v][i]) {
+      u = up[u][i];
+      v = up[v][i];
+    }
+  }
+
+  assert(up[u][0] == up[v][0]);
+  return up[u][0];
+}
+
+int64 get(int v, int p) {
+  int64 res = 0;
+  DOWN(i, LOG, 0) {
+    int t = up[v][i];
+    if (t != -1 && dep[t] > dep[p]) {
+      res += dup[v][i];
+      v = up[v][i];
+    }
+  }
+  return res;
+}
+
+int64 get(int x, int y, int p) {
+  DOWN(i, LOG, 0) {
+    int t = up[x][i];
+    if (t != -1 && dep[t] > dep[p]) x = t;
+    t = up[y][i];
+    if (t != -1 && dep[t] > dep[p]) y = t;
+  }
+  int64 t = n;
+  if (x != p) t -= sub[x];
+  if (y != p && y != x) t -= sub[y];
+  return t * (t - 1) / 2;
+}
+
+int main() {
+  ios_base::sync_with_stdio(false);
+  cin.tie(0);
+  cout << fixed << setprecision(10);
+
+  cin >> n;
+  adj = vec<vi>(n);
+  FOR(i, 0, n - 1) {
+    int a, b;
+    cin >> a >> b;
+    a -= 1;
+    b -= 1;
+    adj[a].push_back(b);
+    adj[b].push_back(a);
+  }
+
+  sub = vi64(n);
+  dep = vi(n);
+  dfs(0);
+
+  //FOR(i, 0, n) cerr << sub[i] << " "; cerr << endl;
+  //FOR(i, 0, n) cerr << dep[i] << " "; cerr << endl;
+  
+  up = vec<vi>(n, vi(LOG, -1));
+  dup = vec<vi64>(n, vi64(LOG));
+  build(0);
+
+  int Q;
+  cin >> Q;
+  while (Q--) {
+    int x, y;
+    cin >> x >> y;
+    x -= 1;
+    y -= 1;
+    int p = lca(x, y);
+    //cerr << x + 1 << " " << y + 1 << " " << p + 1 << endl;
+    int64 res = int64(n) * (n - 1) / 2;
+    res -= get(x, p) + get(y, p);
+    res -= get(x, y, p);
+    if (x != p) res -= sub[x] * (sub[x] - 1) / 2;
+    if (y != p) res -= sub[y] * (sub[y] - 1) / 2;
+    cout << res << eol;
+    //cerr << endl;
+  }
+
+  return 0;
+}

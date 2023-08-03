@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+#define ll long long
+#define MOD ((ll)(1e9 + 7))
+using namespace std;
+int n, t, k;
+int v[50010], size[50010];
+vector<int> e[50010];
+ll dp[50010][101];
+ll ans;
+void dfs(int x, int p)
+{
+    size[x] = 1;
+    fill(dp[x], dp[x] + k + 1, 0);
+    if(v[x])
+        dp[x][1] = 1;
+    else dp[x][0] = 1;
+    for(auto &j: e[x])
+    {
+        if(j != p)
+        {
+            dfs(j, x);
+            size[x] += size[j];
+            for(int f=k; f>=0; f--)
+            {
+                for(int g=k-f; g>=0; g--)
+                {
+                    dp[x][f+g] += dp[x][f] * dp[j][g];
+                    dp[x][f+g] %= MOD;
+                }
+            }
+        }
+    }
+    ans += dp[x][k];
+}
+int main()
+{
+    scanf("%d", &t);
+    while(t--)
+    {
+        scanf("%d%d", &n, &k);
+        for(int i=0; i<n; i++)
+            scanf("%d", v + i);
+        for(int i=0; i<n; i++)
+            e[i].clear();
+        for(int i=1; i<n; i++)
+        {
+            int a, b;
+            scanf("%d%d", &a, &b);
+            a--, b--;
+            e[a].push_back(b);
+            e[b].push_back(a);
+        }
+        dfs(0, 0);
+        cout << (ans % MOD) << "\n";
+        ans = 0;
+    }
+    return 0;
+}

@@ -1,0 +1,278 @@
+
+#include <iostream>
+#include <cstdio>
+#include <vector>
+using namespace std;
+
+vector<vector<int> > T;
+
+
+template<typename value_type> class RMQ {
+    vector<int> a;
+    vector<vector<value_type> > rmq;
+    int log2(int x)
+    {
+        int i = 0, n = 1;
+        while (x >= n) {
+            i++;
+            n <<= 1;
+        }
+        i--;
+        return i;
+    }
+    int size;
+    public:
+    RMQ()
+    {}
+    RMQ(vector<value_type> &a) : a(a)
+    {
+        size = log2(a.size()) + 1;
+        rmq.resize(size, vector<value_type> (a.size()));
+        construct(a);
+    }
+    void construct(vector<value_type> &array)
+    {
+        for (int i = 0; i < array.size(); i++)
+            rmq[0][i] = i;
+        for (int k = 1; k < size; k++) {
+            for (int i = 0; i < a.size(); i++) {
+                int length = 1 << (k - 1);
+                if (i + length >= a.size() || a.at(rmq[k - 1][i]) < a.at(rmq[k - 1][i + length]))
+                    rmq[k][i] = rmq[k - 1][i];
+                else
+                    rmq[k][i] = rmq[k - 1][i + length];
+            }
+        }
+
+        /*for (int k = 0; k < size; k++) {
+            for (int i = 0; i < a.size(); i++)
+                cerr << rmq[k][i] << " ";
+            cerr << endl;
+        }*/
+    }
+    int query(int i, int j)
+    {
+        int range = j - i + 1;
+        int logr = log2(range);
+        if (a[rmq[logr][i]] < a[rmq[logr][j - (1 << logr) + 1]])
+            return rmq[logr][i];
+        else
+            return rmq[logr][j - (1 << logr) + 1];
+    }
+};
+
+class LCA {
+    typedef vector<vector<int> > tree;
+    vector<int> E, H, L;
+    RMQ<int> R;
+    tree T;
+    vector<bool> isvisited;
+    public:
+        void euler_tour(int node, int level)
+        {
+            isvisited[node] = 1;
+            E.push_back(node);
+            L.push_back(level);
+            for (vector<int>::iterator i = T[node].begin(); i != T[node].end(); i++) {
+                if (!isvisited[*i]) {
+                    euler_tour(*i, level + 1);
+                    E.push_back(node);
+                    L.push_back(level);
+                }
+            }
+        }
+        LCA(tree &T, int root): T(T)
+        {
+            isvisited.resize(T.size());
+            H.resize(T.size(), -1);
+            euler_tour(root, 0);
+            for (int i = 0; i < E.size(); i++) {
+                if (H[E[i]] == -1)
+                    H[E[i]] = i;
+            }
+            R = RMQ<int>(L);
+        }
+        int lca(int a, int b)
+        {
+            if (H[a] > H[b])
+                swap(a, b);
+            int index = R.query(H[a], H[b]);
+            return E[index];
+        }
+};
+
+#define MAX 100005
+bool isvisited[MAX];
+int st_size[MAX]; // subtree_size
+int lvl[MAX]; // level of node
+int parent[MAX]; //parent of the node
+
+
+long long prefix[MAX];
+
+int calc_size(int u, int level, int p)
+{
+    isvisited[u] = 1;
+    lvl[u] = level;
+    parent[u] = p;
+
+    st_size[u] = 1;
+    for (int i = 0; i < T[u].size(); i++) {
+        int v = T[u][i];
+        if (!isvisited[v]) {
+            st_size[u] += calc_size(v, level+1, u);
+        }
+    }
+    return st_size[u];
+}
+
+void dfs(int u, int p)
+{
+    if (p != -1)
+        prefix[u] = prefix[p];
+    prefix[u] += (long long)(st_size[p] - st_size[u]) * st_size[u];
+    for (int i = 0; i < T[u].size(); i++) {
+        int v = T[u][i];
+        if (v != p) {
+            dfs(v, u);
+        }
+    }
+}
+
+
+
+class levelAncestor
+{
+	private:
+		vector<size_t> tree;
+		vector<vector<size_t> > LA;
+
+	public:
+		levelAncestor()
+		{}
+		levelAncestor(size_t size)
+		{
+			assign(size);
+		}
+		template<class value> levelAncestor(const vector<value> &T)
+		{
+			assign(T);
+		}
+
+		void assign(size_t size)
+		{
+			clear();
+			tree.resize(size);
+			for(size_t i=0;i<tree.size();i++)
+				tree[i]=i;
+		}
+
+		template<class value> void assign(const vector<value> &T)
+		{
+			clear();
+			tree.resize(T.size());
+			for(size_t i=0;i<tree.size();i++)
+				tree[i]=T[i];
+		}
+
+		void process()
+		{
+			size_t lgn=0;
+			for(size_t sz=tree.size();sz;sz>>=1,lgn++);
+
+			LA.resize(lgn,vector<size_t>(tree.size()));
+
+			for(size_t j=0;j<LA[0].size();j++)
+				LA[0][j]=tree[j];
+
+			for(size_t i=1;i<LA.size();i++)
+				for(size_t j=0;j<LA[i].size();j++)
+					LA[i][j]=LA[i-1][LA[i-1][j]];
+		}
+
+		size_t& operator [](size_t pos)
+		{
+			return tree[pos];
+		}
+
+		size_t query(size_t node,size_t level) const
+		{
+			int k=0;
+			int current=node;
+			for(;level;level>>=1,k++)
+				if(level&1)
+					current=LA[k][current];
+			return current;
+		}
+
+		size_t size() const
+		{
+			return tree.size();
+		}
+		void clear()
+		{
+			tree.clear();
+		}
+		~levelAncestor()
+		{
+			clear();
+		}
+};
+
+int main()
+{
+    int n;
+    scanf("%d", &n);
+    T.resize(n);
+    for (int i = 0; i < n-1; i++) {
+        int a, b;
+        scanf("%d%d", &a, &b);
+        a--, b--;
+        T[a].push_back(b);
+        T[b].push_back(a);
+    }
+    calc_size(0, 0, 0);
+    dfs(0, -1);
+    levelAncestor H(n);
+    for (int i = 0; i < n; i++) {
+        H[i] = parent[i];
+    }
+    H.process();
+    LCA L(T, 0);
+    int q;
+    scanf("%d", &q);
+    while (q--) {
+        int u, v;
+        scanf("%d%d", &u, &v);
+        u--, v--;
+        int lca_xy = L.lca(u, v);
+        int levelDiffU = lvl[u] - lvl[lca_xy];
+        int levelDiffV = lvl[v] - lvl[lca_xy];
+        int sizeU = (levelDiffU == 0)? 0: st_size[H.query(u, levelDiffU - 1)];
+        int sizeV = (levelDiffV == 0)? 0: st_size[H.query(v, levelDiffV - 1)];
+
+        long long pairsA = (long long) (n - sizeU) * sizeU;
+        long long pairsB = (long long) (n - sizeV - sizeU) * sizeV;
+
+        long long pairsC = (levelDiffU == 0)? 0: prefix[u] - prefix[H.query(u, levelDiffU - 1)];
+        long long pairsD = (levelDiffV == 0)? 0: prefix[v] - prefix[H.query(v, levelDiffV - 1)];
+        /*int uAncestorParent = parent[u];
+        int uAncestor = u;
+        while (uAncestor != lca_xy && uAncestorParent != lca_xy) {
+            pairsC += (st_size[uAncestorParent] - st_size[uAncestor]) * st_size[uAncestor];
+            uAncestor = uAncestorParent;
+            uAncestorParent = parent[uAncestorParent];
+        }
+
+        long long pairsD = 0;
+        uAncestorParent = parent[v];
+        uAncestor = v;
+        while (uAncestor != lca_xy && uAncestorParent != lca_xy) {
+            pairsD += (st_size[uAncestorParent] - st_size[uAncestor]) * st_size[uAncestor];
+            uAncestor = uAncestorParent;
+            uAncestorParent = parent[uAncestorParent];
+        }*/
+
+        printf("%lld\n", pairsA + pairsB + pairsC + pairsD);
+    }
+}

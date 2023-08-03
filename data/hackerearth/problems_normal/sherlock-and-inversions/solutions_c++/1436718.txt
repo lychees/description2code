@@ -1,0 +1,123 @@
+//Aayush Agarwal
+ 
+#include<bits/stdc++.h>
+using namespace std;
+ 
+#define fOr(i,n) for(int i=0;i<n;i++)
+#define For(i,n) for(int i=1;i<=n;i++)
+#define ss(a) scanf("%s",a)
+#define si(a) scanf("%d",&a)
+#define sl(a) scanf("%lld",&a)
+#define pi(a) printf("%d ",a)
+#define pl(a) printf("%lld ",a)
+#define ps(a) printf("%s ",a)
+#define nl printf("\n")
+#define ll long long int
+#define ull unsigned long long int
+#define MOD 1000000007
+#define INF INT_MAX
+#define two(X) (1<<(X))
+#define twoL(X) (((int64)(1))<<(X))
+#define contain(S,X) (((S)&two(X))!=0)
+#define containL(S,X) (((S)&twoL(X))!=0)
+#define imax numeric_limits<int>::max()
+#define imin numeric_limits<int>::min()
+#define lmax numeric_limits<ll>::max()
+#define lmin numeric_limits<ll>::min()
+const double eps=1e-9;
+const double PI=2*acos(0.0);
+#define pb(a) push_back(a)
+#define mp(a,b) make_pair(a,b)
+
+// Taken from Niyaz nigmatulin solution of Divide by zero IITI in codechef
+
+const int CO = 320;
+int n;
+const int N = 1 << 17;
+ 
+int qb[N], qa[N], a[N], f[N], id[N], b[N];
+long long pans[N];
+ 
+bool cq(int i, int j) 
+{
+	int c = qa[i] / CO - qa[j] / CO;
+	if (c != 0) return c < 0;
+	return qb[i] < qb[j];
+}
+ 
+void add(int x, int y) 
+{
+	for (int i = x; i < n; i |= i + 1) f[i] += y;
+}
+ 
+int get(int x)
+{
+	int ret = 0;
+	for (int i = x; i >= 0; i = (i & (i + 1)) - 1) ret += f[i];
+	return ret;
+}
+ 
+int main() 
+{
+	scanf("%d", &n);
+	int q;
+	scanf("%d", &q);
+	for (int i = 0; i < n; i++) 
+	{
+		scanf("%d", a + i);
+		b[i] = a[i];
+	}
+	std::sort(b, b + n);
+	int cc = std::unique(b, b + n) - b;
+	for (int i = 0; i < n; i++) 
+	  a[i] = std::lower_bound(b, b + cc, a[i]) - b;
+	
+	for (int i = 0; i < q; i++) 
+	{
+		scanf("%d%d", qa + i, qb + i);
+		--qa[i];
+		--qb[i];
+		id[i] = i;
+	}
+	std::sort(id, id + q, cq);
+	int cl = 0;
+	int cr = -1;
+    long long ans = 0;
+	for (int it = 0; it < q; it++) 
+	{
+		int i = id[it];
+		while (cr < qb[i]) 
+		{
+			ans += (cr - cl + 1) - get(a[cr + 1]);
+			++cr;
+			add(a[cr], 1);
+		}
+		// printf("%d\n", (int) ans);
+		while (cl > qa[i])
+		{
+			ans += get(a[cl - 1] - 1);
+			--cl;
+			add(a[cl], 1);
+		}
+		// printf("%d\n", (int) ans);
+		while (cr > qb[i]) 
+		{
+			add(a[cr], -1);
+			--cr;
+			ans -= (cr - cl + 1) - get(a[cr + 1]);
+		}
+		// printf("%d\n", (int) ans);
+		while (cl < qa[i]) 
+		{
+			add(a[cl], -1);
+			++cl;
+			ans -= get(a[cl - 1] - 1);
+		}
+		// printf("%d\n", (int) ans);
+		pans[i] = ans;
+	}
+	for (int i = 0; i < q; i++) 
+	{
+		printf("%lld\n", pans[i]);
+	}
+}

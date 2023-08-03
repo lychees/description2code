@@ -1,0 +1,62 @@
+#include <iostream>
+#include<vector>
+using namespace std;
+
+bool dfs(int currColor, int i, int n, vector<vector<bool>>& isFriend, vector<bool> &visited, vector<int> & color){
+		if(visited[i]){
+			if(currColor!=color[i])
+				return false;
+			return true;
+		}
+		color[i]=currColor; 
+		visited[i]=true;
+		for(int j=0; j<n; j++)
+			if(isFriend[i][j])
+				if(!dfs(currColor^1, j, n, isFriend, visited, color))
+					return false;
+		return true;
+}
+int main()
+{
+	int n, m, x, y; 
+	cin >> n >> m; 
+	int inv=0, currInv, currCount;
+	vector<char> gender (n); 
+	vector<vector<bool>> isFriend(n, vector<bool>(n, false));
+	vector<int> color;
+	vector<bool> visited (n, false);
+	for(int i=0; i<n; i++)
+		cin >> gender[i]; 
+	for(int i=0; i<m; i++){
+		cin >> x >> y;
+		isFriend[x-1][y-1]=true; 
+		isFriend[y-1][x-1]=true;
+	}
+	for(int i=0; i<n; i++){
+		if(!visited[i]){
+			color = vector<int>(n, -1); 
+			color[i]=gender[i]=='B'?0:1;
+			visited[i]=true;
+			for(int j=0; j<n; j++){
+				if(isFriend[i][j])
+					if(!dfs(color[i]^1, j, n, isFriend, visited, color)){
+						cout << "Not possible" << endl;
+						return 0;
+					}
+			}
+			currCount=0; 
+			currInv=0; 
+			for(int i=0; i<n; i++)
+				if(color[i]>=0){
+					currCount++; 
+					if((gender[i]=='B'&&color[i]==1 ) || (gender[i]=='G'&&color[i]==0))
+						currInv++;
+				}
+			currInv = min(currInv, currCount-currInv);
+			inv+=currInv;
+		}
+	}
+
+    cout << inv << endl;
+    return 0;
+}

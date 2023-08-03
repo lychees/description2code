@@ -1,0 +1,61 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<vector>
+#include<queue>
+#include<utility>
+using namespace std;
+#define MAX 1000000000
+int main(){
+    int t,n,k,l,v,a,b,c,i,j,ver,wt;
+    pair<int,int> top;
+    vector<vector<pair<int,int> > > adj;
+    priority_queue<pair<int,int>,vector<pair<int,int> >,greater<pair<int,int> > > pq;
+    int* dist;
+    scanf("%d",&t);
+    while(t--){
+        scanf("%d%d",&v,&k);
+        l = v;
+        adj.clear();
+        adj.resize(v+1);
+        while(!pq.empty()) pq.pop();
+        dist = (int *)malloc((v+10)*sizeof(int));
+        for(i=1;i<=v;i++) dist[i] = MAX ;
+        for(i=0;i<k;i++){
+            scanf("%d%d%d",&a,&b,&c);
+            for(j=a;j<=b;j++){
+                adj[a].push_back(make_pair(j,c));
+                adj[j].push_back(make_pair(a,c));
+            }
+        }
+        pq.push(make_pair(0,0));
+        dist[0] = 0 ;
+        while(!pq.empty()){
+            top = pq.top();
+            pq.pop();
+            ver = top.second ;
+            wt = -top.first ;
+            if(wt == dist[ver]){
+                // Time is degree of a vertex
+                // Total Number of times executed
+                // Sum of degree of all vertices O(E) outgoing edges only
+                for(i=0;i<adj[ver].size();i++){
+                    v = adj[ver].at(i).first;
+                    wt = adj[ver].at(i).second;
+                    if(dist[v] > (dist[ver]+wt)){
+                        dist[v] = dist[ver]+wt ; // Relaxation
+                        pq.push(make_pair(-dist[v],v));
+                        // AT most E decrease keys
+                    }
+                }
+                // Time = |V| Extract Mins + |E|Decrease Keys
+                // Array  = |V|^2
+                // Binary Heap (|V| + |E|)log(V)
+                // Fibonacci Heap  |E| + |V|log(V)
+                // Same for PRIMS algorithm
+            }
+        }
+        if(dist[l] >= MAX) printf("-1\n");
+        else printf("%d\n",dist[l]);
+    }
+    return 0;
+}

@@ -1,0 +1,143 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define mem(a, x) memset(a, x, sizeof(a))
+#define all(a) a.begin(), a.end()
+#define uni(a) a.erase(unique(all(a)), a.end())
+#define count_bits(x) __builtin_popcount(x)
+#define count_bitsll(x) __builtin_popcountll(x)
+#define least_bits(x) __builtin_ffs(x)
+#define least_bitsll(x) __builtin_ffsll(x)
+#define most_bits(x) 32 - __builtin_clz(x)
+#define most_bitsll(x) 64 - __builtin_clz(x)
+
+vector<string> split(const string &s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c)) v.push_back(x);
+	return v;
+}
+
+#define error(args...) { vector<string> _v = split(#args, ','); err(_v.begin(), args); }
+
+void err(vector<string>::iterator it) {}
+
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << '\n';
+	err(++it, args...);
+}
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {while (b != 0) {T c = a; a = b; b = c % b;} return a;}
+
+
+typedef vector<ll> vl;
+typedef vector<vl> Mat;
+const int N = 41;
+Mat cached[N], iden, tmp(9, vl(9));
+
+char pb[20];
+
+template<class T> inline void readNum(T &n) {
+    n = 0;
+    int c = getchar_unlocked();
+    while (c < '0' || c > '9')
+        c = getchar_unlocked();
+    
+    while (c >= '0' && c <= '9') {
+        n = (n << 3) + (n << 1) + c - '0';
+        c = getchar_unlocked();
+    }
+}
+
+template<class T> inline void putNum(T n, char d) {
+    if (!n) putchar_unlocked('0');
+    int pi = 0;
+    while (n) {
+        pb[pi++] = (n % 10) + '0';
+        n /= 10;
+    }
+    while (pi) {
+        putchar_unlocked(pb[--pi]);
+    }
+    putchar_unlocked(d);
+}
+
+
+inline void unit(Mat &data) {
+    repu(i, 0, 9) data[i][i] = 1;
+}
+
+inline Mat mul(Mat& x, Mat& y) {
+    repu(i, 0, 9) repu(j, i, 9) {
+    	ll z = 0;
+    	repu(k, 0, 9) {
+    		if (k < i) z += x[k][i] * y[k][j];
+    		else if (k < j) z += x[i][k] * y[k][j];
+    		else z += x[i][k] * y[j][k];
+    	}
+    	if (z >= MOD) z %= MOD;
+    	tmp[i][j] = z;
+    }
+    
+    return tmp;
+}
+
+inline Mat pow(ll n) {
+    Mat ans = iden;
+    repu(i, 0, N) {
+    	if (n >> i & 1) ans = mul(ans, cached[i]);
+    }
+    return ans;
+}
+
+inline int f(int i, int j, int x, int y) {
+	return tabs(i - x) + tabs(j - y) + tabs(i + j - x - y);
+}
+
+
+int main(int argc, char *argv[]) {
+    //ios_base::sync_with_stdio(false);
+    int ntest, a[3][3];
+    ll n, ans;
+    
+    Mat base(9, vl(9, 0));
+    repu(i, 0, 3) repu(j, 0, 3) repu(x, 0, 3) repu(y, 0, 3) {
+    	base[i * 3 + j][x * 3 + y] = f(i, j, x, y);
+    }
+    
+    iden.resize(9, vl(9));
+    unit(iden);
+    
+    cached[0] = base;
+    repu(i, 1, N) cached[i] = mul(cached[i - 1], cached[i - 1]);
+
+    readNum(ntest);
+    while (ntest--) {
+    	readNum(n);
+    	repu(i, 0, 3) repu(j, 0, 3) readNum(a[i][j]);
+    	Mat res = pow(n);
+    	//repu(i, 0, 9) repu(j, 0, 9) putNum(res[i][j], (j == 8) ? '\n' : ' ');
+    	repu(i, 0, 9) {
+    		ans = 0;
+    		repu(j, 0, 9) {
+    			if (i <= j) ans += res[i][j] * a[j / 3][j % 3];
+    			else ans += res[j][i] * a[j / 3][j % 3];
+    		}
+    		if (ans >= MOD) ans %= MOD;
+    		putNum(ans, (i % 3 == 2) ? '\n' : ' ');
+    	}
+    }
+    return 0;
+}

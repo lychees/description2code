@@ -1,0 +1,165 @@
+#include<cstdio>
+#include<vector>
+#include<map>
+#include<set>
+#include<algorithm>
+using namespace std;
+
+const int go[4][2] = {0, 1, 1, 0, 0, -1, -1, 0};
+
+int n, m, x_1, y_1, x_2, y_2;
+int min_n, min_m, max_n, max_m;
+int dir;
+int x[111111];
+int y[111111];
+
+set<pair<int, int> > block;
+set<long long> p;
+map<int, vector<int> > xlist, ylist;
+
+void init() {
+	vector<int> v; 
+	block.clear();
+	xlist.clear();
+	ylist.clear();
+	for(int i=0;i<m;i++) {
+		block.insert(make_pair(x[i], y[i]));
+		
+		if(xlist.find(x[i])!=xlist.end()) xlist[x[i]].push_back(y[i]);
+		else {
+			v.clear();
+			v.push_back(y[i]);
+			xlist[x[i]] = v;
+		}
+		if(ylist.find(y[i])!=ylist.end()) ylist[y[i]].push_back(x[i]);
+		else {
+			v.clear();
+			v.push_back(x[i]);
+			ylist[y[i]] = v;
+		}
+	}
+}
+
+void go_along(int &x, int &y, int d) {
+	if(d==0) {
+		vector<int> &v = xlist[x];
+		int pos = upper_bound(v.begin(), v.end(), y)-v.begin();
+		if(pos==v.size()) y=max_m;
+		else y=v[pos]-1;
+	}else if(d==1) {
+		vector<int> &v = ylist[y];
+		int pos = upper_bound(v.begin(), v.end(), x)-v.begin();
+		if(pos==v.size()) x=max_n;
+		else x=v[pos]-1;
+	}else if(d==2) {
+		vector<int> &v = xlist[x];
+		int pos = upper_bound(v.begin(), v.end(), y)-v.begin();
+		if(pos==0) y=min_m;
+		else y=v[pos-1]+1;
+	}else {
+		vector<int> &v = ylist[y];
+		int pos = upper_bound(v.begin(), v.end(), x)-v.begin();
+		if(pos==0) x=min_n;
+		else x=v[pos-1]+1;
+	}
+	dir = (d+3)%4;
+}
+
+bool is_wall(int x, int y) {
+	return x<min_n||y<min_m||x>max_n||y>max_m;
+}
+
+bool is_block(int x, int y) {
+	return block.find(make_pair(x, y)) != block.end();
+}
+
+bool is_empty_cell(int x, int y) {
+	return !is_wall(x, y) && !is_block(x, y);
+}
+
+long long encode(int x, int y, int dir) {
+	return ((long long)(x-1)*n+(y-1))*4+dir;
+}
+
+pair<int, int> calc(int x0, int y0) {
+	int x_last = x0, y_last = y0;
+	
+	go_along(x0, y0, 0); //right
+	
+	while(1) {
+		p.clear();
+		while(p.find(encode(x0, y0, dir)) == p.end()) {
+			//printf("%d %d %d\n", x0, y0, dir);
+			p.insert(encode(x0, y0, dir));
+			
+			int x_hand = x0+go[(dir+1)%4][0], y_hand = y0+go[(dir+1)%4][1];
+			if(is_wall(x_hand, y_hand)) {
+				go_along(x0, y0, dir);
+				continue;
+			}
+			
+			if(dir==0) {
+				if(is_empty_cell(x0, y0+1)&&is_empty_cell(x0+1, y0+1)) {
+					x0++; y0++;dir=1;
+				} 
+				else if(is_empty_cell(x0, y0+1)) y0++;
+				else if(is_empty_cell(x0-1, y0)) {
+					dir=3;
+				} 
+				else dir=2;
+			} 
+			else if(dir==1) {
+				if(is_empty_cell(x0+1, y0)&&is_empty_cell(x0+1, y0-1)) {
+					x0++; y0--;dir=2;
+				} 
+				else if(is_empty_cell(x0+1, y0)) x0++;
+				else if(is_empty_cell(x0, y0+1)) {
+					dir=0;
+				} 
+				else dir=3;
+			}
+			else if(dir==2) {
+				if(is_empty_cell(x0, y0-1)&&is_empty_cell(x0-1, y0-1)) {
+					x0--; y0--;dir=3;
+				} 
+				else if(is_empty_cell(x0, y0-1)) y0--;
+				else if(is_empty_cell(x0+1, y0)) {
+					dir=1;
+				} 
+				else dir=0;
+			}
+			else {
+				if(is_empty_cell(x0-1, y0)&&is_empty_cell(x0-1, y0+1)) {
+					x0--; y0++;dir=0;
+				} 
+				else if(is_empty_cell(x0-1, y0)) x0--;
+				else if(is_empty_cell(x0, y0-1)) {
+					dir=2;
+				} 
+				else dir=1;
+			}
+		}
+		
+		long long val = (*(p.rbegin()))/4;
+		x0=val/n+1;y0=val%n+1;
+		if(x0==x_last && y0==y_last) break;
+		x_last = x0; y_last = y0;
+	}
+	
+	//printf("%d %d\n", x0, y0);
+	return make_pair(x0, y0);
+}
+
+int main() {
+	scanf("%d%d%d%d%d%d", &n, &m, &x_1, &y_1, &x_2, &y_2);
+	min_n = min(x_1, x_2), max_n = max(x_1, x_2);
+	min_m = min(y_1, y_2), max_m = max(y_1, y_2);
+	for(int i=0;i<m;i++)
+		scanf("%d%d", &x[i], &y[i]);
+	init();
+	
+	if(is_empty_cell(x_1, y_1) && is_empty_cell(x_2, y_2) && calc(x_1, y_1)==calc(x_2, y_2)) printf("YAY MACHAU\n");
+	else printf("MAGGU FOREVER\n");
+	
+	return 0;
+}

@@ -1,0 +1,107 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<vector>
+#include<algorithm>
+using namespace std;
+#define MAX 10005   //limit is 10^8
+#define LL long long int
+#define f_in(st) freopen(st,"r",stdin);
+#define f_out(st) freopen(st,"w",stdout);
+int prime[MAX],Size=0;
+int real_prime[MAX];
+void seive()
+{
+    int i,j;
+    for(i=0;i<MAX;i++)
+		prime[i]=1;
+	for(i=2;i<MAX;i+=2)
+		prime[i]=0;
+	for(i=3;i*i<MAX;i+=2)
+	{
+        if(prime[i])
+        {
+            for(j=i*i;j<MAX;j+=i)
+                prime[j]=0;
+        }
+	}
+	j=0;
+	prime[2]=1;
+	for(i=2;i<MAX;i++)
+	{
+		if(prime[i])
+			real_prime[j++]=i;
+	}
+	Size=j;
+}
+int main()
+{
+    //f_in("in09.txt");
+    //f_out("out09.txt");
+    seive();
+    LL A,B,i,j;
+    int t;
+    scanf("%d",&t);
+    while(t--)
+    {
+        scanf("%lld %lld",&A,&B);
+        vector <vector <int> > V;
+        V.resize(10005);
+        for(i=0;i<Size && real_prime[i]*real_prime[i]<=B;i++)
+        {
+            LL Prime=real_prime[i];
+            LL Dev=A/Prime;
+            LL Rem=A%Prime;
+            if(Rem!=0)
+                Dev++;
+            for(j=Dev*Prime;j<=B;j+=Prime)
+            {
+                    if(j>=A && j<=B)
+                        V[j-A].push_back(Prime);
+            }
+        }
+        vector < int > NUM_DIVISORS;
+        NUM_DIVISORS.resize(10005);
+        int Answer=0;
+        int Max=-1;
+        for(i=A;i<=B;i++)
+        {
+            LL Total_Divisors=1;
+            LL Num_Divisors=1;
+            LL Number=i;
+            int len=V[i-A].size();
+            //for(j=0;j<len;j++)
+            //    printf("%d ",(V[i-A])[j]);
+            for(j=0;j<len;j++)
+            {
+                int Count=1;
+                LL Prime=(V[i-A])[j];
+                while( Number%Prime ==0)
+                {
+                    Number=Number/Prime;
+                    Count++;
+                }
+                Total_Divisors*=Count;
+                if(Number==1)
+                    break;
+            }
+            if(Number!=1)
+                Total_Divisors*=2;
+            NUM_DIVISORS[i-A]=Total_Divisors;
+            //printf("%llu %llu\n",i,Total_Divisors);
+            if(Total_Divisors>Max)
+                Max=Total_Divisors;
+            //printf("\n");
+        }
+        for(i=A;i<=B;i++)
+        {
+            //printf("%lld %d\n",i,NUM_DIVISORS[i-A]);
+            if(NUM_DIVISORS[i-A]==Max)
+                Answer++;
+        }
+
+        printf("%d\n",Answer+1);
+    }
+    return 0;
+}
+
+

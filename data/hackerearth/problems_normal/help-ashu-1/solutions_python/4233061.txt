@@ -1,0 +1,81 @@
+import math
+
+class segment:
+    def log2n(self,n):
+        return math.log(n) / math.log(2)
+
+    def __init__(self, arr):
+        self.arr = arr
+        N = len(self.arr)
+        x = int(math.ceil(self.log2n(N)))
+        self.st = [ [] for i in xrange( 2*(2 ** x) - 1 ) ]
+        self.lazy = [0] * ( 2*(2 ** x) - 1 )
+        self.build(0, N-1, 0)
+
+    def build(self, start, end, node):
+        if start == end:
+            if self.arr[start] % 2==0:
+                self.st[node] = [1, 0]
+            else:
+                self.st[node] = [0, 1]
+            return self.st[node]
+        mid = (start + end) / 2
+        n1 = self.build(start, mid, 2*node + 1)
+        n2 = self.build(mid + 1, end, 2*node + 2)
+        self.st[node] = [ n1[0] + n2[0] , n1[1] + n2[1] ]
+        return self.st[node]
+
+    def update(self, node, start, end, ix, value):
+        #print "**",self.st
+        if start == end:
+            self.arr[ix] = value
+            if value % 2 == 0:
+                self.st[node] = [1, 0]
+            else:
+                self.st[node] = [0, 1]
+        else:
+            mid = ( start + end ) / 2
+            if start <= ix <= mid:
+                self.update(2*node + 1, start, mid, ix, value)
+            else:
+                self.update(2*node + 2, mid+1, end, ix, value)
+            self.st[node] = [ self.st[2*node + 1][0] + self.st[2*node + 2][0] , self.st[2*node + 1][1] + self.st[2*node + 2][1] ]
+
+    def count_even(self,node, start, end, l, r):
+        if start > r or end < l:
+            return 0
+        if start >= l and end <= r:
+            return self.st[node][0]
+        mid = ( start + end ) / 2
+        p1 = self.count_even(2*node+1, start, mid, l, r)
+        p2 = self.count_even(2*node+2, mid+1, end, l, r)
+        return p1 + p2
+
+    def count_odd(self, node, start, end, l, r):
+        if start > r or end < l:
+            return 0
+        if start >= l and end <= r:
+            return self.st[node][1]
+        mid = (start + end) / 2
+        p1 = self.count_odd(2 * node + 1, start, mid, l, r)
+        p2 = self.count_odd(2 * node + 2, mid + 1, end, l, r)
+        return p1 + p2
+
+def solution():
+    N = int(input())
+    arr = list(map(int, raw_input('').strip().split(' ')))
+    t = segment(arr)
+    Q = int(input())
+    for i in xrange(Q):
+        case, x, y = map(int, raw_input().strip().split(' '))
+        #print t.st
+        if case == 0:
+            t.update(0, 0, N-1, x-1, y)
+            #print t.st
+            #print t.arr
+        elif case == 1:
+            print t.count_even(0, 0, N-1, x-1, y-1)
+        else:
+            print t.count_odd(0, 0, N-1, x-1, y-1)
+
+solution()

@@ -1,0 +1,73 @@
+#include <algorithm>
+#include <cstdio>
+#include <functional>
+#include <iostream>
+#include <cstring>
+#include <climits>
+#include <cmath>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <stack>
+#include <string>
+#include <time.h>
+#include <vector>
+using namespace std;
+ 
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> i_i;
+typedef pair<ll, int> ll_i;
+typedef pair<double, int> d_i;
+typedef pair<ll, ll> ll_ll;
+typedef pair<double, double> d_d;
+struct edge { int u, v; ll w; };
+
+int MOD = 1000000007;
+
+int a[9] = {0, 1, 2, 0, 4, 3, 8, 1, 0};
+vector< vector<ll> > dp, sum;
+
+ll calc(ll x) {
+	stringstream ss;
+	ss << x;
+	string s = ss.str();
+	int n = s.length();
+	ll res = sum[n - 1][0];
+	for (int i = 0; i < n; i++) {
+		if (s[i] == '0') break;
+		int p = 0;
+		for (int j = 0; j < i; j++)
+			p ^= a[s[j] - '0' - 1];
+		for (int k = 1; k < s[i] - '0'; k++)
+			res += dp[n - i - 1][p ^ a[k - 1]];
+	}
+	return res;
+}
+
+int main() {
+	dp.assign(21, vector<ll>(16));
+	dp[0][0] = 1;
+	for (int i = 0; i < 20; i++)
+		for (int j = 0; j < 16; j++)
+			for (int k = 0; k < 9; k++)
+				dp[i + 1][j ^ a[k]] += dp[i][j];
+	sum.assign(21, vector<ll>(16));
+	for (int i = 0; i < 20; i++)
+		for (int j = 0; j < 16; j++)
+			sum[i + 1][j] = sum[i][j] + dp[i + 1][j];
+	int T; cin >> T;
+	while (T--) {
+		ll A, B, K; cin >> A >> B >> K;
+		ll a = calc(A);
+		ll lb = A, ub = B * 2;
+		while (ub - lb > 1) {
+			ll mid = (lb + ub) / 2;
+			ll x = calc(mid);
+			if (x - a < K) lb = mid;
+			else ub = mid;
+		}
+		cout << (lb <= B ? lb : -1) << endl;
+	}
+}

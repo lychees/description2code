@@ -1,0 +1,110 @@
+#include<iostream>
+#include<stdio.h>
+#include<algorithm>
+#include<string>
+#include<string.h>
+#define sl(n) scanf("%lld",&n)
+#define sd(n) scanf("%d",&n)
+#define ss(n) scanf("%s",n)
+#define MAX 100000000
+#define ll long long int
+using namespace std;
+ll X,Y,K,len,len2;
+ll dp[14][2][14*9][10005];
+bool vis[14][2][14*9][10005];
+char a[14];
+ll call(int pos,int prev,int sum,int val)
+{
+    //cout<<pos<<" "<<prev<<" "<<sum<<" "<<val<<endl;
+    if(sum>Y)
+        return 0;
+    if(pos==len)
+    {
+        //cout<<sum<<" "<<val<<" "<<val%K<<endl;
+        if(sum>=X && sum<=Y && !val)
+        {
+          //  cout<<"One"<<endl;
+            return 1;
+        }
+        return 0;
+    }
+    if(vis[pos][prev][sum][val]==true)
+        return dp[pos][prev][sum][val];
+    vis[pos][prev][sum][val]=true;
+    int lim=9;
+    int i;
+    if(prev)
+        lim=a[pos]-'0';
+    ll ret=0;
+    for(i=0;i<lim;i++)
+    {
+        ret+=call(pos+1,0,sum+i,(val*10+i)%K);
+    }
+    ret+=call(pos+1,prev,sum+i,(val*10+i)%K);
+    //cout<<"Ret "<<pos<<" "<<prev<<" "<<sum<<" "<<val<<endl;
+    return dp[pos][prev][sum][val]=ret;
+}
+ll small(ll A,ll B)
+{
+    memset(vis,false,sizeof(vis));
+    A--;
+    ll ans=0,temp=0;
+    int i;
+    if(A)
+    {
+        sprintf(a,"%lld",A);
+        len=strlen(a);
+        for(i=0;i<a[0]-'0';i++)
+            ans+=call(1,0,i,i%K);
+        ans+=call(1,1,i,i%K);
+    }
+    //cout<<"Split"<<endl;
+    memset(vis,false,sizeof(vis));
+    sprintf(a,"%lld",B);
+    len=strlen(a);
+    //cout<<a<<" "<<len<<endl;
+    for(i=0;i<a[0]-'0';i++)
+        temp+=call(1,0,i,i%K);
+    temp+=call(1,1,i,i%K);
+    //cout<<temp<<" "<<ans<<endl;
+    return temp-ans;
+}
+int Count(ll n)
+{
+    int ret=0;
+    while(n)
+    {
+        ret+=n%10;
+        n/=10;
+    }
+    return ret;
+}
+ll big(ll A,ll B)
+{
+    ll ans=0;
+    ll i=A/K;
+    i=i*K;
+    for(;i<=B;i+=K)
+    {
+        if(i>=A && i<=B)
+        {
+            //cout<<i<<" "<<A<<" "<<B<<endl;
+            int val=Count(i);
+            if(val>=X && val<=Y)
+                ans++;
+        }
+    }
+    return ans;
+}
+int main()
+{
+    ll A,B;
+    sl(A); sl(B); sl(X); sl(Y); sl(K);
+    if(K<10004)
+        printf("%lld\n",small(A,B));
+    else
+    {
+        printf("%lld\n",big(A,B));
+    }
+    return 0;
+}

@@ -1,0 +1,85 @@
+#include<bits/stdc++.h>
+using namespace std;
+string s,t;
+long n,m,k;
+long lps[205];
+long LPS[205][26];
+long dp[205][205][505];
+long get_dis(char a,char b);
+void cal_lps();
+long cal(string A,long len);
+long f(long i,long match,long cost);
+int main()
+{
+    cin>>n>>m>>k;
+    cin>>s>>t;
+    memset(dp,-1,sizeof(dp));
+    cal_lps();
+    long ans=f(0,0,0);
+    cout<<ans;
+    return 0;
+}
+void cal_lps()
+{
+    string s_prefix="";
+    for(char p='a';p<='z';p++)
+    {
+        LPS[0][p-'a']=cal(s_prefix+p,1);
+    }
+    for(int i=0;i<n;i++)
+    {
+        s_prefix=s_prefix+s[i];
+        for(char p='a';p<='z';p++)
+                LPS[i+1][p-'a']=cal(s_prefix+p,i+2);
+    }
+    return;
+}
+long cal(string A,long len)
+{
+    long match=0;
+    lps[0]=0;
+    for(int i=1;i<n;i++)
+    {
+        while(A[i]!=A[match]&&match>0)
+            match=lps[match-1];
+        match+=(A[i]==A[match]);
+        lps[i]=match;
+    }
+    return lps[len-1];
+}
+long f(long i,long match,long cost)
+{
+    if(i==m)
+        return 0;
+    if(dp[i][match][cost]!=-1)
+        return dp[i][match][cost];
+    long ans=0;
+    for(char p='a';p<='z';p++)
+    {
+        /*int dis = abs(p - t[i]);
+		if ( p < t[i] ) dis = min(dis, p - 'a' + 'z' - t[i] + 1);
+		else dis = min(dis, t[i] - 'a' + 'z' - p + 1);*/
+        long dis;
+        dis=get_dis(p,t[i]);
+        if(cost+dis<=k)
+        {
+            if(s[match]==p)
+            {
+                if(match==n-1)
+                    ans=max(ans,1+f(i+1,LPS[n-1][p-'a'],cost+dis));
+                else
+                    ans=max(ans,f(i+1,match+1,cost+dis));
+            }
+            else
+                ans=max(ans,f(i+1,LPS[match][p-'a'],cost+dis));
+        }
+    }
+    dp[i][match][cost]=ans;
+    return ans;
+}
+long get_dis(char a,char b)
+{
+    if(a>b)
+        swap(a,b);
+    return min(b-a,26-b+a);
+}

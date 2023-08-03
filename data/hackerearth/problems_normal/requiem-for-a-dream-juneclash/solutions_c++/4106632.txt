@@ -1,0 +1,180 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+//freopen("input.txt","r",stdin);
+//freopen("output.txt","w",stdout);
+
+#define trace1(x)                cerr << #x << ": " << x << endl;
+#define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define trace4(a, b, c, d)       cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+#define trace5(a, b, c, d, e)    cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << endl;
+#define trace6(a, b, c, d, e, f) cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << " | " << #f << ": " << f << endl;
+#define bitcount    __builtin_popcountll
+#define sd(x) scanf("%d",&x)
+#define sd2(x,y) scanf("%d %d",&x,&y);
+#define slld(x) scanf("%lld",&x)
+#define ss(x) scanf("%s",x)
+#define ll long long
+#define mp(a,b) make_pair(a,b)
+#define F first
+#define S second
+#define pb(x) push_back(x)
+#define MOD 1000000007
+#define MAX 100005
+
+int h[100005];
+int par[100005][25];
+vector<pair<int,ll> >tree[100005]; 
+
+struct node
+{
+
+    ll pre,suff,ans,sum;
+    node(){
+        sum=ans=pre=suff=0;
+    }
+    node (ll k){
+        suff=ans=pre=max(0ll,k);
+        sum=k;
+    }
+};
+
+node merge(node a,node b)
+{
+    node x;
+
+    x.pre=max(a.pre,a.sum+b.pre);
+    x.suff=max(b.suff,b.sum+a.suff);
+    x.sum=a.sum+b.sum;
+
+    x.ans=max(x.ans,max(a.ans,b.ans));
+    x.ans=max(x.ans,max(x.pre,x.suff));
+    x.ans=max(x.ans,a.suff+b.pre);
+    return x;
+
+}
+
+
+node dp[100005][25];
+
+void dfs(int vertex,int p)
+{
+    if(p!=-1){h[vertex]=h[p]+1;}
+    
+    par[vertex][0]=p;
+
+    for(int i=1;i<20;i++)
+    {
+        if(par[vertex][i-1]!=-1){
+            par[vertex][i]=par[par[vertex][i-1]][i-1];
+            dp[vertex][i]=merge(dp[vertex][i-1],dp[par[vertex][i-1]][i-1]);
+            //trace3(vertex,i,dp[vertex][i].sum);
+        }
+    }
+
+    for(auto i:tree[vertex])
+    {
+        if(i.F!=p){
+            dp[i.F][0]=node(i.S);
+            dfs(i.F,vertex);
+        }
+    }
+}
+
+int lca(int v,int u){
+    if(h[v]<h[u])swap(v,u);
+    for(int i=20;i>=0;i--){
+        if(par[v][i]!=-1&&h[par[v][i]] >=h[u]){
+            v=par[v][i];
+        }
+    }
+    if(v==u)return u;
+    for(int i=20;i>=0;i--){
+        if(par[v][i]-par[u][i])
+            v=par[v][i],u=par[u][i];
+    }
+    return par[v][0];
+}
+
+
+
+
+int main()
+{
+
+    int n,q;
+    cin>>n>>q;
+    for(int i=0;i<n-1;i++)
+    {
+        int u,v;
+        ll w;
+        cin>>u>>v>>w;
+        
+        tree[u].pb(mp(v,w));
+        tree[v].pb(mp(u,w));
+    }
+    memset(par,-1,sizeof par);
+    dfs(1,-1);
+/*    int x,y;
+
+    for(int i=0;i<4;i++)
+    {
+        cin>>x>>y;
+        trace1(dp[x][y].sum);
+    }*/
+    while(q--)
+    {
+        int u,v;
+        cin>>u>>v;
+        int l=lca(u,v);
+        //trace1(l);
+        node a,b;
+
+        for(int i=20;i>=0;i--)
+        {
+            if(par[u][i]!=-1&&h[l]<=h[par[u][i]])
+            {
+                a=merge(a,dp[u][i]);
+                //trace2(i,par[u][i]);
+                u=par[u][i];
+            }
+        }
+        //trace2(a.ans,a.sum);
+
+        for(int i=20;i>=0;i--)
+        {
+            if(par[v][i]!=-1&&h[l]<=h[par[v][i]])
+            {
+                b=merge(b,dp[v][i]);
+                v=par[v][i];
+            }
+        }
+
+        swap(b.pre,b.suff);
+        a=merge(a,b);
+
+        cout<<a.ans<<endl;
+
+
+
+        
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+    return 0;
+
+
+}

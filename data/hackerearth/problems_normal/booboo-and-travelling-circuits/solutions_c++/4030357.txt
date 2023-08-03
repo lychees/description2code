@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+constexpr int MOD = 1e9 + 3;
+using ll = long long;
+ll dp[2][10002];
+ll A[10002], B[10002], best[10002];
+int mf[10002];
+
+bool vis[10002];
+
+int main(void) {
+    memset(vis, false, sizeof(vis));
+    mf[1] = 1;
+    for (int i = 2; i <= 10000; ++ i) if (!vis[i]) {
+        mf[i] = i;
+        for (int j = i + i; j <= 10000; j += i) if (!vis[j]) {
+            vis[j] = true;
+            mf[j] = i;
+        }
+    }
+
+
+    int n, m;
+    cin >> n >> m;
+    ll s, p, q, r;
+    cin >> s >> p >> q >> r;
+    ll w, x, y, z;
+    cin >> w >> x >> y >> z;
+
+
+    for (int i = 1; i <= m; ++ i) {
+        dp[1][i] = 1e16;
+        dp[0][i] = 0;
+        best[i] = 1e16;
+    }
+
+    int cur = 1;
+    for (int i = 2; i <= n; ++ i) {
+        for (int j = 1; j <= m; ++ j) {
+            s = (p * s % MOD * s % MOD + q * s % MOD + r) % MOD;
+            A[j] = s;
+            w = (x * w % MOD * w % MOD + y * w % MOD + z) % MOD;
+            B[j] = w;
+        }
+
+        for (int j = 1; j <= m; ++ j) {
+            dp[cur][j] = min(dp[cur][j], dp[cur ^ 1][j] + A[j]);
+        }
+        for (int j = 2; j <= m; ++ j) {
+            dp[cur][1] = min(dp[cur][1], dp[cur^1][j] + B[j]);
+        }
+
+        for (int j = 2; j <= m; ++ j) {
+            dp[cur][j] = min(dp[cur][j], best[mf[j]]);
+            best[mf[j]] = min(best[mf[j]], dp[cur^1][j] + B[j]);
+        }
+        for (int j = 1; j <= m; ++ j) best[j] = 1e16;
+        for (int j = m; j >= 2; -- j) {
+            dp[cur][j] = min(dp[cur][j], best[mf[j]]);
+            best[mf[j]] = min(best[mf[j]], dp[cur^1][j] + B[j]);
+        }
+        for (int j = 1; j <= m; ++ j) {
+            dp[cur^1][j] = 1e16;
+        }
+        for (int j = 1; j <= m; ++ j) best[j] = 1e16;
+        cur ^= 1;
+    }
+
+    ll ans = 1e16;
+    for (int i = 1; i <= m; ++ i) ans = min(ans, dp[cur ^ 1][i]);
+    cout << ans << endl;
+
+    return 0;
+}

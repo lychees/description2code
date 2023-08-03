@@ -1,0 +1,122 @@
+#include<cstdio>
+#include<iostream>
+#include<cstring>
+#include<map>
+#include<utility>
+#include<vector>
+#include<cmath>
+#define x first
+#define y second
+#define p1 10687
+#define p2 2549
+#define S 500021
+#define dot_prod(a,b) ((a).x*(b).x + (a).y*(b).y)
+#define ABS(x) ((x)>=0)?(x):-(x)
+using namespace std;
+
+typedef pair<int,int> ii;
+typedef vector<int> vi;
+typedef vector<ii> vii;
+
+class fraction{
+private:
+    inline unsigned int gcd(unsigned int u, unsigned int v){
+        int shift;
+        if (u == 0) return v;
+        if (v == 0) return u;
+        shift = __builtin_ctz(u | v);
+        u >>= __builtin_ctz(u);
+        do {
+            v >>= __builtin_ctz(v);
+            if (u > v) {
+                unsigned int t = v;
+                v = u;
+                u = t;
+            }
+            v = v - u;
+        } while (v != 0);
+        return u << shift;
+    }
+public:
+    int numer,denom;
+    friend bool operator==(const fraction&, const fraction& );
+    friend bool operator<(const fraction&, const fraction& );
+    fraction(int _n,int _d){
+        numer = _n; denom = _d;
+        if(denom==0)
+            numer = 1;
+        else if(numer==0)
+            denom = 1;
+        else {
+            if(numer*denom > 0){numer = ABS(numer); denom = ABS(denom);}
+            else if(denom < 0) {numer *= (-1); denom *= (-1);}
+            int g = gcd(ABS(numer),ABS(denom));
+            numer/=g; denom/=g;
+        }
+    }
+    int hash_fract(){ return (((ABS(numer+1))%p1)*(denom%p1))%S; }
+};
+
+bool operator==(const fraction& a,const fraction& b){
+    return (a.numer==b.numer)&&(a.denom==b.denom);
+}
+bool operator<(const fraction& a,const fraction& b){
+    return (a.numer*b.denom<a.denom*b.numer);
+}
+
+vector< vector< pair<fraction,int> > > slopes;
+
+inline void Insert(fraction f){
+    int idx = f.hash_fract();
+    for(int i=0; i<slopes[idx].size(); i++){
+        if(slopes[idx][i].first == f){
+            slopes[idx][i].second++;
+            return ;
+        }
+    }
+    slopes[idx].push_back(make_pair(f,1));
+}
+
+inline int Search(fraction f){
+    int idx = f.hash_fract();
+    for(int i=0; i<slopes[idx].size(); i++){
+        if(slopes[idx][i].first == f)
+            return slopes[idx][i].second;
+
+    }
+    return 0;
+}
+
+int main(){
+    //freopen("input.in","r",stdin);
+    int n;
+    scanf("%d",&n);
+
+    vii vecs(n+2);
+    slopes.resize(S);
+
+    for(int i=0; i<n; i++){
+        scanf("%d %d",&vecs[i].x,&vecs[i].y);
+        fraction f(vecs[i].y,vecs[i].x);
+        Insert(f);
+    }
+
+    unsigned long long int ans=0;
+    for(int j=0; j<n; j++){
+        for(int k=j+1; k<n; k++){
+            ii sum = ii(vecs[j].x+vecs[k].x,vecs[j].y+vecs[k].y);
+
+            if(sum == ii(0,0)) continue;
+
+            fraction f(-sum.x,sum.y);
+            int add = Search(f);
+            if(dot_prod(vecs[j],sum)==0)
+                add--;
+            else if(dot_prod(vecs[k],sum) == 0)
+                add--;
+            ans+=add;
+        }
+    }
+    printf("%llu\n",2*ans);
+    return 0;
+}

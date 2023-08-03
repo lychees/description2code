@@ -1,0 +1,103 @@
+#include <iostream>
+#include<cstring>
+using namespace std;
+int tree[2000005];
+int pr[2000005];
+int ar[1000005];
+void build(int node,int b,int e)
+{
+	if(b==e)
+	{
+		tree[node]=ar[b];
+		return ;
+	}
+	int m=(b+e)/2;
+	int l=2*node;
+	int r=l+1;
+	build(l,b,m);
+	build(r,m+1,e);
+	tree[node]=tree[l]+tree[r];
+}
+void update(int node,int b,int e,int id,int val)
+{
+	if(b==e)
+	{
+		ar[id]=1-ar[id];
+		tree[node]=ar[id];
+		return ;
+	}
+	int m=(b+e)/2;
+	int l=2*node;
+	int r=l+1;
+	if(id<=m)
+	update(l,b,m,id,val);
+	else
+	update(r,m+1,e,id,val);
+	tree[node]=tree[l]+tree[r];
+}
+int query(int node,int b,int e,int l,int r)
+{
+	if(b>e or b>r or e<l)
+	return 0;
+	if(b>=l and e<=r)
+	return tree[node];
+	int p,q,ans;
+	int m=(b+e)/2;
+	p=query(2*node,b,m,l,r);
+	q=query(2*node+1,m+1,e,l,r);
+	ans=p+q;
+	return ans;
+}
+int main()
+{
+	pr[0]=1;
+	pr[1]=1;
+	for(int i=2;i<=1000;i++)
+	{
+		if(pr[i]==0)
+		for(int j=i*i;j<=1000000;j+=i)
+		pr[j]=1;
+	}
+	int t;
+	cin>>t;
+	while(t--)
+	{
+		memset(ar,0,sizeof(ar));
+		memset(tree,0,sizeof(tree));
+		int n;
+		cin>>n;
+		for(int i=1;i<=n;i++)
+		{
+			int a;
+			cin>>a;
+			ar[i]=1-pr[a];
+		}
+		build(1,1,n);
+		int q;
+		cin>>q;
+		while(q--)
+		{
+			char ch;
+			int l,r;
+			cin>>ch>>l>>r;
+			if(ch=='A')
+			{
+				int ans=query(1,1,n,l,r);
+				cout<<ans<<endl;
+			}
+			else
+			{
+				int a=ar[l];
+				int b=1-pr[r];
+				if(a!=b)
+				{
+					update(1,1,n,l,1);
+				}
+				
+			}
+		}
+		
+	}
+   // cout << "Hello World!" << endl;
+    return 0;
+}

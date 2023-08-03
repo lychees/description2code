@@ -1,0 +1,154 @@
+#include <cstdio>
+#include <cmath>
+#include <iostream>
+#include <set>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <cassert>
+#include <string>
+#include <cstring>
+#include <queue>
+
+using namespace std;
+
+#define rep(i,a,b) for(int i = a; i < b; i++)
+#define S(x) scanf("%d",&x)
+#define S2(x,y) scanf("%d%d",&x,&y)
+#define P(x) printf("%d\n",x)
+#define all(v) v.begin(),v.end()
+#define FF first
+#define SS second
+
+const int INF = 100000000;
+const int N = 606; // max number of nodes
+
+int dist[N];
+int ptr[N];
+int source = -1, sink = -1;
+
+struct edge {
+  int a,b,cap,flow;
+};
+vector<edge > e;
+vector<int > g[N];
+
+void addEdge(int a, int b, int c) {
+
+  edge e1 = {a,b,c,0};
+  g[a].push_back((int)e.size());
+  e.push_back(e1);
+
+  edge e2 = {b,a,0,0};
+  g[b].push_back((int)e.size());
+  e.push_back(e2);
+
+}
+
+bool bfs() {
+
+  memset(dist, -1, sizeof(dist));
+  dist[source] = 0;
+  queue<int > q;
+  q.push(source);
+
+  while(!q.empty() && dist[sink] == -1) {
+    int u = q.front();
+    q.pop();
+    rep(i,0,g[u].size()) {
+      int id = g[u][i];
+      int to = e[id].b;
+      if(dist[to] != -1 || e[id].flow >= e[id].cap) continue;
+      q.push(to);
+      dist[to] = dist[u] + 1;
+    }
+  }
+
+  // P(dist[sink]);
+  return dist[sink] != -1;
+
+}
+
+int dfs(int u, int flow) {
+
+  if(u == sink) return flow;
+  if(!flow) return 0;
+
+  for(; ptr[u] < g[u].size(); ptr[u]++) {
+    int id = g[u][ptr[u]];
+    int to = e[id].b;
+
+    if(dist[to] != dist[u]+1) continue;
+    int pushed = dfs(to, min(flow, e[id].cap - e[id].flow));
+    if(pushed) {
+      e[id].flow += pushed;
+      e[id^1].flow -= pushed;
+      return pushed;
+    }
+  }
+
+  return 0;
+
+}
+
+int dinic() {
+
+  int flow = 0;
+  while(bfs()) {
+
+    memset(ptr, 0, sizeof(ptr));
+
+    int pushed;
+    while((pushed = dfs(source, INF))) {
+      flow += pushed;
+    }
+  }
+
+  return flow;
+}
+
+int M[N], F[N];
+
+int main() {
+  int n,m;
+  S2(n,m);
+
+  rep(i,1,n+1) {
+    S(M[i]);
+  }
+
+  rep(i,0,n+m-1) {
+    S(F[i]);
+  }
+  source = 0;
+  sink = 2 * n + 1;
+  
+  int ans = -1;
+  int lo = 1, hi = 1000000000;
+  while(lo <= hi) {
+    int mi = (lo + hi) >> 1;
+    e.clear();
+    rep(i,0,sink+1) g[i].clear();
+    rep(i,1,n+1) {
+      addEdge(source, i, 1);
+      addEdge(n + i, sink, 1);
+    }
+    rep(i,1,n+1) {
+      rep(j,0,n) {
+        if(F[M[i]+j] <= mi) {
+          addEdge(i, n + 1 + j, 1);
+        }
+      }
+    }
+    int f = dinic();
+    if(f == n) {
+      ans = mi;
+      hi = mi - 1;
+    } else {
+      lo = mi + 1;
+    }
+  }
+  P(ans);
+
+  return 0;
+}

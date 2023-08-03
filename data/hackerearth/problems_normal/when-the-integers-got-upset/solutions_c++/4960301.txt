@@ -1,0 +1,72 @@
+#include <iostream>
+#include <limits>
+#include <cmath>
+using namespace std;
+
+int onesIn(int mask){
+	int count = 0;
+	while(mask){
+		count++;
+		mask = mask & (mask - 1);
+	}
+	//cout << count << endl;
+	return count;
+}
+
+long int computeUpset(long int upset[][12][12], int A[], int P[], int n){
+	long int Max = numeric_limits<long int>::max(), ans;
+	for(int i = 0; i < 1 << n; i++){
+		//cout << i << " ";
+		for(int p = 0; p < n; p++){
+			for(int q = 0; q < n; q++){
+				upset[i][p][q] = Max;
+			}
+		}
+	}
+	//cout << endl;
+	for(int i = 1; i < 1 << n; i++){
+		for(int p = 0; p < n; p++){
+			for(int q = 0; q < n; q++){
+				for(int r = 0; r < n; r++){
+					if(onesIn(i) > 0 && onesIn(i) < 3 && p != q)
+						upset[i][p][q] = 0L;
+					else if(p != q && q != r && p != r && ((1 << p) & i)
+							&& ((1 << q) & i) && ((1 << r) & i)
+							&& upset[i ^ (1 << p)][q][r] != Max){
+								//cout << "Before not p upset[" << (i ^ (1 << p)) << "][" << q << "][" << r << "]" << upset[i ^ (1 << p)][q][r] << endl;
+								//cout << "Before with p upset[" << i << "][" << p << "][" << q << "]" << upset[i][p][q] << endl;
+								upset[i][p][q] = min(upset[i][p][q], ((A[p]^A[q]^A[r]) * P[onesIn(i) - 1] + upset[i ^ (1 << p)][q][r]));
+								//cout << "After with p upset[" << i << "][" << p << "][" << q << "]" << upset[i][p][q] << endl;
+					}
+				}
+			}
+		}
+	}
+	ans = Max;
+	for(int p = 0; p < n; p++){
+		for(int q = 0; q < n; q++){
+			if(p != q && upset[(1 << n) - 1][p][q] < ans)
+				ans = upset[(1 << n) - 1][p][q];
+			//if(p != q)	cout << ans << " ";
+		}
+	}
+	//cout << endl;
+	return ans;
+}
+
+int main()
+{
+    long int upset[1 << 12][12][12];
+    int t, n, A[12], P[12];
+    cin >> t;
+    while(t--){
+    	cin >> n;
+    	for(int i = 0; i < n; i++)
+    		cin >> A[i];
+    	for(int i = 0; i < n; i++)
+    		cin >> P[i];
+    	
+    	cout << computeUpset(upset, A, P, n) << endl;
+    }
+    return 0;
+}

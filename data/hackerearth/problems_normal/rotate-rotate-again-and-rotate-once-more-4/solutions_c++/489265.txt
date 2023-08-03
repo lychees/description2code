@@ -1,0 +1,206 @@
+#include <iostream>
+#include<stdio.h>
+#include<vector>
+#include <bits/stdc++.h>
+#include<algorithm>
+#define gc() getchar()
+#define N 1000007
+#include<assert.h>
+
+using namespace std;
+int a[N];
+int ans[5];
+
+struct list
+{
+  int east,west,north,south,lazy;
+}tree[4*N];
+
+void init(int node,int i,int j)
+{
+    if(i==j)
+    {
+        tree[node].east=j-i+1;
+        tree[node].west=tree[node].south=tree[node].north=0;
+        tree[node].lazy=0;
+        return;
+    }
+    init(2*node,i,(i+j)/2);
+    init(2*node+1,(i+j)/2+1,j);
+    tree[node].lazy=0;
+    tree[node].north=tree[2*node].north+tree[2*node+1].north;
+    tree[node].east=tree[2*node].east+tree[2*node+1].east;
+    tree[node].west=tree[2*node].west+tree[2*node+1].west;
+    tree[node].south=tree[2*node].south+tree[2*node+1].south;
+}
+
+void update(int node,int i,int j,int x,int y,int turns)
+{
+//if it is lazy
+ if(tree[node].lazy!=0)
+ {
+     if(tree[node].lazy==1)
+     {
+      swap(tree[node].east,tree[node].north);
+      swap(tree[node].north,tree[node].west);
+      swap(tree[node].west,tree[node].south);
+     }
+
+     else if(tree[node].lazy==2)
+     {
+         swap(tree[node].east,tree[node].west);
+         swap(tree[node].south,tree[node].north);
+     }
+     else
+     {
+        swap(tree[node].east,tree[node].north);
+        swap(tree[node].east,tree[node].west);
+        swap(tree[node].east,tree[node].south);
+     }
+
+     if(i!=j)
+     {
+         tree[2*node].lazy=(tree[node].lazy+tree[2*node].lazy)%4;
+         tree[2*node+1].lazy=(tree[node].lazy+tree[2*node+1].lazy)%4;
+     }
+     tree[node].lazy=0;
+ }
+ if(i>y || j<x)
+    return;
+
+ //if it is parent
+ if(i>=x && j<=y)
+ {
+     //marking child as lazy
+
+     if((turns%4)==1)
+     {
+      swap(tree[node].east,tree[node].north);
+      swap(tree[node].north,tree[node].west);
+      swap(tree[node].west,tree[node].south);
+     }
+
+     else if((turns%4)==2)
+     {
+         swap(tree[node].east,tree[node].west);
+         swap(tree[node].south,tree[node].north);
+     }
+     else
+     {
+        swap(tree[node].east,tree[node].north);
+        swap(tree[node].east,tree[node].west);
+        swap(tree[node].east,tree[node].south);
+     }
+     if(i!=j)
+     {
+         tree[2*node].lazy=(turns%4+tree[2*node].lazy)%4;
+         tree[2*node+1].lazy=(turns%4+tree[2*node+1].lazy)%4;
+     }
+
+     return;
+ }
+    update(2*node,i,(i+j)/2,x,y,turns);
+    update(2*node+1,(i+j)/2+1,j,x,y,turns);
+
+    tree[node].north=tree[2*node].north+tree[2*node+1].north;
+    tree[node].east=tree[2*node].east+tree[2*node+1].east;
+    tree[node].west=tree[2*node].west+tree[2*node+1].west;
+    tree[node].south=tree[2*node].south+tree[2*node+1].south;
+}
+
+void query(int node,int i,int j,int x,int y)
+{
+  if(tree[node].lazy!=0)
+ {
+      if(tree[node].lazy==1)
+     {
+      swap(tree[node].east,tree[node].north);
+      swap(tree[node].north,tree[node].west);
+      swap(tree[node].west,tree[node].south);
+     }
+
+     else if(tree[node].lazy==2)
+     {
+         swap(tree[node].east,tree[node].west);
+         swap(tree[node].south,tree[node].north);
+     }
+     else
+     {
+        swap(tree[node].east,tree[node].north);
+        swap(tree[node].east,tree[node].west);
+        swap(tree[node].east,tree[node].south);
+     }
+
+     if(i!=j)
+     {
+         tree[2*node].lazy=(tree[node].lazy+tree[2*node].lazy)%4;
+         tree[2*node+1].lazy=(tree[node].lazy+tree[2*node+1].lazy)%4;
+     }
+     tree[node].lazy=0;
+ }
+
+    if(i>y || j<x)
+        return;
+
+   if(i>=x && j<=y)
+   {
+       ans[0]+=tree[node].east;
+       ans[1]+=tree[node].south;
+       ans[2]+=tree[node].west;
+       ans[3]+=tree[node].north;
+       return;
+   }
+   query(2*node,i,(i+j)/2,x,y);
+   query(2*node+1,(i+j)/2+1,j,x,y);
+}
+
+int main()
+{
+    int n,m;
+    cin>>n>>m;
+    scanf("\n");
+
+    init(1,1,n);
+
+    while(m--)
+    {
+        int b,c,d;
+        char a;
+
+        a=getchar_unlocked();
+
+        while(a!='A' && a!='C' && a!='Q')
+            a=getchar_unlocked();
+
+        scanf("%d%d",&b,&c);
+
+       // printf("%c %d %d--\n",a,b,c);
+
+        if(a=='C' || a=='A')
+        {
+            scanf("%d",&d);
+            d%=4;
+
+            if(a=='A')
+            {
+                if(d==1)
+                    d=3;
+
+                else if(d==3)
+                    d=1;
+            }
+            if(d!=0)
+            update(1,1,n,b,c,d);
+        }
+        else
+        {
+            for(int i=0;i<4;i++)
+            ans[i]=0;
+            query(1,1,n,b,c);
+
+            printf("%d\n",*max_element(ans,ans+4));
+        }
+    }
+
+    return 0;
+}

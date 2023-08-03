@@ -1,0 +1,151 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
+
+#include <algorithm>
+
+using namespace std;
+
+#define FOR(i,n) for(int i=0;i<(n);i++)
+
+int M, N, C, K;
+int gp[30][10][2], gpn[30];
+int _gp[30][400][2], _gpn[30];
+int gm[30];
+int ob[30];
+
+char bo[32][32];
+
+void fill_ghosts() {
+    FOR(c,C) {
+        _gpn[c] = 0;
+        _gp[c][_gpn[c]][0] = gp[c][0][0];
+        _gp[c][_gpn[c]][1] = gp[c][0][1];
+        _gpn[c]++;
+        FOR(i,gpn[c]) {
+            int j = (i+1)%gpn[c];
+            if(gp[c][i][1] == gp[c][j][1]) {
+                int di = 1;
+                if(gp[c][j][0] < gp[c][i][0]) di = -di;
+                int cu = gp[c][i][0];
+                do {
+                    cu += di;
+                    _gp[c][_gpn[c]][0] = cu;
+                    _gp[c][_gpn[c]][1] = gp[c][i][1];
+                    _gpn[c]++;
+                } while(cu != gp[c][j][0]);
+            } else {
+                int di = 1;
+                if(gp[c][j][1] < gp[c][i][1]) di = -di;
+                int cu = gp[c][i][1];
+                do {
+                    cu += di;
+                    _gp[c][_gpn[c]][1] = cu;
+                    _gp[c][_gpn[c]][0] = gp[c][i][0];
+                    _gpn[c]++;
+                } while(cu != gp[c][j][1]);
+            }
+        }
+        _gpn[c]--;
+    }
+
+    // FOR(c,C) {
+    //         FOR(i,_gpn[c]) printf("%d:%d ",_gp[c][i][0],_gp[c][i][1]);
+    //         printf("\n");
+    //     }
+}
+
+void fill_obstructions() {
+    memset(ob,0,sizeof(ob));
+    FOR(i,M) FOR(j,N) if(bo[i][j] != 'X') ob[i] |= (1<<j);
+}
+
+int po[2][30];
+
+int main() {
+    int T;
+    scanf("%d",&T);
+    while(T--) {
+
+        scanf("%d %d %d %d",&M,&N,&C,&K);
+        FOR(i,C) {
+            scanf("%d",&gpn[i]);
+            FOR(j,gpn[i]) {
+                scanf("%d %d",&gp[i][j][0],&gp[i][j][1]);
+                swap(gp[i][j][0],gp[i][j][1]);
+            }
+        }
+
+        fill_ghosts();
+
+        FOR(i,M) scanf("%s",bo[i]);
+
+        fill_obstructions();
+
+        memset(po[0],0,sizeof(po[0]));
+        FOR(i,M) FOR(j,N) if(bo[i][j] == 'P') po[0][i] |= (1<<j);
+        int er, ec;
+        FOR(i,M) FOR(j,N) if(bo[i][j] == 'E') {
+            er = i;
+            ec = j;
+        }
+
+        int roMask = (1<<N)-1;
+
+        memset(gm,0,sizeof(gm));
+        FOR(c,C) {
+            int _r = _gp[c][0][0],
+                _c = _gp[c][0][1];
+            gm[_r] |= (1<<_c);
+        }
+        FOR(i,M) gm[i] ^= roMask;
+
+        int p = 0, q = 1, found = 0;
+        int ti = 0;
+        while(ti <= K && !found) {
+            if(po[p][er] & (1<<ec)) {
+                found = 1;
+                break;
+            }
+            found = -1;
+            FOR(i,M) if(po[p][i]) {
+                found = 0;
+                break;
+            }
+            if(found) break;
+
+            memcpy(po[q],po[p],sizeof(po[q]));
+
+            FOR(i,M) po[q][i] |= (po[p][i]>>1);
+            FOR(i,M) po[q][i] |= ((po[p][i]<<1)&roMask);
+            for(int i = 1; i < M; i++) po[q][i-1] |= po[p][i];
+            for(int i = 1; i < M; i++) po[q][i] |= po[p][i-1];
+
+            FOR(i,M) po[q][i] &= gm[i];
+
+            memset(gm,0,sizeof(gm));
+            int roMask = (1<<N)-1;
+
+            int nti = ti+1;
+            FOR(c,C) {
+                int _r = _gp[c][nti%_gpn[c]][0],
+                    _c = _gp[c][nti%_gpn[c]][1];
+                gm[_r] |= (1<<_c);
+            }
+            FOR(i,M) gm[i] ^= roMask;
+
+            FOR(i,M) po[q][i] &= gm[i];
+
+            FOR(i,M) po[q][i] &= ob[i];
+
+            p=1-p;
+            q=1-q;
+            ti++;
+        }
+
+        if(found == 1) printf("%d\n",ti);
+        else printf("-1\n");
+
+    }
+}

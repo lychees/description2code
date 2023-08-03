@@ -1,0 +1,60 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
+
+const int MAXN = 3000;
+
+long long f[2][1 << 12], MOD;
+
+void add(long long &a, long long b)
+{
+    a += b;
+    if (a >= MOD) {
+        a -= MOD;
+    }
+}
+
+int main()
+{
+    int n, m;
+    assert(scanf("%d%d", &n, &m) == 2);
+
+    MOD = m * 2;
+
+    assert(1 <= n && n <= MAXN);
+    assert(1 <= m && m <= 1000000007);
+
+    memset(f, 0, sizeof(f));
+    int now = 0, old = 1;
+    f[now][0] = 1;
+    for (int i = 1; i <= n; ++ i) {
+        now = 1 - now;
+        old = 1 - old;
+        memset(f[now], 0, sizeof(f[now]));
+        for (int mask = 0; mask < 1 << 12; ++ mask) {
+            if (f[old][mask] > 0) {
+                add(f[now][mask], f[old][mask]);
+                add(f[now][mask ^ i], f[old][mask] * 2 % MOD);
+            }
+        }
+    }
+
+    long long equalPairs = f[now][0];
+
+    long long totalPairs = 1;
+    for (int i = 0; i < n; ++ i) {
+        totalPairs = totalPairs * 3 % MOD;
+    }
+
+    long long answer = (totalPairs + equalPairs) % MOD;
+
+    //fprintf(stderr, "%d %d %d\n", (int)totalPairs, (int)equalPairs, (int)answer);
+
+    assert(answer % 2 == 0);
+    answer /= 2;
+
+    printf("%d\n", (int)answer);
+
+    return 0;
+}

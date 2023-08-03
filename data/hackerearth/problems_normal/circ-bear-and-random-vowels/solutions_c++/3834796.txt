@@ -1,0 +1,100 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <string>
+#include <ctype.h>
+#include <deque>
+#include <queue>
+#include <cstring>
+#include <set>
+#include <list>
+#include <map>
+#include <unordered_map>
+#include <stdio.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef std::vector<int> vi;
+typedef std::vector<bool> vb;
+typedef std::vector<string> vs;
+typedef std::vector<double> vd;
+typedef std::vector<long long> vll;
+typedef std::vector<std::vector<int> > vvi;
+typedef std::vector<std::vector<bool> > vvb;
+typedef std::vector<std::pair<int, int> > vpi;
+typedef std::pair<int, int> pi;
+typedef std::pair<ll, ll> pll;
+typedef std::vector<pll> vpll;
+typedef vector<vll> vvll;
+
+const long long mod = 1000000007;
+
+#define all(c) (c).begin(),(c).end()
+#define sz(c) (int)(c).size()
+#define forn(i, a, b) for(int i = a; i < b; i++)
+
+#define pb push_back
+#define mp make_pair
+
+int isc(char c) {
+    if(c=='a' || c=='o' || c=='e' || c== 'u' || c=='y' || c=='i') return 0;
+    else return 1;
+}
+
+int main()
+{
+#ifndef ONLINE_JUDGE
+    freopen("input.txt", "rt", stdin);
+    freopen("output.txt", "wt", stdout);
+#endif
+    int n,m,k;
+    vvll cnk(3001, vll(3001, 0));
+    forn(i,0,3001) cnk[i][0] = 1;
+    forn(i,1,3001) forn(j,0,i+1) {
+        cnk[i][j] = (((j>0) ? cnk[i-1][j-1] : 0) + cnk[i-1][j]) % mod;
+    }
+    cin >> n >> k;
+    string s;
+    cin >> s;
+    vvll d(n+1, vll(k+1, 0));
+    vvll e(n+1, vll(k+1, 0));
+//    forn(i,0,k+1) {
+        d[0][0] = 1;
+        e[0][0] = 1;
+//    }
+    int v = 0;
+    forn(l, 1, n+1) {
+        if(!isc(s[l-1])) v++;
+        forn(i,0,k+1) {
+            if (!isc(s[l-1])) {
+                d[l][i] = d[l-1][i];
+                e[l][i] = d[l][i];
+            }
+            else {
+                if(l>=3 && isc(s[l-2]) && isc(s[l-3])) {
+                    if (i>0) {
+                        d[l][i] = d[l-1][i-1];
+                        e[l][i] = d[l-1][i-1];
+                    }
+                    d[l][i] = (d[l][i] + d[l-1][i] - e[l-3][i] + mod) % mod;
+                }
+                else {
+                    d[l][i] = d[l-1][i];
+                    if (i>0) d[l][i] = (d[l-1][i-1] + d[l][i]) % mod;
+                    if (i>0) e[l][i] = d[l-1][i-1];
+                }
+            }
+        }
+    }
+    m = (n+1)/2;
+    ll ans = 0;
+    for(int add = max(m - v, 0); add <= k; add++) {
+        ans =  (ans + d[n][add] * cnk[v][k-add]) % mod;
+    }
+    ans = (cnk[n][k] - ans + mod) % mod;
+    cout << ans;
+}
+
+
+

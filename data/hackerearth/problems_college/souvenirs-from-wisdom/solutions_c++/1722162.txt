@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+
+typedef long long int li;
+
+#define min(a,b) a<=b?a:b
+#define max(a,b) a>=b?a:b
+#define Fi(i, st, ft) for(i = st;i <= ft; ++i)
+#define Fd(i, st, ft) for(i = st;i >= ft; --i)
+#define pb(a, b) a.push_back(b)
+#define mod 1000000007
+#define MAXN 1500000
+#define MX 1450000
+#define inf 1000000000000000000ll
+const int maxBufSize = (10000000);
+
+using namespace std;
+
+int n , m , q , gb;
+
+int minDistance(int dist[], bool sptSet[])
+{
+   // Initialize min value
+   int min = INT_MAX, min_index;
+ 
+   for (int v = 0; v < n; v++)
+     if (sptSet[v] == false && dist[v] <= min)
+         min = dist[v], min_index = v;
+ 
+   return min_index;
+}
+ 
+// A utility function to print the constructed distance array
+int printSolution(int dist[], int n)
+{
+   //printf("Vertex   Distance from Source\n");
+   //for (int i = 0; i < n; i++)
+     // printf("%d \t\t %d\n", i, dist[i]);
+    printf("%d\n" , dist[gb]);
+}
+ 
+// Funtion that implements Dijkstra's single source shortest path algorithm
+// for a graph represented using adjacency matrix representation
+void dijkstra(int graph[110][110], int src)
+{
+     int dist[110];     // The output array.  dist[i] will hold the shortest
+                      // distance from src to i
+ 
+     bool sptSet[110]; // sptSet[i] will true if vertex i is included in shortest
+                     // path tree or shortest distance from src to i is finalized
+ 
+     // Initialize all distances as INFINITE and stpSet[] as false
+     for (int i = 0; i < n; i++)
+        dist[i] = INT_MAX, sptSet[i] = false;
+ 
+     // Distance of source vertex from itself is always 0
+     dist[src] = 0;
+ 
+     // Find shortest path for all vertices
+     for (int count = 0; count < n-1; count++)
+     {
+       // Pick the minimum distance vertex from the set of vertices not
+       // yet processed. u is always equal to src in first iteration.
+       int u = minDistance(dist, sptSet);
+ 
+       // Mark the picked vertex as processed
+       sptSet[u] = true;
+ 
+       // Update dist value of the adjacent vertices of the picked vertex.
+       for (int v = 0; v < n; v++)
+ 
+         // Update dist[v] only if is not in sptSet, there is an edge from
+         // u to v, and total weight of path from src to  v through u is
+         // smaller than current value of dist[v]
+         if (!sptSet[v] && graph[u][v] && dist[u] != INT_MAX) {
+            if(u == src) {
+            	dist[v] = min(graph[u][v] , dist[v]);
+            } else if(dist[v] < min(dist[u] , graph[u][v])) {
+            	dist[v] = min(dist[u] , graph[u][v]);
+            }
+         }
+     }
+ 
+     // print the constructed distance array
+     printSolution(dist, n);
+}
+
+
+
+int main()
+{
+	int k , i , j , a , b , c;
+	scanf("%d %d %d" , &n , &m , &q);
+	int arr[110];
+	Fi(i , 0 , n-1) {
+		scanf("%d" , &arr[i]);
+	}
+	int graph[110][110];
+	Fi(i , 0 , 108) {
+		Fi(j , 0 , 108) {
+			graph[i][j] = 0;
+		}
+	}
+	Fi(i , 1 , m) {
+		scanf("%d  %d" , &a , &b);
+		a-- , b--;
+		graph[a][b] = graph[b][a] = min(arr[a] , arr[b]);
+	}
+	char ch;
+	Fi(k , 1 , q) {
+		//scanf("%c %d %d" , &ch , &a , &b);
+		cin >> ch >> a >> b;
+		if(ch == 'A') {
+			a--;
+			b--;
+			gb = b;
+			if(a==b) {
+				printf("%d\n" , arr[a]);
+			} else {
+				dijkstra(graph, a);
+			}
+		} else {
+			a--;
+			arr[a] = b;
+			Fi(i , 0 , n-1) {
+				if(graph[a][i]) {
+					graph[a][i] = graph[i][a] = min(arr[a] , arr[i]);
+				}
+			}
+		}
+	}
+	return 0;
+}

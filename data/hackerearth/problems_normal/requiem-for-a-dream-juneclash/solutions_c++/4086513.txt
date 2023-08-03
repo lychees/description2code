@@ -1,0 +1,140 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("clash.inp","r",stdin)
+#define OUTPUT freopen("clash.out","w",stdout)
+#define FOR(i,l,r) for(auto i=(l);i<=(r);i++)
+#define REP(i,l,r) for(auto i=(l);i<(r);i++)
+#define FORD(i,l,r) for(auto i=(l);i>=(r);i--)
+#define REPD(i,l,r) for(auto i=(l);i>(r);i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+
+const int inf=1e9;
+const int MOD=1e9+7;
+const int N=1e5+10;
+
+int n,m;
+vector <ii> v[N],imp[N];
+int pa[N][20];
+queue <int> q;
+int s[N],h[N];
+int lv[N],w[N];
+
+struct info{
+    ll lsum,rsum,maxv,asum;
+    info (ll _maxv=0,ll _lsum=0,ll _rsum=0,ll _asum=0){
+        lsum=_lsum;
+        rsum=_rsum;
+        maxv=_maxv;
+        asum=_asum;
+    }
+};
+info ans[N][2];
+info merge(info a,info b){
+    return info(max(max(a.maxv,b.maxv),a.rsum+b.lsum),max(a.lsum,a.asum+b.lsum),max(b.rsum,b.asum+a.rsum),a.asum+b.asum);
+}
+struct seginfo{
+    info b[N<<2];
+    void update(int node,int L,int R,int idx,int v){
+        if (L>idx||R<idx) return;
+        if (L==R){
+            int val=max(v,0);
+            b[node]=info(val,val,val,v);
+            return;
+        }
+        update(node*2,L,(L+R)/2,idx,v);
+        update(node*2+1,(L+R)/2+1,R,idx,v);
+        b[node]=merge(b[node*2],b[node*2+1]);
+    }
+    info get(int node,int L,int R,int l,int r){
+        if (l>r) return info();
+        if (L>r||R<l) return info();
+        if (l<=L&&R<=r) return b[node];
+        return merge(get(node*2,L,(L+R)/2,l,r),get(node*2+1,(L+R)/2+1,R,l,r));
+    }
+};
+seginfo mseg;
+int LCA(int x,int y){
+    if (lv[x]<lv[y]) swap(x,y);
+    for(int i=0,val=lv[x]-lv[y];val;i++,val>>=1)
+        if (val&1) x=pa[x][i];
+    if (x==y) return x;
+    FORD(i,int(log2(lv[x])),0) if (pa[x][i]!=pa[y][i])
+        x=pa[x][i],y=pa[y][i];
+    return pa[x][0];
+}
+void BFS(){
+    q.push(1);
+    while (!q.empty()){
+        int x=q.front();q.pop();
+        for(auto i:v[x]) if (i.Y!=pa[x][0]){
+            lv[i.Y]=lv[x]+1;
+            w[i.Y]=i.X;
+            pa[i.Y][0]=x;
+            q.push(i.Y);
+        }
+    }
+    FOR(lay,1,19)
+        FOR(i,1,n) pa[i][lay]=pa[pa[i][lay-1]][lay-1];
+}
+void DFS(){
+    s[1]=1;
+    int n1=1;
+    while (n1){
+        int x=s[n1];
+        if (!h[x]){
+            mseg.update(1,1,n,n1,w[x]);
+            for(auto i:imp[x]){
+                int idx=i.Y>>1;
+                ans[idx][i.Y&1]=mseg.get(1,1,n,lv[i.X]+2,lv[x]+1);
+//                cout<<x<<" "<<i.X<<" "<<ans[idx][i.Y&1].asum<<" "<<ans[idx][i.Y&1].maxv<<" "<<ans[idx][i.Y&1].lsum<<" "<<ans[idx][i.Y&1].rsum<<'\n';
+            }
+        }
+        if (h[x]==v[x].size()){
+            n1--;
+            continue;
+        }
+        int y=v[x][h[x]++].Y;
+        if (y==pa[x][0]) continue;
+        s[++n1]=y;
+    }
+}
+void prepare(){
+    scanf("%d%d",&n,&m);
+    REP(i,1,n) {
+        int x,y,w;
+        scanf("%d%d%d",&x,&y,&w);
+        v[x].push_back(ii(w,y));
+        v[y].push_back(ii(w,x));
+    }
+    BFS();
+    FOR(i,1,m){
+        int x,y,z;
+        scanf("%d%d",&x,&y);
+        z=LCA(x,y);
+        imp[x].push_back(ii(z,i*2));
+        imp[y].push_back(ii(z,i*2+1));
+    }
+
+//    FOR(i,1,n) cout<<pa[i][0]<<" ";ENDL;
+//    FOR(i,1,n) cout<<w[i]<<" ";ENDL;
+
+    DFS();
+}
+int main(){
+//    freopen("input.inp","r",stdin);
+    prepare();
+    FOR(i,1,m) {
+//        cout<<ans[i][0].asum<<" "<<ans[i][1].asum<<'\n';
+//        cout<<ans[i][0].asum<<" "<<ans[i][1].asum<<'\n';
+        swap(ans[i][0].lsum,ans[i][0].rsum);
+        printf("%lld\n",merge(ans[i][0],ans[i][1]).maxv);
+    }
+}

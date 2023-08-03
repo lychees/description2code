@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long int ll;
+typedef vector<int> vi;
+typedef pair<int, int> pii;
+
+#define rep(i,n) for(int (i)=(0);(i)<(n);(i)++)
+#define rep1(i,n) for(int (i)=(1);(i)<=(n);(i)++)
+#define fr(i,a,b) for(int (i)=(a);(i)<(b);(i)++)
+#define mp make_pair
+#define pb push_back
+#define foreach(it,v) for(__typeof(v.begin()) it=v.begin();it!=v.end();it++)
+#define db(x) cerr << #x << " : " << x << endl;
+#define pv(c,a,b) cerr << "{ "; fr(i,a,b) cerr<<c[i]<<", "; cerr << "}" << endl;
+#define fill(a,v) memset(a,v,sizeof(a))
+
+const int inf = (int) 1e9;
+const int maxn = (int) 1e6 + 100;
+
+int prime[maxn];
+char s[2][105];
+int nxt[2][105][10];
+vector<int> primeList;
+vector<string> primeListString;
+
+string toString(int n) {
+  string s = "";
+  while (n) {
+    s += (char) ('0' + n % 10);
+    n /= 10;
+  }
+  reverse(s.begin(), s.end());
+  return s;
+}
+
+int main() {
+  //freopen("in.txt", "r", stdin);
+  fr(i, 2, maxn) prime[i] = true;
+  for (int i = 2; i * i < maxn; i++) if (prime[i]) {
+    for (int j = i + i; j < maxn; j += i) prime[j] = false;
+  }
+  rep(i, maxn) if (prime[i]) {
+    primeList.pb(i);
+    primeListString.pb(toString(i));
+  }//cout << primeList.size() << endl;
+  int T;
+  scanf("%d", &T);
+  while (T--) {
+    int K;
+    scanf("%d", &K);
+    scanf("%s %s", s[0], s[1]);
+    string s1(s[0], s[0] + strlen(s[0]));
+    string s2(s[1], s[1] + strlen(s[1]));
+    rep(it, 2) {
+      int n = strlen(s[it]);
+      for (int i = n + 1; i >= 1; i--) {
+        s[it][i] = s[it][i - 1];
+      }
+    }
+    memset(nxt, -1, sizeof(nxt));
+    rep(it, 2) {
+      int n = strlen(s[it]);
+      for (int i = n - 1; i >= 0; i--) {
+        rep(j, 10) {
+          if (s[it][i + 1] == (char) ('0' +  j)) {
+            nxt[it][i][j] = i + 1;
+          } else {
+            nxt[it][i][j] = nxt[it][i + 1][j];
+          }
+          /*
+          for (int k = i + 1; k <= n; k++) {
+            if (s[it][k] == (char) ('0' + j)) {
+              nxt[it][i][j] = k;
+              break;
+            }
+          }
+          */
+        }
+      }
+      /*
+      for (int j = 0; j < 10; j++) {
+        for (int i = 0; i <= n; i++) {
+          cout << nxt[it][i][j] << " ";
+        }
+        cout << endl;
+      }
+      */
+    }
+    int start = upper_bound(primeList.begin(), primeList.end(), K) - primeList.begin();
+    int ans = -1;
+    for (int it = start; it >= 0; it--) {
+      int t = primeList[it];
+      if (t > K) continue;
+      string &str = primeListString[it];
+      //cout << str << endl;
+      int ptr1 = 0, ptr2 = 0;
+      int ok = true;
+      rep(i, str.size()) {
+        ptr1 = nxt[0][ptr1][str[i] - '0'];
+        ptr2 = nxt[1][ptr2][str[i] - '0'];
+        //cout << ptr1 << " " << ptr2 << endl;
+        if (ptr1 == -1 || ptr2 == -1) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) {
+        ans = t;
+        break;
+      }
+    }
+    printf("%d\n", ans);
+  }
+
+  return 0;
+}
+

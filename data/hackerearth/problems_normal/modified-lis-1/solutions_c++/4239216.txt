@@ -1,0 +1,74 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 100001;
+const int M = N << 3;
+const int MOD= 1000000007; 
+typedef pair<int, int> pii;
+typedef long long ll;
+
+#define mp make_pair
+#define pb push_back
+
+pii positive[M],negetive[M];
+int A;
+
+inline void add(int &a,int b){
+	a+=b;
+	if(a>=MOD) a-=MOD;
+}
+
+pii best(pii &a, pii b,pii c){
+	a=max(b,c);
+	if(b.first == c.first)
+	a.second=(b.second+c.second) % MOD;
+	return a;
+}
+
+void update(int s,int e,int l,int r,int i,int j,int v,pii *tree){
+	if(s>e || e<l || s>r)return;
+	
+	if(s==e){
+		int p= tree[i].first;
+		if(p>j)return;
+		else if(p==j)add(tree[i].second,v);
+		else{
+			tree[i]=mp(j,v);}
+		return;
+	}
+	int mid=(s+e) >> 1;
+	int lt=(i << 1);
+	int rt= lt|1;
+	update(s,mid,l,r,lt,j,v,tree);
+	update(mid+1,e,l,r,rt,j,v,tree);
+	best(tree[i],tree[lt],tree[rt]);
+}
+pii read(int s,int e,int l ,int r,int i,pii* tree){
+	if(s>e || e<l || s>r)return mp(0,0);
+	if(l<=s && e<=r)return tree[i];
+	int mid = (s+e) >> 1;
+	int lt= (i<<1);
+	int rt= lt|1;
+	pii a= read(s,mid,l,r,lt,tree);
+	pii b= read(mid+1,e,l,r,rt,tree);
+	
+	pii res;
+	best(res,a,b);
+	return res;
+}
+int main(){
+	pii ans=mp(-1,-1),call;
+	int n, sign=1;
+	cin >> n;
+	for(int i=1;i<=n;i++){
+		cin >> A;
+		sign=(A>0);
+		if(!sign)A=-A;
+		call= read(1,N-1,1,A-1,1,sign?negetive:positive);
+		if(call.second==0)++call.second;
+		++call.first;
+		update(1,N-1,A,A,1,call.first,call.second,sign?positive:negetive);
+	}
+	best(ans,positive[1],negetive[1]);
+	cout << ans.first << " " << ans.second;
+	return 0;
+}

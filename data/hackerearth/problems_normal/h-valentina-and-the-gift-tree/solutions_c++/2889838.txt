@@ -1,0 +1,151 @@
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+typedef long long int LL;
+const int MAXN = 1 << 17;
+const int MAXLOG = 17;
+const LL INF = 1e18;
+
+struct Data {
+  LL pref, suf, res, sum, max;
+};
+
+std::vector<int> adj[MAXN];
+int value[MAXN];
+int depth[MAXN];
+int parent[MAXN][MAXLOG];
+Data data[MAXN][MAXLOG];
+int preorder[MAXN], postorder[MAXN];
+int timer;
+bool visited[MAXN];
+
+void dfs(int u, int prev) {
+  if (visited[u])
+    return;
+  preorder[u] = ++timer;
+  visited[u] = true;
+  parent[u][1] = prev;
+  depth[u] = depth[prev] + 1;
+  for (int v : adj[u])
+    dfs(v, u);
+  postorder[u] = ++timer;
+}
+
+bool is_son(int u, int v) {
+  return preorder[u] >= preorder[v] && postorder[u] <= postorder[v];
+}
+
+Data merge(Data left, Data right) {
+  Data ret;
+  ret.pref = std::max(left.pref, left.sum + right.pref);
+  ret.suf = std::max(right.suf, left.suf + right.sum);
+  ret.res = std::max(std::max(left.res, right.res), left.suf + right.pref);
+  ret.sum = left.sum + right.sum;
+  ret.max = std::max(left.max, right.max);
+  return ret;
+}
+
+Data query_path(int a, int b) {
+  Data ret = {0, 0, 0, 0, -INF};
+  for (int i = MAXLOG - 1; i >= 0; i--) {
+    if (a != -1 && parent[a][i] != -1) {
+      int p = parent[a][i];
+      if (depth[p] >= depth[b]) {
+        //printf("dziele na %d %d, sum = %d\n", a + 1, p + 1, data[a][i].sum);
+        ret = merge(ret, data[a][i]);
+        a = parent[p][1];
+      }
+    }
+  }
+  return ret;
+}
+
+int lca(int u, int v) {
+  for (int i = MAXLOG - 1; i >= 0; i--) {
+    int p = parent[u][i] != -1 ? parent[parent[u][i]][1] : -1;
+    if (p != -1) {
+      if (!is_son(v, p))
+        u = p;
+    }
+  }
+  return u;
+}
+
+LL solve(const Data& d) {
+  if (d.max < 0)
+    return d.max;
+  return d.res;
+}
+
+LL query(int u, int v) {
+  if (u == v)
+    return value[u];
+  if (depth[u] < depth[v])
+    std::swap(u, v);
+  if (is_son(u, v))
+    return solve(query_path(u, v));
+  int t = lca(u, v);
+  Data d1 = query_path(u, t);
+  Data d2 = query_path(v, parent[t][1]);
+  //printf("d1.suf = %d d2.suf = %d, lca=%d\n", d1.suf, d2.suf, t + 1);
+  
+  if (d1.max < 0 && d2.max < 0)
+    return std::max(d1.max, d2.max);
+  return std::max(d1.suf + d2.suf, std::max(d1.res, d2.res));
+}
+
+int main() {
+  int n;
+  scanf("%d", &n);
+
+  for (int i = 0; i < n - 1; i++) {
+    int u, v;
+    scanf("%d%d", &u, &v);
+    u--, v--;
+
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+  }
+
+  for (int i = 0; i < n; i++)
+    scanf("%d", &value[i]);
+
+  for (int i = 0; i < n; i++)
+    for (int j = 0; j < MAXLOG; j++)
+      parent[i][j] = -1;
+  
+  for (int i = 0; i < n; i++)
+    if (!visited[i])
+      dfs(i, -1);
+  
+  for (int i = 0; i < n; i++) {
+    parent[i][0] = i;
+    if (value[i] < 0)
+      data[i][0] = { 0, 0, 0, value[i], value[i] };
+    else
+      data[i][0] = { value[i], value[i], value[i], value[i], value[i] };
+  }
+
+  for (int i = 1; i < MAXLOG; i++)
+    for (int u = 0; u < n; u++) {
+      int p = parent[u][i - 1];
+      if (p != -1 && parent[p][1] != -1) {
+        if (i > 1)
+          parent[u][i] = parent[parent[p][1]][i - 1];
+        data[u][i] = merge(data[u][i - 1], data[parent[p][1]][i - 1]);
+        //printf("data[%d][%d].res = %Ld\n", u + 1, i, data[u][i].res);
+        //printf("parent[%d][%d] = %d\n", u + 1, i, parent[u][i] + 1);
+      }
+    }
+    
+  int q;
+  scanf("%d", &q);
+
+  while (q--) {
+    int u, v;
+    scanf("%d%d", &u, &v);
+    u--, v--;
+
+    printf("%lld\n", query(u, v));
+  }
+}

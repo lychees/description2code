@@ -1,0 +1,73 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+typedef long long LL;
+ 
+#define PII       pair<int,int>
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+#define cin(x)    scanf("%d",&x)
+#define MOD       1000000007
+#define EPS       1E-10
+
+int dp[100001][10][2];
+int s,d;
+
+int solve(int sumLeft , int last, int flag)
+{
+	if(sumLeft < 0) return 0;
+	else if(sumLeft == 0) return flag;
+	else if(dp[sumLeft][last][flag] != -1) return dp[sumLeft][last][flag];
+	int ret = 0;
+	for(int i = max(1,last-d); i <= last; i++)
+	{
+		if(last - i == d)
+			ret = (ret + solve(sumLeft - i , i , 1)) % MOD;
+		else
+			ret = (ret + solve(sumLeft - i , i , flag)) % MOD;
+	}
+	return (dp[sumLeft][last][flag] = ret);
+}
+
+void FUCK()
+{
+	for(int i = 0; i <= 100000; i++)
+		for(int j = 0; j < 10; j++)
+			dp[i][j][0] = dp[i][j][1] = 0;
+}
+
+int main()
+{
+	int t;
+	cin >> t;
+	for(int ii = 1; ii <= t; ii++)
+	{
+		FUCK();
+		cin >> s >> d;
+		for(int i = 1; i <= 9; i++)
+			dp[i][i][d==0] = 1;
+		for(int sum = 0; sum <= s; sum++)
+		{
+			for(int last = 1; last <= 9; last++)
+			{
+				for(int flag = 0; flag < 2; flag++)
+				{
+					for(int next = last; next <= min(9,last+d); next++)
+					{
+						if(sum+next > s) break;
+						dp[sum + next][next][flag || (d == (next-last))] += dp[sum][last][flag];
+						dp[sum + next][next][flag || (d == (next-last))] %= MOD;
+					}
+				}
+			}
+		}
+		int ans = 0;
+		for(int i = 1; i <= 9; i++)
+			ans = (ans + dp[s][i][1]) % MOD;
+		cout << "Case #" << ii << ": " << ans << "\n";
+	}
+	return 0;
+}

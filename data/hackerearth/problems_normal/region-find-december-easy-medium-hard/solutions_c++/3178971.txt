@@ -1,0 +1,142 @@
+/*******************************************************************************
+IF YOU ARE LOOKING THIS YOU ARE RIGHT WAY
+*******************************************************************************/
+#include<stdio.h>
+#include<vector>
+#include<queue>
+#include<stack>
+#include<set>
+#include<map>
+#include<string>
+#include<cmath>
+#include<cstring>
+#include<stdlib.h>
+#include<iostream>
+#include<string>
+#include<algorithm>
+using namespace std;
+#define MAX 100005
+typedef pair<int,int> p;
+typedef pair<int,p> pii;
+#define fi first
+#define se second
+#define pb push_back
+#define s(a) scanf("%d",&a);
+#define mem(a) memset(a,0,sizeof(0))
+vector<int> v;
+int weight[1501];
+int vis[1501];
+vector<int> G[1501];
+long long dp[1501];
+long long dpG[1501];
+#define MOD 1000000007
+void dfs(int u,int K,int par)
+{
+	long long sg = 0;
+	long long se = 0;
+	vis[u] = 1;
+	for(int i = 0 ; i < G[u].size() ; i++)
+	{
+		if(G[u][i] == par)
+			continue;
+		dfs(G[u][i],K,u);
+/*		if(weight[u]==K)
+		{
+			dp[u] += dp[G[u][i]];
+			dp[u] %= MOD;
+			dp[u] += dpG[G[u][i]];
+			dp[u] %= MOD;
+		}
+		else if(weight[u] > K)
+		{
+			dp[u] += dp[G[u][i]];
+			dp[u] %= MOD;
+			dpG[u] += dpG[G[u][i]];
+			dpG[u] %= MOD;
+		}
+		sg += dpG[G[u][i]];
+		se += dp[G[u][i]];
+*///		printf("%d sg se %lld %lld\n",(500000004*2)%MOD,sg,se);
+//		sg %= MOD;
+//		se %= MOD; 
+	}
+	
+//	printf("%d : %lld %lld %lld\n",u,dp[u],sg,se);
+	if(weight[u] < K)
+	{
+		dp[u] = dpG[u] = 0;
+		return;
+	}
+	long long curg= 0,cure= 0;
+	if(weight[u] == K)
+		cure = 1;
+	else
+		curg = 1;
+	for(int i = 0 ; i < G[u].size() ; i++)
+	{
+		if(G[u][i] == par)
+			continue;
+		curg %= MOD;
+		cure %= MOD;
+		
+		if(weight[u] == K)
+		{
+			cure += (dpG[G[u][i]] * cure)%MOD + (dp[G[u][i]] * cure)%MOD + (dp[G[u][i]] * curg)%MOD + (dpG[G[u][i]] * curg)%MOD;
+//			curg += dp[G[u][i]];
+		}
+		else
+		{
+			long long te,tg;
+			te = cure;
+			tg = curg;
+			cure += (dpG[G[u][i]] * cure)%MOD + (dp[G[u][i]] * cure)%MOD + (dp[G[u][i]] * curg)%MOD;
+			curg += (dpG[G[u][i]] * curg)%MOD;
+		}
+		cure %= MOD;
+		curg %= MOD;
+	}
+	dp[u] %= MOD;
+	dp[u] = cure;
+	dpG[u] = curg;
+	dp[u]%=MOD;
+	dpG[u]%=MOD;
+//	printf("%d : %lld %lld\n",u,dp[u],dpG[u]);
+//	printf("%d : %lld\n",u,dp[u]);
+}
+
+void solve(int K)
+{
+	dfs(1,K,-1);
+}
+
+int main()
+{
+	int N;
+	int u,v,k;
+	scanf("%d",&N);
+	for(int i = 1 ; i <= N ; i++)
+		scanf("%d",weight+i);
+	for(int i = 0 ; i < N -1;i++)
+	{
+		scanf("%d%d",&u,&v);
+		G[u].pb(v);
+		G[v].pb(u);
+	}
+	int Q;
+	scanf("%d",&Q);
+	while(Q--)
+	{
+		scanf("%d",&k);
+		memset(dp,0,sizeof(dp));
+		memset(dpG,0,sizeof(dpG));
+		solve(k);
+		long long ans =0;
+		for(int i = 1 ; i <= N ;i++)
+		{
+			ans += dp[i];
+			ans %= MOD;
+		}
+		printf("%lld\n",ans);
+	}
+	return 0;
+}

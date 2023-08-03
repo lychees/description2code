@@ -1,0 +1,136 @@
+/*input
+1
+10 10
+1 5 78
+1 8 221
+2 7 92
+2 8 159
+3 5 55
+3 6 179
+3 10 237
+4 8 205
+5 6 191
+8 10 157
+6 3 2
+*/
+#include <bits/stdc++.h>
+#include<stdio.h>
+using namespace std;
+#define pii pair<long long,long long>
+#define F(i,a,b) for(ll i = (ll)(a); i <= (ll)(b); i++)
+#define RF(i,a,b) for(ll i = (ll)(a); i >= (ll)(b); i--)
+#define PI 3.14159265
+#define ll long long
+#define ff first
+#define ss second
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair(x,y)
+#define INF 100000000009ll
+#define mod 1000000007
+vector <pii> g[100005];
+ll dist[100005];
+bool vis[100005];
+ll parent[100005];
+vector <ll> ans1,ans2;
+ll djikstra(ll st,ll en)
+{
+	F(i,0,100003)
+		dist[i]=INF;
+	memset(vis,0,sizeof(vis));
+	memset(parent,-1,sizeof(parent));
+	priority_queue < pii, vector<pii> , greater<pii> > pq;
+	dist[st]=0;
+	pq.push(mp(0,st));
+	while(!pq.empty())
+	{
+		ll v = pq.top().ss;
+		pq.pop();
+		if(v==en)
+			break;
+		if(vis[v])
+			continue;
+		vis[v]=1;
+		ll sz = g[v].size();
+		F(i,0,sz-1)
+		{
+			ll w = g[v][i].ss;
+			if(!vis[g[v][i].ff] && (dist[v]+w)<dist[g[v][i].ff])
+			{
+				dist[g[v][i].ff] = dist[v]+w;
+				pq.push(mp(dist[g[v][i].ff],g[v][i].ff));
+				parent[g[v][i].ff] = v;	
+			}
+		}
+	}
+	//F(i,1,6)
+	//	cout<<dist[i]<<" ";
+	//cout<<endl;
+	if(dist[en]==INF)
+		return -1;
+	else
+		return dist[en];
+}
+int main() 
+{
+	std::ios::sync_with_stdio(false);
+	ll t;
+	cin>>t;
+	while(t--)
+	{
+		ll n,k;
+		cin>>n>>k;
+		F(i,0,n+3)
+			g[i].clear();
+		F(i,1,k)
+		{
+			ll u,v,w;
+			cin>>u>>v>>w;
+			g[u].pb(mp(v,w));
+			g[v].pb(mp(u,w));
+		}
+		ll s,e,m,s1=0,s2=0;
+		cin>>s>>m>>e;
+		s1 = djikstra(s,m);
+		ans1.clear();
+		ans2.clear();
+		if(s1!=-1)
+		{
+			ll i=m;
+			while(i!=s)
+			{
+				ans1.pb(i);
+				i = parent[i];
+			}
+		}
+		s2 = djikstra(m,e);
+		if(s2!=-1)
+		{
+			ll i=e;
+			while(i!=m)
+			{
+				ans2.pb(i);
+				i=parent[i];
+			}
+		}
+		if(s1==-1 || s2==-1)
+		{
+			cout<<"No Train Found."<<endl;
+			continue;
+		}
+		else
+		{
+			cout<<s1+s2<<endl;
+			ll sz1 = ans1.size();
+			cout<<s<<" ";
+			RF(i,sz1-1,0)
+				cout<<ans1[i]<<" ";
+			ll sz2 = ans2.size();
+			RF(i,sz2-1,0)
+			{
+				cout<<ans2[i]<<" ";
+			}
+			cout<<endl;
+		}
+	}
+	return 0;
+}

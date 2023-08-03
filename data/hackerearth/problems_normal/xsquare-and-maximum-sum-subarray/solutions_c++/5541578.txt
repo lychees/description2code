@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+#define lli long long
+#define MAX 500005
+#define INF 10000000000000000LL
+using namespace std;
+pair <lli, lli> Q[MAX];
+pair <lli, lli> A[MAX];
+lli ans[MAX];
+struct node {
+	lli ans;
+	lli pre;
+	lli suf;
+	lli sum;
+	node() { }
+	node(lli ans, lli pre, lli suf, lli sum)
+	{
+		this->ans = ans;
+		this->pre = pre;
+		this->suf = suf;
+		this->sum = sum;
+	}
+}tree[4*MAX];
+node combine(node p1, node p2)
+{
+    node ret;
+	ret.sum = max(-INF, p1.sum + p2.sum);
+	ret.pre = max(-INF, max(p1.pre, p1.sum + p2.pre));
+	ret.suf = max(-INF, max(p2.suf, p1.suf + p2.sum));
+	ret.ans = max(p1.ans,p2.ans);
+	ret.ans = max(-INF, max(ret.ans, p1.suf + p2.pre));
+	return ret;
+}
+void build(int where, int left, int right)
+{
+	if ( left > right ) return;
+	if ( left == right ) {
+		tree[where] = node(-INF,-INF,-INF, -INF);
+		return;
+	}
+	int mid = (left+right)/2;
+	build(where*2, left, mid);
+	build(where*2+1, mid+1, right);
+	tree[where] = combine(tree[where*2], tree[where*2+1]);
+}
+void update(int where, int left, int right, int idx, lli val)
+{
+	if ( left > right || left > idx || right < idx ) return;
+	if ( left == right ) {
+		tree[where] = node(val, val, val, val);
+		return;
+	}
+	int mid = (left+right)/2;
+	update(where*2, left, mid, idx, val);
+	update(where*2+1, mid+1, right, idx, val);
+	tree[where] = combine(tree[where*2], tree[where*2+1]);
+}
+template <typename T>
+inline void fi(T *a)
+{
+    register char c=0;
+    while (c<33) c=getchar_unlocked();
+    *a=0;
+    int tmp = 0;
+    while (c>33)
+    {
+        if ( c == 45 ) tmp = 1;
+        else *a=*a*10+c-'0';
+        c=getchar_unlocked();
+    }
+    if ( tmp == 1 ) *a = 0-(*a);
+}
+int main()
+{
+	int n,q,idx1,idx2;
+	fi(&n), fi(&q);
+	build(1,0,n-1);
+	for ( int i = 0; i < n; i++ ) {
+		fi(&A[i].first);
+		A[i].second = i;
+	}
+	sort(A,A+n);
+	for ( int i = 0; i < q; i++ ) {
+		fi(&Q[i].first);
+		Q[i].second = i;
+	}
+	sort(Q, Q+q);
+	idx1 = idx2 = 0;
+	while ( idx1 < q ) {
+		while ( idx2 < n && A[idx2].first <= Q[idx1].first ) {
+			update(1,0,n-1,A[idx2].second,A[idx2].first);
+			idx2++;
+		}
+		ans[Q[idx1].second] = tree[1].ans;
+		idx1++;
+	}
+	for ( int i = 0; i < q; i++ ) {
+        if ( ans[i] == -INF ) printf("No Solution\n");
+        else printf("%lld\n", ans[i]);
+	}
+	return 0;
+}

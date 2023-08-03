@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define PB push_back
+#define F first
+#define S second
+#define PB push_back
+#define MP make_pair
+#define LL long long
+#define sd(x) scanf("%lld", &x)
+#define sld(x) scanf("%lld", &x)
+#define MOD 1000000000
+#define SQ 320
+#define N 1123
+#define SZ(X) ((LL)(X).size())
+#define ALL(X) (X).begin(), (X).end()
+#define REP(I, A, B) for (LL I = A; I <= B; ++I)
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define PII pair<LL,LL>
+
+LL arr[N][N], col[N][N];
+
+LL a[N][4];
+set<LL> s[N];
+set<LL> :: iterator it;
+
+LL update(LL x, LL y, LL val){
+    LL ty = y;
+    if(x == 0 || y == 0){
+        return 0;
+    }
+    while(x < N){
+        y = ty;
+        while(y < N){
+            arr[x][y] += val;
+            y += (y & -y);
+        }
+        x += (x & -x);
+    }
+}
+
+LL query(LL x, LL y){
+    LL ans = 0;
+    LL ty = y;
+    if(x == 0 || y == 0){
+        return 0;
+    }
+    while(x > 0){
+        y = ty;
+        while(y > 0){
+            ans += arr[x][y];
+            y -= (y & -y);
+        }
+        x -= (x & -x);
+    }
+    return ans;
+}
+
+LL solve(){
+    LL n, k;
+    LL i, j, o, x1, x2, y1, y2, ans = 0;
+    char c[3112];
+    cin>>n>>k;
+    for(i = 1; i <= n; i ++){
+        for(j = 1; j <= n; j++){
+            update(i, j, 1);
+        }
+    }
+    for(i = 1; i <= k; i++){
+        cin>>a[i][0]>>a[i][1]>>a[i][2]>>a[i][3]>>c[i];
+    }
+    REP(i, 1, n){
+        REP(j, 1, n){
+            s[i].insert(j);
+        }
+    }
+    LL v, x;
+    for(i = k; i >= 1; i--){
+        x1 = min(a[i][0], a[i][2]);
+        y1 = min(a[i][1], a[i][3]);
+        x2 = max(a[i][2], a[i][0]);
+        y2 = max(a[i][3], a[i][1]);
+        v = query(x2, y2);
+        v -= query(x1 - 1, y2);
+        v -= query(x2, y1 - 1);
+        v += query(x1 - 1, y1 - 1);
+        if(c[i] == 'w'){
+            ans += v;
+        }
+        for(x = x1; x <= x2; x++){
+            it = s[x].lower_bound(y1);
+            while(it != s[x].end() && (*it) <= y2){
+                update(x, *it, -1);
+                it++;
+            }
+            it = s[x].lower_bound(y1);
+            while(it != s[x].end() && (*it) <= y2){
+                s[x].erase(it);
+                it = s[x].lower_bound(y1);
+            }
+
+        }
+    }
+    ans += query(n, n);
+    cout<<ans<<endl;
+}
+
+int main(){
+    solve();
+    return 0;
+}

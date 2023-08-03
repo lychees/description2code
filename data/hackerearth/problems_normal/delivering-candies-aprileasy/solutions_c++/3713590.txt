@@ -1,0 +1,70 @@
+#include <bits/stdc++.h>
+using namespace std;
+vector<long long int> djikstra(vector<vector<pair<int,int> > > g, int s) 
+{
+    typedef pair<long long int,int> Node; 
+    vector<long long int> dist(g.size(), 1e18);
+    priority_queue<Node, vector<Node>, greater<Node> > Q;
+    dist[s] = 0;
+    Q.push(make_pair(dist[s], s));
+    while(!Q.empty())
+    {
+        int u = Q.top().second;
+        long long int d = Q.top().first;
+        Q.pop();
+        
+        if(d > dist[u])
+            continue;
+            
+        for(int i=0;i<g[u].size();i++) 
+        {
+        	pair<int,int> v=g[u][i];
+            if(dist[v.first] > dist[u] + v.second)
+            {
+                dist[v.first] = dist[u] + v.second;
+                Q.push(make_pair(dist[v.first], v.first));
+            }
+        }
+    }
+    return dist;
+}
+int k[100004];
+int main() {
+    int n, m, s;
+    cin>>n>>m>>s;
+    
+    for (int i = 1; i <= n; ++i)
+        cin>>k[i];
+        
+    vector<vector<pair<int, int> > > g(n + 1); 
+    
+    while (m--)
+    {
+        int u, v, w;
+        cin>>u>>v>>w;
+        g[u].push_back({v, w});
+        g[v].push_back({u, w});
+    }
+    vector<long long int> dist = djikstra(g, s);
+    long long int tdist = 0;
+    int people = 0;
+    for (int i = 1; i <= n; ++i)
+    {
+        if (dist[i] < 1e17)
+        {
+            people += k[i];
+            tdist += dist[i] * k[i];
+        }
+    }
+    
+    for (int i = 1; i <= n; ++i)
+    {
+        if (dist[i] < 1e17)
+        {
+            long long ret = dist[i] * (people - k[i]) + tdist - dist[i] * k[i];
+            printf("%lld ", ret);
+        }
+        else
+            printf("0 ");
+    }
+}

@@ -1,0 +1,99 @@
+#include <bits/stdc++.h>
+#define MAX 1111111
+
+using namespace std;
+
+int gcd(int a, int b)
+{
+	if (a == 0 or b == 0)
+		return max(a, b);
+	return __gcd(a, b);
+}
+
+struct Node
+{
+	int v, f, g;
+	Node (int val = 0)
+	{
+		v = g = val;
+		f = 0;
+	}
+	
+	Node (Node a, Node b)
+	{
+		g = gcd(a.g, b.g);
+		f = a.f + b.f;
+	}
+} T[MAX * 4];
+
+int val, upd;
+
+void change(int x, int l, int r)
+{
+	if (l == r)
+	{
+		if (T[x].f == 0) T[x] = Node(val);
+		T[x].f += upd;
+		if (T[x].f == 0) T[x] = Node();
+		return;
+	}
+	
+	int m = (l + r) / 2;
+	if (val <= m)
+		change(2 * x, l, m);
+	else
+		change(2 * x + 1, m + 1, r);
+	T[x] = Node(T[2 * x], T[2 * x + 1]);
+//	cout << l << ' ' << r << ' ' << T[x].g << endl;
+}
+
+int ql, qr;
+
+Node gcdq (int x, int l, int r)
+{
+	if (qr < l or r < ql) return 0;
+	if (ql <= l and r <= qr) return T[x];
+	int m = (l + r) / 2;
+	return Node(gcdq(2 * x, l, m), gcdq(2 * x + 1, m + 1, r));
+}
+
+int smallest (int x, int l, int r, int k)
+{
+	if (l == r)
+		return l;
+	int m = (l + r) / 2;
+	if (k <= T[2 * x].f)
+		return smallest (2 * x, l, m, k);
+	else
+		return smallest (2 * x + 1, m + 1, r, k - T[2 * x].f);
+}
+
+int main()
+{
+    int Q;
+    cin >> Q;
+    while (Q--)
+    {
+    	int t;
+    	scanf("%d", &t);
+    	if (t == 4)
+    	{
+    		scanf("%d %d", &ql, &qr);
+    		printf("%d\n", gcdq(1, 1, MAX - 1).g);
+    	}
+    	else
+    	{
+    		scanf("%d", &val);
+    		if (t == 1)
+    		{
+    			upd = 1; change(1, 1, MAX - 1);
+    		}
+    		else if (t == 2)
+    		{
+    		 	upd = -1; change(1, 1, MAX - 1);
+    		}
+    		else
+    			printf("%d\n", smallest(1, 1, MAX - 1, val));
+    	}
+    }
+}

@@ -1,0 +1,88 @@
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include <map>
+#include <queue>
+#include <set>
+#include <complex>
+using namespace std;
+#define ll long long
+#define x first
+#define y second
+#define pii pair<int, int>
+#define pdd pair<double, double>
+#define L(s) (int)(s).size()
+#define VI vector<int>
+#define all(s) (s).begin(), (s).end()
+#define pb push_back
+#define mp make_pair
+#define PI 2 * acos(0.)
+typedef complex<double> base;
+
+int rev (int num, int lg_n) {
+	int res = 0;
+	for (int i=0; i<lg_n; ++i)
+		if (num & (1<<i))
+			res |= 1<<(lg_n-1-i);
+	return res;
+}
+
+void fft (vector<base> & a, bool invert) {
+	int n = (int) a.size();
+	int lg_n = 0;
+	while ((1 << lg_n) < n)  ++lg_n;
+	for (int i=0; i<n; ++i)
+		if (i < rev(i,lg_n))
+			swap (a[i], a[rev(i,lg_n)]);
+	//cerr << "Here\n";
+	for (int len=2; len<=n; len<<=1) {
+		double ang = 2*PI/len * (invert ? -1 : 1);
+		base wlen (cos(ang), sin(ang));
+		for (int i=0; i<n; i+=len) {
+			base w(1,0);
+			for (int j=0; j<len/2; ++j) {
+				base u = a[i+j],  v = a[i+j+len/2] * w;
+				a[i+j] = u + v;
+				a[i+j+len/2] = u - v;
+				w *= wlen;
+			}
+		}
+	}
+	if (invert)
+		for (int i=0; i<n; ++i)
+			a[i] /= n;
+}
+int n;
+vector<base> a, ra, prod;
+set<int> u;
+int main() {
+	scanf("%d", &n);
+	a.resize(1 << 19); ra.resize(1 << 19); prod.resize(1 << 19);
+	for(int i = 0; i < n; ++i) {
+		int x; scanf("%d", &x);
+		u.insert(x);
+		a[x].real(1);
+		ra[(1 << 18) - x].real(1);
+	}
+	fft(a, 0);
+	fft(ra, 0);
+	for(int i = 0; i < L(a); ++i) {
+		prod[i] = a[i] * ra[i];
+	}
+	fft(prod, 1);
+	int ans = 0;
+	for(int i = (1 << 18) + 1; i < L(a); ++i) {
+		if (prod[i].real() > 0.5) ++ans;
+		//cerr << i - 100000 << " " << prod[i].real() << endl;
+		//if (((int)(prod[i].real() - 1e-9)) > 0) {
+	//		cerr << i - 100000 << endl;
+	//		++ans;
+	//	}
+	}
+	if (L(u) < n) ++ans;
+	cout << ans << endl;
+}

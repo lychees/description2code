@@ -1,0 +1,68 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+
+vector<int> a;
+int n, K;
+
+bool exist[1005][1005][15][2];
+int dp[1005][1005][15][2];
+
+int solve(int i, int last, int k, int direction)
+{
+    if (i == a.size()) {
+        return 0;
+    }
+    if (!exist[i][last][k][direction]) {
+        int answer2 = 0;
+        if (direction == 0) {
+            if (a[i] < last) {
+                if (k > 0) {
+                    answer2 = 1 + solve(i+1, a[i], k-1, direction);
+                } else {
+                    answer2 = 1 + solve(i+1, a[i], 1, !direction);
+                }
+            }
+        } else {
+            if (a[i] > last) {
+                if (k < K) {
+                    answer2 = 1 + solve(i+1, a[i], k+1, direction);
+                } else {
+                    answer2 = 1 + solve(i+1, a[i], K-1, !direction);
+                }
+            }
+        }
+        int answer1 = solve(i+1, last, k, direction);
+        dp[i][last][k][direction] = max(answer1, answer2);
+        exist[i][last][k][direction] = 1;
+    }
+    return dp[i][last][k][direction];
+}
+
+int main()
+{
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        memset(exist, 0, sizeof(exist));
+        memset(dp, 0, sizeof(dp));
+        scanf("%d%d", &n, &K);
+        a.clear();
+        a.resize(n);
+        for (int i = 0; i < n; i++) {
+            scanf("%d", &a[i]);
+        }
+        int answer = 0;
+        for (int i = 1; i <= K; i++) {
+            answer = max(answer, solve(0, 0, i, 1));
+        }
+        for (int i = K-1; i >= 0; i--) {
+            answer= max(answer, solve(0, 1005, i, 0));
+        }
+        printf("%d\n", answer);
+    }
+}

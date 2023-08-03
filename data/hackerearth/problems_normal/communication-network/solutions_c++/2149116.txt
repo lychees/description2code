@@ -1,0 +1,80 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+
+int main() {
+	int N, K;
+	while(~scanf("%d%d", &N, &K)) {
+		vector<int> A(N);
+		rep(i, N) scanf("%d", &A[i]);
+		vector<int> a(N);
+		rep(i, N) a[i] = i;
+		vector<ll> b(N);
+		rep(i, N) b[i] = (ll)A[i] * K * K;
+		const int MaxX = 120;
+		vector<vector<ll> > dp(N, vector<ll>(MaxX+1));
+		auto f = [&](int j, int k, long long x) {
+			return dp[k][j] + (x-a[k]) * (x-a[k]);
+		};
+		vector<vector<pair<int,ll> > > stks(MaxX+1);
+		rer(j, 1, MaxX) {
+			dp[0][j] = b[0];
+			stks[j].push_back(mp(0, 0));
+		}
+		vector<int> inds(MaxX+1, 0);
+		reu(i, 1, N) {
+			rer(j, 2, MaxX) {
+				int &ind = inds[j-1];
+				auto &stk1 = stks[j-1], &stk2 = stks[j];
+				while(ind+1 < (int)stk1.size() && a[i] >= stk1[ind+1].second)
+					++ ind;
+				dp[i][j] = f(j-1, stk1[ind].first, a[i]) + b[i];
+
+ 				while(!stk2.empty() && f(j, stk2.back().first, stk2.back().second) >= f(j, i, stk2.back().second))
+					stk2.pop_back();
+				int t = stk2.back().first;
+				ll num = (dp[i][j] - dp[t][j]) + ((ll)a[i]*a[i] - (ll)a[t]*a[t]);
+				ll den = 2LL * (a[i] - a[t]);
+
+				stk2.push_back(mp(i, (num + den - 1) / den));
+			}
+		}
+		ll ans = dp[N-1][min(K, MaxX)];
+		printf("%lld\n", ans);
+	}
+	return 0;
+}

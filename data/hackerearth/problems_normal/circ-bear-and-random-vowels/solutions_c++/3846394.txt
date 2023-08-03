@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define fi first
+#define se second
+#define pb push_back
+#define mp make_pair
+#define MAXN 3005
+#define MODV 1000000007
+
+typedef long long ll;
+typedef double dbl;
+typedef vector<int> vi;
+typedef pair<int, int> pi;
+void domod(int &a, ll b){a=(a+b)%MODV;}
+void mulmod(int &a, ll b){a=(a*b)%MODV;}
+int getint(){int a;scanf("%d",&a);return a;}
+
+int dp[MAXN][MAXN][5], vc[MAXN];
+int n,k;
+bool isvowel[MAXN];
+char *s;
+
+int power(int a, int b) {
+  int res = 1;
+  while (b > 0) {
+    if (b & 1) { mulmod(res, a); }
+    b >>= 1;
+    mulmod(a, a);
+  }
+  return res;
+}
+int inv(int a) { return power(a, MODV - 2); }
+
+int *fact, *invfact;
+void calcfact(){
+  fact=new int[MAXN];
+  invfact=new int[MAXN];
+  fact[0]=invfact[0]=1;
+  for(int i=1;i<MAXN;i++){
+    fact[i]=fact[i-1];
+    invfact[i]=invfact[i-1];
+    mulmod(fact[i],i);
+    mulmod(invfact[i],inv(i));
+  }
+}
+int cnp(int n, int k){
+  int res=fact[n];
+  mulmod(res,invfact[k]);
+  mulmod(res,invfact[n-k]);
+  return res;
+}
+
+int doit(int ix, int nv, int rc){
+  if(ix==n){
+    if(nv<k)return 0;
+    int added = nv-vc[n-1];
+    if(added>k || added<0 )return 0;
+    if(nv<(n-nv))return 0;
+    int common = k-added;
+    return cnp(vc[n-1],common);
+  }
+  int &ret=dp[ix][nv][rc];
+  if(ret!=-1)return ret;
+  ret=0;
+  if(isvowel[ix]){
+    domod(ret,doit(ix+1,nv+1,0));
+  }else{
+    domod(ret,doit(ix+1,nv+1,0));
+    if(rc<2){
+      domod(ret,doit(ix+1,nv,rc+1));
+    }
+  }
+  return ret;
+}
+
+int main() {
+  string vow="aeiouy";
+  memset(dp,-1,sizeof(dp));
+  memset(vc,0,sizeof(vc));
+  n=getint(),k=getint();
+  s = new char[MAXN];
+  calcfact();
+  scanf("%s", s);
+  for(auto i=0;i<n;i++){
+    isvowel[i]=false;
+    if(i)vc[i]=vc[i-1];
+    if(vow.find(s[i])!=string::npos)vc[i]++,isvowel[i]=true;
+  }
+  int good = doit(0,0,0);
+  int tot =cnp(n,k);
+  tot -= good;
+  while(tot<0)tot+=MODV;
+  cout<<tot<<endl;
+  delete[] s;
+
+  return 0;
+}

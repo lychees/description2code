@@ -1,0 +1,78 @@
+#include<iostream>
+#include<algorithm>
+
+using namespace std;
+
+int const N = 3e6 + 41;
+
+int n, m, d, ans[N], pos[N], sz, F[N];
+pair<int, int> q[N], e[N], allq[N];
+
+void upd(int x, int v){
+	while(x < n){
+		F[x] += v;
+		x |= (x+1);
+	}
+}
+
+int get(int x){
+	int ret = 0;
+	while(x >= 0){
+		ret += F[x];
+		x = (x&(x+1))-1;
+	}
+	return ret;
+}
+
+int main(){
+	scanf("%d%d%d",&n,&m,&d);
+	for(int i=0;i<n;++i){
+		int v;
+		scanf("%d",&v);
+		pos[v-1] = i;
+	}
+	for(int i=0;i<m;++i){
+		int l, r;
+		scanf("%d%d",&l,&r);
+		--l;
+		--r;
+		q[i] = make_pair(l, r);
+		allq[i] = make_pair(r, i); 
+	}
+	for(int i=0;i<=d;++i){
+		for(int j=0;j<n;++j){
+			int v = i + j;
+			if(v < n){
+				int p1 = pos[j];
+				int p2 = pos[v];
+				if(p1 > p2){
+					swap(p1, p2);
+				}
+				e[sz] = make_pair(p2, p1);
+				++sz;
+			}
+		}
+	}
+	
+	sort(allq, allq+m);
+	sort(e, e+sz);
+	int paq = 0, pe = 0;
+	while(paq < m){
+		if(pe == sz || allq[paq].first < e[pe].first){
+			int id = allq[paq].second;
+			int l = q[id].first;
+			int r = q[id].second;
+			ans[id] += get(r) - get(l-1);
+			++paq;
+		}else{
+			upd(e[pe].second, 1);
+			++pe;
+		}
+	}
+
+	for(int i=0;i<m;++i){
+		printf("%d\n",ans[i]);
+	}
+
+	return 0;
+}

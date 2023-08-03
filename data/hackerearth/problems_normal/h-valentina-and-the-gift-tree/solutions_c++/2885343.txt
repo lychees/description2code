@@ -1,0 +1,165 @@
+#include<cstdio>
+#include<unordered_map>
+#include<unordered_set>
+#include<set>
+#include<map>
+#include<vector>
+#include<algorithm>
+#define ll long long
+using namespace std;
+const int maxn=100006;
+int cpar[maxn];
+int clevel[maxn];
+struct node
+{
+	ll m;
+	ll bm;
+	ll em;
+};
+unordered_map<ll,node > info;
+vector<int>  adj[maxn];
+ll gift[maxn];
+bool done[maxn];
+int sz[maxn];
+set<int> vis;
+ll mp(int u, int v)
+{
+	ll ans=u;
+	ans*=1000000;
+	ans+=v;
+	return ans;
+}
+void dfs1(int x)
+{
+	vis.insert(x);
+	//vis[x]=1;
+	sz[x]=1;
+	for(int i=0;i<(int)adj[x].size();++i)
+	{
+		int nx=adj[x][i];
+		if(!done[nx] && vis.find(nx)==vis.end())
+		{
+			dfs1(nx);
+			sz[x]+=sz[nx];
+		}
+	}
+}
+int dfs2(int x,int s)
+{
+	vis.insert(x);
+	//vis[x]=1;
+	for(int i=0;i<(int)adj[x].size();++i)
+	{
+		int nx=adj[x][i];
+		if(!done[nx] && vis.find(nx)==vis.end())
+		{
+			if(sz[nx]>s/2)return dfs2(nx,s);
+		}
+	}
+	return x;
+}
+int find_centroid(int x)
+{
+	vis.clear();
+	dfs1(x);
+	vis.clear();
+	return dfs2(x,sz[x]);
+}
+void dfs3(int x,int c, int p=-1, ll s=0)
+{
+	if(x==c)
+	{
+		node now={gift[x],gift[x],gift[x]};
+		info[mp(c,x)]=now;
+	}
+	else
+	{
+		node now;
+		ll P=mp(c,p);
+		now=info[P];
+		now.em=max(gift[x],now.em+gift[x]);
+		now.m = max(now.m,now.em);
+		now.bm = max(now.bm,s+gift[x]);
+		info[mp(c,x)]=now;
+	}
+	vis.insert(x);
+	//vis[x]=1;
+	for(int i=0;i<(int)adj[x].size();++i)
+	{
+		int nx=adj[x][i];
+		if(!done[nx] && vis.find(nx)==vis.end())dfs3(nx,c,x,s+gift[x]);
+	}
+}
+void make_paths(int x)
+{
+	vis.clear();
+	dfs3(x,x);
+}
+void decompose(int x,int p,int l=0)
+{
+
+	int c=find_centroid(x);
+	make_paths(c);
+	cpar[c]=p;
+	done[c]=1;
+	clevel[c]=l;
+	for(int i=0;i<(int)adj[c].size();++i)
+		if(!done[adj[c][i]])
+			decompose(adj[c][i],c,l+1);
+}
+ll ans(int u, int v)
+{
+	if(clevel[u]>clevel[v])swap(u,v);
+	int lca=v;
+	while(clevel[lca] >clevel[u])lca=cpar[lca];
+	int pu=u;
+	while(lca !=pu)
+	{
+		lca=cpar[lca];
+		pu=cpar[pu];
+	}
+	ll f;
+	if(lca==u)
+	{
+		return info[mp(u,v)].m;
+	}
+	else
+	{
+		ll p1,p2;
+		p1=mp(lca,u);
+		p2=mp(lca,v);
+		f=max(info[p1].m,info[p2].m);
+		f=max(f,info[p1].bm+info[p2].bm-gift[lca]);
+	}
+	return f;
+}
+int main()
+{
+	for(int i=0;i<maxn;++i)
+	{
+		cpar[i]=-1;
+		done[i]=0;
+		clevel[i]=0;
+	}
+	int n;
+	info.clear();
+	scanf("%d",&n);
+	for(int i=0;i<n-1;++i)
+	{
+		int a,b;
+		scanf("%d%d",&a,&b);
+		adj[a].push_back(b);
+		adj[b].push_back(a);
+	}
+	for(int i=1;i<=n;++i)scanf("%lld",&gift[i]);
+	decompose(1,-1);
+	int q;
+	scanf("%d",&q);
+	for(int i=0;i<q;++i)
+	{
+		int x,y;
+		scanf("%d%d",&x,&y);
+		printf("%lld\n",ans(x,y));
+	}
+	return 0;
+}

@@ -1,0 +1,130 @@
+#include <iostream>
+#include <cstdio>
+#include <queue>
+#include <vector>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+struct point
+{
+	int idx, x, y;	
+};
+point make_point(int idx, int x, int y)
+{
+	point temp;
+	temp.idx = idx;
+	temp.x = x;
+	temp.y = y;
+	return temp;
+}
+bool comparebyX(const point &a, const point &b)
+{
+   return a.x<b.x;
+}
+bool comparebyY(const point &a, const point &b)
+{
+   return a.y<b.y;
+}
+struct edge
+{
+	int start, end;
+	int cost;
+};
+int cost(point& a, point &b)
+{
+	return min(abs(a.x-b.x), abs(a.y-b.y));
+}
+edge make_edge(point& a, point &b)
+{
+	edge temp;
+	temp.start = a.idx;
+	temp.end = b.idx;
+	temp.cost = cost(a, b);
+	return temp;
+}
+class Compare
+{
+	public:
+	    bool operator()(const edge& a, const edge& b)
+		{
+			return a.cost>b.cost;
+		}
+};
+class set
+{
+	int *parent;
+	public:
+		set(int n)
+		{
+			parent = new int[n];
+			for(int i = 0; i<n; i++)
+				parent[i] = -1;
+		}
+		~set()
+		{
+			delete[] parent;	
+		}
+		int find(int i)
+		{
+			if(parent[i]<0)
+				return i;
+			parent[i] = find(parent[i]);
+			return parent[i];
+		}
+		void unionn(int i, int j)
+		{
+			int p_i = find(i);
+			int p_j = find(j);
+			int r_i = abs(parent[p_i]);
+			int r_j = abs(parent[p_j]);
+			if(r_i<r_j)
+				parent[p_i] = p_j;
+			else if(r_j<r_i)
+				parent[p_j] = p_i;
+			else
+			{
+				parent[p_j] = p_i;
+				parent[p_i]--;
+			}
+		}
+		bool same(int i, int j)
+		{
+			return find(i)==find(j);
+		}
+};
+int main()
+{
+	int n;
+	scanf("%d", &n);
+	vector<point> points, points2;
+	for(int i = 0; i<n; i++)
+    {
+    	int t1, t2;
+    	scanf("%d %d", &t1, &t2);
+    	points.push_back(make_point(i, t1, t2));
+    	points2.push_back(make_point(i, t1, t2));
+    }
+    sort(points.begin(), points.end(), comparebyX);
+    sort(points2.begin(), points2.end(), comparebyY);
+    
+    priority_queue<edge, vector<edge>, Compare> pq;
+    for(int i = 0; i<n-1; i++)
+    {
+    	pq.push(make_edge(points[i], points[i+1]));
+    	pq.push(make_edge(points2[i], points2[i+1]));
+    }
+    long long cost = 0;
+    set s(n);
+    while(!pq.empty())
+    {
+    	while(!pq.empty() & s.same(pq.top().start, pq.top().end))
+    		pq.pop();
+    	if(pq.empty())
+    		break;
+    	edge top = pq.top();
+    	s.unionn(top.start, top.end);
+    	cost += top.cost;
+    }
+    printf("%lld", cost);
+    return 0;
+}

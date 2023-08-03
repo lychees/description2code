@@ -1,0 +1,136 @@
+#include <bits/stdc++.h>
+#define double         long double
+#define ll             long long
+#define pi             pair <int,int>
+#define pl             pair <ll,ll>
+#define ps             pair <string,string>
+#define vi         vector <int>
+#define vl             vector <ll>
+#define vpi            vector <pi>
+#define vpl            vector <pl>
+#define st             string
+#define vs             vector <st>
+#define f(i,a,b)       for(ll i=(a);i<(b);i++)
+#define fd(i,a,b)      for(ll i=(a);i>(b);i--)
+#define Max(a,b)       ((a)>(b)?(a):(b))
+#define Min(a,b)       ((a)<(b)?(a):(b))
+#define x              first
+#define y              second
+#define si(a)          scanf("%d",&a)
+#define sii(a,b)       scanf("%d %d",&a,&b)
+#define siii(a,b,c)    scanf("%d %d %d",&a,&b,&c)
+#define sl(a)          scanf("%lld",&a)
+#define sll(a,b)       scanf("%lld %lld",&a,&b)
+#define slll(a,b,c)    scanf("%lld %lld %lld",&a,&b,&c)
+#define ss(s)          scanf("%s",s)
+#define pf             printf
+#define pfi(n)         printf("%d\n",n)
+#define pfl(n)         printf("%lld\n",n)
+#define pfls(n)        printf("%lld ",n)
+#define pfci(n,ans)    printf("Case %lld: %d\n",n,ans)
+#define pfcl(n,ans)    printf("Case %lld: %lld\n",n,ans)
+#define pfcd(n,ans)    printf("Case %lld: %lf\n",n,ans)
+#define pb             push_back
+#define all(v)         v.begin(),v.end()
+#define mem(a,v)       memset(a,v,sizeof(a))
+#define INF 1e6
+#define MAX  100007
+#define MOD 1000000007
+#define LG  16
+#define mid ((l+r)/2)
+#define PI acos(-1.0)
+using namespace std;
+
+ll A[MAX],T[MAX];
+
+struct BIT{
+    ll bit[MAX];
+    ll read(ll idx){
+        ll ret=0;
+        while(idx){
+            ret+=bit[idx];
+            idx-=(idx&-idx);
+        }
+        return ret;
+    }
+    void upd(ll idx,ll v){
+        while(idx<MAX){
+            bit[idx]+=v;
+            idx+=(idx&-idx);
+        }
+    }
+};
+
+BIT B,S;
+ll blk[MAX], sqrtN;
+
+struct Query{
+    ll l,r,id;
+    Query(ll l,ll r,ll id) : l(l), r(r), id(id) {}
+    Query() {}
+};
+
+bool cmp(const Query &a,const Query &b){
+    if(blk[a.l]==blk[b.l]){
+        return a.r<b.r;
+    }
+    return blk[a.l]<blk[b.l];
+}
+
+Query qry[MAX];
+ll Ans[MAX];
+
+int main(){
+    ll N,Q;
+    sll(N,Q);
+    f(i,1,N+1){
+        sl(A[i]);
+        T[i]=A[i];
+    }
+    f(i,0,Q){
+        ll l,r;
+        sll(l,r);
+        qry[i]=Query(l,r,i);
+    }
+    sort(T+1,T+1+N);
+    f(i,1,N+1) A[i]=(ll)(lower_bound(T+1,T+1+N,A[i])-T);
+    sqrtN=(ll)sqrt(1.0*N)+1;
+    f(i,1,N+1) blk[i]=i/sqrtN;
+    sort(qry,qry+Q,cmp);
+    ll L=1,R=0;
+    ll ans=0;
+    f(i,0,Q){
+        while(R>qry[i].r){
+            ans-=B.read(A[R]);
+            S.upd(A[R]+1,-1);
+            B.upd(1,-1);
+            B.upd(A[R],1);
+            R--;
+        }
+        while(R<qry[i].r){
+            R++;
+            ans+=B.read(A[R]);
+            S.upd(A[R]+1,1);
+            B.upd(1,1);
+            B.upd(A[R],-1);
+        }
+        while(L>qry[i].l){
+            L--;
+            ans+=S.read(A[L]);
+            S.upd(A[L]+1,1);
+            B.upd(1,1);
+            B.upd(A[L],-1);
+        }
+        while(L<qry[i].l){
+            ans-=S.read(A[L]);
+            S.upd(A[L]+1,-1);
+            B.upd(1,-1);
+            B.upd(A[L],1);
+            L++;
+        }
+        Ans[qry[i].id]=ans;
+    }
+    f(i,0,Q){
+        pfl(Ans[i]);
+    }
+}

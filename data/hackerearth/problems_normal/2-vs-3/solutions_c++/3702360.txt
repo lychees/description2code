@@ -1,0 +1,160 @@
+#include <bits/stdc++.h>
+using namespace std;
+string s;
+long long tree[500003];
+struct d
+{
+	int length;
+	long long val;
+};
+void build(int node,int start,int end)
+{
+	if(start==end)
+		tree[node]=s[start]-48;
+	else
+	{
+		int mid=(start+end)/2;
+		build(2*node,start,mid);
+		build(2*node+1,mid+1,end);
+		long long r=tree[2*node+1];
+		long long l=tree[2*node];
+		int le=(end-mid);
+		int x=0;
+		if(l==2)
+		{
+			if(le%2==0)
+				x=2;
+			else
+				x=1;
+		}
+		if(l==1)
+		{
+			if(le%2==1)
+				x=2;
+			else
+				x=1;
+		}
+		x=(x+r)%3;
+		tree[node]=x;
+		
+	}
+}
+void update(int node,int start,int end,int in)
+{
+	if(in<start||in>end||start>end)
+		return;
+	else
+	{
+		if(start==end)
+		{
+			tree[node]=1;
+			return;
+		}
+		else
+		{
+			int mid=(start+end)/2;
+			update(2*node,start,mid,in);
+			update(2*node+1,mid+1,end,in);
+			long long r=tree[2*node+1];
+			long long l=tree[2*node];
+			int le=(end-mid);
+			int x=0;
+			if(l==2)
+			{
+				if(le%2==0)
+					x=2;
+				else
+					x=1;
+			}
+			if(l==1)
+			{
+				if(le%2==1)
+					x=2;
+				else
+					x=1;
+			}
+			x=(x+r)%3;
+			tree[node]=x;
+		
+		}
+	}
+}
+d query(int node,int start,int end,int l,int r)
+{
+	if(end<l||start>r||end<start)
+		return (d{0,0});
+	
+	if(l<=start&&end<=r)
+	{
+		int len=end-start+1;
+		
+		return (d{len,tree[node]});
+	}
+	else
+	{
+		    int mid=(start+end)/2;
+			d p1=query(2*node,start,mid,l,r);
+		    d p2=query(2*node+1,mid+1,end,l,r);
+			int r1=p2.length;
+			int l1=p1.length;
+			long long rv=p2.val;
+			long long lv=p1.val;
+			long long x=0;
+			if(lv==1)
+			{
+				if(r1%2==0)
+					x=1;
+				else
+					x=2;
+			}
+			else if(lv==2)
+			{
+				if(r1%2==0)
+					x=2;
+				else
+					x=1;
+			}
+			
+			
+			x=(x+rv)%3;
+			r1=r1+l1;
+		
+			return (d{r1,x});
+	}
+}
+int main()
+{
+    int n,q,l,r,i,ch;
+    
+    cin>>n;
+    cin>>s;
+    build(1,0,n-1);
+    cin>>q;
+   
+   for(int j=0;j<q;j++)
+    {
+    	cin>>ch;
+    	if(ch==1)
+    	{
+    		cin>>l;
+    		if(s[l]=='0')
+    		{
+    		s[l]='1';
+    		update(1,0,n-1,l);
+    		}
+    	
+    	}
+    	else 
+    	{
+    		cin>>l>>r;
+    		d c=query(1,0,n-1,l,r);
+    		
+    		int ans=c.val%3;
+    		cout<<ans<<endl;
+    	
+    		}
+    	
+    	
+    }
+    return 0;
+}

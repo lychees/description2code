@@ -1,0 +1,169 @@
+/**/
+#include<bits/stdc++.h>
+using namespace std;
+/***********************************************/
+/*      ____________
+ *     /            \
+ *    /  /\      /\  \
+ *   /  /  \    /  \  \
+ *   \                /
+ *    \     \___/    /
+ *     \____________/
+ */
+const long long mod = 1000000007;
+namespace SuffixArray
+{
+string S;
+int N, gap;
+vector<int> sa, pos, tmp, lcp;
+
+bool sufCmp(int i, int j)
+{
+	if (pos[i] != pos[j])
+		return pos[i] < pos[j];
+	i += gap;
+	j += gap;
+	return (i < N && j < N) ? pos[i] < pos[j] : i > j;
+}
+
+void buildSA()
+{
+	N = S.size();
+	sa.resize(N);
+	pos.resize(N);
+	tmp.resize(N);
+	for(int i = 0;i < N; i++) sa[i] = i, pos[i] = S[i];
+	for (gap = 1;; gap <<= 1)
+	{
+		sort(sa.begin(), sa.end(), sufCmp);
+		for(int i = 0;i+1 < N; i++)  tmp[i + 1] = tmp[i] + sufCmp(sa[i], sa[i + 1]);
+		for(int i = 0;i < N; i++)  pos[sa[i]] = tmp[i];
+		if (tmp[N - 1] == N - 1) break;
+	}
+}
+
+void buildLCP()
+{
+	lcp.resize(N);
+	for (int i = 0, k = 0; i < N; ++i) if (pos[i] != N - 1)
+	{
+		for (int j = sa[pos[i] + 1]; S[i+k] != '#' && S[i + k] == S[j + k];)
+			++k;
+		lcp[pos[i]] = k;
+		if (k)--k;
+	}
+}
+}
+using namespace SuffixArray;
+struct node{
+	int cnt;
+	long long sum;
+	bool l;
+	node * left, * right;
+	node(){
+		cnt = sum = l = 0;
+		left = nullptr;
+		right = nullptr;
+	}
+};
+void build(node & n,int l = 0,int r = 200000){
+	if(l == r){
+		return;
+	}
+	n.left = new node();
+	n.right = new node();
+	int md = (l+r)>>1;
+	build(*(n.left),l,md);
+	build(*(n.right),md+1,r);
+}
+void re(node & n,int l,int r){
+	if(l == r || n.l == false)
+		return;
+	n.left->sum = n.right->sum = n.left->cnt = n.right->cnt = 0;
+	n.left->l = n.right->l = true;
+	n.l = false;
+}
+void upd(node & n,int l,int r,int L = 0,int R = 200000){
+	re(n,L,R);
+	if(l == L && r == R){
+		n.cnt = n.sum = 0;
+		n.l = true;
+		return;
+	}
+	int md = (L + R)>>1;
+	if(l <= md)upd(*(n.left),l,min(r,md),L,md);
+	if(r > md)upd(*(n.right),max(l,md+1),r,md+1,R);
+	n.sum = n.right->sum + n.left->sum;
+	n.cnt = n.right->cnt + n.left->cnt;
+}
+void upd1(node & n,int ind,long long val,int L = 0,int R = 200000){
+	re(n,L,R);
+	if(L == R && L == ind){
+		n.cnt += val;
+		n.sum += val * L;
+		return;
+	}
+	int md = (L+R)>>1;
+	if(ind <= md)upd1(*(n.left),ind,val,L,md);
+	else if(ind > md)upd1(*(n.right),ind,val,md+1,R);
+	n.sum = n.right->sum + n.left->sum;
+	n.cnt = n.right->cnt + n.left->cnt;
+}
+pair<int,long long> get(node & n,int l,int r,int L = 0,int R = 200000){
+	re(n,L,R);
+	if(l == L && r == R){
+		return make_pair(n.cnt,n.sum);
+	}
+	pair<int,long long> cur= make_pair(0,0ll),res = make_pair(0,0ll);
+	int md = (L+R)>>1;
+	if(l <= md)res = get(*(n.left),l,min(r,md),L,md);
+	if(r > md)cur = get(*(n.right),max(l,md+1),r,md+1,R);
+	res.first += cur.first;
+	res.second += cur.second;
+	return res;
+}
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(nullptr);
+
+	int n,m;
+	int md;
+	string x;
+	cin>>n;
+	for(int i = 0;i < n;i++){
+		cin>>x;
+		S += x;
+		S += '#';
+	}
+	md = S.size();
+	cin>>m;
+	for(int i = 0;i < m;i++){
+		cin>>x;
+		S += x;
+		if(i + 1 != m)S += '#';
+	}
+	buildSA();
+	buildLCP();
+	node root1 = node(),root2 = node();
+	build(root1);
+	build(root2);
+	long long res = 0;
+	for(int i = 0;i < N;i++){
+		bool x = sa[i] >= md;
+		res += (x?get(root1,0,200000).second:get(root2,0,200000).second);
+		//cout<<(x?get(root1,0,200000).second:get(root2,0,200000).second)<<endl;
+		int cnt = get(root1,lcp[i]+1,200000).first;
+		upd(root1,lcp[i]+1,200000);
+		upd1(root1,lcp[i],cnt);
+		cnt = get(root2,lcp[i]+1,200000).first;
+		upd(root2,lcp[i]+1,200000);
+		upd1(root2,lcp[i],cnt);
+		if(x)
+			upd1(root2,lcp[i],1);
+		else
+			upd1(root1,lcp[i],1);
+	}
+	cout<<res<<'\n';
+	return 0;
+}
+/**/

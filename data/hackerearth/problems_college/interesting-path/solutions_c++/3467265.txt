@@ -1,0 +1,119 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define ll long long int
+#define REP(i,a,b) for(int i=a;i<b;i++)
+#define rep(i,n) REP(i,0,n)
+#define take(A,n) int A[n+1]; rep(i,n) cin>>A[i]
+#define mod 1000000007
+#define s(x) scanf("%lld", &x)
+#define MX 1000005
+#define MX1 410
+#define INF 8944674407370955161LL
+#define sync() ios_base::sync_with_stdio(0)
+#define get getchar//_unlocked
+#define PI 3.14159265;
+
+void deb(int A[], int n) {
+    for(int i = 0; i < n; i++) {
+        cout << A[i] << " " ;
+    }
+    cout << endl;
+}
+
+ll power(ll a, ll b)
+{
+    if (b == 0)
+        return 1;
+    ll x = power(a, b>>1);
+    if (b & 1)
+        return (((x*x))*a);
+    return (x*x);
+}
+
+
+ll scan()
+{
+    ll n = 0, ch = get();
+    while (ch < '0' || ch > '9')
+        ch = get();
+    while (ch >= '0' && ch <= '9') {
+        n = (n << 3) + (n << 1) + ch - '0';
+        ch = get();
+    }
+    return n;
+}
+
+int A[1010];
+int seg[4040];
+
+void construct(int l, int r, int ind)
+{
+    if(l == r)
+    {
+        seg[ind] = INT_MAX;
+        return;
+    }
+    int m = (l + r) / 2;
+    int p = 2 * ind + 1;
+    int q = p + 1;
+    construct(l, m, p);
+    construct(m + 1, r, q);
+    seg[ind] = INT_MAX;
+}
+
+void update(int i, int val, int l, int r, int ind)
+{
+    if(l <= i && i <= r) {
+        if(l == r) {
+            seg[ind] = val;
+            return;
+        }
+        int m = (l + r) / 2;
+        int p = 2 * ind + 1;
+        int q = p + 1;
+        update(i, val, l, m, p);
+        update(i, val, m + 1, r, q);
+        seg[ind] = min(seg[p], seg[q]);
+    }
+}
+
+int get_min(int x, int y, int l, int r, int ind)
+{
+    if(x > r || y < l) {
+        return INT_MAX;
+    }
+    if(x <= l && r <= y) {
+        return seg[ind];
+    }
+    int m = (l + r) / 2;
+    int p = 2 * ind + 1;
+    int q = p + 1;
+    return min(get_min(x, y, l, m, p), get_min(x, y, m + 1, r, q));
+}
+
+int main()
+{
+    int t, n, i, j;
+    cin >> t;
+    while(t--) {
+        cin >> n;
+        for(i = 1; i <= n; i++) {
+            cin >> A[i];
+        }
+        construct(1, n, 0);
+        
+        update(n, 0, 1, n, 0);
+        for(i = n-1; i > 0; i--) {
+            int tmp = get_min(i+1, min(n, i + A[i]), 1, n, 0);
+            update(i, tmp + 1, 1, n, 0);
+        }
+        
+        cout << get_min(1, 1, 1, n, 0) << endl;
+    }
+
+    return 0;
+}

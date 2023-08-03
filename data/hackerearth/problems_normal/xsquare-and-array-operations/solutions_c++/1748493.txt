@@ -1,0 +1,79 @@
+// adijimmy
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long int ll;
+const int mod = 1e9+7;
+#define MY_LOVE
+ll power(ll a,ll b){
+ ll res = 1;
+ while(b){
+	if(b&1) res = (res*a)%mod;
+	a = (a*a)%mod;
+	b >>= 1;
+ }
+ return res;
+}
+struct node{
+ int val,pos;
+ node() { }
+ node(int a,int b){
+   this->val = a;
+   this->pos = b;
+ }
+}ST[4*100005];
+int arr[100005],n;
+node combine(node a,node b){
+ if(a.val > b.val) return a;
+ return b;
+}
+node check(node a,node b){
+ if(a.val > b.val) return a;
+ return b;
+}
+void build(int l,int r,int idx){
+	if(l==r){
+		ST[idx].val = arr[l];
+		ST[idx].pos = l;
+		return;
+	}
+	int mid = (l+r)/2;
+	build(l,mid,2*idx); build(mid+1,r,2*idx+1);
+	ST[idx] = combine(ST[2*idx],ST[2*idx+1]);
+}
+node query(int l,int r,int a,int b,int idx){
+ if(l>r || l>b || r<a) return node(-1,-1);
+ if(l>=a && r<=b) return ST[idx];
+ int mid = (l+r)/2;
+ node x = query(l,mid,a,b,2*idx);
+ node y = query(mid+1,r,a,b,2*idx+1);
+ return check(x,y);
+}
+ll solve(int l,int r){
+  int pos = query(0,n-1,l,r,1).pos;
+  ll res = 0;
+  if(l <= pos-1){
+	res += arr[pos];
+	res += solve(l,pos-1);
+  }
+  if(pos+1 <= r){
+	res += arr[pos];
+	res += solve(pos+1,r);
+  }
+  return res;
+}
+int main(){
+ #ifndef MY_LOVE
+   freopen("qns.txt","r",stdin);
+   freopen("ans.txt","w",stdout);
+ #endif
+ int t;
+ scanf("%d",&t);
+	while(t--){
+	  scanf("%d",&n);
+	  for(int i=0;i<n;i++) scanf("%d",&arr[i]);
+	  build(0,n-1,1);
+	  ll res = solve(0,n-1);
+	  printf("%lld\n",res);
+	}
+ return 0;
+}

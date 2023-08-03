@@ -1,0 +1,278 @@
+#include <bits/stdc++.h>
+#define ll int
+#define sc(a) scanf("%d", &a)
+#define pr(a) printf("%d\n", a)
+#define get getchar_unlocked
+
+using namespace std;
+
+int scan()
+{
+    int n = 0, ch = get();
+    while (ch < '0' || ch > '9') {
+        ch = get();
+    }
+    while (ch >= '0' && ch <= '9') {
+        n = (n << 3) + (n << 1) + ch - '0';
+        ch = get();
+    }
+    return n;
+}
+
+vector<ll> grp[500005];
+ll par[500005], lev[500005], sub_size[500005];   ///// calculated in cal_par_lev
+
+ll vis[500005];
+ll ch_no, nd_pos_in_ch[500005], nd_kis_ch[500005], ch_ln[500005], ch_hd[500005];  /// chains are indexed from 0 to ch_no
+ll anc[500005][20];
+
+vector<ll> tree[500005], lazy[500005];
+
+ll cal_par_lev(ll cur, ll P, ll L)
+{
+	vis[cur] = 1;
+	par[cur] = P;
+	lev[cur] = L;
+	assert(par[cur] != cur);
+	ll nxt, i, k = grp[cur].size();
+	if (k == 1 && grp[cur][0] == P) {
+		sub_size[cur] = 1;
+		return 1;
+	}
+	ll siz=1;
+	for (i = 0; i < k; i++) {
+		nxt = grp[cur][i];
+		if (!vis[nxt])
+			siz += cal_par_lev(nxt, cur, L+1);
+	}
+	sub_size[cur] = siz;
+	return siz;
+}
+
+void HLD(ll cur)
+{
+	if (ch_hd[ch_no] == -1) {
+		ch_hd[ch_no] = cur;
+	}
+	nd_pos_in_ch[cur] = ch_ln[ch_no];
+	nd_kis_ch[cur] = ch_no;
+	ch_ln[ch_no]++;
+
+	ll ans = -1;
+	ll i, k = grp[cur].size(), in;
+	for (i = 0; i < k; i++) {
+		if (grp[cur][i] != par[cur] && ans < sub_size[grp[cur][i]]) {
+			ans = sub_size[grp[cur][i]];
+			in = i;
+		}
+	}
+	if (ans != -1) {
+		HLD(grp[cur][in]);
+	}
+	for (i = 0; i < k; i++) {
+		if (i != in && grp[cur][i] != par[cur]) {
+			ch_no++;
+			HLD(grp[cur][i]);
+		}
+	}
+}
+
+void LCA_pre(ll n)
+{
+	ll j, i, LOGN = log(n);
+	for (i = 0; i < n; i++) {
+		for (j = 0; j < LOGN; j++) {
+			anc[i][j] = -1;;
+		}
+	}
+	for (i = 0; i < n; i++) {
+		anc[i][0] = par[i];
+	}
+	for (j = 1; (1<<j) <= n; j++) {
+		for (i = 0; i < n; i++) {
+			if (anc[i][j-1] != -1)
+				anc[i][j] = anc[anc[i][j-1]][j-1];
+		}
+	}
+}
+
+ll LCA(ll p, ll q)
+{
+	ll t, lo, i;
+	if (lev[p] < lev[q]) {
+		t = p;
+		p = q;
+		q = t;
+	}
+
+	for (lo = 1; 1 << lo <= lev[p]; lo++);
+    	lo--;
+    for (i = lo; i >= 0; i--)
+        if ((lev[p] - (1 << i)) >= lev[q])
+            p = anc[p][i];
+
+    if (p == q)
+        return p;
+
+    for (i = lo; i >= 0; i--) {
+        if (anc[p][i] != -1 && anc[p][i] != anc[q][i]) {
+    		p = anc[p][i];
+			q = anc[q][i];
+		}
+	}
+
+    return par[p];
+}
+
+ll query(ll a, ll b, ll node, ll l, ll k)
+{
+//	cout << node << " --" << endl;
+	if (lazy[k][node] != 0) {
+//		cout << "haha\n" << endl;
+		tree[k][node] += (b-a+1)*lazy[k][node];
+		if (a != b) {
+			lazy[k][2*node] += lazy[k][node];     /////// add in previous
+			lazy[k][2*node+1] += lazy[k][node];
+		}
+		lazy[k][node] = 0;
+	}
+	if (l < a || l > b || a > b) return 0;
+	if (a == b) return tree[k][node];
+	ll l1;
+	if (l <= (a+b)/2) l1 = query(a, (a+b)/2, 2*node, l, k);
+	else l1 = query((a+b)/2 + 1, b, 2*node+1, l, k);
+
+	return l1;
+}
+
+void update(ll node, ll a, ll b, ll l, ll r, ll k, ll val)
+{
+	if (lazy[k][node]) {
+		tree[k][node] += (b-a+1)*lazy[k][node];
+		if (a != b) {
+			lazy[k][2*node] += lazy[k][node];
+			lazy[k][2*node+1] += lazy[k][node];   /////// add in previous
+		}
+		lazy[k][node] = 0;
+	}
+	if (r < a || l > b || a > b) return ;
+	if (l <= a && r >= b) {
+		tree[k][node] += (b-a+1)*val;
+		if (a != b) {
+			lazy[k][2*node] += val;             /////// add in previous
+			lazy[k][2*node+1] += val;
+		}
+		return ;
+	}
+	update(2*node, a, (a+b)/2, l, r, k, val);
+	update(2*node+1, (a+b)/2 + 1, b, l, r, k, val);
+	tree[k][node] = tree[k][2*node] + tree[k][2*node+1];
+}
+
+int main()
+{
+	ll an,j,pos,k,typ,i,n,m,a,b,q;
+	n = scan();
+	q = scan();
+	for (i = 0; i < n-1; i++) {
+		a = scan()-1;
+		b = scan()-1;
+		grp[a].push_back(b);
+		grp[b].push_back(a);
+	}
+	for (i = 0; i < n; i++) vis[i] = 0;
+	cal_par_lev(0, -1, 0);
+	for (i = 0; i < 500005; i++) {
+		ch_hd[i] = -1;
+		ch_ln[i] = 0;
+	}
+	HLD(0);
+	LCA_pre(n);
+
+/*	for (i = 0; i <= ch_no; i++) {
+		cout << i << " -> " << ch_ln[i] << " " << ch_hd[i] << endl;
+	}
+	cout << endl;
+	for (i = 0; i < n; i++) {
+		cout << i << " size, pos, ch -> " << sub_size[i] << ", " << nd_pos_in_ch[i] << ", " << nd_kis_ch[i] << endl;
+	}
+*/
+	for (i = 0; i <= ch_no; i++) {
+		tree[i].resize(4*ch_ln[i]);
+		lazy[i].resize(4*ch_ln[i]);
+		k = 4*ch_ln[i];
+		for (j = 0; j < k; j++)
+			lazy[i][j] = tree[i][j] = 0;
+	}
+	while (q--) {
+		typ = scan();
+		if (typ == 1) {
+			a = scan()-1;
+			b = scan()-1;
+			an = LCA(a,b);
+			int cnt = 0;
+			while (nd_kis_ch[a] != nd_kis_ch[an]) {
+				k = nd_kis_ch[a];
+				++cnt;
+				update(1, 0, ch_ln[k]-1, 0, nd_pos_in_ch[a], k, 1);
+			//	assert(cnt <= 25);
+				a = par[ch_hd[k]];
+				//assert(nd_kis_ch[a] != k);
+			}
+			k = nd_kis_ch[a];
+			update(1, 0, ch_ln[k]-1, nd_pos_in_ch[an], nd_pos_in_ch[a], k, 1);
+            cnt = 0;
+			while (nd_kis_ch[b] != nd_kis_ch[an]) {
+				k = nd_kis_ch[b];
+				++cnt;
+				update(1, 0, ch_ln[k]-1, 0, nd_pos_in_ch[b], k, 1);
+				//assert(cnt <= 25);
+				b = par[ch_hd[k]];
+				//assert(nd_kis_ch[b] != k);
+			}
+			k = nd_kis_ch[b];
+			update(1, 0, ch_ln[k]-1, nd_pos_in_ch[an], nd_pos_in_ch[b], k, 1);
+			update(1, 0, ch_ln[k]-1, nd_pos_in_ch[an], nd_pos_in_ch[an], k, -1);
+		}
+		else {
+			a = scan();
+			a--;
+			k = nd_kis_ch[a];
+			pos = nd_pos_in_ch[a];
+//			cout << "here\n";
+//			cout << ch_ln[k]-1 << "  " << pos << " " << k << endl;
+//			cout << tree[k].size() << endl;
+			pr(query(0, ch_ln[k]-1, 1, pos, k));
+//			cout << "there\n";
+		}
+	}
+
+    return 0;
+}
+
+
+/*
+23 22
+0 1
+0 2
+0 3
+0 4
+1 5
+1 6
+1 7
+1 8
+2 9
+3 10
+5 11
+7 12
+7 13
+8 14
+8 15
+12 16
+13 17
+13 18
+14 19
+15 20
+15 21
+20 22
+*/

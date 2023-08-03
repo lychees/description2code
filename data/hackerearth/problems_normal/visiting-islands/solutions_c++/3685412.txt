@@ -1,0 +1,163 @@
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <limits.h>
+using namespace std;
+
+typedef pair<int, int> ii;
+typedef vector<bool> vb;
+typedef vector<int> vi;
+typedef vector<ii> vii;
+
+vector<vii> adjlist;
+vi marked;
+vi cycle;
+vi visitid;
+vi distto;
+vi tempdist;
+
+
+int dfs(int s, int vid, int& dist, int& cc, int orig)
+{
+	if(marked[s]<0)
+	{
+		tempdist[s] = dist;
+		marked[s] = orig;
+		dist++;
+		int newvid = vid;
+		//for (int i = 0; i < adjlist[s].size(); ++i)
+		//{
+		int v = adjlist[s][0].first;
+		if (s == v)
+		{
+			
+		} else if(marked[v]<0) {
+			newvid = dfs(v, newvid, dist, cc, orig);
+		} else {
+			if (marked[v] == orig)
+			{
+				cycle[v] = orig;
+				cc = (dist-1)-tempdist[v];
+			} else {
+				newvid = visitid[v];
+				newvid++;
+			}
+		}
+		//}
+		if (cc>=0)
+		{
+			if (cycle[s]!=orig)
+			{
+				visitid[s] = cc; 
+				newvid = visitid[s];
+			} else {
+				cc = -1;
+				visitid[s] = newvid; 	
+				newvid++;
+			}
+		} else {
+			visitid[s] = newvid; 
+			newvid++;
+		}
+		return newvid;
+	} else{
+		//if (visitid[s]==-1)
+		//	visitid[s] = vid;
+		return visitid[s];
+	}
+	
+}
+
+int bfs(int s)
+{
+	marked[s] = 1;
+	distto[s] = 0;
+	int max_dist = 0;
+	queue<int> qe;
+	qe.push(s);
+	while(!qe.empty())
+	{
+		int u = qe.front();
+		qe.pop();
+		for (int i = 0; i < adjlist[u].size(); ++i)
+		{
+			int v = adjlist[u][i].first;
+			if(marked[v]==-1)
+			{
+				distto[v] = distto[u] + 1;
+				marked[v] = 1;
+				qe.push(v);
+				if (max_dist < distto[v])
+					max_dist = distto[v];
+			}
+		}
+	}
+	return max_dist;
+}
+
+// Visiting Islands 
+int main()
+{
+	int T, N, p;
+	cin >> T;
+	while(T--)
+	{
+		cin >> N;
+		adjlist.assign(N, vii());
+		cycle.assign(N, -1);
+		marked.assign(N, -1);
+		visitid.assign(N, -1);
+		tempdist.assign(N, -1);
+		//cout << "after assign" << endl;
+		for (int i = 0; i < N; ++i)
+		{
+			cin >> p;
+			adjlist[i].push_back(make_pair(p, 1));
+			//cout << i << " " << p << endl;
+		}
+		//cout << "after read" << endl;
+		for (int i = 0; i < N; ++i)
+		{
+			int dist = 0;
+			int cc = -1;
+			//visitid[i] = 
+			dfs(i, 0, dist, cc, i);
+			//distto[i] = bfs(i);
+			/*
+			for (int i = 0; i < N; ++i)
+			{
+				cout << visitid[i] << " ";
+			}
+			cout << endl;
+			*/
+		}
+
+		int ind_max = -1;
+		int max = INT_MIN; 
+		for (int i = 0; i < N; ++i)
+		{
+			if (visitid[i] > max )
+			{
+				ind_max = i;
+				max = visitid[i];
+			}
+		}
+		//cout << visitid[2634] << endl;
+		//cout << visitid[43837] << endl;
+		/*
+		int ind1= N-1;
+		int ind2= N-1;
+		
+		distto.assign(N, -1);
+		marked.assign(N, -1);
+		int max_dist1 = bfs(ind1);
+		cout << ind1 <<" : " << visitid[ind1] << " " << max_dist1 << endl;
+		distto.assign(N, -1);
+		marked.assign(N, -1);
+		int max_dist2 = bfs(ind2);
+		cout << ind2 << " : " << visitid[ind2] << " " << max_dist2 << endl;
+		*/
+		//cout << "max " << max << endl;
+		cout << ind_max << endl;
+	}
+}

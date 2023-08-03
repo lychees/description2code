@@ -1,0 +1,122 @@
+
+
+    #include <bits/stdc++.h>
+    using namespace std;
+    #define pb push_back
+    #define ll long long
+    #define mp make_pair
+    #define F first
+    #define S second
+    #define pii pair<int,int>
+    #define vi vector<int>
+    #define vs vector<string>
+    #define vpii vector<pii>
+    #define all(v) v.begin(), v.end()
+    #define fr freopen("g5.txt","r",stdin)
+    #define fo freopen("t5.txt","w",stdout)
+    const int mod = 1000000007;
+    vpii fact[1005];
+    int C[1004], M[171], Mx;
+    bool isprime[1005];
+    void gen(){
+    	for(int i = 2; i <= sqrt(1000); i++){
+    		if(isprime[i] == false){
+    			for(int j = i*i; j <= 1000; j += i){
+    				isprime[j] = true;
+    			}
+    		}
+    	}
+    	Mx = 1;
+    	for(int j = 2; j <= 1000; j++){
+    		if(!isprime[j]){
+    			C[j] = Mx;
+    			M[Mx] = j;
+    			Mx++;
+    		}
+    	}
+    	for(int i = 2; i <= 1000; i++){
+    		int tmp = i;
+    		for(int j = 2; j <= sqrt(i); j++){
+    			int f = 0;
+    			while(tmp % j == 0){
+    				f++;
+    				tmp /= j;
+    			}
+    			if(f>0){
+    				fact[i].pb(mp(j,f));
+    			}
+    		}
+    		if(tmp != 1){
+    			fact[i].pb(mp(tmp,1));
+    		}
+    	}
+    }
+    int tree[10001][171][11], n, a[10005];
+    void update(int idx, int prime, int cnt, int val){
+    	if(idx == 0){
+    		return;
+    	}
+    	while(idx <= n){
+    		tree[idx][prime][cnt] += val;
+    		idx += (idx & -idx);
+    	}
+    }
+    int read(int idx, int prime, int cnt){
+    	if(idx == 0) return 0;
+    	int res = 0;
+    	while(idx > 0){
+    		res += tree[idx][prime][cnt];
+    		idx -= (idx & -idx);
+    	}
+    	return res;
+    }
+    int main(){
+    //fr;
+    //fo;
+    	gen();
+    	scanf("%d",&n);
+    	for(int i = 1; i <= n; i++){
+    		scanf("%d",&a[i]);
+    		for(int j = 0; j < fact[a[i]].size(); j++){
+    			pii temp = fact[a[i]][j];
+    			update(i,C[temp.F],temp.S,1);
+    		}
+    	}
+    	int q,type,l,r;
+    	scanf("%d",&q);
+    	while(q--){
+    		scanf("%d",&type);
+    		if(type == 1){
+    			scanf("%d %d",&l,&r);
+    			for(int i = 0; i < fact[a[l]].size(); i++){
+    				pii temp = fact[a[l]][i];
+    				update(l,C[temp.F],temp.S,-1);
+    			}
+    			for(int i = 0; i < fact[r].size(); i++){
+    				pii temp = fact[r][i];
+    				update(l,C[temp.F],temp.S,1);
+    			}
+    			a[l] = r;
+    		}
+    		else{
+    			scanf("%d %d",&l,&r);
+    			ll ans = 1;
+    			for(int i = 1; i < Mx; i++){
+    				int Val = -1;
+    				for(int j = 9; j > 0; j--){
+    					if(read(r,i,j) - read(l-1,i,j) > 0){
+    						Val = j;
+    						break;
+    					}
+    				}
+    				while(Val > 0){
+    					ans = (ans * M[i]) % mod;
+    					Val--;
+    				}
+    			}
+    			cout << ans << "\n";
+    		}
+    	}
+    	return 0;
+    }
+

@@ -1,0 +1,123 @@
+#include <cstring>
+#include <cassert>
+#include <algorithm>
+#include <iostream>
+#include <cstdio>
+
+using namespace std;
+
+typedef long long llint;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define REP(i, n) FOR (i, 0, n)
+#define TRACE(x) cout << #x << " = " << x << endl;
+#define _ << " _ " <<
+
+const int MAXP = 17;
+const int MAXN = 100000;
+const llint INF = 1e15;
+
+struct path {
+  llint sum, lsum, usum, best;
+  path() { sum = 0; lsum = usum = best = -INF; }
+  path(llint sum, llint lsum, llint usum, llint best):
+    sum(sum), lsum(lsum), usum(usum), best(best) {}
+};
+
+int n, m;
+int depth[MAXN];
+int anc[MAXP+1][MAXN];
+vector<int> e[MAXN];
+
+int val[MAXN];
+path P[MAXP+1][MAXN];
+
+void dfs(int p, int u) {
+  anc[0][u] = p;
+  P[0][u] = path(val[u], val[u], val[u], val[u]);
+  for (int v: e[u])
+    if (v != p) {
+      depth[v] = 1+depth[u];
+      dfs(u, v);
+    }
+}
+
+path merge(path lower, path upper) {
+  path ret;
+  ret.sum = lower.sum+upper.sum;
+  ret.lsum = max(lower.lsum, lower.sum+upper.lsum);
+  ret.usum = max(upper.usum, upper.sum+lower.usum);
+  ret.best = max(lower.usum+upper.lsum, max(lower.best, upper.best));
+  return ret;
+}
+
+path add(path p, llint x) {
+  return merge(p, path(x, x, x, x));
+}
+
+llint query(int a, int b) {
+  if (depth[a] > depth[b]) swap(a, b);
+  int d = depth[b]-depth[a];
+  path left, right;
+  for (int t = 0; t <= MAXP; ++t)
+    if (d>>t&1) {
+      left = merge(left, P[t][b]);
+      b = anc[t][b]; 
+    }
+  if (a != b) {
+    for (int t = MAXP; t >= 0; --t) {
+      if (anc[t][a] != anc[t][b]) {
+        left = merge(left, P[t][b]);
+        right = merge(right, P[t][a]);
+        a = anc[t][a];
+        b = anc[t][b];
+      }
+    }
+    left = add(left, val[b]);
+    right = add(right, val[a]);
+    left = add(left, val[anc[0][b]]);
+  } else {
+    left = add(left, val[a]);
+  }
+  return max(max(left.best, right.best), left.usum+right.usum);
+}
+
+void init(void) {
+  FOR (t, 1, MAXP+1) {
+    REP (u, n) {
+      if (anc[t-1][u] != -1) {
+        anc[t][u] = anc[t-1][anc[t-1][u]];
+        P[t][u] = merge(P[t-1][u], P[t-1][anc[t-1][u]]);
+      } else {
+        anc[t][u] = -1;
+      }
+    }
+  } 
+}
+
+int main(void) {
+  
+  scanf("%d", &n);
+  REP (i, n-1) {
+    int a, b;
+    scanf("%d%d", &a, &b);
+    --a; --b;
+    e[a].push_back(b);
+    e[b].push_back(a);
+  }
+
+  REP (i, n) scanf("%d", &val[i]);
+
+  dfs(-1, 0);
+  init();
+
+  scanf("%d", &m);
+  REP (i, m) {
+    int a, b;
+    scanf("%d%d", &a, &b);
+    --a; --b;
+    printf("%lld\n", query(a, b));
+  }
+
+  return 0;
+}

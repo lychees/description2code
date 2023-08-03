@@ -1,0 +1,107 @@
+#include<bits/stdc++.h>
+using namespace std;
+const long long INF = 1e18;
+const int MAXN = 305;
+long long M[MAXN][MAXN][2];
+long long is[MAXN][MAXN][2];
+
+struct node {
+	int from,to;
+	long long dist;
+	int w;
+	node(){}
+	node(int f, int t, long long d, int ww) {
+		from=f;
+		to=t;
+		dist=d;
+		w=ww;
+	}
+};
+struct cmp {
+	bool operator()(const struct node &A, const struct node &B) {
+		return A.dist>B.dist;
+	}
+};
+int main() {
+	int n,m;
+	cin>>n>>m;
+	memset(is,0,sizeof(is));
+	for(int i=1;i<=m;i++) {
+		int x,y,z;
+		char ch;
+		scanf("%d%d%d %c",&x,&y,&z,&ch);
+		if(ch=='(') is[x][y][0]=z;
+		else is[x][y][1]=z;
+	}
+	for(int i=1;i<=n;i++) for(int j=1;j<=n;j++) M[i][j][0]=M[i][j][1]=INF;
+	priority_queue<struct node, vector<struct node>, cmp> pq;
+	for(int i=1;i<=n;i++) {
+		for(int j=1;j<=n;j++) {
+			for(int k=0;k<2;k++) {
+				if(i==j and k==0) continue;
+				if(is[i][j][0]) {
+					struct node P(i,j,is[i][j][0],1);
+					pq.push(P);
+					M[i][j][1]=is[i][j][0];
+					continue;
+				}
+				struct node P(i,j,INF,k);
+				pq.push(P);
+				M[i][j][k]=INF;
+			}
+		}
+		struct node P(i,i,0,0);
+		pq.push(P);
+		M[i][i][0]=0;
+	}
+	while(!pq.empty()) {
+		struct node P = pq.top();
+		pq.pop();
+		int f=P.from,t=P.to;
+		long long dis=P.dist;
+		int ww=P.w;
+		if(dis>M[f][t][ww]) continue;
+		if(ww==0) {
+			for(int k=1;k<=n;k++) {
+				if(M[f][k][0]>dis+M[t][k][0]) {
+					struct node P(f,k,dis+M[t][k][0],0);
+					M[f][k][0]=dis+M[t][k][0];
+					pq.push(P);
+				}
+				if(M[k][t][0]>dis+M[k][f][0]) {
+					struct node P(k,t,dis+M[k][f][0],0);
+					M[k][t][0]=dis+M[k][f][0];
+					pq.push(P);				
+				}
+				if(M[k][t][1]>dis+M[k][f][1]) {
+					struct node P(k,t,dis+M[k][f][1],1);
+					M[k][t][1]=dis+M[k][f][1];
+					pq.push(P);				
+				}
+			}
+		}
+		else {
+			for(int k=1;k<=n;k++) {
+				if(M[f][k][1]>dis+M[t][k][0]) {
+					struct node P(f,k,dis+M[t][k][0],1);
+					M[f][k][1]=dis+M[t][k][0];
+					pq.push(P);
+				}
+				if(is[t][k][1] and M[f][k][0]>is[t][k][1]+M[f][t][1]) {
+					struct node P(f,k,is[t][k][1]+M[f][t][1],0);
+					pq.push(P);
+					M[f][k][0]=is[t][k][1]+M[f][t][1];
+				}
+			}
+		}
+	}
+	for(int i=1;i<=n;i++) {
+		for(int j=1;j<=n;j++) {
+			if(M[i][j][0]<INF) printf("%lld",M[i][j][0]);
+			else printf("-1");
+			if(j==n) printf("\n");
+			else printf(" ");
+		}
+	}
+	return 0;
+}

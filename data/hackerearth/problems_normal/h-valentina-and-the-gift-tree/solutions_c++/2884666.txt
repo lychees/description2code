@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("H.inp","r",stdin)
+#define OUTPUT freopen("H.out","w",stdout)
+#define FOR(i,l,r) for(auto i=l;i<=r;i++)
+#define REP(i,l,r) for(auto i=l;i<r;i++)
+#define FORD(i,l,r) for(auto i=l;i>=r;i--)
+#define REPD(i,l,r) for(auto i=l;i>r;i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+typedef pair<ll,ll> pll;
+
+const ll inf=1e15;
+const int MOD=1e9+7;
+const int N=1e5+10;
+
+struct pack{
+    ll v,mal,mar,all;
+    pack (ll _v=-inf,ll _mal=-inf,ll _mar=-inf,ll _all=0){
+        v=_v;mal=_mal;mar=_mar;all=_all;
+    }
+}f[N][20];
+pack merge(pack a,pack b){
+    ll v=max(a.mar+b.mal,max(a.v,b.v));
+    return pack(v,max(a.mal,a.all+b.mal),max(b.mar,b.all+a.mar),a.all+b.all);
+}
+queue <int> q;
+int p[N][20],n,lv[N];
+vector <int> v[N];
+void BFS(){
+    q.push(1);
+    while (!q.empty()){
+        int x=q.front();q.pop();
+        for(auto y:v[x]) if (y!=p[x][0]){
+            p[y][0]=x;
+            lv[y]=lv[x]+1;
+            q.push(y);
+        }
+    }
+}
+int LCA(int x,int y){
+    if (lv[x]<lv[y]) swap(x,y);
+    for(int v=lv[x]-lv[y],i=0;v;v>>=1,i++) if (v&1) x=p[x][i];
+    if (x==y) return x;
+    FORD(i,int(log2(lv[x])),0) if (p[x][i]!=p[y][i])
+        x=p[x][i],y=p[y][i];
+    return p[x][0];
+}
+pack query(int x,int v){
+    pack ans;
+    for(int i=0;v;v>>=1,i++) if (v&1) {
+        ans=merge(ans,f[x][i]);
+        x=p[x][i];
+    }
+    return ans;
+}
+void prepare(){
+    scanf("%d",&n);
+    int x,y;
+    REP(i,1,n){
+        scanf("%d%d",&x,&y);
+        v[x].push_back(y);
+        v[y].push_back(x);
+    }
+    FOR(i,1,n) {
+        scanf("%d",&x);
+        f[i][0]=pack(x,x,x,x);
+    }
+    lv[1]=1;
+    BFS();
+    FOR(pha,1,18)
+        FOR(i,1,n) {
+            p[i][pha]=p[p[i][pha-1]][pha-1];
+            f[i][pha]=merge(f[i][pha-1],f[p[i][pha-1]][pha-1]);
+        }
+//    FOR(i,1,n) cout<<p[i][0]<<" \n"[i==n];
+}
+ll solve(int x,int y){
+    int z=LCA(x,y);
+    pack bx=query(x,lv[x]-lv[z]),by=query(y,lv[y]-lv[z]+1);
+    swap(by.mal,by.mar);
+//    printf("-> %d ",z);
+    return merge(bx,by).v;
+}
+int main(){
+    prepare();
+    int test,x,y;
+    scanf("%d",&test);
+    while (test--){
+        scanf("%d%d",&x,&y);
+        printf("%lld\n",solve(x,y));
+    }
+}

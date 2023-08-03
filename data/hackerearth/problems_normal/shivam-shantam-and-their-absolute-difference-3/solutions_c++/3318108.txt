@@ -1,0 +1,65 @@
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+using namespace std;
+
+int main() {
+	int N, i, j; cin >> N;
+	int A[N], B[N];
+	long Q, out = 0l;
+	long sum = 0l, maxs, k = 0l;
+	long long mod = 1e9 + 7;
+	for(i = 0; i < N; i++) {
+		cin >> A[i];
+		sum += A[i];
+	}
+	maxs = sum; sum = 0;
+	for(i = 0; i < N; i++) {
+		cin >> B[i];
+		sum += B[i];
+	}
+	cin >> Q;
+	maxs = max(sum, maxs); //cout << maxs << endl;
+	vector< vector<long long> > dp(2*maxs, vector<long long>(2, 0));
+	dp[maxs][0] = 1;
+	for(i = 0; i < N; i++) {
+		for(j = 0; j < 2*maxs; j++) {
+			dp[j][1-k] = dp[j][k];
+			//cout << dp[j][1-k] << " ";
+			dp[j][1-k] %= mod;
+		}
+		//cout << endl;
+		for(j = 0; j < 2*maxs; j++) {
+			if(j+A[i] >= 0 && j+A[i] < 2*maxs) {
+				dp[j+A[i]][1-k] += dp[j][k];
+				dp[j+A[i]][1-k] %= mod;
+			}
+			//cout << dp[j][1-k] << " ";
+		}
+		//cout << endl;
+		for(j = 0; j < 2*maxs; j++) {
+			if(j-B[i] >= 0 && j-B[i] < 2*maxs) {
+				dp[j-B[i]][1-k] += dp[j][k];
+				dp[j-B[i]][1-k] %= mod;
+			}
+			//cout << dp[j][1-k] << " ";
+		}
+		//cout << endl;
+		for(j = 0; j < 2*maxs; j++) {
+			if(j+A[i]-B[i] >= 0 && j+A[i]-B[i] < 2*maxs) {
+				dp[j+A[i]-B[i]][1-k] += dp[j][k];
+				dp[j+A[i]-B[i]][1-k] %= mod;
+			}
+			//cout << dp[j][1-k] << " ";
+		}
+		//cout << endl;
+		k = 1 - k;
+	}
+	for(i = max<long>(0l, maxs-Q); i <= min(2*maxs, maxs+Q); i++) {
+		out += dp[i][k];
+		out %= mod;
+	}
+	cout << out;
+	return 0;
+}

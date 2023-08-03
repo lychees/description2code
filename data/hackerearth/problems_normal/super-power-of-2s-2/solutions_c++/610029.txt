@@ -1,0 +1,181 @@
+#pragma comment(linker, "/STACK:500000000") 
+#include <functional>
+#include <algorithm> 
+#include <iostream> 
+#include <string.h> 
+#include <stdlib.h> 
+#include <sstream> 
+#include <fstream>
+#include <ctype.h> 
+#include <stdio.h> 
+#include <bitset>
+#include <vector> 
+#include <string> 
+#include <math.h> 
+#include <time.h> 
+#include <queue> 
+#include <stack> 
+#include <list>
+#include <map> 
+#include <set> 
+#define Int long long 
+#define INF 0x3F3F3F3F 
+#define eps 1e-9
+using namespace std;
+
+const int mod = 1e9 + 7;
+
+#define N (1 << 18)
+#define ADD(X, Y) X += Y, X -= (X >= mod) * mod
+
+Int R = 2;
+int n;
+
+Int modpow(Int a, Int n, Int m)
+{
+	Int b = 1;
+	while (n > 0)
+	{
+		if (n & 1)
+			b = b * a % m;
+		n >>= 1;
+		a = a * a % m;
+	}
+	return b % m;
+}
+
+struct SegmentTree
+{
+	int SS[2 * N];
+	int DD[2 * N];
+	int sum[2 * N];
+	int ppow;
+	int denum, rev_2;
+	int RPow[N + 2];
+
+	int getProgressionSum(int S, int D, int n)
+	{
+		if (RPow[1] == 1)
+			return (2 * S + (n - 1) * (Int)D % mod) * rev_2 % mod * n % mod;
+		return ((S - (S + (n - 1) * (Int)D % mod) * RPow[n] % mod + mod) +
+			(Int)D * R % mod * (1 - RPow[n - 1] + mod) % mod * denum % mod) % mod * denum % mod;
+	}
+
+	int Init(int size, int *a)
+	{
+		int origSize = size;
+		denum = modpow((1 - R % mod + mod) % mod, mod - 2, mod);
+		rev_2 = modpow(2, mod - 2, mod);
+		while (size & (size - 1))
+			size++;
+		ppow = size;
+		RPow[0] = 1;
+		for (int i = 1; i <= size + 1; i++)
+			RPow[i] = (Int)RPow[i - 1] * R % mod;
+		fill_n(sum, ppow * 2, 0);
+		fill_n(SS, ppow * 2, 0);
+		fill_n(DD, ppow * 2, 0);
+		for (int i = 0; i < origSize; i++)
+			sum[ppow + i] = a[i];
+		for (int i = ppow - 1; i > 0; i--)
+			sum[i] = (sum[i * 2] + sum[i * 2 + 1]) % mod;
+		return size;
+	}
+
+	void push(int v, int K)
+	{
+		ADD(sum[v], getProgressionSum(SS[v], DD[v], max(1, 2 * K)));
+		if (v < ppow)
+		{
+			ADD(SS[v * 2], SS[v]);
+			ADD(DD[v * 2], DD[v]);
+			ADD(SS[v * 2 + 1], (SS[v] + (Int)K * DD[v]) % mod * RPow[K] % mod);
+			ADD(DD[v * 2 + 1], (Int)RPow[K] * DD[v] % mod);
+		}
+		SS[v] = DD[v] = 0;
+	}
+
+	void add(int v, int tL, int tR, int Le, int Ri, int S, int D)
+	{
+		if (Le > Ri)
+			return;
+		if (Le == tL && Ri == tR)
+		{
+			SS[v] = (SS[v] + S) % mod;
+			DD[v] = (DD[v] + D) % mod;
+			return;
+		}
+		int tC = (tL + tR) / 2;
+		push(v, tR - tC);
+		ADD(sum[v], getProgressionSum(S % mod, D % mod, Ri - Le + 1));
+		add(v * 2, tL, tC, Le, min(tC, Ri), S, D);
+		int K = max(0, tC - Le + 1);
+		add(v * 2 + 1, tC + 1, tR, max(tC + 1, Le), Ri,
+			(S + (Int)K * D % mod) * RPow[K] % mod,
+			(Int)RPow[K] * D % mod);
+	}
+
+	int get(int v, int tL, int tR, int Le, int Ri)
+	{
+		if (Le > Ri)
+			return 0;
+		int tC = (tL + tR) / 2;
+		push(v, tR - tC);
+		if (Le == tL && Ri == tR)
+			return sum[v];
+		return
+			(
+			get(v * 2, tL, tC, Le, min(tC, Ri))
+			+
+			get(v * 2 + 1, tC + 1, tR, max(tC + 1, Le), Ri)
+			) % mod;
+	}
+
+	void Add(int S, int D, int L, int R)
+	{
+		add(1, 0, ppow - 1, L, R, S, D);
+	}
+
+	int GetSum(int L, int R)
+	{
+		return get(1, 0, ppow - 1, L, R);
+	}
+
+	void Add(int pos, int val)
+	{
+		Add(val, 0, pos, pos);
+	}
+
+	int Get(int pos)
+	{
+		return GetSum(pos, pos);
+	}
+} tree;
+
+int A[N];
+
+int main()
+{
+	int tests, q, type, x, y;
+	scanf("%d", &n);
+	for (int i = 0; i < n; i++)
+		scanf("%d", &A[i]);
+	tree.Init(n, A);
+	scanf("%d", &q);
+	while (q--)
+	{
+		scanf("%d", &type);
+		if (type == 0)
+		{
+			scanf("%d %d", &x, &y);
+			x--, y--;
+			tree.Add(2, 0, x, y);
+		}
+		else
+		{
+			scanf("%d %d", &x, &y);
+			x--, y--;
+			printf("%d\n", tree.GetSum(x, y));
+		}
+	}
+}

@@ -1,0 +1,317 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <limits>
+
+// needs to store 100,000
+typedef int tindex;
+const int MAXN = 500000;
+
+// partition the input array to minimise the chance that the tree doesn't work and we end up doing 
+// a linear time search
+// one tree will be allocated for every partition
+// memory requirements are 2*2^15*4*2 + PARTITIONSIZE*4
+// = 390k + PARTITIONSIZE*4 
+// if we are a 32 bit process we have in theory 2GB available
+// allocating even 3000 partitions would be OK... but then the time to iterate over the partitions becomes
+// very significant
+// experimentally, the time to process the partitions on a worst-case input file 
+// started to become significant around 8
+const int PARTITIONS = 4;
+const size_t PARTITIONSIZE = MAXN/PARTITIONS; 
+
+// needs to store 2^15 - 32 bit machine probably faster with int though
+typedef int tvalue;
+const int BITS = 20;
+const int LEAFNODES = (1 << BITS);
+const int BRANCHNODES = (2 << BITS)-2;
+
+// a node in the binary tree
+struct Node {
+    // first and last numbers in the sequence that have the bit pattern matched so far
+    tindex first, last;
+    
+    // resets first and last
+    void clear()
+    {
+        first = std::numeric_limits<tindex>::max();
+        last = std::numeric_limits<tindex>::min();
+    }
+    
+    // updates the first-last range to include i
+    void recordIndex(tindex i)
+    {
+        if (i < first) first = i;
+        if (i > last) last = i;
+    }
+    
+    // does the range p:q intersect first:last
+    bool intersects(tindex p, tindex q) const
+    {
+        return !((p > last) || (q < first));
+    }
+    
+    // is first <= p <= last
+    bool contains(tindex p) const
+    {
+        return (p >= first) && (p <= last);
+    }
+};
+
+// leaf node needs to store the list of indexes that contain this x value,
+// for the case where neither the first and last indexes of the final leaf node lie within
+// p and q -> this means it's possible that there is NOT a value between p and q that equals x
+struct Leaf {
+    std::vector<tindex> indexes;
+    void put(tindex i)
+    {
+        // the indexes are added in order, so we know the array will be sorted 
+        indexes.push_back(i);
+    }
+    void clear()
+    {
+        indexes.resize(0);
+    }
+    // search for a value in indexes that is in p:q
+    // ASSUMES THAT p >= first and q <= last
+    bool find(tindex p, tindex q)
+    {
+        // if we get called, we KNOW that p and q lie between the first and last value
+        // find the first index that is >= p
+        tindex * px = &indexes[0];
+        while (*px < p) px++;
+        // is it less than q?
+        return (*px <= q);
+    }
+  
+};
+
+// the binary tree
+// the two branches at each level represent the possible bits of x
+// the node stores the range of i values for which xi matches the bits specified so far by the tree
+// (starting at the top)
+struct Tree {
+private:
+    Tree(const Tree &);
+    Tree& operator=(const Tree&);
+public:
+    Node nodes[BRANCHNODES];
+    
+    // pointers to the beginning of each row
+    Node * rows[BITS];
+    
+    // the list of individual indexes at the leaf nodes
+    Leaf leafNodes[LEAFNODES];
+    
+    Tree()
+    {
+        for (int i = 0;i < BITS;i ++)
+            rows[i] = nodes + (2 << i) - 2;
+    }
+ 
+    void clear()
+    {
+        for (int i = 0;i < BRANCHNODES;i ++)
+            nodes[i].clear();
+        for (int i = 0;i < LEAFNODES;i ++)
+            leafNodes[i].clear();
+    }
+    
+    // iterator
+    struct Iter {
+        Tree * tree;
+        int row;
+        int position;
+        
+        // initialise pointing to top node
+        Iter(Tree * tree) : tree(tree), row(-1), position(0)
+        {        
+        }
+        
+        // return the current node
+        Node * operator->() 
+        { 
+            return (tree->rows[row] + position);
+        }
+        
+        // move down the tree
+        void next(int zeroone)
+        {
+            row++;
+            position = position * 2 + zeroone;
+        }
+        
+        // peek into node
+        Node * peek(int zeroone)
+        {
+            return tree->rows[row+1] + position * 2 + zeroone;
+        }
+        
+        // move up - returns 0 if we were in a left branch, 1 if we were in a right
+        int up()
+        {
+            int was = position&1;
+            position >>= 1;
+            row--;
+            return was;
+        }
+        
+        // returns the index of the bit represented by the node pair we are pointing at
+        int bit_index()
+        {
+            return BITS-1 - (row+1);
+        }
+        
+        // returns the value of the nodes we have selected
+        tvalue bit_value()
+        {
+            return position;
+        }
+    };
+    
+    // put value x, index i into the tree (i goes into the node first-last, x is used to select the nodes)
+    void put(tvalue x, tindex i)
+    {
+        Iter it(this);
+        
+        // work down from top bit
+        for (int bit = BITS-1; bit >= 0; bit --)
+        {
+            int zeroone = (x >> bit) & 1;
+            
+            // move down the tree
+            it.next(zeroone);
+            
+            // and populate the first/last
+            it->recordIndex(i);
+        }
+        
+        // row should now == BITS, 
+        // populate the exact index
+        leafNodes[it.position].put(i);
+    }
+    
+    // used during recursion to check whether a given iterator points to a valid answer,
+    // or to do more recursion
+    tvalue check(Iter & it)
+    {
+        // are we at the leaf nodes then?
+        if (it.bit_index() < 0)
+        {
+            // process leaf node
+            if ( ( (it->first >= p) && (it->first <= q) ) || 
+                (  (it->last >= p) && (it->last <= q) ) )
+            {
+                return it.bit_value() ^ a; // found it
+            }
+            else
+            {
+                // need to search
+                if (leafNodes[it.position].find(p,q))
+                {
+                    return it.bit_value() ^ a;
+                }
+            }
+            // if we drop through to here, pass on
+        }
+        else
+        {
+            // recurse
+            tvalue result = search(it);
+            if (result >= 0) return result;
+        }
+        return -1;
+    }
+
+    // recursive search function, returns -1 if max value is not found or otherwise returns max value
+    // of x ^ a
+    tvalue search(Iter it)
+    {
+        // determine which path would be ideal
+        int a_bit = (a >> it.bit_index()) & 1;
+
+        // the opposite will be ideal so search that first
+        it.next(1-a_bit);
+        if (it->intersects(p, q))
+        {
+            tvalue result = check(it);
+            if (result >= 0) return result;
+        }
+        
+        
+        // failed - search for the same bit then.  probably not the most efficient
+        it.up();
+        it.next(a_bit);
+        if (it->intersects(p, q))
+        {
+            tvalue result = check(it);
+            if (result >= 0) return result;
+        }
+        return -1;
+    }
+    
+    // used in recursive nextBest method
+    tvalue a,p,q;
+    tvalue query(tvalue a, tindex p, tindex q)
+    {
+        this->a = a;
+        this->p = p;
+        this->q = q;
+        return search(Iter(this));
+    }
+};
+
+// preallocate the tree space
+Tree trees[PARTITIONS];
+
+int main()
+{
+    std::istream * in = &std::cin;
+    
+    // read test cases
+    int T;
+    T=1;
+    while (T--)
+    {
+        int N,Q;
+        (*in) >> N >> Q;
+        
+        // read x and build trees for each partition
+        tindex i = 1;
+        int partitions = 0;
+        trees[0].clear();
+        while (i <= N)
+        {
+            tvalue x;
+            (*in) >> x;
+            trees[partitions].put(x,i);
+            i++;
+            if ( ( (i-1) % PARTITIONSIZE) == 0 )
+            {
+                // don't allocate extra partition for 100,001th element that never gets read
+                if (i <= N)
+                {
+                    partitions++;
+                    trees[partitions].clear();
+                }
+            }
+        }
+        partitions++; // turn into a count
+
+        // run the queries
+        while (Q-- > 0)
+        {
+            tvalue a;
+            tindex p,q;
+            (*in)  >> p >> q>> a;
+            
+            tvalue best = trees[0].query(a,p,q);
+            for (int partition = 1; partition < partitions; partition++)
+                best = std::max(best, trees[partition].query(a,p,q));
+            std::cout << best << std::endl;
+        }
+    }
+    
+    
+    return 0;
+}

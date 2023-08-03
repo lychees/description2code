@@ -1,0 +1,120 @@
+
+#include <bits/stdc++.h>
+
+#define FOR(i,a,b) for(int i=(a),_b=(b); i<=_b; i++)
+#define FORD(i,a,b) for(int i=(a),_b=(b); i>=_b; i--)
+#define REP(i,a) for(int i=0,_a=(a); i<_a; i++)
+#define EACH(it,a) for(__typeof(a.begin()) it = a.begin(); it != a.end(); ++it)
+
+#define DEBUG(x) { cout << #x << " = "; cout << (x) << endl; }
+#define PR(a,n) { cout << #a << " = "; FOR(_,1,n) cout << a[_] << ' '; cout << endl; }
+#define PR0(a,n) { cout << #a << " = "; REP(_,n) cout << a[_] << ' '; cout << endl; }
+
+#define sqr(x) ((x) * (x))
+using namespace std;
+
+const int MN = 100111;
+
+int ntest, n;
+char tmp[MN];
+string a[2];
+
+#define ll long long
+struct Node {
+    pair<ll, ll> hash;
+    int left, right;
+} nodes[11000111];
+int nNode;
+const long long MOD = 1e9 + 7;
+
+int ver[2][MN];
+int last[2][300];
+long long power[MN];
+
+int createNode() {
+    ++nNode;
+    assert(nNode < 11000111);
+    nodes[nNode].hash.first = nodes[nNode].hash.second = nodes[nNode].left = nodes[nNode].right = 0;
+    return nNode;
+}
+
+int update(int oldId, int l, int r, int u, long long val) {
+    if (u < l || r < u) return oldId;
+    if (l == r) {
+        int x = createNode();
+        nodes[x].hash = make_pair(
+                val * power[u],
+                val * power[u] % MOD);
+        return x;
+    }
+    int mid = (l + r) >> 1;
+    int x = createNode();
+    nodes[x].left = update(nodes[oldId].left, l, mid, u, val);
+    nodes[x].right = update(nodes[oldId].right, mid+1, r, u, val);
+    nodes[x].hash = make_pair(
+            nodes[ nodes[x].left ].hash.first + nodes[ nodes[x].right ].hash.first,
+            (nodes[ nodes[x].left ].hash.second + nodes[ nodes[x].right ].hash.second) % MOD);
+    return x;
+}
+
+pair<ll,ll> get(int id, int l, int r, int u, int v) {
+    if (v < l || r < u) return make_pair(0, 0);
+    if (u <= l && r <= v) return nodes[id].hash;
+
+    int mid = (l + r) >> 1;
+    pair<ll,ll> h1 = get(nodes[id].left, l, mid, u, v);
+    pair<ll,ll> h2 = get(nodes[id].right, mid+1, r, u, v);
+    return make_pair(h1.first + h2.first, (h1.second + h2.second) % MOD);
+}
+
+int createTree(int l, int r) {
+    if (l > r) return 0;
+    if (l == r) return createNode();
+    int mid = (l + r) >> 1;
+    int x = createNode();
+    nodes[x].left = createTree(l, mid);
+    nodes[x].right = createTree(mid+1, r);
+    nodes[x].hash = make_pair(0, 0);
+    return x;
+}
+
+int main() {
+    power[0] = 1;
+    FOR(i,1,100000) power[i] = power[i-1] * 1000003LL;
+    scanf("%d\n", &ntest);
+    while (ntest--) {
+        nNode = 0;
+        gets(tmp); a[0] = " " + string(tmp);
+        gets(tmp); a[1] = " " + string(tmp);
+        n = strlen(tmp);
+
+        memset(last, 0, sizeof last);
+        REP(turn,2) {
+            ver[turn][0] = createTree(1, n);
+            FOR(i,1,n) {
+                int u = last[turn][a[turn][i]];
+                if (u) {
+                    ver[turn][i] = update(ver[turn][i-1], 1, n, u, i - u + 1);
+                }
+                else ver[turn][i] = ver[turn][i-1];
+
+                last[turn][a[turn][i]] = i;
+            }
+        }
+
+        int q; scanf("%d", &q);
+        while (q--) {
+            int i, j, k; scanf("%d%d%d\n", &i, &j, &k);
+            pair<ll,ll> h1 = get(ver[0][i+k-1], 1, n, i, i+k-1);
+            pair<ll,ll> h2 = get(ver[1][j+k-1], 1, n, j, j+k-1);
+
+            if (h1.first * power[j] == h2.first * power[i]
+                    && h1.first * power[j] % MOD == h2.first * power[i] % MOD)
+                cout << "yes" << endl;
+            else cout << "no" << endl;
+            fflush(stdout);
+        }
+    }
+    return 0;
+}
+

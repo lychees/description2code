@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+#define M 1000000007
+
+using namespace std;
+
+struct subset {
+    int parent;
+    int rank;
+};
+
+int find(struct subset subsets[], int i) {
+    if (subsets[i].parent != i)
+        subsets[i].parent = find(subsets, subsets[i].parent);
+
+    return subsets[i].parent;
+}
+
+void Union(struct subset subsets[], int x, int y) {
+    int xroot = find(subsets, x);
+    int yroot = find(subsets, y);
+
+    if (subsets[xroot].rank < subsets[yroot].rank)
+        subsets[xroot].parent = yroot;
+    else if (subsets[xroot].rank > subsets[yroot].rank)
+        subsets[yroot].parent = xroot;
+    else {
+        subsets[yroot].parent = xroot;
+        subsets[xroot].rank++;
+    }
+}
+
+int main() {
+    int t, N, E, x, y, inv, tp;
+
+    cin >> t;
+
+    while (t--) {
+        inv = 1;
+
+        cin >> N;
+        subset *subsets = new subset[N];
+        for (int v = 0; v < N; v++) {
+            subsets[v].parent = v;
+            subsets[v].rank = 0;
+        }
+
+        cin >> E;
+        for(int e = 0; e < E; e++) {
+            cin >> x >> y;
+            int a = find(subsets, x);
+            int b = find(subsets, y);
+
+            if (a == b)
+                continue;
+
+            Union(subsets, a, b);
+        }
+
+        inv = 0;
+        for (int i = 0; i < N; i++) {
+            if (subsets[i].parent == i) inv++;
+        }
+        cout << inv << endl;
+    }
+
+    return 0;
+}

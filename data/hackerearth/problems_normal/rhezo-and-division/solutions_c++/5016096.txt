@@ -1,0 +1,65 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define MOD 1000000007
+
+string S, T;
+int Z[20005], A[10004];
+long long dp[10004][4][3][2][2];
+
+long long solve(int N, int two, int three, int five, int seven)
+{
+	if(N==0)
+	{
+		if(two || three || five || seven)
+			return 0;
+		
+		return 1;
+	}
+	
+	if(dp[N][two][three][five][seven]!=-1)
+		return dp[N][two][three][five][seven];
+	
+	int twox = 0, threex = 0, fivex = 0, sevenx = 0, x = A[N];
+	long long ans = solve(N-1, two, three, five, seven);
+	
+	while(x%2==0)
+		x/= 2, twox++;
+	while(x%3==0)
+		x/=3, threex++;
+	while(x%5==0)
+		x/= 5, fivex++;
+	while(x%7==0)
+		x/= 7, sevenx++;
+	
+	ans = (ans + solve(N-1, max(0, two-twox), max(0, three-threex), max(0, five-fivex), max(0, seven-sevenx)))%MOD;
+	
+	return dp[N][two][three][five][seven] = ans;
+}
+
+int main()
+{
+    cin >> T >> S;
+    S = T + "$" + S;
+    
+    int L = 0, R = 0, k = 0;
+    
+    for(int i=1; i<S.size(); i++)
+    {
+    	if(i<=R)
+    		Z[i] = min(Z[i-L], R-i+1);
+    	
+    	for(; i+Z[i]<S.size() && S[Z[i]]==S[i+Z[i]]; Z[i]++);
+    	
+    	if(i+Z[i]-1>R)
+    		L = i, R = i+Z[i]-1;
+    	
+    	if(Z[i]==T.size())
+    		A[++k] = i-T.size();
+    }
+    
+    memset(dp, -1, sizeof(dp));
+    printf("%lld\n", solve(k, 3, 2, 1, 1));
+    
+    return 0;
+}

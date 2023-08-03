@@ -1,0 +1,192 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#ifndef M_PI
+const double M_PI = acos(-1.0);
+#endif
+
+const int modl = 1000000007;
+const int MN = 266666;
+
+typedef complex<double> Base;
+int rev[MN];
+Base wlen_pw[MN];
+void eval(Base a[], int n, bool invert) {
+    for (int i=0; i<n; ++i)
+        if (i < rev[i]) swap(a[i], a[rev[i]]); 
+    for (int len=2; len<=n; len<<=1) {
+        double ang = 2*M_PI/len * (invert?-1:+1);
+        int len2 = len>>1; 
+        Base wlen (cos(ang), sin(ang));
+        wlen_pw[0] = Base(1, 0);
+        for (int i=1; i<len2; ++i)
+            wlen_pw[i] = wlen_pw[i-1] * wlen;
+        for (int i=0; i<n; i+=len) {
+            Base t,
+                *pu = a+i,
+                *pv = a+i+len2, 
+                *pu_end = a+i+len2,
+                *pw = wlen_pw;
+            for (; pu!=pu_end; ++pu, ++pv, ++pw) {
+                t = *pv * *pw;
+                *pv = *pu - t;
+                *pu += t;
+            }
+        }
+    }
+    if (invert)
+        for (int i=0; i<n; ++i)
+            a[i] /= n;
+}
+
+void calc_rev(int n, int log_n) {
+    for (int i=0; i<n; ++i) {
+        rev[i] = 0;
+        for (int j=0; j<log_n; ++j)
+            if (i & (1<<j))
+                rev[i] |= 1<<(log_n-1-j);
+    }
+}
+
+// multiply a[0] * a[1] and store into a[2]
+int multiply(Base a[][MN], int n) {
+    int outN = 1, lg = 1;
+    while (outN < n) outN <<= 1, ++lg;
+    outN <<= 1;
+    calc_rev(outN, lg);
+    eval(a[0], outN, false);
+    eval(a[1], outN, false);
+    for(int i = 0; i < outN; ++i) {
+        a[2][i] = a[0][i] * a[1][i];
+        a[0][i] = Base(0, 0);
+        a[1][i] = Base(0, 0);
+    }
+    eval(a[2], outN, true);
+    return outN;
+}
+
+Base a[3][MN];
+vector<int> mul_poly(vector<int> x, vector<int> y) {
+    for (int i = 0; i < x.size(); i++) 
+        a[0][i] = Base(x[i], 0);
+    for (int i = 0; i < y.size(); i++)
+        a[1][i] = Base(y[i], 0);
+
+    int outN = multiply(a, max(x.size(), y.size()));
+    vector<int> res(outN, 0);
+    for (int i = 0; i < outN; i++) 
+        res[i] = int(a[2][i].real() + 0.5);
+        
+    // Trim the result size
+    while (res.size() > 0 && res.back() == 0) 
+        res.pop_back();
+        
+    return res;
+}
+
+int n, k;
+vector<int> adj[100010];
+
+int count_path[100010];
+
+int gone[100010], key;
+int trace[100010];
+vector<int> q;
+int furthest(int u) {
+    q.clear();
+    key++;
+    
+    q.push_back(u);
+    gone[u] = key;
+    trace[u] = u;
+    for (int i = 0; i < q.size(); i++) { 
+        u = q[i];
+        for (int v: adj[u]) {
+            if (gone[v] < key) {
+                gone[v] = key;
+                q.push_back(v);
+                trace[v] = u;
+            }
+        }
+    }
+    return q.back();
+}
+int centroid(int root) {
+    int u = furthest(root);
+    int v = furthest(u);
+    int cen = v;
+    while (v != u) {
+        cen = trace[cen];
+        v = trace[trace[v]];        
+    }
+    return cen;
+}
+vector<int> counter;
+void dfs(int u, int par, int level) {
+    if (level >= counter.size()) 
+        counter.push_back(1);
+    else
+        counter[level]++;
+    for (int v: adj[u]) 
+        if (v != par && gone[v] < 1e9)
+            dfs(v, u, level + 1);
+}
+vector<int> cummulative_counter;
+void conquer(int root) {
+    cummulative_counter.clear();
+    cummulative_counter.push_back(0);
+    for (int v: adj[root]) 
+        if (gone[v] < 1e9) {
+            counter.clear();
+            counter.push_back(0);
+            dfs(v, root, 1);
+            vector<int> prod = mul_poly(cummulative_counter, counter);
+            for (int i = 1; i < prod.size(); i++)
+                count_path[i] = (count_path[i] + prod[i]) % modl;
+            for (int i = 1; i < counter.size(); i++) {
+                count_path[i] = (count_path[i] + counter[i]) % modl;
+                if (i >= cummulative_counter.size()) cummulative_counter.push_back(counter[i]);
+                else cummulative_counter[i] += counter[i];
+            }
+        }
+}
+void divide(int root) {
+    int cen = centroid(root);
+    conquer(cen);
+    gone[cen] = 1e9;
+    for (int v: adj[cen]) 
+        if (gone[v] < 1e9)
+            divide(v);
+}
+
+int powmod(int n, int k) {
+    if (k == 0) return 1;
+    else if (k & 1) return n * 1ll * powmod(n * 1ll * n % modl, k / 2) % modl;
+    else return powmod(n * 1ll * n % modl, k / 2);
+}
+
+int main() {
+//    freopen("input.txt", "r", stdin);
+    ios::sync_with_stdio(false);
+    cin.tie(0);
+    
+    cin >> n >> k;
+    for (int i = 1; i < n; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    
+    memset(count_path, 0, sizeof count_path);
+    divide(1);
+    
+    int ret = 0;
+    for (int i = 1; i <= n; i++) {
+        ret = (ret + count_path[i] * 1ll * powmod(i, k)) % modl;
+    }
+    cout << ret;
+    
+    return 0;
+}
+

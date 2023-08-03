@@ -1,0 +1,137 @@
+    #include<bits/stdc++.h>
+    using namespace std;
+    #define DEBUG
+    long int  a[100005];
+    long int  b[100005];
+    long int  s[100005];
+    long int  f[100005];
+    long int  tx=0,cx=0;
+    vector<long int > v[100005];
+    long int  vis[100005];
+    long int  tree[4550006];
+    void init()
+    {
+        cx=0;
+        tx=0;
+        long int  i,j;
+        for(i=0;i<100005;i++)
+        {
+            v[i].clear();
+            a[i]=s[i]=f[i]=0;
+        }
+        return ;
+    }
+     
+    void dfs(long int  nd)
+    {
+     
+        vis[nd]=1;
+        s[nd]=tx;
+        b[cx++]=a[nd];
+     
+        for(long int  i=0;i<v[nd].size();i++)
+        {
+            long int  x=v[nd][i];
+            if(!vis[x])
+            {
+     
+            tx++;
+                dfs(x);
+     
+     
+            }
+        }
+        f[nd]=tx;
+        #ifdef DEBU
+        cout<<"node  "<<nd<<" start "<<s[nd]<<"  finsh  "<<f[nd]<<endl;
+        #endif // DEBUG
+        return ;
+    }
+    void bulid(long int  s,long int  e,long int  idx)
+    {
+        if(s==e)
+        {
+            tree[idx]=b[s];
+            return;
+        }
+    long int   m=s+e;
+        m/=2;
+        bulid(s,m,2*idx);
+        bulid(m+1,e,2*idx+1);
+        tree[idx]=tree[2*idx]+tree[idx*2+1];
+        return;
+    }
+     
+    void update(long int  s,long int  e,long int  s1,long int  e1,long int  idx,long int  val)
+    {
+        if(s>e || e<s1 || s>e1)
+            return ;
+     
+        if(s==s1 && e==e1)
+        {
+            tree[idx]=val;
+            return;
+        }
+        long int  m=(s+e)/2;
+        update(s,m,s1,e1,2*idx,val);
+        update(m+1,e,s1,e1,2*idx+1,val);
+        tree[idx]=tree[2*idx]+tree[idx*2+1];
+        return;
+    }
+     
+    long int  query(long int  s,long int  e,long int  s1,long int  e1,long int  idx)
+    {
+              if(s>e || e<s1 || s>e1)
+            return 0;
+     
+        if(s1<=s && e1>=e)
+        {
+       //   cout<<"hiaha "<<tree[idx]<<endl;;
+            return tree[idx];
+     
+        }
+        long int m=(s+e)/2;
+        return query(s,m,s1,e1,2*idx)+query(m+1,e,s1,e1,2*idx+1);
+    }
+    int  main()
+    {
+        long int  n,m,i,j,k,l,x,y;
+        cin>>n>>m;
+        for(i=0;i<n;i++)cin>>a[i];
+     
+        for(j=0;j<n-1;j++)
+        {
+            cin>>x>>y;
+            x--;
+            y--;
+            v[x].push_back(y);
+            v[y].push_back(x);
+        }
+        dfs(0);
+      //  cout<<cx<<endl;
+    //  for(i=0;i<cx;i++)
+     //   cout<<b[i]<<": ";
+        bulid(0,cx-1,1);
+        for(i=0;i<m;i++)
+        {
+            char ch;
+            cin>>ch;
+            if(ch=='Q')
+            {
+     
+                cin>>x;
+                x--;
+      //cout<<s[x]<<"  :: "<<f[x]<<endl;
+                cout<<query(0,cx-1,s[x],f[x],1)<<endl;
+            }
+            else
+            {
+     
+                cin>>x>>y;
+                x--;
+                update(0,cx-1,s[x],s[x],1,y);
+            }
+        }
+        return 0;
+    }
+     

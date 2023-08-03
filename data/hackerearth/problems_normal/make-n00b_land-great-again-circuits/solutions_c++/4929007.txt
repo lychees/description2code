@@ -1,0 +1,254 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define CONS (int) (5e5)
+
+#define MAXN CONS
+#define MAXM CONS
+#define MAXQ CONS
+
+typedef long long ll;
+
+struct Fact {
+    int parent;
+    int b;
+    // addtional data structure
+    vector<int> cs;
+    int sz;
+    int lvl;
+    
+    int hld_id, hld_idx;
+} facts[MAXN + 1];
+
+struct Buss {
+    ll threshold;
+    // additional data structure
+    vector<int> fact_ids;
+    
+    int lo, hi;
+} busses[MAXM + 1];
+
+struct Q {
+    int f, x, d;
+} qs[MAXQ + 1];
+
+
+// dfs the tree to update the size of subtree and level for each node
+// parameter: (idx) marks the node id,  (lvl) marks the level for that node
+int dfs_fact(int idx, int lvl) {
+    Fact &fact = facts[idx];
+    fact.lvl = lvl;
+    int ret = 1; // count itself
+    for (int it = 0; it < fact.cs.size(); ++it) {
+        int child_id = fact.cs[it];
+        ret += dfs_fact(child_id, lvl + 1);
+    }
+    return (fact.sz = ret);
+}
+
+#define lsone(k) (k & -k)
+struct FT {
+    vector<ll> arr;
+    explicit FT() {
+        // do nothing
+    }
+    explicit FT(int n) {
+        n++;
+        arr.resize(n);
+        for (int idx = 0; idx < n; ++idx) {
+            arr[idx] = 0;
+        }
+    }
+    void upd(int v, int k) {
+        for (; k < arr.size(); k += lsone(k)) {
+            arr[k] += v;
+        }
+    }
+    ll get(int k) {
+        ll ret = 0;
+        for (; k; k -= lsone(k)) {
+            ret += arr[k];
+        }
+        return ret;
+    }
+    void reset() {
+        for (int idx = 0; idx < arr.size(); ++idx) {
+            arr[idx] = 0;
+        }
+    }
+};
+
+struct Node {
+    int p_id, p_idx;
+    
+    int n_fact;
+    FT bit_d, bit_d_wo_k, bit_x;
+} nodes[1 << 18 + 1];
+int n_hld = 1;
+
+void dfs_hld(int idx, int hld_id) {
+    Node &node = nodes[hld_id];
+    
+    Fact &fact = facts[idx];
+    fact.hld_id = hld_id;
+    fact.hld_idx = ++node.n_fact;
+    if (fact.cs.size() == 0) { // no children
+        return;
+    }
+    
+    int max_c_idx = fact.cs[0];
+    for (int it = 1; it < fact.cs.size(); ++it) {
+        int c_idx = fact.cs[it];
+        if (facts[c_idx].sz > facts[max_c_idx].sz)
+            max_c_idx = c_idx;
+    }
+    for (int it = 0; it < fact.cs.size(); ++it) {
+        int c_idx = fact.cs[it];
+        if (max_c_idx == c_idx) {
+            dfs_hld(c_idx, hld_id);
+        } else {
+            int next_hld_id = (n_hld++) + 1;
+            nodes[next_hld_id].p_id = fact.hld_id;
+            nodes[next_hld_id].p_idx = fact.hld_idx;
+            dfs_hld(c_idx, next_hld_id);
+        }
+    }
+}
+
+vector<int> busses_check[MAXQ + 1];
+
+#define MAXIT 19
+
+ll get_donation(Fact & fact) {
+    ll d = 0, d_wo_k = 0, x = 0;
+    
+    int hld_id = fact.hld_id, hld_idx = fact.hld_idx;
+    while (hld_id != -1) {
+        Node &node = nodes[hld_id];
+        d += node.bit_d.get(hld_idx);
+        d_wo_k += node.bit_d_wo_k.get(hld_idx);
+        x += node.bit_x.get(hld_idx);
+        
+        // go to the parent
+        hld_id = node.p_id, hld_idx = node.p_idx;
+    }
+    
+    return fact.lvl * d_wo_k - d + x;
+}
+
+ll get_donation(Buss &buss) {
+    ll ret = 0;
+    for (int it = 0; it < buss.fact_ids.size(); ++it) {
+        int fact_id = buss.fact_ids[it];
+        Fact &fact = facts[fact_id];
+        ret += get_donation(fact);
+    }
+    return ret;
+}
+
+int main() {
+    #ifdef DEBUG
+    freopen("make-n00b_land-great-again-circuits.in", "r", stdin);
+    #endif
+    int n, m;
+    scanf("%d %d", &n, &m);
+    for (int idx = 2; idx <= n; ++idx) {
+        Fact &fact = facts[idx];
+        scanf("%d", &fact.parent);
+        
+        Fact &par = facts[fact.parent];
+        par.cs.push_back(idx);
+    }
+    for (int idx = 1; idx <= n; ++idx) {
+        Fact &fact = facts[idx];
+        scanf("%d", &fact.b);
+        
+        Buss &buss = busses[fact.b];
+        buss.fact_ids.push_back(idx);
+    }
+    for (int idx = 1; idx <= m; ++idx) {
+        Buss &buss = busses[idx];
+        scanf("%lld", &buss.threshold);
+    }
+    int q;
+    scanf("%d", &q);
+    for (int idx = 0; idx < q; ++idx) {
+        Q &query = qs[idx];
+        scanf("%d %d %d", &query.f, &query.x, &query.d);
+    }
+    
+    dfs_fact(1, 0);
+    
+    nodes[1].p_id = nodes[1].p_idx = -1;
+    dfs_hld(1, 1);
+    for (int idx = 1; idx <= n_hld; ++idx) {
+        Node &node = nodes[idx];
+        node.bit_d = node.bit_d_wo_k = node.bit_x = FT(node.n_fact);
+    }
+    
+    // prep busses for binary search
+    for (int idx = 1; idx <= m; ++idx) {
+        Buss &buss = busses[idx];
+        buss.lo = 0, buss.hi = q;
+    }
+    
+    // do the parallel
+    for (int it = 1; it <= MAXIT; ++it) {
+        // assign the busses check to corresponding query
+        int max_qidx = 0;
+        for (int idx = 1; idx <= m; ++idx) {
+            Buss &buss = busses[idx];
+            if (buss.lo < buss.hi) {
+                int m = (buss.lo + buss.hi) >> 1;
+                max_qidx = max(max_qidx, m);
+                busses_check[m].push_back(idx);
+            }
+        }
+        
+        for (int qidx = 0; qidx <= max_qidx; ++qidx) {
+            Q &query = qs[qidx];
+            
+            // do the query
+            Fact &fact = facts[query.f];
+            Node &node = nodes[fact.hld_id];
+            node.bit_x.upd(query.x, fact.hld_idx);
+            node.bit_d.upd(fact.lvl * query.d, fact.hld_idx);
+            node.bit_d_wo_k.upd(query.d, fact.hld_idx);
+            
+            // check if there is any buss that can pass after this query
+            while (busses_check[qidx].size()) {
+                int buss_idx = busses_check[qidx].back();
+                busses_check[qidx].pop_back();
+                Buss &buss = busses[buss_idx];
+                
+                ll tot_donation = get_donation(buss);
+                if (tot_donation >= buss.threshold) {
+                    buss.hi = qidx;
+                } else {
+                    buss.lo = qidx + 1;
+                    if (buss.lo < buss.hi) {
+                        int m = (buss.lo + buss.hi) >> 1;
+                        max_qidx = max(max_qidx, m);
+                        busses_check[m].push_back(buss_idx);
+                    }
+                }
+            }
+        }
+        if (max_qidx == 0) {
+            break;
+        }
+        
+        // reset the update
+        for (int idx = 1; idx <= n_hld; ++idx) {
+            nodes[idx].bit_d_wo_k.reset();
+            nodes[idx].bit_x.reset();
+            nodes[idx].bit_d.reset();
+        }
+    }
+    for (int idx = 1; idx <= m; ++idx) {
+        Buss &buss = busses[idx];
+        printf((buss.lo == q) ? "rekt\n" : "%d\n", buss.lo + 1);
+    }
+    
+    return 0;
+}

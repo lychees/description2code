@@ -1,0 +1,150 @@
+#include <bits/stdc++.h>
+// iostream is too mainstream
+#include <cstdio>
+// bitch please
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <list>
+#include <cmath>
+#include <iomanip>
+#include <time.h>
+#define dibs reserve
+#define OVER9000 1234567890
+#define ALL_THE(CAKE,LIE) for(auto LIE =CAKE.begin(); LIE != CAKE.end(); LIE++)
+#define tisic 47
+#define soclose 1e-8
+#define chocolate win
+// so much chocolate
+#define patkan 9
+#define ff first
+#define ss second
+#define abs(x) ((x < 0)?-(x):x)
+#define uint unsigned int
+#define dbl long double
+#define pi 3.14159265358979323846
+using namespace std;
+// mylittledoge
+
+#ifdef DONLINE_JUDGE
+	// palindromic tree is better than splay tree!
+	#define lld I64d
+#endif
+
+struct fin {
+	vector<long long> T;
+	fin(int N) {T.resize(N+tisic,0);}
+	
+	int lastone(int x) {return x&(x^(x-1));}
+	
+	void put(int pos, long long val) {
+		for(int i =pos+1; i < T.size(); i +=lastone(i)) T[i] +=val;
+		}
+	
+	long long get(long long pos) {
+		long long ret =0;
+		for(int i =pos+1; i > 0; i -=lastone(i)) ret +=T[i];
+		return ret;}
+	};
+
+int main() {
+	cin.sync_with_stdio(0);
+	cin.tie(0);
+	cout << fixed << setprecision(10);
+	int N,Q;
+	cin >> N >> Q;
+	vector<int> A(N);
+	for(int i =0; i < N; i++) cin >> A[i];
+	
+	map<int, pair<int,int> > M;
+	fin F(N);
+	for(int i =0; i < N; i++) {
+		int j =i;
+		while(j < N && A[j] == A[i]) j++;
+		M[i] =make_pair(j,A[i]);
+		F.put(i,1LL*(j-i)*(j+1-i)/2);
+		i =j-1;}
+
+	for(int q =0; q < Q; q++) {
+		int tp,l,r;
+		cin >> tp >> l >> r;
+		l--;
+		if(tp == 0) {
+			int c;
+			cin >> c;
+			auto it =M.lower_bound(l);
+			if(it != M.begin()) {
+				it--;
+				int x =it->ss.ff-it->ff;
+				F.put(it->ff,-1LL*x*(x+1)/2);
+				if(it->ss.ff > r) {
+					M[r] =it->ss;
+					F.put(r,1LL*(it->ss.ff-r)*(it->ss.ff-r+1)/2);}
+				it->ss.ff =l;
+				x =it->ss.ff-it->ff;
+				F.put(it->ff,1LL*x*(x+1)/2);}
+			auto jt =M.lower_bound(l);
+			while(jt != M.end() && jt->ss.ff <= r) {
+				int x =jt->ss.ff-jt->ff;
+				F.put(jt->ff,-1LL*x*(x+1)/2);
+				it =jt;
+				jt++;
+				M.erase(it);}
+			if(jt != M.end() && jt->ff < r) {
+				int x =jt->ss.ff-jt->ff;
+				F.put(jt->ff,-1LL*x*(x+1)/2);
+				M[r] =jt->ss;
+				x =jt->ss.ff-r;
+				F.put(r,1LL*x*(x+1)/2);
+				M.erase(jt);}
+			M[l] =make_pair(r,c);
+			F.put(l,1LL*(r-l)*(r-l+1)/2);
+			it =M.lower_bound(l);
+			jt =it;
+			if(jt != M.begin()) {
+				jt--;
+				if(jt->ss.ss == it->ss.ss) {
+					int x =it->ss.ff-it->ff;
+					F.put(it->ff,-1LL*x*(x+1)/2);
+					x =jt->ss.ff-jt->ff;
+					F.put(jt->ff,-1LL*x*(x+1)/2);
+					jt->ss.ff =it->ss.ff;
+					x =jt->ss.ff-jt->ff;
+					F.put(jt->ff,1LL*x*(x+1)/2);
+					M.erase(it);
+					it =jt;}
+				else jt =it;}
+			else jt =it;
+			it++;
+			if(it != M.end() && jt->ss.ss == it->ss.ss) {
+				int x =it->ss.ff-it->ff;
+				F.put(it->ff,-1LL*x*(x+1)/2);
+				x =jt->ss.ff-jt->ff;
+				F.put(jt->ff,-1LL*x*(x+1)/2);
+				jt->ss.ff =it->ss.ff;
+				x =jt->ss.ff-jt->ff;
+				F.put(jt->ff,1LL*x*(x+1)/2);
+				M.erase(it);}
+			continue;}
+		long long ans =0;
+		auto it =M.lower_bound(r);
+		it--;
+		if(it->ff <= l) {
+			ans +=1LL*(r-l)*(r-l+1)/2;
+			cout << ans << "\n";
+			continue;}
+		ans +=1LL*(r-it->ff)*(r-it->ff+1)/2;
+		auto jt =M.lower_bound(l);
+		if(jt != M.end()) {
+			ans +=1LL*(jt->ff-l)*(jt->ff-l+1)/2;
+			ans +=F.get(it->ff-1)-F.get(jt->ff-1);}
+		cout << ans << "\n";}
+	return 0;}
+
+// look at my code
+// my code is amazing

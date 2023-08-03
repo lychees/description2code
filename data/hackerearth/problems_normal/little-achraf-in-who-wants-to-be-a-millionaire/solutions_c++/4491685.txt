@@ -1,0 +1,90 @@
+#include <cstdio>
+
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long llong;
+
+const int MOD = 1e9 + 7;
+
+struct Constraint {
+   llong n, x;
+   char ch;
+};
+
+int L, C;
+Constraint con[10004];
+
+vector<llong> F;
+
+int index(llong x, llong n) {
+   if (x <= L) return x-1;
+
+   llong nn = n-1;
+   int xx = upper_bound(F.begin(), F.end(), nn) - F.begin();
+   xx += (x-1 - xx) % L;
+   while (xx >= L) {
+      int y = xx-L;
+      for (; nn - F[y] >= 0; y++)
+         nn -= F[y];
+      xx = y;
+   }
+   return xx;
+}
+
+llong solve() {
+   F = vector<llong>(L, 1);
+   llong sum = L;
+   for (int x = L; ; ++x) {
+      if (sum > 1000000000000000) break;
+      F.push_back(sum);
+      sum -= F[x - L];
+      sum += F[x];
+   }
+   /*
+   for (int x = F.size(), l = 0; l < L; ++x, ++l) {
+      F.push_back(sum);
+      sum -= F[x - L];
+      sum += F[x];
+   }
+   */
+   for (int l = 0; l <= 2*L; ++l)
+      F.push_back(1000000000000000);
+
+   //for (int x = 0; x < (int) F.size(); ++x) {
+   //  if (F[x] >= 100) break;
+   //  fprintf(stderr, "%d: %lld\n", x, F[x]);
+   //}
+
+   vector<char> S(L, '?');
+   for (int j = 0; j < C; ++j) {
+      int idx = index( con[j].x, con[j].n );
+   //   fprintf(stderr, "j = %d  idx = %d\n", j, idx);
+      if (S[idx] == '?')
+         S[idx] = con[j].ch;
+      else if (S[idx] != con[j].ch)
+         return 0;
+   }
+
+   llong res = 1;
+   for (char c : S)
+      if (c == '?')
+         res = (res * (26+26+10)) % MOD;
+   return res;
+}
+
+int main() {
+   scanf("%d %d", &L, &C);
+   for (int j = 0; j < C; ++j) {
+      char buf[2];
+      scanf("%lld %lld %s", &con[j].n, &con[j].x, buf);
+      con[j].ch = *buf;
+   }
+   
+   llong res = solve();
+   printf("%lld\n", res);
+   
+   return 0;
+}

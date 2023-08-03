@@ -1,0 +1,199 @@
+#include <bits/stdc++.h>
+// iostream is too mainstream
+#include <cstdio>
+// bitch please
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <list>
+#include <cmath>
+#include <iomanip>
+#include <time.h>
+#define dibs reserve
+#define OVER9000 1234567890
+#define ALL_THE(CAKE,LIE) for(auto LIE =CAKE.begin(); LIE != CAKE.end(); LIE++)
+#define tisic 47
+#define soclose 1e-8
+#define chocolate win
+// so much chocolate
+#define patkan 9
+#define ff first
+#define ss second
+#define abs(x) ((x < 0)?-(x):x)
+#define uint unsigned int
+#define dbl long double
+#define pi 3.14159265358979323846
+using namespace std;
+// mylittledoge
+
+#ifdef DONLINE_JUDGE
+	// palindromic tree is better than splay tree!
+	#define lld I64d
+#endif
+
+typedef long long ll;
+ll mod =1000000007,A,B,C,D,E;
+
+int randInt(int MIN, int MAX) {
+	int F =(A*C+B*D+E)%mod;
+	A =B;
+	B =F;
+	return (F%(MAX-MIN+1))+MIN;}
+
+struct query {
+	int Iz,Ik,v,id;
+	query() {}
+	query(int a, int b, int c, int d) {Iz =a, Ik =b, id =c, v =d;}
+	};
+
+struct fin {
+	vector<ll> T,Tc;
+	fin(int N) {T.resize(N+tisic,0); Tc.resize(N+tisic,0);}
+
+	int lastone(int x) {return x&(x^(x-1));}
+
+	void put(int z, int k) {
+		for(int i =z+1; i < (int)T.size(); i +=lastone(i)) T[i]++;
+		for(int i =k+2; i < (int)T.size(); i +=lastone(i)) T[i]--;
+		for(int i =k+2; i < (int)Tc.size(); i +=lastone(i)) Tc[i] +=k;
+		for(int i =z+1; i < (int)Tc.size(); i +=lastone(i)) Tc[i] -=(z-1);
+		}
+
+	ll get(int pos) {
+		ll ret =0;
+		for(int i =pos+1; i > 0; i -=lastone(i)) ret +=T[i]*pos+Tc[i];
+		return ret;}
+	};
+
+int main() {
+	cin.sync_with_stdio(0);
+	cin.tie(0);
+	cout << fixed << setprecision(10);
+	int N,Q;
+	scanf(" %d %d %lld %lld %lld %lld %lld",&N,&Q,&A,&B,&C,&D,&E);
+	vector< pair<int,int> > I(N);
+	vector<query> queries(Q);
+
+	for(int i =0; i < N; i++) {
+		int P =randInt(1,1000000);
+		int Q =randInt(P,1000000);
+		I[i].ff =P, I[i].ss =Q;}
+
+	ll ans =0;
+	vector<int> up(N+Q+1);
+	for(int i =0; i < N; i++) up[i] =i;
+	vector< vector<int> > son(N+Q+1);
+	vector< vector<int> > Qcomp(N+Q+1);
+	int n =N;
+
+	for(int q =0; q < Q; q++) {
+		int tp =randInt(1,2);
+		if(tp == 1) {
+			int U =randInt(1,N);
+			int V =randInt(1,N);
+//    	    event i is that the graph grows an edge from U to V
+			U--, V--;
+			int cx =U, cy =V;
+			while(up[cx] != cx) cx =up[cx];
+			while(up[cy] != cy) cy =up[cy];
+			if(cx == cy) continue;
+			up[cx] =up[cy] =up[n] =n;
+			son[n].push_back(cx);
+			son[n].push_back(cy);
+			while(U != n) {
+				int u =up[U];
+				up[U] =n;
+				U =u;}
+			while(V != n) {
+				int v =up[V];
+				up[V] =n;
+				V =v;}
+			n++;
+			continue;}
+		else {
+			int X =randInt(1,1000000);
+			int Y =randInt(X,1000000);
+			int Z =randInt(1,N);
+			Z--;
+//			event i is that the graph asks the question with the interval [X, Y] and vertex Z
+			int x =Z;
+			while(x != up[x]) x =up[x];
+			while(Z != x) {
+				int u =up[Z];
+				up[Z] =x;
+				Z =u;}
+			Qcomp[Z].push_back(q);
+			queries[q] =query(X,Y,q,Z);}
+		}
+	for(int i =0; i < n; i++) if(up[i] == i) son[n].push_back(i);
+
+	queue<int> q;
+	q.push(n);
+	vector<int> par(n+1,-1);
+	par[n] =n;
+	vector<int> seq(n+1);
+	int seql =0;
+	while(!q.empty()) {
+		seq[seql++] =q.front();
+		ALL_THE(son[q.front()],it) {
+			par[*it] =q.front();
+			q.push(*it);}
+		q.pop();}
+	vector<int> Sz(n+1,0);
+	for(int i =0; i < N; i++) Sz[i]++;
+	for(int i =seql-1; i >= 0; i--)
+		ALL_THE(son[seq[i]],it) Sz[seq[i]] +=Sz[*it];
+	vector< pair<int,int> > It(n+1);
+	It[n].ff =0;
+	for(int i =0; i < seql; i++) {
+		int akt =It[seq[i]].ff;
+		if(seq[i] < N) akt++;
+		ALL_THE(son[seq[i]],it) {
+			It[*it].ff =akt;
+			akt +=Sz[*it];}
+		It[seq[i]].ss =akt;}
+	vector<int> ord(N+1,-1);
+	for(int i =0; i <= n; i++) if(It[i].ss-It[i].ff == 1) ord[It[i].ff] =i;
+
+	vector<int> Qadd_len(N+tisic,0), Qsub_len(N+tisic,0);
+	vector<int> Qadd(Q+tisic), Qsub(Q+tisic);
+	for(int i =0; i < n; i++) {
+		Qadd_len[It[i].ss-1] +=Qcomp[i].size();
+		if(It[i].ff > 0) Qsub_len[It[i].ff-1] +=Qcomp[i].size();}
+	int sum =0;
+	for(int i =0; i < N; i++) {
+		sum +=Qadd_len[i];
+		Qadd_len[i] =sum-Qadd_len[i];}
+	Qadd_len[N] =sum;
+	sum =0;
+	for(int i =0; i < N; i++) {
+		sum +=Qsub_len[i];
+		Qsub_len[i] =sum-Qsub_len[i];}
+	Qsub_len[N] =sum;
+	vector<int> cur_add =Qadd_len, cur_sub =Qsub_len;
+	for(int i =0; i < n; i++) 
+		for(int j =0; j < (int)Qcomp[i].size(); j++) {
+			Qadd[cur_add[It[i].ss-1]++] =Qcomp[i][j];
+			if(It[i].ff > 0) Qsub[cur_sub[It[i].ff-1]++] =Qcomp[i][j];}
+
+	fin F(1100000);
+	for(int i =0; i < N; i++) {
+		F.put(I[ord[i]].ff,I[ord[i]].ss);
+		for(int j =Qadd_len[i]; j < Qadd_len[i+1]; j++)
+			ans +=1LL*(Qadd[j]+1)*(F.get(queries[Qadd[j]].Ik)-F.get(queries[Qadd[j]].Iz-1))%mod;
+		for(int j =Qsub_len[i]; j < Qsub_len[i+1]; j++)
+			ans -=1LL*(Qsub[j]+1)*(F.get(queries[Qsub[j]].Ik)-F.get(queries[Qsub[j]].Iz-1))%mod;
+		ans %=mod;}
+
+	ans %=mod;
+	if(ans < 0) ans +=mod;
+	printf("%lld\n",ans);
+	return 0;}
+
+// look at my code
+// my code is amazing

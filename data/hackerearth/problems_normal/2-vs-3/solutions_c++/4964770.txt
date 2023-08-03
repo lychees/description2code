@@ -1,0 +1,114 @@
+#include <bits/stdc++.h>
+#include <array>
+#include <cmath>
+#define PI 3.141592653589793238462643383279502884L
+using namespace std;
+typedef int ll; //INT 
+typedef double ld; // eps * 10 000 000
+constexpr int MOD = 1000 * 1000 * 1000 + 7;
+constexpr ll SZ = 100011;
+
+constexpr ll depth = 17; // 2^17 array elems
+string inp;
+ll n, q;
+
+struct node
+{
+	ll val, len;
+
+	void split(node& a, node& b)
+	{
+	}
+
+	void merge(node& a, node& b)
+	{
+		len = a.len + b.len;
+		val = a.val;
+		if (b.len % 2)
+			val <<= 1;
+		val += b.val;
+		val %= 3;
+	}
+
+} tree[1<<(depth+1)];
+
+void init(int root)
+{
+	if (root >= 1 << depth)
+	{
+		ll idx = root - (1 << depth);
+		if (idx < inp.size())
+		{
+			tree[root].val = inp[idx] - '0';
+			tree[root].len = 1;
+		}
+	}
+	else
+	{
+		init(2 * root);
+		init(2 * root + 1);
+		tree[root].merge(tree[2 * root], tree[2 * root + 1]);
+	}
+}
+
+const node ident{0, 0};
+
+node range_query(ll root, ll leftmost, ll rightmost, ll u, ll v)
+{
+	if (leftmost >= u && rightmost <= v)
+		return tree[root];
+	node l = ident, r = ident;
+	ll mid = (leftmost + rightmost) / 2;
+	if (u < mid) l = range_query(2 * root, leftmost, mid, u, v);
+	if (v > mid) r = range_query(2 * root + 1, mid, rightmost, u, v);
+	node res{};
+	res.merge(l, r);
+	return res;
+}
+
+void mergeup(ll idx)
+{
+	while (idx > 0)
+	{
+		tree[idx].merge(tree[2 * idx], tree[2 * idx + 1]);
+		idx >>= 1;
+	}
+}
+
+void update(ll idx)
+{
+	idx += 1 << depth;
+	if (tree[idx].val == 0)
+	{
+		tree[idx].val = 1;
+		mergeup(idx >> 1);
+	}
+
+}
+
+ll query(ll l, ll r)
+{
+	return range_query(1, 1 << depth, 1 << (depth + 1), l + (1 << depth), r + (1 << depth) + 1).val;
+}
+
+int main()
+{
+	ios::sync_with_stdio(false); cin.tie(0);
+	cin >> n;
+	cin >> inp;
+	init(1);
+	cin >> q;
+	for (ll i = 0; i < q; ++i)
+	{
+		ll t, l, r;
+		cin >> t >> l;
+		if (t == 0)
+		{
+			cin >> r;
+			cout << query(l, r) << '\n';
+		}
+		else
+			update(l);
+	}
+	return 0;
+}

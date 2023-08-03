@@ -1,0 +1,155 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+const long long MAXN=100009;
+long long fact[MAXN],ifact[MAXN],Fact[MAXN];
+vector<pair<long long,long long> > prime_fact;
+
+//*****************************************extended euclidean from codeforces
+/*void exgcd(int a,int b,int &x,int &y)
+{
+    if (b) {exgcd(b,a%b,y,x);y-=x*(a/b);}
+    else x=1,y=0;
+}*/
+//**************************************************************************
+long long largest_b_poww(long long n,long long r,long long P)
+{
+    long long tp=P;
+    long long b=0;
+    while(n/tp>0)
+    {
+        b=b+(n/tp)+(r/tp)+((n-r)/tp);
+        tp=tp*P;
+    }
+    return b;
+}
+
+pair<long long, pair<long long, long long> > extendedEuclid(long long a, long long b) {
+    long long x = 1, y = 0;
+    long long xLast = 0, yLast = 1;
+    long long q, r,m, n;
+    while(a != 0) {
+        q = b / a;
+        r = b % a;
+        m = xLast - q * x;
+        n = yLast - q * y;
+        xLast = x, yLast = y;
+        x = m, y = n;
+        b = a, a = r;
+    }
+    return make_pair(b, make_pair(xLast, yLast));
+}
+
+long long poww(long long base,long long exp,long long P)
+{
+    long long res=1;
+    while(exp>0)
+    {
+        if(exp%2==1)
+            res = (res * base) % P;
+        base = (base * base) % P;
+        exp/=2;
+    }
+    return res % P;
+}
+
+long long inverse_modulo(long long n,long long P)
+{
+    return poww(n,P-2,P);
+}
+
+void pre_factorial(long long P)
+{
+    fact[0]=1;
+    ifact[0]=1;
+    for(int i=1;i<=P;i++)
+    {
+        fact[i]=(fact[i-1]*i)%P;
+        ifact[i]=(ifact[i-1]*(inverse_modulo(i,P))%P)%P;
+    }
+}
+
+long long SmallC(long long n, long long r, long long P)
+{
+    return (fact[n]*((ifact[r]*ifact[n-r])%P))%P;
+}
+
+long long Lucas(long long n, long long m, long long P)
+{
+    if (n==0 && m==0) return 1;
+    long long ni = n % P;
+    long long mi = m % P;
+    if (mi>ni) return 0;
+    return Lucas(n/P, m/P, P) * SmallC(ni, mi, P);
+}
+
+long long C(long long n, long long r, long long P)
+{
+    pre_factorial(P);
+    return Lucas(n, r, P);
+}
+
+long long CRT(long long M)   //M original nonprime no.
+{
+    pair<long long,pair<long long,long long> > dxy;
+    long long y,e,x;
+    long long num=0;
+    for(int i=0;i<prime_fact.size();i++)
+    {
+        dxy=extendedEuclid(prime_fact[i].first,M/prime_fact[i].first);
+        x=dxy.second.first;
+        y=dxy.second.second;
+        e=y*(M/prime_fact[i].first);
+        //cout<<x<<" "<<y<<" "<<e<<endl;
+        num+=Fact[i]*e;
+    }
+    num=num%M;
+    return (num+M)%M;
+}
+
+void prime_factorization(long long m)
+{
+    map<int,int> mp;
+    long long z=2;
+    while ((z * z) <= m)
+    {
+        if (m % z == 0)
+        {
+            mp[(int)z]+=1;
+            m /= z;
+        }
+        else
+        z++;
+    }
+
+    if (m>1)
+        mp[(int)m]+=1;
+    for(map<int,int>::iterator it=mp.begin();it!=mp.end();it++)
+        prime_fact.push_back(make_pair(it->first,it->second));
+}
+
+long long sol(long long n,long long r,long long M)
+{
+    prime_factorization(M);
+    for(int i=0;i<prime_fact.size();i++)
+    {
+        Fact[i]=C(n,r,prime_fact[i].first);
+        //cout<<prime_fact[i].first<<" "<<Fact[i]<<endl;
+    }
+    return CRT(M);
+}
+
+int main()
+{
+    int t;
+    cin>>t;
+    while(t--)
+    {
+    	long long n,m,k;
+    	cin>>n>>m>>k;
+    	prime_fact.clear();
+    	cout<<sol(n-1,m-1,k)<<endl;
+    }
+    return 0;
+}
+

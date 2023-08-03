@@ -1,0 +1,171 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define M 210
+#define INF 1e9
+int n;
+struct Hungarian {
+	int cost[M][M];
+	int n, max_match, m;
+	int lx[M], ly[M];
+	int xy[M];
+	int yx[M];
+	bool S[M], T[M];
+	int slack[M];
+	int slackx[M];
+	int prev[M];
+	int q[M];
+
+	void init_labels() {
+		memset(lx, 0, sizeof lx);
+		memset(ly, 0, sizeof ly);
+		for (int x = 0; x < m; x++)
+			for (int y = 0; y < n; y++) lx[x] = max(lx[x], cost[x][y]);
+	}
+
+	void update_labels() {
+		int x, y, delta = INF;
+
+		for (y = 0; y < n; y++)
+			if (!T[y]) delta = min(delta, slack[y]);
+		for (x = 0; x < m; x++)
+			if (S[x]) lx[x] -= delta;
+		for (y = 0; y < n; y++)
+			if (T[y]) ly[y] += delta;
+			else slack[y] -= delta;
+	}
+
+	void add_to_tree(int x, int prevx) {
+		S[x] = true;
+		prev[x] = prevx;
+		for (int y = 0; y < n; y++)
+			if (lx[x] + ly[y] - cost[x][y] < slack[y]) {
+				slack[y] = lx[x] + ly[y] - cost[x][y];
+				slackx[y] = x;
+			}
+	}
+
+	void augment() {
+		if (max_match == m) return;
+		int x, y, root;
+		int wr = 0, rd = 0;
+
+		memset(S, 0, sizeof S);
+		memset(T, 0, sizeof T);
+		memset(prev, -1, sizeof prev);
+		for (x = 0; x < m; x++)
+			if (xy[x] == -1) break;
+		q[wr++] = root = x;
+		prev[x] = -2;
+		S[x] = true;
+		for (y = 0; y < n; y++) {
+			slack[y] = lx[root] + ly[y] - cost[root][y];
+			slackx[y] = root;
+		}
+
+		while (true) {
+			while (rd < wr) {
+				x = q[rd++];
+				for (y = 0; y < n; y++)
+					if (cost[x][y] == lx[x] + ly[y] && !T[y]) {
+						if (yx[y] == -1) break;
+						T[y] = true;
+						q[wr++] = yx[y];
+						add_to_tree(yx[y], x);
+					}
+				if (y < n) break;
+			}
+			if (y < n) break;
+			update_labels();
+			wr = rd = 0;
+			for (y = 0; y < n; y++)
+				if (!T[y] && !slack[y]) {
+					if (yx[y] == -1) {
+						x = slackx[y];
+						break;
+					} else {
+						T[y] = true;
+						if (!S[yx[y]]) {
+							q[wr++] = yx[y];
+							add_to_tree(yx[y], slackx[y]);
+						}
+					}
+				}
+			if (y < n) break;
+		}
+
+		if (y < n) {
+			max_match++;
+			for (int cx = x, cy = y, ty; cx != -2; cx = prev[cx], cy = ty) {
+				ty = xy[cx];
+				yx[cy] = cx;
+				xy[cx] = cy;
+			}
+			augment();
+		}
+	}
+
+	int hungarian() {
+		int x, rlt;
+		max_match = 0;
+		memset(xy, -1, sizeof(xy));
+		memset(yx, -1, sizeof(yx));
+		init_labels();
+		augment();
+		for (rlt = x = 0; x < n; x++) rlt += cost[x][xy[x]];
+			return rlt;
+	}
+} Match;
+
+int cost[M], dp[M][M];
+
+vector <int> v[M];
+#define MX 1000000
+
+void dfs(int x, int pa) {
+	int bf = 0;
+	for (int i = 0; i < v[x].size(); i++) {
+		int u = v[x][i]; if (u == pa) continue;
+		dfs(u, x);
+		bf = 1;
+	}
+	if (!bf) {
+		for (int c = 0; c <= n; c++) dp[x][c] = cost[c];
+		return;
+	}
+	for (int c = 0; c <= n; c++) {
+		int son = 0;
+		for (int i = 0; i < v[x].size(); i++) {
+			int u = v[x][i];
+			if (u == pa) {
+				for (int j = 0; j < n; j++) Match.cost[i][j] = 0;
+				continue;
+			}
+			son++;
+			for (int j = 0; j < n; j++) {
+				if (j != c) {
+					Match.cost[i][j] = MX - dp[u][j];
+				}
+				else Match.cost[i][j] = 0;
+			}
+		}
+		Match.m = v[x].size();
+		int rt = Match.hungarian();
+		dp[x][c] = cost[c] + MX * son - rt;
+	}
+}
+
+int main() {
+	//freopen("in.txt", "r", stdin);
+	int T;
+	for (scanf("%d", &T); T--; ) {
+		scanf("%d", &n); for (int i = 0; i < n - 1; i++) scanf("%d", cost + i);
+		cost[n-1] = 0;
+		for (int i = 1; i <= n; i++) v[i].clear();
+		int x, y;
+		for (int i = 1; i < n; i++) scanf("%d %d", &x, &y), v[x].push_back(y), v[y].push_back(x);
+		--n;
+		Match.n = n;
+		dfs(1, 0);
+		printf("%d\n", dp[1][n]);
+	}
+}

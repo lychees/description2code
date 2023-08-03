@@ -1,0 +1,61 @@
+#include <bits/stdc++.h>
+#define lli long long
+
+using namespace std;
+
+lli A[100005];
+lli F[102][1002];
+lli cum[100005];
+lli dp[102][1002];
+int n,m;
+int sz[102];
+bool vis[102][1002];
+
+//Code for FAST INPUT :)
+template <typename T>
+inline void fi(T *a)
+{
+    register char c=0;
+    while (c<33) c=getchar_unlocked();
+    *a=0;
+    int tmp = 0;
+    while (c>33)
+    {
+        if ( c == 45 ) tmp = 1;
+        else *a=*a*10+c-'0';
+        c=getchar_unlocked();
+    }
+    if ( tmp == 1 ) *a = 0-(*a);
+}
+
+lli f(int idx, int cnt)
+{
+	if ( idx == n ) return 0;
+	if ( vis[idx][cnt] ) return dp[idx][cnt];
+	vis[idx][cnt] = true;
+	lli ans = f(idx+1,cnt);
+	for ( int i = 1; i <= sz[idx]; i++ ) {
+		if ( cnt + i > m ) break;
+		ans = max(ans, F[idx][i] + f(idx+1, cnt + i));
+	}
+	dp[idx][cnt] = ans;
+	return ans;
+}
+
+int main()
+{
+	fi(&n), fi(&m);
+	for ( int i = 0; i < n; i++ ) {
+		fi(&sz[i]);
+		cum[0] = 0;
+		for ( int j = 1; j <= sz[i]; j++ ) fi(&A[j]), cum[j] = cum[j-1] + A[j];
+		for ( int j = 1; j <= min(sz[i],m); j++ ) {
+			for ( int k = 1; k + j-1 <= sz[i]; k++ ) {
+				if ( k == 1 || F[i][j] < cum[k+j-1] - cum[k-1] ) F[i][j] = cum[k+j-1] - cum[k-1];
+			} 
+		}
+	}
+	lli ans = f(0,0);
+	printf("%lld\n", ans);
+	return 0;
+}

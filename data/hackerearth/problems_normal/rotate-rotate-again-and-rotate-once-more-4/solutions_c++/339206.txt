@@ -1,0 +1,136 @@
+#include <bits/stdc++.h>
+
+#define PB(a,b) a.push_back(b)
+#define MP(a,b) make_pair(a,b)
+#define leng(a) a.size()
+
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<pair<int,int> > vii;
+typedef vector<string> vs;
+
+int ar[2100001][4],ct[4],n,cat,rot[21000001],MAXN;
+
+void print_all(){
+	for(int i=0;i<9;i++){
+    for(int j=0;j<4;j++)
+      printf("%d ",ar[i][j]);
+    printf(" --> ");
+    for(int j=0;j<4;j++)
+      printf("%d ",ar[2*i+1][j]);
+    printf (" + ");
+    for(int j=0;j<4;j++)
+      printf("%d ",ar[2*i+2][j]);
+    printf("\n");
+  }
+}
+
+void update(int s,int e,int l,int r,int ind,int k,int d){
+  if(r<s || e<l || ind>MAXN)
+    return;
+
+  if(s>=l && e<=r){
+    if(d){
+      for(int i=0;i<4;i++)
+	ct[(i+k)%4] = ar[ind][i];
+      for(int i=0;i<4;i++)
+	ar[ind][i] = ct[i];
+      rot[ind] = (rot[ind]+k)%4;
+    }
+    else{
+      for(int i=0;i<4;i++)
+	ct[(i-k+4)%4] = ar[ind][i];
+      for(int i=0;i<4;i++)
+	ar[ind][i] = ct[i];
+      rot[ind] = (rot[ind]-k+4)%4;
+    }
+    return;
+  }
+  int m = s + (e-s)/2;
+  update(s,m,l,r,2*ind+1,k,d);
+  update(m+1,e,l,r,2*ind+2,k,d);
+  for(int i=0;i<4;i++){
+    ar[ind][(i+rot[ind])%4] = ar[2*ind+1][i]+ ar[2*ind+2][i];
+  }
+    //printf("updated %d = %d + %d",ar[ind][i],ar[2*ind+1][i],ar[2*ind+2][i]);
+  //printf("\n");
+}
+
+int get_sol(int s,int e,int l,int r,int id,int d,int cat){
+  if(e<l || s>r || id>MAXN)
+    return 0;
+	//printf("id %d\n",id);
+    if(l<=s && r>=e){
+      for(int i=0;i<4;i++)
+	ct[(i+cat)%4] = ar[id][i];
+      //printf("get %d %d %d %d %d %d %d\n",s+1,e+1,cat,ct[0],ct[1],ct[2],ct[3]);
+      return ct[d];
+    }
+    int ret=0;
+    int m = (s+e)/2;
+    ret = get_sol(s,m,l,r,2*id+1,d,(cat+rot[id])%4)+get_sol(m+1,e,l,r,2*id+2,d,(cat+rot[id])%4);
+    return ret;
+}
+
+
+
+int query(int l,int r){
+  int ret = 0;
+  for(int i=0;i<4;i++)
+    ret = max(ret,get_sol(0,n-1,l,r,0,i,0));
+  return ret;
+}
+
+void build(int s, int e,int id){
+  rot[id] = 0;
+  if(s==e){
+    ar[id][0]=1;
+    ar[id][1]=0;
+    ar[id][2]=0;
+    ar[id][3]=0;
+    return;
+  }
+  int m = s+(e-s)/2;
+  build(s,m,2*id+1);
+  build(m+1,e,2*id+2);
+  MAXN = max(MAXN,2*id+2);
+  for(int i=0;i<4;i++)
+  ar[id][i] = ar[2*id+1][i]+ar[2*id+2][i];
+  return ;
+}
+
+
+int main(){
+  int m,l,r,k;
+  char c;
+
+  cin>>n>>m;
+
+  build(0,n-1,0);
+
+  //printf("%d\n",MAXN);
+
+  while(m--){
+    cin>>c;
+    if(c=='Q'){
+      cin>>l>>r;
+      l--;r--;
+      cout<<query(l,r)<<endl;
+    }
+    else{
+      cin>>l>>r>>k;
+      l--;r--;
+     // printf("%d\n",k);
+      k = k%4;
+      if(k){
+      if(c=='C')
+	update(0,n-1,l,r,0,k,1);
+      else
+	update(0,n-1,l,r,0,k,0);
+      }
+	//print_all();
+    }
+  }
+}

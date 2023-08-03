@@ -1,0 +1,269 @@
+#include<stdio.h>
+#include<iostream>
+#include<cmath>
+#include<string>
+#include<cstring>
+#include<algorithm>
+#include<vector>
+#include<map>
+#include<utility>
+#define PB push_back
+#define MP make_pair
+#define LL long long int
+#define M 1000000007
+#define sc(x) scanf("%d",&x)
+#define scl(x) scanf("%lld",&x)
+using namespace std;
+
+
+struct node
+{
+	LL l,r,val,val_left,val_right,total_val;
+};
+
+node st[400001];
+LL a[100001],update_val,arr[100001];
+
+inline LL max(LL x, LL y)
+{
+	if(x > y)
+	return x;
+	else
+	return y;
+}
+
+inline LL max(LL x, LL y, LL z)
+{
+	return max(max(x,y),z);
+}
+
+
+
+void construct(LL i, LL left, LL right)
+{
+	st[i].l = left;
+	st[i].r = right;
+	if(left == right)
+	{
+		st[i].val = a[left];
+		st[i].val_left = a[left];
+		st[i].val_right = a[right];
+		st[i].total_val = a[right];
+		arr[left] = i; 
+		return;
+	}
+	LL mid = (left + right)/2;
+	construct((2 * i), left, mid);
+	construct((2 * i + 1), mid + 1, right);
+	st[i].val = max(st[2*i].val, st[2*i+1].val, st[2*i].val_right + st[2*i+1].val_left);
+	
+	if(st[i].val > M)
+	st[i].val %= M;
+	
+	st[i].val_left = max(st[2*i].val_left, st[2*i].total_val + st[2*i+1].val_left);
+	
+	if(st[i].val_left > M)
+	st[i].val_left %= M;
+	
+	st[i].val_right = max(st[2*i+1].val_right, st[2*i+1].total_val + st[2*i].val_right);
+	
+	if(st[i].val_right > M)
+	st[i].val_right %= M;
+	
+	st[i].total_val = st[2*i].total_val + st[2*i + 1].total_val;
+	if(st[i].total_val > M)
+	st[i].total_val %= M;
+	
+	return;
+	
+}
+
+node query(LL i, LL left ,LL right)
+{
+	node temp1, temp2, temp3;
+	LL mid = (st[i].l + st[i].r)/2;
+	if(left == right)
+	{
+		//return st[i];
+		temp3 = st[arr[left]];
+		return temp3;
+		/*temp3.val = a[left];
+		temp3.val_left = a[left];
+		temp3.val_right = a[left];
+		temp3.total_val = a[left];
+		return temp3;*/
+	}
+	if(st[i].l == left && st[i].r == right)
+	{
+		return st[i];
+	}
+	
+	if(left <= mid and right <= mid)
+	{
+		return query(2*i, left, right);
+	}
+	
+	if(left > mid and right > mid)
+	{
+		return query(2*i+1, left, right);
+	}
+	temp1 = query(2*i, left, mid);
+	temp2 = query(2*i+1, mid + 1, right);
+	temp3.val = max(temp1.val, temp2.val, temp1.val_right + temp2.val_left);
+	if(temp3.val > M)
+	temp3.val %= M;
+	
+	temp3.val_left = max(temp1.val_left, temp1.total_val + temp2.val_left);
+	if(temp3.val_left > M)
+	temp3.val_left %= M;
+	
+	temp3.val_right = max(temp2.val_right, temp1.val_right + temp2.total_val);
+	if(temp3.val_right > M)
+	temp3.val_right %= M;
+	
+	temp3.total_val = temp1.total_val + temp2.total_val;
+	if(temp3.total_val > M)
+	temp3.total_val %= M;
+	//cout<<i<<" "<<temp3.val<<" "<<temp3.val_left<<" "<<temp3.val_right<<" "<<temp3.total_val<<endl;
+	return temp3;
+}
+
+
+node st_other[400001];
+LL arr_other[100001];
+
+void construct_other(LL i, LL left, LL right)
+{
+	st_other[i].l = left;
+	st_other[i].r = right;
+	if(left == right)
+	{
+		st_other[i].val = left * a[left];
+		if(st_other[i].val > M)
+		st_other[i].val %= M;
+		
+		st_other[i].val_left = left * a[left];
+		if(st_other[i].val_left > M)
+		st_other[i].val_left %= M;
+		
+		st_other[i].val_right = right * a[right];
+		if(st_other[i].val_right > M)
+		st_other[i].val_right %= M;
+		
+		st_other[i].total_val = right * a[right];
+		if(st_other[i].total_val > M)
+		st_other[i].total_val %= M;
+		
+		arr_other[left] = i; 
+		return;
+	}
+	LL mid = (left + right)/2;
+	construct_other((2 * i), left, mid);
+	construct_other((2 * i + 1), mid + 1, right);
+	st_other[i].val = max(st_other[2*i].val, st_other[2*i+1].val, st_other[2*i].val_right + st_other[2*i+1].val_left);
+	if(st_other[i].val > M)
+	st_other[i].val %= M;
+	
+	st_other[i].val_left = max(st_other[2*i].val_left, st_other[2*i].total_val + st_other[2*i+1].val_left);
+	if(st_other[i].val_left > M)
+	st_other[i].val_left %= M;
+	
+	st_other[i].val_right = max(st_other[2*i+1].val_right, st_other[2*i+1].total_val + st_other[2*i].val_right);
+	if(st_other[i].val_right > M)
+	st_other[i].val_right %= M;
+	
+	st_other[i].total_val = st_other[2*i].total_val + st_other[2*i + 1].total_val;
+	if(st_other[i].total_val > M)
+	st_other[i].total_val %= M;
+	
+	return;
+}
+
+node query_other(LL i, LL left ,LL right)
+{
+	node temp1, temp2, temp3;
+	LL mid = (st_other[i].l + st_other[i].r)/2;
+	if(left == right)
+	{
+		//return st[i];
+		temp3 = st_other[arr_other[left]];
+		return temp3;
+		/*temp3.val = a[left];
+		temp3.val_left = a[left];
+		temp3.val_right = a[left];
+		temp3.total_val = a[left];
+		return temp3;*/
+	}
+	if(st_other[i].l == left && st_other[i].r == right)
+	{
+		return st_other[i];
+	}
+	
+	if(left <= mid and right <= mid)
+	{
+		return query_other(2*i, left, right);
+	}
+	
+	if(left > mid and right > mid)
+	{
+		return query_other(2*i+1, left, right);
+	}
+	temp1 = query_other(2*i, left, mid);
+	temp2 = query_other(2*i+1, mid + 1, right);
+	temp3.val = max(temp1.val, temp2.val, temp1.val_right + temp2.val_left);
+	if(temp3.val > M)
+	temp3.val %= M;
+	
+	temp3.val_left = max(temp1.val_left, temp1.total_val + temp2.val_left);
+	if(temp3.val_left > M)
+	temp3.val_left %= M;
+	
+	temp3.val_right = max(temp2.val_right, temp1.val_right + temp2.total_val);
+	if(temp3.val_right > M)
+	temp3.val_right %= M;
+	
+	temp3.total_val = temp1.total_val + temp2.total_val;
+	if(temp3.total_val > M)
+	temp3.total_val %= M;
+	
+	//cout<<i<<" "<<temp3.val<<" "<<temp3.val_left<<" "<<temp3.val_right<<" "<<temp3.total_val<<endl;
+	return temp3;
+}
+
+
+int main()
+{
+	LL ans;
+	LL t,i,j,n;
+	LL w,x,y,z;
+	LL q;
+	cin>>t;
+	while(t--)
+	{
+		cin>>n>>q;
+		for(i=1;i<=n;i++)
+		{
+			cin>>a[i];
+		}
+		construct(1,1,n);
+		construct_other(1,1,n);
+//		cout<<"here";
+		
+		/*while(1)
+		{
+			cin>>i;
+			cout<<st[i].l<<" "<<st[i].r<<" "<<st[i].val<<" "<<st[i].val_left<<" "<<st[i].val_right<<endl;
+		}*/
+		//cin>>q;
+		while(q--)
+		{
+			scl(w);scl(x);scl(y);scl(z);
+			ans = ((w - x) * (query(1,x+y,x+z).val)) + query_other(1,x+y,x+z).val;
+			ans %= M;
+			if(ans < 0)
+			ans += M;
+			printf("%lld\n",ans);
+		}
+	}
+	return 0;
+}

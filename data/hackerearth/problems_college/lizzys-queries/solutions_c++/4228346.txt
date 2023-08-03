@@ -1,0 +1,174 @@
+//Tirth Maniar
+#include<bits/stdc++.h>
+using namespace std;
+
+#define TRACE
+#ifdef TRACE
+#define trace(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1 && arg1){
+	cerr << name << " : " << arg1 << endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1 && arg1, Args &&... args){
+	const char* comma = strchr(names+1,','); cerr.write(names,comma-names) << " : " << arg1 << " | "; __f(comma+1, args...);
+}
+#else
+#define trace(...)
+#endif
+
+#define ALL(c) c.begin(),c.end()
+#define tr(container,it) for(typeof(container.begin()) it = container.begin(); it != container.end(); it++)
+#define present(container, element) (container.find(element) != container.end()) 
+				// For Set and Map
+#define cpresent(container, element) (find(all(container),element) != container.end())
+				// For Vector
+				// Use v.clear() to remove all elements
+#define PB push_back
+#define MP make_pair
+#define SZ(a) int((a).size())
+				// Better to use v.empty() instead of comparing with 0 to check if empty
+#define F first
+#define S second		
+			// For pair
+#define mod 1000000007
+#define sd(x) scanf("%d",&x)
+#define pd(x) printf("%d\n",x)
+#define sll(x) scanf("%lld",&x)
+#define pll(x) printf("%lld\n",x)
+#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL)
+
+typedef long long ll;
+typedef vector<int> VI;		
+typedef vector< VI > VVI;    	// 2-d array
+typedef pair<int,int> PII;
+typedef vector<PII> VPII;
+
+inline ll mult(ll x,ll y){return ((ll)x*y)%mod;}
+ll power(ll x,ll y){ll ret=1; while(y){ if(y&1) ret = mult(ret,x); x = mult(x,x); y = y/2;} return ret;}
+int gcd(int a,int b){ if(b) return gcd(b,a%b); return a;}
+VI prime;
+void generateprime(int n){ int i,j; VI num(n+5); num[1]=1; for(i=4;i<n;i=i+2) num[i]=1;
+	for(i=3;i<n;i++){ if(num[i]==0) { for(j=3*i;j<n;j=j+2*i) num[j] = 1;}} num[0] = 0;
+	for(i=2; i<n; i++){ if(num[i]==0) prime.PB(i); num.clear();} 
+}
+
+ll getMid(ll s, ll e) { return s + (e -s)/2; }
+
+ll getSumUtil(ll *st, ll ss, ll se, ll qs, ll qe, ll si)
+{
+	if (qs <= ss && qe >= se)
+		return st[si]%mod;
+
+	if (se < qs || ss > qe)
+		return 0;
+
+	ll mid = getMid(ss, se);
+	return (getSumUtil(st, ss, mid, qs, qe, 2*si+1) +
+		getSumUtil(st, mid+1, se, qs, qe, 2*si+2))%mod;
+}
+
+void updateValueUtil(ll *st, ll ss, ll se, ll i, ll diff, ll si)
+{
+	if (i < ss || i > se)
+		return;
+
+	st[si] = (st[si] + diff + mod)%mod;
+	if (se != ss)
+	{
+		ll mid = getMid(ss, se);
+		updateValueUtil(st, ss, mid, i, diff, 2*si + 1);
+		updateValueUtil(st, mid+1, se, i, diff, 2*si + 2);
+	}
+}
+
+void updateValue(ll arr[], ll *st, ll n, ll i, ll new_val)
+{
+	/*if (i < 0 || i > n-1)
+	{
+		printf("Invalid Input");
+		return;
+	}*/
+
+	ll diff = new_val - arr[i];
+	arr[i] = new_val;
+	updateValueUtil(st, 0, n-1, i, diff, 0);
+}
+
+ll getSum(ll *st, ll n, ll qs, ll qe)
+{
+	/*if (qs < 0 || qe > n-1 || qs > qe)
+	{
+		printf("Invalid Input");
+		return -1;
+	}*/
+
+	return getSumUtil(st, 0, n-1, qs, qe, 0);
+}
+
+ll constructSTUtil(ll arr[], ll ss, ll se, ll *st, ll si)
+{
+	if (ss == se)
+	{
+		st[si] = arr[ss];
+		return arr[ss];
+	}
+	ll mid = getMid(ss, se);
+	st[si] = (constructSTUtil(arr, ss, mid, st, si*2+1) +
+			constructSTUtil(arr, mid+1, se, st, si*2+2))%mod;
+	return st[si];
+}
+
+ll *constructST(ll arr[], ll n)
+{
+	ll x = (ll)(ceil(log2(n))); 
+	ll max_size = 2*(ll)pow(2, x) - 1; 
+	ll *st = new ll[max_size];
+	constructSTUtil(arr, 0, n-1, st, 0);
+	return st;
+}
+
+int main()
+{
+	char str[100005],ch[5];
+	ll n,q,sum[100005],sum1[100005],fun,l,r,i,check1,check2;
+	sll(n);
+	sll(q);
+	scanf("%s",str);
+	sum[0] = 0;
+	sum1[0] = 0;
+	for(i=0;i<n;i++)
+	{
+		sum[i+1] = (((str[i]-'a')+1)*power(37,i))%mod;
+		sum1[i+1] = (((str[i]-'a')+1)*power(37,n-i-1))%mod;
+		//trace(i+1,sum[i+1],sum1[i+1]);
+	}
+	ll *cum = constructST(sum,n+1);
+	ll *revcum = constructST(sum1,n+1);
+	while(q--)
+	{
+		sll(fun);
+		if(fun == 0)
+		{
+			sll(i);
+			scanf("%s",ch);
+			updateValue(sum,cum,n+1,i,(((ch[0]-'a')+1)*power(37,i-1))%mod);
+			updateValue(sum1,revcum,n+1,i,(((ch[0]-'a')+1)*power(37,n-i))%mod);
+		}
+		if(fun == 1)
+		{
+			sll(l);
+			sll(r);
+			check1 = ((getSum(cum,n+1,l,r)%mod)*power(power(37,l-1),mod-2))%mod;
+			check2 = ((getSum(revcum,n+1,l,r)%mod)*power(power(37,n-r),mod-2))%mod;
+			//check1 = ((cumstr[r]-cumstr[l-1])*power(l-1,mod-2))%mod;
+			//check2 = ((cumrevstr[n-l+1]-cumrevstr[n-r])*power(n-r,mod-2))%mod;
+			//trace(l,r,check1,l,r,check2);
+			if(check1 == check2)
+				printf("Yes\n");
+			else
+				printf("No\n");
+		}
+	}
+return 0;
+}

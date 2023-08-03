@@ -1,0 +1,93 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MOD 1000000007
+#define MAX 10010
+long long fact[MAX];
+long long ifact[MAX];
+long long mulmod(long long a,long long b,long long c){
+    long long x = 0,y=a%c;
+    while(b > 0){
+        if(b%2 == 1){
+            x = (x+y)%c;
+        }
+        y = (y*2)%c;
+        b /= 2;
+    }
+    return x%c;
+}
+long long pow(long long n,int m)
+{
+    if(m==0) return 1;
+    long long x=pow(n,m/2);
+    if(m%2==0) 
+    	return (x*x)%MOD;
+    else
+    	return (((x*x)%MOD)*n)%MOD;
+}
+
+void initfact(int n=MAX-1)
+{
+     int i;
+     fact[0]=1;
+     for(i=1;i<=n;i++)
+     	fact[i] = i*fact[i-1]%MOD;
+     ifact[n] = pow(fact[n],MOD-2);
+     for(i=n;i>0;i--)
+     ifact[i-1] = ifact[i]*i%MOD;
+}
+bool pairCompare(const std::pair<int, int>& firstElem, const std::pair<int, int>& secondElem) {
+  return firstElem.first+firstElem.second < secondElem.first+secondElem.second;
+
+}
+
+#define C(a,b) ((((fact[a]*ifact[b])%MOD)*ifact[(a)-(b)])%MOD)
+int main(){
+	initfact();
+	int t;
+	cin>>t;
+	while(t--){
+		int N,Q;
+		cin>>N>>Q;
+		vector<pair<int,int>> checkpoints;
+		pair<int,int> start=make_pair(0,0);
+		bool startpresent=false;
+		bool endpresent=false;
+		pair<int,int> end=make_pair(N-1,N-1);
+		while(Q--){
+			int a,b;
+			cin>>a>>b;
+			//cout<<a<<" "<<b<<"\n";
+			if(make_pair(a,b)==start)
+			startpresent=true;
+			if(make_pair(a,b)==end)
+			endpresent=true;
+			checkpoints.push_back(make_pair(a,b));
+		}
+		if(!startpresent){
+			checkpoints.push_back(start);
+		}
+		if(!endpresent){
+			checkpoints.push_back(end);
+		}
+
+		sort(checkpoints.begin(),checkpoints.end(),pairCompare);
+		/*
+		for(int i=0;i<checkpoints.size();i++){
+			cout<<checkpoints[i].first<<" "<<checkpoints[i].second<<"\n";
+		}
+		*/
+		long long int ans=1;
+		for(int i=1;i<checkpoints.size();i++){
+			int a=checkpoints[i-1].first;
+			int b=checkpoints[i-1].second;
+			int c=checkpoints[i].first;
+			int d=checkpoints[i].second;
+			
+			long long L=c-a;
+			long long R=d-b;
+			//cout<<"CURRENT L AND R ARE "<<L<<" "<<R<<"\n";
+			ans=mulmod(ans,C(L+R,L),MOD);
+		}
+		cout<<ans<<"\n";
+	}
+}

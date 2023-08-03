@@ -1,0 +1,147 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+
+int main() {
+    ios_base::sync_with_stdio ( false );
+
+    inrep {
+        int n,k,m;
+        vi prices;
+        vector<double> probabs;
+        cin>>n>>k>>m;
+        rep ( i,n ) {
+            int x,y;
+            cin>>x>>y;
+            prices.push_back ( x );
+            probabs.push_back ( double ( y ) /100 );
+        }
+        if ( k>n ) {
+            cout<<"0.000000\n";
+            continue;
+        }
+        vector<vector<double>> sucs ( 1<<n,vector<double> ( n+1 ) );
+        double highestProb= ( k==0 );
+        rep ( i,k ) sucs[0][i]=0;
+        reu ( i,k,n+1 ) sucs[0][i]=1;
+        reu ( j,1,1<<n ) {
+            int su=0;
+            rep ( i,n ) {
+                if ( ! ( j & ( 1<<i ) ) ) su+=prices[i];
+            }
+            vector<double> &probs=sucs[j];
+            rep ( i,k ) probs[i]=0;
+            reu ( i,k,n+1 ) probs[i]=1;
+            if ( su>m ) continue;
+            rep ( i,n ) {
+                if ( j& ( 1<<i ) ) {
+                    if ( su+prices[i]>m ) continue;
+                    int j2=j- ( 1<<i );
+                    const  double p=probabs[i];
+                    probs[n]=max ( probs[n], ( 1-p ) *sucs[j2][n] );
+                    rep ( l,n ) probs[l]=max ( probs[l], ( 1-p ) *sucs[j2][l]+p*sucs[j2][l+1] );
+                }
+
+            }
+            highestProb=max ( highestProb,probs[0] );
+        }
+        cout.precision ( 6 );
+        cout.setf ( ios::fixed );
+        cout<<highestProb<<endl;
+//         double highTot=0;
+//         int highCost=0;
+//         sucs[0]=vector<double> ( n+1 );
+//
+//         reu ( j,1,1<<n ) {
+//             int su=0;
+//             rep ( i,n ) {
+//                 if ( j & ( 1<<i ) ) su+=prices[i];
+//             }
+//             vector<double> &probs=sucs[j];
+//             probs=vector<double> ( n+1 );
+//             rep ( i,n ) {
+//                 if ( j& ( 1<<i ) ) {
+//                     const  double p=probabs[i];
+//                     int j2=j- ( 1<<i );
+//                     const vector<double> &probs2=sucs[j2];
+//                     assert ( ( int ) probs2.size() ==n+1 );
+//                     probs[0]= ( 1-p ) *probs2[0];
+//                     reu ( l,1,n +1 ) {
+//                         probs[l]= ( 1-p ) *probs2[l]+p*probs2[l-1];
+//                     }
+//
+//                 }
+//             }
+//
+//             double toprob=0;
+//             reu ( i,k,n+1 ) {
+//                 toprob+=probs[i];
+//             }
+//             if ( su<=m) {
+//
+//                 if ( toprob>highestProb ) {
+//                     highestProb=toprob;
+//
+//                 }
+//             }
+//             if(toprob>highestProb &&toprob<0.2341 &&toprob>0.234){
+//                 cout<<toprob<<endl;
+//             }
+//             if ( toprob>highTot ) {
+//                 highCost=su;
+//                 highTot=toprob;
+//
+//             }
+//         }
+//             cout.precision ( 6 );
+//             cout.setf ( ios::fixed );
+//             cout<<highestProb<<endl;
+//             cout<<highTot<<" "<<highCost<<endl;
+    }
+}

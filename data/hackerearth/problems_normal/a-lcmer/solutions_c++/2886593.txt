@@ -1,0 +1,184 @@
+#include<bits/stdc++.h>
+#include<iostream>
+using namespace std;
+#define fre freopen("0.in","r",stdin),freopen("0.out","w",stdout)
+#define abs(x) ((x)>0?(x):-(x))
+#define M 1000000007
+#define lld signed long long int
+#define pp pop_back()
+#define ps(x) push_back(x)
+#define mpa make_pair
+#define pii pair<int,int>
+#define fi first
+#define se second
+#define scan(x) scanf("%d",&x)
+#define print(x) printf("%d\n",x)
+#define scanll(x) scanf("%lld",&x)
+#define printll(x) printf("%lld\n",x)
+#define boost ios_base::sync_with_stdio(0)
+vector<int>primes;
+bool isPrime[100000+5];
+lld pow(lld base, lld exponent,lld modulus)
+{
+lld result = 1;
+while (exponent > 0)
+{
+if (exponent % 2 == 1)
+result = (result * base) % modulus;
+exponent = exponent >> 1;
+base = (base * base) % modulus;
+}
+return result;
+}
+
+int powof(int i,int j)
+{
+int ans=1;
+while(j%i==0)
+{
+j/=i;
+ans*=i;
+}
+return ans;
+}
+lld ifact[10000+5];
+lld inv[10000+5];
+lld ncr(lld n,lld r){
+if(n<r)
+return 0;
+lld ans = ifact[r];
+for(int i=0;i<r;++i){
+ans *= n-i;
+ans %= M;
+}
+return ans;
+}
+lld NCR[500+5][500+5];
+void seive()
+{
+for(int i=2;i<=100000;++i){
+if(isPrime[i]==0){
+primes.push_back(i);
+for(int j=i;j<=100000;j+=i){
+isPrime[i] = 1;
+}
+}
+}
+ifact[0]=1;
+for(int i=1;i<=10000;++i){
+ifact[i] = (ifact[i-1]*pow(i,M-2,M)) % M;
+inv[i] = pow(i,M-2,M);
+}
+for(int i=0;i<=100;++i){
+for(int j=0;j<=i;++j){
+NCR[i][j] = ncr(i,j);
+}
+}
+}
+lld A[500];
+lld calc(lld Y,int N){
+lld ans = 0;
+A[0] = 1;
+for(int i=1;i<=N;++i){
+A[i] = (A[i-1]*(Y-i+1))%M;
+A[i] *= inv[i];
+A[i] %= M;
+}
+for(int x=1;x<=N;++x){
+ans += NCR[N-1][x-1] * A[x];
+ans %= M;
+}
+return ans;
+}
+int n,dp[1<<10],m,fdp[1<<10],bit[1<<10],s,neg;
+lld rec(int mask)
+{
+if(fdp[mask])
+return dp[mask];
+dp[mask]=0;
+fdp[mask]=1;
+int x = 0;
+
+for(int i=0;i<(1<<s);++i)
+{
+if(((neg-mask)&i)==0)
+{
+x += bit[i];
+}
+}
+dp[mask]=calc(x,n);
+
+for(int i=0;i<(1<<s);++i)
+{
+if(((neg-mask)&i)==0 and i!=mask)
+{
+dp[mask]-=rec(i);
+dp[mask]%=M;
+}
+}
+dp[mask]=(dp[mask]+9ll*M)%M;
+return dp[mask];
+}
+vector<int> primeList(int B){
+vector<int>temp;
+temp.clear();
+for(int i=0;i<primes.size() and B>1;++i){
+if(B%primes[i]==0){
+temp.push_back(primes[i]);
+while(B%primes[i]==0){
+B /= primes[i];
+}
+}
+}
+if(B>1)
+temp.push_back(B);
+return temp;
+}
+int countInRange(int mask,int L,int R,vector<int>&factor,vector<int>&power){
+lld ans = 1;
+for(int i=0;i<factor.size();++i){
+if(mask&(1<<i)){
+ans *= power[i];
+}
+}
+return R/ans - (L-1)/ans;
+}
+int main()
+{
+//fre;
+seive();
+
+
+neg=(1<<10)-1;
+int x,l,r,t;
+cin>>t;
+while(t--)
+{
+cin>>n>>l>>r>>x;
+lld ans=0;
+vector<int>power, factor = primeList(x);
+power.clear();
+for(int i=0;i<factor.size();++i){
+power.push_back(powof(factor[i],x));
+}
+
+s = factor.size();
+
+for(int j=0;j<(1<<s);++j)
+bit[j]=dp[j]=fdp[j]=0;
+
+for(int mask=(1<<s)-1; mask >= 0; mask--){
+bit[mask] = countInRange(mask,l,r,factor,power);
+for(int j=0;j<(1<<s);++j){
+
+if((j&mask)==mask and j!=mask){
+bit[mask] -= bit[j];
+}
+}
+}
+ans+=rec((1<<s)-1);
+ans%=M;
+cout<<ans<<endl;
+}
+
+}

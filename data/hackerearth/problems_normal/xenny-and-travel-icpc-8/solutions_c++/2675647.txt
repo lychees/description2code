@@ -1,0 +1,179 @@
+// Author: thecodekaiser
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+#define MXN 1300
+#define INF 1e9+7
+
+ll roadgph[MXN][MXN], railgph[MXN][MXN];
+
+int roadFrmU[MXN], railFrmU[MXN], roadToV[MXN], railToV[MXN];
+int N;
+
+#define getchar_unlocked getchar
+
+inline int scan(){
+    char c = getchar_unlocked();
+    int x = 0;
+    while(c<'0'||c>'9'){
+        c=getchar_unlocked();
+    }
+    while(c>='0'&&c<='9'){
+        x=(x<<1)+(x<<3)+c-'0';
+        c=getchar_unlocked();
+    }
+    return x;
+}
+
+class comp
+{
+public:
+	bool operator() (const pair<int,int> & A, const pair<int,int> & B)
+	{
+		return A.first > B.first;
+	}
+};
+
+void djikstra(int src, int type, int code)
+{
+	priority_queue< pair<int, int>, vector< pair<int,int> >, comp> pq;
+	
+	if(code == 1)
+	{
+		pq.push(pair<int,int>(0, src));
+		
+		while(!pq.empty())
+		{
+			pair<int,int> temp = pq.top();
+			pq.pop();
+			
+			if(type == 1 and roadFrmU[temp.second] != -1)
+				continue;
+			if(type == 2 and railFrmU[temp.second] != -1)
+				continue;
+				
+			if(type == 1)
+				roadFrmU[temp.second] = temp.first;
+			
+			if(type == 2) 
+				railFrmU[temp.second] = temp.first;
+				
+			
+			if(type == 1)
+			{
+				for(int i = 1; i <= N; i++)
+				{
+					if(roadFrmU[i] != -1) continue;
+					
+					pq.push(pair<int, int>(temp.first + roadgph[temp.second][i], i));
+				}
+			}
+			else
+			{
+				for(int i = 1; i <= N; i++)
+				{
+					if(railFrmU[i] != -1) continue;
+					
+					pq.push(pair<int,int>(temp.first + railgph[temp.second][i], i));
+				}
+			}	
+		}
+	}
+	else
+	{
+		pq.push(pair<int,int>(0, src));
+		
+		while(!pq.empty())
+		{
+			pair<int,int> temp = pq.top();
+			pq.pop();
+			
+			if(type == 1 and roadToV[temp.second] != -1)
+				continue;
+			if(type == 2 and railToV[temp.second] != -1)
+				continue;
+				
+			if(type == 1)
+				roadToV[temp.second] = temp.first;
+			
+			if(type == 2) 
+				railToV[temp.second] = temp.first;
+				
+			
+			if(type == 1)
+			{
+				for(int i = 1; i <= N; i++)
+				{
+					if(roadToV[i] != -1) continue;
+					
+					pq.push(pair<int,int>(temp.first + roadgph[i][temp.second], i));
+				}
+			}
+			else
+			{
+				for(int i = 1; i <= N; i++)
+				{
+					if(railToV[i] != -1) continue;
+					
+					pq.push(pair<int,int>(temp.first + railgph[i][temp.second], i));
+				}
+			}	
+		}
+	}
+}
+
+void solve()
+{
+	int val, U, V;
+	cin >> N;
+	
+	for(int i = 0; i < MXN; i++)
+	{
+		roadFrmU[i] = railFrmU[i] = roadToV[i] = railToV[i] = -1;
+	}
+	
+	for(int i = 1; i <= N; i++)
+	{
+		for(int j = 1; j <= N; j++)
+		{
+			roadgph[i][j] = scan();
+		}
+	}
+	
+	for(int i = 1; i <= N; i++)
+	{
+		for(int j = 1; j <= N; j++)
+		{
+			railgph[i][j] = scan();
+		}
+	}
+	
+	scanf("%d %d", &U, &V);
+	
+	djikstra(U, 1, 1);
+	djikstra(U, 2, 1);
+	
+	djikstra(V, 1, 2);
+	djikstra(V, 2, 2);
+	
+	int ans = INF;
+	
+	for(int i = 1; i <= N; i++)
+	{
+		if(i == U or i == V)
+			continue;
+			
+		ans = min(ans, min(roadFrmU[i] + railToV[i], railFrmU[i] + roadToV[i]));
+	}
+	
+	printf("%d\n", ans);
+	
+	return;
+}
+
+int main()
+{
+	solve();
+	return 0;
+}

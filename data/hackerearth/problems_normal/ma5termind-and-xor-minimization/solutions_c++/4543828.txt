@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define mp make_pair
+#define ff first
+#define ss second
+#define pb push_back
+#define pf pop_front
+#define IOS ios::sync_with_stdio(false)
+#define MOD 1000000007
+ll sz , root , a[105] , pre[105] , res;
+pll trie[2][2000005];
+void insert(int k , ll val){
+    int i , v = root;
+    for(i = 31 ; i >= 0; i--){
+        int ch = k & (1 << i);
+        ch = ch?1:0;
+        if(!trie[ch][v].ff){
+            if(i==0){
+                trie[ch][v].ss = val;
+            }
+            trie[ch][v].ff = ++sz;
+        }
+        v = trie[ch][v].ff;
+    }
+}
+vector <int> ans;
+int cnt ;
+void query(int k){
+    int v = root;
+    for(int i = 31 ; i >=  0 ; i--){
+        int ch = (k & (1 << i)) ;
+        ch = ch?1:0;
+        int dwant = ch^1;
+        if(trie[ch][v].ff){
+            if(ch)res|=(1<<i);
+            if(i == 0)cnt = trie[ch][v].ss;
+            v= trie[ch][v].ff;
+        }
+        else{
+            if(dwant)res|=(1<<i);
+            if(i == 0)cnt = trie[dwant][v].ss;
+            v = trie[dwant][v].ff;
+        }
+    }
+}
+ll pow2[100];
+ll dp[102][100005];
+int main(){
+ 
+    IOS;
+    cin.tie(NULL);
+    ll n , i , j , k , q;
+    cin >> n ;
+    pow2[0] = 1;
+    pow2[1] = 2;
+    for(i = 2 ; i <= 40 ; i++)pow2[i] = pow2[i-1]*2;
+    for(i = 1 ; i <= n ; i++){
+        cin >> a[i];
+        pre[i] = pre[i-1] + a[i];
+    }
+    for (i = 1; i <= n; i++)
+      dp[i][0] = 1;
+    dp[1][a[1]] = 1;
+    for( i = 2 ; i <= n ; i++){
+        for(j = 1 ; j <= 100000 ; j++){
+            dp[i][j] = (dp[i][j]%MOD + dp[i-1][j]%MOD)%MOD;
+            if(a[i] <= j){
+                dp[i][j] = (dp[i][j]%MOD + dp[i-1][j-a[i]]%MOD)%MOD;
+            }
+        }
+    }
+    for(i = 1 ; i <= 100000 ; i++){
+        if(dp[n][i]){
+            insert(i,dp[n][i]);
+        }
+    }
+    cin >> q;
+    for(i = 1 ; i <= q ; i++){
+        cin >> k;
+        cnt = res = 0;
+        query(k);
+        cout << res << " " << cnt <<  endl;
+    }
+    return 0;
+}

@@ -1,0 +1,100 @@
+#include <stdio.h>
+#include <math.h>
+#include<vector>
+#include<iostream>
+#include<algorithm>
+using namespace std;
+#define pb push_back 
+#define mk make_pair
+int getMid(int s, int e) {  return s + (e -s)/2;  }
+ 
+
+long long int getSumUtil(long long int *st, int ss, int se, int qs, int qe, int index)
+{
+
+    if (qs <= ss && qe >= se)
+        return st[index];
+ 
+    if (se < qs || ss > qe)
+        return 0;
+ 
+ 
+    int mid = getMid(ss, se);
+    return getSumUtil(st, ss, mid, qs, qe, 2*index+1) +
+           getSumUtil(st, mid+1, se, qs, qe, 2*index+2);
+}
+
+
+long long int getSum(long long int *st, int n, int qs, int qe)
+{
+    return getSumUtil(st, 0, n-1, qs, qe, 0);
+}
+long long int constructSTUtil(long long int arr[], int ss, int se,long long int *st, int si)
+{
+    if (ss == se)
+    {
+        st[si] = arr[ss];
+        return arr[ss];
+    }
+
+    int mid = getMid(ss, se);
+    st[si] =  constructSTUtil(arr, ss, mid, st, si*2+1) +
+              constructSTUtil(arr, mid+1, se, st, si*2+2);
+    return st[si];
+}
+long long int *constructST(long long int arr[], int n)
+{
+    int x = (int)(ceil(log2(n))); 
+    int max_size = 2*(int)pow(2, x) - 1; 
+    long long int *st = new long long int[max_size];
+    constructSTUtil(arr, 0, n-1, st, 0);
+    return st;
+}
+ 
+int main()
+{
+    //int t;
+    //scanf("%d",&t);
+    //while(t--)
+    //{
+    	int i,n,q,st1,st2,en1,en2;
+    	scanf("%d%d",&n,&q);
+    	long long int arr[n];
+    	for(i=0;i<n;i++)
+    		scanf("%lld",&arr[i]);
+    	long long int *st=constructST(arr,n);
+    	while(q--)
+    	{
+    	
+		scanf("%d%d%d%d",&st1,&en1,&st2,&en2);
+		int aa,bb,cc,dd,q1,q2;
+		if(st2<st1)
+			swap(st2,st1);
+		if(en2<en1)
+			swap(en2,en1);
+		if(en1<st1)
+		{
+			swap(st1,en1);
+			swap(st2,en2);
+		}
+		if(en1>st2)
+		{
+			long long int ans=getSum(st, n, st1,st2)+getSum(st, n,en1, en2);
+			printf("%lld\n",ans);
+		}
+		else
+		{
+			if(st2>en2)
+				q2=st2;
+			else
+				q2=en2;
+			long long int ans=getSum(st, n, st1,q2);
+				printf("%lld\n",ans);
+			
+		}
+		}
+		
+	
+    //}
+    return 0;
+}

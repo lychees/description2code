@@ -1,0 +1,184 @@
+//Pranet Verma
+#include <bits/stdc++.h>
+using namespace std;
+const int MAXN = 100005;
+int pool, st[MAXN], en[MAXN], dep[MAXN], pa[17][MAXN], val[MAXN];
+vector<int> g[MAXN];
+int sz[MAXN];
+void dfs(int u, int p) {
+    st[u] = ++pool;
+    dep[u] = dep[p] + 1;
+    pa[0][u] = p;
+    sz[u] = 1;
+    for (auto v : g[u])
+        if (v != p)
+            dfs(v, u), sz[u] += sz[v];
+    en[u] = pool;
+}
+int lca(int u, int v) {
+    if (dep[u] < dep[v])
+        swap(u, v);
+    int d = dep[u] - dep[v];
+    for (int i = 17; i >= 0; --i)
+        if (d & (1 << i))
+            u = pa[i][u];
+    if (u == v)
+        return u;
+    for (int i = 17; i >= 0; --i){
+        if (pa[i][u] != pa[i][v]){
+            u = pa[i][u];
+            v = pa[i][v];
+        }
+    }
+    return pa[0][u];
+}
+int kthAncestor(int u, int k) {
+    for (int i = 17; i >= 0; --i)
+        if (k & (1 << i))
+            u = pa[i][u];
+    return u;
+}   
+typedef struct Node* pnode;
+struct Node {
+    int v, sz, pr;
+    pnode l, r;
+};
+pnode null;
+pnode init(int x) {
+    return new Node{x, 1, rand() % 1000000000, null, null};
+}
+void refresh(pnode u) {
+    if (u == null)
+        return;
+    u->sz = 1 + u->l->sz + u->r->sz;
+}
+void split(pnode u, pnode &l, pnode &r, int k) {
+    if (u == null)
+        l = r = null;
+    else if (u->v <= k)
+        split(u->r, u->r, r, k), l = u;
+    else
+        split(u->l, l, u->l, k), r = u;
+    refresh(u);
+}
+void merge(pnode &u, pnode l, pnode r) {
+    if (l == null)
+        u = r;
+    else if (r == null)
+        u = l;
+    else if (l->pr > r->pr)
+        merge(l->r, l->r, r), u = l;
+    else
+        merge(r->l, l, r->l), u = r;  
+    refresh(u);
+}
+void insert(pnode &u, pnode v) {
+    if (u == null)
+        u = v;
+    else if (v->pr > u->pr)
+        split(u, v->l, v->r, v->v), u = v;
+    else
+        insert(v->v <= u->v ? u->l : u->r, v); 
+    refresh(u);
+}
+void erase(pnode &u, int v) {
+    if (u == null)
+        return;
+    else if (v == u->v)
+        merge(u, u->l, u->r);
+    else
+        erase(v < u->v ? u->l : u->r, v);
+    refresh(u);
+}
+int query(pnode &u, int v) {
+    pnode l, r;
+    split(u, l, r, v);
+    int ret = l->sz;
+    merge(u, l, r);
+    return ret;
+}
+pnode bst[1000003 * 4];
+
+void update(int u, int l, int r, int x, int v,int ty) {
+    if (ty == 1)
+        insert(bst[u], init(v));
+    else
+        erase(bst[u], v);
+    if (l == r)
+        return;
+    int m = (l + r) >> 1;
+    if (x <= m)
+        update(2 * u, l, m, x, v, ty);
+    else
+        update(2 * u + 1, m + 1, r, x, v, ty);
+}
+int query(int u, int l, int r, const vector<int> &add, const vector<int> &sub, int k) {
+    if (l == r)
+        return l;
+    int inLeft = 0;
+    for (auto v : add)
+        inLeft += query(bst[2 * u], v);
+    for (auto v : sub)
+        inLeft -= query(bst[2 * u], v);
+    int m = (l + r) >> 1;
+    if (k > inLeft)
+        return query(2 * u + 1, m + 1, r, add, sub, k - inLeft);
+    else
+        return query(2 * u, l, m, add, sub, k);
+}
+int main() {
+    null = new Node();
+    null->v = 0;
+    null->sz = 0;
+    null->pr = 0;
+    null->l = null;
+    null->r = null;
+    for (int i = 0; i <= 1000000 * 4; ++i)
+        bst[i] = null;
+    int n, q;
+    scanf("%d", &n);
+    for (int i = 2; i <= n; ++i) {
+        int u, v;
+        scanf("%d %d", &u, &v);
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    dfs(1, 0);
+    for (int j = 1; j < 17; ++j)
+        for (int i = 1; i <= n; ++i)
+            pa[j][i] = pa[j - 1][pa[j - 1][i]];
+    for (int u = 1; u <= n; ++u){
+        scanf("%d", &val[u]);
+        update(1, 1, 1000000, val[u], st[u], 1);
+    }
+    scanf("%d", &q);
+    while (q--) {
+        int ty, k, u, v;
+        scanf("%d", &ty);
+        if (ty == 1) {
+            scanf("%d %d", &u, &v);
+            update(1, 1, 1000000, val[u], st[u], 0);
+            val[u] = v;
+            update(1, 1, 1000000, val[u], st[u], 1);
+        }
+        else {
+            scanf("%d %d %d", &k, &u, &v);
+            int l = lca(u, v);
+            vector<int> add, sub;
+            if (u == v) {
+                add.push_back(1e9);
+            }
+            else if (l == u) {
+                int p = kthAncestor(v, dep[v] - dep[u] - 1);
+                add.push_back(1e9);
+                add.push_back(st[p] - 1);
+                sub.push_back(en[p]);
+            }   
+            else {
+                add.push_back(en[u]);
+                sub.push_back(st[u] - 1);
+            }
+            printf("%d\n", query(1, 1, 1000000, add, sub, k));
+        }
+    }
+}

@@ -1,0 +1,109 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MAX 100002
+#define ll long long
+#define ft first
+#define sd second 
+ll A[5][MAX];
+ll bit[120][MAX];
+map<string , int > M;
+int indexx;
+/*-----------find all permutation of the string "abcde" --------------*/
+void perm(string str,int idx,int n){
+	if(idx == n){
+		M[str] = indexx;
+		indexx++;
+		//cout << str << endl;
+		return ;
+	}
+	for(int i=idx;i<n;i++){						
+		int cnt = i-idx;
+		int indx = i;
+		while(cnt--){
+			swap(str[indx],str[indx-1]);
+			indx--;
+		}			
+		perm(str,idx+1,n);
+		cnt = i - idx;
+		indx = idx;
+		while(cnt--){
+			swap(str[indx],str[indx+1]);
+			indx++;
+		}			
+	}
+}
+/*---------bit update ------------------*/
+void update(int idx,ll val,int n,int b){
+	while(idx<=n){
+		bit[b][idx]+=val;
+		idx+=(idx&(-idx));
+	}
+}
+/*------------sum query ----------------*/
+ll sum(int idx,int b){
+	ll s =0;
+	while(idx){
+		s+=bit[b][idx];
+		idx-=(idx&(-idx));
+	}
+	return s;
+}
+ll query(int l,int r,int b){
+	return sum(r,b)-sum(l-1,b);
+}
+int main(){
+	int n;
+	scanf("%d",&n);
+	assert(n>=1&&n<MAX);
+	string str;
+	for(int i=0;i<5;i++){
+		for(int j=1;j<=n;j++){
+			scanf("%lld",&A[i][j]);
+			assert(A[i][j] <= 1000000000 && A[i][j] >= 1);
+		}
+	}
+	cin >> str;
+	assert(str.length() == n);
+	for(int i=0;i<n;i++)
+		str[i] = tolower(str[i]);
+	perm("abcde",0,5);	
+	for(map<string,int> :: iterator it= M.begin() ; it!=M.end() ; it++){
+		for(int j=0;j<n;j++){
+			int indexx = (it->ft)[str[j]-'a']-'a';
+			update(j+1,A[indexx][j+1],n,it->sd);		
+		}
+	}
+	int q;
+	scanf("%d",&q);
+	int queryidx = 0;
+	string s="abcde";
+	while(q--){
+		string type;
+		int l,r;
+		cin >> type;
+		if(type[1]=='c'){	// change 
+			char ch;
+			cin >> l >> ch;
+			ch = tolower(ch);
+			str[l-1] = ch; // string update
+			l--;
+			for(map<string,int> :: iterator it= M.begin() ; it!=M.end() ; it++){
+				int indexx = (it->ft)[str[l]-'a']-'a';
+				update(l+1,A[indexx][l+1]-query(l+1,l+1,it->sd),n,it->sd);		
+			}
+		}else if(type[1]=='e'){
+			char a,b;
+			cin >> a >> b;
+			a = tolower(a);
+			b = tolower(b);
+			swap(s[a-'a'],s[b-'a']);
+			queryidx = M[s]; // new index
+		}else{
+			scanf("%d",&l);
+			scanf("%d",&r);	
+			assert(l<=r);
+			printf("%lld\n",query(l,r,queryidx));
+		}
+	}
+	return 0;
+}

@@ -1,0 +1,85 @@
+#include<cstdio>
+#include<cstdlib>
+#include<set>
+using namespace std;
+multiset<int> dp[101][101];
+multiset<int>::iterator it,it1;
+int main()
+{
+    int T,a[101][101];//dp row column sorted-values
+    scanf("%d",&T);
+
+    while (T--)
+    {
+	int r,c;
+	char s[100];
+	scanf("%d %d",&r,&c);
+	for (int i=0;i<r;i++)
+	    for (int j=0;j<c;j++) {
+		scanf("%s",s);
+		if (s[0]=='#')
+		    a[i][j]=1000;
+		else
+		    a[i][j]=atoi(s);
+	    }
+	for (int i=0;i<r;i++)
+	    for (int j=0;j<c;j++)
+	    {
+		if (a[i][j]==1000) {}
+		else if (i==0 && j==0)
+		    dp[i][j].insert(a[i][j]);
+		else if (i==0) {
+		    for (it=dp[i][j-1].begin();it != dp[i][j-1].end();it++)
+			dp[i][j].insert(*it+a[i][j]);
+		}
+		else if (j==0) {
+		    for (it=dp[i-1][j].begin();it != dp[i-1][j].end();it++)
+			dp[i][j].insert(*it+a[i][j]);
+		}
+		else {
+		    for (it=dp[i][j-1].begin();it != dp[i][j-1].end();it++)
+		    {
+			dp[i][j].insert(*it+a[i][j]);
+			//printf("deb i %d j %d dp %d\n",i,j,*it+a[i][j]);
+			if (dp[i][j].size()==102) {
+			    it1=dp[i][j].end();
+			    --it1;
+			    dp[i][j].erase(it1);
+			}
+		    }
+		    for (it=dp[i-1][j].begin();it != dp[i-1][j].end();it++)
+		    {
+			dp[i][j].insert(*it+a[i][j]);
+			//printf("deb i %d j %d dp %d\n",i,j,*it+a[i][j]);
+			if (dp[i][j].size()==102) {
+			    it1=dp[i][j].end();
+			    --it1;
+			    dp[i][j].erase(it1);
+			}
+		    }
+		}
+	    }
+	int q,m,n,k;
+	scanf("%d",&q);
+	while (q--)
+	{
+	    scanf("%d %d %d",&m,&n,&k);
+	    //printf("deb query %d %d %d\n",m,n,k);
+	    if (a[m][n]==1000)
+		printf("Obstacle\n");
+	    else if(dp[m][n].size()<k)
+		printf("Not so many paths\n");
+	    else {
+		it1=dp[m][n].begin();
+		k=k-1;
+		while (k--)
+		    it1++;
+		printf("%d\n",*it1);
+	    }
+	}
+	for (int i=0;i<101;i++)
+	    for (int j=0;j<101;j++)
+		dp[i][j].clear();
+    }
+    return 0;
+}

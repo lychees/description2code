@@ -1,0 +1,89 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MAX 100005
+#define ll long long int
+ll arr[MAX];
+struct node
+{
+		ll pl,sl,ml;
+} st[MAX*4];
+
+struct node merg(struct node n1, struct node n2, int ss, int se, int mid)
+{
+	
+	struct node res;
+	res.ml = max(n1.ml,n2.ml);
+	if(arr[mid]<arr[mid+1])
+		res.ml = max(res.ml,n1.sl+n2.pl);
+	res.pl = n1.pl;
+	res.sl = n2.sl;
+	if(n1.pl == mid - ss +1 && arr[mid]<arr[mid+1]) res.pl += n2.pl;
+	if(n2.sl == se - mid && arr[mid]<arr[mid+1]) res.sl += n1.sl;
+	return res;
+	
+}
+void build(ll si, ll ss, ll se)
+{
+		if(ss > se) return;
+		if(ss == se)
+		{
+				st[si].sl = st[si].pl = st[si].ml = 1;
+				return;
+		}
+		ll mid = (ss+se)>>1;
+		build(si*2,ss,mid);
+		build(si*2+1,mid+1,se);
+		st[si] = merg(st[si*2],st[si*2+1],ss,se,mid);
+}
+struct node query(ll si, ll ss, ll se, ll qs, ll qe)
+{
+		struct node res;
+		res.ml = res.sl = res.pl = INT_MIN;
+		if(ss > se || qs > se || qe < ss) return st[si];
+		if(qs <= ss && se <= qe) return st[si];
+		ll mid = (ss+se)>>1;
+		if(qe <= mid) return query(si*2,ss,mid,qs,qe);
+		else if(qs > mid) return query(si*2+1,mid+1,se,qs,qe);
+		struct node n1 = query(si*2,ss,mid,qs,qe);
+		struct node n2 = query(si*2+1,mid+1,se,qs,qe);
+		//if(n1.ml == INT_MIN) return n2;
+		//if(n2.ml == INT_MIN)  return n1;
+		return merg(n1,n2,max(qs,ss),min(se,qe),mid);
+}
+void update(ll si, ll ss, ll se, ll pos, ll val)
+{
+		if(ss > se || pos > se || pos < ss) return;
+		if(ss == se)
+		{
+				arr[pos] += val;
+				return;
+		}
+		ll mid = (ss+se)>>1;
+		if(pos <= mid) update(si*2,ss,mid,pos,val);
+		else if(pos > mid) update(si*2+1,mid+1,se,pos,val);
+		st[si] = merg(st[si*2],st[si*2+1],ss,se,mid);
+}
+int main()
+{
+		int t;
+		cin>>t;
+		while(t--)
+		{
+				int n,q;
+				scanf("%d %d",&n,&q);
+				int i;
+				for(i=1;i<=n;++i)
+						scanf("%lld",arr+i);
+				build(1,1,n);
+				ll a,b,c;
+				while(q--)
+				{
+						scanf("%lld %lld %lld",&a,&b,&c);
+						if(a) update(1,1,n,b,c);
+						else printf("%lld\n",query(1,1,n,b,c).ml);
+				}
+				
+				
+				
+		}
+}

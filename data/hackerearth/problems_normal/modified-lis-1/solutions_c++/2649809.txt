@@ -1,0 +1,123 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+
+#define inp_s     ios_base::sync_with_stdio(false)
+#define DRT()     int test_case;cin>>test_case;while(test_case--)
+
+#define VI        vector<int>
+#define VS        vector<string>
+#define VLL       vector<LL>
+#define PII       pair<int,int>
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+
+#define cin(x)     scanf("%d",&x)
+
+#define FOR(i,a,b)      for(int i=(int)(a);i<(int)(b);i++)
+#define RFOR(i,a,b)     for(int i=(int)(b)-1;i>=(int)(a);i--)
+
+#define MOD       1000000007
+#define EPS       1E-10
+
+#define PI  acos(-1)
+
+#define CASE(x)   cout << "Case #" << x << ": ";
+
+vector<PII> negative(1000000) , positive(1000000);
+
+PII merge(PII A , PII B)
+{
+	if(A.first > B.first) return A;
+	else if(A.first < B.first) return B;
+	PII ret;
+	ret.first = A.first;
+	ret.second = (A.second + B.second) % MOD;
+	return ret;
+}
+
+void positiveUpdate(int idx , PII val , int l , int r , int pos)
+{
+	if(l > idx or r < idx) return;
+	if(l == r)
+	{
+		positive[pos] = merge(val , positive[pos]);
+		return ;
+	}
+	int mid = (l + r) / 2;
+	positiveUpdate(idx , val , l , mid , 2*pos);
+	positiveUpdate(idx , val , mid + 1 , r , 2*pos+1);
+	positive[pos] = merge(positive[2*pos] , positive[2*pos+1]);
+}
+
+void negativeUpdate(int idx , PII val , int l , int r , int pos)
+{
+	if(l > idx or r < idx) return;
+	if(l == r)
+	{
+		negative[pos] = merge(val , negative[pos]);
+		return ;
+	}
+	int mid = (l + r) / 2;
+	negativeUpdate(idx , val , l , mid , 2*pos);
+	negativeUpdate(idx , val , mid + 1 , r , 2*pos+1);
+	negative[pos] = merge(negative[2*pos] , negative[2*pos+1]);
+}
+
+PII positiveQuery(int lQ,int rQ,int l,int r,int pos)
+{
+	if(l > r or l > rQ or r < lQ) return mp(0,0);
+	else if(l >= lQ && r <= rQ) return positive[pos];
+	int mid = (l + r) / 2;
+	PII L = positiveQuery(lQ,rQ,l,mid,2*pos);
+	PII R = positiveQuery(lQ,rQ,mid+1,r,2*pos+1);
+	return merge(L,R);
+}
+
+PII negativeQuery(int lQ,int rQ,int l,int r,int pos)
+{
+	if(l > r or l > rQ or r < lQ) return mp(0,0);
+	else if(l >= lQ && r <= rQ) return negative[pos];
+	int mid = (l + r) / 2;
+	PII L = negativeQuery(lQ,rQ,l,mid,2*pos);
+	PII R = negativeQuery(lQ,rQ,mid+1,r,2*pos+1);
+	return merge(L,R);
+}
+
+int main()
+{
+	inp_s;
+	int n;
+	cin >> n;
+	for(int i = 0; i < n; i++)
+	{
+		int x;
+		cin >> x;
+		if(x > 0)
+		{
+			PII Q = negativeQuery(1,x-1,1,100000,1);
+			if(Q.first == 0 && Q.second == 0)
+				Q.first = Q.second = 1;
+			else
+				Q.first += 1;
+			positiveUpdate(x,Q,1,100000,1);
+		}
+		else
+		{
+			x = -x;
+			PII Q = positiveQuery(1 , x-1 , 1 , 100000 , 1);
+			if(Q.first == 0 && Q.second == 0)
+				Q.first = Q.second = 1;
+			else
+				Q.first += 1;
+			negativeUpdate(x,Q,1,100000,1);
+		}
+	}
+	PII ans = merge(negative[1] , positive[1]);
+	cout << ans.first << " " << ans.second << endl;
+	return 0;
+}

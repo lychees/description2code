@@ -1,0 +1,91 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+#define MAXN 1000111
+#define sd(x) scanf("%d", &x)
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+#define LL long long int
+
+int a[MAXN] = {0};
+LL ans[MAXN] = {0};
+set<int> s;
+set<int>::iterator it;
+map<int,int> m;
+vector< pair<pair<int, bool>, int> > query[MAXN];
+LL BIT[MAXN], w, ret;
+
+inline void update(int i, int v){
+    while(i < MAXN){
+        BIT[i] += v;
+        i += (i & (-i));
+    }
+}
+
+inline LL get(int i){
+    ret = 0;
+    while(i > 0){
+        ret += BIT[i];
+        i -= (i & (-i));
+    }
+    return ret;
+}
+
+inline void solve(){
+    int n, p, i, j, k, l, r, k1, k2, u, v;
+    sd(n); sd(k);
+    memset(BIT, 0, sizeof BIT);
+    s.clear();
+    m.clear();
+    for(i = 1; i <= n; i++){
+        sd(a[i]);
+        s.insert(a[i]);
+    }
+    for(i = 0; i < k; i++){
+        sd(k1); sd(k2);
+        sd(l); sd(r);
+        query[l - 1].PB(MP(MP(k1 - 1, true), i));
+        query[l - 1].PB(MP(MP(k2, false), i));
+        query[r].PB(MP(MP(k2, true), i));
+        query[r].PB(MP(MP(k1 - 1, false), i));
+        ans[i] = 0;
+        s.insert(k2);
+        s.insert(k1 - 1);
+    }
+    i = 1;
+    for(it = s.begin(); it != s.end(); it++){
+        m[*it] = i;
+        i++;
+    }
+    for(i = 1; i <= n; i++){
+        update(m[a[i]], a[i]);
+        for(j = query[i].size() - 1; j >= 0; j--){
+            u = query[i][j].F.F;
+            v = query[i][j].S;
+            //cout<<i<<" "<<u<<" "<<v<<" "<<m[u]<<" ";
+            w = get(m[u]);
+            //cout<<u<<endl;
+            if(query[i][j].F.S == true){
+                ans[v] += w;
+            }
+            else{
+                ans[v] -= w;
+            }
+        }
+    }
+    for(i = 0; i < k; i++){
+        printf("%d\n", ans[i]);
+    }
+    return ;
+}
+
+int main(){
+    int t = 1;
+    while(t--){
+        solve();
+    }
+    return 0;
+}

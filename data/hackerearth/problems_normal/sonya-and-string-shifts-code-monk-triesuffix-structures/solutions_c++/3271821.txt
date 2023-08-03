@@ -1,0 +1,195 @@
+#include <iostream>
+#include <stdio.h>
+#include <algorithm>
+#include <limits.h>
+#define R 27
+#define NULLdigit 0
+using namespace std;
+
+class Item
+{
+public:
+    int rank;
+    char* s;
+    Item()
+    {
+        rank = 0;
+        s = 0;
+    }
+    Item(int x, char* str)
+    {
+        rank = x;
+        s = str;
+    }
+};
+
+class TST
+{
+private:
+    struct node
+    {
+        Item item;
+        char d;
+        int rank;
+        node *l, *m, *r;
+        node(Item& x, int k)
+        {
+            item = x;   d = k;
+            l = m = r = 0;
+            rank = x.rank;
+        }
+        node(node* h, int k)
+        {
+            d = k;
+            m = h;
+            l = r = 0;
+            rank = h->rank;
+        }
+        int internal()
+        {
+            return d!=NULLdigit;
+        }
+    };
+    typedef node* link;
+    link heads[R];
+    int high[R];
+    Item nullItem;
+    int len;
+
+    link newext(Item& x)
+    {
+        return new node(x, NULLdigit);
+    }
+
+    link split(link p, link q, int d)
+    {
+        int pd = p->item.s[d];
+        int qd = q->item.s[d];
+        link t;
+        if(d==len)
+        {
+            t = q;
+            delete p;
+            return t;
+        }
+        t = new node(nullItem, qd);
+        if(pd == qd)
+        {
+            t->m = split(p, q, d+1);
+            t->rank = t->m->rank;
+        }
+        else if(pd < qd)
+        {
+            t->m = q;
+            t->l = new node(p, pd);
+            t->rank = t->l->rank;
+        }
+        else
+        {
+            t->m = q;
+            t->r = new node(p, pd);
+            t->rank = t->m->rank;
+        }
+        return t;
+    }
+
+    void insertR(link& h, Item& x, int d)
+    {
+        int i = x.s[d];
+        if(h==0)
+         {
+            h = new node(newext(x), i);
+            return;
+         }
+        if(!h->internal())
+        {
+            h = split(newext(x), h, d);
+            //h->rank = h->m->rank;
+            return;
+        }
+        if(i < h->d) { insertR(h->l, x, d); h->rank = h->l->rank; }
+        else if(i == h->d) { insertR(h->m, x, d+1); if(h->l==0) h->rank = h->m->rank; }
+        else if(i > h->d) { insertR(h->r, x, d); }
+    }
+
+    int searchR(link h, int k)
+    {
+        if(!h->internal()) return h->rank;
+        int tmp;
+        if(h->rank <= k) return h->rank;
+        if(h->l != 0)
+        {
+            tmp = searchR(h->l, k);
+            if(tmp<=k)
+                return tmp;
+        }
+        if(h->m != 0)
+        {
+            tmp = searchR(h->m, k);
+            if(tmp<=k)
+                return tmp;
+        }
+        if(h->r != 0)
+        {
+            tmp = searchR(h->r, k);
+            if(tmp<=k)
+                return tmp;
+        }
+        return INT_MAX;
+    }
+
+public:
+    TST(int x)
+    {
+        for(int i=0; i<R; i++)
+        {
+            heads[i] = 0;
+            high[i] = -1;
+        }
+        len = x;
+    }
+
+    void insert(char* s, int n)
+    {
+        for(int i=0; i<n; i++)
+        {
+            Item item(i, s+i);
+            insertR(heads[s[i]-'a'], item, 1);
+            if(high[s[i]-'a']==-1)
+                high[s[i]-'a'] = i;
+        }
+    }
+
+    int search(int k)
+    {
+        int tmp;
+        for(int i=0;i<26; i++)
+        {
+            if(heads[i]==0) continue;
+            if(k<high[i]) continue;
+            tmp = searchR(heads[i], k);
+            if(tmp<=k)
+                return tmp;
+        }
+        return k;
+    }
+};
+
+int main()
+{
+    int n, q, k;
+    char s[2000006];
+    scanf("%d %s", &n, s);
+    for(int i=0; i<n; i++)
+        s[n+i] = s[i];
+    s[2*n] = '\0';
+    TST trie(n);
+    trie.insert(s, n);
+    scanf("%d", &q);
+    for(int i=0; i<q; i++)
+    {
+        scanf("%d", &k);
+        printf("%d\n",trie.search(k));
+    }
+    return 0;
+}

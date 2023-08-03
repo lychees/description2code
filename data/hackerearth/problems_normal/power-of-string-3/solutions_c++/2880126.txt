@@ -1,0 +1,181 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<queue>
+#include<map>
+#include<utility>
+#include<set>
+#include<stack>
+#include<list>
+#include<deque>
+#include<bitset>
+#include<iomanip>
+#include<cstring>
+#include<sstream>
+#include<cstdio>
+#include<cstdlib>
+#include<climits>
+#include<cmath>
+#include<cctype>
+
+
+#define pb push_back
+#define mp make_pair
+#define rep(i,a,b) for(int i=a;i<=b;i++)
+#define ren(i,a,b) for(int i=a;i>=b;i--)
+#define ff first
+#define ss second
+#define pll pair<long long int,long long int>
+#define pii pair<int,int>
+#define vll vector<long long int>  
+#define vii vector<int>
+#define gi(n) scanf("%d",&n)
+#define gll(n) scanf("%lld",&n)
+#define gstr(n) scanf("%s",n)
+#define gl(n) cin >> n
+#define oi(n) printf("%d",n)
+#define oll(n) printf("%lld",n)
+#define ostr(n) printf("%s",n)
+#define ol(n) cout << n
+#define os cout<<" "
+#define on cout<<"\n"
+#define o2(a,b) cout<<a<<" "<<b
+#define all(n) n.begin(),n.end()
+#define present(s,x) (s.find(x) != s.end()) 
+#define cpresent(s,x) (find(all(s),x) != s.end()) 
+#define tr(container, it) for(__typeof(container.begin()) it = container.begin(); it != container.end(); it++) 
+using namespace std;
+ 
+typedef unsigned long long int ull;
+typedef long long int ll;
+typedef vector<vector<ll> > mat;
+
+ll mod1=1e9+7,mod2=1e9+9,pr=31,inv1,inv2;
+
+struct Hash
+{
+	ll x,y;
+	Hash(){}
+	Hash(int x,int y)
+	{
+		x=x;
+		y=y;
+	}
+	const bool operator<(Hash b) const
+	{
+		if(x==b.x)
+		return y<b.y;
+		return x<b.x;
+	}
+	const bool operator==(Hash b) const
+	{
+		return x==b.x&&y==b.y;
+	}
+};
+
+Hash add(Hash a,Hash b)
+{
+	Hash r;
+	r.x=(a.x+b.x)%mod1;
+	r.y=(a.y+b.y)%mod2;
+	return r;
+}
+
+Hash sub(Hash a,ll b)
+{
+	Hash r;
+	r.x=(a.x-b+mod1)%mod1;
+	r.y=(a.y-b+mod2)%mod2;
+	return r;
+}
+
+Hash mul(Hash a,Hash b)
+{
+	Hash r;
+	r.x=(a.x*b.x)%mod1;
+	r.y=(a.y*b.y)%mod2;
+	return r;
+}
+
+Hash mul(Hash a,ll mm)
+{
+	Hash r;
+	r.x=(a.x*mm)%mod1;
+	r.y=(a.y*mm)%mod2;
+	return r;
+}
+
+Hash c[1000009],h[1000005],pp[1000005];
+
+ll p(ll a,ll b,ll mod)
+{
+	ll r=1;
+	while(b)
+	{
+		if(b%2)
+		r=(r*a)%mod;
+		a=(a*a)%mod;
+		b/=2;
+	}
+	return r;
+}
+
+int k,n;
+string s;
+
+bool f(int l)
+{
+	Hash a=h[l-1];int sz=0;
+	c[sz++]=a;
+	int mx=1;
+	rep(i,l,n-1)
+	{
+		a=sub(a,(s[i-l]-'a'));
+		a=add(a,mul(pp[l],(s[i]-'a')));
+		
+		a.x=(a.x*inv1)%mod1;
+		a.y=(a.y*inv2)%mod2;
+		c[sz++]=a;
+	}
+	sort(c,c+sz);
+	c[sz].x=c[sz].y=-1;
+	int cc=1;
+	rep(i,1,sz)
+	{
+		if(c[i]==c[i-1])
+		{
+			cc++;
+		}
+		else
+		{
+			mx=max(mx,cc);
+			cc=1;
+		}
+	}
+	if(mx>=k)
+	return true;
+	return false;
+}
+
+int main()
+{ios_base::sync_with_stdio(false);
+cin>>k>>n>>s;
+inv1=p(pr,mod1-2,mod1),inv2=p(pr,mod2-2,mod2);
+pp[0].x=1;pp[0].y=1;
+rep(i,1,n-1)
+pp[i]=mul(pp[i-1],pr);
+h[0].x=h[0].y=((s[0]-'a'));
+rep(i,1,n-1)
+h[i]=add(h[i-1],mul(pp[i],(s[i]-'a')));
+int lo=0,hi=n;
+while(lo<=hi)
+{
+	int mid=(lo+hi)/2;
+	if(f(mid))
+	lo=mid+1;
+	else
+	hi=mid-1;
+}
+ol(hi);
+return 0;
+}

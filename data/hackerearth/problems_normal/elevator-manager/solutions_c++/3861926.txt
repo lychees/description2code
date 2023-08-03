@@ -1,0 +1,169 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+ll modMult ( ll a, ll b, ll mod ) {
+    __int128 res=a;
+    res=res*b%mod;
+    return res;
+}
+ll modPow ( ll b, ll e, ll mod ) {
+    ll r=1;
+    while ( e ) {
+        if ( e&1 ) r=modMult ( r,b,mod );
+        b=modMult ( b,b,mod );
+        e>>=1;
+    }
+    return r;
+}
+
+
+struct Sieve1 {
+    vector<bool> sieve;
+    vi primes;
+    Sieve1 ( int maxn ) :sieve ( maxn ) {
+        sieve[0]=sieve[1]=1;
+        for ( ll i=2; i<maxn; i++ ) {
+            if ( !sieve[i] ) {
+                primes.push_back ( i );
+
+                if ( i*i<maxn ) {
+                    for ( ll n=i*i; n<maxn; n+=i )
+                        sieve[n]=1;
+                }
+            }
+        }
+    }
+    bool isPrime ( int n ) const {
+        assert ( n<sieve.size() );
+        return !sieve[n];
+    }
+};
+struct PrimeTest64 {
+    PrimeTest64 ( ) {} //,s ( MAXN ) {}
+    bool isPrime ( ll n ) {
+        return  MRIsPrime ( n );
+
+    }
+
+    bool MRIsPrime ( ll n ) {
+        if(n<2)return 0;
+        if ( n==2 ) return 1;
+        if ( ! ( n&1 ) ) return 0;
+        if ( n==3 ) return 1;
+        vi tests ( {2, 3, 5, 7, 11, 13,  17} );
+        ll d=n-1,s=0;
+        while ( ( d&1 ) ==0 ) {
+            d/=2;
+            s++;
+        }
+        for ( int t: tests ) {
+            if ( t>=n ) break;
+            ll m=t; // ( t, n );
+            ll p=modPow ( m,d,n );
+            bool corr=1;
+            if ( p ==1 ) corr=0;
+
+            rep ( j,s ) {
+                if ( p==n-1 ) corr=0;
+                p=modMult ( p,p,n );
+            }
+            if ( corr ) return 0;
+        }
+
+        return 1;
+    }
+};
+ll llsqrt ( ll x ) {
+    ll a=sqrt ( x );
+    if ( a<2 ) return a;
+    a--;
+    while ( a*a<=x ) a++;
+    return a-1;
+}
+int main() {
+    ios_base::sync_with_stdio ( false );
+    ll n,q;
+    cin>>n>>q;
+    PrimeTest64 pt;
+//     Sieve1 s ( 10000000 );
+//     reu ( i,1,10000000 ) {
+//         cout<<i<<endl;
+//         if ( pt.isPrime ( i ) !=s.isPrime ( i ) ) {
+//             cout<<i<<endl;
+//             cout<<pt.isPrime(i)<<" "<<s.isPrime(i)<<endl;
+//             assert(0);
+//         }
+//     }
+    ll fl=1;
+    ll p=0;
+    ll su=0;
+    rep ( i,q ) {
+        int t;
+        ll f;
+        ll k;
+        cin>>t>>f>>k;
+        if ( t==1 ) {
+            if ( pt.isPrime ( f+k ) ) {
+                p+=k;
+                su+=abs ( fl-f );
+                fl=f;
+            }
+        } else {
+            ll s=llsqrt ( f+k );
+            if ( s*s==f+k ) {
+                p-=k;
+                su+=abs ( fl-f );
+                fl=f;
+            }
+        }
+
+    }
+    cout<<su%1000000007<<" "<<p<<endl;
+
+}

@@ -1,0 +1,91 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+#define MOD 1000000007LL
+#define N 200010
+using ll=long long;
+ll neg_mod(ll a,ll b)
+{
+	if(a<0) a+=(-a/b+1)*b;
+	return a%b;
+}
+struct info
+{
+	ll S1,S2;
+	ll delta;
+};
+info sgt[N<<2];
+void ch(int nd, ll d,int sz)
+{
+	sgt[nd].delta+=d;
+	sgt[nd].S1 = neg_mod((sgt[nd].S1+neg_mod(2*sgt[nd].S2*d,MOD))%MOD+sz*(d*d%MOD),MOD);//
+	sgt[nd].S2 = neg_mod(sgt[nd].S2+sz*d,MOD);
+}
+void down(int nd,int l,int r)
+{
+	int left = nd<<1;
+	if(sgt[nd].delta==0) return;
+	int m = (l+r)>>1;
+	ll d = sgt[nd].delta;
+	ch(nd*2,d,m-l+1);
+	ch(nd*2+1,d,r-m);
+	sgt[nd].delta=0;
+}
+ll query(int nd,int l,int r,int lo,int hi)
+{
+	if(l>=lo && r<=hi) return sgt[nd].S1;
+	down(nd,l,r);
+	int m = (l+r)>>1;
+	ll ans=0;
+	if(lo<=m) ans+=query(nd*2,l,m,lo,hi),ans=neg_mod(ans,MOD);
+	if(hi>m) ans+=query(nd*2+1,m+1,r,lo,hi),ans=neg_mod(ans,MOD);
+	return ans;
+}
+void update(int nd,int l,int r,int lo,int hi,ll d)
+{
+	if(l>=lo && r<=hi)
+	{
+		ch(nd,d,r-l+1);
+		return;
+	}
+	int m = (l+r)/2;
+	down(nd,l,r);
+	if(lo<=m) update(nd*2,l,m,lo,hi,d);
+	if(m<hi) update(nd*2+1,m+1,r,lo,hi,d);
+	sgt[nd].S2 = neg_mod(sgt[nd*2].S2+sgt[nd*2+1].S2,MOD);//
+	sgt[nd].S1 = neg_mod(sgt[nd*2].S1+sgt[nd*2+1].S1,MOD);//
+}
+int pos[N];
+ll arr[N];
+int main()
+{
+//	vector<ll> ds;
+	int n;
+	scanf("%d",&n);
+	for(int i=1;i<=n;++i)
+	{
+		scanf("%lld",&arr[i]);
+	//	ds.push_back(arr[i]);
+	}
+//	sort(ds.begin(),ds.end());
+//	ds.erase(unique(ds.begin(),ds.end()),ds.end());
+//	for(int i=1;i<=n;++i)
+//	{
+//		arr[i] = lower_bound(ds.begin(),ds.end(),arr[i])-ds.begin();
+//	}
+	ll ans=0;
+	for(int i=n;i;--i)
+	{
+		if(pos[arr[i]])
+		{
+			update(1,1,n,pos[arr[i]],n,-1);
+		}
+		pos[arr[i]] = i;
+		update(1,1,n,i,n,1);
+		ans = (ans + query(1,1,n,i,n)) %MOD;
+		
+	}
+	printf("%lld\n",ans);
+    return 0;
+}

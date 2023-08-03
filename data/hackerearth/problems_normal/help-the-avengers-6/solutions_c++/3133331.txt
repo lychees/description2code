@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+int primes[1000006];
+int BIT[1000006];
+
+void sieve()
+{
+	long long int i, j;
+	primes[1] = primes[0] = 1;
+	for(long long int i = 2; i * i <= 1000005 ; i++) {
+		if(!primes[i]) {
+			for(long long int j = i * i ; j <= 1000005; j += i) {
+				primes[j] = 1;
+			}
+		}
+	} 
+}
+int sum_bit(int start, int end, int n)
+{
+	int end_sum = 0;
+	int start_sum = 0;
+	start--;
+
+	while(end > 0) {
+		end_sum += BIT[end];
+		end = end - (end & -end);
+	}
+	while(start > 0) {
+		start_sum += BIT[start];
+		start = start - (start & -start);
+	}
+return end_sum - start_sum;
+} 
+void update_bit(int idx, int num, int n)
+{
+	while(idx <= n) {
+		BIT[idx] += num;
+		idx = idx + (idx & -idx);
+	}
+} 
+void construct_bit(int *arr, int n)
+{
+	for(int i = 1; i <= n; i++) 
+		update_bit(i , !primes[arr[i]] ? 1 : 0, n);
+}
+					
+	
+int main()
+{
+
+	int t, n , q, temp, x, y;
+	char c;
+	sieve();
+	int arr[32005]; 
+	cin >> t;
+	while(t--) {
+		cin >> n;
+		memset(BIT, 0 , 1000006 * sizeof(int));
+		for(int i = 1; i <= n; i++) { 
+			cin >> temp;
+			arr[i] = temp;
+		}
+		cin >> q;
+		construct_bit(arr, n);
+/*		for(int i = 1; i <= n; i++)
+			cout << BIT[i] << " ";*/
+		while(q--) {
+			cin >> c >> x >> y;
+			if(c == 'C') {
+				update_bit(x , !primes[y] - !primes[arr[x]] , n);
+				arr[x] = y;
+			}
+		
+			else
+				cout << sum_bit(x, y, n) << endl;
+		}
+	}
+return 0;
+}

@@ -1,0 +1,204 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+
+template<int MOD>
+struct ModInt {
+	static const int Mod = MOD;
+	unsigned x;
+	ModInt() : x(0) {}
+	ModInt(signed sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	ModInt(signed long long sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	int get() const { return (int)x; }
+
+	ModInt &operator+=(ModInt that) { if((x += that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator-=(ModInt that) { if((x += MOD - that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator*=(ModInt that) { x = (unsigned long long)x * that.x % MOD; return *this; }
+
+	ModInt operator+(ModInt that) const { return ModInt(*this) += that; }
+	ModInt operator-(ModInt that) const { return ModInt(*this) -= that; }
+	ModInt operator*(ModInt that) const { return ModInt(*this) *= that; }
+};
+typedef ModInt<1000000007> mint;
+
+struct UnionFind {
+	vector<int> data;
+	void init(int n) { data.assign(n, -1); }
+	bool unionSet(int x, int y) {
+		x = root(x); y = root(y);
+		if(x != y) {
+			if(data[y] < data[x]) swap(x, y);
+			data[x] += data[y]; data[y] = x;
+		}
+		return x != y;
+	}
+	bool findSet(int x, int y) { return root(x) == root(y); }
+	int root(int x) { return data[x] < 0 ? x : data[x] = root(data[x]); }
+	int size(int x) { return -data[root(x)]; }
+};
+
+int A, B, C, D, E;
+int randInt(int mi, int ma) {
+	int F = ((ll)A * C + (ll)B * D + E) % 1000000007;
+	A = B;
+	B = F;
+	return F % (ma - mi + 1) + mi;
+}
+
+template<typename T>
+struct FenwickTree {
+	vector<T> v;
+	void init(int n) { v.assign(n, T()); }
+	void add(int i, T x) {
+		for(; i < (int)v.size(); i |= i+1) v[i] += x;
+	}
+	T sum(int i) const {	//[0, i)
+		T r = T();
+		for(-- i; i >= 0; i = (i & (i+1)) - 1) r += v[i];
+		return r;
+	}
+	T sum(int left, int right) const {	//[left, right)
+		return sum(right) - sum(left);
+	}
+};
+
+int main() {
+	int N; int T;
+	while(~scanf("%d%d", &N, &T)) {
+		scanf("%d%d%d%d%d", &A, &B, &C, &D, &E);
+		vector<pii> intervals(N);
+		rep(i, N) {
+			int P = randInt(1, 1000000);
+			int Q = randInt(P, 1000000);
+			-- P;
+			intervals[i] = mp(P, Q);
+		}
+		UnionFind uf;
+		uf.init(N);
+		vi nodes(N);
+		int nNodes = 0;
+		rep(i, N) nodes[i] = nNodes ++;
+		vector<pii> children(N + N, mp(-1, -1));
+		vector<pair<pii, pii> > queries;
+		rep(ii, T) {
+			if(randInt(1, 2) == 1) {
+				int U = randInt(1, N);
+				int V = randInt(1, N);
+				-- U, -- V;
+
+				U = uf.root(U), V = uf.root(V);
+				if(U == V) continue;
+				uf.unionSet(U, V);
+				int W = uf.root(U);
+				children[nNodes] = mp(nodes[U], nodes[V]);
+				nodes[W] = nNodes ++;
+			} else {
+				int X = randInt(1, 1000000);
+				int Y = randInt(X, 1000000);
+				int Z = randInt(1, N);
+				-- X, -- Z;
+
+				int node = nodes[uf.root(Z)];
+				queries.push_back(mp(mp(node, ii + 1), mp(X, Y)));
+			}
+		}
+
+		vector<int> ord;
+		vector<int> lefts(nNodes, -1), rights(nNodes, -1);
+		{
+			vector<int> stk;
+			rep(i, N) if(uf.root(i) == i)
+				stk.push_back(nodes[i]);
+			while(!stk.empty()) {
+				int i = stk.back(); stk.pop_back();
+				if(i < 0) {
+					rights[-i - 1] = ord.size();
+					continue;
+				}
+				lefts[i] = ord.size();
+				stk.push_back(-(i + 1));
+				if(i < N) {
+					ord.push_back(i);
+				} else {
+					stk.push_back(children[i].first);
+					stk.push_back(children[i].second);
+				}
+			}
+			assert(ord.size() == N);
+		}
+
+		vector<vector<pair<int,mint> > > queryV(N+1);
+
+		each(i, queries) {
+			int node = i->first.first;
+			int qi = i->first.second;
+			int left = lefts[node], right = rights[node];
+			int X = i->second.first, Y = i->second.second;
+			mint ans;
+			queryV[right].push_back(mp(Y, +qi));
+			queryV[right].push_back(mp(X, -qi));
+			queryV[left].push_back(mp(Y, -qi));
+			queryV[left].push_back(mp(X, +qi));
+		}
+
+		const int RR = 1000000;
+		FenwickTree<int> ftcnt; ftcnt.init(RR+1);
+		FenwickTree<mint> ftsum; ftsum.init(RR+1);
+
+		mint anssum;
+		for(int ix = 0;; ++ ix) {
+			each(j, queryV[ix]) {
+				int pos = j->first;
+				mint x;
+				x += ftsum.sum(pos);
+				x += mint(ftcnt.sum(RR - pos + 1)) * pos;
+				anssum += x * j->second;
+			}
+
+			if(ix == N) break;
+
+			int i = ord[ix];
+			ftcnt.add(RR - intervals[i].second, 1);
+			ftcnt.add(RR - intervals[i].first, -1);
+			ftsum.add(intervals[i].second, intervals[i].second);
+			ftsum.add(intervals[i].first, -intervals[i].first);
+		}
+
+		printf("%d\n", anssum.get());
+	}
+	return 0;
+}

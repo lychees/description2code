@@ -1,0 +1,64 @@
+/**/
+#define _USE_MATH_DEFINES
+#include<bits/stdc++.h>
+using namespace std;
+
+#define pb push_back
+#define For(i, begin, end) for (__typeof(end) i = (begin) - ((begin) > (end)); i != (end) - ((begin) > (end)); i += 1 - 2 * ((begin) > (end)))
+#define all( v ) (v).begin(),(v).end()
+template<typename T> using V = vector<T>;
+typedef long long int ll;
+typedef unsigned long long int ull;
+/***********************************************/
+/*      ____________
+ *     /            \
+ *    /  /\      /\  \
+ *   /  /  \    /  \  \
+ *   \                /
+ *    \     \___/    /
+ *     \____________/
+ */
+const ll mod = 1000000007;
+ull D(pair<ull,ull> a,pair<ull,ull> b){
+	ull diff = (b.first * b.first - a.first * a.first);
+	if(b.second + diff <= a.second)
+		return b.first;
+	ull cur =  b.second + diff - a.second ;
+	ull d = 2 * b.first - 2 * a.first;
+	d = cur / d + (bool)(cur%d != 0);
+	d = max(d,b.first);
+	return d;
+}
+int main(){
+	ios_base::sync_with_stdio(false);
+	cin.tie(nullptr);
+	ull N,K,R;
+	cin>>N>>K;
+	R = min(60ull,K+1);
+	V<ull> a(N);
+	For(i,0,N)cin>>a[i];
+	V<V<ull>> dp(R,V<ull>(N));
+	V<deque<ull>> ch(R);
+	For(i,0,R)
+		dp[i][0] = K * K * a[0],ch[i].pb(0);
+	For(i,1,N){
+		For(j,2,R){
+			while(ch[j-1].size() >= 2 && (D({ch[j-1][0],dp[j-1][ch[j-1][0]]},{ch[j-1][1],dp[j-1][ch[j-1][1]]}) <= i))
+				ch[j-1].pop_front();
+			dp[j][i] = dp[j-1][ch[j-1][0]] + K * K * a[i] + (i - ch[j-1][0]) * (i - ch[j-1][0]);
+			while(ch[j].size() >= 2){
+				ull fs = ch[j][ch[j].size()-2];
+				ull sc = ch[j].back();
+				if(D({fs,dp[j][fs]},{sc,dp[j][sc]}) >= D({sc,dp[j][sc]},{i,dp[j][i]}))
+					ch[j].pop_back();
+				else
+					break;
+			}
+			if(D({ch[j].back(),dp[j][ch[j].back()]},{i,dp[j][i]}) < N)
+				ch[j].pb(i);
+		}
+	}
+	cout<<dp[R-1][N-1]<<endl;
+	return 0;
+}
+/**/

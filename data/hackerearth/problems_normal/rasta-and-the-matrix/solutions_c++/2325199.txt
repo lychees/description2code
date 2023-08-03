@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+#define MOD 1000000007
+
+using namespace std;
+
+#define rep(i, a, b) for(int i = (a); i < int(b); ++i)
+#define rrep(i, a, b) for(int i = (a) - 1; i >= int(b); --i)
+#define trav(it, v) for(typeof((v).begin()) it = (v).begin(); it != (v).end(); ++it)
+#define all(v) (v).begin(), (v).end()
+
+typedef double fl;
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef vector<pii> vpi;
+
+ll type[100005], l[100005], r[100005], x[100005], y[100005];
+
+struct Node{
+	Node *lChild, *rChild;
+	ll L, R, black;
+	bool xored;
+
+	Node(ll _L, ll _R){
+		lChild=NULL;
+		rChild=NULL;
+		L=_L;
+		R=_R;
+		black=0;
+		xored=0;
+	}
+
+	void createChildren(){
+		if(lChild != NULL)
+			return;
+		ll mid=L+(R-L)/2;
+		lChild = new Node(L, mid);
+		rChild = new Node(mid, R);
+	}
+	
+	ll query(ll lr, ll rr){
+		if(rr <= L || lr >= R)
+			return 0;
+		if(rr > R)rr=R;
+		if(lr < L)lr=L;
+		ll num=R-L;
+		if(lr == L && rr == R){
+			return black;
+		}
+		createChildren();
+		if(xored){
+			lChild->black=lChild->R-lChild->L-lChild->black;
+			rChild->black=rChild->R-rChild->L-rChild->black;
+			lChild->xored^=1;
+			rChild->xored^=1;
+			xored=0;
+		}
+		ll ret1 = lChild->query(lr, rr);
+		ll ret2 = rChild->query(lr, rr);
+		black=lChild->black+rChild->black;
+		return ret1+ret2;
+	}
+	
+	void update(ll lr, ll rr){
+		if(rr <= L || lr >= R)
+			return;
+		if(rr > R)rr=R;
+		if(lr < L)lr=L;
+		ll num=R-L;
+		if(lr == L && rr == R){
+			xored^=1;
+			black=num-black;
+			return;
+		}
+		createChildren();
+		if(xored){
+			lChild->black=lChild->R-lChild->L-lChild->black;
+			rChild->black=rChild->R-rChild->L-rChild->black;
+			lChild->xored^=1;
+			rChild->xored^=1;
+			xored=0;
+		}
+		lChild->update(lr, rr);
+		rChild->update(lr, rr);
+		black=lChild->black+rChild->black;
+	}
+};
+
+Node* root[2];
+
+int main(){
+	int n;
+	scanf("%d", &n);
+	rep(i,0,n){
+		scanf("%lld", type+i);
+		if(type[i] == 1){
+			scanf("%lld%lld%lld", x+i, l+i, r+i);
+		}
+		else{
+			scanf("%lld%lld%lld%lld", l+i, r+i, x+i, y+i);
+		}
+	}
+	for(int i=0; i < 2; ++i){
+		root[i] = new Node(0, 1000000000000000005LL);
+	}
+	ll lastAns=0;
+	rep(i,0,n){
+		if(type[i] == 1){
+			l[i]^=lastAns;	
+			r[i]^=lastAns;	
+			++r[i];
+			root[x[i]]->update(l[i], r[i]);
+		}
+		else{
+			l[i]^=lastAns;	
+			r[i]^=lastAns;	
+			x[i]^=lastAns;	
+			y[i]^=lastAns;	
+			++r[i];++y[i];
+			ll b1=root[0]->query(l[i], r[i]);
+			ll b2=root[1]->query(x[i], y[i]);
+			b1%=MOD;
+			b2%=MOD;
+			ll ans=0;
+			ans += b1*((y[i]-x[i]-b2)%MOD);
+			ans += b2*((r[i]-l[i]-b1)%MOD);
+			ans %= MOD;
+			lastAns = ans;
+			printf("%lld\n", ans);
+		}
+	}
+}

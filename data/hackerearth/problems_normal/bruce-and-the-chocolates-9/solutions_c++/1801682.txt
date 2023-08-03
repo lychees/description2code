@@ -1,0 +1,391 @@
+#include <iostream>
+#include <limits>
+using namespace std;
+
+int n;
+int arr[99][99], org_arr[99][99];
+bool assignment[99][99];
+bool row_mark[99], col_mark[99], row_assigned[99], col_assigned[99], row_line[99], col_line[99], rows_visited[99], cols_visited[99];
+
+void hungarian();
+void step1();
+void step2();
+bool step3();
+void step4();
+int get_matrix_min();
+void draw_lines();
+void mark();
+void mark_cols_of_row(int row_no);
+void mark_row_of_col(int col_no);
+int get_min(bool is_row, int number);
+void initialize();
+int find_assign();
+int count_lines();
+bool find_col_to_assign(int row_no);
+bool find_row_to_assign(int col_no);
+void reset();
+int gcd(int a, int b);
+
+int main(int argc, char const *argv[])
+{
+	int t;
+	cin >> t;
+	while(t--)
+	{
+		int num_students, m;
+		cin >> num_students >> m;
+		int chocolate[num_students];
+		for (int i = 0; i < num_students - 1; ++i)
+		{
+			cin >> chocolate[i];
+		}
+		n = (num_students - 1)/2;
+		for (int i = 0; i < n; ++i)
+		{
+			for (int j = 0; j < n; ++j)
+			{
+				org_arr[i][j] = 0;
+			}
+		}
+		int max = 0;
+		for (int i = 0; i < m; ++i)
+		{
+			int s1, s2;
+			cin >> s1 >> s2;
+			s1--;
+			s2--;
+			if (s1%2 == 0)
+			{
+				int g = gcd(chocolate[s1], chocolate[s2]);
+				org_arr[s1/2][s2/2] = g;
+				if (g > max)
+				{
+					max = g;
+				}
+			}
+			else
+			{
+				int g = gcd(chocolate[s1], chocolate[s2]);
+				org_arr[s2/2][s1/2] = g;
+				if (g > max)
+				{
+					max = g;
+				}
+			}
+		}
+		for (int i = 0; i < n; ++i)
+		{
+			for (int j = 0; j < n; ++j)
+			{
+				arr[i][j] = max - org_arr[i][j];
+			}
+		}
+		hungarian();
+		int ans = 0;
+		for (int i = 0; i < n; ++i)
+		{
+			for (int j = 0; j < n; ++j)
+			{
+				if (assignment[i][j])
+				{
+					ans = ans + org_arr[i][j];
+				}
+			}
+		}
+		cout << ans << "\n";
+	}
+	return 0;
+}
+
+int gcd(int a, int b)
+{
+	if (a == 0)
+	{
+		return b;
+	}
+	else
+	{
+		return gcd(b%a, a);
+	}
+}
+
+void hungarian() {
+	
+	initialize();
+	step1();
+	step2();
+	while(true)
+	{
+		int num_assigned = find_assign();
+		if (step3() && num_assigned == n)
+		{
+			break;
+		}
+		step4();
+		reset();
+	}
+	find_assign();
+}
+
+void step1() 
+{
+	for (int i = 0; i < n; ++i)
+	{
+		int min = get_min(true, i);
+		for (int j = 0; j < n; ++j)
+		{
+			arr[i][j] = arr[i][j] - min;
+		}
+	}
+}
+
+void step2() 
+{
+	for (int j = 0; j < n; ++j)
+	{
+		int min = get_min(false, j);
+		if (min > 0)
+		{
+			for (int i = 0; i < n; ++i)
+			{
+				arr[i][j] = arr[i][j] - min;
+			}
+		}
+	}
+}
+
+bool step3()
+{
+	mark();
+	draw_lines();
+	return (count_lines() == n);
+}
+
+int count_lines()
+{
+	int count = 0;
+	for (int i = 0; i < n; ++i)
+	{
+		if (row_line[i])
+		{
+			count++;
+		}
+		if (col_line[i])
+		{
+			count++;
+		}
+	}
+	return count;
+}
+
+void step4()
+{
+	int min = get_matrix_min();
+	for (int i = 0; i < n; ++i)
+	{
+		for (int j = 0; j < n; ++j)
+		{
+			if ((! row_line[i]) && (! col_line[j]))
+			{
+				arr[i][j] = arr[i][j] - min;
+			}
+			if (row_line[i] && col_line[j])
+			{
+				arr[i][j] = arr[i][j] + min;
+			}
+		}
+	}
+}
+
+int get_matrix_min()
+{
+	int min = numeric_limits<int>::max();
+	for (int i = 0; i < n; ++i)
+	{
+		for (int j = 0; j < n; ++j)
+		{
+			if (arr[i][j] < min && arr[i][j] > 0)
+			{
+				min = arr[i][j];
+			}
+		}
+	}
+	return min;
+}
+
+void draw_lines()
+{
+	for (int i = 0; i < n; ++i)
+	{
+		row_line[i] = (! row_mark[i]);
+		col_line[i] = col_mark[i];
+	}
+}
+
+void mark()
+{
+	for (int i = 0; i < n; ++i)
+	{
+		row_mark[i] = (! row_assigned[i]);
+	}
+	for (int i = 0; i < n; ++i)
+	{
+		if (row_mark[i])
+		{
+			mark_cols_of_row(i);
+		}
+	}
+}
+
+void mark_cols_of_row(int row_no)
+{
+	for (int j = 0; j < n; ++j)
+	{
+		if (! col_mark[j] && arr[row_no][j] == 0)
+		{
+			col_mark[j] = true;
+			mark_row_of_col(j);
+		}
+	}
+}
+
+void mark_row_of_col(int col_no)
+{
+	for (int i = 0; i < n; ++i)
+	{
+		if (assignment[i][col_no])
+		{
+			row_mark[i] = true;
+			mark_cols_of_row(i);
+		}
+	}
+}
+
+int get_min(bool is_row, int number) 
+{
+	int min = numeric_limits<int>::max();
+	if (is_row)
+	{
+		for (int j = 0; j < n; ++j)
+		{
+			if (arr[number][j] < min)
+			{
+				min = arr[number][j];
+			}
+		}
+	}
+	else
+	{
+		for (int i = 0; i < n; ++i)
+		{
+			if (arr[i][number] < min)
+			{
+				min = arr[i][number];
+			}
+		}
+	}
+	return min;
+}
+
+void initialize()
+{
+	for (int i = 0; i < n; ++i)
+	{
+		for (int j = 0; j < n; ++j)
+		{
+			assignment[i][j] = false;
+		}
+	}
+	for (int i = 0; i < n; ++i)
+	{
+		row_mark[i] = false;
+		col_mark[i] = false;
+		row_assigned[i] = false;
+		col_assigned[i] = false;
+		row_line[i] = false;
+		col_line[i] = false;
+		rows_visited[i] = false;
+		cols_visited[i] = false;
+	}
+}
+
+void reset()
+{
+	for (int i = 0; i < n; ++i)
+	{
+		row_mark[i] = false;
+		col_mark[i] = false;
+		row_line[i] = false;
+		col_line[i] = false;
+		rows_visited[i] = false;
+		cols_visited[i] = false;
+	}
+}
+
+int find_assign()
+{
+	int num_assigned = 0;
+	for (int i = 0; i < n; ++i)
+	{
+		if (! row_assigned[i])
+		{
+			rows_visited[i] = true;
+			if(find_col_to_assign(i))
+			{
+				row_assigned[i] = true;
+				continue;
+			}
+		}
+	}
+	for (int i = 0; i < n; ++i)
+	{
+		if (row_assigned[i])
+		{
+			num_assigned++;
+		}
+	}
+	return num_assigned;
+}
+
+bool find_col_to_assign(int row_no)
+{
+	for (int j = 0; j < n; ++j)
+	{
+		if ((! col_assigned[j]) && arr[row_no][j] == 0 && (! cols_visited[j]))
+		{
+			col_assigned[j] = true;
+			assignment[row_no][j] = true;
+			return true;
+		}	
+		if (col_assigned[j] && arr[row_no][j] == 0 && (! cols_visited[j]))
+		{
+			cols_visited[j] = true;
+			if(find_row_to_assign(j))
+			{
+				assignment[row_no][j] = true;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+bool find_row_to_assign(int col_no)
+{
+	for (int i = 0; i < n; ++i)
+	{
+		if (assignment[i][col_no] && (! rows_visited[i]))
+		{
+			if(find_col_to_assign(i))
+			{
+				assignment[i][col_no] = false;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+	return false;
+}

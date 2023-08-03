@@ -1,0 +1,140 @@
+/*
+Please write complete compilable code.
+Read input from standard input (STDIN) and print output to standard output(STDOUT).
+For more details, please check http://www.interviewstreet.com/recruit/challenges/faq/view#stdio
+*/
+#include <iostream>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+#include <cmath>
+#include <string>
+#include <map>
+#include <set>
+#include <fstream>
+using namespace std;
+typedef long long ll;
+ 
+const int MAXN = (1 << 16);
+const ll MOD = 1000000007;
+ 
+struct Point{
+	int x, y;
+	Point(){}
+	Point(int _x, int _y):x(_x), y(_y){}
+}points[20];
+ 
+inline int points_in_line(int i, int j, int k){
+	int le = (points[j].y - points[i].y) * (points[k].x - points[i].x);
+	int ri = (points[k].y - points[i].y) * (points[j].x - points[i].x);
+	return le == ri;
+}
+ 
+int dp[MAXN], vi[MAXN], pil[16][16][16];
+int n;
+ll ct[MAXN];
+ 
+int count(int s){
+	int ret = 0;
+	while(s){
+		++ret;
+		s &= s - 1;
+	}
+	return ret;
+}
+void init(){
+	memset(pil, 0, sizeof(pil));
+	for(int i = n - 1; i >= 0; --i)
+		for(int j = i - 1; j >= 0; --j)
+			for(int k = j - 1; k >= 0; --k)
+				pil[i][j][k] = points_in_line(i, j, k);
+	memset(ct, -1, sizeof(ct));
+}
+ 
+ll calc_ct(int s){
+	if(ct[s] != -1)return ct[s];
+	int i, j, k;
+	for(i = n - 1; i >= 0; --i){
+		if((1 << i) & s)break;
+	}
+	ct[s] = 0;
+	if(dp[1 << i] + dp[s ^ (1 << i)] == dp[s]){
+		ct[s] = dp[s] * calc_ct(s ^ (1 << i));
+	}
+	vector<int> vi, tvi;
+	for(j = i - 1; j >= 0; --j){
+		if((1 << j) & s){
+			int m = ((1 << i) | (1 << j));
+			vi.clear();
+			vi.push_back(m);
+			for(int k = j - 1; k >= 0; --k){
+				if(((1 << k) & s) && pil[i][j][k]){
+					tvi.clear();
+					for(int ii = 0; ii < vi.size(); ++ii){
+						tvi.push_back(vi[ii] | (1 << k));
+					}
+					for(int ii = 0; ii < tvi.size(); ++ii){
+						vi.push_back(tvi[ii]);
+					}
+				}
+			}
+			for(int ii = 0; ii < vi.size(); ++ii){
+				if(dp[s] == dp[vi[ii]] + dp[s ^ vi[ii]]){
+					ct[s] += dp[s] * calc_ct(s ^ vi[ii]);
+				}
+			}
+			ct[s] %= MOD;
+		}
+	}
+	return ct[s];
+}
+	
+void calc_dp(){
+	dp[0] = 0;
+	ct[0] = 0;
+	for(int s = 1; s < (1 << n); ++s){
+		int ret = count(s);
+		if(ret == 1 || ret == 2){
+			dp[s] = 1;
+			ct[s] = 1;
+		}else {
+			int i, j, m;
+			for(i = n - 1; i >= 0; --i){
+				if((1 << i) & s)break;
+			}
+			dp[s] = 1 + dp[s ^ (1 << i)];
+			
+			for(j = i - 1; j >= 0; --j){
+				if((1 << j) & s){
+					m = ((1 << i) | (1 << j));
+					for(int k = j - 1; k >= 0; --k){
+						if(((1 << k) & s) && pil[i][j][k]){
+							m |= (1 << k);
+						}
+					}
+					dp[s] = min(dp[s], dp[s^m] + 1);
+				}
+			}
+			if(dp[s] == 1){
+				ct[s] = 1;
+			}
+		}
+	}
+}
+					
+int main()
+{
+	int T, m;
+	scanf("%d", &T);
+	while(T--){
+		scanf("%d", &n);
+		for(int i = 0; i < n; ++i){
+			scanf("%d %d", &points[i].x, &points[i].y);
+		}
+		init();
+		calc_dp();
+		m = (1 << n) - 1;
+		printf("%d %d\n", dp[m], (int)calc_ct(m));
+	}
+	return 0;
+}

@@ -1,0 +1,82 @@
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+using namespace std;
+
+int gcd(int a, int b) {
+    return b == 0 ? a : gcd(b, a % b);
+}
+
+int g[12][12];
+
+// generate array r
+const int p = 1000000007;
+void pre() {
+    for (int i = 0; i < 12; i++)
+        for (int j = 0; j < 12; j++)
+            g[i][j] = gcd(i, j);
+    int a[12];
+    for (int n = 2; n <= 12; n++) {
+        for (int i = 0; i < n; i++)
+            a[i] = i;
+        long long r[4] = { 0, 0, 0, 0 };
+        do {
+            long long sr[4] = { 1, 0, 0, 0 };
+            for (int i = 0; i < n; i++) {
+                for (int j = i+1; j < n; j++) {
+                    int d = g[abs(i-j)][abs(a[i]-a[j])];
+                    for (int k = 0; k < 4; k++)
+                        sr[k] *= d;
+                    for (int k = 0; k < 3; k++) {
+                        if (sr[k] >= p) {
+                            sr[k+1] += sr[k] / p;
+                            sr[k] %= p;
+                        }
+                    }
+                }
+            }
+            for (int k = 0; k < 4; k++)
+                r[k] += sr[k];
+            for (int k = 0; k < 3; k++) {
+                if (r[k] >= p) {
+                    r[k+1] += r[k] / p;
+                    r[k] %= p;
+                }
+            }
+        } while (next_permutation(a, a+n));
+        printf("{ %lld", r[0]);
+        for (int k = 1; k < 4; k++)
+            printf(", %lld", r[k]);
+        printf(" },\n");
+    }
+}
+
+int r[][4] = {
+    { 0, 0, 0, 0 },
+    { 0, 0, 0, 0 },
+    { 2, 0, 0, 0 },
+    { 8, 0, 0, 0 },
+    { 68, 0, 0, 0 },
+    { 1504, 0, 0, 0 },
+    { 127792, 0, 0, 0 },
+    { 57140352, 0, 0, 0 },
+    { 23198578, 258, 0, 0 },
+    { 296085707, 10151395, 0, 0 },
+    { 941429550, 835813807, 3673, 0 },
+    { 615044158, 232838249, 318668024, 13 },
+    { 493636207, 301414430, 508219802, 531680707 },
+};
+
+int main() {
+    // pre();
+    int T;
+    scanf("%d", &T);
+    while (T--) {
+        int n, m;
+        scanf("%d %d", &n, &m);
+        long long ans = 0, pk = 1;
+        for (int k = 0; k < 4; k++, pk = pk * p % m)
+            ans += pk * r[n][k] % m;
+        printf("%lld\n", ans % m);
+    }
+}

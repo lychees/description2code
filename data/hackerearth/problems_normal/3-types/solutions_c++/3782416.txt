@@ -1,0 +1,176 @@
+using namespace std;
+#include <map>
+#include <set>
+#include <list>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <string>
+#include <bitset>
+#include <cstdio>
+#include <limits>
+#include <vector>
+#include <climits>
+#include <cstring>
+#include <cstdlib>
+#include <fstream>
+#include <numeric>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+#define ll long long
+#define input freopen("input.in","r",stdin);
+#define output freopen("output.out","w",stdout);
+#define e printf("\n");
+#define all(it,v) for(it=(v).begin();it!=(v).end();it++)
+#define rep(i,a,b) for(int i=a;i<b;i++)
+#define pii pair<int,int>
+typedef vector<vector<ll> > mat;
+const ll mx=10000;
+const ll mod=1000000007;
+const ll inf=0x3f3f3f3f;
+vector<pair<int,pair<int,int> > > g1;
+vector<pair<int,pair<int,int> > > g2;
+vector<int> g[10001];
+vector<int> G[10001];
+int par[mx+1];
+int rnk[mx+1];
+bool vis[mx+1];
+bool dfs1(int u)
+{
+  vis[u]=true;
+  rep(i,0,g[u].size())
+  {
+    int w=g[u][i];
+    if(!vis[w])
+      dfs1(w);
+  }
+}
+bool dfs2(int u)
+{
+  vis[u]=true;
+  rep(i,0,G[u].size())
+  {
+    int w=G[u][i];
+    if(!vis[w])
+      dfs2(w);
+  }
+}
+int fin(int i)
+{
+  if(par[i]==i)
+    return i;
+  par[i]=fin(par[i]);
+  return par[i];
+}
+void uni(int x,int y)
+{
+  int xr=fin(x);
+  int yr=fin(y);
+
+  if(rnk[xr]>rnk[yr])
+  {
+    par[yr]=xr;
+  }
+  else
+  if(rnk[xr]<rnk[yr])  
+  {
+    par[xr]=yr;
+  }
+  else
+  {
+    par[yr]=xr;
+    rnk[xr]++;
+  }
+}
+void solve()
+{
+  int i,j,k,u,v,w,m,n,t,x,y;
+  cin>>n>>m;
+  pair<int,pair<int,int> > p;
+  set<pair<int,int> > s;
+  memset(vis,false,sizeof vis);
+  for(i=0;i<m;i++)
+  {
+    cin>>u>>v>>w;
+    g[u].push_back(v);
+    g[v].push_back(u);
+    if(w==3)
+      {
+        g1.push_back(make_pair(1,make_pair(u,v)));
+        g2.push_back(make_pair(1,make_pair(u,v)));
+        g[u].push_back(v);
+        g[v].push_back(u);
+        G[u].push_back(v);
+        G[v].push_back(u);
+      }
+     if(w==2)
+      {
+        g2.push_back(make_pair(2,make_pair(u,v)));
+        G[u].push_back(v);
+        G[v].push_back(u);
+      }
+     if(w==1)
+      {
+        g1.push_back(make_pair(2,make_pair(u,v)));
+        g[u].push_back(v);
+        g[v].push_back(u);
+      }
+  }
+  dfs1(1);
+  for(i=1;i<=n;i++)
+  {
+    if(!vis[i])
+    {
+      cout<<"-1\n";
+      return ;
+    }
+  }
+  memset(vis,false,sizeof vis);
+  dfs2(1);
+  for(i=1;i<=n;i++)
+  {
+    if(!vis[i])
+    {
+      cout<<"-1\n";
+      return ;
+    }
+  }
+  sort(g1.begin(),g1.end());
+  sort(g2.begin(),g2.end());
+  for(i=1;i<=n;i++)
+    par[i]=i;
+  for(i=0;i<g1.size();i++)
+  {
+      p=g1[i];
+      x=p.second.first;
+      y=p.second.second;
+      if(fin(x)!=fin(y))
+        {
+          s.insert(make_pair(min(x,y),max(x,y)));
+          uni(x,y);
+        } 
+  }
+  memset(rnk,0,sizeof rnk);
+  for(i=1;i<=n;i++)
+    par[i]=i;
+  for(i=0;i<g2.size();i++)
+  {
+      p=g2[i];
+      x=p.second.first;
+      y=p.second.second;
+      if(fin(x)!=fin(y))
+        {
+          s.insert(make_pair(min(x,y),max(x,y)));
+          uni(x,y);
+        }  }
+  cout<<m-s.size();
+ return ;
+}
+int main()
+{
+  solve();
+  return 0;
+}

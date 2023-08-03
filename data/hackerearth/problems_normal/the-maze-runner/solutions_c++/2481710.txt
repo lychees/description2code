@@ -1,0 +1,108 @@
+#include <bits/stdc++.h> 
+
+using namespace std;
+ 
+#define pb push_back
+#define mp make_pair
+#define fs first
+#define sc second
+#define sz(x) (int)((x).size()) 
+#define forn(i,n) for (int i = 0; (i) < (n); ++i)
+#define fornr(i,n) for (int i = (n) - 1; (i) >= 0; --i)
+#define forab(i,a,b) for (int i = (a); (i) < (b); ++i)
+#define forba(i,a,b) for (int i = (b) - 1; (i) >= (a); --i)
+#define forit(it,c) for(__typeof((c).begin()) it = (c).begin(); it != (c).end(); ++it)
+#define all(c) (c).begin(),(c).end() 
+
+#ifdef LOCAL
+    #define eprintf(...) fprintf(stderr, __VA_ARGS__)
+#else
+    #define eprintf(...) static_cast<void>(0)   
+#endif
+
+#ifdef _WIN32
+    #define I64 "%I64d"
+#else
+    #define I64 "%lld"
+#endif
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef long double LD;
+typedef unsigned int uint;
+typedef vector <int> vi;
+typedef pair <int, int> pii;
+
+#define FNAME ""
+
+const int MAXN = 1e5 + 5, INF = 1e9;
+
+int x[MAXN], y[MAXN];
+double dp[MAXN];
+
+inline int sqr(int a)
+{
+    return a * a;
+}
+
+inline double dist(int x_1, int y_1, int x_2, int y_2)
+{
+    return sqrt(sqr(x_1 - x_2) + sqr(y_1 - y_2));
+}
+
+void relax(int ind, double val)
+{
+    dp[ind] = min(dp[ind], val);
+}
+
+int main() 
+{
+#ifdef LOCAL    
+    freopen(FNAME".in", "r", stdin);
+    freopen(FNAME".out", "w", stdout); 
+#endif    
+    int n, h;
+    scanf("%d", &n);
+    n++;
+    forn (i, n)
+        scanf("%d%d", &x[i], &y[i]);
+    scanf("%d", &h);
+    forab (i, 1, n)
+    {
+        int curX = x[i], curY = y[i];
+        forn (g, 2)
+        {
+            double down = 0, up = M_PI;
+            dp[2 * i + g] = INF;
+            forba (j, 0, i)
+            {
+                double ang1 = M_PI / 2 - atan2(curY - y[j], curX - x[j]);
+                double ang2 = M_PI / 2 - atan2(curY - y[j] - h, curX - x[j]);
+                down = max(down, ang1);
+                up = min(up, ang2);
+                //printf("%f %f\n", down, up);
+                if (ang1 >= down && ang1 <= up)
+                    relax(2 * i + g, dp[2 * j] + dist(curX, curY, x[j], y[j]));
+                if (ang2 >= down && ang2 <= up)
+                    relax(2 * i + g, dp[2 * j + 1] + dist(curX, curY, x[j], y[j] + h));
+            }
+            //printf("%f\n", dp[2 * i + g]);
+            if (M_PI / 2 >= down && M_PI / 2 <= up)
+                relax(2 * i + g, x[i] - x[0]);
+            curY += h;
+        }
+    } 
+    int maxx = y[n - 1] + h, minn = y[n - 1];
+    double ans = INF;
+    fornr (i, n)
+    {
+        maxx = min(maxx, y[i] + h);
+        minn = max(minn, y[i]);
+        if (y[i] >= minn && y[i] <= maxx)
+            ans = min(ans, dp[2 * i] + x[n - 1] - x[i]);
+        if (y[i] + h >= minn && y[i] + h <= maxx)
+            ans = min(ans, dp[2 * i + 1] + x[n - 1] - x[i]);
+    } 
+    printf("%.10f\n", ans);
+    return 0;
+}

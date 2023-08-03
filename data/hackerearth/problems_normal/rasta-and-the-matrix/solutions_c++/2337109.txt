@@ -1,0 +1,131 @@
+// There is nothing in caterpillar that tells you its going to be  a butterfly -----------------------------------  !
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long  int
+#define pb push_back
+#define f first
+#define s second
+#define mod 1000000007
+#define INF 1e18+20
+
+#define pi pair<ll,ll>
+#define pii pair<pi,ll>
+#define f first
+#define mp make_pair
+#define s second
+
+#define rep(i,n) for(ll i=0;i<n;i++)
+#define forup(i,a,b) for(int i=a;i<=b;i++)
+#define gd(v) scanf("%d",&v)
+#define pd(v) printf("%d\n",v)
+#define gl(v) scanf("%lld",&v)
+#define pl(v) printf("%lld\n",v)
+#define fr freopen("input-10.txt","r",stdin)
+#define fo freopen("output-10.txt","w",stdout)
+
+struct seg{
+	seg * L , *R;
+	ll l,r,b,lz;
+	seg(){
+		b=l=r=lz=0;
+		L=R=NULL;
+	};
+	seg(ll a,ll b){
+		l=a;
+		r=b;
+		L=NULL;
+		R=NULL;
+		b=0;
+		lz=0;
+	}
+	inline void le(){
+		if(r==l or L!=NULL) return ;
+		ll mid=(l+r)/2;
+		L=new seg(l,mid);
+	}
+	inline void re(){
+		if(r==l or R!=NULL) return;
+		ll mid=(l+r)/2;
+		R=new seg(mid+1,r);
+	}
+	inline void color(bool h){
+		if(!h) return ;
+		lz^=1;
+		b=r-l+1-b;
+	}
+	inline void lazy_update(){
+		le();
+		re();
+		if(l!=r){
+			L->color(lz);
+			R->color(lz);
+		}
+		lz=0;
+	}
+	inline ll query(ll s,ll e){
+		if(r<s or e<l) return 0;
+		if(s<=l and r<=e) return b;
+		lazy_update();
+		return L->query(s,e)+R->query(s,e);
+	}
+	inline void update(ll s,ll e){
+		if(r<s or e<l or s>e) return;
+		if(s<=l and r<=e){
+			color(1);
+			return;
+		}
+		lazy_update();
+		L->update(s,e);
+		R->update(s,e);
+		b=L->b + R->b;
+	}
+
+};
+
+int main(){
+	ios_base::sync_with_stdio(0);
+	int n;
+	cin >> n ;
+	ll t,l,r,x,y;
+	seg *stree[2];
+	stree[0]=new seg(1,(ll)INF);
+	stree[1]=new seg(1,(ll)INF);
+	ll ans=0;
+	rep(i,n){
+		cin >> t;
+		if(t==1){
+			cin >> x >> l >> r;
+			l^=ans;
+			r^=ans;
+
+			if(x==0){
+				stree[0]->update(l,r);
+			}
+			else{
+				stree[1]->update(l,r);
+			}
+		}
+		else{
+			cin >> l >> r >> x >> y;
+			l^=ans;
+			r^=ans;
+			x^=ans;
+			y^=ans;
+			ll b1=stree[0]->query(l,r);
+			ll b2=stree[1]->query(x,y);
+			ll w1=r-l+1-b1;
+			ll w2=y-x+1-b2;
+			w1%=mod;
+			w2%=mod;
+			b1%=mod;
+			b2%=mod;
+			ans=1LL*w1*b2;
+			ans%=mod;
+			ll ans2=(1LL*w2*b1)%mod;
+			ans2%=mod;
+			ans+=ans2;
+			if(ans>=mod) ans-=mod;
+			cout<<ans%mod<<"\n";
+		}
+	}
+}

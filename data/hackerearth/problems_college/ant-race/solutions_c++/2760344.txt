@@ -1,0 +1,77 @@
+#include <iostream>
+using namespace std;
+#define max 1005
+int t, n, inorder[max], preorder[max], tree[max], first, mango, second, position[max];
+int preInd;
+
+int search(int val, int start, int end) {
+	for(int i=start;i<=end;i++) if(inorder[i] == val) return i;
+}
+int create(int start, int end, int treeInd) {
+	if(start > end) return 0;	
+	int pos = search(preorder[preInd], start, end);
+	preInd++;
+	int x;
+	x = create(start, pos-1, 2*treeInd+1);
+	if(x!=0) tree[treeInd*2+1] = x;
+	x = create(pos+1, end, 2*treeInd+2);
+	if(x!=0) tree[treeInd*2+2] = x;
+	return inorder[pos];
+}
+void display() {
+	for(int i=0;i<n;i++) cout<<tree[i]<<" ";
+	cout<<endl;
+}
+void createTree() {
+	// create tree using n, inorder and preorder
+	// and since it is full binary tree, can be stored in array
+	preInd = 0;	
+	tree[0] = create(0, n-1, 0);
+	for(int i=0;i<n;i++) {
+		position[tree[i]] = i;
+	}
+}
+int lca(int ind, int f, int s) {
+	if(ind >= n) return -1;
+	if(tree[ind] == f || tree[ind] == s) return ind;
+	int left = lca(2*ind+1, f, s);
+	int right = lca(2*ind+2, f, s);
+	if(left == -1) return right;
+	if(right == -1) return left;
+	return ind;
+}
+int dist(int ind) {
+	int ans = 0;
+	while(ind > 0) {
+		ans++;
+		ind = (ind - 1)/2;
+		
+	}
+	return ans+1;
+}
+void solve() {
+	// first mango and second contain the nodes.
+	// find distance between first and mango, and mango and second
+	int lca1 = lca(0, first, mango);
+	int lca2 = lca(0, mango, second);		
+	int df = dist(position[first]), ds = dist(position[second]), dm = dist(position[mango]), dl1 = dist(lca1), dl2 = dist(lca2);
+	int d1 = df + dm - 2*dl1 + 1;
+	int d2 = dm + ds - 2*dl2 + 1;
+	if(d1 < d2) cout<<"FIRST\n";
+	else cout<<"SECOND\n";
+	
+}
+int main()
+{
+	cin>>t;
+	while(t--) {
+		cin>>n;
+		for(int i=0;i<n;i++) cin>>inorder[i];
+		for(int i=0;i<n;i++) cin>>preorder[i];
+		createTree();
+		// display();
+		cin>>first>>mango>>second;		
+		solve();
+	}
+    return 0;
+}

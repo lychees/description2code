@@ -1,0 +1,104 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<algorithm>
+#include<vector>
+using namespace std;
+int offs[2097200],a0[2097200],a1[2097200],a2[2097200],a3[2097200];
+inline void build(int node,int st,int ed)
+{
+	if(st>ed)return;
+	if(st==ed)
+	{
+		a0[node]=1;
+		return;
+	}
+	build(2*node+1,st,(st+ed)/2);
+	build(2*node+2,(st+ed)/2+1,ed);	
+	a0[node]=a0[2*node+1]+a0[2*node+2];
+}
+
+inline void swap(int *a,int *b,int *c,int *d)
+{
+	int temp=*a;*a=*b;*b=*c;*c=*d,*d=temp;
+}
+
+inline void lazyprop(int node)
+{
+	offs[2*node+1]+=offs[node];
+	offs[2*node+2]+=offs[node];
+	int ct=offs[node]%4;
+	offs[node]=0;;
+	while(ct--)
+	{
+		swap(&a0[2*node+1],&a1[2*node+1],&a2[2*node+1],&a3[2*node+1]);
+		swap(&a0[2*node+2],&a1[2*node+2],&a2[2*node+2],&a3[2*node+2]);
+	}
+	return;
+}
+
+inline void up_date(int node,int st,int ed,int l,int r,int val)
+{
+	if(st>ed||l>ed||r<st)return;
+	if(st>=l&&ed<=r)
+	{
+		offs[node]+=val;
+		int ct=val;
+		while(ct--)swap(&a0[node],&a1[node],&a2[node],&a3[node]);
+		return;
+	}
+	
+	if(offs[node]>0)lazyprop(node);
+	
+	up_date(2*node+1,st,(st+ed)/2,l,r,val);
+	up_date(2*node+2,(st+ed)/2+1,ed,l,r,val);
+	
+	a0[node]=a0[2*node+1]+a0[2*node+2];
+	a1[node]=a1[2*node+1]+a1[2*node+2];
+	a2[node]=a2[2*node+1]+a2[2*node+2];
+	a3[node]=a3[2*node+1]+a3[2*node+2];
+	return;
+}
+inline int query(int tree[],int node,int st,int ed,int l,int r)
+{
+	if(l>ed||r<st||st>ed)return 0;
+	if(st>=l&&ed<=r)return tree[node];
+	if(offs[node]>0)lazyprop(node);
+	return (query(tree,2*node+1,st,(st+ed)/2,l,r)+query(tree,2*node+2,(st+ed)/2+1,ed,l,r));
+}
+inline int mx(int a,int b,int c,int d)
+{
+	return max(a,max(b,max(c,d)));
+}
+
+int n,q,l,r,k;
+char ch;
+int main()
+{
+	scanf("%d %d",&n,&q);
+	build(0,0,n-1);
+	while(q--)
+	{
+		scanf("%c %c",&ch,&ch);
+		if(ch=='C')
+		{
+			scanf("%d %d %d",&l,&r,&k);
+			l--,r--;
+			up_date(0,0,n-1,l,r,k%4);
+		}
+		else if(ch=='A')
+		{
+			scanf("%d %d %d",&l,&r,&k);
+			l--,r--;
+			up_date(0,0,n-1,l,r,4-k%4);
+		}
+		else
+		{
+			scanf("%d %d",&l,&r);
+			l--,r--;
+			//cout<<".............."<<query(a0,0,0,n-1,l,r)<<" "<<query(a1,0,0,n-1,l,r)<<" "<<query(a2,0,0,n-1,l,r)<<" "<<query(a3,0,0,n-1,l,r)<<endl;
+			printf("%d\n",mx(query(a0,0,0,n-1,l,r),query(a1,0,0,n-1,l,r),query(a2,0,0,n-1,l,r),query(a3,0,0,n-1,l,r)));
+		}
+	}
+	return 0;
+}

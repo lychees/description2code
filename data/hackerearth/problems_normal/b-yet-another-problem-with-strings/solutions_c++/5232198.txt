@@ -1,0 +1,115 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define fru(j,n) for(int j=0; j<(n); ++j)
+//#define tr(it,v) for(typeof((v).begin()) it=(v).begin(); it!=(v).end(); ++it)
+#define tr(it,v) for(auto it=(v).begin(); it!=(v).end(); ++it)
+#define x first
+#define y second
+#define pb push_back
+#define ALL(G) (G).begin(),(G).end()
+ 
+#if 1
+	#define DEB printf
+#else
+	#define DEB(...)
+#endif
+ 
+typedef long long ll;
+typedef long long LL;
+typedef double D;
+typedef pair<int,int> pii;
+typedef vector<int> vi;
+ 
+const int mod1 = 1000000123;
+const int mod2 = 1000000181;
+const int MAXN = 1000006;
+ 
+typedef pii ht;
+const ht hinit = pii(0,0);
+ht updh(ht h, char c) {
+	pii ret;
+	ret.x = (1LL*h.x*347 + c) % mod1;
+	ret.y = (1LL*h.y*427 + c) % mod2;
+	return ret;
+}
+ht hminus(ht h, ht base, char c) {
+	pii ret;
+	ret.x = ((h.x - 1LL*base.x*c) % mod1 + mod1) % mod1;
+	ret.y = ((h.y - 1LL*base.y*c) % mod2 + mod2) % mod2;
+	return ret;
+}
+ 
+char buf[MAXN];
+ 
+void solve() {
+	int n,qq;
+	scanf("%d%d",&n,&qq);
+	vector<ht> H(n); vi L(n);
+	map<int,multiset<ht> > M;
+	fru(i,n) {
+		scanf("%s",buf);
+		int l = strlen(buf);
+		ht h = hinit;
+		fru(j,l) h = updh(h, buf[j]);
+		H[i] = h;
+		L[i] = l;
+		M[l].insert(h);
+	}
+	int lastyes = 0;
+	fru(q,qq) {
+		int t;
+		scanf("%d",&t);
+		if(t==1) {
+			scanf("%s",buf);
+			int l = strlen(buf);
+			fru(i,l) buf[i] = 'a' + (buf[i]-'a'+lastyes)%26;
+			bool ok = 0;
+			tr(it,M) {
+				int l0 = it->x;
+				if(l0 > l) break;
+				ht h = hinit;
+				ht h0 = updh(hinit, 1);
+				int l1 = 0;
+				fru(i,l) {
+					if(i<l0) h0 = updh(h0,0);
+					h = updh(h, buf[i]); l1++;
+					if(i>=l0) { h = hminus(h,h0,buf[i-l0]); l1--; }
+					if(l1 == l0) {
+						if(it->y.find(h) != it->y.end()) {
+							ok = 1;
+							break;
+						}
+					}
+				}
+				if(ok) break;
+			}
+			if(ok) {
+				puts("YES");
+				lastyes = q;
+			} else {
+				puts("NO");
+			}
+		}
+		if(t==2) {
+			int i, al;
+			scanf("%d%d",&i,&al);
+			i = (i+lastyes)%n;
+			al = (al+lastyes)%26;
+			ht &h = H[i];
+			int &l = L[i];
+			M[l].erase(M[l].find(h));
+			if(M[l].empty()) M.erase(M.find(l));
+			l++;
+			h = updh(h,al+'a');
+			M[l].insert(h);
+		}
+	}
+}
+ 
+int main() {
+	int te = 1;
+//	scanf("%d",&te);
+	fru(ti,te) solve();
+	return 0;
+}

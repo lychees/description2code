@@ -1,0 +1,157 @@
+#include <iostream>
+#include <string>
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+#include <queue>
+#include <list>
+#include <stack>
+#include <map>
+#include <set>
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <sstream>
+using namespace std;
+typedef long long LL;
+#define VI vector<int>
+#define SIZE(A) ((int)A.size())
+#define LEN(A) ((int)A.length())
+#define MS(A) memset(A,0,sizeof(A))
+#define MAX(a,b) ((a>=b)?(a):(b))
+#define MIN(a,b) ((a>=b)?(b):(a))
+#define II pair<int,int>
+#define MP make_pair
+#define X first
+#define Y second
+#define PB push_back
+#define FOUND(A,x) (A.find(x)!=A.end)
+#define getcx getchar_unlocked
+
+#define REP(i, n) for(int i = 0; i < (n); i++)
+#define FOR(i, a, n) for(i = a; i < n; i++)
+#define REV(i, a, n) for(i = a; i > n; i--)
+#define FORALL(it,A) for(it=A.begin(); it!=A.end();it++)
+#define DEB(n) cout<<"(<<< DEBUG "<<n<<" >>>)"<<endl;
+//int dx[] = {-1,0,1,0}, dy[] = {0,1,0,-1};
+//int dx[] = {1,1,1,0,0,-1,-1,-1}, dy[] = {1,0,-1,1,-1,1,0,-1};
+inline void inp( int &n )
+{
+        n=0;
+        int ch=getcx();int sign=1;
+        while( ch < '0' || ch > '9' ){if(ch=='-')sign=-1; ch=getcx();}
+
+        while(  ch >= '0' && ch <= '9' )
+                n = (n<<3)+(n<<1) + ch-'0', ch=getcx();
+		n=n*sign;
+}
+
+struct Tree {
+	int a[4];
+};
+
+int a[4];
+
+Tree tree[4000000];
+int flag[4000000];
+
+void init(int node, int l, int r) {
+	if (l == r) {
+		tree[node].a[0] = 1;
+		tree[node].a[1] = 0;
+		tree[node].a[2] = 0;
+		tree[node].a[3] = 0;
+		return;
+	} else {
+		init(2*node, l, (l+r) / 2);
+		init(2*node + 1, (l+r) / 2 + 1, r);
+		for (int i=0; i<4; i++) {
+			tree[node].a[i] = tree[2*node].a[i] + tree[2*node+1].a[i];
+		}
+	}
+}
+
+void update(int node, int l, int r, int b, int e) {
+	if (flag[node] != 0) {
+		for (int i=0; i<4; i++) a[i] = tree[node].a[i];
+		for (int i=0; i<4; i++) {
+			tree[node].a[i] = a[(i + 4 - (flag[node] % 4)) % 4];
+		}
+		if (l != r) {
+			flag[2*node] += flag[node];
+			flag[2*node + 1] += flag[node];
+		}
+		flag[node] = 0;
+	}
+	if (r<l || e<l || b>r) return;
+	if (l >= b && r <= e) {
+		for (int i=0; i<4; i++) a[i] = tree[node].a[i];
+		for (int i=0; i<4; i++) {
+			tree[node].a[i] = a[(i+3) % 4];
+		}
+		if(l != r) {
+			flag[2*node] ++;
+			flag[2*node + 1] ++;
+		}
+		return;
+	}
+	update(2*node, l, (l+r) / 2, b, e);
+	update(2*node + 1 , (l+r) / 2 + 1, r, b, e);
+	for (int i=0; i<4; i++) {
+		tree[node].a[i] = tree[2*node].a[i] + tree[2*node + 1].a[i];
+	}
+}
+
+Tree Z;
+
+Tree query(int node,int l,int r,int b,int e) {
+	if (flag[node] != 0) {
+		for (int i=0; i<4; i++) a[i] = tree[node].a[i];
+		for (int i=0; i<4; i++) {
+			tree[node].a[i] = a[(i + 4 - (flag[node] % 4)) % 4];
+		}
+		if (l != r) {
+			flag[2*node] += flag[node];
+			flag[2*node + 1] += flag[node];
+		}
+		flag[node] = 0;
+	}
+	if(r < l || e < l || b > r) return Z;
+	if (l>=b && r<=e) {
+		return tree[node];
+	}
+
+	Tree q1 = query(2*node, l, (l+r)/2, b, e);
+	Tree q2 = query(2*node + 1 , (l+r)/2 + 1, r, b, e);
+	Tree res;
+	for(int i=0; i<4; i++) res.a[i] = q1.a[i] + q2.a[i];
+	return res;
+}
+
+int main()
+{
+	int n, m;
+	cin >> n >> m;
+	init(1, 0, n-1);
+	for(int i=0; i<m; i++) {
+		char ch;
+		int x, y, z;
+		cin >> ch;
+		if(ch == 'Q'){
+			cin >> x >> y;
+			int ans = 0;
+			Tree a = query(1, 0, n-1, x-1, y-1);
+			REP(j, 4) ans = max(ans, a.a[j]);
+			cout << ans << endl;
+		} else {
+			cin >> x >> y >> z;
+			z %= 4;
+			if(ch == 'A'){
+				if(z == 1 || z == 3) z = (z + 2) % 4;
+			}
+			REP(j, z) update(1, 0, n-1, x-1, y-1);
+		}
+	}
+	return 0;
+}
+

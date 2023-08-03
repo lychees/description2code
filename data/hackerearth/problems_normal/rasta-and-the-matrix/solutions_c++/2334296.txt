@@ -1,0 +1,121 @@
+#include <bits/stdc++.h>
+#define rf freopen("inp.in","r",stdin)
+#define  MOD 1000000007LL
+#define NMAX 100050
+
+using namespace std ;
+
+long long  N = 1e18  ;
+long long  q , type  ;
+long long lastans = 0;
+
+struct node{
+	
+	node* left ; node* right;
+	long long val ;
+	bool lazy;
+	
+	node(){
+		val = lazy = 0LL;
+		left = right = NULL;
+	}
+
+	void push( long long  l , long long r){
+		if( lazy ){
+			val = r - l + 1 - val ;
+			if( l != r ){
+				if( left  == NULL ) left  = new node();
+				if( right == NULL ) right = new node();
+				left -> lazy = 1 - left -> lazy ;
+				right-> lazy = 1 - right-> lazy ;
+			}
+			lazy = 0; 
+		}
+	}
+
+	node* update( long long l , long long r , long long qs , long long qe ){
+		push( l , r );
+		if( l > qe or r < qs) return this; // Important
+		if( l >=qs and r <= qe) {
+			lazy = 1;
+			push( l , r ) ;
+			return this;  // Important
+		}
+		long long mid = (l+r) >> 1 ;
+		if( left == NULL ) // No left child for this node , let's make one 
+			left = new node();
+		if(right == NULL ) // No right child for this node
+			right= new node();
+		left  = left  -> update( l , mid , qs , qe );
+		right = right -> update( mid+1 , r , qs ,qe);
+		val   = left -> val + right -> val ;
+		return this ;
+	}
+
+	long long query( long long l , long long  r, long long qs , long long qe){
+		push( l , r );
+		if( l > qe  or  r <  qs) return 0 ;
+		if( l >= qs and r <= qe) return val;
+		long long mid = (l+r) >> 1 ;
+		long long res = 0;
+		if( left != NULL ) res += left -> query( l , mid , qs , qe) ;
+		if(right != NULL ) res += right-> query(mid+1, r , qs , qe) ;
+		return res;
+	}
+
+};
+
+node* root1 = new node();
+node* root2 = new node();
+
+long long compute( long long x1 , long long x2 , long long y1 , long long y2 ){
+	
+	long long res , row_ones , row_zero , col_ones , col_zero ;
+	
+	row_ones = root1 -> query(1,N,x1,x2);
+	row_zero = x2 - x1 + 1 - row_ones ;
+
+	col_ones = root2 -> query(1,N,y1,y2);
+	col_zero = y2 - y1 + 1 - col_ones ;
+
+	row_ones %= MOD , col_ones %= MOD , row_zero %= MOD , col_zero %= MOD ;
+
+	res = ( row_ones * col_zero + row_zero * col_ones) % MOD;
+	return res;
+
+}
+
+int main(){
+	
+	
+	cin.tie(0);
+	ios::sync_with_stdio(false);
+
+	cin >> q;
+	
+	while( q-- ){
+		
+		cin >> type;
+		
+		if( type & 1 ){
+			long long check , l , r;
+			cin >> check >> l >> r;
+			l ^= lastans , r ^= lastans ;
+			if( check == 0) // Row
+				root1 = root1 -> update(1,N,l,r);
+			else            // Column
+				root2 = root2 -> update(1,N,l,r);
+		}
+
+		else {
+			long long x1 , x2 , y1 , y2 ;
+			cin >> x1 >> x2 >> y1 >> y2 ;
+			x1 ^= lastans , x2 ^= lastans , y1 ^= lastans , y2 ^= lastans ;
+			lastans = compute( x1 , x2 , y1 , y2 );
+			cout << lastans << "\n";
+		}
+
+	}
+
+	return 0;
+}

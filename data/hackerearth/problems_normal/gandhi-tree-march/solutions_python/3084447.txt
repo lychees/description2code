@@ -1,0 +1,94 @@
+#!/usr/bin/python
+#gandhi tree problem
+import copy
+def convert(key, mystr):
+	global column,temp,Fcolumn
+	L = list(mystr)
+	#check if binary or single
+	open = 0
+	close = 0
+	LFindex = 0
+	LLindex = 0
+	RFindex = 0
+	RLindex = 0
+	#stores the a of a()
+	column[key] = L.pop(0)
+	#removes '(' and ')'
+	L.pop(0)
+	L.pop(len(L)-1)
+	if len(L) == 0:
+		return
+	mystr = mystr[2:] + mystr[:len(mystr)]
+	for i, ch in enumerate(L):
+		if L[i] == '(':
+			open = open + 1
+			if open == 1:
+				LFindex = i-1
+			continue	
+		if L[i] == ')':
+			close = close - 1
+			if open == abs(close):
+				LLindex = i
+				break;
+
+	if not i == len(L) - 1: 
+		# it means there is  right tree
+		RFindex = LLindex + 1
+		RLindex = len(L) - 1
+	
+	#here key receives CR CL CRL means Center Right Left like
+	lkey = key + "L"
+	lstr = mystr[LFindex:LLindex+1]
+	column[lkey] = lstr
+	rkey = key + "R"
+	rstr = mystr[RFindex:RLindex+1]
+	column[rkey] = rstr
+treeDisp = []
+indDisp = []
+map_column = {"C":0, "L":-1, "R":1}
+T = int( raw_input() )
+for count in range(T):
+	column = {}
+	Fcolumn = {}
+	temp = {}
+	Gandhi_Tree = {}
+	colDisp, line = raw_input().split(" ")
+	colDisp = int(colDisp)
+	indDisp.append(colDisp)
+	line = line.replace("..","")
+	line = line.replace(".","@()")
+	convert("C",line)
+	while len(column):
+		keyall = column.keys()
+		if not len(keyall):
+			convert(keyall[0],column[keyall[0]])
+		else:
+			if len(column[keyall[0]]) == 1:
+				Fcolumn[keyall[0]] = column.pop(keyall[0])
+				continue
+			convert(keyall[0],column[keyall[0]])
+			Fcolumn[keyall[0]] = column.pop(keyall[0])
+	column.clear()
+	temp.clear()
+	for key in Fcolumn:
+		newkey = 0
+		for ch in key:
+			newkey = newkey + map_column[ch]
+		if Gandhi_Tree.has_key(newkey):
+			Gandhi_Tree[newkey] += Fcolumn[key].replace('@','')
+		else:
+			Gandhi_Tree[newkey] = Fcolumn[key].replace('@','')
+	treeDisp.append(Gandhi_Tree)
+for ind, tree in zip(indDisp, treeDisp):
+	mystr = ""
+	try:
+		sorted_output = list(tree[ind])
+		sorted_output.sort()
+		for ch in sorted_output:
+			mystr = mystr + ch
+	except KeyError:
+		mystr = "Common Gandhijee!"
+	if mystr == "":
+		print "Common Gandhijee!"
+	else:
+		print mystr

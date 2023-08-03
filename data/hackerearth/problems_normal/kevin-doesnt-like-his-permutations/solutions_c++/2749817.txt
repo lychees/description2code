@@ -1,0 +1,90 @@
+#include <iostream>
+#include <cstdio>
+
+#ifdef ONLINE_JUDGE
+#define getchar getchar_unlocked
+#define putchar putchar_unlocked
+#define fread fread_unlocked
+#define fwrite fwrite_unlocked
+#endif
+#ifdef getchar
+#undef getchar
+#endif
+#define getchar() (*_pinp?*_pinp++:(_inp[fread(_pinp=_inp, 1, 4096, stdin)]='\0', *_pinp++))
+char _inp[4097], *_pinp=_inp;
+#define scan(x) do{while((x=getchar())<'-'); _ssign=x=='-'; if(_ssign) while((x=getchar())<'0'); for(x-='0'; '0'<=(_=getchar()); x=(x<<3)+(x<<1)+_-'0'); x=_ssign?-x:x;}while(0)
+char _;
+bool _ssign;
+
+using namespace std;
+
+int N, K, MOD;
+long long MODSQ;
+int A[500][500];
+
+int gcd(int a, int b, int c, int d, int e, int f, int& o, int& p)
+{
+    if(b==0)
+    {
+        o=c;
+        p=e;
+        return a;
+    }
+    int k=a/b;
+    return gcd(b, a-b*k, d, c-d*k, f, e-f*k, o, p);
+}
+
+int modinv(int x)
+{
+    int a, b;
+    gcd(x, MOD, 1, 0, 0, 1, a, b);
+    return (a+MOD)%MOD;
+}
+
+void _main()
+{
+    scanf("%d%d%d", &N, &K, &MOD);
+    MODSQ=1LL*MOD*MOD;
+    for(int i=0; i<N; i++)
+        for(int j=0; j<N; j++)
+            if(abs(i-j)<=K)
+                A[i][j]=abs(i-j)%MOD;
+            else
+                A[i][j]=0;
+    int sign=1;
+    int scale=1;
+    for(int i=0; i<N; i++)
+    {
+        int row=i;
+        for(; row<N; row++)
+            if(A[row][i]!=0)
+                break;
+        if(row!=i)
+        {
+            for(int j=0; j<N; j++)
+                swap(A[i][j], A[row][j]);
+            sign*=-1;
+        }
+        for(int j=i+1; j<N; j++)
+        {
+            scale=(1LL*scale*A[i][i])%MOD;
+            for(int k=N-1; k>=i; k--)
+                A[j][k]=(1LL*A[j][k]*A[i][i]-1LL*A[j][i]*A[i][k]+MODSQ)%MOD;
+        }
+    }
+    int ans=1;
+    for(int i=0; i<N; i++)
+        ans=1LL*ans*A[i][i]%MOD;
+    ans=(1LL*ans*sign+MOD)%MOD;
+    ans=1LL*ans*modinv(scale)%MOD;
+    printf("%d\n", ans);
+}
+
+int main()
+{
+    int TEST;
+    scanf("%d", &TEST);
+    while(TEST--)
+        _main();
+    return 0;
+}

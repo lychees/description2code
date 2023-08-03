@@ -1,0 +1,111 @@
+#include <cstdio>
+#include <iostream>
+#include <vector>
+#include <cstring>
+#include <cassert>
+
+#define DEBUG if(0)
+
+using namespace std;
+typedef long long int int32;
+
+vector<int32> Primes;
+vector<int32> ProductPrimes;
+vector<int32> seive;
+vector<int32> divisors;
+
+const int maxRange = 4*1e6 + 1;
+
+int32 ProductOfDigits(int32 n)
+{
+    int32 ans = 1;
+    while(n > 0)
+    {
+        int digit = n%10;
+        n = n/10;
+        if(digit != 0)
+            ans *= digit;
+    }
+    return ans;
+}
+bool CheckPalin(int n)
+{
+    char buf[124];
+    sprintf(buf,"%d",n);
+    int len = strlen(buf);
+    for(int i = 0; i < len/2 ; ++i)
+    {
+        if(buf[i] != buf[len - 1 - i])
+            return false;
+    }
+    return true;
+}
+void init()
+{
+    
+    seive.resize(maxRange);
+    divisors.resize(maxRange);
+
+    divisors[0] = 0;
+    divisors[1] = 1;
+    
+    for(int i = 2; i < maxRange; ++i )
+    {
+        if( seive[i] == 0 )
+        {
+            if(CheckPalin(i))
+            {
+                Primes.push_back(i);
+                ProductPrimes.push_back(ProductOfDigits(i));
+            }
+
+            divisors[i] = 2;
+            for(int j = 2*i; j < maxRange; j+=i )
+            {
+                seive[j] = 1;
+
+                if( divisors[j] == 0 )
+                    divisors[j] = 2;
+                else
+                    ++divisors[j];
+            }
+        }
+        else
+        {
+            for(int j = i; j < maxRange; j+=i )
+            {
+                if( divisors[j] == 0 )
+                    divisors[j] = 2;
+                else
+                    ++divisors[j];
+            }
+        }
+    }
+
+    DEBUG 
+    {
+        cout << Primes.size() << endl;
+        cout << Primes[113-1] << endl;
+        cout << ProductPrimes[112] << endl;
+
+        for(int i = 1; i <= 10; ++i )
+        {
+            cout << Primes[i] << endl;
+        }
+    }
+}
+
+int main()
+{
+    init();
+    int32 T,n,m;
+    cin >> T;
+    while(T--)
+    {
+        cin >> n >> m;
+        int32 product = m*ProductPrimes[n-1];
+        if(product > maxRange) assert(0);
+        cout << divisors[product] << endl;
+    }
+    return 0;
+}

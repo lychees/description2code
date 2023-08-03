@@ -1,0 +1,135 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<algorithm>
+#include<vector>
+#include<memory.h>
+using namespace std;
+const int MAXN = 2 * 1e5 + 5;
+const long long BASE = 137;
+
+int N;
+int S[MAXN];
+
+struct Entry {
+	int id;
+	pair<int, int> val;
+	bool operator < (const Entry &en) const {
+		if (val == en.val)
+			return id < en.id;
+		return val < en.val;
+	}
+} L[MAXN];
+int p[MAXN][20];
+
+void calSuffix()
+{
+	int k = 16;
+	for(int i = 0;i < N;i ++)
+        p[i][0] = S[i];
+
+    for(int j = 1;j <= k;j ++)
+    {
+    	int len = 1 << (j - 1);
+        for(int i = 0;i < N;i ++)
+        {
+            L[i].val.first = p[i][j - 1];
+            L[i].val.second = (len + len <= N) ? p[(i + len) % N][j - 1] : -1;
+            L[i].id = i;
+        }
+        sort(L, L + N);
+        p[L[0].id][j] = 0;
+        for(int i = 1;i < N;i ++)
+            p[L[i].id][j] = p[L[i - 1].id][j] + (L[i].val != L[i - 1].val);
+    }
+}
+struct fenwick
+{
+    int sum[MAXN];
+    void clear()
+    {
+        memset(sum , 0 , sizeof sum);
+    }
+    void update(int x)
+    {
+        for(x;x < MAXN;x += (x & -x))
+            sum[x] ++;
+    }
+    int get(int x)
+    {
+        int ans = 0;
+        for(x; x > 0;x -= (x & -x))
+            ans += sum[x];
+        return ans;
+    }
+} fen1;
+long long inv[MAXN] , revin[MAXN] , inv2[MAXN] , revin2[MAXN] , age[MAXN];
+
+vector<int> V;
+int main()
+{
+    int T;
+    cin >> T;
+    for(int i = 0;i < T;i ++)
+    {
+        cin >> N;
+
+        V.clear();
+        fen1.clear();
+        memset(inv , 0 , sizeof inv);
+        memset(inv2 , 0 , sizeof inv2);
+        memset(revin2 , 0 , sizeof revin2);
+        memset(revin , 0 , sizeof revin);
+        for(int i = 0;i < N;i ++)
+        {
+            cin >> S[i];
+            V.push_back(S[i]);
+        }
+
+        sort(V.begin() , V.end());
+        V.resize(unique(V.begin() , V.end()) - V.begin());
+
+        for(int i = 0;i < N;i ++)
+        {
+            int pos = lower_bound(V.begin() , V.end() , S[i]) - V.begin() + 1;
+            inv[i] = inv[i - 1] + fen1.get(N) - fen1.get(pos);
+            inv2[i] = inv2[i - 1] + fen1.get(pos - 1);
+            fen1.update(pos);
+        }
+        fen1.clear();
+        for(int i = N - 1;i >= 0;i --)
+        {
+            int pos = lower_bound(V.begin() , V.end() , S[i]) - V.begin() + 1;
+            revin[i] = revin[i + 1] + fen1.get(pos - 1);
+            revin2[i] = revin2[i + 1] + fen1.get(N) - fen1.get(pos);
+            fen1.update(pos);
+        }
+
+        long long total = inv[N - 1] , total2 = inv2[N - 1];
+        long long mn = 0;
+        age[0] = mn = total;
+        for(int i = 0;i < N - 1;i ++)
+        {
+            long long bet = (total2 - inv2[i] - revin2[i + 1]);
+            long long thi = inv[i] + revin[i + 1] + bet;
+            age[i + 1] = thi;
+            mn = max(mn , thi);
+        }
+
+        for(int i = 0;i < N;i ++)
+            S[i + N] = S[i];
+
+        calSuffix();
+        int mnans = 0;
+
+
+        for(int i = 0;i < N;i ++)
+            if(age[L[i].id] == mn)
+            {
+                mnans = L[i].id;
+                break;
+            }
+
+        cout << mnans << " " << mn << endl;
+    }
+}

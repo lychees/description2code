@@ -1,0 +1,194 @@
+#include <stdio.h>
+#include <vector>
+#include <queue>
+#include <malloc.h>
+#include <utility>
+#include <algorithm>
+
+using namespace std;
+
+struct Edge
+{
+	long long int u,v,weight;
+};
+
+
+struct graph
+{
+     long long int V,E;
+	 
+	 struct Edge *edge;	
+};
+
+struct graph *createGraph(long long int V, long long int E)
+{
+	struct graph *g = (struct graph *)malloc(sizeof(struct graph));
+	g->V = V;
+	g->E = E;
+	g->edge = (struct Edge *)malloc(sizeof(struct Edge)*E);
+	return g;
+};
+
+struct subset
+{
+	long long int parent;
+	long long int rank;
+};
+
+int compare(const void * a, const void *b)
+{
+	struct Edge *u = (struct Edge *)a;
+	struct Edge *v = (struct Edge *)b;
+	return u->weight > v->weight;
+}
+
+long long int find(long long int u, struct subset* subsets)
+{
+	if(subsets[u].parent!=u)
+	   subsets[u].parent =  find(subsets[u].parent, subsets);
+	
+	return subsets[u].parent;   
+}
+
+long long int unionT(long long int u, long long int v, struct subset* subsets)
+{
+	
+	long long int x = find(u,subsets);
+	long long int y = find(v,subsets);
+	
+	if(subsets[x].rank < subsets[y].rank)
+	     subsets[x].parent = y;
+	
+	else if(subsets[y].rank < subsets[x].rank)
+	     subsets[y].parent = x;
+		 
+	else
+	{
+	     	subsets[y].parent = x;
+	     	subsets[x].rank++;
+	}	  
+}
+
+struct Edge * mst_kruskal(struct graph *g, long long int *e)
+{
+    qsort(g->edge,g->E,sizeof(g->edge[0]),compare);	
+    long long int  V = g->V;
+   long long int  E = g->E;
+    //for(long long int i=0;i<g->E;i++)
+        //prlong long intf("%d ",g->edge[i].weight);
+        
+    struct subset *subsets = (subset *)malloc(sizeof(subset)*V);    
+    
+    for(long long int i=0;i<V;i++)
+    {
+    	subsets[i].parent = i;
+    	subsets[i].rank = 0;
+	}
+	
+	long long int i=0;
+	struct Edge *result  = (struct Edge *)malloc(sizeof(struct Edge)*V);
+	while(*e<V-1)
+	{
+		 if(i>=E)
+		  break;
+		struct Edge next_edge = g->edge[i++];  
+		long long int u = next_edge.u;
+		long long int v = next_edge.v;
+		long long int x = find(u,subsets);
+		long long int y = find(v,subsets);
+		
+		if(x != y)
+		{
+		    unionT(x,y,subsets);
+			result[(*e)++] = next_edge;			    
+		}   
+		
+	}
+    
+    //for(long long int i=0;i<*e;i++)
+      //prlong long intf(" %d %d %d \n",result[i].u, result[i].v, result[i].weight);
+    
+    //qsort(result,*e,sizeof(result[0]),compare);
+    
+    //for(long long int i=0;i<e;i++)
+      //prlong long intf(" %d %d %d \n",result[i].u, result[i].v, result[i].weight);
+
+    return result;
+    
+}
+
+int main()
+{
+	//vector < pair <int,int> > v[1000001];
+	long long int n,m,k,i,a,b,c;
+	scanf("%lld%lld%lld",&n,&m,&k);
+	long long int e=0;
+	struct graph *G = createGraph(n,m);
+	
+	for(i=0;i<m;i++)
+	{
+		scanf("%lld%lld%lld",&a,&b,&c);
+		G->edge[i].u = a-1;
+		G->edge[i].v = b-1;
+		G->edge[i].weight = c;
+	}
+	
+	//printf("hi");
+	struct Edge * result = mst_kruskal(G,&e);
+	
+	//printf("hi");
+	
+	qsort(result,e,sizeof(result[0]),compare);
+	
+	long long int sum=0;
+	
+	for(i=e-1;i>=0;i--)
+	{
+	    sum = sum + result[i].weight; 
+	}
+	
+	long long int ans =0;
+	
+	/*for(i=e-1;i>=0;i--)
+	{
+		//printf("hi");
+		while(sum>k && result[i].weight>1)
+		{
+			sum = sum - result[i].weight + 1;
+			ans++;
+		}
+	}*/
+	
+	long long int cost=0;
+	
+	long long int forest = n;
+	long long int res = (forest-1<=k)?forest-1:-1;
+	for(i=0;i<e;i++)
+	{
+          --forest;
+		  cost = cost+result[i].weight;
+		  
+		  if(cost+forest-1 <=k)
+		  	res = forest-1;
+		  	
+		  if(forest==1)
+		    break;	
+	}
+	
+	if(forest>1)
+	  printf("-1\n");
+	
+	else
+	  printf("%lld\n",res);
+	 
+	//int V = G->V;
+	
+	//if(sum>k || e<V-1)
+	  //printf("-1\n");
+	//else
+	 //printf("%lld\n",ans);  
+	 
+	//printf("%d",e);  
+	
+    return 0;
+}

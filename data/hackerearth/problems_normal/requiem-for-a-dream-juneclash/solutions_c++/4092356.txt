@@ -1,0 +1,148 @@
+#include <iostream>
+#include <set>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include <queue>
+#include <set>
+#include <cstring>
+#include <map>
+#include <bitset>
+#include <random>
+#include <stack>
+#include <list>
+#include <unordered_set>
+#include <ctime>
+
+using namespace std;
+
+#define ll long long
+#define ld long double
+#define sc second
+#define fs first
+#define mp make_pair
+
+int gcd(int a, int b) {
+	return b ? gcd(b, a % b) : a;
+}
+
+int _c(int k, int n){
+	int nm = 1, dm = 1;
+	while (k){
+		nm *= n;
+		dm *= k;
+		n--, k--;
+	}
+	return nm / dm;
+}
+
+template<class T> T sqr(T x) { return x*x; }
+ld pi = 3.1415926535897932384626433832795;
+
+const int N = 2e5 + 10, lg = 20;
+ll mod = 1e9 + 7;
+
+vector<int> factor(int n){
+	vector<int> res;
+	for (int i = 2; i*i <= n; i++){
+		if (n%i == 0)
+			res.push_back(i);
+		while (n%i == 0)
+			n /= i;
+	}
+	if (n != 1) res.push_back(n);
+	return res;
+}
+
+int dx[] = { 0, 0, 1, -1, };
+int dy[] = { 1, -1, 0, 0 };
+
+struct data {
+	ll sum, pref, suff, ans;
+	data(){};
+	data(ll vl){ sum = vl; pref = suff = ans = max(vl, 0ll); }
+};
+
+data combine(data l, data r) {
+	data res;
+	res.sum = l.sum + r.sum;
+	res.pref = max(l.pref, l.sum + r.pref);
+	res.suff = max(r.suff, r.sum + l.suff);
+	res.ans = max(max(l.ans, r.ans), l.suff + r.pref);
+	return res;
+}
+
+vector<pair<int, ll> > g[N];
+int tin[N], tout[N], _tm = 0;
+int up[N][lg];
+data dup[N][lg];
+
+
+void dfs(int v, ll len = 0, int p = 1){
+	up[v][0] = p;
+	data d = data(len);
+	dup[v][0] = d;
+	tin[v] = _tm++;
+	for (int i = 1; i < lg; i++){
+		up[v][i] = up[up[v][i - 1]][i - 1];
+		dup[v][i] = combine(dup[v][i - 1], dup[up[v][i - 1]][i - 1]);
+	}
+	for (int i = 0; i < g[v].size(); i++){
+		int to = g[v][i].fs;
+		ll len = g[v][i].sc;
+		if (to == p) continue;
+		dfs(to,len, v);
+	}
+	tout[v] = _tm++;
+}
+
+bool isupper(int u, int v){
+	return tin[u] <= tin[v] && tout[u] >= tout[v];
+}
+
+int lca(int u, int v){
+	if (isupper(u, v)) return u;
+	if (isupper(v, u)) return v;
+	for (int i = lg - 1; i >= 0; i--){
+		if (!isupper(up[u][i], v))
+			u = up[u][i];
+	}
+	return up[u][0];
+}
+
+data find(int u, int _lca){
+	data res = data(0);
+	for (int i = lg - 1; i >= 0; i--){
+		if (!isupper(up[u][i], _lca) || up[u][i] == _lca){
+			res = combine(res, dup[u][i]);
+			u = up[u][i];
+		}
+	}
+	return res;
+}
+
+int main()
+{
+	int n, q;
+	cin >> n >> q;
+	for (int i = 1; i < n; i++){
+		int u, v, w;
+		cin >> u >> v >> w;
+		g[u].push_back(mp(v, w));
+		g[v].push_back(mp(u, w));
+	}
+	dfs(1);
+	while (q--){
+		int u, v;
+		cin >> u >> v;
+		int _lca = lca(u, v);
+
+		data l, r;
+		l = find(u, _lca);
+		r = find(v, _lca);
+		swap(r.suff, r.pref);
+		l = combine(l, r);
+		cout << l.ans << endl;
+	}
+	return 0;
+}

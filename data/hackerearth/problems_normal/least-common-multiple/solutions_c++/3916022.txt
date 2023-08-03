@@ -1,0 +1,81 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int uli;
+const int mx=32e6;
+bool criba[mx];
+int nxt[mx];
+
+//primalty test exatracted from hackereart ;)
+uli mulmod(uli a,uli b,uli c){
+   uli res = 0;
+   if(a < b)swap(a, b);
+   while(b){
+      if(b & 1){
+         res = (res + a);
+         if(res >= c) {
+            res -= c;
+         }
+      }
+      a = (a + a);
+      if(a >= c)a -= c;
+      b >>= 1;
+   }
+   return res;
+}
+uli BigMod(uli a,uli b,uli mod){
+   if(!b) return 1;
+   uli x = BigMod(a,b/2,mod);
+   x = mulmod(x,x,mod);
+   if(b%2) x = mulmod(x,a,mod);
+   return x;
+}
+
+int miller_rabin(uli n,int iterations){
+   if(n<2) return 0;
+   if(n==2) return 1;
+   if(n%2 == 0) return 0;
+   uli d = n-1;
+   while(d%2 == 0) d/=2;
+   while(iterations--){
+      uli rnd = rand()%(n-2) + 2;
+      uli temp = d;
+      uli x = BigMod(rnd,temp,n);
+      while(temp!=n-1 && x!=1 && x!=n-1){
+         temp *= 2;
+         x = mulmod(x,x,n);
+      }
+      if(x!=n-1 && temp%2 == 0) return false;
+   }
+   return true;
+}
+
+
+int main(){
+   //   freopen("data.in","r",stdin);
+   //   freopen("my.out","w",stdout);
+   memset(criba,true,sizeof criba);
+   criba[0]=criba[1]=false;
+
+   uli n;
+   cin>>n;
+   uli ans=n;
+   for(int i=0;i<mx;i++){
+      if(criba[i]){
+         if(uli(i)>n)break;
+         uli v=i;
+         while(v<=n/uli(i))v*=uli(i);
+         ans=min(ans,v*(n/v));
+         for(int j=i+i;j<mx;j+=i){
+            criba[j]=false;
+         }
+      }
+   }
+   for(uli p=n/2+1;p<=ans;p++){
+      if(miller_rabin(p,18)){
+         ans=min(ans,p);
+         break;
+      }
+   }
+   cout<<ans<<endl;
+   return 0;
+}

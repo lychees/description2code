@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int
+  N = 50005;
+
+typedef long long L;
+
+struct T {
+  int l, r;
+  int id;
+  
+  T(int l = -1, int r = -1, int id = 0) :
+    l(l), r(r), id(id) {} 
+};
+
+int a[N], cnt1[N], cnt2[N];
+vector <T> Q, buc[2500];
+int cl = -1, cr = -1;
+L ans, re[N];
+
+void push1() {
+  ++cnt1[a[++cl]];
+  ans += cnt2[a[cl]];
+}
+
+void push2() {
+  ++cnt2[a[++cr]];
+  ans += cnt1[a[cr]];
+}
+
+void pop1() {
+  --cnt1[a[cl]];
+  ans -= cnt2[a[cl--]];
+}
+
+void pop2() {
+  --cnt2[a[cr]];
+  ans -= cnt1[a[cr--]];
+}
+
+void solve(int x, int y) {
+  while(cl < x) push1();
+  while(cl > x) pop1();
+  while(cr < y) push2();
+  while(cr > y) pop2();
+}
+
+int main()
+{
+  int n;
+  scanf("%d", &n);
+  
+  for(int i = 0; i < n; ++i) {
+    scanf("%d", a + i);
+  }
+  
+  int q;
+  scanf("%d", &q);
+  
+  for(int i = 0; i < q; ++i) {
+    int l1, r1, l2, r2;
+    scanf("%d%d%d%d", &l1, &r1, &l2, &r2);
+    
+    --l1; --l2; --r1; --r2;
+    Q.push_back(T(r1, r2, i+1));
+    Q.push_back(T(l1 - 1, l2 - 1, i+1));
+    Q.push_back(T(l1 - 1, r2, -i-1));
+    Q.push_back(T(r1, l2 - 1, -i-1));
+  }
+  
+  int sz = 0;
+  
+  for(T x : Q) {
+    if(x.l < 0) continue;
+    buc[x.l/250].push_back(x);
+    sz = max(sz, x.l/250);
+  }
+  
+  for(int i = 0; i <= sz; ++i) {
+    vector <T> v = buc[i];
+    sort(v.begin(), v.end(), [] (const T a, const T b) {
+      if(a.r != b.r) return a.r < b.r;
+      return a.l < b.l;
+    });
+    for(T x : v) {
+      solve(x.l, x.r);
+      if(x.id > 0) re[x.id - 1] += ans;
+      else re[-1 - x.id] -= ans;
+    }
+  }
+  
+  for(int i = 0; i < q; ++i) {
+    printf("%lld\n", re[i]);
+  }
+  return(0);
+}

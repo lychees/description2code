@@ -1,0 +1,99 @@
+using namespace std;
+#include<bits/stdc++.h>
+
+#define BG begin()
+#define ED end()
+#define st first
+#define nd second
+#define PB push_back
+#define PF push_front
+#define FOR(i,a,b) for (int i=a;i<b;i++)
+#define FORE(i,a,b) for (int i=a;i<=b;i++)
+#define FORD(i,a,b) for (int i=a;i>=b; i--)
+#define ri(n)({\
+    int neg=0;\
+    n=0;\
+    char ch;\
+    for(ch=getchar(); ch<'0' || ch>'9'; ch=getchar()) if (ch=='-') neg=1-neg;\
+    n=ch-48;\
+    for(ch=getchar(); ch>='0' && ch<='9'; ch=getchar()) n=(n<<3)+(n<<1)+ch-48;\
+    if (neg) n=-n;\
+})
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int,int> II;
+typedef pair<ll,ll> LL;
+const ll INF=1000000000+7;
+const double esp=1e-13;
+const double pi=3.141592653589;
+
+string s;
+ll a,b,dp[16][136][2],sodo,power[20];
+int gt;
+bool kt;
+
+ll xuli(int pos,int sum, int check){
+    if (pos==s.size()){
+        dp[pos][sum][check]=(sum==gt);
+    }
+    ll ans=dp[pos][sum][check];
+    if (ans==-1){
+        ans=0;
+        int x;
+        if (check) x=9;
+        else x=s[pos]-'0';
+        FORE(i,0,x) ans+=xuli(pos+1, sum+i, check | (i<x));
+    }
+    return dp[pos][sum][check]=ans;
+}
+
+ll ans(ll n){
+    memset(dp,-1,sizeof(dp));
+    s="";
+    while (n){
+        s=(char)(n%10+48)+s;
+        n/=10;
+    }
+    return xuli(0,0,0);
+}
+
+void minsolution(int pos,int sum, int check,ll value){
+    if (kt) return;
+    if (pos==s.size()){
+        if (sum==gt && value>=a) sodo=min(sodo,value);
+        return;
+    }
+    int x;
+    if (check) x=9;
+    else x=s[pos]-'0';
+
+    FORE(i,x,9){
+        if (pos==0 && i==0) continue;
+        if (!kt && sum+i<=gt && sum+i+(s.size()-pos-1)*9>=gt) minsolution(pos+1,sum+i,check|(i>x), value*10+i );
+    }
+}
+
+int main(){
+ //   freopen("sum-of-digits-8.inp", "r", stdin);
+ //   freopen("sum-of-digits-8.out", "w", stdout);
+    cin >> a >> b >> gt;
+    power[0]=1;
+    FORE(i,1,15) power[i]=power[i-1]*10;
+    sodo=INF*INF;
+    cout << ans(b)-ans(a-1) << "\n";
+
+    s="";
+    while (a){
+        s=(char)(a%10+48)+s;
+        a/=10;
+    }
+
+    FORE(i,0,15)
+    if (!kt){
+        if (i) s="0"+s;
+        kt=false;
+        minsolution(0,0,0,0);
+    }
+    cout << sodo;
+}

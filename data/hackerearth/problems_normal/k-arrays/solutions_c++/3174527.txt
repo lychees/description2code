@@ -1,0 +1,115 @@
+#include <iostream>
+#include <cstdio>
+
+using namespace std;
+
+long long int mod = 1e9+7;
+
+long long int a[17][17], sum[21];
+
+long long int add(long long int a, long long int b) {
+	a += b;
+	if(a >= mod) {
+		a %= mod;
+	}
+	return a;
+}
+
+long long int mul(long long int a, long long int b) {
+	a *= b;
+	if(a >= mod) {
+		a %= mod;
+	}
+	return a;
+}
+
+long long int invb(long long int base, long long int exponent, long long int modulus)
+{
+    long long int result = 1;
+    while (exponent > 0)
+    {
+        if (exponent % 2 == 1)
+            result = (result * base) % modulus;
+        exponent = exponent >> 1;
+        base = (base * base) % modulus;
+
+    }
+    return result;
+}
+
+long long int divi(long long int x, long long int y) {
+	if(x == 0)	return 0;
+	long long int ans = mul(x, invb(y, mod-2, mod));
+	return ans;
+}
+
+int main()
+{
+
+    int t, n, k;
+	scanf("%d", &t);
+	
+    while(t--) {
+    	scanf("%d %d", &n, &k);
+    	for(int i = 0; i < k; ++i) {
+    		for(int j = 0; j < n; ++j) {
+    			scanf("%lld", &a[i][j]);
+    		}
+    	}
+    	for(int i = 0; i < n; ++i) {
+    		sum[i] = 0;
+    		for(int j = 0; j < k; ++j)
+    			sum[i] = add(sum[i], a[j][i]);
+    	}
+
+    	int maxx = (1<<(n)) - 1;
+    	//cout<<maxx<<endl;
+
+    	int maxlen = 1001, minlen = 0;
+
+    	long long int minvalue = 1000000000000ll;
+    	long long int maxvalue = -1;
+    	for(int i = 1; i <= maxx; ++i) {
+    		int cnt = 0;
+    		int num = i;
+    		int bit = 0;
+    		long long int val = 1;
+    		while(num) {
+    			if(num&1) {
+    				val = mul(val, sum[bit]);
+    				cnt++;
+    			}
+    			num /= 2;
+    			bit++;
+    		}
+    		val = divi(val, cnt);
+    		if(val <= minvalue) {
+    			if(val < minvalue) {
+    				minvalue = val;
+    				minlen = cnt;
+    			}
+    			else {
+    				minlen = max(minlen, cnt);
+    			}
+    		}
+
+    		if(val >= maxvalue) {
+    			if(val > maxvalue) {
+    				maxvalue = val;
+    				maxlen = cnt;
+    			}
+    			else {
+    				maxlen = min(maxlen, cnt);
+    			}
+    		}
+    	}
+    	long long int ans1 = minvalue^maxvalue;
+    	long long int ans2 = minlen^maxlen;
+    	
+		printf("%lld %lld\n", ans1, ans2);
+    }
+    
+    
+
+    return 0;
+}

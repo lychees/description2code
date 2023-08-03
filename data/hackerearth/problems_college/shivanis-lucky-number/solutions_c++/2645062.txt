@@ -1,0 +1,84 @@
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <queue>
+
+ 
+std::queue<std::pair<int, int> > q;
+ 
+int use[1024][1000];
+int prex[1024][1000], prey[1024][1000], res[1024][1000];
+char s[1000];
+ 
+void add(int val, int preS, int preX, int tS, int tX) {
+	if (use[tS][tX]) return;
+	use[tS][tX] = 1;
+	prex[tS][tX] = preS;
+	prey[tS][tX] = preX;
+	res[tS][tX] = val;
+	q.push(std::make_pair(tS, tX));
+}
+ 
+int main() {
+	int T;
+	scanf("%d", &T);
+	getchar();
+	for (int cas = 1; cas <= T; cas++) {
+		gets(s);
+		int x;
+		scanf("%d", &x);
+		getchar();
+		int numS = 0;
+		for (int i = 0; s[i]; i++) {
+			if (s[i] >= '0' && s[i] <= '9') {
+				numS |= (1 << (s[i] - '0'));
+			}
+		}
+		memset(prex, -1, sizeof(prex));
+		memset(prey, -1, sizeof(prey));
+		memset(use, 0, sizeof(use));
+		for (int i = 1; i < 10; i++) {
+			if (numS & (1 << i)) {
+				add(i, -1, -1, 1 << i, i % x);
+			}
+		}
+		while (!q.empty()) {
+			std::pair<int, int> fx = q.front();
+			q.pop();
+			for (int i = 0; i < 10; i++) {
+				if (numS & (1 << i)) {
+					add(i, fx.first, fx.second, fx.first | (1 << i), (fx.second * 10 + i) % x);
+				}
+			}
+		}
+		if (!use[numS][0]) {
+			puts("Impossible");
+		} else {
+			std::string ans = "";
+			int xS = numS, yS = 0;
+			while (xS != -1) {
+				ans += res[xS][yS] + '0';
+				int txS = prex[xS][yS], tyS = prey[xS][yS];
+				xS = txS;
+				yS = tyS;
+			}
+			std::reverse(ans.begin(), ans.end());
+			std::string res = "";
+			int now = 0;
+			for (int i = 0; i < ans.size(); i++) {
+				now = now * 10 + (ans[i] - '0');
+				res += now / x + '0';
+				now %= x;
+			}
+			printf("%s = %d * ", ans.c_str(), x);
+			int pos = 0;
+			for (; res[pos] == '0'; pos++);
+			for (; pos < res.size(); pos++) {
+				printf("%c", res[pos]);
+			}
+			puts("");
+		}
+	}
+	return 0;
+}

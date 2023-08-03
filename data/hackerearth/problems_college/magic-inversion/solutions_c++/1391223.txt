@@ -1,0 +1,124 @@
+#include <iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+struct node{
+    struct node *lchild,*rchild;
+    long int info,cnt_small,aux_cnt,freq;
+};
+vector<long int> a(200000);
+vector<long int> b(200000);
+
+struct node* insert_in_tree(struct node *root,struct node *ptr,long int val){
+    if(root == nullptr){
+        struct node *tmp = new struct node;
+        tmp->aux_cnt =0;
+        tmp->cnt_small =0;
+        tmp->freq = 1;
+        tmp->info = val;
+        tmp->lchild = nullptr;
+        tmp->rchild = nullptr;
+        root = tmp;
+        return root;
+    }
+    ptr->cnt_small+=ptr->aux_cnt;
+    if(ptr->lchild)
+        ptr->lchild->aux_cnt += ptr->aux_cnt;
+    if(ptr->rchild)
+        ptr->rchild->aux_cnt += ptr->aux_cnt;
+    ptr->aux_cnt = 0;
+    if(ptr->info == val){
+        ptr->freq++;
+        if(ptr->rchild)
+            ptr->rchild->aux_cnt++;
+        return root;
+    }
+    else if(ptr->info > val){
+        ptr->cnt_small++;
+        if(ptr->rchild)
+            ptr->rchild->aux_cnt++;
+        if(ptr->lchild)
+            insert_in_tree(root,ptr->lchild,val);
+        else{
+            struct node *tmp = new struct node;
+            tmp->aux_cnt =0;
+            tmp->cnt_small =ptr->cnt_small-1;
+            tmp->freq = 1;
+            tmp->info = val;
+            tmp->lchild = nullptr;
+            tmp->rchild = nullptr;
+            ptr->lchild = tmp;
+        }
+    }
+    else{
+        if(ptr->rchild){
+            insert_in_tree(root,ptr->rchild,val);
+        }
+        else{
+           struct node *tmp = new struct node;
+            tmp->aux_cnt =0;
+            tmp->cnt_small =ptr->cnt_small+1;
+            tmp->freq = 1;
+            tmp->info = val;
+            tmp->lchild = nullptr;
+            tmp->rchild = nullptr;
+            ptr->rchild = tmp;
+        }
+    }
+    return root;
+}
+
+long int Ceil(struct node *ptr, long int input)
+{
+    if( ptr == NULL )
+        return -1;
+    ptr->cnt_small+=ptr->aux_cnt;
+    if(ptr->lchild)
+          ptr->lchild->aux_cnt += ptr->aux_cnt;
+    if(ptr->rchild)
+          ptr->rchild->aux_cnt += ptr->aux_cnt;
+    ptr->aux_cnt = 0;
+
+    if( ptr->info == input ){
+       return ptr->cnt_small;
+    }
+
+    if( ptr->info < input )
+        return Ceil(ptr->rchild, input);
+
+    long int ceil = Ceil(ptr->lchild, input);
+    return (ceil >= 0)? ceil : ptr->cnt_small;
+}
+bool check_prime(long int num){
+	long int i;
+	for(i=2;i<=sqrt(num);i++){
+		if(num%i == 0)
+			return false;
+	}
+	return true;
+}
+int main()
+{
+    long int t,i,j,x,n,cnt=0;
+    struct node *root = nullptr;
+    scanf("%ld",&n);
+    for(i=0;i<n;i++)
+        scanf("%ld",&a[i]);
+    for(i=0;i<n;i++)
+        scanf("%ld",&b[i]);
+    for(i=n-2;i>=0;i--){
+        root = insert_in_tree(root,root,b[i+1]);
+        x = Ceil(root,a[i]);
+        if(x == -1){
+            cnt+=(n)-(i+1);
+        }
+        else
+            cnt+=x;
+        //printf("count is %ld\n",cnt);
+    }
+    if(check_prime(cnt))
+       printf("MAGIC INVERSION");
+    else
+   		printf("SIMPLE INVERSION");
+    return 0;
+}

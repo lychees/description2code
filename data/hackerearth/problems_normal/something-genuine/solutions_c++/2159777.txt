@@ -1,0 +1,66 @@
+#include <cstdio>
+#include <map>
+using namespace std;
+
+typedef long long LL;
+
+const LL MOD = 1000000007;
+const int N = 200005;
+
+struct node{
+    LL squared;
+    LL sum;
+    LL lazy;
+    
+    node(){
+        squared = sum = lazy = 0;
+    }
+};
+
+node stree[4 * N];
+int n;
+map<int,int> last;
+
+void Proc(int id,int l,int r,LL add){
+    stree[id].squared = (stree[id].squared + 2LL * add * stree[id].sum + (LL)(r - l + 1) * add * add) % MOD;
+    stree[id].sum = (stree[id].sum + add * (LL)(r - l + 1)) % MOD;
+    stree[id].lazy = (stree[id].lazy + add) % MOD;
+}
+
+void Propagate(int id,int l,int r){
+    int chld = id << 1;
+    int m = (l + r) >> 1;
+    Proc(chld,l,m,stree[id].lazy);
+    Proc(chld + 1,m + 1,r,stree[id].lazy);
+    stree[id].lazy = 0;
+}
+
+void Update(int id,int l,int r,int x,int y){
+    if(x <= l && r <= y){
+        Proc(id,l,r,1);
+    }
+    else{
+        int chld = id << 1;
+        int m = (l + r) >> 1;
+        Propagate(id,l,r);
+        if(x <= m) Update(chld,l,m,x,y);
+        if(y > m)  Update(chld + 1,m + 1,r,x,y);
+        stree[id].squared = (stree[chld].squared + stree[chld + 1].squared) % MOD;
+        stree[id].sum = (stree[chld].sum + stree[chld + 1].sum) % MOD;
+    }
+}
+
+int main(){
+    scanf("%d",&n);
+    LL ans = 0;
+    for(int i = 1 ; i <= n ; i++){
+        int x;
+        scanf("%d",&x);
+        int prv = last[x] + 1;
+        Update(1,1,n,prv,i);
+        ans = (ans + stree[1].squared) % MOD;
+        last[x] = i;
+    }
+    printf("%lld\n",ans);
+    return 0;
+}

@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+#define MAXN 305
+using namespace std;
+
+#define rep(i, a, b) for(int i = (a); i < int(b); ++i)
+#define rrep(i, a, b) for(int i = (a) - 1; i >= int(b); --i)
+#define trav(it, v) for(typeof((v).begin()) it = (v).begin(); it != (v).end(); ++it)
+#define all(v) (v).begin(), (v).end()
+#define what_is(x) cerr << #x << " is " << x << endl;
+
+typedef double fl;
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+typedef vector<pii> vpi;
+
+int inv[3][800];
+int M[3]={2,5,719};
+
+void print(vector<vector<int> > v){
+	rep(i,0,v.size()){
+		rep(j,0,v[i].size())
+		printf("%d ", v[i][j]);
+		printf("\n");
+	}
+	printf("\n");
+
+}
+
+struct Matrix{
+	vector<vector<int> > a;
+
+	vector<bool> solvable(vector<vector<int> > b, int mind){
+		rep(i,0,a[0].size()){
+			rep(j,0,a.size()){
+				a[j][i]%=M[mind];
+			}
+		}
+		rep(i,0,b[0].size()){
+			rep(j,0,b.size()){
+				b[j][i]%=M[mind];
+			}
+		}
+		/*print(a);
+		print(b);*/
+		vector<bool> ans(b[0].size(), 1);
+		int k=0;
+		rep(i,0,a[0].size()){
+			bool any=0;
+			rep(j,k,a.size()){
+				if(a[j][i]){
+					swap(a[k], a[j]);
+					swap(b[k], b[j]);
+					any=1;
+					break;
+				}
+			}
+			if(!any)
+				continue;
+			/*print(a);
+			print(b);*/
+			int mul=inv[mind][a[k][i]];
+			rep(I,0,a[0].size()){
+				a[k][I]=(a[k][I]*mul)%M[mind];
+			}
+			rep(I,0,b[0].size()){
+				b[k][I]=(b[k][I]*mul)%M[mind];
+			}
+			rep(j,k+1,a.size()){
+				mul=a[j][i];
+				rep(I,0,a[0].size()){
+					a[j][I]=(a[j][I]-mul*a[k][I])%M[mind];
+					if(a[j][I] < 0)
+						a[j][I] += M[mind];
+				}
+				rep(I,0,b[0].size()){
+					b[j][I]=(b[j][I]-mul*b[k][I])%M[mind];
+					if(b[j][I] < 0)
+						b[j][I] += M[mind];
+				}
+			}
+			++k;
+			/*print(a);
+			print(b);*/
+		}
+		rep(j,k,b.size())
+			rep(I,0,b[0].size()){
+				if(b[j][I])
+					ans[I]=0;
+			}
+		return ans;
+	}
+};
+
+int n, q;
+
+int main(){
+	rep(i,0,3)
+		rep(j,0,M[i])
+			rep(k,0,M[i])
+				if((j*k)%M[i] == 1)
+					inv[i][j]=k;
+	Matrix m;
+	scanf("%d%d", &n, &q);
+	rep(i,0,n){
+		m.a.push_back(vector<int>(n));
+		rep(j,0,n){
+			scanf("%d", &m.a[i][j]);
+		}
+	}
+	vector<vector<int> > atmp=m.a;
+	vector<vector<int> > bs(n,vector<int>(q));
+	rep(j,0,q){
+		rep(i,0,n){
+			int y;
+			scanf("%d", &y);
+			bs[i][j]=y;
+		}
+	}
+	vector<bool> oks[3];
+	rep(i,0,3){
+		m.a=atmp;
+		oks[i]=m.solvable(bs, i);
+	}
+	rep(i,0,q){
+		bool ok=1;
+		rep(j,0,3){
+			ok=(ok&&oks[j][i]);
+		}
+		puts(ok?"Yes":"No");
+	}
+}

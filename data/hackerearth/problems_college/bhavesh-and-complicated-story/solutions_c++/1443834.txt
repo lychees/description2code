@@ -1,0 +1,75 @@
+#include<stdio.h>
+#include<algorithm>
+using namespace std;
+typedef long long ll;
+ll a[100005],s[4*100005];
+void build(int v,int l,int r)
+{
+	
+	if(l==r)s[v] = a[l];
+	else{
+		int m = (l+r)/2;
+		build(2*v, l,m);
+		build(2*v+1, m+1,r);
+		s[v] = s[2*v] + s[2*v+1];
+	}
+	//printf("building at %d which look for %d to %d\n",v,l,r);
+	//printf("at this we put %lld\n",s[v]);
+}
+ll sum(int v, int lo,int hi,int l,int r)
+{
+  //  printf("we want sum from %d to %d\n",lo,hi);
+	if(lo > hi)return 0;
+	if(lo==l && hi==r)return s[v];
+	int m = (l+r)/2;
+	ll first,second;
+	first = sum(2*v, lo, min(hi,m), l,m);
+	second = sum(2*v+1, max(lo,m+1), hi, m+1, r);
+	return first+second;
+	
+}
+void update(int v, int l, int r, int pos)
+{
+	if(l>r)return;
+	if(l==r)s[v] = a[pos];
+	else {
+		int m  = (l+r)/2;
+		if(pos<=m)update(2*v, l, m, pos);
+		else update(2*v+1, m+1, r, pos);
+		s[v] = s[2*v] + s[2*v+1];
+	}
+	
+}
+int main()
+{
+   
+    int n,q;
+    int ma = 100000;
+    scanf("%d",&n);
+    int i,x;
+    for(i=0;i<n;i++)
+    {
+    	scanf("%d",&x);
+    	a[x]++;
+    }
+    build(1,0,ma);
+    scanf("%d",&q);
+   // printf("queries are\n");
+    for(i=0;i<q;i++)
+    {
+    	int ty,x,y;
+    	scanf("%d",&ty);
+    	if(ty==0)
+    	{
+    		scanf("%d%d",&x,&y);
+    		//printf("query for %d and %d\n",x,y);
+    		printf("%lld\n",sum(1,x,y,0,ma));
+    	}
+    	else {
+    		scanf("%d",&x);
+    		if(ty==1)a[x]--;
+    		else a[x]++;
+    		update(1,0,ma,x);
+    	}
+    }
+}

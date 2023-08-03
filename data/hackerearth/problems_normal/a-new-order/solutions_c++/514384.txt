@@ -1,0 +1,98 @@
+#include <iostream>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+#include <set>
+using namespace std;
+#define pii pair<int,int>
+#define pp pair<int,pii>
+int ii[100],re[100][100][10],ge[100][100];
+inline void fi(int *a)
+{
+ register char c=0;
+ while (c<33) c=getchar_unlocked();
+ *a=0;
+ int tmp = 0;
+ while (c>33)
+ {
+     if ( c == 45 ) tmp = 1;
+     else *a=*a*10+c-'0';
+     c=getchar_unlocked();
+ }
+ if ( tmp == 1 ) *a = 0-(*a);
+}
+const int NN = 300;
+string ll[NN];
+vector<int> g[NN],val[NN];
+int in[NN],lop[NN];
+set <int> sahi;
+int to(char ch) { 
+    return (int)(ch-'a'); 
+}
+void goo(int lc,int co){
+    lop[lc]=max(lop[lc],co);
+    for(int i=0;i<g[lc].size();i++){
+        int x=g[lc][i];
+        goo(x,lop[lc]+1);
+    }
+}
+void func()
+{
+     ii[0]=1;
+     for(int i=1;i<4;i++) ii[i]=4*ii[i-1];
+     for(int i=0;i<ii[3];i++)
+        for(int j=0;j<=2;j++)
+        {
+            ge[i][j]=(i/ii[j])%4;
+            for(int k=0;k<4;k++)
+                re[i][j][k]=i+ii[j]*(k-ge[i][j]);
+        }
+}
+void chk(int lc,int pl,int c){
+    vector<pp> v;
+    for(int i=lc,j;i<=pl;i=j)
+    {
+        if (c>=ll[i].size())
+        {
+            j=i+1;
+            continue;
+        }
+        j=i;
+        while(j<=pl && c<ll[j].size() && ll[j][c]==ll[i][c]) j++;
+        v.push_back(make_pair(to(ll[i][c]),make_pair(i,j-1)));
+    }
+    for(int i=1;i<v.size();i++){
+        g[v[i-1].first].push_back(v[i].first);
+        in[v[i].first]++;
+    }    
+    for(int i=0;!v.empty() && i<v.size();i++) chk(v[i].second.first,v[i].second.second,c+1);
+}
+int main()
+{
+    int n;
+    cin >> n;
+    for ( int i = 0; i < n; i++ ) {
+            cin >> ll[i];
+            for( int j = 0; j < (int)ll[i].size(); j++ ){
+                 sahi.insert(to(ll[i][j]));
+            }
+    }
+    
+    chk(0,n-1,0);
+    
+    for( int i = 0; i < 26; i++ ) {
+         if (!in[i] && sahi.find(i) != sahi.end() ) goo(i,1);
+    }
+    for( int i = 0; i < 26; i++ ) val[lop[i]].push_back(i);
+    
+    for ( int i = 0; i < 26; i++ ) sort(val[i].begin(),val[i].end());
+
+    for ( int i = 1; i <= n; i++ ) {
+        if ( val[i].empty() ) continue;
+        for ( int j = 0; j < val[i].size(); j++ ) {
+            printf("%c", char(val[i][j]+97));
+        }
+        printf("\n");
+    }
+    return 0;
+}

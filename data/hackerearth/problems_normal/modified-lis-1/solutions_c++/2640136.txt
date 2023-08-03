@@ -1,0 +1,221 @@
+#include <iostream>
+#include <cmath>
+#include <math.h>
+#include <vector>
+#include <algorithm>
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <set>
+#include <map>
+#include <stack>
+#include <queue>
+#include <tuple>
+
+//#include <conio.h>
+
+using namespace std;
+
+#define vec vector
+#define ALL(x) (x).begin(), (x).end()
+#define mp make_pair
+#define mt make_tuple 
+
+typedef long long ll;
+typedef double ld;
+typedef unsigned long long ull;
+
+const ll inf = 1000000000ll;
+const ll inf64 = inf * inf;
+const ll base = inf + 7;
+const ld pi = 3.1415926535897932384626433832795;
+
+struct Node {
+	Node *l, *r;
+	int y, value, dp, cnt, maxDp, cntOfMaxDp;
+
+	Node() {
+		l = r = 0;
+		y = rand() % base;
+		value = dp = maxDp = cntOfMaxDp = 0;
+	}
+
+	Node(int x, int yy, int z) {
+		l = r = 0;
+		y = rand() % base;
+		value = x;
+		cnt = cntOfMaxDp = yy;
+		dp = maxDp = z;
+	}
+
+	void show() {
+		if(l) l->show();
+		cout << value << " ";
+		if(r) r->show(); 
+	}
+};
+
+void update(Node *& v) {
+	int mx, c;
+	mx = v->dp;
+	c = v->cnt;
+	if(v->l) {
+		if(v->l->maxDp > mx) {
+			mx = v->l->maxDp;
+			c = v->l->cntOfMaxDp;
+		}else if(v->l->maxDp == mx) {
+			c = (c + v->l->cntOfMaxDp) % base;
+		}
+	}
+	if(v->r) {
+		if(v->r->maxDp > mx) {
+			mx = v->r->maxDp;
+			c = v->r->cntOfMaxDp;
+		}else if(v->r->maxDp == mx) {
+			c = (c + v->r->cntOfMaxDp) % base;
+		}
+	}
+	v->maxDp = mx;
+	v->cntOfMaxDp = c;
+}
+
+void merge(Node *& v, Node *l, Node *r) {
+	if(!l || !r) {
+		v = (l?l : r);
+		return;
+	}
+
+	if(l->y >= r->y) {
+		merge(l->r, l->r, r);
+		v = l;
+	}else {
+		merge(r->l, l, r->l);
+		v = r;
+	}
+
+	if(v) update(v);
+}
+
+// <= x
+void split(Node * v, Node *& l, Node *& r, int x) {
+	if(!v) {
+		l = r = 0;
+		return;
+	}
+
+	if(v->value <= x) {
+		split(v->r, v->r, r, x);
+		l = v;
+	}else {
+		split(v->l, l, v->l, x);
+		r = v;
+	}
+
+	if(l) update(l);
+	if(r) update(r);
+}
+
+bool solve() {
+	
+	int n;
+	scanf("%d", &n);
+	
+	vec< int > a(n + 1), dp(n + 1, 0), cnt(n + 1, 0);
+
+	for(int i = 1;i <= n;i++) {
+		scanf("%d", &a[i]);
+	}
+
+	Node *t, *nl, *nm, *nr;
+
+	t = 0;
+
+	for(int i = 1;i <= n;i++) {
+
+		//_getch();
+
+		if(a[i] < 0) {
+			nl = nm = nr = 0;
+
+			split(t, nl, nr, 0);
+			split(nr, nm, nr, -a[i] - 1);
+
+			//cout << "(" << 0 << " .. " << -a[i] << ")\n";
+
+			/*cout << '\n';
+			if(nl) nl->show();
+			cout << " | ";
+			if(nm) nm->show();
+			cout << " | ";
+			if(nr) nr->show();
+			cout << '\n';*/
+
+			if(nm) {
+				//cout << i << "ok\n";
+				dp[i] = nm->maxDp + 1;
+				cnt[i] = nm->cntOfMaxDp;
+			}else {
+				dp[i] = cnt[i] = 1;
+			}
+
+			merge(nr, nm, nr);
+			merge(t, nl, nr);
+		}else {
+			nl = nm = nr = 0;
+
+			split(t, nl, nr, 0);
+			split(nl, nl, nm, -a[i]);
+			
+			/*cout << '\n';
+			if(nl) nl->show();
+			cout << " | ";
+			if(nm) nm->show();
+			cout << " | ";
+			if(nr) nr->show();
+			cout << '\n';*/
+
+			if(nm) {
+				dp[i] = nm->maxDp + 1;
+				cnt[i] = nm->cntOfMaxDp;
+			}else {
+				dp[i] = cnt[i] = 1;
+			}
+
+			merge(nl, nl, nm);
+			merge(t, nl, nr);
+		}
+
+		nl = nm = nr = 0;
+
+		split(t, nl, nr, a[i]);
+		merge(nl, nl, new Node(a[i], cnt[i], dp[i]));
+		merge(t, nl, nr);
+
+		//merge(t, t, new Node(a[i], 1, 1));
+
+		//cout << "\n\n";
+		//t->show();
+	} 
+
+	int ans = 0, mx = -1;
+
+	for(int i = 1;i <= n;i++) {
+		//cout << dp[i] << ' ' << cnt[i] << '\n';
+		if(mx < dp[i]) {
+			mx = dp[i];
+			ans = cnt[i];
+		}else if(mx == dp[i]) ans = (ans + cnt[i]) % base;
+	}
+
+	printf("%d %d\n", mx, ans);
+
+	return true;
+}
+
+int main() {
+
+	//while(solve());
+    solve();
+
+    return 0;
+}

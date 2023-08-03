@@ -1,0 +1,152 @@
+#include <iostream>
+#include <cstdio>
+using namespace std;
+const int  MAX = 1e5+5;
+#define LL long long
+#define FASTKRO ios::sync_with_stdio(false);cin.tie(0);
+
+struct node {
+
+    int tl;
+    LL sv,ev;
+    int ll,rl;
+    int tn;
+    node(){sv = ev = 0LL;
+            ll = rl = tl = 0;}
+    node(LL sv, LL ev, int ll , int rl, int tl) {
+        this->sv = sv;
+        this->ev = ev;
+        this->ll = ll;
+        this->rl = rl;
+        this->tl = tl;
+    }
+};
+node tree[4*MAX];
+LL arr[MAX];
+
+node combine(node lc, node rc) {
+    if(lc.tl == -1) {return rc;}
+    if(rc.tl == -1){return lc;}
+
+    //cout << " " << lc.sv << " " <<  lc.ev << " " <<  lc.ll  << " " <<  lc.rl  << " " <<  lc.tl << " " <<  lc.tn << endl;
+    //cout <<  " " << rc.sv << " " <<  rc.ev << " " <<  rc.ll  << " " <<  rc.rl  << " " <<  rc.tl << " " <<  rc.tn << endl;
+
+
+    node tmp;
+    tmp.sv = lc.sv;
+    tmp.ev = rc.ev;
+    tmp.tn = lc.tn + rc.tn;
+    tmp.tl = max(lc.tl, rc.tl);
+
+     tmp.ll = lc.ll;
+     tmp.rl = rc.rl;
+
+    if(lc.ev < rc.sv){
+        tmp.tl = max(tmp.tl, lc.rl + rc.ll);
+          if(lc.ll == lc.tn)
+             tmp.ll += rc.ll;
+         if(rc.rl == rc.tn)
+             tmp.rl += lc.rl;
+    }
+   
+    // if(lc.ll == lc.tn) {
+    //     if(lc.ev < rc.sv)
+    //         tmp.ll = lc.tn + rc.ll;
+    //     else tmp.ll = lc.tn;
+    // }else tmp.ll = lc.ll;
+
+    // if(rc.rl == rc.tn) {
+    //      if(lc.ev < rc.sv)
+    //         tmp.rl = lc.rl + rc.tn;
+    //     else tmp.rl = rc.tn;
+    // }else tmp.rl = rc.rl;
+
+ //cout <<  " " << tmp.sv << " " <<  tmp.ev << " " <<  tmp.ll  << " " <<  tmp.rl  << " " <<  tmp.tl << " " <<  tmp.tn << endl;
+
+    return tmp;
+    
+}
+void build(int ind, int l , int r) {
+    
+   // cout << ind << " " << l << " " << r << endl;
+    if(l > r) return;
+
+    tree[ind].tn = r-l+1;
+    //cout <<  tree[ind].tn  << " as " << ind << endl;
+    if(l == r) {
+        tree[ind] = node(arr[l], arr[l], 1, 1,1);
+        tree[ind].tn = 1;
+         //cout <<  tree[ind].tn  << " asin " << ind << endl;
+        return;
+    }
+    int mid = (l+r)/2;
+    build(ind*2+1, l , mid);
+    build(ind*2+2, mid+1, r);
+
+    //cout <<  ind << " " << tree[ind].tn << " -- " << tree[ind*2+1].tn << " " << tree[ind*2+2].tn << " ";
+    tree[ind] = combine(tree[ind*2+1] , tree[ind*2+2]);
+    // cout << tree[ind].tn << " -- \n";
+}
+node query(int ind, int st, int ed, int l, int r) {
+    //cout << st <<  " " << ed   << " "  << l << " "  << r << endl;
+    if(st > ed || st > r || ed < l){
+        //cout << "dsf" << endl;
+        return node(-1,-1,-1,-1,-1);
+    }
+    if(st >= l && ed <= r) {
+       //cout << "full in" << endl;
+        return tree[ind];
+    }
+    int mid = (st+ed)/2;
+
+    return combine(query(ind*2+1 , st , mid, l , r) , query(ind*2+2, mid+1, ed, l , r));
+
+}
+void update(int ind, int st, int ed, int i , LL val) {
+    if(st > ed || st > i) return;
+    if(st == ed) {
+        tree[ind] = node(val, val,1,1,1);
+        tree[ind].tn = 1;
+        return;
+    }
+
+    int mid = (st+ed)/2;
+    if(mid >= i)
+        update(ind*2+1, st , mid, i , val);
+    else update(ind*2+2, mid+1, ed, i , val);
+    tree[ind] = combine(tree[ind*2+1] , tree[ind*2+2]);
+}
+int main()
+{
+    FASTKRO;
+    int t,n,q,qt,l,r;
+    LL p;
+    scanf("%d", &t);
+    while(t--) {
+        scanf("%d%d", &n,&q);
+        for(int i = 0; i < n; i++) scanf("%lld", &arr[i]);
+        //    cout << "-----------------------------------\n";
+        build(0,0,n-1);
+        //    for(int i = 0; i < 8; i++)
+         //      cout << i << " " << tree[i].sv << " " <<  tree[i].ev << " " <<  tree[i].ll  << " " <<  tree[i].rl  << " " <<  tree[i].tl << " " <<  tree[i].tn << endl;
+        //    cout << "-----------------------------------\n";
+        while(q--) {
+            scanf("%d", &qt);
+            if(qt == 0) {
+                scanf("%d%d", &l,&r);
+                printf("%d\n", query(0,0,n-1,l-1,r-1).tl);
+            }else {
+                scanf("%d%lld", &l, &p);
+                l--;
+                arr[l] += p;
+                update(0, 0, n-1, l, arr[l]);
+
+                 // for(int i = 0; i < 8; i++)
+                //    cout << i << " " << tree[i].sv << " " <<  tree[i].ev << " " <<  tree[i].ll  << " " <<  tree[i].rl  << " " <<  tree[i].tl << " " <<  tree[i].tn << endl;
+          // cout << "-----------------------------------\n";
+            }
+        }
+
+    }
+return 0;
+}

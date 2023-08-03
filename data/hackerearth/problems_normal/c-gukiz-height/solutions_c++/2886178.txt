@@ -1,0 +1,127 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+#include <iostream>
+#include <cassert>
+
+using namespace std;
+
+typedef __int128 ll;
+// typedef long long ll;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define REP(i, n) for (int i = 0; i < (n); ++i)
+#define TRACE(x) cout << #x << " = " << x << endl
+#define _  << "_" <<
+
+#define MAX 100004
+
+int a[MAX];
+ll sum[MAX];
+ll total;
+int n, H;
+
+ll brute(void) {
+  ll sum = 0;
+  for (ll i = 1; ; ++i) {
+    sum += a[(i - 1) % n];
+    if (sum >= H - i * (i + 1) / 2)
+      return i;
+  }
+}
+
+inline ll func(ll m, int i) {
+  ll k = i + m * n + 1;
+  ll lhs = sum[i] + total * m;
+  ll rhs = H - k * (k + 1) / 2;
+  return lhs - rhs;
+}
+
+ll binary_inc(ll l, ll h, int i) {
+  while (l < h) {
+    ll m = l + (h - l) / 2;
+
+    ll val = func(m, i);
+//     printf("binary inc %lld %lld i=%d  val=%lld\n",
+//         (long long)l, (long long)h, i, (long long)val);
+    if (val >= 0) {
+      h = m;
+    } else {
+      l = m + 1;
+    }
+  }
+  return l;
+}
+
+// ll binary_dec(ll l, ll h, int i) {
+//   while (l < h) {
+//     ll m = l + (h - l + 1) / 2;
+//     ll val = func(m, i);
+//     printf("binary dec %lld %lld %lld i=%d  val=%lld\n",
+//         (long long)l, (long long)m, (long long)h, i, (long long)val);
+//     if (val >= 0) {
+//       l = m;
+//     } else {
+//       h = m - 1;
+//     }
+//   }
+//   return l;
+// }
+
+int main(void) {
+  scanf("%d%d", &n, &H);
+  for (;;) {
+    // n = 30000;
+    // int L = 1000000;
+    // H = 1 + rand() % L;
+    REP(i, n) {
+      scanf("%d", a + i);
+      // a[i] = -L + rand() % (2 * L);
+      sum[i] = i == 0 ? a[i] : sum[i - 1] + a[i];
+    }
+    total = sum[n - 1];
+
+    ll best = 1e18;
+    REP(i, n) {
+      ll a = (ll)n * n;
+      ll b = (ll)n * (2 * i + 3) + 2 * total;
+
+      ll max_lo = (-b + (ll)1e18 * (2 * a)) / (2 * a) - (ll)1e18;
+      // ll c = (ll)(i + 1) * (i + 2) + 2 * (sum[i] - H);
+      // printf("a=%lld b=%lld c=%lld  i=%d max_lo=%d\n",
+      //     (long long)a, (long long)b, (long long)c, i, (int)max_lo);
+      ll root;
+      if (func(0, i) >= 0) {
+        // root = binary_dec(0, max_lo, i);
+        root = 0;
+      } else {
+        if ((-b) % (2 * a) != 0)
+          ++max_lo;
+        root = binary_inc(max((ll)0, max_lo), 5e9, i);
+      }
+      best = min(best, i + root * n + 1);
+
+      // ll dd = b * b - 4 * a * c;
+      // if (dd < 0) continue;
+      // long double x = (-b + sqrtl(dd)) / (2 * a);
+      // long double y = (-b - sqrtl(dd)) / (2 * a);
+    }
+    ll result = best;
+    // ll br = brute();
+    // if (result != br) {
+    //   printf("%lld!=%lld\n", (long long)result, (long long)br);
+    //   printf("%d %d\n", n, H);
+    //   REP(i, n)
+    //     printf("%d ", a[i]);
+    //   printf("\n");
+    //   return 0;
+    // }
+    printf("%lld\n", (long long)result);
+    // printf("."); fflush(stdout);
+    break;
+  }
+
+  return 0;
+}
+

@@ -1,0 +1,116 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+
+#define inp_s     ios_base::sync_with_stdio(false)
+#define DRT()     int test_case;cin>>test_case;while(test_case--)
+
+#define VI        vector<int>
+#define VS        vector<string>
+#define VLL       vector<LL>
+#define PII       pair<int,int>
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+
+#define GI(x)     scanf("%d",&x)
+
+#define FOR(i,a,b)      for(int i=(int)(a);i<(int)(b);i++)
+#define RFOR(i,a,b)     for(int i=(int)(b)-1;i>=(int)(a);i--)
+
+#define MOD       1000000007
+#define EPS       1E-10
+
+#define PI  acos(-1)
+
+#define CASE(x)   cout << "Case #" << x << ": ";
+
+vector<int> dijkstra(vector< VI > &graph , int source)
+{
+	VI ret(sz(graph) , 100000000);
+	int n = sz(graph);
+	ret[source] = 0;
+	priority_queue< PII , vector<PII> , greater<PII> > pq;
+	pq.push(mp(ret[source] , source));
+	while(!pq.empty())
+	{
+		PII ele = pq.top();
+		pq.pop();
+		for(int i = 0; i < n; i++)
+		{
+			int cost = ele.first + graph[ele.second][i];
+			if(cost < ret[i])
+			{
+				ret[i] = cost;
+				pq.push(mp(ret[i] , i));
+			}
+		}
+	}
+	return ret;
+}
+
+vector<int> dijkstraINV(vector< VI > &graph , int source)
+{
+	VI ret(sz(graph) , 100000000);
+	int n = sz(graph);
+	ret[source] = 0;
+	priority_queue< PII , vector<PII> , greater<PII> > pq;
+	pq.push(mp(ret[source] , source));
+	while(!pq.empty())
+	{
+		PII ele = pq.top();
+		pq.pop();
+		for(int i = 0; i < n; i++)
+		{
+			int cost = ele.first + graph[i][ele.second];
+			if(cost < ret[i])
+			{
+				ret[i] = cost;
+				pq.push(mp(ret[i] , i));
+			}
+		}
+	}
+	return ret;
+}
+int main()
+{
+	inp_s;
+	int n;
+	cin >> n;
+	vector< VI > railway(n);
+	vector< VI > roadway(n);
+	FOR(i,0,n)
+	{
+		roadway[i].resize(n);
+		FOR(j,0,n) cin >> roadway[i][j];
+	}
+	FOR(i,0,n)
+	{
+		railway[i].resize(n);
+		FOR(j,0,n) cin >> railway[i][j];
+	}
+	int u , v;
+	cin >> u >> v;
+	u -= 1;
+	v -= 1;
+	VI D1 = dijkstra(railway , u);
+	VI D2 = dijkstraINV(roadway , v);
+	int ans = INT_MAX;
+	FOR(i,0,n)
+	{
+		if(i == u or i == v) continue;
+		ans = min(ans , D1[i] + D2[i]);
+	}
+	D1 = dijkstraINV(railway , v);
+	D2 = dijkstra(roadway , u);
+	FOR(i,0,n)
+	{
+		if(i == u or i == v) continue;
+		ans = min(ans , D1[i] + D2[i]);
+	}
+	cout << ans << endl;
+	return 0;
+}

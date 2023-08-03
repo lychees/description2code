@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+struct TrieNode{
+	struct TrieNode* children[26];
+	int weight;
+	bool isLeaf;
+};
+
+bool sortinrev(const pair<int,string> &a,const pair<int,string> &b){
+       return (a.first > b.first);
+}
+
+struct TrieNode* createNode(){
+	struct TrieNode* node = NULL;
+	node = (struct TrieNode*)malloc(sizeof(struct TrieNode));
+	if(node){
+		for(int i=0; i<26; i++){
+			node->children[i]=NULL;
+		}
+		node->isLeaf=false;
+		node->weight=0;
+	}
+	return node;
+}
+
+void insert(struct TrieNode* root, pair<int, string> entry){
+	struct TrieNode* traverse=root;
+	int len = entry.second.length();
+	for(int i=0; i<len; i++){
+		int index = entry.second[i]-'a';
+		if(!traverse->children[index]){
+			traverse->children[index] = createNode();
+			traverse->children[index]->weight=entry.first;
+		}
+		traverse = traverse->children[index];
+	}
+	traverse->isLeaf=true;
+}
+
+bool search(string str, struct TrieNode* root, int& ans){
+	struct TrieNode* traverse=root;
+	int len = str.length();
+	for(int i=0; i<len; i++){
+		int index = str[i]-'a';
+		if(!traverse->children[index]){
+			return false;
+		}
+		ans = traverse->children[index]->weight;
+		traverse = traverse->children[index];
+	}
+	return true;
+}
+
+int main(){
+   	int n, q;
+   	cin>>n>>q;
+   	vector< pair<int, string> >entries;
+   	struct TrieNode* root=createNode();
+   	for(int i=0; i<n; i++){
+   		int weight;
+   		string str;
+   		cin>>str>>weight;
+   		entries.push_back(make_pair(weight, str));
+   	}
+    sort(entries.begin(), entries.end(), sortinrev);
+   	
+   	for(int i=0; i<n; i++){
+   		insert(root, entries[i]);	
+   	}
+   	for(int i=0; i<q; i++){
+   		int ans=-1;
+   		string str;
+   		cin>>str;
+   		if(search(str, root, ans)){
+ 			cout<<ans<<endl;
+   		}
+   		else{
+   			cout<<"-1"<<endl;
+   		}
+   	}
+    return 0;
+}

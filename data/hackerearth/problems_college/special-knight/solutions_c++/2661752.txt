@@ -1,0 +1,85 @@
+#include <cstdio>
+#include <utility>
+#include <algorithm>
+
+#define N 10
+#define mod 10007
+
+using namespace std;
+
+bool v[N+10];
+int T,n,x,y,ans,fac[mod+10];
+pair<int,int> p[N+10],q[N+10];
+
+inline void prepare(){
+	fac[0]=1;
+	for (int i=1;i<mod;++i) fac[i]=fac[i-1]*i%mod;
+}
+
+/*
+ * x+2y=a
+ * 2x+y=b => 4x+2y=2b
+ * 3x=2b-a => x=(2b-a)/3
+ * 2y=a-x => y=(a-x)/2
+ */
+
+inline pair<int,int> solve(int a,int b){
+	if ((2*b-a)%3) return make_pair(-1,-1);
+	int x=(2*b-a)/3;
+	if ((a-x)%2) return make_pair(-1,-1);
+	int y=(a-x)/2;
+	return make_pair(x,y);
+}
+
+inline int qpow(int a,int b){
+	int ans=1;
+	for (a%=mod;b;b>>=1,a=a*a%mod) if (b&1) ans=ans*a%mod;
+	return ans;
+}
+
+inline int C(int n,int m){
+	int ans=1;
+	while (m){
+		ans=ans*(m%mod>n%mod?0:fac[n%mod]*qpow(fac[m%mod],mod-2)%mod*qpow(fac[n%mod-m%mod],mod-2)%mod)%mod,n/=mod,m/=mod;
+		if (!ans) return 0;
+	}
+	return ans;
+}
+
+void dfs(int k,int cnt){
+	if (k>n){
+		int tot=0;
+		q[++tot]=make_pair(1,1);
+		for (int i=1;i<=n;++i)
+			if (v[i]) q[++tot]=p[i];
+		bool f=1;
+		q[++tot]=make_pair(x,y);
+		int res=1;
+		for (int i=2;i<=tot;++i){
+			int dx=q[i].first-q[i-1].first,dy=q[i].second-q[i-1].second;
+			pair<int,int> t=solve(dx,dy);
+			if (t.first<0 || t.second<0){res=0;break;}
+			res=res*C(t.first+t.second,t.first)%mod;
+		}
+		if (cnt&1) ans=(ans-res+mod)%mod;else ans=(ans+res)%mod;
+		return;
+	}
+	v[k]=0;
+	dfs(k+1,cnt);
+	v[k]=1;
+	dfs(k+1,cnt+1);
+}
+
+int main(){
+	scanf("%d",&T);
+	prepare();
+	for (int kase=1;kase<=T;++kase){
+		ans=0;
+		scanf("%d%d%d",&x,&y,&n);
+		for (int i=1;i<=n;++i) scanf("%d%d",&p[i].first,&p[i].second);
+		sort(p+1,p+n+1);
+		dfs(1,0);
+		printf("Case #%d: %d\n",kase,ans);
+	}
+	return 0;
+}

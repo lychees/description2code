@@ -1,0 +1,64 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define rep(i,n) for(int i=0;i<n;i++)
+#define ll  long long int
+#define pi pair<ll,ll>
+#define pii pair<pi,int>
+#define f first
+#define s second
+#define pb push_back
+struct trie{
+    int f;
+    trie* child[26];
+};
+ll A[100011];
+trie* insert(trie*t,string &s,int i){
+    if(i==s.length()){
+        t->f++;
+        return t;
+    }
+    if(t->child[s[i]-'a']==NULL){
+        t->child[s[i]-'a']=new trie();
+        t->child[s[i]-'a']->f=0;
+    }
+    t->f-=t->child[s[i]-'a']->f;
+    t->child[s[i]-'a']=insert(t->child[s[i]-'a'],s,i+1);
+    t->f+=t->child[s[i]-'a']->f;
+    return t;
+}
+void calc(trie* t,int d){
+    if(t==NULL) return;
+    ll cnt=0;
+    ll cnt1=0;
+    ll r;
+    rep(i,26){
+        if(t->child[i]){
+            r=t->child[i]->f;
+            cnt+=r;
+            cnt1+=r*r;
+            calc(t->child[i],d+1);
+        }
+    }
+    r=cnt*cnt-cnt1;
+    r/=2;
+    A[d]+=r;
+    r = t->f - cnt;
+    A[d]+=r*cnt;
+    A[d]+=(r*(r-1))/2;
+}
+int main(){
+    int N;
+    cin >> N;
+    string s[N];
+    trie*t=new trie();
+    int maxlen=0;
+    rep(i,N){
+        cin >> s[i];
+        maxlen=max(maxlen,(int)s[i].size());
+        t=insert(t,s[i],0);
+    }
+    calc(t,0);
+    rep(i,maxlen+1){
+        cout<<A[i]<<" ";
+    }
+}

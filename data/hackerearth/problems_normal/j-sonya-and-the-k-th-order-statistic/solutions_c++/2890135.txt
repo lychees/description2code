@@ -1,0 +1,159 @@
+#include <bits/stdc++.h>
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace std;
+using namespace __gnu_pbds;
+
+#define fru(j,n) for(int j=0; j<(n); ++j)
+//#define tr(it,v) for(typeof((v).begin()) it=(v).begin(); it!=(v).end(); ++it)
+#define tr(it,v) for(auto it=(v).begin(); it!=(v).end(); ++it)
+#define x first
+#define y second
+#define pb push_back
+#define ALL(G) (G).begin(),(G).end()
+
+#if 0
+	#define DEB printf
+#else
+	#define DEB(...)
+#endif
+
+typedef long long ll;
+typedef long long LL;
+typedef double D;
+typedef pair<int,int> pii;
+typedef vector<int> vi;
+
+const int inft = 1000000009;
+const int mod = 1000000007;
+const int MAXN = 1024*1024;
+
+typedef tree<int, null_type, less<int>, rb_tree_tag,
+		tree_order_statistics_node_update> ordset;
+
+vector<vi> V;
+vi W, pre, post;
+int ctim;
+
+ordset drz[2*MAXN];
+
+void dfs(int u) {
+	pre[u] = ctim++;
+	tr(it, V[u]) {
+		V[*it].erase(find(ALL(V[*it]), u));
+		dfs(*it);
+	}
+	post[u] = ctim;
+}
+
+void adddrz(int u, int v) {
+	u += MAXN;
+	while(u/2) {
+		drz[u].insert(v);
+		u /= 2;
+	}
+}
+
+void remdrz(int u, int v) {
+	u += MAXN;
+	while(u/2) {
+		drz[u].erase(v);
+		u /= 2;
+	}
+}
+
+int drzcnt(int u, int lo, int hi) {
+	lo = drz[u].order_of_key(lo);
+	hi = drz[u].order_of_key(hi);
+	return hi - lo;
+}
+
+template <typename F> int binsercz(int left, int right, F f) {
+	while(left+1<right) {
+		int mid = left + (right-left)/2;
+		if(f(mid)) {
+			left = mid;
+		} else {
+			right = mid;
+		}
+	}
+	return left;
+}
+
+void solve() {
+	int n;
+	scanf("%d",&n);
+	V.resize(n); W.resize(n);
+	pre.resize(n); post.resize(n);
+	fru(i,n-1) {
+		int a,b;
+		scanf("%d%d",&a,&b);
+		a--; b--;
+		V[a].pb(b);
+		V[b].pb(a);
+	}
+	dfs(0);
+	fru(i,n) scanf("%d",&W[i]);
+//	fru(u,n) adddrz(W[u], pre[u]);
+	fru(u,n) drz[W[u]+MAXN].insert(pre[u]);
+	for(int i=MAXN-1; i>1; i--) {
+		drz[i] = drz[2*i];
+		tr(it, drz[2*i+1]) drz[i].insert(*it);
+	}
+	int qq;
+	scanf("%d",&qq);
+	fru(q,qq) {
+		int type;
+		scanf("%d",&type);
+		if(type == 1) {
+			int u,x;
+			scanf("%d%d",&u,&x);
+			u--;
+			remdrz(W[u], pre[u]);
+			W[u] = x;
+			adddrz(W[u], pre[u]);
+		}
+		if(type == 2) {
+			int k,u,r;
+			scanf("%d%d%d",&k,&u,&r);
+			k--; u--; r--;
+			int lo1, hi1, lo2 = -1, hi2 = -1;
+			if(u == r) {
+				lo1 = 0; hi1 = ctim;
+			} else if(pre[r] <= pre[u] || pre[r] >= post[u]) {
+				lo1 = pre[u];
+				hi1 = post[u];
+			} else if(pre[r] >= pre[u] && post[r] <= post[u]) {
+				int dz = binsercz(0, V[u].size(), [=](int z) {
+					return pre[V[u][z]] <= pre[r];
+				});
+				DEB("binsercz: %d\n",dz);
+				assert(post[r] <= post[V[u][dz]]);
+				lo1 = 0;
+				hi1 = pre[V[u][dz]];
+				lo2 = post[V[u][dz]];
+				hi2 = ctim;
+			} else assert(!"pre-post mismatch");
+			DEB("lo/hi: %d/%d, %d/%d\n",lo1,hi1,lo2,hi2);
+			int val = 1;
+			while(val < MAXN) {
+				int ile = drzcnt(2*val, lo1, hi1) + drzcnt(2*val, lo2, hi2);
+				if(ile > k) {
+					val = 2*val;
+				} else {
+					k -= ile;
+					val = 2*val+1;
+				}
+			}
+			val -= MAXN;
+			printf("%d\n",val);
+		}
+	}
+}
+
+int main() {
+	int te = 1;
+//	scanf("%d",&te);
+	fru(ti,te) solve();
+	return 0;
+}

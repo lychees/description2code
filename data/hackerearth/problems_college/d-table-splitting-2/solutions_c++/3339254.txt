@@ -1,0 +1,113 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <sys/resource.h>
+using namespace std;
+
+const int N = 2100100;
+int n, m;
+string s1, s2;
+vector<int> g[N];
+bool used[N];
+int C;
+int odd[N];
+
+void addEdge(int v, int u)
+{
+	g[v].push_back(u);
+	g[u].push_back(v);
+	return;
+}
+
+void read()
+{
+	cin >> n >> m;
+	for (int i = 0; i < (n + 1) * (m + 1); i++)
+		g[i].clear();
+	cin >> s1;
+	for (int j = 0; j < m - 1; j++)
+		if (s1[j] != s1[j + 1])
+			addEdge(j + 1, m + 1 + j + 1);
+	for (int i = 1; i < n; i++)
+	{
+		cin >> s2;
+		for (int j = 0; j < m - 1; j++)
+			if (s2[j] != s2[j + 1])
+				addEdge(i * (m + 1) + j + 1, (i + 1) * (m + 1) + j + 1);
+		for (int j = 0; j < m; j++)
+			if (s1[j] != s2[j])
+				addEdge(i * (m + 1) + j, i * (m + 1) + j + 1);
+		s1 = s2;
+	}
+	n = (n + 1) * (m + 1);
+	return;
+}
+
+void dfs(int v)
+{
+	used[v] = 1;
+	for (int u : g[v])
+	{
+		if (used[u]) continue;
+		dfs(u);
+	}
+	return;
+}
+
+bool solve()
+{
+	read();
+	for (int i = 0; i < n; i++)
+		used[i] = false;
+	for (int i = 0; i < m + 1; i++)
+	{
+		if (g[i].empty() || used[i]) continue;
+		dfs(i);
+	}
+	for (int i = n - 1; i >= n - (m + 1); i--)
+	{
+		if (g[i].empty() || used[i]) continue;
+		dfs(i);
+	}
+	for (int i = 0; i < n; i += m + 1)
+	{
+		if (g[i].empty() || used[i]) continue;
+		dfs(i);
+	}
+	for (int i = m; i < n; i += m + 1)
+	{
+		if (g[i].empty() || used[i]) continue;
+		dfs(i);
+	}
+	for (int i = 0; i < n; i++)
+		if (!g[i].empty() && !used[i])
+			return true;
+	return false;
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(0);
+	
+	const rlim_t kStackSize = 64L * 1024L * 1024L;   // min stack size = 64 Mb
+    struct rlimit rl;
+    int result;
+    result = getrlimit(RLIMIT_STACK, &rl);
+    rl.rlim_cur = kStackSize;
+    result = setrlimit(RLIMIT_STACK, &rl);
+	
+	int t;
+	cin >> t;
+	while(t--)
+	{
+		if (!solve())
+			printf("YES\n");
+		else
+			printf("NO\n");
+	}
+    return 0;
+}

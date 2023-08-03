@@ -1,0 +1,55 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define mp pair<int,int>
+#define ft first
+#define sd second
+
+int n,m,a,b,pre[500],low[500],cnt = 1,q;
+bitset<500> visit,bdg;
+vector<mp> ady[500];
+
+void bridges(int nd,int p){
+    visit[nd] = true;
+    pre[nd] = low[nd] = cnt++;
+    int k,tam = ady[nd].size();
+
+    for(int i=0;i<tam;i++){
+        if(ady[nd][i].ft == p)  continue;
+
+        if(!visit[ady[nd][i].ft]){
+            bridges(ady[nd][i].ft,nd);
+            k = low[ady[nd][i].ft];
+            low[nd] = min(low[nd], low[ady[nd][i].ft]);
+            if(pre[nd] < low[ady[nd][i].ft])
+                bdg[ady[nd][i].sd] = true;
+        }
+        else{
+            low[nd] = min(low[nd],pre[ady[nd][i].ft]);
+        }
+    }
+    return;
+}
+
+int main(){
+    scanf("%d %d",&n,&m);
+    for(int i=0;i<m;i++){
+        scanf("%d %d",&a,&b);
+        ady[a].push_back(mp(b,i));
+        ady[b].push_back(mp(a,i));
+    }
+
+    for(int i=1;i<=n;i++)
+        if(!visit[i])  bridges(i,i);
+
+    scanf("%d",&q);
+    for(int i=0;i<q;i++){
+        scanf("%d",&a);
+
+        int mm = 0, tam = ady[a].size();
+        for(int j=0;j<tam;j++)   if(bdg[ady[a][j].sd])   mm++;
+
+        if(mm>0 && tam!=1)  printf("Satisfied %d\n",tam);
+        else    printf("Not Satisfied\n");
+
+    }
+}

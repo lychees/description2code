@@ -1,0 +1,144 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define pdd pair<double,double>
+#define X first
+#define Y second
+#define REP(i,a) for(int i=0;i<a;++i)
+#define REPP(i,a,b) for(int i=a;i<b;++i)
+#define FILL(a,x) memset(a,x,sizeof(a))
+#define	foreach( gg,itit )	for( typeof(gg.begin()) itit=gg.begin();itit!=gg.end();itit++ )
+#define	mp make_pair
+#define	pb push_back
+#define sz(a) int((a).size())
+#define all(a)  a.begin(), a.end()
+#define	debug(ccc)	cout << #ccc << " = " << ccc << endl;
+#define present(c,x) ((c).find(x) != (c).end())
+const double eps = 1e-8;
+#define EQ(a,b) (fabs((a)-(b))<eps)
+inline int max(int a,int b){return a<b?b:a;}
+inline int min(int a,int b){return a>b?b:a;}
+inline ll max(ll a,ll b){return a<b?b:a;}
+inline ll min(ll a,ll b){return a>b?b:a;}
+const int mod = 1e9+7;
+const int N = 1e6+10;
+const ll inf = 1e18;
+
+ll power(ll a,ll n){
+	if(n==0){
+		return 1;
+	}
+	ll b = power(a,n/2);
+	b = b*b%mod;
+	if(n%2) b= b*a%mod;
+	return b;
+}
+
+int add(int a,int b){ return (a+b)%mod;}
+int mul(int a,int b){ return (ll)a*b%mod;}
+
+int A[N];
+vector <int> G[N],C[N],tree[N];
+int par[N][20],tin[N],tout[N],timer=0,depth[N] , ans;
+
+void dfs(int node , int p , int d=0){
+	tin[node]=timer++;
+	depth[node]=d;
+	par[node][0]=p;
+	REP(j,G[node].size()){
+		if(G[node][j]==p)	continue;
+		dfs(G[node][j],node,d+1);
+	}
+	tout[node]=timer++;
+}
+
+int lca(int u,int v){
+	if(depth[u]<depth[v])	swap(u,v);
+	int dif = depth[u]-depth[v],c=0;
+	while(dif>0){
+		if(dif&1)	u = par[u][c];
+		c++;dif/=2;
+	}
+	if(u==v)	return u;
+	for(int i= 19;i>=0;i--){
+		if(par[u][i]!=par[v][i])
+			u = par[u][i] , v = par[v][i];
+	}
+	return par[u][0];
+}
+
+int dfs1(int node,int c){
+	int mx1 = -1 , mx2 = -1;
+	REP(i,tree[node].size()){
+		int x = dfs1(tree[node][i],c);
+		x += depth[tree[node][i]]-depth[node];
+		if(x>mx1){
+			mx2 = mx1 ; mx1 = x;
+		}else if(x>mx2){
+			mx2 = x;
+		}
+	}
+	if(mx2!=-1){
+		ans = max(ans,mx1+mx2);
+	}
+	if(A[node]==c){
+		if(mx1!=-1)	ans = max(ans,mx1);
+		else mx1 = 0;
+	}
+	return mx1;
+}
+
+int cmp(int i,int j){
+	return tin[i]<tin[j];
+}
+
+bool ancestor(int A,int b){
+	return tin[A]<=tin[b] and tout[A]>=tout[b];
+}
+
+
+void solve(int c){
+	int p = C[c].size();
+	sort(all(C[c]),cmp);
+	REP(i,p-1){
+		C[c].pb(lca(C[c][i],C[c][i+1]));
+	}
+	sort(all(C[c]),cmp);
+	C[c].resize(unique(all(C[c]))-C[c].begin());
+	stack <int> S;
+	S.push(C[c][0]);
+	REPP(i,1,C[c].size()){
+		while(!ancestor(S.top(),C[c][i]))	S.pop();
+		tree[S.top()].pb(C[c][i]);
+		S.push(C[c][i]);
+	}
+	dfs1(C[c][0],c);
+	REP(i,C[c].size())	tree[C[c][i]].clear();
+}
+
+
+
+
+int main(){
+ // 	freopen("nice.in","r",stdin);
+ // freopen("nice.out","w",stdout);
+	int n,m;scanf("%d %d",&n,&m);
+	REP(i,n){
+		int c;scanf("%d",&c);c--;A[i]=c;
+		C[c].pb(i);
+	}
+	REP(i,n-1){
+		int u,v;scanf("%d %d",&u,&v);u--;v--;G[u].pb(v);G[v].pb(u);
+	}
+	dfs(0,0);
+	REPP(j,1,20)	REP(i,n)	par[i][j] = par[par[i][j-1]][j-1];
+	REP(i,m){
+		ans = 0;solve(i);
+		printf("%d ",ans);
+	}
+	printf("\n");
+
+	return 0;
+}

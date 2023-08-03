@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+#define LL long long
+#define mod 1000000007
+#define maxn 501
+using namespace std;
+
+LL power(LL x, LL y){
+    if(y == 0)
+        return 1;
+    else if (y%2 == 0)
+        return (power((x*x)%mod, y/2))%mod;
+    else
+        return (x*power((x*x)%mod, y/2))%mod;
+
+}
+
+// fib using matrix expo - source/reference - https://ronzii.wordpress.com/2011/07/09/using-matrix-exponentiation-to-calculated-nth-fibonacci-number/
+// zodiac
+long long fibonacci(long long n)
+{
+    long long fib[2][2]= {{1,1},{1,0}},ret[2][2]= {{1,0},{0,1}},tmp[2][2]= {{0,0},{0,0}};
+    long long i,j,k;
+    while(n)
+    {
+        if(n&1){
+            memset(tmp,0,sizeof tmp);
+            for(i=0; i<2; i++)
+                for(j=0; j<2; j++)
+                    for(k=0; k<2; k++)
+                        tmp[i][j]=(tmp[i][j]+ret[i][k]*fib[k][j])%mod;
+
+            for(i=0; i<2; i++)
+                for(j=0; j<2; j++)
+                    ret[i][j]=tmp[i][j];
+        }
+        memset(tmp,0,sizeof tmp);
+        for(i=0; i<2; i++)
+            for(j=0; j<2; j++)
+                for(k=0; k<2; k++)
+                    tmp[i][j]=(tmp[i][j]+fib[i][k]*fib[k][j])%mod;
+
+        for(i=0; i<2; i++)
+            for(j=0; j<2; j++)
+                fib[i][j]=tmp[i][j]%mod;
+        n/=2;
+    }
+    return (ret[0][1]%mod);
+}
+
+int total = 1, last = 1;
+long long fib[1000001];
+set <long long> s;
+
+void pre(){
+
+    fib[0] = 0;
+
+    for(int i=1;i<=100000;i++){
+        fib[i] = fibonacci(i);
+        if(i<=44)
+            s.insert(fib[i]);
+    }
+
+    s.insert(1134903170);
+}
+
+int main() {
+
+    int t;
+    cin >> t;
+    pre();
+    while(t--){
+        long long n;
+        scanf("%lld",&n);
+
+        //cout << fib[n] << " ";
+
+        LL non_fib = 0,last = 0,gap = n;
+
+        for(auto it=s.begin();it!=s.end();it++){
+            if(!gap) break;
+
+            if(*it - last -1 >0 && *it - last - 1 <= gap){
+                gap = gap - (*it - last - 1);
+                non_fib = *it - 1;
+            } else if (*it - last - 1 > gap){
+                non_fib = last + gap;
+                gap = 0;
+            }
+         //   cout << non_fib << ' ';
+            last = *it;
+
+        }
+
+
+        LL ans = (power(non_fib,fibonacci(n)) + mod)%mod;
+        printf("%lld\n",ans);
+
+    }
+    // take care amigos last code.
+    return 0;
+}

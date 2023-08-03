@@ -1,0 +1,143 @@
+#include <cstdio>
+#include <cctype>
+#include <cstdlib>
+#include <cstring>
+#include <cassert>
+#include <cmath>
+#include <climits>
+#include <iostream>
+#include <vector>
+#include <map>
+#include <list>
+#include <queue>
+#include <algorithm>
+#include <limits>
+#include <bitset>
+using namespace std;
+
+//Shorthands
+typedef vector<int> vi;
+typedef pair<int, int> ii;
+typedef vector<vi> vvi;
+typedef vector<ii> vii;
+typedef long long ll;
+typedef vector<ll> vll;
+#define sd(x) scanf("%d", &x)
+#define sl(x) scanf("%lld", &x)
+#define For(i, j, k) for (int i = j; i <= k; i++)
+#define Ford(i, j, k) for (int i = j; i >= k; i--)
+#define sz(a) int((a).size())
+#define rsz resize
+#define pb push_back
+#define all(c) (c).begin(),(c).end()
+#define tr(c,i) for(auto i = (c).begin(); i != (c).end(); i++)
+#define present(c,x) ((c).find(x) != (c).end())
+#define abs(x) (((x) > 0) ? (x) : (-(x)))
+#define mp make_pair
+
+//DEBUG
+#define trace(x) cerr << #x << ": " << x << endl;
+#define trace2(x, y) cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+#define trace3(x, y, z) cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+#define trace4(a, b, c, d) cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+#define track(a) cerr << #a << ": "; for (auto tmp: a) cerr << tmp << " "; cerr << endl;
+#define trackp(a) cerr << #a << ": "; for (auto tmp: a) cerr << "(" << tmp.first << ", " << tmp.second << "), "; cerr << endl;
+
+//Constants
+#define MOD 1000000007LL
+#define INF 1e10
+
+
+ll pow(ll n, ll m)
+{
+    if(m==0) return 1;
+    ll x=pow(n,m/2);
+    if(m%2==0)
+               return (x*x)%MOD;
+    else
+               return (((x*x)%MOD)*n)%MOD;
+}
+
+vector<bool> isprime;
+vector<int> primes;
+void sieve(int n)
+{
+	isprime.resize(n + 1);
+	for (int i = 0; i <= n; i++)
+		isprime[i] = 1;
+	isprime[1] = 0;
+	isprime[2] = 1;
+	for (int i = 2; i * i <= n; i++)
+		if (isprime[i])
+			for (int j = 2; i * j < n; j++)
+					isprime[i * j] = 0;
+	for (int i = 2; i < n; i++)
+		if (isprime[i])
+			primes.push_back(i);
+	return;
+}
+
+void input(string n)
+{
+    #ifndef ONLINE_JUDGE
+        string file = "input" + n +".txt";
+        freopen(file.c_str(), "r", stdin);
+    #endif // ONLINE_JUDGE
+}
+
+void output()
+{
+    #ifndef ONLINE_JUDGE
+        freopen("output.txt", "w", stdout);
+    #endif // ONLINE_JUDGE
+}
+
+int main()
+{
+    sieve(1000005);
+    ios::sync_with_stdio(false);
+    int n;
+    cin >> n;
+    vector<ll> a(n);
+    vector<ll> prmfrq(primes.size() + 5);
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    map<ll, ll> bigprimes;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < primes.size() && primes[j]*primes[j] <= a[i]; j++) {
+            while (a[i] % primes[j] == 0) {
+                prmfrq[j]++;
+                a[i] /= primes[j];
+            }
+        }
+        if (a[i] > 1) bigprimes[a[i]]++;
+    }
+
+    ll ways = 1;
+    bool flag = true;
+    for (int i = 0; i < primes.size(); i++) {
+        if (primes[i] % 4 == 3) {
+            if (prmfrq[i] % 2 != 0) {flag = false; break;}
+        } else if (primes[i] % 4 == 1) {
+            ways *= (prmfrq[i] + 1);
+            ways %= MOD;
+        }
+    }
+    //trace(ways);
+
+    for (map<ll, ll>::iterator i = bigprimes.begin(); i != bigprimes.end(); i++) {
+        ll prime = (*i).first;
+        ll f = (*i).second;
+        if (prime % 4 == 3) {
+            if (f % 2 != 0) {flag = false; break;}
+        } else if (prime % 4 == 1) {
+            ways *= (f + 1);
+            ways %= MOD;
+        }
+    }
+    if (flag)
+        cout << (4 * ways) % MOD << endl;
+    else
+        cout << 0 << endl;
+}

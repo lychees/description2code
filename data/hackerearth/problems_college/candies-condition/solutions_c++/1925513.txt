@@ -1,0 +1,214 @@
+#include <cstdio>
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAX = 4*17000, MOD = (int)1e9 + 7;
+vector<int> fnd;
+int st[MAX][169][2], data[17000], divCount[1001], divisor[1000][6][2];
+int n;
+int prime[1001];
+
+void clear(){
+	for (int i = 0; i < MAX; ++i)
+	{
+		for (int j = 0; j < 169; ++j)
+		{
+			for (int k = 0; k < 2; ++k)
+			{
+				st[i][j][k] = 0;
+			}
+		}
+	}
+}
+int left(int p){
+	return (p << 1);
+}
+
+int right(int p){
+	return (p << 1) + 1;
+}
+
+void build(int p, int l, int r){
+	if(l > r)
+		return;
+
+	if(l == r){
+		for(int i = 0; i < divCount[data[l]]; ++i){
+			st[p][i][0] = divisor[data[l]][i][0];
+			st[p][i][1] = divisor[data[l]][i][1];
+		}
+		return;
+	}
+
+	int mid = (l + r) >> 1;
+	build(left(p), l, mid);
+	build(right(p), mid + 1, r);
+	int lf = left(p), rf = right(p), c = 0;
+	for(int i = 0; st[lf][i][0] != 0; ++i){
+		st[p][i][0] = st[lf][i][0];
+		st[p][i][1] = st[lf][i][1];
+		// cout << st[p][i][0] << "," << st[p][i][1] << "\n";
+	}
+	for(int i = 0; st[rf][i][0] != 0; ++i){
+		int k = 0;
+		while(st[p][k][0] != 0 && st[p][k][0] != st[rf][i][0])
+			k++;
+		st[p][k][0] = st[rf][i][0];
+		st[p][k][1] = max(st[rf][i][1], st[p][k][1]);
+		// cout << st[p][k][0] << "," << st[p][k][1] << "\n";
+	}
+}
+
+void update(int p, int pos, int val, int l, int r){
+	if(l > pos || r < pos)
+		return;
+
+	if(l == r){
+		data[l] = val;
+		for(int i = 0; i < 169; ++i)
+			st[p][i][0] = st[p][i][1] = 0;
+		for(int i = 0; i < divCount[data[l]]; ++i){
+			st[p][i][0] = divisor[data[l]][i][0];
+			st[p][i][1] = divisor[data[l]][i][1];
+		}
+		return;
+	}
+
+	int mid = (l + r) >> 1;
+	update(left(p), pos, val, l, mid);
+	update(right(p), pos, val, mid + 1, r);
+
+	int lf = left(p), rf = right(p), c = 0;
+	for(int i = 0;i < 169; ++i)
+		st[p][i][0] = st[p][i][1] = 0;
+	for(int i = 0; st[lf][i][0] != 0; ++i){
+		st[p][i][0] = st[lf][i][0];
+		st[p][i][1] = st[lf][i][1];
+	}
+	for(int i = 0; st[rf][i][0] != 0; ++i){
+		int k = 0;
+		while(st[p][k][0] != 0 && st[p][k][0] != st[rf][i][0])
+			k++;
+		st[p][k][0] = st[rf][i][0];
+		st[p][k][1] = max(st[rf][i][1], st[p][k][1]);
+	}
+
+}
+
+void upd(int pos, int val){
+	update(1, pos, val, 0, n - 1);	
+}
+
+long long power(long long base, int exp){
+	long long res = 1;
+
+	while(exp > 0){
+		if((exp & 1) == 0){
+			exp >>= 1;
+			base *= base;
+			base %= MOD;
+		}
+
+		--exp;
+		res *= base;
+		res %= MOD;
+	}
+	return res;
+}
+void find(int p, int a, int b, int l, int r){
+	if(l > b || r < a || l > r){
+		return;
+	}
+
+	if(l >= a && r <= b){
+		int g = 0;
+		while(g < 169 && st[p][g][0] > 0){
+			fnd[st[p][g][0]] = max(fnd[st[p][g][0]],st[p][g][1]);
+			g++;
+		}
+		return;
+	}
+
+	int mid = (l + r) / 2;
+	find(left(p), a, b, l, mid);
+	find(right(p), a, b, mid + 1, r);
+	return;
+}
+
+long long query(int a, int b){
+	if(a > b)return -1;
+
+	long long ret = 1;
+	find(1, a, b, 0, n - 1);
+	for (int i = 0; i < 1000; ++i)
+	{
+		if (prime[i] == 0)continue;
+		ret = (ret * power(i, fnd[i])) % MOD;
+	}
+	return ret;
+}
+
+
+int main(){
+
+	int cnt = 0;
+	for(int i = 2;i <= 1000; ++i)prime[i] = 1;
+	for(int i = 2; i * i <= 1000 ; ++i){
+		if(prime[i] == 0)continue;
+		for(int j = 2*i; j <= 1000; j += i){
+			prime[j] = 0;
+		}
+	}
+	for(int i = 2; i <= 1000; ++i)
+		if(prime[i])prime[cnt++] = i;
+
+	for(int i = 1; i <=1000; ++i){
+		int j = i, p = 0;
+		while(j > 1 && j >= prime[p]){
+			int v = 0;
+			while(j % prime[p] == 0){
+				j /= prime[p];
+				v++;
+			}
+			if(v > 0){
+				divisor[i][divCount[i]][0] = prime[p];
+				divisor[i][divCount[i]++][1] = v;
+			}
+			p++;
+		}
+		if(j > 1){
+			divisor[i][divCount[i]][0] = j;
+			divisor[i][divCount[i]++][1] = 1;
+		}
+	}
+
+	int test;
+	cin >> test;
+	for(int i = 0;i < 1000; ++i){
+		fnd.push_back(0);
+	}
+	while(test--){
+		scanf("%d",&n);
+		for(int i = 0; i < n; ++i){
+			scanf("%d",&data[i]);
+		}
+		build(1, 0, n - 1);
+		int q;
+		scanf("%d",&q);
+		while(q--){
+			int qq,a,b;
+			scanf("%d%d%d",&qq,&a,&b);
+			if(qq > 0){
+				printf("%d\n",query(a - 1,b - 1));
+				for(int i = 0;i < 1000; ++i)fnd[i] = 0;
+			}
+			else{
+				upd(a - 1,b);
+			}
+		}
+		clear();
+	}
+	return 0;
+}

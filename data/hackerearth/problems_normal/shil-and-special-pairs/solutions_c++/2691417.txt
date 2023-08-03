@@ -1,0 +1,104 @@
+#include <iostream>
+#include <cmath>
+#include <math.h>
+#include <vector>
+#include <algorithm>
+#include <stdio.h>
+#include <cstring>
+#include <string>
+#include <set>
+#include <map>
+#include <stack>
+#include <queue>
+#include <tuple>
+
+using namespace std;
+
+#define vec vector
+#define ALL(x) (x).begin(), (x).end()
+#define mp make_pair
+#define mt make_tuple 
+
+typedef long long ll;
+typedef double ld;
+typedef unsigned long long ull;
+
+const ll inf = 1000000000ll;
+const ll inf64 = inf * inf;
+const ll base = inf + 7;
+const ld pi = 3.1415926535897932384626433832795;
+
+bool round(ll x) {
+	if(x < 0) return 0;
+	if(x == 0) return 1;
+	vec< int > t;
+	while(x) {
+		t.push_back(x % 10);
+		x /= 10;
+	}
+	return (t.front() == t.back());
+}
+
+bool solve() {
+	
+	int n, m, d;
+
+	scanf("%d %d %d", &n, &m, &d);
+
+	vec< int > a(n + 1), b(n + 1);
+	for(int i = 1;i <= n;i++) {
+		scanf("%d", &a[i]);
+		b[a[i]] = i;
+	}
+	
+	// {r, l}
+	
+	vec< vec< int > > add(n + 1);
+	vec< vec< pair< int, int > > > ask(n + 1);
+	// {l, id}
+
+	for(int i = 1;i <= n;i++) {
+		for(int j = i;j >= max(1, i - d);j--) {
+			int l, r;
+			l = min(b[i], b[j]);
+			r = max(b[i], b[j]);
+			add[r].push_back(l);
+		}
+	}
+
+	vec< int > ans(m, 0);
+
+	for(int l, r, i = 0;i < m;i++) {
+		scanf("%d %d", &l, &r);
+		ask[r].push_back(mp(l, i));
+	}
+
+	vec< int > f(n + 1, 0);
+
+	for(int i = 1;i <= n;i++) {
+		for(int j = 0;j < (int)add[i].size();j++) {
+			int l = add[i][j];
+			for(int q = l;q <= n;q = (q | (q + 1))) f[q]++;
+		}
+		for(int j = 0;j < (int)ask[i].size();j++) {
+			int l, id;
+			tie(l, id) = ask[i][j];
+			// >= l
+			ans[id] = 0;
+			for(int q = n;q >= 1;q = (q & (q + 1)) - 1) ans[id] += f[q];
+			for(int q = l - 1;q >= 1;q = (q & (q + 1)) - 1) ans[id] -= f[q];
+		}
+	}
+
+	for(int i = 0;i < m;i++) printf("%d\n", ans[i]);
+
+	return true;
+}
+
+int main() {
+
+	//while(solve());
+    solve();
+
+    return 0;
+}

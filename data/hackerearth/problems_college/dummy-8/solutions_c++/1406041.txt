@@ -1,0 +1,99 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <functional>
+#include <utility>
+#include <bitset>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstdio>
+
+using namespace std;
+
+#define REP(i,n) for((i)=0;(i)<(int)(n);(i)++)
+#define snuke(c,itr) for(__typeof((c).begin()) itr=(c).begin();itr!=(c).end();itr++)
+
+#define INF (1<<29)
+
+string ds = "^>v<";
+int dx[] = {-1,0,1,0}, dy[] = {0,1,0,-1};
+
+int X,Y;
+string board[110];
+int init[110][110];
+int dist[110][110][4];
+queue <int> q;
+
+bool valid(int x, int y, int r){
+	if(x < 0 || x >= X || y < 0 || y >= Y || board[x][y] == '#' || init[x][y] != -1) return false;
+	
+	int i,j;
+	REP(i,4) for(j=1;j<110;j++){
+		int x2 = x + dx[i] * j, y2 = y + dy[i] * j;
+		if(x2 >= 0 && x2 < X && y2 >= 0 && y2 < Y){
+			if(board[x2][y2] == '#') break;
+			if(init[x2][y2] != -1 && (init[x2][y2] + 2 + r) % 4 == i) return false;
+			if(init[x2][y2] != -1) break;
+		}
+	}
+	
+	return true;
+}
+
+void main2(void){
+	int i,j,k;
+	
+	cin >> X >> Y;
+	REP(i,X) cin >> board[i];
+	REP(i,X) REP(j,Y){
+		init[i][j] = -1;
+		REP(k,4) if(board[i][j] == ds[k]) init[i][j] = k;
+	}
+	
+	REP(i,X) REP(j,Y) REP(k,4) dist[i][j][k] = INF;
+	REP(i,X) REP(j,Y) if(board[i][j] == 'S'){
+		dist[i][j][0] = 0;
+		q.push(i); q.push(j); q.push(0);
+	}
+	
+	while(!q.empty()){
+		int x = q.front(); q.pop();
+		int y = q.front(); q.pop();
+		int r = q.front(); q.pop();
+		
+		REP(i,4){
+			int x2 = x + dx[i], y2 = y + dy[i], r2 = (r + 1) % 4;
+			if(valid(x2, y2, r2) && dist[x2][y2][r2] == INF){
+				dist[x2][y2][r2] = dist[x][y][r] + 1;
+				q.push(x2); q.push(y2); q.push(r2);
+			}
+		}
+	}
+	
+	int ans = INF;
+	REP(i,X) REP(j,Y) if(board[i][j] == 'G') REP(k,4) ans = min(ans, dist[i][j][k]);
+	if(ans == INF){
+		cout << "impossible" << endl;
+	} else {
+		cout << ans << endl;
+	}
+}
+
+int main(void){
+	int T,t;
+	cin >> T;
+	REP(t,T){
+		printf("Case #%d: ", t+1);
+		main2();
+	}
+	return 0;
+}

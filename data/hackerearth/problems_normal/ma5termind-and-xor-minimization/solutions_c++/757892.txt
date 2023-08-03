@@ -1,0 +1,135 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+typedef long long LL;
+
+const int MOD = 1000000007;
+struct Z {
+  int i;
+  Z():i(0) {}
+  Z(int i): i(i >= 0 ? i : i + MOD) {}
+  void operator +=(const Z& z) { i += z.i; if(i >= MOD) i -= MOD; }
+  void operator -=(const Z& z) { i -= z.i; if(i < 0) i += MOD; }
+  void operator *=(const Z& z) { i = (LL) i * z.i % MOD; }
+  void operator /=(const Z& z) { (*this) *= z.inverse(); }
+  Z operator +(const Z& z) const { Z ret(i); ret += z; return ret; }
+  Z operator -(const Z& z) const { Z ret(i); ret -= z; return ret; }
+  Z operator *(const Z& z) const { Z ret(i); ret *= z; return ret; }
+  Z operator /(const Z& z) const { return (*this) * z.inverse(); }
+  // Z operator -() const { return Z(-i); }
+  Z inverse() const {
+    int a = i, d = MOD, x = 0, s = 1;
+    while(a) {
+      int q = d / a, r = d % a, t = x - q * s;
+      d = a, a = r, x = s, s = t;
+    }
+    if (d != 1) return -1;
+    return x < 0 ? x + MOD : x;
+  }
+  Z pow(int b) {
+    Z x=1,y=*this; // ll is taken to avoid overflow of intermediate results
+    while(b > 0){
+      if(b%2 == 1)
+        x *= y;
+      y *= y; // squaring the base
+      b /= 2;
+    }
+    return x;
+  }
+};
+
+vector<Z> factorial(1, 1), inv_factorial(1, 1);
+
+Z inv_fact(int n) {
+  while(inv_factorial.size() <= n)
+    inv_factorial.push_back(inv_factorial.back() / inv_factorial.size());
+  return inv_factorial.at(n);
+}
+
+Z fact(int n) {
+  while(factorial.size() <= n)
+    factorial.push_back(factorial.back() * factorial.size());
+  return factorial.at(n);
+}
+
+Z choose(int n, int k) {
+  if(n < k) return 0;
+  return fact(n) * (inv_fact(k) * inv_fact(n-k));
+}
+
+struct Node {
+    Node *left;
+    Node *right;
+};
+
+Node *root;
+
+void addNode(int n) {
+    Node *p = root;
+    for(int i = 30; i >= 0; i--) {
+        if ((n >> i) & 1) {
+            if (!p->right) p->right = new Node;
+            p = p->right;
+        } else {
+            if (!p->left) p->left = new Node;
+            p = p->left;
+        }
+    }
+}
+
+int main() {
+    root = new Node;
+    int N;
+    cin >> N;
+    vector<int> A(N);
+    for(int i = 0; i < N; i++) {
+        cin >> A[i];
+    }
+    vector<Z> dp(100 * 1000+1);
+    vector<bool> b(100 * 1000 + 1);
+    dp[0] = 1;
+    b[0] = true;
+    for(int i = 0; i < N; i++) {
+        for(int j = 100*1000; j >= A[i]; j--) {
+            dp[j] += dp[j - A[i]];
+            b[j] = b[j] || b[j - A[i]];
+        }
+    }
+
+    for(int i = 1; i <= 100000; i++) {
+        if(b[i]) {
+            addNode(i);
+        }
+    }
+
+    // for(int i = 0; i < 7; i++) {
+    //     cout << dp[i].i << endl;
+    // }
+    int Q;
+    cin >> Q;
+    while(Q--) {
+        int A;
+        scanf("%d", &A);
+        Node *p = root;
+        int ans = 0;
+        for (int i = 30; i >= 0; i--) {
+            if ((A >> i) & 1) {
+                if (p->right) {
+                    p = p->right;
+                    ans = ans | (1 << i);
+                } else {
+                    p = p->left;
+                }
+            } else {
+                if (p -> left) {
+                    p = p->left;
+                } else {
+                    p = p->right;
+                    ans = ans | (1 << i);
+                }
+            }
+        }        
+        printf("%d %d\n", ans, dp[ans].i);
+    }    
+}

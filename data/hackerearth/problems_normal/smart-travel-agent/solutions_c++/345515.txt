@@ -1,0 +1,73 @@
+#include<iostream>
+using namespace std;
+void maxWeightPath(unsigned int **graph,unsigned int &N,unsigned int current,unsigned int &dest,
+                            bool *&visited,unsigned int *&path,unsigned int &length,unsigned int &weight,
+                            unsigned int *current_path=NULL,unsigned int path_weight=0,
+                            unsigned int level=0){
+    if(level==0){
+        current_path=new unsigned int[N];
+    }
+    unsigned int i,j,count;//cout<<"current path:";
+    current_path[level]=current;
+    //for(i=0;i<=level;i++) cout<<current_path[i]<<" ";
+    static unsigned int max_weight=0;
+    //cout<<" current: "<<current<<"destination: "<<dest<<endl;
+    if(dest==current) {
+        visited[current]=false;
+        if(max_weight<path_weight){
+            max_weight=path_weight;
+            unsigned int * temp=new unsigned int[N];
+            for(i=0;i<=level;i++) temp[i]=current_path[i];
+            path=temp;length=level+1;weight=max_weight;
+        }
+        return ;
+    }
+    count=graph[current][0];
+    visited[current]=true;
+    for(i=1;i<count*2;i+=2){
+        if(visited[graph[current][i]]==false){
+            j=(path_weight==0)?graph[current][i+1]:(path_weight<graph[current][i+1])?path_weight:graph[current][i+1];
+            maxWeightPath(graph,N,graph[current][i],dest,visited,path,length,weight,current_path,j,level+1);
+        }
+    }
+    visited[current]=false;
+    /*if(path_weight==0)
+        return max;
+    else
+        return (max>current)?current:max;*/
+}
+int main(){
+    unsigned int **graph,T,S,D,R,N,i,j,weight,count,*path,length;
+    bool *visited;
+    cin>>N>>R;
+    visited=new bool[N];
+    graph=new unsigned int*[N];
+    for(i=0;i<N;i++){
+        visited[i]=false;
+        graph[i]=new unsigned int[20];
+        graph[i][0]=0;
+    }
+    while(R>0){
+        R--;
+        cin>>i>>j>>weight;i--;j--;
+        graph[i][0]+=1;
+        count=graph[i][0];
+        graph[i][count*2-1]=j;
+        graph[i][count*2]=weight;
+        graph[j][0]+=1;
+        count=graph[j][0];
+        graph[j][count*2-1]=i;
+        graph[j][count*2]=weight;
+    }
+    //print graph
+    /*for(i=0;i<N;i++){
+        cout<<endl<<"node: "<<i<<"count "<<graph[i][0];
+        for(j=1;j<graph[i][0]*2;j+=2)
+        cout<<endl<<graph[i][j]<<" "<<graph[i][j+1];
+    }*/
+    cin>>S>>D>>T;S--;D--;
+    /*weight=*/maxWeightPath(graph,N,S,D,visited,path,length,weight);
+    for(i=0;i<length;i++) cout<<path[i]+1<<" ";
+    cout<<endl<<(T/(weight-1))+(T%(weight-1)>0)?1:0;
+    return 0;
+}

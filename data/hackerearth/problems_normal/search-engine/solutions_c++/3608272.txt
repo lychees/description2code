@@ -1,0 +1,109 @@
+typedef long long ll;
+#include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <string.h>
+#include <map>
+#include <queue>
+#include <stack>
+#include <sstream>
+#include <fstream>
+#include <stdlib.h>
+#include <utility>
+
+#define ARRAY_SIZE(a) sizeof(a)/sizeof(a[0])
+#define ALPHABET_SIZE 26
+#define CHAR_TO_INDEX(c) ((int) c-(int)'a')
+
+
+using namespace std;
+
+map<ll,ll> m;
+
+typedef struct trie_node trie_node_t;
+struct trie_node{
+    ll value;
+    trie_node_t *children[ALPHABET_SIZE];
+};
+
+typedef struct trie trie_t;
+struct trie{
+    trie_node_t *root;
+    ll count;
+};
+
+trie_node_t *getNode()
+{
+    trie_node_t *pNode=NULL;
+    pNode=(trie_node_t *)malloc(sizeof(trie_node_t));
+    if(pNode)
+    {
+        pNode->value=0;
+        for(ll i=0;i<ALPHABET_SIZE;i++)
+        pNode->children[i]=NULL;
+    }
+    return pNode;
+}
+
+void initialize(trie_t *ptrie)
+{
+    ptrie->root=getNode();
+    ptrie->count=0;
+}
+
+void insert(trie_t *ptrie, string key)
+{
+    ll level,length=key.length();
+    int index;
+    trie_node_t *pcrawl=ptrie->root;
+    ptrie->count++;
+    for(level=0;level<length;level++)
+    {
+        index=CHAR_TO_INDEX(key[level]);
+        if(!pcrawl->children[index])
+        pcrawl->children[index]=getNode();
+        pcrawl->value=max(pcrawl->value,m[ptrie->count]);
+        pcrawl= pcrawl->children[index];
+    }
+    pcrawl->value=max(pcrawl->value,m[ptrie->count]);
+}
+ll search(trie_t *ptrie, string key)
+{
+    ll level,length=key.length();
+    int index;
+    trie_node_t *pcrawl=ptrie->root;
+    for(ll level=0;level<length;level++)
+    {
+        index=CHAR_TO_INDEX(key[level]);
+        if(!pcrawl->children[index])
+        return 0;
+        pcrawl=pcrawl->children[index];
+    }
+    return pcrawl->value;
+}
+int main()
+{
+    ll n,q,val,w;
+    string x;
+    trie_t trie;
+    initialize(&trie);
+    scanf("%lld %lld",&n,&q);
+    for(ll i = 0; i < n; i++)
+    {
+        cin>>x>>w;
+         m[i+1]=w;
+        insert(&trie,x);
+    }
+    while(q--)
+    {
+        cin>>x;
+        val=search(&trie,x);
+        if(val==0)
+        val=-1;
+        printf("%lld\n",val);
+    }
+   	return 0;
+}

@@ -1,0 +1,100 @@
+#include<cstdio>
+#include<cstdlib>
+#include<iostream>
+#include<algorithm>
+#include<vector>
+#include<cstring>
+#include<map>
+#include<set>
+#include<stack>
+#include<queue>
+#include<string>
+#include<iterator>
+#include<string>
+#include<sstream>
+#include<cassert>
+#include<ctime>
+
+#define MP make_pair
+#define PB push_back
+#define X first
+#define Y second
+#define oo 2000000000
+#define MOD 1000000007
+#define LL long long int
+
+using namespace std;
+
+bool prime[1002];
+char str[2002];
+
+string preProcess(string s) {
+  int n = s.length();
+  if (n == 0) return "^$";
+  string ret = "^";
+  for (int i = 0; i < n; i++)
+    ret += "#" + s.substr(i, 1);
+
+  ret += "#$";
+  return ret;
+}
+
+string longestPalindrome(string s) {
+  string T = preProcess(s);
+  int n = T.length();
+  int *P = new int[n];
+  int C = 0, R = 0;
+  for (int i = 1; i < n-1; i++) {
+    int i_mirror = 2*C-i; // equals to i' = C - (i-C)
+
+    P[i] = (R > i) ? min(R-i, P[i_mirror]) : 0;
+
+    // Attempt to expand palindrome centered at i
+    while (T[i + 1 + P[i]] == T[i - 1 - P[i]])
+      P[i]++;
+
+    // If palindrome centered at i expand past R,
+    // adjust center based on expanded palindrome.
+    if (i + P[i] > R) {
+      C = i;
+      R = i + P[i];
+    }
+  }
+
+  // Find the maximum element in P.
+  int maxLen = 0;
+  int centerIndex = 0;
+  for (int i = 1; i < n-1; i++) {
+    if (P[i] > maxLen) {
+      maxLen = P[i];
+      centerIndex = i;
+    }
+  }
+  delete[] P;
+
+  return s.substr((centerIndex - 1 - maxLen)/2, maxLen);
+}
+
+int main(){
+    memset(prime,0,sizeof(prime));
+    for(int i=2;i<=1000;i++){
+        bool is=true;
+        for(int j=2;j*j<=i;j++){
+            if(i%j==0){
+                is=false;
+                break;
+            }
+        }
+        if(is) prime[i]=true;
+    }
+    int T;
+    scanf("%d",&T);
+    while(T--){
+        scanf("%s",str);
+        string tmp = longestPalindrome(string(str));
+        int ans=tmp.length();
+        if(prime[ans]) printf("YES\n");
+        else puts("NO");
+    }
+    return 0;
+}

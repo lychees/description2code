@@ -1,0 +1,105 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+const ll P = (ll)1e9 + 7;
+
+const int maxN = 200500;
+
+int N;
+map<int, int> mapp;
+
+int getLastPos(int val) {
+    return mapp[val];
+}
+
+struct node {
+    ll sum2, sum, add;
+    node() {}
+};
+
+node t[maxN * 4];
+
+void push(int v) {
+    (t[(v << 1) + 1].add += t[v].add) %= P;
+    (t[(v << 1) + 2].add += t[v].add) %= P;
+    t[v].add = 0;
+}
+
+ll calcSum(const node & v, int len) {
+    return (v.sum + len * v.add) % P;
+}
+
+ll calcSum2(const node & v, int len) {
+    return (v.sum2 + 2 * v.sum * v.add + ((v.add * v.add) % P) * len) % P;
+}
+
+void upd(int v, int leftLen, int rightLen) {
+    t[v].sum = calcSum(t[(v << 1) + 1], leftLen) + calcSum(t[(v << 1) + 2], rightLen);
+    t[v].sum %= P;
+    t[v].sum2 = calcSum2(t[(v << 1) + 1], leftLen) + calcSum2(t[(v << 1) + 2], rightLen);
+    t[v].sum2 %= P;
+}
+
+void add(int v, int tl, int tr, int l, int r, int val) {
+    if (tl == l && tr == r) {
+        t[v].add += val;
+        t[v].add %= P;
+        return;
+    }
+    push(v);
+    int tm = (tl + tr) >> 1;
+    if (r <= tm) {
+        add((v << 1) + 1, tl, tm, l, r, val);
+    }
+    else if (l > tm) {
+        add((v << 1) + 2, tm + 1, tr, l, r, val);
+    }
+    else {
+        add((v << 1) + 1, tl, tm, l, tm, val);
+        add((v << 1) + 2, tm + 1, tr, tm + 1, r, val);
+    }
+    upd(v, tm - tl + 1, tr - tm);
+}
+
+ll sum(int v, int tl, int tr, int l, int r) {
+    if (tl == l && tr == r) {
+        return calcSum2(t[v], r - l + 1);
+    }
+    push(v);
+    int tm = (tl + tr) >> 1;
+    if (r <= tm) {
+        return sum((v << 1) + 1, tl, tm, l, r);
+    }
+    else if (l > tm) {
+        return sum((v << 1) + 2, tm + 1, tr, l, r);
+    }
+    else {
+        return (sum((v << 1) + 1, tl, tm, l, tm),
+                sum((v << 1) + 2, tm + 1, tr, tm + 1, r));
+    }
+    upd(v, tm - tl + 1, tr - tm);
+}
+
+int main() {
+    scanf("%d", &N);
+
+    ll res = 0;
+
+    for (int i = 1; i <= N; i++) {
+        int x;
+        scanf("%d", &x);
+        int l = getLastPos(x) + 1;
+        int r = i;
+        add(0, 1, N, l, r, 1);
+        res += sum(0, 1, N, 1, N);
+        res %= P;
+        mapp[x] = i;
+    }
+
+    printf("%d\n", (int)res);
+
+    return 0;
+}

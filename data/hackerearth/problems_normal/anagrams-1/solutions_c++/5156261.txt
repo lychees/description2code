@@ -1,0 +1,129 @@
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+struct t_pair{
+    char first;
+    int second;
+};
+
+bool cmp(t_pair a, t_pair b) { return (a.first < b.first); }
+
+void init(int *arr)
+{
+    for (int i = 0; i < 30; i++) arr[i] = 0;
+}
+
+void preprocess(string s, int *tb, int &size)
+{
+    size = 0;
+    for (int i = 0; s[i] != '\0'; i++)
+    {
+        if (s[i] >= 'A' && s[i] <= 'Z')
+        {
+            size++;
+            tb[s[i] - 'A']++;
+        }
+        else if (s[i] >= 'a' && s[i] <= 'z')
+        {
+            size++;
+            tb[s[i] - 'a']++;
+        }
+    }
+}
+
+bool is_anagram(int *tb1, int *tb2)
+{
+    for (int i = 0; i < 30; i++)
+        if (tb1[i] != tb2[i]) return false;
+    return true;
+}
+
+string fix(int *tb1, int *tb2)  //str first > str second
+{
+    bool odd = false;
+    char oddchar;
+    vector<t_pair> tb;
+
+    for (int i = 0; i < 30; i++)
+    {
+        int temp = tb1[i] - tb2[i];
+        if (temp < 0) return "NO LUCK";
+        else if (temp == 0) continue;
+        if (temp % 2)
+        {
+            if (!odd)
+            {
+                oddchar = char(i + 'a');
+                t_pair rs;
+                rs.first = i;
+                rs.second = temp - 1;
+                tb.push_back(rs);
+                odd = true;
+            }
+            else return "NO LUCK";
+        }
+        else
+        {
+            t_pair rs;
+            rs.first = i;
+            rs.second = temp;
+            tb.push_back(rs);
+        }
+    }
+
+    sort(tb.begin(), tb.end(), cmp);
+
+    string temp1;
+    string rs;
+    int tbsize = tb.size();
+    for (int i = 0; i < tbsize; i++)
+    {
+        for (int j = 0; j < tb[i].second / 2; j++)
+        {
+            rs += char(tb[i].first + 'a');
+        }
+    }
+    temp1 = rs;
+    reverse(temp1.begin(), temp1.end());
+    if (odd) rs += oddchar + temp1;
+    else rs += temp1;
+
+    return rs;
+}
+
+int main()
+{
+    int testcase;
+    cin >> testcase;
+    cin.ignore();
+    while (testcase--)
+    {
+        string s1, s2;
+        getline(cin, s1);
+        getline(cin, s2);
+
+        int tb1[30];
+        int tb2[30];
+
+        init(tb1);
+        init(tb2);
+
+        int size1, size2;
+
+        preprocess(s1, tb1, size1);
+        preprocess(s2, tb2, size2);
+
+        if (is_anagram(tb1, tb2)) cout << "YES" << endl;
+        else
+        {
+            if (size1 > size2) cout << fix(tb1, tb2) << endl;
+            else cout << fix(tb2, tb1) << endl;
+        }
+    }
+
+    return 0;
+}

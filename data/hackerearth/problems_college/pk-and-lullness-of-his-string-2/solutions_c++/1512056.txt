@@ -1,0 +1,115 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define LL long long
+#define MOD 1000000007
+#define MXN 100005
+LL n;
+LL Fact[MXN + 20];
+LL IFact[MXN + 20];
+LL leftt[MXN + 20];
+LL rightt[MXN + 20];
+string str;
+LL Pow_(LL n, LL base)
+{
+	if(base == 1 || base == 0)
+		return n;
+	LL c = Pow_(n, base >> 1);
+	c = (c * c);
+	if(c >= MOD)
+		c %= MOD;
+	if(base & 1) {
+		c = (c * n);
+		if(c >= MOD)
+			c %= MOD;
+	}
+	return c;
+}
+
+void pre()
+{
+	Fact[0] = 1;
+	for(LL i = 1; i <= MXN; ++i) {
+		Fact[i] = Fact[i - 1] * i;
+		if(Fact[i] >= MOD)
+			Fact[i] %= MOD;
+	}
+	
+	IFact[MXN] = Pow_(Fact[MXN], MOD - 2);
+	for(LL i = MXN; i >= 1; --i) {
+		IFact[i - 1] = IFact[i] * i;
+		if(IFact[i - 1] >= MOD)
+			IFact[i - 1] %= MOD;
+	}
+}
+
+LL nCk(LL N, LL K)
+{
+	LL N_fac = Fact[N];
+	LL R_ifac = IFact[K];
+	LL N_minus_R_ifac = IFact[N - K];
+	LL ans = N_fac * R_ifac;
+	if(ans >= MOD)
+		ans %= MOD;
+		ans = (ans * N_minus_R_ifac);
+	if(ans >= MOD)
+		ans %= MOD;
+	return ans;	
+}
+
+void solve()
+{
+	cin >> str;
+	LL l = str.size();
+	scanf("%lld", &n);
+	if(n == 1) {
+		int count = 0;
+		for(int i = 0; i < l; i++) {
+			if(str[i] == 'u') {
+				count++;
+			}
+		}
+		printf("%d\n", count);
+		return;
+	}
+	n = (n - 1) / 2;
+	memset(leftt, 0, sizeof(leftt));
+	memset(rightt, 0, sizeof(rightt));
+	leftt[0] = (str[0] == 'l');
+	for(LL i = 1; i < l; i++) {
+		if(str[i] == 'l') {
+			leftt[i] = leftt[i - 1] + 1;
+		}
+		else {
+			leftt[i] = leftt[i - 1];
+		}
+	}
+	rightt[l - 1] = (str[l - 1] == 'l');
+	for(LL i = l - 2; i >= 0; i--) {
+		if(str[i] == 'l') {
+			rightt[i] = rightt[i + 1] + 1;
+		}
+		else {
+			rightt[i] = rightt[i + 1];
+		}
+	}
+	LL ans = 0;
+	for(LL i = 1; i < l - 1; i++) {
+		if(str[i] == 'u') {
+			if(leftt[i - 1] < n || rightt[i + 1] < n) continue;
+			ans += ((nCk(leftt[i - 1], n) % MOD) * (nCk(rightt[i + 1], n) % MOD));
+			ans %= MOD;
+		}
+	}
+	printf("%lld\n", ans);
+}
+
+int main()
+{
+	int t;
+	scanf("%d", &t);
+	pre();
+	while(t--) {
+		solve();
+	}
+	return 0;
+}

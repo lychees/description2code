@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+#define foru(i, a, b) for(int i = a; i <= b; ++i)
+using namespace std;
+const int MAXN = 3005;
+const int BASE = 1e9 + 7;
+int n, k, t;
+int C[MAXN][MAXN], dp[MAXN][MAXN][2][2];
+bool isVowel[MAXN];
+char s[MAXN];
+
+void update(int &u, int v) {
+	u += v; if (u >= BASE) u -= BASE;
+}
+
+int main() {
+	//freopen("input.txt", "r", stdin);
+	//freopen("output.txt", "w", stdout);
+	scanf("%d%d\n", &n, &k); 
+	scanf("%s", s + 1);
+
+	string vowels = "aeiouy";
+	foru(i, 1, n)
+    	foru(j, 0, 5)
+        	if(s[i] == vowels[j]) {
+        		isVowel[i] = true; ++t; break;
+        	}
+
+	foru(i, 0, n) C[i][0] = C[i][i] = 1;
+	foru(i, 1, n) foru(j, 1, i - 1) C[i][j] = (C[i - 1][j] + C[i - 1][j - 1]) % BASE;
+
+	dp[0][0][0][1] = 1;
+	foru(i, 0, n - 1) foru(j, 0, i) foru(x, 0, 1) foru(y, 0, 1) {
+		update(dp[i + 1][j + 1][y][1], dp[i][j][x][y]);
+		if (!isVowel[i + 1] && x + y) update(dp[i + 1][j][y][0], dp[i][j][x][y]);
+	}
+
+	int ans = 0; 
+	foru(j, (n + 1) / 2, n) { 
+		int x = k + t - j; //k + t - x = j; 
+		if (x < 0 || x > t) continue;  
+		int s = 0;
+		foru(x, 0, 1) foru(y, 0, 1) update(s, dp[n][j][x][y]);
+		update(ans, (1LL * s * C[t][x]) % BASE);
+	} 
+
+	ans = C[n][k] - ans; if (ans < 0) ans += BASE;
+
+	printf("%d\n", ans);
+	return 0;
+}

@@ -1,0 +1,86 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define forn(i, n)   for(int i = 0;i<n;i++)
+#define FOR(i, a, b) for(int i = a;i<=b;i++)
+#define for1(i, n)  for(int i = 1;i <= n;i ++)
+
+const int MOD = 1e9 + 7;
+const int N = 2005;
+long long dp[N][N];
+vector<int> g[N];
+int n;
+
+int a[N];
+map<int,int> tt;
+    vector<int> mi;
+void load_tree()
+{
+    cin >> n;
+    for1(i, n) {cin >> a[i];       tt[a[i]] = 1;}
+    forn(i, n - 1)
+    {
+        int u, v;
+        cin >> u >> v;
+        g[v].push_back(u);
+        g[u].push_back(v);
+    }
+}
+
+void load_weight()
+{
+    for1(i, n) mi.push_back(a[i]);
+    sort(mi.begin(), mi.end());
+    mi.resize(unique(mi.begin(), mi.end()) - mi.begin());
+    for1(i, n)
+       a[i] = lower_bound(mi.begin(), mi.end(), a[i]) - mi.begin() + 1;
+}
+
+void dfs(int u,int p)
+{
+    for(int i = 1;i <= a[u]; i ++)
+    {
+        dp[u][i] = 1;
+    }
+    forn(i, g[u].size())
+    {
+        int v = g[u][i];
+        if(v == p) continue;
+        dfs(v, u);
+        for(int i = 1; i <= a[v]; i ++)
+        {
+            dp[u][i] = (dp[u][i] * (1 + dp[v][i]))%MOD;
+        }
+    }
+
+}
+
+int main()
+{
+  //  freopen("test.inp","r",stdin);
+    ios_base:: sync_with_stdio(false);
+    load_tree();
+    load_weight();
+    dfs(1, 0);
+    long long ans[N];
+    for1(i, n)
+    {
+        for1(j, n)
+        {
+            ans[i] = (ans[i] +  dp[j][i] - dp[j][i + 1] +MOD)%MOD;
+        }
+    }
+    int q;
+    cin >> q;
+    while(q -- )
+    {
+        int k;
+        cin >> k;
+        if(tt.count(k) == 0)
+        {
+            cout<< 0 << endl;
+            continue;
+        }
+        int rval = lower_bound(mi.begin(), mi.end(), k) - mi.begin() + 1;
+        cout<< ans[rval] << endl;
+    }
+}

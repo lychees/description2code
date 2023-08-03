@@ -1,0 +1,59 @@
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+#define DIV 1000000007
+// Just defined this in case if I miss a zero anywhere in the program 
+// I might not be able to figure out where the issue is
+long long modpow( long long base, int pow){
+    if(pow==0) return 1;
+    if(pow==1) return base%DIV;
+    long long buf = base;
+    for(int i = 2;i<=pow;i++){
+        base *=buf;
+        base %=DIV;
+    }
+    return base;
+}
+int main() {    
+    /* Enter your code here. Read input from STDIN.
+     * Print output to STDOUT */
+    int test_cases;
+    cin >>test_cases;
+    vector<long long> row(1000);
+    row[0] = 1;
+    row[1] = 2;
+    row[2] = 4;
+    row[3] = 8;
+    for(int i=4;i<1000;i++){
+        row[i] = (row[i-1]+row[i-2]+row[i-3]+row[i-4])%DIV;
+    }
+    for(int i=0;i<test_cases;i++){
+        int N,M,X,Y;
+        cin>>N>>M;
+        vector<long long> uWall(M);
+        for(int j=0;j<M;j++){
+            uWall[j] = (long long) modpow(row[j],N);
+        }
+        vector<long long> Wall(M);
+        long long wrong_ways;
+        Wall[0] = 1;
+        // For N*2 it is dependent on N
+        for(int k = 1;k<M;k++){
+            wrong_ways = 0;
+            for(int i=0;i<k;i++){
+                wrong_ways += ((Wall[i]*uWall[k-i-1])%DIV);
+                wrong_ways %= DIV;
+            }
+            Wall[k] = uWall[k]-wrong_ways;
+            Wall[k] %= DIV;
+        }
+        while(Wall[M-1]<0){
+            Wall[M-1]+=DIV;
+        }
+        cout<<Wall[M-1]<<endl;
+    }
+    return 0;
+}  

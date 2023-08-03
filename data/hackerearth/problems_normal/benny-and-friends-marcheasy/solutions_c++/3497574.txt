@@ -1,0 +1,171 @@
+#include <bits/stdc++.h>
+
+#define fi first
+#define se second
+#define mk make_pair
+#define pb push_back
+
+using namespace std;
+
+pair < int , pair < int , int > > edg[100020];
+int PA[100020];
+
+int Pa(int u)
+ {
+  if (PA[u] == u) return u;
+  PA[u]=Pa(PA[u]);
+  return PA[u];
+ }
+
+void uni(int a,int b)
+ {
+  a=Pa(a);
+  b=Pa(b);
+  PA[a]=b;
+ }
+
+int CST[19][100020];
+vector < int > g[100020];
+vector < int > s[100020];
+int level[100020];
+int P[100020];
+int SS;
+int cx;
+void inp(int & n)
+ {
+  n=0;
+  cx=getchar();
+  while (!(cx >= '0' && cx <= '9')) cx=getchar();
+  while (cx >= '0' && cx <= '9') n=(n<<3)+(n<<1)+cx-'0',cx=getchar();
+ }
+
+int PPP[100200];
+void calc(int p,int u,int lvl,int now)
+ {
+  if (SS != u) { PPP[u]=now; }
+  CST[lvl][u]=now;
+  for (int i=0;i<g[u].size();i++)
+   {
+    int to=g[u][i];
+    if (to == p) continue;
+    if (level[to] != -1) continue;
+    calc(u,to,lvl,max(now,s[u][i]));
+   }
+ }
+
+int dfs(int p,int v,int siz,int & res)
+ {
+  int sum=1;
+  for (int i=0;i<g[v].size();i++)
+   {
+    int to=g[v][i];
+    if (to == p) continue;
+    if (level[to] != -1) continue;
+    sum+=dfs(v,to,siz,res);
+   }
+  if (res == -1 && (sum*2 >= siz || p == -1))
+    res=v;
+  return sum;
+ }
+
+void build(int v,int siz,int d,int p)
+ {
+  int center=-1;
+  dfs(-1,v,siz,center);
+  P[center]=p;
+  level[center]=d;
+  SS=center;
+  calc(0,center,d,0);
+  for (int i=0;i<g[center].size();i++)
+   {
+    int to=g[center][i];
+    if (level[to] != -1) continue;
+    build(to,siz/2,d+1,center);
+   }
+ }
+
+int n,m,i,q,u,x,ans;
+int xr[100200];
+multiset < int > ALL[100200];
+char ch;
+
+bool used[100020];
+int sz=0;
+
+void go (int p,int u)
+ {
+  if (used[u]) return;
+  used[u]=1;
+  for (int i=0;i<g[u].size();i++)
+    if (g[u][i] != p) go(u,g[u][i]);
+  sz++;
+ }
+
+int main()
+ {
+  scanf("%d%d",&n,&m);
+  for (i=1;i<=m;i++)
+   {
+     inp(edg[i].se.fi); inp(edg[i].se.se); inp(edg[i].fi);
+   }
+  sort(edg+1,edg+m+1);
+  for (i=1;i<=n;i++) PA[i]=i;
+  for (i=1;i<=m;i++)
+   {
+    int x=edg[i].se.fi;
+    int y=edg[i].se.se;
+    int d=edg[i].fi;
+    if (Pa(x) == Pa(y)) continue;
+    g[x].pb(y);
+    g[y].pb(x);
+    s[x].pb(d);
+    s[y].pb(d);
+    uni(x,y);
+   }
+
+  for (i=1;i<=n;i++) level[i]=-1;
+  for (i=1;i<=n;i++)
+   if (!used[i])
+    {
+     sz=0;
+     go(0,i);
+     build(i,sz,0,0);
+    }
+
+  scanf("%d",&q);
+  while (q--)
+   {
+    ch=getchar();
+    while (ch != '+' && ch != '-' && ch != '?') ch=getchar();
+    inp(x);
+    u=x;
+
+    if (ch == '+')
+     {
+      while (x != 0)
+       {
+         ALL[x].insert(CST[level[x]][u]);
+         x=P[x];
+       }
+     } else
+    if (ch == '-')
+     {
+      while (x != 0)
+       {
+        ALL[x].erase(ALL[x].find(CST[level[x]][u]));
+        x=P[x];
+       }
+
+     } else
+     {
+      ans=1000000001;
+      while (x != 0)
+       {
+        if (ALL[x].size()) ans=min(ans,max(*ALL[x].begin(),CST[level[x]][u]));
+        x=P[x];
+       }
+       if (ans == 1000000001) ans=-1;
+      printf("%d\n",ans);
+     }
+   }
+ }

@@ -1,0 +1,244 @@
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <math.h>
+#include <limits.h>
+#include <algorithm>
+#include <vector>
+#include <list>
+#include <stack>
+#include <queue>
+#include <set>
+#include <map>
+#include <bitset>
+#include <string>
+#include <string.h>
+#include <sstream>
+#include <ctime>
+
+using namespace std;
+
+#define eps 1e-12
+#define pi 3.14159265358979323846
+#define pb push_back
+#define mp make_pair
+
+
+typedef long long ll;
+typedef long double ld;
+typedef unsigned long long ull;
+typedef pair<ll,ll> ii;
+
+
+
+
+
+
+
+
+
+const int N=310;
+const int INF=INT_MAX;
+int w[N][N];
+int n,mxMtch;
+int lx[N],ly[N];
+int mtx[N];
+int mty[N];
+bool s[N],t[N];
+int slck[N];
+int indslck[N];
+int prnt[N];
+
+void initLbl()
+{
+	for(int i=1;i<=n;i++)lx[i]=ly[i]=0;
+	for(int i=1;i<=n;i++)
+		for(int j=1;j<=n;j++)lx[i]=max(lx[i],w[i][j]);
+}
+
+void updtLbl()
+{
+	int chng=INT_MAX;
+	for(int i=1;i<=n;i++)if(!t[i])chng=min(chng,slck[i]);
+	for(int i=1;i<=n;i++)
+	{
+		if(s[i])lx[i]-=chng;
+		if(t[i])ly[i]+=chng;
+		else slck[i]-=chng;
+	}
+}
+
+void addToTree(int x,int prntx)
+{
+	s[x]=true;
+	prnt[x]=prntx;
+	for(int i=1;i<=n;i++)
+	{
+		if(slck[i]>lx[x]+ly[i]-w[x][i])
+		{
+			slck[i]=lx[x]+ly[i]-w[x][i];
+			indslck[i]=x;
+		}
+	}
+}
+
+void augment()
+{
+	if(mxMtch==n)return;
+	int rt,x,y;
+	bool augFnd;
+	queue<int>q;
+	for(int i=1;i<=n;i++)
+	{
+		s[i]=t[i]=false;
+		prnt[i]=-1;
+	}
+	for(int i=1;i<=n;i++)
+	{
+		if(mtx[i]==-1)
+		{
+			rt=i;
+			q.push(i);
+			prnt[i]=-2;//keep for now
+			s[i]=true;
+			break;
+		}
+	}
+	for(int i=1;i<=n;i++)
+	{
+		slck[i]=lx[rt]+ly[i]-w[rt][i];
+		indslck[i]=rt;
+	}
+	augFnd=false;
+	while(true)
+	{
+		while(!q.empty())
+		{
+			x=q.front();
+			q.pop();
+			for(int i=1;i<=n;i++)
+			{
+				if(!t[i] && w[x][i]==lx[x]+ly[i])
+				{
+					if(mty[i]==-1)
+					{
+						y=i;
+						augFnd=true;
+						break;
+					}
+					t[i]=true;
+					q.push(mty[i]);
+					addToTree(mty[i],x);
+				}
+			}
+			if(augFnd)break;
+		}
+		if(augFnd)break;
+		updtLbl();
+		while(!q.empty())q.pop();//keep this line for now
+		for(int i=1;i<=n;i++)
+		{
+			if(!t[i] && slck[i]==0)
+			{
+				if(mty[i]==-1)
+				{
+					x=indslck[i];
+					y=i;
+					augFnd=true;
+					break;
+				}
+				else
+				{
+					t[i]=true;
+					if(!s[mty[i]])
+					{
+						q.push(mty[i]);
+						addToTree(mty[i],indslck[i]);
+					}
+				}
+			}
+		}
+		if(augFnd)break;
+	}
+	if(augFnd)
+	{
+		mxMtch++;
+		for(int i=x,j=y,ty;i!=-2;i=prnt[i],j=ty)
+		{
+			ty=mtx[i];
+			mtx[i]=j;
+			mty[j]=i;
+		}
+		augment();
+	}
+}
+
+
+int hungarian()
+{
+	int res=0;
+	mxMtch=0;
+	for(int i=1;i<=n;i++)mtx[i]=mty[i]=-1;
+	initLbl();
+	augment();
+	for(int i=1;i<=n;i++)res+=w[i][mtx[i]];
+	return res;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+int m,a[310],f2[610],val[310][310];
+
+
+
+
+
+int main()
+{
+	std::ios::sync_with_stdio(0);
+	cin.tie(0);
+	cin>>n>>m;
+	for(int i=1;i<=n;i++)cin>>a[i];
+	for(int i=1;i<n+m;i++)cin>>f2[i];
+	for(int i=1;i<=n;i++)
+	{
+		for(int j=1;j<=n;j++)
+		{
+			val[i][j]=f2[a[i]+j];
+		}
+	}
+	sort(f2+1,f2+n+m);
+	int frst=1;
+	int lst=n+m-1;
+	while(frst<lst)
+	{
+		int mid=(frst+lst)>>1;
+		for(int i=1;i<=n;i++)
+		{
+			for(int j=1;j<=n;j++)
+			{
+				if(val[i][j]<=f2[mid])w[i][j]=1;
+				else w[i][j]=0;
+			}
+		}
+		if(hungarian()<n)frst=mid+1;
+		else lst=mid;
+	}
+	cout<<f2[frst]<<"\n";
+	return 0;
+}

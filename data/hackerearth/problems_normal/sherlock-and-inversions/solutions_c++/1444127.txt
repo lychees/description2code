@@ -1,0 +1,151 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+using namespace std;
+ 
+#define MAX_N 100009
+int n;
+int q;
+vector<int> vv;
+vector<pair<int, pair<int,int> > > v;
+int a[MAX_N];
+int unit;
+int b(int i){
+	return i / unit+1;
+}
+long long int outt[MAX_N];
+long long int bit[MAX_N];
+//
+int cmp(pair<int,pair<int,int> > a,pair<int,pair<int,int> > b){
+	if(a.first/unit==b.first/unit){
+		return a.second.first<b.second.first;
+	}
+	return a.first/unit<b.first/unit;
+}
+void add(int i, int x){
+	i++;
+	while (i < MAX_N){
+		bit[i] += x;
+		i += i&-i;
+	}
+}
+long long int sum(int i){
+	i++;
+	long long int r = 0;
+	while (i){
+		r += bit[i];
+		i -= i&-i;
+	}
+	return r;
+}
+int de(int i){
+	return i*unit;
+}
+/**/
+#define MAX MAX_N
+long long int bit1[MAX];
+int u_s;
+int use[MAX];
+void add1(int i, int x){
+	i++;
+	while (i < MAX){
+		if (use[i] != u_s){
+			bit1[i] = 0;
+		}
+		use[i] = u_s;
+		bit1[i] += x;
+		i += i&-i;
+	}
+}
+long long int sum1(int i){
+	long long int r = 0;
+	i++;
+	while (i){
+		if (use[i] != u_s){
+			bit1[i] = 0;
+		}
+		use[i] = u_s;
+		r += bit1[i];
+		i -= i&-i;
+	}
+	return r;
+}
+int main(){
+	scanf("%d%d", &n, &q);
+	unit = 200;
+	for (int i = 0; i < n; i++){
+		scanf("%d", &a[i]);
+		vv.push_back(a[i]);
+	}
+	sort(vv.begin(), vv.end());
+	vv.erase(unique(vv.begin(), vv.end()), vv.end());
+	for (int i = 0; i < n; i++){
+		a[i] = lower_bound(vv.begin(), vv.end(),a[i]) - vv.begin();
+		a[i]++;
+	}
+	v.resize(q);
+	for (int i = 0; i < q; i++){
+		v[i].second.second = i;
+		scanf("%d%d", &v[i].first, &v[i].second.first);
+		v[i].first--;
+		v[i].second.first--;
+	}
+	sort(v.begin(), v.end(),cmp);
+	int st = 0;
+	int en = 0;
+	long long int res = 0;
+	int countt=0;
+	for (int i = 0; i < v.size(); i++){
+		int l = v[i].first;
+		int r = v[i].second.first;
+		int ind = v[i].second.second;
+		if(l >= st){
+			st = (l/unit+1)*unit;
+			en = st;
+			res = 0LL;
+			countt=0;
+			memset(bit, 0, sizeof(bit));
+		}
+		//long long int ans = res;
+		for (int j = en; j <= r; j++,en++){
+			res += countt-sum(a[j]);
+			add(a[j], 1);
+			countt++;
+		}
+		long long int ans=res;
+		int rr = min(r,st - 1);
+		u_s+=1;
+		for (int j = rr; j >= l; j--){
+			ans += sum1(a[j]-1);
+			ans+=sum(a[j]-1);
+			add1(a[j], 1);
+		}
+		outt[ind] = ans;
+	}
+	for (int i = 0; i < q; i++){
+		printf("%lld\n", outt[i]);
+	}
+	return 0;
+}

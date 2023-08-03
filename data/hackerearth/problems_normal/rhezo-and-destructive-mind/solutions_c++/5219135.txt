@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+
+void dfs(int i, vector<vector<int> > edges,bool* visited, int* parent,int* dfn,int* low,int time,bool* ap)
+{
+	visited[i]=true;
+	time++;
+	dfn[i]=time;
+	low[i]=dfn[i];
+	int child=0;
+
+	for (int j = 0; j < edges[i].size(); ++j)
+	{
+
+		int v=edges[i][j];
+		/*if(i==1)
+			cout << v;*/	
+		if(visited[v]==false)
+		{
+			child++;
+			parent[v]=i;
+			dfs(v,edges,visited,parent,dfn,low,time,ap);
+
+			low[i]=min(low[i],low[v]);			
+
+			if(parent[i]!=-1 && low[v]>=dfn[i])
+			{
+				
+				ap[i]=true;
+			}
+			if(parent[i]==-1 && child>1)
+			{
+			
+				ap[i]=true;
+			}
+
+		}
+		else if(v!=parent[i])
+		{
+			low[i]=min(low[i],dfn[v]);
+		}
+	}
+}
+
+int main()
+{
+	int n,m;
+	cin >> n >> m;
+	vector<vector<int> > edges(n+1);
+
+	for (int i = 0; i < m; ++i)
+	{
+		int a,b;
+		cin >>  a >> b;
+		edges[a].push_back(b);
+		edges[b].push_back(a);
+	}
+
+	bool visited[n+1];
+	bool ap[n+1];
+	int parent[n+1];
+	int dfn[n+1];
+	int low[n+1];
+	int time=0;
+
+	for (int i = 0; i <= n; ++i)
+	{
+		parent[i]=-1;
+		visited[i]=false;
+		ap[i]=false;
+		dfn[i]=0;
+		low[i]=0;
+	}
+	for(int i=1;i<=n;i++)
+	{
+		if(visited[i]==false)
+			dfs(i,edges,visited,parent,dfn,low,time,ap);
+	}
+
+	int q;
+	cin >> q;
+
+	for(int kase=1;kase<=q;kase++)
+	{
+		int query;
+		cin >> query;
+
+		if(ap[query]==true)
+			cout << "Satisfied " << edges[query].size() << endl;
+		else
+			cout << "Not Satisfied" << endl;
+	}
+
+	return 0;
+}

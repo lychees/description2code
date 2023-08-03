@@ -1,0 +1,83 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long LL;
+
+LL H[111111];
+LL L[111111];
+LL sc[111111], scl;
+
+LL seg[444444];
+
+void update(int si, int sl, int sr, int qi, LL val)
+{
+	if (qi < sl || sr < qi)
+		return;
+	
+	if (sl == sr)
+	{
+		assert(qi == sl);
+		seg[si] = val;
+		return;
+	}
+	
+	seg[si] = max(seg[si], val);
+	int mid = (sl + sr) / 2;
+	if (qi <= mid)
+		update(si * 2, sl, mid, qi, val);
+	else
+		update(si * 2 + 1, mid + 1, sr, qi, val);
+}
+
+LL query(int si, int sl, int sr, int ql ,int qr)
+{
+	if (qr < sl || sr < ql)
+		return 0;
+	
+	if (ql <= sl && sr <= qr)
+		return seg[si];
+	
+	int mid = (sl + sr) / 2;
+	LL ans = 0;
+	if (ql <= mid)
+		ans = max(ans, query(si * 2, sl, mid, ql, qr));
+	if (qr > mid)
+		ans = max(ans, query(si * 2 + 1, mid + 1, sr, ql, qr));
+	return ans;
+}
+
+int main()
+{
+	int N;
+	
+	scanf("%d", &N);
+	for (int i = 0; i < N; i++)
+	{
+		scanf("%lld%lld", H + i, L + i);
+		sc[i] = L[i];
+	}
+	
+	// sort
+	sort(sc, sc + N);
+	// compress
+	scl = 1;
+	for (int i = 1; i < N; i++)
+	{
+		if (sc[scl - 1] != sc[i])
+		{
+			sc[scl] = sc[i];
+			scl++;
+		}
+	}
+	
+	memset(seg, 0, sizeof(seg));
+	for (int i = 0; i < N; i++)
+	{
+		int ind = lower_bound(sc, sc + scl, L[i]) - sc;
+		LL s = query(1, 0, N - 1, 0, ind);
+		s += H[i];
+		update(1, 0, N - 1, ind, s);
+	}
+	printf("%lld\n", seg[1]);
+	
+    return 0;
+}

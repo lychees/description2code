@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+typedef vector<int> vi;
+typedef vector<ll> vll;
+
+const int MAX_N = 10030;    // Change as necessary
+const ll  MODD = 1000000007; //
+
+pair<int,int> A[MAX_N][12][12]; // (ans,carryover)
+ll ten[MAX_N];
+
+int K;
+string s;
+
+pair<int,int> f(int dig,int prefix_47,int so_far){
+  if(prefix_47 > K) return make_pair(ten[dig],0);
+  if(dig == 0) {
+    int ans = (so_far+prefix_47);
+    if(ans > K) return make_pair(1,0);
+    return make_pair(0,ans);
+  }
+  ll ans = 0;
+  
+  if(dig == 1){
+    for(char c='0';c<='9';c++){
+      so_far += prefix_47+(c=='4'||c=='7');
+      if(so_far > K){
+        ans++;
+        so_far = 0;
+      }
+    }
+    
+    return make_pair(ans,so_far);
+  }
+  
+  pair<int,int> &x = A[dig][prefix_47][so_far];
+  if(x.first >= 0) return x;
+  
+  ll over=so_far;
+  for(char c='0';c<='9';c++){
+    pair<int,int> tmp = f(dig-1,prefix_47+(c == '4' || c=='7'),over);
+    over = tmp.second;
+    ans = (ans+tmp.first)%MODD;
+  }
+  return x = make_pair(ans,over);
+}
+
+int main(){
+  /*
+  int ctr = 0;
+  for(int i=0;i<=74;i++){
+    stringstream ss; ss << i; string s = ss.str();
+    ctr += count(s.begin(),s.end(),'4') + count(s.begin(),s.end(),'7');
+    if(ctr > 3){ cout << i << endl; ctr = 0; }
+  }
+  return 0;*/
+  ios_base::sync_with_stdio(false);
+  cin.tie(0);
+  
+  for(int i=0;i<10030;i++)
+    for(int j=0;j<12;j++)
+      for(int k=0;k<12;k++)
+        A[i][j][k] = make_pair(-1,-1);
+  
+  ten[0] = 1;
+  for(int i=1;i<MAX_N;i++)
+    ten[i] = ten[i-1]*10 % MODD;
+  
+  cin >> K >> s;
+  
+  int f47 = 0,so_far = 0;
+  ll ans = 0;
+  for(int i=0;i<s.length();i++){
+    for(char c='0';c<s[i] || (i == s.length()-1 && c==s[i]);c++){
+      pair<int,int> tmp = f(s.length()-i-1,f47+(c=='4'||c=='7'),so_far);
+      so_far = tmp.second;
+      ans = (ans+tmp.first) % MODD;
+      //cout << "After " << i << " " << c << " : " << ans << " " << so_far << endl;
+    }
+    
+    if(s[i] == '4' || s[i] == '7') f47++;
+  }
+  cout << ans << endl;
+  
+  return 0;
+}

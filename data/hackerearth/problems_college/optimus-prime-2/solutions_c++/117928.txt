@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define lli long long int
+int p;
+#define MAX 1000000
+#define LMT 216
+#define LEN 4830
+#define RNG 100032
+bool A[1000005];
+lli P[1000005];
+unsigned base[MAX/64], segment[RNG/64], primes[LEN];
+
+#define sq(x) ((x)*(x))
+#define mset(x,v) memset(x,v,sizeof(x))
+#define chkC(x,n) (x[n>>6]&(1<<((n>>1)&31)))
+#define setC(x,n) (x[n>>6]|=(1<<((n>>1)&31)))
+
+/* Generates all the necessary prime numbers and marks them in base[]*/
+void sieve()
+{
+    A[0]=A[1]=1;
+    for(int i=2;i<=1000;i++)
+    {
+        if(!A[i])
+        {
+            for(int j=i*i;j<=1000000;j+=i)
+                A[j]=1;
+        }
+    }
+    p=0;
+    for(int i=0;i<=1000000;i++)
+        if(A[i]==0) P[p++]=i;
+}
+
+/* Returns the prime-count within range [a,b] and marks them in segment[] */
+int segmented_sieve(int a, int b)
+{
+    unsigned i, j, k, cnt = (a<=2 && 2<=b)? 1 : 0;
+    if(b<2) return 0;
+    if(a<3) a = 3;
+    if(a%2==0) a++;
+    mset(segment,0);
+    for(i=0; sq(primes[i])<=b; i++)
+    {
+        j = primes[i] * ( (a+primes[i]-1) / primes[i] );
+        if(j%2==0) j += primes[i];
+        for(k=primes[i]<<1; j<=b; j+=k)
+            if(j!=primes[i])
+                setC(segment, (j-a));
+    }
+    for(i=0; i<=b-a; i+=2)
+        if(!chkC(segment, i))
+            cnt++;
+    return cnt;
+}
+bool seg[1000005];
+lli a,b;
+bool func(int in)
+{
+    lli n=a+in;
+    int ct=0;
+    while(n!=0)
+    {
+        int x=n%10;
+        if(x==2 || x==3 || x==5 || x==7) ct++;
+        n=n/10;
+    }
+    if(ct==2 || ct==3 || ct==5 || ct==7 || ct==11) return 1;
+    return 0;
+}
+int main()
+{
+    sieve();
+    int t;
+    cin>>t;
+    while(t--)
+    {
+        memset(seg,0,sizeof(seg));
+        cin>>a>>b;
+        for(int i=0;i<p && P[i]*P[i]<=b;i++)
+        {
+            //cout<<P[i]<<"\n";
+            lli tmp=a/P[i];
+            tmp=tmp*P[i];
+            //cout<<tmp<<"\n";
+
+            for(lli in=tmp;in<=b;in+=P[i])
+            {
+                if(in-a<0) continue;
+                if(P[i]==in) continue;
+                lli in1=in-a;
+                seg[in1]=1;
+            }
+        }
+        int c=0;
+        for(int i=0;i<=b-a;i++)
+        {
+            if(seg[i]==0)
+            {
+                c+=func(i);
+            }
+        }
+        cout<<c<<"\n";
+    }
+    return 0;
+}

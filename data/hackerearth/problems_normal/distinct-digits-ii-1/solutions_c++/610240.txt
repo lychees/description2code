@@ -1,0 +1,111 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const int N = (int)1e5 + 6, mod = (int)1e9 + 7;
+int a[N];
+
+struct fenwick
+{
+	int bit[N];
+	fenwick() { memset(bit, 0, sizeof(bit)); }
+	int pref(int x)
+	{
+		int ret = 0;
+		for (int i = x; i >= 0; i = (i & (i+1)) - 1) ret += bit[i];
+		return ret;
+	}
+	inline void upd(int x, long long val) { for (int i = x; i < N; i |= i+1) bit[i] += val; }
+	inline int que(int x, int y) { return pref(y) - pref(x-1); }
+};
+
+fenwick ct[10];
+
+inline int go(int n)
+{
+	bool pres[10] = {};
+	while (n > 0) pres[n % 10] = true, n /= 10;
+	int ct = 0;
+	for (int i = 0; i < 10; i++) ct += pres[i];
+	return ct;
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+
+	int n; cin >> n;
+	for (int i = 1; i <= n; i++)
+	{
+		cin >> a[i];
+		ct[go(a[i])].upd(i, 1);
+	}
+
+	int m; cin >> m;
+	while (m--)
+	{
+		string s; cin >> s;
+		if (s == "ADD")
+		{
+			int u, v; cin >> u >> v;
+			ct[go(a[u])].upd(u, -1);
+			a[u] += v;
+			if (a[u] >= mod) a[u] -= mod;
+			ct[go(a[u])].upd(u, 1);
+		}
+		if (s == "MUL")
+		{
+			int u, v; cin >> u >> v;
+			ct[go(a[u])].upd(u, -1);
+			a[u] = 1ll * a[u] * v % mod;
+			ct[go(a[u])].upd(u, 1);
+		}
+		if (s == "REP")
+		{
+			int u, v; cin >> u >> v;
+			ct[go(a[u])].upd(u, -1);
+			a[u] = v;
+			ct[go(a[u])].upd(u, 1);
+		}
+		if (s == "MIN")
+		{
+			int l, r; cin >> l >> r;
+			for (int i = 0; i < 10; i++)
+				if (ct[i].que(l, r))
+				{
+					cout << i << " " << ct[i].que(l, r) << "\n";
+					break;
+				}
+		}
+		if (s == "MAX")
+		{
+			int l, r; cin >> l >> r;
+			for (int i = 9; i >= 0; i--)
+				if (ct[i].que(l, r))
+				{
+					cout << i << " " << ct[i].que(l, r) << "\n";
+					break;
+				}
+		}
+	}
+	return 0;
+}

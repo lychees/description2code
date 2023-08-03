@@ -1,0 +1,107 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+using namespace std;
+const int  MAX = 1e5+5;
+#define LL long long
+#define FASTKRO ios::sync_with_stdio(false);cin.tie(0);
+#define pii pair<int,int>
+
+string str;
+
+void swaper(int &a, int &b) {int c = a; a = b; b = c;}
+pii tree[200000*4];
+bool lazy[200000*4];
+
+void build(int ind, int l , int r) {
+    if(l > r)return;
+    if(l == r) {
+        tree[ind] = (str[l] == '>') ? make_pair(1,0) : make_pair(0,1);
+        return;
+    }
+    int mid = (l+r)/2;
+    build(ind*2+1, l , mid);
+    build(ind*2+2, mid+1, r);
+
+    tree[ind] = {tree[ind*2+1].first+tree[ind*2+2].first, tree[ind*2+1].second+tree[ind*2+2].second};
+}
+pii query(int ind, int st, int ed, int l , int r) {
+    if(lazy[ind]) {
+        tree[ind] = {tree[ind].second, tree[ind].first};
+        lazy[ind] = false;
+
+        if(st != ed) {
+            lazy[ind*2+1] = !lazy[ind*2+1];
+            lazy[ind*2+2] = !lazy[ind*2+2];
+        }
+    }
+    if(st > ed || st > r || ed < l) return {0,0};
+
+    if(st >= l && ed <= r) return tree[ind];
+
+    int mid = (st+ed)/2;
+    pii left = query(ind*2+1, st, mid, l , r);
+    pii right = query(ind*2+2, mid+1, ed, l , r);
+
+    return {left.first+right.first, left.second+right.second};
+}
+void update(int ind, int st, int ed, int l , int r) {
+    // cout << st << " " << ed << endl;
+    if(lazy[ind]) {
+        tree[ind] = {tree[ind].second, tree[ind].first};
+        lazy[ind] = false;
+
+        if(st != ed) {
+            lazy[ind*2+1] = !lazy[ind*2+1];
+            lazy[ind*2+2] = !lazy[ind*2+2];
+        }
+    }
+    if(st > ed || st > r || ed < l) return;
+
+    if(st >= l && ed <= r) {
+        tree[ind] = {tree[ind].second, tree[ind].first};
+        if(st != ed) {
+            lazy[ind*2+1] = !lazy[ind*2+1];
+            lazy[ind*2+2] = !lazy[ind*2+2];
+        }
+        return ;
+    }
+    int mid = (st+ed)/2;
+    update(ind*2+1, st, mid, l , r);
+    update(ind*2+2, mid+1,ed, l , r);
+    tree[ind] = {tree[ind*2+1].first+tree[ind*2+2].first, tree[ind*2+1].second+tree[ind*2+2].second};
+}
+int main()
+{
+    memset(lazy, false, sizeof(lazy));
+    //FASTKRO;
+    int t,n,q,qt,l,r;
+    LL p;
+    scanf("%d%d", &n,&q);
+    cin >> str;
+    //cout << "str = " << str.size() << endl;
+    n--;
+
+    build(0,0,n-1);
+     // for(int i= 0; i <= 12; i++)
+     //     cout << i << " " << tree[i].first << " " << tree[i].second << endl;
+    while(q--) {
+        
+        scanf("%d", &qt);
+        if(qt == 2) {
+            scanf("%d%d", &l,&r);
+            bool flag = false;
+            if(l > r) {flag = true; swaper(l,r);}
+            pii ans =  query(0,0,n-1,l-1,r-2);
+            if(flag) printf("%d\n", ans.first);
+            else printf("%d\n", ans.second);
+        }else {
+            scanf("%d%d", &l, &r);
+            if(l > r) {swaper(l,r);}
+            update(0, 0, n-1, l-1, r-2);
+        }
+    }
+
+    
+return 0;
+}

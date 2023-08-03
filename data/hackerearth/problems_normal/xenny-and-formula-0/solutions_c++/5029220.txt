@@ -1,0 +1,60 @@
+#include <stdio.h>
+#include <iostream>
+using namespace std;
+typedef long long int ll;
+ll mod;
+ll a[100001];
+ll tree[100001];
+void update(int id, int n, ll val) {
+	while(id <= n) {
+		tree[id] = (tree[id] + val)%mod;
+		id+=id&-id;
+	}
+}
+ll query(int id) {
+	ll ans = 0;
+	while(id > 0) {
+		ans = (ans + tree[id])%mod;;
+		id-=id&-id;
+	}
+	return ans;
+}
+int main() {
+	int q, n;
+	mod = 1000000007;
+	scanf("%d %d", &q, &n);
+	int i;
+	for(i = 1; i <= n; i++) {
+		scanf("%lld", &a[i]);
+		update(i, n, a[i]);
+	}
+	while(q--) {
+		ll l, w, d, val;
+		scanf("%lld %lld %lld %lld", &l, &w, &d, &val);
+		ll num = w/d + 1;
+		ll p = 2 * w - (num - 1) * d;
+		if(p%2 == 0) {
+			p/=2;
+		}
+		else {
+			num/=2;
+		}
+		p = p * num;
+		ll ans = 0;
+		if(p >= n) {
+			ans = ((p/n)%mod) * (query(n));
+			ans%=mod;
+			p%=n;
+		}
+		int r = (l + p)%(n + 1);
+		if(l > r) {
+			ans = (ans + query(n))%mod;
+			r++;
+		}
+		ans = (ans + query(r) - query(l - 1) + mod)%mod;
+		printf("%lld\n", ans);
+		a[l]+=val;
+		update(l, n, val);
+	}
+	return 0;
+}

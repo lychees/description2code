@@ -1,0 +1,213 @@
+#include <bits/stdc++.h>
+
+typedef long long int li;
+
+#define Fi(i, st, ft) for(i = st;i <= ft; ++i)
+#define Fd(i, st, ft) for(i = st;i >= ft; --i)
+#define pb(a, b) a.push_back(b)
+#define mod 1000000007
+#define MAXN 1500000
+#define MAX 1000
+#define MX 1450000
+#define inf 1000000000000000000ll
+const int maxBufSize = (10000000);
+
+using namespace std;
+
+li t , n , q;
+li arr[100005];
+vector< pair<li,li> > v[1005];
+bool prime[1005];
+vector<li> pr;
+
+li power(li a , li b)
+{
+	li c , result;
+	if(b == 0) {
+		return 1;
+	}
+	c = power(a , b/2)%mod;
+	if(b%2 == 0) {
+		result = (c*c)%mod;
+	} else {
+		result = ((c*c)%mod*a)%mod;
+	}
+	return result%mod;
+}
+
+class RMQ_seg_tree {
+      public:
+             li seg[200][5*20000];
+             
+             li construct(li pm , li s , li e , li a) {
+             		li c , b , mid , chk;
+             		if(s == e) {
+             			c = arr[s];
+             			b = v[c].size();
+             			li i;
+             			chk = 0;
+             			Fi(i , 0 , b-1) {
+             				if(v[c][i].first == pr[pm]) {
+             					seg[pm][a] = v[c][i].second;
+             					chk = 1;
+             				}
+             			}
+             			if(chk == 0) {
+             				seg[pm][a] = 0;
+             			}
+             			return seg[pm][a];
+             		}
+             		mid = (s+e)/2;
+             		b = construct(pm , s , mid , 2*a);
+             		c = construct(pm , mid+1 , e , 2*a+1);
+             		seg[pm][a] = max(b , c);
+             		return seg[pm][a];
+             }
+             
+             li update(li pm , li s , li e , li a , li l , li val) {
+                  li i , chk , c , b , mid;
+                  if(s == e && s == l) {
+                       b = v[val].size();
+                       chk = 0;
+                       Fi(i , 0 , b-1) {
+                       		if(v[val][i].first == pr[pm]) {
+                       			seg[pm][a] = v[val][i].second;
+                       			chk = 1;
+                       		}
+                       }
+                       if(chk == 0) {
+                       	seg[pm][a] = 0;
+                       }
+                       return seg[pm][a];
+                  }
+                  if(e < l || l < s) {
+                       return seg[pm][a];
+                  }
+                  mid = (s+e)/2;
+                  c = update(pm , s , mid , 2*a , l , val);
+                  b = update(pm , mid+1 , e , 2*a+1 , l , val);
+                  seg[pm][a] = max(c , b);
+                  return seg[pm][a];
+             }
+             
+             li query(li pm , li s , li e , li a , li l , li r) {
+                  if((l <= s) && (e <= r)) {
+                       return seg[pm][a];
+                  }
+                  if(e < l || s > r) {
+                       return 0;
+                  }
+                  li c , b , mid;
+                  mid = (s+e)/2;
+                  c = query(pm , s , mid , 2*a , l , r);
+                  b = query(pm , mid+1 , e , 2*a+1 , l , r);
+                  return max(b , c);
+             }
+             
+             void display(li s , li e , li a) {
+                  cout << s << " " << e << " " << seg[a] << "\n";
+                  if(s == e) {
+                       return;
+                  }
+                  li mid = (s+e)/2;
+                  display(s , mid , 2*a);;
+                  display(mid+1 , e , 2*a+1);
+             }
+};
+
+RMQ_seg_tree rmq;
+
+void sieve(li n)
+{
+	//prime[i] = true if i is a prime number...prime is a boolean array...
+	memset(prime , true , sizeof(prime));
+	prime[0] = prime[1] = false;
+	li m = (li)sqrt(n);
+	li i , k;
+	Fi(i , 2, m) {
+      		if (prime[i]) {
+         		for (int k=i*i; k<=n; k+=i) {
+            			prime[k]=false;
+            		}
+            	}
+	}
+}
+
+void pre() {
+	li i;
+	pair<li,li> temp;
+    Fi(i,1,MAX) {
+        li x = i;
+       	li idx = 2;
+        while ( idx*idx <= x ) {
+        	
+            if ( x%idx == 0 ) {
+            	temp.first = idx;
+            	temp.second = 0;
+                
+                while ( x%idx == 0 ) {
+                	x/=idx;
+                	temp.second++;
+                }
+                pb(v[i],temp);
+            }
+            idx++;
+        }
+        if ( x > 1 ) {
+        	temp.first = x;
+        	temp.second = 1;
+        	pb(v[i],temp);
+        }
+    }
+}
+
+int main()
+{
+	li i , j , a , b , c , len;
+	scanf("%lld" , &t);
+	pre();
+	sieve(1005);
+	Fi(i , 2 , 1000) {
+		if(prime[i]) {
+			pb(pr,i);
+		}
+	}
+	len = pr.size();
+	/*Fi(i , 1 , 10) {
+		scanf("%lld" , &a);
+		b = v[a].size();
+		Fi(i , 0 , b-1) {
+			cout << v[a][i].first << " " << v[a][i].second << "\n";
+		}
+		cout << "\n";
+	}*/
+	while(t--) {
+		scanf("%lld" , &n);
+		Fi(i , 1 , n) {
+			scanf("%lld" , &arr[i]);
+		}
+		
+		Fi(i , 0 , len-1) {
+			a = pr[i];
+			rmq.construct(i , 1 , n , 1);
+		}
+		scanf("%lld" , &q);
+		Fi(i , 1 , q) {
+			scanf("%lld %lld %lld" , &a , &b , &c);
+			if(a == 0) {
+				Fi(j , 0 , len-1) {
+					li d = rmq.update(j , 1 , n , 1 , b , c);
+				}
+			} else {
+				li ans = 1;
+				Fi(j , 0 , len-1) {
+					li d = rmq.query(j , 1 , n , 1 , b , c);
+					d = power(pr[j],d);
+					ans = (ans*d)%mod;
+				}
+				printf("%lld\n" , ans);
+			}
+		}
+	}
+	return 0;
+}

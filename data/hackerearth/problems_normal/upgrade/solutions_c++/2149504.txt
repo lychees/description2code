@@ -1,0 +1,348 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+unsigned xor128() {
+	static unsigned x = 123456789, y = 362436069, z = 521288629, w = 88675123;
+	unsigned t = x ^ (x << 11);
+	x = y; y = z; z = w;
+	return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
+}
+
+struct Node {
+	Node *left, *right;
+	int size;
+	int val, sum;
+	bool rev;
+	Node(int val_ = 0): left(NULL), right(NULL), size(1), val(val_), sum(val_), rev(false) { }
+	Node *update() {
+		size = (!left ? 0 : left->size) + 1 + (!right ? 0 : right->size);
+		sum = (!left ? 0 : left->sum) + val + (!right ? 0 : right->sum);
+		return this;
+	}
+	//?propagate????get...????????????????????????rev?getLeft()??????????????????
+	inline void propagate() {
+		if(rev) {
+			rev = false;
+			if(left) left->rev = !left->rev;
+			if(right) right->rev = !right->rev;
+			swap(left, right);
+		}
+	}
+	inline Node *linkl(Node *c) {
+		left = c;
+		return update();
+	}
+	inline Node *linkr(Node *c) {
+		right = c;
+		return update();
+	}
+	inline Node *linklr(Node *l, Node *r) {
+		left = l, right = r;
+		return update();
+	}
+};
+
+struct RBST {
+	typedef Node *Ref;
+	static int size(Ref t) { return !t ? 0 : t->size; }
+	static const int MaxHeight = 32 * 4;
+	static Ref join(Ref l, Ref r) {
+		if(!l) return r;
+		if(!r) return l;
+		if((int)(xor128() % (l->size + r->size)) < l->size) {
+			l->propagate();
+			return l->linkr(join(l->right, r));
+		}else {
+			r->propagate();
+			return r->linkl(join(l, r->left));
+		}
+	}
+	typedef pair<Ref,Ref> RefPair;
+	static RefPair split(Ref t, int k) {
+		if(!t) return RefPair((Ref)NULL, (Ref)NULL);
+		t->propagate();
+		int s = size(t->left);
+		if(k <= s) {
+			RefPair p = split(t->left, k);
+			return RefPair(p.first, t->linkl(p.second));
+		}else {
+			RefPair p = split(t->right, k - s - 1);
+			return RefPair(t->linkr(p.first), p.second);
+		}
+	}
+	template<typename It> static Ref fromList(It b, It e) {
+		int n = e - b;
+		if(n == 0) return NULL;
+		It m = b + n / 2;
+		Ref l = fromList(b, m);
+		Ref r = fromList(m+1, e);
+		return (*m)->linklr(l, r);
+	}
+	tuple<Ref,Ref,Ref> static split3(Ref t, int l, int r) {
+		RefPair p = split(t, l);
+		RefPair q = split(p.second, r - l);
+		return make_tuple(p.first, q.first, q.second);
+	}
+	static Ref join3(Ref l, Ref m, Ref r) {
+		return join(join(l, m), r);
+	}
+};
+
+struct CentroidPathDecomposition {
+	vector<int> colors, positions;	//Vertex -> Color, Vertex -> Offset
+	vector<int> lengths, parents, branches;	//Color -> Int, Color -> Color, Color -> Offset
+	vector<int> parentnodes, depths;	//Vertex -> Vertex, Vertex -> Int
+	//vector<FenwickTree>??????1??????????
+	//sortednodes?[lefts[v], rights[v])?v?subtree??????
+	vector<int> sortednodes, offsets;	//Index -> Vertex, Color -> Index
+	vector<int> lefts, rights;	//Vertex -> Index
+
+	struct BuildDFSState {
+		int i, len, parent;
+		BuildDFSState() { }
+		BuildDFSState(int i_, int l, int p): i(i_), len(l), parent(p) { }
+	};
+
+	//??????????????????????????
+	void build(const vector<vi> &g, int root) {
+		int n = g.size();
+
+		colors.assign(n, -1); positions.assign(n, -1);
+		lengths.clear(); parents.clear(); branches.clear();
+		parentnodes.assign(n, -1); depths.assign(n, -1);
+
+		sortednodes.clear(); offsets.clear();
+		lefts.assign(n, -1); rights.assign(n, -1);
+
+		vector<int> subtreesizes;
+		measure(g, root, subtreesizes);
+
+		typedef BuildDFSState State;
+		depths[root] = 0;
+		vector<State> s;
+		s.push_back(State(root, 0, -1));
+		while(!s.empty()) {
+			State t = s.back(); s.pop_back();
+			int i = t.i, len = t.len;
+			int index = sortednodes.size();
+			int color = lengths.size();
+
+			if(t.parent == -3) {
+				rights[i] = index;
+				continue;
+			}
+
+			if(t.parent != -2) {
+				assert(parents.size() == color);
+				parents.push_back(t.parent);
+				branches.push_back(len);
+				offsets.push_back(index);
+				len = 0;
+			}
+			colors[i] = color;
+			positions[i] = len;
+
+			lefts[i] = index;
+			sortednodes.push_back(i);
+
+			int maxsize = -1, maxj = -1;
+			each(j, g[i]) if(colors[*j] == -1) {
+				if(maxsize < subtreesizes[*j]) {
+					maxsize = subtreesizes[*j];
+					maxj = *j;
+				}
+				parentnodes[*j] = i;
+				depths[*j] = depths[i] + 1;
+			}
+			s.push_back(State(i, -1, -3));
+			if(maxj == -1) {
+				lengths.push_back(len + 1);
+			}else {
+				each(j, g[i]) if(colors[*j] == -1 && *j != maxj)
+					s.push_back(State(*j, len, color));
+				s.push_back(State(maxj, len + 1, -2));
+			}
+		}
+	}
+	
+	void get(int v, int &c, int &p) const {
+		c = colors[v]; p = positions[v];
+	}
+	bool go_up(int &c, int &p) const {
+		p = branches[c]; c = parents[c];
+		return c != -1;
+	}
+
+	inline const int *nodesBegin(int c) const { return &sortednodes[0] + offsets[c]; }
+	inline const int *nodesEnd(int c) const { return &sortednodes[0] + (c+1 == offsets.size() ? sortednodes.size() : offsets[c+1]); }
+
+private:
+	void measure(const vector<vi> &g, int root, vector<int> &out_subtreesizes) const {
+		out_subtreesizes.assign(g.size(), -1);
+		vector<int> s;
+		s.push_back(root);
+		while(!s.empty()) {
+			int i = s.back(); s.pop_back();
+			if(out_subtreesizes[i] == -2) {
+				int s = 1;
+				each(j, g[i]) if(out_subtreesizes[*j] != -2)
+					s += out_subtreesizes[*j];
+				out_subtreesizes[i] = s;
+			}else {
+				s.push_back(i);
+				each(j, g[i]) if(out_subtreesizes[*j] == -1)
+					s.push_back(*j);
+				out_subtreesizes[i] = -2;
+			}
+		}
+	}
+};
+
+int lowest_common_ancestor(const CentroidPathDecomposition &cpd, int x, int y) {
+	int cx, px, cy, py;
+	cpd.get(x, cx, px);
+	cpd.get(y, cy, py);
+	while(cx != cy) {
+		if(cpd.depths[*cpd.nodesBegin(cx)] < cpd.depths[*cpd.nodesBegin(cy)])
+			cpd.go_up(cy, py);
+		else
+			cpd.go_up(cx, px);
+	}
+	return cpd.nodesBegin(cx)[min(px, py)];
+}
+
+void get_route(const CentroidPathDecomposition &cpd, int u, int v, vector<pair<int,pii> > &route) {
+	route.clear();
+	int w = lowest_common_ancestor(cpd, u, v), wc, wp;
+	cpd.get(w, wc, wp);
+	rep(uv, 2) {
+		int c, p;
+		cpd.get(uv == 0 ? u : v, c, p);
+		int sz = route.size();
+		while(1) {
+			int top = c == wc ? wp + uv : 0;
+			pii q = uv == 0 ? mp(p + 1, top) : mp(top, p + 1);
+			if(q.first != q.second) {
+				if(uv == 1 && c == wc) {	//c???????????
+					assert(route[sz-1].first == c);
+					assert(route[sz-1].second.first - route[sz-1].second.second == 1);
+					assert(route[sz-1].second.first == q.first);
+					route[sz-1].second = mp(route[sz-1].second.second, q.second);
+				}else {
+					route.push_back(mp(c, q));
+				}
+			}
+			if(c == wc) break;
+			cpd.go_up(c, p);
+		}
+		if(uv == 1)
+			reverse(route.begin() + sz, route.end());
+	}
+}
+
+int main() {
+	int N, Q;
+	while(~scanf("%d%d", &N, &Q)) {
+		vector<int> A(N);
+		rep(i, N) scanf("%d", &A[i]);
+		vector<vi> g(N);
+		rep(i, N-1) {
+			int u, v;
+			scanf("%d%d", &u, &v), -- u, -- v;
+			g[u].push_back(v);
+			g[v].push_back(u);
+		}
+		vector<Node> nodes(N);
+		rep(i, N) nodes[i] = Node(A[i]);
+		CentroidPathDecomposition cpd; cpd.build(g, 0);
+		int C = cpd.lengths.size();
+		vector<Node*> ts(C);
+		vector<Node*> tmpv;
+		rep(c, C) {
+			const int *a = cpd.nodesBegin(c), *b = cpd.nodesEnd(c);
+			tmpv.clear();
+			for(; a != b; ++ a)
+				tmpv.push_back(&nodes[*a]);
+			ts[c] = RBST::fromList(tmpv.begin(), tmpv.end());
+		}
+		vector<pair<int,pii> > route;
+		vector<pair<Node*,Node*> > rems;
+		rep(ii, Q) {
+			char ty[2];
+			int u, v;
+			scanf("%s%d%d", ty, &u, &v), -- u, -- v;
+			if(*ty == 'R') {
+				get_route(cpd, u, v, route);
+				Node *path = NULL;
+				rems.resize(route.size());
+				rep(i, route.size()) {
+					int c = route[i].first;
+					int l, r; tie(l, r) = route[i].second;
+					Node *t;
+					tie(rems[i].first, t, rems[i].second) =
+						RBST::split3(ts[c], min(l, r), max(l, r));
+					if(l > r)
+						t->rev = !t->rev;
+					path = RBST::join(path, t);
+				}
+				path->rev = !path->rev;
+				rep(i, route.size()) {
+					int c = route[i].first;
+					int l, r; tie(l, r) = route[i].second;
+					Node *t;
+					tie(t, path) = RBST::split(path, abs(r - l));
+					if(l > r)
+						t->rev = !t->rev;
+					ts[c] = RBST::join3(rems[i].first, t, rems[i].second);
+				}
+			}else if(*ty == 'S') {
+				get_route(cpd, u, v, route);
+				int ans = 0;
+				rep(i, route.size()) {
+					int c = route[i].first;
+					int l, r; tie(l, r) = route[i].second;
+					Node *tl, *t, *tr;
+					tie(tl, t, tr) = RBST::split3(ts[c], min(l, r), max(l, r));
+					ans += t->sum;
+					ts[c] = RBST::join3(tl, t, tr);
+				}
+				printf("%d\n", ans);
+			}else abort();
+		}
+	}
+	return 0;
+}

@@ -1,0 +1,242 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define MOD 1000000007
+
+typedef struct
+{
+	int mxmd=0,mxmc=0;
+	int mnmd=0,mnmc=0;
+}seg;
+seg tree[2000009];int A[1000009];
+void build(int node, int start, int en)
+{
+    if(start == en)
+    {
+        tree[node].mxmd = tree[node].mnmd = A[start];
+        tree[node].mxmc = tree[node].mnmc = 1;
+    }
+    else
+    {
+        int mid = (start + en) / 2;
+        build(2*node, start, mid);
+        build(2*node+1, mid+1, en);
+        if(tree[2*node].mxmd==tree[2*node+1].mxmd)
+        {
+        	tree[node].mxmd = tree[2*node].mxmd;
+        	tree[node].mxmc = tree[2*node].mxmc + tree[2*node+1].mxmc;
+        }
+        else if(tree[2*node].mxmd>tree[2*node+1].mxmd)
+        {
+        	tree[node].mxmd = tree[2*node].mxmd;
+        	tree[node].mxmc = tree[2*node].mxmc;
+        }
+        else if(tree[2*node].mxmd<tree[2*node+1].mxmd)
+        {
+        	tree[node].mxmd = tree[2*node+1].mxmd;
+        	tree[node].mxmc = tree[2*node+1].mxmc;
+        }
+
+        if(tree[2*node].mnmd==tree[2*node+1].mnmd)
+        {
+        	tree[node].mnmd = tree[2*node].mnmd;
+        	tree[node].mnmc = tree[2*node].mnmc + tree[2*node+1].mnmc;
+        }
+        else if(tree[2*node].mnmd<tree[2*node+1].mnmd)
+        {
+        	tree[node].mnmd = tree[2*node].mnmd;
+        	tree[node].mnmc = tree[2*node].mnmc;
+        }
+        else if(tree[2*node].mnmd>tree[2*node+1].mnmd)
+        {
+        	tree[node].mnmd = tree[2*node+1].mnmd;
+        	tree[node].mnmc = tree[2*node+1].mnmc;
+        }
+    }
+}
+
+void update(int node, int start, int en, int idx, int val)
+{
+    if(start == en)
+    {
+        A[idx] = val;
+        tree[node].mxmd = tree[node].mnmd = A[idx];
+        tree[node].mxmc = tree[node].mnmc = 1;
+    }
+    else
+    {
+        int mid = (start + en) / 2;
+        if(start <= idx and idx <= mid)
+        {
+            update(2*node, start, mid, idx, val);
+        }
+        else
+        {
+            update(2*node+1, mid+1, en, idx, val);
+        }
+        if(tree[2*node].mxmd==tree[2*node+1].mxmd)
+        {
+        	tree[node].mxmd = tree[2*node].mxmd;
+        	tree[node].mxmc = tree[2*node].mxmc + tree[2*node+1].mxmc;
+        }
+        else if(tree[2*node].mxmd>tree[2*node+1].mxmd)
+        {
+        	tree[node].mxmd = tree[2*node].mxmd;
+        	tree[node].mxmc = tree[2*node].mxmc;
+        }
+        else if(tree[2*node].mxmd<tree[2*node+1].mxmd)
+        {
+        	tree[node].mxmd = tree[2*node+1].mxmd;
+        	tree[node].mxmc = tree[2*node+1].mxmc;
+        }
+
+        if(tree[2*node].mnmd==tree[2*node+1].mnmd)
+        {
+        	tree[node].mnmd = tree[2*node].mnmd;
+        	tree[node].mnmc = tree[2*node].mnmc + tree[2*node+1].mnmc;
+        }
+        else if(tree[2*node].mnmd<tree[2*node+1].mnmd)
+        {
+        	tree[node].mnmd = tree[2*node].mnmd;
+        	tree[node].mnmc = tree[2*node].mnmc;
+        }
+        else if(tree[2*node].mnmd>tree[2*node+1].mnmd)
+        {
+        	tree[node].mnmd = tree[2*node+1].mnmd;
+        	tree[node].mnmc = tree[2*node+1].mnmc;
+        }
+    }
+}
+int m,c;
+void query(int node, int start, int en, int l, int r,char s[])
+{
+    if(r < start || en < l)
+    {
+        if(s[1]=='A')
+        {
+        	m = -1;
+        	c = 0;
+        }
+        else  if(s[1]=='I')
+        {
+        	m = 1000000009;
+        	c = 0;
+        }
+        return;
+    }
+    if(l <= start && en <= r)
+    {
+        if(s[1]=='A')
+        {
+        	m = tree[node].mxmd;
+        	c = tree[node].mxmc;
+        }
+        else  if(s[1]=='I')
+        {
+        	m = tree[node].mnmd;
+        	c = tree[node].mnmc;
+        }
+        return;
+    }
+    // range represented by a node is partially inside and partially outside the given range
+    int mid = (start + en) / 2;
+    query(2*node, start, mid, l, r,s);
+    int m1 = m,c1 = c;
+    query(2*node+1, mid+1, en, l, r,s);
+    int m2 = m,c2 = c;
+    if(m1==m2)
+    {
+    	m = m1;
+    	c = c1+c2;
+    }
+    if(m1>m2)
+    {
+    	if(s[1]=='A')
+    	{
+    		m = m1;
+    		c = c1;
+    	}
+    	else if(s[1]=='I')
+    	{
+    		m = m2;
+    		c = c2;
+    	}
+    }
+    if(m1<m2)
+    {
+    	if(s[1]=='A')
+    	{
+    		m = m2;
+    		c = c2;
+    	}
+    	else if(s[1]=='I')
+    	{
+    		m = m1;
+    		c = c1;
+    	}
+    }
+}
+int count(long long e)
+{
+
+	int ten[10],v=0;
+	for(int i=0;i<10;i++)
+		ten[i]=0;
+	while(e>0)
+	{
+		ten[e%10]++;
+		e/=10;
+	}
+	for(int i=0;i<10;i++)
+		if(ten[i]>0)
+			v++;
+	return v;
+}
+int main()
+{
+    //freopen("file1.txt","r",stdin);
+    //freopen("out.cpp","w",stdout);
+    int n,q,a,b,cnt;
+    cin>>n;
+    long long p[n+1];
+    char s[5];
+    for(int i=1;i<=n;i++)
+    {
+    	cin>>p[i];
+    	A[i] = count(p[i]);
+    }
+    build(1,1,n);
+
+    cin>>q;
+    for(int i=0;i<q;i++)
+    {
+    	cin>>s>>a>>b;
+    	if(s[1]=='U')
+    	{
+    	    cnt = count(((p[a]*b)%MOD+MOD)%MOD);
+    	    update(1,1,n,a,cnt);
+    	    A[a] = cnt;
+    	    p[a] = ((p[a]*b)%MOD+MOD)%MOD;
+    	}
+    	else if(s[1]=='D')
+    	{
+    	    cnt = count(((p[a]+b)%MOD+MOD)%MOD);
+    	    update(1,1,n,a,cnt);
+    	    A[a] = cnt;
+    	    p[a] = ((p[a]+b)%MOD+MOD)%MOD;
+    	}
+    	else if(s[1]=='E')
+    	{
+    	    cnt = count(b%MOD);
+    	    update(1,1,n,a,cnt);
+    	    A[a] = cnt;
+    	    p[a] = b%MOD;
+    	}
+    	else if(s[1]=='A' || s[1]=='I')
+    	{
+    		query(1,1,n,a,b,s);
+    		cout<<m<<" "<<c;
+    		cout<<endl;
+    	}
+
+    }
+}

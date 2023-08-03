@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define icin(x) scanf("%d",&x)
+#define lcin(x) scanf("%lld",&x)
+#define pb push_back
+#define mp make_pair
+#define F first
+#define S second
+#define MOD (LL(1e9)+7)
+typedef long long LL;
+typedef vector<int> vi;
+typedef vector<vi> vvi;
+typedef pair<int,int> pii;
+
+
+// Modular exponentiation
+LL power(LL base, LL exponent, LL modulus){
+  LL result = 1;
+  while(exponent){
+    if (exponent&1)result = (result * base);
+    if(result>=modulus)result %= modulus;
+    exponent >>= 1;
+    base = (base * base);
+    if(base>=modulus)base %= modulus;
+  }
+  return result;
+}
+
+class DSU{
+public:
+	vector<int32_t> parent;
+	vector<int32_t> rank;
+	vector<int32_t> size;		//Size of set
+	int32_t number_of_sets;
+	DSU(int32_t _n){
+		number_of_sets=_n;
+		parent.resize(_n);
+		rank.resize(_n);
+		size.resize(_n);
+		for(int32_t i=0;i<_n;i++){
+			parent[i]=i;rank[i]=1;size[i]=1;
+		}
+	}
+	~DSU(){
+		number_of_sets=0;
+		parent.clear();rank.clear();size.clear();
+	}
+	int32_t root(int32_t i){
+		return (parent[i]==i) ? i : (parent[i] = root(parent[i]));
+	}
+	int32_t sizeSet(int32_t i){
+		return (parent[i]==i) ? size[i] : size[i] = size[root(i)];
+	}
+	void unionSet(int32_t i,int32_t j){
+		i=root(i);j=root(j);
+		if(i==j)return;
+		number_of_sets--;
+		if(rank[i]<rank[j])swap(i,j);
+		if(rank[i]==rank[j])rank[i]++;
+		parent[j]=i;
+		size[i] += size[j]; 
+	}
+	bool isSameSet(int32_t i,int32_t j){
+		return root(i)==root(j);
+	}
+};
+
+
+map<LL,int> m;
+vector<pair<LL,LL> > v;
+int main(){
+	LL n;
+	int k;
+	lcin(n);
+	icin(k);
+	v.resize(k);
+	for(int i=0;i<k;i++){
+		lcin(v[i].F);
+		lcin(v[i].S);
+		m[v[i].F-1]=0;
+		m[v[i].S]=0;
+	}
+	int idx=0;
+	for(auto it=m.begin();it!=m.end();++it){
+		it->second=idx;
+		idx++;
+	}
+	DSU dsu(idx);
+	LL ans = power(2,n,MOD),inv=power(2,MOD-2,MOD);
+	for(int i=0;i<k;i++){
+		int a=m[v[i].F-1],b=m[v[i].S];
+		if(dsu.isSameSet(a,b)==false)
+			ans = (ans *inv)%MOD;
+		dsu.unionSet(a,b);
+		printf("%lld\n",ans);
+	}
+
+  return 0;
+}

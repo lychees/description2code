@@ -1,0 +1,117 @@
+//Sinha Saab
+//NARUTO Fan
+
+
+
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <string.h>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <list>
+#include <math.h>
+
+#define ll long long int
+#define maxN 1000000
+#define maxVal 100000000
+#define minVal -100000000
+#define mod 1000000007LL
+
+#define gcd(a,b) __gcd(a,b)
+
+using namespace std;
+
+struct trie
+{
+	struct trie * child[26];
+	ll leaves[26];
+	ll term[26];
+};
+struct trie * root;
+char a[maxN+5];
+ll l;
+ll dp[maxN+5]={0};
+
+struct trie * makeNode()
+{
+	struct trie * v;
+	v=(struct trie *)malloc(sizeof(struct trie));
+	if(v)
+	{
+		ll i;
+		for(i=0;i<26;i++)
+		{
+			v->child[i]=NULL;
+			v->leaves[i]=0;
+			v->term[i]=0;
+		}
+	}
+	return v;
+}
+
+void insert()
+{
+	ll i,p;
+	struct trie * v=root;
+	for(i=0;i<l;i++)
+	{
+		p=a[i]-'a';
+		if(!v->child[p])
+			v->child[p]=makeNode();
+		v->leaves[p]++;
+		v=v->child[p];
+	}
+	v->term[a[l-1]-'a']++;
+}
+
+void query()
+{
+	ll i,j,p;
+	struct trie * v=root;
+	for(i=0;i<l;i++)
+	{
+		p=a[i]-'a';
+		for(j=0;j<26;j++)
+			if(p!=j&&v->child[j])
+				dp[i]+=v->leaves[j];
+		if(i!=0)
+			dp[i]+=v->term[a[i-1]-'a'];
+		if(!v->child[p])
+			break;
+		v=v->child[p];
+	}
+	if(i==l)
+	{
+		dp[i]+=v->term[a[i-1]-'a'];
+		for(j=0;j<26;j++)
+			dp[i]+=v->leaves[j];
+	}
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    #ifndef LOCAL_SYS
+        //freopen("in.txt","r",stdin);
+        //freopen("out.txt","w",stdout);
+    #endif
+    ll n,i,m=0;
+    scanf("%lld",&n);
+    root=makeNode();
+    for(i=0;i<n;i++)
+    {
+    	scanf("%s",a);
+    	l=strlen(a);
+    	m=max(m,l);
+    	query();
+    	insert();
+    }
+    for(i=0;i<=m;i++)
+    	printf("%lld ",dp[i]);
+    printf("\n");
+    return 0;
+}

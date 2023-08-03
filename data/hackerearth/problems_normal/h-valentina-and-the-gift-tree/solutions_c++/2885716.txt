@@ -1,0 +1,142 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+#include <iostream>
+#include <cassert>
+#include <vector>
+#include <stack>
+
+using namespace std;
+
+typedef long long ll;
+typedef long long llint;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define REP(i, n) for (int i = 0; i < (n); ++i)
+#define TRACE(x) cout << #x << " = " << x << endl
+#define _  << "_" <<
+
+const int MAXN = 100000;
+const int MAXP = 17;
+const llint INF = 1e15;
+
+struct value {
+  llint sum, ans, upper, lower;
+  value() { sum = 0; ans = upper = lower = -INF; }
+  value(llint sum, llint ans, llint upper, llint lower):
+    sum(sum), ans(ans), upper(upper), lower(lower) {}
+};
+
+int x[MAXN];
+int anc[MAXP+1][MAXN];
+int depth[MAXN];
+value V[MAXP+1][MAXN];
+vector<int> e[MAXN];
+
+value merge(value down, value up) {
+  llint sum = down.sum+up.sum;
+  llint upper = max(up.upper, up.sum+down.upper);
+  llint lower = max(down.lower, down.sum+up.lower);
+  llint ans = max(up.ans, down.ans);
+  ans = max(ans, max(lower, upper));
+  ans = max(ans, down.upper+up.lower);
+  return value(sum, ans, upper, lower);
+}
+
+value add(value path, llint x) {
+  return merge(path, value(x, x, x, x));
+}
+
+stack<pair<int, int>> st;
+void dfs(int p, int u) {
+  st.emplace(p, u);
+  while (!st.empty()) {
+    p = st.top().first;
+    u = st.top().second;
+    st.pop();
+    anc[0][u] = p;
+    V[0][u] = value(x[u], x[u], x[u], x[u]);
+    for (int i = 1; i <= MAXP; ++i) {
+      if (anc[i-1][u] != -1) {
+        anc[i][u] = anc[i-1][anc[i-1][u]];
+        V[i][u] = merge(V[i-1][u], V[i-1][anc[i-1][u]]);
+      } else {
+        anc[i][u] = -1;
+      }
+    }
+    for (int v: e[u]) {
+      if (v == p) continue;
+      depth[v] = 1+depth[u];
+      st.emplace(u, v);
+    }
+  }
+}
+
+llint query(int a, int b) {
+  if (depth[a] < depth[b]) swap(a, b);
+  int d = depth[a]-depth[b];
+  value left, right;
+  for (int i = 0; i <= MAXP; ++i)
+    if (d>>i&1) {
+      left = merge(left, V[i][a]);
+//      printf("%lld %lld %lld\n", V[i][a].sum, V[i][a].ans, V[i][a].upper);
+//      printf("%lld %lld %lld\n", left.sum, left.ans, left.upper);
+      a = anc[i][a];
+    }
+  if (a != b) {
+    for (int i = MAXP; i >= 0; --i)
+      if (anc[i][a] != anc[i][b]) {
+        left = merge(left, V[i][a]);
+        right = merge(right, V[i][b]);
+        a = anc[i][a];
+        b = anc[i][b];
+      }
+    left = add(left, x[a]);
+    right = add(right, x[b]);
+    left = add(left, x[anc[0][a]]);
+  } else {
+    left = add(left, x[a]);
+  }
+  llint ret = max(left.ans, right.ans);
+  ret = max(ret, left.upper+right.upper);
+  return ret;
+}
+
+int main(void) {
+
+  int n;
+  scanf("%d", &n);
+
+  REP (i, n-1) {
+    int a, b;
+    scanf("%d%d", &a, &b);
+    --a; --b;
+    e[a].push_back(b);
+    e[b].push_back(a);
+  }
+  REP (i, n)
+    scanf("%d", &x[i]);
+
+  dfs(-1, 0);
+//  for (int i = 0; i < n; ++i) {
+//    printf("%d: ", i+1);
+//    for (int j = 0; j <= 3; ++j) 
+//      if (anc[j][i] != -1)
+//        printf("%d (%lld, %lld, %lld) ", 1+anc[j][i], V[j][i].sum, V[j][i].upper, V[j][i].ans);
+//    printf("\n");
+//  }
+
+  int m;
+  scanf("%d", &m);
+  REP (i, m) {
+    int a, b;
+    scanf("%d%d", &a, &b);
+    --a; --b;
+    printf("%lld\n", query(a, b));
+  }
+
+
+  return 0;
+}
+

@@ -1,0 +1,83 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+#define MOD 1000000007
+
+int steps(vector<int> x, vector<int> d, int m) {
+    int n = x.size();
+
+    long long md[m + 1][n + 1];
+    for (int i = 0; i < n; i++) {
+        long long mx[d[i] + 1][m+1];
+        int D = d[i];
+
+        for (int j = 1; j <= D; j++)
+            mx[j][0] = 1;
+
+        for (int k=1; k<=m; k++) {
+            for (int j = 1; j <= D; j++) {
+                mx[j][k] = 0;
+                if (j - 1 > 0)
+                    mx[j][k] = (mx[j][k] + mx[j - 1][k - 1]) % MOD;
+                if (j + 1 <= D)
+                    mx[j][k] = (mx[j][k] + mx[j+1][k-1]) % MOD;
+            }
+        }
+
+        md[0][i+1]= 1;
+        for (int j = 1; j <= m; j++)
+            md[j][i + 1] = mx[x[i]][j];
+    }
+
+    long long c[m+1][m+1];
+    for (int i= 0; i<=m; i++) {
+        c[i][0] = 1;
+        c[i][i] = 1;
+    }
+    for (int i = 1; i <= m; i++)
+        for (int j = 1; j < i; j++)
+        c[i][j] = (c[i - 1][j - 1] + c[i - 1][j]) % MOD;
+
+    long long mdt[m+1][n+1];
+    for (int i = 0; i <= m; i++)
+        mdt[i][1] = md[i][1];
+    for (int i= 0; i<=n; i++)
+        mdt[0][i] = 1;
+
+    for (int i= 2; i<=n; i++) {
+        for (int j = 1; j <= m; j++) {
+            mdt[j][i] = 0;
+            for (int k = 0; k <= j; k++)
+                mdt[j][i] =
+                    (mdt[j][i] +
+                     ((c[j][j - k] *
+                       ((mdt[k][i - 1] * md[j - k][i]) % MOD)) % MOD)) % MOD;
+        }
+    }
+
+    return mdt[m][n];
+}
+
+int main() {
+    int t,n,m,temp;
+    cin>>t;
+
+    while(t--) {
+        cin>>n>>m;
+        vector<int> x;
+        vector<int> d;
+
+        for (int i = 0; i < n; i++) {
+            cin >> temp;
+            x.push_back(temp);
+        }
+
+        for (int i = 0; i < n; i++) {
+            cin >> temp;
+            d.push_back(temp);
+        }
+
+        cout << steps(x,d,m) << endl;
+    }
+    return 0;
+}

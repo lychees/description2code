@@ -1,0 +1,54 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int MOD = (int)(1e6) + 3;
+int fac[MOD + 10], inv[MOD + 10];
+int power(int x, int k) {
+    if (k == 0) return 1;
+    long long t = power(x, k / 2);
+    t = (t * t) % MOD;
+    if (k % 2 == 1) t = (t * x) % MOD;
+    return t;
+}
+void init() {
+    fac[0] = 1;
+    for(int i = 1; i < MOD; i++) fac[i] = ((long long)(fac[i - 1]) * i) % MOD;
+    for(int i = 0; i < MOD; i++) inv[i] = power(fac[i], MOD - 2);
+}
+int combi(int k, int n) {
+    if (k > n) return 0;
+    return ((long long)(fac[n]) * ((long long)(inv[n - k]) * inv[k]) % MOD) % MOD;
+}
+int Lucas(long long k, long long n) {
+    if (max(n, k) < MOD) return combi(k, n);
+    return ((long long)(combi(k % MOD, n % MOD)) * Lucas(k / MOD, n / MOD)) % MOD;
+}
+int calc(int m, int n, long long s) {
+    if (s < m) return 0;
+    s -= m; n--;
+    //cout<<"D="<<s<<"  t="<<n<<" and n= "<<m<<"\n";
+    int ret = Lucas(s, s + m - 1);
+    //cout<<ret<<"\n";
+    for(int i = 1; i <= m; i++) {
+        long long x = s - (long long)(i) * (n + 1);
+        if (x < 0) break;
+        int j = ((long long)(Lucas(i, m)) * Lucas(x, x + m - 1)) % MOD;
+        if (i % 2 == 1) ret = (ret - j + MOD) % MOD;
+        else ret = (ret + j) % MOD;
+    }
+    return ret;
+}
+int main()
+{
+    int test;
+    cin >> test;
+    assert((1 <= test) && (test <= 10));
+    init();
+    while (test --) {
+        int d, c, n;
+        cin >> d >> c >> n;
+        assert((1 <= d) && (d <= 1000000));
+        assert((1 <= c) && (c <= 1000000));
+        assert((1 <= n) && (n <= 1000000));
+        cout << calc(d + c, n, (long long)(n + 1) * d) << endl;
+    }
+}

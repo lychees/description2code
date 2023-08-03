@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define REP(i,n) for(int i=0;i<(int)(n);++i)
+#define FOR(i,c) for(__typeof((c).begin())i=(c).begin();i!=(c).end();++i)
+#define ALL(c) (c).begin(), (c).end()
+#define valid(y,x,h,w) (0<=y&&y<h&&0<=x&&x<w)
+#define tpl(...) make_tuple(__VA_ARGS__)
+const int INF = 0x3f3f3f3f;
+const double EPS = 1e-8;
+const double PI = acos(-1);
+typedef long long ll;
+typedef pair<int,int> pii;
+template<class T>bool chmax(T &a, const T &b) { if (a<b) { a=b; return 1; } return 0; }
+template<class T>bool chmin(T &a, const T &b) { if (b<a) { a=b; return 1; } return 0; }
+template<class T>ostream&operator<<(ostream &o,const vector<T>&t){o<<'[';FOR(i,t){if(i!=t.begin())o<<',';o<<*i;}return o<<']';}
+template<class S,class T>ostream&operator<<(ostream &o,const pair<S,T>&t){return o<<'('<<t.first<<','<<t.second<<')';}
+template<int N,class Tp>void output(ostream&,const Tp&){}
+template<int N,class Tp,class,class ...Ts>void output(ostream &o,const Tp&t){if(N)o<<',';o<<get<N>(t);output<N+1,Tp,Ts...>(o,t);}
+template<class ...Ts>ostream&operator<<(ostream&o,const tuple<Ts...>&t){o<<'(';output<0,tuple<Ts...>,Ts...>(o,t);return o<<')';}
+template<class T>void output(T t,char z=10){if(t<0)t=-t,putchar(45);int c[20];
+int k=0;while(t)c[k++]=t%10,t/=10;for(k||(c[k++]=0);k;)putchar(c[--k]^48);putchar(z);}
+template<class T>void outputs(T t){output(t);}
+template<class S,class ...T>void outputs(S a,T...t){output(a,32);outputs(t...);}
+template<class T>void output(T *a,int n){REP(i,n)output(a[i],i!=n-1?',':10);}
+template<class T>void output(T *a,int n,int m){REP(i,n)output(a[i],m);}
+template<class T>bool input(T &t){int n=1,c;for(t=0;!isdigit(c=getchar())&&~c&&c-45;);
+if(!~c)return 0;for(c-45&&(n=0,t=c^48);isdigit(c=getchar());)t=10*t+c-48;t=n?-t:t;return 1;}
+template<class S,class ...T>bool input(S&a,T&...t){input(a);return input(t...);}
+
+// 2,3,5,7
+int v[10][4];
+ll dp[20][2][2][2][2][2];
+ll mycount(ll x) {
+  stringstream ss; ss << x;
+  string s = ss.str();
+  int n = s.size();
+  memset(dp,0,sizeof(dp));
+  REP(i,n)
+    dp[i][0][0][0][0][i!=0] = 1;
+  REP(i,n) {
+    REP(j2,2) {
+      REP(j3,2) {
+        REP(j5,2) {
+          REP(j7,2) {
+            REP(ls,2) {
+              for (int k=1; k<=(ls?9:(s[i]-'0')); ++k) {
+                int ln = ls || (k<s[i]-'0');
+                dp[i+1][j2^v[k][0]][j3^v[k][1]][j5^v[k][2]][j7^v[k][3]][ln] += dp[i][j2][j3][j5][j7][ls];
+                // if (dp[i][j2][j3][j5][j7][ls]) {
+                //   cout << tpl(i,j2,j3,j5,j7,ls) << endl;
+                //   cout << "!" << endl;
+                // }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  ll res = 0;
+  REP(i,2)
+    res += dp[n][0][0][0][0][i];
+  return res;
+}
+int main() {
+  for (int i=1; i<=9; ++i) {
+    int y = i;
+    int j = 0;
+    for (int x : {2,3,5,7}) {
+      while(y%x==0){
+        v[i][j]^=1;
+        y /= x;
+      }
+      j++;
+    }
+  }
+
+  int T;
+  cin >> T;
+  while(T--) {
+    ll A,B,K;
+    input(A,B,K);
+    ll low = A-1, high = B+1;
+    ll ct = mycount(A-1);
+    while(low+1<high) {
+      ll mid = (low+high)/2;
+      if (mycount(mid)-ct < K) {
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+    // cout << mycount(low)-ct << endl;
+    if (high == B+1) {
+      cout << -1 << endl;
+    } else {
+      cout << high << endl;
+    }
+  }
+}

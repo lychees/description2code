@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MAXN = 1e4;
+
+int n, m;
+int arr[MAXN], f[MAXN], aux[MAXN];
+
+//Kuhn code taken from topcoder cookbook
+//link : http://apps.topcoder.com/forums/?module=Thread&threadID=684427&start=0&mc=12#1950341
+
+class KuhnImplementation
+{
+public:
+	int n, k;
+	vector < vector<int> > g;
+	vector<int> pairs_of_right, pairs_of_left;
+	vector<bool> used;
+ 
+ 
+	bool kuhn (int v) 
+	{
+		if (used[v])  return false;
+		used[v] = true;
+		for (int i = 0; i < g[v].size(); ++i) 
+		{
+			int to = g[v][i]-n;
+			if (pairs_of_right[to] == -1 || kuhn (pairs_of_right[to])) 
+			{
+				pairs_of_right[to] = v;
+				pairs_of_left[v] = to;
+				return true;
+			}
+		}
+		return false;
+	}
+ 
+	bool find_max_matching(vector<vector<int> > &_g, int _n, int _k) 
+	{
+		g = _g;
+		n = _n;
+		k = _k;
+ 
+		pairs_of_right = vector<int> (k, -1);
+		pairs_of_left = vector<int> (n, -1);
+		used = vector<bool> (n, false);
+ 
+ 
+		bool path_found;
+		do {
+			fill(used.begin(), used.end(), false);
+			path_found = false;
+			for (int i = 0; i < n; ++i)
+				if (pairs_of_left[i] < 0 && !used[i])
+					path_found |= kuhn (i);
+		} while (path_found);
+ 
+ 
+		vector<pair<int, int> > res;
+		for(int i = 0; i < k; i++)
+			if(pairs_of_right[i] != -1)
+				res.push_back(make_pair(pairs_of_right[i], i+n));
+ 
+		if((int)res.size() == n) return true;
+		return false;
+	}
+};
+
+bool check(int idx) {
+	int lessEq = aux[idx];
+	vector< vector<int> > temp(n);
+	for(int i=0; i<n; i++) {
+		for(int j=0; j<n; j++) if(f[i+arr[j]] <= lessEq) {
+			temp[i].push_back(n+j);
+		}
+	}
+	KuhnImplementation ki;
+	return ki.find_max_matching(temp, n, n);
+}
+
+int main(int argc, char const *argv[]){
+	
+	scanf("%d%d", &n, &m);
+	for(int i=0; i<n; i++) {
+		scanf("%d", &arr[i]);
+	}
+	for(int i=0; i<n+m-1; i++) {
+		scanf("%d", &f[i]);
+		aux[i] = f[i];
+	}
+
+	sort(aux, aux+n+m-1);
+
+	for(int i=0; i<n+m-1; i++) if(check(i)) {
+		printf("%d\n", aux[i]);
+		break;
+	}
+	return 0;
+}

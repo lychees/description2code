@@ -1,0 +1,270 @@
+/* https://www.hackerearth.com/july-clash-15/algorithm/upgrade/ */
+#include <bits/stdc++.h>
+#include <sys/resource.h>
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define all(X) (X).begin(),(X).end()
+#define clr(X,a) memset((X), (a), sizeof((X)))
+#define s(a) scanf("%d", &a)
+#define ps(a) printf("%d ", a)
+#define pn(a) printf("%d\n", a)
+#define rep(i,n) for(i = 0; i < (n); i++)
+#define repr(i,a,b) for(i = (a); i <= (b); i++)
+#define MAXN 100111
+
+int N,i,j,T,head[MAXN],subtree[MAXN],depth[MAXN],parent[MAXN],weight[MAXN],chainsize[MAXN],pos[MAXN],Q;
+vector<vector<int>> G;
+
+struct node
+{
+    node *left, *right;
+    int size = 0, sum, priority, weight;
+    bool rev;
+    
+    node(node *l, node *r, int sz, int w, int p, bool _rev) : left(l), right(r), size(sz), sum(w), priority(p), weight(w), rev(_rev) {}
+    
+    void update()
+    {
+        size = left->size + right->size + 1;
+        sum = left->sum + right->sum + weight;
+    }
+    
+    void push();    
+};
+
+node *dummy = new node(nullptr, nullptr, 0, 0, 0, false);
+node* treap[MAXN];
+
+void node::push()
+{
+    if(rev)
+    {
+        swap(left, right);
+        if(left != dummy) left->rev = !left->rev;
+        if(right != dummy) right->rev = !right->rev;
+        rev = false;
+    }
+}
+
+void split(node *root, node *&l, node *&r, int pos)
+{
+    l = dummy; r = root;
+    if(pos == 0) return;
+    if(pos == root->size) { swap(l, r); return; }
+    root->push();
+    if(root->left->size + 1 <= pos)
+    {
+        l = root;
+        split(root->right, l->right, r, pos - root->left->size - 1);
+    }
+    else
+    {
+        r = root;
+        split(root->left, l, r->left, pos);
+    }
+    l->update();
+    r->update();
+}
+
+node* merge(node *l, node *r)
+{
+    if(l == dummy) return r;
+    if(r == dummy) return l;
+    node *newroot = nullptr;
+    l->push();
+    r->push();
+    if(l->priority > r->priority)
+    {
+        newroot = l;
+        newroot->right = merge(l->right, r);
+    }    
+    else
+    {
+        newroot = r;
+        newroot->left = merge(l, r->left);
+    }
+    newroot->update();
+    return newroot;
+}
+
+node* insert(node *root, int w)
+{
+    return merge(root, new node(dummy, dummy, 1, w, rand(), false));
+}
+
+int query(node *&root, int l, int r)
+{
+    node *ln, *rn, *mn;
+    split(root, ln, rn, r);
+    split(ln, ln, mn, l-1);
+    int ans = mn->sum;
+    root = merge(merge(ln, mn), rn);
+    return ans;
+}
+
+void reverse(node *&l)
+{
+    l->rev = !l->rev;
+}
+
+void walk(node *root)
+{
+    if(root == dummy) return;
+    walk(root->left);
+    ps(root->weight);
+    walk(root->right);
+}
+
+void dfs(int v, int p, int d)
+{
+    parent[v] = p;
+    depth[v] = d;
+    subtree[v] = 1;
+    for(int n : G[v]) if(n != p)
+    {
+        dfs(n, v, d+1);
+        subtree[v] += subtree[n];
+    }
+}
+
+void hld(int v, int p, int hd)
+{
+    head[v] = hd;
+    treap[hd] = insert(treap[hd], weight[v]);
+    pos[v] = ++chainsize[hd];    
+    int mx = -1;
+    for(int n : G[v]) if(n != p && subtree[n] >= subtree[v]/2)
+    {
+        hld(n, v, hd);
+        mx = n;
+        break;
+    }
+    for(int n : G[v]) if(n != p && n != mx)
+    {
+        treap[n] = dummy;
+        hld(n, v, n);
+    }
+}
+
+int getlca(int u, int v)
+{
+    while(head[u] != head[v])
+    {
+        if(depth[head[u]] > depth[head[v]])
+            u = parent[head[u]];
+        else
+            v = parent[head[v]];
+    }
+    return depth[u] > depth[v] ? v : u;
+}
+
+int main()
+{
+    const rlim_t kStackSize = 16 * 1024 * 1024;   // min stack size = 16 MB
+    struct rlimit rl;
+    int result; 
+    getrlimit(RLIMIT_STACK, &rl);
+    rl.rlim_cur = kStackSize;
+    result = setrlimit(RLIMIT_STACK, &rl);
+
+    s(N); s(Q);
+    rep(i, N) s(weight[i+1]);
+    G.resize(N+1);
+    rep(i, N-1)
+    {   
+        int a, b; s(a); s(b);
+        G[a].pb(b); G[b].pb(a);
+    }   
+    dfs(1, -1, 1);
+    treap[1] = dummy;
+    hld(1, -1, 1);
+    while(Q--)
+    {
+        char ch; int u, v; 
+        scanf("%*[ \n\t]%c%d%d", &ch, &u, &v);
+        int lca = getlca(u, v);
+        if(ch == 'R')
+        {
+            node *path = dummy, *path2 = dummy;
+            node *l, *r, *m;
+            int origu = u, origv = v;
+            while(head[u] != head[lca])
+            {
+                split(treap[head[u]], l, treap[head[u]], pos[u]);
+                u = parent[head[u]];
+                path = merge(l, path);
+            }
+            split(treap[head[lca]], l, r, pos[u]);
+            split(l, l, m, pos[lca]-1);
+            treap[head[lca]] = merge(l, r);
+            path = merge(m, path);
+            
+            while(head[v] != head[lca])
+            {
+                split(treap[head[v]], l, treap[head[v]], pos[v]);
+                v = parent[head[v]];
+                path2 = merge(l, path2);
+            }
+            if(pos[lca]+1 <= pos[v])
+            {
+                split(treap[head[lca]], l, r, pos[v] - 1);
+                // if this if block is getting executed, then lca has been removed by the previous code, so -1 in position of v
+                split(l, l, m, pos[lca] - 1);
+                // since lca was removed, the numbering of elements before lca remains same
+                treap[head[lca]] = merge(l, r);
+                path2 = merge(m, path2);
+            }
+            reverse(path2);
+            path = merge(path2, path);
+            
+            u = origu; v = origv;
+            while(head[u] != head[lca])
+            {
+                split(path, l, path, pos[u]);
+                reverse(l);                
+                treap[head[u]] = merge(l, treap[head[u]]);
+                u = parent[head[u]];
+            }
+            split(path, l, path, pos[u] - pos[lca] + 1);
+            reverse(l);
+            split(treap[head[lca]], m, r, pos[lca]-1);
+            treap[head[lca]] = merge(merge(m, l), r);
+            
+            while(head[v] != head[lca])
+            {
+                split(path, path, r, path->size - pos[v]);
+                treap[head[v]] = merge(r, treap[head[v]]);
+                v = parent[head[v]];
+            }
+            if(pos[lca]+1 <= pos[v])
+            {
+                split(treap[head[lca]], l, m, pos[lca]);
+                treap[head[lca]] = merge(merge(l, path), m);
+            }
+        }
+        else
+        {            
+            int sum = 0;
+            while(head[u] != head[lca])
+            {
+                sum += query(treap[head[u]], 1, pos[u]);
+                u = parent[head[u]];
+            }
+            sum += query(treap[head[lca]], pos[lca], pos[u]);
+            while(head[v] != head[lca])
+            {
+                sum += query(treap[head[v]], 1, pos[v]);
+                v = parent[head[v]];
+            }
+            if(pos[lca]+1 <= pos[v])
+                sum += query(treap[head[lca]], pos[lca]+1, pos[v]);
+            pn(sum);
+        }
+//        repr(i, 1, N) if(treap[i] != nullptr)
+//            walk(treap[i]), printf("\n");
+    }
+    
+    return 0;
+}

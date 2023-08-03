@@ -1,0 +1,93 @@
+#include<bits/stdc++.h>
+#define ll long long
+using namespace std;
+ll int tree[300000],A[300000];
+void build(ll int node,ll int start,ll int end)
+{
+    if(start == end)
+    {
+        // Leaf node will have a single element
+        tree[node] = A[start];
+    }
+    else
+    {
+        ll int mid = (start + end) / 2;
+        // Recurse on the left child
+        build(2*node, start, mid);
+        // Recurse on the right child
+        build(2*node+1, mid+1, end);
+        // Internal node will have the sum of both of its children
+        tree[node] = tree[2*node] + tree[2*node+1];
+    }
+}
+void update(ll int node,ll int start,ll int end,ll int idx,ll int val)
+{
+    if(start == end)
+    {
+        // Leaf node
+        tree[node] =tree[node] - A[idx] + val;
+        A[idx] = val;
+    }
+    else
+    {
+        ll int mid = (start + end) / 2;
+        if(start <= idx and idx <= mid)
+        {
+            // If idx is in the left child, recurse on the left child
+            update(2*node, start, mid, idx, val);
+        }
+        else
+        {
+            // if idx is in the right child, recurse on the right child
+            update(2*node+1, mid+1, end, idx, val);
+        }
+        // Internal node will have the sum of both of its children
+        tree[node] = tree[2*node] + tree[2*node+1];
+    }
+}
+ll int query(ll int node,ll int start,ll int end,ll int l,ll int r)
+{
+    if(r < start or end < l)
+    {
+        // range represented by a node is completely outside the given range
+        return 0;
+    }
+    if(l <= start and end <= r)
+    {
+        // range represented by a node is completely inside the given range
+        return tree[node];
+    }
+    // range represented by a node is partially inside and partially outside the given range
+    ll int mid = (start + end) / 2;
+    ll int p1 = query(2*node, start, mid, l, r);
+    ll int p2 = query(2*node+1, mid+1, end, l, r);
+    return (p1 + p2);
+}
+int main()
+{
+    long long int  n,i,q,c,qlow,qhigh;
+    cin>>n;
+    for(i=1;i<=n;i++)
+    {
+        cin>>c;
+        A[i]=c%2==0?1:0;
+    }
+    build(1,1,n);
+    cin>>q;
+    while(q--)
+    {
+        cin>>c>>qlow>>qhigh;
+        if(c==0)
+        {
+            update(1,1,n,qlow,qhigh%2==0?1:0);
+        }
+        else if(c==1)
+        {
+            cout<<query(1,1,n,qlow,qhigh)<<endl;
+        }
+        else
+        {
+            cout<<qhigh-qlow+(qhigh!=qlow?1:0)-query(1,1,n,qlow,qhigh)<<endl;
+        }
+    }
+}

@@ -1,0 +1,143 @@
+/*
+        By: facug91
+        From: 
+        Name: 
+        Date: 23/09/2015
+*/
+ 
+#include <bits/stdc++.h>
+#define y1		nd03dnqwuidg1odbnw9uddu0132d
+#define clock	asoudh219udhjdgausdhs9udy433
+#define left	dfgag34gsfaf342rf23fgwrf42ff
+#define middle	lk78k6ujkj76kjk88kkummnhh456
+#define right	apidwcojbl213f80sjb3y8efjfas
+#define move	df53y5fgsf43fdsfsdtg4j6hfdg4
+#define count	nkwdfj111afbjdfsbj32r8yfwejb
+#define prev	asdnklgbgbjfasdbhksdva4t9jds
+#define endl "\n"
+#define EPS 1e-9
+#define MP make_pair
+#define DB(x) cerr << " #" << (#x) << ": " << (x)
+#define DBL(x) cerr << " #" << (#x) << ": " << (x) << endl
+const double PI = 2.0*acos(0.0);
+ 
+#define INF 1000000000
+//#define MOD 1000000007ll
+//#define MAXN 10005
+ 
+using namespace std;
+typedef long long ll;
+typedef unsigned long long llu;
+typedef pair<int, int> ii; typedef pair<ii, ii> iiii;
+typedef vector<int> vi; typedef vector<ii> vii; typedef vector<iiii> viiii;
+
+int n, q, a, b, s, t, p[405], pa[405], cnt;
+vector<pair<int, pair<int, int> > > adj[405], adj2[405];
+bool vis[405];
+ 
+bool bfs () {
+	int u, v, c, rev, i;
+	queue<int> q; q.push(s);
+	for (i=1; i<=n; i++) p[i] = pa[i] = -1;
+	bool sink = false;
+	while (q.size()) {
+		u = q.front(); q.pop();
+		if (u == t) {
+			sink = true;
+			continue;
+		}
+		for (i=0; i<adj[u].size(); i++) {
+			v = adj[u][i].first;
+			c = adj[u][i].second.first;
+			rev = adj[u][i].second.second;
+			if (p[v] == -1 && c > 0) {
+				p[v] = u;
+				pa[v] = rev;
+				q.push(v);
+			}
+		}
+	}
+	return sink;
+}
+int dfs (int u, int min_edge) {
+	if (u == s) return min_edge;
+	else if (p[u] != -1) {
+		int rev = adj[u][pa[u]].second.second;
+		int cr = adj[p[u]][rev].second.first;
+		if (cr > 0) {
+			int f = dfs(p[u], min(min_edge, cr));
+			if (f) {
+				adj[p[u]][rev].second.first -= f;
+				adj[u][pa[u]].second.first += f;
+			}
+			return f;
+		} else return 0;
+	} else return 0;
+}
+
+int max_flow () {
+	int mf = 0, i, v, cr, rev;
+	while (bfs()) {
+		for (i=0; i<adj[t].size(); i++) {
+			v = adj[t][i].first;
+			rev = adj[t][i].second.second;
+			cr = adj[v][rev].second.first;
+			if (cr > 0) {
+				p[t] = v;
+				pa[t] = i;
+				mf += dfs(t, cr);
+			}
+		}
+	}
+	return mf;
+}
+
+void count_component (int u) {
+	vis[u] = true;
+	cnt++;
+	for (int i=0; i<adj[u].size(); i++) {
+		int v = adj[u][i].first;
+		if (!vis[v]) count_component(v);
+	}
+}
+
+int main () {
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	//cout<<fixed<<setprecision(7); cerr<<fixed<<setprecision(7); //cin.ignore(INT_MAX, ' '); //cout << setfill('0') << setw(5) << 25
+	int i, j, tc;
+	
+	cin>>n>>q;
+	while (q--) {
+		cin>>a>>b; a--;
+		adj[a].push_back(MP(b, MP(1, adj[b].size())));
+		adj[b].push_back(MP(a, MP(0, adj[a].size()-1)));
+		adj[a].push_back(MP(b, MP(0, adj[b].size())));
+		adj[b].push_back(MP(a, MP(1, adj[a].size()-1)));
+	}
+	memset(vis, 0, sizeof vis);
+	n++;
+	cnt = 0;
+	count_component(0);
+	if (cnt < n) {
+		cout<<0<<endl;
+		return 0;
+	}
+	for (i=0; i<n; i++) adj2[i] = adj[i];
+	int ans = INT_MAX;
+	for (i=1; i<n; i++) {
+		s = 0; t = i;
+		for (j=0; j<n; j++) adj[j] = adj2[j];
+		ans = min(ans, max_flow());
+	}
+	cout<<ans<<endl;
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	return 0;
+}

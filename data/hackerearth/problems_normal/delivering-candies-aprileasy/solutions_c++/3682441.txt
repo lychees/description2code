@@ -1,0 +1,87 @@
+#include    <bits/stdc++.h>
+
+#define     M_PI            3.14159265358979323846
+#define     mod             1000000007
+#define     inf             1000000000000000000
+#define     mp              make_pair
+#define     pb              push_back
+#define     F               first
+#define     S               second
+#define     ll              long long
+#define     pii             pair<int,int>
+#define     pli             pair<ll,int>
+#define     pil             pair<int,ll>
+#define     pll             pair<ll,ll>
+#define     si(t)           scanf("%d",&t)
+#define     sii(m,n)        scanf("%d %d",&m,&n);
+#define     sl(t)           scanf("%lld",&t)
+#define     rep(i,n)        for(int i=0;i<n;i++)
+#define     REP(i,a,b)      for(int i=a;i<=b;i++)
+#define     RREP(i,a,b)     for(int i=a;i>=b;i--)
+#define     N               100500
+
+using namespace std;
+
+vector<pair<ll,int> > g[N];
+ll dist[N];
+int mark[N] , k[N];
+
+void dijkstra(int source){
+
+    set< pair<ll,int> > q;
+    q.insert(make_pair(0,source));
+    dist[source] = 0;
+    mark[source] = 1;
+    
+    while(!q.empty()){
+    
+        pair<ll,int> p = *q.begin();
+        mark[p.second] = 2;
+        q.erase(p);
+        
+        for(int i=0;i<g[p.second].size();i++){
+            
+            if(mark[g[p.second][i].second] == 0){
+                q.insert(make_pair(dist[p.second]+g[p.second][i].first , g[p.second][i].second ));
+                dist[g[p.second][i].second] = dist[p.second]+g[p.second][i].first ;
+                mark[g[p.second][i].second] = 1;
+            }
+            
+            else if(mark[g[p.second][i].second] == 1 && dist[g[p.second][i].second] > dist[p.second] + g[p.second][i].first ){
+                
+                q.erase(make_pair(dist[g[p.second][i].second] ,g[p.second][i].second ));
+                dist[g[p.second][i].second] = dist[p.second]+g[p.second][i].first ;
+                q.insert(make_pair(dist[g[p.second][i].second] ,g[p.second][i].second ));
+            }
+        }
+        
+    }
+    
+} 
+
+int main(){
+    int n,m,s,a,b;
+    ll w;
+    sii(n,m); si(s);
+    rep(i,n) si(k[i]);
+    ll sk,sd ;
+    sk = sd = 0;
+    
+    for(int i=0;i<m;i++){
+            scanf("%d %d %lld",&a,&b,&w);
+            g[a].push_back(make_pair(w,b));
+            g[b].push_back(make_pair(w,a));
+        }
+    dijkstra(s);
+    rep(i,n) if(mark[i+1] != 0 ) sk += k[i];
+    REP(i,1,n) if(mark[i] != 0 ) sd += dist[i]*(ll)k[i-1];
+    REP(i,1,n){
+        if(mark[i] == 0) printf("0 ");
+        else{
+            ll ans = dist[i]*(sk - k[i-1]) + sd - dist[i]*(ll)k[i-1];
+            printf("%lld ",ans );
+        }
+    }
+    printf("\n");
+    return 0;
+}

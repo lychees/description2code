@@ -1,0 +1,70 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int lli;
+//segtree code goes here
+const int N=100*1000+9;
+lli  cells[N+9];
+lli stree[4*N+9];
+int n;
+void build(int id,int st,int en){
+    if(st==en){
+        stree[id]=st;
+        return;
+    }
+    int md=(st+en)/2;
+    build(2*id,st,md);
+    build(2*id+1,md+1,en);
+    if(cells[stree[2*id]]>cells[stree[2*id+1]])
+        stree[id]=stree[2*id];
+    else 
+        stree[id]=stree[2*id+1];
+    return;
+}
+int qry(int id,int st,int en,int l,int r){
+    if(st>en || en<l || r<st)
+        return 0;
+    if(l<=st && en<=r)
+        return stree[id];
+    int md=(st+en)/2;
+    int left=qry(2*id,st,md,l,r);
+    int right=qry(2*id+1,md+1,en,l,r);
+    if(cells[left]>cells[right])
+        return left;
+    else 
+        return right;
+}
+int findMax(int left,int right){
+    int ans=qry(1,1,n,left,right);
+    return ans;
+}
+lli findCost(int left,int right){
+    int x=findMax(left,right);
+    //printf("x is %d %d %d\n",x,left,right);
+    lli ans=0;
+    if(left>=right)
+        return 0;
+    if(left<=x-1){
+        ans+=cells[x];
+        ans+=findCost(left,x-1);
+    }
+    if(right>=x+1){
+        ans+=cells[x];
+        ans+=findCost(x+1,right);
+    }
+    return ans;
+}
+int main(){
+    ios::sync_with_stdio(false);
+    int tc;cin>>tc;
+    while(tc--){
+        cin>>n;
+        for(int i=1;i<=n;++i)
+            cin>>cells[i];
+        memset(stree,0,sizeof stree);
+        cells[0]=0;
+        build(1,1,n);
+       lli ans=findCost(1,n);
+        cout<<ans<<"\n";
+    }
+    return 0;
+}

@@ -1,0 +1,142 @@
+#include <iostream>
+#include <iomanip>
+#include <stdio.h>
+#include <set>
+#include <vector>
+#include <map>
+#include <cmath>
+#include <algorithm>
+#include <memory.h>
+#include <string>
+#include <sstream>
+#include <cstdlib>
+#include <ctime>
+#include <cassert>
+
+using namespace std;
+
+typedef long long LL;
+typedef pair<int,int> PII;
+
+#define MP make_pair
+#define PB push_back
+#define FF first
+#define SS second
+
+#define FORN(i, n) for (int i = 0; i <  (int)(n); i++)
+#define FOR1(i, n) for (int i = 1; i <= (int)(n); i++)
+#define FORD(i, n) for (int i = (int)(n) - 1; i >= 0; i--)
+#define FOREACH(i, c) for (typeof((c).begin()) i = (c).begin(); i != (c).end(); i++)
+
+#define MOD 1000000007
+#define INF 2000000000
+
+const int MAXL = 100010;
+int sposn[MAXL];
+
+const int MAXC = 26;
+vector< vector<int> > pos; vector<int> posidx, phave, pneed;
+
+int N, K; int ssz;
+string s, ss, ts, res;
+
+bool check(int p) {
+    if (p == ssz + 1) return false;
+    
+    fill(phave.begin(), phave.end(), 0); fill(pneed.begin(), pneed.end(), 0);
+
+    int pspaces = 0;
+
+    for (int i = 0; i < p; i++) {
+        if (s[i] != ss[i]) {
+            phave[s[i] - 'a']++; pneed[ss[i] - 'a']++;
+            pspaces++;
+        }
+    }
+
+    int sspaces = 0;
+
+    for (int i = 0; i < MAXC; i++) {
+        int pgive = min(phave[i], pneed[i]);
+        phave[i] -= pgive;
+        pneed[i] -= pgive;
+        sspaces += pneed[i];
+
+        posidx[i] = pos[i].size() - 1;
+    }
+
+    //cout << "DBG1 P: " << p << " PSPACES: " << pspaces << " SSPACES: " << sspaces << endl;
+
+    if (pspaces + sspaces > K) return false;
+    int extraspaces = K - pspaces - sspaces;
+
+    ts = ss.substr(0, p) + s.substr(p);
+
+    memset(sposn, 0, sizeof sposn);
+
+    for (int i = 0; i < MAXC; i++) {
+        while (pneed[i] > 0) {
+            sposn[pos[i][posidx[i]--]] = 1;
+            pneed[i]--;
+        }
+    }
+
+    int phidx = 0;
+
+    for (int i = p; i < s.size(); i++) {
+        while (phidx < MAXC && phave[phidx] == 0) phidx++;
+        if (phidx == MAXC) break;
+
+        if (sposn[i]) {
+            ts[i] = (char)('a' + phidx);
+            phave[phidx]--;
+        }
+        else if (extraspaces > 0 && ts[i] - 'a' > phidx) {
+            phave[ts[i]-'a']++;
+            ts[i] = (char)('a' + phidx);
+            phave[phidx]--;
+            extraspaces--;
+        }
+    }
+
+    res = min(res, ts);
+    return true;
+}
+
+int main() {
+    cin >> N >> K;
+    cin >> s; int ssz = s.size();
+
+    if (K == 1) {
+        cout << s << "\n";
+        return 0;
+    }
+
+    pos.resize(MAXC);
+    for (int i = 0; i < N; i++) pos[s[i] - 'a'].PB(i);
+
+    ss = s;
+    sort(ss.begin(), ss.end());
+
+    phave.resize(MAXC); pneed.resize(MAXC); posidx.resize(MAXC);
+
+    //cout << s << endl; cout << ss << endl;
+
+    res = s;
+
+    int lo = 1; int hi = ssz + 1;
+
+    while (lo != hi) {
+        int mid = (lo + hi) >> 1;
+
+        if (check(mid)) {
+            lo = mid + 1;
+        }
+        else {
+            hi = mid;
+        }
+    }
+
+    cout << res << "\n";
+    return 0;
+}

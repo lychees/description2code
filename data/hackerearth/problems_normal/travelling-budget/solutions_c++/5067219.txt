@@ -1,0 +1,76 @@
+#include <bits/stdc++.h>
+#define pp pair < int,int >
+#define pp2 pair < int, pp >
+#define mp make_pair
+
+using namespace std;
+
+vector < vector < pp2 > > invAdj;
+
+int n,m,B;
+bool visited[1005][505];
+long int dp[1005][505];
+
+long int solve(int b,int v)
+{
+    if(b>B)
+        return -1;
+    if(v==1)
+        return 0;
+    if(visited[b][v])
+        return dp[b][v];
+    visited[b][v] = true;
+    long int ret = 1e9;
+    for(int i=0;i<invAdj[v].size();i++)
+    {
+        int cost = invAdj[v][i].second.first;
+        int l = invAdj[v][i].second.second;
+        int u = invAdj[v][i].first;
+        if(cost>b)
+            continue;
+        long int temp = solve(b-cost,u);
+        if(temp==-1)
+            continue;
+        ret = min(ret,l+temp);
+    }
+    if(ret<1e9)
+        dp[b][v] = ret;
+    else
+        dp[b][v] = -1;
+    return dp[b][v];
+}
+
+void init()
+{
+    scanf("%d %d %d",&n,&m,&B);
+    invAdj.clear();
+    invAdj.resize(n+5);
+    for(int b=0;b<=1000;b++)
+        for(int j=1;j<=n;j++)
+            visited[b][j] = false;
+
+    for(int i=0;i<m;i++)
+    {
+        int u,v,c,l;
+        scanf("%d %d %d %d",&u,&v,&c,&l); // u ---> v
+        invAdj[v].push_back(mp(u,mp(c,l))); // contains vertices pointing at v
+    }
+
+    int q;
+    scanf("%d",&q);
+    while(q--)
+    {
+        int des,b;
+        scanf("%d %d",&des,&b);
+        printf("%ld\n",solve(b,des));
+    }
+}
+
+int main()
+{
+    int t;
+    cin>>t;
+    while(t--)
+        init();
+    return 0;
+}

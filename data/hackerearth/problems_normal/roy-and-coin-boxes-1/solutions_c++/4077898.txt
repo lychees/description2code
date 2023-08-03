@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+const int maxn = 1e6+10;
+int n; // array size
+int sgt[4*maxn], a[maxn], lzy[4*maxn], ar[maxn];
+void build(int id = 1, int lf = 0, int rg = n){
+	if(lf == rg)sgt[id] = a[lf];
+	else{
+		int md = (lf+rg)>>1;
+		build(id<<1, lf, md);
+		build((id<<1)+1, md+1, rg);
+		sgt[id] = sgt[id<<1]+sgt[(id<<1)+1];
+	}
+}
+void lazy(int id, int lf, int rg){
+	if(lzy[id]){
+		sgt[id] = (rg-lf+1)*lzy[id];
+		if(rg != lf)lzy[id<<1] = lzy[1+(id<<1)] = lzy[id];
+		lzy[id] = 0;
+	}
+}
+void update(int val, int esq, int dir, int lf = 0, int rg = n, int id = 1){
+	lazy(id, lf, rg);
+	if(lf > rg || lf  > dir || rg < esq)return;
+	if(lf >= esq && rg <= dir){
+		sgt[id] += val*(rg-lf+1);
+		if(lf != rg){
+			lzy[id<<1]+=val;
+			lzy[1+(id<<1)]+=val;
+		}
+		return;
+	}
+	int md = (lf+rg)>>1;
+	update(val, esq, dir, lf, md, id<<1);
+	update(val, esq, dir, md+1, rg, 1+(id<<1));
+	sgt[id] = sgt[id<<1]+sgt[1+(id<<1)];
+}
+int query(int esq, int dir , int lf = 0, int rg = n, int id = 1){
+	if(lf > rg || lf > dir || rg < esq)return 0;
+	lazy(id, lf, rg);
+	if(esq <= lf && rg<=dir)return sgt[id];
+	int md = (lf+rg)>>1;
+	int l = query(esq, dir, lf, md, id<<1);
+	int r = query(esq, dir, md+1, rg, 1 + (id<<1));
+	return (l+r);
+}
+int main(){
+	int q;
+	scanf("%d", &n);
+	memset(ar, 0, sizeof ar);
+	memset(a, 0, sizeof a);
+	memset(sgt, 0, sizeof sgt);
+	int m; scanf("%d", &m);
+	int lf,rg;
+	while(m--){
+		scanf("%d %d", &lf, &rg);
+		ar[lf]++;
+		ar[rg+1]--;
+	}
+	int acum = 0;
+	for(int i = 1; i <= n; i++){
+		acum+=ar[i];
+		update(1, acum, acum);
+	}
+	scanf("%d", &m);
+	int x;
+	while(m--){
+		scanf("%d", &x);
+		printf("%d\n", query(x, n));
+	}
+	return 0;
+}

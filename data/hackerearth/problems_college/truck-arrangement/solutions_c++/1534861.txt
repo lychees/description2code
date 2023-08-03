@@ -1,0 +1,108 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MIN(x,y) (x<y?x:y)
+#define MAX(x,y) (x>y?x:y)
+int match[10001];
+int segtree[20002][3]={0};
+int curmake;
+int depth;
+int makesegment(int nodenow,int l, int r)
+{
+
+    depth++;
+    if(l==r)
+    {
+        segtree[nodenow][0]=match[l];
+        segtree[nodenow][1]=-1;
+        segtree[nodenow][2]=-1;
+
+    }
+    else
+    {
+        segtree[nodenow][1]=curmake;
+        curmake++;
+        makesegment(curmake-1,l,(l+r)/2);
+
+        segtree[nodenow][2]=curmake;
+        curmake++;
+        makesegment(curmake-1,(l+r)/2+1,r);
+        segtree[nodenow][0]=segtree[segtree[nodenow][1]][0]+segtree[segtree[nodenow][2]][0];
+
+    }
+    depth--;
+     return segtree[nodenow][0];
+}
+int findsum(int at,int atl,int atr,int l,int r)
+{
+    int a=0,b=0;
+    if(atl==l  &&  atr==r)
+        return segtree[at][0];
+    if((atl+atr)/2>=l)
+    a=findsum(segtree[at][1],atl,(atl+atr)/2,l,MIN(r,(atl+atr)/2));
+    if((atl+atr)/2+1<=r)
+    b=findsum(segtree[at][2],(atl+atr)/2+1,atr,MAX(l,(atl+atr)/2+1),r);
+    return (a+b);
+}
+void makechange(int at,int atl,int atr,int change,int nodeno)
+{
+    segtree[at][0]+=change;
+    if(atl==atr && atl==nodeno)
+        return;
+    if((atl+atr)/2>=nodeno)
+    {
+        makechange(segtree[at][1],atl,(atl+atr)/2,change,nodeno);
+    }
+    else if((atl+atr)/2+1<=nodeno)
+    {
+        makechange(segtree[at][2],(atl+atr)/2+1,atr,change,nodeno);
+
+    }
+}
+int main()
+{
+    int t;
+   scanf("%d",&t);
+    while(t--)
+    {
+        int i,n,nos[10000];
+        i=0;
+        scanf(" %d",&n);
+        while(i<n)
+        {
+            scanf(" %d",&nos[i]);
+            i++;
+        }
+        for(i=0;i<=10000;i++)
+            match[i]=0;
+      
+        curmake=1;
+        depth=0;
+        makesegment(0,0,10000);
+        int b[10000];
+        for(i=0;i<n;i++)
+        {
+            b[i]=findsum(0,0,10000,nos[i]+1,10000);
+            makechange(0,0,10000,1,nos[i]);
+        }
+        for(i=0;i<=10000;i++)
+        	match[i]=0;
+     
+
+         curmake=1; 
+        depth=0;
+        makesegment(0,0,10000);
+        for(i=n-1;i>=0;i--)
+        {
+            b[i]=MAX(b[i],findsum(0,0,10000,0,nos[i]-1));
+
+            makechange(0,0,10000,1,nos[i]);
+        }
+
+        int max=b[0];
+        for(i=1;i<n;i++)
+            if(b[i]>max)
+                max=b[i];
+        printf("%d\n",max);
+    }
+    return 0;
+}

@@ -1,0 +1,176 @@
+#include <iostream>
+#include <vector>
+#include <algorithm> 
+
+using namespace std;
+
+int n, q;
+typedef long long LL;
+
+vector<pair<int, LL> > G[100007];
+
+#define MAX_N 100005
+#define MAX_L 20
+
+int K;
+int L[MAX_N << 1], H[MAX_N << 1], Lg[MAX_N << 1], First[MAX_N];
+int Rmq[MAX_L][MAX_N << 2];
+ 
+void dfs(int nod, int lev, int from) {
+    H[++K] = nod;
+    L[K] = lev;
+    First[nod] = K;
+    for (auto nod2 : G[nod]) {
+        if (nod2.first == from) continue;
+        dfs(nod2.first, lev + 1, nod);
+        H[++K] = nod;
+        L[K] = lev;
+    }
+}
+ 
+void rmq() {
+    for(int i = 2; i <= K; ++i)
+        Lg[i] = Lg[i >> 1] + 1;
+    for(int i = 1; i <= K; ++i)
+        Rmq[0][i] = i;
+     
+    for(int i = 1; (1 << i) < K; ++i)
+        for(int j = 1; j <= K - (1 << i); ++j)
+        {
+            int l = 1 << (i - 1);
+             
+            Rmq[i][j] = Rmq[i-1][j];
+            if(L[Rmq[i-1][j + l]] < L[Rmq[i][j]])
+                Rmq[i][j] = Rmq[i-1][j + l];
+        }
+}
+ 
+int lca(int x, int y) {
+    int diff, l, sol, sh;
+    int a = First[x], b = First[y];
+    if(a > b) swap(a, b);
+    diff = b - a + 1;
+    l = Lg[diff];
+    sol = Rmq[l][a];
+    sh = diff - (1 << l);
+    if(L[sol] > L[Rmq[l][a + sh]])
+        sol = Rmq[l][a + sh];
+    return H[sol];
+}
+
+LL v[MAX_N];
+struct data {
+  LL left_sum, right_sum, all_sum, best_sum;
+  data() {
+    left_sum = right_sum = all_sum = best_sum = 0;
+  }
+  void swap2() {
+    swap(left_sum, right_sum);
+  }
+  void print() {
+    cerr << "left: " << left_sum << " right: " << right_sum << ' ' << " all: " << all_sum << " all_best: " << best_sum << '\n'; 
+  }
+};
+struct Query {
+  int a, b, parent;
+  vector<data> datas;
+};
+vector<Query> queries;
+vector<Query*> node_to_query[MAX_N];
+
+
+data tree[MAX_N<<2];
+data combine(const data& left, const data& right) {
+  data ret;
+  ret.all_sum = left.all_sum + right.all_sum;
+  ret.left_sum = max(left.left_sum, left.all_sum + right.left_sum);
+  ret.right_sum = max(right.right_sum, right.all_sum + left.right_sum);
+  ret.best_sum = max(ret.left_sum, ret.right_sum);
+  ret.best_sum = max(ret.best_sum, left.best_sum);
+  ret.best_sum = max(ret.best_sum, right.best_sum);
+  ret.best_sum = max(ret.best_sum, left.right_sum + right.left_sum);
+  return ret;
+}
+void update(int at, int a, int b, int nod, int val) {
+  if (a > b) return;
+  if (nod < a || nod > b) return;
+  if (a == b) {
+    v[a] = val;
+    tree[at].left_sum = val;
+    tree[at].right_sum = val;
+    tree[at].all_sum = val;
+    tree[at].best_sum = val;
+    return;
+  }
+  int mid = (a + b) / 2;
+  update(at * 2, a, mid, nod, val);
+  update(at * 2 + 1, mid + 1, b, nod, val);
+  tree[at] = combine(tree[2 * at], tree[2 * at + 1]);
+}
+
+data query_tree(int at, int a, int b, int c, int d) {
+  if (a > b || b < c || a > d || c > d) return data();
+  if (c <= a && d >= b) {
+    //cerr << "Here " << a << ' ' << b << ' ' << c << ' ' << d << '\n';
+    //tree[at].print();
+    return tree[at];
+  }
+  int mid = (a + b) / 2;
+  data left = query_tree(2 * at, a, mid, c, d);
+  data right = query_tree(2 * at + 1, mid + 1, b, c, d);
+  return combine(left, right);
+}
+
+int level[MAX_N];
+int N;
+void dfs2(int nod, int from, int lev) {
+  level[nod] = lev;
+  for (auto* query : node_to_query[nod]) {
+    //cerr << query->parent << ' ' << nod << '\n';
+    int start_node = level[query->parent], end_node = level[nod];
+    //cerr << start_node << ' ' << end_node - 1 << '\n';
+    //cerr << "Values: ";
+    //for (int i = 1; i < end_node; ++i) cerr << v[i] << " ";
+    //cerr << '\n';
+    query->datas.push_back(query_tree(1, 1, MAX_N, start_node, end_node - 1));
+  }
+  //cerr << "Done\n";
+
+  for (auto nod2 : G[nod]) {
+    if (nod2.first == from) continue;
+    // add edge
+    N++;
+    update(1, 1, MAX_N, N, nod2.second); 
+    dfs2(nod2.first, nod, lev + 1);
+    update(1, 1, MAX_N, N, 0); 
+    N--;
+  }
+}
+int main()
+{
+    // Read tree.
+    scanf("%d %d", &n, &q);
+    for (int i = 1; i < n; ++i) {
+        int a, b, c; scanf("%d %d %d", &a, &b, &c);
+        G[a].push_back(make_pair(b, c));
+        G[b].push_back(make_pair(a, c));
+    }
+    dfs(1, 0, -1); rmq();
+    queries.reserve(2 * q);
+    for (int i = 1; i <= q; ++i) {
+        int a, b; scanf("%d %d", &a, &b);
+        Query now; now.a = a; now.b = b; now.parent = lca(a, b);
+        queries.push_back(now);
+        node_to_query[a].push_back(&queries[queries.size() - 1]);
+        node_to_query[b].push_back(&queries[queries.size() - 1]);
+    }
+    dfs2(1, -1, 1);
+    for (auto query : queries) {
+      query.datas[0].swap2();
+      LL now = combine(query.datas[0], query.datas[1]).best_sum;
+      if (now < 0) now = 0;
+      cout << now << '\n';
+    }
+    return 0;
+}
+

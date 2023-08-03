@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+string s[110];
+list<int> l[26];
+vector<int> v(26,0);
+int indegree[26];
+vector<bool> appeared(26,0);
+void mydfs(int i,int r)
+{
+	if(v[i]==0)
+	{
+		v[i]=r;
+		list<int>::iterator it;
+		for(it=l[i].begin();it!=l[i].end();it++)
+		{
+			mydfs(*it,r+1);
+		}
+	}
+}
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	int n;
+	cin>>n;
+	int i,j,k;
+	memset(indegree,0,sizeof(indegree));
+	for(i=0;i<n;i++)
+	{
+		cin>>s[i];
+		for(j=0;j<s[i].length();j++)
+		appeared[s[i].at(j)-'a']=1;
+	}
+	for(i=0;i<n;i++)
+	{
+		for(j=(i+1);j<n;j++)
+		{
+			for(k=0;k<min(s[i].length(),s[j].length());k++)
+			{
+				if(s[i].at(k)!=s[j].at(k))
+				{
+					l[s[i].at(k)-'a'].push_back(s[j].at(k)-'a');
+					indegree[s[j].at(k)-'a']++;
+					break;
+				}
+			}
+		}
+	}
+	/*
+	for(i=0;i<26;i++)
+	{
+		if(v[i]==0 && l[i].size()!=0)
+		{
+			mydfs(i,1);
+		}
+	}
+	*/
+	queue<pair<int,int> > q;
+	for(i=0;i<26;i++)
+	{
+		if(indegree[i]==0 && appeared[i]!=0)
+		{
+			q.push(make_pair(i,1));
+		}
+	}
+	pair<int,int> t;
+	list<int>::iterator it;
+	//~ cout<<q.size()<<endl;
+	while(!q.empty())
+	{
+		t=q.front();
+		q.pop();
+		if(!v[t.first])
+		{
+			v[t.first]=t.second;
+			for(it=l[t.first].begin();it!=l[t.first].end();it++)
+			{
+				indegree[*it]--;
+				if(indegree[*it]==0)
+				q.push(make_pair(*it,t.second+1));
+			}
+		}
+	}
+	for(i=1;i<=26;i++)
+	{
+		bool found=0;
+		for(j=0;j<26;j++)
+		{
+			if(v[j]==i)
+			{
+				cout<<(char)('a'+j);
+				found=1;
+			}
+		}
+		if(found)
+		cout<<endl;
+	}
+	return 0;
+}

@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ii pair<int,int>
+#define zz pair<int,ii>
+int n,m,pr[1100],T,W[1010][1010],c[1010],cnt,dd[1010],f[1010];
+vector<zz> edge;
+vector<int> a[1010];
+vector<ii> weight[110];
+map<ii,bool> mp;
+int parent(int u){
+	if(pr[u]==0) return u;
+	return pr[u] = parent(pr[u]);
+}
+void dfs(int u){
+	c[u] = ++cnt;
+	f[u] = c[u];
+	for(int i = 0; i < a[u].size(); i++){
+		int v = a[u][i];
+		if(c[v]!=0) continue;
+		dfs(v);
+		dd[v] = u;
+		f[u] = max(f[u],f[v]);
+	}
+}
+int main(){
+	//freopen("in.in","r",stdin);
+	cin >> T;
+	while(T--){
+		cin >> n >> m;
+		edge.clear();
+		memset(pr,0,sizeof(pr));
+		memset(c,0,sizeof(c));
+		mp.clear();
+		for(int i = 1; i <= n; i++) a[i].clear();
+		for(int i = 1; i <= 100; i++) weight[i].clear();
+		for(int i = 1; i <= m; i++){
+			int u,v,w; cin >> u >> v >> w;
+			edge.push_back(zz(w,ii(u,v)));
+			weight[w].push_back(ii(u,v));
+		}
+		// MST
+		sort(edge.begin(),edge.end());
+		for(int i = 0; i < edge.size(); i++){
+			int u = edge[i].second.first;
+			int v = edge[i].second.second;
+			int w = edge[i].first;
+			int pu = parent(u);
+			int pv = parent(v);
+			if(pu==pv) continue;
+			a[u].push_back(v);
+			a[v].push_back(u);
+			W[u][v] = w;
+			W[v][u] = w;
+			pr[pu] = pv;
+		}
+		// DFS
+		cnt = 0;
+		dfs(1);
+		// Brute-force
+		for(int u = 1; u <= n; u++){
+			for(int j = 0; j < a[u].size(); j++){
+				int v = a[u][j];
+				if(dd[u]==v) continue;
+				for(int z = 0; z < weight[W[u][v]].size(); z++){
+					int x = weight[W[u][v]][z].first;
+					int y = weight[W[u][v]][z].second;
+					if(c[v]<=c[x]&&c[x]<=f[v]&&c[v]<=c[y]&&c[y]<=f[v])
+						continue;
+					if((c[v]<=c[x]&&c[x]<=f[v])||(c[v]<=c[y]&&c[y]<=f[v])){
+						 mp[ii(x,y)] = mp[ii(y,x)] = 1;
+					}
+				}
+			}
+		}
+		int q; cin >> q;
+		int ans = 0;
+		for(int i = 1; i <= q; i++){
+			int u,v; cin >> u >> v;
+			ans += mp[ii(u,v)];
+		}
+		int dd = __gcd(ans,q);
+		ans /= dd;
+		q /= dd;
+		cout << ans << "/" << q << "\n";
+	}
+}

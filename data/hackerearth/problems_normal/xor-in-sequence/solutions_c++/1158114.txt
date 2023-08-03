@@ -1,0 +1,89 @@
+#include <iostream>
+#include <string.h>
+#include <time.h>
+using namespace std;
+#define MAX 100100
+#define NIL 0
+#define LOG 30
+int a[MAX];
+int ptree[LOG*MAX][3];
+int n, q, test, ntree;
+long long b[10][3];
+
+
+void update(int v) {
+	int p = 0;
+	for (int i = LOG; i >= 0; --i) {
+		int x = (v >> i) & 1;
+
+		if (ptree[p][x] == NIL) ptree[p][x] = ++ntree;
+
+		p = ptree[p][x];
+		++ptree[p][2];
+	}
+}
+
+
+long long calc(int v, int last) {
+	int p = 0, i;
+	long long ans = 0;
+
+	for (i = LOG; i >= 0; --i) {
+		int x = (v >> i) & 1;
+		int y = (last >> i) & 1;
+
+		if (x == 1 && ptree[p][y] != NIL) ans += ptree[ptree[p][y]][2];
+		
+		p = ptree[p][x^y];
+
+		if (p == NIL) break;
+	}
+
+	if (i < 0) ans += ptree[p][2];
+	return ans;
+}
+
+void query() {
+	ntree = 0;
+	memset(ptree, NIL, sizeof(ptree));
+
+	long long ans = 0, now = a[0];
+	update(now);
+	for (int j = 0; j < q; ++j) 
+	if (b[j][0] <= now && now <= b[j][1]) b[j][2]++;
+
+	for (int i = 1; i < n; ++i) {
+		now ^= a[i];
+		for (int j = 0; j < q; ++j) {
+			b[j][2] += calc(b[j][1], now);
+			if (b[j][0] > 0) b[j][2] -= calc(b[j][0] - 1, now);
+			if (b[j][0] <= now && now <= b[j][1]) b[j][2]++;
+		}
+
+		update(now);
+	}
+}
+
+int main() {
+	//freopen("input.txt", "r", stdin);
+	//freopen("output.txt", "w", stdout);
+	cin >> test;
+	while (test--) {
+		cin >> n;
+		time_t begin = clock();
+		for (int i = 0; i < n; ++i) cin >> a[i];
+		
+		cin >> q;
+		for (int i = 0; i < q; ++i) {
+			int l, r;
+			cin >> b[i][0] >> b[i][1];
+			b[i][2] = 0;
+		}
+
+		query();
+		for (int i = 0; i < q; ++i) 
+			cout << b[i][2] << endl;
+	}
+
+	
+}

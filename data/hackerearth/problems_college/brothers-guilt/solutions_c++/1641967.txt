@@ -1,0 +1,133 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define LL_MAX 200000000000
+#define MOD 1000000007
+#define INF 1000000000
+#define EPS 1e-14
+#define PI 3.14159265358979
+# define X first
+# define Y second
+#define REPD(i,e,s)  for (int i=(e),_s=(s);i>=_s;i--)
+#define ll long long int
+#define llu long long unsigned
+#define ld long
+# define inf (~(1<<31))
+#define mp make_pair
+#define pb push_back
+#define maX(a,b) ( (a) > (b) ? (a) : (b))
+#define miN(a,b) ( (a) < (b) ? (a) : (b))
+#define minelt(A) *min_element(b2e(A))
+#define maxelt(A) *max_element(b2e(A))
+# define f(i,a,b) for(int i=a;i<b;i++)
+# define fill(x,a) memset(x,a,sizeof(x))
+typedef vector<vector<int> > vvi;
+typedef vector <ll> vi;
+typedef pair <ll, ll> pii;
+typedef pair <pii, ll> pii1;
+typedef vector<bool> vb;
+typedef vector<vector<bool> > vvb;
+typedef vector<string> vs;
+ 
+//int dx[] = {-1,0,1,0}, dy[] = {0,1,0,-1};
+//int dx[] = {1,1,1,0,0,-1,-1,-1}, dy[] = {1,0,-1,1,-1,1,0,-1};
+ll gcd(ll a, ll b) {if (a == 0 || b == 0) return max(a,b); if (b % a == 0) return a; return gcd(b%a, a);}
+ll modpow(ll a,ll b) {ll res=1;a%=MOD;for(;b;b>>=1){if(b&1)res=res*a%MOD;a=a*a%MOD;}return res;}
+string s1,s2,v;
+int dp[102][102][102];
+pair<pair<int,int> ,int> nex[102][102][102];
+int pi[102];
+ 
+void do_pi(){
+    int k=0;
+    pi[0]=pi[1]=0;
+    for(int i=2;i<=v.size();i++){
+        int j=pi[i-1];
+        while(1){
+            if(v[i-1]==v[j]){
+                pi[i]=j+1;break;
+            }
+            if(j==0){
+                pi[i]=0;break;
+            }
+            j=pi[j];
+        }
+    }
+}
+ 
+int fn(int a,int b, int c){
+    if(c==v.size())return -inf/100;
+    if(a==s1.size()||b==s2.size()){
+        dp[a][b][c]=0;return 0;
+    }
+    int &ret=dp[a][b][c];
+    pair<pair <int, int > ,int> &ne=nex[a][b][c];
+    if(ret!=-1)return ret;
+    ret=0;
+    int fir=fn(a+1,b,c);
+    if(ret<fir){
+        ret=fir;
+        ne=mp(mp(a+1,b),c);
+    }
+    int sec=fn(a,b+1,c);
+    if(ret<sec){
+        ret=sec;
+        ne=mp(mp(a,b+1),c);
+    }
+    if(s1[a]==s2[b]){
+        if(s1[a]==v[c]){
+            fir=fn(a+1,b+1,c+1)+1;
+            if(ret<fir){
+                ret=fir;
+                ne=mp(mp(a+1,b+1),c+1);
+            }
+        }
+        else{
+            int k=c;
+            while(k!=0&&v[k]!=s1[a]){
+                k=pi[k];
+            }
+            if(s1[a]==v[k])k++;
+            fir=fn(a+1,b+1,k)+1;
+            if(ret<fir){
+                ret=fir;
+                ne=mp(mp(a+1,b+1),k);
+            }
+        }
+    }
+ 
+ 
+    return ret;
+}
+ 
+int main(){
+    cin>>s1;
+    cin>>s2;
+    cin>>v;
+ 
+    fill(dp,-1);
+    f(i,0,102)f(j,0,102)f(kk,0,102)nex[i][j][kk]=mp(mp(-1,-1),-1);
+    //fill up kmp table or do something here
+    do_pi();
+    int len=fn(0,0,0);
+    if(len==0){
+        cout<<len<<endl;
+        return 0;
+    }
+    //cout<<len<<endl;
+    string ans;
+    int a=0;int b=0;int c=0;
+    while(a!=-1&&a!=s1.size()&&b!=s2.size()&&c!=v.size()){
+        //cout<<a tt b tt c<<endl;
+        int na,nb,nc;
+        pair< pair <int,int> ,int > ne=nex[a][b][c];
+        na=ne.X.X;nb=ne.X.Y;nc=ne.Y;
+        if(min(min(na,nb),nc)==-1)break;
+        if(dp[a][b][c]==dp[na][nb][nc]+1){
+            ans.pb(s1[a]);
+        }
+        a=na;b=nb;c=nc;
+    }
+    cout<<ans.size()<<endl;
+    return 0;
+}

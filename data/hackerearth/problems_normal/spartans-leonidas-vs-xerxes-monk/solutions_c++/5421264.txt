@@ -1,0 +1,132 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define fast ios::sync_with_stdio(false); cin.tie(0); cout.tie(0)
+
+struct Node{
+	long long prefix;
+	long long suffix;
+	long long ans;
+}tree[300011];
+
+long long n,m,k,x,y,p[100100];
+
+void reset(){
+	memset(tree,0,sizeof tree);
+}
+
+void build(long long node=1, long long be=0, long long en=n-1){
+	if(be==en){
+		tree[node].prefix=tree[node].suffix=tree[node].ans=1;
+		return;
+	}
+	long long mid=(be+en)/2;
+	build(2*node,be,mid);
+	build(2*node+1,mid+1,en);
+	long long count = 0;
+	if(p[mid] < p[mid + 1]){
+		count = tree[2 * node].suffix + tree[2 * node + 1].prefix;
+	}
+	if(count > tree[2 * node].ans && count > tree[2 * node + 1].ans){
+		tree[node].ans = count;
+		if(tree[2 * node].prefix == (mid - be + 1))
+			tree[node].prefix = tree[2 * node].prefix + tree[2 * node + 1].prefix;
+		else
+			tree[node].prefix = tree[2 * node]. prefix;
+		if(tree[2 * node + 1].suffix == (en - mid))
+			tree[node].suffix = tree[2 * node].suffix + tree[2 * node + 1].suffix;
+		else
+			tree[node].suffix = tree[2 * node + 1].suffix;
+	}
+	else if(tree[2 * node].ans > tree[2 * node + 1].ans){
+		tree[node] = {tree[2 * node].prefix, tree[2 * node + 1].suffix,tree[2 * node].ans};
+	}
+	else{
+		tree[node] = {tree[2 * node].prefix, tree[2 * node + 1].suffix,tree[2 * node + 1].ans};
+	}
+}
+
+void update(long long i, long long v, long long node=1, long long be=0, long long en=n-1){
+	if(be==en){
+		p[be]+=v;
+		//tree[node].prefix=tree[node].suffix=tree[node].ans=1;
+		return;
+	}
+	long long mid=(be+en)/2;
+	if(be<=i&&i<=mid){
+		update(i,v,2*node,be,mid);
+	}else{
+		update(i,v,2*node+1,mid+1,en);
+	}
+	long long count = 0;
+	if(p[mid] < p[mid + 1]){
+		count = tree[2 * node].suffix + tree[2 * node + 1].prefix;
+	}
+	if(count > tree[2 * node].ans && count > tree[2 * node + 1].ans){
+		tree[node].ans = count;
+		if(tree[2 * node].prefix == (mid - be + 1))
+			tree[node].prefix = tree[2 * node].prefix + tree[2 * node + 1].prefix;
+		else
+			tree[node].prefix = tree[2 * node]. prefix;
+		if(tree[2 * node + 1].suffix == (en - mid))
+			tree[node].suffix = tree[2 * node].suffix + tree[2 * node + 1].suffix;
+		else
+			tree[node].suffix = tree[2 * node + 1].suffix;
+	}
+	else if(tree[2 * node].ans > tree[2 * node + 1].ans){
+		tree[node] = {tree[2 * node].prefix, tree[2 * node + 1].suffix,tree[2 * node].ans};
+	}
+	else{
+		tree[node] = {tree[2 * node].prefix, tree[2 * node + 1].suffix,tree[2 * node + 1].ans};
+	}
+}
+
+Node query(long long l, long long r, long long node=1, long long be=0, long long en=n-1){
+	if(be>r||en<l) return {tree[node].prefix,tree[node].suffix,0};
+	if(be>=l&&en<=r) return tree[node];
+	long long mid=(be+en)/2;
+	if(r<=mid)
+	return query(l,r,2*node,be,mid);
+	else if(l>mid)
+	return query(l,r,2*node+1,mid+1,en);
+	Node a = query(l,r, 2 * node, be, mid);
+	Node b = query(l, r, 2 * node + 1, mid + 1, en);
+	if(a.ans == 0)
+		return {a.prefix, b.suffix, b.ans};
+	if(b.ans == 0L)
+		return {a.prefix, b.suffix, a.ans};
+	long long count = 0;
+	if(p[mid] < p[mid + 1]){
+		count += (mid - l + 1) > a.suffix ? a.suffix : (mid - l +1);
+		count += (r - mid) > b.prefix ? b.prefix : (r - mid);
+	}
+	if(count > a.ans && count > b.ans){
+		if(a.prefix == (mid - be + 1L))
+			a.prefix = a.prefix + b.prefix;
+		if(b.suffix == (en - mid))
+			b.suffix = a.suffix + b.suffix;
+		return {a.prefix, b.suffix, count};
+	}
+	if(a.ans > b.ans)
+		return {a.prefix, b.suffix, a.ans};
+	else
+		return {a.prefix, b.suffix, b.ans};
+	
+}
+
+int main()
+{
+	fast;
+    long long t; cin>>t;
+    while(t--){
+    	cin>>n>>m;
+    	//reset();
+    	for(long long i=0;i<n;i++) cin>>p[i];
+    	build();
+    	while(m--){
+    		cin>>k>>x>>y;
+    		if(k) update(x-1,y);
+    		else cout<<query(x-1,y-1).ans<<endl;
+    	}
+    }
+    return 0;
+}

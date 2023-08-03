@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define DEBUG(x) 	cerr << #x << " = " << x << endl;
+#define INPUT		freopen("Data.inp", "r", stdin);
+#define OUTPUT		freopen("Data.out", "w", stdout);
+
+typedef long long LL;
+typedef pair<int, int> II;
+struct State {
+	LL d;
+	int u, v, k;
+	State();
+	State(LL d, int u, int v, int k): d(d), u(u), v(v), k(k) {};
+	bool operator > (const State &obj) const {
+		if (d != obj.d) return d > obj.d;
+		if (u != obj.u) return u > obj.u;
+		if (v != obj.v) return v > obj.v;
+		return k > obj.k;
+	}
+};
+
+const int 	N 	= (int) 3e2 + 10;
+const LL 	INF	= (LL ) 1e15;
+int n, m, c[N][N], f[N][N];
+LL d[N][N][2];
+
+int main() {
+	scanf("%d%d", &n, &m);
+	for (int i = 1; i <= m; ++i) {
+		int u, v, w; char S[5];
+		scanf("%d%d%d%s", &u, &v, &w, S);
+		c[u][v] = w;
+		f[u][v] = (S[0] == '(') ? 0 : 1;
+	}
+
+	priority_queue< State, vector<State>, greater<State> > pq;
+	for (int i = 1; i <= n; ++i)
+		for (int j = 1; j <= n; ++j)
+			d[i][j][0] = d[i][j][1] = INF;
+	for (int i = 1; i <= n; ++i) {
+		d[i][i][0] = 0;
+		pq.push(State(0, i, i, 0));
+	}
+	while (pq.size()) {
+		State X = pq.top(); pq.pop(); if (X.d > d[X.u][X.v][X.k]) continue;
+		int u = X.u, v = X.v, k = X.k;
+		if (k == 0) {
+			for (int t = 1; t <= n; ++t) if (c[t][u] > 0 && f[t][u] == 0) {
+				if (d[t][v][1] > c[t][u] + d[u][v][0]) {
+					d[t][v][1] = c[t][u] + d[u][v][0];
+					pq.push(State(d[t][v][1], t, v, 1));
+				}
+			}
+			for (int t = 1; t <= n; ++t) {
+				if (d[t][v][0] > d[t][u][0] + d[u][v][0]) {
+					d[t][v][0] = d[t][u][0] + d[u][v][0];
+					pq.push(State(d[t][v][0], t, v, 0));
+				}
+			}
+			for (int t = 1; t <= n; ++t) {
+				if (d[u][t][0] > d[u][v][0] + d[v][t][0]) {
+					d[u][t][0] = d[u][v][0] + d[v][t][0];
+					pq.push(State(d[u][t][0], u, t, 0));
+				}
+			}
+		}
+		else {
+			for (int t = 1; t <= n; ++t) if (c[v][t] > 0 && f[v][t] == 1) {
+				if (d[u][t][0] > d[u][v][1] + c[v][t]) {
+					d[u][t][0] = d[u][v][1] + c[v][t];
+					pq.push(State(d[u][t][0], u, t, 0));
+				}
+			}
+		}
+	}
+
+	for (int i = 1; i <= n; ++i) {
+		for (int j = 1; j <= n; ++j) {
+			if (i == j) printf("0 "); else
+			if (d[i][j][0] == INF) printf("-1 "); else
+			printf("%lld ", d[i][j][0]);
+		}
+		puts("");
+	}
+	return 0;
+}

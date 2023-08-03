@@ -1,0 +1,173 @@
+//O(ElogV)
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long unsigned
+const ll MAX = 2000000;
+ll id[MAX], m,n;
+vector < pair < ll, pair<ll,ll> > > v;
+vector <ll> vec,adj[MAX];
+bool visited[MAX];
+ 
+ll *ID, *sz;
+map<ll,ll> mp;  //use this map to map indexes with data.
+void init(ll N)
+{
+    
+	ID = new ll[N+1];
+	sz = new ll[N+1];
+    for(ll i=1; i<=N; i++)
+    {
+        ID[i] = i;
+	    sz[i] = 1;
+	}
+}
+
+ll find(ll p)
+{
+    ll root = p;
+    while (root != ID[root])
+        root = ID[root];
+    while (p != root) {
+        ll newp = ID[p];
+        ID[p] = root;
+        p = newp;
+    }
+    return root;
+}
+// Replace sets containing x and y with their union.
+void merge(ll x, ll y)
+{
+    ll i = find(x);
+    ll j = find(y);
+    if (i == j) return;
+    // make smaller root point to larger one
+    if(sz[i]<sz[j])
+    {
+        ID[i] = j;
+        sz[j] += sz[i];
+    }
+    else
+    {
+        ID[j] = i;
+        sz[i] += sz[j];
+    }
+    
+}
+
+void initialize()
+{
+    for(ll i = 0;i<=MAX;++i)
+        id[i] = i;
+    
+}
+ 
+ll root(ll x)
+{
+    while(id[x] != x)
+    {
+        id[x] = id[id[x]];
+        x = id[x];
+    }
+    return x;
+}
+ 
+void union1(ll x, ll y)
+{
+    ll p = root(x);
+    ll q = root(y);
+    id[p] = id[q];
+}
+ 
+long long kruskal()
+{
+    ll x, y;
+    ll cost, minCost = 0;
+    for(ll i = 0;i<v.size();++i)
+    {
+        // Selecting edges one by one in increasing order from the beginning
+        x = v[i].second.first;
+        y = v[i].second.second;
+        cost = v[i].first;
+        // Check if the selected edge is creating a cycle or not
+        if(root(x) != root(y))
+        {
+            minCost += cost;
+            vec.push_back(cost);
+            union1(x, y);
+        }    
+    }
+    return minCost;
+}
+ 
+bool comp(const pair< ll, pair < ll,ll > > &a, const pair< ll, pair < ll,ll > > &b)
+{
+    return a.first<b.first;
+}
+ 
+int main()
+{
+    /*ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    cout.tie(NULL);
+    */
+    ll x, y,t,i,cnt=0;
+    ll weight, cost, minCost,k;
+    //scanf("%llu %llu %llu",&n,&m,&k);
+    cin>>n>>m>>k;
+    initialize();
+    init(n);
+    for(i=0;i<m;i++){
+    
+    //scanf("%llu %llu %llu",&x,&y,&weight);
+    cin>>x>>y>>weight;
+    v.push_back(make_pair(weight,make_pair(x,y)));
+    merge(x,y);
+    //adj[x].push_back(y);
+    //adj[y].push_back(x);
+    merge(x,y);
+    }
+    
+   /* dfs(1);
+    
+    for(i=1;i<=n;i++)
+    {
+        if(!visited[i])
+        {
+            cout<<"-1";
+            return 0;
+        }
+    }*/
+    
+    for(i=2;i<=n;i++)
+    {
+        if(find(i)!=find(i-1))
+        {
+            cout<<"-1";
+            return 0;
+        }
+    }
+    // Sort the edges in the descending order
+    sort(v.begin(),v.end(),comp);
+    
+    minCost = kruskal();
+    
+    sort(vec.rbegin(),vec.rend());
+    i=0;
+    
+    
+    while(minCost>k&&i<vec.size())
+    {
+        minCost-=vec[i];
+        minCost++;
+        cnt++;
+        i++;
+    }
+    if(minCost<=k)
+    cout<<cnt;
+    
+    else
+        cout<<"-1";
+    
+    
+    return 0;
+}

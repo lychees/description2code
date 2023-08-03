@@ -1,0 +1,174 @@
+/*
+*/
+ 
+//#pragma comment(linker, "/STACK:16777216")
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <complex>
+#include <math.h>
+#include <set>
+#include <vector>
+#include <map>
+#include <queue>
+#include <stdio.h>
+#include <stack>
+#include <algorithm>
+#include <list>
+#include <ctime>
+#include <memory.h>
+#include <ctime> 
+ 
+#define y0 sdkfaslhagaklsldk
+#define y1 aasdfasdfasdf
+#define yn askfhwqriuperikldjk
+#define j1 assdgsdgasghsf
+#define tm sdfjahlfasfh
+#define lr asgasgash
+ 
+#define eps 1e-9
+//#define M_PI 3.141592653589793
+#define bs 1000000007
+#define bsize 512
+#define right adsgasgadsg
+#define free adsgasdg
+ 
+using namespace std;
+
+pair<long, long> t[1<<20];
+long ar[1<<19];
+long n;
+long ps,val;
+string st;
+long tests,m;
+
+void build(long v,long tl,long tr)
+{
+ if (tl==tr)
+ {
+  t[v]=make_pair(ar[tl],ar[tl]);
+  return;
+ }
+ long tm=tl+tr;
+ tm/=2;
+ build(v*2,tl,tm);
+ build(v*2+1,tm+1,tr);
+ t[v].first=min(t[v*2].first,t[v*2+1].first);
+ t[v].second=max(t[v*2].second,t[v*2+1].second);
+}
+
+void update(long v,long tl,long tr,long ps,long val)
+{
+ if (tl==tr)
+ {
+  t[v]=make_pair(val,val);
+  return;
+ }
+ long tm=tl+tr;
+ tm/=2;
+ if (ps<=tm)
+  update(v*2,tl,tm,ps,val);
+  else
+  update(v*2+1,tm+1,tr,ps,val);
+ t[v].first=min(t[v*2].first,t[v*2+1].first);
+ t[v].second=max(t[v*2].second,t[v*2+1].second);
+}
+
+long ans;
+
+pair<long, long> get(long v,long tl,long tr,long l,long r)
+{
+ if (l>r)
+  return make_pair(1000000000,-1000000000);
+ if (l==tl&&r==tr)
+ {
+  return t[v];
+ }
+ long tm=tl+tr;
+ tm/=2;
+ pair<long, long> p1,p2,res;
+ p1=get(v*2,tl,tm,l,min(r,tm));
+ p2=get(v*2+1,tm+1,tr,max(tm+1,l),r);
+ res.first=min(p1.first,p2.first);
+ res.second=max(p1.second,p2.second);
+ return res;
+}
+
+bool good(long v,long l,long r,long low,long hi)
+{
+ if (l>=ps)
+  return (t[v].first>=low&&t[v].second<=hi);
+ if (r<ps)return 1;
+ long tm=l+r;
+ tm/=2;
+ long res=1;
+ if (ps<=tm)
+  res&=good(v*2,l,tm,low,hi);
+ res&=good(v*2+1,tm+1,r,low,hi);
+ return res;
+}
+
+void lookout(long v,long tl,long tr,long low,long hi)
+{
+// cout<<v<<" "<<tl<<" "<<tr<<" "<<low<<" "<<hi<<endl;
+ 
+ if (tl==tr)
+ {
+  if (ar[tl]<low||ar[tl]>hi)ans=tl-1;else
+  ans=tl;
+  return;
+ }
+ long tm=tl+tr;
+ tm/=2;
+ if (good(v*2,tl,tm,low,hi))
+  lookout(v*2+1,tm+1,tr,low,hi);
+ else
+  lookout(v*2,tl,tm,low,hi);
+}
+
+int main(){
+//freopen("alter.in","r",stdin);
+//freopen("alter.out","w",stdout);
+//freopen("C:/input.txt","r",stdin);
+//freopen("C:/output.txt","w",stdout);
+//ios_base::sync_with_stdio(0);
+//cin.tie(0);
+
+cin>>n>>m;
+for (int i=1;i<=n;i++)
+scanf("%ld",&ar[i]);
+// cin>>ar[i];
+
+build(1,1,n);
+for (;m;--m)
+{
+ cin>>st;
+ if (st=="U")
+ {
+//  cin>>ps>>val;
+scanf("%ld",&ps);
+scanf("%ld",&val);
+  update(1,1,n,ps,val);
+  ar[ps]=val;
+  continue;
+ }
+ scanf("%ld",&ps);
+ scanf("%ld",&val);
+ if (val<0)
+ {
+  cout<<-1<<" "<<-1<<"\n";
+  continue;
+ }
+ long l;
+ 
+ lookout(1,1,n,ar[ps]-val,ar[ps]+val);
+ l=ans;
+ printf("%ld ",l-ps+1);
+ //cout<<l-ps+1<<" ";
+ pair<long, long> tp=get(1,1,n,ps,l);
+ long res=ar[ps]-tp.first;
+ res=max(res,tp.second-ar[ps]);
+ printf("%ld\n",res);//cout<<res<<"\n";
+}
+cin.get();cin.get();
+return 0;}

@@ -1,0 +1,87 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define MAXN 100005
+int BIT[MAXN][26];
+string str;
+void update(int idx,char newval,int n,int code){
+	
+	int i = idx;
+	char oldval = str[idx-1];
+	while(idx<=n){
+		if(code==2)
+			BIT[idx][oldval-'a']--;
+		BIT[idx][newval-'a']++;
+		idx += (idx&-idx);
+	}
+	str[i-1] = newval;
+	return;
+}
+
+bool query(int l,int r){
+	
+	int i,cnt1[26]={0},cnt2[26]={0},flag;
+	i = r;
+	while(i>0){
+		for(int j=0;j<26;j++)
+			cnt1[j] += BIT[i][j];
+		i -= (i&-i);
+	}
+	i=l-1;
+	while(i>0){
+		 for(int j=0;j<26;j++)
+                        cnt2[j] += BIT[i][j];
+                i -= (i&-i);
+	}
+	flag=0;
+//	cout << "count of alphabets in range ("<<l<<","<<r<<") are " << endl;
+//	for(int i=0;i<26;i++)
+//		cout << "count of " << ('a'+i) << " is " << cnt1[i]-cnt2[i] << endl;
+	if((r-l+1)%2==0){
+		for(int i=0;i<26;i++){
+			if((cnt1[i]-cnt2[i])%2==0)
+				continue;
+			else {flag=1;break;}
+		}
+	}
+	else{
+		int cnt_odd=0;
+		for(int i=0;i<26;i++){
+			if((cnt1[i]-cnt2[i])%2==0)
+				continue;
+			else{
+				cnt_odd++;
+				if(cnt_odd>1){flag=1;break;}
+			}
+		}
+	}
+
+	return (flag==1)?false:true;
+}
+int main(){
+
+	int n,q,c,l,r;
+	bool res;
+	char c1;
+	cin >> n >> q;
+	cin >> str;
+	memset(BIT,0,sizeof(BIT));
+	for(int i=0;i<str.length();i++)
+		update(i+1,str[i],n,1);
+	
+	while(q--){
+		cin >> c;
+		if(c==1){
+			cin >> l >> c1;	
+			update(l,c1,n,2);
+		}
+		else{
+			cin >> l >> r;
+			res = query(l,r);
+			if(res)
+				cout << "yes" << endl;
+			else cout << "no" << endl;
+		}
+	}
+
+	return 0;
+}

@@ -1,0 +1,104 @@
+#include<bits/stdc++.h>
+using namespace std;
+long long p[500000][6],m[100100];
+int st,ed,val;
+/*
+0= # middle
+1= # front
+2= val front
+3= # back
+4= val back
+*/
+inline void update(int a,int b,int c)
+{
+	if(a==b)
+	{
+		p[c][0]=p[c][1]=p[c][3]=1;
+		p[c][2]=p[c][4]=m[a]=m[a]+val;
+		return;
+	}
+	int e=(a+b)/2,f=c*2,g=c*2+1;
+	if(st<=e)update(a,e,f);
+	else update(e+1,b,g);
+	p[c][2]=p[f][2];
+	p[c][4]=p[g][4];
+	if(p[f][4]<p[g][2])
+	{
+		p[c][0]=max(max(p[f][0],p[g][0]),p[f][3]+p[g][1]);
+		if(p[f][1]==(e-a+1))p[c][1]=p[f][1]+p[g][1];
+		else p[c][1]=p[f][1];
+		if(p[g][3]==(b-e))p[c][3]=p[f][3]+p[g][3];
+		else p[c][3]=p[g][3];
+	}
+	else
+	{
+		p[c][0]=max(p[f][0],p[g][0]);
+		p[c][1]=p[f][1];
+		p[c][3]=p[g][3];
+	}
+}
+inline tuple<int,int,long long,int,long long> sum(int a,int b,int c)
+{
+	if(st<=a&&ed>=b)return make_tuple(p[c][0],p[c][1],p[c][2],p[c][3],p[c][4]);
+	long long e=(a+b)/2,f=c*2;
+	if(st<=e&&ed>=e+1)
+	{
+		tuple<int,int,long long,int,long long> m,n;
+		int a0,a1,a3,b0,b1,b3,c0,c1,c3;
+		long long a2,a4,b2,b4,c2,c4;
+		m=sum(a,e,f);
+		n=sum(e+1,b,f+1);
+		tie(a0,a1,a2,a3,a4)=m;
+		tie(b0,b1,b2,b3,b4)=n;
+		c2=a2;
+		c4=b4;
+		if(a4<b2)
+		{
+			c0=max(max(a0,b0),a3+b1);
+			if(a1==(e-a+1))c1=a1+b1;
+			else c1=a1;
+			if(b3==(b-e))c3=a3+b1;
+			else c3=b3;
+		}
+		else
+		{
+			c0=max(a0,b0);
+			c1=a1;
+			c3=b3;
+		}
+		return make_tuple(c0,c1,c2,c3,c4);
+	}
+	if(ed<=e)return sum(a,e,f);
+	return sum(e+1,b,f+1);
+}
+int main()
+{
+	int a,b,c,d,e,f,g;
+	ios::sync_with_stdio(false);
+	cin.tie(NULL);
+	cin>>a;
+	for(b=0;b<a;b++)
+	{
+		cin>>c>>d;
+		for(st=1;st<=c;st++)
+		{
+			cin>>val;
+			update(1,c,1);
+		}
+		for(e=0;e<d;e++)
+		{
+			cin>>f;
+			if(f==1)
+			{
+				cin>>st>>val;
+				update(1,c,1);
+			}
+			else
+			{
+				cin>>st>>ed;
+				cout<<(get<0>(sum(1,c,1)))<<"\n";
+			}
+		}
+		for(e=0;e<=c;e++)m[e]=0;
+	}
+}

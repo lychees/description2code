@@ -1,0 +1,97 @@
+#include <cstdio>
+#include <utility>
+#include <algorithm>
+
+using namespace std;
+
+const int NMAX= 1005;
+
+int arr1[NMAX];
+int arr2[NMAX];
+
+int size1[NMAX];
+int size2[NMAX];
+
+typedef pair<int, pair<int, int> > p3i;
+
+p3i e[10005];
+
+int root(int *arr, int s)
+{
+	int i = s;
+	while(i != arr[i]) {
+		arr[i] = arr[arr[i]];
+		i = arr[i];
+	}
+	return i;
+}
+
+void unite(int *arr, int *size, int a, int b)
+{
+	int root_a = root(arr, a);
+	int root_b = root(arr, b);
+	if(size[root_a] < size[root_b]) {
+		arr[root_a] = root_b;
+		size[root_b] += size[root_a];
+	}
+	else {
+		arr[root_b] = root_a;
+		size[root_a] += size[root_b];
+	}
+}
+
+bool cmp(p3i const &e1, p3i const &e2) {return e1.first > e2.first; }
+
+int main()
+{
+	int n,m,a,b,c;
+	int com = 0, diff1 = 0, diff2= 0; 
+	scanf("%d %d", &n, &m);
+	for(int i = 0; i < m; i++) {
+		scanf("%d %d %d", &a, &b, &c);
+		e[i].first = c;
+		e[i].second.first = a;
+		e[i].second.second = b;
+	}
+
+	for(int i = 1; i <= n; i++) {
+		arr1[i] = i;
+		arr2[i] = i;
+		size1[i] = 1;
+		size2[i] = 1;
+	}
+
+	sort(e, e+m, cmp);
+
+	for(int i = 0; i < m; i++) {
+		int c = e[i].first;
+		int v1 = e[i].second.first;
+		int v2 = e[i].second.second;
+		switch(c) {
+			case 3:
+				if(root(arr1, v1) != root(arr1, v2)) {
+					unite(arr1, size1, v1, v2);
+					unite(arr2, size2, v1, v2);
+					com++;
+				}
+				break;
+			case 2:
+				if(root(arr2, v1) != root(arr2, v2)) {
+					unite(arr2, size2, v1, v2);
+					diff2++;
+				}
+				break;
+			case 1:
+				if(root(arr1, v1) != root(arr1, v2)) {
+					unite(arr1, size1, v1, v2);
+					diff1++;
+				}
+		}
+	}
+	
+	if(size1[root(arr1, 1)] == n && size2[root(arr2, 1)] == n) 
+		printf("%d\n", m-com-diff1-diff2);
+	else
+		printf("-1\n");
+
+}

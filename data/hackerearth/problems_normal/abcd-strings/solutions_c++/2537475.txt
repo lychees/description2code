@@ -1,0 +1,171 @@
+#include <bits/stdc++.h>
+using namespace std;
+using namespace std::chrono;
+#define DBG(x) cout << #x << " = " << x << "\n";
+/*
+Compile:
+    -Wall -Wextra -pedantic -std=c++11 -O2 -Wshadow -Wformat=2 -Wfloat-equal -Wconversion -Wlogical-op -Wcast-qual -Wcast-align -fwhole-program -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -lmcheck -fsanitize=address 
+ 
+Check for memory usage:
+    valgrind --tool=massif
+*/
+
+const int MOD = 1e9 + 7;
+const long long MOD2 = static_cast<long long>(MOD) * MOD;
+
+struct Matrix
+{
+    vector< vector<int> > mat;
+    int n_rows, n_cols;
+
+    Matrix() {}
+
+    Matrix(vector< vector<int> > values): mat(values), n_rows(values.size()),
+        n_cols(values[0].size()) {}
+
+    static Matrix identity_matrix(int n)
+    {
+        vector< vector<int> > values(n, vector<int>(n, 0));
+        for(int i = 0; i < n; i++)
+            values[i][i] = 1;
+        return values;
+    }
+
+    Matrix operator*(const Matrix &other) const 
+    {
+        int n = n_rows, m = other.n_cols;
+        vector< vector<int> > result(n_rows, vector<int>(n_cols, 0));
+        for(int i = 0; i < n; i++)
+            for(int j = 0; j < m; j++) {
+                long long tmp = 0;
+                for(int k = 0; k < n_cols; k++) {
+                    tmp += mat[i][k] * 1ll * other.mat[k][j];
+                    while(tmp >= MOD2)
+                        tmp -= MOD2;
+                }
+                result[i][j] = tmp % MOD;
+            }
+
+        return move(Matrix(move(result)));
+    }
+
+    inline bool is_square() const
+    {
+        return n_rows == n_cols;
+    }
+};
+
+Matrix fast_exponentiation(Matrix m, long long power)
+{
+    assert(m.is_square());
+    Matrix result = Matrix::identity_matrix(m.n_rows);
+
+    while(power) {
+        if(power & 1)
+            result = result * m;
+        m = m * m;
+        power >>= 1;
+    }
+
+    return result;
+}
+
+string build(int i)
+{
+    if(i == 0)
+        return "a";
+    if(i == 1)
+        return "b";
+    if(i == 2)
+        return "c";
+    return "d";
+}
+
+string build(int i, int j)
+{
+    return build(i) + build(j);
+}
+
+int solve()
+{
+    long long n;
+    int k;
+    cin >> n >> k;
+    vector<string> banned(k);
+    for(int i = 0; i < k; i++)
+        cin >> banned[i];
+    
+
+    vector<string> one_two_str;
+    for(int i = 0; i < 4; i++) {
+        string tt = "";
+        tt += 'a' + i;
+        for(int j = 0; j < 4; j++) {
+            string rr = tt;
+            rr += 'a' + j;
+            one_two_str.push_back(rr);
+        }
+    }
+
+    if(n == 1) {
+        int ans = 4;
+        for(int i = 0; i < 4; i++) {
+            string tt = "";
+            tt += 'a' + i;
+            for(const auto &r: banned)
+                if(tt == r) {
+                    ans--;
+                    break;
+                }
+        }
+        return ans;
+    }
+
+    vector< vector<int> > initial(1, vector<int>(16, 1));
+    vector< vector<int> > M(16, vector<int>(16, 0));
+
+    for(int i = 0; i < 4; i++) {
+        for(int j = 0; j < 4; j++) {
+            string tt = "";
+            tt += 'a' + i;
+            tt += 'a' + j;
+            for(const auto &r: banned) {
+                if(tt == r or r == build(i) or r == build(j)) {
+                    initial[0][i * 4 + j] = 0;
+                    break;
+                }
+            }
+            if(initial[0][i * 4 + j] == 0)
+                continue;
+
+            for(int r = 0; r < 4; r++) {
+                string rr = tt;
+                rr += 'a' + r;
+                M[i * 4 + j][j * 4 + r] = 1;
+                for(const auto x: banned) {
+                    if(x == rr or x == build(r) or x == build(j, r)) {
+                        M[i * 4 + j][j * 4 + r] = 0;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    auto result = Matrix(initial) * fast_exponentiation(Matrix(M), n - 2);
+    int ans = 0;
+    for(int i = 0; i < 16; i++)
+        ans = (ans + result.mat[0][i]) % MOD;
+    return ans;
+}
+
+int main()
+{
+    int t;
+
+    cin >> t;
+    for(int i = 0; i < t; i++) {
+        cout << solve() << "\n";
+    }
+    return 0;
+}

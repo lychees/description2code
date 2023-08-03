@@ -1,0 +1,401 @@
+#pragma GCC optimize ("-O3")
+#define _GLIBCXX_USE_CXX11_ABI 0
+#include <bits/stdc++.h>
+
+#define FOR(i, n)     for(lli i = 0; i < (lli)(n); ++i)
+#define FORU(i, j, k) for(lli i = (j); i <= (lli)(k); ++i)
+#define FORD(i, j, k) for(lli i = (j); i >= (lli)(k); --i)
+
+#define DESTRUCT2(t, x, y)                      \
+  auto x = get<0>(t);                           \
+  auto y = get<1>(t);
+
+#define DESTRUCT3(t, x, y, z)                   \
+  auto x = get<0>(t);                           \
+  auto y = get<1>(t);                           \
+  auto z = get<2>(t);
+
+#define DESTRUCT4(t, x, y, z, w)                \
+  auto x = get<0>(t);                           \
+  auto y = get<1>(t);                           \
+  auto z = get<2>(t);                           \
+  auto w = get<3>(t);
+
+#define SQ(x) ((x)*(x))
+
+#define all(x) begin(x), end(x)
+#define rall(x) rbegin(x), rend(x)
+#define mp make_pair
+#define mt make_tuple
+#define pb push_back
+#define eb emplace_back
+
+#define PE flush << "\033[2K\r"
+
+using namespace std;
+using lli   = long long int;
+using llu   = long long unsigned;
+
+using pii   = tuple<lli, lli>;
+using piii  = tuple<lli, lli, lli>;
+using piiii = tuple<lli, lli, lli, lli>;
+using vi    = vector<lli>;
+using vii   = vector<pii>;
+using viii  = vector<piii>;
+using vvi   = vector<vi>;
+using vvii  = vector<vii>;
+using vviii = vector<viii>;
+
+template<class T>
+using min_queue = priority_queue<T, vector<T>, greater<T> >;
+
+template<class T>
+using max_queue = priority_queue<T>;
+
+template<int... I>
+struct my_index_sequence {
+  using type = my_index_sequence;
+  static constexpr array<int, sizeof...(I)> value = { I... };
+};
+
+namespace my_index_sequence_detail {
+  template<typename I, typename J> struct concat;
+  template<int... I, int... J>
+  struct concat<my_index_sequence<I...>, my_index_sequence<J...> > :
+    my_index_sequence<I..., (sizeof...(I)+J)...> { };
+  template<int N> struct make_index_sequence :
+    concat<typename make_index_sequence<N/2>::type, typename make_index_sequence<N-N/2>::type>::type { };
+  template <> struct make_index_sequence<0> : my_index_sequence<>{};
+  template <> struct make_index_sequence<1> : my_index_sequence<0>{};
+}
+
+template<class... A>
+using my_index_sequence_for = typename my_index_sequence_detail::make_index_sequence<sizeof...(A)>::type;
+
+template<class T, int... I>
+void print_tuple(ostream& s, T const& a, my_index_sequence<I...>){
+  using swallow = int[];
+  (void)swallow{0, (void(s << (I == 0? "" : ", ") << get<I>(a)), 0)...};
+}
+
+template<class T>
+ostream& print_collection(ostream& s, T const& a){
+  s << '[';
+  for(auto it = begin(a); it != end(a); ++it){
+    s << *it;
+    if(it != prev(end(a))) s << " ";
+  }
+  return s << ']';
+}
+
+template<class... A>
+ostream& operator<<(ostream& s, tuple<A...> const& a){
+  s << '(';
+  print_tuple(s, a, my_index_sequence_for<A...>{});
+  return s << ')';
+}
+
+template<class A, class B>
+ostream& operator<<(ostream& s, pair<A, B> const& a){
+  return s << "(" << get<0>(a) << ", " << get<1>(a) << ")";
+}
+
+template<class T, int I>
+ostream& operator<<(ostream& s, array<T, I> const& a) { return print_collection(s, a); }
+template<class T>
+ostream& operator<<(ostream& s, vector<T> const& a) { return print_collection(s, a); }
+template<class T, class U>
+ostream& operator<<(ostream& s, multimap<T, U> const& a) { return print_collection(s, a); }
+template<class T>
+ostream& operator<<(ostream& s, multiset<T> const& a) { return print_collection(s, a); }
+template<class T, class U>
+ostream& operator<<(ostream& s, map<T, U> const& a) { return print_collection(s, a); }
+template<class T>
+ostream& operator<<(ostream& s, set<T> const& a) { return print_collection(s, a); }
+
+namespace std {
+  namespace {
+    template <class T>
+    inline void hash_combine(size_t& seed, T const& v) {
+      seed ^= hash<T>()(v) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+    }
+    template <class Tuple, size_t Index = tuple_size<Tuple>::value - 1>
+      struct HashValueImpl {
+        static void apply(size_t& seed, Tuple const& tuple) {
+          HashValueImpl<Tuple, Index-1>::apply(seed, tuple);
+          hash_combine(seed, get<Index>(tuple));
+        }
+      };
+    template <class Tuple>
+    struct HashValueImpl<Tuple, 0> {
+      static void apply(size_t& seed, Tuple const& tuple) {
+        hash_combine(seed, get<0>(tuple));
+      }
+    };
+  }
+  template <typename ... TT>
+  struct hash<tuple<TT...>> {
+    size_t operator()(tuple<TT...> const& tt) const {
+      size_t seed = 0;
+      HashValueImpl<tuple<TT...> >::apply(seed, tt);
+      return seed;
+    }
+  };
+}
+
+//------------------------------------------------------------------------------
+
+// --- BEGIN SNIPPET SEGMENT TREE ---
+
+const lli MOD = 1e9+7;
+
+lli fexp(lli a, lli b) {
+  if(b == 0) return 1;
+  if(b == 1) return a;
+  lli c = fexp(a, b/2);
+  c = (c*c)%MOD;
+  if(b&1) c = (a*c)%MOD;
+  return c;
+}
+
+lli modinv(lli a) { return fexp(a, MOD-2); }
+
+struct segment_node {
+  lli mult  = 1;
+  lli value = 1;
+};
+
+struct segment_tree {
+  lli n;
+  vector<segment_node> A;
+  segment_tree(lli n_) : n((lli)1<<(lli)(log2(n_)+1)), A(2*n) { }
+
+  void push(lli i, lli a, lli b){
+    if(i < n){
+      lli c = (a+b)/2;
+      if(A[i].mult != 1){
+        mult__(2*i  , a  , c, A[i].mult);
+        mult__(2*i+1, c+1, b, A[i].mult);
+        A[i].mult = 1;
+      }
+    }
+  }
+
+  void update(lli i){
+    A[i].value = (A[2*i].value + A[2*i+1].value) % MOD;
+  }
+
+  void build(){
+    FORD(i, n-1, 1) update(i);
+  }
+
+  void mult__(lli i, lli a, lli b, lli v){
+    (A[i].mult *= v) %= MOD;
+    (A[i].value *= v) %= MOD;
+  }
+
+  void mult_(lli i, lli a, lli b, lli l, lli r, lli v){
+    if(l > b) return;
+    if(r < a) return;
+    if(l <= a && b <= r){
+      mult__(i, a, b, v);
+      return;
+    }
+    push(i, a, b);
+    lli c = (a+b)/2;
+    mult_(2*i  , a  , c, l, r, v);
+    mult_(2*i+1, c+1, b, l, r, v);
+    update(i);
+  }
+
+  void mult(lli l, lli r, lli v){
+    mult_(1, 0, n-1, l, r, v);
+  }
+
+  lli query_(lli i, lli a, lli b, lli l, lli r){
+    if(l > b) return 0;
+    if(r < a) return 0;
+    if(l <= a && b <= r){
+      return A[i].value;
+    }
+    push(i, a, b);
+    lli c = (a+b)/2;
+    return (query_(2*i  , a  , c, l, r) +
+            query_(2*i+1, c+1, b, l, r))%MOD;
+  }
+
+  lli query(lli l, lli r){
+    return query_(1, 0, n-1, l, r);
+  }
+};
+
+// --- END SNIPPET SEGMENT TREE ---
+
+// --- BEGIN SNIPPET TREE ---
+
+struct treechain {
+  lli root = -1;
+  lli size = 0;
+  vi  nodes;
+
+  // segment tree / bit / other
+
+  treechain() { }
+
+  void build(){ // make segment tree }
+  };
+};
+
+struct tree {
+  lli n;
+  vvi G;
+
+  vi parent;
+  vi depth;
+  vi size;
+  vi from;
+  vi to;
+
+  vector<treechain> chains;
+  vector<lli>       chain;
+  vector<lli>       chainIx;
+
+  tree(lli n_) : n(n_), G(n) { }
+
+  void read_graph(lli m) {
+    FOR(i, m) {
+      lli u, v; cin >> u >> v;
+      u -= 1; v -= 1;
+      G[u].pb(v); G[v].pb(u);
+    }
+  }
+
+  void dfs(function<void(lli, lli)> const& f){
+    function<void(lli, lli)> dfs = [&](lli i, lli p){
+      f(i, p);
+      for(auto j : G[i]) if(j != p) dfs(j, i);
+    };
+    dfs(0, -1);
+  }
+
+  void calcparent() {
+    if(parent.empty()) {
+      parent.resize(n);
+      function<void(lli, lli)> dfs = [&](lli i, lli p){
+        parent[i] = p;
+        for(auto j : G[i]) if(j != p) dfs(j, i);
+      };
+      dfs(0, -1);
+    }
+  }
+
+  void calcsize() {
+    if(size.empty()) {
+      size.assign(n, 0);
+      function<void(lli, lli)> dfs = [&](lli i, lli p){
+        size[i] = 1;
+        for(auto j : G[i]) if(j != p) {
+            dfs(j, i);
+            size[i] += size[j];
+          }
+      };
+      dfs(0, -1);
+    }
+  }
+
+  void calcdepth() {
+    if(depth.empty()) {
+      depth.assign(n, 0);
+      function<void(lli, lli)> dfs = [&](lli i, lli p){
+        depth[i] = p==-1 ? 0 : depth[p]+1;
+        for(auto j : G[i]) if(j != p) dfs(j, i);
+      };
+      dfs(0, -1);
+    }
+  }
+
+  void calcfromto() {
+    if(from.empty() || to.empty()) {
+      from.resize(n);
+      to.resize(n);
+      lli cur = 0;
+      function<void(lli, lli)> dfs = [&](lli i, lli p) {
+        from[i] = cur; cur += 1;
+        for(lli j : G[i]) if(j != p) dfs(j, i);
+        to[i] = cur-1;
+      };
+      dfs(0, -1);
+    }
+  }
+
+  void calchld() {
+    if(chains.empty()){
+      calcsize();
+
+      chain.assign(n, -1);
+      function<void(lli, lli)> dfs1 = [&](lli i, lli p){
+        lli best = -1;
+        for(auto j : G[i]) if(j != p) {
+            dfs1(i, p);
+            if(best == -1 || size[j] > size[best]) best = j;
+          }
+        if(best == -1) {
+          chain[i] = chains.size();
+          chains.eb();
+        }else{
+          chain[i] = chain[best];
+        }
+        chains[chain[i]].size += 1;
+      };
+      dfs1(0, -1);
+
+      chainIx.assign(n, -1);
+      function<void(lli, lli)> dfs2 = [&](lli i, lli p){
+        if(p==-1 || chain[i] != chain[p]) chains[chain[i]].root = i;
+        chainIx[i] = chains[chain[i]].nodes.size();
+        chains[chain[i]].nodes.pb(i);
+
+        for(auto j : G[i]) if(j != p) {
+            dfs2(i, p);
+          }
+      };
+      dfs2(0, -1);
+
+      for(auto& c : chains) c.build();
+
+    }
+  }
+};
+
+// --- END SNIPPET TREE ---
+
+int main(int, char**){
+  ios::sync_with_stdio(0);
+  lli n, q; cin >> n >> q;
+  tree t(n);
+  t.read_graph(n-1);
+  t.calcparent();
+  t.calcfromto();
+  vi A(n, 1);
+  segment_tree s(n);
+  FOR(i, n) {
+    lli x; cin >> x;
+    A[i] = x;
+    s.mult(t.from[i]+1, t.to[i], x);
+  }
+  s.build();
+  FOR(i, q) {
+    lli ty; cin >> ty;
+    if(ty == 1) {
+      lli v, x; cin >> v >> x;
+      lli m = (modinv(A[v-1]) * x)%MOD;
+      s.mult(t.from[v-1]+1, t.to[v-1], m);
+      A[v-1] = x;
+    }else{
+      lli v; cin >> v;
+      cout << s.query(t.from[v-1], t.to[v-1]) << endl;
+    }
+  }
+
+  return 0;
+}

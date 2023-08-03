@@ -1,0 +1,90 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+int n;
+double x[105],y[105],h;
+double dist[105][2];//dist[i][0] --> i is the index of the vertex(xi,yi) and 0 for lower polyline and 1 for upper polyline.
+//dist[i][0] is shortest distance to reach (x1,yi) and dist[i][1] is shortest distance to reach vertex (xi,yi+h)
+
+double get_dist(double x1, double y1, double x2, double y2)
+{
+    return sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1));
+}//distance between points (x1,j1) and (x2,j2) is sqrt((x2-x1)^2 + (y2-y1)^2)
+
+bool check(int l, int r, double Y)
+{
+    for(int i=l; i<=r;++i)
+    {
+        if(Y<y[i]||Y>(y[i]+h))
+            return false;
+    }
+    return true;
+}//this function checks if a given y coordinate of a vertex (x,y) lies between two polylines from 'l'th vertex to 'r'th vertex by checking the y coordinates from 'l'th vertex till 'r'th vertex
+
+
+bool valid(double x1, double y1, double x2, double y2, int l, int r)
+{
+    for(int i=l;i<=r;++i)
+    {
+        double X = x[i];
+        double Y = y1 + (X-x1)*(y2-y1)/(x2-x1);
+        //line equation (x-x1)=m(y-y1) where m is (y2-y1)/(x2-x1)
+        if(Y<y[i] || Y>(y[i]+h))
+            return false;
+    }
+    return true;
+}//this function creates a line segment whose two end points are (x1,y1) and (x2,y2)
+//it then checks whether this line is between the two polylines or not.It does so by checking all the vertices between the points (x1,y1) and (x2,y2)
+//it checks by taking the x coordinate of the each vertex between the two points and finding the corresponding y coordinate on the line for that x
+//suppose (xi,yi) is a vertex between the two points. then the y obtained for xi upon using line equation must lie between yi and yi+h for the line to be in maze
+
+int main()
+{
+    scanf("%d",&n);
+    for(int i=0;i<=n;++i)
+        scanf("%lf%lf",&x[i],&y[i]);
+    scanf("%lf",&h);
+
+    for(int i=0;i<=n;++i)
+        dist[i][0]=dist[i][1]=(1e+9);
+    //intializing the distances initially with a huge number
+
+    dist[0][0] = dist[0][1] = 0;// 0 because (x0,y0) or (x0,y0+h) is the starting point
+
+    for(int i=1;i<=n;++i)
+    {
+        if(check(0,i-1,y[i]))//checks if a horizontal line can be directly drawn from starting point to the ith vertex in lower polyline
+            dist[i][0] = min(dist[i][0],x[i]-x[0]);
+        if(check(0,i-1,y[i]+h))//checks if a horizontal line can be directly drawn from starting point to the ith vertex in upper polyline
+            dist[i][1] = min(dist[i][1],x[i]-x[0]);
+    }
+
+    for(int i=0;i<=n;++i)
+        for(int j=0;j<=1;++j)
+            for(int q=i+1;q<=n;++q)
+                for(int w=0;w<=1;++w)
+                {
+                    double x1,y1,x2,y2;
+
+                    x1 = x[i];
+                    y1 = y[i]+h*j;
+                    x2 = x[q];
+                    y2 = y[q]+h*w;
+                    if(valid(x1,y1,x2,y2,i+1,q-1))//checks if a line is possible between (x1,y1) and (x2,y2)
+                        dist[q][w] = min(dist[q][w],dist[i][j]+get_dist(x1,y1,x2,y2));//dist[i][j]+get_dist(x1,y1,x2,y2) means distance from starting till vertex i is added with distance between ith and qth vertex which gives distance from starting till qth vertex
+                }
+    double ans = (1e+9);
+    for(int i=0;i<=n;++i)
+    {
+        if(check(i+1,n,y[i]))//checks if a horizontal line can be directly drawn from ith vertext till the ending point for lower polyline
+            ans = min(ans,dist[i][0]+x[n]-x[i]);
+        if(check(i+1,n,y[i]+h))//checks if a horizontal line can be directly drawn from ith vertext till the ending point for upper polyline
+            ans = min(ans,dist[i][1]+x[n]-x[i]);
+    }
+    printf("%.10f",ans);
+    return 0;
+}
+
+
+

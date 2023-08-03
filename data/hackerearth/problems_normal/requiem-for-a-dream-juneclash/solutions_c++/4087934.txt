@@ -1,0 +1,143 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cassert>
+#include <iostream>
+#include <set>
+#include <vector>
+#include <cstring>
+#include <string>
+#include <algorithm>
+#include <numeric>
+#include <cmath>
+#include <complex>
+#include <map>
+#include <queue>
+using namespace std;
+typedef long long ll;
+typedef vector<int> vi;
+typedef vector<ll> vl;
+typedef vector<vl> vvl;
+typedef vector<vi> vvi;
+typedef vector<double> vd;
+typedef pair<int, int> pii;
+typedef pair<double, double> pdd;
+typedef vector<pii> vii;
+typedef vector<string> vs;
+
+vvi gr,grw;
+vvi pc;
+vi rm, sz, szc;
+vector<map<int, ll> > ci, ci2;
+int c0;
+
+int lcenter(int a, int b) {
+    int i = pc[a].size() - 1;
+    int j = pc[b].size() - 1;
+    while (1) {
+        int ca = pc[a][i], cb = pc[b][j];
+        if (ca == cb) return ca;
+        if (szc[ca] <= szc[cb]) {
+            --i;
+        }
+        if (szc[ca] >= szc[cb]) {
+            --j;
+        }
+    }
+}
+
+void dfs(int v, int p, int c, ll sum, ll ma, ll ma2, ll mi) {
+    pc[v].push_back(c);
+    ma = max(ma, sum);
+    ma2 = max(ma2, sum - mi);
+    mi = min(mi, sum);
+    ci[c][v] = ma;
+    ci2[c][v] = ma2;
+    for (int i = 0; i < gr[v].size(); ++i) {
+        int nv = gr[v][i];
+        if (nv == p || rm[nv]) continue;
+        dfs(nv, v, c, sum + grw[v][i], ma, ma2, mi);
+    }
+}
+
+void build(int c) {
+    dfs(c, -1, c, 0, 0, 0, 0);
+    szc[c] = ci[c].size();
+}
+
+void dfs_sz(int v, int p) {
+    sz[v] = 1;
+    for (int i = 0; i < gr[v].size(); ++i) {
+        int nv = gr[v][i];
+        if (nv == p || rm[nv]) continue;
+        dfs_sz(nv, v);
+        sz[v] += sz[nv];
+    }
+}
+
+int find_center(int v) {
+    dfs_sz(v, -1);
+    int tot = sz[v], p = -1;
+    while (true) {
+        bool ok = 1;
+        for (int i = 0; i < gr[v].size(); ++i) {
+            int nv = gr[v][i];
+            if (rm[nv] || nv == p) continue;
+            if (sz[nv] > tot/2) {
+                ok = 0;
+                p = v;
+                v = nv;
+            }
+        }
+        if (ok) return v;
+    }
+}
+
+void push_centroid(int v) {
+    //cerr << v+1 << endl;
+    build(v);
+    rm[v] = 1;
+    for (int i = 0; i < gr[v].size(); ++i) {
+        int nv = gr[v][i];
+        if (rm[nv]) {
+            continue;
+        }
+        int c = find_center(nv);
+        push_centroid(c);
+    }
+}
+
+void centroid() {
+    c0 = find_center(0);
+    push_centroid(c0);
+}
+
+int main() {
+    int n,Q;
+    cin >> n >> Q;
+    gr.resize(n);
+    grw.resize(n);
+    pc.resize(n);
+    ci.resize(n);
+    ci2.resize(n);
+    rm.assign(n, 0);
+    sz.assign(n, 0);
+    szc.assign(n, 0);
+    for (int i = 0; i < n-1; ++i) {
+        int a, b, c;
+        scanf("%d%d%d",&a,&b,&c);
+        --a; --b;
+        gr[a].push_back(b);
+        gr[b].push_back(a);
+        grw[a].push_back(c);
+        grw[b].push_back(c);
+    }
+    centroid();
+    for (int q = 0; q < Q; ++q) {
+        int a,b;
+        scanf("%d%d",&a,&b);
+        --a; --b;
+        int c = lcenter(a, b);
+        printf("%lld\n", max(ci[c][a] + ci[c][b], max(ci2[c][a], ci2[c][b])));
+    }
+    return 0;
+}

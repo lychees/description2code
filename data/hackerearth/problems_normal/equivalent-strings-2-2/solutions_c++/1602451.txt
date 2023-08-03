@@ -1,0 +1,117 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+typedef long long ll;
+const int MOD = int(1e9) + 7;
+vector<int> posA[26], posB[26];
+vector<ll> hashA[26], hashB[26];
+ll pw[111000];
+ll smap[26];
+
+ll get_hash(int st, int len, const vector<int>* pos, const vector<ll>* code) {
+  static pair<int, int> ord[26];
+  int C = 0;
+  for (int c = 0; c < 26; c++) {
+    const int p = lower_bound(pos[c].begin(), pos[c].end(), st) - pos[c].begin();
+    if (p < (int) pos[c].size() && pos[c][p] < st + len) {
+      ord[C++] = make_pair(pos[c][p], c);
+    }
+  }
+  sort(ord, ord + C);
+  ll res = 0;
+  for (int i = 0; i < C; i++) {
+    const int c = ord[i].second;
+    const int p1 = lower_bound(pos[c].begin(), pos[c].end(), st) - pos[c].begin();
+    const int p2 = lower_bound(pos[c].begin(), pos[c].end(), st + len) - pos[c].begin() - 1;
+    if (p1 == 0)
+      res += code[c][p2] * pw[st + len - pos[c][p2]] * smap[i];
+    else
+      res += (code[c][p2] - code[c][p1 - 1] * pw[pos[c][p2] - pos[c][p1 - 1]])
+          * pw[st + len - pos[c][p2]] * smap[i];
+  }
+  return res;
+}
+
+void solve(int test_num) {
+  string A, B;
+  cin >> A >> B;
+  const int N = A.size();
+  pw[0] = 1;
+  for (int i = 1; i <= N; i++)
+    pw[i] = pw[i - 1] * MOD;
+  srand(1234);
+  for (int c = 0; c < 26; c++) {
+    smap[c] = rand();
+    while (smap[c] == 0)
+      smap[c] = rand();
+    posA[c].clear();
+    hashA[c].clear();
+    posB[c].clear();
+    hashB[c].clear();
+  }
+  for (int i = 0; i < N; i++) {
+    posA[A[i] - 'a'].push_back(i);
+    posB[B[i] - 'a'].push_back(i);
+  }
+  for (int c = 0; c < 26; c++) {
+    for (int i = 0; i < (int) posA[c].size(); i++) {
+      if (i == 0)
+        hashA[c].push_back(1);
+      else
+        hashA[c].push_back(hashA[c][i - 1] * pw[posA[c][i] - posA[c][i - 1]] + 1);
+    }
+    for (int i = 0; i < (int) posB[c].size(); i++) {
+      if (i == 0)
+        hashB[c].push_back(1);
+      else
+        hashB[c].push_back(hashB[c][i - 1] * pw[posB[c][i] - posB[c][i - 1]] + 1);
+    }
+  }
+  int Q;
+  cin >> Q;
+  while (Q-- > 0) {
+    int x, y, len;
+    cin >> x >> y >> len;
+    const ll hash_a = get_hash(--x, len, posA, hashA);
+    const ll hash_b = get_hash(--y, len, posB, hashB);
+    //pln(hash_a, hash_b);
+    if (hash_a == hash_b)
+      cout << "yes\n";
+    else
+      cout << "no\n";
+  }
+}
+
+void solve() {
+#ifdef AZN
+  double start_t = clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr);
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+  int T = 1;
+//scanf("%d", &T);
+  cin >> T;
+  for (int t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << "Took: " << ((clock() - start_t) / CLOCKS_PER_SEC);
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

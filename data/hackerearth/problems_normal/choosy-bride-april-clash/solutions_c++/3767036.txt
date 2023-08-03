@@ -1,0 +1,163 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define sd(x) scanf("%d", &x)
+#define boost ios_base::sync_with_stdio(false);
+#define mp make_pair
+#define pb push_back
+#define all(a) a.begin(), a.end()
+#define f first
+#define s second
+
+typedef pair<int, int> pii;
+typedef long long ll;
+
+const int mod = 1000000007;
+const int inf = 50000000;
+const int maxn = 250010;
+
+struct node{
+	ll max_val, lazy;
+	int ans, is_leaf;
+};
+
+ll arr[2][maxn];
+node st[2][maxn*5];
+int n;
+
+//Lazy propagating node u down
+void propagate_down(int t, int u)
+{	
+	if(!st[t][u].is_leaf){
+		int l = 2*u + 1;
+		int r = l+1;
+		st[t][l].lazy+=st[t][u].lazy;
+		st[t][r].lazy+=st[t][u].lazy;
+		st[t][l].max_val+=st[t][u].lazy;
+		st[t][r].max_val+=st[t][u].lazy;
+	}
+	st[t][u].lazy = 0;
+}
+
+//Merging node cur with u
+//Updates max_val, ans of node cur.
+void combine(int t, node &cur, int u)
+{
+	if(cur.max_val > st[t][u].max_val)
+		return;
+	int temp = u, l, r;
+	while(!st[t][temp].is_leaf){
+		propagate_down(t, temp);
+		l = 2*temp + 1;
+		r = l+1;
+		if(cur.max_val > st[t][l].max_val)
+			temp = r;
+		else{
+			cur.ans+=(st[t][temp].ans-st[t][l].ans);
+			temp = l;
+		}
+	}
+	cur.ans+=st[t][temp].ans;
+	cur.max_val = st[t][u].max_val;
+}
+
+void init(int t, int s, int e, int u)
+{
+	if(s==e){
+		st[t][u].max_val = arr[t][s];
+		st[t][u].is_leaf = st[t][u].ans = 1;
+		st[t][u].lazy = 0;
+		return;
+	}
+	int mid, lc, rc;
+	mid = (s+e)>>1;
+	lc = 2*u + 1;
+	rc = lc + 1;
+	init(t, s, mid, lc);
+	init(t, mid+1, e, rc);
+	st[t][u] = st[t][lc];
+	st[t][u].is_leaf = 0;
+	combine(t, st[t][u], rc);
+}
+
+void update(int t, int s, int e, int qs, int qe, int val, int u)
+{
+	propagate_down(t, u);
+	if(s>e || s>qe || qs>e)
+		return;
+	int mid, lc, rc;
+	mid = (s+e)>>1;
+	lc = 2*u + 1;
+	rc = lc + 1;
+	if(s>=qs && qe>=e){
+		st[t][u].max_val+=val;
+		st[t][u].lazy+=val;
+		return;
+	}
+	update(t, s, mid, qs, qe, val, lc);
+	update(t, mid+1, e, qs, qe, val, rc);
+	st[t][u] = st[t][lc];
+	st[t][u].is_leaf = 0;
+	st[t][u].lazy = 0;
+	combine(t, st[t][u], rc);
+}
+
+void query(int t, node &collector, int s, int e, int qs, int qe, int u)
+{
+	propagate_down(t, u);
+	if(s>e || s>qe || qs>e)
+		return;
+	if(s>=qs && qe>=e){
+		combine(t, collector, u);
+		return;
+	}
+	int mid, lc, rc;
+	mid = (s+e)>>1;
+	lc = 2*u + 1;
+	rc = lc + 1;
+	query(t, collector, s, mid, qs, qe, lc);
+	query(t, collector, mid+1, e, qs, qe, rc);
+}
+
+int main()
+{
+	//freopen("i.txt", "r", stdin);
+	//freopen("o.txt", "w", stdout);
+	int t, i, j, q, type, l, r, val;
+	scanf("%d", &t);
+	while(t--){
+		scanf("%d%d", &n, &q);
+		for(i=0; i<n; i++){
+			scanf("%lld", &arr[0][i]);
+			arr[1][n-1-i] = arr[0][i];
+		}
+		init(0, 0, n-1, 0);
+		init(1, 0, n-1, 0);
+		//for(i=0; i<=8; i++){
+		//	cout << i << " 0 " << st[0][i].max_val << " " << st[0][i].ans << " " << st[0][i].is_leaf << " " << st[0][i].lazy << "\n";
+		//	cout << i << " 1 " << st[1][i].max_val << " " << st[1][i].ans << " " << st[1][i].is_leaf << " " << st[1][i].lazy << "\n";
+		//}
+		node collector;
+		while(q--){
+			scanf("%d%d%d", &type, &l, &r);
+			l--, r--;
+			if(type==1){
+				collector.max_val = -1ll<<50;
+				collector.ans = 0;
+				if(l<=r)
+					query(0, collector, 0, n-1, l, r, 0);
+				else
+					query(1, collector, 0, n-1, n-1-l, n-1-r, 0);
+				printf("%d\n", collector.ans);
+			}
+			else{
+				scanf("%d", &val);
+				update(0, 0, n-1, l, r, val, 0);
+				update(1, 0, n-1, n-1-r, n-1-l, val, 0);
+			}
+		}
+	}
+	
+	return 0;
+}

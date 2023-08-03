@@ -1,0 +1,89 @@
+#include "bits/stdc++.h"
+using namespace std;
+const int N = 1e5 + 5;
+const int LN = 17;
+int n , q;
+vector < pair < int , int > > v[N];
+int a , b , c;
+int dp[LN][N];
+int depth[N];
+struct data{
+	long long ans;
+	long long pre;
+	long long suf;
+	long long sum;
+	data(){
+		ans = 0;
+		pre = 0;
+		suf = 0;
+		sum = 0;
+	}
+};
+data dat[LN][N];
+data combine(data down , data up){
+	data ret;
+	ret.sum = down.sum + up.sum;
+	ret.pre = max(down.pre , down.sum + up.pre);
+	ret.suf = max(up.suf , up.sum + down.suf);
+	ret.ans = max(max(up.ans , down.ans) , down.suf + up.pre);
+	return ret;
+}
+void dfs(int node , int parent){
+	for(auto it : v[node]){
+		if(it.first != parent){
+			dp[0][it.first] = node;
+			dat[0][it.first].ans = dat[0][it.first].pre = dat[0][it.first].suf = max(0 , it.second);
+			dat[0][it.first].sum = it.second;
+			depth[it.first] = depth[node] + 1;
+			dfs(it.first , node);
+		}
+	}
+}
+void lca(int a , int b){
+	if(depth[a] < depth[b]){
+		swap(a , b);
+	}
+	int dif = depth[a] - depth[b];
+	data res1;
+	data res2;
+	for(int i = 0 ; i < LN ; ++i){
+		if(dif & (1 << i)){
+			res1 = combine(res1 , dat[i][a]);
+			a = dp[i][a];
+		}
+	}
+	if(a != b){
+		for(int i = LN - 1 ; i >= 0 ; --i){
+			if(dp[i][a] != dp[i][b]){
+				res1 = combine(res1 , dat[i][a]);
+				res2 = combine(res2 , dat[i][b]);
+				a = dp[i][a];
+				b = dp[i][b];
+			}
+		}
+		res1 = combine(res1 , dat[0][a]);
+		res2 = combine(res2 , dat[0][b]);
+		swap(res2.pre , res2.suf);
+		res1 = combine(res1 , res2);
+	}
+	printf("%lld\n" , res1.ans);
+}
+int main(){
+	scanf("%d %d" , &n , &q);
+	for(int i = 1 ; i < n ; ++i){
+		scanf("%d %d %d" , &a , &b , &c);
+		v[a].emplace_back(make_pair(b , c));
+		v[b].emplace_back(make_pair(a , c));
+	}
+	dfs(1 , 0);
+	for(int i = 1 ; i < LN ; ++i){
+		for(int j = 1 ; j <= n ; ++j){
+			dp[i][j] = dp[i - 1][dp[i - 1][j]];
+			dat[i][j] = combine(dat[i - 1][j] , dat[i - 1][dp[i - 1][j]]);
+		}
+	}
+	while(q--){
+		scanf("%d %d" , &a , &b);
+		lca(a , b);
+	}
+}

@@ -1,0 +1,141 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<valarray>
+using namespace std;
+int H, W, L;
+
+char in[2010][2010];
+int ul[2010][2010], dr[2010][2010];
+
+struct BIT
+{
+	static const int N = 4010;
+	int val[N];
+
+	void Init() { for (int i = 0; i < N; ++i) val[i] = 0; }
+	void Add(int i, int x) { ++i; while (i <= N) { val[i] += x; i += i & -i; } }
+	int Sum(int i) { int s = 0; while (i > 0) { s += val[i]; i -= i & -i; } return s; }
+	int Query(int L, int R) { return (R > L) ? (Sum(R) - Sum(L)) : 0; }
+};
+
+void Precalc()
+{
+	for (int i = 0; i < H; ++i) for (int j = 0; j < W; ++j) ul[i][j] = dr[i][j] = 10000;
+
+	int c = 0;
+
+	for (int i = 0; i < H; ++i) {
+		c = 0;
+		for (int j = 0; j < W; ++j) {
+			dr[i][j] = min(dr[i][j], c = (in[i][j] == '.' ? (c + 1) : 0));
+		}
+
+		c = 0;
+		for (int j = W - 1; j >= 0; --j) {
+			ul[i][j] = min(ul[i][j], c = (in[i][j] == '.' ? (c + 1) : 0));
+		}
+	}
+
+	for (int j = 0; j < W; ++j) {
+		c = 0;
+		for (int i = 0; i < H; ++i) {
+			dr[i][j] = min(dr[i][j], c = (in[i][j] == '.' ? (c + 1) : 0));
+		}
+
+		c = 0;
+		for (int i = H - 1; i >= 0; --i) {
+			ul[i][j] = min(ul[i][j], c = (in[i][j] == '.' ? (c + 1) : 0));
+		}
+	}
+}
+
+vector<int> lef, rig;
+vector<pair<int, int> > eve;
+
+BIT sl, sr;
+
+long long sol = 0;
+
+void Solve(int tx, int ty)
+{
+	int id = 0;
+	lef.clear(); rig.clear(); eve.clear();
+	sl.Init(); sr.Init();
+
+	while (tx < H && ty < W) {
+		lef.push_back(ul[tx][ty]);
+		rig.push_back(dr[tx][ty]);
+
+		if (ul[tx][ty] > 0) eve.push_back(make_pair(ul[tx][ty], id * 2));
+		if (dr[tx][ty] > 0) eve.push_back(make_pair(dr[tx][ty], id * 2 + 1));
+
+		++tx; ++ty; ++id;
+	}
+
+	sort(eve.begin(), eve.end());
+
+	for (int i = eve.size() - 1; i >= 0; --i) {
+		int v = eve[i].second, w = eve[i].first;
+
+		if (v % 2 == 0) {
+			v /= 2;
+			sol += sr.Query(v + L - 1, v + w);
+
+			sl.Add(v, 1);
+		} else {
+			v /= 2;
+			sol += sl.Query(v - w + 1, v - L + 2);
+
+			sr.Add(v, 1);
+		}
+	}
+}
+char buf[2010];
+int main()
+{
+	int P;
+	L=1;
+	scanf("%d%d", &H, &W);
+	for(int i=0;i<H;i++){
+		scanf("%s",buf);
+		for(int j=0;j<W;j++){
+			if(buf[j]=='1'){
+				in[i][j]='#';
+			}
+			else{
+				in[i][j]='.';
+			}
+		}
+	}
+
+	Precalc();
+	sol = 0;
+	for (int i = 0; i < W; ++i) Solve(0, i);
+	for (int i = 1; i < H; ++i) Solve(i, 0);
+
+	printf("%lld\n", sol);
+	return 0;
+}

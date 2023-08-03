@@ -1,0 +1,97 @@
+#include <iostream>
+using namespace std;
+
+bool lessThan(long int A[], long int B[]){
+	if(A[0] < B[0])
+		return true;
+	if(A[0] == B[0] && A[1] < B[1])
+		return true;
+	return false;
+}
+
+void min_heap_insert(long int Arr[][2], long int &size, long int z, long int c){
+	size++;
+	Arr[size][0] = z;
+	Arr[size][1] = c;
+	long int temp;
+	long int i = size;
+	while(i > 1L){
+		if(lessThan(Arr[i], Arr[i / 2])){
+			temp = Arr[i][0];
+			Arr[i][0] = Arr[i / 2][0];
+			Arr[i / 2][0] = temp;
+			temp = Arr[i][1];
+			Arr[i][1] = Arr[i / 2][1];
+			Arr[i / 2][1] = temp;
+			i /= 2;
+		}
+		else{
+			break;
+		}
+	}
+}
+
+void min_heap_remove(long int Arr[][2], long int &size){
+	long int temp, smallest, i;
+	Arr[1][0] = Arr[size][0];
+	Arr[1][1] = Arr[size][1];
+	size--;
+	i = 1L;
+	while(true){
+		smallest = i;
+		if(2 * i <= size && lessThan(Arr[2 * i], Arr[i]))
+			smallest = 2 * i;
+		if(2 * i + 1 <= size && lessThan(Arr[2 * i + 1], Arr[smallest]))
+			smallest = 2 * i + 1;
+		if(smallest != i){
+			temp = Arr[smallest][0];
+			Arr[smallest][0] = Arr[i][0];
+			Arr[i][0] = temp;
+			temp = Arr[smallest][1];
+			Arr[smallest][1] = Arr[i][1];
+			Arr[i][1] = temp;
+			i = smallest;
+		}
+		else{
+			break;
+		}
+	}
+}
+
+int main()
+{
+    long int IQ[2][100005], C, P, N, Students[100005], Monks[100005], Arr[100005][2], courseCount[100005], size = 0L, curZ, curC;
+    for(int i = 0; i < 2; i++){
+    	for(long int j = 0L; j < 100005L; j++){
+    		IQ[i][j] = 0L;
+    		courseCount[j] = 0;
+    	}
+    }
+    cin >> C >> P >> N;
+    for(long int i = 1L ; i <= N; i++){
+    	cin >> Students[i];
+    	IQ[1][i] = Students[i];
+    	courseCount[i] = 1L;
+    }
+    for(long int i = 1L ; i <= P; i++)
+    	cin >> Monks[i];
+    for(long int i = 1L; i <= N; i++){
+    	min_heap_insert(Arr, size, IQ[1][i], i);
+    }
+    for(long int i = N + 1L; i <=C ; i++){
+    	min_heap_insert(Arr, size, 0L, i);
+    }
+    for(long int i = 1L; i <= P; i++){
+    	curZ = Arr[1][0];
+    	curC = Arr[1][1];
+    	/*for(long int j = 1L; j <= size; j++){
+    		cout << Arr[j][0] << "--";
+    	}*/
+    	cout << curC << ' ';
+    	min_heap_remove(Arr, size);
+    	IQ[0][curC] = IQ[1][curC];
+    	IQ[1][curC] = Monks[i];
+    	min_heap_insert(Arr, size, (IQ[1][curC] + IQ[0][curC]) * (++courseCount[curC]) , curC);
+    }
+    cout << endl;
+}

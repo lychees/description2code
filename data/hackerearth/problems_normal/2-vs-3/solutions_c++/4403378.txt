@@ -1,0 +1,148 @@
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <list>
+#define For(i,n) for(int i=0;i<n;i++)
+#define ll long long
+using namespace std;
+string a;
+int n;
+//int a[1000001];
+int st[3000000];
+//int lazy[3000000];
+int m_pow(int x,int y,int c)
+{
+  int res=1;
+  x = x%c;
+  while(y>0)
+  {
+    if(y&1)
+        res = (res*x)%c;
+    y = y/2;
+    x = (x*x)%c;
+  }
+ return res;
+}
+
+
+int cons(int s,int e,int idx)
+{
+  if(s==e)
+    { if(a[s]=='0')
+      st[idx]=0;
+      else
+        st[idx]=1;
+         //cout<<s<<"--"<<e<<" "<<st[idx]<<endl;
+     return st[idx];}
+  int mid = s+(e-s)/2;
+  int x = m_pow(2,e-mid,3);
+  int y = (cons(s,mid,2*idx+1)*x)%3;
+  st[idx] = (y + cons(mid+1,e,2*idx+2))%3;
+ // cout<<s<<"--"<<e<<" "<<st[idx]<<endl;
+  return st[idx];
+}
+
+/*void ur(int s,int e,int l,int r,int idx,int val)
+{
+  if(lazy[idx])
+  {
+    st[idx]+= (e-s+1)*lazy[idx];
+    if(s!=e)
+    {lazy[2*idx+1]+=lazy[idx];
+    lazy[2*idx+2]+=lazy[idx];}
+    lazy[idx]=0;
+  }
+if(l>e || r<s)
+    return;
+if(l<=s && r>=e)
+{
+ st[idx]+= (e-s+1)*val;
+    if(s!=e)
+    {lazy[2*idx+1]+=val;
+    lazy[2*idx+2]+=val;}
+    return;
+}
+int mid = s+(e-s)/2;
+ur(s,mid,l,r,2*idx+1,val);
+ur(mid+1,e,l,r,2*idx+2,val);
+st[idx]= st[2*idx+1]+st[2*idx+2];
+}*/
+
+int query(int s,int e,int l,int r,int idx)
+{
+ /*
+ if(lazy[idx])
+ {
+   st[idx]+= (e-s+1)*lazy[idx];
+    if(s!=e)
+    {lazy[2*idx+1]+=lazy[idx];
+    lazy[2*idx+2]+=lazy[idx];}
+    lazy[idx]=0;
+ }*/
+
+ if(l<=s && e<=r)
+    return (st[idx]*m_pow(2,r-e,3))%3;
+ if(s>r || e<l)
+    return 0;
+ int mid = s+(e-s)/2;
+
+ /*int x = m_pow(2,e-mid,3);
+  int y = (query(s,mid,l,r,2*idx+1)*x)%3;
+  st[idx] = (y + query(mid+1,e,l,r,2*idx+2))%3;*/
+  return (query(s,mid,l,r,2*idx+1) + query(mid+1,e,l,r,2*idx+2))%3;
+
+
+}
+
+void update(int i,int val,int s,int e,int idx)
+{
+
+ if(i>e || i<s)
+    return;
+ if(s==e)
+  {st[idx]=val;
+    //cout<<s<<" -- "<<e<<" "<<st[idx]<<endl;
+     return;}
+ if(s!=e)
+ {int mid = s+(e-s)/2;
+ update(i,val,s,mid,2*idx+1);
+ update(i,val,mid+1,e,2*idx+2);
+ int x = m_pow(2,e-mid,3);
+  int y = (st[2*idx+1]*x)%3;
+  st[idx] = (y +st[2*idx+2])%3;
+  //cout<<s<<" -- "<<e<<" "<<st[idx]<<endl;
+}
+}
+
+
+int main()
+{int q,ch,x,y;
+ cin>>n;
+ cin>>a;
+ cin>>q;
+ cons(0,n-1,0);
+/* For(i,n)
+  cout<<st[i]<<endl;*/
+  while(q--)
+  {
+      cin>>ch;
+    if(ch==0)
+    {
+      cin>>x>>y;
+      cout<<query(0,n-1,x,y,0)<<endl;
+    }
+    else
+    {
+      cin>>x;
+      if(a[x]=='0')
+      {
+       a[x]='1';
+       update(x,1,0,n-1,0);
+      }
+    }
+  }
+ //cout<<query(0,n-1,2,4,0)<<endl;
+// cout<<query(0,n-1,2,3,0)<<endl;
+ return 0;
+}

@@ -1,0 +1,123 @@
+#include <iostream>
+#include<climits>
+#include<set>
+#include<map>
+using namespace std;
+typedef long long int ll;
+
+ll segment[400005],dp[100005],L[100005],H[100005],L_dp[100005];
+
+void build(int id,int l,int r)
+{
+    int m=(l+r)/2;
+    if(l==r)
+        segment[id]=L_dp[l];
+    else
+    {
+        build(2*id,l,m);
+        build(2*id+1,m+1,r);
+        segment[id]=max(segment[2*id],segment[2*id+1]);
+    }
+}
+
+ll query(int id,int l,int r,int index)
+{
+    int m=(l+r)/2;
+    ll curr;
+  //  cout<<"("<<id<<",";
+    if(l==r&&l==index)
+    {
+        curr=segment[id];
+        //cout<<"("<<id<<","<<curr<<")->";
+        return curr;
+
+    }
+    else if(index>m)
+    {
+        curr=max(segment[2*id],query(2*id+1,m+1,r,index));
+      //  cout<<"("<<id<<","<<curr<<")->";
+        return curr;
+    }
+    else
+    {
+        curr=query(2*id,l,m,index);
+    //    cout<<"("<<id<<","<<curr<<")->";
+        return curr;
+    }
+}
+
+void update(int id,int l,int r,int index)
+{
+    int m=(l+r)/2;
+    if(l==r&&index==l)
+    {
+        segment[id]=L_dp[l];
+        return;
+    }
+    else if(index<=m)
+        update(2*id,l,m,index);
+    else
+        update(2*id+1,m+1,r,index);
+    segment[id]=max(segment[2*id],segment[2*id+1]);
+}
+
+int main()
+{
+	int n,k=0;
+	cin>>n;
+	set <ll> DL;
+	map <ll,int> L_I;
+	for(int i=0;i<n;++i)
+	{
+		cin>>H[i]>>L[i];
+		dp[i]=H[i];
+		DL.insert(L[i]);
+	}
+	set <ll>::iterator it;
+	for(it=DL.begin();it!=DL.end();++it)
+    {
+        //cout<<k<<" "<<(*it)<<endl;
+        L_I[(*it)]=k;
+        ++k;
+    }
+    //cout<<endl;
+    for(int i=0;i<k;++i)
+        L_dp[i]=LLONG_MIN;
+	build(1,0,k-1);
+	ll ans=dp[0];
+	int Lindex;
+	for(int i=0;i<n;++i)
+	{
+	   /* cout<<"Intial: "<<i<<endl;
+	    for(int j=1;j<=5;++j)
+            cout<<segment[j]<<" ";
+        cout<<endl;
+        */
+        Lindex=L_I[L[i]];
+	    ll a=query(1,0,k-1,Lindex);
+        //cout<<endl;
+	    if(a==LLONG_MIN)
+	    dp[i]=max(dp[i],H[i]);
+	    else
+        dp[i]=max(dp[i],H[i]+a);
+
+	    L_dp[Lindex]=max(L_dp[Lindex],dp[i]);
+
+	    update(1,0,k-1,Lindex);
+
+        ll af=query(1,0,k-1,Lindex);
+        /*cout<<endl;
+		cout<<"previous: "<<a<<" Later: "<<af<<" Lindex : "<<Lindex<<" L_dp[Lindex]: "<<L_dp[Lindex]<<endl<<endl;
+
+        cout<<"Final: "<<i<<endl;
+        for(int j=1;j<=5;++j)
+            cout<<segment[j]<<" ";
+        cout<<endl<<endl;
+*/
+		ans=max(ans,dp[i]);
+	}
+	cout<<ans<<endl;
+    //cout << "Hello World!" << endl;
+    return 0;
+}
+

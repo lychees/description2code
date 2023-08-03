@@ -1,0 +1,161 @@
+#include <bits/stdc++.h>
+
+
+#define gc getchar
+#define pc putchar
+
+using namespace std;
+
+#define vi vector<int>
+#define si set<int>
+#define vs vector<string>
+#define pii pair<int,int>
+#define vpi vector<pii>
+#define pri priority_queue<int>
+#define rev_pri priority_queue<int,vector<int>,greater<int> >
+#define mpi map<int,int>
+#define i64 long long int
+#define endl '\n'
+#define pi acos(-1)
+#define all(v) v.begin(),v.end()
+#define pb push_back
+#define mp make_pair
+#define mod 1000000007
+#define For(i,n) for(int i=0;i<n;i++)
+#define Rep(i,x,y) for(int i=x;i<=y;i++)
+#define eps 1e-8
+#define ff first
+#define ss second
+#define mem(a,b) memset(a,b,sizeof(a))
+#define min3(a,b,c) min(a,min(b,c))
+#define max3(a,b,c) max(a,max(b,c))
+#define READ freopen("input.txt", "r", stdin)
+#define sz size()
+#define dbg(x) printf("yo is %d!\n",x)
+#define dbg2(x,y) printf("yo is %d! and %d!\n",x,y)
+#define foreach(i,c) for(__typeof((c).begin()) i = (c).begin(); i != (c).end(); i++)
+#define sqr(a) (a) * (a)
+#define clr clear()
+#define CASE(a) printf("Case %d: ",a)
+#define sf(n) scanf("%d", &n)
+#define sff(a,b) scanf("%d %d", &a, &b)
+#define sfff(a,b,c) scanf("%d %d %d", &a, &b, &c)
+
+//int dx[] = {0,1,0,-1};
+//int dy[] = {1,0,-1,0};
+//int dx[] = { -1, -1,  0, 1, 1, 1,  0, -1 };
+//int dy[] = {  0, -1, -1, -1,  0, 1, 1, 1 };
+//int dxK[] = { -2, -2, -1, 1, 2, 2, 1, -1 };
+//int dyK[] = { -1, 1, 2, 2, 1, -1, -2, -2 };
+
+//functions
+
+//i64 gcd(i64 a,i64 b){if(!b)return a;return gcd(b,a%b);}
+
+//inline void fastRead(i64 *a){register char c=0;while(c<33)c=gc();*a=0;while(c>33){*a=*a*10+c-'0';c=gc();}}
+
+//inline void fastWrite(int a){char snum[20];int i=0;do{snum[i++]=a%10+48;a=a/10;}while(a!=0);i=i-1;while(i>=0)pc(snum[i--]);pc('\n');}
+
+//i64 bigmod(i64 num,i64 n){if(!n)return 1;i64 x=(bigmod(num,n/2)*bigmod(num,n/2))%mod;if(n%2)x=(x*num)%mod;return x;}
+
+//i64 modinverse(i64 num){return bigmod(num,mod-2);}
+
+//void combination(int pos,int last){if(pos==k+1){for(int i=1;i<=k;i++)cout << tem[i];cout << endl;return;}
+//for(int i=last+1;i<=n-k+pos;i++){tem[pos] = num[i-1];combination(pos+1,i);}}
+//i64 power(i64 value, i64 base){i64 result = 1;For(i,base)result *= value;return result;}
+//int Set(int N,int pos){return N = (1<<pos);}
+//int reset(int N,int pos){return N &= (~(1<<pos));}
+//bool check(int N,int pos){return (bool)(N & (1<<pos));}
+
+#define MAX 400005
+
+int arr[100005];
+pii seg[MAX];         //pair<odd,even>
+
+void build(int node, int start, int end)
+{
+    if(start==end)
+    {
+        if(arr[start]%2==1)
+            seg[node] = mp(1,0);
+        else
+            seg[node] = mp(0,1);
+    }
+    else
+    {
+        int mid = (start+end)/2;
+        build(2*node,start,mid);
+        build(2*node+1,mid+1,end);
+        seg[node] = mp(seg[2*node].ff+seg[2*node+1].ff,seg[2*node].ss+seg[2*node+1].ss);
+    }
+}
+
+void update(int node, int start, int end, int idx, int val)
+{
+    if(start==end)
+    {
+        if(val%2)
+            seg[node] = mp(1,0);
+        else
+            seg[node] = mp(0,1);
+    }
+    else
+    {
+        int mid = (start+end)/2;
+        if(start<=idx && idx<=mid)
+            update(2*node,start,mid,idx,val);
+        else
+            update(2*node+1,mid+1,end,idx,val);
+        seg[node].ff = seg[2*node].ff+seg[2*node+1].ff;
+        seg[node].ss = seg[2*node].ss+seg[2*node+1].ss;
+    }
+}
+
+int query(int node, int start, int end, int q, int left, int right)
+{
+    if(right<start || end < left)
+        return 0;
+    if(left<=start && end<=right)
+    {
+        if(q==1)
+            return seg[node].ss;
+        else
+            return seg[node].ff;
+    }
+    int mid = (start+end)/2;
+    int p1 = query(2*node, start, mid,q, left, right);
+    int p2 = query(2*node+1, mid+1, end,q, left, right);
+    return (p1 + p2);
+
+}
+
+int main()
+{
+    int n,q;
+    cin >> n;
+    For(i,n)
+        cin >> arr[i];
+    build(1,0,n-1);
+    //Rep(i,1,13)
+        //cout << i << "->" << seg[i].ff << " " << seg[i].ss << endl;
+    cin >> q;
+    int a,b,c;
+    while(q--)
+    {
+        cin >> a >> b >> c;
+        b--,c--;
+        if(a==1)
+            cout << query(1,0,n-1,1,b,c) << endl;
+        else if(a==2)
+            cout << query(1,0,n-1,2,b,c) << endl;
+        else
+        {
+            update(1,0,n-1,b,c+1);
+            //Rep(i,1,13)
+                //cout << i << "->" << seg[i].ff << " " << seg[i].ss << endl;
+        }
+    }
+
+
+    return 0;
+}

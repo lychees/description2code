@@ -1,0 +1,143 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long int
+
+struct node
+{
+    ll mi;
+    ll ma;
+    ll cnt;
+
+};
+
+map <ll, ll> ma;
+ll a[100010];
+node tree[1000010];
+vector <ll> vi;
+vector <ll> query[100010];
+
+void cst(ll node, ll l, ll r)
+{
+    if (l > r)
+        return;
+    if (l == r) {
+        tree[node].mi = vi[l-1];
+        tree[node].ma = vi[l-1];
+        tree[node].cnt = 0;
+        return;
+    }
+
+    ll m = (l + r) / 2;
+
+    cst(node*2, l, m);
+    cst(node*2+1,m+1,r);
+
+    tree[node].mi = min(tree[node*2].mi, tree[node*2+1].mi);
+    tree[node].ma = max(tree[node*2].ma, tree[node*2+1].ma);
+    tree[node].cnt = tree[node*2].cnt + tree[node*2+1].cnt;
+}
+
+void update(ll node, ll l, ll r, ll index, ll v)
+{
+   // cout <<index<<" "<<l <<" "<<r<<endl;
+    if (l > r)
+        return;
+
+    if (l == r && tree[node].mi == tree[node].ma && tree[node].mi == index)
+    {
+        tree[node].cnt += v;
+     //   cout <<"hello "<<l<<endl;
+        return ;
+    }
+
+    ll m = (l + r) / 2;
+
+    if (tree[node*2].ma >= index)
+        update(node*2,l,m,index,v);
+    else
+        update(node*2+1, m+1, r,index, v);
+
+    tree[node].cnt = tree[node*2].cnt + tree[node*2+1].cnt;
+}
+
+ll qry(ll node, ll l, ll r, ll u, ll v)
+{
+    if (l > r)
+        return 0;
+
+    if (tree[node].ma < u || v < tree[node].mi)
+        return 0;
+
+    if (u <= tree[node].mi && tree[node].ma <= v)
+        return tree[node].cnt;
+
+    ll m = (l + r) / 2;
+
+    return (qry(node*2, l , m, u,v) + qry(node*2+1, m+1, r,u,v));
+}
+
+int main()
+{
+    ll n,q,k,i,si,ty,x,y,u,v,c,d,m;
+    cin >> n >> q >> k;
+
+    for (i = 1; i <= n; i++) {
+        cin >> a[i];
+        if (ma[a[i]] == 0)
+            vi.push_back(a[i]);
+        ma[a[i]] = 1;
+    }
+
+    for (i = 1; i <= q; i++) {
+        cin >> ty;
+        query[i].push_back(ty);
+        if (ty == 0) {
+            cin >> x >> y;
+            query[i].push_back(x);
+            query[i].push_back(y);
+
+            if (ma[y] == 0) {
+                vi.push_back(y);
+                ma[y] = 1;
+            }
+
+        } else {
+            cin >> u >> v >> c >> d;
+            query[i].push_back(u);
+            query[i].push_back(v);
+            query[i].push_back(c);
+            query[i].push_back(d);
+        }
+    }
+
+    sort(vi.begin(), vi.end());
+
+    si = vi.size();
+
+    cst(1,1,si);
+
+    for (i = 1; i <= n; i++) {
+        update(1,1,si,a[i],1);
+       // cout <<"done\n";
+    }
+
+    for (i = 1; i <= q; i++) {
+        if (query[i][0] == 0) {
+            x = query[i][1];
+            y = query[i][2];
+            update(1,1,si,a[x],-1);
+            update(1,1,si,y,1);
+            a[x] = y;
+        } else {
+            u = max(query[i][1], query[i][3]);
+            v = min(query[i][2], query[i][4]);
+            m = qry(1,1,si,u,v);
+            if (m >= k)
+                printf("Propose\n");
+            else
+                printf("Do not propose\n");
+        }
+    }
+    return 0;
+}

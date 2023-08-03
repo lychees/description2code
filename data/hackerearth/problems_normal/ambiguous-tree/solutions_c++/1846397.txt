@@ -1,0 +1,114 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define rep(i, from, to) for (int i = from; i < int(to); ++i)
+#define trav(a, x) for (auto& a : x)
+#define all(x) x.begin(), x.end()
+#define sz(x) (int)(x).size()
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef vector<int> vi;
+
+int N, L;
+ll sq(ll x) { return x * x; }
+
+struct Node {
+	vi ed1, ch;
+	int par, sz, depth;
+	ll parSq, sumParSq;
+	vi jmp;
+};
+vector<Node> g;
+
+int root(int ind, int par = -1, int depth = 0) {
+	int sz = 1;
+	Node& n = g[ind];
+	trav(x, n.ed1) {
+		if (x == par) continue;
+		sz += root(x, ind, depth + 1);
+		n.ch.push_back(x);
+	}
+	n.par = par;
+	n.sz = sz;
+	n.depth = depth;
+	return sz;
+}
+
+void setSq(int ind) {
+	Node& n = g[ind];
+	if (n.par == -1)
+		n.parSq = -1000;
+	else
+		n.parSq = sq(g[n.par].sz) + sq(n.sz) - 2*(ll)g[n.par].sz*n.sz;
+	n.sumParSq = (n.par == -1 ? 0 : g[n.par].sumParSq) + n.parSq;
+	n.jmp.resize(L);
+	n.jmp[0] = (n.par == -1 ? ind : n.par);
+	rep(i,0,L-1)
+		n.jmp[i+1] = g[n.jmp[i]].jmp[i];
+	trav(x, n.ch)
+		setSq(x);
+}
+
+int jump(int a, int n) {
+	for (int i = 0; n; ++i) {
+		if (n & (1 << i)) {
+			n &= ~(1 << i);
+			a = g[a].jmp[i];
+		}
+	}
+	return a;
+}
+
+ll query(int a, int b) {
+	if (a == b) return 0;
+	if (g[a].depth > g[b].depth) swap(a, b);
+	int lb = jump(b, g[b].depth - g[a].depth);
+
+	if (lb == a) {
+		// a is ancestor of b
+		lb = jump(b, g[b].depth - g[a].depth - 1);
+		ll res = 0;
+		res += sq(g[b].sz);
+		res += g[b].sumParSq - g[lb].sumParSq;
+		res += sq(N - g[lb].sz);
+		return (N*(ll)N - res) / 2;
+	}
+	else {
+		int la = a;
+		for (int i = L; i --> 0; ) {
+			if (g[la].jmp[i] != g[lb].jmp[i]) {
+				la = g[la].jmp[i];
+				lb = g[lb].jmp[i];
+			}
+		}
+		ll res = 0;
+		res += sq(g[a].sz);
+		res += sq(g[b].sz);
+		res += g[a].sumParSq - g[la].sumParSq;
+		res += g[b].sumParSq - g[lb].sumParSq;
+		res += sq(N - g[la].sz - g[lb].sz);
+		return (N*(ll)N - res) / 2;
+	}
+}
+
+int main() {
+	cin.sync_with_stdio(false);
+	cin >> N;
+	g.resize(N);
+	while ((1 << L) < N+3) ++L;
+	rep(i,0,N-1) {
+		int a, b;
+		cin >> a >> b;
+		--a, --b;
+		g[a].ed1.push_back(b);
+		g[b].ed1.push_back(a);
+	}
+	root(0);
+	setSq(0);
+	int Q;
+	cin >> Q;
+	rep(i,0,Q) {
+		int a, b; cin >> a >> b;
+		cout << query(a-1, b-1) << endl;
+	}
+}

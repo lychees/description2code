@@ -1,0 +1,119 @@
+#include <stdio.h>
+#include <string.h>
+#include <algorithm>
+#include <vector>
+
+using namespace std;
+
+#define DEBUG 0
+#define NMAX 111111
+#define HMULT 19997U
+#define HMULTINV 1299637301U
+#define AMAX 128
+
+char A[NMAX], B[NMAX];
+unsigned int ha[AMAX][NMAX], hb[AMAX][NMAX], hmultpow[NMAX], shmultpow[NMAX], hmultinvpow[NMAX], shmultinvpow[NMAX];
+int poza[AMAX][NMAX], npoza[AMAX];
+int pozb[AMAX][NMAX], npozb[AMAX];
+int N, Q, i, j, k, sa, sb, ea, eb, len;
+vector<pair<int, pair<int, int> > > ca, cb;
+
+int FindFirstPoz(int k, int poz[AMAX][NMAX], int npoz[NMAX], int s) {
+	int li = 1, ls = npoz[k], mid, ans = npoz[k] + 1;
+	while (li <= ls) {
+		mid = (li + ls) >> 1;
+		if (poz[k][mid] >= s) {
+			ans = mid;
+			ls = mid - 1;
+		} else li = mid + 1;
+	}
+	return ans;
+}
+
+int FindLastPoz(int k, int poz[AMAX][NMAX], int npoz[NMAX], int s) {
+	int li = 1, ls = npoz[k], mid, ans = 0;
+	while (li <= ls) {
+		mid = (li + ls) >> 1;
+		if (poz[k][mid] <= s) {
+			ans = mid;
+			li = mid + 1;
+		} else ls = mid - 1;
+	}
+	return ans;
+}
+
+int main() {
+//	freopen("y.txt", "r", stdin);
+	int T;
+	scanf("%d", &T);
+	while (T--) {
+		scanf("%s %s", A + 1, B + 1);
+		N = strlen(A + 1);
+		hmultpow[0] = shmultpow[0] = hmultinvpow[0] = shmultinvpow[0] = 1;
+		memset(npoza, 0, sizeof(npoza));
+		memset(npozb, 0, sizeof(npozb));
+		for (i = 1; i <= N; i++) {
+			npoza[A[i]]++;
+			poza[A[i]][npoza[A[i]]] = i;
+			npozb[B[i]]++;
+			pozb[B[i]][npozb[B[i]]] = i;
+			hmultpow[i] = hmultpow[i - 1] * HMULT;
+			shmultpow[i] = shmultpow[i - 1] + hmultpow[i];
+			hmultinvpow[i] = hmultinvpow[i - 1] * HMULTINV;
+			shmultinvpow[i] = shmultinvpow[i - 1] + hmultinvpow[i];
+		}
+		for (k = 0; k < AMAX; k++) {
+			ha[k][0] = hb[k][0] = 0;
+			for (i = 1; i <= npoza[k]; i++)
+				ha[k][i] = ha[k][i - 1] + hmultpow[i] * poza[k][i];
+			for (i = 1; i <= npozb[k]; i++)
+				hb[k][i] = hb[k][i - 1] + hmultpow[i] * pozb[k][i];
+		}
+
+		scanf("%d", &Q);
+		while (Q--) {
+			scanf("%d %d %d", &sa, &sb, &len);
+			ea = sa + len - 1;
+			eb = sb + len - 1;
+			ca.clear();
+			cb.clear();
+			for (k = 0; k < AMAX; k++) {
+				int pk = FindFirstPoz(k, poza, npoza, sa);
+				if (pk <= npoza[k] && poza[k][pk] <= ea)
+					ca.push_back(make_pair(poza[k][pk], make_pair(k, pk)));
+				pk = FindFirstPoz(k, pozb, npozb, sb);
+				if (pk <= npozb[k] && pozb[k][pk] <= eb)
+					cb.push_back(make_pair(pozb[k][pk], make_pair(k, pk)));
+			}
+			if (DEBUG) fprintf(stderr, "ca.size=%u cb.size=%u\n", ca.size(), cb.size());
+			if (ca.size() != cb.size()) {
+				printf("no\n");
+				continue;
+			}
+			sort(ca.begin(), ca.end());
+			sort(cb.begin(), cb.end());
+			for (i = 0; i < ca.size(); i++) {
+				int ka = ca[i].second.first, kb = cb[i].second.first;
+				int starta = ca[i].second.second, startb = cb[i].second.second;
+				int enda = FindLastPoz(ka, poza, npoza, ea);
+				int endb = FindLastPoz(kb, pozb, npozb, eb);
+				if (DEBUG) fprintf(stderr, "i=%d: ka=%d [%d-%d] kb=%d [%d-%d]\n", i, ka, starta, enda, kb, startb, endb);
+				if (enda - starta != endb - startb) break;
+				unsigned int hka, hkb;
+				hka = ha[ka][enda] - ha[ka][starta - 1];				
+				hka *= hmultinvpow[starta];
+				hka -= shmultpow[enda - starta] * ca[i].first;
+				hkb = hb[kb][endb] - hb[kb][startb - 1];
+				hkb *= hmultinvpow[startb];
+				hkb -= shmultpow[endb - startb] * cb[i].first;
+				if (DEBUG) fprintf(stderr, "  hka=%u hkb=%u\n", hka, hkb);
+				if (hka != hkb) break;
+			}
+
+			if (i == ca.size()) printf("yes\n");
+			else printf("no\n");
+		}
+	}
+
+	return 0;
+}

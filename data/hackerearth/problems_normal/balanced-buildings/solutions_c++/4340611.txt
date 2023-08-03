@@ -1,0 +1,122 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define MAXN 2505
+#define vi vector<int>
+#define X first 
+#define Y second
+#define pii pair<ll,ll>
+ll dp[MAXN];
+ll c[MAXN][MAXN];
+pair<ll int,ll int> last[MAXN][MAXN];
+ll S,M,P;
+ll a[MAXN];
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	int n;
+	cin>>n>>S>>M>>P;
+	for(int i=1;i<=n;i++)
+		cin>>a[i];
+	memset(dp,0,sizeof(dp));
+	memset(c,0,sizeof(c));
+	dp[1]=0;
+	last[1][1]=pii(a[1],-1);
+	c[1][1]=0;
+
+	if(n<=100)
+	{
+		for(int i=2;i<=n;i++)
+		{
+			dp[i]=max(dp[i-1],0LL);
+			for(int j=1;j<i;j++)
+			{
+				for(int k=j;k<=i;k++)
+				{
+					ll h=a[k];
+					ll sum=S*(i-j);
+					for(int l=j;l<=i;l++)
+					{
+						if(a[l]>h)
+							sum-=M*(a[l]-h);
+						else sum-=P*(h-a[l]);
+					}
+					dp[i]=max(dp[i],dp[j-1]+sum);
+				}
+			}
+		}	
+		cout<<dp[n]<<endl;
+		return 0;
+	}
+
+	for(int i=2;i<=n;i++)
+	{
+		dp[i]=max(0LL,dp[i-1]);
+		last[i][i]=pii(a[i],-1);
+		c[i][i]=0;
+		//vi larger,smaller;
+		ll val=0;
+		for(int j=i-1;j>=1;j--)
+		{
+			last[i][j].Y=-1;
+			ll cost=0;
+			ll int h=last[i-1][j].X;
+			cost=c[i-1][j];
+			if(h<a[i])
+				cost-=M*(a[i]-h);
+			else cost-=P*(h-a[i]);
+			c[i][j]=cost+S;
+			last[i][j].X=last[i-1][j].X;
+			if(a[j]>a[i])
+				val+=M*(a[j]-a[i]);
+			else val+=P*(a[i]-a[j]);
+			ll v=val;
+			v=-v;
+
+			if((v+S*(i-j))>c[i][j])
+			{
+				c[i][j]=v+S*(i-j);
+				last[i][j]=pii(a[i],-1);
+			}
+			else if(v+S*(i-j)==c[i][j])
+			{
+				last[i][j].Y=a[i];
+			}
+
+			if(last[i-1][j].Y!=-1)
+			{
+				ll int h=last[i-1][j].X;
+			cost=c[i-1][j];
+			if(h<a[i])
+				cost-=M*(a[i]-h);
+			else cost-=P*(h-a[i]);
+			if(cost+S>c[i][j])
+			{
+				c[i][j]=cost+S;
+				last[i][j]=pii(h,-1);
+			}
+			else if(cost+S==c[i][j])
+			{
+				last[i][j].Y=h;
+			}
+			}	
+			
+			dp[i]=max(dp[i],c[i][j]+dp[j-1]);
+		}
+	}	
+	/*for(int i=1;i<=n;i++)
+	{
+		for(int j=1;j<=i;j++)
+			cout<<c[i][j]<<" ";
+		cout<<endl;
+	}
+	for(int i=1;i<=n;i++)
+	{
+		for(int j=1;j<=i;j++)
+			cout<<last[i][j]<<" ";
+		cout<<endl;
+	}*/
+	cout<<dp[n]<<endl;
+	return 0;
+}

@@ -1,0 +1,162 @@
+#include <algorithm>
+#include <bitset>
+#include <cassert>
+#include <cctype>
+#include <cmath>
+#include <complex>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <map>
+#include <queue>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+using namespace std;
+
+#ifdef _WIN32
+#define LLD "%I64d"
+#else
+#define LLD "%lld"
+#endif
+
+#define pb push_back
+#define fi first
+#define se second
+#define all(x) (x).begin(), (x).end()
+#define sz(x) (int((x).size()))
+#define bit(x) (1 << (x))
+#define cnt1(x) (__builtin_popcount(x))
+
+template<class T>
+inline void chkmax(T& x, T y) {
+	if (x < y) x = y;
+}
+
+template<class T>
+inline void chkmin(T& x, T y) {
+	if (y < x) x = y;
+}
+
+typedef long long LL;
+typedef double DB;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+const int MX = 100005;
+int n, q;
+VI adj[MX];
+int p[MX], dp[MX];
+int cnt[MX];
+LL val[MX];
+
+LL C2(LL x) {
+	return x * (x - 1) / 2;
+}
+
+void DFS1(int u, int prv) {
+	int i, v;
+	
+	cnt[u] = 1;
+	p[u] = prv;
+	dp[u] = dp[prv] + 1;
+	for (i = sz(adj[u]) - 1; i >= 0; i--) {
+		v = adj[u][i];
+		if (v == prv) continue;
+		DFS1(v, u);
+		cnt[u] += cnt[v];
+	}
+	for (i = sz(adj[u]) - 1; i >= 0; i--) {
+		v = adj[u][i];
+		if (v == prv) continue;
+		val[v] = C2(cnt[u] - cnt[v]);
+	}
+}
+
+void DFS2(int u, int prv) {
+	int i, v;
+	
+	for (i = sz(adj[u]) - 1; i >= 0; i--) {
+		v = adj[u][i];
+		if (v == prv) continue;
+		val[v] += val[u];
+		DFS2(v, u);
+	}
+}
+
+const int L = 18;
+int anc[MX][L];
+int xx, yy;
+
+int get(int x, int d) {
+	for (int i = L - 1; i >= 0; i--) {
+		if (d < bit(i)) continue;
+		x = anc[x][i];
+		d -= bit(i);
+	}
+	return x;
+}
+
+int LCA(int x, int y) {
+	if (dp[x] < dp[y]) swap(x, y);
+	
+	for (int i = L - 1; i >= 0; i--) {
+		if (dp[anc[x][i]] >= dp[y]) x = anc[x][i];
+		if (x == y) return x;
+	}
+	
+	for (int i = L - 1; i >= 0; i--) {
+		if (anc[x][i] != anc[y][i])
+			x = anc[x][i], y = anc[y][i];
+	}
+	xx = x, yy = y;
+	return anc[x][0];
+}
+
+void build() {
+	for (int i = 1; i <= n; i++) anc[i][0] = p[i];
+	for (int i = 1; i < L; i++) for (int j = 1; j <= n; j++)
+		anc[j][i] = anc[anc[j][i - 1]][i - 1];
+}
+
+int main() {
+	
+	int i, j, k, u;
+	LL rlt;
+	
+	scanf("%d", &n);
+	for (k = 1; k < n; k++) {
+		scanf("%d%d", &i, &j);
+		adj[i].pb(j);
+		adj[j].pb(i);
+	}
+	DFS1(1, 0);
+	DFS2(1, 0);
+	build();
+	
+	scanf("%d", &q);
+	for (k = 0; k < q; k++) {
+		scanf("%d%d", &i, &j);
+		if (i == j) {
+			puts("0");
+			continue;
+		}
+		u = LCA(i, j);
+		if (u != i && u != j) {
+			rlt = val[i] + val[j] - val[xx] - val[yy] + C2(cnt[i]) + C2(cnt[j]);
+			rlt += C2(n - cnt[xx] - cnt[yy]);
+		}
+		else if (u == i) {
+			xx = get(j, dp[j] - dp[i] - 1);
+			rlt = val[j] - val[xx] + C2(cnt[j]) + C2(n - cnt[xx]);
+		}
+		else {
+			yy = get(i, dp[i] - dp[j] - 1);
+			rlt = val[i] - val[yy] + C2(cnt[i]) + C2(n - cnt[yy]);
+		}
+		printf(LLD "\n", C2(n) - rlt);
+	}
+	return 0;
+}

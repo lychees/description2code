@@ -1,0 +1,139 @@
+#include <bits/stdc++.h>
+
+#define s(x) scanf("%d",&x);
+#define sl(x) scanf("%lld",&x);
+#define ll long long
+
+
+#define pb push_back
+#define mp make_pair
+#define MD 1000000007
+using namespace std;
+
+ll a[105][105];
+ll q[105];
+ll res[105][105];
+ll e[105][105];
+ll SIZE;
+ll n, m;
+ll N;
+
+bool ispalin(string s)
+{
+	int l = s.size();
+	for (int i = 0; i < l / 2; i++) {
+		if (s[i] != s[l - i - 1]) return false;
+	}
+	return true;
+}
+
+inline ll calc(string s)
+{
+	set <string> st;
+	int l = s.size();
+	for (int i = 0; i < l; i++) {
+		for (int j = i; j < l; j++) {
+			string tmp = s.substr(i, j - i + 1);
+			if (ispalin(tmp)) {
+				st.insert (tmp);
+			}
+		}
+	}
+	ll sizz = st.size();
+	return sizz;
+}
+
+void one(ll a[105][105])
+{
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            a[i][j] = (i == j) ? 1 : 0;
+}
+void mul(ll a[105][105], ll b[105][105])
+{
+    ll res[105][105];
+    memset(res,0,sizeof res);
+    ll tmp;
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            for (int k = 0; k < N; k++)
+            {
+                tmp = a[i][k] * b[k][j];
+                tmp %= MD;
+                res[i][j] = (res[i][j] + tmp) %MD;
+            }
+
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            a[i][j] = res[i][j];
+}
+
+void pow(ll a[105][105], ll n, ll res[105][105])
+{
+    one(res);
+
+    while (n > 0) {
+        if (n % 2 == 0)
+        {
+            mul(a, a);
+            n /= 2;
+        }
+        else {
+            mul(res, a);
+            n--;
+        }
+    }
+}
+int main()
+{
+	string s;
+	ll x1, y1, x2, y2;
+	cin >> n >> m;
+	
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < m; j++) {
+			cin >> s;
+			q[i * 10 + j] = calc(s);
+		}
+		//cout << endl;
+	}
+	memset (a, 0, sizeof a);
+	memset (res, 0, sizeof res);
+	
+	ll c; cin >> c;
+	
+	for (int i = 0; i < c; i++)  {
+		cin >> x1 >> y1 >> x2 >> y2;
+		a[x1 * 10 + y1][x2 * 10 + y2]++;
+		a[x2 * 10 + y2][x1 * 10 + y1]++;
+	}
+	N = 100;
+	SIZE = N;
+	
+	for (int i = 0; i < N; i++) {
+		a[i][i]++;
+	}
+	
+	ll d;
+	cin >> d;
+	ll tmp;
+	pow (a, d, res);
+	
+	for (int i = 0; i < N; i++) {
+		ll ans = 0;
+		for (int j = 0; j < N; j++) {
+			tmp = (res[i][j] * q[j]) %MD;
+			ans = (ans + tmp) % MD;
+		}
+		e[i / 10][i % 10] = ans;
+		//cout << ans << endl;
+	}
+	
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < m; j++) {
+			cout << e[i][j] << " ";
+		}
+		cout << endl;
+	}
+	return 0;
+}

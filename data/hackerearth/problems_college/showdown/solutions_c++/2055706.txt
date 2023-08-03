@@ -1,0 +1,222 @@
+/*
+Author :: MD. Musfiqur Rahman Sanim
+Aust cse 28th Batch
+ID:11.02.04.097
+*/
+
+
+//{ Template
+using namespace std;
+//{ headers
+#include<bits/stdc++.h>
+//}
+//{ Loops
+#define forab(i,a,b) for (__typeof(b) i = (a); i <= (b); ++i)
+#define rep(i,n) forab (i, 0, (n) - 1)
+#define For(i,n) forab (i, 1, n)
+#define rofba(i,a,b) for (__typeof(b) i = (b); i >= (a); --i)
+#define per(i,n) rofba (i, 0, (n) - 1)
+#define rof(i,n) rofba (i, 1, n)
+#define forstl(i,s) for (__typeof ((s).end ()) i = (s).begin (); i != (s).end (); ++i)
+//}
+//{ Floating-points
+#define EPS 1e-7
+#define abs(x) (((x) < 0) ? - (x) : (x))
+#define zero(x) (abs (x) < EPS)
+#define equal(a,b) (zero ((a) - (b)))
+#define PI 2*acos (0.0)
+//}
+typedef long long int64;
+typedef unsigned long long int64u;
+#define memo(a,v) memset(a,v,sizeof(a))
+#define all(a) a.begin(),a.end()
+#define db double
+#define pb push_back
+#define eb emplace_back
+#define pii pair<int ,int >
+#define NL puts("")
+#define ff first
+#define ss second
+//{
+//Intput_Output
+#define gc getchar
+#define II ({ int a; read(a); a;})
+#define IL ({ int64 a; read(a);  a;})
+#define ID ({ db a; scanf("%lf",&a);  a;})
+#define IC ({ char a; scanf("%c",&a);  a;})
+#define IS ({ string a; cin >> a;  a;})
+#define OC printf("Case %d:",cs);
+//}
+//}
+#define _stl(x) {__stl_print__(x);}
+#define __(args...) {dbg,args; cerr<<endl;}
+template<class T>inline bool read(T &x){int c=gc();int sgn=1;while(~c&&c<'0'|c>'9'){if(c=='-')sgn=-1;c=gc();}for(x=0;~c&&'0'<=c&&c<='9';c=gc())x=x*10+c-'0';x*=sgn;return ~c;}
+struct debugger{template<typename T> debugger& operator , (const T& v){cerr<<v<<"    "; return *this; }}dbg;
+template <class T> void __stl_print__ (T &x) { // for all STL containers
+    cerr << "["; forstl (i, x) cerr << (i != x.begin () ? ", " : "") << *i; cerr << "]" << endl;
+}
+template <class T, class U> inline T max (T &a, U &b)
+{
+    return a > b ? a : b;
+}
+template <class T, class U> inline T min (T &a, U &b)
+{
+    return a < b ? a : b;
+}
+template <class T, class U> inline T swap (T &a, U &b)
+{
+    T tmp = a;
+    a = b;
+    b = tmp;
+}
+//int dx[]={1,0,-1,0};int dy[]={0,1,0,-1}; //4 Direction
+//int dx[]={1,1,0,-1,-1,-1,0,1};int dy[]={0,1,1,1,0,-1,-1,-1};//8 Direction
+//int dx[]={2,1,-1,-2,-2,-1,1,2};int dy[]={1,2,2,1,-1,-2,-2,-1};//Knight Direction
+//int dx[6]={2,1,-1,-2,-1,1};int dy[6]={0,1,1,0,-1,-1}; //Hexagonal Direction
+
+
+const int mx = 1e5 + 7;
+const int mod = 1000000007 ;
+const db pi = PI;
+int EQ(double d) {
+    if ( fabs(d) < EPS ) return 0;
+    return d > EPS ? 1 : -1 ;
+}
+
+const int MX = 52;
+const int INF = 1e8 ;
+
+int cost[MX][MX];        // cost matrix
+int N,mxMatch;          // N workers and N jobs
+int lx[MX], ly[MX];    // Labels of X and Y parts
+int xy[MX];           // xy[x] - vertex that is matched with x,
+int yx[MX];          // yx[y] - vertex that is matched with y
+bool S[MX], T[MX];  // Sets S and T in algorithm
+int slack[MX];
+int slackX[MX];   // slackX[y] such a vertex, that
+                 // l(slackX[y]) + l(y) - w(slackX[y],y) = slack[y]
+int Prev[MX];   // Array for memorizing alternating paths
+
+void initLabels() {
+    memo(lx,0);
+    memo(ly,0);
+    rep(x,N) rep(y,N) lx[x] = max(lx[x], cost[x][y]);
+}
+
+void Update_Labels(){
+    int delta = INF;
+    rep(y,N) if(!T[y]) delta = min(delta, slack[y]);
+    rep(x,N) if( S[x]) lx[x] -= delta;
+    rep(y,N) if( T[y]) ly[y] += delta;
+    rep(y,N) if(!T[y]) slack[y] -= delta;
+}
+
+void Add_To_Tree(int x, int Prevx) {
+    S[x] = true;
+    Prev[x] = Prevx;
+    rep(y,N)
+        if (lx[x] + ly[y] - cost[x][y] < slack[y]){
+            slack[y] = lx[x] + ly[y] - cost[x][y];
+            slackX[y] = x;
+        }
+}
+
+void Augment(){
+    if (mxMatch == N) return;
+    int x, y, root;
+    int q[MX], wr = 0, rd = 0;
+    memo(S,false);
+    memo(T,false);
+    memo(Prev,-1);
+    for( x=0;x<N;x++ )
+        if (xy[x] == -1){
+            q[wr++] = root = x;
+            Prev[x] = -2;
+            S[x] = true;
+            break;
+        }
+    for( y=0;y<N;y++ ){
+        slack[y] = lx[root] + ly[y] - cost[root][y];
+        slackX[y] = root;
+    }
+    while( true ){
+        while (rd < wr){
+            x = q[rd++];
+            for( y=0;y<N;y++ ){
+                if (cost[x][y] == lx[x] + ly[y] &&  !T[y]){
+                    if (yx[y] == -1) break;
+
+                    T[y] = true;
+                    q[wr++] = yx[y];
+
+                    Add_To_Tree(yx[y], x);
+                }
+            }
+            if (y < N) break;
+        }
+        if (y < N) break;
+        Update_Labels();
+        wr = rd = 0;
+        for( y=0;y<N;y++ ){
+            if (!T[y] &&  slack[y] == 0){
+                if (yx[y] == -1){
+                    x = slackX[y];
+                    break;
+                }
+                else{
+                    T[y] = true;
+                    if (!S[yx[y]]){
+                        q[wr++] = yx[y];
+                        Add_To_Tree(yx[y], slackX[y]);
+                    }
+                }
+            }
+        }
+        if (y < N) break;
+    }
+    if (y < N){
+        mxMatch++;
+        for (int cx = x, cy = y, ty; cx != -2; cx = Prev[cx], cy = ty){
+            ty = xy[cx];
+            yx[cy] = cx;
+            xy[cx] = cy;
+        }
+        Augment();
+    }
+}
+
+int Hungarian(){
+    int ret = 0;
+    mxMatch = 0;
+    memo(xy,-1);
+    memo(yx,-1);
+    initLabels();
+    Augment();
+    rep(x,N) ret += cost[x][xy[x]];
+    return ret;
+}
+
+int a[22],b[22];
+
+int main() {
+    #ifdef Sanim
+	//geting WA check int64 & int64u
+    freopen ("in.txt", "r", stdin);
+    // freopen ("output.txt", "w", stdout);
+#endif
+
+    N = II ;
+    rep(i,N)a[i] = II;
+    rep(i,N)b[i] = II;
+    rep(i,N) rep(j,N) {
+        if(a[i] == b[j]) cost[i][j] = 50;
+        else if(a[i] > b[j]) cost[i][j] = 100;
+        else cost[i][j] = 0;
+    }
+    int Ans = Hungarian();
+    printf("%d\n",Ans);
+
+}
+
+
+

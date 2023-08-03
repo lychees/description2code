@@ -1,0 +1,244 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+
+unsigned xor128() {
+	static unsigned x = 123456789, y = 362436069, z = 521288629, w = 88675123;
+	unsigned t = x ^ (x << 11);
+	x = y; y = z; z = w;
+	return w = w ^ (w >> 19) ^ (t ^ (t >> 8));
+}
+
+struct Node {
+	Node *left, *right;
+	int size;
+
+	long long len, cnt;
+	long long lensum, cntsum;
+	bool flip;
+
+	Node(ll len_ = 0, ll cnt_ = 0): left(NULL), right(NULL), size(1),
+		len(len_), cnt(cnt_), lensum(len_), cntsum(cnt_), flip(false) { }
+	inline Node *update() {
+		size = (!left ? 0 : left->size) + 1 + (!right ? 0 : right->size);
+		lensum = (!left ? 0 : left->lensum) + len + (!right ? 0 : right->lensum);
+		cntsum = getcntsum(left) + cnt + getcntsum(right);
+		return this;
+	}
+	static ll getcntsum(const Node *t) {
+		return !t ? 0 : !t->flip ? t->cntsum : t->lensum - t->cntsum;
+	}
+	inline void propagate() {
+		if(flip) {
+			cnt = len - cnt;
+			cntsum = lensum - cntsum;
+			if(left) left->flip ^= 1;
+			if(right) right->flip ^= 1;
+			flip = false;
+		}
+	}
+	inline Node *linkl(Node *c) {
+		left = c;
+		return update();
+	}
+	inline Node *linkr(Node *c) {
+		right = c;
+		return update();
+	}
+	inline Node *linklr(Node *l, Node *r) {
+		left = l, right = r;
+		return update();
+	}
+};
+
+
+struct RBSTBase {
+	typedef Node *Ref;
+	static int size(Ref t) { return !t ? 0 : t->size; }
+	static const int MaxHeight = 32 * 4;
+	static Ref join(Ref l, Ref r) {
+		if(!l) return r;
+		if(!r) return l;
+		if((int)(xor128() % (l->size + r->size)) < l->size) {
+			l->propagate();
+			return l->linkr(join(l->right, r));
+		}else {
+			r->propagate();
+			return r->linkl(join(l, r->left));
+		}
+	}
+	typedef pair<Ref,Ref> RefPair;
+	static RefPair split(Ref t, int k) {
+		if(!t) return RefPair((Ref)NULL, (Ref)NULL);
+		t->propagate();
+		int s = size(t->left);
+		if(k <= s) {
+			RefPair p = split(t->left, k);
+			return RefPair(p.first, t->linkl(p.second));
+		}else {
+			RefPair p = split(t->right, k - s - 1);
+			return RefPair(t->linkr(p.first), p.second);
+		}
+	}
+	static Ref insert(Ref t, int k, Ref n) {
+		if(!t) return n->linklr(NULL, NULL);
+		if(xor128() % (t->size + 1) == 0) {
+			RefPair p = split(t, k);
+			return n->linklr(p.first, p.second);
+		}
+		t->propagate();
+		int s = size(t->left);
+		if(k <= s)
+			return t->linkl(insert(t->left, k, n));
+		else
+			return t->linkr(insert(t->right, k - s - 1, n));
+	}
+	static RefPair remove(Ref t, int k) {
+		if(!t) return RefPair((Ref)NULL, (Ref)NULL);
+		t->propagate();
+		int s = size(t->left);
+		if(k < s) {
+			RefPair p = remove(t->left, k);
+			return RefPair(t->linkl(p.first), p.second);
+		}else if(k > s) {
+			RefPair p = remove(t->right, k - s - 1);
+			return RefPair(t->linkr(p.first), p.second);
+		}else {
+			Ref a = join(t->left, t->right);
+			return RefPair(a, t->linklr(NULL, NULL));
+		}
+	}
+	static int findPos(Ref t, long long k) {
+		if(!t) return 0;
+		t->propagate();
+		ll s = !t->left ? 0 : t->left->lensum;
+		int si = size(t->left);
+		if(k < s)
+			return findPos(t->left, k);
+		else if(k >= s + t->len)
+			return si + 1 + findPos(t->right, k - s - t->len);
+		else
+			return si;
+	}
+};
+
+typedef RBSTBase BST;
+Node *splitNode(Node *t, long long x) {
+	int k = BST::findPos(t, x);
+	BST::RefPair p = BST::split(t, k);
+	BST::RefPair q = BST::split(p.second, 1);
+	Node *u = q.first;
+	u->propagate();
+	ll y = x - (!p.first ? 0 : p.first->lensum), z = u->len - y;
+	bool b = u->cnt == u->len;
+	Node *a = BST::join(new Node(y, b ? y : 0), new Node(z, b ? z : 0));
+	return BST::join(p.first, BST::join(a, q.second));
+}
+
+template<int MOD>
+struct ModInt {
+	static const int Mod = MOD;
+	unsigned x;
+	ModInt(): x(0) { }
+	ModInt(signed sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	ModInt(signed long long sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	int get() const { return (int)x; }
+	
+	ModInt &operator+=(ModInt that) { if((x += that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator-=(ModInt that) { if((x += MOD - that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator*=(ModInt that) { x = (unsigned long long)x * that.x % MOD; return *this; }
+	
+	ModInt operator+(ModInt that) const { return ModInt(*this) += that; }
+	ModInt operator-(ModInt that) const { return ModInt(*this) -= that; }
+	ModInt operator*(ModInt that) const { return ModInt(*this) *= that; }
+};
+typedef ModInt<1000000007> mint;
+
+int main() {
+	int q;
+	while(~scanf("%d", &q)) {
+		int lastans = 0;
+		Node *ts[2] = {};
+		rep(k, 2) ts[k] = new Node((ll)1e18+1, 0);
+		rep(ii, q) {
+			int ty;
+			scanf("%d", &ty);
+//			ty=rand()%2+1;
+			if(ty == 1) {
+				int x;
+				ll l, r;
+				scanf("%d%lld%lld", &x, &l, &r);
+				l ^= lastans, r ^= lastans, -- l;
+//				x=rand()%2,l=rand()%100,r=rand()%100;if(l>r)swap(l,r);
+				ts[x] = splitNode(ts[x], l);
+				ts[x] = splitNode(ts[x], r);
+				BST::RefPair p = BST::split(ts[x], BST::findPos(ts[x], r));
+				BST::RefPair q = BST::split(p.first, BST::findPos(p.first, l));
+				assert((!q.first ? 0 : q.first->lensum) == l);
+				assert((!q.second ? 0 : q.second->lensum) == r - l);
+				if(q.second != 0) q.second->flip ^= 1;
+				ts[x] = BST::join(BST::join(q.first, q.second), p.second);
+			}else {
+				ll l[2], r[2];
+				scanf("%lld%lld%lld%lld", &l[0], &r[0], &l[1], &r[1]);
+//				l[0]=rand()%100,r[0]=rand()%100;if(l[0]>r[0])swap(l[0],r[0]);
+//				l[1]=rand()%100,r[1]=rand()%100;if(l[1]>r[1])swap(l[1],r[1]);
+				mint total = 1, none = 1, both = 1;
+				rep(k, 2) {
+					l[k] ^= lastans, r[k] ^= lastans, -- l[k];
+					ts[k] = splitNode(ts[k], l[k]);
+					ts[k] = splitNode(ts[k], r[k]);
+					BST::RefPair p = BST::split(ts[k], BST::findPos(ts[k], r[k]));
+					BST::RefPair q = BST::split(p.first, BST::findPos(p.first, l[k]));
+					assert((!q.first ? 0 : q.first->lensum) == l[k]);
+					assert((!q.second ? 0 : q.second->lensum) == r[k] - l[k]);
+					ll a = Node::getcntsum(q.second);
+					ll b = (!q.second ? 0 : q.second->lensum) - Node::getcntsum(q.second);
+					total *= r[k] - l[k];
+					both *= a;
+					none *= b;
+					ts[k] = BST::join(BST::join(q.first, q.second), p.second);
+				}
+				mint ans = total - both - none;
+				printf("%d\n", ans.get());
+				lastans = ans.get();
+			}
+
+		}
+	}
+	return 0;
+}

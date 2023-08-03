@@ -1,0 +1,84 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+#define FO(i,a,b) for (int i = (a); i < (b); i++)
+#define sz(v) int(v.size())
+ 
+typedef long long ll;
+ 
+set<int> bt[1005];
+int f[1005];
+bool proc[1005];
+ll dst[1005];
+ 
+int n, m, p;
+vector<tuple<int,int,int> > u[1005];
+vector<tuple<int,int> > ru[1005];
+ 
+int rdint() {
+	int res = 0; char ch;
+	while ((ch=getchar_unlocked())<'0');
+	do res = res*10+ch-'0';
+	while ((ch=getchar_unlocked())>='0');
+	return res;
+}
+ 
+void cf() {
+    priority_queue<pair<ll,int> > q;
+    FO(i,0,n-1) dst[i] = 1e16;
+    q.emplace(0,n-1);
+    while (!q.empty()) {
+        ll d = q.top().first; int i = q.top().second; q.pop();
+        d *= -1;
+        if (proc[i]) continue;
+        proc[i] = true;
+        for (auto e : ru[i]) {
+            int j, c; tie(j,c) = e;
+            ll nd = d+c;
+            if (nd < dst[j]) {
+                dst[j] = nd;
+                f[j] = f[i]+1;
+                q.emplace(-nd,j);
+            }
+        }
+    }
+ 
+}
+ 
+int main()
+{
+	n = rdint(); m = rdint(); p = rdint();
+    FO(i,0,n) {
+        int o = rdint();
+        bt[i].insert(o);
+    }
+    FO(i,0,m) {
+        int x = rdint(), y = rdint(), c = rdint();
+        u[x].emplace_back(y,c,c%p);
+        ru[y].emplace_back(x,c);
+    }
+    cf();
+    priority_queue<tuple<ll,ll,int> > q;
+    q.emplace(dst[0],0,0);
+    while (!q.empty()) {
+        ll dd, d; int i; tie(dd,d,i) = q.top(); q.pop();
+        d *= -1; dd *= -1;
+        int dp = d%p;
+        if (sz(bt[i]) > f[i]+1 || bt[i].find(dp) != bt[i].end()) continue;
+        if (i == n-1) {
+            printf("%lld\n", d);
+            return 0;
+        }
+        bt[i].insert(dp);
+        for (auto e : u[i]) {
+            int j, c, cp; tie(j,c,cp) = e;
+            ll nd = d+c;
+            int ndp = dp + cp;
+            if (ndp >= p) ndp -= p;
+            if (sz(bt[j]) <= f[j]+1 && bt[j].find(ndp) == bt[j].end()) {
+                q.emplace(-(nd+dst[j]), -nd,j);
+            }
+        }
+    }
+    printf("-1\n");
+}

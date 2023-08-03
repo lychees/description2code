@@ -1,0 +1,149 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+typedef long long     LL;
+typedef pair<int,int> pii;
+ 
+double PI  = acos(-1);
+double EPS = 1e-7;
+int INF    = 1000000000;
+int MOD    = 1000000007;
+int MAXINT = 2147483647;
+LL INFLL   = 1000000000000000000LL;
+LL MAXLL   = 9223372036854775807LL;
+ 
+#define fi            first
+#define se            second
+#define mp            make_pair
+#define pb            push_back
+#define SIZE(a)       (int)a.size()
+#define MIN(a, b)     (a) = min((a), (b))
+#define MAX(a, b)     (a) = max((a), (b))
+#define input(in)     freopen(in,"r",stdin)
+#define output(out)   freopen(out,"w",stdout)
+#define RESET(a, b)   memset(a,b,sizeof(a))
+#define FOR(a, b, c)  for (int (a)=(b); (a)<=(c); (a)++)
+#define FORD(a, b, c) for (int (a)=(b); (a)>=(c); (a)--)
+#define FORIT(a, b)   for (__typeof((b).begin()) a=(b).begin(); a!=(b).end(); a++)
+ 
+int mx[8] = {-1,1,0,0,-1,-1,1,1};
+int my[8] = {0,0,-1,1,-1,1,-1,1};
+ 
+// ------------ //
+ 
+int nx[100005];
+int pr[100005];
+int x[100005];
+int ls[100005];
+int sz[100005];
+int pos[100005];
+int pre[100005];
+int D = 400;
+int C = 100000;
+int mod = 1000000007;
+ 
+int bit[100005];
+LL ans = 0;
+ 
+inline void update(int x,int v)
+{
+	for(int i=x;i<=C;i+=(i&-i))
+	{
+		bit[i] += v;
+	}
+}
+ 
+inline int query(int x)
+{
+	int res = 0;
+	for(int i=x;i>=1;i-=(i&-i))
+	{
+		res += bit[i];
+	}
+	return res;
+}
+ 
+ 
+ 
+int main()
+{
+	int n;
+	scanf("%d",&n);
+	FOR(a,1,n)
+	{
+		scanf("%d",&x[a]);
+	}
+	FORD(a,n,1)
+	{
+		nx[a] = ls[x[a]];
+		if (nx[a])
+		{
+			pr[nx[a]] = a;
+		}
+		pos[a] = pos[ls[x[a]]]+1;
+		ls[x[a]] = a;
+		sz[x[a]]++;
+	}
+	FOR(a,1,n)
+	{
+		pos[a] = sz[x[a]]-pos[a];
+	}
+	FOR(a,1,C)
+	{
+		if (sz[a] > D) // Big
+		{
+			FOR(b,1,n)
+			{
+				pre[b] = pre[b-1];
+				if (x[b] == a) pre[b]++;
+			}
+			FOR(b,1,n) // big later..  
+			{
+				if (x[b] == a || pos[b]) continue;
+				LL cur = 0;
+				int pr = 0;
+				for(int p = b; p; p = nx[p])
+				{
+					cur += (LL)(pre[p]-pre[pr])*pos[p];
+					ans += ((LL)(cur%mod)*(pre[n]-pre[p]))%mod;
+					if (ans >= MOD) ans -= MOD;
+					pr = p;
+				}
+			}
+			FORD(b,n,1)
+			{
+				if (sz[x[b]]-1-pos[b] || sz[x[b]] > D) continue;
+				LL cur = 0;
+				int nx = n;
+				for(int p = b; p; p = pr[p])
+				{
+					cur += (LL)(pre[nx]-pre[p])*(sz[x[b]]-1-pos[p]);
+					ans += ((LL)(cur%mod)*pre[p])%mod;
+					if (ans >= MOD) ans -= MOD;
+					nx = p;
+				}
+			}
+		}
+	}
+	FOR(a,1,n)
+	{
+		if (sz[x[a]] <= D)
+		{
+			//cout << "MASUK " << endl;
+			int lol = query(a);
+			int xd = 1;
+			for(int p = nx[a]; p; p = nx[p])
+			{
+				ans += (query(p)-lol-xd*pos[a])%mod;
+				if (ans >= MOD) ans -= MOD;
+				xd++;
+			}
+			for(int p = nx[a]; p; p = nx[p])
+			{
+				update(p,1);
+			}
+		}
+	}
+	cout << ans << endl;
+ 
+} 

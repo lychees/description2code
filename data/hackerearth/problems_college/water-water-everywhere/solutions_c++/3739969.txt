@@ -1,0 +1,103 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int, int> pii; typedef vector<pair<int, int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+struct UnionFind {
+	vector<int> data;
+	void init(int n) { data.assign(n, -1); }
+	bool unionSet(int x, int y) {
+		x = root(x); y = root(y);
+		if(x != y) {
+			if(data[y] < data[x]) swap(x, y);
+			data[x] += data[y]; data[y] = x;
+		}
+		return x != y;
+	}
+	bool findSet(int x, int y) { return root(x) == root(y); }
+	int root(int x) { return data[x] < 0 ? x : data[x] = root(data[x]); }
+	int size(int x) { return -data[root(x)]; }
+};
+
+int main() {
+	int N;
+	while(~scanf("%d", &N)) {
+		vector<pair<int, pii> > edges(N - 1);
+		for(int i = 0; i < N - 1; ++ i) {
+			int u; int v; int c;
+			scanf("%d%d%d", &u, &v, &c), -- u, -- v;
+			edges[i] = mp(c, mp(u, v));
+		}
+		vector<map<int,int>> sets(N);
+		int Q;
+		scanf("%d", &Q);
+		rep(i, Q) {
+			int n;
+			scanf("%d", &n);
+			rep(j, n) {
+				int x;
+				scanf("%d", &x), -- x;
+				++ sets[x][i];
+			}
+		}
+		sort(edges.begin(), edges.end());
+		reverse(all(edges));
+		UnionFind uf; uf.init(N);
+		vector<ll> ans(Q, 0);
+		rep(ei, N - 1) {
+			int c = edges[ei].first;
+			int a = edges[ei].second.first, b = edges[ei].second.second;
+			map<int, int> &v = sets[uf.root(a)];
+			map<int, int> &w = sets[uf.root(b)];
+			if(v.size() < w.size())
+				v.swap(w);
+			each(i, w) {
+				auto j = v.find(i->first);
+				if(j != v.end())
+					ans[i->first] += (ll)c * i->second * j->second;
+			}
+			each(i, w)
+				v[i->first] += i->second;
+			w.clear();
+
+			uf.unionSet(a, b);
+			sets[uf.root(a)].swap(v);
+		}
+
+		for(int i = 0; i < (int)ans.size(); ++ i)
+			printf("%lld\n", ans[i]);
+	}
+	return 0;
+}

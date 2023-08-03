@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define MAXN 100100
+
+typedef long long ll;
+
+ll n, m, s;
+vector<ll> g[MAXN];
+vector<ll> w[MAXN];
+priority_queue<pair<ll, ll> > pq;
+ll d[MAXN];
+ll cost[MAXN];
+ll ans[MAXN];
+
+int main() {
+	ios::sync_with_stdio(false);
+	memset(d, -1, sizeof(d));
+	cin >> n >> m >> s;
+	for (int i = 1; i <= n; i++) {
+		cin >> cost[i];
+	}
+	for (int i = 0; i < m; i++) {
+		int a, b, c;
+		cin >> a >> b >> c;
+		g[a].push_back(b);
+		g[b].push_back(a);
+		w[a].push_back(c);
+		w[b].push_back(c);
+	}
+	int b = s;
+	d[b] = 0;
+	pq.push({-d[b], b});
+	while (!pq.empty()) {
+		pair<int, int> p = pq.top();
+		pq.pop();
+		if (-p.first > d[p.second]) continue;
+		for (int i = 0; i < (int)g[p.second].size(); i++) {
+			int to = g[p.second][i];
+			int wei = w[p.second][i];
+			if (d[to] == -1) {
+				d[to] = wei + d[p.second];
+				pq.push({-d[to], to});
+			} else if (wei + d[p.second] < d[to]) {
+				d[to] = wei + d[p.second];
+				pq.push({-d[to], to});
+			}
+		}
+	}
+	ll away = 0;
+	ll acc = 0;
+	for (int i = 1; i <= n; i++) {
+		if (d[i] == -1) {
+			away++;
+			continue;
+		}
+		ans[s] += cost[i] * d[i];
+		acc += cost[i];
+	}
+	for (int i = 1; i <= n; i++) ans[i] = ans[s];
+	for (int i = 1; i <= n; i++) {
+		if (i > 1) cout << " ";
+		if (d[i] == -1) {
+			ans[i] = 0;
+			cout << ans[i];
+			continue;
+		}
+		if (i != s) {
+			ans[i] += d[i] * (acc - cost[i]);
+			ans[i] -= d[i] * cost[i];
+		}
+		cout << ans[i];
+	}
+	cout << endl;
+		
+	
+	
+	return 0;
+}
+

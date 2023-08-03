@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define REPU(i, a, b) for (int i = (a); i < (b); ++i)
+#define REPD(i, a, b) for (int i = (a); i > (b); --i)
+#define MEM(a, x) memset(a, x, sizeof(a))
+#define ALL(a) a.begin(), a.end()
+#define UNIQUE(a) a.erase(unique(ALL(a)), a.end())
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T, class U> inline T tmin(T a, U b) { return (a < b) ? a : b; }
+template<class T, class U> inline T tmax(T a, U b) { return (a > b) ? a : b; }
+template<class T, class U> inline void amax(T &a, U b) { if (b > a) a = b; }
+template<class T, class U> inline void amin(T &a, U b) { if (b < a) a = b; }
+template<class T> inline T tabs(T a) { return (a > 0) ? a : -a; }
+template<class T> T gcd(T a, T b) { while (b != 0) { T c = a; a = b; b = c % b; } return a; }
+
+const ll INF = (ll) 1e18, N = 100005;
+typedef pair<ll, int> P;
+struct E { int to, cost; };
+vector<E> g[N];
+int k[N];
+ll d[N], f[N];
+
+void dijkstra(int s) {
+    priority_queue<P, vector<P>, greater<P>> que;
+    fill(d, d + N, INF);
+    d[s] = 0;
+    que.push(P(0, s));
+    while (!que.empty()) {
+        P p = que.top(); que.pop();
+        if (d[p.second] < p.first) continue;
+        REPU(i, 0, g[p.second].size()) {
+            E &e = g[p.second][i];
+            if (d[e.to] > d[p.second] + e.cost) {
+                d[e.to] = d[p.second] + e.cost;
+                que.push(P(d[e.to], e.to));
+            }
+        }
+    }
+}
+
+int main(int argc, char *argv[]) {
+	ios_base::sync_with_stdio(false);
+	
+	int n, m, s, u, v, w;
+	cin >> n >> m >> s;
+	REPU(i, 1, n + 1) cin >> k[i];
+	REPU(i, 0, m) {
+		cin >> u >> v >> w;
+		g[u].push_back({v, w});
+		g[v].push_back({u, w});
+	}
+
+	MEM(f, 0);
+	dijkstra(s);
+	ll tot = 0, tot_w = 0;
+	REPU(i, 1, n + 1) {
+		if (d[i] != INF) f[i] = k[i] * 1LL * d[i], tot_w += k[i];
+		tot += f[i];
+	}
+	ll ans;
+	REPU(i, 1, n + 1) {
+		if (d[i] == INF) ans = 0;
+		else {
+			ans = d[i] * (tot_w - k[i]) + tot - f[i];
+		}
+		printf("%lld%c", ans, " \n"[i == n]);
+	}
+
+
+	return 0;
+}

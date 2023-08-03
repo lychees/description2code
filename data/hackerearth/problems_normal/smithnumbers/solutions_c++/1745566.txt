@@ -1,0 +1,78 @@
+//https://www.hackerearth.com/april-easy-challenge-15/algorithm/smithnumbers/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+using namespace std;
+
+#define MAXSIZE 10000002
+
+bool isPrime[MAXSIZE];
+char primeFactSum[MAXSIZE];
+int countTill[MAXSIZE];
+
+short getDigitSum(int x)
+{
+	short res = 0;
+	while(x)
+	{
+		res += x%10;
+		x/=10;
+	}
+	return res;
+}
+
+void primeSeive()
+{
+	memset(isPrime, true, sizeof(bool)*MAXSIZE);
+	memset(primeFactSum, 0, sizeof(char)*MAXSIZE);
+	isPrime[2] = true;
+	for(int i=2; i<MAXSIZE; i++)
+	{
+		if(isPrime[i])
+		{
+			primeFactSum[i] = getDigitSum(i);
+			for(int j=2; i*j<MAXSIZE; j++)
+			{
+				isPrime[i*j]=false;
+				primeFactSum[i*j] = primeFactSum[i] + primeFactSum[j];
+			}
+		}
+	}
+}
+
+void cumulateCount()
+{
+	countTill[2] = 1;
+	for(int i=3; i<MAXSIZE; i++)
+	{
+		countTill[i] = countTill[i-1];
+		if(primeFactSum[i] == getDigitSum(i))
+			countTill[i]++;
+	}
+}
+
+int main()
+{
+	int t, l, r;
+
+	primeSeive();
+
+	cumulateCount();
+
+	scanf("%d", &t);
+
+	while(t--)
+	{
+		scanf("%d %d", &l, &r);
+		int count = countTill[r] - countTill[l];
+		
+		if(primeFactSum[l] == getDigitSum(l))
+			count++;
+
+		printf("%d\n", count);
+	}
+
+	return 0;
+}

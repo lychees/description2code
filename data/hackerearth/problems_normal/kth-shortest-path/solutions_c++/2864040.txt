@@ -1,0 +1,169 @@
+#include <iostream>
+#include <map>
+#include <vector>
+#include <string>
+#include <climits>
+#include <algorithm>
+
+using namespace std;
+
+#define KMAX 101
+
+void traversePath(vector<vector<int> > mat, int x, int y, int xDst, int yDst, int curCost,
+vector<vector<vector<int> > > &sol){
+	//cout<<"x: "<<x<<", y: "<<y<<", curCost: "<<curCost<<endl;
+	if(x<0 || y<0 || x>=mat.size() || y>=mat[0].size()){
+		
+		return;
+	}
+	
+	if(mat[x][y]==INT_MIN){
+		return;
+	}
+	
+	curCost += mat[x][y];
+	
+	if(x==xDst && y==yDst){
+		//cout<<"c1"<<endl;
+		if(sol[x][y].size()==KMAX){
+			//cout<<"c2"<<endl;
+			make_heap(sol[x][y].begin(), sol[x][y].end());
+			if(sol[x][y].front()>curCost){
+				pop_heap(sol[x][y].begin(), sol[x][y].end());
+				sol[x][y].pop_back();
+				sol[x][y].push_back(curCost);
+			}
+		}
+		else{
+			//cout<<"check1"<<endl;
+			sol[x][y].push_back(curCost);
+			//cout<<"check2"<<endl;
+		}
+	}
+	traversePath(mat, x+1, y, xDst, yDst, curCost, sol);
+	traversePath(mat, x, y+1, xDst, yDst, curCost, sol);
+}
+
+int main()
+{
+    //cout << "Hello World!" << endl;
+    int T;
+    cin>>T;
+    while(T--){
+    	int m, n;
+    	cin>>m;
+    	cin>>n;
+    	
+    	vector<vector<int> > mat(m, vector<int>(n, -1));
+    	string str;
+    	for(int i=0; i<m; ++i){
+    		for(int j=0; j<n; ++j){
+    			cin>>str;
+    			if(str=="##"){
+    				mat[i][j]=INT_MIN;
+    			}
+    			else{
+    				mat[i][j]=stoi(str);
+    			}
+    		}
+    	}
+    	
+    	/*
+    	for(int i=0; i<m; ++i){
+    		for(int j=0; j<n; ++j){
+    			cout<<mat[i][j]<<" ";
+    		}
+    		cout<<endl;
+    	}
+    	*/
+    	vector<vector<vector<int> > > sol(m, vector<vector<int>>(n));
+    	for(int i=0; i<m; ++i){
+    		for(int j=0; j<n; ++j){
+    			//cout<<"i: "<<i<<", j: "<<j<<endl;
+    			if(i==0 && j==0){
+    				sol[0][0].push_back(mat[0][0]);
+    			}
+    			else if(mat[i][j]!=INT_MIN){
+    				//cout<<"check"<<endl;
+    				//cout<<(i>0 && j>0)<<endl;
+    				//cout<<(i>0)<<endl;
+    				//cout<<(j>0)<<endl;
+    				if(i>0 && j>0){
+    					vector<int>  vec1 = sol[i-1][j];
+    					vector<int> vec2 = sol[i][j-1];
+    					int k1=0;
+    					int k2=0;
+    				
+    					while(k1<vec1.size() && k2<vec2.size() && sol[i][j].size()<KMAX){
+    						if(vec1[k1]<=vec2[k2]){
+    							sol[i][j].push_back(vec1[k1]+mat[i][j]);
+    							++k1;
+    						}
+    						else{
+    							sol[i][j].push_back(vec2[k2]+mat[i][j]);
+    							++k2;
+    						}
+    					}
+    					
+    					while(k1<vec1.size() && sol[i][j].size()<KMAX){
+    						sol[i][j].push_back(vec1[k1]+mat[i][j]);
+    						++k1;
+    					}
+    					
+    					while(k2<vec2.size() && sol[i][j].size()<KMAX){
+    						sol[i][j].push_back(vec2[k2]+mat[i][j]);
+    						++k2;
+    					}
+    				}
+    				else if(i>0){
+    					//cout<<"check1"<<endl;
+    					vector<int> vec1 = sol[i-1][j];
+    					int k1=0;
+    					while(k1<vec1.size() && sol[i][j].size()<KMAX){
+    						sol[i][j].push_back(vec1[k1]+mat[i][j]);
+    						++k1;
+    					}
+    				}
+    				else if(j>0){
+    					//cout<<"check2"<<endl;
+    					vector<int> vec2 = sol[i][j-1];
+    					int k2=0;
+    					//cout<<"1\n";
+    					while(k2<vec2.size() && sol[i][j].size()<KMAX){
+    						//cout<<"2\n";
+    						sol[i][j].push_back(vec2[k2]+mat[i][j]);
+    						++k2;
+    					}
+    				}
+    				
+    			}
+    		}
+    	}
+    	//traversePath(mat, 0, 0, m-1, n-1, 0, sol);
+    	int q;
+    	cin>>q;
+    	while(q--){
+    		int tx, ty, k;
+    		cin>>tx;
+    		cin>>ty;
+    		cin>>k;
+    		if(mat[tx][ty]==INT_MIN){
+    			cout<<"Obstacle"<<endl;
+    		}
+    		else{
+    			//vector<int> sol;
+    			//traversePath(mat, 0, 0, tx, ty, 0, sol);
+    			if(sol[tx][ty].size()<k){
+    				cout<<"Not so many paths"<<endl;
+    			}
+    			else{
+    				sort(sol[tx][ty].begin(), sol[tx][ty].end());
+    				cout<<sol[tx][ty][k-1]<<endl;
+    			}
+    		}
+    	}
+    	
+    }
+    
+    return 0;
+}

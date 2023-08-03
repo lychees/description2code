@@ -1,0 +1,170 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+typedef long long ll;
+typedef pair<ll, ll> pii;
+typedef pair<pii, pii> gh;
+
+gh init(ll v){
+  ll a = max(0ll,v);
+  return make_pair(pii(a,a), pii(v, a));
+}
+
+gh combine(gh p, gh q){
+  ll prefix = max(p.first.first, p.second.first + q.first.first);
+  ll suffix = max(q.first.second, q.second.first + p.first.second);
+  ll sum = p.second.first + q.second.first;
+  ll all = max(max(p.second.second, q.second.second), p.first.second + q.first.first);
+  return make_pair(pii(prefix, suffix), pii(sum, all));
+}
+const int maxn = 1e5 + 100;
+gh ST[4 * maxn];
+#define left(p) (p<<1)
+#define right(p) ((p<<1)+1)
+#define mid ((l+r)>>1)
+
+ll Val;
+void update(int p, int l, int r, int i){
+  if(l > i || r < i) return;
+  if(l == r){
+    ST[p] = init(Val);
+    return;
+  }
+  update(left(p), l, mid, i);
+  update(right(p), mid+1, r, i);
+  ST[p] = combine(ST[left(p)], ST[right(p)]);
+}
+vector<int> blocks;
+void decompose(int p, int l, int r, int i, int j){
+  if(i > r || j < l) return;
+  if(i <= l && r <= j){
+    blocks.push_back(p);
+    return;
+  }
+  decompose(left(p), l, mid, i, j);
+  decompose(right(p), mid+1, r, i, j);
+}
+
+vector<pii> adj[maxn];
+vector<int> ch[maxn];
+int pa[maxn];
+int jump[maxn][20];
+int depth[maxn];
+ll val[maxn];
+
+void dfs0(int v){
+  for(pii uu : adj[v]){
+    int u = uu.first;
+    if(u == pa[v]) continue;
+    pa[u] = v;
+    ch[v].push_back(u);
+    val[u] = uu.second;
+    dfs0(u);
+  }
+}
+void dfs(int v){
+  for(int u : ch[v]){
+    depth[u] = depth[v] + 1;
+    jump[u][0] = v;
+    for(int i = 1; i < 20; i++){
+      jump[u][i] = jump[jump[u][i-1]][i-1];
+    }
+    dfs(u);
+  }
+}
+pii LCA(int u, int v){
+  bool swapped = false;
+  if(depth[u] > depth[v]){  swap(u,v); swapped = true; }
+  for(int i = 19; i>=0;i--){
+    if(depth[jump[v][i]] >= depth[u]) v = jump[v][i];
+  }
+  if(u == v){
+    return pii(-1, u);
+  }
+  assert(depth[u] == depth[v]);
+  for(int i = 19; i >= 0;i--){
+    if(jump[u][i] != jump[v][i]){
+      u = jump[u][i]; v = jump[v][i];
+    }
+  }
+  assert(pa[u] == pa[v]);
+  if(swapped) swap(u,v);
+  return pii(u,v);
+}
+int LA(int u, int k){//ancesetor of u with depth k
+  for(int i = 19; i >= 0; i--){
+    if(depth[jump[u][i]] >= k) u = jump[u][i];
+  }
+  return u;
+}
+
+int want[maxn][2];//indexed by queries
+gh ans[2 * maxn];
+
+vector<pii> queries[maxn];
+int n;
+void perform(int v){
+  Val = val[v];
+  update(1, 0, n+3, depth[v]);
+  for(pii x : queries[v]){
+    int id = x.second;
+    int start = depth[x.first];
+    blocks.clear();
+    decompose(1, 0, n+3, start, depth[v]);
+    for(int p : blocks){
+      ans[id] = combine(ans[id], ST[p]);
+    }
+  }
+  for(int u : ch[v]){
+    perform(u);
+  }
+}
+
+int main(){  
+  depth[0] = -1;
+  cin >> n; int q; cin >> q;
+  for(int i=0;i<n-1;i++){
+    int u, v, w; scanf("%d%d%d", &u, &v, &w);
+    adj[u].push_back(pii(v,w));
+    adj[v].push_back(pii(u,w));
+  }
+  dfs0(1); dfs(1);
+  int tt = -1;
+  for(int qq = 0; qq < q; qq++){
+    int a,b; scanf("%d%d", &a, &b);
+    pii c = LCA(a,b);
+    if(c.first == -1){
+      want[qq][0] = -1;
+      tt++; want[qq][1] = tt;
+      if(depth[a] > depth[b]) swap(a,b);
+      assert(c.second == a);
+      if(a == b){
+	want[qq][1] = -1;
+	continue;
+      }
+      queries[b].push_back(pii(LA(b, depth[a]+1), tt));
+    }
+    else{
+      tt++; want[qq][0] = tt;
+      queries[a].push_back(pii(c.first, tt));
+      tt++; want[qq][1] = tt;
+      queries[b].push_back(pii(c.second, tt));
+    }
+  }
+  assert(val[0] == 0);
+  perform(1);
+  for(int qq = 0; qq < q; qq++){
+    if(want[qq][0] == -1){
+      if(want[qq][1] == -1) cout << 0 << "\n";
+      else cout << ans[want[qq][1]].second.second << "\n";
+    }
+    else{
+      ll a = ans[want[qq][0]].second.second;
+      a = max(a, ans[want[qq][1]].second.second);
+      a = max(a, ans[want[qq][0]].first.first + ans[want[qq][1]].first.first);
+      //cout << ans[want[qq][0]].first.second << " " << ans[want[qq][1]].first.first << "!\n";
+      cout << a << "\n";
+      //cout << "!!\n";
+    }
+  }
+}

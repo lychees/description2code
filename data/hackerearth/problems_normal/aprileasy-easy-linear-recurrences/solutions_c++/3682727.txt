@@ -1,0 +1,158 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+
+#include <cassert>
+#include <limits>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define each(it,o) for(auto it= (o).begin(); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+#define inrep int t;cin>>t; while(t--)
+using namespace std;
+
+typedef vector<int> vi;
+typedef pair<int,int> pii;
+typedef vector<pii > vpii;
+typedef long long ll;
+typedef vector<ll> vll;
+typedef pair<ll,ll> pll;
+typedef vector<pll > vpll;
+typedef vector<string> vs;
+typedef long double ld;
+
+template<typename T> ostream& operator<< ( ostream &o,vector<T> v ) {
+    if ( v.size() >0 )
+        o<<v[0];
+    for ( unsigned   i=1; i<v.size(); i++ )
+        o<<" "<<v[i];
+    return o<<endl;
+}
+template<typename U,typename V> ostream& operator<< ( ostream &o,pair<U,V> p ) {
+    return o<<"("<<p.first<<", "<<p.second<<") ";
+}
+template<typename T> istream& operator>> ( istream &in,vector<T> &v ) {
+
+    for ( unsigned   i=0; i<v.size(); i++ )
+        in>>v[i];
+    return in;
+}
+const int MOD=1000000007;
+vector<vi> matMult ( const vector<vi> &A,const vector<vi> &B ) {
+
+    const int n=A.size();
+    vector<vi> Bt ( n,vi ( n ) );
+    rep ( i,n ) rep ( j,n ) Bt[j][i]=B[i][j];
+    vector<vi> C=vector<vi> ( n,vi ( n ) );
+    rep ( i,n ) rep ( j,n ) {
+        ll r=0;
+        rep ( k,n ) {
+            r=  r+ ( ll ) A[i][k]*Bt[j][k] ;
+            if ( r>MOD ) r%=MOD;
+        }
+        C[i][j]=r%MOD;
+    }
+    return C;
+}
+void mVMult ( const vector<vi> &A,const vi &w, vi& res ) {
+//     vector<ll> v ( all ( w ) );
+    const int n=A.size();
+//     vi res ( n );
+    rep ( i,n ) {
+        ll r=0;
+        rep ( j,n ) {
+            r=r+ ( ll ) A[i][j]*w[j];
+            if ( r>MOD ) r%=MOD;
+
+        }
+        res[i]=r%MOD;
+    }
+//     return res;
+
+}
+
+vector<vector<vi>> mPows;
+
+
+int matPowMult ( const vector<vi> &A,const vi&w, ll n ) {
+//     vector<vi> M ( A );
+    vi res ( w );
+    vi res2 ( w.size() );
+    int cnt=0;
+    while ( n ) {
+        if ( n&1 ) {
+           mVMult ( mPows[cnt],res,res2 );
+             swap ( res,res2 );
+        }
+      
+        cnt++;
+        n>>=1;
+    }
+    return res.back();
+
+}
+
+
+
+void init ( vector<vi> mat ) {
+    mPows.push_back ( mat );
+    rep ( i,32 ) {
+        mPows.push_back ( matMult ( mPows.back(),mPows.back() ) );
+    }
+}
+#define gc getchar_unlocked
+void scan ( int &x ) {
+    int c = gc();
+    x = 0;
+    for ( ; ( c<48 || c>57 ); c = gc() );
+    for ( ; c>47 && c<58; c = gc() ) {
+        x = ( x << 1 ) + ( x << 3 ) + c - 48;
+    }
+}
+
+int main() {
+//     ios_base::sync_with_stdio ( false );
+    ll a,b,c,d,e,f,f0,f1,g0,g1;
+    cin>>a>>b>>c>>d>>e>>f>>f0>>f1>>g0>>g1;
+    vector<vll> matll= {{a,0,0,b,0},{1,0,0,0,0},{0,d,c,0,0},{0,0,1,0,0},{a*e,d*f,c*f,b*e,1}};
+    vector<vi> mat ( 5,vi ( 5 ) );
+    rep ( i,5 ) rep ( j,5 ) mat[i][j]=matll[i][j]%MOD;
+    init ( mat );
+//     cout<<mat<<endl;
+
+    int h0= ( e*f0+f*g0 ) %MOD;
+    int h1= ( e*f0+f*g0+e*f1+f*g1 ) %MOD;
+    ll f2=a*f1+b*g0;
+    ll g2=c*g1+d*f0;
+    ll h2=e*f2+f*g2;
+    vll bbll= {f1,f0,g1,g0,h1};
+    vi bb ( 5 );
+    rep ( i,5 ) bb[i]=bbll[i]%MOD;
+//     cout<<bb<<endl;
+    int q;
+    cin>>q;
+
+    vi ans ( q );
+    rep ( i,q ) {
+        int n;
+        scan ( n );
+//         cin>>n;
+        if ( n==0 ) ans[i]= ( h0 );
+        else if ( n==1 ) ans[i]=h1;
+        else {
+            ans[i]= matPowMult ( mat,bb,n-1 );
+//             ans[i]= ( res.back() );
+        }
+    }
+    rep ( i,q ) printf ( "%d\n",ans[i] ); // cout<<ans[i]<<'\n';
+}

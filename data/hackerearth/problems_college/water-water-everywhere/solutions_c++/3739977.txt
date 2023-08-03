@@ -1,0 +1,86 @@
+#include <algorithm>
+#include <cassert>
+#include <cstring>
+#include <iostream>
+#include <unordered_map>
+
+using namespace std;
+
+#define FOR(i, a, b) for (int i = (a); i < (b); ++i)
+#define REP(i, n) FOR(i, 0, n)
+#define TRACE(x) cout << #x << " = " << x << endl
+#define _ << " _ " <<
+
+typedef long long llint;
+
+const int MAX = 100100;
+
+struct Edge {
+  int a, b, w;
+  friend bool operator < (const Edge& a, const Edge& b) {
+    return a.w > b.w;
+  }
+};
+
+vector<Edge> E;
+vector<int> v[MAX];
+llint ans[MAX];
+
+int where[MAX];
+vector<int> g[MAX];
+unordered_map<int, int> M[MAX];
+
+int main(void) {
+  int n;
+  scanf("%d", &n);
+  REP(i, n-1) {
+    int a, b, w;
+    scanf("%d %d %d", &a, &b, &w);
+    --a, --b;
+    E.push_back({a, b, w});
+  }
+
+  sort(E.begin(), E.end());
+
+  int q;
+  scanf("%d", &q);
+  REP(i, q) {
+    int k;
+    scanf("%d", &k);
+    REP(j, k) {
+      int x;
+      scanf("%d", &x); --x;
+      v[x].push_back(i);
+    }
+  }
+  
+  REP(i, n) {
+    where[i] = i;
+    for (int j: v[i]) M[i][j]++;
+    g[i].push_back(i);
+  }
+  
+  for (auto& e: E) {
+    if (where[e.a] == where[e.b]) continue;
+    
+    int x = where[e.a];
+    int y = where[e.b];
+    if (g[x].size() < g[y].size()) swap(x, y);
+
+    for (int p: g[y]) {
+      where[p] = x;
+      g[x].push_back(p);
+    }
+    g[y].clear();
+
+    if (M[x].size() < M[y].size()) M[x].swap(M[y]);
+    for (auto& p: M[y]) {
+      if (M[x].count(p.first)) ans[p.first] += llint(e.w) * M[x][p.first] * p.second;
+      M[x][p.first] += p.second;
+    }
+    M[y].clear();
+  }
+  
+  REP(i, q) printf("%lld\n", ans[i]);
+  return 0;
+}

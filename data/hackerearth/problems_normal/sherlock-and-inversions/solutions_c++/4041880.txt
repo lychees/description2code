@@ -1,0 +1,107 @@
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+#include <cmath>
+using namespace std;
+#define N 100010
+class BIT
+{
+	int data[N];
+	public:
+	int query(int idx)
+	{
+		if(idx<0) return 0;
+		int res=data[0];
+		while(idx)
+		{
+			res+=data[idx];
+			idx&=idx-1;
+		}
+		return res;
+	}
+	void update(int idx,int delta)
+	{
+		if(idx==0)
+		{
+			data[0]+=delta;
+			return;
+		}
+		while(idx<N)
+		{
+			data[idx]+=delta;
+			idx+=idx&-idx;
+		}
+	}
+}bit{};
+int arr[N];
+int mp[N];
+int main()
+{
+	int n,q;
+	scanf("%d%d",&n,&q);
+	vector<int> ds;
+	for(int i=0;i<n;++i)
+	{
+		scanf("%d",&arr[i]);ds.push_back(arr[i]);
+	}
+	vector<pair<int,pair<int,int>>> qs(q);
+	sort(ds.begin(),ds.end());
+	ds.erase(unique(ds.begin(),ds.end()),ds.end());
+	for(int i=0;i<n;++i)
+	{
+		mp[i] = lower_bound(ds.begin(),ds.end(),arr[i])-ds.begin();
+	}
+	for(int i=0;i<q;++i)
+	{
+		scanf("%d%d",&qs[i].second.first,&qs[i].second.second);
+		--qs[i].second.first,--qs[i].second.second;
+		qs[i].first=i;
+	}
+	int sz = sqrt(n);
+	using PIP = pair<int,pair<int,int>>;
+	sort(qs.begin(),qs.end(),[sz](PIP const & lhs,PIP const & rhs)
+	{
+		int p1 = lhs.second.first/sz,p2 = rhs.second.first/sz;
+		return p1<p2 ||p1==p2 && lhs.second.second<rhs.second.second;
+	});
+	vector<long long>res(q);
+	int L=0,R=-1;
+	long long cur=0;
+	for(auto &qy:qs)
+	{
+	
+		while(R<qy.second.second)
+		{
+			++R;
+			int idx = mp[R];
+			cur+= R-L - bit.query(idx);
+			bit.update(idx,1);
+		}
+		while(R>qy.second.second)
+		{
+			int idx = mp[R];
+			bit.update(idx,-1);
+			cur-= R-L-bit.query(idx);
+			--R;
+		}
+		
+		while(L<qy.second.first)
+		{
+			int idx = mp[L];
+			bit.update(idx,-1);
+			cur-=bit.query(idx-1);
+			++L;
+		}
+		while(L>qy.second.first)
+		{
+			--L;
+			int idx = mp[L];
+			cur+=bit.query(idx-1);
+			bit.update(idx,1);
+		}
+		res[qy.first] = cur;
+	}
+	for(auto i:res) printf("%lld\n",i);
+    return 0;
+}

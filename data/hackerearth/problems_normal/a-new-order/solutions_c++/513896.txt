@@ -1,0 +1,153 @@
+/* ***************************
+Author: Abhay Mangal (abhay26)
+*************************** */
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <algorithm>
+#include <cstring>
+#include <cassert>
+#include <numeric>
+#include <utility>
+#include <bitset>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+using namespace std;
+ #define tr(container, it) \
+    for(typeof(container.begin()) it = container.begin(); it != container.end(); it++)
+#define maX(a,b) (a) > (b) ? (a) : (b)
+#define pii pair< int, int >
+#define pip pair< int, pii >
+#define FOR(i,n) for(int i=0; i<(int)n ;i++)
+#define REP(i,a,n) for(int i=a;i<(int)n;i++)
+#define pb push_back
+#define mp make_pair
+typedef long long ll;
+//int dx[]= {-1,0,1,0};
+//int dy[]= {0,1,0,-1};
+string A[105];
+vector<int> L,S;
+int inc[26];
+set<int> small[26];
+set<int> big[26];
+int pre[26];
+int adj[26][26];
+void dfs(int root, int cur)
+{
+    adj[root][cur] = 1;
+    int n = cur;
+    for(set<int>::iterator it = small[n].begin(); it != small[n].end();it++)
+    {
+        int x = *it;
+        dfs(root,x);
+    }
+}
+int main()
+{
+    memset(adj,0,sizeof adj);
+    int w;
+    scanf("%d",&w);
+    FOR(i,w)
+    {
+        cin >> A[i];
+        FOR(k,A[i].length())
+        pre[A[i][k]-'a'] = 1;
+    }
+    for(int i=0;i<w-1;i++)
+    {
+       // int j = i+1;
+        for(int j=i+1;j<w;j++){
+            int sz = min(A[i].length(),A[j].length());
+            for(int k=0;k<sz;k++)
+            {
+                if(A[i][k] != A[j][k])
+                {
+                    adj[A[i][k]-'a'][A[j][k]-'a'] = 1;
+                    inc[A[j][k]-'a'] = 1;
+                    small[A[i][k]-'a'].insert(A[j][k]-'a');
+                    big[A[j][k]-'a'].insert(A[i][k]-'a');
+                    break;
+                }
+            }
+        }
+    }
+    for(int i=0;i<26;i++)
+    {
+        int n = i;
+        for(set<int>::iterator it = small[n].begin(); it != small[n].end();it++)
+        {
+            int x=*it;
+            dfs(n,x);
+        }
+    }
+    int cnt = 0;
+    for(int i=0;i<26;i++)
+    {
+        if(!pre[i])
+            continue;
+        cnt++;
+        if(inc[i] == 0)
+            S.push_back(i);
+    }
+    for(int i=0;i<S.size();i++)
+    {
+        int n = S[i];
+        L.push_back(n);
+        for(set<int>::iterator it = small[n].begin(); it != small[n].end();it++)
+        {
+            int m = *it;
+            big[m].erase(n);
+          //  small[n].erase(m);
+            if(big[m].size() == 0)
+            {
+                S.pb(m);
+            }
+        }
+    }
+    vector<vector<int> > ANS;
+    vector<int> tmp;
+    FOR(i,L.size())
+    {
+        //printf("%c",L[i]+'a');
+        tmp.pb(L[i]);
+        if(i == L.size()-1)
+        {
+            ANS.pb(tmp);
+            break;
+        }
+        //cout << L[i] << " " << L[i+1] << " " << adj[L[i]][L[i+1]] << endl;
+        FOR(z,tmp.size())
+        if(adj[tmp[z]][L[i+1]])
+        {
+            ANS.pb(tmp);
+            tmp.clear();
+        }
+    }
+    int printed = 0;
+    FOR(i,ANS.size())
+    {
+        sort(ANS[i].begin(),ANS[i].end());
+        FOR(j,ANS[i].size())
+        {
+            printf("%c",ANS[i][j]+'a');
+            printed++;
+        }
+        printf("\n");
+    }
+    if(printed != cnt)
+        assert(0);
+    FOR(i,26)
+    {
+        if(big[i].size() != 0)
+            assert(0);
+    }
+return 0;
+}

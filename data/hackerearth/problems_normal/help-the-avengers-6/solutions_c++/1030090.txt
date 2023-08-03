@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define fto(i,a,b) for (int i = (a), _b = (b); i <= _b; i++)
+#define fdw(i,a,b) for (int i = (a), _b = (b); i >= _b; i--)
+#define fill(ar, val) memset(ar, val, sizeof(ar))
+#define debug(a) cout << #a << " = " << a << endl
+#define debug2(i,a) cout << i << " " << #a << " = " << a << endl
+#define oo 1000000000000LL
+#define maxn 32005
+
+#define sz(a) int((a).size())
+#define all(c) (c).begin(), (c).end()
+#define tr(ar, it) for ( typeof(ar.begin()) it = ar.begin(); it != ar.end(); it++ )
+#define present(c,x) ((c).find(x) != (c).end())
+#define cpresent(c,x) (find(all(c),x) != (c).end())  //vector
+
+typedef pair<long long, long long> ii;
+typedef vector <int> di1;
+typedef vector<di1> di2;
+
+bool prime[1000005];
+int a[maxn], it[maxn*4];
+int n, q, numtest, x, y;
+char c;
+
+int sieve() {
+    fto(i,1,1000000) prime[i] = true;
+    prime[1] = false;
+    for(int i=2; i*i<=1000000; i++)
+        if (prime[i]) {
+            for(int j=i*i; j<=1000000; j += i) {
+                prime[j] = false;
+            }
+        }
+    //cout << prime[3];
+}
+
+int init_tree(int i, int l, int r) {
+    if (r==l) {
+  //  debug(l);
+   // debug(r);
+
+   // debug(i);
+        if (prime[a[r]]) it[i] = 1;
+        else it[i] = 0;
+  //  debug2(a[r], it[i]);
+    }
+    else {
+        int mid = (l+r)/2;
+        init_tree(i*2,l,mid);
+        init_tree(i*2+1,mid+1,r);
+        it[i] = it[i*2] + it[i*2+1];
+    }
+}
+
+int update_tree(int i, int u, int v, int l, int r) {
+//debug(l);
+//debug(r);
+    if (l==r) {
+
+        if (l==u) {
+            if (prime[v]) it[i] = 1; else it[i] = 0;
+            return 0;
+            //debug(v);
+        }
+    }
+
+    if (u<l || r<u) exit;
+    int mid = (l+r)/2;
+    if (u<=mid) update_tree(i*2,u,v,l,mid);
+    else update_tree(i*2+1,u,v,mid+1,r);
+
+    it[i] = it[i*2] + it[i*2+1];
+  //  debug(l);
+  //  debug(r);
+  //  debug2(i, it[i]);
+}
+
+int find_tree(int i, int u, int v, int l, int r) {
+    if (v<l || r<u) return 0;
+    if (u<=l && r<=v) return it[i];
+    int mid = (l+r)/2;
+    return (find_tree(i*2,u,v,l,mid) + find_tree(i*2+1,u,v,mid+1,r));
+}
+
+int main() {
+    #ifndef ONLINE_JUDGE
+    freopen("in.inp","r",stdin);
+   freopen("ou.out","w",stdout);
+    #endif
+
+    sieve();
+
+    cin >> numtest;
+    fto(test,1,numtest) {
+        cin >> n;
+        fto(i,1,n) cin >> a[i];
+        init_tree(1,1,n);
+ //   fto(i,1,21) cout << it[i] << endl;
+        cin >> q;   getchar();
+        fto(i,1,q) {
+            cin >> c;
+            cin >> x >> y;   getchar();  //debug(x); debug(y);
+            if (c=='C') update_tree(1,x,y,1,n);
+            else {
+                cout << find_tree(1,x,y,1,n) << endl;
+            }
+        }
+    }
+    //cout << prime[1];
+}

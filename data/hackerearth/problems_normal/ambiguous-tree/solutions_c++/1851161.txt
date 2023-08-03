@@ -1,0 +1,119 @@
+#include<cstdio>
+#include<iostream>
+#include<algorithm>
+#include<cmath>
+#include<cstring>
+#include<vector>
+using namespace std;
+#define lim 18
+#define lim2 100001
+#define ll long long
+#define f first
+#define s second
+ll n,i,j,x,y,z,q,u,v,res;
+pair<ll,ll> p;
+ll D[lim2],M[lim2],S[lim2],P[lim][lim2];
+vector<ll> V[lim2];
+ll size(ll x)
+{
+  ll i,y;
+  S[x]=1;
+  for(i=0;i<V[x].size();i++)
+  {
+    y=V[x][i];
+    if(!S[y])
+    {
+      D[y]=D[x]+1;
+      M[y]+=M[x];
+      S[x]+=size(y);
+    }
+  }
+  return S[x];
+}
+pair<ll,ll> lca(ll x,ll y)
+{
+  ll i;
+  if(D[x]>D[y])
+  {
+    for(i=lim-1;i>=0;i--)
+      if(D[x]-(1<<i)>=D[y])
+        x=P[i][x];
+  }
+  else
+    for(i=lim-1;i>=0;i--)
+      if(D[y]-(1<<i)>=D[x])
+        y=P[i][y];
+  for(i=lim-1;i>=0;i--)
+    if(P[i][x]!=P[i][y])
+    {
+      x=P[i][x];
+      y=P[i][y];
+    }
+  return make_pair(x,y);
+}
+int main()
+{
+  cin>>n;
+  for(i=0;i+1<n;i++)
+  {
+    cin>>x>>y;
+    x--;
+    y--;
+    V[x].push_back(y);
+    V[y].push_back(x);
+  }
+  D[0]=0;
+  size(0);
+  for(i=0;i<n;i++)
+    for(j=0;j<V[i].size();j++)
+    {
+      x=V[i][j];
+      if(D[x]==D[i]+1)
+      {
+        M[x]=(S[i]-S[x])*(S[i]-S[x]-1)/2;
+        P[0][x]=i;
+      }
+    }
+  P[0][0]=-1;
+  for(i=1;i<lim;i++)
+    for(j=0;j<n;j++)
+      P[i][j]=P[i-1][P[i-1][j]];
+  D[0]=0;
+  memset(S,0,sizeof S);
+  size(0);
+  cin>>q;
+  while(q--)
+  {
+    cin>>x>>y;
+    x--;
+    y--;
+    if(x==y)
+    {
+      printf("0\n");
+      continue;
+    }
+    p=lca(x,y);
+    if(p.f==p.s)
+    {
+      if(D[x]<D[y])
+      {
+        u=x;
+        v=y;
+      }
+      else
+      {
+        u=y;
+        v=x;
+      }
+      z=v;
+      for(i=lim-1;i>=0;i--)
+        if(D[z]-(1<<i)>D[u])
+          z=P[i][z];
+      res=M[v]-M[z]+S[v]*(S[v]-1)/2+(n-S[z])*(n-S[z]-1)/2;
+    }
+    else
+      res=M[x]-M[p.f]+M[y]-M[p.s]+S[x]*(S[x]-1)/2+S[y]*(S[y]-1)/2+(n-S[p.f]-S[p.s])*(n-S[p.f]-S[p.s]-1)/2;
+    cout<<n*(n-1)/2-res<<"\n";
+  }
+	return 0;
+}

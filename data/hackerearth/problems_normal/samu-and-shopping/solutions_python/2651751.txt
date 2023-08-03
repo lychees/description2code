@@ -1,0 +1,67 @@
+class Shop(object):
+    def __init__(self, costs):
+        self.skirt_cost = costs[0]
+        self.pant_cost = costs[1]
+        self.shoe_cost = costs[2]
+
+    def __getitem__(self, item_idx):
+        assert 0 <= item_idx < 3
+        if item_idx == 0: return self.skirt_cost
+        if item_idx == 1: return self.pant_cost
+        return self.shoe_cost
+
+    def __repr__(self):
+        return "({}, {}, {})".format(self.skirt_cost, self.pant_cost, self.shoe_cost)
+
+
+def money_req_iter(shops):
+    cache = {}
+    n = len(shops)
+
+    shop = shops[0]
+    cache[(0, 0)] = min([shop[1], shop[2]])
+    cache[(0, 1)] = min([shop[0], shop[2]])
+    cache[(0, 2)] = min([shop[0], shop[1]])
+
+    for start_index in xrange(1, n):
+        shop = shops[start_index]
+        cache[(start_index, 0)] = min([cache[(start_index - 1, 1)] + shop[1], cache[(start_index - 1, 2)] + shop[2]])
+        cache[(start_index, 1)] = min([cache[(start_index - 1, 0)] + shop[0], cache[(start_index - 1, 2)] + shop[2]])
+        cache[(start_index, 2)] = min([cache[(start_index - 1, 0)] + shop[0], cache[(start_index - 1, 1)] + shop[1]])
+
+    return min([cache[(n - 1, 0)], cache[(n - 1, 1)], cache[(n - 1, 2)]])
+
+
+def money_req(shops, start_index, exclude, cache):
+    if start_index < 0:
+        return 0
+    if (start_index, exclude) in cache:
+        return cache[(start_index, exclude)]
+
+    shop = shops[start_index]
+    optimal_money = 999999999999999999999999999999999999L  # +Infinity
+    for i in xrange(3):
+        if i != exclude:
+            cost = money_req(shops, start_index - 1, i, cache) + shop[i]
+            if cost < optimal_money:
+                optimal_money = cost
+
+    cache[(start_index, exclude)] = optimal_money
+    return optimal_money
+
+
+def main():
+    num_tests = int(raw_input())
+    for t in xrange(num_tests):
+        n = int(raw_input())
+        shops = []
+        for i in xrange(n):
+            shops.append(Shop(map(int, raw_input().split())))
+        print money_req_iter(shops)
+
+
+if __name__ == '__main__':
+    main()
+    # import cProfile
+
+    # cProfile.run("main()")

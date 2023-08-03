@@ -1,0 +1,82 @@
+#include <iostream>
+#include <cstring>
+using namespace std;
+#define mod 1000000007
+//http://leetcode.com/2011/11/longest-palindromic-substring-part-ii.html
+string preProcess(string s) {
+  int n = s.length();
+  if (n == 0) return "^$";
+  string ret = "^";
+  for (int i = 0; i < n; i++)
+    ret += "#" + s.substr(i, 1);
+ 
+  ret += "#$";
+  return ret;
+}
+int P[300001]; 
+int n;
+void longestPalindrome(string s) {
+  string T = preProcess(s);
+  n = T.length();
+  
+  //int *P = new int[n];
+  int C = 0, R = 0;
+  for (int i = 1; i < n-1; i++) {
+    int i_mirror = 2*C-i; // equals to i' = C - (i-C)
+    
+    P[i] = (R > i) ? min(R-i, P[i_mirror]) : 0;
+    
+    // Attempt to expand palindrome centered at i
+    while (T[i + 1 + P[i]] == T[i - 1 - P[i]])
+      P[i]++;
+ 
+    // If palindrome centered at i expand past R,
+    // adjust center based on expanded palindrome.
+    if (i + P[i] > R) {
+      C = i;
+      R = i + P[i];
+    }
+  }
+ 
+}
+int main()
+{
+    int t;
+    cin>>t;
+    string s;
+    while(t--){
+    	cin>>s;
+    	memset(P,0,sizeof(P));
+    	longestPalindrome(s);
+    	long long su = 0;
+    	for(int i=1;i<n-1;i++){
+    		if (P[i]==0) continue;
+    		if (i&1){
+    		/*	for(int j=2;j<=P[i];j+=2){
+    				su += 1LL*j;
+    				su %= mod;
+    			}*/
+    			long long tmp;
+    			if (P[i]&1) tmp = P[i]-1;
+    			else tmp = P[i];
+    			su += 1LL*((tmp-2)/2+1)*(2+tmp)/2;
+    			su%=mod;
+    		}
+    		else{
+    			/*for(int j=1;j<=P[i];j+=2){
+    				su += 1LL*j;
+    				su %= mod;
+    			}*/
+    			long long tmp;
+    			if (P[i]&1) tmp = P[i];
+    			else tmp = P[i]-1;
+    			su += 1LL*((tmp-1)/2+1)*(1+tmp)/2;
+    			su%=mod;
+    		}
+    	}
+    	printf("%lld\n",su);
+    //	for(int i=1;i<n-1;i++) cout << P[i] << " ";
+    //	cout << endl;
+    }
+    return 0;
+}

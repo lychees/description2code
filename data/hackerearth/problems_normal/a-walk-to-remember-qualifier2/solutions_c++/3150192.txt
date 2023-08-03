@@ -1,0 +1,71 @@
+#include <cstdio>
+#include <vector>
+#include <algorithm>
+
+#define MAX_N 200010
+
+using namespace std;
+
+vector<int> g[MAX_N], g_rev[MAX_N];
+vector<int> finishOrder;
+bool visited[MAX_N];
+
+void dfs( int s ) {
+	visited[s] = true;
+		
+	for( int u : g[s] )
+		if( !visited[u] ) {
+			dfs(u);
+		}
+	
+	finishOrder.push_back(s);
+} 
+
+vector<int> comp;
+void dfs_rev( int s ) {
+	visited[s] = true;
+	
+	comp.push_back(s);
+	
+	for( int v : g_rev[s] )
+		if( !visited[v] ) 
+			dfs_rev(v);
+}
+
+int main( void ) {
+	int n, m;
+	scanf("%i %i", &n, &m);
+	
+	while( m-- ) {
+		int u, v;
+		scanf("%i %i", &u, &v);
+		
+		g[u].push_back(v);
+		g_rev[v].push_back(u);
+	}
+	
+	fill(visited, visited+MAX_N, false);
+	for( int i = 1; i <= n; i++ )
+		if( !visited[i] ) {
+			dfs(i);
+		}
+	
+	vector<bool> can(n+1, false);
+	
+	fill(visited, visited+MAX_N, false);
+	for( int i = n-1; i >= 0; i-- )
+		if( !visited[finishOrder[i]] ) {
+			comp.clear();
+			dfs_rev(finishOrder[i]);
+			
+			if( comp.size() > 1 ) {
+				for( int u : comp )
+					can[u] = true;
+			}
+		}
+	
+	for( int i = 1; i <= n; i++ )
+		printf("%i%c", can[i] ? 1 : 0, (i == n) ? '\n' : ' ');
+	
+	return 0;
+}

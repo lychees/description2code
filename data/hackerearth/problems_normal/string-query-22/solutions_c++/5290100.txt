@@ -1,0 +1,68 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define MAX 200005
+string st;
+int m;
+int tree[4*MAX][26];
+void build(int node, int start, int end)
+{
+	if(start == end) {
+		tree[node][st[start]-97]=1;
+		return;
+	}
+	int mid = (start + end) / 2;
+	build(2*node,start, mid);
+	build(2*node+1,mid+1, end);
+	int i;
+	for(i=0;i<26;i++)
+		tree[node][i] = tree[2*node][i] + tree[2*node+1][i];
+	return;	
+}
+//ind is char - 97
+void update(int node, int start, int end, int kth, int ind)
+{
+	if(start == end) {
+		//cout<<st[start];
+		tree[node][st[start]-97]=0;
+		st[start] = '*';
+		//cout<<start;
+		return;
+	}
+	int mid = (start + end) / 2;
+	int p = kth - tree[2*node][ind];
+	if(p<=0) {
+		update(2*node,start,mid,kth,ind);
+	}
+	else {
+		update(2*node+1,mid+1,end,p,ind);
+	}
+	int i;
+	for(i=0;i<26;i++)
+		tree[node][i] = tree[2*node][i] + tree[2*node+1][i];
+	return;
+}
+int main()
+{
+	string q,s;
+	cin>>s;
+	q='*';
+	st=q+s;
+	//cout<<st;
+	int n=st.length() - 1;
+	scanf("%d",&m);
+	build(1,1,n);
+	while(m--) {
+		int h,k;
+		char x;
+		scanf("%d %c",&k,&x);
+		h=x-97;
+		//cout<<k<<" "<<x<<" "<<h<<endl;
+		update(1,1,n,k,h);
+	}
+	int i;
+	for(i=0;st[i]!='\0';i++) {
+		if(st[i]!='*')
+			printf("%c",st[i]);
+	}
+	return 0;
+}

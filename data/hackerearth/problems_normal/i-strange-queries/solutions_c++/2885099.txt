@@ -1,0 +1,94 @@
+#include <bits/stdc++.h>
+
+#define FOR(i,a,b) for (int i = (int)(a); i < (int)(b); ++i)
+#define REP(i,n) FOR(i,0,n)
+#define pb push_back
+#define ALL(x) (x).begin(), (x).end()
+#define ll long long
+
+#define TRACE(x) cerr << #x << " = " << x << endl
+#define _ << " _ " <<
+
+using namespace std;
+
+class ev{
+public:
+	int x, y;
+	int id;
+};
+
+int n, q;
+int a[50005];
+
+vector < ev > Quer;
+
+bool cmpx(ev a, ev b){return a.x < b.x;}
+
+vector < ev > bucket[2005];
+
+int s1 = -1, s2 = -1;
+int cnt1[50005], cnt2[50005];
+ll cr;
+void push1(){
+	++cnt1[a[++s1]];
+	cr += cnt2[a[s1]];
+}
+void push2(){
+	++cnt2[a[++s2]];
+	cr += cnt1[a[s2]];
+}
+void pop1(){
+	--cnt1[a[s1]];
+	cr -= cnt2[a[s1--]];
+}
+void pop2(){
+	--cnt2[a[s2]];
+	cr -= cnt1[a[s2--]];
+}
+void Set(int x, int y){
+	while (s1 < x) push1();
+	while (s2 < y) push2();
+	while (s1 > x) pop1();
+	while (s2 > y) pop2();
+}
+
+bool cmpy(ev a, ev b){if (a.y != b.y) return a.y < b.y; return a.x < b.x;}
+
+ll ans[50005];
+
+int main(){
+    cin >> n;
+    REP(i,n) cin >> a[i];
+    
+    //Set(3, 4);
+    //TRACE(cr);
+    
+    cin >> q;
+    REP(i,q){
+    	int l1, r1, l2, r2;
+    	cin >> l1 >> r1 >> l2 >> r2, --l1, --l2, --r1, --r2;
+    	Quer.pb({r1, r2, i+1});
+    	//TRACE(Quer.back().x _ Quer.back().y _ Quer.back().id);
+    	Quer.pb({l1-1, l2-1, i+1});
+    	Quer.pb({l1-1, r2, -i-1});
+    	Quer.pb({r1, l2-1, -i-1});
+    }
+    for (auto x : Quer){
+    	if (x.x < 0) continue;
+    	bucket[x.x/200].pb(x);
+    }
+    
+    for (auto &v : bucket){
+    	sort(ALL(v), cmpy);
+    	for (auto x : v){
+    		Set(x.x, x.y);
+    		//TRACE(x.x _ x.y _ x.id _ cr);
+    		if (x.id > 0) ans[x.id-1] += cr;
+    		else ans[-1-x.id] -= cr;
+    	}
+    }
+    
+    REP(i,q) cout << ans[i] << endl;
+    
+    return 0;
+}

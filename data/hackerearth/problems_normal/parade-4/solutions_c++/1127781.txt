@@ -1,0 +1,101 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+#include <vector>
+
+#define MOD 1000000007
+
+using namespace std;
+
+int aluno[1003], antes[1003];
+int prox[1003], cor[1003], PD[2][1003];
+int n, m, T, anterior[1003];
+
+inline int getin() {
+    int r;
+    char c;
+    while (1) {
+        c = fgetc_unlocked(stdin);
+        if ('0' <= c and c <= '9') break;
+    }
+    r = c-'0';
+    while (1) {
+        c = fgetc_unlocked(stdin);
+        if (c == ' ' or c == '\n' or c==EOF) break;
+        r = 10*r + (c-'0');
+    }
+    return r;
+}
+
+
+inline int mode(int n) {
+    while (n >= MOD)
+        n -= MOD;
+    return n;
+}
+
+inline int get(int i, int j) {
+    return PD[i][j];
+}
+
+inline void set(int i, int j, int v) {
+    PD[i][j] = v;
+}
+
+int main() {
+
+    T=getin();
+    for(;T--;) {
+        n = getin();
+        m = getin();
+        memset(prox,0xff,n*sizeof(int));
+        int maxcor=0;
+        int prim=-1;
+        for (int i=0;i<n;i++) {
+            int t;
+            t = getin(); t--;
+            cor[i] = getin();
+            if (t != -1) prox[t] = i;
+            else prim=i;
+            if (cor[i] > maxcor) maxcor = cor[i];
+        }
+        for (int i=0;i<n;i++) {
+            aluno[i] = prim;
+            prim = prox[prim];
+        }
+
+        memset(anterior,0,(maxcor+1)*sizeof(int));
+        for (int i=0;i<n;i++) {
+            antes[i] = anterior[cor[aluno[i]]];
+            anterior[cor[aluno[i]]] = i;
+        }
+
+        for (int i=0;i<2;i++)
+            memset(PD[i],0,(n+1)*sizeof(int));
+        int P=0;
+
+        set(P, 0, 1);
+        int pd;
+        int resp = 0;
+        for (int tam=1;tam<=m;tam++) {
+            pd = get(P,0);
+            for (int u=0;u<n;u++) {
+
+                if (antes[u] == 0 && (u==0 || cor[aluno[u]] != cor[aluno[0]]))
+                    resp = mode(resp + pd);
+
+                if (u) {
+                    set(P^1,antes[u], mode(get(P^1,antes[u]) + pd));
+                    set(P^1,u, mode(get(P^1,u) - pd + MOD));
+                }
+                pd = mode(pd + get(P,u+1));
+            }
+            P ^= 1;
+            memset(PD[P^1],0,(n+1)*sizeof(int));
+        }
+
+        printf("%d\n",resp);
+    }
+
+    return 0;
+}

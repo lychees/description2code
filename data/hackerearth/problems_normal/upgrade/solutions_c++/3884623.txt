@@ -1,0 +1,253 @@
+//Tanuj Khattar
+#include<bits/stdc++.h>
+
+using namespace std;
+
+typedef pair<int,int>   II;
+typedef vector< II >      VII;
+typedef vector<int>     VI;
+typedef vector< VI > 	VVI;
+typedef long long int 	LL;
+
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+#define SZ(a) (int)(a.size())
+#define ALL(a) a.begin(),a.end()
+#define SET(a,b) memset(a,b,sizeof(a))
+
+#define si(n) scanf("%d",&n)
+#define dout(n) printf("%d\n",n)
+#define sll(n) scanf("%lld",&n)
+#define lldout(n) printf("%lld\n",n)
+#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL)
+
+#define TRACE
+
+#ifdef TRACE
+#define trace(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+  cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+  const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define trace(...)
+#endif
+
+//FILE *fin = freopen("in","r",stdin);
+//FILE *fout = freopen("out","w",stdout);
+
+const int N = int(1e5)+10;
+const int LOGN = 20;
+namespace Treap{
+  typedef struct node{
+    int prior,size,val,sum,lazy;
+    node(){prior=rand();size=1;lazy=0;}
+    //value in array,info of segtree,lazy update
+    struct node *l,*r;
+  }node;typedef node* pnode;
+  node BUFF[10*N];int blen;
+  int sz(pnode t){
+    return t?t->size:0;
+  }
+  void upd_sz(pnode t){
+    if(t)t->size=sz(t->l)+1+sz(t->r);
+  }
+  void lazy(pnode t){
+    if(!t || !t->lazy)return;
+    swap(t->l,t->r);
+    if(t->l)t->l->lazy^=t->lazy;//propagate lazy
+    if(t->r)t->r->lazy^=t->lazy;
+    t->lazy=0;
+  }
+  void reset(pnode t){
+    if(t)t->sum = t->val;//lazy already propagated
+  }
+  void combine(pnode& t,pnode l,pnode r){//combine segtree ranges
+    if(!l || !r)return void(t = l?l:r);
+    t->sum = l->sum + r->sum;
+  }
+  void operation(pnode t){//operation of segtree
+    if(!t)return;
+    reset(t);//node represents single element of array
+    lazy(t->l);lazy(t->r);//imp:propagate lazy before combining l,r
+    combine(t,t->l,t);combine(t,t,t->r);
+  }
+  void split(pnode t,pnode &l,pnode &r,int pos,int add=0){
+    if(!t)return void(l=r=NULL);
+    lazy(t);int curr_pos = add + sz(t->l);
+    if(curr_pos<=pos)//element at pos goes to "l"
+      split(t->r,t->r,r,pos,curr_pos+1),l=t;
+    else	split(t->l,l,t->l,pos,add),r=t;
+    upd_sz(t);operation(t);
+  }
+  void merge(pnode &t,pnode l,pnode r){//result/left/right array
+    lazy(l);lazy(r);
+    if(!l || !r) t = l?l:r;
+    else if(l->prior>r->prior)merge(l->r,l->r,r),t=l;
+    else	merge(r->l,l,r->l),t=r;
+    upd_sz(t);operation(t);
+  }
+  pnode init(int val){
+    pnode ret = BUFF+blen++;
+    ret->val=val;ret->sum=val;
+    return ret;
+  }
+  int range_query(pnode t,int l,int r){//[l,r]
+    pnode L,mid,R;
+    split(t,L,mid,l-1);split(mid,t,R,r-l);//note: r-l!!
+    int ans = t->sum;
+    merge(mid,L,t);merge(t,mid,R);
+    return ans;
+  }
+  void range_update(pnode t,int l,int r){//[l,r]
+    pnode L,mid,R;
+    split(t,L,mid,l-1);split(mid,t,R,r-l);//note: r-l!!
+    t->lazy^=1; //lazy_update
+    merge(mid,L,t);merge(t,mid,R);
+  }
+  void mySwap(pnode t,int l1,int r1,int l2,int r2,bool rev = false){
+    if(r2 < l1)swap(l1,l2),swap(r1,r2);
+   //trace(l1,r1,l2,r2);
+    assert(l1<=r1 && r1<l2 && l2<=r2);
+    pnode L,m1,m2,m3,R;
+    split(t,L,m1,l1-1);split(m1,m1,m2,r1-l1);
+    split(m2,m2,m3,l2-r1-2);split(m3,m3,R,r2-l2);
+    if(rev)m1->lazy^=1,m3->lazy^=1;
+    //trace(m1->sum,m3->sum);
+    merge(t,L,m3);merge(t,t,m2);merge(t,t,m1);merge(t,t,R);
+  }
+}
+VI g[N];//edge list graph.graph is 1-based.
+int U[N],V[N],A[N],baseArray[N],DP[LOGN][N],level[N],sub[N];
+int chainParent[N],chainHead[N],blen,chainNo[N],pos[N],nchain;
+Treap::pnode treap;
+int adj(int u,int e){
+  return U[e]^u^V[e];
+}
+void HLD(int u,int ee){
+  baseArray[blen]=A[u];
+  pos[u]=blen;blen++;
+  chainNo[u]=nchain;
+  int sc=-1,mx=0;
+  for(int i=0;i<SZ(g[u]);i++){
+    int e = g[u][i],w = adj(u,e);
+    if(e==ee)continue;
+    if(sub[w]>mx)sc = e,mx = sub[w];
+  }
+  if(sc==-1)return;HLD(adj(u,sc),sc);
+  for(int i=0;i<SZ(g[u]);i++){
+    int e = g[u][i],w = adj(u,e);
+    if(e==ee || e==sc)continue;
+    nchain++;chainParent[nchain]=u;chainHead[nchain]=w;
+    HLD(w,e);
+  }
+}
+void dfs(int u,int ee){
+  sub[u]=1;
+  for(int i=0;i<SZ(g[u]);i++)
+    if(g[u][i]!=ee){
+      int w = adj(u,g[u][i]);
+      level[w]=level[u]+1;DP[0][w]=u;
+      dfs(w,g[u][i]);sub[u]+=sub[w];
+    }
+}
+int lca(int a,int b){
+  if(level[a]>level[b])swap(a,b);
+  int d = (level[b]-level[a]);
+  for(int i=LOGN-1;i>=0;i--)
+    if((1<<i)&d)
+      b = DP[i][b];
+  if(a==b)return a;
+  for(int i=LOGN-1;i>=0;i--)
+    if(DP[i][a]!=DP[i][b])
+      a=DP[i][a],b=DP[i][b];
+  return DP[0][a];
+}
+void preprocess(int n){
+  //hang the tree
+  DP[0][1]=1;dfs(1,0);
+  //HLD
+  chainHead[nchain]=chainParent[nchain]=1;HLD(1,0);
+  //LCA
+  for(int i=1;i<LOGN;i++)
+    for(int j=1;j<=n;j++)
+      DP[i][j]=DP[i-1][DP[i-1][j]];
+  //Treap
+  for(int i=0;i<blen;i++)
+    Treap::merge(treap,treap,Treap::init(baseArray[i]));
+  //done :)
+}
+int queryUp(int u,int p){
+  int ret = 0;
+  while(chainNo[u]!=chainNo[p]){
+    int l = pos[chainHead[chainNo[u]]], r = pos[u];
+    ret += Treap::range_query(treap,l,r);
+    u = chainParent[chainNo[u]];
+  }
+  ret += range_query(treap,pos[p],pos[u]);
+  return ret;
+}
+int query(int u,int v){
+  int LCA = lca(u,v);
+  return queryUp(u,LCA)+queryUp(v,LCA)-queryUp(LCA,LCA);
+}
+int goUp(int u,int d){
+  for(int i=0;i<LOGN-1;i++)
+    if((1<<i)&d)
+      u = DP[i][u];
+  return u;
+}
+void update(int u,int v){
+  if(level[u]<level[v])swap(u,v);
+  int LCA = lca(u,v);
+  //trace(u,v,LCA);
+  while(level[v] > level[LCA]){
+    int p = (chainNo[v]==chainNo[LCA]?goUp(v,level[v]-level[LCA]-1):chainHead[chainNo[v]]);
+    int d = min(level[u]-level[chainHead[chainNo[u]]],level[v]-level[p]);
+    int pu = goUp(u,d), pv = goUp(v,d);
+    Treap::mySwap(treap,pos[pu],pos[u],pos[pv],pos[v]);
+    u = DP[0][pu];v = DP[0][pv];
+  }v = LCA;
+  while(chainNo[u]!=chainNo[v] && level[u]>level[v]){
+    int vc = u,vt = u;
+    while(chainNo[vc]!=chainNo[v])vt = chainHead[chainNo[vc]],vc = chainParent[chainNo[vc]];
+    //trace(vc,vt);
+    int d = min(level[vc]-level[v],level[u]-level[chainHead[chainNo[u]]]);
+    if(d != level[vc]-level[v])
+      vt = goUp(vt,level[vc]-level[v] - d),vc = DP[0][vt];
+    int pu = goUp(u,d);
+    //trace(pu,u,v,vc,pos[u],pos[v],baseArray[pos[u]],baseArray[pos[v]]);
+    Treap::mySwap(treap,pos[pu],pos[u],pos[v],pos[vc],true);
+    v = vt; u = DP[0][pu];
+  }
+  //trace(u,v,LCA);
+  if(level[u]>level[v])Treap::range_update(treap,pos[v],pos[u]);
+}
+int main()
+{
+  int n,q;
+  si(n);si(q);
+  for(int i=1;i<=n;i++)
+    si(A[i]);
+  for(int i=1;i<n;i++){
+    scanf("%d %d",U+i,V+i);
+    g[U[i]].PB(i);g[V[i]].PB(i);
+  }
+  preprocess(n);
+  while(q--){
+    char s[2];int u,v;
+    scanf("%s %d %d",s,&u,&v);
+    if(s[0]=='R')
+      update(u,v);
+    else 
+      dout(query(u,v));
+   // trace(q,s);
+  }
+  return 0;
+}

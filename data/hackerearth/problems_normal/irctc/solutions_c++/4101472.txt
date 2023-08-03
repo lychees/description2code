@@ -1,0 +1,131 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef pair<int ,int> ii;
+class graph
+{
+    int v;
+    vector< pair <int ,int> > *arr;
+    public:
+      graph(int V)
+      {
+          v=V;
+          arr=new vector< pair <int ,int> >[v];
+      }
+      void add(int a,int b,int wt)
+      {
+          arr[a].push_back(make_pair(b,wt));
+          arr[b].push_back(make_pair(a,wt));
+      }
+      int Dijkstra(int sr,int ds,int *parent);
+};
+int graph::Dijkstra(int s,int ds,int *parent)
+{
+    int dis[v];
+    for(int i=0;i<v;i++)
+    {
+        dis[i]=INT_MAX;
+    }
+    priority_queue <ii, vector<ii> , greater<ii> > q;
+    q.push(ii(0,s));
+    dis[s]=0;
+    while(!q.empty())
+    {
+        ii r=q.top();
+        q.pop();
+        int x=r.second;
+        for(int i=0;i<arr[x].size();i++)
+        {
+            int t=arr[x][i].first;
+            int w=arr[x][i].second;
+            if(dis[t]>dis[x]+w)
+            {
+                dis[t]=dis[x]+w;
+                parent[t]=x;
+                q.push(ii(dis[t],t));
+            }
+        }
+    }
+    //cout<<dis[ds];
+    if(dis[ds]==INT_MAX)
+    {
+        
+        return 0;
+    }
+    else
+    {
+        return dis[ds];
+    }
+}
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    int t;
+    cin>>t;
+    while(t--)
+    {
+        int n,m;
+        cin>>n>>m;
+        graph g(n);
+        int i;
+        for(i=0;i<m;i++)
+        {
+            int a,b,wt;
+            cin>>a>>b>>wt;
+            g.add(a-1,b-1,wt);
+        }
+        int a,b,c,dest;
+        cin>>a>>b>>c;
+        int *parent=new int[n];
+        int par[100000];
+        
+        if(g.Dijkstra(a-1,b-1,parent)==0)
+        {
+            cout<<"No Train Found.";
+        }
+        else
+        {
+            dest=g.Dijkstra(a-1,b-1,parent);
+            int f=0;
+            i=b-1;
+            par[f]=b;
+            f++;
+            while(parent[i]!=a-1)
+            {
+                par[f]=parent[i]+1;
+                i=parent[i];
+                f++;
+            }
+            par[f]=a;
+            f++;
+            if(g.Dijkstra(b-1,c-1,parent)==0)
+            {
+                cout<<"No Train Found.";
+            }
+            else
+            {
+                dest=dest+g.Dijkstra(b-1,c-1,parent);
+                cout<<dest<<"\n";
+                for(i=f-1;i>=0;i--)
+                {
+                    cout<<par[i]<<" ";
+                }
+                f=0;
+                i=c-1;
+                par[f]=c;
+                f=1;
+                while(parent[i]!=b-1)
+                {
+                    par[f]=parent[i]+1;
+                    i=parent[i];
+                    f++;
+                }
+                for(i=f-1;i>=0;i--)
+                {
+                    cout<<par[i]<<" ";
+                }
+            }
+        }
+        cout<<"\n";
+    }
+}

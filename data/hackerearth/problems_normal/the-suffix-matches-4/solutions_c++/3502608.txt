@@ -1,0 +1,114 @@
+// Question on suffix array
+
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+char str[300100];
+ll rankk[300100],pos[300100],temp[300100],gap=1,len,lcp[300100],lcppos[300100][30];
+bool cmp(ll a,ll b)
+{
+	if(pos[a]!=pos[b]) return (pos[a]<pos[b]);
+	a+=gap;
+	b+=gap;
+	return ((a<len && b<len)?(pos[a]<pos[b]):(a>b));
+}
+void suffixa()
+{
+	ll i,j;
+	for(i=0; i<len; i++)
+	{
+		rankk[i]=i;
+		pos[i]=(ll)str[i];
+	}
+	temp[0]=0;
+	ll cnt=0;
+	for(gap=1;;gap*=2)
+    {
+        sort(rankk,rankk+len,cmp);
+        for(i=0; i<len-1; i++)         
+			 temp[i+1]=temp[i]+cmp(rankk[i],rankk[i+1]);
+        for(i=0; i<len; i++)       
+		     pos[rankk[i]]=temp[i];
+        if(temp[len-1]==len-1)   break;
+    }
+}
+//making the lcp array
+void lcpform()
+{
+	ll i,j,k=0;
+	for(i=0; i<len; i++)
+	{
+		if(pos[i]==len-1)
+			continue;
+		j=rankk[pos[i]+1];
+		while(str[i+k]==str[j+k]) ++k;
+		lcp[pos[i]+1]=k;
+		if(k) --k;
+	}
+}
+/*this lcpminposition is basically range minimum query
+on the lcp array, i.e. lcppos[i][j] is storing the minimum values from the
+lcp array starting from ith index to length 2^j(including element at ith index).
+This is helpful in finding the lcp among the suffixes which are far apart.
+Since the lcp between the two suffixes is the longest common prefix between them, hence
+if we need to find the lcp between two strings s1 and s2 then, it is equal to the 
+min of all the lcps of the strings which are in between s1 and s2 including both.
+
+IN our case , basically we are first reverting the string in main(), and making suffix array of the
+new reversed string.
+
+Now, with the help of the lcp , we are calculating the lcppos[i][j](RANGE MINIMUM QUERY,RMQ).
+
+And , now if user gives x as the input in query, then we know , we need to find the length of the
+longest suffix which matches between string str(1 to x) and str.
+i.e. After reversing, we need to find the longest common prefix between reversed string and string from len-x to len;
+THAT IS WHY, WE ARE SENDING answer(pos[len-x],pos[0]);
+*/
+void lcpminposition()
+{
+	ll i,j;
+	for(i=0; i<=len-1; i++)
+	{
+		lcppos[i][0]=lcp[i];
+	}
+	for(i=1; (1<<i)<=len; i++)
+	{
+		for(j=0; j+(1<<i)-1<len; j++)
+		{
+			if(lcppos[j][i-1]<=lcppos[j+(1<<(i-1))][i-1])
+				lcppos[j][i]=lcppos[j][i-1];
+			else
+				lcppos[j][i]=lcppos[j+(1<<(i-1))][i-1];
+		}
+	}
+}
+ll answer(ll a,ll b)
+{
+	if(a>b)
+		swap(a,b);
+	if(a==b) return (len-rankk[a]);
+	ll idx=0;
+	while((1<<idx)<=(b-a)) ++idx;
+	return min(lcppos[a+1][idx-1],lcppos[b-(1<<(idx-1))+1][idx-1]);
+}
+int main()
+{
+	scanf("%s",str);
+	len=strlen(str);
+	reverse(str,str+len);
+	gap=1;
+	suffixa();
+	lcpform();
+	lcpminposition();
+	ll q;
+	scanf("%lld",&q);
+	while(q--)
+	{
+		ll val;
+		scanf("%lld",&val);
+		val=len-val;
+		ll ans=answer(pos[0],pos[val]);
+		printf("%lld\n",ans);
+	}
+	return 0;
+}

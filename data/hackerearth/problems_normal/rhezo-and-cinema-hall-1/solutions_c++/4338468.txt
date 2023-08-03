@@ -1,0 +1,49 @@
+#include<iostream>
+#include<algorithm>
+#include<vector>
+
+using namespace std;
+
+typedef long long ll;
+
+const int MOD = 1e9 + 7;
+const int MAXN = 500 + 4;
+
+int n, m, k;
+ll d[MAXN][MAXN], dp[MAXN], e[2][MAXN];
+
+int main(){
+	ios::sync_with_stdio(false);
+	cin.tie(0);
+	cin >> n >> m >> k;
+	for (int i = 1; i <= m; i++){
+		d[i][1] = 1;
+		for (int j = 2; j <= i; j++)
+			for (int w = i - 2; w > 0; w--)
+				d[i][j] = (d[i][j] + d[w][j - 1]) % MOD;
+	}
+
+	for (int j = 1; j <= m; j++)
+		for (int i = 1; i <= m; i++)
+			dp[j] = (dp[j] + d[i][j]) % MOD;
+
+	ll ans = 1, sm = 0;
+	for (int j = 2; j <= m; j++)	sm = (sm + dp[j]) % MOD;
+	for (int i = 0; i < n; i++)	ans = (ans * sm) % MOD;
+
+	bool cur = 0;
+	e[cur][0] = 1;
+	for (int i = 0; i < n; i++){
+		for (int j = 0; j <= k; j++)	e[!cur][j] = 0;
+		for (int j = 0; j <= k; j++)
+			for (int w = 2; w <= j && w <= m; w++)
+				e[!cur][j] = (e[!cur][j] + e[cur][j - w] * dp[w]) % MOD;
+
+		cur = !cur;
+	}
+
+	for (int i = 0; i < k; i++)
+		ans = (ans + MOD - e[cur][i]) % MOD;
+	cout << ans << endl;
+	return 0;
+}

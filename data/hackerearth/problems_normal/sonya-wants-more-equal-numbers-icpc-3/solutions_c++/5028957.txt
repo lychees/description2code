@@ -1,0 +1,74 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int a[1005];
+int nxt[100005][105];
+int sum[100005];
+bool visited[100005][105];
+long int dp[100005][105];
+int n;
+
+long solve(int idx,int s) // return max. no. of disjoint sub arrays with sum = s starting with index = idx
+{
+    if(idx>n)
+        return 0;
+    if(visited[s][idx])
+        return dp[s][idx];
+    visited[s][idx] = true;
+    if(nxt[s][idx])
+        dp[s][idx] = max(1+solve(nxt[s][idx]+1,s),solve(idx+1,s));
+    else
+        dp[s][idx] = solve(idx+1,s);
+    return dp[s][idx];
+}
+
+int add(int i,int j)
+{
+    int ret = 0;
+    for(int k=i;k<=j;k++)
+        ret += a[k];
+    nxt[ret][i] = j;
+    sum[ret] = 1;
+    return ret;
+}
+
+int main()
+{
+
+    cin>>n;
+    for(int i=0;i<=1e5;i++)
+        sum[i] = 0;
+
+    for(int i=0;i<=1e5;i++)
+        for(int j=0;j<=n;j++)
+        {
+            nxt[i][j] = 0;
+            visited[i][j] = false;
+        }
+
+    for(int i=1;i<=n;i++)
+        cin>>a[i];
+    for(int i=1;i<=n;i++)
+        for(int j=i;j<=n;j++)
+            add(i,j);
+    long int mx = 0;
+    long int temp[100005];
+    for(int i=0;i<=1e5;i++)
+    {
+        if(sum[i]==0)
+        {
+            temp[i] = 0;
+            continue;
+        }
+        temp[i] = solve(0,i);//max no. of disjoint intervals with sum = i , beginning from 0 index
+        mx = max(mx,temp[i]);
+    }
+
+    cout<<mx<<endl;
+
+    for(int i=0;i<=1e5;i++)
+        if(temp[i]==mx)
+        cout<<i<<" ";
+    cout<<endl;
+    return 0;
+}

@@ -1,0 +1,219 @@
+#define _CRT_SECURE_NO_WARNINGS
+
+#pragma comment(linker, "/STACK:640000000")
+
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <iomanip>
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+#include <queue>
+#include <stack>
+#include <set>
+#include <map>
+#include <list>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <cmath>
+#include <ctime>
+#include <cassert>
+#include <bitset>
+
+using namespace std;
+
+#define forn(i, n) for(int i = 0; i < (int)(n); i++)
+#define forn1(i, n) for(int i = 1; i <= (int)(n); i++)
+#define forr(i, l, r) for(int i = int(l); i <= int(r); i++)
+#define all(a) (a).begin(), (a).end()
+#define sz(a) (int)((a).size())
+#define mp make_pair
+#define pb push_back
+#define x first
+#define y second
+#define y1 __y1
+#define sqr(x) ((x) * (x))
+
+typedef long long li;
+typedef long double ld;
+typedef pair<int, int> pt;
+
+inline void read(int&);
+inline void read(li&);
+inline void read(ld&);
+inline void read(char&);
+inline void read(string&);
+template <typename T1, typename T2> inline void read(T1&, T2&);
+template <typename T1, typename T2, typename T3> inline void read(T1&, T2&, T3&);
+template <typename T1, typename T2, typename T3, typename T4> inline void read(T1&, T2&, T3&, T4&);
+
+const int INF = (int)(1e9);
+const li INF64 = (li)(INF)* (li)(INF);
+const ld eps = 1e-9;
+const ld pi = ld(3.1415926535897932384626433832795);
+
+inline bool in(int i, int j, int n, int m) {
+    return i >= 1 && i <= n && j >= 1 && j <= m;
+}
+
+inline int myrand() {
+    return (rand() ^ (rand() << 15));
+}
+
+inline li randL() {
+    return myrand() * 1LL * myrand() + myrand();
+}
+
+const int dx[] = { 0, -1, 1, 0 };
+const int dy[] = { -1, 0, 0, 1 };
+
+const int N = 1e6 + 555;
+
+int n, m;
+li z;
+int a[N];
+
+inline void gen() {
+    return;
+}
+
+inline bool read() {
+	if(scanf("%d %d %lld", &n, &m, &z) != 3) return false;
+	forn(i, n) assert(scanf("%d", &a[i]) == 1);
+	//m = INF, z = 100;
+    return true;
+}
+
+inline void norm(int &x) {
+	while(x >= m) x -= m;
+	while(x < 0) x += m;
+	return;
+}
+
+inline void add(int &a, int b) {
+	a += b;
+	norm(a);
+	return;
+}
+
+int sumEv[N], sumOdd[N];
+
+inline int getOdd(int lf, int rg) {
+	int res = sumOdd[rg] - (lf == 0 ? 0 : sumOdd[lf - 1]);
+	norm(res);
+	return res;
+}
+
+inline int getEv(int lf, int rg) {
+	int res = sumEv[rg] - (lf == 0 ? 0 : sumEv[lf - 1]);
+	norm(res);
+	return res;
+}
+
+#include <unordered_map>
+
+inline void solve() {
+	//while(1);
+	forn(i, N) sumOdd[i] = sumEv[i] = 0;
+
+	const int LIM = 1000 * 1000;
+	//if(z > LIM) return;
+	unordered_map<int, int> used;
+	int startCyc = -1, lenCyc = -1;
+
+	sumEv[0] = a[0];
+	for(int i = 1; i < n; i++) {
+		sumEv[i] = sumEv[i - 1];
+		if(i % 2 == 0) add(sumEv[i], a[i]);
+	}
+
+	if(n > 1) {
+		sumOdd[1] = a[1];
+		for(int i = 2; i < n; i++) {
+			sumOdd[i] = sumOdd[i - 1];
+			if(i & 1) add(sumOdd[i], a[i]);
+		}
+	}
+
+	for(int k = n; k <= min(li(LIM), z); k++) {
+		int rg = k - 1, lf = k - n;
+		int sum;
+		if(k & 1) {
+			sum = getEv(lf, rg) - getOdd(lf, rg);
+		} else {
+			sum = getOdd(lf, rg) - getEv(lf, rg);
+		}
+
+		norm(sum);
+
+		a[k] = sum;
+		sumEv[k] = sumEv[k - 1];
+		if(!(k & 1)) add(sumEv[k], a[k]);
+		sumOdd[k] = sumOdd[k - 1];
+		if(k & 1) add(sumOdd[k], a[k]);
+		if(used.count(sum) == 0) {
+			if(k > 500 * 1000) used[sum] = k;
+		} else {
+			if(lenCyc == -1) {
+				int pos = used[sum];
+				int len = k - pos;
+				if(len > 100000 && k - len >= n && a[k] == a[k - len] && k - 2 * len >= n && a[k] == a[k - 2 * len]) {
+					startCyc = pos;
+					lenCyc = len;
+					break;
+				}
+			}
+		}
+		//cerr << "k sum == " << k << ' ' << sum << endl;
+	}
+	
+	if(z > LIM) assert(lenCyc != -1);
+	//while(1);
+	if(lenCyc == -1) {
+		assert(z <= LIM);
+		printf("%d\n", a[z]);
+		return;
+	}
+
+	assert(a[startCyc + lenCyc] == a[startCyc]);
+	assert(lenCyc >= 100000);
+	int pos = startCyc + lenCyc;
+	while(pos <= LIM) {
+		//assert(a[pos] == a[pos - lenCyc]);
+		pos += lenCyc;
+	}
+	li len = z - startCyc;
+	int idx = int(len % lenCyc);
+	assert(startCyc + idx <= LIM);
+	printf("%d\n", a[startCyc + idx]);
+	return;
+}
+
+int main() {
+#ifdef _DEBUG
+    assert(freopen("input.txt", "rt", stdin));
+    assert(freopen("output.txt", "wt", stdout));
+#endif
+
+    cout << setprecision(10) << fixed;
+    cerr << setprecision(10) << fixed;
+
+    srand(int(time(NULL)));
+
+    int T = 1;
+    assert(scanf("%d", &T) == 1);
+	//T = 1;
+
+    forn(i, T) {
+		//cerr << "TEST == " << i + 1 << endl;
+        assert(read());
+        solve();
+    }
+
+#ifdef _DEBUG
+    cerr << "TIME == " << clock() << " ms" << endl;
+#endif
+    return 0;
+}

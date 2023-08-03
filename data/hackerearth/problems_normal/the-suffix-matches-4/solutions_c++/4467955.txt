@@ -1,0 +1,97 @@
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <string.h>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <list>
+#include <math.h>
+ 
+#define ll long long int
+#define maxN 200000
+#define maxVal 100000000
+#define minVal -100000000
+#define mod 1000000007LL
+ 
+#define gcd(a,b) __gcd(a,b)
+ 
+using namespace std;
+ 
+char a[maxN+5];
+int n,p;
+struct suffix
+{
+	int left,right,i;
+};
+suffix f[maxN+5];
+int rankl[30][maxN+5];
+ 
+bool way(suffix x,suffix y)
+{
+	if(x.left==y.left)
+		return x.right<y.right;
+	return x.left<y.left;
+}
+ 
+int lcp(int x,int y)
+{
+	if(x==y)
+		return n-x;
+	int k,v=0;
+	for(k=p;k>=0&&x<n&&y<n;k--)
+	{
+		if(rankl[k][x]==rankl[k][y])
+		{
+			v+=(1<<k);
+			x+=(1<<k);
+			y+=(1<<k);
+		}
+	}
+	return v;
+}
+ 
+int main()
+{
+	ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    #ifndef LOCAL_SYS
+        //freopen("in.txt","r",stdin);
+        //freopen("out.txt","w",stdout);
+    #endif
+    int q,i,j,k,r;
+    scanf("%s",a);
+    n=strlen(a);
+    for(i=0;i<n;i++)
+    	rankl[0][n-1-i]=a[i]-'a';
+    for(i=1,j=1;i<n;i*=2,j++)
+    {
+    	for(k=0;k<n;k++)
+    	{
+    		f[k].left=rankl[j-1][k];
+    		f[k].right=((k+i)<n)?rankl[j-1][k+i]:-1;
+    		f[k].i=k;
+    	}
+    	sort(f,f+n,way);
+    	rankl[j][f[0].i]=r=0;
+    	for(k=0;k<n;k++)
+    	{
+    		if(f[k].left!=f[k-1].left||f[k].right!=f[k-1].right)
+    			r++;
+    		rankl[j][f[k].i]=r;
+    	}
+    }
+    p=j-1;
+    /*for(i=0;i<n;i++)
+    	printf("%d\n",f[i].i);
+    return 0;*/
+    scanf("%d",&q);
+    while(q--)
+    {
+    	scanf("%d",&i);
+    	i=n-i;
+    	printf("%d\n",lcp(0,i));
+    }
+    return 0;
+}

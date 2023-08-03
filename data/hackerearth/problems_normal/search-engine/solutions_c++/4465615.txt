@@ -1,0 +1,107 @@
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+
+class Node
+{
+	private:
+		char mContent;
+		bool mMarker;
+		int weight;
+		vector<Node*>	mChildren;
+	public:
+		Node() {mContent = ' '; mMarker = false;}
+		char content() {return mContent;}
+		void setContent(char c) {mContent = c;}
+		bool wordMarker() {return mMarker;}
+		void setWordMarker() {mMarker = true;}
+		void setWeight(int wt) {if(wt>weight) weight = wt;}
+		int getWeight() {return weight;}
+		void appendChild(Node* child) {mChildren.push_back(child);}
+		Node* findChild(char c);
+};
+
+class Trie
+{
+	private:
+		Node* root;
+	public:
+		Trie() {root = new Node();}
+		void addWord(string s, int weight);
+		int maxWeight(string s);
+};
+
+Node* Node::findChild(char c)
+{
+	for(int i=0; i<mChildren.size(); i++)
+	{
+		Node* temp = mChildren.at(i);
+		if(temp->content() == c)
+			return temp;
+	}
+	return NULL;
+}
+
+void Trie::addWord(string s, int weight)
+{
+	Node* current = root;
+	if(s.length()==0)
+	{
+		current->setWordMarker();
+		current->setWeight(weight);
+		return;
+	}
+	for(int i=0; i<s.length(); i++)
+	{
+		Node* child = current->findChild(s[i]);
+		if(child != NULL)
+			current = child;
+		else
+		{
+			Node* temp = new Node();
+			temp->setContent(s[i]);
+			current->appendChild(temp);
+			current = temp;
+		}
+		if(i==s.length()-1)
+			current->setWordMarker();
+		current->setWeight(weight);
+	}
+}
+
+int Trie::maxWeight(string s)
+{
+	Node *current = root, *temp = NULL;
+	for(int i=0; i<s.length(); i++)
+	{
+		temp = current->findChild(s[i]);
+		if(temp == NULL) return -1;
+		current = temp;
+	}
+	
+	return current->getWeight();
+}
+
+int main()
+{
+	int n, q, wt;
+	string str;
+
+	cin >> n >> q;
+
+	Trie* trie = new Trie();
+
+	for(int i=0; i<n; i++)
+	{
+		cin >> str >> wt;
+		trie->addWord(str, wt);
+	}
+
+	for(int i=0; i<q; i++)
+	{
+		cin >> str;
+		cout << trie->maxWeight(str) << '\n';
+	}
+	return 0;
+}

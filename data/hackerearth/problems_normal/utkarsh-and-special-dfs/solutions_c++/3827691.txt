@@ -1,0 +1,280 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <limits.h>
+#include <vector>
+#include <stdlib.h>
+#include <algorithm>
+#include <memory.h>
+#include <string.h>
+#include <math.h>
+#include <string>
+#include <algorithm>
+#include <functional>
+#include <cassert>
+#include <map>
+#include <set>
+#include <list>
+
+using namespace std;
+typedef long long lli;
+typedef vector<int> vi;
+typedef vector<lli> vli;
+typedef pair<int, int> pii;
+typedef vector<pii> vpii;
+typedef long double ld;
+
+const int INF = 0x3f3f3f3f;
+const lli LINF = 0x3f3f3f3f3f3f3f3f;
+
+//#define _LOCAL_DEBUG_
+#ifdef _LOCAL_DEBUG_
+#define eprintf(...) fprintf(stderr,__VA_ARGS__)
+#else
+#define eprintf(...) 
+#endif
+
+#pragma region Modular Arithmetic
+const int MOD = int(1e9) + 7;
+inline int add(const int a, const int b, const int mod = MOD) { return (a + b >= mod) ? (a + b - mod) : (a + b); }
+inline int sub(const int a, const int b, const int mod = MOD) { return (a - b < 0) ? (a - b + mod) : (a - b); }
+inline void inc(int &a, const int b, const int mod = MOD) { a = add(a, b, mod); }
+inline int negate(const int a, const int mod = MOD) { return mod - a; }
+inline int mul(const int a, const int b, const int mod = MOD) { return (a * 1ll * b) % mod; }
+int binPow(int b, int p, const int mod = MOD) {
+	int r = 1;
+	while (p) {
+		if (p & 1)
+			r = mul(r, b, mod);
+		b = mul(b, b, mod);
+		p >>= 1;
+	}
+	return r;
+}
+int inv(const int a, const int mod = MOD) {   // assuming that MOD is prime (Fermat's little theorem)
+	int res = binPow(a, mod - 2, mod);
+	return res;
+}
+inline int dvd(const int a, const int b, const int mod = MOD) { return mul(a, inv(b, mod), mod); } // b != 0
+#pragma endregion
+
+const int MAX = 1e5 + 10;
+int n, q;
+vi g[MAX];
+
+int l[MAX] = { 0 }, r[MAX] = { 0 }, a[MAX] = { 0 }, ba[MAX] = { 0 };
+int s[MAX] = { 0 };
+int gs[MAX] = { 0 };
+int types[MAX] = { 0 }, vs[MAX] = { 0 }, xs[MAX] = { 0 };
+int vis[MAX] = { 0 };
+int rev[MAX];
+int t[4 * MAX] = { 0 };
+int m[4 * MAX] = { 0 };
+
+void build(int v, int tl, int tr) {
+	if (tl == tr) {
+		t[v] = s[rev[tl]];
+		return;
+	}
+	int tm = (tl + tr) / 2;
+	build(2 * v, tl, tm);
+	build(2 * v + 1, tm + 1, tr);
+	t[v] = add(t[2 * v], t[2 * v + 1]);
+}
+
+void push(int v) {
+	if (m[v] == 0) return;
+	t[2 * v] = mul(t[2 * v], m[v]);
+	t[2 * v + 1] = mul(t[2 * v + 1], m[v]);
+	m[2 * v] = m[2 * v] ? mul(m[2 * v], m[v]) : m[v];
+	m[2 * v + 1] = m[2 * v + 1] ? mul(m[2 * v + 1], m[v]) : m[v];
+	m[v] = 0;
+}
+
+void update(int v, int tl, int tr, int l, int r, int mu) {
+	if (l > r) return;
+	if (tl == l && tr == r) {
+		t[v] = mul(t[v], mu);
+		m[v] = m[v] ? mul(m[v], mu) : mu;
+		return;
+	}
+	if(tl < tr) push(v);
+	int tm = (tl + tr) / 2;
+	update(2 * v, tl, tm, l, min(tm, r), mu);
+	update(2 * v + 1, tm + 1, tr, max(tm + 1, l), r, mu);
+	t[v] = add(t[2 * v], t[2 * v + 1]);
+}
+
+int query(int v, int tl, int tr, int l, int r) {
+	if (l > r) return 0;
+	if (tl == l && tr == r) 
+		return t[v];
+	if (tl < tr) push(v);
+	int tm = (tl + tr) / 2;
+	int lres = query(2 * v, tl, tm, l, min(tm, r));
+	int rres = query(2 * v + 1, tm + 1, tr, max(tm + 1, l), r);
+	int res = add(lres, rres);
+	return res;
+}
+
+void clear() {
+	for (int i = 0; i < MAX; i++) g[i].clear();
+	memset(s, 0, sizeof(s));
+	memset(t, 0, sizeof(t));
+	memset(m, 0, sizeof(m));
+	memset(rev, 0, sizeof(rev));
+}
+
+void dfs(int v, int p, int m, int &time) {
+	rev[time] = v;
+	l[v] = time++;
+	s[v] = m;
+	m = mul(m, a[v]);
+	gs[v] = s[v];
+	for (int i = 0; i < g[v].size(); i++) {
+		int to = g[v][i];
+		if (to == p) continue;
+		dfs(to, v, m, time);
+		gs[v] = add(gs[v], gs[to]);
+	}
+	r[v] = time;
+}
+
+vi solve() {
+	memcpy(a, ba, sizeof(ba));
+	int time = 0;
+	dfs(0, -1, 1, time);
+
+	build(1, 0, n - 1);
+
+	vi ans;
+	for (int i = 0; i < q; i++) {
+		int type = types[i], v = vs[i], x = xs[i];
+		if (type == 1) {
+			int mu = dvd(x, a[v]);
+			a[v] = x;
+			update(1, 0, n - 1, l[v] + 1, r[v] - 1, mu);
+		}
+		else {
+			int res = query(1, 0, n - 1, l[v], r[v] - 1);
+			ans.push_back(res);
+		}
+	}
+	return ans;
+}
+
+void dfs(int v, int p) {
+	vis[v] += 1;
+	for (int i = 0; i < a[v]; i++)
+		for (int j = 0; j < g[v].size(); j++) {
+			int to = g[v][j];
+			if (to == p) continue;
+			dfs(to, v);
+		}
+}
+
+vi solve1() {
+	memcpy(a, ba, sizeof(ba));
+	int time = 0;
+	dfs(0, -1, 1, time);
+
+	vi ans;
+	for (int i = 0; i < q; i++) {
+		int type = types[i], v = vs[i], x = xs[i];
+		if (type == 1) {
+			a[v] = x;
+		}
+		else {
+			memset(vis, 0, sizeof(vis));
+			dfs(0, -1);
+			int res = 0;
+			for (int i = l[v]; i < r[v]; i++) res = add(res, vis[i]);
+			ans.push_back(res);
+		}
+	}
+	return ans;
+}
+
+
+vi solve2() {
+	memcpy(a, ba, sizeof(ba));
+	int time = 0;
+	dfs(0, -1, 1, time);
+
+	vi ans;
+	for (int i = 0; i < q; i++) {
+		int type = types[i], v = vs[i], x = xs[i];
+		if (type == 1) {
+			a[v] = x;
+		}
+		else {
+			int time = 0;
+			dfs(0, -1, 1, time);
+			int res = gs[v];
+			int res1 = 0;
+			for (int i = l[v]; i < r[v]; i++)
+				res1 = add(res1, s[rev[i]]);
+			assert(res1 == res);
+			ans.push_back(res1);
+		}
+	}
+	return ans;
+}
+
+vi solve3() {
+	vi res;
+	res.push_back(4);
+	res.push_back(3);
+	res.push_back(2);
+	res.push_back(1);
+	res.push_back(103);
+	res.push_back(102);
+	res.push_back(101);
+	res.push_back(100);
+	return res;
+}
+
+void read() {
+	for (int i = 0; i < n - 1; i++) {
+		int f, t;
+		scanf("%d%d", &f, &t);
+		f--, t--;
+		g[f].push_back(t);
+		g[t].push_back(f);
+	}
+	for (int i = 0; i < n; i++) scanf("%d", &ba[i]);
+	for (int i = 0; i < q; i++) {
+		int type, v, x = 0;
+		scanf("%d%d", &type, &v);
+		v--;
+		if (type == 1) {
+			scanf("%d", &x);
+		}
+		types[i] = type, vs[i] = v, xs[i] = x;
+	}
+}
+
+int main() {
+#ifdef _LOCAL_VAN
+	freopen("in.txt", "r", stdin);
+#endif
+	while (scanf("%d%d", &n, &q) == 2) {
+		clear();
+		read();
+		//vi res1 = solve1();
+		//vi res2 = solve2();
+		vi res = solve();
+
+		for (int i = 0; i < res.size(); i++) {
+			//assert(res[i] == res1[i]);
+			//assert(res[i] == res2[i]);
+		}
+
+		for (int i = 0; i < res.size(); i++)
+			printf("%d\n", res[i]);
+		printf("\n");
+#ifndef _LOCAL_VAN
+		return 0;
+#endif
+	}
+	return 0;
+}

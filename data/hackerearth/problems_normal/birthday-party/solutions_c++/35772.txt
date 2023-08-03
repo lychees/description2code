@@ -1,0 +1,76 @@
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<set>
+#include<cstring>
+#include<string.h>
+using namespace std;
+
+int history[1010][1010]; ///upto sum,idx
+
+void clear_history()
+{
+	memset(history,0,sizeof(history));
+}
+
+void pre_compute(const vector<int>& vec)
+{
+	for(int i=0;i<1010;++i)history[0][i]=true;
+	for(int i=1;i<1010;i++)history[i][0]=false;
+ 
+	for(int i=1;i<1010;i++)
+	{
+		for(int j=1;j<=vec.size();j++)
+		{
+			history[i][j] = history[i][j-1];
+			if (i >= vec[j-1])
+				history[i][j] = history[i][j] || history[i - vec[j-1]][j-1];
+		}
+	}
+}
+
+bool find_soln(int sum,const vector<int>& vec,int idx)
+{
+	return history[sum][idx];
+}
+
+int main()
+{
+	int t;scanf("%i",&t);
+	vector<int> vec;
+	while(t--)
+	{
+		int ppl,num;scanf("%i %i",&ppl,&num);
+		int proper=0;
+
+		vec.clear();
+
+		for(int i=0;i<num;++i)
+		{
+			int tmp;scanf("%i",&tmp);vec.push_back(tmp);
+		}
+
+		sort(vec.begin(),vec.end());
+		clear_history();
+		pre_compute(vec);
+
+		for(int i=0,counter=0,prev=-1;i<ppl;++i)
+		{
+			int tmp;scanf("%i",&tmp);
+
+			if(tmp!=prev && i)
+			{
+				proper+=find_soln(counter,vec,vec.size()-1);
+				counter=0;
+			}
+			prev=tmp;
+			++counter;
+			
+			if(i==ppl-1)proper+=find_soln(counter,vec,vec.size()-1);
+		}
+
+		printf("%i\n",proper);
+	}
+//	getch();
+	return 0;
+}

@@ -1,0 +1,86 @@
+#include <iostream>
+#include <stdio.h>
+
+using namespace std;
+
+#define MAX 11
+#define ulli unsigned long long int
+#define ODD_MASK 1
+/***
+ Infnite power = all digits must be even
+ Power of number not with Infinite power (N)= (Infinite power number just greater than N - N) / ( N - Infinite power number just less than N )
+***/
+
+ulli gcd( ulli a, ulli b ){
+    if(a == 0)
+        return b;
+    return gcd(b%a, a);
+}
+
+int main(){
+    int t, n, temp, index, flag, dig_count;
+    int digits[MAX];
+    scanf("%d", &t);
+    
+    while(t--){
+        scanf("%d", &n);
+        temp = n;
+        index = -1;
+        flag = 0;
+        dig_count = 0;
+        //store digits of number in an array
+        while( temp != 0 ){
+            digits[++index] = temp%10;
+            if( (digits[index] & ODD_MASK) == 1 )
+                flag = ODD_MASK;
+            temp /= 10;
+        }
+        dig_count = index;
+        
+        if(flag == ODD_MASK){
+            ulli greaterIN = 0, lowerIN = 0;
+            
+            while( index >= 0 && (digits[index] & ODD_MASK) == 0 ){
+                greaterIN =  greaterIN * 10 + digits[index];
+                lowerIN =  lowerIN * 10 + digits[index];
+                index -= 1;
+            }
+            
+            if( digits[index] == 9 ){
+                lowerIN = lowerIN * 10 + digits[index] - 1;
+                if( greaterIN != 0 && digits[index+1] == 8 ){
+                    ulli temp2 = 8, tin = 1;
+                    while( index + tin <= dig_count && digits[index+tin] == 8 ){
+                        greaterIN -= temp2;
+                        temp2 *= 10;
+                        tin += 1;
+                    }
+                    greaterIN = ( greaterIN + ( temp2 / 4 ) ) * 10;
+                }
+                else
+                    greaterIN = ( greaterIN + 2 ) * 10;
+                index -= 1;
+            }
+            else{
+                greaterIN = greaterIN * 10 + digits[index] + 1;
+                lowerIN = lowerIN * 10 + digits[index] - 1;
+                index -= 1;
+            }
+            while( index >= 0 ){
+                greaterIN =  greaterIN * 10;
+                lowerIN =  lowerIN * 10 + 8;
+                index -= 1;
+            }
+            
+            //printf("%llu/%llu\n", greaterIN, lowerIN);
+            ulli common_div = gcd( greaterIN - n, n - lowerIN );
+            greaterIN = (greaterIN - n) /common_div;
+            lowerIN = (n - lowerIN) /common_div;
+            printf("%llu/%llu\n", greaterIN, lowerIN);
+        }
+        else
+            printf("Unlimited Power\n");
+        
+    }
+    return 0;
+}

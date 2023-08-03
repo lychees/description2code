@@ -1,0 +1,102 @@
+#include <bits/stdc++.h>
+using namespace std ;
+
+int n, q, BLOCK ;
+long long current_answer ;
+
+void insert(int val, vector <int>& tree) {
+	while(val <= n) {
+		tree[val]++ ;
+		val = val + (val & -val) ;
+	}
+}
+
+void remove(int val, vector <int>& tree) {
+	while(val <= n) {
+		tree[val]-- ;
+		val = val + (val & -val) ;
+	}
+}
+
+int lessThanOrEqualTo(int val, vector <int>& tree) {
+	int ans = 0 ;
+	while(val > 0) {
+		ans += tree[val] ;
+		val = val - (val & -val) ;
+	}
+	return ans ;
+}
+
+int greaterThan(int val, vector <int>& tree) {
+	return lessThanOrEqualTo(n, tree) - lessThanOrEqualTo(val, tree) ;
+}
+
+int lesserThan(int val, vector <int>& tree) {
+	return lessThanOrEqualTo(val - 1, tree) ;
+}
+
+class Query {
+	public :
+		int l, r, idx ;
+} ;
+
+bool cmp(const Query& q1, const Query& q2) {
+	int b1 = q1.l / BLOCK ;
+	int b2 = q2.l / BLOCK ;
+	if(b1 == b2)
+		return q1.r < q2.r ;
+	return b1 < b2 ;
+}
+
+int main() {
+	scanf("%d %d", &n, &q) ;
+	BLOCK = (int)floor(sqrt(n * 1.0)) ;
+	vector <int> a(n) ;
+	for(int i = 0 ; i < n ; i++)
+		scanf("%d", &a[i]) ;
+	vector <int> b(a) ;
+	sort(b.begin(), b.end()) ;
+	for(int i = 0 ; i < n ; i++)
+		a[i] = (lower_bound(b.begin(), b.end(), a[i]) - b.begin()) + 1 ;
+
+	vector <Query> queries(q) ;
+	for(int i = 0 ; i < q ; i++) {
+		scanf("%d %d", &queries[i].l, &queries[i].r) ;
+		queries[i].l-- ;
+		queries[i].r-- ;
+		queries[i].idx = i ;
+	}
+	sort(queries.begin(), queries.end(), cmp) ;
+
+	vector <int> tree(n + 1, 0) ;
+	int mo_left = 0, mo_right = -1 ;
+	current_answer = 0 ;
+	vector <long long> ans(q) ;
+	for(int i = 0 ; i < q ; i++) {
+		int left = queries[i].l ;
+		int right = queries[i].r ;
+		while(mo_right < right) {
+			mo_right++ ;
+			current_answer += (long long)greaterThan(a[mo_right], tree) ;
+			insert(a[mo_right], tree) ;
+		}
+		while(mo_right > right) {
+			current_answer -= (long long)greaterThan(a[mo_right], tree) ;
+			remove(a[mo_right], tree) ;
+			mo_right-- ;
+		}
+		while(mo_left < left) {
+			current_answer -= (long long)lesserThan(a[mo_left], tree) ;
+			remove(a[mo_left], tree) ;
+			mo_left++ ;
+		}
+		while(mo_left > left) {
+			mo_left-- ;
+			current_answer += (long long)lesserThan(a[mo_left], tree) ;
+			insert(a[mo_left], tree) ;
+		}
+		ans[queries[i].idx] = current_answer ;
+	}
+	for(int i = 0 ; i < q ; i++)
+		printf("%lld\n", ans[i]) ;
+}

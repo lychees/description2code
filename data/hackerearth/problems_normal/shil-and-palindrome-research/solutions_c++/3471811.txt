@@ -1,0 +1,130 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define FAST ios::sync_with_stdio(false)
+#define mp make_pair
+#define pb push_back
+#define re return
+#define fi first
+#define se second
+#define sz(x) ((int) (x).size())
+#define all(x) (x).begin(), (x).end()
+#define sqr(x) ((x) * (x))
+#define sqrt(x) sqrt(abs(x))
+#define fill(x,y) memset(x,y,sizeof(x))
+#define rep(i, begin, end) for(__typeof(begin) i = (begin); i != (end) + 1 - 2 * ((begin) > (end)); i += 1 - 2 * ((begin) > (end)))
+#define rep_stl(i, begin, end) for(i = begin; i != end; i++)
+#define MAX 100005
+#define MOD 1000000007
+#define endl "\n"
+#define in scanf 
+#define out printf
+//#define TIMER cout<<endl<<"Time Taken : "<<(double)(clock()-t1)/CLOCKS_PER_SEC<<" seconds."<<endl
+//#define FILE freopen("test.in", "r", stdin); freopen("test.out", "w", stdout)
+typedef long long ll;
+typedef long double ld;
+typedef double D;
+typedef vector<int> vi;
+typedef vector<long> vl;
+typedef vector<ll> vll;
+typedef pair<int, int> pii;
+typedef vector<pii> vpii;
+typedef vector<string> vs;
+typedef vector<vi> matrix;
+typedef vector<vi> vii;
+template<class T> T _abs(T x) { re (x > 0) ? x : -x; }
+template<class T> T _min(T a, T b) { re (a > b) ? b : a; }
+template<class T> T _max(T a, T b) { re (a > b) ? a : b; }
+clock_t t1 = clock();
+
+ll bit[MAX][26], n;
+char a[MAX];
+
+bool canPalin(ll alpha[]){
+	ll i;
+	ll odd = 0;
+	rep(i,0,25){
+		if(alpha[i] % 2) odd++;
+	}
+	if(odd > 1) return false;
+	return true;
+}
+
+void createBIT(){
+	fill(bit,0);
+	ll i,j,temp;
+	rep(i,1,n){
+		temp = a[i-1] - 'a'; // 0 based array
+		j = i;
+		while(j <= n){
+			bit[j][temp]++;
+			j += j & -j;
+		}
+	}
+}
+
+void update(ll index, char x){
+	ll value = x - 'a';
+	ll j = index;
+	ll prev = a[index-1] - 'a';
+	a[index-1] = x;
+	while(j <= n){
+		bit[j][value]++;
+		bit[j][prev]--;
+		j += j & -j;
+	}
+}
+
+bool query(ll l, int r){
+	ll alpha[26];
+	fill(alpha,0);
+	int ans = 0, i, j;
+	j = r;
+	while(j > 0){
+		rep(i,0,25){
+			alpha[i] += bit[j][i];
+		}
+		j -= j & -j;
+	}
+	j = l-1;
+	while(j > 0){
+		rep(i,0,25){
+			alpha[i] -= bit[j][i];
+		}
+		j -= j & -j;
+	}
+	return canPalin(alpha);
+}
+
+int main(){
+	FAST;
+	#ifdef FILE
+		FILE;
+	#endif
+	/*
+		1-based index of the BIT
+		0-based index of the input array
+	*/
+
+	ll i, j, q, x, y, l, r;
+	char z;
+	cin>>n>>q;
+	cin>>a;
+	createBIT();
+	while(q--){
+		cin>>x;
+		// x = 1 for update, x = 2 for query
+		if(x==1){
+			cin>>y>>z;
+			update(y,z);
+		}else if(x==2){
+			cin>>l>>r;
+			if(query(l, r)) cout<<"yes"<<endl;
+			else cout<<"no"<<endl;
+		}
+	}
+
+	#ifdef TIMER
+		TIMER;
+	#endif
+	return 0;
+}

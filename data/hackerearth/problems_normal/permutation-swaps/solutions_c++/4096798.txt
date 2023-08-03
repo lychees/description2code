@@ -1,0 +1,115 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <queue>
+using namespace std;
+
+void bfs(vector<int> arr[],int s,int visited[],int com_num[],int n,int ctr)
+{
+	int temp;
+	visited[s] = 1;
+	com_num[s] = ctr;
+
+	queue<int> gph;
+	gph.push(s);
+	while(!gph.empty())
+	{
+		temp = gph.front();
+		gph.pop();
+		for(int i=0;i<arr[temp].size();i++)
+		{
+			if(visited[arr[temp][i]]==0)
+			{
+				gph.push(arr[temp][i]);
+				visited[arr[temp][i]] = 1;
+				com_num[arr[temp][i]] = ctr;	
+			}
+		}
+	}
+}
+
+void visit_bfs(vector<int> arr[],int com_num[],int n)
+{
+	int visited[n+1];
+	int ctr = 1;
+	for(int i=1;i<=n;i++)
+		visited[i] = 0;
+	
+	for(int i=1;i<=n;i++)
+	{
+		if(arr[i].size()==0)
+			continue;
+
+		if(visited[i]==0)
+		{
+			bfs(arr,i,visited,com_num,n,ctr);
+			ctr++;
+		}
+	}
+}
+
+int main()
+{
+	#ifndef ONLINE_JUDGE
+		freopen("inp.txt","r",stdin);
+	#endif
+
+	int t,n,m,a,b;
+	scanf("%d",&t);
+	int arr1[100001];
+	int arr2[100001];
+	int check[100001]={0};
+	int com_num[100001];
+	while(t--)
+	{
+		scanf("%d %d",&n,&m);
+
+		for(int i=1;i<=n;i++)
+			scanf("%d",&arr1[i]);
+		
+		for(int i=1;i<=n;i++)
+			scanf("%d",&arr2[i]);
+
+		vector<int> gph[n+1];
+		while(m--)
+		{
+			scanf("%d %d",&a,&b);
+			gph[arr1[a]].push_back(arr1[b]);
+			gph[arr1[b]].push_back(arr1[a]);
+			check[a] = 1;
+			check[b] = 1;
+		}
+		int I;
+		for(I=1;I<=n;I++)
+		{
+			if(check[I]==0 && arr1[I]!=arr2[I])
+				break;
+		}
+
+		if(I<=n)
+		{
+			printf("NO\n");
+			continue;
+		}
+
+		visit_bfs(gph,com_num,n);
+
+		int i;
+		for(i=1;i<=n;i++)
+		{
+			if(check[i]==0)
+				continue;
+
+			if(com_num[arr2[i]]!=com_num[arr1[i]])
+			{
+				printf("NO\n");
+				break;		
+			}
+		}
+
+		if(i==(n+1))
+			printf("YES\n");	
+	}
+
+	return 0;
+}

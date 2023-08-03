@@ -1,0 +1,120 @@
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <functional>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#if defined(_MSC_VER) || __cplusplus > 199711L
+#define aut(r,v) auto r = (v)
+#else
+#define aut(r,v) __typeof(v) r = (v)
+#endif
+#define each(it,o) for(aut(it, (o).begin()); it != (o).end(); ++ it)
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int, int> pii; typedef vector<pair<int, int> > vpii; typedef long long ll;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+template<int MOD>
+struct ModInt {
+	static const int Mod = MOD;
+	unsigned x;
+	ModInt() : x(0) {}
+	ModInt(signed sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	ModInt(signed long long sig) { int sigt = sig % MOD; if(sigt < 0) sigt += MOD; x = sigt; }
+	int get() const { return (int)x; }
+
+	ModInt &operator+=(ModInt that) { if((x += that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator-=(ModInt that) { if((x += MOD - that.x) >= MOD) x -= MOD; return *this; }
+	ModInt &operator*=(ModInt that) { x = (unsigned long long)x * that.x % MOD; return *this; }
+
+	ModInt operator+(ModInt that) const { return ModInt(*this) += that; }
+	ModInt operator-(ModInt that) const { return ModInt(*this) -= that; }
+	ModInt operator*(ModInt that) const { return ModInt(*this) *= that; }
+};
+typedef ModInt<1000000007> mint;
+
+mint linearRecurrentSequenceValue(long long K, const vector<mint> &initValues, const vector<mint> &annPoly) {
+	assert(K >= 0);
+	if(K < (int)initValues.size())
+		return initValues[(int)K];
+	int d = (int)annPoly.size() - 1;
+	assert(d >= 0);
+	assert(annPoly[d].get() == 1);
+	assert(d <= (int)initValues.size());
+	if(d == 0)
+		return mint();
+	vector<mint> coeffs(d), square;
+	coeffs[0] = 1;
+	int l = 0;
+	while((K >> l) > 1) ++ l;
+	for(; l >= 0; -- l) {
+		square.assign(d * 2 - 1, mint());
+		for(int i = 0; i < d; ++ i)
+			for(int j = 0; j < d; ++ j)
+				square[i + j] += coeffs[i] * coeffs[j];
+		for(int i = d * 2 - 2; i >= d; -- i) {
+			mint c = square[i];
+			if(c.x == 0) continue;
+			for(int j = 0; j < d; ++ j)
+				square[i - d + j] -= c * annPoly[j];
+		}
+		for(int i = 0; i < d; ++ i)
+			coeffs[i] = square[i];
+		if(K >> l & 1) {
+			mint lc = coeffs[d - 1];
+			for(int i = d - 1; i >= 1; -- i)
+				coeffs[i] = coeffs[i - 1] - lc * annPoly[i];
+			coeffs[0] = mint() - lc * annPoly[0];
+		}
+	}
+	mint res;
+	for(int i = 0; i < d; ++ i)
+		res += coeffs[i] * initValues[i];
+	return res;
+}
+
+int main() {
+	pair<vector<mint>, vector<mint>> minPolys[11] = {
+		{ {},{} },
+		{ { 1 },{ -10, 1 } },
+		{ { 1, 5, 25 },{ 0, 10, -11, 1 } },
+		{ { 1, 4 },{ 10, -11, 1 } },
+		{ { 1, 3, 9, 59 },{ 0, 0, 10, -11, 1 } },
+		{ { 1, 2, 4 },{ 0, 10, -11, 1 } },
+		{ { 1, 2, 8, 74 },{ 0, -10, 21, -12, 1 } },
+		{ { 1, 2, 4, 22, 206, 2113, 20728, 205438, 2043640, 20411101, 204084732, 40990191, 408959052, 85027559, 823446952, 170555094, 638951001, 755081639, 150816375, 880163275, 429775542, 393470184, 177560692, 741316619, 584637747, 389437805, 52737168, 958845043, 734340990, 755366518, 519976808, 300088287, 539469569, 947588326, 197715117, 441669109, 557829851, 176360105, 325420814, 122363440, 10609163 },{ 10000000, -11000000, 1000000, 10000000, -11000000, 1000000, -171300000, 188430000, -17130000, -171300000, 188430000, -17130000, 122126000, -134338600, 12212600, 122126000, -134338600, 12212600, -23442010, 25786211, -2344201, -23442010, 25786211, -2344201, 1560170, -1716187, 156017, 1560170, -1716187, 156017, -26100, 28710, -2610, -26100, 28710, -2610, 10, -11, 1, 10, -11, 1 } },
+		{ { 1, 2, 4, 17, 142 },{ 0, 0, 0, 10, -11, 1 } },
+		{ { 1, 2 },{ 10, -11, 1 } },
+		{ { 1 },{ -1, 1 } },
+	};
+	int T;
+	scanf("%d", &T);
+	for(int ii = 0; ii < T; ++ ii) {
+		int n; int k;
+		scanf("%d%d", &n, &k);
+		mint ans = linearRecurrentSequenceValue(n, minPolys[k].first, minPolys[k].second);
+		printf("%d\n", ans.get());
+	}
+	return 0;
+}

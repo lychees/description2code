@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+typedef long long ll;
+const int MAXN = 2510, MAXLG = 12;
+
+#define fi first
+#define se second
+
+struct fenwick {
+	ll bit[MAXN];
+
+	void reset() {
+		fill_n(bit, MAXN, 0);
+	}
+
+	void update (int x, ll v) {
+		for (x++; x < MAXN; x += (x & -x)) {
+			bit[x] += v;
+		}
+	}
+
+	ll query (int x) {
+		ll s = 0;
+		for (x++; x; x &= x - 1) {
+			s += bit[x];
+		}
+		return s;
+	}
+
+	//the first one that has query >= s
+	int search (ll s) {
+		int cind = 0;
+		ll csum = 0;
+		for (int i = MAXLG - 1; i >= 0; i--) {
+			int nind = cind + (1 << i);
+			if (nind >= MAXN) {
+				continue;
+			}
+			ll nsum = csum + bit[nind];
+			if (nsum < s) {
+				cind = nind;
+				csum = nsum;
+			}
+		}
+		return cind;
+	}
+} fena, fens;	//active, sum.
+
+int N;
+ll A[MAXN], S, Q, P, dp[MAXN];
+int inds[MAXN];
+vector<pair<ll, int>> vals;
+
+ll getsum (int x) {
+	if (x == 0) {
+		return 0;
+	}
+	//sum of first x people
+	int ind = fena.search(x);
+	return fens.query(ind);
+}
+
+void add (int ind) {
+	fena.update(ind, 1);	//note: this is vals ind
+	fens.update(ind, vals[ind].fi);
+}
+
+int main() {
+	scanf("%d %lld %lld %lld", &N, &S, &Q, &P);	//P = higher, Q = lower.
+	for (int i = 0; i < N; i++) {
+		scanf("%lld", &A[i]);
+		vals.push_back(make_pair(A[i], i));
+	}
+	sort(vals.begin(), vals.end());
+	for (int i = 0; i < N; i++) {
+		inds[vals[i].se] = i;
+	}
+
+	for (int i = 1; i < N; i++) {
+		//calc dp[i]
+		ll sumh = 0;
+		fena.reset();
+		fens.reset();
+		for (int j = i; j >= 0; j--) {
+			sumh += A[j];
+			add(inds[j]);
+			//# of things is i - j + 1
+			int len = i - j + 1, num = len * Q / (P + Q);
+			ll cost = 1e16;
+			//printf("[%d, %d], num = %d\n", j, i, num);
+			for (int k = -1; k <= 1; k++) {
+				int pos = num + k;
+				if (1 <= pos && pos <= len) {
+					ll lsum = getsum(pos), rsum = sumh - lsum;
+					//printf("[%d, %d]. pos = %d. lsum = %lld, rsum = %lld\n", j, i, pos, lsum, rsum);
+					ll apos = lsum - getsum(pos - 1);
+					//printf("apos = %lld\n", apos);
+					cost = min(cost, (pos * apos - lsum) * P + (rsum - (len - pos) * apos) * Q);
+				}
+			}
+			//printf("[%d, %d] cost is %lld\n", j, i, cost);
+			dp[i] = max(dp[i], (j ? dp[j - 1] : 0) + ((i - j) * S - cost));
+		}
+		//printf("dp[%d] = %lld\n", i, dp[i]);
+	}
+
+	printf("%lld\n", dp[N - 1]);
+}

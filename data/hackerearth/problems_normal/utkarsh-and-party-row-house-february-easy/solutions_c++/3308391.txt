@@ -1,0 +1,78 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+
+struct BIT{
+	vector< LL >f;
+	int tam;
+	BIT( int N ){
+		tam = N+5;
+		f.assign(tam, 0);
+	}
+
+	int LSone( int x ){
+		return (x&(-x));
+	}
+
+	void update( int idx,  LL val){
+		for(;idx<tam; idx+=LSone(idx)){
+			f[idx]+=val;
+		}
+	}
+
+	 LL query( int n){
+        LL res = 0;
+		while(n){
+			res+=f[n];
+			n-=LSone(n);
+		}
+		return res;
+	}
+
+
+	 long long query( int l, int r){
+		return query(r)-query(l-1);
+	}
+};
+
+int main()
+{
+    //freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w", stdout);
+    ios::sync_with_stdio(false);
+    cin.tie( NULL );
+    for( LL n, m, aux, cas, k, l, r; cin>>n>>m; ){
+    	BIT ai(n), sai(n);
+    	for( int i=0;i<n; i++){
+    		cin>>aux;
+    		ai.update(i+1,aux);
+    		sai.update(i+1, (i+1)*aux);
+    	}
+    	LL res = 0;
+    	for( int j=0; j<m; j++){
+    		cin>>cas;
+    		if( cas==1 ){
+    			cin>>k>>l>>r;
+    			//cout<<"->"<<ai.query(l, r)<<"\n";
+    			//cout<<"->"<<sai.query(l, r)<<"\n";
+    			if(r<k || k<l){
+                    if( r<k ){
+                        res= ai.query(l, r)*k-sai.query(l, r);
+                    } else{
+                        res= sai.query(l, r)-ai.query(l, r)*k;
+                    }
+    			} else {
+                    res= ai.query(l, k-1)*k-sai.query(l, k-1);
+                    res+=sai.query(k+1, r)-ai.query(k+1, r)*k;
+    			}
+    			cout<<res<<"\n";
+    		} else {
+    			cin>>k>>l;
+    			ai.update(k, l);
+    			sai.update( k, l*k);
+    		}
+    	}
+    }
+    return 0;
+}

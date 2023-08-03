@@ -1,0 +1,177 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define vi vector <int> 
+#define vl vector <ll>
+#define pii pair <int,int>
+#define pb push_back
+#define mp make_pair
+#define all(x) x.begin(),x.end()
+#define FOR(i,n) for(int i =1;i<=n;i++)
+#define For(i,n) for(int i=0;i<n;i++)
+#define MAX 1000100
+#define MOD 1000000007
+#define INF 2000000000
+#define matrix vector < vector<ll> >
+#define si(x) scanf("%d",&x)
+#define sl(x) scanf("%lld",&x)
+
+int parent[MAX];
+ll sum;
+const int K=2;
+vector < pair < int,pair<int,int> > > G;
+matrix mul(matrix &A,matrix &B)
+{
+	matrix C(K+1,vector<ll>(K+1));
+	FOR(i,K) FOR(j,K) FOR(k,K)
+	C[i][j]=(C[i][j]+A[i][k]*B[k][j])%MOD;
+	return C;
+}
+
+matrix _pow(matrix &A, ll p)
+{
+	if (p == 1)
+    return A;
+    if (p % 2){
+    	matrix y=_pow(A,p-1);
+    return mul(A,y);	
+    }
+    
+    matrix X = _pow(A, p/2);
+    return mul(X, X);
+}
+
+ll fib(ll n)
+{
+	vector<ll> f1(K+1);
+	f1[1]=1;
+	f1[2]=1;
+	matrix T(K+1,vector<ll>(K+1));
+	T[1][1]=0;
+	T[1][2]=1;
+	T[2][1]=1;
+	T[2][2]=1;
+	
+	if(n==0)
+	return 0;
+	
+	if(n==1)
+	return 1;
+	
+	T=_pow(T,n-1);
+	ll ans=0;
+	
+	FOR(i,K)
+	ans=(ans+T[1][i]*f1[i])%MOD;
+	return ans;
+	
+}
+
+
+void init(int n)
+{
+	for(int i=0;i<n;i++)
+	parent[i]=i;
+}
+int find_parent(int x)
+{
+	return (x==parent[x])?x:parent[x]=find_parent(parent[x]);
+}
+
+void Kruskal()
+{
+	sort(all(G));
+	/*for(int i=0;i<G.size();i++)
+	{
+		cout<<G[i].first<<" "<<G[i].second.first<<" "<<G[i].second.second<<endl;
+	}*/
+	for(int i=0;i<G.size();i++)
+	{
+		int par_u=find_parent(G[i].second.first);
+		int par_v=find_parent(G[i].second.second);
+		//cout<<par_u<<" "<<par_v<<endl;
+		if(par_u!=par_v)
+		{
+			//cout<<"hi"<<endl;
+			sum+=G[i].first;
+			parent[par_u]=par_v;
+		}
+	}
+	//cout<<sum<<endl;
+}
+int main()
+{
+	
+	//vector < pair < int,pair<int,int> > > G;
+	int N;
+	si(N);
+	init(N*N);	
+	ll K1,K2,K3,K4;
+    
+    sl(K1);
+    sl(K2);
+    sl(K3);
+    sl(K4);
+    ll fibK1=fib(K1);ll fibK2=fib(K2);ll fibK3=fib(K3);ll fibK4=fib(K4);
+    ll prev_fibK1=fib(K1-1); ll prev_fibK2=fib(K2-1); ll prev_fibK3=fib(K3-1); ll prev_fibK4=fib(K4-1); 
+    for(int i=0;i<N;i++)
+    {
+    	for(int j=0;j<N;j++)
+    	{
+    		int u=N*i+j;
+    		int v;
+    		int w=0;
+    		if(j<N-1)
+    		{
+    			v = N*i + j + 1;
+    			//cout<<"F2="<<fibK2<<endl;
+    			w=(fibK1+fibK2)%MOD;
+    			//cout<<"Wrow="<<w<<endl;
+    			G.pb(mp(w,mp(u,v)));
+    			
+    			ll temp = fibK1;
+    			fibK1 += prev_fibK1;
+    			if(fibK1 >= MOD)
+    			fibK1 %= MOD;
+    			prev_fibK1 = temp;
+    			
+    			temp = fibK2;
+    			fibK2 += prev_fibK2;
+    			if(fibK2 >= MOD)
+    			fibK2 %= MOD;
+    			prev_fibK2 = temp;    			
+    		}    		
+    	}
+    }
+    for(int j=0;j<N;j++)
+    {
+        for(int i=0;i<N;i++)
+        {
+            int u = N*i + j ,v;
+            int w = 0;
+            if(i < N-1)
+            {
+            	//cout<<"F4="<<fibK4<<endl;
+                v = N*(i+1) + j;
+                w = (fibK3 + fibK4)%MOD;
+                //cout<<"Wcol="<<w<<endl;
+                G.pb(mp(w,mp(u,v)));
+                
+                ll tmp = fibK3;
+                fibK3 += prev_fibK3;
+                if(fibK3 >= MOD)
+                fibK3 %= MOD;
+                prev_fibK3 = tmp;
+                
+                tmp = fibK4;
+                fibK4 += prev_fibK4;
+                if(fibK4 >= MOD)
+                fibK4 %= MOD;
+                prev_fibK4 = tmp;
+            }
+        }
+    }
+    Kruskal();
+    cout<<sum<<endl;
+    return 0;
+}

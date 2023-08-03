@@ -1,0 +1,60 @@
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+using namespace std;
+
+#define MAX 310
+#define MOD 1000000009
+
+char str[MAX], s[MAX];
+long long a[MAX], f[MAX][MAX][2];
+int n, m, q, l, r;
+
+void prepare(){
+	n = strlen(str);
+	for (int i = 0; i < n; i++)
+		a[i] = str[i] - 48;
+
+	memset(f, 0, sizeof(f));
+	for (int i = 0; i < n; i++){
+		f[i][i][0] = !a[i];
+		f[i][i][1] = a[i];
+	}
+	
+	for (int j = 0; j < n; j++){
+		for (int i = j - 1; i >= 0; i--){
+			for (int k = i; k < j; k++){
+				if (s[k] == 'a'){
+					f[i][j][0] = (f[i][j][0] + ((f[i][k][0] * f[k + 1][j][0]) % MOD + (f[i][k][0] * f[k + 1][j][1]) % MOD + (f[i][k][1] * f[k + 1][j][0]) % MOD) % MOD) % MOD;
+					f[i][j][1] = (f[i][j][1] + (f[i][k][1] * f[k + 1][j][1]) % MOD) % MOD;
+				}
+				else
+					if (s[k] == 'x'){
+						f[i][j][0] = (f[i][j][0] + ((f[i][k][0] * f[k + 1][j][0]) % MOD + (f[i][k][1] * f[k + 1][j][1]) % MOD)) % MOD;
+						f[i][j][1] = (f[i][j][1] + ((f[i][k][1] * f[k + 1][j][0]) % MOD + (f[i][k][0] * f[k + 1][j][1]) % MOD) % MOD) % MOD;
+					}
+					else{
+						f[i][j][0] = (f[i][j][0] + (f[i][k][0] * f[k + 1][j][0]) % MOD) % MOD;
+						f[i][j][1] = (f[i][j][1] + ((f[i][k][0] * f[k + 1][j][1]) % MOD + (f[i][k][1] * f[k + 1][j][0]) % MOD +(f[i][k][1] * f[k + 1][j][1]) % MOD) % MOD) % MOD;
+					}
+			}
+		}
+	}
+}
+
+int main(){
+	cin >> str >> s;
+	
+	prepare();
+	
+	cin >> q;
+	while (q--){
+		cin >> l >> r >> str;
+		if (str[0] == 't')
+			cout << f[l - 1][r - 1][1] % MOD << endl;
+		else
+			cout << f[l - 1][r - 1][0] % MOD << endl;
+	}
+	
+	return 0;
+}

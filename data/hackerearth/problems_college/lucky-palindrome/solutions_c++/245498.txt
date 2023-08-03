@@ -1,0 +1,113 @@
+// Hackerearth - Lucky Palindrome
+// String Handling
+
+#include <stdio.h>
+#include <iostream>
+#include <string>
+#include <map>
+#define MAXN 1005
+#define MAXLEN 1005
+
+using namespace std;
+typedef long long LL;
+
+// Primes - Sieve of Eratosthenes
+int isPrime[MAXN];
+int primes[MAXN];
+int index;
+
+void preProcess()
+{
+  // Initialize
+  for(int i = 0; i <= MAXN; i++)
+   isPrime[i] = 1;
+
+  isPrime[1] = isPrime[0] = 0;
+  for(int i = 2; i * i <= MAXN; i++)
+   if(isPrime[i])
+    for(int k = i * i; k <= MAXN; k += i)
+     isPrime[k] = 0;
+
+  // Copy Primes
+  index = 1;
+  for(int i = 1; i <= MAXN; i++)
+   if(isPrime[i])
+    primes[index++] = i; 
+}
+//
+
+// Transform S into T.
+// For example, S = "abba", T = "^#a#b#b#a#$".
+// ^ and $ signs are sentinels appended to each end to avoid bounds checking
+string preProcess(string s) 
+{
+  int n = s.length();
+  if(n == 0) return "^$";
+  string result = "^";
+  for(int i = 0; i < n; i++)
+   result += "#" + s.substr(i, 1);
+ 
+  result += "#$";
+  return result;
+}
+ 
+string longestPalindrome(string s) 
+{
+  string T = preProcess(s);
+  int n = T.length();
+  int *P = new int[n];
+  int C = 0, R = 0;
+
+  for(int i = 1; i < n - 1; i++) 
+  {
+    int iMirror = 2 * C - i; // equals to i' = C - (i-C)
+    
+    P[i] = (R > i) ? min(R - i, P[iMirror]) : 0;
+    
+    // Attempt to expand palindrome centered at i
+    while(T[i + 1 + P[i]] == T[i - 1 - P[i]])
+     P[i]++;
+ 
+    // If the palindrome centered at i expand past R,
+    // adjust the center based on the expanded palindrome.
+    if(i + P[i] > R) 
+    {
+      C = i;
+      R = i + P[i];
+    }
+  }
+ 
+  // Find the maximum element in P.
+  int maxLen = 0;
+  int centerIndex = 0;
+  for(int i = 1; i < n - 1; i++)
+   if(P[i] > maxLen) 
+   {
+      maxLen = P[i];
+      centerIndex = i;
+   }
+
+  delete[] P;
+  return s.substr((centerIndex - 1 - maxLen) / 2, maxLen);
+}
+//
+
+int main()
+{
+  int t;
+  string s, ans;
+
+  // Preprocess
+  preProcess();
+
+  scanf("%d", &t);
+  while(t--)
+  {
+    cin >> s;
+    ans = longestPalindrome(s);
+    if(isPrime[ans.length()]) cout << "YES" << endl;
+    else cout << "NO" << endl; 
+  }
+   
+  return 0;
+}

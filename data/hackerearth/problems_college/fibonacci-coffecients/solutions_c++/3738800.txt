@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define sd(x) scanf("%d", &x)
+#define boost ios_base::sync_with_stdio(false);
+#define mp make_pair
+#define pb push_back
+#define all(a) a.begin(), a.end()
+#define f first
+#define s second
+
+typedef pair<int, int> pii;
+typedef long long ll;
+
+const int inf = 50000000;
+const int maxn = 200010;
+const int sqrtn = 400;
+
+ll arr[maxn], fib[maxn], dp[maxn], nval[maxn];
+set<int> changes;
+
+int main()
+{
+	//freopen("i.txt", "r", stdin);
+	//freopen("o.txt", "w", stdout);
+	int i, j, t, l, r, ind, n, m, mod;
+	ll val, ans, add, sub;
+	scanf("%d%d%d", &n, &m, &mod);
+	fib[0] = fib[1] = 1;
+	for(i=2; i<maxn; i++)
+		fib[i] = (fib[i-1]+fib[i-2])%mod;
+	for(i=1; i<=n; i++)
+		scanf("%lld", &arr[i]);
+	dp[n+1] = dp[n+2] = 0;
+	for(i=n; i>=1; i--)
+		dp[i] = (dp[i+1]+dp[i+2]+arr[i])%mod;
+	while(m--){
+		scanf("%d", &t);
+		if(t==1){
+			scanf("%d%lld", &ind, &val);
+			changes.insert(ind);
+			nval[ind] = val;
+		}
+		else{
+			scanf("%d%d", &l, &r);
+			ans = (dp[l] - (dp[r+1]*fib[r-l+1])%mod - (dp[r+2]*fib[r-l])%mod)%mod;
+			for(auto it:changes){
+				ind = it;
+				val = nval[it];
+				if(ind>=l && ind<=r){
+					sub = (fib[ind-l]*arr[ind])%mod;
+					add = (fib[ind-l]*val)%mod;
+					ans = (ans-sub+add+mod)%mod;
+				}
+			}
+			if(ans<0)
+				ans+=mod;
+			printf("%lld\n", ans);
+		}
+		if(changes.size() > sqrtn){
+			for(auto it:changes){
+				arr[it] = nval[it];
+				nval[it] = 0;
+			}
+			for(i=n; i>=1; i--)
+				dp[i] = (dp[i+1]+dp[i+2]+arr[i])%mod;
+			changes.clear();
+		}
+	}
+	return 0;
+}

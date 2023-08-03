@@ -1,0 +1,103 @@
+
+#include <bits/stdc++.h>
+using namespace std;
+
+const int MAXN = 1000010;
+typedef long long ll;
+
+ll a[3000];
+ll dp[3000];
+ll c[2][MAXN];
+
+void add(int i, int x, int v) {
+    while (x < MAXN) {
+        c[i][x] += v;
+        x += x & -x;
+    }
+}
+
+ll sum(int i, int x) {
+    ll ret = 0;
+    while (x > 0) {
+        ret += c[i][x];
+        x -= x & -x;
+    }
+    return ret;
+}
+
+typedef set<ll>::iterator Iter;
+
+Iter prev(Iter x) {
+    return -- x;
+}
+
+int main(void) {
+    ios::sync_with_stdio(false);
+    ll n, S, M, P;
+    cin >> n >> S >> M >> P;
+    //int t = 0;
+    if (M > P) {
+        //t = -1000001;
+        //swap(M, P);
+    }
+    for (int i = 1; i <= n; ++ i) {
+        cin >> a[i];
+        //a[i] += t;
+    }
+
+    dp[0] = dp[1] = 0;
+    for (ll i = 2; i <= n; ++ i) {
+        ll &ret = dp[i];
+        ret = 0;
+        ll s = 0;
+        //for (int j = 1; j <= i; ++ j) add(a[j], a[j]);
+        set<ll> se;
+        map<ll, ll> cnt;
+        ll x = a[i];
+        auto it = begin(se);
+        ll k = 0;
+        ll cc = 0;
+        for (ll j = i; j >= 1; -- j) {
+            add(0, a[j], a[j]);
+            add(1, a[j], 1);
+            se.insert(a[j]);
+            ++ cnt[a[j]];
+            ++ cc;
+            s += a[j];
+            if (j == i) {it = se.begin();}
+            else if (a[j] < (*it)) {-- it;}
+            if (j < i && (cc * M) / (P + M) > k) {
+                ++ it;
+                k = (cc * M) / (P + M);
+            }
+
+            auto p = it;
+            ++ p;
+
+            for (int t = 0; t < 3; ++ t) {
+            //for (ll t = -1; t <= 1; ++ t) {
+            ll tmp = (i - j) * S + dp[j - 1];
+            x = *p;
+            -- p;
+            //k = min(k, cc - cnt[x]);
+           //cerr << x << endl;
+            ll s1 = sum(0, x - 1);
+            ll les = sum(1, x - 1);
+            tmp -= P * (les * x - s1) + (s - cnt[x] * x - s1 - x * (cc - les - cnt[x])) * M;
+
+            //cerr << s1 << ' ' << les << ' ' << cnt[x] << endl;
+            ret = max(ret, tmp);
+            }
+        //    add(a[j], -a[j]);
+        }
+        for (int j = 1; j <= i; ++ j) {
+            add(0, a[j], -a[j]);
+            add(1, a[j], -1);
+        }
+//        cerr << i << ' ' << ret << endl;
+    }
+
+    cout << dp[n] << endl;
+
+    return 0;
+}

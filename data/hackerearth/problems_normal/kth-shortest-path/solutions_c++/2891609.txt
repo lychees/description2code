@@ -1,0 +1,153 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+int mat[110][110];
+int n,m;
+bool valid(int x,int y)
+{
+	if(x>=0 && x<n && y>=0 && y<m && mat[x][y]!=INT_MIN)
+	return 1;
+	return 0;
+}
+int myconv(string s)
+{
+	int l=s.length();
+	int i,num=0;
+	bool negate=0;
+	for(i=0;i<l;i++)
+	{
+		if(i==0 && s.at(0)=='-')
+		{
+			negate=1;
+			continue;
+		}
+		num=num*10 +(s.at(i)-'0');
+	}
+	if(negate)
+	num*=-1;
+	return num;
+}
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	cin.tie(NULL);
+	int test;
+	cin>>test;
+	while(test--)
+	{
+		string s;
+		cin>>n>>m;
+		int i,j,k,t;
+		for(i=0;i<n;i++)
+		{
+			for(j=0;j<m;j++)
+			{
+				cin>>s;
+				if(s=="##")
+				mat[i][j]=INT_MIN;
+				else
+				mat[i][j]=myconv(s);
+				//~ cout<<mat[i][j]<<" ";
+			}
+			//~ cout<<endl;
+		}
+		multiset<int> dp[110][110];
+		multiset<int>::iterator it,it2;
+		dp[0][0].insert(mat[0][0]);
+		for(i=0;i<n;i++)
+		{
+			for(j=0;j<m;j++)
+			{
+				if(i==0 && j==0)
+				continue;
+				if(mat[i][j]==INT_MIN)
+				continue;
+				else
+				{
+					if(valid(i-1,j))
+					{
+						for(it=dp[i-1][j].begin();it!=dp[i-1][j].end();it++)
+						{
+							t=*it+mat[i][j];
+							//~ cout<<t<<endl;
+							if(dp[i][j].size()<105)
+							{
+								dp[i][j].insert(t);
+							}
+							else
+							{
+								it2=dp[i][j].end();
+								it2--;
+								if(t<*it2)
+								{
+									dp[i][j].erase(it2);
+									dp[i][j].insert(t);
+								}
+							}
+						}
+					}
+					if(valid(i,j-1))
+					{
+						//~ cout<<"here "<<endl;
+						for(it=dp[i][j-1].begin();it!=dp[i][j-1].end();it++)
+						{
+							t=*it+mat[i][j];
+							//~ cout<<t<<endl;
+							if(dp[i][j].size()<105)
+							{
+								dp[i][j].insert(t);
+							}
+							else
+							{
+								it2=dp[i][j].end();
+								it2--;
+								if(t<*it2)
+								{
+									dp[i][j].erase(it2);
+									dp[i][j].insert(t);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		int q,tx,ty;
+		cin>>q;
+		for(i=0;i<q;i++)
+		{
+			cin>>tx>>ty>>k;
+			//~ tx--;ty--;
+			if(mat[tx][ty]==INT_MIN)
+			{
+				cout<<"Obstacle"<<endl;
+			}
+			else if(dp[tx][ty].size()<k)
+			{
+				cout<<"Not so many paths"<<endl;
+				//~ for(it2=dp[tx][ty].begin();it2!=dp[tx][ty].end();it2++)
+				//~ {
+					//~ cout<<*it2<<" ";
+				//~ }
+				//~ cout<<endl;
+			}
+			else
+			{
+				int ans;
+				j=0;
+				for(it2=dp[tx][ty].begin();it2!=dp[tx][ty].end();it2++)
+				{
+					j++;
+					if(j==k)
+					{
+						ans=*it2;
+						break;
+					}
+					//~ cout<<*it2<<" ";
+				}
+				cout<<ans<<endl;
+			}
+		}
+	}
+	return 0;
+}

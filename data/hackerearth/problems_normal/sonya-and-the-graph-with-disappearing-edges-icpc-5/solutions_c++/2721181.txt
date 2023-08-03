@@ -1,0 +1,105 @@
+/**
+ *@author:  Orchid
+ *@Problem: Disappearing Edge
+ *@Contest: Hackerearth ICPC Prep '15
+ */
+#include <bits/stdc++.h>
+#define ULLI unsigned long long int
+#define LLI long long int
+#define pb push_back
+#define mem(a,p) memset(a,p,sizeof(a))
+#define fi first
+#define se second
+#define mp make_pair
+#define mt make_tuple
+#define tg(p,i) get<i>(p)
+#define bitcount __builtin_popcount
+#define checkbit(n,b) ((n>>b)&1)
+#define gcd __gcd
+#define rep(i,a,b) for(int i=a;i<b;++i)
+#define all(a) a.begin(),a.end()
+#define sz(a) ((int)(a.size()))
+#define DREP(a) sort(all(a));a.erase(unique(all(a)),a.end())
+#define ns ios_base::sync_with_stdio(false);cin.tie(0)
+using namespace std;
+#define VI vector<int>
+#define PII pair<int,int>
+#define VPII vector<pair<int,int>>
+#define MOD 1000000007LL
+#define EPS 1e-12
+
+//only for C++11/C++14; call as debug(x,y,z,...)
+#define debug(args...)  { vector<string> _v; string _s = #args;    \
+                          replace(_s.begin(), _s.end(), ',', ' '); \
+                          splitstr(_s, _v); err(_v.begin(), args); }
+void splitstr(const string &s, vector<string> &v) {
+    istringstream in(s);
+    copy(istream_iterator<string>(in), istream_iterator<string>(), back_inserter(v));
+}
+void err(vector<string>::iterator it) {}
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+    cerr << *it << " = " << a << '\n';
+    err(++it, args...);
+}
+
+VI g[100008];
+int n, m, k;
+bool vis[100007];
+unordered_map<int, int>edge;
+map<PII, int>e;
+
+int findInMap(int a, int b) {
+    int edgeNo = -1;
+    if (e.find(mp(a, b)) != e.end()) {
+        edgeNo = e[mp(a, b)];
+    }
+    if (edgeNo != -1 && edge.find(edgeNo) != edge.end()) {
+        return edge[edgeNo];
+    }
+    return -1;
+}
+
+int main() {
+    ns;
+    cin >> n >> m >> k;
+    int xx, y;
+    rep(i, 0, m) {
+        cin >> xx >> y;
+        g[xx].pb(y);
+        g[y].pb(xx);
+        e[mp(xx, y)] = i + 1;
+        e[mp(y, xx)] = i + 1;
+    }
+    rep(i, 0, k) {
+        cin >> xx >> y;
+        edge[y] = xx;
+    }
+    queue<PII>q;
+    vis[1] = true;
+    int res = -1;
+    q.push(mp(1, 0));
+    while (!q.empty()) {
+        auto x = q.front();
+        q.pop();
+        if (x.fi == n) {
+            res = x.se;
+            break;
+        }
+        int z = sz(g[x.fi]);
+        rep(i, 0, z) {
+            int cur = g[x.fi][i];
+            if (vis[cur] == false) {
+                int isPr = findInMap(x.fi, cur);
+                if ((isPr != -1) && (isPr <= (x.se + 1))) {
+                    continue;
+                } else {
+                    vis[cur] = true;
+                    q.push(mp(cur, x.se + 1));
+                }
+            }
+        }
+    }
+    cout << res << "\n";
+    return 0;
+}

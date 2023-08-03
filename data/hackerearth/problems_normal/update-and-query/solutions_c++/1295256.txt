@@ -1,0 +1,88 @@
+#include <stdio.h>
+#include <iostream>
+#include <algorithm>
+#include <string.h>
+#include <string>
+#include <vector>
+#include <queue>
+#include <map>
+using namespace std;
+#define mp make_pair
+#define pb push_back
+#define x first
+#define y second
+#define vi vector<int>
+#define pii pair<int,int>
+#define all(x) x.begin(),x.end()
+#define ll long long
+#define inf 1000000007
+#define mod 1000000007
+#define DBG(x) cerr<<#x<<"="<<x<<"\n";
+#define FOREACH(it,x) for(__typeof(x.begin()) it=x.begin();it!=x.end();it++)
+#define N 200005
+
+int lx[N<<2],rx[N<<2],a[N];
+void build(int p,int l,int r)
+{
+	if(l==r){lx[p]=rx[p]=a[l];return;}
+	int m=(l+r)>>1;
+	build(p<<1,l,m);
+	build(p<<1|1,m+1,r);
+	lx[p]=min(lx[p<<1],lx[p<<1|1]);
+	rx[p]=max(rx[p<<1],rx[p<<1|1]);
+}
+void upd(int p,int l,int r,int x,int v)
+{
+	if(l==r){lx[p]=rx[p]=v;return;}
+	int m=(l+r)>>1;
+	if(x<=m)upd(p<<1,l,m,x,v);
+	else upd(p<<1|1,m+1,r,x,v);
+	lx[p]=min(lx[p<<1],lx[p<<1|1]);
+	rx[p]=max(rx[p<<1],rx[p<<1|1]);
+}
+void query(int p,int l,int r,int x,int y,int &a,int &b)
+{
+	if(l>=x&&r<=y)
+	{
+		a=lx[p],b=rx[p];return;
+	}
+	a=inf,b=-inf;
+	int m=(l+r)>>1,a1=inf,b1=-inf;
+	if(x<=m)query(p<<1,l,m,x,y,a,b);
+	if(y>m)query(p<<1|1,m+1,r,x,y,a1,b1);
+	a=min(a,a1);b=max(b,b1);
+}
+int main()
+{
+	int T,i,j,k,m,n,ca=0;
+	scanf("%d%d",&n,&m);
+	for(i=1;i<=n;i++)scanf("%d",&a[i]);
+	build(1,1,n);
+	//DBG("?")
+	while(m--)
+	{
+		char s[2];
+		scanf("%s%d%d",s,&i,&j);
+		if(s[0]=='U')upd(1,1,n,i,j),a[i]=j;
+		else 
+		{
+			if(j<0){puts("-1 -1");continue;}
+			int x=max(0,a[i]-j),y=min(a[i]+j,inf);
+			int l=i,r=n;
+			while(l<=r)
+			{
+				int z=(l+r)>>1;
+				int x1,y1;
+				query(1,1,n,i,z,x1,y1);
+				//cerr<<x1<<" "<<y1<<"\n";
+				if(x1>=x&&y1<=y)l=z+1;
+				else r=z-1;
+			}
+			if(i>l-1){puts("-1 -1");continue;}
+			int ans=l-1-i+1;
+			printf("%d ",ans);
+			query(1,1,n,i,l-1,x,y);
+			printf("%d\n",max(a[i]-x,y-a[i]));
+		}
+	}
+}

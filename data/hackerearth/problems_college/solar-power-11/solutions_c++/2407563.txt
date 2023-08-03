@@ -1,0 +1,85 @@
+#include <iostream>
+using namespace std;
+
+const int max_x = 1000, max_y=1000;
+const long long mod = 1000000007;
+long long tree[max_x+1][max_y+1];
+
+void update(int x , int y , int val){
+    int y1;
+    while (x <= max_x){
+        y1 = y;
+        while (y1 <= max_y){
+            tree[x][y1] += val;
+            tree[x][y1] %= mod;
+            y1 += (y1 & -y1); 
+        }
+        x += (x & -x); 
+    }
+}
+
+long long read(int x , int y){
+    int y1;
+    long long res = 0;
+    while (x > 0){
+        y1 = y;
+        while (y1 > 0){
+            res += tree[x][y1];
+            res %= mod;
+            y1 -= (y1 & -y1); 
+        }
+        x -= (x & -x); 
+    }
+    return res;
+}
+
+
+
+int main()
+{
+    int D;
+    cin>>D;
+    while (D--)
+    {
+    	int N, K;
+    	cin>>N>>K;
+    	for (int i = 1; i <= N; i++)
+    	{
+    		for (int j = 1; j <= N; j++) tree[i][j] = 0;
+    	}
+    	for (int i = 1; i <= N; i++)
+    	{
+    		for (int j = 1; j <= N; j++) update(i, j, K);
+    	}
+    	int A;
+    	cin>>A;
+    	while (A--)
+    	{
+    		char a;
+    		cin>>a;
+    		if (a == 'm')
+    		{
+    			int x1, y1, x2, y2;
+    			cin>>x1>>y1>>x2>>y2;
+    			long long res = 0;
+    			res += read(x2, y2);
+    			res -= read(x1-1, y2);
+    			res -= read(x2, y1-1);
+    			res += read(x1-1, y1-1);
+    			while (res < 0) res += mod;
+    			res %= mod;
+    			cout<<res<<endl;
+    		}
+    		else
+    		{
+    			int x, y, Z;
+    			cin>>x>>y>>Z;
+    			long long old = read(x,y)-read(x-1, y)- read(x, y-1) + read(x-1, y-1);
+    			while (old < 0) old += mod;
+    			old %= mod;
+    			update(x, y, (old*Z)%mod - old);
+    		}
+    	}
+    }
+    return 0;
+}

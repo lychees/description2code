@@ -1,0 +1,151 @@
+#include <cstdlib>
+#include <cstdio>
+#include <algorithm>
+#include <vector>
+#include <queue>
+#include <cmath>
+#include <stack>
+#include <map>
+#include <set>
+#include <deque>
+#include <cstring>
+#include <functional>
+#include <climits>
+#include <list>
+#include <ctime>
+#include <complex>
+
+#define F1(x,y,z) for(int x=y;x<z;x++)
+#define F2(x,y,z) for(int x=y;x<=z;x++)
+#define F3(x,y,z) for(int x=y;x>z;x--)
+#define F4(x,y,z) for(int x=y;x>=z;x--)
+#define pb push_back
+#define LL long long
+#define co complex<double>
+ 
+#define MAX 100005
+#define AMAX 1500
+#define MOD 1000000007
+
+#define f(c,d) ((1<<(c))*(d))
+
+using namespace std;
+
+int t,n,m,i,ct;
+char x[MAX*10];
+vector<vector<char> > y;
+vector<vector<bool> > v;
+vector<bool> vv;
+vector<pair<pair<int,int>,int> > z;
+vector<int> w[2];
+vector<vector<int> > va;
+queue<int> qa,qb;
+bool ans;
+pair<int,int> pt;
+
+int main(){
+	scanf("%d",&t);
+	while(t--){
+		ans=1;
+		y.clear();
+		v.clear();
+		scanf("%d%d",&n,&m);
+		v.pb(vector<bool>());
+		F1(a,0,m)v.back().pb(0);
+		F1(a,0,n){
+			scanf("%s",x);
+			y.pb(vector<char>());
+			if(a)v.pb(v.back());
+			F1(b,0,m)y.back().pb(x[b]);
+		}
+		F1(a,0,n)F1(b,0,m)if(!v[a][b]){
+			z.clear();
+			w[0].clear();
+			w[1].clear();
+			v[a][b]=1;
+			qa.push(a);
+			qb.push(b);
+			while(!qa.empty()){
+				if(qa.front()==0||y[qa.front()][qb.front()]!=y[qa.front()-1][qb.front()]){
+					z.pb(make_pair(make_pair(qa.front(),qb.front()),w[0].size()*2));
+					z.pb(make_pair(make_pair(qa.front(),qb.front()+1),w[0].size()*2+1));
+					w[0].pb(0);
+					w[1].pb(0);
+				}else if(!v[qa.front()-1][qb.front()]){
+					v[qa.front()-1][qb.front()]=1;
+					qa.push(qa.front()-1);
+					qb.push(qb.front());
+				}
+				if(qb.front()==0||y[qa.front()][qb.front()]!=y[qa.front()][qb.front()-1]){
+					z.pb(make_pair(make_pair(qa.front(),qb.front()),w[0].size()*2));
+					z.pb(make_pair(make_pair(qa.front()+1,qb.front()),w[0].size()*2+1));
+					w[0].pb(0);
+					w[1].pb(0);
+				}else if(!v[qa.front()][qb.front()-1]){
+					v[qa.front()][qb.front()-1]=1;
+					qa.push(qa.front());
+					qb.push(qb.front()-1);
+				}
+				if(qa.front()==n-1||y[qa.front()][qb.front()]!=y[qa.front()+1][qb.front()]){
+					z.pb(make_pair(make_pair(qa.front()+1,qb.front()),w[0].size()*2));
+					z.pb(make_pair(make_pair(qa.front()+1,qb.front()+1),w[0].size()*2+1));
+					w[0].pb(0);
+					w[1].pb(0);
+				}else if(!v[qa.front()+1][qb.front()]){
+					v[qa.front()+1][qb.front()]=1;
+					qa.push(qa.front()+1);
+					qb.push(qb.front());
+				}
+				if(qb.front()==m-1||y[qa.front()][qb.front()]!=y[qa.front()][qb.front()+1]){
+					z.pb(make_pair(make_pair(qa.front(),qb.front()+1),w[0].size()*2));
+					z.pb(make_pair(make_pair(qa.front()+1,qb.front()+1),w[0].size()*2+1));
+					w[0].pb(0);
+					w[1].pb(0);
+				}else if(!v[qa.front()][qb.front()+1]){
+					v[qa.front()][qb.front()+1]=1;
+					qa.push(qa.front());
+					qb.push(qb.front()+1);
+				}
+				qa.pop();
+				qb.pop();
+			}
+			sort(z.begin(),z.end());	
+			va.clear();
+			vv.clear();
+			pt=make_pair(-1,-1);
+			i=-1;
+			F1(c,0,z.size()){
+				if(z[c].first!=pt){
+					pt=z[c].first;
+					i++;
+					va.pb(vector<int>());
+					vv.pb(0);
+				}
+				w[z[c].second&1][z[c].second>>1]=i;
+			}
+			F1(c,0,w[0].size()){
+				va[w[0][c]].pb(w[1][c]);
+				va[w[1][c]].pb(w[0][c]);
+			}
+			vv[0]=1;
+			ct=-1;
+			qa.push(0);
+			while(!qa.empty()){
+				ct++;
+				F1(c,0,va[qa.front()].size())if(!vv[va[qa.front()][c]]){
+					vv[va[qa.front()][c]]=1;
+					qa.push(va[qa.front()][c]);
+				}
+				qa.pop();
+			}
+			if(ct!=i){
+				ans=0;
+				a=n;
+				break;
+			}
+		}
+		printf(ans?"YES\n":"NO\n");
+	}
+	//system("pause");
+	return 0;
+}

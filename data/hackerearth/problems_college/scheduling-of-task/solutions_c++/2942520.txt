@@ -1,0 +1,172 @@
+
+
+#include "time.h"
+#include "stdlib.h"
+#include "math.h"
+#include "string.h"
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <vector>
+
+
+//std::cout << std::setprecision(2) << std::fixed
+//-1 % 3= -1
+int test_num;
+
+
+#define INT_MIN     (-2147483647 - 1) /* minimum (signed) int value */
+
+
+const int maxn = 100000;
+
+bool MforD[maxn]={0};
+
+int M[maxn],D[maxn],IforD[maxn];
+
+typedef void * DATA_TYPE ;
+ 
+
+//seg tree
+
+struct node
+
+{
+
+   int a,b;
+
+   int cnt; 
+
+   int sum; //Max{son's (cnt+sum)}
+
+   int tot;
+
+};
+
+node tree[maxn*2];
+
+ 
+
+void maketree(int c,int d,int ind)
+
+{
+	if (c>d) return;
+
+    tree[ind].a = c;
+
+    tree[ind].b = d;
+
+    tree[ind].cnt = 0;
+
+	tree[ind].tot = 0;
+
+    tree[ind].sum = INT_MIN;
+
+	if(c==d) 
+	{
+		return;
+	}
+   
+    int mid = (c+d)>>1;
+
+    maketree(c,mid,ind<<1);
+
+    maketree(mid+1,d,ind<<1|1);
+
+}
+
+ 
+
+ 
+
+void insert(int c,int d,int ind,int increament,int init, bool insertleaf = false)       //O(logN);
+
+{
+
+		if (c>d) return;
+
+        if(c <= tree[ind].a && tree[ind].b <= d) //leaf or full range covered
+         {
+			 if (insertleaf && tree[ind].sum == INT_MIN)
+			 {
+				 tree[ind].sum = 0;
+
+				 tree[ind].cnt += init;
+
+				 //tree[ind].sum== INT_MIN and tree[ind].cnt<0 not possible
+			 }
+
+			 tree[ind].cnt += increament;
+         
+			 return ;
+
+         }
+
+		//not leaf and not fully covered
+
+        if(c <= tree[ind<<1].b)
+			insert(c,d<tree[ind<<1].b ? d: tree[ind<<1].b,ind<<1,increament,init,insertleaf);
+
+ 
+
+        if(d >= tree[ind<<1|1].a)
+			insert(c>tree[ind<<1|1].a ? c: tree[ind<<1|1].a ,d,ind<<1|1,increament,init,insertleaf);//--------------------
+
+
+		tree[ind].sum = (tree[ind<<1].cnt + tree[ind<<1].sum> tree[ind<<1|1].cnt + tree[ind<<1|1].sum)?
+			
+					tree[ind<<1].cnt + tree[ind<<1].sum:tree[ind<<1|1].cnt + tree[ind<<1|1].sum;
+
+		//tree[ind].tot=tree[ind<<1].tot+tree[ind<<1 | 1].tot;
+
+}
+
+ 
+
+
+int main()
+{
+	//srand(time(NULL));
+	//std::cin>>test_num;
+
+	int T,i,j,k;
+	std::cin>>T;
+	for (i=0;i<T;i++)
+	{
+		std::cin>>D[i]>>M[i];
+		MforD[D[i]-1]=true;		
+	}
+
+	if (MforD[0])
+		IforD[0]=0;
+	else
+		IforD[0]=-1;
+
+	for (i=1;i<maxn;i++)
+	{
+		IforD[i]=IforD[i-1];
+		if (MforD[i])
+		{
+			IforD[i]++;
+		}
+	}
+	
+	maketree(0,IforD[maxn-1],1);
+
+	for (i=0;i<T;i++)
+	{
+		j=D[i]-1;
+		k=1;//root
+		insert(IforD[j],IforD[j],k,M[i],-D[i],true);
+		insert(IforD[j]+1,IforD[maxn-1],k,M[i],-D[i]);
+
+
+		if (tree[1].cnt + tree[1].sum>0)
+			std::cout<<tree[1].cnt+tree[1].sum;
+		else
+			std::cout<<0;
+		std::cout<<'\n';
+	}
+
+}
+

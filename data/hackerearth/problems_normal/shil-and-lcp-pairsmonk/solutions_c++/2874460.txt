@@ -1,0 +1,71 @@
+#include <iostream>
+#include <cstring>
+#include <algorithm>
+
+using namespace std;
+
+typedef long long ll;
+
+struct TrieNode
+{
+    TrieNode *sons[26];
+    int nb_s;   //nombre de chaînes ayant un préfixe allant jusque là
+
+    TrieNode()
+    {
+        memset(sons, 0, sizeof(sons));
+        nb_s = 1;
+    }
+};
+
+ll h[1000001];
+
+TrieNode *root;
+
+void add_to_trie(string& s)
+{
+    TrieNode *act = root;
+    int i;
+    for(i = 0; true; i++)
+    {
+        h[i] += act->nb_s - (((i < (int)s.size()) && act->sons[s[i]-'a'])?act->sons[s[i]-'a']->nb_s:0);  //toutes les chaines qui divergent à cet endroit précis
+        act->nb_s++;    //en particulier, nb_s de root augmente tout le temps
+
+        if((i < (int)s.size()) && (act->sons[s[i]-'a']))
+            act = act->sons[s[i]-'a'];
+        else
+            break;
+    }
+
+    for(; i < (int)s.size(); i++)
+    {
+        act->sons[s[i]-'a'] = new TrieNode;
+        act = act->sons[s[i]-'a'];
+    }
+}
+
+int main()
+{
+    cin.sync_with_stdio(false);
+
+    root = new TrieNode;
+    root->nb_s = 0; //pour elle c'est un peu différent
+
+    int N;
+    cin >> N;
+
+    int L = 0;
+    while(N--)
+    {
+        string s;
+        cin >> s;
+
+        L = max(L, (int)s.size());
+        add_to_trie(s);
+    }
+
+    for(int i = 0; i < L; i++)
+        cout << h[i] << ' ';
+    cout << h[L] << '\n';
+    return 0;
+}

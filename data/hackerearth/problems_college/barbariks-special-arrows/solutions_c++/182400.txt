@@ -1,0 +1,129 @@
+
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<vector>
+#include<queue>
+#include<algorithm>
+#include<set>
+#include<math.h>
+#include<map>
+using namespace std;
+ 
+#define mp make_pair
+#define pb push_back
+#define X first
+#define Y second
+#define MAX 1010
+ 
+vector < int > v[MAX];
+pair <int,int> l[MAX],r[MAX];
+bool visited[MAX];
+int Left[MAX], Right[MAX];
+ 
+bool dfs(int u)
+{
+	if(visited[u])
+        return false;
+	visited[u] = true;
+	int len = v[u].size(),temp;
+	for(int i=0;i<len;i++)
+	{
+		temp=v[u][i];
+		if(Right[temp]==-1)
+		{
+			Right[temp]=u;
+            Left[u]=temp;
+			return true;
+		}
+	}
+	for(int i=0;i<len;i++)
+	{
+		temp=v[u][i];
+		if(dfs(Right[temp]))
+		{
+			Right[temp]=u;
+			Left[u]=temp;
+			return true;
+		}
+	}
+	return false;
+}
+ 
+int bpm()
+{
+	memset(Left,-1,sizeof(Left));
+	memset(Right,-1,sizeof(Right));
+	int ans=0;
+	bool flag;
+	do
+	{
+		flag = true;
+		memset(visited,0,sizeof(visited));
+		for(int i=0; i<MAX; i++)
+		{
+			if(Left[i]==-1 && dfs(i))
+				flag=false;
+		}
+	} while(!flag);
+	for(int i=0; i<MAX; i++)
+        ans += (Left[i]!=-1);
+	return ans;
+}
+ 
+int main()
+{
+    //freopen("input.txt","r",stdin);
+	int t, n, i, x, y;
+	scanf("%d", &t);
+	while(t--)
+	{
+		scanf("%d", &n);
+		for(i=0; i<MAX; i++)
+            v[i].clear();
+		for(i=0; i<n; i++)
+		{
+			scanf("%d%d", &x, &y);
+            r[i].X=y;
+            r[i].Y=x;
+		}
+ 
+		sort(r,r+n);
+		int prev=r[0].X,cnt=0;
+		r[0].X=0;
+        for(int i=1;i<n;i++)
+        {
+            if(r[i].X==prev)
+                r[i].X=cnt;
+            else
+            {
+                prev=r[i].X;
+                r[i].X = ++cnt;
+            }
+            l[i].X=r[i].Y;
+            l[i].Y=r[i].X;
+        }
+        l[0].X=r[0].Y;
+        l[0].Y=r[0].X;
+ 
+        sort(l,l+n);
+        prev=l[0].X;
+        cnt=0;
+        l[0].X=0;
+        for(int i=1;i<n;i++)
+        {
+            if(l[i].X==prev)
+                l[i].X=cnt;
+            else
+            {
+                prev=l[i].X;
+                l[i].X = ++cnt;
+            }
+        }
+        for(int i=0;i<n;i++)
+            v[l[i].X].pb(l[i].Y);
+		printf("%d\n", bpm());
+	}
+	return 0;
+}
+ 

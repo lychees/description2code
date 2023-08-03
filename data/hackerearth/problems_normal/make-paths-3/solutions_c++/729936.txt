@@ -1,0 +1,89 @@
+#include <iostream>
+#include <algorithm>
+#include <functional>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
+#include <string>
+using namespace std;
+const int MAXN = 100100;
+
+struct planet {
+    int x, y;
+    int index;
+};
+
+int dad[ MAXN ];
+vector <planet> v, org;
+
+bool xcmp( const planet &A, const planet &B ) { return A.x < B.x; }
+bool ycmp( const planet &A, const planet &B ) { return A.y < B.y; }
+
+
+int find_dad( int x ) 
+{
+    if( dad[x] == -1 ) return x;
+    return dad[x] = find_dad( dad[x] );
+}
+
+
+struct edge 
+{
+    int x, y;
+    int cost;
+    
+    edge( int a, int b ) : x( a ), y( b ) 
+	{
+        cost = min( abs( org[x].x-org[y].x ), abs( org[x].y-org[y].y ) );
+	}
+    friend bool operator < ( const edge &A, const edge &B ) {
+        return A.cost < B.cost;
+    }
+};
+
+
+int main( void )
+{
+    int n=0;
+	cin >> n;
+	
+	vector< edge > E; // 3.5 MB
+    E.reserve( 3*n + 100 );
+    for( int i = 0; i < n; ++i ) 
+	{
+		planet p;
+		cin>>p.x>>p.y;
+		p.index = i;
+				
+		v.push_back(p);
+		
+		org.push_back(p);
+		
+    }
+    
+	sort( v.begin(), v.end(), xcmp );
+	for( int i = 1; i < n; ++i )
+        E.push_back( edge( v[i-1].index, v[i].index ) );
+
+    sort( v.begin(), v.end(), ycmp );
+	for( int i = 1; i < n; ++i )
+        E.push_back( edge( v[i-1].index, v[i].index ) );
+
+	sort( E.begin(), E.end() );
+    
+
+    
+    long long sum = 0;
+    memset( dad, -1, sizeof dad );
+    for( vector< edge >::iterator it = E.begin(); it != E.end(); ++it ) {
+        int A = find_dad( it->x );
+        int B = find_dad( it->y );
+        if( A != B ) {
+            sum += it->cost;
+            dad[A] = B;
+        }
+    }
+    cout << sum << endl;
+}

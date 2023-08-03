@@ -1,0 +1,247 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+#define MP make_pair
+#define PB push_back
+#define LL long long
+#define int LL
+#define st first
+#define nd second
+#define FI st
+#define SE nd
+#define FOR(i,a,b) for(int i = (a); i <= (b); i++)
+#define RE(i,n) FOR(i,1,n)
+#define R(i,n) FOR(i,0,(int)(n)-1)
+#define REP(i,n) R(i,n)
+#define ALL(x) (x).begin(), (x).end()
+#define SZ(x) ((int)(x).size())
+#define PII pair<int,int>
+#define VI vector<int>
+template<class C> void mini(C&a4, C b4){a4=min(a4,b4);}
+template<class C> void maxi(C&a4, C b4){a4=max(a4,b4);}
+
+template<class TH> void _dbg(const char *sdbg, TH h){cerr<<sdbg<<"="<<h<<"\n";}
+template<class TH, class... TA> void _dbg(const char *sdbg, TH h, TA... a){
+  while(*sdbg!=',')cerr<<*sdbg++;cerr<<"="<<h;_dbg(sdbg+1,a...);
+}
+
+#ifdef LOCAL
+#define debug(...) _dbg(#__VA_ARGS__, __VA_ARGS__)
+#define debugv(C) {for(auto&c:C)cerr<<c<<",";cerr<<endl;}
+#else
+#define debug(...) (__VA_ARGS__)
+#define debugv(C) {}
+#define cerr if(0)cout
+#endif
+
+using LD = double;
+using CD = complex<LD>;
+using C = CD;
+
+
+const LL Mod = 1000000007;
+
+LL pow_mod(LL a, LL n){
+  LL result = 1;
+  while(n){
+    if(n & 1) result = (result * a) % Mod;
+    a = (a * a) % Mod;
+    n >>= 1;
+  }
+  return result;
+}
+
+
+inline int rev_bits(unsigned val, int num_bits){
+  unsigned mask = 0x0000FFFF;
+  val = ((val&mask)<<16) | ((val>>16)&mask);
+  mask = 0x00FF00FF;
+  val = ((val&mask)<<8) | ((val>>8)&mask);
+  mask = 0x0F0F0F0F;
+  val = ((val&mask)<<4) | ((val>>4)&mask);
+  mask = 0x33333333;
+  val = ((val&mask)<<2) | ((val>>2)&mask);
+  mask = 0x55555555;
+  val = ((val&mask)<<1) | ((val>>1)&mask);
+  return (val >> (32-num_bits));
+}
+
+void fft(const CD *from, CD *to, int depth, bool inv){
+  int N = (1<<depth);
+  
+  for(int i = 0; i < N; i++){ to[rev_bits(i,depth)] = from[i]; }
+  for(int l = 1; l <= depth; l++){
+    int step = (1<<l);
+    LD ang = (inv?1:-1) * (2*M_PI) / step;
+    CD root(cos(ang), sin(ang));
+    
+    for(int pos = 0; pos < N; pos += step){
+      CD omega(1);
+      
+      for(int k = 0; k < step/2; k++){
+        CD a = to[pos+k],
+           b = omega*to[pos+k+step/2];
+        to[pos+k] = a+b;
+        to[pos+k+step/2] = a-b;
+        omega *= root;
+      }
+    }
+  }
+  
+  if(inv){
+    for(int i = 0; i < N; i++) to[i] /= N;
+  }
+  
+}
+
+void mul(const CD *A, const CD *B, CD *res, int N){
+  int depth = 0, size = 1;
+  while(size<N){ depth++; size *= 2; }
+  
+  debug(A[0], A[1], A[2], B[0], B[1], B[2]);
+  
+  CD *tmp = new CD[size];
+  fft(A, res, depth, false);
+  fft(B, tmp, depth, false);
+  for(int i = 0; i < size; i++) tmp[i] *= res[i];
+  fft(tmp, res, depth, true);
+  
+  delete[] tmp;
+}
+
+
+const int MaxN = 100005;
+
+int N, K;
+vector<int> adj[MaxN];
+LL cntPaths[MaxN*3];
+bool available[MaxN];
+int visited[MaxN];
+int dfsNum = 0;
+int curDepths[MaxN];
+int totalDepths[MaxN];
+int treeSize[MaxN];
+int depth[MaxN];
+
+void tree_sizes(int v){
+  visited[v] = dfsNum;
+  treeSize[v] = 1;
+  for(int s : adj[v]){
+    if(!available[s] || visited[s] == dfsNum) continue;
+    tree_sizes(s);
+    treeSize[v] += treeSize[s];
+  }
+}
+
+int find_centroid(int v){
+  dfsNum++;
+  tree_sizes(v);
+  int sz = treeSize[v];
+  while(true){
+    bool found = false;
+    for(int s : adj[v]){
+      if(!available[s] || treeSize[s] > treeSize[v]) continue;
+      if(treeSize[s]*2 >= sz){ found = true; v = s; break; }
+    }
+    if(!found) return v;
+  }
+}
+
+int get_depths(int v){
+  visited[v] = dfsNum;
+  curDepths[depth[v]]++;
+  int res = depth[v];
+  for(int s : adj[v]){
+    if(visited[s] == dfsNum || !available[s]) continue;
+    depth[s] = depth[v] + 1;
+    maxi(res, get_depths(s));
+  }
+
+  return res;
+}
+
+void add_res(int* tab, int maxDepth, int coef){
+  for(int i = 0; i <= maxDepth; i++) debug(i, tab[i]);
+  
+  int S = 1; while(S <= maxDepth) S *= 2;
+  debug(S, maxDepth, coef);
+  CD *A = new CD[S*2],
+     *R = new CD[S*2];
+  for(int i = 0; i <= maxDepth; i++) A[i] = tab[i];
+  mul(A, A, R, S*2);
+  
+  for(int i = 0; i < S*2; i++){
+    debug(i, A[i], R[i]);
+    cntPaths[i] += (LL)round(R[i].real()) * coef;
+  }
+  
+  delete[] A;
+  delete[] R;
+}
+
+void process(int v){
+  int centr = find_centroid(v);
+  int S = treeSize[v];
+  fill(curDepths, curDepths+S+1, 0);
+  fill(totalDepths, totalDepths+S+1, 0);
+  
+  int mDepth = 0;
+  available[centr] = false;
+  
+  for(int s : adj[centr]){
+    if(!available[s]) continue;
+    dfsNum++;
+    depth[s] = 1;
+    int M = get_depths(s);
+    add_res(curDepths, M, -1);
+    
+    for(int i = 0; i <= M; i++){
+      totalDepths[i] += curDepths[i];
+      curDepths[i] = 0;
+    }
+    maxi(mDepth, M);
+  }
+  debug(v, centr, S, mDepth);
+  
+  totalDepths[0]++;
+  add_res(totalDepths, mDepth, 1);
+  
+  for(int s : adj[centr]){
+    if(!available[s]) continue;
+    process(s);
+  }
+  
+}
+
+
+void input(){
+  cin >> N >> K;
+  for(int i = 0; i < N-1; i++){
+    int u, v;
+    cin >> u >> v;
+    adj[u].push_back(v);
+    adj[v].push_back(u);
+  }
+  
+  fill(available, available+N+1, true);
+}
+
+#undef int
+int main(){
+#define int LL
+  ios_base::sync_with_stdio(0);
+  cin.tie(0);
+  cout<<fixed<<setprecision(10);
+  
+  input();
+  process(1);
+  
+  LL result = 0;
+  for(int i = 1; i <= N; i++){
+    result = (result + (cntPaths[i]/2)%Mod * pow_mod(i, K)) % Mod;
+    debug(i, cntPaths[i]);
+  }
+  cout << result << endl;
+  
+  return 0; 
+}

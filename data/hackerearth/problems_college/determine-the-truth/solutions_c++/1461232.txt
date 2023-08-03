@@ -1,0 +1,200 @@
+/* -.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.-.
+ * Created By : Vishwas Tripathi 
+ * CSE, MNNIT-ALLAHABAD 
+ * vishfrnds@gmail.com
+ _._._._._._._._._._._._._._._._._._._._._.*/
+
+//fft code from http://codeforces.com/blog/entry/12513
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <map>
+#include <queue>
+#include <stack>
+#include <cstring>
+#include <algorithm>
+#include <cstdlib>
+#include <cmath>
+#include <assert.h>
+using namespace std;
+
+#define MP make_pair
+#define pb push_back
+#define rep(i,n) for(i=0;i<n;i++)
+#define REP(i,a,b) for(i=a;i<=b;i++)
+#define PER(i,a,b) for(i=b;i>=a;i--)
+#define X first
+#define Y second
+
+#define tr(c, itr) for(itr = (c).begin(); itr != (c).end(); itr++)
+#define present(container, element) (container.find(element) != container.end()) //for set,map,etc
+#define cpresent(container, element) (find(all(container),element) != container.end()) //for vectors
+
+ typedef long long ll;
+ typedef vector<int> vi; 
+ typedef vector< vi > vvi; 
+ typedef pair< int,int > ii; 
+
+#define sz(a) int((a).size())
+#define clr(a) memset(a,0,sizeof(a))
+#define ini(a) memset(a,-1,sizeof(a))
+#define MOD 998244353
+
+#define chk(a) cout << endl << #a << " : " << a << endl
+#define chk2(a,b) cout << endl << #a << " : " << a << "\t" << #b << " : " << b << endl
+#define chk3(a,b,c) cout << endl << #a << " : " << a << "\t" << #b << " : " << b << "\t" << #c << " : " << c << endl
+#define chk4(a,b,c,d) cout << endl << #a << " : " << a << "\t" << #b << " : " << b << "\t" << #c << " : " << c << "\t" << #d << " : " << d << endl
+#include<cstdio>
+#include<cstdlib>
+#include<cstring>
+#include<algorithm>
+#include<iostream>
+#include<fstream>
+#include<map>
+#include<ctime>
+#include<set>
+#include<queue>
+#include<cmath>
+#include<vector>
+#include<bitset>
+#include<functional>
+using namespace std;
+
+typedef long long LL;
+typedef double ld;
+
+const int MAX=1000000+10;
+const int Mod=998244353;
+const int alp=3;
+namespace opt
+{
+	int N;
+	int a[MAX],b[MAX],w[MAX],tmp[MAX];
+	
+	int Pow(int a,int b)
+	{
+		int k=1;
+		for(;b;b/=2,a=(LL)a*a%Mod)
+			if(b%2==1)
+				k=(LL)k*a % Mod;
+		return k;
+	}
+	void FFT(int *a,int S,int d)
+	{
+		if(d==N) return ;
+		FFT(a,S,d<<1);
+		FFT(a,S+d,d<<1);
+		for(int i=S,j=S,p=0;i<N/2;i+=d,j+=d<<1,p+=d)
+		{
+			int G=a[j],K=a[j+d];
+			tmp[i]=((LL)G+(LL)w[p]*K)%Mod;
+			tmp[i+N/2]=((LL)G+(LL)w[p+N/2]*K)%Mod;
+		}
+		for(int i=S;i<N;i+=d)
+			a[i]=tmp[i];
+	}
+	void conv(int *aa,int *bb,int *c,int n)
+	{
+		for(int i=0;i<n;++i)
+			a[i]=aa[i],b[i]=bb[i];
+/*	
+		if(n<=500)
+		{
+			for(int i=0;i<n*2;++i)
+				c[i]=0;
+			for(int i=0;i<n;++i)
+				for(int j=0;j<n;++j)
+					c[i+j]=( c[i+j]+(LL)a[i]*b[j] ) % Mod;
+			for(int i=0;i<n;++i)
+				a[i]=b[i]=0;
+			return;
+		}
+		*/
+		N=1;
+		for(;N<n;N<<=1);
+		N<<=1;
+		w[0]=1;
+
+		w[1]=Pow(alp, (Mod - 1) / N);
+		for(int i=2;i<=N;++i)
+			w[i]=(LL)w[i-1]*w[1]%Mod;
+		FFT(a,0,1);
+		FFT(b,0,1);
+		for(int i=0;i<N;++i)
+			a[i]=(LL)a[i]*b[i]%Mod;
+		for(int i=0;i<N;++i)
+			b[i]=a[i?(N-i):0];
+		FFT(b,0,1);
+		int InvN=Pow(N,Mod-2);
+		for(int i=0;i<N;++i)
+		{
+			c[i]=(LL)b[i]*InvN%Mod;
+			a[i]=b[i]=0;
+		}
+	}
+}
+int main () {
+	int t, i, j;
+	cin >> (t);
+	while (t--) {
+		string s;
+		cin >> s;
+		int l = s.length();
+		int a[2*l + 10], b[2*l + 10], c[2*l +100];  
+		clr (a);
+		clr (b);
+		clr (c);
+		int cr = 1;
+		for (i = l - 1, j = 0; i >= 0; i--, j++) {
+			int v = s[i] - '0';
+			a[j] = v;
+			b[j] = v + cr;
+			if (b[j] > 9) {
+				b[j] -= 10;
+				cr = 1;
+			}
+			else
+				cr = 0;
+		//	chk2(a[j], b[j]);
+		}
+		if (cr)
+			b[j] = 1;
+		//chk (l);
+		opt::conv(a, b, c, l + 2);
+		i = 0, cr = 0;
+		while (i < 2* l + 20) {
+			c[i] += cr;
+			//chk(c[i]);
+			if (c[i] > 9) {
+				cr = c[i] / 10;
+				c[i] %= 10;
+			}
+			else
+				cr = 0;
+			//chk(c[i]);
+			i++;
+		}
+		i = 2*l + 99;
+		cr = 0;	
+		while (c[i] == 0 && i > 0) {
+			i--;
+			c[i] += cr *10; 
+			cr = c[i] % 2;
+			c[i] /= 2;
+		}
+		//chk (i);
+		
+		while (1) {
+			printf("%d", c[i]);
+			i--;
+			if (i < 0)break;
+			c[i] += cr *10; 
+			cr = c[i] % 2;
+			c[i] /= 2;
+			
+		}
+		putchar('\n');
+	}
+	return 0;
+}
+

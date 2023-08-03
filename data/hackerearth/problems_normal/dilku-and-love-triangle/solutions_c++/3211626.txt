@@ -1,0 +1,258 @@
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+#include <queue>
+#include <cmath>
+#include <iostream>
+#include <set>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <bits/stdc++.h>
+
+using namespace std;
+#define FOR(i,s,e) for (int i=(s); i<(e); i++)
+#define FOE(i,s,e) for (int i=(s); i<=(e); i++)
+#define FOD(i,s,e) for (int i=(s); i>=(e); i--)
+#define debug(args...) {vector<string> _v = split(#args, ','); err(_v.begin(), args); cerr<<endl;}
+#define LL long long
+#define eps 1e-9
+#define pi acos(-1.0)
+LL max(LL a,LL b){if (a>b){return a;} else {return b;}}
+LL min(LL a,LL b){if (a<b){return a;} else {return b;}}
+
+vector<string> split(const string& s, char c) {
+    vector<string> v;
+    stringstream ss(s);
+    string x;
+    while (getline(ss, x, c))
+        v.emplace_back(x);
+    return move(v);
+}
+
+void err(vector<string>::iterator it) {}
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+    cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << ", ";
+    err(++it, args...);
+}
+
+template<typename T>
+struct number_iterator : std::iterator<random_access_iterator_tag, T>{
+    T v;
+    number_iterator(T _v) : v(_v) {}
+    operator T&(){return v;}
+    T operator *() const {return v;}
+};
+template <typename T>
+struct number_range {
+    T b,e;
+    number_range(T b, T e):b(b),e(e){}
+    number_iterator<T> begin(){return b;}
+    number_iterator<T> end(){return e;}
+};
+
+template<typename T> number_range<T> range(T e) {return number_range<T>(1, e + 1);}
+
+template<typename T> number_range<T> range(T b, T e) {return number_range<T>(b, e + 1);}
+
+#define M 500001
+
+int n, m, q;
+vector<int> nxt[M], ZZ[M];
+int c[M];
+int rep[M], fir[M], cnt, order[M], cc, lat[M], vis[M];
+LL pp[M];
+
+
+int QQ[M];
+
+int SP[M * 3][23];
+int tot;
+int bb[M * 3];
+
+vector<int> L;
+vector<int> QB[M], QC[M];
+int l[M * 10], b[M*10], r[M * 10], rt[M], cu, hh;
+
+void build(){
+    int z = L.size();
+    FOE(i, 1, z) SP[i][0] = L[i - 1];
+    FOE(j, 1, 22){
+        FOE(i, 1, z){
+            SP[i][j] = min(SP[i][j - 1], (i + (1 << (j - 1)) > z? SP[i][j - 1]: SP[i + (1 << (j - 1))][j - 1]));
+        }
+    }
+}
+
+int LCA(int a, int b){
+    int s1 = order[a];
+    int s2 = order[b];
+    if (s1 > s2){
+        int t = s2; s2 = s1; s1 = t;
+    }
+    s1 = fir[s1];
+    s2 = lat[s2];
+   // if (a == b) debug(a, b, s1, s2);
+    int dist = s2 - s1 + 1;
+ //   debug(s2 - (1 << bb[dist]) + 1, SP[7][0], rep[SP[7][0]], bb[dist]);
+    return rep[min(SP[s1][bb[dist]], SP[s2 - (1 << bb[dist]) + 1][bb[dist]])];
+}
+
+void DFS(int u, int p){
+    ++cnt;
+    ++cc;
+    order[u] = cc;
+    rep[cc] = u;
+    fir[cc] = lat[cc] = cnt;
+    L.push_back(order[u]);
+    for (auto po : nxt[u]) if (po != p){
+        DFS(po, u);
+        ++cnt;
+        lat[order[u]] = cnt;
+        L.push_back(order[u]);
+    }
+}
+
+int he[M], id[M], head[M], pos[M], par[M], nu[M], rq[M];
+int h3;
+
+int DFS2(int u, int po){
+    nu[u] = 1;
+    he[u] = -1;
+  //  debug(u, he[u]);
+    if (nxt[u].size() == 1 && nxt[u][0] == po) return 1;
+    int ma;
+    for (auto i : range(0, (int)(nxt[u].size() - 1))) if (nxt[u][i] != po){
+        DFS2(nxt[u][i], u);
+        if (he[u] == -1 || nu[nxt[u][i]] > ma){
+            ma = nu[nxt[u][i]];
+            he[u] = nxt[u][i];
+        }
+        nu[u] += nu[nxt[u][i]];
+    }
+    return nu[u];
+}
+
+int DFS3(int u, int po, int pq){
+   // debug(u, po, pq, he[u]);
+    if (pq == 1) head[cu] = u;
+    id[u] = cu;
+    par[u] = po;
+    pos[u] = pq;
+    rq[cu] = pq;
+    ZZ[cu].push_back(u);
+    if (he[u] != -1) DFS3(he[u], u, pq + 1);
+    for (auto i : nxt[u]) if (i != po && i != he[u]){
+        cu++;
+        DFS3(i, u, 1);
+    }
+}
+
+void build2(int u, int lb, int rb){
+ //   debug(h3);
+    b[u] = 0;
+    if (lb == rb){
+        return;
+    }
+  //  debug("BUILD", u, h3, lb, rb);
+    build2(l[u] = ++h3, lb, (lb + rb) / 2);
+    build2(r[u] = ++h3, (lb + rb) / 2 + 1, rb);
+}
+
+priority_queue<int> res;
+int nn;
+
+int query(int u, int lb, int rb, int qt){
+  //  debug("QUERY", u, lb, rb, qt, b[u]);
+    if (lb == rb){
+        return b[u];
+    } else {
+        int mid = (lb + rb) / 2, x = 0;
+        if (qt <= mid) x = query(l[u], lb, mid, qt);
+        if (qt > mid) x = query(r[u], mid + 1, rb, qt);
+        return x + b[u];
+    }
+}
+
+void UPD(int u, int lb, int rb, int lq, int rq){
+  //  debug("UPDATE", u, lb, rb, lq, rq, b[u]);
+    if (lb >= lq && rb <= rq){
+        b[u]++;
+    } else {
+        int mid = (lb + rb) / 2, x = 0;
+        if (lq <= mid) UPD(l[u], lb, mid, lq, rq);
+        if (rq > mid) UPD(r[u], mid + 1, rb, lq, rq);
+    }
+}
+
+void FIND(int u, int pr, int use){
+  //  debug(u, pr, id[u], id[pr], pos[u], pos[pr]);
+    if (id[u] != id[pr]){
+        UPD(rt[id[u]], 1, rq[id[u]], 1, pos[u]);
+        FIND(par[head[id[u]]], pr, use);
+    } else {
+        if (use) UPD(rt[id[u]], 1, rq[id[u]], pos[pr], pos[u]);
+        else if (pos[pr] < pos[u]) UPD(rt[id[u]], 1, rq[id[u]], pos[pr] + 1, pos[u]);
+    }
+}
+
+int main(){
+    int w = 1;
+    int hh = 4;
+    int last = 1;
+    bb[1] = 0;
+    while (hh <= M * 3){
+        FOE(i, last + 1, hh - 1) bb[i] = w;
+        last = hh - 1;
+        hh *= 2;
+        w++;
+    }
+    scanf("%d%d", &n, &m);
+    for (auto i : range(n - 1)){
+        int a, b;
+        scanf("%d%d", &a, &b);
+        nxt[a].push_back(b);
+        nxt[b].push_back(a);
+    }
+
+    cnt = 0;
+    cc = 0;
+    FOE(i, 1, n) vis[i] = 0;
+    DFS(1, -1);
+    build();
+    DFS2(1, -1);
+    cu = 1;
+    DFS3(1, -1, 1);
+
+    h3 = 0;
+    for (auto i : range(cu)) {
+        rt[i] = ++h3;
+   //     debug(h3);
+        build2(rt[i], 1, rq[i]);
+    }
+    for (auto i : range(m)){
+		int op;
+		scanf("%d", &op);
+		if (op == 1){
+        int a1, a2;
+        scanf("%d%d", &a1, &a2);
+
+        int y = LCA(a1, a2);
+   //     debug(a1, a2, y)
+        FIND(a1, y, 1);
+        if (y != a2) FIND(a2, y, 0);
+		} else {
+			int i;
+			scanf("%d", &i);
+			int y = query(rt[id[i]], 1, rq[id[i]], pos[i]);
+			printf("%d\n", y);
+		}
+    }
+
+    return 0;
+}
+
+
+
+

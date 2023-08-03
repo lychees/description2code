@@ -1,0 +1,132 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<valarray>
+using namespace std;
+#define MAX 500001
+int n;
+int q;
+int a[MAX];
+vector<pair<int, int> > v;
+struct st{
+	int countt;
+	long long int right;
+	long long int left;
+	long long int maxt;
+	long long int sum;
+	int range;
+	st(){
+		countt = 0;
+		right = LLONG_MIN;
+		left = LLONG_MIN;
+		sum = 0;
+		maxt = LLONG_MIN;
+	}
+};
+st seg[MAX * 4];
+st merge(st &a, st &b){
+	st r;
+	r.range = a.range + b.range;
+	r.countt = a.countt + b.countt;
+	r.maxt = max(a.maxt, b.maxt);
+	r.sum = a.sum + b.sum;
+	if (r.range == r.countt){
+		r.maxt = max(r.maxt,r.sum);
+	}
+	r.left = a.left;
+	if (a.countt == a.range&&b.left!=LLONG_MIN){
+		r.left = max(r.left, a.sum + b.left);
+		r.maxt = max(r.maxt, r.left);
+	}
+	r.right = b.right;
+	if (b.countt == b.range&&a.right!=LLONG_MIN){
+		r.right = max(r.right, b.sum + a.right);
+		r.maxt = max(r.maxt, r.right);
+	}
+	if(a.right!=LLONG_MIN&&b.left!=LLONG_MIN){
+		r.maxt=max(r.maxt,a.right+b.left);
+	}
+	return r;
+}
+inline void add(int b, int l, int r, int ll){
+	if (l <= ll&&ll < r){
+		if (l + 1 == r){
+			seg[b].left = seg[b].right = seg[b].maxt=seg[b].sum = a[ll];
+			seg[b].countt = 1;
+			seg[b].range = 1;
+			return;
+		}
+		//
+		add(b * 2 + 1, l, (l + r) / 2, ll);
+		add(b * 2 + 2, (l + r) / 2, r, ll);
+		seg[b] = merge(seg[b * 2 + 1], seg[b * 2 + 2]);
+	}
+	else{
+		return;
+	}
+}
+inline void init(int b, int l, int r){
+	if (l + 1 == r){
+		seg[b].range = r - l;
+		return;
+	}
+	seg[b].range = r - l;
+	init(b * 2 + 1, l, (l + r) / 2);
+	init(b * 2 + 2, (l + r) / 2, r);
+}
+vector<pair<long long int,int> > query;
+long long int outt[MAX];
+int main(){
+	scanf("%d%d", &n, &q);
+	for (int i = 0; i < n; i++){
+		scanf("%d", &a[i]);
+		v.push_back(make_pair(a[i], i));
+	}
+	init(0, 0, n);
+	sort(v.begin(), v.end());
+	for (int i = 0; i < q; i++){
+		int c;
+		scanf("%d", &c);
+		query.push_back(make_pair(c,i));
+	}
+	sort(query.begin(), query.end());
+	int ind = 0;
+	for (int i = 0; i < query.size(); i++){
+		while (ind < v.size() && v[ind].first <= query[i].first){
+			add(0, 0, n, v[ind].second);
+			ind++;
+		}
+		outt[query[i].second] = seg[0].maxt;
+	}
+	for (int i = 0; i < query.size(); i++){
+		if (outt[i] == LLONG_MIN){
+			puts("No Solution");
+		}
+		else{
+			printf("%lld\n", outt[i]);
+		}
+	}
+	return 0;
+}

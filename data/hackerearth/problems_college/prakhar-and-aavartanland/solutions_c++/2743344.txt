@@ -1,0 +1,173 @@
+#include<bits/stdc++.h>
+
+#define _ ios::sync_with_stdio(false);
+#define INF (1 << 30)
+#define ll_INF (1ll << 60)
+#define ll long long
+#define mp make_pair
+#define pb push_back
+#define eb emplace_back
+#define mt make_tuple
+#define pii pair<int,int>
+#define mem(x,a) memset(x, a, sizeof(x))
+#define SWAP(a,b) tie(a,b) = mt(b,a)
+#define rep(i, begin, endd) for (__typeof(endd) i = (begin) - ((begin) > (endd)); i != (endd) - ((begin) > (endd)); i += 1 - 2 * ((begin) > (endd)))
+inline ll Power(int b, int p) { ll ret = 1; for ( int i = 1; i <= p; i++ ) ret *= b; return ret; }
+
+#define MAX (1<<22)+1
+
+using namespace std;
+string s;
+struct info
+{
+    int left = 0;
+    int right = 0;
+};
+info tree[MAX];
+bool lazy[MAX];
+void build_tree(int node, int a, int b)
+{
+    if(a>b)
+        return;
+    if(a==b)
+    {
+        if(s[a] == '>')
+        {
+            tree[node].right++;
+            return;
+        }
+        if(s[a] == '<')
+        {
+            tree[node].left++;
+            return;
+        }
+    }
+
+    build_tree(2*node, a, (a+b)/2);
+    build_tree(2*node+1, (a+b)/2+1, b);
+
+    tree[node].left = tree[2*node].left + tree[2*node+1].left;
+    tree[node].right = tree[2*node].right + tree[2*node+1].right;
+}
+info query(int node, int a, int b, int i, int j) 
+{
+    
+    if(a > b || a > j || b < i)
+    {
+        info x;
+        return x;
+    } 
+
+    if(lazy[node] != false) 
+    { 
+        SWAP(tree[node].left, tree[node].right);
+
+        if(a != b) 
+        {
+            if(lazy[node*2])
+                lazy[node*2] = false;
+            else
+                lazy[node*2] = true;
+
+            if(lazy[node*2+1])
+                lazy[node*2+1] = false;
+            else
+                lazy[node*2+1] = true;
+        }
+
+        lazy[node] = false; 
+    }
+
+    if(a >= i && b <= j)
+        return tree[node];
+
+    info left_q = query(node*2, a, (a+b)/2, i, j);
+    info right_q = query(1+node*2, 1+(a+b)/2, b, i, j); 
+
+    info tmp;
+    tmp.left = left_q.left + right_q.left;
+    tmp.right = left_q.right + right_q.right;
+    return tmp;
+    
+
+}
+void update(int node, int a, int b, int i, int j) 
+{
+  
+    if(lazy[node] != false) 
+    { 
+        SWAP(tree[node].left, tree[node].right);
+
+        if(a != b) 
+        {
+            if(lazy[node*2])
+                lazy[node*2] = false;
+            else
+                lazy[node*2] = true;
+
+            if(lazy[node*2+1])
+                lazy[node*2+1] = false;
+            else
+                lazy[node*2+1] = true;
+        }
+
+        lazy[node] = false;
+    }
+  
+    if(a > b || a > j || b < i) 
+        return;
+    
+    if(a >= i && b <= j) 
+    { 
+        SWAP(tree[node].left, tree[node].right);
+
+        if(a != b) 
+        {
+            if(lazy[node*2])
+                lazy[node*2] = false;
+            else
+                lazy[node*2] = true;
+
+            if(lazy[node*2+1])
+                lazy[node*2+1] = false;
+            else
+                lazy[node*2+1] = true;
+        }
+
+            return;
+    }
+
+    update(node*2, a, (a+b)/2, i, j);
+    update(1+node*2, 1+(a+b)/2, b, i, j);
+
+    tree[node].left = tree[2*node].left + tree[2*node+1].left;
+    tree[node].right = tree[2*node].right + tree[2*node+1].right;
+}
+int main()
+{_
+    int n,m;
+    cin>>n>>m;
+    cin>>s;
+    build_tree(1,0,n-2);
+    while(m--)
+    {
+        int x,a,b;
+        cin>>x>>a>>b;
+        int tempa = min(a,b);
+        int tempb = max(a,b);
+        if(x==2)
+        {
+            info ans = query(1,0,n-2,tempa-1,tempb-2);
+            if(a>=b)
+                cout<<ans.right<<"\n";
+            else
+                cout<<ans.left<<"\n";
+
+        }
+        else
+        {
+            update(1,0,n-2,tempa-1,tempb-2);
+        }
+    }
+
+}

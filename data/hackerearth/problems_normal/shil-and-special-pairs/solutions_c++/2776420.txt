@@ -1,0 +1,108 @@
+/*
+ID: ashish1610
+PROG:
+LANG: C++
+*/
+#include<bits/stdc++.h>
+using namespace std;
+#define ll				long long int
+#define vi				vector<int>
+#define vl				vector<ll>
+#define	pii				pair<int,int>
+#define pil				pair<int, ll>
+#define pll				pair<ll, ll>
+#define pli 			pair<ll, int>
+#define pb(v, a)		v.push_back(a)
+#define mp(a, b)		make_pair(a, b)
+#define MOD				1000000007
+#define rep(i, a, b)	for(i=a; i<=b; ++i)
+#define rrep(i, a, b)	for(i=a; i>=b; --i)
+#define si(a)			scanf("%d", &a)
+#define sl(a)			scanf("%lld", &a)
+#define pi(a)			printf("%d", a)
+#define pl(a)			printf("%lld", a)
+#define pn 				printf("\n")
+ll pow_mod(ll a, ll b) {
+	ll res = 1;
+	while(b) {
+		if(b & 1)
+			res = (res * a) % MOD;
+		a = (a * a) % MOD;
+		b >>= 1;
+	}
+	return res;
+}
+ll bit_tree[100005];
+int ar[100005], idx[100005];
+ll ans[100005];
+void update_bit(int idx, int maxn, int val) {
+	// cout << idx << endl;
+	while(idx <= maxn) {
+		// cout << idx << " ";
+		bit_tree[idx] += val;
+		idx += (idx & -idx);
+	}
+}
+ll query_bit(int idx) {
+	ll res = 0;
+	while(idx > 0) {
+		res += bit_tree[idx];
+		idx -= (idx & -idx);
+	}
+	return res;
+}
+struct query {
+	int l, r, pos;
+};
+vector<query> queries;
+bool compare(query q1, query q2) {
+	if(q1.r == q2.r) {
+		return q1.l < q2.l;
+	}
+	return q1.r < q2.r;
+}
+int main() {
+	int n, m, d;
+	si(n); si(m); si(d);
+	for(int i = 1; i <= n; ++i) {
+		si(ar[i]);
+		idx[ar[i]] = i;
+	}
+	query q1;
+	for(int i = 0; i < m; ++i) {
+		si(q1.l);
+		si(q1.r);
+		q1.pos = i;
+		queries.push_back(q1);
+	}
+	sort(queries.begin(), queries.end(), compare);
+	int q_idx = 0;
+	for(int i = 1; i <= n; ++i) {
+		// cout << "For : " << i << " updating " << max(1, ar[i] - d) << " " << min(n, ar[i] + d) << endl;
+		for(int j = max(1, ar[i] - d); j <= min(n, ar[i] + d); ++j) {
+			if(idx[j] <= i) {
+				update_bit(idx[j], n, 1);
+			}
+		}
+		// cout << queries[q_idx].r << " " << i << endl;
+		while(q_idx < m && queries[q_idx].r == i) {
+			int L = queries[q_idx].l;
+			int R = queries[q_idx].r;
+			// cout << "quering  " << L << "  " << R << endl; 
+			ans[queries[q_idx].pos] = query_bit(R) - query_bit(L - 1);
+			q_idx++;
+		}
+	}
+	for(int i = 0; i < m; ++i) {
+		pl(ans[i]);
+		pn;
+	}
+	return 0;
+}
+/*
+p[i] - p[j] <= D
+p[j] >= p[i] - D
+
+p[j] - p[i] <= D
+p[j] <= D + p[i];
+*/

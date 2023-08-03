@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define mem(a, x) memset(a, x, sizeof(a))
+#define all(a) a.begin(), a.end()
+#define uni(a) a.erase(unique(all(a)), a.end())
+#define count_bits(x) __builtin_popcount(x)
+#define count_bitsll(x) __builtin_popcountll(x)
+#define least_bits(x) __builtin_ffs(x)
+#define least_bitsll(x) __builtin_ffsll(x)
+#define most_bits(x) 32 - __builtin_clz(x)
+#define most_bitsll(x) 64 - __builtin_clz(x)
+
+vector<string> split(const string &s, char c) {
+	vector<string> v;
+	stringstream ss(s);
+	string x;
+	while (getline(ss, x, c)) v.push_back(x);
+	return v;
+}
+
+#define error(args...) { vector<string> _v = split(#args, ','); err(_v.begin(), args); }
+
+void err(vector<string>::iterator it) {}
+
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+	cerr << it -> substr((*it)[0] == ' ', it -> length()) << " = " << a << '\n';
+	err(++it, args...);
+}
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void amax(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void amin(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {while (b != 0) {T c = a; a = b; b = c % b;} return a;}
+
+const int N = 500005;
+int n, m, a[N * 3], pos[N];
+
+template<class T> struct Fenwick {
+    vector<T> bit;
+    int sz;
+    
+    Fenwick(int _n) {
+        sz = _n;
+        bit.assign(_n + 1, 0);
+    }
+    
+    void add(int ind, T val) {
+        for (int i = ind; i <= sz; i += i & -i) {
+            bit[i] += val;
+        }
+    }
+    
+    T get(int ind) {
+        T ans = 0;
+        for (int i = ind; i > 0; i -= i & -i) {
+            ans += bit[i];
+        }
+        return ans;
+    }
+    
+    T range(int l, int r) {
+        return get(r) - get(l - 1);
+    }
+};
+
+int main(int argc, char *argv[]) {
+	ios_base::sync_with_stdio(false);
+	
+    int x;
+    char y;
+    
+	cin >> n >> m;
+    int tot = N + N + n;
+    Fenwick<int> fw(tot + 1);
+    repu(i, 0, n) {
+        cin >> a[N + i];
+        pos[a[N + i]] = N + i;
+        fw.add(N + i, 1);
+    }
+    
+    int l = N, r = N + n - 1;
+    ll ret = 0;
+    repu(i, 0, m) {
+        cin >> x >> y;
+        int lb = fw.range(0, pos[x] - 1);
+        int rb = fw.range(pos[x] + 1, tot);
+        ret += min(lb, rb);
+        fw.add(pos[x], -1);
+        if (y == 'l') {
+            a[--l] = x; pos[x] = l;
+            fw.add(l, 1);
+        }
+        else {
+            a[++r] = x; pos[x] = r;
+            fw.add(r, 1);
+        }
+    }
+    printf("%lld\n", ret);
+	
+	return 0;
+}

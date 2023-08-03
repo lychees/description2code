@@ -1,0 +1,85 @@
+#include<iostream>
+#include<algorithm>
+using namespace std;
+struct query
+{
+	int l,r;
+	int ord;
+};
+bool operator<(query a,query b)
+{
+	if(a.r==b.r)
+	{
+		return a.l<b.l;
+	}
+	return a.r<b.r;
+}
+int ind[100015];
+void update(int pos,int val)
+{
+	while(pos<=100010)
+	{
+		ind[pos]+=val;
+		pos+=pos&(-pos);
+	}
+}
+int sum(int pos)
+{
+	int ans=0;
+	while(pos>0)
+	{
+		ans+=ind[pos];
+		pos-=pos&(-pos);
+	}
+	return ans;
+}
+query queries[100005];
+int nums[100005];
+int ans[100005];
+int used[100005];
+int main(){
+	//cin.tie(NULL);
+	//ios::sync_with_stdio(false);
+	int n,m,d;
+	cin>>n>>m>>d;
+	for(int i=1;i<=n;i++)
+	{
+		cin>>nums[i];
+	}
+	for(int i=0;i<m;i++)
+	{
+		cin>>queries[i].l>>queries[i].r;
+		queries[i].ord=i;
+	}
+	sort(queries,queries+m);
+	int tk=0;
+	int last=0;
+	for(int i=0;i<m;i++)
+	{
+		if(queries[i].r!=last)
+		{
+			for(int j=last+1;j<=queries[i].r;j++)
+			{
+				for(int p=max(1,nums[j]-d);p<=min(n,nums[j]+d);p++)
+				{
+					if(used[p])
+					{
+						tk++;
+						update(used[p],1);
+					}
+				}
+				used[nums[j]]=j;
+				tk++;
+				update(j,1);
+			}
+			last=queries[i].r;
+		}
+		ans[queries[i].ord]=tk-sum(queries[i].l-1);
+		//cout<<queries[i].l<<" "<<queries[i].r<<": "<<ans[queries[i].ord]<<"\n";
+	}
+	for(int i=0;i<m;i++)
+	{
+		cout<<ans[i]<<"\n";
+	}
+	return 0;
+}

@@ -1,0 +1,74 @@
+#include <algorithm>
+#include <cstring>
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+const int MOD = 1e9 + 7;
+
+struct matrix {
+    int a[16][16];
+} id, base;
+
+matrix operator*(const matrix& x, const matrix& y) {
+    matrix r;
+    for (int i = 0; i < 16; ++i)
+        for (int j = 0; j < 16; ++j) {
+            int v = 0;
+            for (int k = 0; k < 16; ++k) {
+                v = (v + (long long)x.a[i][k] * y.a[k][j]) % MOD;
+            }
+            r.a[i][j] = v;
+        }
+    return r;
+}
+
+matrix operator^(matrix a, long long b) {
+    matrix r = id;
+    for (; b; b >>= 1, a = a * a)
+        if (b & 1) r = r * a;
+    return r;
+}
+
+int main() {
+//    freopen("in", "r", stdin);
+//    freopen("out", "w", stdout);
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    for (int i = 0; i < 16; ++i) {
+        id.a[i][i] = 1;
+    }
+    for (int i = 0; i < 16; ++i) {
+        for (int j = 0; j < 16; ++j) {
+            for (int d = 1; d <= 9; ++d) {
+                int mask = j;
+                int tmp = d;
+                while (tmp > 0 && tmp % 2 == 0) tmp /= 2, mask ^= 1 << 0;
+                while (tmp > 0 && tmp % 3 == 0) tmp /= 3, mask ^= 1 << 1;
+                while (tmp > 0 && tmp % 5 == 0) tmp /= 5, mask ^= 1 << 2;
+                while (tmp > 0 && tmp % 7 == 0) tmp /= 7, mask ^= 1 << 3;
+                if (mask == i) {
+                    ++base.a[i][j];
+                }
+            }
+        }
+    }
+    int tt;
+    cin >> tt;
+    while (tt--) {
+        long long n;
+        cin >> n;
+        matrix r;
+        memset(r.a, 0, sizeof(r.a));
+        r.a[0][0] = 1;
+        r = (base ^ n) * r;
+        int ans = 0;
+        for (int i = 0; i < 16; ++i) {
+            if (__builtin_popcount(i) > 0) {
+                ans = (ans + r.a[i][0]) % MOD;
+            }
+        }
+        cout << ans << '\n';
+    }
+}

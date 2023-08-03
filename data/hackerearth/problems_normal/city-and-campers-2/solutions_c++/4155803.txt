@@ -1,0 +1,119 @@
+#include <iostream>
+#include <map>
+
+using namespace std;
+
+typedef long long ll;
+
+const int inf = 2147483647;
+const int mod = (int) 1e9 + 7;
+const int maxn = (int) 1e5;
+
+int n = 0, q = 0;
+int campers[maxn];
+int size[maxn];
+
+void init() {
+    for (int i = 0; i < n; ++i) {
+        campers[i] = i;
+        size[i] = 1;
+    }
+}
+
+int root(int i) {
+    while (campers[i] != i) {
+        campers[i] = campers[campers[i]];
+        i = campers[i];
+    }
+    return i;
+}
+
+//bool find(int first, int second) {
+//    return root(first) == root(second);
+//}
+
+//void merge(int first, int second) {
+//    int firstRoot = root(first);
+//    int secondRoot = root(second);
+//
+//    if (size[firstRoot] > size[secondRoot]) {
+//        campers[secondRoot] = firstRoot;
+//        size[firstRoot] += size[secondRoot];
+//    } else {
+//        campers[firstRoot] = secondRoot;
+//        size[secondRoot] += size[firstRoot];
+//    }
+//}
+
+void mergeRoots(int firstRoot, int secondRoot) {
+    if (size[firstRoot] > size[secondRoot]) {
+        campers[secondRoot] = firstRoot;
+        size[firstRoot] += size[secondRoot];
+    } else {
+        campers[firstRoot] = secondRoot;
+        size[secondRoot] += size[firstRoot];
+    }
+}
+
+int main() {
+    cin >> n >> q;
+    map <int, int> cnt;
+    cnt[1] = n;
+    init();
+
+    while (q--) {
+        int a, b;
+        cin >> a >> b;
+
+        a--;
+        b--;
+        int rootA = root(a);
+        int rootB = root(b);
+
+        if (rootA != rootB) {
+            int sizeA = size[rootA];
+            int sizeB = size[rootB];
+            int totalSize = sizeA + sizeB;
+
+            cnt[sizeA]--;
+            if (cnt[sizeA] == 0)
+                cnt.erase(sizeA);
+
+            cnt[sizeB]--;
+            if (cnt[sizeB] == 0)
+                cnt.erase(sizeB);
+
+            if (cnt.count(totalSize) > 0)
+                cnt[totalSize]++;
+            else
+                cnt[totalSize] = 1;
+
+            mergeRoots(rootA, rootB);
+        }
+
+        int prev = cnt.begin()->first, curMin = inf;
+        bool found = false;
+        for (auto it: cnt) {
+            if (it.second > 1) {
+                found = true;
+                cout << 0 << endl;
+                break;
+            }
+
+            if (it.first != prev) {
+                if (abs(it.first - prev) < curMin)
+                    curMin = abs(it.first - prev);
+            }
+            prev = it.first;
+        }
+
+        if (!found) {
+            if (curMin == inf)
+                cout << 0 << endl;
+            else
+                cout << curMin << endl;
+        }
+    }
+
+    return 0;
+}

@@ -1,0 +1,81 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long int64;
+
+int grafo[1300][1300][2];
+int dist[1300][4], n, usado[1300];
+
+void solve(int origem, int g, int num){
+	for(int i= 0; i <= n; i++) {
+		dist[i][num] = 1e9;
+		usado[i] = 0;
+	}
+	priority_queue < pair < int, int > > fila;
+	fila.push(make_pair(0,origem));
+	usado[origem] = 1;
+	dist[origem][num] = 0;
+
+	while( !fila.empty() ){
+		pair < int, int > at = fila.top();
+		int u = at.second;
+		int t = -at.first;
+		fila.pop();
+
+		for(int i = 0; i < n; i++){
+			if(i == u)continue;
+			int v = i;
+			int custo = grafo[u][i][g];
+
+			if( dist[v][num] > (t + custo)){
+			//	usado[v] = 1;
+				dist[v][num] = t + custo;
+				fila.push(make_pair(-dist[v][num],v));
+			}
+		}
+	}
+}
+
+
+
+
+int main(){
+	ios::sync_with_stdio(false);
+	cin >> n;
+
+	for(int i = 0; i < n; i++){
+		for(int j = 0; j < n; j++){
+			cin >> grafo[i][j][0];
+		}
+	}
+	for(int i = 0; i < n; i++){
+		for(int j = 0; j < n; j++){
+			cin >> grafo[i][j][1];
+		}
+	}
+	int u, v;
+	cin >> u >> v;
+	u--; v--;
+
+	solve(u, 0, 0);
+	solve(u, 1, 1);
+
+	for(int i = 0; i < n; i++)for(int j = i + 1; j < n; j++){
+		swap(grafo[i][j][1], grafo[j][i][1]);
+		swap(grafo[i][j][0], grafo[j][i][0]);
+	}
+	
+	solve(v, 0, 2);
+	solve(v, 1, 3);
+
+	int ans = 1e9;
+	for(int i = 0; i < n; i++){
+		if(i == u || i == v)continue;
+		ans = min(ans, dist[i][0] + dist[i][3]);
+		ans = min(ans, dist[i][1] + dist[i][2]);
+	}
+	cout << ans << '\n';
+
+	return 0;
+}

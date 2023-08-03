@@ -1,0 +1,144 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define FOR(i,a,b) for(int i = (a); i <= (b); ++i)
+#define FORD(i,a,b) for(int i = (a); i >= (b); --i)
+#define RI(i,n) FOR(i,1,(n))
+#define REP(i,n) FOR(i,0,(n)-1)
+#define mp make_pair
+#define pb push_back
+typedef long long ll;
+const int inf = 1e9 + 5;
+const int nax = 1e6 + 15;
+vector<pair<int,int> > H = vector<pair<int,int> > {
+	make_pair(27, 1000*1000*1000 + 7),
+	//make_pair(61, 1000*1000*1000 + 9),
+	make_pair(101,1000*1000*1001 + 27)
+};
+const int K = H.size();
+const vector<int> HASH_ZERO = vector<int>(K, 0);
+vector<int> powers[nax];
+void initPowers() {
+	powers[0] = vector<int>{1, 1, 1};
+	RI(i, nax-1) {
+		REP(j, K) {
+			ll tmp = (ll) powers[i-1][j] * H[j].first;
+			powers[i].pb(int(tmp % H[j].second));
+		}
+	}
+}
+vector<int> mul(vector<int> w, int len) {
+	REP(i, K) w[i] = (ll) w[i] * powers[nax-1-len][i] % H[i].second;
+	return w;
+}
+vector<int> sub(vector<int> a, vector<int> b) {
+	REP(i, K) a[i] = (a[i] - b[i] + H[i].second) % H[i].second;
+	return a;
+}
+vector<int> extendHash(vector<int> w, int ch) {
+	for(int i = 0; i < K; ++i) {
+		ll tmp = (ll) w[i] * H[i].first + ch + 1;
+		w[i] = tmp % H[i].second;
+	}
+	return w;
+}
+struct Node {
+	int endHere = 0;
+	int sum = 0; // sum over endHere of ansectors, including me
+	vector<int> hash;
+} node[nax];
+map<vector<int>, int> mapHash; // not hashmap ;p
+int COUNTER, LAST_Q;
+int trie[nax][26];
+char sl[nax];
+int where[nax]; // initially 0 for all N strings
+void update(int a) {
+	REP(i, 26) {
+		int b = trie[a][i];
+		if(b == 0) continue;
+		bool before = (bool) node[b].sum;
+		node[b].sum = node[a].sum + node[b].endHere;
+		if(before != (bool) node[b].sum)
+			update(b);
+	}
+}
+int len[nax];
+void addLetter(int id, int ch) {
+	++len[id];
+	int v = where[id];
+	int & child = trie[v][ch];
+	if(!child) {
+		child = ++COUNTER;
+		node[child].hash = extendHash(node[v].hash, ch);
+		mapHash[mul(node[child].hash, len[id])] = child;
+	}
+	where[id] = child;
+	node[v].endHere--;
+	node[v].sum--;
+	node[child].endHere++;
+	update(v);
+}
+void queryAdd(int n) {
+	int i, j;
+	scanf("%d%d", &i, &j);
+	assert(0 <= i && 0 <= j && i < n && j < 26);
+	addLetter((i + LAST_Q) % n, (j + LAST_Q) % 26);
+}
+vector<int> t[nax];
+bool queryCheck() {
+	static ll total = 0;
+	scanf("%s", sl);
+	int d = strlen(sl);
+	total += d;
+	assert(total <= 500 * 1000);
+	for(int i = 0; i < d; ++i)
+		assert('a' <= sl[i] && sl[i] <= 'z');
+	for (int i = 0; i < d; ++i)
+	    sl[i] = 'a' + ((sl[i] - 'a' + LAST_Q) % 26);
+	t[0] = HASH_ZERO;
+	FOR(i,1,d) t[i] = extendHash(t[i-1], sl[i-1] - 'a');
+	REP(i, d) {
+		int low = i - 1, high = d - 1;
+		while(low < high) {
+			int j = (low + high + 1) / 2;
+			vector<int> interval = sub(mul(t[j+1], j+1), mul(t[i], i));
+			// we are shifted by i now because this is how many letters/positions we subtracted
+			interval = mul(interval, nax-1 - i);
+			auto it = mapHash.find(interval);
+			if(it == mapHash.end()) high = j -1;
+			else {
+				low = j;
+				if(node[(*it).second].endHere) return true;
+			}
+		}
+	}
+	return false;
+}
+int main() {
+	initPowers();
+	int n, q;
+	scanf("%d%d", &n, &q);
+	assert(1 <= min(n, q) && max(n, q) <= 500 * 1000);
+	node[0].endHere = node[0].sum = n;
+	node[0].hash = HASH_ZERO;
+	ll total = 0;
+	REP(id, n) {
+		scanf("%s", sl);
+		int d = strlen(sl);
+		total += d;
+		REP(j, d) assert('a' <= sl[j] && sl[j] <= 'z');
+		REP(j, d) addLetter(id, sl[j] - 'a');
+	}
+	assert(total <= 500 * 1000);
+	REP(i, q) {
+		int which;
+		scanf("%d", &which);
+		assert(1 <= which && which <= 2);
+		if(which == 1) {
+			bool ans = queryCheck();
+			puts(ans ? "YES" : "NO");
+			if(ans) LAST_Q = i;
+		}
+		else queryAdd(n);
+	}
+	return 0;
+}

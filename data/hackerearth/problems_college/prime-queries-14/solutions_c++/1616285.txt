@@ -1,0 +1,189 @@
+#include <cstring>
+#include <cassert>
+#include <vector>
+#include <list>
+#include <queue>
+#include <map>
+#include <set>
+#include <deque>
+#include <stack>
+#include <bitset>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <fstream>
+#include <climits>
+#define scan(a) scanf("%d",&a);
+#define s2(a,b) scanf("%d %d",&a,&b)
+#define PI 2acos(-1.0)
+#define s1(a) scanf("%d",&a);
+#define INF 2<<15
+#define PB(A) push_back(A)
+#define clr(a,b) memset(a,b,sizeof(a))
+#define MAX 1000009
+#define MD 1000000007
+#define LL long long
+
+using namespace std;
+
+
+
+bool is_prime[MAX];
+LL prime[MAX];
+
+bool sieve()
+{
+    long i,j;
+    is_prime[1] = 1;
+    for(i = 4; i < MAX; i+=2)
+        is_prime[i] = 1;
+    prime[0]=2;
+    int k=1;
+    int sq=(sqrt(MAX));
+    for(i=3; i<=sq; i+=2)
+    {
+        if(!is_prime[i])
+        {
+            for(j=i*i; j<=MAX; j+=(2*i))
+                is_prime[j]=1;
+        }
+    }
+    for(j=3; j<=MAX; j+=2)
+    {
+        if(!is_prime[j])
+        {
+            prime[k++]=j;
+        }
+    }
+}
+
+int arr[MAX];
+int seg[4*MAX];
+
+void init(int ind, int st, int ed)
+{
+    if(st == ed)
+    {
+        seg[ind] = -1;
+//        cout<<ind<<" "<<-1<<endl;
+        return;
+    }
+
+
+    int mid = (st + ed)/2;
+    int lft = ind * 2;
+    int rgt = lft + 1;
+
+    //  if(lft <= mid)
+    init(lft, st, mid);
+
+    init(rgt, mid + 1, ed);
+    seg[ind] = max(seg[lft], seg[rgt]);
+
+}
+
+
+void insert(int ind, int st, int ed, int pos)
+{
+    if(st == pos && ed == pos)
+    {
+        if(!is_prime[arr[pos]])
+        seg[ind] = arr[pos];
+        else
+            seg[ind] = -1;
+        return;
+    }
+    int mid = (st + ed)/2;
+    int lft = ind * 2;
+    int rgt = lft + 1;
+
+    if(pos <= mid)
+        insert(lft, st, mid, pos);
+    else
+        insert(rgt, mid + 1, ed, pos);
+    seg[ind] = max(seg[lft], seg[rgt]);
+}
+
+int query(int ind, int st, int ed, int l, int r)
+{
+    if(st == l && ed == r)
+    {
+        return seg[ind];
+    }
+    int mid = (st + ed)/2;
+    int lft = ind * 2;
+    int rgt = lft + 1;
+
+    if(r <= mid)
+        return query(lft, st, mid, l, r);
+    else if(l > mid)
+        return query(rgt, mid + 1, ed, l, r);
+    else
+        return max( query(lft, st, mid, l, mid), query(rgt, mid + 1, ed, mid + 1, r) );
+//    seg[ind] = max(seg[lft], seg[rgt]);
+}
+
+
+
+
+int  main()
+{
+    int i,j , k;
+    int n, m, a;
+    sieve();
+    scanf("%d %d", &n, &m);
+    init(1, 1, n);
+//        for(j = 1; j <= 4; j++)
+//            cout<<j<<" "<<seg[j]<<endl;
+    for(i = 1; i <= n; i++)
+    {
+        scanf("%d", &a);
+        arr[i] = a;
+        insert(1, 1, n, i);
+
+//        for(j = 1; j <= 4; j++)
+//            cout<<j<<" "<<seg[j]<<endl;
+
+    }
+    int op, b;
+    while(m--)
+    {
+        scanf("%d %d %d", &op, &a, &b);
+        if(op)
+        {
+            int res = query(1, 1, n, a, b);
+            printf("%d\n", res);
+        }
+        else
+        {
+            arr[a] = b;
+            insert(1, 1, n, a);
+        }
+    }
+
+
+
+
+
+    return 0;
+}
+
+/*
+
+
+
+3 10
+1 2 3
+0 2 1
+1 1 2
+
+
+*/

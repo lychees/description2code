@@ -1,0 +1,162 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define mp make_pair
+#define pb push_back
+typedef long long ll;
+typedef pair<int,int> pii;
+#define X first
+#define Y second
+
+const int H = 18;
+const int maxV = 1<<H;
+
+
+struct ver
+{
+	ll lx, lc, rx, rc, res;
+	int all;
+	int lb, rb;
+	ver () {all=-1;}
+	
+	int len () const
+	{
+		return rb-lb;
+	}
+	
+};
+
+ver vs[maxV];
+int color[maxV];
+
+ver recalc(const ver &a, const ver &b)
+{
+	if (a.lb == -1) return b;
+	if (b.lb == -1) return a;
+	ver c;
+	c.lb = a.lb;
+	c.rb = b.rb;
+	c.lx = (a.lx == a.len() && a.lc == b.lc ? a.len() + b.lx : a.lx);
+	c.lc = a.lc;
+	c.rx = (b.rx == b.len() && a.rc == b.rc ? b.len() + a.rx : b.rx);
+	c.rc = b.rc;
+	c.res = a.res + b.res + (a.rc == b.lc ? a.rx * b.lx : 0);
+	c.all = (c.lx == c.len() ? c.lc : -1);
+	return c;
+}
+
+void recalc(int v)
+{
+	int lb = vs[v].lb, rb = vs[v].rb;
+	if (lb == rb - 1)
+	{
+		vs[v].lx = vs[v].rx = 1;
+		vs[v].lc = vs[v].rc = color[lb];
+		vs[v].res = 1;
+	}
+	else
+	{
+		vs[v] = recalc(vs[v*2], vs[v*2+1]);		
+	}
+}
+
+void push(int v)
+{	 
+	if (vs[v].all != -1)
+	{
+		vs[v].lc = vs[v].rc = vs[v].all;
+		vs[v].lx = vs[v].rx = vs[v].len();
+		vs[v].res = (ll)vs[v].len()*(ll)(vs[v].len()+1)/2ll;
+		
+	//	cout << "pushed [" << vs[v].lb << "," << vs[v].rb << ") all=" << vs[v].all << endl;
+		if (vs[v].lb != vs[v].rb-1) vs[v*2].all = vs[v*2+1].all = vs[v].all;
+	}	
+}
+
+void init(int n)
+{
+	for (int i = maxV/2; i < maxV; i++)
+	   if (i-maxV/2 >= n) color[i-maxV/2] = -1;
+    for (int i = maxV/2; i < maxV; i++)
+      { vs[i].lb = i-maxV/2; vs[i].rb = i-maxV/2 + 1;/* cout << i << " -> " << vs[i].lb << ".." << vs[i].rb << endl;*/ }
+    for (int i = maxV/2-1; i >= 1; i--)
+       vs[i].lb = vs[i*2].lb, vs[i].rb = vs[i*2+1].rb;
+    for (int i = maxV-1; i >= 1; i--)
+       recalc(i);
+}
+
+ver query(int v, int l, int r)
+{
+	push(v);
+	//cout << "v=[" << vs[v].lb << "," << vs[v].rb << ")  [" << l << "," << r << ")" << endl;
+	//cout << "all=" << vs[v].all << endl;
+	//cout << "00 L: x=" << vs[v].lx << ",c=" << vs[v].lc << " R: x=" << vs[v].rx << ",c=" << vs[v].rc << endl;
+	   
+	if (vs[v].rb <= l || vs[v].lb >= r)
+	{
+		ver empty;
+		empty.lb = -1;
+		return empty;
+	}
+	if (vs[v].lb >= l && vs[v].rb <= r)
+	{
+	 //  cout << "v=[" << vs[v].lb << "," << vs[v].rb << ")  [" << l << "," << r << ") = " << vs[v].res << endl;
+	  // cout << "L: x=" << vs[v].lx << ",c=" << vs[v].lc << " R: x=" << vs[v].rx << ",c=" << vs[v].rc << endl;
+	   return vs[v];
+	}
+	ver u = recalc(query(v*2,l,r), query(v*2+1,l,r));
+	//cout << "v=[" << vs[v].lb << "," << vs[v].rb << ")  [" << l << "," << r << ") = " << u.res << endl;
+	//cout << "* L: x=" << u.lx << ",c=" << u.lc << " R: x=" << u.rx << ",c=" << u.rc << endl;
+	   
+	return u;
+}
+
+void fill(int v, int l, int r, int clr)
+{
+	push(v);
+	if (vs[v].rb <= l || vs[v].lb >= r)
+	   return;
+	if (vs[v].lb >= l && vs[v].rb <= r)
+	{
+		vs[v].all = clr;
+	//	cout << "[" << vs[v].lb << "," << vs[v].rb << ") " << clr << endl;
+		push(v);
+		return;		
+	}   
+	fill(v*2,l,r,clr);
+	fill(v*2+1,l,r,clr);
+	vs[v] = recalc(vs[v*2], vs[v*2+1]);
+}
+
+
+int main()
+{
+	int n, m;
+	assert( scanf("%d%d", &n, &m) == 2 );
+	for (int i = 0; i < n; i++)
+	   assert( scanf("%d", &color[i]) == 1 );
+	init(n);
+	/*for (int i = 1; i < maxV; i++)
+	{
+		cout << "[" << vs[i].lb << ".." << vs[i].rb << "] L: (" << vs[i].lc <<
+		 ","<< vs[i].lx <<") R: (" << vs[i].rc << "," << vs[i].rx << ") res=" << vs[i].res << endl;
+	}
+	fill(1, 0, 5, 3);
+	for (int l = 0; l < n; l++)
+	   for (int r = l+1; r <= n; r++)
+	      cout << "q(" << l << ".." << r << "] = " << query(1,l,r).res << endl;
+	*/
+	while (m-->0)
+	{
+		int t,l,r;
+		assert(scanf("%d%d%d", &t, &l, &r) == 3);
+		l--;
+		if (t == 0) 
+		{
+			int clr;
+			assert(scanf("%d", &clr) == 1);
+			fill(1,l,r,clr);
+		}
+		else cout << query(1,l,r).res << "\n";
+	}
+	return 0;
+}

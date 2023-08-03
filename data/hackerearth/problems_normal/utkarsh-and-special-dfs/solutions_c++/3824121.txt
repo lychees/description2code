@@ -1,0 +1,106 @@
+//Pranet Verma
+#include <bits/stdc++.h>
+using namespace std;
+const int mod = 1000000000 + 7, MAXN = 100005;
+long long pwr(long long a, int b) {
+    long long ret = 1;
+    for (; b; b >>= 1, a = a * a % mod) {
+        if (b & 1) {
+            ret = ret * a % mod;
+        }
+    }
+    return ret;
+}
+long long inv(long long a) {
+    return pwr(a, mod - 2);
+}
+struct Node {
+    long long sum, mul;
+};
+Node tree[MAXN * 4];
+void makeTree(int u, int l, int r, long long a[]) {
+    if (l == r) {
+        tree[u] = Node{a[l], 1};
+        return;
+    }
+    int m = (l + r) / 2;
+    makeTree(u << 1, l, m, a);
+    makeTree(u << 1 | 1, m + 1, r, a);
+    tree[u] = Node{(tree[u << 1].sum + tree[u << 1 | 1].sum) % mod, 1};
+}
+void update(int u, int l, int r, int x, int y, int v) {
+    if (x > r or y < l) {
+        return;
+    }
+    if (x <= l and r <= y) {
+        tree[u].sum = tree[u].sum * v % mod;
+        tree[u].mul = tree[u].mul * v % mod;
+        return;
+    }
+    tree[u << 1].sum = tree[u << 1].sum * tree[u].mul % mod;
+    tree[u << 1 | 1].sum = tree[u << 1 | 1].sum * tree[u].mul % mod;
+    tree[u << 1].mul = tree[u << 1].mul * tree[u].mul % mod;
+    tree[u << 1 | 1].mul = tree[u << 1 | 1].mul * tree[u].mul % mod;
+    tree[u].mul = 1;
+    int m = (l + r) / 2;
+    update(u << 1, l, m, x, y, v);
+    update(u << 1 | 1, m + 1, r, x, y, v);
+    tree[u] = Node{(tree[u << 1].sum + tree[u << 1 | 1].sum) % mod, 1};
+}
+long long query(int u, int l, int r, int x, int y) {
+    if (x > r or y < l) {
+        return 0;
+    }
+    if (x <= l and r <= y) {
+        return tree[u].sum;
+    }
+    tree[u << 1].sum = tree[u << 1].sum * tree[u].mul % mod;
+    tree[u << 1 | 1].sum = tree[u << 1 | 1].sum * tree[u].mul % mod;
+    tree[u << 1].mul = tree[u << 1].mul * tree[u].mul % mod;
+    tree[u << 1 | 1].mul = tree[u << 1 | 1].mul * tree[u].mul % mod;
+    tree[u].mul = 1;
+    int m = (l + r) / 2;
+    return (query(u << 1, l, m, x, y) + query(u << 1 | 1, m + 1, r, x, y)) % mod;
+}
+int a[MAXN], st[MAXN], en[MAXN], pool, n;
+long long cnt[MAXN];
+vector<int> g[MAXN];
+void dfs(int u, int p, long long mul) {
+    st[u] = ++pool;
+    cnt[st[u]] = mul;
+    for (auto v : g[u]) {
+        if (v != p) {
+            dfs(v, u, mul * a[u] % mod);
+        }
+    }
+    en[u] = pool;
+}
+int main() {
+    int q;
+    scanf("%d %d", &n, &q);
+    for (int i = 2; i <= n; ++i) {
+        int u, v;
+        scanf("%d %d", &u, &v);
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    for (int i = 1; i <= n; ++i) {
+        scanf("%d", &a[i]);
+    }
+    a[0] = cnt[0] = 1;
+    dfs(1, 0, 1);
+    makeTree(1, 1, n, cnt);
+    while (q--) {
+        int ty, u, x;
+        scanf("%d %d", &ty, &u);
+        if (ty == 1) {
+            scanf("%d", &x);
+            update(1, 1, n, st[u] + 1, en[u], inv(a[u]));
+            a[u] = x;
+            update(1, 1, n, st[u] + 1, en[u], a[u]);
+        }
+        else {
+            printf("%lld\n", query(1, 1, n, st[u], en[u]));
+        }
+    }
+}

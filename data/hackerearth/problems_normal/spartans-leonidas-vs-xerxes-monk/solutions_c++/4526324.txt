@@ -1,0 +1,191 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+#include<unordered_map>
+#include<unordered_set>
+//#include<quadmath.h>
+using namespace std;
+struct st{
+    long long int left_val;
+	long long int right_val;
+	int left_count;
+	int right_count;
+	int maxt;
+	int range;
+	void init(){
+		left_val = right_val = left_count = right_count = 0;
+		maxt = 0;
+	}
+	st(){
+		init();
+	}
+};
+#define MAX 100002
+st seg[MAX * 4];
+int n;
+int q;
+namespace test{
+	void end_test(){
+		int val;
+		if (cin >> val){
+			exit(1);
+		}
+	}
+	void range_test(int t,int l,int r){
+		if (t < l || r < t){
+			exit(1);
+		}
+	}
+}
+long long int p[MAX];
+st emp;
+st merge(st a, st b){
+	if (a.maxt == -1){
+		return b;
+	}
+	if (b.maxt == -1){
+		return a;
+	}
+	st nex;
+	nex.init();
+	nex.maxt = max(a.maxt, b.maxt);
+	if (a.right_val < b.left_val){
+		nex.maxt = max(nex.maxt, a.right_count + b.left_count);
+	}
+	nex.left_val = a.left_val;
+	nex.right_val = b.right_val;
+	nex.range = a.range + b.range;
+	if (a.left_count ==a.range){
+		if (a.right_val < b.left_val){
+			nex.left_count = a.range + b.left_count;
+		}
+		else{
+			nex.left_count = a.range;
+		}
+	}
+	else{
+		nex.left_count = a.left_count;
+	}
+	if (b.right_count == b.range){
+		if (a.right_val < b.left_val){
+			nex.right_count = a.right_count + b.range;
+		}
+		else{
+			nex.right_count = b.range;
+		}
+	}
+	else{
+		nex.right_count = b.right_count;
+	}
+	return nex;
+}
+inline void init(int b, int l, int r){
+	seg[b].range = r - l;
+	if (l + 1 == r){
+		seg[b].left_val = seg[b].right_val = p[l];
+		seg[b].left_count = seg[b].right_count = 1;
+		seg[b].maxt = 1;
+		return;
+	}
+	init(b * 2 + 1, l, (l + r) >> 1);
+	init(b * 2 + 2, (l + r) >> 1, r);
+	seg[b] = merge(seg[b * 2 + 1], seg[b * 2 + 2]);
+}
+inline void add(int b, int l, int r, int ll,long long int x){
+	if (l <= ll&&ll < r){
+		if (l + 1 == r){
+			seg[b].init();
+			seg[b].left_count = seg[b].right_count = 1;
+			seg[b].left_val = seg[b].right_val = x;
+			seg[b].range = r - l;
+			seg[b].maxt = 1;
+			return;
+		}
+		add(b * 2 + 1, l, (l + r) >> 1, ll, x);
+		add(b * 2 + 2, (l + r) >> 1, r, ll, x);
+		seg[b] = merge(seg[b * 2 + 1], seg[b * 2 + 2]);
+	}
+	return;
+}
+inline st qq(int b, int l, int r, int ll, int rr){
+	if (rr <= l || r <= ll){
+		return emp;
+	}
+	if (ll <= l&&r <= rr){
+		return seg[b];
+	}
+	st rrr = qq(b * 2 + 1, l, (l + r) >> 1, ll, rr);
+	rrr = merge(rrr, qq(b * 2 + 2, (l + r) >> 1, r, ll, rr));
+	return rrr;
+}
+int main(){
+	emp.init();
+	emp.maxt = -1;
+	int t;
+	scanf("%d", &t);
+	test::range_test(t, 1, 10);
+	while (t--){
+		int n, q;
+		scanf("%d%d", &n, &q);
+		test::range_test(n, 1, 100000);
+		test::range_test(q, 1, 100000);
+		for (int i = 0; i < n; i++){
+			scanf("%lld", &p[i]);
+			test::range_test(p[i], 1, 1000000000);
+		}
+	init(0, 0, n);
+		while (q--){
+			int ty;
+			scanf("%d", &ty);
+			if (ty == 1){
+				int x;
+				long long int y;
+				scanf("%d%lld", &x, &y);
+				test::range_test(x, 1, n);
+				test::range_test(abs(y), 0, 1000000000);
+				x--;
+				p[x]+=y;
+				add(0, 0, n, x, p[x]);
+				continue;
+			}
+			else{
+				int x, y;
+				scanf("%d%d", &x, &y);
+				if (x > y){
+					exit(1);
+				}
+				test::range_test(x, 1, n);
+				test::range_test(y, 1, n);
+				x--;
+				y--;
+				
+				st ans = qq(0, 0, n, x, y + 1);
+				printf("%d\n", ans.maxt);
+			}
+		}
+	}
+	test::end_test();
+	return 0;
+}

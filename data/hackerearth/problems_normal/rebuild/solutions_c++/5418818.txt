@@ -1,0 +1,134 @@
+#include <iostream>
+#include <map>
+#include <set>
+#include <vector>
+#include<queue>
+#include <algorithm>
+using namespace std;
+int vertices, edges;
+int deg[100001];
+int par[100001];
+int min(int x, int y)
+{
+	if (x<y)
+		return x;
+	return y;
+}
+int max(int x, int y)
+{
+	if (x<y)
+		return y;
+	return x;
+}
+void initT()
+{
+	for (int i = 1; i <= vertices; i++)
+	{
+		par[i] = i;
+		deg[i] = 0;
+	}
+}
+
+int rootT(int x)
+{
+	while (par[x] != x)
+	{
+		par[x] = par[par[x]];
+		x = par[x];
+	}
+	return x;
+}
+
+void unionT(int x, int y)
+{
+	int p = rootT(x);
+	int q = rootT(y);
+	par[p] = par[q];
+}
+long long applyGEN(vector<pair<int, pair<int, int> > > edgeList)
+{
+	int sz = edgeList.size();
+	int u, v, cost;
+	long long min_cost = 0;
+	for (int i = 0; i < sz; i++)
+	{
+		cost = edgeList[i].first;
+		u = edgeList[i].second.first;
+		v = edgeList[i].second.second;
+		if (rootT(u) != rootT(v))
+		{
+			min_cost += cost;
+			deg[u]++;
+			deg[v]++;
+			unionT(u, v);
+		}
+	}
+	return min_cost;
+}
+bool compare(pair<int, pair<int, int> > A, pair<int, pair<int, int> > B)
+{
+	if (A.first < B.first)
+		return true;
+	else if (A.first>B.first)
+		return false;
+	else
+	{
+		if (A.second.first > B.second.first)
+			return true;
+		else if (A.second.first < B.second.first)
+			return false;
+		else
+		{
+			if (A.second.second > B.second.second)
+				return true;
+			else
+				return false;
+		}
+	}
+}
+void PrintF(long long cost)
+{
+	cout << cost << endl;
+	for (int i = 1; i <= vertices; i++)
+		cout << deg[i] << " ";
+	cout << endl;
+}
+int main()
+{
+	int t, u, v, cost;
+	cin >> t;
+	for (int k = 1; k <= t; k++)
+	{
+		cin >> vertices >> edges;
+		map<pair<int, int>, int> mymap;
+		initT();
+		for (int i = 0; i<edges; i++)
+		{
+			cin >> u >> v >> cost;
+			if (u != v)
+			{
+				if (mymap.find(make_pair(min(u, v),max(u,v))) == mymap.end())
+					mymap[make_pair(min(u, v), max(u, v))] = cost;
+				else
+					mymap[make_pair(min(u, v), max(u, v))] = min(cost, mymap[make_pair(min(u, v), max(u, v))]);
+			}
+		}
+		vector<pair<int, pair<int, int> > > edgeList;
+		for(auto itr = mymap.begin(); itr != mymap.end(); itr++)
+		{
+			cost = (*itr).second;
+			u = (*itr).first.first;
+			v = (*itr).first.second;
+			edgeList.push_back(make_pair(cost, make_pair(u, v)));
+		}
+		sort(edgeList.begin(), edgeList.end(),compare);
+		PrintF(applyGEN(edgeList));
+		/*
+		for (auto itr = edgeList.begin(); itr != edgeList.end(); itr++)
+		{
+			cout << "cost " << (*itr).first << " u : " << (*itr).second.first << " v : " << (*itr).second.second << endl;
+		}
+		*/
+	}
+	return 0;
+}

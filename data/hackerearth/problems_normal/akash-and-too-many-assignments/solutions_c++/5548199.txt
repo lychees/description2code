@@ -1,0 +1,122 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define ll long long
+#define f(i,n) for(int i=0;i<n;i++)
+#define f1(i,n) for(int i=1;i<n;i++)
+#define max 1000000
+int tree[(5*max)/2][26]; char a[max];
+
+void build(int node,int st,int end)
+{
+	if(st==end)
+	{ 
+	  char p=a[st]-'a';
+	  int m=p;
+	  tree[node][m]+=1;
+	}
+	else
+	{
+		int mid=(st+end)/2;
+		build(2*node,st,mid);
+		build(2*node+1,mid+1,end);
+		f(i,26)
+		{
+			tree[node][i]=tree[2*node][i]+tree[2*node+1][i];
+		}
+	}
+}
+void update(int node,int st,int end,int idx,char value)
+{
+	if(st==end)
+	{ char p=a[idx]-'a';
+	  int m=p;
+	tree[node][m]-=1;
+		a[idx]=value;
+		 p=a[idx]-'a';
+	  m=p;
+	  tree[node][m]+=1;
+	}
+	else
+	{
+		int mid=(st+end)/2;
+		if(mid>=idx)
+		update(2*node,st,mid,idx,value);
+		else
+		update(2*node+1,mid+1,end,idx,value);
+		f(i,26)
+		{
+			tree[node][i]=tree[2*node][i]+tree[2*node+1][i];
+		}
+	}
+}
+void query(int node,int st,int end,int lt,int rt,int k,int* su)
+{
+	if(lt<=st&&rt>=end)
+	{
+		f(i,26)
+		{
+			su[i]+=tree[node][i];
+		}
+	}
+else	if(st>rt||lt>end)
+{
+	return;
+}
+	else
+	{
+		int mid=(st+end)/2;
+		query(2*node,st,mid,lt,rt,k,su);
+		query(2*node+1,mid+1,end,lt,rt,k,su);
+		
+	}
+}
+int main()
+{
+	int n,q;
+	cin>>n>>q;
+	cin>>a;
+	build(1,0,n-1);
+	
+	f(i,q)
+	{
+		int m;
+		cin>>m;
+		if(m==0)
+		{ //cout<<i<<endl;
+			int l;
+			char v;
+			cin>>l>>v;
+			update(1,0,n-1,l-1,v);
+		/*	f1(k,9)
+	{
+		f(j,30)
+		{
+			cout<<tree[k][j]<<" ";
+		}
+		cout<<endl;
+	}*/
+		}
+		else
+		{
+			int lt,rt,k;
+			cin>>lt>>rt>>k;
+			int su[26]={};
+			query(1,0,n-1,lt-1,rt-1,k,su);
+			int yo=-1;
+			while(k>0&&yo<25)
+			{yo++;
+				k=k-su[yo];
+			//	cout<<k<<"  ";
+				
+			}
+			char beep=yo;
+			beep=beep+'a';
+			if(k<=0)
+			cout<<beep<<endl;
+			else
+			cout<<"Out of range"<<endl;
+			
+		}
+	}
+	
+}

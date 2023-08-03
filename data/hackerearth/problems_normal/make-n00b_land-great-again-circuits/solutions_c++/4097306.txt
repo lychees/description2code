@@ -1,0 +1,156 @@
+#include <iostream>
+#include <vector>
+#include <math.h>
+using namespace std;
+
+#define NMAX 500005
+#define ll long long
+
+int n,m;
+vector<int> children[NMAX];
+int owner[NMAX];
+ll threshold[NMAX];
+int depth[NMAX];
+int arrival[NMAX];
+int departure[NMAX];
+pair<ll, pair<ll, ll>> queries[NMAX];
+int _timer=0;
+int ans[NMAX];
+vector<int> factories[NMAX];
+vector<int> toCheck[NMAX];
+int q;
+
+int L[NMAX], R[NMAX];
+
+ll bit[2][NMAX];
+
+void add(int id, int x, ll v)  {
+    while (x<=n) {
+        bit[id][x]+=v;
+        x+=(x&(-x));
+    }
+}
+
+ll query(int id, int x)    {
+    ll sum=0;
+    while (x>0) {
+        sum+=bit[id][x];
+        x-=(x&(-x));
+    }
+    return sum;
+}
+
+
+
+void dfs(int v, int p)  {
+    depth[v]=depth[p]+1;
+    _timer++;   arrival[v]=_timer;
+    for (auto c : children[v]) {
+        if (c!=p) {
+            dfs(c, v);
+        }
+    }
+    departure[v]=_timer;
+}
+
+
+void cleanUp()  {
+    for (int i=0; i<=q; i++) {
+        toCheck[i].clear();
+    }
+    for (int i=0; i<=n; i++) {
+        bit[0][i]=bit[1][i]=0;
+    }
+    int mid;
+    for (int i=1; i<=m; i++) {
+        if (L[i]==R[i]) {
+            continue;
+        }
+        mid=(L[i]+R[i])/2;
+        toCheck[mid].push_back(i);
+    }
+}
+
+
+
+
+int main() {
+    ll x;
+    scanf("%d %d",&n,&m);
+    for(int i=2;i<=n;i++)   {
+        scanf("%lld",&x);
+        children[x].push_back(i);
+    }
+    for (int i=1; i<=n; i++) {
+        scanf("%d",&owner[i]);
+        factories[owner[i]].push_back(i);
+    }
+    for (int i=1; i<=m; i++) {
+        scanf("%lld",&threshold[i]);
+    }
+    dfs(1, 0);
+    scanf("%d",&q);
+    for (int i=1; i<=q; i++) {
+        scanf("%lld %lld %lld", &queries[i].first, &queries[i].second.first, &queries[i].second.second);
+    }
+    q++;
+    queries[q].first=1, queries[q].second.first=1e18+1, queries[q].second.second=0;
+    
+    for (int i=1; i<=m; i++) {
+        L[i]=1, R[i]=q;
+    }
+    
+    bool abc=0;
+    ll g=25, v, y, curr;
+    while (g--) {
+        cleanUp();
+        abc=0;
+        for (int i=1; i<=q; i++) {
+            v=queries[i].first, x=queries[i].second.first, y=queries[i].second.second;
+            add(0, arrival[v], y);
+            add(0, departure[v]+1, -y);
+            add(1, arrival[v], (-1*depth[v]*y)+x);
+            add(1, departure[v]+1, depth[v]*y-x);
+            
+            for(auto j:toCheck[i])  {
+                abc=1;
+                curr=0;
+                for(auto k:factories[j])    {
+//                    curr+=query(0, arrival[k])*depth[k]+query(1, arrival[k]);
+                    curr+=query(1, arrival[k]);
+                    curr+=1ll*query(0, arrival[k])*depth[k];
+                    if(curr>2e18)
+                        curr=2e18;
+                        
+                }
+                if(curr>=threshold[j])  {
+                    R[j]=i;
+                }
+                else
+                    L[j]=i+1;
+            }
+            
+        }
+        if (!abc) {
+            break;
+        }
+    }
+    for (int i=1; i<=m; i++) {
+//        cout<<L[i]<<"  "<<R[i]<<endl;
+        if (L[i]>=q) {
+            printf("rekt\n");
+        }
+        else    {
+            printf("%d\n",L[i]);
+        }
+    }
+    
+    
+//    int block=sqrt(q);
+//    
+//    for (int i=0; i<q; i+=block) {
+////        process(i, min(i+block-1, q-1));
+//    }
+    
+    return 0;
+}

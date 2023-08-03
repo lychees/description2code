@@ -1,0 +1,87 @@
+
+#include<iostream>
+#include<limits.h>
+#include<map>
+#include<vector>
+#include<cstring>
+#include<cmath>
+#include<algorithm>
+#include<cstdio>
+#include<fstream>
+using namespace std;//miller rabin primality 7 set for 64 bit int {2, 325, 9375, 28178, 450775, 9780504, 1795265022}
+#define abs(x) ((x)>0?(x):-(x))
+#define M 1000000007
+#define lld signed long long int
+#define pp pop_back()
+#define ps(x) push_back(x)
+#define tkint(n) scanf("%d",&n)
+#define tkchar(ch) scanf("%c",&ch)
+#define tklong(n) scanf("%llu",&n)
+#define  ms0(s) memset(s,0,sizeof s)
+map<lld,int>mp;
+int left_tree[20000*5+5],right_tree[5*20000+5];
+int mx;
+int read(int tree[],int idx)
+{
+	int sum = 0;
+	while (idx > 0)
+	{
+		sum += tree[idx];
+		idx -= (idx & -idx);
+	}
+	return sum;
+}
+void update(int tree[],int idx ,int val)
+{
+	while(idx <= mx+2)
+	{
+		tree[idx] += val;
+		idx += (idx & -idx);
+	}
+}
+lld l[20000+5],ql[20000+3],qr[20000+3],r[20000+3];
+int main()
+{
+	int n,t;
+	lld a,b,c;
+	cin>>t;
+	while(t--)
+	{
+		cin>>n>>a>>b>>c;
+		lld ans=0;
+		vector<lld>v;
+		v.clear();
+		mp.clear();
+		for(int i=1;i<=n;++i)
+		{
+			scanf("%lld%lld",&l[i],&r[i]);
+			v.ps(l[i]);
+			v.ps(r[i]);
+		}
+		sort(v.begin(),v.end());
+		mx=v.size()+5;
+		for(int i=0;i<v.size();++i)
+		{
+			mp[v[i]]=i+1;
+		}
+		for(int i=1;i<=n;++i)
+		{
+			update(left_tree,mp[l[i]],1);
+			update(right_tree,mp[r[i]],1);
+		}
+		int ans_left,ans_right;
+		for(int i=0;i<v.size();++i)
+		{
+			ans_left=read(right_tree,mp[v[i]]-1);
+			ans_right=n-read(left_tree,mp[v[i]]);
+			//cout<<v[i]<<' '<<ans_left<<' '<<(n-ans_left-ans_right)<<' '<<ans_right<<endl;
+			ans=max(ans,ans_left*c+ans_right*a+(n-ans_left-ans_right)*b);
+		}
+		cout<<ans<<endl;
+		for(int i=1;i<=n;++i)
+		{
+			update(left_tree,mp[l[i]],-1);
+			update(right_tree,mp[r[i]],-1);
+		}
+	}
+}

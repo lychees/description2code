@@ -1,0 +1,106 @@
+
+#include<stdio.h>
+#include<iostream>
+#include<math.h>
+#include<ctype.h>
+#include<vector>
+#include<stack>
+#include<queue>
+#include<map>
+#include<set>
+#include<string.h>
+#include<algorithm>
+#include <complex>
+#include <numeric>
+#define mod 1000000007
+#define inf 200000000000000L
+#define countbits __builtin_popcount
+#define sz sizeof
+#define mp make_pair
+#define pb push_back
+#define ll long long
+#define ull unsigned long long
+#include<deque>
+#define mset memset
+#define sz sizeof
+#define maxn 3005
+#include<list>
+using namespace std;
+int n,a,b,k,r,cnt,med,cnt1,g1,g2;
+pair<ll,ll> P[maxn],B[maxn];
+ll dist(pair<ll,ll> a,pair<ll,ll> b)
+{
+	return (a.first-b.first)*(a.first-b.first) + (a.second-b.second)*(a.second-b.second);
+}
+vector<int> Adj[maxn];
+int Dist[maxn],Par[maxn];
+bool BFS()
+{
+	queue<int>Cola;
+	for(int i =1 ; i <=g1+g2 ;++i)
+		if(Par[i] == 0){
+			Cola.push(i);
+			Dist[i] = 0;
+		}
+		else
+			Dist[i] = maxn;
+	Dist[0] = maxn;
+	while(!Cola.empty()){
+		int v = Cola.front();Cola.pop();
+		for(int i = 0 ; i < Adj[v].size();i++)
+			if(Dist[Par[Adj[v][i]]] == maxn){
+				Cola.push(Par[Adj[v][i]]);
+				Dist[Par[Adj[v][i]]] = Dist[v] + 1;
+			}
+	}
+	return Dist[0] !=  maxn;
+}
+bool DFS(int x)
+{
+	for(int i = 0 ;i < Adj[x].size();i++)
+	{
+		if(Dist[Par[Adj[x][i]]] == Dist[x] + 1 && (Par[Adj[x][i]]==0 || DFS(Par[Adj[x][i]])) )
+		{
+			Par[x] = Adj[x][i];
+			Par[Adj[x][i]] = x;
+			return 1;
+		}
+	}
+	Dist[x] = maxn;
+	return 0;
+}
+int main()
+{
+	ios_base::sync_with_stdio(0);
+	cin>>g1>>g2>>k;
+	for(int i=1;i<=g1;i++) cin>>P[i].first>>P[i].second;
+	for(int i=1;i<=g2;i++) cin>>B[i].first>>B[i].second;
+	ll hi = inf;
+	ll low = 0;
+	ll sol = 0;
+	while(low <= hi)
+	{
+		med = (hi+low)/2;
+		memset(Par,0,sizeof(Par));
+		memset(Dist,0,sizeof(Dist));
+		for(int i=1;i<=g1;i++) Adj[i].clear();
+		for(int i=1; i <= g1;i++)
+			for(int j=1;j<= g2;j++)
+			{
+				ll d = dist(P[i],B[j]);
+				if(d <= med)Adj[i].pb(g1 + j);
+			}
+		int res = 0;
+		while(BFS())
+			for(int i = 1 ; i <=g1+g2 ; i++)
+				if(!Par[i] && DFS(i))
+					res++;
+		if(res>=k){
+			sol = med;
+			hi = med-1;
+		}else
+			low = med+1;
+	}
+	cout<<sol<<endl;
+	return 0;
+}

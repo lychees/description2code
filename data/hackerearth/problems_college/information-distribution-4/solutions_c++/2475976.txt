@@ -1,0 +1,109 @@
+#include <string>
+#include <vector>
+#include<iostream>
+#include<cstdio>
+#include<cstdlib>
+#include<stack>
+#include<queue>
+#include<cmath>
+#include<algorithm>
+#include<functional>
+#include<list>
+#include<deque>
+#include<bitset>
+#include<set>
+#include<map>
+#include<unordered_map>
+#include<cstring>
+#include<sstream>
+#include<complex>
+#include<iomanip>
+#include<numeric>
+#define X first
+#define Y second
+#define pb push_back
+#define rep(X,Y) for (int (X) = 0;(X) < (Y);++(X))
+#define rrep(X,Y) for (int (X) = (Y)-1;(X) >=0;--(X))
+#define repe(X,Y) for ((X) = 0;(X) < (Y);++(X))
+#define peat(X,Y) for (;(X) < (Y);++(X))
+#define all(X) (X).begin(),(X).end()
+#define rall(X) (X).rbegin(),(X).rend()
+#define eb emplace_back
+#define UNIQUE(X) (X).erase(unique(all(X)),(X).end())
+
+using namespace std;
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+template<class T> using vv=vector<vector<T>>;
+template<class T> ostream& operator<<(ostream &os, const vector<T> &t) {
+os<<"{"; rep(i,t.size()) {os<<t[i]<<",";} os<<"}"<<endl; return os;}
+template<class S, class T> ostream& operator<<(ostream &os, const pair<S,T> &t) { return os<<"("<<t.first<<","<<t.second<<")";}
+const ll MOD=1e9+7;
+
+int comb[112][112][112];
+ll modpow(ll r,ll n,ll m=MOD){
+  ll re=1,d=r%m;
+  if(n<0)(n%=MOD-1)+=MOD-1;
+  for(;n;n/=2){
+    if(n&1)(re*=d)%=m;
+    (d*=d)%=m;
+  }
+  return re;
+}
+ll garner(vector<ll> a,vector<ll> m,vector<ll> p,ll mod=MOD){
+  int n=a.size(); m.pb(mod); p.pb(mod);
+  vector<ll> d(n+1,1),sum(n+1);
+  rep(i,n){
+    ll x=(a[i]-sum[i])%m[i]*modpow(d[i],m[i]/p[i]*(p[i]-1)-1,m[i])%m[i];
+    if(x<0) x+=m[i];
+    for(int j=i+1;j<=n;++j){
+      (sum[j]+=x%m[j]*d[j]%m[j])%=m[j];
+      (d[j]*=m[i])%=m[j];
+    }
+  }
+  return (sum.back()%mod+mod)%mod;
+}
+
+int main(){
+  ios_base::sync_with_stdio(false);
+  cout<<fixed<<setprecision(0);
+  rep(m,110)if(m){
+    comb[m][0][0]=1;
+    rep(j,110)rep(k,110){
+      (comb[m][j+1][k+1]+=comb[m][j][k])%=m;
+      (comb[m][j+1][k]+=comb[m][j][k])%=m;
+    }
+  }
+  //rep(i,10){rep(j,10)cout<<comb[20][i][j]<<",";cout<<endl;}
+  int T;
+  cin>>T;
+  while(T--){
+    ll n,m,k,orig;
+    cin>>n>>m>>k;
+    orig=k;
+    --n; --m;
+    vector<ll> a,md;
+    for(int i=2;i*i<=k;++i)
+      if(k%i==0){
+	k/=i;
+	md.pb(i);
+	int prod=1;
+	for(ll nn=n,mm=m;nn||mm;nn/=i,mm/=i)
+	  (prod*=comb[i][nn%i][mm%i])%=i;
+	a.pb(prod);
+      }
+    if(k>1){
+      md.pb(k);
+      int prod=1;
+      for(;n||m;n/=k,m/=k){
+	(prod*=comb[k][n%k][m%k])%=k;
+	//cout<<prod<<endl;
+      }
+      a.pb(prod);
+    }
+    //cout<<a<<md;
+    cout<<garner(a,md,md,orig)<<endl;
+  }
+  return 0;
+}

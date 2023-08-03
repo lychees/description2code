@@ -1,0 +1,97 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <iostream>
+using namespace std;
+int n,m,i,j,k,ans,s,t,tot;
+int par[1000],mn[1000];
+struct Edge
+{
+    int src, dest, weight;
+};
+ 
+struct Graph
+{
+    int V, E;
+ 
+    struct Edge* edge;
+};
+ 
+struct Graph* createGraph(int V, int E)
+{
+    struct Graph* graph = (struct Graph*) malloc( sizeof(struct Graph) );
+    graph->V = V;
+    graph->E = E;
+ 
+    graph->edge = (struct Edge*) malloc( graph->E * sizeof( struct Edge ) );
+ 
+    return graph;
+}
+ 
+void printArr(int u)
+{
+	//cout << u << endl;
+    if(u==0)
+		return;
+	printArr(par[u]);
+	cout << u << " ";
+}
+ 
+void BellmanFord(struct Graph* graph, int src)
+{
+    int V = graph->V;
+    int E = graph->E;
+    int dist[V];
+ 
+    for (int i = 0; i < V; i++)
+        dist[i]   = INT_MAX;
+    //dist[t] = INT_MAX;
+    
+ 
+    for (int i = 1; i <= V-1; i++)
+    {
+        for (int j = 0; j < E; j++)
+        {
+            int u = graph->edge[j].src;
+            int v = graph->edge[j].dest;
+            int weight = graph->edge[j].weight;
+            if (min(dist[u] , weight) > mn[v]){
+                dist[v] = min(dist[u] , weight);
+                mn[v]=dist[v];
+				par[v]=u;
+			}
+        }
+    }
+    par[src]=0;
+ 	//cout << dist[t] << endl;
+	//cout << t << endl;
+    printArr(t);
+	cout << endl;
+	ans=dist[t];
+	ans--;
+	if(tot%ans==0)
+		cout << tot/ans << endl;
+	else
+		cout << tot/ans + 1 << endl;
+ 
+    return;
+}
+
+int main(){
+	cin >> n >> m;
+	struct Graph* graph = createGraph(n, 2*m);
+	for(i=0;i<2*m;i+=2){
+		int a,b,w;
+		cin >> a >> b >> w;
+		graph->edge[i].src = a;
+		graph->edge[i].dest = b;
+		graph->edge[i].weight = w;
+		graph->edge[i+1].src = b;
+		graph->edge[i+1].dest = a;
+		graph->edge[i+1].weight = w;
+	}
+	cin >> s >> t >> tot;
+	BellmanFord(graph, s);
+	return 0;
+}

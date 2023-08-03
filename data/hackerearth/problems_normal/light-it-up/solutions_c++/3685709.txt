@@ -1,0 +1,182 @@
+/*
+-----------------------------------------------------------------------------
+Author :            ---------------------------------------------------------
+    UTKAR$H $AXETotA  ---------------------------------------------------------
+    IIT ITotDORE      ---------------------------------------------------------
+-----------------------------------------------------------------------------
+*/
+#include<bits/stdc++.h>
+#include<iostream>
+using namespace std;
+#define fre 	freopen("0.in","r",stdin);freopen("0.out","w",stdout)
+#define abs(x) ((x)>0?(x):-(x))
+#define MOD 1000000007
+#define LL signed long long int
+#define sBottomVisible(x) sBottomVisiblef("%d",&x)
+#define print(x) printf("%d\n",x)
+#define sBottomVisiblell(x) sBottomVisiblef("%lld",&x)
+#define printll(x) printf("%lld\n",x)
+#define rep(i,from,to) for(int i=(from);i <= (to); ++i)
+#define pii pair<int,int>
+#define S second
+#define F first
+/*
+---------------------------------------
+Geometry (from Stanford)
+---------------------------------------
+*/
+struct PT {
+    double x, y;
+    PT() {}
+    PT(double x, double y) : x(x), y(y) {}
+    PT(const PT &p) : x(p.x), y(p.y)    {}
+    PT operator + (const PT &p)  const {
+        return PT(x+p.x, y+p.y);
+    }
+    PT operator - (const PT &p)  const {
+        return PT(x-p.x, y-p.y);
+    }
+    PT operator * (double c)     const {
+        return PT(x*c,   y*c  );
+    }
+    PT operator / (double c)     const {
+        return PT(x/c,   y/c  );
+    }
+};
+
+double dot(PT p, PT q)     {
+    return p.x*q.x+p.y*q.y;
+}
+double dist2(PT p, PT q)   {
+    return dot(p-q,p-q);
+}
+double cross(PT p, PT q)   {
+    return p.x*q.y-p.y*q.x;
+}
+ostream &operator<<(ostream &os, const PT &p) {
+    os << "(" << p.x << "," << p.y << ")";
+}
+/*
+---------------------------------------
+Geometry Codechunk ends!!
+---------------------------------------
+*/
+const int maxn = 2002;
+
+vector<PT> tops, bottoms;
+bool BottomVisible[2002][2002];
+
+int CrossProduct(pii x, pii y, pii z) {
+	int dx = y.F - x.F;
+	int dy = y.S - x.S;
+	int res = z.F * dy - z.S * dx + x.S * dx - x.F * dy;
+	return res;
+}
+int TopLeft[2005];
+int TopRight[2005];
+
+void clearData() {
+	tops.clear();
+	bottoms.clear();
+	for (int i = 0; i < 2002; ++i) {
+		TopLeft[i]= TopRight[i]= 0;
+	}
+}
+bool way(PT a,PT b){
+	return a.x<b.x;
+}
+int main() {
+	//fre;
+	int T,flag, Tot, L, R, H;
+	cin>>T;
+	while (T--) {
+		clearData();
+		cin>>Tot;
+
+		vector<pii >bb,tt;
+
+		TopRight[Tot-1] = 1;
+		TopLeft[0] = 1;
+
+		for (int i = 0; i < Tot; ++i) {
+			cin>>L>>R>>H;
+			tops.push_back({L, H});
+			tops.push_back({R, H});
+
+			tt.push_back({L, H});
+			tt.push_back({R, H});
+
+			bottoms.push_back({L, 0});
+			bottoms.push_back({R, 0});
+
+			bb.push_back({L, 0});
+			bb.push_back({R, 0});
+		}
+		sort(tops.begin(),tops.end(),way);
+		sort(bottoms.begin(),bottoms.end(),way);
+		sort(tt.begin(),tt.end());
+		sort(bb.begin(),bb.end());
+		for (int i = 0; i < tops.size(); ++i) {
+			for (int j = 0; j < bottoms.size(); ++j) {
+				if (i == j) {
+					BottomVisible[i][j] = 1;
+					continue;
+				}
+				bool flag = 1;
+				for (int k = min(i,j)+1; k < max(i,j) && flag; ++k) {
+					if (CrossProduct(tt[i], bb[j], tt[k])
+						* 1LL *
+						CrossProduct(tt[i], bb[j], {bb[j].F, bb[j].S - 1})
+						< 0) {
+						flag = 0;
+					}
+				}
+				BottomVisible[i][j] = flag;
+			}
+		}
+
+		for(int i=0;i<Tot;++i){
+			for(int j=0;j<Tot;++j){
+				BottomVisible[2*i][2*j] = BottomVisible[2*i+1][2*j+1] = 0;
+			}
+			BottomVisible[2*i][2*i+1] = BottomVisible[2*i+1][2*i] = 0;
+			BottomVisible[2*i][2*i] = BottomVisible[2*i+1][2*i+1] = 1;
+		}
+		for(int i=1;i<Tot;++i){
+			flag = 0;
+			for(int j=0;j<i;++j){
+				if(TopRight[j] and BottomVisible[2*j+1][2*i])
+					flag = 1;
+			}
+			if(flag==0){
+				if(tops[2*i].y >= tops[2*i-2].y){
+					TopLeft[i] = 1;
+				}
+				else{
+					TopRight[i-1] = 1;
+				}
+			}
+		}
+		for(int i=Tot-2;i>=0;i--){
+			flag = 0;
+			for(int j=i+1;j<Tot;++j){
+				if(BottomVisible[2*j][2*i+1] and TopLeft[j])
+					flag = 1;
+			}
+			if(flag==0){
+				if(tops[2*i].y >= tops[2*i+2].y){
+					TopRight[i] = 1;
+				}
+				else{
+					TopLeft[i+1] = 1;
+				}
+			}
+		}
+		int Sum = 0;
+		for(int i=0;i<Tot;++i){
+			Sum += TopLeft[i] + TopRight[i] ;
+		}
+		cout<<Sum<<endl;
+
+	}
+}

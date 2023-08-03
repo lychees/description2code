@@ -1,0 +1,124 @@
+#include<cstdio>
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<string>
+#include<cstring>
+using namespace std;
+
+typedef long long LL;
+typedef vector<int> VI;
+
+#define REP(i,n) for(int i=0, i##_len=(n); i<i##_len; ++i)
+#define EACH(i,c) for(__typeof((c).begin()) i=(c).begin(),i##_end=(c).end();i!=i##_end;++i)
+#define eprintf(s...) fprintf(stderr, s)
+
+template<class T> inline void amin(T &a, const T &b) { if (a>b) a=b; }
+template<class T> inline void amax(T &a, const T &b) { if (a<b) a=b; }
+
+template<class T>
+struct Fenwick : vector<T> {
+    typedef vector<T> S;
+    int N;
+    Fenwick(int N_=0): S(N_), N(N_) {}
+    void add(int i, T x) {
+	for (; i<N; i|=i+1) S::operator[](i) += x;
+    }
+    T sum(int l, int r) {
+	if (l==0) {
+	    T s = 0;
+	    for (; r; r&=r-1) s += S::operator[](r-1);
+	    return s;
+	} else {
+	    return sum(0, r) - sum(0, l);
+	}
+    }
+};
+
+
+int N, M;
+char F[2222][2222];
+int A[2222][2222], B[2222][2222];
+
+
+LL Count(const int r, const int c) {
+    vector<pair<int, int> > P, Q;
+    for (int k=0; r+k<N && c+k<M; k++) {
+	P.push_back(make_pair(k, k + A[r+k][c+k]));
+	Q.push_back(make_pair(k - B[r+k][c+k] + 1, k+1));
+    }
+
+    sort(P.begin(), P.end()); // o-.
+    sort(Q.begin(), Q.end()); // .-o
+    Fenwick<int> X(Q.size() + 10);
+
+    LL ans = 0;
+    int i = 0, j = 0;
+    for (i=0; i<(int)P.size(); i++) {
+	while (j < (int)Q.size() && Q[j].first <= P[i].first) {
+	    X.add(Q[j].second-1, 1);
+	    j++;
+	}
+	ans += X.sum(P[i].first, min((int)X.size(), P[i].second));
+    }
+    return ans;
+}
+
+int main() {
+    scanf("%d%d", &N, &M);
+    REP (i, N) scanf("%s", F[i]);
+
+    // N = M = 2000;
+    // memset(F, '0', sizeof F);
+    
+    REP (i, N) {
+	int cnt = 0;
+	for (int j=M; j--;) {
+	    if (F[i][j] == '0') {
+		cnt++;
+		A[i][j] = cnt;
+	    } else {
+		cnt = 0;
+	    }
+	}
+    }
+    REP (j, M) {
+	int cnt = 0;
+	for (int i=N; i--;) {
+	    if (F[i][j] == '0') {
+		cnt++;
+		amin(A[i][j], cnt);
+	    } else {
+		cnt = 0;
+	    }
+	}
+    }
+    REP (i, N) {
+	int cnt = 0;
+	REP (j, M) {
+	    if (F[i][j] == '0') {
+		cnt++;
+		B[i][j] = cnt;
+	    } else {
+		cnt = 0;
+	    }
+	}
+    }
+    REP (j, M) {
+	int cnt = 0;
+	REP (i, N) {
+	    if (F[i][j] == '0') {
+		cnt++;
+		amin(B[i][j], cnt);
+	    } else {
+		cnt = 0;
+	    }
+	}
+    }
+    
+    LL ans = 0;
+    REP (j, M) ans += Count(0, j);
+    for (int i=1; i<N; i++) ans += Count(i, 0);
+    printf("%lld\n", ans);
+    return 0;
+}

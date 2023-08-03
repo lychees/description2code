@@ -1,0 +1,116 @@
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <set>
+#include <cstring>
+#include <cstdlib>
+#include <cctype>
+#include <map>
+#include <string>
+#include <sstream>
+#include <vector>
+#include <queue>
+#include <stack>
+#include <cmath>
+#include <numeric>
+ 
+#define repn(i, a, b) for(int i=(int)a ;i < (int)b ; i++)
+#define rep(i, n) repn( i , 0 , n ) 
+#define all(x)  x.begin() , x.end()
+#define rall(x) x.rbegin() , x.rend()
+#define clr(x, y) memset(x, (y), sizeof x)
+#define two(x) (1<<(x))
+#define twol(x) (1LL<<(x))
+#define mp make_pair
+#define fst first
+#define snd second
+using namespace std;
+ 
+typedef long long int64;
+typedef long double ldouble;
+typedef pair<int, int> pii;
+const int MAXN = 151;
+const int ERROR = -2;
+const int UNAVAILABLE = -1;
+int a[MAXN];
+string str;
+int sum_g (int a, int b) {
+	if (a == ERROR || b == ERROR) 
+		return ERROR;
+	return a + b;
+}
+int max_g (int a, int b) {
+	if (a == ERROR and b == ERROR)
+		return ERROR;
+	if (a == ERROR) 
+		return b;
+	if (b == ERROR)
+		return a;
+	return max(a, b);
+}
+int dp_f[MAXN][MAXN];
+int dp_g[MAXN][MAXN][MAXN/2 + 1];
+// gets the maximum sum of the application of g in a selection of some elements of 
+// a partition
+//
+int g(int, int, int);
+int f (int begin, int end) {
+	int & ans = dp_f[begin][end];
+	if (ans != -1) return ans;
+	if (end < begin) return ans = 0;
+	ans = max(0, g(begin, end, 0));
+	ans = max(ans, max(f(begin+1, end), f(begin, end-1)));
+	repn (mid, begin, end) {
+		ans = max(ans, f(begin, mid) + f(mid+1, end));	
+	}
+	return ans;
+}
+// gets the maximum points one can get if dissasemble te string[begin:end] into palindromes
+int g (int begin, int end, int lvl) {
+	// skip prefix if available
+	int & ans = dp_g[begin][end][lvl];
+	if (ans != -1) return ans;
+	ans = ERROR;
+	
+	if (begin > end) {
+		if (a[lvl*2] == UNAVAILABLE) return ans = ERROR;
+		return ans = a[lvl*2];
+	}
+	repn (i, begin, end) {
+		int prefix = sum_g(g(begin, i, 0), g(i+1, end, lvl));
+		int sufix  = sum_g(g(begin, i, lvl), g(i+1, end, 0));
+		ans = max_g(ans, max_g(prefix, sufix));
+	}
+	if (a[lvl*2 + 1] != UNAVAILABLE) {
+		repn (mid, begin, end + 1) {
+			int left = g(begin, mid-1, 0);
+			int right = g(mid+1, end, 0);
+			ans = max_g(ans, sum_g(sum_g(left, right), a[lvl*2 + 1]));
+		}
+	}
+	// if there are atleast 2 characters left, compare the first and the last one
+	if (begin != end) {
+		if (str[begin] == str[end]) {
+			ans = max_g(ans, g(begin+1, end-1, lvl+1));
+		}
+	}
+	// end even
+	if (a[lvl*2] != UNAVAILABLE and lvl > 0)
+		ans = max_g(ans, sum_g(a[lvl*2], g(begin, end, 0)));
+	
+	if (begin == end and a[lvl*2 + 1] != UNAVAILABLE) {
+		ans = max_g(ans, a[lvl*2+1]);
+	}
+	return ans;
+}
+int main () {
+	int len;
+	cin >> len;
+	rep (i, len) cin >> a[i+1];
+	a[0] = 0;
+	cin >> str;
+	clr(dp_f, -1);
+	clr(dp_g, -1);
+	cout << f(0, len-1) << endl;
+	return 0;
+}

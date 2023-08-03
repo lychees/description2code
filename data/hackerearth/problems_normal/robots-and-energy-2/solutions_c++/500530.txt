@@ -1,0 +1,132 @@
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <deque>
+#include <stack>
+#include <bitset>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <cstring>
+#include <queue>
+#define tr(c,i) for(typeof(c).begin() i = (c).begin(); i != (c).end(); i++)
+using namespace std;
+long long int mod=1000000007;
+int n,m;
+int f(string &temp)
+{
+	set <string> S;
+	//odd length
+	for (int i = 0; i < temp.length(); ++i)
+	{
+		int l=i,r=i;
+		while(l>=0 && r<temp.length())
+		{
+			if(temp[l]==temp[r])
+				S.insert(temp.substr(l,r+1-l));
+			else
+				break;
+			r++;
+			l--;
+		}
+	}
+	//even length
+	for (int i = 1; i < temp.length(); ++i)
+	{
+		int l=i-1,r=i;
+		while(l>=0 && r<temp.length())
+		{
+			if(temp[l]==temp[r])
+				S.insert(temp.substr(l,r+1-l));
+			else
+				break;
+			r++;
+			l--;
+		}
+	}
+	int sz=S.size();
+	return sz;
+}
+vector < vector <long long int> > matrix_mult(vector <vector <long long int> > &A,vector < vector <long long int> > &B)
+{
+	vector < vector <long long int> > ans(n*m,vector <long long int> (n*m));
+	for (int i = 0; i < n*m; ++i)
+	{
+		for (int j = 0; j < n*m; ++j)
+		{
+			ans[i][j]=0;
+			for (int k = 0; k < n*m; ++k)
+			{
+				ans[i][j]+=((A[i][k]*B[k][j])%mod);
+			}
+			ans[i][j]%=mod;
+		}
+	}
+	return ans;
+}
+vector < vector <long long int> > matrix_power(vector <vector <long long int> > &A,int d)
+{
+	if(d==1)
+		return A;
+	vector < vector <long long int> > ans=matrix_power(A,d/2);
+	ans=matrix_mult(ans,ans);
+	if(d%2)
+		ans=matrix_mult(ans,A);
+	return ans;
+}
+int main()
+{
+	// freopen("input.txt","r",stdin);
+	cin>>n>>m;
+	long long int ival[n*m];
+	string temp;
+	for (int i = 0; i < n; ++i)
+	{
+		for (int j = 0; j < m; ++j)
+		{
+			cin>>temp;
+			ival[(i*m)+j]=f(temp);
+		}
+	}
+	vector < vector <long long int> > A(n*m,vector <long long int> (n*m,0));
+	int c,x1,x2,y1,y2;
+	cin>>c;
+	while(c--)
+	{
+		cin>>x1>>y1>>x2>>y2;
+		A[(x1*m)+y1][(x2*m)+y2]++;
+		A[(x2*m)+y2][(x1*m)+y1]++;
+	}
+	for (int i = 0; i < n*m; ++i)
+	{
+		A[i][i]++;
+	}
+	int d;
+	cin>>d;
+	A=matrix_power(A,d);
+	for (int i = 0; i < n; ++i)
+	{
+		for (int j = 0; j < m; ++j)
+		{
+			d=(i*m)+j;
+			long long int ans=0;
+			for (int k = 0; k < n*m; ++k)
+			{
+				ans+=ival[k]*A[k][d];
+			}
+			ans%=mod;
+			cout<<ans<<" ";
+		}
+		cout<<"\n";
+	}
+	return 0;
+}

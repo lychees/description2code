@@ -1,0 +1,196 @@
+#include <bits/stdc++.h>
+// iostream is too mainstream
+#include <cstdio>
+// bitch please
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <list>
+#include <cmath>
+#include <iomanip>
+#include <time.h>
+#define dibs reserve
+#define OVER9000 1234567890
+#define ALL_THE(CAKE,LIE) for(auto LIE =CAKE.begin(); LIE != CAKE.end(); LIE++)
+#define tisic 47
+#define soclose 1e-8
+#define chocolate win
+// so much chocolate
+#define patkan 9
+#define ff first
+#define ss second
+#define abs(x) ((x < 0)?-(x):x)
+#define uint unsigned int
+#define dbl long double
+#define pi 3.14159265358979323846
+using namespace std;
+// mylittledoge
+
+#ifdef DONLINE_JUDGE
+	// palindromic tree is better than splay tree!
+	#define lld I64d
+#endif
+
+typedef vector<int> VD;
+typedef vector<VD> VVD;
+typedef vector<int> VI;
+
+int MinCostMatching(VVD &cost, VI &Lmate, VI &Rmate) {
+  int n = int(cost.size());
+
+  // construct dual feasible solution
+  VD u(n);
+  VD v(n);
+  for (int i = 0; i < n; i++) {
+    u[i] = cost[i][0];
+    for (int j = 1; j < n; j++) u[i] = min(u[i], cost[i][j]);
+  }
+  for (int j = 0; j < n; j++) {
+    v[j] = cost[0][j] - u[0];
+    for (int i = 1; i < n; i++) v[j] = min(v[j], cost[i][j] - u[i]);
+  }
+  
+  // construct primal solution satisfying complementary slackness
+  Lmate = VI(n, -1);
+  Rmate = VI(n, -1);
+  int mated = 0;
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (Rmate[j] != -1) continue;
+      if (fabs(cost[i][j] - u[i] - v[j]) < 1e-10) {
+	Lmate[i] = j;
+	Rmate[j] = i;
+	mated++;
+	break;
+      }
+    }
+  }
+  
+  VD dist(n);
+  VI dad(n);
+  VI seen(n);
+  
+  // repeat until primal solution is feasible
+  while (mated < n) {
+    
+    // find an unmatched left node
+    int s = 0;
+    while (Lmate[s] != -1) s++;
+    
+    // initialize Dijkstra
+    fill(dad.begin(), dad.end(), -1);
+    fill(seen.begin(), seen.end(), 0);
+    for (int k = 0; k < n; k++) 
+      dist[k] = cost[s][k] - u[s] - v[k];
+    
+    int j = 0;
+    while (true) {
+      
+      // find closest
+      j = -1;
+      for (int k = 0; k < n; k++) {
+	if (seen[k]) continue;
+	if (j == -1 || dist[k] < dist[j]) j = k;
+      }
+      seen[j] = 1;
+      
+      // termination condition
+      if (Rmate[j] == -1) break;
+      
+      // relax neighbors
+      const int i = Rmate[j];
+      for (int k = 0; k < n; k++) {
+	if (seen[k]) continue;
+	const int new_dist = dist[j] + cost[i][k] - u[i] - v[k];
+	if (dist[k] > new_dist) {
+	  dist[k] = new_dist;
+	  dad[k] = j;
+	}
+      }
+    }
+    
+    // update dual variables
+    for (int k = 0; k < n; k++) {
+      if (k == j || !seen[k]) continue;
+      const int i = Rmate[k];
+      v[k] += dist[k] - dist[j];
+      u[i] -= dist[k] - dist[j];
+    }
+    u[s] += dist[j];
+    
+    // augment along path
+    while (dad[j] >= 0) {
+      const int d = dad[j];
+      Rmate[j] = Rmate[d];
+      Lmate[Rmate[j]] = j;
+      j = d;
+    }
+    Rmate[j] = s;
+    Lmate[s] = j;
+    
+    mated++;
+  }
+  
+  int value = 0;
+  for (int i = 0; i < n; i++)
+    value += cost[i][Lmate[i]];
+  
+  return value;
+}
+
+int N;
+vector<int> C;
+vector< vector<int> > G;
+vector< vector<int> > ans;
+
+void DFS(int R, int par) {
+	int D =G[R].size();
+	vector<int> Lm(D+1),Rm(D+1);
+	vector< vector<int> > cost(D+1,vector<int>(D+1,0));
+	int s =0;
+	ALL_THE(G[R],it) if(*it != par) {
+		DFS(*it,R);
+		for(int i =0; i <= D; i++) cost[s][i] =ans[*it][i]+C[i];
+		s++;}
+	for(int i =0; i <= D; i++) {
+		vector<int> c0(D+1);
+		for(int j =0; j <= D; j++) {
+			c0[j] =cost[j][i];
+			cost[j][i] =1000000;}
+		cost[D][i] =0;
+		ans[R][i] =MinCostMatching(cost,Lm,Rm);
+		for(int j =0; j <= D; j++) cost[j][i] =c0[j];}
+	for(int i =D+1; i < N; i++) ans[R][i] =ans[R][i-1];}
+
+int main() {
+	cin.sync_with_stdio(0);
+	cin.tie(0);
+	cout << fixed << setprecision(10);
+	int T;
+	cin >> T;
+	for(int t =0; t < T; t++) {
+		cin >> N;
+		G.clear();
+		G.resize(N);
+		C.resize(N);
+		C[N-1] =1000;
+		for(int i =0; i < N-1; i++) cin >> C[i];
+		sort(begin(C),end(C));
+		for(int i =0; i < N-1; i++) {
+			int u,v;
+			cin >> u >> v;
+			G[--u].push_back(--v);
+			G[v].push_back(u);}
+		ans.clear();
+		ans.resize(N,vector<int>(N,1000000));
+		DFS(0,0);
+		cout << ans[0][N-1] << "\n";}
+	return 0;}
+
+// look at my code
+// my code is amazing

@@ -1,0 +1,79 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <vector>
+#include <algorithm>
+#include <queue>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <map>
+#include <set>
+using namespace std;
+
+const int N = 2e5+5;
+long long fenv[10][N];
+int a[N], rev[N];
+int mod = 1e9+7;
+int nn;
+pair<pair<int, int>, int> qrs[N];
+
+void upd(int tid, int id, int add) {
+	for( ; id < nn; id = id | (id+1)) {
+		fenv[tid][id] += add;
+		if(fenv[tid][id] >= mod)
+			fenv[tid][id] -= mod;
+	}
+}
+
+long long sum(int tid, int id) {
+	long long ans = 0;
+	for( ; id >= 0; id = (id&(id+1)) - 1) {
+		ans += fenv[tid][id];
+		if(ans >= mod)
+			ans -= mod;
+	}
+	return ans;
+}
+
+long long ans[N];
+
+int main() {
+	int n, m, d;
+	cin >> n >> m >> d;
+	nn = n;
+	for(int i = 0; i < n; ++i) {
+		scanf("%d", &a[i]);
+		a[i]--;
+		rev[a[i]] = i;
+	}
+	for(int i = 0; i < m; ++i) {
+		int l, r;
+		scanf("%d%d", &l, &r);
+		--l, --r;
+		qrs[i] = make_pair(make_pair(r, l), i);
+	}
+	sort(qrs, qrs+m);
+
+	int id = 0;
+	for(int i = 0; i < m; ++i) {
+		int l = qrs[i].first.second;
+		int r = qrs[i].first.first;
+		while(id <= r) {
+			for(int j = max(0, a[id] - d); j <= min(n-1, a[id] + d); ++j) {
+				if(rev[j] <= id)
+					upd(0, rev[j], 1);
+			}
+			++id;
+		}
+		ans[qrs[i].second] = sum(0, r) - sum(0, l-1);
+	}
+
+	for(int i = 0; i < m; ++i)
+		printf("%lld\n", ans[i]);
+
+	return 0;
+}
+
+
+

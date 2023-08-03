@@ -1,0 +1,82 @@
+#include <iostream>
+#include <cstdio>
+#include <queue>
+
+#include <utility>
+
+#define S(a) scanf("%d", &a)
+#define FOR(i, m, n) for(i = (m); (i) <= (n); (i)++)
+#define MP(a,b) make_pair(a,b)
+
+using namespace std;
+
+bool subsetSum(int sac_size, int *items, int size){
+
+	//Initialize
+	std::vector<bool> knapsac[2];
+	knapsac[0].push_back(true); 
+	knapsac[1].push_back(true); 
+	for (int i = 1; i <= sac_size; i++){
+		knapsac[0].push_back(false); 
+		knapsac[1].push_back(false); 
+	}
+
+
+	//Solve Knapsac Problem
+	for (int i = 0; i < size; i++){
+		int cur = (i+1) % 2;
+		int prev = 1 - cur;
+
+		for (int j = 0; j <= sac_size; j++){
+			knapsac[cur][j] = knapsac[prev][j];
+			if (j - items[i] >= 0){
+				knapsac[cur][j] = knapsac[cur][j] | knapsac[prev][j-items[i]]; 
+			}
+		}
+	}
+
+	return knapsac[size%2][sac_size];
+}
+
+int main(){
+	int T;
+	S(T);
+
+	while(T--){
+		int P, M;
+		S(P);
+		S(M);
+
+		int i, N[M];
+		FOR(i, 0, M-1)
+			S(N[i]);
+
+		int total_scan = 1, proper_families = 0;
+		int p_old, p, count  = 1;
+		S(p_old);
+		while(total_scan < P){
+			S(p);
+			total_scan++;
+
+			if(p == p_old)
+				count++;
+
+			else{
+				//cout << p_old << ":" << count << ":" << subsetSum(count,N, M) << endl;
+				if (subsetSum(count,N, M))
+					proper_families++;
+				count = 1;
+			}
+			p_old = p;
+		}
+				
+		//cout << p_old << ":" << count << ":" << subsetSum(count,N, M) << endl;
+		if (subsetSum(count,N, M))
+			proper_families++;
+
+
+		printf("%d\n", proper_families);
+	}
+
+	return 0;
+}

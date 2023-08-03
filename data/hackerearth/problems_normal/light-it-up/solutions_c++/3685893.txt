@@ -1,0 +1,176 @@
+// Aditya Shah
+
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <queue>
+#include <deque>
+#include <stack>
+#include <bitset>
+#include <algorithm>
+#include <functional>
+#include <numeric>
+#include <utility>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+#include <limits>
+#include <string>
+#include <cassert>
+
+using namespace std;
+
+typedef vector<int> VI;
+typedef pair<int, int> PII;
+typedef pair<double, double> PT;
+
+#define all(x) (x).begin(), (x).end()
+
+const int N = 2001;
+double INF = 1e100;
+double EPS = 1e-12;
+
+bool see[N][N];
+
+PT operator + (const PT &p, const PT &q)  { return PT(p.first + q.first, p.second + q.second); }
+PT operator - (const PT &p, const PT &q)  { return PT(p.first - q.first, p.second - q.second); }
+PT operator * (const PT &p, double c) { return PT(p.first * c, p.second * c  ); }
+PT operator / (const PT &p, double c) { return PT(p.first / c, p.second / c  ); }
+
+double dot(PT p, PT q)     { return p.first * q.first + p.second * q.second; }
+double dist2(PT p, PT q)   { return dot(p - q, p - q); }
+double cross(PT p, PT q)   { return p.first * q.second - p.second * q.first; }
+ostream &operator<<(ostream &os, const PT &p) {
+	os << "(" << p.first << "," << p.second << ")";
+}
+
+int checkSides(PII x, PII y, PII z) {
+	int dx = y.first - x.first;
+	int dy = y.second - x.second;
+	int res = z.first * dy - z.second * dx + x.second * dx - x.first * dy;
+	return res;
+}
+
+PT ProjectPointLine(PT a, PT b, PT c) {
+	return a + (b - a) * dot(c - a, b - a) / dot(b - a, b - a);
+}
+
+// project point c onto line segment through a and b
+PT ProjectPointSegment(PT a, PT b, PT c) {
+	double r = dot(b - a, b - a);
+	if (fabs(r) < EPS) return a;
+	r = dot(c - a, b - a) / r;
+	if (r < 0) return a;
+	if (r > 1) return b;
+	return a + (b - a) * r;
+}
+
+// compute distance from c to segment between a and b
+double DistancePointSegment(PT a, PT b, PT c) {
+	return sqrt(dist2(c, ProjectPointSegment(a, b, c)));
+}
+
+// determine if lines from a to b and c to d are parallel or collinear
+bool LinesParallel(PT a, PT b, PT c, PT d) {
+	return fabs(cross(b - a, c - d)) < EPS;
+}
+
+bool LinesCollinear(PT a, PT b, PT c, PT d) {
+	return LinesParallel(a, b, c, d)
+	       && fabs(cross(a - b, a - c)) < EPS
+	       && fabs(cross(c - d, c - a)) < EPS;
+}
+
+// determine if line segment from a to b intersects with
+// line segment from c to d
+bool SegmentsIntersect(PT a, PT b, PT c, PT d) {
+	if (LinesCollinear(a, b, c, d)) {
+		if (dist2(a, c) < EPS || dist2(a, d) < EPS ||
+		        dist2(b, c) < EPS || dist2(b, d) < EPS) return true;
+		if (dot(c - a, c - b) > 0 && dot(d - a, d - b) > 0 && dot(c - b, d - b) > 0)
+			return false;
+		return true;
+	}
+	if (cross(d - a, b - a) * cross(c - a, b - a) > 0) return false;
+	if (cross(a - c, d - c) * cross(b - c, d - c) > 0) return false;
+	return true;
+}
+
+vector<PII> x, y;
+bool bright[N];
+
+int main() {
+	int n, l, r, h, T;
+	scanf("%d", &T);
+	while (T--) {
+		scanf("%d", &n);
+		x.resize(n << 1);
+		y.resize(n << 1);
+		for (int i = 0; i < n; ++i) {
+			scanf("%d %d %d", &l, &r, &h);
+			x[i << 1] = PT(l, h);
+			x[(i << 1) | 1] = PT(r, h);
+			y[i << 1] = PT(l, 0);
+			y[(i << 1) | 1] = PT(r, 0);
+		}
+		n <<= 1;
+		sort(all(x), [](PII a, PII b) {
+			return a.first < b.first;
+		});
+		sort(all(y), [](PII a, PII b) {
+			return a.first < b.first;
+		});
+		for (int i = 0; i < n; ++i) {
+			bright[i] = 0;
+			for (int j = 0; j < n; ++j) {
+				if ((i + j) % 2 == 0) {
+					continue;
+					see[i][j] = 0;
+				}
+				bool ok = 1;
+				l = min(i, j);
+				r = max(i, j);
+				for (int k = l + 1; k < r && ok; ++k) {
+					if (checkSides(x[i], y[j], x[k]) * 1LL * checkSides(x[i], y[j], PII(y[j].first, y[j].second - 1)) < 0)
+						ok = 0;
+				}
+				see[i][j] = ok;
+			}
+			if (i & 1) see[i][i - 1] = 0;
+			else see[i][i + 1] = 0;
+			see[i][i] = 1;
+		}
+		int res = 2;
+		bright[0] = 1;
+		for (int i = 2; i < n; i += 2) {
+			if (!bright[i]) {
+				int toLight = (x[i - 1].second >= x[i].second) ? (i - 1) : i;
+				bright[i] = bright[i - 1] = 1; ++res;
+				for (int j = 0; j < n; ++j) {
+					if (see[toLight][j]) {
+						bright[j] = 1;
+					}
+				}
+			}
+		}
+		bright[n - 1] = 1;
+		for (int i = n - 3; i > 0; i -= 2) {
+			if (!bright[i]) {
+				int toLight = (x[i + 1].second >= x[i].second) ? (i + 1) : i;
+				bright[i] = bright[i + 1] = 1; ++res;
+				for (int j = 0; j < n; ++j) {
+					if (see[toLight][j]) {
+						bright[j] = 1;
+					}
+				}
+			}
+		}
+		printf("%d\n", res);
+	}
+	return 0;
+}

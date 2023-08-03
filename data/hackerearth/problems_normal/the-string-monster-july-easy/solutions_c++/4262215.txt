@@ -1,0 +1,50 @@
+#include <bits/stdc++.h>
+#define FOR(x,n) for(int x = 0; x < n; x++)
+#define ALL(a) (a).begin(), (a).end()
+#define ll long long
+#define pb push_back
+using namespace std;
+
+int main() {
+    int T; cin >> T;
+    
+    while(T--) {
+        int N; cin >> N;
+        vector<string> in(N);
+        FOR(x,N) cin >> in[x];
+        string target; cin >> target;
+        vector<int> targetA(26);
+        vector< vector<int> > cnts(N, vector<int>(26));
+        FOR(x,N) FOR(y,in[x].size()) cnts[x][in[x][y]-'a']++;
+        FOR(x,target.size()) targetA[target[x]-'a']++;
+        int halfN = N/2;
+        set< vector<int> > half1;
+        for(int x = 1; x < (1<<halfN); x++) {
+            vector<int> tmp(26);
+            for(int y = 0; y < halfN; y++)
+                if(x & (1<<y)) FOR(z,26) tmp[z] += cnts[y][z];
+            //cout << x << ":"; for(int i : tmp) cout << " " << i; cout << '\n';  
+            half1.insert(tmp);
+        }
+        //h = 1, | 1 2
+        int leftN = N-halfN;
+        set< vector<int> > half2;
+        for(int x = 1; x < (1<<leftN); x++) {
+            vector<int> tmp(26);
+            for(int y = halfN; y < N; y++)
+                if(x & (1<<(y-halfN))) FOR(z,26) tmp[z] += cnts[y][z];
+            //cout << x << ":"; for(int i : tmp) cout << " " << i; cout << '\n';
+            half2.insert(tmp);
+        }
+        
+        bool can = half2.count(targetA) || half1.count(targetA);
+        for(vector<int> i : half1) {
+            vector<int> need = targetA;
+            FOR(x,26) need[x] -= i[x];
+            can |= half2.count(need);
+            if(can) break;
+        }
+        //cout << "target:"; for(int i : targetA) cout << " " << i; cout << '\n';
+        cout << (can ? "YES" : "NO") << '\n';
+    }
+}

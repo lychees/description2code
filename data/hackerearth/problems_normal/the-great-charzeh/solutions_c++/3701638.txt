@@ -1,0 +1,91 @@
+#include<bits/stdc++.h>
+const int N = 700;
+using namespace std;
+int n, m, a[N], f[N];
+vector<int> g[N];
+int used[N];
+int mt[N];
+bool try_kuhn(int v)
+{
+	
+	
+	for (int i = 0; i < g[v].size(); i++)
+	{
+		int to = g[v][i];
+		if(used[to])
+		continue;
+		used[to]=1;
+		if (mt[to] == -1 || try_kuhn(mt[to]))
+		{
+			mt[to] = v;
+			return true;
+		}
+	}
+	return false;
+}
+int MATCH()
+{
+	for (int i = 0; i < n; i++)
+	{
+		mt[i] = -1;
+	}
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			used[j] = 0;
+		}
+		try_kuhn(i);
+	}
+	int res = 0;
+	for (int i = 0; i < n; i++)
+	{
+		if (mt[i] != -1)
+			res++;
+	}
+	return res;
+}
+bool solve(int bound)
+{
+	for (int i = 0; i < n; i++)
+	{
+		g[i].clear();
+	}
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			if (f[a[i] + j] <= bound)
+				g[i].push_back(j);
+		}
+	}
+	int res = MATCH();
+	return (res == n);
+}
+int main(){
+	ios_base::sync_with_stdio(0);
+	//cin.tie(0);
+	cin >> n >> m;
+	for (int i = 0; i < n; i++)
+	{
+		cin >> a[i];
+	}
+	for (int i = 0; i < m + n - 1; i++)
+	{
+		cin >> f[i];
+	}
+	int l, r;
+	l = 0;
+	r = 1e9;
+	while (l < r)
+	{
+		int mid = l + r;
+		mid /= 2;
+		if (solve(mid))
+			r = mid;
+		else
+			l = mid + 1;
+	}
+	cout << l << endl;
+	return 0;
+}

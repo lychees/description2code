@@ -1,0 +1,72 @@
+#include <iostream>
+#include <algorithm>
+#include <utility>
+#include <cstring>
+#include <queue>
+using namespace std;
+
+struct edge
+{
+	int v, id;
+	edge(int a, int b)
+	{
+		v = a; id = b;
+	}
+};
+
+vector<vector<edge> > graph(100005);
+bool visited[100005];
+int diss_time[100005];
+int ans_time = -1;
+
+void bfs(int v, int n)
+{
+	queue<pair<int, int> > q;
+	q.push(make_pair(v, 0));
+	pair<int, int> t;
+
+	while(!q.empty())
+	{
+		t = q.front();
+		q.pop();
+		int u = t.first;
+
+		if(u == n)
+		{
+			ans_time = t.second;
+			break;
+		}
+
+		for(int i = 0; i < graph[u].size(); i++)
+			if(!visited[graph[u][i].v] and (diss_time[graph[u][i].id] == -1 or diss_time[graph[u][i].id] > t.second))
+			{
+				visited[graph[u][i].v] = 1;
+				q.push(make_pair(graph[u][i].v, t.second+1));
+			}
+	}
+}
+
+int main(int argc, char const *argv[])
+{
+	int n, m, k, u, v;
+	cin >> n >> m >> k;
+
+	for(int i = 0; i < m; i++)
+	{
+		cin >> u >> v;
+		graph[u].push_back(edge(v, i+1));
+		graph[v].push_back(edge(u, i+1));
+	}
+
+	memset(diss_time, -1, sizeof(diss_time));
+	for(int i = 0; i < k; i++)
+	{
+		cin >> u >> v;
+		diss_time[v] = u;
+	}
+
+	bfs(1, n);
+	cout << ans_time << endl;
+
+	return 0;
+}

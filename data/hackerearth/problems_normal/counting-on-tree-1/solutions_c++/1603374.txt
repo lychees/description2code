@@ -1,0 +1,82 @@
+/*
+ *
+ * File: stuff.cpp
+ * Author: Andy Y.F. Huang (azneye)
+ * Created on Aug 23, 2014, 11:50:25 PM
+ */
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+namespace stuff {
+typedef long long ll;
+const int MOD = int(1e9) + 7;
+ll dp[51111][111];
+int arr[51111];
+vector<int> adj[51111];
+int K;
+
+void dfs(int at, int par) {
+  for (int i = 0; i < (int) adj[at].size(); i++) {
+    if (adj[at][i] == par)
+      continue;
+    dfs(adj[at][i], at);
+  }
+  memset(dp[at], 0, sizeof(dp[at]));
+  dp[at][arr[at]]++;
+  for (int i = 0; i < (int) adj[at].size(); i++) {
+    const int to = adj[at][i];
+    if (to == par)
+      continue;
+    for (int k = K; k >= 0; k--)
+      if (dp[at][k] > 0)
+        for (int ch = K - k; ch >= 0; ch--)
+          dp[at][k + ch] = (dp[at][k + ch] + dp[at][k] * dp[to][ch]) % MOD;
+  }
+}
+
+void solve(int test_num) {
+  int N;
+  cin >> N >> K;
+  for (int i = 1; i <= N; i++)
+    adj[i].clear();
+  for (int i = 1; i <= N; i++)
+    cin >> arr[i];
+  for (int i = 0, a, b; i < N - 1; i++) {
+    cin >> a >> b;
+    adj[a].push_back(b);
+    adj[b].push_back(a);
+  }
+  dfs(1, 1);
+  ll res = 0;
+  for (int v = 1; v <= N; v++)
+    res += dp[v][K];
+  res %= MOD;
+  cout << res << endl;
+}
+
+void solve() {
+#ifdef AZN
+  double start_t = clock();
+  freopen("input.txt", "r", stdin);
+  freopen("output.txt", "w", stdout);
+//freopen("azn.txt", "w", stderr);
+#endif
+  ios::sync_with_stdio(false);
+  cin.tie(NULL);
+  int T = 1;
+//scanf("%d", &T);
+  cin >> T;
+  for (int t = 1; t <= T; t++)
+    solve(t);
+#ifdef AZN
+  cerr << "Took: " << ((clock() - start_t) / CLOCKS_PER_SEC);
+#endif
+}
+}
+
+int main() {
+  stuff::solve();
+  return 0;
+}

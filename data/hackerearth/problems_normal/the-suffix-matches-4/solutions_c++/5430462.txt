@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define maxn 200100
+#define maxa 27
+
+#define Rep(i,n) for(int i = 0; i < (n); ++i)
+#define Repd(i,n) for(int i = (n)-1; i >= 0; --i)
+#define For(i,a,b) for(int i = (a); i <= (b); ++i)
+#define Ford(i,a,b) for(int i = (a); i >= (b); --i)
+#define Fit(i,v) for(__typeof((v).begin()) i = (v).begin(); i != (v).end(); ++i)
+#define Fitd(i,v) for(__typeof((v).rbegin()) i = (v).rbegin(); i != (v).rend(); ++i)
+#define mp make_pair
+#define pb push_back
+#define fi first
+#define se second
+#define sz(a) ((int)(a).size())
+#define all(a) (a).begin(), (a).end()
+#define ms(a,x) memset(a, x, sizeof(a))
+
+int n, from, to, nc, a[maxn], p[maxn], c[maxn], pn[maxn], cn[maxn], cnt[maxn], lcp[maxn];
+char s[maxn];
+
+void suffix_array() {
+    Rep(i, n) a[i] = s[i] - 'a' + 1;
+    a[n++] = 0;
+
+    ms(cnt, 0);
+    Rep(i, n) ++cnt[a[i]];
+    For(i, 1, maxa - 1) cnt[i] += cnt[i - 1];
+    Repd(i, n) p[--cnt[a[i]]] = i;
+
+    nc = 1; c[p[0]] = 0;
+    For(i, 1, n - 1) {
+        if (a[p[i]] > a[p[i - 1]]) ++nc;
+        c[p[i]] = nc - 1;
+    }
+
+    for (int h = 1; h < n; h <<= 1) {
+        Rep(i, n) {
+            pn[i] = p[i] - h;
+            if (pn[i] < 0) pn[i] += n;
+        }
+
+        ms(cnt, 0);
+        Rep(i, n) ++cnt[c[pn[i]]];
+        For(i, 1, nc - 1) cnt[i] += cnt[i - 1];
+        Repd(i, n) p[--cnt[c[pn[i]]]] = pn[i];
+
+        nc = 1; cn[p[0]] = 0;
+        For(i, 1, n - 1) {
+            int x = (p[i] + h) % n, y = (p[i - 1] + h) % n;
+            if (c[p[i]] > c[p[i - 1]] || c[x] > c[y]) ++nc;
+            cn[p[i]] = nc - 1;
+        }
+        Rep(i, n) c[i] = cn[i];
+    }
+
+    int h = 0;
+    Rep(i, n) {
+        if (c[i] > 0) {
+            int j = p[c[i] - 1];
+            while (a[i + h] == a[j + h]) ++h;
+            lcp[c[i]] = h;
+            if (h > 0) --h;
+        }
+    }
+}
+int ret[maxn];
+
+int main()
+{
+	int q, i, k, x;
+	scanf("%s\n%d", s, &q);
+	n = strlen(s);
+	for(i = 0, k = n - 1; i < k; i++, k--)
+		swap(s[i], s[k]);
+	suffix_array();
+	n--;
+	x = c[0];
+	ret[n - p[x]] = n;
+	for(i = x - 1; i >= 0; i--)
+		ret[n - p[i]] = min(ret[n - p[i + 1]], lcp[i + 1]);
+	for(i = x + 1; i <= n; i++)
+		ret[n - p[i]] = min(ret[n - p[i - 1]], lcp[i]);
+	while(q--)
+	{
+		scanf("%d", &i);
+		printf("%d\n", ret[i]);
+	}
+	return 0;
+}

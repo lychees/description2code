@@ -1,0 +1,92 @@
+#include <iostream>
+#define MAXN 1696969
+#define mid ((a+b)/2)
+#define l (2*curNode)
+#define r ((2*curNode)+1)
+
+using namespace std;
+typedef long long ll;
+
+ll input[MAXN];
+int tree[MAXN];
+int N , Q;
+
+int check(ll num){
+    ll a = num%10;
+
+    while(num >= 10){
+        num/=10;
+    }
+
+    return (a == num ? 1 : 0);
+}
+
+void build_tree(int curNode , int a , int b){
+    if(a > b) return;
+
+    if(a == b){
+        int q = check(input[a]);
+        tree[curNode] = q;
+        return;
+    }
+
+    build_tree(l , a , mid);
+    build_tree(r , mid + 1 , b);
+
+    tree[curNode] = tree[l] + tree[r];
+}
+
+void update_tree(int curNode , int a , int b , int p , ll q){
+    if(b < p ||  a > p || a > b) return;
+
+    if(a == b){
+        int re = check(q);
+        tree[curNode] = re;
+        return;
+    }
+
+    update_tree(l , a , mid , p , q);
+    update_tree(r , mid + 1 , b , p , q);
+
+    tree[curNode] = tree[l] + tree[r];
+}
+
+int query_tree(int curNode , int a , int b , int i , int j){
+    if(a > b || a > j || b < i) return 0;
+
+    if(a >= i && b <= j) return tree[curNode];
+
+    int p = query_tree(l , a , mid , i , j);
+    int q = query_tree(r , mid + 1 , b , i , j);
+
+    return p+q;
+}
+
+
+int main(){
+    cin >> N >> Q;
+    for(int i=0; i<N; i++)
+        cin >> input[i];
+    build_tree(1 , 0 , N-1);
+
+
+
+    while(Q--){
+        ll p , q , re;
+        cin >> p >> q >> re;
+
+        if(p == 1){
+            cout << query_tree(1 , 0 , N-1 , q-1 , re-1) << endl;
+        }
+        else{
+            update_tree(1 , 0 , N-1 , q-1 , re);
+        }
+       // for(int i=0; i<20; i++)
+        //    cout << tree[i] <<" " ;
+       // cout << endl;
+    }
+
+
+    return 0;
+}
+

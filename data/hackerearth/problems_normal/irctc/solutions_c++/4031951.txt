@@ -1,0 +1,120 @@
+/*    SHUBHAM SINHA    */
+ 
+ 
+ 
+#include <cstdio>
+#include <iostream>
+#include <algorithm>
+#include <string.h>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <list>
+#include <math.h>
+ 
+#define ll long long int
+#define maxN 100000
+#define maxVal (ll)100000000000000
+#define minVal -100000000
+#define mod 1000000007LL
+ 
+#define gcd(a,b) __gcd(a,b)
+ 
+using namespace std;
+ 
+int n,m;
+vector<pair<int,ll> > g[maxN+5];
+int path[maxN+5];
+ll d[maxN+5];
+set<pair<ll,int> > s;
+set<pair<ll,int> >::iterator it;
+vector<int> p1,p2;
+
+void djikstras(int u,int e)
+{
+	int i,v;
+	ll w;
+	d[u]=0;
+	s.insert(make_pair(d[u],u));
+	while(!s.empty())
+	{
+		it=s.begin();
+		u=(*it).second;
+		s.erase(it);
+		for(i=0;i<(int)g[u].size();i++)
+		{
+			v=g[u][i].first;
+			w=g[u][i].second;
+			if(d[v]>(d[u]+w))
+			{
+				if(d[v]!=(ll)maxVal)
+					s.erase(s.find(make_pair(d[v],v)));
+				d[v]=d[u]+w;
+				path[v]=u;
+				s.insert(make_pair(d[v],v));
+			}
+		}
+	}
+}
+
+int main()
+{
+    #ifndef ONLINE_JUDGE
+    	freopen("in.txt","r",stdin);
+    	freopen("out.txt","w",stdout);
+    #endif
+	int t,i,u,v,a,b,c;
+	ll w,ans;
+	scanf("%d",&t);
+	while(t--)
+	{
+		scanf("%d%d",&n,&m);
+		for(i=1;i<=n;i++)
+		{
+			g[i].clear();
+			path[i]=-1;
+			d[i]=(ll)maxVal;
+		}
+		p1.clear();
+		while(m--)
+		{
+			scanf("%d%d%lld",&u,&v,&w);
+			g[u].push_back(make_pair(v,w));
+			g[v].push_back(make_pair(u,w));
+		}
+		scanf("%d%d%d",&a,&b,&c);
+		djikstras(a,b);
+		if(d[b]==(ll)maxVal)
+			printf("No Train Found.\n");
+		else
+		{
+			for(i=b;i!=a;i=path[i])
+				p1.push_back(i);
+			ans=d[b];
+			for(i=1;i<=n;i++)
+			{
+				path[i]=-1;
+				d[i]=(ll)maxVal;
+			}
+			p2.clear();
+			djikstras(b,c);
+			if(d[c]==(ll)maxVal)
+				printf("No Train Found.\n");
+			else
+			{
+				for(i=c;i!=b;i=path[i])
+					p2.push_back(i);
+				ans+=d[c];
+				printf("%lld\n",ans);
+				printf("%d ",a);
+				for(i=((int)p1.size()-1);i>=0;i--)
+					printf("%d ",p1[i]);
+				for(i=((int)p2.size()-1);i>=0;i--)
+					printf("%d ",p2[i]);
+				printf("\n");
+			}
+		}
+	}
+    return 0;
+}

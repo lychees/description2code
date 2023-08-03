@@ -1,0 +1,111 @@
+#include <cstdio>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <set>
+#include <cctype>
+#include <utility>
+#include <queue>
+#include <cmath>
+#include <complex>
+using namespace std;
+
+typedef long long LL;
+typedef pair<int, int> PII;
+typedef vector<int> VI;
+typedef vector<PII> VPII;
+typedef pair<LL, LL> PLL;
+typedef pair<int, LL> PIL;
+typedef pair<LL, int> PLI;
+typedef double DB;
+
+#define pb push_back
+#define mset(a, b) memset(a, b, sizeof a)
+#define all(x) (x).begin(), (x).end()
+#define bit(x) (1 << (x))
+#define bitl(x) (1LL << (x))
+#define sqr(x) ((x) * (x))
+#define sz(x) ((int)(x.size()))
+#define counti(x) (__builtin_popcount(x))
+#define countl(x) (__builtin_popcountll(x))
+#define clz(x) (__builtin_clz(x))
+#define clzl(x) (__builtin_clzll(x))
+#define ctz(x) (__builtin_ctz(x))
+#define ctzl(x) (__builtin_ctzll(x))
+
+#define rep(i, n) for (int (i) = 0; (i) < (int)(n); ++(i))
+
+#define X first
+#define Y second
+
+#define Error(x) cout << #x << " = " << x << endl
+
+template <typename T, typename U> 
+inline void chkmax(T& x, U y) {
+	if (x < y) x = y;
+}
+
+template <typename T, typename U>
+inline void chkmin(T& x, U y) {
+	if (y < x) x = y;
+}
+
+int a[333][666], b[333][666];
+int ans[333], r[1111];
+int n, m;
+
+void check(int p) {
+	r[1] = 1;
+	for (int i = 2; i < p; i++) r[i] = (p - r[p % i]) * (p / i) % p;
+	for (int i = 1; i <= n; i++) for (int j = 1; j <= n + m; j++) b[i][j] = a[i][j] % p;
+	for (int i = 1; i <= n; i++) {
+		bool found = 0;
+		for (int j = i; j <= n && !found; j++) {
+			for (int k = i; k <= n && !found; k++) {
+				if (b[j][k]) {
+					if (j > i) for (int l = i; l <= n+m; l++) swap(b[j][l], b[i][l]);
+					if (k > i) for (int l = 1; l <= n; l++) swap(b[l][i], b[l][k]);
+					found = 1;
+				}
+			}
+		}
+		if (!b[i][i]) {
+			for (int k = 1; k <= m; k++) {
+				for (int j = i; j <= n; j++) if (b[j][k+n]) ans[k] = 0;
+			}
+			return;
+		} else {
+			for (int k = i+1; k <= n; k++) if (b[k][i]) {
+				int c = r[b[i][i]] * b[k][i] % p;
+				for (int l = i; l <= n+m; l++) b[k][l] -= b[i][l] * c;
+				for (int l = i; l <= n+m; l++) {
+					b[k][l] %= p;
+					if (b[k][l] < 0) b[k][l] += p;
+				}
+			}
+		}
+	}
+}
+
+int main() {
+
+	scanf("%d%d", &n, &m);
+
+	for (int i = 1; i <= n; i++) for (int j = 1; j <= n; j++) scanf("%d", &a[i][j]);
+	for (int i = 1; i <= m; i++) for (int j = 1; j <= n; j++) scanf("%d", &a[j][n+i]);
+
+	for (int i = 1; i <= m; i++) ans[i] = 1;
+	check(2), check(5), check(719);
+
+	for (int i = 1; i <= m; i++) {
+		if (ans[i]) puts("Yes");
+		else 				puts("No");
+	}
+
+	return 0;
+}

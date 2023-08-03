@@ -1,0 +1,110 @@
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <set>
+#include <list>
+#include <queue>
+#include <stack>
+#include <vector>
+#include <cassert>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+#define foreach(e, x) for (__typeof(x.begin()) e = x.begin(); e != x.end(); ++e)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int n, m;
+int fenMx;
+
+int fen[500000] = {}, fenL[500000] = {}, fenR[500000] = {};
+int a[500000], pos[500000], fl[500000] = {};
+int l[500000], r[500000], lc = 0, rc = 0, szl = 0, szr = 0, szm;
+char s[5];
+
+inline void fenInc(int *fen, int pos) {
+    for (; pos < fenMx; pos |= pos + 1)
+        ++fen[pos];
+}
+
+inline void fenDec(int *fen, int pos) {
+    for (; pos < fenMx; pos |= pos + 1)
+        --fen[pos];
+}
+
+inline void fenInitOnes(int *fen) {
+    REP(i, n) fen[i] = 1;
+    REP(i, n) {
+        int j = i | (i + 1);
+        if (j < n) fen[j] += fen[i];
+    }
+}
+
+inline int fenGet(int *fen, int pos) {
+    int ret = 0;
+    for (; pos >= 0; pos = (pos & (pos + 1)) - 1)
+        ret += fen[pos];
+    return ret;
+}
+
+int main() {
+    scanf("%d%d", &n, &m);
+    szm = n;
+    fenMx = max(n, m);
+    REP(i, n) scanf("%d", a + i), --a[i];
+    REP(i, n) pos[a[i]] = i;
+    fenInitOnes(fen);
+    LL ans = 0;
+    REP(i, m) {
+        int num;
+        scanf("%d%s", &num, s), --num;
+        if (fl[num] == 0) {
+            ans += min(szl + fenGet(fen, pos[num] - 1), szr + szm - fenGet(fen, pos[num]));
+        } else if (fl[num] == 1) {
+            ans += min(szl - fenGet(fenL, pos[num]), szr + szm + fenGet(fenL, pos[num] - 1));
+        } else {
+            ans += min(szl + szm + fenGet(fenR, pos[num] - 1), szr - fenGet(fenR, pos[num]));
+        }
+        if (s[0] == 'l') {
+            if (fl[num] == 0) {
+                fenDec(fen, pos[num]);
+                ++szl, --szm;
+            } else if (fl[num] == 1) {
+                fenDec(fenL, pos[num]);
+            } else {
+                fenDec(fenR, pos[num]);
+                ++szl, --szr;
+            }
+            fenInc(fenL, lc);
+            pos[num] = lc;
+            fl[num] = 1;
+            ++lc;
+        } else {
+            if (fl[num] == 0) {
+                fenDec(fen, pos[num]);
+                ++szr, --szm;
+            } else if (fl[num] == 2) {
+                fenDec(fenR, pos[num]);
+            } else {
+                fenDec(fenL, pos[num]);
+                ++szr, --szl;
+            }
+            fenInc(fenR, rc);
+            pos[num] = rc;
+            fl[num] = 2;
+            ++rc;
+        }
+        //cout << ans << endl;
+    }
+    cout << ans << endl;
+	return 0;
+}

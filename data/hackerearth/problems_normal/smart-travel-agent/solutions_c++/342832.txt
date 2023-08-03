@@ -1,0 +1,109 @@
+#include <iostream>
+#include <cstdio>
+#include <list>
+#include <cstring>
+#include <queue>
+using namespace std;
+
+#define MAXN 110
+typedef long long ll;
+
+bool visited[MAXN];
+int s,e,pre[MAXN];
+queue<int> Q;
+
+struct node
+{
+	int nd;
+	ll pr;
+}tmp;
+
+list<node> l[MAXN];
+
+void dfs(int curr,ll mid)
+{	
+	list<node>::iterator itr=l[curr].begin();
+	visited[curr]=1;
+	for(;itr!=l[curr].end();++itr)
+	{
+		if(!visited[(*itr).nd] && (*itr).pr>=mid) 
+			dfs((*itr).nd,mid);
+	}
+}
+
+ll binsearch(ll left,ll right)
+{
+	if(left==right) return left; 
+	ll mid=(left+right+1)>>1;
+	memset(visited,0,sizeof(visited));
+	dfs(s,mid);
+	//cout<<"left: "<<left<<" right: "<<right<<" mid: "<<mid<<endl;
+	if(visited[e]) return binsearch(mid,right);
+	else	 return binsearch(left,mid-1);
+}
+		
+bool func(node a,node b)
+{
+	return a.nd<b.nd;
+}
+
+void bfs(ll p)
+{	
+	int curr;
+	list<node>::iterator itr;
+	while(!Q.empty())
+	{
+	curr=Q.front();
+	Q.pop();
+	itr=l[curr].begin();
+	l[curr].sort(func);
+	for(;itr!=l[curr].end();++itr)
+	{
+		if(!visited[(*itr).nd] && (*itr).pr>=p)
+		{
+			Q.push((*itr).nd);
+			visited[(*itr).nd]=1;
+			pre[(*itr).nd]=curr;
+		}
+	}
+	}
+}
+
+int main() {
+	int n,r,u,v;
+	ll p,mx,t;
+	scanf("%d%d",&n,&r);
+	while(r--)
+	{
+		scanf("%d%d%lld",&u,&v,&p);
+		tmp.nd=v;
+		tmp.pr=p;
+		l[u].push_back(tmp);
+		tmp.nd=u;
+		l[v].push_back(tmp);
+		if(p>mx) mx=p;
+	//	cout<<"r: "<<r<<endl;
+	}
+	//cout<<"here!"<<endl;
+	scanf("%d%d%lld",&s,&e,&t);
+	ll mn=binsearch(1,mx);
+	//cout<<"min: "<<mn<<endl;
+	memset(visited,0,sizeof(visited));
+	visited[s]=1;
+	Q.push(s);
+	bfs(mn);
+	--mn;
+	//cout<<"mn after bfs: "<<mn<<endl;
+	int i=e;
+	list<int> res;
+	while(1)
+	{
+		res.push_front(i);
+		if(i==s) break;
+		i=pre[i];
+	}
+	list<int>::iterator itr;
+	for(itr=res.begin();itr!=res.end();++itr)
+		printf("%d ",*itr);
+	printf("\n%lld\n",(t+mn-1)/(mn));
+}

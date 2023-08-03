@@ -1,0 +1,66 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long int lli;
+const int MAXN=100*1000+9;
+const lli MOD=1000*1000*1000+7;
+lli bit0[MAXN],bit1[MAXN],bit2[MAXN];
+//bit0 =dp[i][0]
+//bit1 =dp[i][1]
+// bit2=normal bit containing arr elements
+void upd(int at,lli  by,lli * bit){
+    for(;at<=MAXN;at+=at&-at){
+        bit[at]=((bit[at]%MOD)+(by%MOD))%MOD;
+    }
+    return;
+}
+lli qry(int at,lli* bit){
+    lli sum=0;
+    for(;at>=1;at-=at&-at)
+        sum=((sum%MOD)+(bit[at]%MOD))%MOD;
+    return sum%MOD;
+}
+int  arr[MAXN];
+int  main(){
+    int n;cin>>n;
+    for(int i=1;i<=n;++i){
+        cin>>arr[i];
+    }
+    memset(bit0,0,sizeof bit0);
+    memset(bit1,0,sizeof bit1);
+    memset(bit2,0,sizeof bit2);
+    //dp[1][0]=0;
+    //dp[1][1]=0;
+    upd(arr[1],0LL,bit0);
+    upd(arr[1],0LL,bit1);
+    upd(arr[1],1LL,bit2);
+    //dp[i][0]=L0+sigma(dp[j][1]);j<i && arr[i]>arr[j]
+    //dp[i][1]=L1+sigma(dp[j][0]);j<i && arr[i]<arr[j]
+    for(int i=2;i<=n;++i){
+        lli L0=(qry((lli)arr[i]-1LL,bit2))%MOD;//arr[j]<arr[i] && j<i
+        lli L1=((lli)(i-1)-(qry((lli)arr[i],bit2)))%MOD;//inversions wrt to arr[i]
+      //  printf("i is %d L0 %lld L1 %lld\n",i,L0,L1);
+        //dp[i][0]=L0+qry(arr[i]-1,bit1);
+        upd(arr[i],((L0%MOD)+(qry(arr[i]-1,bit1)%MOD))%MOD,bit0);
+        //dp[i][1]=L1+qry(i-1,bit0);
+        lli val=(qry(MAXN,bit0)%MOD-qry(arr[i],bit0)%MOD);
+        if(val<0)val+=MOD;
+        upd(arr[i],(L1%MOD+val%MOD)%MOD,bit1);
+        //now upd the element in bit2
+        upd(arr[i],1LL,bit2);
+    }
+ /*   for(int i=1;i<=n;++i){
+        printf("end at  %d is %lld\n",
+                i,qry(arr[i],bit0)-qry(arr[i]-1,bit0)+
+                qry(arr[i],bit1)-qry(arr[i]-1,bit1));
+    }*/
+    
+   /* for(int i=1;i<=n;++i){
+        printf("dp[%d][0] is %lld\n",i,qry(i,bit0)-qry(i-1,bit0));
+    }
+     for(int i=1;i<=n;++i){
+        printf("dp[%d][1] is %lld\n",i,qry(i,bit1)-qry(i-1,bit1));
+     } */
+    lli ans=(qry(MAXN,bit0)%MOD+qry(MAXN,bit1)%MOD)%MOD;
+    cout<<ans<<"\n";
+    return 0;
+}

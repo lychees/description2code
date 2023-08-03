@@ -1,0 +1,58 @@
+#include <cstdio>
+#include <utility>
+#include <vector>
+
+int r, p, r1, r2, t, visited[1000000] = {0}, treasure[1000000] = {0};
+long long maxDist[1000000] = {0}, ans = 0;
+std::vector<std::pair<int, int>> portals[1000000];
+std::vector<int> sorted;
+
+void topoSort(int ind)
+{
+	if (visited[ind] == 1)
+	{
+		return;
+	}
+	visited[ind] = 1;
+	for (int i = 0; i < portals[ind].size(); i++)
+	{
+		topoSort(portals[ind][i].first);
+	}
+	sorted.push_back(ind);
+}
+
+int main()
+{
+	scanf("%d %d", &r, &p);
+	while (p--)
+	{
+		scanf("%d %d %d", &r1, &r2, &t);
+		r1--;
+		r2--;
+		t += 2;
+		portals[r2].push_back(std::make_pair(r1, t));
+		treasure[r1] = 1;
+	}
+	for (int i = 0; i < r; i++)
+	{
+		topoSort(i);
+	}
+	for (int i = 0; i < r; i++)
+	{
+		for (int j = 0; j < portals[sorted[i]].size(); j++)
+		{
+			if (maxDist[portals[sorted[i]][j].first] + portals[sorted[i]][j].second > maxDist[sorted[i]])
+			{
+				maxDist[sorted[i]] = maxDist[portals[sorted[i]][j].first] + portals[sorted[i]][j].second;
+			}
+		}
+		if (treasure[sorted[i]] == 0)
+		{
+			if (ans < maxDist[sorted[i]])
+			{
+				ans = maxDist[sorted[i]];
+			}
+		}
+	}
+	printf("%lld\n", ans);
+}

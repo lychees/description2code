@@ -1,0 +1,141 @@
+#include<iostream>
+#include<fstream>
+#include<cstdio>
+#include<vector>
+#include<string>
+#include<cstring>
+#include<queue>
+#include<map>
+#include<set>
+#include<algorithm>
+#include<iomanip>
+#include<bitset>
+using namespace std;
+
+const int MOD = 1000000007;
+const int N = 201000;
+const int SQR = 450;
+
+int n, x[N], po[N];
+map<int, int> poznext, pozlast;
+int nrel[SQR], cf1[SQR], cf2[SQR], ver[N], cs[SQR], cd[SQR], siz[SQR];
+int el[SQR], nre;
+
+void recalc(int poz) {
+    int i;
+    nre = 0;
+    int si = 0;
+
+    for(i = cs[poz]; i <= cd[poz]; ++i) {
+        if(ver[i]) {
+            el[++nre] = si;
+
+            si = 0;
+        }
+
+        ++si;
+    }
+    el[++nre] = si;
+
+    cf1[poz] = cf2[poz] = 0;
+
+    for(i = 2; i <= nre; ++i) {
+        cf1[poz] = cf1[poz] + 2 * (i - 1) * el[i];
+        if(cf1[poz] >= MOD)
+            cf1[poz] -= MOD;
+
+        cf2[poz] = cf2[poz] + (i - 1) * (i - 1) * el[i];
+        if(cf2[poz] >= MOD)
+            cf2[poz] -= MOD;
+    }
+}
+
+void update(int poz) {
+    ver[poz] = 1;
+    nrel[poz / SQR]++;
+
+    recalc(poz / SQR);
+}
+
+int query(int poz) {
+    int rez = 0;
+
+    int nrdif = 0, bu = poz / SQR;
+
+    while(poz <= n && poz <= cd[bu]) {
+        nrdif += ver[poz];
+
+        rez = rez + nrdif * nrdif;
+        if(rez >= MOD)
+            rez -= MOD;
+
+        ++poz;
+    }
+
+    for(bu++; bu <= n / SQR; ++bu) {
+        int c1, c2, c3 = cf2[bu];
+
+        c1 = (1LL * nrdif * nrdif) % MOD;
+        c1 = (1LL * c1 * siz[bu]) % MOD;
+
+        c2 = (1LL * nrdif * cf1[bu]) % MOD;
+
+        rez = rez + c1;
+        if(rez >= MOD)
+            rez -= MOD;
+        rez = rez + c2;
+        if(rez >= MOD)
+            rez -= MOD;
+        rez = rez + c3;
+        if(rez >= MOD)
+            rez -= MOD;
+
+        nrdif += nrel[bu];
+    }
+
+    return rez;
+}
+
+int main() {
+    int i;
+    //freopen("ttt", "r", stdin);
+
+    cin >> n;
+
+    for(i = 1; i <= n; ++i) {
+        scanf("%d", &x[i]);
+    }
+
+    for(i = 0; i < SQR; ++i) {
+        cs[i] = max(1, i * SQR);
+        cd[i] = min(n, (i + 1) * SQR - 1);
+        siz[i] = cd[i] - cs[i] + 1;
+    }
+
+    for(i = n; i; --i) {
+        po[i] = poznext[x[i]];
+
+        poznext[x[i]] = i;
+    }
+
+    for(i = 1; i <= n; ++i) {
+        if(!pozlast[x[i]])
+            update(i);
+
+        pozlast[x[i]] = i;
+    }
+
+    int rez = 0;
+
+    for(i = 1; i <= n; ++i) {
+
+        rez = (rez + query(i)) % MOD;
+
+        if(po[i])
+            update(po[i]);
+    }
+
+    cout << rez;
+
+    return 0;
+}

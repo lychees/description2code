@@ -1,0 +1,114 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<algorithm>
+#include<vector>
+#include<set>
+using namespace std;
+typedef vector<int> vi;
+typedef vector<vi> vvi;
+typedef pair<int,int> pii;
+int N,R,T,x,y,val,C[102][102];
+bool visited[105];
+
+inline void MST_prims(vvi& adj,vi& parent,vi& nd,vi& d,int S)
+{
+	d[S]=val;
+	nd[S]=1;
+	parent[S]=-1;
+	
+	set<pii> Q;
+	Q.insert(pii(0,S));
+	while(!Q.empty())
+	{
+		set<pii>::iterator it=Q.end();
+		it--;
+		pii top=*it;Q.erase(it);
+		int u=top.second;
+		visited[u]=true;
+		for(int mn,i=0;i<adj[u].size();i++)
+		if(!visited[adj[u][i]])
+		{
+			mn=min(d[u],C[u][adj[u][i]]);
+			if(d[adj[u][i]]!=-1)
+			{
+				Q.erase(Q.find(pii(d[adj[u][i]],adj[u][i])));
+			}
+			else
+			{
+				nd[adj[u][i]]=nd[u]+1;
+				d[adj[u][i]]=mn;
+				parent[adj[u][i]]=u;
+				Q.insert(pii(mn,adj[u][i]));
+				continue;
+			}
+			
+			if(mn>d[adj[u][i]])
+			{
+				if(d[adj[u][i]]>=val)
+				{
+					Q.insert(pii(d[adj[u][i]],adj[u][i]));
+				}
+				else
+				{
+					nd[adj[u][i]]=nd[u]+1;
+					parent[adj[u][i]]=u;
+					d[adj[u][i]]=mn;
+					Q.insert(pii(mn,adj[u][i]));
+				}
+			}
+			else if(mn==d[adj[u][i]])
+			{
+				if(nd[u]+1<nd[adj[u][i]])
+				{
+					nd[adj[u][i]]=nd[u]+1;
+					parent[adj[u][i]]=u;
+					Q.insert(pii(mn,adj[u][i]));
+				}
+				else if(nd[u]+1==nd[adj[u][i]])
+				{
+					parent[adj[u][i]]=min(parent[adj[u][i]],u);
+					Q.insert(pii(d[adj[u][i]],adj[u][i]));
+				}
+				else Q.insert(pii(d[adj[u][i]],adj[u][i]));
+			}
+			else Q.insert(pii(d[adj[u][i]],adj[u][i]));
+		}
+	}
+}
+
+int main()
+{
+	scanf("%d %d",&N,&R);
+	vvi adj(N+1);
+	vi parent(N+2,-1),nd(N+2,N+2),d(N+2,-1);
+	while(R--)
+	{
+		scanf("%d %d %d",&x,&y,&val);
+		adj[x].push_back(y);
+		adj[y].push_back(x);
+		C[x][y]=C[y][x]=max(C[x][y],val);
+	}
+	
+	scanf("%d %d %d",&x,&y,&val);
+	MST_prims(adj,parent,nd,d,x);
+	int T=y,count=0;
+	vi arr(N+2);
+	arr[0]=y;
+	while(parent[y]!=-1)
+	{
+		y=arr[++count]=parent[y];
+	}
+	
+	for(int i=count;i>0;i--)printf("%d ",arr[i]);
+	printf("%d\n",arr[0]);
+	
+	count=0;
+	if(d[T]>1)
+	{
+		count=count=val/(d[T]-1);
+		if(val%(d[T]-1)!=0)count+=1;
+		printf("%d",count);
+	}
+	return 0;
+}

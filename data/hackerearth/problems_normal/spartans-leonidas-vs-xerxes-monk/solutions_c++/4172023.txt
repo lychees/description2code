@@ -1,0 +1,105 @@
+#include<iostream>
+#include<algorithm>
+
+using namespace std;
+
+int const N = 1e5 + 41;
+
+int n, q;
+long long a[N];
+
+struct T{
+	int pref, suf, maxi, len;
+	long long leftVal, rightVal;
+	T(){};
+	T(int p, int s, long long lv, long long rv, int maxi, int len) : pref(p), suf(s), leftVal(lv), rightVal(rv), maxi(maxi), len(len) {};
+};
+
+T t[N * 4], neu = T(-1, -1, -1, -1, -1, -1);
+
+T comb(T a, T b){
+	T ret;
+	ret.len = a.len + b.len;
+	ret.leftVal = a.leftVal;
+	ret.rightVal = b.rightVal;
+	ret.maxi = max(a.maxi, b.maxi);
+	if(b.leftVal > a.rightVal){
+		ret.maxi = max(ret.maxi, b.pref + a.suf);
+	}
+	ret.pref = a.pref;
+	if(a.pref == a.len && b.leftVal > a.rightVal){
+		ret.pref = a.pref + b.pref;
+	}
+	ret.suf = b.suf;
+	if(b.suf == b.len && b.leftVal > a.rightVal){
+		ret.suf = b.suf + a.suf;
+	}
+	return ret;
+}
+
+void build(int v, int tl, int tr){
+	if(tl == tr){
+		t[v] = T(1, 1, a[tl], a[tl], 1, 1);
+	}else{
+		int tm = (tl+tr)/2;
+		build(v*2+1, tl, tm);
+		build(v*2+2, tm+1, tr);
+		t[v] = comb(t[v*2+1], t[v*2+2]);
+	}
+}
+
+void upd(int v, int tl, int tr, int p, T val){
+	if(tl == tr){
+		t[v] = val;
+	}else{
+		int tm = (tl+tr)/2;
+		if(p <= tm){
+			upd(v*2+1, tl, tm, p, val);
+		}else{
+			upd(v*2+2, tm+1, tr, p, val);
+		}
+		t[v] = comb(t[v*2+1], t[v*2+2]);
+	}
+}
+
+T getMaxi(int v, int tl, int tr, int l, int r){
+	if(tl > r || tr < l){
+		return neu;
+	}
+	if(l <= tl && tr <= r){
+		return t[v];
+	}
+	int tm = (tl+tr)/2;
+	T t1, t2;
+	t1 = getMaxi(v*2+1, tl, tm, l, r);
+	t2 = getMaxi(v*2+2, tm+1, tr, l, r);
+	if(t1.len == -1 || t2.len == -1){
+		return (t1.len == -1 ? t2 : t1);
+	}
+	return comb(t1, t2);
+}
+
+int main(){
+	int test;
+	scanf("%d",&test);
+	for(int te=0;te<test;++te){
+		scanf("%d%d",&n,&q);
+		for(int i=0;i<n;++i){
+			scanf("%lld",&a[i]);
+		}
+		build(0, 0, n-1);
+		for(int i=0;i<q;++i){
+			int ty, fi, se;
+			scanf("%d%d%d",&ty,&fi,&se);
+			if(ty == 0){
+				printf("%d\n",getMaxi(0, 0, n-1, fi-1, se-1).maxi);
+			}else{
+				a[fi-1] += se;
+				upd(0, 0, n-1, fi-1, T(1, 1, a[fi-1], a[fi-1], 1, 1));
+			}
+		}
+	}
+
+
+	return 0;
+}

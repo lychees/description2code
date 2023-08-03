@@ -1,0 +1,101 @@
+__author__ = 'apritam'
+
+
+def is_in_range(value , start, end):
+    if value >=start and value <=end:
+        return True
+    return False
+
+test_case_input=raw_input()
+n_s_e_list=test_case_input.split(' ')
+number_of_check = long(n_s_e_list[0])
+index = 0;
+l=[];
+#l.append([int(n_s_e_list[1]),int(n_s_e_list[2])])
+
+while index < number_of_check:
+    x_strength = raw_input()
+    x_s_list=x_strength.split(' ')
+    if long(x_s_list[0])>long(x_s_list[1]):
+        l.append([long(x_s_list[0])-long(x_s_list[1]),long(x_s_list[0])+long(x_s_list[1])])
+    elif long(x_s_list[0])<=long(x_s_list[1]):
+        l.append([0,long(x_s_list[0])+long(x_s_list[1])])
+    index+=1
+
+def getKey(item):
+    return item[0]
+
+l=sorted(l, key=getKey)
+
+length=l.__len__()
+i=0
+result = 0
+merged = []
+max_cov=0
+min_cov=-1
+end = long(n_s_e_list[2])
+start = long(n_s_e_list[1])
+max_cov= 0
+
+def get_merged_set(l):
+    rl = []
+    i=0
+    while i<l.__len__()-1:
+        if is_in_range(l[i][1],l[i+1][0],l[i+1][1]):
+            rl.append([l[i][0],l[i+1][1]])
+            i+=1
+        elif l[i][1] > l[i+1][1]:
+            rl.append([l[i][0],l[i][1]])
+            i+=1
+        else:
+            rl.append([l[i][0],l[i][1]])
+            if(i==l.__len__()-2):
+                rl.append([l[i+1][0],l[i+1][1]])
+        i+=1
+    if all(x in rl for x in l):
+        return rl
+    else:
+        return get_merged_set(rl)
+
+
+def get_merged(l):
+    rl = []
+    rl.append([l[0][0],l[0][1]])
+    i=0
+    while i<=l.__len__()-1:
+        if (rl[rl.__len__()-1][1] < l[i][0]-1):
+            rl.append([l[i][0],l[i][1]])
+        elif (rl[rl.__len__()-1][1] < l[i][1]):
+            x= rl[rl.__len__()-1][0]
+            rl.pop()
+            rl.append([x,l[i][1]])
+        i+=1
+    return rl
+
+if length > 1:
+    l=get_merged(l)
+
+i = 0
+result = end-start
+covered = 0
+
+while i<= l.__len__()-1:
+    if (is_in_range(l[i][1],start,end) or is_in_range(l[i][0],start,end)) and start<end:
+        if is_in_range(l[i][1],start,end) and is_in_range(l[i][0],start,end):
+            covered += l[i][1]-l[i][0]
+            start=l[i][1]
+        elif is_in_range(l[i][1],start,end):
+            if start >= l[i][0]:
+                covered += l[i][1]-start
+            else:
+                covered += l[i][1]-l[i][0]
+            start=l[i][1]
+        else:
+            if end >= l[i][1]:
+                covered +=  l[i][1]-l[i][0]
+                start = l[i][1]
+            else:
+                covered +=  end-l[i][0]
+                start = end
+    i+=1
+print result-covered

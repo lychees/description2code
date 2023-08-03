@@ -1,0 +1,127 @@
+#include <iostream>
+using namespace std;
+
+struct node {
+	int v;
+	struct node * left;
+	struct node *right;
+};
+node *head = NULL;
+int dp[1000001] = {0};
+
+int max(int a, int b) 
+{
+	if (a > b) {
+		return a;
+	}
+	return b;
+	
+}
+
+node* construct_tree1(int arr[], int lb, int ub, node *head)
+{
+    head = new node;
+    head -> v = 0;
+    head -> left = NULL;
+    head -> right = NULL;
+
+    if (lb == ub) {
+    	if (dp[arr[lb]] == 0) {
+	        head -> v = arr[lb];
+    	} else {
+    		head -> v = -1;
+    	}
+    	return head;
+    }
+
+    int mid = (lb + ub) / 2;
+    node *l = construct_tree1(arr, lb, mid, head -> left);
+    node *r = construct_tree1(arr, mid + 1, ub, head -> right);
+    head -> left = l;
+    head -> right = r;
+    head -> v = max(l -> v, r -> v);
+
+    return head;
+}
+
+int calc(node *head, int a, int b, int lb, int ub)
+{
+    if (b == -1) {
+        return 0;
+    }
+    if (lb > b || ub < a) {
+        return -1;
+    }
+    if (lb >= a && ub <= b) {
+        return head -> v;
+    }
+    int mid = (lb + ub) / 2;
+
+    return max(calc(head -> left, a, b, lb, mid),calc(head -> right, a, b, mid + 1, ub));
+
+
+}
+
+void updatea(int a, int lb, int ub, int c, node **head)
+{
+    if (lb == ub) {
+    	if (dp[c] == 0) {
+    		(*head) -> v = c;
+    	} else {
+    		(*head) -> v = -1;
+    	}
+        return;
+    }
+    int mid = (lb + ub) / 2;
+    if (a > mid) {
+        updatea(a, mid + 1, ub, c, &((*head) -> right));
+        (*head) -> v = max((*head) -> left -> v, (*head) -> right -> v);        
+    } else {
+        updatea(a, lb, mid, c, &((*head) -> left));
+		(*head) -> v = max((*head) -> left -> v, (*head) -> right -> v);
+    }
+}
+
+void print(node *head) {
+    if (head == NULL) {
+        return;
+    }
+    print(head -> left);
+    cout << head -> v << " ";
+    print(head -> right);
+}
+
+int main()
+{
+	dp[0] = 1;
+	dp[1] = 1;
+	for (int i = 2; i < 1000001; i++) {
+		for (int j = i + i; j < 1000001; j = j + i) {
+			dp[j] = 1;
+		}
+	}
+	
+	int n, m;
+	cin >> n >> m;
+	int a[n];
+	for (int i = 0; i < n; i++) {
+		cin >> a[i];
+	}
+	
+	head = construct_tree1(a, 0, n - 1, head);
+//	print(head);
+//	cout << endl;
+	for (int i = 0; i < m; i++) {
+		int a, b, c;
+		cin >> a >> b >> c;
+		if (a == 0) {
+			updatea(b - 1, 0, n - 1, c, &head);
+		} else {
+			cout << calc(head, b - 1, c - 1, 0, n - 1) << endl;
+		}
+//	print(head);
+//	cout << endl;
+	}
+	
+	return 0;
+}

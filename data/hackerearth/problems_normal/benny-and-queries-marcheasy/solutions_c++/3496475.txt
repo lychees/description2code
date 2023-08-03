@@ -1,0 +1,80 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define REPU(i, a, b) for (int i = (a); i < (b); ++i)
+#define REPD(i, a, b) for (int i = (a); i > (b); --i)
+#define MEM(a, x) memset(a, x, sizeof(a))
+#define ALL(a) a.begin(), a.end()
+#define UNIQUE(a) a.erase(unique(ALL(a)), a.end())
+
+typedef long long ll;
+const int MOD = 1000000007;
+
+template<class T> inline T tmin(T a, T b) { return (a < b) ? a : b; }
+template<class T> inline T tmax(T a, T b) { return (a > b) ? a : b; }
+template<class T> inline void amax(T &a, T b) { if (b > a) a = b; }
+template<class T> inline void amin(T &a, T b) { if (b < a) a = b; }
+template<class T> inline T tabs(T a) { return (a > 0) ? a : -a; }
+template<class T> T gcd(T a, T b) { while (b != 0) { T c = a; a = b; b = c % b; } return a; }
+
+const int N = 500005, M = 21 * N;
+int bin[25], root[N];
+
+struct Trie {
+	int cnt = 0;
+	vector<vector<int>> to;
+	vector<int> sum;
+	
+	Trie() { 
+		to.assign(M, vector<int>(2, 0));
+		sum.assign(M, 0);
+	}
+
+	int insert(int x, int val){
+		int tmp = ++cnt, y = tmp;
+		REPD(i, 19, -1) {
+			int t = val & bin[i];
+			t >>= i;
+			to[y][0] = to[x][0], to[y][1] = to[x][1];
+			to[y][t] = ++cnt;
+			x = to[x][t], y = to[y][t];
+			sum[y] = sum[x] + 1;
+		}
+		return tmp;
+	}
+	int query(int l, int r, int x){
+		int tmp = 0;
+		REPD(i, 19, -1) {
+			int t = x & bin[i];
+			t >>= i;
+			if (sum[to[r][t ^ 1]] - sum[to[l][t ^ 1]]) {
+				tmp += bin[i], l = to[l][t ^ 1], r = to[r][t ^ 1];
+			}
+			else l = to[l][t], r = to[r][t];
+		}
+		return tmp;
+	}
+};
+
+int main(int argc, char *argv[]) {
+	ios_base::sync_with_stdio(false);
+	
+	int n, q, a, l, r, x;
+
+	bin[0] = 1;
+	REPU(i, 1, 21) bin[i] = bin[i - 1] << 1;
+
+	cin >> n >> q;
+	Trie trie;
+	root[0] = 0;
+	REPU(i, 0, n) {
+		cin >> a;
+		root[i + 1] = trie.insert(root[i], a);
+	}
+	REPU(i, 0, q) {
+		cin >> l >> r >> x;
+		printf("%d\n", trie.query(root[l - 1], root[r], x));
+	}
+	
+	return 0;
+}

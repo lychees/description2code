@@ -1,0 +1,167 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <limits.h>
+#include <vector>
+#include <stdlib.h>
+#include <algorithm>
+#include <memory.h>
+#include <string.h>
+#include <math.h>
+#include <string>
+#include <algorithm>
+#include <functional>
+#include <cassert>
+#include <map>
+#include <set>
+#include <list>
+
+using namespace std;
+typedef long long lli;
+typedef vector<int> vi;
+typedef vector<lli> vli;
+typedef pair<int, int> pii;
+typedef vector<pii> vpii;
+typedef long double ld;
+
+const int INF = 0x3f3f3f3f;
+const lli LINF = 0x3f3f3f3f3f3f3f3f;
+
+//#define _LOCAL_DEBUG_
+#ifdef _LOCAL_DEBUG_
+#define eprintf(...) fprintf(stderr,__VA_ARGS__)
+#else
+#define eprintf(...) 
+#endif
+
+#pragma region Modular Arithmetic
+int MOD = int(1e9) + 7;
+inline int add(const int a, const int b, const int mod = MOD) { return (a + b >= mod) ? (a + b - mod) : (a + b); }
+inline int sub(const int a, const int b, const int mod = MOD) { return (a - b < 0) ? (a - b + mod) : (a - b); }
+inline void inc(int &a, const int b, const int mod = MOD) { a = add(a, b, mod); }
+inline int negate(const int a, const int mod = MOD) { return mod - a; }
+inline int mul(const int a, const int b, const int mod = MOD) { return (a * 1ll * b) % mod; }
+int binPow(int b, int p, const int mod = MOD) {
+	int r = 1;
+	while (p) {
+		if (p & 1)
+			r = mul(r, b, mod);
+		b = mul(b, b, mod);
+		p >>= 1;
+	}
+	return r;
+}
+int inv(const int a, const int mod = MOD) {   // assuming that MOD is prime (Fermat's little theorem)
+	int res = binPow(a, mod - 2, mod);
+	return res;
+}
+inline int dvd(const int a, const int b, const int mod = MOD) { return mul(a, inv(b, mod), mod); } // b != 0
+#pragma endregion
+
+int n;
+
+int gcd(int a, int b) {
+	return b == 0 ? a : gcd(b, a % b);
+}
+
+void clear() {
+}
+
+const int BASE = 1e9;
+struct llnum {
+	lli d[5] = { 0 };
+	int len;
+
+	llnum(int x) {
+		len = 1, d[0] = x;
+	}
+
+	void mul(int x) {
+		int carry = 0;
+		for (int i = 0; i < len; i++) {
+			lli tmp = 1ll * d[i] * x + carry;
+			d[i] = tmp % BASE;
+			carry = tmp / BASE;
+		}
+		if (carry) d[len++] = carry;
+	}
+
+	void add(llnum n) {
+		int carry = 0;
+		for (int i = 0; i < max(len, n.len); i++) {
+			int tmp = d[i] + n.d[i] + carry;
+			d[i] = tmp % BASE;
+			carry = tmp / BASE;
+		}
+		len = max(len, n.len);
+		if (carry) d[len++] = carry;
+	}
+
+	void out() {
+		for (int i = len - 1; i >= 0; i--)
+			printf(i == len - 1 ? "%d " : "%09d ", d[i]);
+		printf("\n");
+	}
+};
+
+lli solve() {
+	int p[20];
+	for (int i = 0; i < n; i++) p[i] = i + 1;
+	llnum sum(0);
+	do {
+		llnum prod(1);
+		for (int i = 0; i < n; i++) {
+			for (int j = i + 1; j < n; j++) {
+				int gd = gcd(abs(p[i] - p[j]), j - i);
+				if (gd == 1) continue;
+				prod.mul(gd);
+			}
+		}
+		sum.add(prod);
+	} while (next_permutation(p, p + n));
+	sum.out();
+	return 0;
+}
+
+lli precalc[][4] = { 
+	{ -1, 0, 0, 0 },
+	{ -1, 0, 0, 0 },
+	{ 2, 0, 0, 0 },
+	{ 8, 0, 0, 0 },
+	{ 68, 0, 0, 0 },
+	{ 1504, 0, 0, 0 },
+	{ 127792, 0, 0, 0 },
+	{ 57140352, 0, 0, 0 },
+	{ 23200384, 258, 0, 0 },
+	{ 367145472, 10151395, 0, 0 },
+	{ 792306176, 835865235, 3673, 0 },
+	{ 859649536, 694192513, 318668301, 13 },
+	{ 872790016, 573555796, 673514734, 531680718 },
+};
+
+int solve2() {
+	int res = 0;
+	int bm = 1;
+	for (int i = 0; i < 4; i++) {
+		res = add(res, mul(bm, precalc[n][i] % MOD));
+		bm = mul(bm, BASE);
+	}
+
+	return res;
+}
+
+int main() {
+#ifdef _LOCAL_VAN
+	freopen("in.txt", "r", stdin);
+#endif
+	int t;
+	scanf("%d", &t);
+	while (t--) {
+		clear();
+		scanf("%d%d", &n, &MOD);
+		//lli res1 = solve();
+		int res = solve2();
+		//assert(res1 == res2);
+		printf("%d\n", res);
+	}
+	return 0;
+}

@@ -1,0 +1,88 @@
+#include<iostream>
+#include<queue>
+#include<utility>
+#include<vector>
+#include<cstring>
+#include<stdio.h>
+using namespace std;
+
+int visited[30][30];
+int dist[30][30];
+#define CLEAR(s, n) memset(s, 0, sizeof(s[0][0]) * n * n);
+
+vector< pair<int, int> > getNeighbours(pair<int, int> pos, int dim) {
+    int i = pos.first, j = pos.second;
+    vector< pair<int, int> > neighbours;
+    if (i - 1 >= 0 && visited[i - 1][j] == 0){
+        neighbours.push_back(make_pair(i - 1, j));
+        visited[i - 1][j] = 1;
+    }
+    if (j - 1 >= 0 && visited[i][j - 1] == 0){
+        neighbours.push_back(make_pair(i, j - 1));
+        visited[i][j - 1] = 1;
+    }
+    if (i + 1 <= dim - 1 && visited[i + 1][j] == 0){
+        neighbours.push_back(make_pair(i + 1, j));
+        visited[i + 1][j] = 1;
+    }
+    if (j + 1 <= dim - 1 && visited[i][j + 1] == 0){
+        neighbours.push_back(make_pair(i, j + 1));
+        visited[i][j + 1] = 1;
+    }
+    return neighbours;
+}
+
+int BFS(char G[][30], int dim, int sr, int sc, int er, int ec) {
+    queue< pair<int, int> > q;
+    pair<int, int> pos, temp;
+    vector< pair<int, int> > neigh;
+
+    q.push(make_pair(sr, sc));
+    visited[sr][sc] = 1;
+    dist[sr][sc] = 0;
+
+    while(!q.empty()) {
+        pos = q.front();
+        q.pop();
+        //cout << G[pos.first][pos.second] << " : " << dist[pos.first][pos.second] << endl;
+        if (pos.first == er && pos.second == ec) {
+            return dist[er][ec];
+        }
+
+        // Get all adjacent vertices
+        neigh = getNeighbours(pos, dim);
+        for(vector< pair<int, int> >::iterator it = neigh.begin(); it != neigh.end(); ++it) {
+            temp = *it;
+            if (G[temp.first][temp.second] != 'T') {
+                q.push(temp);
+                if (dist[temp.first][temp.second] > dist[pos.first][pos.second] + 1) {
+                    dist[temp.first][temp.second] = dist[pos.first][pos.second] + 1;
+                }
+            }
+        }
+    }
+}
+
+int main() {
+    char graph[30][30];
+    int n, start_row, start_col, end_row, end_col;
+    cin >> n;
+    for(int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cin >> graph[i][j];
+            dist[i][j] = 999;
+            if (graph[i][j] == 'S') {
+                start_row = i;
+                start_col = j;
+            }
+            if (graph[i][j] == 'E') {
+                end_row = i;
+                end_col = j;
+            }
+        }
+    }
+
+    cout << BFS(graph, n, start_row, start_col, end_row, end_col) << endl;
+
+    return 0;
+}

@@ -1,0 +1,73 @@
+#include <iostream>
+#include <vector>
+#include <deque>
+#include <map>
+#include <set>
+#include <iomanip>
+#include <algorithm>
+
+using namespace std;
+
+typedef int ll;
+typedef pair<ll, ll> ii;
+typedef vector<ll> vi;
+typedef vector<vi> vvi;
+typedef pair<ll,ll> ii;
+#define inf 999999
+int find_parent(vvi& parent_size, int a){
+    if (a == parent_size[a][0]){
+        return a;
+    }else{
+        int parent = find_parent(parent_size, parent_size[a][0]);
+        parent_size[a][0] = parent;
+        return parent;
+    }
+}
+void union_set(vvi& parent_size, int a, int b){
+    int parent_a = find_parent(parent_size, a);
+    int parent_b = find_parent(parent_size, b);
+    
+    if (parent_size[parent_a][1] < parent_size[parent_b][1]){
+        parent_size[parent_b][1] += parent_size[parent_a][1];
+        parent_size[parent_a][0] = parent_b;
+    }else{
+        parent_size[parent_a][1] += parent_size[parent_b][1];
+        parent_size[parent_b][0] = parent_a;
+    }
+}
+int main(){
+    int test;
+    cin >> test;
+    for (int i = 0; i < test; ++i){
+        int n, k;
+        cin >> n >> k;
+        bool yes = true;
+        vector< vector<int> > parent_size(n, vector<int>(2));
+        for (int i = 0; i < n; i++) {
+            parent_size[i][0] = i;
+            parent_size[i][1] = 1;
+        }
+        
+        vector<ii> queries;
+        for (int j = 0; j < k; ++j){
+            int a, b;
+            string r;
+            cin >> a >> r >> b;
+            --a; --b;
+            if (r == "="){
+                union_set(parent_size, a, b);
+            }else{
+                queries.push_back(make_pair(a, b));
+            }
+        }
+        
+        for (vector<ii>::iterator it = queries.begin(); it != queries.end(); ++it){
+            if (find_parent(parent_size, it->first) == find_parent(parent_size, it->second)){
+                yes = false;
+                break;
+            }
+        }
+        if (yes) cout << "YES" << endl;
+        else cout << "NO" << endl;
+    }
+}

@@ -1,0 +1,193 @@
+#include<stdio.h>
+#define ll long long
+ll a[100006];
+ll seg_tree1[400005];
+ll seg_tree2[400005];
+ll seg_tree3[400005];
+int n;
+int left(int node)
+{
+	return 2*node;
+}
+int right(int node)
+{
+	return 2*node+1;
+}
+void construct_1(int node,int beg,int end)
+{
+	if(beg==end)
+	{
+		seg_tree1[node]=a[beg]*beg;
+		return ;
+	}
+	int mid=(beg+end)/2;
+	construct_1(left(node),beg,mid);
+	construct_1(right(node),mid+1,end);
+	seg_tree1[node]=seg_tree1[left(node)]+seg_tree1[right(node)];
+}
+void construct_2(int node,int beg,int end)
+{
+	if(beg==end)
+	{
+		seg_tree2[node]=a[beg]*(n-beg+1);
+		return ;
+	}
+	int mid=(beg+end)/2;
+	construct_2(left(node),beg,mid);
+	construct_2(right(node),mid+1,end);
+	seg_tree2[node]=seg_tree2[left(node)]+seg_tree2[right(node)];
+}
+void construct_3(int node,int beg,int end)
+{
+	if(beg==end)
+	{
+		seg_tree3[node]=a[beg];
+		return ;
+	}
+	int mid=(beg+end)/2;
+	construct_3(left(node),beg,mid);
+	construct_3(right(node),mid+1,end);
+	seg_tree3[node]=seg_tree3[left(node)]+seg_tree3[right(node)];
+}
+void update_1(int node,int beg,int end,int index,ll value)
+{
+	if(beg==end&&beg==index)
+	{
+		seg_tree1[node]=value*beg;
+		return ;
+	}
+	if(index<beg||index>end)
+	return ;
+	int mid=(beg+end)/2;
+	if(index<=mid)
+	update_1(left(node),beg,mid,index,value);
+	else
+	update_1(right(node),mid+1,end,index,value);
+	seg_tree1[node]=seg_tree1[left(node)]+seg_tree1[right(node)];
+}
+void update_2(int node,int beg,int end,int index,ll value)
+{
+	if(beg==end&&beg==index)
+	{
+		seg_tree2[node]=value*(n-beg+1);
+		return ;
+	}
+	if(index<beg||index>end)
+	return ;
+	int mid=(beg+end)/2;
+	if(index<=mid)
+	update_2(left(node),beg,mid,index,value);
+	else
+	update_2(right(node),mid+1,end,index,value);
+		seg_tree2[node]=seg_tree2[left(node)]+seg_tree2[right(node)];
+}
+void update_3(int node,int beg,int end,int index,ll value)
+{
+	if(beg==end&&beg==index)
+	{
+		seg_tree3[node]=value;
+		return ;
+	}
+	if(index<beg||index>end)
+	return ;
+	int mid=(beg+end)/2;
+	if(index<=mid)
+	update_3(left(node),beg,mid,index,value);
+	else
+	update_3(right(node),mid+1,end,index,value);
+		seg_tree3[node]=seg_tree3[left(node)]+seg_tree3[right(node)];
+}
+ll query_1(int node,int beg,int end,int i,int j)
+{
+	if(i>end||j<beg)
+	return 0;
+	if(i<=beg&&j>=end)
+	return seg_tree1[node];
+	int mid=(beg+end)/2;
+	ll a1=query_1(left(node),beg,mid,i,j);
+	ll a2=query_1(right(node),mid+1,end,i,j);
+	return a1+a2;
+}
+ll query_2(int node,int beg,int end,int i,int j)
+{
+	if(i>end||j<beg)
+	return 0;
+	if(i<=beg&&j>=end)
+	return seg_tree2[node];
+	int mid=(beg+end)/2;
+	ll a1=query_2(left(node),beg,mid,i,j);
+	ll a2=query_2(right(node),mid+1,end,i,j);
+	return a1+a2;
+}
+ll query_3(int node,int beg,int end,int i,int j)
+{
+	if(i>end||j<beg)
+	return 0;
+	if(i<=beg&&j>=end)
+	return seg_tree3[node];
+	int mid=(beg+end)/2;
+	ll a1=query_3(left(node),beg,mid,i,j);
+	ll a2=query_3(right(node),mid+1,end,i,j);
+	return a1+a2;
+}
+int main()
+{
+	int q;
+	scanf("%d%d",&n,&q);
+	int i;
+	for(i=1;i<=n;i++)
+		scanf("%lld",&a[i]);
+	construct_1(1,1,n);
+	construct_2(1,1,n);
+	construct_3(1,1,n);
+	while(q--)
+	{
+		int c;
+		scanf("%d",&c);
+		if(c==1)
+		{
+			int k,l,r;
+				scanf("%d%d%d",&k,&l,&r);
+			
+		
+			if(k<=l&&k<=r)
+			{
+				ll v2=query_3(1,1,n,l,r);
+				ll v1=query_1(1,1,n,l,r);
+			//	printf("%d %d\n",v1,v2);
+				printf("%lld\n",v1-k*v2);
+			}
+			else if(k>=l&&k>=r)
+			{
+				ll v2=query_3(1,1,n,l,r);
+				ll v1=query_2(1,1,n,l,r);
+			//	printf("%d %d\n",v1,v2);
+				printf("%lld\n",v1-(n-k+1)*v2);
+			}
+			else if(k>=l&&k<=r)
+			{
+				ll v1=query_2(1,1,n,l,k);
+				ll v2=query_1(1,1,n,k,r);
+				ll v3=query_3(1,1,n,l,k);
+				ll v4=query_3(1,1,n,k,r);
+				ll ans1=v1-(n-k+1)*v3;
+				ll ans2=v2-k*v4;
+				printf("%lld\n",ans1+ans2);
+			}
+		}
+		else
+		{
+			int l;
+			ll r;
+			scanf("%d%lld",&l,&r);
+			a[l]+=r;
+			update_1(1,1,n,l,a[l]);
+			update_2(1,1,n,l,a[l]);
+			update_3(1,1,n,l,a[l]);
+		}
+	
+	}
+	
+	
+	
+}

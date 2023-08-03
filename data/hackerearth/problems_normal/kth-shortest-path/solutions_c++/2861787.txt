@@ -1,0 +1,81 @@
+#include <iostream>
+#include <bits/stdc++.h>
+using namespace std;
+
+
+int main() {
+	int t;
+	cin>>t;
+	while(t--){
+		int n,m;
+		cin>>m>>n;
+		string s;
+		int a[105][105];
+		vector<int> dp[105][105];
+		for(int i=0;i<m;i++){
+			for(int j=0;j<n;j++){
+				cin>>s;
+				if(s=="##"){
+					a[i][j]=-10;
+				}else{
+					a[i][j]=stoi(s);
+				}
+			}
+		}
+		dp[0][0].push_back(a[0][0]);
+		for(int i=1;i<n;i++){
+			if(a[0][i]!=-10)
+				dp[0][i].push_back(a[0][i]+dp[0][i-1][0]);
+			else
+				break;
+		}
+		for(int i=1;i<m;i++){
+			if(a[i][0]!=-10)
+				dp[i][0].push_back(a[i][0]+dp[i-1][0][0]);
+			else
+				break;
+		}
+		for(int i=1;i<m;i++){
+			for(int j=1;j<n;j++){
+				if(a[i][j]==-10) continue;
+				int x=dp[i][j-1].size();
+				int y=dp[i-1][j].size();
+				int k=0,l=0;
+				int cnt=0;
+				while((k<x||l<y)&&cnt<101){
+					if(k==x){
+						dp[i][j].push_back(dp[i-1][j][l]+a[i][j]);
+						l++;
+					}else if(l==y){
+						dp[i][j].push_back(dp[i][j-1][k]+a[i][j]);
+						k++;
+					}else{
+						if(dp[i][j-1][k]<=dp[i-1][j][l]){
+							dp[i][j].push_back(dp[i][j-1][k]+a[i][j]);
+							k++;
+						}else{
+							dp[i][j].push_back(dp[i-1][j][l]+a[i][j]);
+							l++;
+						}
+					}
+					cnt++;
+				}
+			}
+		}
+		int q;
+		cin>>q;
+		while(q--){
+			int tx,ty,kx;
+			cin>>tx>>ty>>kx;
+			if(a[tx][ty]==-10) cout<<"Obstacle"<<endl;
+			else{
+				if(dp[tx][ty].size()<kx){
+					cout<<"Not so many paths"<<endl;
+				}else{
+					cout<<dp[tx][ty][kx-1]<<endl;
+				}
+			}
+		}
+	}
+	return 0;
+}

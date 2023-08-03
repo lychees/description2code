@@ -1,0 +1,179 @@
+//Archit Rai
+#include<bits/stdc++.h>
+using namespace std;
+#define pb push_back
+#define mp make_pair
+#define sz(a) (int)(a.size())
+#define all(c) (c).begin(),(c).end()
+#define F first
+#define S second
+#define si(n) scanf("%d",&n)
+#define sll(n) scanf("%lld",&n)
+#define REP(i,a,b) for(int i=a;i<b;i++)
+#define MOD 1000000007
+#define endl '\n'
+#define PIN(n) printf("%d\n",n)
+#define PLLN(n) printf("%lld\n",n)
+#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL)
+typedef long long int ll;
+#define N 100010
+const int MOD1=999999929,MOD2=999999937;
+const int x1=31LL,x2=37LL;
+ll powmod(ll a,ll b)
+{
+    if(b==0)return 1;
+    ll x=powmod(a,b/2);
+    ll y=(x*x)%MOD;
+    if(b%2)
+	return (a*y)%MOD;
+    return y%MOD;
+}
+//Template ends here
+
+ll p1[N],p2[N];
+string s;
+inline void init()
+{
+    p1[0]=1,p2[0]=1LL;
+    for(int i=1;i<N;i++)
+    {
+	p1[i]=(p1[i-1]*(ll)x1)%MOD1;
+	p2[i]=(p2[i-1]*(ll)x2)%MOD2;
+    }
+}
+
+void AddToHash(ll &Hash,char c,int pos)
+{
+    ll val1=(Hash<<32LL)>>32LL;
+    ll val2=Hash>>32LL;
+    val1=(val1+(ll)(c-'a'+1)*p1[pos])%MOD1;
+    val2=(val2+(ll)(c-'a'+1)*p2[pos])%MOD2;
+    Hash=val1+(val2<<32LL);
+}
+
+ll MergeHash(ll Hleft,ll Hright,ll lenleft)
+{
+    ll L1=(Hleft<<32LL)>>32LL;
+    ll L2=Hleft>>32LL;
+    ll R1=(Hright<<32LL)>>32LL;
+    ll R2=Hright>>32LL;
+    ll val1=(L1+R1*p1[lenleft])%MOD1;
+    ll val2=(L2+R2*p2[lenleft])%MOD2;
+    ll ret=val1+(val2<<32LL);
+    return ret;
+}
+
+int a[100010];
+typedef struct segtree{
+    ll hash1,hash2;
+    ll len;
+    bool check;
+}segtree;
+segtree tree[400010];
+inline segtree merge(segtree node1,segtree node2)
+{
+    segtree node;
+    node.len=node1.len+node2.len;
+    node.hash1=MergeHash(node1.hash1,node2.hash1,node1.len);
+    node.hash2=MergeHash(node2.hash2,node1.hash2,node2.len);
+    if(node.hash1==node.hash2)
+	node.check=true;
+    else
+	node.check=false;
+    return node;
+}
+void build(int node, int start, int end)
+{
+    if(start==end)
+    {
+	tree[node].hash1=0;
+	tree[node].hash2=0;
+	AddToHash(tree[node].hash1,s[start],0);
+	AddToHash(tree[node].hash2,s[start],0);
+	tree[node].len=1;
+	tree[node].check=true;
+    }
+    else
+    {
+	int mid = start+(end-start) / 2;
+	build(2*node, start, mid);
+	build(2*node+1, mid+1, end);
+	tree[node]=merge(tree[2*node],tree[2*node+1]);
+    }
+}
+segtree query(int node, int start, int end, int l, int r)
+{
+    segtree mi;
+    if(start>=l&&end<=r)
+	return tree[node];
+    int mid = start+(end-start)/2;
+    segtree p1,p2;
+    if(r<=mid)
+    {
+	p1 = query(2*node, start, mid, l, r);
+	return p1;
+    }
+    else if(l>mid)
+    {
+	p2 = query(2*node+1, mid+1, end, l, r);
+	return p2;
+    }
+    p1 = query(2*node, start, mid, l, r);
+    p2 = query(2*node+1, mid+1, end, l, r);
+    mi=merge(p1,p2);
+    return mi;
+}
+void update(int node,int start,int end,int index,char val)
+{
+    if(start==end)
+    {
+	tree[node].hash1=0;
+	tree[node].hash2=0;
+	AddToHash(tree[node].hash1,val,0);
+	AddToHash(tree[node].hash2,val,0);
+	tree[node].len=1;
+	tree[node].check=true;
+	return;
+    }
+    int mid=start+(end-start)/2;
+    if(start<=index && index<=mid)
+	update(2*node,start,mid,index,val);
+    else
+	update(2*node+1,mid+1,end,index,val);
+    tree[node]=merge(tree[2*node],tree[2*node+1]);
+}
+
+int main()
+{
+    int n,q;
+    cin>>n>>q;
+    cin>>s;
+    init();
+    build(1,0,n-1);
+    while(q--)
+    {
+	int type;
+	cin>>type;
+	if(type==1)
+	{
+	    int l,r;
+	    cin>>l>>r;
+	    l--,r--;
+	    segtree f=query(1,0,n-1,l,r);
+	    if(f.check)
+		cout<<"Yes\n";
+	    else
+		cout<<"No\n";
+	}
+	else
+	{
+	    int l;
+	    string v;
+	    cin>>l;
+	    cin>>v;
+	    l--;
+	    update(1,0,n-1,l,v[0]);
+	}
+    }
+    return 0;
+}

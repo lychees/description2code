@@ -1,0 +1,151 @@
+#include <iostream>
+#include <cstdio>
+#include <string>
+#include <cassert>
+#include <map>
+#include <set>
+#include <stack>
+#include <time.h>
+#include <algorithm>
+#include <vector>
+#include <queue>
+#include "cmath"
+#include "iomanip"
+#include <time.h>
+
+
+#define pr pair <int, int>
+#define llong long long int
+#define pb push_back
+#define lb lower_bound
+#define mp make_pair
+
+using namespace std;
+const int  MAXN = 4e6 + 7, INF = 1e9 + 7;
+int n, sz = 1, m;
+int mn[MAXN], mx[MAXN];
+int getmin(int x, int y) {
+    int ans = INF;
+    x += sz - 1;
+    y += sz - 1;
+    while (x <= y) {
+        if (x == y) {
+            ans = min(ans, mn[x]);
+            break;
+        }
+        if (x & 1) {
+            ans = min(ans, mn[x]);
+        }
+        if (y % 2 == 0) {
+            ans = min(ans, mn[y]);
+        }
+        y--;
+        x++;
+        x >>= 1;
+        y >>= 1;
+        
+    }
+    return ans;
+}
+int getmax(int x, int y) {
+    int ans = -INF;
+    x += sz - 1;
+    y += sz - 1;
+    while (x <= y) {
+        if (x == y) {
+            ans = max(ans, mx[x]);
+            break;
+        }
+        if (x & 1) {
+            ans = max(ans, mx[x]);
+        }
+        if (y % 2 == 0) {
+            ans = max(ans, mx[y]);
+        }
+        y--;
+        x++;
+        x >>= 1;
+        y >>= 1;
+        
+    }
+    return ans;
+}
+void upd(int x, int y) {
+    x += sz - 1;
+    mn[x] = mx[x] = y;
+    do {
+        x >>= 1;
+        mn[x] = min(mn[x * 2], mn[x * 2 + 1]);
+        mx[x] = max(mx[x * 2], mx[x * 2 + 1]);
+    } while (x);
+}
+bool check(int x, int y, int c) {
+    int mins = getmin(x, y);
+    int maxs = getmax(x, y);
+    x += sz - 1;
+    if (mins >= mn[x] - c && maxs <= mn[x] + c) {
+        return  true;
+    }
+    return false;
+}
+int main () {
+#ifdef DEBUG
+    freopen("input.txt", "r", stdin);
+    freopen("output.txt", "w", stdout);
+#else
+    //freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w", stdout);
+#endif
+	scanf("%d%d", &n, &m);
+    while (sz < n) {
+        sz <<= 1;
+    }
+    for (int i = 0; i < n; i++) {
+        scanf("%d", &mn[sz + i]);
+        mx[sz + i] = mn[sz + i];
+    }
+    for (int i = sz + n; i < sz * 2; i++) {
+        mn[i] = INF;
+        mx[i] = -INF;
+    }
+    for (int i = sz - 1; i >= 1; i--) {
+        mn[i] = min(mn[i * 2], mn[i * 2 + 1]);
+        mx[i] = max(mx[i * 2], mx[i * 2 + 1]);
+    }
+    for (int i = 1; i <= m; i++) {
+        char ch;
+        int x, y;
+        cin >> ch;
+        scanf("%d%d", &x, &y);
+        
+        if (ch == 'U') {
+            upd(x, y);
+        } else {
+            if (y < 0) {
+                puts("-1 -1");
+                continue;
+            }
+            int L = x, R = n;
+            while (R - L > 1) {
+                int mid = (R + L) / 2;
+                if (check(x, mid, y)) {
+                    L = mid;
+                } else {
+                    R = mid;
+                }
+            }
+            if (check(x, R, y)) {
+                L = R;
+            }
+            int len = L - x + 1;
+            int mins = getmin(x, L);
+            int maxs = getmax(x, L);
+            x += sz - 1;
+
+            //cout << " min = " << mins << " max = " << maxs << endl;
+            mins = max(mn[x] - mins, maxs - mn[x]);
+            printf("%d %d\n", len , mins);
+        }
+    }
+    return 0;
+}

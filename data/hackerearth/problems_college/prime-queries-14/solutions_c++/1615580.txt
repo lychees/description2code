@@ -1,0 +1,108 @@
+//https://www.hackerrank.com/contests/koder-kombat-finals/challenges/daedalus-and-icarus/submissions/code/2374617
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <cstring>
+using namespace std;
+int C[100001];
+int prime[100001];
+const int MAX_N = int(1e5) + 10;
+typedef long long int64;
+
+//int a[MAX_N], n;
+
+int get(int x, int y) {
+	if (x == -1 || y == -1)
+		return x == -1 ? y : x;
+	//return a[x] > a[y] ? x : y;
+    if (C[x]>C[y] && prime[C[x]]==-1) return x;
+    else if (C[x]<C[y] && prime[C[y]]==-1) return y;
+    else if (prime[C[x]]==-1) return x;
+    else if (prime[C[y]]==-1) return y;
+    else return -1;
+}
+
+struct Tree {
+	Tree*pl, *pr;
+	int l, r, mx;
+//	int64 sum;
+
+	void update() {
+		mx = get(pl->mx, pr->mx);
+	//	sum = pl->sum + pr->sum;
+	}
+
+	Tree(int l, int r) :
+			l(l), r(r) {
+		if (l + 1 == r) {
+	//		sum = a[l];
+			mx = l;
+			return;
+		}
+		pl = new Tree(l, l + r >> 1);
+		pr = new Tree(l + r >> 1, r);
+		update();
+	}
+
+	void change(int p, int x) {
+		if (p < l || p >= r)
+			return;
+		if (l + 1 == r) {
+		//	sum = x;
+			C[l] = x;
+			return;
+		}
+		pl->change(p, x);
+		pr->change(p, x);
+		update();
+	}
+
+	int queryMax(int L, int R) {
+		if (L <= l && R >= r) {
+			return mx;
+		}
+		if (L >= r || l >= R)
+			return -1;
+		return get(pl->queryMax(L, R), pr->queryMax(L, R));
+	}
+
+/*	int64 querySum(int L, int R) {
+		if (L <= l && R >= r) {
+			return sum;
+		}
+		if (L >= r || l >= R)
+			return 0;
+		return pl->querySum(L, R) + pr->querySum(L, R);
+	}*/
+}*rt;
+int main() {
+    int n,m;
+    scanf("%d%d",&n,&m);
+    for(int i=1;i<=n;i++) scanf("%d",&C[i-1]);
+    memset(prime,-1,sizeof(prime));
+    
+    prime[0] = 1;
+    prime[1] = 1;
+    for(int i=2;i<=100000;i++)
+        for(int j=2;i*j<=100000;j++)
+        if (prime[i*j]==-1) prime[i*j] = 1;
+    
+        int p,a,b;
+    rt = new Tree(0, n);
+    while(m--) {
+        scanf("%d%d%d",&p,&a,&b);
+        if (p){
+            int at = rt->queryMax(a-1, b);
+            if (at==-1) printf("-1\n");
+            else if (prime[C[at]]!=-1) printf("-1\n");
+            else printf("%d\n",C[at]);
+        }
+        else{
+            C[a-1] = b;
+            rt->change(a-1,b);
+        }
+    }   
+    return 0;
+}

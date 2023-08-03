@@ -1,0 +1,174 @@
+// AUTHOR: ARVIND NAIR
+
+#include<bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<int,int> pi;
+typedef vector<int> vi;
+
+#define TEST  int test_case; scanf("%d",&test_case); while(test_case--)
+#define RT fprintf(stderr, "\nTIME = %lf\n", 1.0 * clock()/CLOCKS_PER_SEC);
+#define rep(a,c)   for ( int (a)=0; (a)<(c); (a)++)
+#define repn(a,b,c)  for ( int (a)=(b); (a)<=(c); (a)++)
+#define repd(a,b,c)  for (  int (a)=(b); (a)>=(c); (a)--)
+#define FOR(arr) for(auto &i:arr)
+#define all(v) (v).begin(),(v).end()
+#define fi  first
+#define se  second
+#define pb push_back
+#define mp make_pair
+#define EPS (double)(1e-9)
+#define MOD 1000000007
+#define M(x,i) memset(x,i,sizeof(x))
+#define trace(x)    cout<<#x<<" is "<<x<<"\n"
+#define sz(x) (int)(x.size())
+#define si(n) scanf("%d",&n)
+#define gi(n) printf("%d\n",n)
+#define sll(n) scanf("%lld",&n)
+#define gll(n) printf("%lld\n",n)
+
+vector<pair<int,int>> g[100005];
+int pa[20][100005],dep[100005];
+
+struct node {
+  ll sum,suff,pref,ans;
+
+  node():sum(0),suff(0),pref(0),ans(0){}
+
+  node(int val) {
+
+  	sum=val;
+  	suff=max(0,val);
+  	pref=ans=suff; 
+  }
+};
+
+node sol[20][100005];
+vector<node> v1,v2;
+
+node merge(const node &l, const node &r) {
+  node res;
+  res.sum=l.sum+r.sum;
+  res.suff=max(r.suff,l.suff+r.sum);
+  res.pref=max(l.pref,l.sum+r.pref);
+  res.ans=max({l.ans,r.ans,l.suff+r.pref});
+  return res;
+}
+
+void dfs(int u, int v, int c) {
+
+	pa[0][u]=v;
+	sol[0][u]=node(c);
+	dep[u]=dep[v]+1;
+
+
+	rep(i,sz(g[u])) {
+
+		int p=g[u][i].fi;
+
+		if(p!=v) 
+			dfs(p,u,g[u][i].se);
+	}
+}
+
+int lca(int u, int v) {
+
+	if(dep[u]<dep[v])
+		swap(u,v);
+
+	int k=dep[u]-dep[v];
+
+	repd(i,19,0)
+	 if(k&(1<<i))
+	 	u=pa[i][u];
+
+	 if(u==v)
+	 	return u;
+
+	 repd(i,19,0)
+        if(pa[i][u]!=pa[i][v])
+            u=pa[i][u],v=pa[i][v];
+
+        return pa[0][u];
+
+}
+
+int main() { 
+
+int n,q; si(n); si(q);
+
+rep(i,n-1) {
+
+	 int u,v,w; si(u); si(v); si(w);
+	 g[u].pb({v,w});
+	 g[v].pb({u,w});
+}  
+
+ dfs(1,0,0);
+ int x;
+
+  repn(i,1,19)
+    repn(j,1,n)
+      x=pa[i-1][j],pa[i][j]=pa[i-1][x],sol[i][j]=merge(sol[i-1][j],sol[i-1][x]);
+
+
+ while(q--) {
+
+ 	int u,v; si(u); si(v);
+ 	v1.clear();
+ 	v2.clear();
+
+ 	int LCA=lca(u,v);
+
+ 	if(u==v) {
+
+ 		gi(0);
+ 		continue;
+ 	}
+
+ 	int k=dep[u]-dep[LCA];
+
+	repd(i,19,0)
+	 if(k&(1<<i))
+	 	v1.pb(sol[i][u]),u=pa[i][u];
+
+ k=dep[v]-dep[LCA];
+
+	repd(i,19,0)
+	 if(k&(1<<i))
+	 	v2.pb(sol[i][v]),v=pa[i][v];
+
+	 if(u!=v) {
+
+	 	v1.pb(sol[0][u]);
+	 	v2.pb(sol[0][v]);
+	 }
+
+        reverse(all(v2));
+
+     rep(i,sz(v2))
+       swap(v2[i].suff,v2[i].pref);
+
+
+         node res;
+
+         rep(i,sz(v1))
+           //cout<<v1[i].sum<<" "<<v1[i].ans<<" "<<v1[i].pref<<" "<<v1[i].suff<<"\n";
+         res=merge(res,v1[i]);
+
+          //cout<<"\n";
+          //cout<<res.sum<<" "<<res.ans<<" "<<res.pref<<" "<<res.suff<<"\n";
+
+          rep(i,sz(v2))
+           res=merge(res,v2[i]);
+
+           //cout<<"\n";
+          //cout<<res.sum<<" "<<res.ans<<" "<<res.pref<<" "<<res.suff<<"\n";
+           gll(res.ans);   	    
+
+ }
+     
+return 0;
+}

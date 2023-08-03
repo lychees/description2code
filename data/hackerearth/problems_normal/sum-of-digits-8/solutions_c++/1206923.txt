@@ -1,0 +1,85 @@
+// Author: thecodekaiser
+#include <bits/stdc++.h>
+using namespace std;
+ 
+/**
+ * The problem is to calculate the number of numbers between A and B, whose sum of digits is 60.
+ */
+ 
+// This not only counts the no of such numbers but also finds the minimum of them
+ 
+#define MXN 20
+#define MXSUM 150
+ 
+typedef long long ll;
+ll A, B;
+int C;
+ll min_sol;
+ll mem[MXN][MXSUM];
+ll poW10[MXN];
+ 
+int sum, N, res;
+ 
+// Function : To convert a string value into integer
+ll toInt(const string & s) { stringstream ss; ss << s; ll n; ss >> n; return n; }
+ 
+ 
+ll f(ll prefix, int digits, int sum)
+{
+	if(sum < 0)
+		return 0;
+
+	ll mni  = prefix;			// This is the max lower bound
+	ll mxi  = prefix + poW10[digits] - 1;	// This is the min upper bound
+
+	if (A > mxi or B < mni)
+		return 0;
+
+	if(digits == 0)
+	{
+		// No more digits to fill
+		if(sum > 0)
+			return 0;	
+		if(min_sol == -1)
+			min_sol = prefix;		// Always min soltion is filled first..but once filled we don't need to fill it
+							// again
+		return 1;
+	}
+
+	bool memo = (mni >= A and mxi <= B);	// In bounds
+	if(memo and mem[digits][sum] != -1)
+		return mem[digits][sum];
+
+	ll ret = 0;
+	for(int dig = 0; dig < 10; dig++)
+		ret += f(prefix + dig*poW10[digits-1], digits-1, sum - dig);
+	
+	if(memo)
+		mem[digits][sum] = ret;
+
+	return ret;
+}
+
+ 
+void solve()
+{
+	poW10[0] = 1;
+	for(int i = 1; i <= 15; i++)
+		poW10[i] = poW10[i-1] * 10;
+
+	cin >> A >> B >> C;
+	min_sol = -1;
+	memset(mem, -1, sizeof(mem));
+
+	cout << f(0, 15, C) << endl;
+	cout << min_sol << endl; 
+	
+	return;
+}
+ 
+int main()
+{
+	solve();
+ 
+	return 0;
+}

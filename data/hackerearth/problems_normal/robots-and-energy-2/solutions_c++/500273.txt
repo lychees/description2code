@@ -1,0 +1,116 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const int md = (int)1e9 + 7;
+
+struct matrix
+{
+	vector <vector <int> > mat;
+
+	matrix(int n = 0, bool id = false)
+	{
+		mat.resize(n);
+		for (int i = 0; i < n; i++) mat[i].resize(n);
+		if (id) for (int i = 0; i < n; i++) mat[i][i] = 1;
+	}
+
+	inline int size() { return (int)mat.size(); }
+	vector <int>& operator[] (int i) { return mat[i]; }
+};
+
+matrix operator * (matrix &a, matrix &b)
+{
+	int n = a.size();
+	matrix ret(n);
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
+			for (int k = 0; k < n; k++)
+			{
+				ret[i][j] += 1ll * a[i][k] * b[k][j] % md;
+				if (ret[i][j] >= md) ret[i][j] -= md;
+			}
+	return ret;
+}
+
+matrix pow(matrix &a, long long p)
+{
+	int n = a.size();
+	matrix ret(n, true);
+	while (p > 0)
+	{
+		if (p % 2 == 1) ret = ret * a;
+		p /= 2, a = a * a;
+	}
+	return ret;
+}
+
+int get(string& s)
+{
+	set <string> ss;
+	int n = s.size();
+	for (int i = 0; i < n; i++)
+		for (int j = 1; j <= n-i; j++)
+		{
+			bool eq = true;
+			for (int k = i, kk = i+j-1; k < kk; k++, kk--) eq &= s[k] == s[kk];
+			if (eq) ss.insert(s.substr(i, j));
+		}
+	return ss.size();
+}
+
+int main()
+{
+	int n, m; cin >> n >> m;
+	int a[n * m];
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < m; j++)
+		{
+			string s; cin >> s;
+			a[i * m + j] = get(s);
+		}
+
+	int c; cin >> c;
+	matrix b(n * m, 1);
+	while (c--)
+	{
+		int x0, y0, x1, y1;
+		cin >> x0 >> y0 >> x1 >> y1;
+		int fst = x0 * m + y0;
+		int snd = x1 * m + y1;
+		b[fst][snd]++;
+		b[snd][fst]++;
+	}
+	int d; cin >> d;
+	b = pow(b, d);
+
+	for (int i = 0; i < n * m; i++)
+	{
+		int cur = 0;
+		for (int j = 0; j < n * m; j++)
+		{
+			cur += 1ll * b[i][j] * a[j] % md;
+			if (cur >= md) cur -= md;
+		}
+		cout << cur << (i % m == m-1 ? '\n' : ' ');
+	}
+	return 0;
+}

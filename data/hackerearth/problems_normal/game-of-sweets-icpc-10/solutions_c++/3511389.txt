@@ -1,0 +1,127 @@
+//#define _CRT_SECURE_NO_WARNINGS
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <set>
+#include <map>
+#include <queue>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <cmath>
+#include <ctime>
+#include <cstring>
+#include <cctype>
+#include <cassert>
+#include <limits>
+#include <bitset>
+#include <complex>
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+#define all(o) (o).begin(), (o).end()
+#define pb(x) push_back(x)
+#define mp(x,y) make_pair((x),(y))
+#define mset(m,v) memset(m,v,sizeof(m))
+#define INF 0x3f3f3f3f
+#define INFL 0x3f3f3f3f3f3f3f3fLL
+using namespace std;
+typedef vector<int> vi; typedef pair<int,int> pii; typedef vector<pair<int,int> > vpii;
+typedef long long ll; typedef vector<long long> vl; typedef pair<long long,long long> pll; typedef vector<pair<long long,long long> > vpll;
+typedef vector<string> vs; typedef long double ld;
+template<typename T, typename U> inline void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> inline void amax(T &x, U y) { if(x < y) x = y; }
+
+typedef long double Num;	//??????long double?????
+const Num PI = 3.141592653589793238462643383279L;
+typedef complex<Num> Complex;
+//n?????
+//a?????
+void fft_main(int n, Num theta, Complex a[]) {
+	for(int m = n; m >= 2; m >>= 1) {
+		int mh = m >> 1;
+		Complex thetaI = Complex(0, theta);
+		rep(i, mh) {
+			Complex w = exp((Num)i*thetaI);
+			for(int j = i; j < n; j += m) {
+				int k = j + mh;
+				Complex x = a[j] - a[k];
+				a[j] += a[k];
+				a[k] = w * x;
+			}
+		}
+		theta *= 2;
+	}
+	int i = 0;
+	reu(j, 1, n-1) {
+		for(int k = n >> 1; k > (i ^= k); k >>= 1) ;
+		if(j < i) swap(a[i], a[j]);
+	}
+}
+
+void fft(int n, Complex a[]) { fft_main(n, 2 * PI / n, a); }
+void inverse_fft(int n, Complex a[]) { fft_main(n, -2 * PI / n, a); }
+
+void convolution(vector<Complex> &v, vector<Complex> &w) {
+	int n = 1, vwn = v.size() + w.size() - 1;
+	while(n < vwn) n <<= 1;
+	v.resize(n), w.resize(n);
+	fft(n, &v[0]);
+	fft(n, &w[0]);
+	rep(i, n) v[i] *= w[i];
+	inverse_fft(n, &v[0]);
+	rep(i, n) v[i] /= n;
+}
+
+//　solve problem....
+const int MOD = 100003;
+
+vector<int> calc_dfs(const vector<int> &A, int l, int r) {
+	if(r - l == 1) {
+		vector<int> res(2);
+		res[0] = 1;
+		res[1] = A[l];
+		return res;
+	}
+	int mid = (l + r) / 2;
+	vector<int> L = calc_dfs(A, l, mid), R = calc_dfs(A, mid, r);
+	vector<Complex> Lc(all(L)), Rc(all(R));
+	convolution(Lc, Rc);
+	int n = L.size() + R.size() - 1;
+	vector<int> res(n);
+	rep(i, n) res[i] = (long long)(Lc[i].real() + .5) % MOD;
+//	cerr << "["<< l << "," << r <<"): ";
+//	rep(i, n) cerr << res[i] << ", "; cerr << endl;
+	return res;
+}
+
+const int MAXN = 100000;
+bool vis[MAXN];
+int main() {
+	int N;
+	scanf("%d", &N);
+	vector<Complex> A(MAXN+1, 0), B(MAXN+1, 0);
+    int ans = 0;
+	rep(i, N) {
+        int x;
+		scanf("%d", &x);
+        if (A[x].real() > 0 && !ans) ++ ans;
+        A[x] = 1;
+        B[MAXN-x] = 1;
+	}
+    convolution(A, B);
+    int l = A.size();
+    for (int i = 0; i < l; ++ i) {
+        int x = A[i].real() + .5;
+        if (x > 0) {
+            x = abs(i - MAXN);
+            if (x > 0 && !vis[x]) ++ ans;
+            //printf("--%d\n", x);
+            vis[x] = true;
+        }
+    }
+    printf("%d\n", ans);
+
+	return 0;
+}

@@ -1,0 +1,187 @@
+/*
+***************************************************************************************************************
+
+							Author : Yash Sadhwani
+
+**************************************************************************************************************
+*/
+#include<stdio.h>
+#include<iostream>
+#include<vector>
+#include<string.h>
+#include<algorithm>
+#include<deque>
+#include<map>
+#include<set>
+#include<stdlib.h>
+#include<math.h>
+#include<queue>
+#include<functional>
+using namespace std;
+#define ll long long
+#define si(x) scanf("%d",&x)
+#define sl(x) scanf("%lld",&x)
+#define sc(x) scanf("%c",&x)
+#define vl vector<ll>
+#define vi vector<int>
+#define vvl vector< vl >
+#define vvi vector< vi >
+#define pb push_back
+#define mod 1000000007
+#define mem(x,y) memset(x,y,sizeof(x))
+#define f(i,a,b) for(int i=(a);i<(b);i++)
+#define max_int_value 2147483647
+#define max_long_value 9223372036854775807
+
+
+//thanks to Vinay Guthal(win_ay) for the below fast IO functions
+#define llu long long unsigned
+#define ld long
+#define F first
+#define S second
+int scan_d()    {int ip=getchar_unlocked(),ret=0,flag=1;for(;ip<'0'||ip>'9';ip=getchar_unlocked())if(ip=='-'){flag=-1;ip=getchar_unlocked();break;}for(;ip>='0'&&ip<='9';ip=getchar_unlocked())ret=ret*10+ip-'0';return flag*ret;}
+ld scan_ld()    {int ip=getchar_unlocked(),flag=1;ld ret=0;for(;ip<'0'||ip>'9';ip=getchar_unlocked())if(ip=='-'){flag=-1;ip=getchar_unlocked();break;}for(;ip>='0'&&ip<='9';ip=getchar_unlocked())ret=ret*10+ip-'0';return flag*ret;}
+ll scan_ll()    {int ip=getchar_unlocked(),flag=1;ll ret=0;for(;ip<'0'||ip>'9';ip=getchar_unlocked())if(ip=='-'){flag=-1;ip=getchar_unlocked();break;}for(;ip>='0'&&ip<='9';ip=getchar_unlocked())ret=ret*10+ip-'0';return flag*ret;}
+llu scan_llu()    {int ip=getchar_unlocked();llu ret=0;for(;ip<'0'||ip>'9';ip=getchar_unlocked());for(;ip>='0'&&ip<='9';ip=getchar_unlocked())ret=ret*10+ip-'0';return ret;}
+ 
+//end of fast input
+//fast output
+ 
+//no line break
+void print_d(int n)     {if(n<0){n=-n;putchar_unlocked('-');}int i=10;char output_buffer[10];do{output_buffer[--i]=(n%10)+'0';n/=10;}while(n);do{putchar_unlocked(output_buffer[i]);}while(++i<10);}
+void print_ld(ld n)     {if(n<0){n=-n;putchar_unlocked('-');}int i=11;char output_buffer[11];do{output_buffer[--i]=(n%10)+'0';n/=10;}while(n);do{putchar_unlocked(output_buffer[i]);}while(++i<11);}
+void print_ll(ll n)     {if(n<0){n=-n;putchar_unlocked('-');}int i=21;char output_buffer[21];do{output_buffer[--i]=(n%10)+'0';n/=10;}while(n);do{putchar_unlocked(output_buffer[i]);}while(++i<21);}
+void print_llu(llu n)     {int i=21;char output_buffer[21];do{output_buffer[--i]=(n%10)+'0';n/=10;}while(n);do{putchar_unlocked(output_buffer[i]);}while(++i<21);}
+
+
+//qsort(ww,cc,sizeof(tp),compare);
+/*int compare(const void *a,const void *b){
+	ll y=((((tp*)a)->w)-(((tp*)b)->w));
+	if(y>0)return 1;
+	else if(y==0)return 0;
+	else return -1;
+}*/
+
+
+struct matrix{
+	ll mat[20][20];
+	matrix(){
+		for(int i=0;i<20;i++)for(int j=0;j<20;j++)mat[i][j]=0;
+	}
+};
+
+matrix mul(matrix A,matrix B){
+	matrix ret;
+	for(int i=0;i<=16;i++){
+		for(int j=0;j<=16;j++){
+			ret.mat[i][j]=0;
+			for(int k=0;k<=16;k++){
+				ret.mat[i][j]+=(A.mat[i][k]*B.mat[k][j]);
+				ret.mat[i][j]%=mod;
+			}
+		}
+	}
+	return ret;
+}
+
+matrix pow(matrix A,ll p){
+	if(p==1)return A;
+	matrix temp=pow(A,p/2);
+	temp=mul(temp,temp);
+	if(p&1)temp=mul(temp,A);
+	return temp;
+}
+
+matrix Transition;
+
+inline void CreateTransforms(void){
+	for(int mask=0;mask<16;mask++){
+		for(int i=1;i<=9;i++){
+			int h=mask;
+			int num=i;
+			while(num%2==0){
+				h^=1;
+				num/=2;
+			}
+			while(num%3==0){
+				h^=2;
+				num/=3;
+
+			}
+			if(num%5==0){
+				h^=4;
+			}
+			if(num%7==0){
+				h^=8;
+			}
+            //cout<<h<<endl;
+			Transition.mat[mask][h]++;
+		}
+	}
+}
+
+ll modpow(ll base, ll exponent)
+{
+    ll result = 1;
+    while (exponent > 0)
+    {
+        if (exponent % 2 == 1)
+            result = (result * base) % mod;
+        exponent = exponent >> 1;
+        base = (base * base) % mod;
+    }
+    return result;
+}
+
+ll N;
+
+inline void ReadInput(void){
+	sl(N);
+}
+
+inline void solve(void){
+	if(N==1){
+		printf("4\n");
+		return;
+	}
+	ll dp[]={3,2,1,1,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0};
+	for(int i=0;i<=16;i++)Transition.mat[i][16]=dp[i];
+	matrix here=pow(Transition,N-1);
+	ll ans=0;
+	for(int i=0;i<=16;i++){
+		ans+=here.mat[0][i]*dp[i];
+		ans%=mod;
+	}
+    //cout<<ans<<endl;
+	ans+=(modpow(10,N)+1);
+	ans%=mod;
+	ll temp=(modpow(9,N+1))-1;
+	if(temp<0)temp+=mod;
+	temp*=modpow(8,mod-2);
+	temp%=mod;
+	ans=(ans-temp)%mod;
+	if(ans<0)ans+=mod;
+	printf("%lld\n",ans );
+    /*for(int i=0;i<16;i++){
+        for(int j=0;j<16;j++)cout<<Transition.mat[i][j]<<" ";
+        cout<<endl;
+    }*/
+}
+
+inline void Refresh(void){
+
+}
+
+int main()
+{
+	CreateTransforms();
+    //return 0;
+	int t=scan_d();
+	while(t--){
+		ReadInput();
+		Refresh();
+		solve();
+        //return 0;
+	}
+	return 0;
+}

@@ -1,0 +1,174 @@
+//Tanuj Khattar
+#include<bits/stdc++.h>
+
+using namespace std;
+
+typedef pair<int,int>   II;
+typedef vector< II >      VII;
+typedef vector<int>     VI;
+typedef vector< VI > 	VVI;
+typedef long long int 	LL;
+
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+#define SZ(a) (int)(a.size())
+#define ALL(a) a.begin(),a.end()
+#define SET(a,b) memset(a,b,sizeof(a))
+
+#define si(n) scanf("%d",&n)
+#define dout(n) printf("%d\n",n)
+#define sll(n) scanf("%lld",&n)
+#define lldout(n) printf("%lld\n",n)
+#define fast_io ios_base::sync_with_stdio(false);cin.tie(NULL)
+
+#define TRACE
+
+#ifdef TRACE
+#define trace(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+	cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+	const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define trace(...)
+#endif
+
+//FILE *fin = freopen("in","r",stdin);
+//FILE *fout = freopen("out","w",stdout);
+
+typedef vector<double> VD;
+typedef vector<VD> VVD;
+
+double MinCostMatching(const VVD &cost, VI &Lmate, VI &Rmate) {
+  int n = int(cost.size());
+
+  // construct dual feasible solution
+  VD u(n);
+  VD v(n);
+  for (int i = 0; i < n; i++) {
+    u[i] = cost[i][0];
+    for (int j = 1; j < n; j++) u[i] = min(u[i], cost[i][j]);
+  }
+  for (int j = 0; j < n; j++) {
+    v[j] = cost[0][j] - u[0];
+    for (int i = 1; i < n; i++) v[j] = min(v[j], cost[i][j] - u[i]);
+  }
+  
+  // construct primal solution satisfying complementary slackness
+  Lmate = VI(n, -1);
+  Rmate = VI(n, -1);
+  int mated = 0;
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      if (Rmate[j] != -1) continue;
+      if (fabs(cost[i][j] - u[i] - v[j]) < 1e-10) {
+	Lmate[i] = j;
+	Rmate[j] = i;
+	mated++;
+	break;
+      }
+    }
+  }
+  
+  VD dist(n);
+  VI dad(n);
+  VI seen(n);
+  
+  // repeat until primal solution is feasible
+  while (mated < n) {
+    
+    // find an unmatched left node
+    int s = 0;
+    while (Lmate[s] != -1) s++;
+    
+    // initialize Dijkstra
+    fill(dad.begin(), dad.end(), -1);
+    fill(seen.begin(), seen.end(), 0);
+    for (int k = 0; k < n; k++) 
+      dist[k] = cost[s][k] - u[s] - v[k];
+    
+    int j = 0;
+    while (true) {
+      
+      // find closest
+      j = -1;
+      for (int k = 0; k < n; k++) {
+	if (seen[k]) continue;
+	if (j == -1 || dist[k] < dist[j]) j = k;
+      }
+      seen[j] = 1;
+      
+      // termination condition
+      if (Rmate[j] == -1) break;
+      
+      // relax neighbors
+      const int i = Rmate[j];
+      for (int k = 0; k < n; k++) {
+	if (seen[k]) continue;
+	const double new_dist = dist[j] + cost[i][k] - u[i] - v[k];
+	if (dist[k] > new_dist) {
+	  dist[k] = new_dist;
+	  dad[k] = j;
+	}
+      }
+    }
+    
+    // update dual variables
+    for (int k = 0; k < n; k++) {
+      if (k == j || !seen[k]) continue;
+      const int i = Rmate[k];
+      v[k] += dist[k] - dist[j];
+      u[i] -= dist[k] - dist[j];
+    }
+    u[s] += dist[j];
+    
+    // augment along path
+    while (dad[j] >= 0) {
+      const int d = dad[j];
+      Rmate[j] = Rmate[d];
+      Lmate[Rmate[j]] = j;
+      j = d;
+    }
+    Rmate[j] = s;
+    Lmate[s] = j;
+    
+    mated++;
+  }
+  
+  double value = 0;
+  for (int i = 0; i < n; i++)
+    value += cost[i][Lmate[i]];
+  
+  return value;
+}
+const int N = 101;
+double A[N];
+VVD C;
+VI L,R;
+int main()
+{
+	int t;si(t);
+	while(t--)
+	{
+		int n;si(n);
+		for(int i=0;i<n;i++)
+			scanf("%lf",A+i);
+		C = VVD(n,VD(n,0));
+		L = VI(n,0), R = VI(n,0);
+		for(int i=0;i<n;i++)
+			for(int j=0;j<n;j++)
+				if(!j)C[i][j] = 1.0;
+				else C[i][j] = C[i][j-1]*A[i];
+		for(int i=0;i<n;i++)
+			for(int j=0;j<n;j++)
+				C[i][j]=-C[i][j];
+		printf("%.6lf\n",-MinCostMatching(C,L,R));
+	}
+	return 0;
+}

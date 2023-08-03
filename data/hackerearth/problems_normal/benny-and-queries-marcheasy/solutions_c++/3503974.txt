@@ -1,0 +1,130 @@
+/*
+ye mera template hai
+apna khud likho bc :P
+*/
+
+/*
+Author : Sarvagya Agarwal
+*/
+
+#include<bits/stdc++.h>
+using namespace std;
+
+//defines
+#define openin freopen("input.txt","r",stdin)
+#define openout freopen("output.txt","w",stdout)
+#define fast ios_base::sync_with_stdio(false);cin.tie(0);cout.tie(0)
+#define ll long long
+#define mod 1000000007
+#define rep(i,a,n) for(__typeof(n) i=a;i<=n;++i)
+#define all(c) (c).begin(),(c).end()
+#define ff first
+#define ss second
+#define pb push_back
+#define mp make_pair
+
+//templates
+template <typename T>T expo(T e, T n){T x=1,p=e;while(n){if(n&1)x=x*p;p=p*p;n>>=1;}return x;}
+template <typename T>T power(T e, T n, T m){T x=1,p=e;while(n){if(n&1)x=(x*p)%m;p=(p*p)%m;n>>=1;}return x;}
+template <typename T> T InverseEuler(T a, T m){return (a==1? 1 : power(a, m-2, m));}
+template <typename T> T gcd(T a, T b){while(a%=b^=a^=b^=a); return b;}
+template <typename T> T lcm(T a, T b){return (a*(b/gcd(a,b)));}
+
+double tick()
+{
+    static clock_t oldtick;
+    clock_t newtick = clock();
+    double diff = 1.0*(newtick-oldtick)/CLOCKS_PER_SEC;
+    oldtick = newtick ;
+    return diff ;
+}
+
+//debug
+#define TRACE
+
+#ifdef TRACE
+#define trace(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+		cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+		const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define trace(...)
+#endif
+
+// DOBARA OVERFLOW KI GALTI HUI TO TU CHUTIYA HAI BC
+const int MAX = 500005;
+int trie[MAX*20][2];
+int q,n,x,cnt=1,bits=20;
+vector<int> pos[MAX*20];
+void trie_insert(int x,int index)
+{
+    //trace(x,index);
+    int cur = 0;
+    for(int i=bits-1;i>=0;i--)
+    {
+        int t = ((x & (1 << i))>0 ) ? 1 : 0 ;
+        //trace(i,t);
+        if(trie[cur][t]==-1)
+        {
+            trie[cur][t] = cnt++ ;
+        }
+        cur = trie[cur][t] ;
+        //trace(cur);
+        pos[cur].pb(index);
+    }
+}
+int query(int l,int r,int x)
+{
+    int res = 0;
+    int cur = 0;
+    for(int i=bits-1;i>=0;--i)
+    {
+        int t = ((x & (1 << i))>0 ) ? 1 : 0 ;
+        t = 1-t;
+        if(trie[cur][t]==-1)
+        {
+            cur = trie[cur][1-t];
+            continue;
+        }
+        int node = trie[cur][t];
+        int ind = lower_bound(pos[node].begin(),pos[node].end(),l) - pos[node].begin();
+        if(ind == pos[node].size() || pos[node][ind] > r)
+        {
+            cur = trie[cur][1-t];
+        }
+        else{
+            res += (1<<i);
+            cur = node;
+        }
+    }
+    return res ;
+}
+int main()
+{
+    fast;
+    rep(i,0,(MAX*20)-1)rep(j,0,1)trie[i][j]=-1;
+    cin >> n >> q;
+    rep(i,1,n)
+    {
+        cin >> x;
+        trie_insert(x,i);
+    }
+    /*rep(i,0,30){
+        trace(i);
+    for(auto it:pos[i])
+        trace(it);
+        cout<<endl;
+    }*/
+    rep(i,1,q)
+    {
+        int l,r,x;
+        cin >> l >> r >> x;
+        cout << query(l,r,x) << endl;
+    }
+    return 0;
+}

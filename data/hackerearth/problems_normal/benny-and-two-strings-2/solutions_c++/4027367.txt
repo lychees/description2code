@@ -1,0 +1,71 @@
+#include <stdio.h>
+#include <string.h>
+#include <algorithm>
+#define MAXN 205
+#define MAX_K 505
+using namespace std;
+
+int dp[MAXN][MAXN][MAX_K]; // [s][t][cost]
+char a[MAXN];
+char b[MAXN];
+int fail[MAXN];
+int n, m;
+
+void build_fail(int n) {
+    int len;
+    int i;
+
+    fail[0] = 0;
+    i = 1;
+    len = 0;
+
+    while(i < n) {
+        if (a[i] == a[len]) {
+            len++;
+            fail[i++] = len;
+        } else {
+            if (len != 0) {
+                len = fail[len - 1];
+            } else {
+                fail[i++] = 0;
+            }
+        }
+    }
+    return;
+}
+
+int solve(int x, int y, int k) {
+	if (k < 0) {
+		return 0;
+	}
+	if (x >= n) {
+		return 1 + solve(fail[x - 1], y, k);
+	}
+	if (y >= m) {
+		return 0;
+	}
+	if (dp[x][y][k] != -1) {
+		return dp[x][y][k];
+	}
+
+	// not match
+	int aux = solve(fail[x], y + 1, k);
+	// match
+	int delta = abs(a[x] - b[y]);
+	delta = min(delta, 26 - delta);
+	aux = max(aux, solve(x + 1, y + 1, k - delta));
+	dp[x][y][k] = aux;
+	return aux;
+}
+
+int main(void) { 
+	int k;
+
+	scanf(" %d %d %d", &n, &m, &k);
+	scanf(" %s %s", a, b);
+	build_fail(n);
+	memset(dp, -1, sizeof(dp));
+	int r = solve(0, 0, k);
+	printf("%d\n", r);
+	return 0;
+}

@@ -1,0 +1,145 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define TRACE
+#ifdef TRACE
+#define TR(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+  cerr << name << " : " << arg1 << std::endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+  const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+}
+#else
+#define TR(...)
+#endif
+
+typedef long long        LL;
+typedef vector < int >   VI;
+typedef pair < int,int > II;
+typedef vector < II >    VII;
+
+#define MOD              1000000007
+#define EPS              1e-12
+#define N                100100
+#define PB               push_back
+#define MP               make_pair
+#define F                first 
+#define S                second
+#define ALL(v)           v.begin(),v.end()
+#define SZ(a)            (int)a.size()
+#define FILL(a,b)        memset(a,b,sizeof(a))
+#define SI(n)            scanf("%d",&n)
+#define SLL(n)           scanf("%lld",&n)
+#define PLLN(n)          printf("%lld\n",n)
+#define PIN(n)           printf("%d\n",n)
+#define REP(i,j,n)       for(LL i=j;i<n;i++)
+#define PER(i,j,n)       for(LL i=n-1;i>=j;i--)
+#define endl             '\n'
+#define fast_io          ios_base::sync_with_stdio(false);cin.tie(NULL)
+
+int n;
+LL k;
+VII g[N];
+VI tree[N];
+bool vis[N];
+void dfs0(int u , int x , int p) {
+  for(auto i : g[u]) {
+    int v = i.F , c = i.S;
+    if(v == p) continue;
+    if(c <= x) {
+      tree[u].PB(v);
+      tree[v].PB(u);
+    }
+    dfs0(v , x , u);
+  }
+}
+
+int cen[N] , sz[N] , mx[N] , ct[N] , P[N];
+
+void dfs1(int u , int p) {
+  if(vis[u]) return;
+  vis[u] = true;
+  sz[u] = 1;
+  mx[u] = 0;
+  P[u] = p;
+  for(auto i : tree[u]) {
+    if(i == p) continue;
+    dfs1(i , u);
+    sz[u] += sz[i];
+    if(mx[u] < sz[i]) {
+      ct[u] = i;
+      mx[u] = sz[i];
+    }
+  }
+}
+
+int GO(int u , int n) {
+  int Cen = cen[u];
+  while(n - sz[Cen] > n/2) Cen = P[Cen];
+  return Cen;
+}
+
+void dfs(int u , int p) {
+  if(vis[u]) return;
+  vis[u] = true;
+  for(int i : tree[u]) {
+    if(i == p) continue;
+    dfs(i , u);
+  }
+  if(sz[u] == 1 || mx[u] <= sz[u]/2)
+    cen[u] = u;
+  else
+    cen[u] = GO(ct[u] , sz[u]);
+}
+
+LL tot;
+
+void final(int u , int p , int x) {
+  tot += x;
+  for(auto i : tree[u])
+    if(i != p)
+      final(i , u , x+1);
+}
+
+inline LL go(int x) {
+  REP(i,1,n+1) tree[i].clear();
+  dfs0(1 , x , 0);
+  REP(i,1,n+1) vis[i] = false;
+  REP(i,1,n+1) dfs1(i , 0);
+  REP(i,1,n+1) vis[i] = false;
+  VI roots;
+  REP(i,1,n+1)
+    if(!vis[i]) {
+      roots.PB(i);
+      dfs(i , 0);
+    }
+  tot = 0LL;
+  for(int i : roots)
+    final(cen[i] , 0 , 0);
+  return tot;
+}
+
+int main() {
+  SI(n); SLL(k);
+  REP(i,1,n) {
+    int u , v , c; SI(u); SI(v); SI(c);
+    g[u].PB(MP(v,c));
+    g[v].PB(MP(u,c));
+  }
+  int lo = 0 , hi = 1e9 , ans = 0;
+  while(lo <= hi) {
+    int mid = lo + (hi-lo)/2;
+    LL cost = go(mid);
+    if(cost <= k) {
+      ans = mid;
+      lo = mid + 1;
+    }
+    else
+      hi = mid - 1;
+  }
+  PIN(ans);
+  return 0;
+}

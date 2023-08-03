@@ -1,0 +1,105 @@
+#include <iostream>
+#include <utility>
+#include <algorithm>
+#include <stdio.h>
+using namespace std;
+
+int N,M,rootW[5001],rootM[5001],id[1001];
+
+bool sortDec(pair<int, pair<int, int> > a, pair<int, pair<int, int> > b)
+{
+    return a.first>b.first;
+}
+
+int findRootW(int x)
+{
+    if(rootW[x]==x) return x;
+    else return findRootW(rootW[x]);
+}
+
+void insertW(int a, int b)
+{
+    int root_a = findRootW(a);
+    int root_b = findRootW(b);
+
+    if(root_a!=root_b) rootW[root_a] = root_b;
+}
+int findRootM(int x)
+{
+    if(rootM[x]==x) return x;
+    else return findRootM(rootM[x]);
+}
+
+void insertM(int a, int b)
+{
+    int root_a = findRootM(a);
+    int root_b = findRootM(b);
+
+    if(root_a!=root_b) rootM[root_a] = root_b;
+}
+
+int kruskal(pair<int, pair<int, int> > p[])
+{
+    int max = 0;
+    for(int i=0; i<M; ++i)
+    {
+        int x = p[i].second.first;
+        int y = p[i].second.second;
+        int w = p[i].first;
+
+        if(w==3 && findRootM(x)!=findRootM(y))
+        {
+            max++;
+            insertM(x,y);
+            insertW(x,y);
+        }
+        else if(w==2 && findRootW(x)!=findRootW(y))
+        {
+        	max++;
+        	insertW(x,y);
+        }
+        else if(w==1 && findRootM(x)!=findRootM(y))
+        {
+        	max++;
+        	insertM(x,y);
+        }
+    }
+    
+    int c=0;
+    for(int i=1;i<=N;++i)
+    {
+    	if(rootM[i]==i) c++;
+    	if(rootW[i]==i) c++;
+    }
+    if(c>2) return -1;
+    return max;
+}
+
+int main()
+{
+    scanf("%d %d",&N,&M);
+
+    for(int i=1; i<=N; ++i) 
+    {
+    	rootW[i]=i;
+    	rootM[i]=i;
+    }
+
+    pair<int, pair<int, int> > p[M];
+
+    for(int i=0; i<M; ++i)
+    {
+        int a,b,c;
+        scanf("%d %d %d",&a,&b,&c);
+
+        p[i] = make_pair(c, make_pair(a,b));
+    }
+
+    sort(p, p+M, sortDec);
+
+    int max = kruskal(p);
+    if(max==-1) printf("%d\n",max);
+    else printf("%d\n",M-max);
+
+    return 0;
+}

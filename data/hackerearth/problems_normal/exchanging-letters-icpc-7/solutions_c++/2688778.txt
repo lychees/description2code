@@ -1,0 +1,86 @@
+#include<bits/stdc++.h>
+#define s(x) scanf("%lld",&(x));
+#define print(x) printf("%d ",x);
+#define printnl(x) printf("%d\n",x);
+#define MOD 1000000007
+#define ll long long
+#define LEADING_ZEROS(x) __builtin_clz(x);
+#define TRAILING_ZEROS(x) __builtin_ctz(x);
+#define ONES_IN(x) __builtin_popcount(x);
+#define SEG_NODE(n) (int)((1<<((int)(log((double)n)/log(2.0)))+1)<<1)   /* # nodes= 2*2^(lg(n)+1) */
+#define F first
+#define S second
+#define LIMIT 10000
+using namespace::std;
+/*when handling double use %lf in scanf and %0.6f in printf */
+/*inline int read_int()
+{
+    char c;
+    while ((c=getchar_unlocked()) < 48 || c > 57);
+    int p = c-48;
+    while ((c=getchar_unlocked()) >= 48 && c <= 57) p=p*10+c-48;
+    return p;
+}*/
+
+ll power(ll base,ll exponent)
+/*works for any base and long long power*/
+{
+    if(base==1 || exponent==0)
+        return 1;
+
+    if((exponent&1)==0)
+        return ((power(((base%MOD)*(base%MOD))%MOD,exponent>>1)))%MOD;
+
+    return (((base%MOD)*(power(((base%MOD)*(base%MOD))%MOD,(exponent-1)>>1)%MOD)))%MOD;
+}
+struct sort_pred
+/*for sorting based on second element*/
+{
+    bool operator()(const pair<int,int> &left, const pair<int,int> &right)
+    {
+        return left.second < right.second;
+    }
+};
+int GCD (int a, int b) { if (!a) return b; return GCD(b%a, a);}
+map<pair<int,int>,ll> dp;
+ll solve(int N, int T, bool card[]){
+    if(N<=0 || T<0){
+        return 0;
+    }
+    //cout<<N<<" "<<T<<endl;
+    auto it=dp.find({N,T});
+    if(it!=dp.end()){
+        return it->second;
+    }
+    if(card[N]==false){
+        return dp[{N,T}]=solve(N-1,T,card)%MOD;
+    }
+    else{
+        return dp[{N,T}]=(solve(N-1,T-N-1,card)%MOD+solve(N-1,T-N+1,card)%MOD)%MOD;
+    }
+}
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);cout.tie(NULL);
+    int N,K,T,x;
+    cin>>N>>K>>T;
+    bool card[N+1];
+    memset(card,false,sizeof(card));
+    for(int i=1;i<=K;++i){
+        cin>>x;
+        card[x]=true;
+    }
+    dp.clear();
+    /*base case*/
+    for(int i=1;i<=N;++i){
+        if(card[i]==true){
+            dp[{i,i-1}]=1;
+            dp[{i,i+1}]=1;
+            break;
+        }
+    }
+    cout<<solve(N,T,card)%MOD;
+    return 0;
+}
+

@@ -1,0 +1,135 @@
+#include <bits/stdc++.h>
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<algorithm>
+#include<vector>
+#include<set>
+using namespace std;
+#define lili long long
+#define VECTOR(n,m,t) vector < vector <t> > table(n, vector <t> (m))
+#define TESTWHILE int test; cin >> test; while(test--)
+#define CLEAR(arr) memset(arr,-1,sizeof(arr))
+#define VECTORs(n,t) vector <t> arr(n)
+#define MOD 1000000007
+#define MAX 500005
+#define INF 10000000000000000LL
+
+pair <lili , lili > Q[MAX];
+pair < lili ,lili > A[MAX];
+lili ans[MAX];
+
+struct node{
+
+lili  ans,pre,suf,sum;
+	node(){}
+	node(lili ans,lili pre,lili suf,lili sum)
+	{
+	this->ans=ans;this->pre=pre;this->suf=suf;this->sum=sum;
+	}
+}tree[4*MAX];
+
+node combine(node p1,node p2)
+{
+node ret;
+	ret.sum=max(-INF,p1.sum+p2.sum);
+	ret.pre=max(-INF,max(p1.pre,p1.sum+p2.pre));	//why?
+	ret.suf=max(-INF,max(p2.suf,p1.suf+p2.sum));
+	ret.ans=max(p1.ans,p2.ans);	
+	ret.ans=max(-INF,max(ret.ans,p1.suf+p2.pre));
+return ret;
+}
+
+void build(lili where,lili st,lili se)
+{
+	if(st >se)return;
+	if(st ==se) {
+		tree[where]=node(-INF,-INF,-INF,-INF);
+		return;
+	}	
+	int mid=st +(se-st)/2;
+	build(where*2,st,mid);build(where*2+1,mid+1,se);
+	tree[where]=combine(tree[where*2],tree[where*2+1]);
+}
+void update(lili where,lili st,lili se,lili index,lili val)
+{
+	if(st > se || st >index || se < index)
+		return;
+
+	if(st==se)
+	{
+	tree[where]=node(val,val,val,val);
+	return;
+	}
+	int mid=st+(se-st)/2;
+	update(where*2,st,mid,index,val);
+	update(where*2+1,mid+1,se,index,val);
+
+	tree[where]=combine(tree[where*2],tree[where*2+1]);
+}
+////////////////
+template <typename T>
+inline void phi(T *a)
+{
+register char c=0;
+while (c<33) c=getchar_unlocked();
+*a=0;
+int tmp = 0;
+while (c>33)
+{
+if ( c == 45 ) tmp = 1;
+else *a=*a*10+c-'0';
+c=getchar_unlocked();
+}
+if ( tmp == 1 ) *a = 0-(*a);
+}
+////////////
+int main()
+{
+	
+lili n,q,index1,index2;
+
+	phi(&n);phi(&q);
+	build(1,0,n-1);
+	for(int i=0;i<n;i++)
+	{
+		phi(&A[i].first);
+		A[i].second=i;
+	}
+
+	sort(A,A+n);
+
+	for(int i=0;i<q;i++)
+	{
+		phi(&Q[i].first);
+		Q[i].second=i;
+	}
+	sort(Q,Q+q);
+
+	index1=index2=0;
+	for(int i=0;i<MAX;i++)
+	{
+	ans[i]=-INF;
+	}
+	while(index1<q)
+	{
+		while(index2<n && A[index2].first <=Q[index1].first)
+		{
+			update(1,0,n-1,A[index2].second,A[index2].first);
+			index2++;
+		}
+	ans[Q[index1].second]=tree[1].ans;
+	index1++;
+
+	}
+
+	
+	for ( int i = 0; i < q; i++ ) {
+    if ( ans[i] == -INF ) printf("No Solution\n");
+    else printf("%lld\n", ans[i]);
+    }
+
+
+
+return 0;
+}

@@ -1,0 +1,113 @@
+#include <iostream>
+#include <cstdio>
+#include <cstdio>
+#include <cstring>
+#include <cassert>
+#include <algorithm>
+#include <ctime>
+using namespace std;
+
+const int MB = 19;
+const int N = 500010;
+int arr[N], t, n, q, a, b, c;
+
+int sorted_arrs[N * (MB + 2)];
+struct XorqNode {
+    int child[2], idx, len;
+} nodes[1000 + N * (MB - 6)]; // 
+int arr_cnt, node_cnt;
+
+int split(int idx, int len, int bm, int r) {
+    int cnt = 0;
+    for(int i = 0; i < len; i ++) {
+        if((bm & arr[sorted_arrs[i + idx]]) == r) {
+            sorted_arrs[arr_cnt++] = sorted_arrs[i + idx];
+            cnt ++;
+        }
+    }
+    return cnt;
+}
+
+void build(int root, int idx, int len, int bit = MB) {
+    nodes[root].idx = idx;
+    nodes[root].len = len;
+    if(bit == -1) return;
+    int bm = (1 << bit);
+    int sidx1 = arr_cnt;
+    int left_cnt = split(idx, len, bm, 0);
+    int sidx2 = arr_cnt;
+    int right_cnt = split(idx, len, bm, bm);
+    assert(left_cnt + right_cnt == len);
+    if(left_cnt) {
+        nodes[root].child[0] = node_cnt;
+        build(node_cnt ++, sidx1, left_cnt, bit - 1);
+    } else {
+        nodes[root].child[0] = -1;
+    }
+    if(right_cnt) {
+        nodes[root].child[1] = node_cnt;
+        build(node_cnt ++, sidx2, right_cnt, bit - 1);
+    } else {
+        nodes[root].child[1] = -1;
+    }
+}
+
+bool search(int root, int from, int to) {
+    int left = nodes[root].idx;
+    int right = left + nodes[root].len - 1;
+    int r = N;
+    while(left <= right) {
+        int mid = (left + right) / 2;
+        int val = sorted_arrs[mid];
+        if(val >= from) {
+            r = val;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return r <= to;
+}
+
+int query(int root, int n, int from, int to, int bit = MB) {
+    if(bit == -1) return 0;
+    int mybit = ((1 << bit) & n) ? 1 : 0;
+    if(nodes[root].child[1 - mybit] != -1 && search(nodes[root].child[1 - mybit], from, to)) {
+        return query(nodes[root].child[1 - mybit], n, from, to, bit - 1) + (1 << bit);
+    } else {
+
+        return query(nodes[root].child[mybit], n, from, to, bit - 1);
+    }
+}
+
+int query2(int n, int from, int to) {
+    int r = 0;
+    for(int i = from; i <= to; i ++) {
+        r = max(r, arr[i] ^ n);
+    }
+    return r;
+}
+
+int main() {
+    int cl = clock();
+    int err_cnt = 0;
+     {
+        arr_cnt = node_cnt = 0;
+        scanf("%d %d", &n, &q);
+        for(int i = 0; i < n; i ++) {
+            scanf("%d", &arr[i]);
+        }
+        for(int i = 0; i < n; i ++) {
+            sorted_arrs[arr_cnt++] = i;
+        }
+        node_cnt = 1;
+        build(0, 0, n);
+        for(int i = 0; i < q; i ++) {
+            scanf("%d %d %d",  &b, &c,&a);
+            int r1 = query(0, a, b - 1, c - 1);
+            cout << r1 << endl;
+        }
+    }
+    //cerr << (clock() - cl) * 0.001 << endl;
+    return 0;
+}

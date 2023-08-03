@@ -1,0 +1,118 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long LL;
+
+#define PII       pair<int,int>
+#define all(c)    c.begin(),c.end()
+#define sz(c)     (int)c.size()
+#define clr(c)    c.clear()
+#define pb        push_back
+#define mp        make_pair
+#define cin(x)    scanf("%d",&x)
+#define MOD		1000000007
+#define EPS		1E-10
+
+const int base = 37;
+const int modulo = MOD + 2;
+
+typedef struct
+{
+	LL forwardHash, reverseHash;
+	int length;
+}node;
+
+node segtree[500000];
+
+LL shift[500000];
+string s;
+
+node merge(node &A, node &B)
+{
+	node ret;
+	ret.forwardHash = ((A.forwardHash * shift[B.length]) + B.forwardHash) % modulo;
+	ret.reverseHash = ((B.reverseHash * shift[A.length]) + A.reverseHash) % modulo;
+	ret.length = A.length + B.length;
+	return ret;
+}
+
+void buildTree(int l,int r,int pos)
+{
+	if(l == r)
+	{
+		segtree[pos].length = 1;
+		segtree[pos].forwardHash = segtree[pos].reverseHash = (int)(s[l - 1] - 'a' + 2);
+		return ;
+	}
+	int mid = (l + r) >> 1;
+	buildTree(l,mid,2*pos);
+	buildTree(mid+1,r,2*pos+1);
+	segtree[pos] = merge(segtree[2 * pos], segtree[2 * pos + 1]);
+}
+
+void update(int idx,char val,int l,int r,int pos)
+{
+	if(l == r)
+	{
+		segtree[pos].length = 1;
+		segtree[pos].forwardHash = segtree[pos].reverseHash = (int)(val - 'a' + 2);
+		return ;
+	}
+	int mid = (l + r) >> 1;
+	if(idx <= mid)
+		update(idx,val,l,mid,2*pos);
+	else
+		update(idx,val,mid+1,r,2*pos+1);
+	segtree[pos] = merge(segtree[2 * pos], segtree[2 * pos + 1]);
+}
+
+node query(int lQ,int rQ,int l,int r,int pos)
+{
+	if(l > rQ or r < lQ or lQ > rQ or l > r)
+	{
+		node ret;
+		ret.length = 0;
+		ret.forwardHash = ret.reverseHash = 0;
+		return ret;
+	}
+	if(l >= lQ && r <= rQ) return segtree[pos];
+	int mid = (l + r) >> 1;
+	node L = query(lQ,rQ,l,mid,2*pos);
+	node R = query(lQ,rQ,mid + 1,r,2*pos + 1);
+	return merge(L,R);
+}
+
+int main()
+{
+	std::ios_base::sync_with_stdio;
+	shift[0] = 1;
+	for(int i = 1; i < 500000; i++)
+		shift[i] = (shift[i - 1] * base) % modulo;
+	int n,q;
+	cin >> n >> q;
+	cin >> s;
+	buildTree(1,n,1);
+	while(q--)
+	{
+		int t;
+		cin >> t;
+		if(t == 1)
+		{
+			int l,r;
+			cin >> l >> r;
+			node val = query(l,r,1,n,1);
+			if(val.forwardHash == val.reverseHash)
+				printf("Yes\n");
+			else
+				printf("No\n");
+		}
+		else
+		{
+			int pos;
+			char x;
+			cin >> pos >> x;
+			update(pos,x,1,n,1);
+		}
+	}
+	return 0;
+}

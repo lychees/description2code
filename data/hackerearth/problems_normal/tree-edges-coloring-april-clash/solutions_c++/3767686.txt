@@ -1,0 +1,88 @@
+//Pranet Verma
+#include <bits/stdc++.h>
+using namespace std;
+int a[101][101], INF = 1e9;
+int hungarian(int a[101][101], int n, int m) {
+    vector<int> u (n+1), v (m+1), p (m+1), way (m+1);
+    for (int i=1; i<=n; ++i) {
+        p[0] = i;
+        int j0 = 0;
+        vector<int> minv (m+1, INF);
+        vector<char> used (m+1, false);
+        do {
+            used[j0] = true;
+            int i0 = p[j0],  delta = INF,  j1 = -1;
+            for (int j=1; j<=m; ++j)
+                if (!used[j]) {
+                    int cur = a[i0][j]-u[i0]-v[j];
+                    if (cur < minv[j])
+                        minv[j] = cur,  way[j] = j0;
+                    if (minv[j] < delta)
+                        delta = minv[j],  j1 = j;
+                }
+            for (int j=0; j<=m; ++j)
+                if (used[j])
+                    u[p[j]] += delta,  v[j] -= delta;
+                else
+                    minv[j] -= delta;
+            j0 = j1;
+        } while (p[j0] != 0);
+        do {
+            int j1 = way[j0];
+            p[j0] = p[j1];
+            j0 = j1;
+        } while (j0);
+    }
+    return -v[0];
+}
+int cost[101], n;
+vector<int> g[101];
+int DP[101][101];
+
+void dfs(int u, int p) {
+    vector<int> at;
+    for (auto v : g[u]) {
+        if (v != p) {
+            dfs(v, u);
+            at.push_back(v);
+        }
+    }
+    for (int col = 0; col < n - 1; ++col) {
+        int ptr = 0;
+        for (auto v : g[u]) {
+            if (v != p) {
+                for (int i = 0; i < n - 1; ++i) {
+                    if (p == 0 or i != col) {
+                        a[ptr + 1][i + 1] = DP[at[ptr]][i];
+                    }
+                    else {
+                        a[ptr + 1][i + 1] = 1e9;
+                    }
+                }
+                ++ptr;
+            }
+        }
+        DP[u][col] = hungarian(a, at.size(), n - 1) + (p == 0 ? 0 : cost[col]);
+    }
+}
+int main() {
+    int t;
+    scanf("%d", &t);
+    while (t--) {
+        scanf("%d", &n);
+        for (int i = 0; i < n - 1; ++i) {
+            scanf("%d", &cost[i]);
+        }
+        for (int i = 1; i <= n; ++i) {
+            g[i].clear();
+        }
+        for (int i = 2; i <= n; ++i) {
+            int u, v;
+            scanf("%d %d", &u, &v);
+            g[u].push_back(v);
+            g[v].push_back(u);
+        }
+        dfs(1, 0);
+        printf("%d\n", *min_element(DP[1], DP[1] + n - 1));
+    }     
+}

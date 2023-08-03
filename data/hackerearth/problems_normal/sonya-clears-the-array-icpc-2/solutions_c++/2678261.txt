@@ -1,0 +1,63 @@
+#include <bits/stdc++.h>
+using namespace std;
+ 
+typedef long long ll;
+typedef vector < int > vii;
+const int N = 505, M = 1e6 + 35;
+const ll INF = 1LL << 57LL;
+bool prime[M];
+ll B[N];
+ll DP[N][N];
+vii pr;
+ 
+void pre(){
+	for(long long i = 2; i < M; ++i) {
+		if(prime[i] == true) continue;
+		pr.push_back(i);
+		for(long long j = i * i; j < M; j += i)	prime[j] = true;
+	}
+}
+ 
+long long cost(int x, int y){
+	if (y > x) return (pr[y - 1] - pr[x]);
+	else return (pr[x + 1] - pr[y]);
+}
+ 
+long long solve(int st, int en){
+	if (st == en) return INF;
+	if(st > en) {
+		DP[st][en] = 0;
+		return 0;
+	}
+	if(DP[st][en] != -1) return DP[st][en];
+	long long & ret = DP[st][en];
+	ret = INF;
+	for(int i = st + 1; i < en - 1; i++)
+		ret = min(ret, solve(st, i) + solve(i + 1, en));
+	ret = min(ret, solve(st + 1, en - 1) + cost(B[st], B[en]));
+	return ret;
+}
+ 
+int main(){
+    ios_base::sync_with_stdio(0);
+	cin.tie(0);
+	memset(DP, -1, sizeof(DP));
+	pre();
+	int n, X;
+	ll ans = 0;
+	cin >> n;
+	for(int i = 1; i <= n; ++i) {
+		cin >> X;
+		for(int j = 0; j < pr.size(); ++j) {
+			if(pr[j] >= X){
+				ans += pr[j];
+				ans -= X;
+				B[i] = j;
+				break;
+			}
+		}
+	}
+	ans += solve(1, n);
+	ans += (n >> 1);
+	cout << ans << '\n';
+}

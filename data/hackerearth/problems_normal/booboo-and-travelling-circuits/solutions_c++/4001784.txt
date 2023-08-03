@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int n, m;
+int a[2000][10001];
+int b[2000][10001];
+int P, Q, R, S, X, Y, Z, W;
+const int MOD = 1000000003;
+int pr[10001];
+LL d[10001] = {}, nd[10001];
+LL mn[10001], mn2[10001];
+int pos[10001], pos2[10001];
+
+void upd(int c, int j, LL cost) {
+    if (cost < mn[c]) {
+        mn2[c] = mn[c];
+        pos2[c] = pos[c];
+        mn[c] = cost;
+        pos[c] = j;
+    } else if (cost < mn2[c]) {
+        mn2[c] = cost;
+        pos2[c] = j;
+    }
+}
+
+int main() {
+    memset(pr, -1, sizeof pr);
+    for (int i = 2; i <= 10000; ++i) {
+        for (int j = i; j <= 10000; j += i) {
+            if (pr[j] == -1) {
+                pr[j] = i;
+            }
+        }
+    }
+    pr[1] = 1;
+    scanf("%d%d%d%d%d%d%d%d%d%d", &n, &m, &S, &P, &Q, &R, &W, &X, &Y, &Z);
+    REP(i, n * m) {
+        S = ((LL)P * S % MOD * S + (LL)Q * S + R) % MOD;
+        a[i / m][i % m + 1] = S;
+    }
+    REP(i, n * m) {
+        W = ((LL)X * W % MOD * W + (LL)Y * W + Z) % MOD;
+        b[i / m][i % m + 1] = W;
+    }
+    REP(i, n - 1) {
+        memset(mn, 63, sizeof mn);
+        memset(mn2, 63, sizeof mn2);
+        for (int j = 2; j <= m; ++j) {
+            upd(pr[j], j, d[j] + b[i][j]);
+        }
+        for (int j = 1; j <= m; ++j) {
+            upd(1, j, d[j] + b[i][j]);
+        }
+        for (int j = 1; j <= m; ++j) nd[j] = d[j] + a[i][j];
+        for (int j = 1; j <= m; ++j) if (pos[pr[j]] == j) {
+            nd[j] = min(nd[j], mn2[pr[j]]);
+        } else {
+            nd[j] = min(nd[j], mn[pr[j]]);
+        }
+        memcpy(d, nd, sizeof d);
+    }
+    LL ans = 1e18;
+    for (int i = 1; i <= m; ++i) {
+        ans = min(ans, d[i]);
+    }
+    cout << ans << endl;
+    return 0;
+}

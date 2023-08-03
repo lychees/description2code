@@ -1,0 +1,81 @@
+#include<stdio.h>
+#include<utility>
+#include<algorithm>
+
+using namespace std;
+
+typedef long long ll;
+typedef pair<ll,ll> pl;
+typedef pair<pl,ll> pll;
+
+const ll MAX = (1e+5)+5;
+const ll one = 1;
+
+ll n,m,d;
+ll bit[MAX],A[MAX],pos[MAX],ans[MAX];
+pll queries[MAX];
+
+void update(ll ind)
+{
+    while(ind<=n)
+    {
+        bit[ind]++;
+        ind += (ind & -ind);
+    }
+}
+
+ll query(ll ind)
+{
+    ll ans =0;
+    while(ind>0)
+    {
+        ans += bit[ind];
+        ind -= (ind & -ind);
+    }
+    return ans;
+}
+
+bool comp(const pll &a,const pll &b)
+{
+    return a.first.second <= b.first.second;
+}
+
+int main()
+{
+    ll l,r;
+    scanf("%lld%lld%lld",&n,&m,&d);
+    for(ll i=1;i<=n;++i)
+    {
+        scanf("%lld",&A[i]);
+        pos[A[i]] = i;
+    }
+    for(ll i=1;i<=m;++i)
+    {
+        scanf("%lld%lld",&l,&r);
+        queries[i].first = pl(l,r);
+        queries[i].second = i;
+    }
+    sort(queries+1,queries+m+1,comp);
+
+    ll j=1;
+    for(ll i=1;i<=n;++i)
+    {
+        for(ll k=max(one,A[i]-d);k<=min(n,A[i]+d);++k)
+        {
+            if(pos[k]!=0 && pos[k]<=i)
+            {
+                update(pos[k]);
+            }
+        }
+        while(j<=m && (queries[j].first.second == i))
+        {
+            ans[queries[j].second] = query(queries[j].first.second) - query(queries[j].first.first - 1);
+            ++j;
+        }
+    }
+    for(ll i=1;i<=m;++i)
+    {
+        printf("%lld\n",ans[i]);
+    }
+    return 0;
+}

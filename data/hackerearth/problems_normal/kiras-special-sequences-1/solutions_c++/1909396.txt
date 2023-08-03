@@ -1,0 +1,60 @@
+#include <bits/stdc++.h>
+#define lli long long
+#define M 100000
+
+using namespace std;
+
+string s;
+int n;
+lli dp[202][202];
+bool vis[202][202];
+
+lli f(int l, int r)
+{
+	if ( l > r ) return 1LL;
+	if ( (r-l+1)%2 != 0 ) return 0LL;
+	if ( l+1 == r ) {
+		if ( s[l] == s[r] ) {
+			if ( s[r] != '?' ) return 0LL;
+			else return 3LL;
+		}
+		else {
+			if ( s[l] == '?' && s[r] != '?' && s[r] >= 97 ) return 1LL;
+			else if ( s[l] != '?' && s[r] == '?' && s[l] <= 96 ) return 1LL;
+			else if ( s[l] != '?' && s[r] != '?' ) {
+                if ( s[l]+32 == s[r] ) return 1;
+                else return 0LL;
+			}
+			else return 0LL;
+		}
+	}
+	if ( vis[l][r] ) return dp[l][r];
+	vis[l][r] = true;
+	lli ans = 0;
+	for ( int i = l+1; i <= r; i++ ) {
+		if ( s[i] == '?' && s[l] == '?' ) {
+			lli val = (f(l+1,i-1)*f(i+1,r))%M;
+			val = (3LL*val)%M;
+			ans = (ans + val)%M;
+		}
+		if ( s[l] <= 96 && s[i] >= 97 && s[l] != '?' && s[i] != '?' ) {
+			if ( s[i] == s[l]+32 ) {
+				ans = (ans + (f(l+1,i-1)*f(i+1,r))%M)%M;
+			}
+		}
+		if ( s[l] != '?' && s[l] <= 96 && s[i] == '?' ) ans = (ans + (f(l+1,i-1)*f(i+1,r))%M)%M;
+		if ( s[l] == '?' && s[i] != '?' && s[i] >= 97 ) ans = (ans + (f(l+1,i-1)*f(i+1,r))%M)%M;
+	}
+	dp[l][r] = ans;
+//	cout << l << " " << r << " " << ans << endl;
+	return ans;
+}
+
+int main()
+{
+	cin >> n;
+	cin >> s;
+	lli ans = f(0,n-1);
+	cout << ans << endl;
+	return 0;
+}

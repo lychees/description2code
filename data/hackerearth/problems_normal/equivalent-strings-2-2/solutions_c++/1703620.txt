@@ -1,0 +1,103 @@
+#include <iostream>
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <vector>
+
+using namespace std;
+
+int X0=97, MOD0=1000000009;
+int X1=107, MOD1=1000000023;
+int P0[100002];
+int P1[100002];
+
+struct Hash
+{
+    pair<int, int> val;
+    int len;
+    Hash operator+ (Hash other) const
+    {
+        Hash ret;
+        ret.len=len+other.len;
+        ret.val.first=(1LL*val.first*P0[other.len]+other.val.first)%MOD0;
+        ret.val.second=(1LL*val.second*P1[other.len]+other.val.second)%MOD1;
+        return ret;
+    }
+    Hash operator- (Hash other) const
+    {
+        Hash ret;
+        ret.len=len-other.len;
+        ret.val.first=(val.first-1LL*other.val.first*P0[ret.len]%MOD0+MOD0)%MOD0;
+        ret.val.second=(val.second-1LL*other.val.second*P1[ret.len]%MOD1+MOD1)%MOD1;
+        return ret;
+    }
+};
+
+int N, M, Q;
+char S[100002];
+char T[100002];
+Hash A[26][100002];
+Hash B[26][100002];
+
+void _main()
+{
+    scanf("%s%s", S+1, T+1);
+    N=strlen(S+1);
+    M=strlen(T+1);
+    for(int i=0; i<26; i++)
+    {
+        for(int j=1; j<=N; j++)
+        {
+            Hash tmp;
+            if(S[j]-'a'==i)
+                tmp.len=1, tmp.val={123, 456};
+            else
+                tmp.len=1, tmp.val={789, 101112};
+            A[i][j]=A[i][j-1]+tmp;
+        }
+        for(int j=1; j<=M; j++)
+        {
+            Hash tmp;
+            if(T[j]-'a'==i)
+                tmp.len=1, tmp.val={123, 456};
+            else
+                tmp.len=1, tmp.val={789, 101112};
+            B[i][j]=B[i][j-1]+tmp;
+        }
+    }
+    scanf("%d", &Q);
+    int a, b, c;
+    vector<pair<int, int>> X, Y;
+    while(Q--)
+    {
+        scanf("%d%d%d", &a, &b, &c);
+        X.clear();
+        Y.clear();
+        for(int i=0; i<26; i++)
+        {
+            X.push_back((A[i][a+c-1]-A[i][a-1]).val);
+            Y.push_back((B[i][b+c-1]-B[i][b-1]).val);
+        }
+        sort(X.begin(), X.end());
+        sort(Y.begin(), Y.end());
+        if(X==Y)
+            printf("yes\n");
+        else
+            printf("no\n");
+    }
+}
+
+int main()
+{
+    P0[0]=1;
+    for(int i=1; i<=100001; i++)
+        P0[i]=1LL*P0[i-1]*X0%MOD0;
+    P1[0]=1;
+    for(int i=1; i<=100001; i++)
+        P1[i]=1LL*P1[i-1]*X1%MOD1;
+    int TEST;
+    scanf("%d", &TEST);
+    while(TEST--)
+        _main();
+    return 0;
+}

@@ -1,0 +1,113 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+struct three
+{
+    int first, second, third;
+};
+ 
+int N, M, P;
+int bad[1000];
+vector<three> adj[1000];
+vector<pair<int, int>> rev[1000];
+unordered_map<int, int> has[1000];
+int cnt[1000];
+vector<long long> dist[1000];
+long long rdist[1000];
+bool flag;
+ 
+struct node
+{
+    int u;
+    long long d;
+    int m;
+    bool operator< (const node& other) const
+    {
+        if(flag)
+            return d+rdist[u]>other.d+rdist[other.u];
+        return d>other.d;
+    }
+};
+ 
+priority_queue<node> pq;
+ 
+void relax(int u, long long d, int t)
+{
+    if(t>=P)
+        t-=P;
+    if(bad[u]==t)
+        return;
+    int idx=-1;
+    if(has[u].count(t))
+        idx=has[u][t];
+    else
+        idx=has[u][t]=cnt[u]++, dist[u].push_back(0x3f3f3f3f3f3f3f3fLL);
+    if(d<dist[u][idx])
+    {
+        dist[u][idx]=d;
+        pq.push((node){u, d, t});
+    }
+}
+ 
+void dijkstra()
+{
+    memset(rdist, 0x3f, sizeof rdist);
+    pq.push({N-1, 0, 0});
+    rdist[N-1]=0;
+    while(!pq.empty())
+    {
+        int u=pq.top().u;
+        long long d=pq.top().d;
+        pq.pop();
+        if(d!=rdist[u])
+            continue;
+        for(auto& it: rev[u])
+        {
+            int v=it.first;
+            int c=it.second;
+            if(d+c<rdist[v])
+            {
+                rdist[v]=d+c;
+                pq.push({v, d+c, 0});
+            }
+        }
+    }
+}
+ 
+int main()
+{
+    scanf("%d%d%d", &N, &M, &P);
+    for(int i=0; i<N; i++)
+        scanf("%d", bad+i);
+    if(bad[0]==-1)
+        return printf("-1\n"), 0;
+    int a, b, c;
+    for(int i=0; i<M; i++)
+    {
+        scanf("%d%d%d", &a, &b, &c);
+        adj[a].push_back({b, c, c%P});
+        rev[b].push_back({a, c});
+    }
+    dijkstra();
+    flag=true;
+    pq.push((node){0, 0, 0});
+    dist[0].push_back(0);
+    cnt[0]=1;
+    has[0][0]=0;
+    while(!pq.empty())
+    {
+        int u=pq.top().u;
+        long long d=pq.top().d;
+        int m=pq.top().m;
+        pq.pop();
+        if(d!=dist[u][has[u][m]])
+            continue;
+        if(u==N-1)
+            return printf("%lld\n", d), 0;
+        for(auto& it: adj[u])
+            relax(it.first, d+it.second, m+it.third);
+    }
+    printf("-1\n");
+    return 0;
+}

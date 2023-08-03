@@ -1,0 +1,184 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int val[555555];
+
+struct node
+{
+	node *left, *right;
+	int key, size;
+	node() { left = right = NULL, size = 0; }
+};
+
+inline int size(node* x)
+{
+	return x == NULL ? 0 : x->size;
+}
+
+node* splay(int k, node* t)
+{
+	if (t == NULL) return t;
+	node N, *l, *r, *y;
+	int l_size = 0, r_size = 0;
+	l = r = &N;
+
+	for (; k != t->key;)
+		if (k < t->key)
+		{
+			if (t->left == NULL) break;
+			if (k < t->left->key)
+			{
+				y = t->left;
+				t->left = y->right;
+				y->right = t;
+				t->size = size(t->left) + size(t->right) + 1;
+				t = y;
+				if (t->left == NULL) break;
+			}
+			r->left = t;
+			r = t;
+			t = t->left;
+			r_size += 1 + size(r->right);
+		}
+		else
+		{
+			if (t->right == NULL) break;
+			if (k > t->right->key)
+			{
+				y = t->right;
+				t->right = y->left;
+				y->left = t;
+				t->size = size(t->left) + size(t->right) + 1;
+				t = y;
+				if (t->right == NULL) break;
+			}
+			l->right = t;
+			l = t;
+			t = t->right;
+			l_size += 1 + size(l->left);
+		}
+
+	l_size += size(t->left);
+	r_size += size(t->right);
+	t->size = l_size + r_size + 1;
+	l->right = r->left = NULL;
+
+	for (y = N.right; y != NULL; y = y->right)
+	{
+		y->size = l_size;
+		l_size -= 1+size(y->left);
+	}
+	for (y = N.left; y != NULL; y = y->left)
+	{
+		y->size = r_size;
+		r_size -= 1+size(y->right);
+	}
+
+	l->right = t->left;
+	r->left = t->right;
+	t->left = N.right;
+	t->right = N.left;
+	return t;
+}
+
+node* insert(int k, node* t)
+{
+	t = splay(k,t);
+	node* cur = new node;
+	if (t != NULL)
+	{
+		if (k == t->key) return t;
+		else if (k < t->key)
+		{
+			cur->left = t->left;
+			cur->right = t;
+			t->left = NULL;
+			t->size = 1 + size(t->right);
+		}
+		else
+		{
+			cur->right = t->right;
+			cur->left = t;
+			t->right = NULL;
+			t->size = 1 + size(t->left);
+		}
+	}
+	cur->key = k;
+	cur->size = 1 + size(cur->left) + size(cur->right);
+	return cur;
+}
+
+node* erase(int k, node* t)
+{
+	if (t == NULL) return t;
+	t = splay(k,t);
+	int tsize = t->size;
+	if (k == t->key)
+	{
+		node* x;
+		if (t->left == NULL) x = t->right;
+		else
+		{
+			x = splay(k, t->left);
+			x->right = t->right;
+		}
+		delete t;
+		if (x != NULL) x->size = tsize - 1;
+		return x;
+	}
+	return t;
+}
+
+inline int inp()
+{
+	int c = getchar_unlocked(), x = 0;
+	for (; ((c < 48 or c > 57) and c != '-'); c = getchar_unlocked());
+	for (; c > 47 and c < 58; c = getchar_unlocked())
+		x = (x << 1) + (x << 3) + c - 48;
+	return x;
+}
+
+int main()
+{
+	node *rt = new node();
+	int n = inp(), m = inp();
+	for (int i = 0; i < n; i++)
+		rt = insert(val[inp() - 1] = i, rt);
+
+	long long sum = 0;
+	int lo = -1, hi = n;
+	while (m--)
+	{
+		int x = inp() - 1;
+		char c = getchar_unlocked();
+
+		rt = splay(val[x], rt);
+		int cur = size(rt->left);
+		sum += min(cur, n - 1 - cur);
+
+		rt = erase(val[x], rt);
+		val[x] = (c == 'l' ? lo-- : hi++);
+		rt = insert(val[x], rt);
+	}
+	printf("%lld\n", sum);
+	return 0;
+}

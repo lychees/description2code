@@ -1,0 +1,207 @@
+#include <cstdio>
+#include <iostream>
+#include <cstring>
+#include <cstdlib>
+#include <string>
+#include <stack>
+#include <queue>
+#include <deque>
+#include <vector>
+#include <map>
+#include <set>
+#include <utility>
+#include <algorithm>
+#include <cmath>
+#include <climits>
+#include <cassert>
+#ifdef DEBUG
+    #include <ctime>
+#endif
+using namespace std;
+
+// template
+
+// abbreviations
+#define vi vector<int>
+#define vl vector<ll>
+#define vb vector<bool>
+#define vs vector<string>
+#define ii pair<int, int>
+#define a first
+#define b second
+#define vii vector<ii>
+#define mii map<ii>
+#define vvi vector<vi>
+#define vvl vector<vl>
+#define que queue
+#define pque priority_queue
+#define stk stack
+#define pub push_back
+#define pob pop_back
+#define puf push_front
+#define pof pop_front
+#define pu push
+#define po pop
+#define mp make_pair
+#define sz(var) ((int) var.size())
+#define rep(it, n) for(int it = 0; it < n; ++it)
+#define dep(it, n) for(int it = n - 1; it >= 0; --it)
+#define rep1(it, n) for(int it = 1; it <= n; ++it)
+#define dep1(it, n) for(int it = n; it > 0; --it)
+#define loop(it, from, to) for(int it = (from); it <= (to); ++it)
+#define iter(it, cont) for(__typeof((cont).begin()) it = (cont).begin(); it != (cont).end(); ++it)
+#define riter(it, cont) for(__typeof((cont).rbegin()) it = (cont).rbegin(); it != (cont).rend(); ++it)
+#define all(cont) (cont).begin(), (cont).end()
+#define rng(cont, n) cont, cont + n
+#define memclr(var) memset(var, 0, sizeof(var))
+
+typedef unsigned long long ull;
+typedef long long ll;
+
+const int INF = INT_MAX;
+const int NINF = INT_MIN;
+const ll INF_LL = LLONG_MAX;
+const ll NINF_LL = LLONG_MIN;
+const double PI = acos(-1.0);
+const int MOD = 1e9 + 7;
+
+#ifdef DEBUG
+    #define debug(fmt, args...) printf("Line %d, in %s\t: " fmt, __LINE__, __FUNCTION__, ##args)
+    #define rep_rt() printf("[Run time: %.3fs]\n", ((double) clock()) / CLOCKS_PER_SEC)
+#else
+    #define debug(...)
+#endif
+
+// end of template
+
+#define NNODE (1 << 21)
+
+struct Node {
+    int cv;
+    int c[26];
+} tree[NNODE + 1];
+
+#define L (k << 1)
+#define R (L | 1)
+#define m ((l + r) >> 1)
+int update(int k, int cv, int i, int l, int r) {
+    Node &node = tree[k];
+
+    int prev_cv;
+    if (l == r) {
+        prev_cv = node.cv;
+        node.c[prev_cv]--;
+        node.c[cv]++;
+        node.cv = cv;
+        return prev_cv;
+    }
+    node.c[cv]++;
+    if (i <= m) {
+        prev_cv = update(L, cv, i, l, m);
+    } else {
+        prev_cv = update(R, cv, i, m + 1, r);
+    }
+    node.c[prev_cv]--;
+    return prev_cv;
+}
+
+int st_res[26];
+
+void reset_st_res() {
+    rep(cv, 26) {
+        st_res[cv] = 0;
+    }
+}
+
+void get(int k, int i, int j, int l, int r) {
+    Node &node = tree[k];
+    if ((i == l) and (j == r)) {
+        rep(cv, 26) {
+            st_res[cv] += node.c[cv];
+        }
+        return;
+    }
+    if (j <= m) {
+        get(L, i, j, l, m);
+        return;
+    } else if (m + 1 <= i) {
+        get(R, i, j, m + 1, r);
+        return;
+    }
+    get(L, i, m, l, m);
+    get(R, m + 1, j, m + 1, r);
+}
+
+#define MAXN (int) (1e6)
+char str[MAXN + 1];
+
+int init_idx = 0;
+void init(int k, int l, int r) {
+    Node &node = tree[k];
+    if (l != r) {
+        init(L, l, m);
+        init(R, m + 1, r);
+        rep(cv, 26) {
+            node.c[cv] = tree[L].c[cv] + tree[R].c[cv];
+        }
+    } else {
+        rep(cv, 26) {
+            node.c[cv] = 0;
+        }
+        node.cv = str[init_idx++] - 'a';
+        node.c[node.cv]++;
+    }
+}
+
+#undef m
+
+int get_ans(int l, int r, int k) {
+    rep(cv, 26) {
+        if (k <= st_res[cv]) {
+            return cv;
+        }
+        k -= st_res[cv];
+    }
+    return 0;
+}
+
+int main() {
+#ifdef DEBUG
+    freopen("akash-and-too-many-assignments.in", "r", stdin);
+#endif
+    
+    int n, q;
+    scanf("%d %d%*c", &n, &q);
+    scanf("%1000000s%*c", str);
+
+    init(1, 1, n);
+
+    while (q--) {
+        int type;
+        scanf("%d", &type);
+        if (type == 0) {
+            int index;
+            char c;
+            scanf("%d %c%*c", &index, &c);
+            assert(update(1, c - 'a', index, 1, n) + 'a' == str[index - 1]);
+
+            str[index - 1] = c;
+        } else {
+            int left_limit, right_limit, k;
+            scanf("%d %d %d%*c", &left_limit, &right_limit, &k);
+            right_limit = min(right_limit, n);
+            if (right_limit - left_limit + 1 < k) {
+                puts("Out of range");
+                continue;
+            }
+            reset_st_res();
+            get(1, left_limit, right_limit, 1, n);
+            printf("%c\n", get_ans(left_limit, right_limit, k) + 'a');
+        }
+    }
+
+#ifdef DEBUG
+    rep_rt();
+#endif
+    return 0;
+}

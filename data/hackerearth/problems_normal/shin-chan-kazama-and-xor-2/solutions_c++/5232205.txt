@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define MOD 1000000007
+#define pii pair<int, int>
+#define pll pair<long long, long long>
+#define vi  vector<int>
+#define pb  push_back
+#define mp  make_pair
+#define ALL(x) x.begin(),x.end()
+#define M(a,x) memset(a,x,sizeof(a))
+#define sci(x) scanf("%d",&x);
+#define scl(x) scanf("%lld",&x);
+#define scs(x) scanf("%s",x);
+#define print(x) printf("%d",x);
+#define nl printf("\n")
+#define fr first
+#define se second
+#define printl(x) printf("%lld",x)
+#define F(i,a,n) for(int i=a;i<n;i++)
+#define INF 100000000000000000LL
+#define LL long long
+
+const int N = 1e6 + 5;
+int a[N];
+pii res[N];
+
+const int SQN = 1e3;
+struct query {
+	int L, R, x, i;
+}Q[N / 10];
+
+struct Trie {
+	int next[2];
+	int cnt;
+	Trie() {
+		next[0] = next[1] = -1;
+		cnt = 0;
+	}
+}tree[20 * N];
+bool cmp(query a, query b) {
+	if (a.L / SQN == b.L / SQN)
+		return a.R<b.R;
+	return a.L / SQN<b.L / SQN;
+}
+int add;
+inline void insert(int bit, int val, int idx) {
+	tree[idx].cnt++;
+	if (bit == -1)
+		return;
+	int flag = ((val&(1 << bit))>0);
+	if (tree[idx].next[flag] == -1) {
+		tree[idx].next[flag] = ++add;
+	}
+	insert(bit - 1, val, tree[idx].next[flag]);
+}
+inline void erase(int bit, int val, int idx) {
+	tree[idx].cnt--;
+	if (bit == -1)
+		return;
+	int flag = ((val&(1 << bit))>0);
+	erase(bit - 1, val, tree[idx].next[flag]);
+	if (tree[tree[idx].next[flag]].cnt <= 0) {
+		tree[idx].next[flag] = -1;
+	}
+}
+int cc;
+int solve(int bit, int val, int idx) {
+	if (bit == -1) {
+		cc = tree[idx].cnt;
+		return 0;
+	}
+	int flag = ((val&(1 << bit))>0);
+	if (tree[idx].next[flag] == -1) {
+		flag = flag ^ 1;
+	}
+	return (1 << bit)*flag + solve(bit - 1, val, tree[idx].next[flag]);
+}
+int main() {
+	//  freopen("inp.in","r",stdin);
+	//  freopen("o2.out","w",stdout);
+	int n;
+	sci(n);
+	F(i, 0, n) sci(a[i]);
+	int q;
+	sci(q);
+	F(i, 0, q) {
+		int l, r, x;
+		sci(l); sci(r); sci(x);
+		l--; r--;
+		Q[i] = { l, r, x, i };
+	}
+	sort(Q, Q + q, cmp);
+	insert(30, a[0], 0);
+	int L = 0, R = 0;
+	F(i, 0, q) {
+		query temp = Q[i];
+		while (R>temp.R) {
+			erase(30, a[R], 0);
+			R--;
+		}
+		while (R<temp.R) {
+			R++;
+			insert(30, a[R], 0);
+		}
+		while (L>temp.L) {
+			L--;
+			insert(30, a[L], 0);
+		}
+		while (L<temp.L) {
+			erase(30, a[L], 0);
+			L++;
+		}
+		int ans = solve(30, Q[i].x, 0);
+		res[Q[i].i].fr = ans;
+		res[Q[i].i].se = cc;
+	}
+	F(i, 0, q) {
+		printf("%d %d\n", res[i].fr, res[i].se);
+	}
+}

@@ -1,0 +1,132 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+#define MAX 1100
+#define pii pair<int, int>
+
+int n, m, res = 0;
+int u, v, w;
+int root[MAX], ranks[MAX];
+int rootTmp[MAX], ranksTmp[MAX];
+vector<pii> commonRoads, menRoads, womenRoads;
+
+int findset(int v)
+{
+	if (v == root[v])
+		return v;
+	return findset(root[v]);
+}
+
+void unionset(int u, int v)
+{
+	u = findset(u);
+	v = findset(v);
+	
+	if (ranks[v] < ranks[u])
+		root[v] = u;
+	else if (ranks[u] < ranks[v])
+		root[u] = v;
+	else 
+	{
+		ranks[u]++;
+		root[v] = u;
+	}
+}
+
+
+int kruskal(vector<pii> roads)
+{
+	int count = 0;
+	
+	for (int i = 0; i < roads.size(); i++)
+	{
+		u = roads[i].first;
+		v = roads[i].second;
+		
+		if (findset(u) != findset(v))
+			unionset(u, v);
+		else count++;
+	}
+	
+	int cnt = 0;
+	for (int i = 0; i < n; i++)
+	{
+		if (root[i] == i)
+		{
+			cnt++;
+			if (cnt >= 2)
+			{
+				count = -1;
+				break;
+			}
+		}
+	}
+	
+	return count;
+}
+
+int main()
+{
+    cin >> n >> m;
+    
+    for (int i = 0; i < m; i++)
+    {
+    	cin >> u >> v >> w;
+    	--u, --v;
+    	if (w == 1)
+    		menRoads.push_back(make_pair(u, v));
+    	else if (w == 2)
+    		womenRoads.push_back(make_pair(u, v));
+    	else commonRoads.push_back(make_pair(u, v));
+    }
+    
+    for (int i = 0; i < n; i++)
+    {
+    	root[i] = i;
+    	ranks[i] = -1;
+    }
+    
+    for (int i = 0; i < commonRoads.size(); i++)
+    {
+    	u = commonRoads[i].first;
+    	v = commonRoads[i].second;
+    	
+    	if (findset(u) == findset(v))
+    		res++;
+    	else unionset(u, v);
+    }
+    	
+    
+    for (int i = 0; i < n; i++)
+    {
+    	rootTmp[i] = root[i];
+    	ranksTmp[i] = ranks[i];
+    }
+    
+    int menCut = kruskal(menRoads);
+    if (menCut == -1)
+    {
+    	cout << -1 << endl;
+    	return 0;
+    }
+    res += menCut;
+    
+    for (int i = 0; i < n; i++)
+    {
+    	root[i] = rootTmp[i];
+    	ranks[i] = ranksTmp[i];
+    }
+    
+    int womenCut = kruskal(womenRoads);
+    if (womenCut == -1)
+    {
+    	cout << -1 << endl;
+    	return 0;
+    }
+   	res += womenCut;
+   	
+   	cout << res << endl;
+    
+    return 0;
+}

@@ -1,0 +1,87 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+using namespace std;
+const int nax = 26;
+const int maxlen = 1000010;
+char s[maxlen];
+struct Trie{
+	char c;
+	int w;
+	int maxw;
+	Trie* child[26];
+};
+Trie* initialize(char c, int w)
+{
+	Trie* node = new Trie;
+	node->c = c; node->w = w; node->maxw = w;
+	for (int i = 0; i < nax; i++) node->child[i] = NULL;
+	return node;
+}
+void insert(Trie* root, int w, int idx)
+{
+	if (idx >= strlen(s)) return;
+	char k = s[idx]; int i = 0;
+	for (i = 0; i < nax; i++){
+		if (root->child[i] && (k - 'a') == i){
+			insert(root->child[i], w, idx+1);
+			int newmaxw = (root->child[i])->w;
+			for (int j = 0; j < nax; j++) 
+				if((root->child[i])->child[j])
+					newmaxw = max(newmaxw, ((root->child[i])->child[j])->maxw);
+			(root->child[i])->maxw = newmaxw;
+		   return;
+		}
+		
+	}
+	if (i == nax){
+	//	cout << k << "  is inserted bifurcating tree at " << root->c << "\n";
+		int cn = k - 'a';
+		root->child[cn] = initialize(k, w);
+		insert(root->child[cn],  w, idx+1);
+		int newmaxw = root->w;
+		for (int j = 0; j < nax; j++) 
+			if(root->child[j])
+			newmaxw = max(newmaxw, root->child[j]->maxw);
+		root->maxw = newmaxw;
+	}
+}
+int cal(Trie* root)
+{
+	int ans = root->w;
+	for (int i = 0; i < nax; i++){
+		if (root->child[i])
+			ans = max(ans, cal(root->child[i]));
+	}
+	return ans;
+}
+int findout(Trie* root, int idx)
+{
+	char k = s[idx];
+	for (int i = 0; i < nax; i++){
+		if (root->child[i] && (k - 'a') == i){
+			int ans = -1;
+			if (idx == strlen(s) - 1){
+				ans =  (root->child[i])->maxw;
+			}
+			else 
+				ans = findout(root->child[i], idx+1);
+	//		cout << k << " matches with " << (root->child[i])->c << " with result: " << ans << "\n";
+			return ans;
+		}
+	}
+	return -1;
+}
+int main() {
+	Trie* root = initialize('!', 0);
+	int n, q; scanf("%d %d", &n, &q);
+	while(n--){
+		int weight; scanf("%s %d", &s, &weight);
+		insert(root, weight, 0);
+	}
+	while(q--){
+		scanf("%s", &s);
+		cout << findout(root, 0) << "\n";
+	}
+	return 0;
+}

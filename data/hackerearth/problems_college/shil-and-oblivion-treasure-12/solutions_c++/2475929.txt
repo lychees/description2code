@@ -1,0 +1,157 @@
+#include <string>
+#include <vector>
+#include<iostream>
+#include<cstdio>
+#include<cstdlib>
+#include<stack>
+#include<queue>
+#include<cmath>
+#include<algorithm>
+#include<functional>
+#include<list>
+#include<deque>
+#include<bitset>
+#include<set>
+#include<map>
+#include<unordered_map>
+#include<cstring>
+#include<sstream>
+#include<complex>
+#include<iomanip>
+#include<numeric>
+#define X first
+#define Y second
+#define pb push_back
+#define rep(X,Y) for (int (X) = 0;(X) < (Y);++(X))
+#define rrep(X,Y) for (int (X) = (Y)-1;(X) >=0;--(X))
+#define repe(X,Y) for ((X) = 0;(X) < (Y);++(X))
+#define peat(X,Y) for (;(X) < (Y);++(X))
+#define all(X) (X).begin(),(X).end()
+#define rall(X) (X).rbegin(),(X).rend()
+#define eb emplace_back
+#define UNIQUE(X) (X).erase(unique(all(X)),(X).end())
+
+using namespace std;
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef pair<ll,ll> pll;
+template<class T> using vv=vector<vector<T>>;
+template<class T> ostream& operator<<(ostream &os, const vector<T> &t) {
+os<<"{"; rep(i,t.size()) {os<<t[i]<<",";} os<<"}"<<endl; return os;}
+template<class S, class T> ostream& operator<<(ostream &os, const pair<S,T> &t) { return os<<"("<<t.first<<","<<t.second<<")";}
+const ll MOD=1e9+7;
+const int MAX_N=(1<<15);
+const ll INF=(1ll<<60);
+int nn=MAX_N;
+ll modpow(ll r,ll m=MOD){
+  ll re=1,d=r%m;
+  ll n=MOD-2;
+  for(;n;n/=2){
+    if(n&1)(re*=d)%=m;
+    (d*=d)%=m;
+  }
+  return re;
+}
+
+struct Seg{
+ ll d;
+  Seg(int dd=1){
+    d=dd;
+  }
+  static Seg e;
+};
+vector<Seg> dat[170];
+Seg Seg::e=Seg();
+
+Seg operator+(const Seg &l,const Seg &r){
+  if(l.d<r.d) return r;
+  return l;
+}
+//ostream& operator<<(ostream &os, const Seg &t) { return os<<"["<<t.mn<<")";}
+template<class T> void upd(vector<T> &dat,int k,T a){
+  k+=nn-1;
+  dat[k]=a;
+  while(k>0){
+    k=(k-1)/2;
+    dat[k]=dat[k*2+1]+dat[k*2+2];
+  }
+}
+
+//(l,r,0,0,nn)
+template<class T> T query(vector<T> &dat,int a,int b,int k=0,int l=0,int r=nn){
+  if(r<=a || b<=l)return T::e;
+  if(a<=l && r<=b) return dat[k];
+  return query(dat,a,b,k*2+1,l,(l+r)/2) + query(dat,a,b,k*2+2,(l+r)/2,r);
+}
+vector<int> inv(11234);
+void upd(int x,int i){
+    for(int j=2;j*j<=x;++j){
+      if(x%j==0){
+	int prod=1;
+	while(x%j==0){
+	  prod*=j;
+	  x/=j;
+	}
+	upd(dat[inv[j]],i,Seg(prod));
+	//cout<<i<<":"<<j<<","<<prod<<endl;
+      }
+    }
+    if(x>1){
+      upd(dat[inv[x]],i,Seg(x));
+      //cout<<i<<":"<<x<<","<<x<<endl;
+    }
+}
+void del(int x,int i){
+    for(int j=2;j*j<=x;++j){
+      if(x%j==0){
+	while(x%j==0) x/=j;
+	upd(dat[inv[j]],i,Seg(1));
+      }
+    }
+    if(x>1){
+      upd(dat[inv[x]],i,Seg(1));
+    }
+}
+const int PRIME_MAX=1000;
+vector<int> primes;
+int prime[PRIME_MAX];
+void findPrime(){
+  for(int i=2;i<PRIME_MAX;i++)if(!prime[i]){
+      primes.pb(i);
+      for(int j=i*2;j<PRIME_MAX;j+=i)
+	prime[j]=1;
+  }
+}
+int main(){
+  ios_base::sync_with_stdio(false);
+  cout<<fixed<<setprecision(0);
+  rep(i,170)
+    dat[i].resize(2*MAX_N-1);
+  findPrime();
+  //cout<<primes.size()<<endl;
+  rep(i,primes.size()) inv[primes[i]]=i;
+  int n,x;
+  cin>>n;
+  vector<int> a(n);
+  rep(i,n){
+    cin>>x;
+    upd(x,i);
+    a[i]=x;
+  }
+  int q,t,y;
+  cin>>q;
+  rep(i,q){
+    cin>>t>>x>>y; --x;
+    if(t==1){
+      del(a[x],x);
+      upd(y,x);
+      a[x]=y;
+    }else{
+      ll prod=1;
+      rep(i,170)
+	(prod*=query(dat[i],x,y).d)%=MOD;
+      cout<<prod<<endl;
+    }
+  }
+  return 0;
+}

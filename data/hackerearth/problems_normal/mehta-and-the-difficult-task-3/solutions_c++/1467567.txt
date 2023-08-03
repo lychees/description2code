@@ -1,0 +1,155 @@
+#include <iostream>
+#include <algorithm>
+#include <cstdio>
+#include <cmath>
+#include <vector>
+#include <map>
+#include <set>
+#include <queue>
+#include <stack>
+#include <cstring>
+#include <fstream>
+#include <ctime>
+#include <iomanip>
+#define LL long long
+#define ULL unsigned long long
+#define FOR(i,a,b) for(int i=a;i<=b;i++)
+#define FO(i,a,b) for(int i=a;i<b;i++)
+#define FORD(i,a,b) for(int i=a;i>=b;i--)
+#define FOD(i,a,b) for(int i=a;i>b;i--)
+#define FORV(i,a) for(typeof(a.begin()) i = a.begin(); i != a.end(); i++)
+#define x first
+#define y second
+#define pb push_back
+#define mp make_pair
+#define debug cout << "YES" << endl
+#define sqr(x) x*x
+using namespace std;
+
+typedef pair<int,int>II;
+typedef pair<int,II>PII;
+template<class T> T gcd(T a, T b) {T r; while(b!=0) {r=a%b;a=b;b=r;} return a;}
+template<class T> T lcm(T a, T b) { return a / gcd(a, b) * b; }
+template<class T> int getbit(T s, int i) { return (s >> i) & 1; }
+template<class T> T onbit(T s, int i) { return s | (T(1) << i); }
+template<class T> T offbit(T s, int i) { return s & (~(T(1) << i)); }
+
+const double PI = 2*acos(0.0);
+const double eps = 1e-9;
+const int infi = 1e9;
+const LL Linfi = (LL) 1e15;
+const LL MOD = 1000000007;
+#define maxn 200005
+
+int n = 15;
+
+struct matrix
+{
+    LL a[17][17];
+    friend ostream &operator<<(ostream &in, matrix m)    {
+        FOR (i, 0, n)        {
+            FOR(j, 0, n) cout << m.a[i][j] << " ";
+            cout << endl;
+        }
+    }
+};
+
+matrix mulMatrix(matrix A, matrix B){
+    matrix ans;
+    FOR(i,0,n)
+    FOR(j,0,n) ans.a[i][j] = 0;
+    FOR(i,0,n)
+    FOR(j,0,n)    {
+        LL dem = 0;
+        FOR(k,0,n)
+        dem = (dem + A.a[i][k] * B.a[k][j]) % MOD;
+
+        ans.a[i][j] = dem;
+    }
+    return ans;
+}
+
+matrix powMatrix(matrix A, LL p){
+    matrix ans; /// ans = I;
+    FOR(i,0,n)
+    FOR(j,0,n) ans.a[i][j] = 0;
+    FOR(i,0,n) ans.a[i][i] = 1;
+    while(p > 0)    {
+        if(p % 2 == 1) ans = mulMatrix(A,ans);
+        A = mulMatrix(A,A);
+        p /= 2;
+    }
+    return ans;
+}
+
+matrix M;
+vector<int> V[16];
+LL ST[16];
+LL m;
+int A, B, C, D;
+
+void Init(){
+    FOR(mask,0,15){
+        FORD(i,4,1) {
+            if(getbit(mask,i-1)) V[mask].pb(1);
+            else V[mask].pb(0);
+        }
+        //FOR(i,1,4) cout << V[mask][i-1] << " "; cout << endl;
+    }
+
+    memset(ST, 0, sizeof(ST));
+    ST[0] = 6;
+    ST[1] = ST[2] = ST[4] = ST[8] = 1;
+
+    /// build matrix
+    FOR(i,0,n) FOR(j,0,n){
+        if(i == j) M.a[i][j] = 6;
+        else {
+            int dif = 0, pos = -1;
+            FOR(k,0,3) if(V[i][k] != V[j][k]){
+                dif++; pos = k;
+            }
+            if(dif > 1) M.a[i][j] = 0;
+            else {
+                M.a[i][j] = 1;
+            }
+        }
+    }
+    //cout << M; cout << endl;
+}
+
+void solve(){
+    matrix mu = powMatrix(M, m-1);
+    LL ans[16];
+    memset(ans,0,sizeof(ans));
+    FOR(i,0,15) {
+        FOR(j,0,15) ans[i] = (ans[i] + ST[j] * mu.a[j][i]) % MOD;
+    }
+    int pos = 0;
+    if(A) pos += (1<<3);
+    if(B) pos += (1<<2);
+    if(C) pos += (1<<1);
+    if(D) pos += 1;
+    //FOR(i,0,15) cout << ans[i] << " "; cout << endl;
+    cout << ans[pos] << endl;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    #ifndef ONLINE_JUDGE
+    //freopen("test.in", "r", stdin);
+    //freopen("test.out", "w", stdout);
+    #endif
+    Init();
+    int sotest;
+    cin >> sotest;
+    while(sotest--){
+        cin >> m >> A >> B >> C >> D;
+        solve();
+
+    }
+
+
+
+    return 0;
+}

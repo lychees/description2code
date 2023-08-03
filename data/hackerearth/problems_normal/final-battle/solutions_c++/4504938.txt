@@ -1,0 +1,167 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define ld long double
+#define ui unsigned int
+#define ull unsigned ll
+#define vi vector<int>
+#define pb push_back
+#define mp make_pair
+#define mt make_tuple
+#define si set<int>
+#define sll set<ll>
+#define F first
+#define S second
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define vii vector<pii >
+#define vll vector<ll >
+#define mii map<int,int>
+#define mll map<ll,ll>
+#define vvi vector<vi >
+#define vvl vector<vll >
+#define cps CLOCKS_PER_SEC
+#define eb emplace_back
+#define rep(i, begin, end) for (__typeof(end) i = (begin) - ((begin) > (end)); i != (end) - ((begin) > (end)); i += 1)
+#define all(a) (a).begin(), (a).end()
+#define sz(a) int((a).size())
+#define print(s) cout<<#s<<" : ";for(auto i:(s))cout<<i<<" ";cout<<"\n";
+#define what_is(x) cerr << #x << " is " << x << endl;
+#define slld(t) scanf("%lld",&(t))
+#define sd(t) scanf("%d",&(t))
+#define pd(t) printf("%d\n",(t))
+#define plld(t) printf("%lld\n",(t))
+#define endl "\n" 
+#define piii pair<int,pair<int,int> > 
+
+const int maxn = 100;
+const ll mod = 1e9+7;
+
+vector<piii > edges;  
+int M[105][105],p[105];  
+int n,m;  
+  
+int fun(int x)  
+{  
+  if(p[x]<0)  
+    return x;  
+  return p[x]=fun(p[x]);  
+}  
+  
+long long det(vii& es)  
+{  
+  vi hash;  
+  rep(i,0,sz(es))
+    {  
+      hash.eb(es[i].F);  
+      hash.eb(es[i].S);  
+    }  
+  sort(hash.begin(),hash.end());  
+  hash.erase(unique(hash.begin(),hash.end()),hash.end());  
+  int n=hash.size();  
+  n--;  
+  for(int i=0; i<n; i++)  
+    for(int j=0; j<n; j++)  
+      M[i][j]=0;  
+  for(int i=0; i<es.size(); i++)  
+    {  
+      int u=lower_bound(hash.begin(),hash.end(),es[i].F)-hash.begin();  
+      int v=lower_bound(hash.begin(),hash.end(),es[i].S)-hash.begin();  
+      M[u][u]++;  
+      M[v][v]++;  
+      M[u][v]--;  
+      M[v][u]--;  
+    }  
+  long long ans=1LL;  
+  for(int i=0; i<n; i++)  
+    {  
+      for(int j=i+1; j<n; j++)  
+        {  
+          while(M[j][i])  
+            {  
+              ans*=-1;  
+              long long t=M[i][i]/M[j][i];  
+              for(int k=i; k<n; k++)  
+                {  
+                  M[i][k]=(M[i][k]-M[j][k]*t)%mod;  
+                  M[i][k]^=M[j][k];  
+                  M[j][k]^=M[i][k];  
+                  M[i][k]^=M[j][k];  
+                }  
+            }  
+        }  
+      if(M[i][i]==0)  
+        {  
+          return 0;  
+        }  
+      else ans=(ans*M[i][i])%mod;  
+    }  
+  return (ans%mod+mod)%mod;  
+}  
+  
+int main()  
+{  
+  sd(n),sd(m);  
+  int x1,y1;
+  rep(i,0,n-1)
+  sd(x1),sd(y1);
+  edges.clear();  
+  memset(p,-1,sizeof(p));  
+  for(int i=0; i<m; i++)  
+    {  
+      int u,v,w;  
+      scanf("%d%d%d",&u,&v,&w);  
+      u--;  
+      v--;  
+      edges.eb(mp(w,mp(u,v)));  
+    }  
+  long long ans=1LL;  
+  sort(edges.begin(),edges.end());  
+  int l,r=0;  
+  while(r<edges.size())  
+    {  
+      l=r++;  
+      while(r<edges.size()&&edges[r].F==edges[l].F)  
+        r++;  
+      for(int i=l; i<r; i++)  
+        {  
+          int& u=edges[i].S.F;  
+          int& v=edges[i].S.S;  
+          u=fun(u);  
+          v=fun(v);  
+        }  
+      for(int i=l; i<r; i++)  
+        {  
+          int u=edges[i].S.F;  
+          int v=edges[i].S.S;  
+          u=fun(u);  
+          v=fun(v);  
+          if(u!=v)  
+            p[u]=v;  
+        }  
+      for(int i=0; i<n; i++)  
+        if(p[i]<0)  
+          {  
+            vii es;  
+            for(int j=l; j<r; j++)  
+              {  
+                int u=edges[j].S.F;  
+                int v=edges[j].S.S;  
+                if(fun(u)==i&&fun(v)==i)  
+                  es.eb(mp(u,v));  
+              }  
+            ans=(ans*det(es))%mod;  
+          }  
+    }  
+  int num=0;  
+  for(int i=0; i<n; i++)  
+    if(p[i]<0)  
+      num++;  
+  if(num>1)  
+    {  
+      cout<<0<<endl;
+      return 0; 
+    }  
+  plld((ans%mod+mod)%mod);  
+}  

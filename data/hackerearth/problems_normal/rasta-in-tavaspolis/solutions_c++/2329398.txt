@@ -1,0 +1,365 @@
+#include <bits/stdc++.h>
+
+#ifdef getchar
+#undef getchar
+#endif
+#define getchar() (*_pinp?*_pinp++:(_inp[fread(_pinp=_inp, 1, 1<<20, stdin)]='\0', *_pinp++))
+char _inp[(1<<20)+1], *_pinp=_inp;
+#define scan(x) do{while((x=getchar())<'0'); for(x-='0'; '0'<=(_=getchar()); x=(x<<3)+(x<<1)+_-'0');}while(0)
+char _;
+#ifdef putchar
+#undef putchar
+#endif
+#define putchar(x) (*_pout++=(x), (_pout==_eout?(fwrite(_pout=_out, 1, 4096, stdout)):0))
+#define flush() fwrite(_out, 1, _pout-_out, stdout)
+char _out[4097], *_eout=_out+4096, *_pout=_out;
+#define print(x) do{if(!x)putchar('0');else{for(;x;x/=10)*_p++='0'+x%10;do putchar(*--_p);while(_p!=_buf);}}while(0)
+char _buf[20], *_p=_buf;
+
+using namespace std;
+
+const int LG=18;
+int N, Q;
+vector<pair<int, int>> adj[100001];
+map<int, int> id[100001];
+int W[100001];
+int level[100001];
+int sz[100001];
+int parent[LG][100001];
+int direction[LG][100001];
+int in[LG][100001], out[LG][100001], now[LG], inv[LG][100001];
+vector<int> linkup[100001];
+map<int, int> nxt[100001];
+int root, master, cd;
+
+struct segtree
+{
+    int _N;
+    long long data[100001];
+    long long seg[262144];
+    long long lazy[262144];
+    int ind[262144];
+    long long bit[100001];
+    inline void init(int idx, int begin, int end)
+    {
+        if(begin==end)
+        {
+            seg[idx]=data[begin], ind[idx]=begin;
+            for(int x=begin; x<=_N; x+=x&-x)
+                bit[x]+=data[begin];
+            for(int x=begin+1; x<=_N; x+=x&-x)
+                bit[x]-=data[begin];
+        }
+        else
+        {
+            int mid=(begin+end)/2;
+            init(idx*2, begin, mid);
+            init(idx*2+1, mid+1, end);
+            seg[idx]=max(seg[idx*2], seg[idx*2+1]);
+            if(seg[idx]==seg[idx*2])
+                ind[idx]=ind[idx*2];
+            else
+                ind[idx]=ind[idx*2+1];
+        }
+    }
+    inline void down(int idx)
+    {
+        if(lazy[idx])
+        {
+            seg[idx*2]+=lazy[idx];
+            seg[idx*2+1]+=lazy[idx];
+            lazy[idx*2]+=lazy[idx];
+            lazy[idx*2+1]+=lazy[idx];
+            lazy[idx]=0;
+        }
+    }
+    inline void update(int idx, int begin, int end, int l, int r, long long v)
+    {
+        if(r<begin || end<l)
+            return;
+        if(l<=begin && end<=r)
+        {
+            seg[idx]+=v;
+            lazy[idx]+=v;
+        }
+        else
+        {
+            down(idx);
+            int mid=(begin+end)/2;
+            update(idx*2, begin, mid, l, r, v);
+            update(idx*2+1, mid+1, end, l, r, v);
+            seg[idx]=max(seg[idx*2], seg[idx*2+1]);
+            if(seg[idx]==seg[idx*2])
+                ind[idx]=ind[idx*2];
+            else
+                ind[idx]=ind[idx*2+1];
+        }
+    }
+    inline void update(int l, int r, long long v)
+    {
+        for(int x=l; x<=_N; x+=x&-x)
+            bit[x]+=v;
+        for(int x=r+1; x<=_N; x+=x&-x)
+            bit[x]-=v;
+        update(1, 1, _N, l, r, v);
+    }
+    inline long long query(int idx, int begin, int end, int l, int r)
+    {
+        if(r<begin || end<l)
+            return 0;
+        if(l<=begin && end<=r)
+            return seg[idx];
+        down(idx);
+        int mid=(begin+end)/2;
+        return max(query(idx*2, begin, mid, l, r),
+                   query(idx*2+1, mid+1, end, l, r));
+    }
+    inline pair<long long, int> query2(int idx, int begin, int end, int l, int r)
+    {
+        if(r<begin || end<l)
+            return make_pair(0, 0);
+        if(l<=begin && end<=r)
+            return make_pair(seg[idx], ind[idx]);
+        down(idx);
+        int mid=(begin+end)/2;
+        return max(query2(idx*2, begin, mid, l, r),
+                   query2(idx*2+1, mid+1, end, l, r));
+    }
+    inline long long query(int l, int r)
+    {
+        l=max(1, l);
+        r=min(r, _N);
+        if(l>r)
+            return 0;
+        if(l==r)
+        {
+            long long ret=0;
+            for(int x=l; x>0; x-=x&-x)
+                ret+=bit[x];
+            return ret;
+        }
+        return query(1, 1, _N, l, r);
+    }
+    inline pair<long long, int> query2(int l, int r)
+    {
+        l=max(1, l);
+        r=min(r, _N);
+        if(l>r)
+            return make_pair(0, 0);
+        if(l==r)
+        {
+            long long ret=0;
+            for(int x=l; x>0; x-=x&-x)
+                ret+=bit[x];
+            return make_pair(ret, l);
+        }
+        return query2(1, 1, _N, l, r);
+    }
+} tree[LG];
+
+inline void dfs(int u, int p)
+{
+    sz[u]=1;
+    for(auto& it: adj[u])
+    {
+        int v=it.first;
+        if(v==p || level[v]!=-1)
+            continue;
+        dfs(v, u);
+        sz[u]+=sz[v];
+    }
+}
+
+inline void dfs2(int u, int p, long long d, int dir)
+{
+    parent[cd][u]=p;
+    direction[cd][u]=dir;
+    in[cd][u]=++now[cd];
+    inv[cd][in[cd][u]]=u;
+    tree[cd].data[in[cd][u]]=d;
+    if(u!=master)
+        linkup[u].push_back(master);
+    for(auto& it: adj[u])
+    {
+        int v=it.first;
+        if(v==p || level[v]!=-1)
+            continue;
+        int c=W[it.second];
+        if(dir==-1)
+            dfs2(v, u, d+c, v);
+        else
+            dfs2(v, u, d+c, dir);
+    }
+    out[cd][u]=now[cd];
+}
+
+int decompose(int u, int depth)
+{
+    dfs(u, u);
+    while(1)
+    {
+        int v=-1;
+        for(auto& it: adj[u])
+        {
+            int vv=it.first;
+            if(level[vv]==-1 && (v==-1 || sz[vv]>sz[v]))
+                v=vv;
+        }
+        if(v==-1 || sz[v]*2<=sz[u])
+            break;
+        sz[u]-=sz[v];
+        sz[v]+=sz[u];
+        u=v;
+    }
+    level[u]=depth;
+    master=u;
+    cd=depth;
+    dfs2(u, u, 0, -1);
+    for(auto& it: adj[u])
+    {
+        int v=it.first;
+        if(level[v]==-1)
+            nxt[u][v]=decompose(v, depth+1);
+    }
+    return u;
+}
+
+inline void upd(int u, int v, int c)
+{
+    int idx=id[u][v];
+    int delta=c-W[idx];
+    W[idx]=c;
+    int cur=root;
+    int lv=0;
+    while(1)
+    {
+        if(in[lv][u]>in[lv][v])
+            swap(u, v);
+        tree[lv].update(in[lv][v], out[lv][v], delta);
+        if(cur==u || cur==v)
+            break;
+        cur=nxt[cur][direction[lv][u]];
+        lv++;
+    }
+}
+
+inline long long ask(int u)
+{
+    static vector<pair<long long, int>> outside;
+    outside.clear();
+    for(int i=0; i<(int)linkup[u].size(); i++)
+    {
+        int x=linkup[u][i];
+        int dir=direction[i][u];
+        long long d=tree[i].query(in[i][u], in[i][u]);
+        d+=max(tree[i].query(in[i][x], in[i][dir]-1), tree[i].query(out[i][dir]+1, out[i][x]));
+        outside.push_back({d, parent[i][u]});
+    }
+    long long ret=0;
+    sort(outside.rbegin(), outside.rend());
+    if(!outside.empty())
+        ret=outside[0].first;
+    for(int i=1; i<(int)outside.size(); i++)
+    {
+        if(outside[i].second!=outside[0].second)
+        {
+            ret=outside[0].first+outside[i].first;
+            break;
+        }
+    }
+    int last=-1;
+    int lv=level[u];
+    for(int i=0; i<(int)outside.size(); i++)
+    {
+        if(last==outside[i].second)
+            continue;
+        long long d=0;
+        if(level[outside[i].second]<lv)
+            d=tree[lv].query(in[lv][u], out[lv][u]);
+        else
+            d=max(tree[lv].query(in[lv][u], in[lv][outside[i].second]-1), tree[lv].query(out[lv][outside[i].second]+1, out[lv][u]));
+        ret=max(ret, outside[i].first+d);
+        if(last==-1)
+            last=outside[i].second;
+        else
+            break;
+    }
+    pair<long long, int> res=tree[lv].query2(in[lv][u], out[lv][u]);
+    if(inv[lv][res.second]!=u)
+    {
+        int p=direction[lv][inv[lv][res.second]];
+        ret=max(ret, res.first+max(tree[lv].query(in[lv][u], in[lv][p]-1), tree[lv].query(out[lv][p]+1, out[lv][u])));
+    }
+    return ret;
+}
+
+long long bdfs(int u, int p)
+{
+    long long ret=0;
+    for(auto& it: adj[u])
+    {
+        int v=it.first;
+        if(v==p)
+            continue;
+        ret=max(ret, bdfs(v, u)+W[it.second]);
+    }
+    return ret;
+}
+
+long long brute(int u)
+{
+    vector<long long> vv(2, 0);
+    for(auto& it: adj[u])
+    {
+        int v=it.first;
+        vv.push_back(bdfs(v, u)+W[it.second]);
+    }
+    sort(vv.rbegin(), vv.rend());
+    return vv[0]+vv[1];
+}
+
+int main()
+{
+#if 0
+    freopen("big.1.in", "r", stdin);
+    freopen("big.1.out", "w", stdout);
+#endif
+    memset(level, -1, sizeof level);
+    scan(N);
+    scan(Q);
+    int a, b, c;
+    for(int i=0; i<N-1; i++)
+    {
+        scan(a);
+        scan(b);
+        scan(c);
+        adj[a].push_back(make_pair(b, i));
+        adj[b].push_back(make_pair(a, i));
+        id[a][b]=id[b][a]=i;
+        W[i]=c;
+    }
+    root=decompose(1, 0);
+    for(int i=0; i<LG; i++) if(now[i])
+        tree[i].init(1, 1, tree[i]._N=now[i]);
+    int op;
+    while(Q--)
+    {
+        scan(op);
+        if(op==1)
+        {
+            scan(a);
+            scan(b);
+            scan(c);
+            upd(a, b, c);
+        }
+        else
+        {
+            scan(a);
+            long long ans=ask(a);
+            print(ans);
+            putchar('\n');
+        }
+    }
+    flush();
+    return 0;
+}

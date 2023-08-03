@@ -1,0 +1,119 @@
+#include<bits/stdc++.h>
+using namespace std;
+ 
+struct node
+{
+	long long int val;
+};
+
+long long int power(int a,int b)
+{
+	int y=1;
+	while(b!=0)
+	{
+		if(b%2!=0)
+		{
+			y=(y*a)%3;
+		}
+		a=(a*a)%3;
+		b/=2;
+	}
+	return y%3;
+}
+/*void construct(long long intarr[],long long intindex,struct node *t,long long intst,long long intend)
+{
+	printf("%d %d\n",st,end);
+	if(st>end)
+	return;
+	if(st==end)
+	{
+		t[index].val=arr[st-1];
+		return;
+	}
+	long long intmid=(st+mid)/2;
+	construct(arr,2*index,t,st,mid);
+	construct(arr,2*index+1,t,mid+1,end);
+	t[index].val=t[2*index].val+t[2*index+1].val;
+}*/
+void construct(long long int arr[],long long int index,struct node *t,long long int st,long long int end){
+	if(st==end)
+	{
+		t[index].val=arr[st-1]; //printf("%d at %d\n",arr[st-1],index);
+		return;
+	}
+	long long int mid=(st+end)/2;
+	construct(arr,2*index,t,st,mid);
+	construct(arr,2*index+1,t,mid+1,end);
+	t[index].val=(((int)power(2,end-mid)%3)*(t[2*index].val%3)+(t[2*index+1].val%3))%3;
+}
+long long int query(struct node *t,long long int index,long long int i,long long int j,long long int st,long long int end)
+{
+	if(st>=i && end<=j )
+	{
+		//printf("%d %d %d\n",st,end,index);
+		return (((int)power(2,j-end)%3)*(t[index].val%3))%3;
+	}
+	if(end<i || st >j)
+	{
+		return 0;
+	}
+	long long int mid=(st+end)/2;
+	return ( (query(t,2*index,i,j,st,mid)%3) + (query(t,2*index+1,i,j,mid+1,end)%3) )%3;
+}
+
+
+void update(long long int val,long long int pos,long long int index,struct node *t,long long int st,long long int end)
+{
+	//printf("%d %d\n",st,end);
+	if(st==pos && end==pos )
+	{
+		t[index].val+=val;
+		return;
+	}
+	if(end<pos || st >pos)
+	{
+		return;
+	}
+	long long int mid=(st+end)/2;//printf("mid %d %d %d\n",mid,st,end);
+	update(val,pos,2*index,t,st,mid);
+	update(val,pos,2*index+1,t,mid+1,end);
+	t[index].val=( ((int)power(2,end-mid)%3)*(t[2*index].val%3) + (t[2*index+1].val%3) )%3;
+}
+
+main()
+{
+	long long int N;
+	scanf("%lld",&N);
+	long long int arr[N+5];
+	char str[N+5];
+	long long int s=2*pow(2,ceil(log2(N)));
+	struct node t[s];
+	scanf("%s",str);
+	for(long long int i=0;i<N;i++)
+	{
+		arr[i]=str[i]-'0';
+	}
+	long long int m;
+	construct(arr,1,t,1,N);
+
+	scanf("%d",&m);//queries
+	for(long long int i=1;i<=m;i++)
+	{
+		long long int l,r,cho;
+		scanf("%d",&cho);
+		if(cho==0)
+		{
+			scanf("%lld%lld",&l,&r);
+			printf("%lld\n",query(t,1,l+1,r+1,1,N)%3);
+		}
+		else
+		{
+			scanf("%lld",&l);
+			if(arr[l]==0)
+			{
+				arr[l]=1;
+				update(1,l+1,1,t,1,N);
+			}
+		}
+	}
+}

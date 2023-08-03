@@ -1,0 +1,72 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define MAX 1000001
+bool isprime[MAX];
+int checker[MAX];
+int smith[MAX];
+
+int dsum(ulong n){
+	int s=0;
+	while(n>0){
+		s+=(n%10);
+		n/=10;
+	}
+	return s;
+}
+
+inline void set_smith(){
+	int cnt = 0;
+	for(ulong i = 2; i < MAX; i++){
+		if(isprime[i] == false){ // Prime numbers
+			checker[i] = dsum(i);
+			cnt++; //definitely Smith Num.
+		}
+		else
+		{
+			if(i%2 == 0) {
+				checker[i] = 2 + (checker[i/2]);  // e.g for i=22 as => 22=2*(11) => 2+[1+1] = 4
+			}
+			else
+			{
+			   for(int j = 3; 2*j < i; j=j+2)
+			   	  if(i%j == 0) 
+			   	  {
+			   	  	checker[i] = checker[j] + checker[i/j];
+			   	  	break;
+			   	  }
+			}
+			if(checker[i] == dsum(i)) cnt++;
+		}
+		smith[i] = cnt;
+	}
+}
+void set_prime(){
+	memset(isprime, false, sizeof(isprime));
+	int j = 2+2;
+	while(j < MAX){
+		isprime[j] = true;   //1 means it is not a prime number....0 means it is a prime number 
+		j = j+2;
+	}
+	for(ulong i = 3; i < MAX; i = i+2){
+		if(isprime[i] == false){
+			j = i+i;
+			while(j < MAX){
+				isprime[j] = true;
+				j = j+i;
+			}
+		}
+	}
+}
+
+int main(){
+	ulong t,l,r;
+	set_prime();
+	set_smith();
+	cin>>t;
+	while(t--){
+		scanf("%ld%ld", &l, &r);
+		printf("%d\n", (smith[r] - smith[l-1]));
+	}
+	return 0;
+}

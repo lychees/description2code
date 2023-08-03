@@ -1,0 +1,124 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef struct node node;
+struct node
+{
+	node *zero, *one;
+	vector<int> occ;
+	node(node *a, node *b)
+	{
+		zero = a;
+		one = b;
+	}
+};
+/**/
+bool overlap(vector<int> &v, int l, int r)//if bs of l and r are not equal then true else if bs(l), bs(r) are equal and l=r=bs(l)
+{
+	int left = 0, right = v.size(), mid;
+	while(right > left)
+	{
+		mid = (left + right)>>1;
+		if( v[mid] <= r && v[mid] >= l )
+		{
+			return true;
+		}
+		else if( l > v[mid] )
+		{
+			left = mid + 1;
+		}
+		else
+		{
+			right = mid;
+		}
+	}
+	return false;
+}
+void insert(node *root, int len, int val, int idx)
+{
+	if(len >= 0)
+	{
+		if( val&(1<<len) )
+		{
+			if( root->one == NULL )
+			{
+				root->one = new node(NULL,NULL);
+			}
+			( (root->one)->occ ).push_back(idx);
+			insert(root->one, len - 1, val, idx);
+		}
+		else
+		{
+			if( root->zero == NULL )
+			{
+				root->zero = new node(NULL,NULL);
+			}
+			( (root->zero)->occ ).push_back(idx);
+			insert(root->zero, len - 1, val, idx);
+		}
+	}
+}
+void query(node *root, int len, int l, int r, int x, int &ans)
+{
+	if(len >= 0)
+	{
+		if( x&(1<<len) )
+		{
+			if(root->zero != NULL)
+			{
+				if( overlap((root->zero)->occ, l, r) == true )
+				{
+					ans += 1<<len;
+					query(root->zero, len - 1, l, r, x, ans);
+				}
+				else
+				{
+					query(root->one, len - 1, l, r, x, ans);
+				}
+			}
+			else
+			{
+				query(root->one, len - 1, l, r, x, ans);
+			}
+		}
+		else
+		{
+			if(root->one != NULL)
+			{
+				if( overlap( (root->one)->occ, l, r) == true )
+				{
+					ans += 1<<len;
+					query(root->one, len - 1, l, r, x, ans);
+				}
+				else
+				{
+					query(root->zero, len - 1, l, r, x, ans);
+				}
+			}
+			else
+			{
+				query(root->zero, len - 1, l, r, x, ans);
+			}
+		}
+	}
+}
+int main()
+{
+	int n, q, i, a;
+	scanf("%d%d",&n,&q);
+	node *root;
+	root = new node(NULL,NULL);
+	for( i = 1 ; i <= n ; i++ )
+	{
+		scanf("%d",&a);
+		insert(root, 20, a, i);
+	}
+	int l, r, x, ans = 0;
+	for( i = 1 ; i <= q ; i++ )
+	{
+		scanf("%d%d%d",&l,&r,&x);
+		ans = 0;
+		query(root, 20, l, r, x, ans);
+		printf("%d\n",ans);
+	}
+	return 0;
+}

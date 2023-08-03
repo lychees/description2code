@@ -1,0 +1,76 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+ 
+const double eps = 1e-9;
+inline bool equals(double a, double b) { return fabs(a - b) < eps ;}
+ 
+class Point {
+public:
+    double x, y;
+ 
+    Point(double x = 0, double y = 0): x(x), y(y) {};
+ 
+    Point operator + (Point p) { return Point(x + p.x, y + p.y); }
+    Point operator - (Point p) { return Point(x - p.x, y - p.y); }
+    Point operator * (double a) { return Point(a * x, a * y); }
+    Point operator / (double a) { return Point(x / a, y / a); }
+ 
+    double abs() { return sqrt(norm()); }
+    double norm() { return x * x + y * y; }
+ 
+    bool operator < (const Point &p) const {
+        return x != p.x ? x < p.x : y < p.y;
+    }
+ 
+    bool operator == (const Point &p) const {
+        return fabs(x - p.x) < eps && fabs(y - p.y) < eps;
+    }
+};
+typedef Point Vector;
+ 
+struct Segment {Point p1, p2;};
+ 
+double dot(const Vector& a, const Vector& b) {
+    return a.x * b.x + a.y * b.y;
+}
+ 
+// return abs of closs product
+double cross(const Vector& a, const Vector& b) {
+    return a.x * b.y - a.y * b.x;
+}
+ 
+int ccw(Point p0, Point p1, Point p2) {
+    const int COUNTER_CLOCKWISE = 1, CLOCKWISE = -1;
+    const int ONLINE_BACK = 2, ONLINE_FRONT = -2, ON_SEGMENT = 0;
+    Vector a = p1 - p0;
+    Vector b = p2 - p0;
+    if (cross(a, b) >  eps) return COUNTER_CLOCKWISE;
+    if (cross(a, b) < -eps) return CLOCKWISE;
+    if (dot(a, b)   < -eps) return ONLINE_BACK;
+    if (a.norm() < b.norm()) return ONLINE_FRONT;
+    return ON_SEGMENT;
+}
+ 
+bool intersect(Point p1, Point p2, Point p3, Point p4) {
+    return (ccw(p1, p2, p3) * ccw(p1, p2, p4) <= 0 &&
+            ccw(p3, p4, p1) * ccw(p3, p4, p2) <= 0);
+}
+ 
+bool intersect(Segment s1, Segment s2) {
+    return intersect(s1.p1, s1.p2, s2.p1, s2.p2);
+}
+ 
+int main(void) {
+    int q;
+    cin >> q;
+    int x0 = 0, y0 = 0;
+    while (q--) {
+        int x2, y2, x3, y3, x1, y1;
+        cin >> x2 >> y2 >> x3 >> y3 >> x0 >> y0;
+        Segment s1 = {Point(x0, y0), Point(x1, y1)};
+        Segment s2 = {Point(x2, y2), Point(x3, y3)};
+        cout << (intersect(s1, s2) ? "NO" : "YES") << endl;
+    }
+    return 0;
+}

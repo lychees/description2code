@@ -1,0 +1,143 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define sd(x) scanf("%d",&x)
+#define slld(x) scanf("%lld",&x)
+#define ss(x) scanf("%s",x)
+#define ll long long
+#define mod 1000000007
+#define bitcount    __builtin_popcountll
+#define pb push_back
+#define pi pair<int,int>
+int p[100005],tree1[300005],tree2[300005];
+string a,b;
+
+void build(int node,int l,int r)
+{
+    if(l==r)
+    {
+    	tree1[node]=a[l]-'a'+1;
+        tree2[node]=b[l]-'a'+1;
+        //printf("%d %d %d\n",node,tree1[node],tree2[node]);
+    }
+    else
+    {
+        int m=(l+r)/2;
+        build(2*node,l,m);
+        build(2*node+1,m+1,r);
+        tree1[node]=(1ll*tree1[2*node]*p[r-m])%mod+tree1[2*node+1];
+        tree2[node]=(1ll*tree2[2*node]*p[r-m])%mod+tree2[2*node+1];
+        if(tree1[node]>=mod)
+        	tree1[node]-=mod;
+        if(tree2[node]>=mod)
+        	tree2[node]-=mod;
+    }
+}
+void update1(int node,int l,int r,int i,int val)
+{
+    if(l==r)
+        tree1[node]=val;
+    else
+    {
+        int m=(l+r)/2;
+        if(l<=i&&i<=m)
+            update1(2*node,l,m,i,val);
+        else
+            update1(2*node+1,m+1,r,i,val);
+        tree1[node]=(1ll*tree1[2*node]*p[r-m])%mod+tree1[2*node+1];
+		if(tree1[node]>=mod)
+        	tree1[node]-=mod;
+    }
+}
+void update2(int node,int l,int r,int i,int val)
+{
+    if(l==r)
+        tree2[node]=val;
+    else
+    {
+        int m=(l+r)/2;
+        if(l<=i&&i<=m)
+            update2(2*node,l,m,i,val);
+        else
+            update2(2*node+1,m+1,r,i,val);
+        tree2[node]=(1ll*tree2[2*node]*p[r-m])%mod+tree2[2*node+1];
+		if(tree2[node]>=mod)
+        	tree2[node]-=mod;
+    }
+}
+pair<int,int> query1(int node,int l,int r,int i,int j)
+{
+    if(j<l||r<i)
+        return make_pair(0,0);
+    if(i<=l&&r<=j)
+    {
+    	//printf("%d %d\n",node,tree1[node]);
+
+        return make_pair(tree1[node],r-l+1);
+    }
+    int m=(l+r)/2;
+    pi p1=query1(2*node,l,m,i,j);
+    pi p2=query1(2*node+1,m+1,r,i,j);
+    //printf("%d %d %d %d\n",p1,p2,l,r);
+    p1.first=(1ll*p1.first*p[p2.second])%mod+p2.first;
+    if(p1.first>=mod)
+    	p1.first-=mod;
+    p1.second=p1.second+p2.second;
+    return p1;
+}
+pi query2(int node,int l,int r,int i,int j)
+{
+    if(j<l||r<i)
+        return make_pair(0,0);
+    if(i<=l&&r<=j)
+        return make_pair(tree2[node],r-l+1);
+    int m=(l+r)/2;
+    pi p1=query2(2*node,l,m,i,j);
+    pi p2=query2(2*node+1,m+1,r,i,j);
+    //printf("%d %d %d %d\n",p1,p2,l,r);
+    p1.first=(1ll*p1.first*p[p2.second])%mod+p2.first;
+    if(p1.first>=mod)
+    	p1.first-=mod;
+    p1.second=p1.second+p2.second;
+    return p1;
+}
+int main()
+{
+    //freopen("in.txt","r",stdin);
+    //freopen("out.txt","w",stdout);
+    int n,q,i,j,k,t,l,r;
+    char c;
+    p[0]=1;
+    for(i=1;i<=100000;i++)
+    	p[i]=(1ll*27*p[i-1])%mod;
+    sd(n);
+    sd(q);
+    cin>>a;
+    b=a;
+    reverse(b.begin(),b.end());
+    //cout<<a<<b;
+    build(1,0,n-1);
+    while(q--)
+    {
+    	sd(t);
+    	sd(l);
+    	if(t==0)
+    	{
+    		c=getchar();
+    		c=getchar();
+    		update1(1,0,n-1,l-1,c-'a'+1);
+    		update2(1,0,n-1,n-l,c-'a'+1);
+    	}
+    	else
+    	{
+    		sd(r);
+    		pi i=query1(1,0,n-1,l-1,r-1);
+    		pi j=query2(1,0,n-1,n-r,n-l);
+    		//printf("%d %d\n",i,j);
+    		if(i.first==j.first)
+    			printf("Yes\n");
+    		else
+    			printf("No\n");
+    	}
+    }
+    return 0;
+}

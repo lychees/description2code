@@ -1,0 +1,91 @@
+"""
+calculate ncr%p where p is prime using inverse modulo
+
+1)nck = n*(n-1)*(n-2)...(n-k+1)
+        ---------------------- = num/den
+        1*2*............k
+        
+2)nck = num*den^-1
+
+3)nck%p = ((num%p)*(den^-1%p))%p
+
+4)den^-1 = den^(p-2)=den^b
+
+4)nck%p = ((num%p)*(den^b%p))%p
+
+
+5)we know that (a^b)%c = ((a%c)^b)%c;den^b%p = ((den%p)^b)%p
+
+6)nck%p = ((num%p)*((den%p)^b)%p)%p
+
+7)now calculate num%p and den%p  easily using (a*b)%p = (a%p*b%p)%p
+
+8)after den%p = a has been calculated we compute now (a^b)%p using fast modular exponention
+
+"""
+
+
+
+def modpow(a,x,p):
+    #calculates a^x mod p in logarithmic time.
+    res= 1
+    while(x>0):
+        if (x%2 ==1):
+            res*=a
+            res%=p
+        a = a*a
+        a%=p
+        x=x/2
+    return res
+        
+def modInverse(a,p):
+     #calculates the modular multiplicative of a mod p.
+    #(assuming p is prime).
+    return modpow(a,p-2,p)
+
+
+
+def comp(n,r,fact,ifact,M):
+    ret = (fact[n]*ifact[r])%M
+    ret *=ifact[n-r]
+    ret = ret%M
+    return ret
+    
+    
+
+
+def precompute(fact,ifact,N,M):
+    fact[0] = 1
+
+    for i in range(1,N):
+        fact[i] = (i*fact[i-1])%M
+
+    ifact[N-1] = modpow(fact[N-1],M-2,M) 
+
+    j= N-2
+    while(j>=0):
+        ifact[j]= ((j+1)*ifact[j+1])%M
+        j-=1
+    
+        
+N = 100005
+M = 1000000007
+fact  = [0]*N
+ifact = [0]*N
+precompute(fact,ifact,N,M)
+
+
+T = int(raw_input())
+for t in range(T):
+    n,k = [int(x) for x in raw_input().split()]
+   
+    strength = [int(x) for x in raw_input().split()]
+    strength.sort()
+    res = 0
+    i=0
+    for i in range(n-k+1):
+        ncr = comp(n-i-1,k-1,fact,ifact,M)
+        ncr = (ncr*strength[i])%M
+        res = (res +ncr)%M
+    print res
+        

@@ -1,0 +1,141 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int,int> ii;
+typedef pair<ll,ll> pll;
+
+#define TRACE
+#ifdef TRACE
+template<class T, class U>
+ostream& operator<<(ostream& out, const pair<T,U>& a){out<<"["<<a.first<<" "<<a.second<<"]";return out;}
+template<class T>
+ostream& operator<<(ostream& out, const vector<T>& a){out<<"[ ";for(auto &it:a)out<<it<<" ";out<<"]";return out;}
+template<class T>
+ostream& operator<<(ostream& out, const set<T>& a){out<<"[ ";for(auto &it:a)out<<it<<" ";out<<"]";return out;}
+template<class T,class U>
+ostream& operator<<(ostream& out, const map<T,U>& a){for(auto &it:a)out<<it.first<<" -> "<<it.second<<" | ";return out;}
+#define pra(a,n) cerr<<#a<<" : ";for(int i=0;i<n;++i)cerr<<a[i]<<" ";cerr<<endl;
+#define pr(...) __f(#__VA_ARGS__, __VA_ARGS__)
+template <typename Arg1>
+void __f(const char* name, Arg1&& arg1){
+  cerr << name << " : " << arg1 << endl;
+}
+template <typename Arg1, typename... Args>
+void __f(const char* names, Arg1&& arg1, Args&&... args){
+  const char* comma = strchr(names + 1, ',');cerr.write(names, comma - names) << " : " << arg1<<" | ";__f(comma+1, args...);
+} 
+#else
+#define pr(...)
+#define pra(a,n)
+#endif
+#define fill(a,x) memset(a,x,sizeof(a)) 
+#define all(x) (x).begin(), (x).end()
+#define sz(a) int((a).size()) 
+#define pb push_back 
+#define F first
+#define S second
+#define FOR(i,a,b) for(int i = a; i<=b; ++i)
+#define NFOR(i,a,b) for(int i = a; i>=b; --i)
+#define NOFLUSH ios_base::sync_with_stdio(false),cin.tie(0),cout.tie(0);
+
+const ll INF = 1e18;
+const int mod = 1e9+7;
+const int N = 1e5+10; 
+const double eps = 1e-9;
+
+ll expo(ll a,ll b,ll c = mod){
+    if(!b)return 1;
+    ll temp = expo(a,b/2,c);
+    temp = (temp*temp)%c;
+    if(b&1)temp = (temp*a)%c;
+    return temp; 
+}
+vector<pair<int,ll> > G[N];
+int n;ll k;
+int vis[N],sub[N],root[N],par[N];
+ll dist[N];
+void dfs(int node,ll val,int ROOT){
+	vis[node] = 1;
+	sub[node] = 1;
+	for(auto it: G[node]){
+		if(it.S <= val && !vis[it.F]){
+			dfs(it.F,val,ROOT);
+			par[it.F] = node;
+			root[it.F] = ROOT;
+			sub[node] += sub[it.F];
+		}
+	}
+}
+ll dfs1(int node,ll val){
+	ll ret = 0;
+	//cout << node+1 << " "; 
+	for(auto it : G[node]){
+		if(it.S <= val && it.F!=par[node]){
+			//pr(node+1,it.F+1,val,it.S);
+			ret += (dfs1(it.F,val)+sub[it.F]);
+		}
+	}
+	return ret;
+}
+void dfs2(int node,ll val){
+	for(auto it : G[node]){
+		if(it.S <= val && it.F!=par[node]){
+			dist[it.F] = dist[node] + sub[root[it.F]] - 2*sub[it.F];
+			dfs2(it.F,val);
+		}
+	}
+}
+int func(ll val){
+	fill(vis,0);
+	FOR(i,0,n-1)par[i]=root[i]=-1;
+	FOR(i,0,n-1){
+		if(!vis[i])dfs(i,val,i);
+	}
+	ll maxi = 0;
+	FOR(i,0,n-1)dist[i] = INF;
+	FOR(i,0,n-1){
+		if(par[i] == -1){
+			dist[i] = dfs1(i,val);
+			dfs2(i,val);
+		}
+	}
+	//pra(sub,n);
+	//pra(dist,n);
+	FOR(i,0,n-1){
+		dist[root[i]] = min(dist[root[i]],dist[i]);
+	}
+	FOR(i,0,n-1){
+		if(par[i]==-1)maxi +=dist[i];
+	}
+	return maxi <= k;
+
+}
+int main(){
+  clock_t tm = clock();
+  NOFLUSH;
+  int __t = 1;
+  //cin >> __t;
+  FOR(_t,1,__t){
+      cin >> n >> k;
+      FOR(i,0,n-2){
+      	int u,v,w;
+      	cin >> u >> v >> w;
+      	u--,v--;
+      	G[u].pb({v,w});
+      	G[v].pb({u,w}); 
+      }
+      ll l = 0,r = 1e9;
+      //cout << func(7) << "\n";
+      while(l < r){
+      	ll mid = (l+r+1)>>1;
+      	if(func(mid))l = mid;
+      	else r = mid-1;
+      }
+      cout << l << "\n";
+  }
+  tm = clock()-tm ;
+  cerr << (float)(tm)/CLOCKS_PER_SEC << "\n";
+  return 0;
+}

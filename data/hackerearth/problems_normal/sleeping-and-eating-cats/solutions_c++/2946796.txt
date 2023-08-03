@@ -1,0 +1,178 @@
+#include <iostream>
+#include <fstream>
+#include <cstdio>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <sstream>
+#include <algorithm>
+#include <cmath>
+#include <set>
+#include <queue>
+#include <map>
+#include <stack>
+#include <complex>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int, int> pii;
+
+struct NODE
+{
+	ll cnt, llen, rlen, lval, rval;
+	NODE() 
+	{ 
+		cnt = llen = rlen = lval = rval = 0;
+	}
+	NODE(ll cnt_, ll llen_, ll rlen_, ll lval_, ll rval_)
+	{
+		cnt = cnt_; llen = llen_; rlen = rlen_; lval = lval_; rval = rval_;
+	}
+};
+
+const int MAXN = 100100;
+const int MAXSEG = 1 << 18;
+int N, M;
+int A[MAXN];
+ll seg[MAXSEG];
+ll llen[MAXSEG];
+ll rlen[MAXSEG];
+ll lval[MAXSEG];
+ll rval[MAXSEG];
+ll lazy[MAXSEG];
+
+void update_parent(int node, int left, int right)
+{
+	int mid = (left + right) / 2;
+	seg[node] = seg[2 * node] + seg[2 * node + 1];
+
+	llen[node] = llen[2 * node]; lval[node] = lval[2 * node];
+	if (llen[2 * node] == mid - left + 1 && lval[2 * node] == lval[2 * node + 1])
+		llen[node] += llen[2 * node + 1];
+
+	rlen[node] = rlen[2 * node + 1]; rval[node] = rval[2 * node + 1];
+	if (rlen[2 * node + 1] == right - mid && rval[2 * node + 1] == rval[2 * node])
+		rlen[node] += rlen[2 * node];
+
+	if (rval[2 * node] == lval[2 * node + 1])
+		seg[node] += rlen[2 * node] * llen[2 * node + 1];
+}
+
+void build_tree(int node, int left, int right)
+{
+	if (left == right)
+	{
+		seg[node] = llen[node] = rlen[node] = 1;
+		lval[node] = rval[node] = A[left];
+		return;
+	}
+
+	int mid = (left + right) / 2;
+	build_tree(2 * node, left, mid);
+	build_tree(2 * node + 1, mid + 1, right);
+	update_parent(node, left, right);
+}
+
+void down(int node, int left, int right)
+{
+	if (lazy[node] != 0)
+	{
+		int mid = (left + right) / 2;
+		seg[2 * node] = (ll)(mid - left + 1)*(mid - left + 2) / 2;
+		llen[2 * node] = rlen[2 * node] = mid - left + 1;
+		lval[2 * node] = rval[2 * node] = lazy[node];
+
+		seg[2 * node + 1] = (ll)(right - mid)*(right - mid + 1) / 2;
+		llen[2 * node + 1] = rlen[2 * node + 1] = right - mid;
+		lval[2 * node + 1] = rval[2 * node + 1] = lazy[node];
+
+		lazy[2 * node] = lazy[2 * node + 1] = lazy[node];
+		lazy[node] = 0;
+	}
+}
+
+void update(int node, int left, int right, int ql, int qr, int c)
+{
+	if (left > right || ql > qr || qr < left || right < ql)
+		return;
+
+	if (ql <= left && right <= qr)
+	{
+		seg[node] = (ll)(right - left + 1)*(right - left + 2) / 2;
+		llen[node] = rlen[node] = right - left + 1;
+		lval[node] = rval[node] = c;
+		lazy[node] = c;
+		return;
+	}
+
+	down(node, left, right);
+
+	int mid = (left + right) / 2;
+	update(2 * node, left, mid, ql, qr, c);
+	update(2 * node + 1, mid + 1, right, ql, qr, c);
+	update_parent(node, left, right);
+}
+
+NODE query(int node, int left, int right, int ql, int qr)
+{
+	if (left > right || ql > qr || qr < left || right < ql)
+		return NODE();
+
+	if (ql <= left && right <= qr)
+		return NODE(seg[node], llen[node], rlen[node], lval[node], rval[node]);
+
+	down(node, left, right);
+
+	int mid = (left + right) / 2;
+	NODE ret1 = query(2 * node, left, mid, ql, qr);
+	NODE ret2 = query(2 * node + 1, mid + 1, right, ql, qr);
+
+	NODE ret;
+	ret.cnt = ret1.cnt + ret2.cnt;
+
+	ret.llen = ret1.llen; ret.lval = ret1.lval;
+	if (ret1.llen == mid - left + 1 && ret1.lval == ret2.lval)
+		ret.llen += ret2.llen;
+
+	ret.rlen = ret2.rlen; ret.rval = ret2.rval;
+	if (ret2.rlen == right - mid && ret2.rval == ret1.rval)
+		ret.rlen += ret1.rlen;
+
+	if (ret1.rval == ret2.lval)
+		ret.cnt += ret1.rlen * ret2.llen;
+
+	return ret;
+}
+
+int main()
+{
+	ios::sync_with_stdio(0);
+
+	cin >> N >> M;
+	for (int i = 1; i <= N; i++)
+		cin >> A[i];
+
+	build_tree(1, 1, N);
+
+	for (int i = 0; i < M; i++)
+	{
+		int type;
+		cin >> type;
+		if (type == 0) 
+		{
+			int ql, qr, c;
+			cin >> ql >> qr >> c;
+			update(1, 1, N, ql, qr, c);
+		}
+		else
+		{
+			int ql, qr;
+			cin >> ql >> qr;
+			cout << query(1, 1, N, ql, qr).cnt << "\n";
+		}
+	}
+
+	return 0;
+}

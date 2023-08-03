@@ -1,0 +1,107 @@
+/*********************************************************************\
+   |--\        ---       /\        |-----------| -----   /-------|    |
+   |   \        |       /  \       |               |    /             |
+   |    \       |      /    \      |               |   |              |
+   |     \      |     /      \     |               |   |----|         |
+   |      \     |    / ------ \    |-------|       |        |-----|   |
+   |       \    |   /          \   |               |              |   |
+   |        \   |  /            \  |               |              /   |
+  ---        -------            ------           ----- |---------/    |
+                                                                      |
+    codeforces = nfssdq  ||  topcoder = nafis007                      |
+    mail = nafis_sadique@yahoo.com || nfssdq@gmail.com                |
+    IIT,Jahangirnagar University(41)                                  |
+                                                                      |
+**********************************************************************/
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define xx         first
+#define yy         second
+#define pb         push_back
+#define mp         make_pair
+#define LL         long long
+#define inf        INT_MAX/3
+#define mod        1000000007ll
+#define PI         acos(-1.0)
+#define linf       (1ll<<60)-1
+#define FOR(I,A,B) for(int I = (A); I < (B); ++I)
+#define REP(I,N)   FOR(I,0,N)
+#define ALL(A)     ((A).begin(), (A).end())
+#define set0(ar)   memset(ar,0,sizeof ar)
+#define vsort(v)   sort(v.begin(),v.end())
+#define setinf(ar) memset(ar,126,sizeof ar)
+
+//cout << fixed << setprecision(20) << p << endl;
+
+template <class T> inline T bigmod(T p,T e,T M){
+    LL ret = 1;
+    for(; e > 0; e >>= 1){
+        if(e & 1) ret = (ret * p) % M;
+        p = (p * p) % M;
+    } return (T)ret;
+}
+template <class T> inline T gcd(T a,T b){if(b==0)return a;return gcd(b,a%b);}
+template <class T> inline T modinverse(T a,T M){return bigmod(a,M-2,M);}
+
+LL fib[1000001][2];
+LL seg[4000001][2], M;
+void insert(int idx, int s, int e, int p, LL v){
+    if(s == e){
+        seg[idx][0] = (v * fib[0][0]) % M;
+        seg[idx][1] = (v * fib[0][1]) % M;
+        return;
+    }
+    int mid = (s + e) / 2;
+    if(p <= mid) insert(idx * 2 + 1, s, mid, p, v);
+    else insert(idx * 2 + 2, mid + 1, e, p, v);
+
+    LL v1 = 0, v2 = 0, v3 = 0, v4 = 0;
+    v2 = fib[mid-s+2][0]; v4 = fib[mid-s+2][1];
+    v1 = fib[mid-s+1][0]; v3 = fib[mid-s+1][1];
+
+    seg[idx][0] = (seg[idx * 2 + 1][0] + v1*seg[idx * 2 + 2][0] + v2*seg[idx * 2 + 2][1]) % M;
+    seg[idx][1] = (seg[idx * 2 + 1][1] + v3*seg[idx * 2 + 2][0] + v4*seg[idx * 2 + 2][1]) % M;
+}
+
+LL query(int idx, int s, int e, int st, int ed, LL x, LL y){
+    if(s == st && e == ed){
+        return (seg[idx][0]*x + seg[idx][1]*y) % M;
+    }
+    int mid = (s + e) / 2;
+    if(ed <= mid) return query(idx * 2 + 1, s, mid, st, ed, x, y);
+    else if(st > mid) return query(idx * 2 + 2, mid + 1, e, st, ed, x, y);
+    else {
+        LL ret = query(idx * 2 + 1, s, mid, st, mid, x, y);
+        LL tx = (fib[mid-st+1][0]*x + fib[mid-st+1][1]*y) % M;
+        LL ty = (fib[mid-st+2][0]*x + fib[mid-st+2][1]*y) % M;
+        ret = (ret + query(idx * 2 + 2, mid + 1, e, mid + 1, ed, tx, ty)) % M;
+        return ret;
+    }
+}
+
+int main(){
+    ios_base::sync_with_stdio(0); cin.tie(0);
+    int n, m; cin >> n >> m >> M;
+
+    fib[0][0] = 1; fib[1][1] = 1;
+    for(int i = 2; i <= 1000000; i++){
+        fib[i][0] = (fib[i-1][0] + fib[i-2][0]) % M;
+        fib[i][1] = (fib[i-1][1] + fib[i-2][1]) % M;
+    }
+
+    FOR(i, 1, n+1){
+        int x; cin >> x;
+        insert(0, 1, n, i, x%M);
+    }
+    while(m--){
+        int t, x, y; cin >> t >> x >> y;
+        if(t == 1){
+            insert(0, 1, n, x, y%M);
+        } else {
+            cout << query(0, 1, n, x, y, 1, 1) << endl;
+        }
+    }
+
+}

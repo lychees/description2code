@@ -1,0 +1,69 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+#define N 1000010
+class BIT
+{
+	vector<int> data;
+	public:
+	BIT(int sz= N):data(sz){}
+	int query(int l,int r)
+	{
+		int ans=0;
+		--l;
+		while(l!=r)
+		{
+			if(l<r) ans+=data[r],r&=r-1;
+			else ans-=data[l],l&=l-1;
+		}
+		return ans;
+	}
+	void update(int idx,int d)
+	{
+		while(idx<data.size())
+		{
+			data[idx]+=d;
+			idx+=idx&-idx;
+		}
+	}
+};
+char str[N];
+int main()
+{
+    int n,q;
+    scanf("%d%d%s",&n,&q,str+1);
+    BIT bts[26];
+    for(int i=1;i<=n;++i) bts[str[i]-'a'].update(i,1);
+    while(q--)
+    {
+    	int t;
+    	scanf("%d",&t);
+    	if(t==0)
+    	{
+    		char c;
+    		int idx;
+    		scanf("%d %c",&idx,&c);
+    		bts[str[idx]-'a'].update(idx,-1);
+    		str[idx] = c;
+    		bts[c-'a'].update(idx,1);
+    	}
+    	else
+    	{
+    		int l,r,k;
+    		scanf("%d%d%d",&l,&r,&k);
+    		int ans=0,cnt=0;
+    		if(k>r-l+1) printf("Out of range\n");
+    		else{
+    		for(;;)
+    		{
+    			cnt+=bts[ans].query(l,r);
+    			if(cnt>=k)break;
+    			++ans;
+    		}
+    		printf("%c\n",char(ans+'a'));
+    		}
+    	}
+    }
+    
+    return 0;
+}

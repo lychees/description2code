@@ -1,0 +1,219 @@
+/*
+ID: ashish1610
+PROG:
+LANG: C++
+*/
+#include<bits/stdc++.h>
+using namespace std;
+#define ll	long long int
+#define MOD	1000000007
+/*Power by exponentiation*/
+ll pow_mod(ll a, ll b)
+{
+	ll res=1;
+	while(b)
+	{
+		if(b&1)
+			res=(res*a)%MOD;
+		a=(a*a)%MOD;
+		b>>=1;
+	}
+	return res;
+}
+/*Matrix Exponentiation*/
+typedef vector<vector<ll> > matrix;
+const int K=2;
+matrix mul(matrix A, matrix B)
+{
+	matrix C(K+1,vector<ll>(K+1));
+	for(int i=1;i<=K;++i)
+		for(int j=1;j<=K;++j)
+			for(int k=1;k<=K;++k)
+				C[i][j]=(C[i][j]+A[i][k]*B[k][j])%MOD;
+	return C;
+}
+matrix mat_pow(matrix A, int p)
+{
+	if(p==1)
+		return A;
+	if(p&1)
+		return mul(A,mat_pow(A,p-1));
+	matrix tmp=mat_pow(A,p/2);
+	return mul(tmp, tmp);
+}
+ll solve(ll n, ll ar[2])
+{
+	matrix ans(K+1,vector<ll>(K+1));
+	ans[1][1]=0, ans[1][2]=1;
+	ans[2][1]=2, ans[2][2]=1;
+	if(n==1)
+		return ar[0];
+	ans=mat_pow(ans,n-1);
+	ll res=0;
+	for(int i=1;i<=K;++i)
+		res=(res+ans[1][i]*ar[i-1])%MOD;
+	return res;
+}
+/*Minimum Spanning Tree*/
+struct node
+{
+	int src,dest;
+	ll wght;
+};
+int par[100005],rnk[100005];
+int Find(int nd)
+{
+	if(par[nd]!=nd)
+		par[nd]=Find(par[nd]);
+	return par[nd];
+}
+void Union(int nd1, int nd2)
+{
+	int x=Find(nd1);
+	int y=Find(nd2);
+	if(rnk[x]<rnk[y])
+		par[x]=y;
+	else if(rnk[x]>rnk[y])
+		par[y]=x;
+	else
+	{
+		par[y]=x;
+		rnk[x]++;
+	}
+}
+bool compare(node n1, node n2)
+{
+	return n1.wght<n2.wght;
+}
+vector<node> mst;
+void kruskal(vector<node> g, int n)
+{
+	for(int i=0;i<n;++i)
+	{
+		par[i]=i;
+		rnk[i]=0;
+	}
+	sort(g.begin(),g.end(),compare);
+	int cnt=0,cnt1=0;
+	while(cnt!=n-1)
+	{
+		node ne=g[cnt1++];
+		int x=Find(ne.src);
+		int y=Find(ne.dest);
+		if(x!=y)
+		{
+			mst.push_back(ne);
+			Union(x,y);
+			cnt++;
+		}
+	}
+}
+/*Distance on tree using BFS or DFS*/
+ll ans[1005][1005],wt[1005][1005];
+vector<int> adj[1005];
+bool visited[1005];
+/*...............Using DFS........................*/
+void dfs(int nd, int src)
+{
+	visited[nd]=true;
+	for(int i=0;i<adj[nd].size();++i)
+	{
+		if(!visited[adj[nd][i]])
+		{
+			if(src==adj[nd][i])
+				ans[src][adj[nd][i]]=0;
+			else
+				ans[src][adj[nd][i]]=(ans[src][nd]+wt[nd][adj[nd][i]]);
+			dfs(adj[nd][i],src);
+		}
+	}
+}
+/*...............Using BFS........................*/
+void bfs(int nd, int src)
+{
+	queue<int> q;
+	q.push(nd);
+	while(!q.empty())
+	{
+		int id=q.front();
+		q.pop();
+		if(visited[id])
+			continue;
+		visited[id]=true;
+		for(int i=0;i<adj[id].size();++i)
+		{
+			if(!visited[adj[id][i]])
+			{
+				if(src==adj[id][i])
+					ans[src][adj[id][i]]=0;
+				else
+					ans[src][adj[id][i]]=(ans[src][id]+wt[id][adj[id][i]]);
+				q.push(adj[id][i]);
+			}
+		}
+	}
+}
+/*Shortest Path using Dijkstra*/
+vector<vector<pair<int,int> > >G(1005);
+vector<int> Dijkstra(int s)
+{
+	vector<int> D(1005,INT_MAX);
+    set<pair<int,int> > Q;
+    D[s] = 0;
+    Q.insert(make_pair(0,s));
+    while(!Q.empty())
+    {
+        pair<int,int> top = *Q.begin();
+        Q.erase(Q.begin());
+        int v = top.second;
+        int d = top.first;
+ 
+        for (vector<pair<int,int> >::const_iterator it = G[v].begin(); it != G[v].end(); it++)
+        {
+            int v2 = it->first;
+            int cost = it->second;
+            if (D[v2] > D[v] + cost)
+            {
+                if (D[v2] != INT_MAX)
+                {
+                    Q.erase(Q.find(make_pair(D[v2], v2)));
+                }
+                D[v2] = D[v] + cost;
+                Q.insert(make_pair(D[v2], v2));
+            }
+        }
+    }
+    return D;
+}
+/*Shortest path using bellman ford*/
+void bellman(int n)
+{
+	ll dist[n][n];
+	for(int i=1;i<=n;++i)
+		for(int j=1;j<=n;++j)
+			dist[i][j]=INT_MAX;
+	//take input here
+	for(int i=1;i<=n;++i)
+		dist[i][i]=0;
+	for(int k=1;k<=n;++k)
+		for(int i=1;i<=n;++i)
+			for(int j=1;j<=n;++j)
+				dist[i][j]=min(dist[i][j],dist[i][k]+dist[k][j]);
+}
+int main()
+{
+	ios_base::sync_with_stdio(false);
+	int t;
+	cin>>t;
+	while(t--)
+	{ 
+		ll n;
+		cin>>n;
+		ll ar[2]={2,7};
+		if(n<=2)
+			cout<<ar[n-1]<<endl;
+		else
+			cout<<solve(n,ar)<<endl;
+	}
+	return 0;
+}

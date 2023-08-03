@@ -1,0 +1,48 @@
+#include <stdio.h>
+
+#define DEBUG 0
+
+long long gcd(long long a, long long b) {
+	if (b == 0) return a;
+	return gcd(b, a % b);
+}
+
+int LengthBruteForce(int start) {
+	for (int i = 2; i < start; i++)
+		if ((start % i) > 0) return 1 + LengthBruteForce(i);
+	return 1;
+}
+
+long long Count(long long N) {
+	if (DEBUG) fprintf(stderr, "[Count] N=%lld\n", N);
+	if (N == 1) return 0;
+	long long ans = ((N + 1) / 2 - 1) * 2;
+	if (DEBUG) fprintf(stderr, "sum_odd=%lld\n", ans);
+	long long lcm = 2, next_lcm, num_lcm, num_next_lcm = 1;
+	for (int d = 2; num_next_lcm > 0; d++, lcm = next_lcm) {
+		num_lcm = (N / lcm);
+		if (d + 1 > lcm) {
+			ans++;
+			num_lcm--;
+		}
+		long long divi = gcd(lcm, d + 1);
+		int dd = (d + 1) / divi;
+		if (lcm > N / dd) num_next_lcm = 0;
+		else {
+			next_lcm = lcm * dd;
+			num_next_lcm = N / next_lcm;
+		}
+		int lenbf = LengthBruteForce(d + 1);
+		ans += (num_lcm - num_next_lcm) * (lenbf + 1);
+		if (DEBUG) fprintf(stderr, "d=%d lcm=%lld nextlcm=%lld: nmultlcm=%lld nmultnextlcm=%lld lenbf=%d ans=%lld\n", d, lcm, next_lcm, num_lcm, num_next_lcm, lenbf, ans);
+	}
+	return ans;
+}
+
+int main() {
+	//freopen("x.txt", "r", stdin);
+	long long A, B;
+	scanf("%lld %lld", &A, &B);
+	printf("%lld\n", Count(B) - Count(A - 1));
+	return 0;
+}

@@ -1,0 +1,134 @@
+#include<bits/stdc++.h>
+using namespace std;
+# define ll long long
+# define mod 1000000007
+bool hsh[5000001];
+int fact[5000001],prime[200],id,vals[5000001],tots[5000001];
+void sieve(int n)
+{
+    int i,a;
+    for(i=2;i<=n;i++)
+        hsh[i]=true;
+    for(i=2;i<=n;i++)
+    if(hsh[i])
+    {
+        a=2;
+        fact[i]=i;
+        while(a*i<=n)
+            hsh[a*i]=false,fact[a*i]=i,a++;
+    }
+}
+int tot(int n)
+{
+    ll ret=n;
+    id=0;
+    while(n>1)
+    {
+        if(!hsh[fact[n]])
+            hsh[fact[n]]=true,prime[id++]=fact[n];
+        n/=fact[n];
+    }
+    for(int i=0;i<id;i++)
+        ret=ret-ret/prime[i],hsh[prime[i]]=false;
+    return ret%mod;
+}
+void init(int n)
+{
+    int i,j;
+    for(i=1;i<=n;i++)
+        tots[i]=tot(i);
+    for(i=1;i<=n;i++)
+        for(j=i;j<=n;j+=i)
+        vals[j]=(vals[j]+(1LL*tots[j/i]*i)%mod)%mod;
+}
+int ar[5000001];
+struct tree
+{
+    int data,a,b;
+    struct tree *l,*r;
+};
+void build_tree(struct tree *s)
+{
+if(s->a==s->b)
+{
+s->l=NULL;
+s->r=NULL;
+s->data=vals[ar[s->a]];
+}
+else
+{
+struct tree *p=(struct tree*)malloc(sizeof(struct tree));
+struct tree *q=(struct tree*)malloc(sizeof(struct tree));
+s->l=p;
+s->r=q;
+s->l->a=s->a;
+s->l->b=(s->a+s->b)/2;
+s->r->a=s->l->b+1;
+s->r->b=s->b;
+build_tree(p);
+build_tree(q);
+s->data=(p->data+q->data)%mod;
+}
+}
+int query(struct tree *s,int i,int j)
+{
+if(s->a==i && s->b==j)
+return s->data;
+if(i<=(s->a+s->b)/2 && j<=(s->a+s->b)/2)
+return query(s->l,i,j);
+if(i>(s->a+s->b)/2 && j>(s->a+s->b)/2)
+return query(s->r,i,j);
+return (1LL*(query(s->l,i,(s->a+s->b)/2)+query(s->r,((s->a+s->b)/2)+1,j)))%mod;
+}
+void update(struct tree *node,int i,int j,int index,int val)
+{
+    if(index>j || index<i)
+        return ;
+    if(i==j && i==index)
+    {
+        ar[index]=val;
+        node->data=vals[val];
+        return ;
+    }
+    if(index<=(node->a+node->b)/2)
+    update(node->l,i,(node->a+node->b)/2,index,val);
+    else if(index>(node->a+node->b)/2)
+    update(node->r,((node->a+node->b)/2)+1,j,index,val);
+    else
+    {
+    update(node->l,i,(node->a+node->b)/2,index,val);
+    update(node->r,(node->a+node->b)/2+1,j,index,val);
+    }
+    ll temp,temp1;
+    temp=node->l->data+node->r->data;
+    temp%=mod;
+    node->data=temp;
+    return ;
+}
+int main()
+{
+    sieve(500000);
+    memset(hsh,false,sizeof(hsh));
+    init(500000);
+    cin.sync_with_stdio(false);
+    int i,j,n,l,r;
+    cin>>n;
+    for(i=1;i<=n;i++)
+        cin>>ar[i];
+    struct tree *s=(struct tree*)malloc(sizeof(struct tree));
+    s->a=1;
+    s->b=n;
+    build_tree(s);
+    int q;
+    cin>>q;
+    while(q--)
+    {
+        char type;
+        cin>>type>>l>>r;
+        if(type=='C')
+            cout<<query(s,l,r)<<'\n';
+        else
+            update(s,1,n,l,r);
+    }
+    return 0;
+}

@@ -1,0 +1,112 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define MAX 200002
+
+int D;
+int good[MAX];
+int used[MAX / 32 + 1];
+int dused[20][MAX / 32 + 1];
+int nextd[20];
+int belowdiag[MAX];
+
+int init() {
+    memset(good, 0, sizeof (good));
+    memset(used, 0, sizeof (used));
+    memset(dused, 0, sizeof (dused));
+    for (int i = 0; i < D; i++) {
+        good[i] = i;
+        dused[i][0] = 1;
+        nextd[i] = 0;
+        belowdiag[i] = i + 1;
+    }
+    for (int col = D; col < MAX; col++) {
+        if (good[col]) {
+            belowdiag[col] = belowdiag[col - 1] + 1;
+            continue;
+        }
+        belowdiag[col] = belowdiag[col - 1];
+        while (dused[col % D][nextd[col % D]] == -1)
+            nextd[col % D]++;
+        int diag = nextd[col % D]*32;
+        int row = diag + col;
+        while (row < MAX && ((dused[col % D][diag >> 5]&(1 << (diag & 31))) ||
+                (used[row >> 5]&(1 << (row & 31))))
+                )
+            row++, diag++;
+        if (row < MAX) {
+            good[row] = col;
+            good[col] = row;
+            used[row >> 5] |= 1 << (row & 31);
+            dused[col % D][diag >> 5] |= 1 << (diag & 31);
+        } else
+            good[col] = MAX + 5;
+    }
+}
+
+int query(int w, int h) {
+    int res = 0;
+    while (w > 0 && good[w] > w)
+        w--;
+    while (h > 0 && good[h] < h)
+        h--;
+    if (good[w] > h) {
+        for (w = min(w, good[h] + 20); w > 0 && w > good[h] - 20; w--)
+            res += good[w] <= h && good[w] <= w && good[w] != 0;
+        res += belowdiag[w];
+    } else {
+        for (int i = 0; i < 20 && w > 0; i++, w--)
+            res += good[w] <= h && good[w] <= w && good[w] != 0;
+        res += belowdiag[w];
+    }
+    return res;
+}
+
+int query2(int a, int b) {
+    if (a < 0 || b < 0)
+        return 0;
+    return query(a, b) + query(b, a) - min(D, min(a, b) + 1);
+}
+
+int query_rect_bf(int x1, int y1, int x2, int y2) {
+    int res = 0;
+    for (; x1 <= x2; x1++)
+        res += y1 <= good[x1] && good[x1] <= y2;
+    return res;
+}
+
+int query_rect(int x1, int y1, int x2, int y2) {
+    int res = query2(x2, y2) - query2(x2, y1 - 1) - query2(x1 - 1, y2) + query2(x1 - 1, y1 - 1);
+    // assert(res==query_rect_bf(x1, y1, x2, y2));
+    return res;
+}
+
+long long gcd(long long a, long long b) {
+    while (b) {
+        long long temp = a % b;
+        a = b;
+        b = temp;
+    }
+    return a;
+}
+
+int main() {
+    int T;
+    int x1, y1, x2, y2;
+    scanf("%d %d", &D, &T);
+    init();
+    for (int i = 0; i < T; i++) {
+        scanf("%d %d %d %d", &x1, &y1, &x2, &y2);
+        x1--;
+        x2--;
+        y1--;
+        y2--;
+        long long num = query_rect(x1, y1, x2, y2);
+        long long den = (long long) (x2 - x1 + 1)*(y2 - y1 + 1);
+        long long g = gcd(num, den);
+        num /= g;
+        den /= g;
+        printf("%lld/%lld\n", num, den);
+    }
+    return 0;
+}

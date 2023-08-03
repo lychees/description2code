@@ -1,0 +1,99 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+
+#define MOD  1000000009
+#define MAXN 100
+#define MAXV 5001
+
+int n, m, w[10], s[MAXN];
+int aux[1<<10][10][MAXV], dpc[MAXV][1<<10], dps[MAXN][1<<10];
+long long dp[MAXN][1<<10];
+
+long long go(int idx, int mask) {
+    if (idx == n)
+        return 1;
+    if (dp[idx][mask] != -1)
+        return dp[idx][mask];
+    long long ret = 0;
+    if (mask == 0) {
+        for (int x = 1; x < 1 << m; x++)
+            ret += go(idx+1, x) * dps[idx][x] % MOD;
+        return dp[idx][mask] = ret % MOD;
+    }
+    for (int i = 0; i < m; i++) {
+        if (mask >> i & 1) {
+            int d = i + 1;
+            for (int x = 1; x < 1 << d; x++)
+                ret += go(idx+1, mask | x) * dps[idx][x] % MOD;
+            break;
+        }
+    }
+    for (int i = 0, j = 1; i < m; i = j++) {
+        if (~mask >> i & 1) continue;
+        while (j < m && (~mask >> j & 1)) j++;
+        int d = j < m ? j - i + 1 : j - i;
+        for (int x = 1; x < 1 << d; x++) {
+            int y = x << i;
+            ret += go(idx+1, mask | y) * dps[idx][y] % MOD;
+        }
+    }
+    for (int i = 0; i < m; i++)
+        if (mask >> i & 1)
+            ret -= go(idx+1, mask) * dps[idx][1 << i] % MOD;
+    ret %= MOD;
+    return dp[idx][mask] = ret < 0 ? ret + MOD : ret;
+}
+
+int main() {
+    int T;
+    scanf("%d", &T);
+    while (T--) {
+        scanf("%d %d", &n, &m);
+        for (int i = 0; i < m; i++)
+            scanf("%d", &w[i]);
+        for (int i = 0; i < n; i++)
+            scanf("%d", &s[i]);
+        sort(w, w+m);
+        for (int mask = 1; mask < 1 << m; mask++) {
+            int k = __builtin_ctz(mask);
+            for (int i = 0; i < k; i++)
+                for (int j = 0; j < w[i]; j++)
+                    aux[mask][i][j] = 0;
+        }
+        memset(dpc, 0, sizeof(dpc));
+        dpc[0][0] = 1;
+        for (int x = 0; x < MAXV; x++) {
+            for (int mask = 1; mask < 1 << m; mask++) {
+                int k = __builtin_ctz(mask);
+                if ((mask & (mask - 1)) == 0)
+                    dpc[x][mask] = x % w[k] == 0;
+                else
+                    dpc[x][mask] = aux[mask ^ 1 << k][k][x % w[k]];
+                for (int i = 0; i < k; i++) {
+                    int y = x % w[i];
+                    aux[mask][i][y] = (aux[mask][i][y] + dpc[x][mask]) % MOD;
+                }
+            }
+        }
+        for (int i = 0; i < n; i++) {
+            dps[i][0] = 1;
+            for (int mask = 1; mask < 1 << m; mask++) {
+                long long cnt = 0;
+                for (int sub = mask; sub > 0; sub = (sub-1) & mask) {
+                    if (__builtin_popcount(sub) & 1)
+                        cnt += dpc[s[i]][sub];
+                    else
+                        cnt -= dpc[s[i]][sub];
+                }
+                if (~__builtin_popcount(mask) & 1)
+                    cnt = -cnt;
+                cnt %= MOD;
+                dps[i][mask] = cnt < 0 ? cnt + MOD : cnt;
+            }
+        }
+        memset(dp, -1, sizeof(dp));
+        printf("%lld\n", go(0, 0));
+    }
+}

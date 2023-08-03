@@ -1,0 +1,54 @@
+'''
+# Read input from stdin and provide input before running code
+
+name = raw_input('What is your name?\n')
+print 'Hi, %s.' % name
+'''
+'''binary-indexed tree, allows point updates and prefix sum queries
+Copied from : http://stackoverflow.com/questions/22943787/sum-of-absolute-differences-of-a-number-in-an-array
+'''
+class Fenwick:
+  def __init__(self, n):
+    self.tree = [0]*(n+1)
+    self.n = n
+  def update_point(self, i, val):  # O(log n)
+    i += 1
+    while i <= self.n:
+      self.tree[i] += val
+      i += i & -i
+  def read_prefix(self, i):        # O(log n)
+    i += 1
+    sum = 0
+    while i > 0:
+      sum += self.tree[i]
+      i -= i & -i
+    return sum
+
+def solve(a):
+  rank = { v : i for i, v in enumerate(sorted(a)) }
+  res = []
+  counts, sums = Fenwick(len(a)), Fenwick(len(a))
+  total_sum = 0
+  for i, x in enumerate(a):
+    r = rank[x]
+    num_smaller = counts.read_prefix(r)
+    sum_smaller = sums.read_prefix(r)
+    res.append(total_sum - 2*sum_smaller + x * (2*num_smaller - i))
+    counts.update_point(r, 1)
+    sums.update_point(r, x)
+    total_sum += x
+  return res
+
+
+N = int(raw_input())
+i = 0
+while i < N:
+    count = raw_input()
+    x = raw_input().split()
+    new_x = [int(j) for j in x]
+    res = sum(solve(new_x)) * max(new_x)
+    if(res > 1000000007):
+    	res = res % 1000000007
+    print res
+    i = i + 1
+     

@@ -1,0 +1,110 @@
+#include <iostream>
+#include <cstring>
+
+using namespace std;
+
+typedef long long int int32;
+const int32 mod = 1e9+7;
+int D[10101];
+int X[11];
+
+int Process(int N,int M);
+
+int main()
+{
+	int T,n,m;
+	cin>>T;
+	while(T--)
+    {
+        cin >> n >> m;
+		cout << Process(n,m) << endl; 
+	}
+	return 0;
+}
+
+int Process(int N,int M)
+{
+	int32 TW[N+1][M+1];
+
+    for (int i=0; i<N; i++)
+		cin >> X[i];
+	for (int i=0; i<N; i++)
+		cin >> D[i];
+
+
+	for (int i=0; i<N; i++)
+    {
+		int32 total[D[i]];
+		memset(total, 0, sizeof(total));
+
+        total[ X[i]-1 ] = 1;
+
+        int32 ans = 0;
+		TW[i][0] = 1;
+
+		for (int step=1; step<=M; step++)
+        {
+			int32 tmp[D[i]];
+
+			for (int j=0; j<D[i]; j++)
+            {
+				tmp[j] = 0;
+
+				if (j>0) 
+                    tmp[j] += total[j-1];
+
+				if (j<D[i]-1) 
+                    tmp[j] += total[j+1];
+
+                tmp[j] %= mod;
+			}
+
+			TW[i][step] = 0;
+
+            for (int j=0; j<D[i]; j++)
+            {
+				total[j] = tmp[j];
+				TW[i][step] += total[j];
+				TW[i][step] %= mod;
+			}
+        }
+  	}
+
+	int32 C[M+1][M+1];
+
+	for (int i=0; i<=M; i++)
+    {
+		C[i][0] = 1;
+		for (int j=1; j<=i; j++)
+			C[i][j] = (C[i-1][j]+C[i-1][j-1]) % mod;
+
+        for (int j=i+1; j<=M; j++)
+			C[i][j] = 0;
+	}
+
+	int32 result[N][M+1];
+
+	for (int i=0; i<N; i++)
+    {
+		for (int step=0; step<=M; step++)
+        {
+            if (i==0)
+            {
+                result[i][step] = TW[i][step];
+                continue;
+            }
+
+            result[i][step] = 0;
+            for (int k=0; k<=step; k++)
+            {
+                int32 tmp = (result[i-1][k]*TW[i][step-k])%mod;
+                tmp = tmp*C[step][step-k]%mod;
+                result[i][step] += tmp;
+                result[i][step] %= mod;
+            }
+        
+        }
+    }
+
+    return result[N-1][M];
+}

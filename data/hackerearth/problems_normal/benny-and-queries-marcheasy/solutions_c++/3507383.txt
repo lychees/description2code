@@ -1,0 +1,129 @@
+#include <bits/stdc++.h>
+ 
+using namespace std;
+ 
+#define ll long long int
+#define pb push_back
+#define mp make_pair
+#define INF (ll)(1e18)
+#define inf 0x7fffffff
+#define inff 100000
+#define ff first
+#define ss second
+#define sz(x) ((int) (x).size())
+#define fast cin.sync_with_stdio(0);cin.tie(0)
+#define rep(i,N) for(int i = 0;i < N;i++)
+#define frep(i,a,b) for(int i = a;i <= b;i++)
+#define pii pair<int , int>
+#define pll pair<ll , ll>
+#define vii vector<int>
+#define fill(A,v) memset(A,v,sizeof(A))
+#define setbits(x) __builtin_popcount(x)
+#define print(A,j,k) for(int ii=j;ii<=k;ii++)cout<<A[ii]<<" ";cout<<"\n"
+#define all(x) (x).begin(), (x).end()
+#define gcd __gcd
+#define SQRT 350
+#define CASES int t;cin>>t;while(t--)
+#define FILE freopen("inp.txt" , "r" , stdin);
+#define ld long double
+
+const int N = 2e5 + 5;
+const int MOD = 1e9 + 9;
+const int MOD2 = 1e9 + 7;
+
+struct trie {
+	struct trie * link[2];
+	vii V;
+	trie() {
+		link[0] = link[1] = NULL;
+		V.clear();
+	}
+};
+
+struct trie *root , *troot , *croot;
+
+void insert(int x , int index) {
+	root = troot;
+	for(int j = 19;j >= 0;j--) {
+		int v = ((1 << j) & x);
+		v = min(v , 1);
+		// cout << "v " << v << '\n';
+		if (root -> link[v] == NULL) {
+			root -> link[v] = new trie();
+		}
+		root = root -> link[v];
+		root -> V.pb(index);
+	}
+}
+
+bool check(struct trie * root , int l , int r) {
+	int i = lower_bound(root -> V.begin() , root -> V.end() , l) - root -> V.begin();
+	if (i == root -> V.size())
+		return false;
+	return (root -> V[i] <= r);
+}
+
+/*
+1 7 3 8 2
+1 111 11 1000 10
+
+10
+1010
+*/
+
+int query(int l , int r , int x) {
+	root = troot;
+	int ans = 0;
+	for(int j = 19;j >= 0;j--) {
+		int v = ((1 << j) & x);
+		v = min(v , 1);
+		int rev = 0;
+		if (v == 0)
+			rev = 1;
+
+		croot = root;
+		if (croot -> link[rev] != NULL) {
+			croot = croot -> link[rev];
+			if (check(croot , l, r)) {
+				root = root -> link[rev];
+				ans += (1 << j);
+				// cout << "ans " << ans << '\n';
+				// cout << "rev " << rev << '\n';
+			}
+			else
+				root = root -> link[v];
+		}
+		else
+			root = root -> link[v];
+	}
+	return ans;
+}
+
+int main(int argc, char const *argv[])
+{
+	fast;
+
+	// FILE;
+
+	int n , q;
+	cin >> n >> q;
+
+	root = new trie();
+	troot = root;
+
+	rep(i , n) {
+		int x;
+		cin >> x;
+		insert(x , i);
+	}
+
+	while (q--) {
+		int l , r , x;
+		cin >> l >> r >> x;
+		l--;
+		r--;
+		cout << query(l , r , x) << '\n';
+	}
+
+	return 0;
+}

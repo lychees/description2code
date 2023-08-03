@@ -1,0 +1,116 @@
+#include<bits/stdc++.h>
+using namespace std;
+struct node
+{
+	int max,left,right;
+};
+int getMax(int a,int b)
+{
+	return (a>b?a:b);
+}
+void build(node *tree,long long *a,int i,int start,int end)
+{
+	if(start==end)
+	{
+		tree[i].max=1;
+		tree[i].left=1;
+		tree[i].right=1;
+		return;
+	}
+	int mid=(start+end)/2;
+	build(tree,a,2*i,start,mid);
+	build(tree,a,2*i+1,mid+1,end);
+	tree[i].max=getMax(tree[2*i].max,tree[2*i+1].max);
+	tree[i].left=tree[2*i].left;
+	tree[i].right=tree[2*i+1].right;
+	if(a[mid]<a[mid+1])
+	{
+		int newval=tree[2*i].right+tree[2*i+1].left;
+		if(newval>tree[i].max)
+			tree[i].max=newval;
+		if(tree[2*i].left==(mid+1-start))
+			tree[i].left=(mid+1-start)+tree[2*i+1].left;
+		if(tree[2*i+1].right==(end-mid))
+			tree[i].right=(end-mid)+tree[2*i].right;
+	}
+}
+void update(node *tree,long long *a,int target,int i,int start,int end)
+{
+	if(start==end)
+		return;
+	int mid=(start+end)/2;
+	if(target<=mid)
+		update(tree,a,target,2*i,start,mid);
+	else
+		update(tree,a,target,2*i+1,mid+1,end);
+	tree[i].max=getMax(tree[2*i].max,tree[2*i+1].max);
+	tree[i].left=tree[2*i].left;
+	tree[i].right=tree[2*i+1].right;
+	if(a[mid]<a[mid+1])
+	{
+		int newval=tree[2*i].right+tree[2*i+1].left;
+		if(newval>tree[i].max)
+			tree[i].max=newval;
+		if(tree[2*i].left==(mid+1-start))
+			tree[i].left=(mid+1-start)+tree[2*i+1].left;
+		if(tree[2*i+1].right==(end-mid))
+			tree[i].right=(end-mid)+tree[2*i].right;
+	}
+}
+int query(node *tree,long long *a,int l,int r,int i,int start,int end)
+{
+	if(start>r||end<l)
+		return 0;
+	if(start>=l&&end<=r)
+		return tree[i].max;
+	int mid=(start+end)/2;
+	int m1=query(tree,a,l,r,2*i,start,mid);
+	int m2=query(tree,a,l,r,2*i+1,mid+1,end);
+	int max=getMax(m1,m2);
+	if(m1!=0&&m2!=0)
+	{
+		if(a[mid]<a[mid+1])
+		{
+			int L=tree[2*i].right;
+			if(L>(mid+1-l))
+				L=(mid+1-l);
+			int R=tree[2*i+1].left;
+			if(R>(r-mid))
+				R=(r-mid);
+			if(L+R>max)
+				max=L+R;
+		}
+	}
+	return max;
+}
+int main()
+{
+	int t;
+	cin>>t;
+	while(t--)
+	{
+		int n,q;
+		cin>>n>>q;
+		long long a[n+1];
+		for(int i=1;i<=n;i++)
+			scanf("%lld",&a[i]);
+		int size=pow(2,ceil(log2(n))+1);
+		node tree[size];
+		build(tree,a,1,1,n);
+		int type,x,y;
+		while(q--)
+		{
+			scanf("%d %d %d",&type,&x,&y);
+			if(type==1)
+			{
+				a[x]+=y;
+				update(tree,a,x,1,1,n);
+			}
+			else
+			{
+				cout<<query(tree,a,x,y,1,1,n)<<endl;
+			}
+		}
+	}
+	return 0;
+}

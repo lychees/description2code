@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+bool seen[30], adj[30][30];
+int inDeg[30], ra[30];
+vector<string> v;
+vector<pair<int,int> > ans;
+
+void init(){
+	for( int i = 0; i <= 26; i++ )
+		for( int j = 0; j <= 26; j++ )	adj[i][j] = false;
+	
+	
+	for( int i = 0; i <= 26; i++ )	inDeg[i] = 0;
+	for( int i = 0; i <= 26; i++ ){	seen[i] = false;	ra[i] = -1;	}
+}
+
+int toI( char c ){
+	return (int)( c - 97 );	
+}
+
+
+void topo(){
+	queue<int> q;
+	int cnt = 0;
+	for( int i = 0; i < 26; i++ )
+		if( seen[i] && inDeg[i] == 0 ){	
+			q.push( i );
+			ra[i] = 0;
+			ans.push_back( make_pair( ra[i], i ) );
+		}
+	
+	while( !q.empty() ){
+		int v = q.front();
+		q.pop();
+		
+		//ans.push_back( make_pair( cnt++, v ) );
+		
+		for( int i = 0; i < 26; i++ )
+			if( seen[i] && adj[v][i] ){
+				inDeg[i]--;
+				
+				if( inDeg[i] == 0 ){
+					ra[i] = ra[v]+1;
+					ans.push_back( make_pair( ra[i], i ) );
+					q.push( i );
+				}
+			}		
+	}	
+	
+	sort( ans.begin(), ans.end() );
+	
+
+	
+	for( int i = 0; i < ans.size(); i++ ){
+		
+		cout<<char(ans[i].second+97);
+		if( i < ans.size() - 1 && ans[i].first != ans[i+1].first )	cout<<endl;
+	}
+}
+
+int main()
+{
+	int n;
+	cin>>n;
+	string s;
+	
+	for( int i = 0; i < n; i++ ){
+		cin>>s;
+		for( int j = 0; j < s.length(); j++ )	seen[toI(s[j])] = true;
+		v.push_back( s );
+	}
+	
+	for( int i = 0; i < n-1; i++ )
+		for( int j = i+1; j < n; j++ ){
+			int k = 0;
+			while( v[i][k] == v[j][k] )	k++;
+			
+			if( k < v[i].length() && k < v[j].length() ){
+				int a = toI( v[i][k] ), b = toI( v[j][k] );
+				
+				if( adj[a][b] == false ){
+					adj[a][b] = true;
+					inDeg[b]++;
+				}
+			}
+		}
+		
+	topo();
+	
+	
+    return 0;
+}

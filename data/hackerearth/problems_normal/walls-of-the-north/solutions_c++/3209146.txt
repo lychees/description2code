@@ -1,0 +1,62 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int N = 1234567;
+
+int mx[2][N];
+int t;
+
+void modify(int q, int x, int v) {
+  while (x <= t) {
+    if (v > mx[q][x]) mx[q][x] = v;
+    x = (x | (x - 1)) + 1;
+  }
+}
+
+int find_max(int q, int x) {
+  int v = 0;
+  while (x > 0) {
+    if (mx[q][x] > v) v = mx[q][x];
+    x &= x - 1;
+  }
+  return v;
+}
+
+int f[2][N];
+int h[N];
+pair <int, int> hs[N];
+
+int main() {
+  int tt;
+  scanf("%d", &tt);
+  while (tt--) {
+    int n;
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) {
+      scanf("%d", h + i);
+      hs[i] = make_pair(h[i], i);
+    }
+    sort(hs, hs + n);
+    t = 0;
+    for (int i = 0; i < n; i++) {
+      if (i == 0 || hs[i].first != hs[i - 1].first) {
+        t++;
+      }
+      h[hs[i].second] = t;
+    }
+    for (int i = 1; i <= t; i++) {
+      mx[0][i] = mx[1][i] = 0;
+    }
+    int ans = 0;
+    for (int i = 0; i < n; i++) {
+      f[0][i] = find_max(0, h[i]) + 1;
+      f[1][i] = find_max(1, t - h[i] + 1) + 1;
+      modify(0, h[i], f[1][i]);
+      modify(1, t - h[i] + 1, f[0][i]);
+      ans = max(ans, max(f[0][i], f[1][i]));
+    }
+    printf("%d\n", ans);
+  }
+  return 0;
+}

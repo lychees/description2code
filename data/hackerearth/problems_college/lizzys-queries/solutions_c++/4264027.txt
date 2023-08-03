@@ -1,0 +1,124 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define pb push_back
+#define mp make_pair
+#define all(x) x.begin(),x.end()
+#define sz(x) ((int)x.size())
+
+
+typedef long long ll;
+typedef pair<int,int> pii;
+typedef pair<ll,pair<ll,ll> > plll;
+const ll MOD = 1e9+7;
+const ll BASE = 37;
+const int MAXN = 1e5+5;
+bool st[4*MAXN];
+ll fash[4*MAXN];
+ll rash[4*MAXN];
+string str;
+ll power(ll a, ll b) {
+	ll ret=1;
+	while(b) {
+		if(b&1) ret*=a;
+		a*=a;
+		a%=MOD;
+		ret%=MOD;
+		b>>=1;
+	}
+	return ret;
+}
+ll inv(ll x) {
+	return power(x,MOD-2);
+}
+void build(int node, int start, int end) {
+	if(start==end) {
+		st[node]=true;
+		fash[node]=rash[node]=str[start]-'a';
+		return;
+	}
+	int mid=(start+end)>>1;
+	build(2*node,start,mid);
+	build(2*node+1,mid+1,end);
+	ll fHash=fash[2*node];
+	fHash+=(power(BASE,mid-start+1)*fash[2*node+1])%MOD;
+	fHash%=MOD;
+	ll rHash=rash[2*node+1];
+	rHash+=(power(BASE,end-mid)*rash[2*node])%MOD;
+	rHash%=MOD;
+	fash[node]=fHash;
+	rash[node]=rHash;
+}
+bool valid(int start, int end, int qs, int qe) {
+	if(start>end or qs>end or qe<start) return false;
+	return true;
+}
+plll query(int node, int start, int end, int qs, int qe) {
+	if(start>=qs and end<=qe) return mp(fash[node],mp(rash[node],end-start+1));
+	int mid=(start+end)>>1;
+	plll t1,t2;
+	plll z={-1,{-1,-1}};
+	if(valid(start,mid,qs,qe)) {
+		t1=query(2*node,start,mid,qs,qe);
+		z=t1;
+	}
+	if(valid(mid+1,end,qs,qe)) {
+		t2=query(2*node+1,mid+1,end,qs,qe);
+		if(z.ff==-1 and z.ss.ff==-1 and z.ss.ss==-1) z=t2;
+		else {
+			ll fHash=t1.ff;
+			fHash+=(power(BASE,t1.ss.ss)*t2.ff)%MOD;
+			fHash%=MOD;
+			ll rHash=t2.ss.ff;
+			rHash+=(power(BASE,t2.ss.ss)*t1.ss.ff)%MOD;
+			rHash%=MOD;
+			z.ff=fHash;
+			z.ss.ff=rHash;
+			z.ss.ss=t1.ss.ss+t2.ss.ss;
+		}
+	}
+	return z;
+}
+void update(int node, int start, int end, int qs, int qe, char c) {
+	if(start>end or qs>end or qe<start) return;
+	if(start>=qs and end<=qe) {
+		fash[node]=rash[node]=c-'a';
+		return;
+	}
+	int mid=(start+end)>>1;
+	update(2*node,start,mid,qs,qe,c);
+	update(2*node+1,mid+1,end,qs,qe,c);
+	ll fHash=fash[2*node];
+	fHash+=(power(BASE,mid-start+1)*fash[2*node+1])%MOD;
+	fHash%=MOD;
+	ll rHash=rash[2*node+1];
+	rHash+=(power(BASE,end-mid)*rash[2*node])%MOD;
+	rHash%=MOD;
+	fash[node]=fHash;
+	rash[node]=rHash;
+}
+int main() {
+	// freopen("TASK.in","r",stdin);freopen("TASK.out","w",stdout);
+	int n,q;
+	cin>>n>>q;
+	cin>>str;
+	build(1,0,n-1);
+	while(q--) {
+		int x,y,z;
+		char ch;
+		cin>>x>>y;
+		if(x) cin>>z;
+		else cin>>ch;
+		plll ans;
+		if(x) {
+			ans=query(1,0,n-1,y-1,z-1);
+			if(ans.ff==ans.ss.ff) printf("Yes\n");
+			else printf("No\n");
+		}
+		else update(1,0,n-1,y-1,y-1,ch);
+	}
+	return 0;
+}

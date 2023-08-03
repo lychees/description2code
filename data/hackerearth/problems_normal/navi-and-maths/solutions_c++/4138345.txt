@@ -1,0 +1,67 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define mod 1000000007
+
+vector<int> binary_conversion(int number, int range)
+{
+    vector<int> ret;
+    while(number){
+        ret.push_back(number%2);
+        number/=2;
+    }
+    while(ret.size() < range)
+        ret.push_back(0);
+    reverse(ret.begin(), ret.end());
+    return ret;
+}
+
+long long find_inverse(int number, long long power)
+{
+    if (power == 0)
+        return 1;
+    long long p = find_inverse(number, power/2) % mod;
+    p = (p * p) % mod;
+    return (power%2 == 0)? p : (number * p) % mod;
+}
+
+int main()
+{
+    int t;
+    cin>>t;
+    int x = 1;
+    while(x!=t+1){
+        int n;
+        cin>>n;
+        vector<int> numbers;
+        for(int q=0; q!=n; q++){
+            int x;
+            cin>>x;
+            numbers.push_back(x);
+        }
+        int limit = pow(2,n)-1;
+        double max_val = 0;
+        for(int q=3; q!=limit+1; q++){
+            vector<int> binary = binary_conversion(q, n);
+            vector<int> picked_values;
+            for(int w=0; w!=binary.size(); w++)
+                if(binary[w]==1)
+                    picked_values.push_back(numbers[w]);
+            if(picked_values.size()<2)
+                continue;
+            int denominator = accumulate(picked_values.begin(), picked_values.end(), 0);
+            long long mul_inverse = find_inverse(denominator, mod-2);
+            long long P = 1;
+            for(vector<int>::iterator iter=picked_values.begin(); iter!=picked_values.end(); iter++){
+                P*=(*iter);
+                P%=mod;
+            }
+            P = P * (mul_inverse%mod);
+            P%=mod;
+            if(P > max_val)
+                max_val = P;
+        }
+        cout<<"Case #"<<x<<": "<<(long long)max_val<<endl;
+        x++;
+    }
+}
+

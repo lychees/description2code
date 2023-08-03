@@ -1,0 +1,116 @@
+//Prime Factorization for Numbers <= 10^9
+#include <iostream>
+#include <vector>
+#include <bitset>
+#include <cmath>
+
+const int MAX = 1001;
+const int SQRT_MAX = ((int)sqrt(MAX)) + 1;
+static std::bitset<MAX> v;
+
+bool prime(int n)
+{
+	return n < v.size() && v.test(n);
+}
+
+void sieveOfAtkin()
+{
+	for (int x = 1; x < SQRT_MAX; x++) 
+	{
+		for (int y = 1; y < SQRT_MAX; y++) 
+		{
+			int k = 4 * x * x + y * y;
+			
+			if ((k < MAX) && ((k % 12 == 1) || (k % 12 == 5))) 
+			{
+				v.flip(k);
+			}
+		
+			k = 3 * x * x + y * y;
+			
+			if ((k < MAX) && (k % 12 == 7)) 
+			{
+				v.flip(k);
+			}
+			
+			if (x > y) 
+			{
+				k = 3 * x * x - y * y;
+				
+				if ((k < MAX) && (k % 12 == 11)) 
+				{
+					v.flip(k);
+				}
+			}
+		}
+	}
+	
+	v.set(2);
+	v.set(3);
+	
+	for (int n = 5; n <= SQRT_MAX; n++) 
+	{
+		if (v.test(n)) 
+		{
+			int n2 = n * n;
+			
+			for (int k = n2; k < MAX; k += n2) 
+			{
+				v.reset(k);
+			}
+		}
+	}
+}
+
+std::vector<std::pair<int, int>> primeFactors(int a)
+{
+	std::vector<std::pair<int, int>> vp;
+	int i = 2;
+	
+	while (a > 1 && i < MAX)
+	{
+		if (prime(i) && a % i == 0)
+		{
+			vp.push_back(std::make_pair(i, 0));
+			
+			while (a % i == 0)
+			{
+				vp.back().second++;
+				a = a / i;
+			}
+		}
+		
+		++i;
+	}
+	
+	if (i == MAX)
+	{
+		vp.push_back(std::make_pair(a, 1));
+	}
+	
+	return vp;
+}
+
+int main()
+{	
+	sieveOfAtkin();
+		
+	int t, h;
+	std::cin >> t;
+	
+	while (t--)
+	{
+		std::cin >> h;
+		std::vector<std::pair<int, int>> vp = primeFactors(h);
+
+		int res = 0;
+		for (int i = 0; i < vp.size(); ++i)
+		{
+			res ^= vp.at(i).second;
+		}
+		
+		std::cout << (res == 0 ? "Pappu Bhujia" : "Printf{}") << std::endl;
+	}
+	
+	return 0;
+}

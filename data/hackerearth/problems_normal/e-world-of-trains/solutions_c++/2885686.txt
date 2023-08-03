@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define pdd pair<double,double>
+#define X first
+#define Y second
+#define REP(i,a) for(int i=0;i<a;++i)
+#define REPP(i,a,b) for(int i=a;i<b;++i)
+#define FILL(a,x) memset(a,x,sizeof(a))
+#define	foreach( gg,itit )	for( typeof(gg.begin()) itit=gg.begin();itit!=gg.end();itit++ )
+#define	mp make_pair
+#define	pb push_back
+#define sz(a) int((a).size())
+#define all(a)  a.begin(), a.end()
+#define	debug(ccc)	cout << #ccc << " = " << ccc << endl;
+#define present(c,x) ((c).find(x) != (c).end())
+const double eps = 1e-8;
+#define EQ(a,b) (fabs((a)-(b))<eps)
+inline int max(int a,int b){return a<b?b:a;}
+inline int min(int a,int b){return a>b?b:a;}
+inline ll max(ll a,ll b){return a<b?b:a;}
+inline ll min(ll a,ll b){return a>b?b:a;}
+const int mod = 1e9+7;
+const int N = 2*1e5+10;
+const ll inf = 1e18;
+
+ll power(ll a,ll n){
+	if(n==0){
+		return 1;
+	}
+	ll b = power(a,n/2);
+	b = b*b%mod;
+	if(n%2) b= b*a%mod;
+	return b;
+}
+
+int n,l,t;
+ll k;
+
+
+ll dp1[4000][4000],dp2[4000][4000],F[10000],inv[10000];
+
+int main(){
+	scanf("%d %d %d %lld",&n,&l,&t,&k);
+	F[0]=inv[0]=1;
+	REPP(i,1,8000){
+		F[i] = (F[i-1]*i)%mod;
+		inv[i] = power(F[i],mod-2);
+	}
+	dp1[0][0]=1;
+	REP(i,3500)	dp2[i][0]=1;
+	REPP(i,1,3500){
+		REP(j,3500){
+			if(j<i){
+				dp1[j][i]=0;continue;
+			}
+			dp1[j][i] = dp2[j-1][i-1];
+			if(j>=l)	dp1[j][i]-=dp2[j-l][i-1];
+			dp1[j][i]%=mod;
+		//	printf("%d %d %lld\n",j,i,dp1[j][i]);
+		}
+		REPP(j,1,3500)	dp2[j][i]=(dp2[j-1][i]+dp1[j][i])%mod;
+	}
+
+	
+	ll ans=0;
+	REPP(m,0,t+1){
+		int a = (l-1)*m+t;
+		if(a<0)	continue;
+		int b = n-a;
+		if(b<0)	continue;
+		if(m>t)	continue;
+	//	printf("%d %d %d\n",m,a,b);
+		ll a1;
+		if(t>0 && m>0) a1= F[t-1]*inv[m-1]%mod*inv[t-m]%mod;
+		if(t>0 && m==0)	continue;
+		if(t==0 && m==0)	a1=1;
+	//	printf("%lld\n",a1);
+		REPP(kk,0,b+1){
+			ll a2 = dp1[b][kk];
+			ans=(ans+a1*a2%mod*F[m+kk]%mod*inv[m]%mod*inv[kk]%mod*k%mod*power(k-1,m+kk-1)%mod)%mod;
+	//		printf("%d %lld %lld %lld\n",b,k,a2,ans);
+		}
+	}
+	printf("%lld\n",(ans+mod)%mod);
+  	return 0;
+}

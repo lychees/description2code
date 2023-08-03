@@ -1,0 +1,59 @@
+#include<iostream>
+#include<algorithm>
+#include<string.h>
+#include<vector>
+#include<set>
+#include<limits.h>
+#define MAXM 100000
+using namespace std;
+
+vector< pair<long long,long long> >e[MAXM+10];
+set< pair<long long,long long> >s;
+long long dis[MAXM+10],k[MAXM+10];
+
+void djikstra(long long candy) {
+    int d,c,nxt,frm,to;
+    dis[candy]=0;
+    while(!s.empty()) {
+    pair< long long,long long >x = *(s.begin());
+    s.erase(s.begin());
+    frm=x.second;
+    for(int i=0;i<e[frm].size();i++) {
+      to=e[frm][i].second;
+      if(dis[to]==INT_MAX) {
+        dis[to]=dis[frm]+e[frm][i].first;
+        s.insert(make_pair(dis[to],to));
+      }
+      else if(dis[to]>dis[frm]+e[frm][i].first) {
+        s.erase(s.find(make_pair(dis[to],to)));
+        dis[to]=dis[frm]+e[frm][i].first;
+        s.insert(make_pair(dis[to],to));
+      }
+    }
+  }
+}
+
+int main()
+{
+      long long i,j,n,m,e1,e2,w,candy,tot=0,toAdd=0;
+      cin>>n>>m>>candy;
+      for(i=1;i<=n;i++) cin>>k[i];
+      for(i=1;i<=m;i++) {
+        cin>>e1>>e2>>w;
+        e[e1].push_back(make_pair(w,e2));
+        e[e2].push_back(make_pair(w,e1));
+      }
+      for(i=1;i<=n;i++) dis[i]=INT_MAX;
+      s.insert(make_pair(0,candy));
+      djikstra(candy);
+      for(i=1;i<=n;i++) {
+        if(dis[i]!=INT_MAX) tot+=k[i],toAdd+=(k[i]*dis[i]);
+      }
+      for(i=1;i<=n;i++) {
+        if(dis[i]==INT_MAX) cout<<"0 ";
+        else {
+            cout<<dis[i]*(tot-k[i])+toAdd-k[i]*dis[i]<<" ";
+        }
+      }
+      return 0;
+}

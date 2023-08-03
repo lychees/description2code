@@ -1,0 +1,105 @@
+#include<bits/stdc++.h>
+using namespace std;
+ 
+
+int GetCeilIndex(int A[], int T[], int l, int r, int key) {
+   int m;
+ 
+   while( r - l > 1 ) {
+      m = l + (r - l)/2;
+      if( A[T[m]] >= key )
+         r = m;
+      else
+         l = m;
+   }
+ 
+   return r;
+}
+ 
+int LongestIncreasingSubsequence(int A[], int size) {
+   int *tailIndices = new int[size];
+   int *prevIndices = new int[size];
+   int len;
+ 
+   memset(tailIndices, 0, sizeof(tailIndices[0])*size);
+   memset(prevIndices, 0xFF, sizeof(prevIndices[0])*size);
+ 
+   tailIndices[0] = 0;
+   prevIndices[0] = -1;
+   len = 1; // it will always point to empty location
+   for( int i = 1; i < size; i++ ) {
+      if( A[i] < A[tailIndices[0]] ) {
+         // new smallest value
+         tailIndices[0] = i;
+      } else if( A[i] > A[tailIndices[len-1]] ) {
+         prevIndices[i] = tailIndices[len-1];
+         tailIndices[len++] = i;
+      } else {
+        int pos = GetCeilIndex(A, tailIndices, -1, len-1, A[i]);
+ 
+        prevIndices[i] = tailIndices[pos-1];
+        tailIndices[pos] = i;
+      }
+   }
+ 
+   delete[] tailIndices;
+   delete[] prevIndices;
+ 
+   return len;
+}
+ int _lis( int arr[], int n, int *max_ref)
+{
+    /* Base case */
+    if(n == 1)
+        return 1;
+ 
+    int res, max_ending_here = 1; // length of LIS ending with arr[n-1]
+ 
+    /* Recursively get all LIS ending with arr[0], arr[1] ... ar[n-2]. If 
+       arr[i-1] is smaller than arr[n-1], and max ending with arr[n-1] needs
+       to be updated, then update it */
+    for(int i = 1; i < n; i++)
+    {
+        res = _lis(arr, i, max_ref);
+        if (arr[i-1] < arr[n-1] && res + 1 > max_ending_here)
+            max_ending_here = res + 1;
+    }
+ 
+    // Compare max_ending_here with the overall max. And update the
+    // overall max if needed
+    if (*max_ref < max_ending_here)
+       *max_ref = max_ending_here;
+ 
+    // Return length of LIS ending with arr[n-1]
+    return max_ending_here;
+}
+ 
+// The wrapper function for _lis()
+int lis(int arr[], int n)
+{
+    // The max variable holds the result
+    int max = 1;
+ 
+    // The function _lis() stores its result in max
+    _lis( arr, n, &max );
+ 
+    // returns max
+    return max;
+}
+int main() {
+	int test;
+	cin>>test;
+	while(test--){
+		int n;
+		cin>>n;
+   		int A[n+1];
+   		for(int i=1;i<=n;i++)cin>>A[i];
+   		int B[n];
+   		for(int i=1;i<=n;i++){
+   			B[A[i]]=i;
+   		}
+   		printf("%d\n", LongestIncreasingSubsequence(B+1, n));
+   		
+	}
+   return 0;
+}

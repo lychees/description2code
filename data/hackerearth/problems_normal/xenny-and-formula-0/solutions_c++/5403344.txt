@@ -1,0 +1,132 @@
+#include <iostream>
+#define ll long long
+using namespace std;
+#define MAX 100001
+#define MOD 1000000007
+
+ll tree[4*MAX], arr[MAX];
+
+void build(ll l, ll r, ll pos) {
+	if(l == r) {
+		tree[pos] = arr[l];
+	}
+	else {
+		ll mid = (l+r)/2;
+		build(l, mid, 2*pos);
+		build(mid+1, r, 2*pos+1);
+		tree[pos] = tree[2*pos] + tree[2*pos+1];
+	}
+}
+
+ll query(ll start, ll end, ll l, ll r, ll pos) {
+	
+	//if range is totally outside the current range
+	//that is : r > end || l < start
+	if(r > end  || l < start) {
+		return 0;
+	}
+	
+	//if range is exact same
+	if(l == start && r == end) {
+		return tree[pos];
+	}
+	
+	//if not the above two cases, the range could be in right child or in left child or
+	//partially inside the current range
+	
+	ll mid = (start+end)/2;
+	
+	//check for right child
+	if(l>mid) {
+		return query(mid+1, end, l, r, 2*pos+1);
+	}
+	
+	//check for left child
+	if(r<=mid) {
+		return query(start, mid, l, r, 2*pos);
+	}
+	
+	//if none of the above the only case is partially inside range
+	ll left = query(start, mid, l, mid, 2*pos);
+	ll right = query(mid+1, end, mid+1, r, 2*pos+1);
+	return left+right;
+	
+}
+
+void update(ll start, ll end, ll pos, ll idx, ll val) {
+	
+	//if start = end, update this node
+	if(start == end) {
+		tree[pos] += val;
+		return;
+	}
+	
+	ll mid = (start+end)/2;
+	
+	//id idx <= mid, update left subtree else right subtree
+	if(idx<=mid && idx >= start) {
+		update(start, mid, 2*pos, idx, val);
+	}
+	else {
+		update(mid+1, end, 2*pos+1, idx, val);
+	}
+	
+	//update this node as to reflect changes in child nodes
+	tree[pos] = tree[2*pos+1] + tree[2*pos];
+	
+}
+
+int main()
+{
+	ios::sync_with_stdio(false);
+	ll r,n;
+	cin >> r;
+	cin >> n;
+	for(ll i = 1; i <= n; ++i) {
+		cin >> arr[i];
+	}
+	build(1, n, 1);
+	while(r--) {
+		ll s, w, d, v;
+		cin >> s >> w >> d >> v;
+		ll m = w/d + 1;
+		ll dist = (m * (2*w - (m-1)*d))/2;
+		ll cr = dist / n;
+		ll x = dist % n;
+		ll ppl = 0;
+		ll crq = query(1, n, 1, n, 1) % MOD;
+		if(cr>0) {
+			ppl = (cr % MOD) * (crq % MOD);
+			ppl %= MOD;
+		}
+		
+		if(s+x > n) {
+			ll f = s + x - n;
+			
+			// ll fq = query(1, n, f+1, s-1, 1) % MOD;
+			// ppl %= MOD;
+			// ppl += crq % MOD;
+			// ppl %= MOD;
+			// ppl -= fq % MOD;
+			// ppl %= MOD;
+			
+			ll fq = query(1, n, s, n, 1) % MOD;
+			ll gq = query(1, n, 1, f, 1) % MOD;
+			ppl %= MOD;
+			ppl += fq % MOD;
+			ppl %= MOD;
+			ppl += gq % MOD;
+			ppl %= MOD;
+		}
+		else {
+			ppl %= MOD;
+			ppl += query(1, n, s, s+x, 1) % MOD;
+			ppl %= MOD;
+		}
+		cout << ppl % MOD << endl;
+		update(1, n, 1, s, v);
+		
+	}
+    
+    return 0;
+}

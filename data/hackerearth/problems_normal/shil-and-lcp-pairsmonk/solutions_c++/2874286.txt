@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int maxn = 2e6;
+
+int len[maxn], link[maxn], cnt[maxn];
+map<char, int> to[maxn];
+int sz = 1, last;
+
+void add_letter(char c, int cst)
+{
+	int p = last;
+	last = sz++;
+	len[last] = len[p] + 1;
+	cnt[last] = cst;
+	for(; to[p][c] == 0; p = link[p])
+		to[p][c] = last;
+	if(to[p][c] == last)
+		return;
+	int q = to[p][c];
+	if(len[q] == len[p] + 1)
+	{
+		link[last] = q;
+		return;
+	}
+	int cl = sz++;
+	to[cl] = to[q];
+	link[cl] = link[q];
+	len[cl] = len[p] + 1;
+	link[last] = link[q] = cl;
+	for(; to[p][c] == q; p = link[p])
+		to[p][c] = cl;
+}
+vector<int> g[maxn];
+
+int cnT[maxn];
+
+void add_str(string s)
+{
+	int v = 0;
+	cnt[v]++;
+	for(auto c: s)
+	{
+		if(!to[v][c])
+			to[v][c] = sz++;
+		len[to[v][c]] = len[v] + 1;
+		v = to[v][c];
+		cnt[v]++;
+	}
+	cnT[v]++;
+}
+
+int64_t ans[maxn];
+
+void dfs(int v = 0)
+{
+	int sm = cnT[v];
+	ans[len[v]] += 1LL * cnT[v] * (cnT[v] - 1) / 2;
+	for(auto it: to[v])
+	{
+		int u = it.second;
+		dfs(u);
+		ans[len[v]] += 1LL * cnt[u] * sm;
+		sm += cnt[u];
+	}
+}
+
+signed main()
+{
+	//freopen("input.txt", "r", stdin);
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+    int n;
+    cin >> n;
+    int mx = 0;
+    while(n--)
+    {
+		string s;
+		cin >> s;
+		mx = max((int)s.size(), mx);
+		add_str(s);
+	}
+	dfs();
+	for(int i = 0; i <= mx; i++)
+		cout << ans[i] << " ";
+    return 0;
+}

@@ -1,0 +1,224 @@
+#include <bits/stdc++.h>
+#include <assert.h>
+#define PB push_back
+#define MP make_pair
+#define UNDEF -1LL
+using namespace std;
+typedef long long ll;
+
+string ALPHABET = "abcdefghijklmnopqrstuvwxyz-#$";
+int ALPHABETLEN = ALPHABET.length();
+
+typedef struct Node {
+    int begin;
+    int end;
+    int depth; // distance in characters from root to this node
+    Node *parent;
+    Node **children;
+    Node *suffixLink;
+    pair<ll,ll> dp;
+    bool g;
+} Node;
+
+Node *init(int begin, int end, int depth, Node *parent) {
+	Node *x = new Node;
+    x->begin = begin;
+    x->end = end;
+    x->parent = parent;
+    x->depth = depth;
+    x->children = new Node*[ALPHABETLEN];
+    for (ll i = 0; i < ALPHABETLEN; i++) {
+    	x->children[i] = NULL;
+    }
+    x->suffixLink = NULL;
+    x->dp = MP(UNDEF,UNDEF);
+    x->g = false;
+    return x;
+}
+
+Node *buildSuffixTree(string s) {
+	int n = s.length();
+	int *a = new int[n];
+	for (int i = 0; i < n; i++) {
+		a[i] = ALPHABET.find(s[i]);
+	}
+	Node *root = init(0,0,0,NULL);
+	Node *node = root;
+	for (int i = 0, tail = 0; i < n; i++,tail++) {
+		Node *last = NULL;
+		while (tail >= 0) {
+			Node *ch = node->children[a[i-tail]];
+			while (ch != NULL && tail >= ch->end - ch->begin) {
+				tail -= ch->end - ch->begin;
+				node = ch;
+				ch = ch->children[a[i-tail]];
+			}
+			if (ch == NULL) {
+				node->children[a[i]] = init(i,n,node->depth + node->end - node->begin, node);
+				if (last != NULL) last->suffixLink = node;
+				last = NULL;
+			}
+			else {
+				int t = a[ch->begin + tail];
+				if (t == a[i]) {
+					if (last != NULL) last->suffixLink = node;
+					break;
+				}
+				else {
+					Node *splitNode = init(ch->begin, ch->begin + tail, node->depth + node->end - node->begin, node);
+					splitNode->children[a[i]] = init(i, n, ch->depth + tail, splitNode);
+					splitNode->children[t] = ch;
+					ch->begin += tail;
+					ch->depth += tail;
+					ch->parent = splitNode;
+					node->children[a[i - tail]] = splitNode;
+					if (last != NULL) last->suffixLink = splitNode;
+					last = splitNode;
+				}
+			}
+			if (node == root) {
+				--tail;
+			}
+			else {
+				node = node->suffixLink;
+			}
+		}
+	}
+	return root;
+}
+string a[100000],b[100000];
+ll mid = -1;
+ll len = -1;
+void dfs2(Node *x, bool g) {
+	if (x->begin <= mid && x->end > mid) {g = true;}
+	x->g = g;
+    for (ll i = 0; i < ALPHABETLEN; i++) {
+    	Node *child = x->children[i];
+    	if (child != NULL) {
+    		dfs2(child, g);
+    	}
+    }
+}
+pair<ll,ll> dfs(Node *x) {
+	if (x->dp.first != UNDEF) return x->dp;
+	pair<ll,ll> ans;
+	if (x->end == len) {
+		ans = (x->g) ? MP(0LL,1LL) : MP(1LL,0LL);
+	}
+	else {
+		ans = MP(0LL,0LL);
+    	for (ll i = 0; i < ALPHABETLEN; i++) {
+    		Node *child = x->children[i];
+    		if (child != NULL) {
+    			pair<ll,ll> cand = dfs(child);
+    			ans.first += cand.first;
+    			ans.second += cand.second;
+    		}
+    	}
+	}
+	x->dp = ans;
+	//printf("Node %x %d %d ",x,x->begin, x->end);
+	for (int i = x->begin; i < x->end; i++) //printf("%c",s[i]);
+	//printf(" has dp: %d %d\n",ans.first,ans.second);
+	return ans;
+}
+vector<Node*> v;
+void bfs(Node *root) {
+	queue<Node*> q;
+	q.push(root);
+	while (!q.empty()) {
+		Node *x = q.front();
+		v.PB(x);
+		q.pop();
+    	for (ll i = 0; i < ALPHABETLEN; i++) {
+    		Node *child = x->children[i];
+    		if (child != NULL) {
+    			q.push(child);
+    		}
+    	}
+	}
+}
+
+ll final = 0;
+set<int> p;
+void dfs4(Node *x) {
+	vector<Node*> v;
+	int lim = *(p.lower_bound(x->begin));
+	{
+		ll len = min(lim,x->end) - x->begin;
+		final += (x->dp.first * x->dp.second * len);
+		//printf("Adding %x %d %d ",x,x->begin, x->end);
+		//for (int i = x->begin; i < x->end; i++) //printf("%c",s[i]);
+		//printf(" has dp: %d %d, len %d, prod %d\n",x->dp.first, x->dp.second, len,(x->dp.first * x->dp.second * len));
+	}
+	if (x->end <= lim) {
+    	for (ll i = 0; i < ALPHABETLEN; i++) {
+    		Node *y = x->children[i];
+    		if (y != NULL) {
+    			dfs4(y);
+    		}
+    	}
+    }
+}
+
+
+int main() {
+	int n,m;
+	cin >> n;
+	len = 0;
+	for (int i = 0; i < n; i++) {
+		cin >> a[i];
+		len += a[i].length();
+		len++;
+	}
+	len++;
+	cin >> m;
+	for (int i = 0; i < m; i++) {
+		cin >> b[i];
+		len += b[i].length();
+		len++;
+	}
+	len++;
+	char *d = new char[len+1];
+	int idx = 0;
+	for (int i = 0; i < n; i++) {
+		int slen = a[i].length();
+		for (ll j = 0; j < slen; j++) {
+			d[idx] = a[i][j];
+			idx++;
+		}
+		p.insert(idx);
+		d[idx] = '-';
+		idx++;
+	}
+	d[idx] = '#';
+	mid = idx;
+	idx++;
+	for (int i = 0; i < m; i++) {
+		int slen = b[i].length();
+		for (ll j = 0; j < slen; j++) {
+			d[idx] = b[i][j];
+			idx++;
+		}
+		p.insert(idx);
+		d[idx] = '-';
+		idx++;
+	}
+	d[idx] = '$';
+	idx++;
+	assert(idx == len);
+	d[len] = '\0';
+	string s(d);
+	//cout << s << endl;
+	Node *root = buildSuffixTree(s);
+	//dfs3(root,s);
+	//return 0;
+	bfs(root);
+	dfs2(root, false);
+	for (vector<Node*>::reverse_iterator it = v.rbegin(); it != v.rend(); ++it) {
+		Node *x = *it;
+		dfs(x);
+	}
+	dfs4(root);
+	cout << final << endl;
+}

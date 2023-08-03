@@ -1,0 +1,74 @@
+#include <iostream>
+#include <stack>
+#include <vector>
+#include <algorithm>
+#include <climits>
+using namespace std;
+#define N 131072
+pair<int,int> sgt[N<<1];
+void init()
+{
+	for(int i=N-1;i>0;--i)
+	{
+		sgt[i] = sgt[i*2];
+		if(sgt[i*2+1].second>sgt[i].second) sgt[i]=sgt[i*2+1];
+	}
+	
+}
+int query(int l,int r)
+{
+	--l,++r;
+	int ans=N;
+	while(l^r^1)
+	{
+		if(~l&1)
+		{
+			if(sgt[ans].second<sgt[l^1].second)
+			ans = sgt[l^1].first;
+		}
+		if(r&1)
+		{
+			if(sgt[r^1].second>sgt[ans].second)
+			{
+				ans = sgt[r^1].first;
+			}
+		}
+		l>>=1;
+		r>>=1;
+	}
+	return ans;
+}
+int main()
+{
+    int t;
+    scanf("%d",&t);
+    while(t--)
+    {
+    	int n;
+    	scanf("%d",&n);
+    	sgt[N].second = INT_MIN;
+    	sgt[N].first=N;
+    	for(int i=N+1;i<=N+n;++i) scanf("%d",&sgt[i].second),sgt[i].first=i;
+    	for(int i=N+n+1;i<N+N;++i) sgt[i].second = i;
+    	init();
+    	long long ans=0;
+    	stack<pair<int,int>> st;
+    	st.push({1+N,n+N});
+    	while(not st.empty())
+    	{
+    		auto pr = st.top();st.pop();
+    		if(pr.first<pr.second)
+    		{
+    			int q = query(pr.first,pr.second);
+    			ans+=sgt[q].second;
+    			if(q!=pr.first && q!=pr.second) ans+=sgt[q].second;
+    			st.push({pr.first,q-1});
+    			st.push({q+1,pr.second});
+    			
+    		}
+    	}
+    	printf("%lld\n",ans);
+    	
+    }
+    return 0;
+}

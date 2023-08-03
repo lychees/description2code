@@ -1,0 +1,94 @@
+using namespace std;
+#include<bits/stdc++.h>
+
+#define BG begin()
+#define ED end()
+#define st first
+#define nd second
+#define PB push_back
+#define PF push_front
+#define FOR(i,a,b) for (long long i=a;i<b;i++)
+#define FORE(i,a,b) for (long long i=a;i<=b;i++)
+#define FORD(i,a,b) for (long long i=a;i>=b; i--)
+#define TR(c, it) for(typeof((c).begin()) it=(c).begin(); it!=(c).end(); it++)
+#define ri(n)({\
+    int neg=0;\
+    n=0;\
+    char ch;\
+    for(ch=getchar(); ch<'0' || ch>'9'; ch=getchar()) if (ch=='-') neg=1-neg;\
+    n=ch-48;\
+    for(ch=getchar(); ch>='0' && ch<='9'; ch=getchar()) n=(n<<3)+(n<<1)+ch-48;\
+    if (neg) n=-n;\
+})
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int,int> II;
+typedef pair<ll,ll> LL;
+const ll INF=1000000000+7;
+const double esp=1e-13;
+const double pi=3.141592653589;
+
+int n,q,IT[500000+10][12],type;
+ll a[100000+10],u,v,c;
+
+int dem(ll n){
+    bool f[11];
+    FORE(i,0,9) f[i]=false;
+    while (n){
+        f[n%10]=true;
+        n/=10;
+    }
+    int dem2=0;
+    FORE(i,0,9) dem2+=f[i];
+    return dem2;
+}
+
+void build(int k, int l, int r, int i){
+    if (i>r || i<l) return;
+    if (l==i && i==r){
+        IT[k][ dem(a[l]) ]=1;
+        FORE(j,1,10)
+        if (j!=dem(a[l])) IT[k][j]=0;
+        return;
+    }
+    int m=(l+r)/2;
+    if (i<=m) build(k*2,l,m,i);
+    else build(k*2+1,m+1,r,i);
+    FORE(j,1,10) IT[k][j]=IT[k*2][j]+IT[k*2+1][j];
+}
+
+int query(int k, int l, int r, int i, int j, int value){
+    if (i>r || j<l) return 0;
+    if (i<=l && r<=j) return IT[k][value];
+    int m=(l+r)/2;
+    int t1=query(k*2,l,m,i,j,value);
+    int t2=query(k*2+1,m+1,r,i,j,value);
+    return t1+t2;
+}
+
+int main(){
+ //   freopen("distinct-digits-i-6.inp", "r", stdin);
+ //   freopen("distinct-digits-i-6.out", "w", stdout);
+    ri(n);
+    FORE(i,1,n) ri(a[i]);
+    FORE(i,1,n) build(1,1,n,i);
+    ri(q);
+    while (q--){
+        ri(type);
+        if (type==0){
+            ri(u); ri(v);
+            a[u]+=v;
+            build(1,1,n,u);
+        }
+        else if (type==1){
+            ri(u); ri(v);
+            a[u]=v;
+            build(1,1,n,u);
+        }
+        else{
+            ri(u); ri(v); ri(c);
+            printf("%d\n",query(1,1,n,u,v,c));
+        }
+    }
+}

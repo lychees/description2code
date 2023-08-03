@@ -1,0 +1,119 @@
+#include<cstdio>
+#include<iostream>
+using namespace std;
+struct triangle
+{
+    long long int x, y, z;
+};
+struct node
+{
+    triangle t;
+    int counts;
+    node *left, *right;
+};
+void sort(triangle &t)
+{
+    if(t.x > t.y)
+        swap(t.x, t.y);
+    if(t.y > t.z)
+        swap(t.y, t.z);
+    if(t.x > t.y)
+        swap(t.x, t.y);
+}
+node *create_node(triangle &t)
+{
+	node *n = new node;
+	n->counts = 1;
+	n->left = n->right = NULL;
+	n->t = t;
+}
+int compare(const triangle &t1, const triangle &t2)
+{
+	if(t1.x < t2.x)
+		return -1;
+	else if(t1.x > t2.x)
+		return 1;
+	else if(t1.y < t2.y)
+		return -1;
+	else if(t1.y > t2.y)
+		return 1;
+	else if(t1.z < t2.z)
+		return -1;
+	else if(t1.z > t2.z)
+		return 1;
+	else
+		return 0;
+}
+class bst
+{
+	int unique_count;
+    node *root;
+    void insert_util(node *current, triangle &t);
+    void unique_triangle_utility(node *current);
+public:
+    bst();
+    void insert_node(triangle t);
+    int unique_triangle();
+};
+bst::bst()
+{
+	root = NULL;
+	unique_count = 0;
+}
+void bst::insert_node(triangle t)
+{
+	if(root == NULL)
+		root = create_node(t);
+	else
+		insert_util(root, t);
+}
+void bst::insert_util(node *current, triangle &t)
+{
+	int check = compare(t, current->t);
+	if(check == -1)
+	{
+		if(current->left != NULL)
+			insert_util(current->left, t);
+		else
+			current->left = create_node(t);
+	}
+	else if(check == 1)
+	{
+		if(current->right != NULL)
+			insert_util(current->right, t);
+		else
+			current->right = create_node(t);
+	}
+	else
+		current->counts++;
+}
+int bst::unique_triangle()
+{
+	unique_triangle_utility(root);
+	return unique_count;
+}
+void bst::unique_triangle_utility(node *current)
+{
+	if(current == NULL)
+		return;
+	if(current->counts == 1)
+		unique_count++;
+	unique_triangle_utility(current->left);
+	unique_triangle_utility(current->right);
+	delete current;
+}
+int main()
+{
+    int n;
+    triangle t;
+    bst b;
+    cin >> n;
+    for(int i = 0; i < n; i++)
+    {
+        scanf("%lld%lld%lld", &t.x, &t.y, &t.z);
+        sort(t);
+        b.insert_node(t);
+    }
+    cout << b.unique_triangle();
+    return 0;
+}

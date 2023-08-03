@@ -1,0 +1,67 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+vector<int> primeList;
+
+int n;
+int a[55];
+int dp[51][(1<<15) + 5];
+int curMask[55];
+
+int prime(int n) {
+	for (int i = 2; i * i <= n; i++) {
+		if (n % i == 0) {
+			return false;
+		}
+	}
+	return true;
+}
+
+int main() {
+	for (int i = 2; i < 50; i++) {
+		if (prime(i)) {
+			primeList.push_back(i);
+			//cout << i << endl;
+		}
+	}
+		
+	int T;
+	scanf("%d", &T);
+	while (T--) {
+		scanf("%d", &n);
+		memset(curMask, 0, sizeof(curMask));
+		for (int i = 0; i < n; i++) {
+			scanf("%d", &a[i]);
+			int mask1 = 0;
+			for (int j = 0; j < primeList.size(); j++) {
+				if (a[i] % primeList[j] == 0) {
+					mask1 |= (1 << j);
+				}
+			}
+			curMask[i] = mask1;
+		}
+		//memset(dp, 0, sizeof(dp));
+		for (int i = 0; i <= n; i++) {
+			for (int mask = 0; mask < (1 << primeList.size()); mask++) {
+				dp[i][mask] = 0;
+			}
+		}
+		for (int i = 0; i < n; i++) {
+			for (int mask = 0; mask < (1 << primeList.size()); mask++) {
+				int mask1 = curMask[i];
+				if ((mask & mask1) == 0) {
+					int newMask = mask | mask1;
+					dp[i + 1][newMask] = max(dp[i + 1][newMask], dp[i][mask] + 1);
+				}
+				dp[i + 1][mask] = max(dp[i + 1][mask], dp[i][mask]);
+			}
+		}
+		int ans = 0;
+		for (int mask = 0; mask < (1 << primeList.size()); mask++) {
+			ans = max(ans, dp[n][mask]);
+		}
+		printf("%d\n", ans);
+	}
+	return 0;
+}

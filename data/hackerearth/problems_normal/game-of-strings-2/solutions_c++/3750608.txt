@@ -1,0 +1,86 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+void computeZ(const string &str, vector<int > &Z)
+{
+    int n = str.length();
+    int L, R, k;
+
+    Z.resize(n, 0);
+    L = R = 0; //[L R] window
+    for (int i = 1; i < n; ++i)
+    {
+        if (i > R)
+        {
+            L = R = i;
+            while (R<n && str[R-L] == str[R])
+                R++;
+            Z[i] = R-L;
+            R--;
+        }
+        else
+        {
+            k = i-L; // k = i-L so k corresponds to number which matches in [L,R] interval.
+
+            if (Z[k] < R-i+1)  // if Z[k] is less than remaining interval then Z[i] will be equal to Z[k].
+                 Z[i] = Z[k];
+            else
+            {
+                L = i;
+                while (R<n && str[R-L] == str[R]) //  else start from R  and check manually
+                    R++;
+                Z[i] = R-L;
+                R--;
+            }
+        }
+    }
+}
+
+int f(const vector <int > &Z, int k) {
+    int n = Z.size();
+    int sofar = 0;
+
+    int maxS = 0, len = n - k - 1;
+    for(int i = 1; i <= k; ++i) {
+        if(Z[i] + i - 1 > k) {
+            int temp = k - i + 1;
+            maxS = max(maxS, temp);
+        } else {
+            maxS = max(maxS, Z[i]);
+        }
+    }
+
+    for(int i = n - 1; i > 0; --i) {
+        if(Z[i] + i == n && Z[i] <= maxS) {
+            sofar = max(sofar, Z[i]);
+        }
+    }
+    return sofar;
+}
+
+int main() {
+    int t;
+    cin >> t;
+
+    while(t--) {
+    string T;
+    cin >> T;
+
+    vector<int > Z;
+    computeZ(T, Z);
+
+  //  for(int i = 0; i < Z.size(); ++i) {
+   //     cout << Z[i] << " ";
+   // } cout << endl;
+
+    int k;
+    cin >> k;
+    int maxL = f(Z, k - 1);
+
+    if(maxL == 0)
+        cout << "Puchi is a cheat!\n";
+    else
+        cout << T.substr(0, maxL) << endl;
+    }
+    return 0;
+}

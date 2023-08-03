@@ -1,0 +1,118 @@
+#include<iostream>
+#include<list>
+#include<stdio.h>
+#define X 1000000009
+using namespace std;
+struct node
+{
+       int vertex;
+       int dis;
+};
+int graph[105][105],arr[105];
+int maxflow,init,cnt;
+class Graph
+{
+      int V;
+      list<struct node> *adj; 
+      public:
+      Graph(int v)
+      {
+           V=v;
+           adj=new list<struct node>[V];
+      }            
+      void addEdge(int a,int b,int c)
+      {
+           
+           struct node s1;
+           s1.vertex=b;
+           s1.dis=c;
+           adj[a].push_back(s1);
+           struct node s2;
+           s2.vertex=a;
+           s2.dis=c;
+           adj[b].push_back(s2);
+      }
+      void dfs(int s,int t,int parent[],int visited[])
+      {
+           //cout<<s;
+           int pathflow;
+           if(s==t)
+           {
+                   //cout<<"hola";
+              pathflow=X;
+                   
+              for(int v=t;v!=init;v=parent[v])
+              {
+                      //cout<<v;
+                     int u=parent[v];
+                     if(graph[u][v]<pathflow)
+                     pathflow=graph[u][v];
+                      
+              }
+              
+              //cout<<pathflow<<endl;
+              if(pathflow>maxflow)
+              {
+                  int i=0;                
+                  for(int v=t;v!=init;v=parent[v])
+                  {
+                        arr[i]=v;
+                        i++;
+                  } 
+                  arr[i]=init;
+                  i++;
+                  cnt=i;
+                  maxflow=pathflow;
+              }  
+              return;
+           }
+           visited[s]=1;
+           for(list<struct node>::iterator iter=adj[s].begin();iter!=adj[s].end();iter++)
+           {
+                  int x;
+                  x=iter->vertex;
+                  if(visited[x]==0)
+                  { 
+                    parent[x]=s;                
+                    dfs(x,t,parent,visited);
+                  }
+           }
+           visited[s]=0;
+           return; 
+      }
+};
+int main()
+{
+    int n,m,x,y,z,s,t,persons,visited[105],parent[105];
+    scanf("%d%d",&n,&m);
+    Graph g(n);
+    
+    maxflow=0;
+    for(int i=0;i<m;i++)
+    {
+         scanf("%d%d%d",&x,&y,&z);
+         g.addEdge(x-1,y-1,z);
+         graph[x-1][y-1]=z;
+         graph[y-1][x-1]=z;
+            
+    }  
+    scanf("%d%d%d",&s,&t,&persons);
+    for(int i=0;i<n;i++)
+    {
+       parent[i]=-1;
+       visited[i]=0;
+    }
+    init=s-1;
+    g.dfs(s-1,t-1,parent,visited);
+    //printf("%d\n",maxflow);
+    for(int i=0;i<cnt;i++)
+    printf("%d ",arr[cnt-i-1]+1);
+    printf("\n");
+    if(persons%(maxflow-1)==0)
+    printf("%d\n",persons/(maxflow-1));
+    else
+    printf("%d\n",persons/(maxflow-1)+1);
+    //system("pause");
+    return 0;
+}
+              

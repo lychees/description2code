@@ -1,0 +1,127 @@
+/**
+ *@author:  Orchid
+ *@Problem: mehta-and-the-difficult-task-3
+ *@Contest: february-clash-15
+ */
+#include<bits/stdc++.h>
+#define ULLI unsigned long long int
+#define LLI long long int
+#define pb push_back
+#define mem(a,p) memset(a,p,sizeof(a))
+#define fi first
+#define se second
+#define mp make_pair
+#define mt make_tuple
+#define bitcount __builtin_popcount
+#define checkbit(n,b) ((n>>b)&1)
+#define gcd __gcd
+#define rep(i,a,b) for(int i=a;i<b;++i)
+#define all(a) a.begin(),a.end()
+#define sz(a) ((int)(a.size()))
+#define DREP(a) sort(all(a));a.erase(unique(all(a)),a.end())
+#define ns ios_base::sync_with_stdio(false);cin.tie(0)
+using namespace std;
+#define VI vector<int>
+#define PII pair<int,int>
+#define MOD 1000000007LL
+#define EPS 1e-12
+
+//only for C++11/C++14; call as debug(x,y,z,...)
+#define debug(args...)  { vector<string> _v; string _s = #args;    \
+                          replace(_s.begin(), _s.end(), ',', ' '); \
+                          splitstr(_s, _v); err(_v.begin(), args); }
+void splitstr(const string &s, vector<string> &v) {
+    istringstream in(s);
+    copy(istream_iterator<string>(in), istream_iterator<string>(), back_inserter(v));
+}
+void err(vector<string>::iterator it) {}
+template<typename T, typename... Args>
+void err(vector<string>::iterator it, T a, Args... args) {
+    cerr << *it << " = " << a << '\n';
+    err(++it, args...);
+}
+
+//Matrix Exponentiation using vector:: Bohdan's code
+vector<vector<LLI>> identityMatrix(LLI sz) {
+    vector<vector<LLI>> res;
+    res.resize(sz);
+    int z = res.size();
+    rep(i, 0, z) {
+        res[i].resize(sz);
+    }
+    rep(i, 0, z) {
+        rep(j, 0, z) {
+            res[i][j] = (i == j);
+        }
+    }
+    return res;
+}
+
+vector<vector<LLI>> mult(vector<vector<LLI>> a, vector<vector<LLI>> b) {
+    vector<vector<LLI>> res;
+    res = identityMatrix(a.size());
+    int zz = sz(res);
+    rep(i, 0, zz) {
+        rep(j, 0, zz) {
+            res[i][j] = 0;
+        }
+    }
+    int az = sz(a);
+    rep(i, 0, az) {
+        rep(j, 0, az) {
+            rep(k, 0, az) {
+                res[i][j] = (res[i][j] + a[i][k] * b[k][j]) % MOD;
+            }
+        }
+    }
+    return res;
+}
+
+vector<vector<LLI>> power(vector<vector<LLI>> a, LLI b) {
+    if (b == 0) {
+        return identityMatrix(a.size());
+    }
+    if (b % 2) {
+        return mult(a, power(a, b - 1));
+    }
+    return power(mult(a, a), b / 2);
+}
+
+vector<vector<LLI>> v;
+void createTransformationMatrix() {
+    v.resize(16); //16x16 is the dimension in this case.
+    int z = sz(v);
+    rep(i, 0, z) {
+        v[i].resize(16);
+    }
+    //Here you form the zxz transformation matrix;
+    rep(i, 0, 16) {
+        rep(j, 0, 16) {
+            v[i][j] = 0;
+        }
+    }
+    rep(mask, 0, 16) {
+        v[mask][mask] = 6;
+        rep(j, 0, 4) {
+            v[mask][mask ^ (1 << j)] = 1;
+        }
+    }
+}
+
+int main() {
+    ns;
+    int tests;
+    cin >> tests;
+    createTransformationMatrix();
+    LLI n, a, b, c, d;
+    while(tests--) {
+        cin >> n >> a >> b >> c >> d;
+        vector<vector<LLI>> t = v;
+        t = power(t, n);
+        LLI need = 0;
+        //converting into bitmask
+        need = 8 * a + 4 * b + 2 * c + d;
+        cout << t[0][need] << "\n";
+    }
+    return 0;
+}

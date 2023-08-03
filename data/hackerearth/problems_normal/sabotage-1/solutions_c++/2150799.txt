@@ -1,0 +1,93 @@
+#include <bits/stdc++.h>
+#define ll long long
+using namespace std;
+typedef struct node
+{
+	ll int p,r; //parent,rank
+}node;
+ll int n;
+node a[100010];
+pair<ll int,ll int> r[100010];
+void make_set()
+{
+	ll int i;
+	for(i=0;i<n;i++)
+	{
+		a[i].p=i;
+		a[i].r=0;
+	}
+}
+ll int find_set(ll int x)
+{
+	if(a[x].p==x)
+	return x;
+	else
+	{
+		a[x].p=find_set(a[x].p); //Path compression
+		return a[x].p;
+	}
+}
+void link_set(ll int x,ll int y)
+{
+	if(a[x].r>a[y].r)
+	{
+		a[y].p=x;
+	}
+	else if(a[y].r>a[x].r)
+	{
+		a[x].p=y;
+	}
+	else
+	{
+		a[x].p=y;
+		a[y].r+=1;
+	}
+}
+void union_set(ll int x,ll int y)
+{
+	ll int i,j;
+	i=find_set(x);
+	j=find_set(y);
+	if(i==j)
+	{
+		return;
+	}
+	else
+	{
+		link_set(i,j);
+	}
+}
+int main()
+{
+	scanf("%lld",&n);
+	make_set();
+	ll int m;
+	scanf("%lld",&m);
+	ll int i,x,y;
+	for(i=0;i<m;i++)
+	{
+		scanf("%lld%lld",&(r[i].first),&(r[i].second));
+		r[i].first--;r[i].second--;//Converting to 0-based index
+	}
+	stack<ll int> s;//As we want answer later in lexicographic order(as we input)
+	for(i=(m-1);i>=0;i--)
+	{
+		x=find_set(r[i].first);
+		y=find_set(r[i].second);
+		if(x==y)//same connected component,hence we can remove
+		{
+			s.push(i+1);
+		}
+		else
+		{
+			union_set(x,y);
+		}
+	}
+	printf("%lld\n",(ll int)s.size());
+	while(!s.empty())
+	{
+		printf("%lld\n",s.top());
+		s.pop();
+	}
+	return 0;
+}

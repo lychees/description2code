@@ -1,0 +1,151 @@
+#include <iostream>
+#include <cstdlib>
+#include <string>
+#include <vector>
+#include <climits>
+
+using namespace std;
+
+enum COLOR {WHITE, GRAY, BLACK, P_INIT, P_RED, P_BLACK};
+
+struct VectorAttr
+{
+	int whichOne;
+	int color;
+	int paintedColor;
+	int distance;
+	int parentVector;
+};
+
+int main ()
+{
+	const int NIL = -1;
+	const int MIN_VERTICES = 1;
+	const int MAX_VERTICES = 200;
+	const int SENTINEL = 0; //must be on its own line
+	int numVertices, numEdges, nextVal;
+	int vertex1, vertex2;
+	int adjListSize, testsDone = 0, numTests;
+	bool bBicolorable;
+	VectorAttr initVertex;
+	VectorAttr vertexU;
+	vector < vector <int> > adjList;
+	vector <VectorAttr> verticesForBFS;
+	vector <VectorAttr> queue;
+	
+	cin >> numTests; //ADDED
+	cin >> nextVal;
+
+	while (testsDone < numTests && SENTINEL != nextVal)
+	{
+		bBicolorable = true;
+		numVertices = nextVal;
+		cin >> numEdges;
+
+		//init adjacency list columns
+		for (int i = 0; i < numVertices; i++)
+		{
+			vector <int> row;
+			adjList.push_back (row);
+		}
+
+		//fill out adjacency list
+		for (int i = 0; i < numEdges; i++)
+		{
+			cin >> vertex1;
+			cin >> vertex2;
+
+			adjList[vertex1].push_back (vertex2);
+		}
+
+		//start modifiable breadth first search
+
+		//init each vertex
+		initVertex.color = WHITE;
+		initVertex.distance = INT_MAX;
+		initVertex.parentVector = NIL;
+		initVertex.paintedColor = P_INIT;
+
+		for (int i = 0; i < numVertices; i++)
+		{
+			initVertex.whichOne = i;
+			verticesForBFS.push_back (initVertex);
+		}
+
+		//modified breadth first search to assign colors, determine conflicts
+		verticesForBFS.at (0).color = GRAY;
+		verticesForBFS.at (0).distance = 0;
+		verticesForBFS.at (0).parentVector = NIL;
+		verticesForBFS.at (0).paintedColor = P_RED;
+		verticesForBFS.at (0).whichOne = 0;
+		
+		//enqueue the root
+		queue.push_back (verticesForBFS.at (0));
+
+		while (0 != queue.size ()  && bBicolorable)
+		{
+			// u = dequeue (Q)
+			vertexU = queue.front ();
+			queue.erase (queue.begin ());
+
+			for (unsigned int v = 0; v < adjList[vertexU.whichOne].size () && bBicolorable; v++)
+			{
+				//set adjacent vertex color based on parent
+				if (0 != vertexU.whichOne && verticesForBFS[adjList[vertexU.whichOne][v]].paintedColor != P_INIT)
+				{
+					if (vertexU.paintedColor == verticesForBFS[adjList[vertexU.whichOne][v]].paintedColor)
+					{
+						bBicolorable = false;
+					}
+				}
+				else if (vertexU.paintedColor == P_RED)
+				{
+					verticesForBFS[adjList[vertexU.whichOne][v]].paintedColor = P_BLACK;
+				}
+				else
+				{
+					verticesForBFS[adjList[vertexU.whichOne][v]].paintedColor = P_RED;
+				}
+
+				if (verticesForBFS[adjList[vertexU.whichOne][v]].color == WHITE)
+				{
+					verticesForBFS[adjList[vertexU.whichOne][v]].color = GRAY;;
+					verticesForBFS[adjList[vertexU.whichOne][v]].distance = vertexU.distance + 1;
+					verticesForBFS[adjList[vertexU.whichOne][v]].parentVector = vertexU.whichOne;
+
+					//enqueue
+					queue.push_back (verticesForBFS[adjList[vertexU.whichOne][v]]);
+				}
+			}
+
+			vertexU.color = BLACK;
+		}
+
+		//print results
+		if (bBicolorable)
+		{
+			cout << "BICOLORABLE." << endl;
+		}
+		else
+		{
+			cout << "NOT BICOLORABLE." << endl;
+		}
+
+		cin >> nextVal;
+		
+		//clear all the vectors for future tests
+		adjListSize = adjList.size ();
+
+		for (int i = 0; i < adjListSize; i++)
+		{
+			adjList[i].clear();
+		}
+
+		adjList.clear ();
+		verticesForBFS.clear ();
+		queue.clear ();
+		++testsDone;
+	}
+
+	return EXIT_SUCCESS;
+}

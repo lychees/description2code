@@ -1,0 +1,156 @@
+/* --- author: enot-the-rockstar ---*/
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <set>
+#include <map>
+#include <ctime>
+#include <cassert>
+
+#define fs first
+#define sc second
+#define pb push_back
+#define mp make_pair
+#define forn(i, n) for(int i = 0 ; (i) < (n) ; ++i)
+#define forit(it,v) for(typeof((v).begin()) it = v.begin() ; it != (v).end() ; ++it)
+#define eprintf(...) fprintf(stderr, __VA_ARGS__),fflush(stderr)
+#define sz(a) ((int)(a).size())
+#define all(a) (a).begin(),a.end()
+
+static inline unsigned long long rdtsc() { unsigned long long d; __asm__ __volatile__ ("rdtsc" : "=A" (d) ); return d; }
+
+using namespace std;
+
+typedef long long ll;
+typedef double dbl;
+typedef vector<int> vi;
+typedef pair<int, int> pi;
+
+const int inf = (int)1e9;
+const dbl eps = 1e-9;
+
+/* --- main part --- */
+
+#define TASK "a"
+
+const int maxn = (int)2e5 + 10;
+
+int a[maxn];
+int b[maxn], bc = 0;
+int t[maxn];
+ll res[maxn];
+
+inline int get(int x)
+{
+    x += 1;
+    int val = 0;
+    for (; x > 0; x -= x & -x) val += t[x];
+    return val;
+}
+
+inline void upd(int x, int dx)
+{
+    x += 1;
+    for (; x < maxn; x += x & -x) t[x] += dx;
+}
+
+int ls[maxn];
+int lss[maxn];
+
+const int P = 239;
+const int mod = (int)1e9 + 9;
+
+int h[maxn];
+int pn[maxn];
+int n;
+
+inline int get(int l, int r)
+{
+    return (h[r] - h[l] * (ll)pn[r - l] % mod + mod) % mod;
+}
+
+inline bool comp(int x, int y)
+{
+    if (get(x, x + n) == get(y, y + n)) return false;
+    int l = 1, r = n;
+    while (l < r)
+    {
+        int m = (l + r) >> 1;
+        if (get(x, x + m) != get(y, y + m)) r = m;
+        else l = m + 1;
+    }
+    return a[x + r - 1] < a[y + r - 1];
+}
+
+int main()
+{
+    #ifdef home
+        assert(freopen(TASK".in", "r", stdin));
+        assert(freopen(TASK".out", "w", stdout));
+    #endif
+    int tn;
+    scanf("%d", &tn);
+    forn(tt, tn)
+    {
+        scanf("%d", &n);
+        forn(i, n) scanf("%d", &a[i]);
+        bc = 0;
+        forn(i, n) b[bc++] = a[i];
+        sort(b, b + bc);
+        bc = unique(b, b + bc) - b;
+        forn(i, n) a[i] = lower_bound(b, b + bc, a[i]) - b;
+        forn(i, n + 1) t[i] = 0;
+        res[0] = 0;
+        forn(i, n)
+        {
+            ls[i] = get(a[i]);
+            lss[i] = get(a[i] - 1);
+            int gr = i - ls[i];
+            res[0] += gr;
+            upd(a[i], 1);
+        }
+        //eprintf("start %I64d\n", res[0]);
+        for (int i = 0; i < n - 1; ++i)
+        {
+            //eprintf("~~~~~ %d\n", i);
+            a[i + n] = a[i];
+            ls[i + n] = get(a[i]);
+            lss[i + n] = get(a[i] - 1);
+            //eprintf("ls  %d -> %d\n", ls[i], ls[i + n]);
+            //eprintf("lss %d -> %d\n", lss[i], lss[i + n]);
+            //eprintf("+ %d\n", n - ls[i + n] + ls[i]);
+            //eprintf("- %d\n", lss[i + n] - lss[i]);
+            res[i + 1] = res[i];
+            res[i + 1] -= lss[i + n] - lss[i];
+            res[i + 1] += n - ls[i + n] + ls[i];
+            //eprintf("%d --> %I64d\n", i + 1, res[i + 1]);
+            upd(a[i], 1);
+        }
+        forn(i, 2 * n) h[i + 1] = (h[i] * (ll)P + a[i]) % mod;
+        pn[0] = 1;
+        forn(i, 2 * n) pn[i + 1] = (pn[i] * (ll)P) % mod;
+        ll mx = 0;
+        forn(i, n) mx = max(mx, res[i]);
+        int pos = -1;
+        forn(i, n) if (res[i] == mx)
+        {
+            if (pos == -1) pos = i;
+            else if (comp(i, pos)) pos = i;
+        }
+        if (pos == -1) pos = 0;
+        printf("%d %lld\n", pos, mx);
+    }         
+             
+
+
+    #ifdef home
+        eprintf("Time: %d ms\n", (int)(clock() * 1000. / CLOCKS_PER_SEC));
+    #endif
+    return 0;
+}
+ 

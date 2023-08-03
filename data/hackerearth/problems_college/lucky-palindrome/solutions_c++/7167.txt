@@ -1,0 +1,100 @@
+#include<iostream>
+#include<cstdlib>
+#include<cstdio>
+#include<cstring>
+#include<cmath>
+#define LIMIT 1010
+using namespace std;
+int nCount = 0;
+
+void fillPrime(bool *primes)
+{
+ for(int i = 5; i < LIMIT; i++)
+        primes[i] = false;
+    int nSqr = pow(LIMIT, 0.5);
+    primes[2] = true;
+    primes[3] = true;
+    for(int i = 1; i <= nSqr; i++)
+        {
+            for(int j = 1; j <= nSqr; j++)
+            {
+                int a = i*i, b = j*j;
+                int n = 4*a + b;
+                if(n <= LIMIT && (n%12 == 1 || n%12 == 5))
+                    primes[n] ^= true;
+                n = 3*a + b;
+                if(n <= LIMIT && n%12 == 7)
+                    primes[n] ^= true;
+                n = 3*a - b;
+                if(i>j && n <= LIMIT && n%12 == 11)
+                    primes[n] ^= true;
+            }
+        }
+    for(int i = 5; i <= nSqr; i++)
+        if(primes[i])
+            for(int j = i*i; j <= LIMIT; j+=i*i)
+                primes[j] = false;
+}
+
+
+string preProcess(string s) {
+  int n = s.length();
+  if (n == 0) return "^$";
+  string ret = "^";
+  for (int i = 0; i < n; i++)
+    ret += "#" + s.substr(i, 1);
+
+  ret += "#$";
+  return ret;
+}
+
+int longestPal(string s)
+{
+    string T = preProcess(s);
+  int n = T.length();
+  int *P = new int[n];
+  int C = 0, R = 0;
+  for (int i = 1; i < n-1; i++) {
+    int i_mirror = 2*C-i;
+    P[i] = (R > i) ? min(R-i, P[i_mirror]) : 0;
+    while (T[i + 1 + P[i]] == T[i - 1 - P[i]])
+      P[i]++;
+    if (i + P[i] > R) {
+      C = i;
+      R = i + P[i];
+    }
+  }
+  int maxLen = 0;
+  int centerIndex = 0;
+  for (int i = 1; i < n-1; i++) {
+    if (P[i] > maxLen) {
+      maxLen = P[i];
+      centerIndex = i;
+    }
+  }
+  delete[] P;
+  int nMax = (s.substr((centerIndex - 1 - maxLen)/2, maxLen)).length();
+  return nMax;
+}
+
+int main()
+{
+    int nCases;
+    cin>>nCases;
+    bool *primes = new bool[LIMIT];
+    fillPrime(primes);
+    primes[4] = false;
+    primes[0] = false;
+    primes[1] = false;
+    getchar();
+    while(nCases-- > 0)
+    {
+        string strIn;
+        getline(cin, strIn);
+        if(primes[longestPal(strIn)])
+           cout<<"YES"<<endl;
+        else
+           cout<<"NO"<<endl;
+    }
+    return 0;
+}

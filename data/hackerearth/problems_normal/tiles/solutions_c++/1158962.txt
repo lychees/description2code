@@ -1,0 +1,158 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const long long mod = 1e9 + 7;
+
+struct matrix
+{
+	vector <vector <int> > mat;
+	matrix(int n = 0, bool id = false)
+	{
+		mat.resize(n);
+		for (int i = 0; i < n; i++) mat[i].resize(n);
+		if (id) for (int i = 0; i < n; i++) mat[i][i] = 1;
+	}
+	void init(int n)
+	{
+		mat.resize(n);
+		for (int i = 0; i < n; i++) mat[i].resize(n);
+	}
+	inline int size() { return (int)mat.size(); }
+	vector <int>& operator[] (int i) { return mat[i]; }
+} f[7];
+
+matrix operator * (matrix &a, matrix &b)
+{
+	int n = a.size();
+	matrix ret(n);
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
+			for (int k = 0; k < n; k++)
+			{
+				ret[i][j] += 1ll * a[i][k] * b[k][j] % mod;
+				if (ret[i][j] >= mod) ret[i][j] -= mod;
+			}
+	return ret;
+}
+
+matrix pow(matrix &a, long long p)
+{
+	int n = a.size();
+	matrix ret(n, true);
+	while (p > 0)
+	{
+		if (p % 2 == 1) ret = ret * a;
+		p /= 2, a = a * a;
+	}
+	return ret;
+}
+
+int memo[1 << 6][1 << 6][7];
+
+int get(int msk1, int msk2, int m)
+{
+	int& ret = memo[msk1][msk2][m];
+	if (~ret) return ret;
+	ret = 0;
+
+	if (m == 0) return ret = 1;
+	int lst1 = (msk1 & 1);
+	int lst2 = (msk2 & 1);
+	msk1 >>= 1;
+	msk2 >>= 1;
+	if (lst2 == 0) return ret = get(msk1, msk2, m - 1);
+	if (lst1 == 1)
+	{
+		if (msk2 % 2 == 0) return ret = 0;
+		return ret = get(msk1, msk2 - 1, m - 1);
+	}
+	ret = get(msk1, msk2, m - 1);
+	if (msk2 % 2 == 1) ret += get(msk1, msk2 - 1, m - 1);
+	return ret;
+}
+
+int st[1 << 6];
+
+bool works(int msk)
+{
+	if (~st[msk]) return st[msk];
+	for (int i = 0; i < 10; i++)
+		if (msk >> i & 1)
+		{
+			if ((msk >> (i+1) & 1) == 0) return st[msk] = false;
+			else i++;
+		}
+	return st[msk] = true;
+}
+
+void pre()
+{
+	memset(memo, -1, sizeof(memo));
+	memset(st, -1, sizeof(st));
+	for (int m = 1; m <= 6; m++)
+	{
+		int n = (1 << m);
+		f[m].init(n);
+		for (int i = 0; i < n; i++)
+			for (int j = 0; j < n; j++)
+				f[m][i][j] = get(i, j, m);
+	}
+}
+
+int go(int m, int n)
+{
+	matrix base = f[m];
+	base = pow(base, n - 1);
+
+	n = (1 << m);
+	int ret = 0;
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			if (!works(j)) continue;
+			ret += base[j][i] % mod;
+			if (ret >= mod) ret -= mod;
+		}
+	}
+	return ret;
+}
+
+inline int inp()
+{
+	int c = getchar_unlocked(), x = 0;
+	for (; ((c < 48 or c > 57) and c != '-'); c = getchar_unlocked());
+	for (; c > 47 and c < 58; c = getchar_unlocked())	x = (x << 1) + (x << 3) + c - 48;
+	return x;
+}
+
+int main()
+{
+	pre();
+	int t = inp();
+	while (t--)
+	{
+		int m = inp(), n = inp();
+		printf("%d\n", go(m, n));
+	}
+	return 0;
+}

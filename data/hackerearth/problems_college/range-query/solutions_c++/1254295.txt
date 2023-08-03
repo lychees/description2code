@@ -1,0 +1,105 @@
+//HackerEarth--RangeQuery
+#include<bits/stdc++.h>
+#define MAX 10005
+
+using namespace std;
+
+struct node{
+	
+	int frequency[101];
+	
+	void init(){
+		
+		for(int i=0;i<101;i++)
+		 frequency[i]=0;		
+		
+	}
+	
+	void merge(struct node &lhs,struct node &rhs){
+		
+		init();
+		for(int i=0;i<101;i++)
+		  frequency[i]=lhs.frequency[i]+rhs.frequency[i];
+		
+	}
+	
+	node(){	init();	}
+	
+	void makeLeaf(int value){
+		
+		frequency[value]=1;
+		
+	}
+	
+}Tree[4*MAX];
+
+int Array[MAX];
+
+void makeTree(int ,int ,int );
+struct node query(int ,int ,int ,int ,int ,int );
+
+int main(void){
+	
+	int totalNumbers,queries,i,start,end,val;
+	
+	scanf("%d",&totalNumbers);
+	
+	for(i=0;i<totalNumbers;i++)
+	  scanf("%d",&Array[i]);
+	  
+	  makeTree(0,0,totalNumbers-1);
+	  
+	 scanf("%d",&queries);
+	 
+	 while(queries--){
+	 	
+	 	scanf("%d%d%d",&start,&end,&val);
+	 	struct node ans=query(0,0,totalNumbers-1,start,end,val);
+	 	
+	 	printf("%d\n",ans.frequency[val]);	
+	 	
+	 } 	
+	
+	return 0;
+	
+}
+
+void makeTree(int idx,int assStart,int assEnd){
+	
+	if(assStart==assEnd){
+		
+		Tree[idx].init();
+		Tree[idx].makeLeaf(Array[assStart]);
+		
+		return;
+		
+	}
+	
+	int mid=(assStart+assEnd)/2;
+	
+	makeTree(2*idx+1,assStart,mid);
+	makeTree(2*idx+2,mid+1,assEnd);
+	
+	Tree[idx].merge(Tree[2*idx+1],Tree[2*idx+2]);
+	
+}
+
+struct node query(int idx,int assStart,int assEnd,int s,int e,int val){
+	
+	if(assStart>assEnd||assStart>e||s>assEnd)//invalid
+	  return node();
+	
+	if(assStart>=s&&assEnd<=e)
+	  return Tree[idx];
+	  
+	int mid=(assStart+assEnd)/2;
+	struct node lhs,rhs,ans;
+	
+	lhs=query(2*idx+1,assStart,mid,s,e,val);
+	rhs=query(2*idx+2,mid+1,assEnd,s,e,val);
+	
+	ans.merge(lhs,rhs);
+	
+	return ans;
+	
+}

@@ -1,0 +1,135 @@
+#include <iostream>
+
+using namespace std;
+long long hashe[70];
+
+bool
+isCritical (long long x)
+{
+/*
+  48-57  --> 0-9
+  65-90		10->35 A-Z
+  97-122	36->61 a-z
+*/
+  if (x >= 48 && x <= 57)
+    return (hashe[x - 48]);
+  else if (x >= 65 && x <= 90)
+    return (hashe[x - 55]);
+  else
+    return (hashe[x - 61]);
+}
+
+void
+setHash (char *crit, long long k)
+{
+  for (long long i = 0; i < 70; i++)
+    hashe[i] = 0;
+  long long x = 0;
+  for (long long i = 0; i < k; i++)
+    {
+      x = crit[i];
+      if (x >= 48 && x <= 57)
+	hashe[x - 48] = 1;
+      else if (x >= 65 && x <= 90)
+	hashe[x - 55] = 1;
+      else
+	hashe[x - 61] = 1;
+    }
+}
+
+int
+main ()
+{
+  long long tc = 0;
+  cin >> tc;
+
+  char str[10005];
+  char special[63];
+  long long n, k, l, r;
+  while (tc--)
+    {
+      bool isZero = false;
+      cin >> n >> k >> l >> r;
+      cin >> str;
+      if (l == 0)
+	{
+	  isZero = true;
+	  l = 1;
+	}
+      cin >> special;
+      setHash (special, k);
+
+      long long arr[10005];	//arr[i] has the num of strings that are of len i
+      for (long long i = 0; i < 10005; i++)
+	arr[i] = 0;
+      long long len = 0;
+      long long ans = 0;
+
+      for (long long i = 0; i < n; i++)
+	{
+	  if (isCritical (str[i]))
+	    {
+	      len++;
+
+	    }
+	  arr[len]++;
+	}
+      /*for (long long i = 0; i <= n; i++)
+	{
+	  //cout << "arr[" << i << "] = " << arr[i] << endl;
+	}*/
+      for (long long i = l; i <= r; i++)
+	{
+	  ans = ans + arr[i];
+	}
+      long long lastans = ans;
+      //cout << "lastans= " << lastans << endl;
+      long long lp = l;
+      long long rp = r;
+      for (long long i = 1; i < n; i++)
+	{
+	  if (isCritical (str[i - 1]))
+	    {
+	      /*cout << str[i -
+	         1] << " is critical, so for " << str[i] <<
+	         "lp = " << lp << " and rp= " << rp << endl; */
+	      lastans = lastans + arr[rp + 1] - arr[lp];
+	      //cout << "lastans = " << lastans << endl;
+	      lp++;
+	      rp++;
+
+              if(rp > n)
+	        rp = n;	
+              if(lp >=n)
+	        lp = n-1;	
+	    }
+if(lastans>=0)
+	  ans = ans + lastans;
+	}
+      if (isZero)
+	{
+	  long long lastcount = arr[0];
+	      ans = ans + lastcount;
+	  long long crits = 0;
+	  if (lastcount == 0)
+	    crits = 1;
+	  for (long long i = 1; i < n; i++)
+	    {
+	      if (isCritical (str[i]))
+		{
+		  lastcount = 0;
+		  crits++;
+		}
+	      else if (lastcount != 0)
+		lastcount = lastcount - 1;
+	      else		//lastcount =0
+		{
+		  lastcount = arr[crits] - 1;
+		}
+	      ans = ans + lastcount;
+	      //cout << "count for " << str[i] << " = " << lastcount << endl;
+	    }
+	}
+      cout << ans << endl;
+    }
+}

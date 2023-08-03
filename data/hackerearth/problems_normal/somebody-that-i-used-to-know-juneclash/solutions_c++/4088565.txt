@@ -1,0 +1,109 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("clash.inp","r",stdin)
+#define OUTPUT freopen("clash.out","w",stdout)
+#define FOR(i,l,r) for(auto i=(l);i<=(r);i++)
+#define REP(i,l,r) for(auto i=(l);i<(r);i++)
+#define FORD(i,l,r) for(auto i=(l);i>=(r);i--)
+#define REPD(i,l,r) for(auto i=(l);i>(r);i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+
+const ll inf=1e18;
+const int MOD=1e9+7;
+const int N=3e2+10,M=N*N;
+
+ll d[N][N][2];
+vector <int> e[N],reve[N];
+int n,v[M][2],w[M],type[M];
+struct info{
+    int x,y,re;
+    ll val;
+    info (int _x=0,int _y=0,int _re=0,ll _val=0){
+        x=_x;
+        y=_y;
+        val=_val;
+        re=_re;
+    }
+};
+struct comp{
+    bool operator ()(info a,info b){
+        return a.val>b.val;
+    }
+};
+priority_queue <info,vector<info>,comp> pq;
+template <class T>
+bool minimize(T &x,T y){
+    if (x>y) x=y;else return 0;
+    return 1;
+}
+
+void prepare(){
+    int m;
+    scanf("%d%d",&n,&m);
+    FOR(i,1,m){
+        int x,y;
+        char ch;
+        scanf("%d%d%d %c",&x,&y,w+i,&ch);
+        v[i][0]=x;v[i][1]=y;
+        type[i]=(ch=='(')?1:-1;
+        e[x].push_back(i);
+        reve[y].push_back(i);
+    }
+}
+void solve(){
+    FOR(i,1,n)
+        FOR(j,1,n)
+            FOR(type,0,1) d[i][j][type]=inf;
+    FOR(i,1,n) d[i][i][0]=0;
+    FOR(i,1,n) pq.push(info(i,i,0,0));
+    while (!pq.empty()){
+        info cur=pq.top();pq.pop();
+        if (cur.val>d[cur.x][cur.y][cur.re]) continue;
+        if (!cur.re){
+            for(auto i:reve[cur.x]){
+                int y=v[i][0];
+                if (type[i]==1&&minimize(d[y][cur.y][1],cur.val+w[i]))
+                    pq.push(info(y,cur.y,1,d[y][cur.y][1]));
+            }
+            FOR(i,1,n){
+                if (minimize(d[i][cur.y][1],cur.val+d[i][cur.x][1]))
+                    pq.push(info(i,cur.y,1,d[i][cur.y][1]));
+                if (minimize(d[cur.x][i][1],cur.val+d[cur.y][i][1]))
+                    pq.push(info(cur.x,i,1,d[cur.x][i][1]));
+            }
+            continue;
+        }
+        for(auto i:e[cur.y]){
+            int y=v[i][1];
+            if (type[i]==-1&&minimize(d[cur.x][y][0],cur.val+w[i]))
+                pq.push(info(cur.x,y,0,d[cur.x][y][0]));
+        }
+        FOR(i,1,n){
+            if (minimize(d[i][cur.y][1],cur.val+d[i][cur.x][0]))
+                pq.push(info(i,cur.y,1,d[i][cur.y][1]));
+            if (minimize(d[cur.x][i][1],cur.val+d[cur.y][i][0]))
+                pq.push(info(cur.x,i,1,d[cur.x][i][1]));
+        }
+    }
+    FOR(mid,1,n)
+        FOR(i,1,n)
+            FOR(j,1,n) d[i][j][0]=min(d[i][j][0],d[i][mid][0]+d[mid][j][0]);
+    FOR(i,1,n){
+        FOR(j,1,n) if (d[i][j][0]==inf) printf("-1 ");
+        else printf("%lld ",d[i][j][0]);
+        ENDL;
+    }
+}
+int main(){
+//    freopen("input.inp","r",stdin);
+    prepare();
+    solve();
+}

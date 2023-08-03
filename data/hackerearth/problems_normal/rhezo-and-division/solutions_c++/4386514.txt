@@ -1,0 +1,164 @@
+/*
+Author:
+Prob:
+Link:
+Tag:
+Comp:
+*/
+
+#include <bits/stdc++.h>
+using namespace std;
+
+#define ll long long
+#define ull unsigned long long
+#define ii pair<int,int>
+#define iii pair<ii, int>
+
+#define fi first
+#define se second
+#define mp make_pair
+#define pb push_back
+#define ep emplace_back
+#define sz(a) (int) a.size()
+#define cl(a) a.clear()
+
+#define vi vector<int>
+#define vii vector<ii>
+
+#define FOR(x,a,b) for (int x=a;x<=b;x++)
+#define FOD(x,a,b) for (int x=a;x>=b;x--)
+#define REP(x,a,b) for (int x=a;x<b;x++)
+#define RED(x,a,b) for (int x=a;x>b;x--)
+
+const int MAX = 1e4 + 10;
+const int MAXN = 1e6 + 10;
+const int MOD = 1e9 + 7;
+const int inf = 1e9;
+const double pi = acos(-1.0);
+const double eps = 1e-6;
+
+int Z[2*MAX];
+vi a;
+ll f[MAX][4][3][2][2];
+
+void Zfunction(string S){
+	int L, R, N;
+	N = S.length();
+	L = R = 0;
+	for (int i = 1; i < N; i++){
+		if (i > R){
+			L = R = i;
+			while (R < N && S[R - L] == S[R])
+				R++;
+			Z[i] = R - L;
+			R--;
+		}
+		else{
+			int k = i - L;
+			if (Z[k] < R - i + 1)
+				Z[i] = Z[k];
+			else{
+				L = i;
+				while (R < N && S[R - L] == S[R])
+					R++;
+				Z[i] = R - L;
+				R--;
+			}
+		}
+	}
+}
+
+// ll dp(int id, int two, int three, int five, int seven){
+// 	if (id == a.size())
+// 		return (two > 2 && three > 1 && five && seven);
+// 	if (f[id][two][three][five][seven] != -1)
+// 		return f[id][two][three][five][seven];
+
+// 	ll &ret = f[id][two][three][five][seven];
+// 	ret = 0;
+
+// 	int pos = a[id];
+// 	int _two = 0;
+// 	while (!(pos&1)) _two++, pos /= 2;
+	
+// 	pos = a[id];
+// 	int _three = 0;
+// 	while (pos % 3 == 0) _three++, pos /= 3;
+
+// 	pos = a[id];
+// 	int _five = 0;
+// 	while (pos % 5 == 0) _five++, pos /= 5;
+
+// 	pos = a[id];
+// 	int _seven = 0;
+// 	while (pos % 7 == 0) _seven++, pos /= 7;
+
+// 	ret = dp(id+1, two, three, five, seven);
+// 	ret += dp(id+1, min(3, two + _two), min(2, three + _three), min(1, five + _five), min(1, seven + _seven));
+// 	return ret %= MOD;
+// }
+
+ll Pow2(int p){
+	if (!p) return 1;
+	ll ret = Pow2(p/2);
+	ret = (ret * ret) % MOD;
+	if (p & 1)
+		ret = (ret * 2) % MOD;
+	return ret;
+}
+
+ll dp(int id, int two, int three, int five, int seven){
+	if (id == a.size())
+		return (two > 2 && three > 1 && five && seven);
+
+	if (f[id][two][three][five][seven] != -1)
+		return f[id][two][three][five][seven];
+	if (two > 2 && three > 1 && five && seven)
+		return f[id][two][three][five][seven] = Pow2(a.size()-id);
+
+	ll &ret = f[id][two][three][five][seven];
+	ret = 0;
+
+	int pos = a[id];
+	int _two = 0;
+	while (!(pos&1)) _two++, pos /= 2;
+	
+	pos = a[id];
+	int _three = 0;
+	while (pos % 3 == 0) _three++, pos /= 3;
+
+	pos = a[id];
+	int _five = 0;
+	while (pos % 5 == 0) _five++, pos /= 5;
+
+	pos = a[id];
+	int _seven = 0;
+	while (pos % 7 == 0) _seven++, pos /= 7;
+
+	ret = dp(id+1, two, three, five, seven);
+	ret += dp(id+1, min(3, two + _two), min(2, three + _three), min(1, five + _five), min(1, seven + _seven));
+	return ret %= MOD;
+}
+
+int main(){
+	// freopen("test.in", "rt", stdin);
+	ios::sync_with_stdio(false);
+
+	string t, s;
+	int n;
+
+	cin >> t >> s;
+
+	n = t.length();
+	t += "#" + s;
+	Zfunction(t);
+
+	FOR(i,1,s.length())
+		if (Z[n+i] >= n)
+			a.pb(i);
+
+	memset(f,-1,sizeof(f));
+	cout << dp(0,0,0,0,0);
+
+	return 0;
+}

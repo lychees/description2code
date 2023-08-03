@@ -1,0 +1,160 @@
+#include <iostream>
+#include <cstdio>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <algorithm>
+#include <map>
+#include <set>
+
+using namespace std;
+
+#define PB push_back
+#define MP make_pair
+#define F first
+#define S second
+#define MOD 1000000007
+
+vector<int> edge[200];
+int parent[200], size[200];
+int n;
+int vis[200] = {0}, par[200];
+
+int dfs(int start){
+    sort(edge[start].begin(), edge[start].end());
+    for(int i = 0; i < edge[start].size(); i++){
+        if(vis[edge[start][i]] == 0){
+            vis[edge[start][i]] = 1;
+            par[edge[start][i]] = start;
+            dfs(edge[start][i]);
+        }
+    }
+}
+
+ /*   stack<int> s;
+    s.push(start);
+    for(int i = 0; i <= 100; i++){
+        par[ i ] = 0;
+        vis[i] = 0;
+    }
+    vis[start] = 1;
+
+    while(!s.empty()){
+        int x = s.top(), ch;
+        sort(edge[x].begin(), edge[x].end());
+        cout<<edge[x][0]<<endl;
+        for(int i = edge[x].size() - 1; i >= 0; i--){
+            ch = edge[x][i];
+            if(vis[ch] == 0){
+                vis[ch] = 1;
+                par[ch] = x;
+                s.push(ch);
+            }
+        }
+
+        s.pop();
+    }
+
+}*/
+
+int getparent(int x){
+    vector<int> v;
+    v.PB(x);
+    while(1){
+        if(parent[x] == x) break;
+        x = parent[x];
+        v.PB(x);
+    }
+    for(int i = 0; i < v.size(); i++){
+        parent[v[i]] = x;
+    }
+    return x;
+}
+
+int unio(int x, int y){
+    int px, py;
+    if(getparent(x) != getparent(y)){
+        px = getparent(x);
+        py = getparent(y);
+        if(size[px] > size[py]){
+            parent[py] = px;
+            size[px] += size[py];
+        }
+        else{
+            parent[px] = py;
+            size[py] += size[px];
+        }
+    }
+    else{
+        return 0;
+    }
+}
+
+pair<int, pair<int, int> > p[100000];
+
+int solve(){
+    int m, x, y, cost;
+    cin>>n>>m;
+    for(int i  = 1; i <= n; i++){
+        parent[i] = i;
+        size[i] = 1;
+    }
+    for(int i=  0; i < m; i++){
+        cin>>x>>y>>cost;
+        p[i].F = cost;
+        p[i].S.F = x;
+        p[i].S.S = y;
+    }
+
+    sort(p, p + m);
+    int start, end, travel;
+    cin>>start>>end>>travel;
+    int i;
+    for( i = m - 1; i >= 0; i--){
+        x = p[i].S.F;
+        y = p[i].S.S;
+        edge[x].PB(y);
+        edge[y].PB(x);
+        unio(x, y);
+        if(getparent(start) == getparent(end) ) {
+            for(int j = i - 1; j >= 0; j--){
+                if(p[j].F == p[i].F){
+                    x = p[j].S.F;
+                    y = p[j].S.S;
+                    edge[x].PB(y);
+                    edge[y].PB(x);
+                    unio(x, y);
+                }
+            }
+            break;
+        }
+    }
+    int ans = travel / (p[i].F - 1);
+    if(travel % (p[i].F - 1) ) ans++;
+
+    dfs(start);
+    int ch;
+    ch = end;
+    vector<int> ve;
+    while(1){
+        ve.PB(ch);
+        if(ch == start) break;
+        ch = par[ch];
+    }
+    for(int i = ve.size() - 1; i >= 0; i--){
+        cout<<ve[i]<<" ";
+    }
+    cout<<endl;
+    cout<<ans<<endl;
+
+}
+
+int main(){
+    //freopen("input.txt", "r", stdin);
+    int test = 1;
+    //cin>>test;
+    while(test--){
+        solve();
+    }
+    return 0;
+}

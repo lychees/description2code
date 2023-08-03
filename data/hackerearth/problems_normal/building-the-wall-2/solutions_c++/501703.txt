@@ -1,0 +1,199 @@
+//Karol Kaszuba
+#include <iostream>
+#include <iomanip>
+#include <cstdio>
+#include <algorithm>
+#include <cmath>
+#include <set>
+#include <map>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
+#include <unordered_map>
+
+using namespace std;
+
+typedef long long LL;
+typedef vector<int> VI;
+typedef pair<int,int> PII;
+typedef double D;
+typedef long double LD;
+typedef vector<PII> VII;
+
+#define FOR(i,x,y) for(int i=(x);i<=(y);++i)
+#define REP(i,x) FOR(i,0,(x)-1)
+#define FORD(i,x,y) for(int i=(x);i>=(y);--i)
+#define VAR(i,c) __typeof(c) i=(c)
+#define FORE(i,c) for(VAR(i,(c).begin());i!=(c).end();++i)
+
+#define SIZE(c) (int)((c).size())
+#define ALL(c) (c).begin(),(c).end()
+#define PB push_back
+#define IN insert
+#define ER erase
+#define MP make_pair
+#define ST first
+#define ND second
+#define IOSYNC ios_base::sync_with_stdio(0)
+
+const LL mod = 1000000007;
+const int N = 1000001;
+LL A[N + 5][4][4], B[N + 5][4][4];
+
+/*
+inline int maxx(const int &a, const int &b, const int &c)
+{
+	if(a >= b)
+	{
+		if(a >= c)
+			return a;
+		return c;
+	}
+	if(b >= c)
+		return b;
+	return c;
+	
+}
+
+inline int BT(const int &a, const int &b, const int &c)
+{
+	if(a < 0 || b < 0 || c < 0) return 0;
+	
+	if(a + b + c == 0) return 1;
+		
+	LL wyn = 0;
+	int k = maxx(a,b,c);
+	
+	if(a == k)
+	{
+		if(T[a][a - b][a - c] != 0)
+			return T[a][a - b][a - c];
+			
+		REP(i, 3)
+			wyn += BT(a - i - 1, b, c);
+		if(a == b)
+			wyn += BT(a - 1, b - 1, c);
+		if(a == b && b == c)
+			wyn += T[a - 1][b - c][a - c];
+		while(wyn > mod)
+			wyn = wyn - mod;
+		T[a][a - b][a - c] = wyn;
+		return wyn;
+	}
+	if(c == k)
+	{
+			if(T[c][c - b][c - a] != 0)
+				return T[c][c - b][c - a];
+				
+			REP(i, 3)
+				wyn += BT(c - i - 1, b, a);
+			if(c == b)
+				wyn += BT(c - 1, b - 1, a);
+			if(c == b && b == a)
+				wyn += T[c - 1][b - c][c - a];
+			while(wyn > mod)
+				wyn = wyn - mod;
+			T[c][c - b][c - a] = wyn;
+			return wyn;
+	}
+	
+	if(b == k)
+	{
+		if(A[b][b - a][b - c] != 0)
+			return A[b][b - a][b - c];
+		REP(i, 3)
+			wyn += BT(a, b - i - 1, c);
+		if(b == c)
+			wyn += BT(a, b - 1, c - 1);
+		while(wyn > mod)
+			wyn = wyn - mod;
+		A[b][b - a][b - c] = wyn;
+		return wyn;
+	}
+}
+* */
+
+int DP(int n)
+{	
+	B[3][0][0] = 1;
+	A[3][0][0] = 1;
+	
+	FOR(i, 4, n + 3)
+	{
+		
+		B[i][1][1] = (B[i - 1][0][0] + A[i - 1][1][0] + A[i - 1][2][0]) % mod;
+		B[i][1][2] = (B[i - 1][0][1] + A[i - 1][1][1] + A[i - 1][2][1]) % mod;
+		B[i][1][3] = (B[i - 1][0][2] + A[i - 1][1][2] + A[i - 1][2][2]) % mod;
+		B[i][2][2] = (B[i - 1][1][1] + B[i - 2][0][0] + A[i - 2][1][0]) % mod;
+		B[i][2][3] = (B[i - 1][1][2] + B[i - 2][0][1] + A[i - 2][1][1]) % mod;
+		B[i][3][3] = (B[i - 1][2][2] + B[i - 2][1][1] + B[i - 3][0][0]) % mod;
+		
+		A[i][0][1] = (B[i][1][1] + B[i][1][2] + B[i][1][3] + A[i - 1][0][0]) % mod;
+		A[i][0][2] = (B[i][1][2] + B[i][2][2] + B[i][2][3] + A[i - 1][0][1]) % mod;
+		A[i][0][3] = (B[i][1][3] + B[i][2][3] + B[i][3][3] + A[i - 1][0][2]) % mod;
+		
+		
+		A[i][1][1] = (A[i - 1][0][0] + A[i - 1][0][1] + A[i - 1][0][2]) % mod;
+		A[i][1][2] = (A[i - 1][0][1] + B[i - 1][1][1] + B[i - 1][1][2]) % mod;
+		A[i][1][3] = (A[i - 1][0][2] + B[i - 1][1][2] + B[i - 1][2][2]) % mod;
+		A[i][1][0] = (A[i][1][1] + A[i][1][2] + A[i][1][3]) % mod;
+		
+		
+		A[i][2][1] = (A[i - 1][1][0] + A[i - 1][1][1] + A[i - 1][1][2]) % mod;
+		A[i][2][2] = (A[i - 1][1][1] + A[i - 2][0][0] + A[i - 2][0][1]) % mod;
+		A[i][2][3] = (A[i - 1][1][2] + A[i - 2][0][1] + B[i - 2][1][1]) % mod;
+		A[i][2][0] = (A[i][2][1] + A[i][2][2] + A[i][2][3]) % mod;
+		
+		A[i][0][0] = (A[i][0][1] + A[i][0][2] + A[i][0][3] + A[i - 1][0][0] + A[i][1][1]) % mod;
+		
+		B[i][0][0] = A[i][0][0];
+		B[i][0][1] = A[i][0][1];
+		B[i][0][2] = A[i][0][2];
+		B[i][0][3] = A[i][0][3];
+	}
+}
+
+/*
+void prepro(int n)
+{
+	T[0][0][0] = 1;
+	A[0][0][0] = 1;
+	FOR(i, 1, n)
+	{
+		BT(i, i, i);
+	}
+	return;
+	
+}
+int zapytanie[1000006];
+*/
+int main()
+{
+	
+	int t;
+	scanf("%d", &t);
+	
+	int maks = 0, a;
+	DP(1000000);
+	
+	REP(i, t)
+	{
+		scanf("%d", &a);
+		printf("%lld\n", A[a + 3][0][0]);
+	}
+	
+	/*
+	REP(i, t)
+	{
+		cin >> a;
+		zapytanie[i] = a;
+		maks = max(maks, a);
+	}
+	//prepro(maks);
+	REP(i, t)
+	{
+		a = zapytanie[i];
+		printf("%lld\n", T[a + 3][0][0]);
+	}
+	* */
+}

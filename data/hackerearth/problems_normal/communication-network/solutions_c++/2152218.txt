@@ -1,0 +1,98 @@
+#include <bits/stdc++.h>
+// iostream is too mainstream
+#include <cstdio>
+// bitch please
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <list>
+#include <cmath>
+#include <iomanip>
+#include <time.h>
+#define dibs reserve
+#define OVER9000 1234567890
+#define ALL_THE(CAKE,LIE) for(auto LIE =CAKE.begin(); LIE != CAKE.end(); LIE++)
+#define tisic 47
+#define soclose 1e-8
+#define chocolate win
+// so much chocolate
+#define patkan 9
+#define ff first
+#define ss second
+#define abs(x) ((x < 0)?-(x):x)
+#define uint unsigned int
+#define dbl long double
+#define pi 3.14159265358979323846
+using namespace std;
+// mylittledoge
+
+struct event { // zahod id v case >= d
+	long long d;
+	int id,nxt_id;
+	event() {}
+	event(long long a, int b, int c) {d =a, id =b, nxt_id =c;}
+
+	bool operator<(const event &E) const {
+		return d > E.d;}
+	};
+
+int main() {
+	cin.sync_with_stdio(0);
+	cin.tie(0);
+	cout << fixed << setprecision(10);
+	int N,K;
+	cin >> N >> K;
+	vector<long long> A(N);
+	for(int i =0; i < N; i++) cin >> A[i];
+	
+	vector<long long> cost(N,(long long)(1e12));
+	cost[0] =1LL*K*K*A[0];
+	priority_queue<event> q;
+	int fpref =0;
+	int maxk =49;
+	if(K < 100) maxk =70;
+	if(K > 40000) {cout << 1LL*K*K*(A[0]+A[N-1])+1LL*(N-1)*(N-1); return 0;}
+	for(int k =0; k < min(maxk,K-1); k++) {
+		long long ds =(N-1)/(k+1);
+		long long a =1024LL*(k+2)*K*K+ds*ds*k+1LL*(N-ds*k)*(N-ds*k);
+		if(N > 1000 && k > 40 && a > cost[N-1]) break;
+		vector<long long> cost_old =cost;
+		for(int i =0; i < N; i++) cost_old[i] +=1LL*i*i;
+
+		vector< pair<long long,long long> > V(N);
+		for(int i =0; i < N; i++) V[i].ff =cost_old[i], V[i].ss =2*i;
+		// .ff-x*.ss
+		vector<int> nxt(N+2,0),prev(N+2,0);
+		for(int i =0; i <= N; i++) nxt[i] =i+1, prev[i+1] =i;
+		for(int i =0; i < N-1; i++) q.push(event((V[i+1].ff-V[i].ff+1)/2,i+1,nxt[i+1]));
+		vector<bool> live(N,true);
+
+		for(int i =fpref+1; i < N; i++) {
+			while(!q.empty()) {
+				event e =q.top();
+				if(e.d > i) break;
+				q.pop();
+				if(!live[e.id] || !live[e.nxt_id]) continue;
+				live[e.id] =false;
+				prev[e.nxt_id] =prev[e.id];
+				nxt[prev[e.id]] =e.nxt_id;
+				if(prev[e.nxt_id] > 0) {
+					long long t =max(0LL,V[e.nxt_id-1].ff-V[prev[e.nxt_id]-1].ff)/(V[e.nxt_id-1].ss-V[prev[e.nxt_id]-1].ss);
+					if(V[e.nxt_id-1].ff-V[prev[e.nxt_id]-1].ff > t*(V[e.nxt_id-1].ss-V[prev[e.nxt_id]-1].ss)) t++;
+					q.push(event(t,prev[e.nxt_id],e.nxt_id));}
+				}
+			int x =nxt[0]-1;
+			if(i == fpref+1 && cost[i] < V[x].ff-V[x].ss*i+K*K*A[i]+1LL*i*i) fpref++;
+			cost[i] =min(cost[i],V[x].ff-V[x].ss*i+K*K*A[i]+1LL*i*i);}
+		while(!q.empty()) q.pop();}
+
+	cout << cost[N-1] << "\n";
+	return 0;}
+
+// look at my code
+// my code is amazing

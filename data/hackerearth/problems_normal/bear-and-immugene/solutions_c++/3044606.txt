@@ -1,0 +1,92 @@
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
+using namespace std;
+typedef long long LL;
+
+const int M = 1000000007;
+const int MX = 1<<20;
+const int MM = 5;
+
+inline void add(int &x, int y) {
+	x += y;
+	if (x >= M) x -= M;
+}
+
+struct Data {
+	int t[MM][MM];
+	void init(int x) {
+		int i, j;
+		for (i = 0; i < MM; i++) {
+			for (j = 0; j < MM; j++) t[i][j] = 0;
+			t[i][i] = 1;
+		}
+		t[4][4] = 2;
+		t[4][x] = M-1;
+		for (j = 0; j < MM; j++) t[x][j] = 0;
+		t[x][4] = 1;
+	}
+};
+
+Data a[MX * 2 + 5];
+int tp[MM][MM];
+char s[MX];
+char str[] = "ACGT";
+int N, Q;
+
+int get(char c) {
+	return strchr(str, c) - str;
+}
+
+void mul(int a[MM][MM], int b[MM][MM], int c[MM][MM]) {
+	int i, j, k;
+	for (i = 0; i < MM; i++) for (j = 0; j < MM; j++) {
+		tp[i][j] = 0;
+		for (k = 0; k < MM; k++) add(tp[i][j], LL(a[i][k]) * b[k][j] % M);
+	}
+	for (i = 0; i < MM; i++) for (j = 0; j < MM; j++) c[i][j] = tp[i][j];
+}
+
+void up(int u) {
+	mul(a[u * 2].t, a[u * 2 + 1].t, a[u].t);
+}
+
+void change(int u, int l, int r, int k, int c) {
+	if (l == r) {
+		a[u].init(c);
+		return;
+	}
+	int m = (l + r) / 2;
+	if (k <= m) change(u * 2, l, m, k, c);
+	else change(u * 2 + 1, m + 1, r, k, c);
+	up(u);
+}
+
+void build(int u, int l, int r) {
+	if (l == r) {
+		a[u].init(get(s[l]));
+		return;
+	}
+	int m = (l + r) / 2;
+	build(u * 2, l, m);
+	build(u * 2 + 1, m + 1, r);
+	up(u);
+}
+
+int main() {
+//	freopen("in.txt", "r", stdin);
+//	freopen("out.txt", "w", stdout);
+	
+	int j, k;
+	char buf[120];
+	scanf("%d%d%s", &N, &Q, s + 1);
+	build(1, 1, N);
+	while (Q--) {
+		scanf("%d%s", &k, buf);
+		change(1, 1, N, k, get(buf[0]));
+		int ans = 0;
+//		for (j = 0; j < MM; j++) add(ans, a[1].t[4][j]);
+		printf("%d\n", a[1].t[4][4]);
+	}
+	return 0;
+}

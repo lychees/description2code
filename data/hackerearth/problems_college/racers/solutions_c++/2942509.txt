@@ -1,0 +1,76 @@
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <memory.h>
+#include <set>
+
+using namespace std;
+
+const int N = 255;
+bool vis[N];
+int match[N];
+vector <int> g[N];
+
+int nBikers, nBikes, need;
+long long xBikes[N], yBikes[N], xBikers[N], yBikers[N];
+
+bool bpm(int u) {
+    for(int i = 0; i < g[u].size(); i++) {
+        int v = g[u][i];
+        if(!vis[v]) {
+            vis[v] = 1;
+            if (match[v] == -1 || bpm(match[v])) {
+                match[v] = u;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void makeGraph(long long dst) {
+    for(int i = 0; i < nBikers; i++) g[i].clear();
+    for(int i = 0; i < nBikers; i++) {
+        for(int j = 0; j < nBikes; j++) {
+            long long d = (xBikers[i] - xBikes[j]) * (xBikers[i] - xBikes[j]) + (yBikers[i] - yBikes[j]) * (yBikers[i] - yBikes[j]);
+            if(d <= dst) {
+                g[i].push_back(j);
+            }
+        }
+    }
+}
+
+int matching(long long dist) {
+    int cnt = 0;
+    makeGraph(dist);
+    memset(match, -1, sizeof(match));
+    for(int i = 0; i < nBikers; i++) {
+        memset(vis, 0 , sizeof(vis));
+        if(bpm(i)) cnt++;
+    }
+    return cnt;
+}
+
+int main() {
+    //freopen("in.txt","r",stdin);
+    cin >> nBikers >> nBikes >> need;
+    for(int i = 0; i < nBikers; i++) cin >> xBikers[i] >> yBikers[i];
+    for(int i = 0; i < nBikes; i++) cin >> xBikes[i] >> yBikes[i];
+    set <long long> possible;
+    for(int i = 0; i < nBikers; i++) {
+        for(int j = 0; j < nBikes; j++) {
+            long long d = (xBikers[i] - xBikes[j]) * (xBikers[i] - xBikes[j]) + (yBikers[i] - yBikes[j]) * (yBikers[i] - yBikes[j]);
+            possible.insert(d);
+        }
+    }
+    for(set <long long>::iterator it = possible.begin(); it != possible.end(); ++it) {
+        if(matching(*it) < need) continue;
+        else {
+            cout << *it << endl;
+            break;
+        }
+    }
+    return 0;
+}

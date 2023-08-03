@@ -1,0 +1,187 @@
+//Created By Mayur Agarwal :)
+
+#include <iostream>
+#include <stdio.h>
+#include <cmath>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <set>
+#include <algorithm>
+#include <map>
+#include <iterator>
+#include <functional>
+#include <queue>
+
+#define ll long long
+#define ind(a) scanf("%d",&a)
+#define in(a) scanf("%lld",&a)
+#define inc(a) scanf("%c",&a)
+#define ins(a) scanf("%s",a)
+#define pr(a) printf("%lld\n",a)
+#define debug(x) cout << #x << " = " << x << endl
+#define MS0(X) memset((X), 0, sizeof((X)))
+#define MS1(X) memset((X), -1, sizeof((X)))
+#define pb push_back
+#define ff first
+#define ss second
+#define SIZE 100010
+const ll mod = 1e9 + 7;
+
+using namespace std;
+typedef pair<ll, ll>pll;
+bool prime[SIZE];
+ll phi[SIZE];
+vector<ll>divisor;
+
+inline ll power(ll base, ll exp)
+{
+	ll res = 1;
+	while (exp)
+	{
+		if (exp & 1)
+		{
+			res = (res * base) % mod;
+		}
+		base = (base * base) % mod;
+		exp >>= 1;
+	}
+	return res;
+}
+
+inline void sieve()
+{
+	for (int i = 1; i < SIZE; i++)
+	{
+		phi[i] = i;
+	}
+	prime[0] = prime[1] = 1;
+	for (int i = 2; i < SIZE; i++)
+	{
+		if (prime[i] == 0)
+		{
+			phi[i] = i - 1;
+			for (int j = 2 * i; j < SIZE; j += i)
+			{
+				prime[j] = 1;
+				phi[j] = (phi[j] * (i - 1)) % mod;
+				phi[j] = (phi[j] * power(i, mod - 2)) % mod;
+			}
+		}
+	}
+}
+
+// inline vector<ll> get_primes(ll n)
+// {
+// 	std::vector<ll> vec;
+// 	for (ll i = 2; i * i <= n; i++)
+// 	{
+// 		if (n % i == 0)
+// 		{
+// 			vec.pb(i);
+// 			while (n % i == 0)
+// 			{
+// 				n = n / i;
+// 			}
+// 		}
+// 	}
+// 	if (n > 1)
+// 		vec.pb(n);
+// 	return vec;
+// }
+// inline ll phi(ll d)
+// {
+// 	std::vector<ll> prime_factor = get_primes(d);
+// 	ll res = d;
+// 	for (ll i = 0; i < prime_factor.size(); i++)
+// 	{
+// 		res = (res * (prime_factor[i] - 1)) % mod;
+// 		res = (res * power(prime_factor[i], mod - 2)) % mod;
+// 	}
+// 	return res;
+// }
+
+// inline vector<ll> get_divisor(ll n)
+// {
+// 	std::vector<ll> vec;
+
+// 	return vec;
+// }
+
+inline ll geometric_progess(ll first, ll number_of_terms, ll comm_diff)
+{
+	if (comm_diff == 1)
+	{
+		return (first * number_of_terms) % mod;
+	}
+	ll num = (first * (1 - power(comm_diff, number_of_terms) + mod) ) % mod;
+	ll den = (1 - comm_diff + mod) % mod;
+	ll res = (num * power(den, mod - 2)) % mod;
+	return res;
+}
+inline void solve(ll type, ll n)
+{
+	divisor.clear();
+	for (ll i = 1; i * i <= n; i++)
+	{
+		if (n % i == 0)
+		{
+			divisor.pb(i);
+			if (n / i != i)
+				divisor.pb(n / i);
+		}
+	}
+
+	ll res = 0;
+	for (ll i = 0; i < divisor.size(); i++)
+	{
+		//ll phiD = phi(divisor[i]);
+		//ll phiD = phi[divisor[i]];
+		//ll temp = phiD;
+		ll d = divisor[i];
+		if (type == 1)
+		{
+			ll temp = phi[d];
+			//cout << pow(2, 10);
+			ll nd = power(n, d);
+			temp = (temp * geometric_progess(nd, n / d, nd)) % mod;
+			res = (res + temp) % mod;
+		}
+		else if (type == 2)
+		{
+			ll temp = phi[d];
+			ll pow2n = power(2, n);
+			temp = (temp * pow2n) % mod;
+			ll pow2d = power(2, d);
+			temp = (temp * geometric_progess(pow2d, n / d, pow2d)) % mod;
+			res = (res + temp) % mod;
+		}
+		else
+		{
+			ll temp = (phi[d] * phi[n]) % mod;
+			temp = (temp * power(n, mod - 2)) % mod;
+			ll nd = power(n, d);
+			temp = (temp * geometric_progess(nd, n / d, nd)) % mod;
+			res = (res + temp) % mod;
+		}
+	}
+	pr(res);
+}
+int main()
+{
+#ifndef ONLINE_JUDGE
+	freopen("input.txt", "r", stdin);
+	freopen("output.txt", "w", stdout);
+#endif
+	ll q;
+	sieve();
+	in(q);
+	while (q--)
+	{
+		ll n, type;
+		in(type);
+		in(n);
+		solve(type, n);
+	}
+	return 0;
+}

@@ -1,0 +1,100 @@
+#include<bits/stdc++.h>
+ 
+using namespace std;
+ 
+int st[800000]={0},lazy[800000]={0};
+ 
+int query(int start,int end,int qstart,int qend,int cur)
+{
+    if(lazy[cur]%2!=0)
+    {
+        st[cur]=(end-start+1)-st[cur];
+        if(start!=end)
+        {
+            lazy[cur*2+1]+=1;
+            lazy[cur*2+2]+=1;
+        }
+        lazy[cur]=0;
+    }
+    if(qstart>end || qend<start)
+        return 0;
+    if(qstart<=start && qend>=end)
+        return st[cur];
+    int mid=(start+end)/2;
+    return query(start,mid,qstart,qend,cur*2+1)+query(mid+1,end,qstart,qend,cur*2+2);
+}
+ 
+void update(int start,int end,int qstart,int qend,int cur)
+{
+    if(lazy[cur]%2!=0)
+    {
+        st[cur]=(end-start+1)-st[cur];
+        if(start!=end)
+        {
+            lazy[cur*2+1]+=1;
+            lazy[cur*2+2]+=1;
+        }
+        lazy[cur]=0;
+    }
+    if(qstart>end || qend<start)
+        return ;
+    if(qstart<=start && qend>=end)
+    {
+        st[cur]=(end-start+1)-st[cur];
+        if(start!=end)
+        {
+            lazy[cur*2+1]+=1;
+            lazy[cur*2+2]+=1;
+        }
+        lazy[cur]=0;
+        return ;
+    }
+    int mid=(start+end)/2;
+    update(start,mid,qstart,qend,cur*2+1);
+    update(mid+1,end,qstart,qend,cur*2+2);
+    st[cur]=st[cur*2+1]+st[cur*2+2];
+}
+ 
+void build(int a[],int start,int end,int cur)
+{
+    if(start==end)
+    {
+        st[cur]=a[start];
+        return;
+    }
+    int mid=(start+end)/2;
+    build(a,start,mid,cur*2+1);
+    build(a,mid+1,end,cur*2+2);
+    st[cur]=st[cur*2+1]+st[cur*2+2];
+}
+ 
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cin.tie(0);
+    int n,m,i;
+    cin>>n>>m;
+    char s[n];
+    cin>>s;
+    int a[n];
+    for(i=0;s[i]!='\0';i++)
+        if(s[i]=='>')
+            a[i]=0;
+        else
+            a[i]=1;
+    build(a,0,n-2,0);
+    while(m--)
+    {
+        int c,l,r;
+        cin>>c>>l>>r;
+        if(c==1)
+            update(0,n-2,l-1,r-2,0);
+        else
+        {
+            if(l<r)
+                cout<<query(0,n-2,l-1,r-2,0)<<"\n";
+            else
+                cout<<(l-r)-query(0,n-2,r-1,l-2,0)<<"\n";
+        }
+    }
+}

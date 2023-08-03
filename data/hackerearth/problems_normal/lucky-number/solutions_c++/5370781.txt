@@ -1,0 +1,98 @@
+#include<bits/stdc++.h>
+using namespace std;
+int vis[1100][1100];
+struct node
+{
+    int mask, mod, dig, idx;
+    node() {}
+    node(int mask, int mod, int dig, int idx)
+    {
+        this->mask=mask;
+        this->mod=mod;
+        this->dig=dig;
+        this->idx=idx;
+    }
+};
+void divide(string d, int n)
+{
+    int q=0;
+    string ans="";
+    for(int i=0; i<d.length(); i++)
+    {
+        q=q*10	+ (d[i]-'0');
+        if(q<n)ans+='0';
+        else
+        {
+            ans+=(char)((q/n)+'0');
+            q%=n;
+        }
+    }
+    int i=0;
+    while(ans[i]=='0')i++;
+    while(i<ans.length())cout<<ans[i++];
+}
+node q[1000100];
+int main()
+{
+    int t;
+    cin>>t;
+    while(t--)
+    {
+        string str;
+        scanf(" ");
+        getline(cin,str);
+        vector<int> v;
+        int mask=0;
+        for(int i=0; i<str.length(); i+=2)
+        {
+            int temp=str[i]-'0';
+            v.push_back(temp);
+            mask|=(1<<temp);
+        }
+        int n;
+        cin>>n;
+        if(mask == 1)
+        {
+            cout<<"Impossible\n";
+            continue;
+        }
+        memset(vis, 0, sizeof(vis));
+        sort(v.begin(), v.end());
+        int front=1, back=0;
+        for(int i=0;  i<v.size(); i++)
+            if(v[i])
+                q[++back]=node(1<<v[i], v[i]%n, v[i], -1);
+        node top;
+        while(front<=back)
+        {
+            top=q[front];
+            if(top.mask == mask && top.mod == 0)
+                break;
+            front++;
+            for(int i=0; i<v.size(); i++)
+            {
+                int nmask=top.mask|(1<<v[i]);
+                int nmod=(top.mod*10+v[i])%n;
+                if(vis[nmask][nmod])continue;
+                vis[nmask][nmod]=1;
+                q[++back]=node(nmask, nmod, v[i], front-1);
+            }
+        }
+        if(front > back)cout<<"Impossible\n";
+        else
+        {
+            string mul="";
+            while(true)
+            {
+                mul+=(char)('0'+top.dig);
+                if(top.idx==-1)break;
+                top=q[top.idx];
+            }
+            reverse(mul.begin(), mul.end());
+            cout<<mul<<" = "<<n<<" * ";
+            divide(mul, n);
+            cout<<endl;
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,88 @@
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <string>
+#include <sstream>
+#include <algorithm>
+#include <iostream>
+#include <iomanip>
+#include <map>
+#include <set>
+#include <list>
+#include <queue>
+#include <stack>
+#include <vector>
+#include <cassert>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+#define foreach(e, x) for (__typeof(x.begin()) e = x.begin(); e != x.end(); ++e)
+typedef unsigned long long LL;
+typedef pair<int, int> PII;
+
+char s[100005], t[100005];
+int n, q, tt;
+LL h[2][26][100001];
+LL MOD = 1e15 + 37, MUL = 3;
+LL mu[100001];
+
+inline LL mult(LL a, LL b) {
+    LL res = 0;
+    if (a > b) swap(a, b);
+    while (a) {
+        res += (a & 1023ll) * b;
+        a >>= 10;
+        b = (b << 10) % MOD;
+    }
+    return res % MOD;
+}
+
+inline LL getHash(LL* h, int from, int to) {
+    return (h[from] + MOD - mult(h[to], mu[to - from])) % MOD;
+}
+
+vector<LL> sv, tv;
+
+int main() {
+    mu[0] = 1;
+    REP(i, 100000) mu[i + 1] = (mu[i] * MUL) % MOD;
+    scanf("%d", &tt);
+    REP(test, tt) {
+        scanf("%s%s", s, t);
+        n = strlen(s);
+        REP(i, 26) h[0][i][n] = h[1][i][n] = 0;
+        for (int i = n - 1; i >= 0; --i) {
+            REP(j, 26) h[0][j][i] = (h[0][j][i + 1] * MUL + 1) % MOD;
+            int c = s[i] - 'a';
+            h[0][c][i] = (h[0][c][i] + 1) % MOD;
+            REP(j, 26) h[1][j][i] = (h[1][j][i + 1] * MUL + 1) % MOD;
+            c = t[i] - 'a';
+            h[1][c][i] = (h[1][c][i] + 1) % MOD;
+        }
+
+        scanf("%d", &q);
+        REP(i, q) {
+            int sfrom, tfrom, len;
+            scanf("%d%d%d", &sfrom, &tfrom, &len), --sfrom, --tfrom;
+            REP(j, 26) {
+                sv.pb(getHash(h[0][j], sfrom, sfrom + len));
+                tv.pb(getHash(h[1][j], tfrom, tfrom + len));
+            }
+            sort(sv.begin(), sv.end());
+            sort(tv.begin(), tv.end());
+            bool flag = true;
+            REP(j, 26) if (sv[j] != tv[j]) {
+                flag = false;
+                break;
+            }
+            if (flag) printf("yes\n");
+            else printf("no\n");
+            sv.clear();
+            tv.clear();
+        }
+    }
+	return 0;
+}

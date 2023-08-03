@@ -1,0 +1,88 @@
+#include <iostream>
+#include <stdio.h>
+#include <vector>
+#include <algorithm>
+#define ll long long
+using namespace std;
+
+vector<ll int> fact;
+vector<ll int> fact_mod;
+
+ll int comb(ll int n, ll int k)
+{
+	ll int ans = 1;
+	if(k > n-k)
+		k = n-k;
+	for (int i = 0; i < k; ++i)
+	{
+		ans *= (n-i);
+		ans /= (i+1);
+	}
+	return ans;
+}
+
+ll int modpow(ll int a, ll int b, ll int c)
+{
+	ll int res = 1;
+	while(b>0)
+	{
+		if(b%2==1)
+			res = (res*a)%c;
+		a = (a*a)%c;
+		b /= 2;
+	}
+	return res;
+}
+
+void precompute_fact_mod(ll int N, ll int p)
+{
+	fact.assign(N, 0);
+	fact_mod.assign(N, 0);
+	fact[0] = 1;
+	for (int i = 1; i < N; ++i)
+	{
+		fact[i] = (i*fact[i-1])%p;
+	}
+	fact_mod[N-1] = modpow(fact[N-1], p-2, p);
+	for (int i = N-2; i >= 0; i--)
+	{
+		fact_mod[i] = (fact_mod[i+1]*(i+1))%p;
+	}
+}
+
+ll int comb_mod(ll int n, ll int k, ll int p)
+{
+	ll int res = fact[n] % p;
+	res = (res*fact_mod[k]) % p;
+	res = (res*fact_mod[n-k]) % p;
+	return res;
+}
+
+// Ankit and Race Team
+int main()
+{
+	int N, K, T;
+	ll int sum, p;
+	p = 1000000007;
+	scanf("%d", &T);
+	while(T--)
+	{
+		scanf("%d %d", &N, &K);
+		vector<ll int> st(N, 0);
+		for (int i = 0; i < N; ++i)
+			scanf("%ld", &st[i]);
+		sort(st.begin(), st.end());
+		
+		precompute_fact_mod(N+1, p);
+		sum = 0;
+		for (int i = 0; i < N; ++i)
+		{
+			if (N-i-1 >= K-1) 
+			{
+				sum += st[i]*comb_mod(N-i-1, K-1, p);
+			}
+		}
+		sum = sum % p;
+		printf("%ld\n", sum);
+	}
+}

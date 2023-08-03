@@ -1,0 +1,153 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+int t[4000005]={0};
+ll a[1000005];
+ll mod=10e8+7;
+int fi(int n)
+     {
+       int result = n;
+       for(int i=2;i*i <= n;i++)
+       {
+         if (n % i == 0) result -= result / i;
+         while (n % i == 0) n /= i;
+       }
+       if (n > 1) result -= result / n;
+       return result;
+     }
+
+ll gcd(ll a,ll b)
+{
+    while(a%b!=0)
+    {
+        ll r=a%b;
+        a=b;
+        b=r;
+    }
+    return b;
+}
+const int N = 1000000;
+int lp[N + 1];
+int phi[N + 1];
+vector<int> pr;
+void calc_sieve()
+{
+    phi[1] = 1;
+    for (int i = 2; i <= N; ++i)
+    {
+        if (lp[i] == 0)
+        {
+            lp[i] = i;
+            phi[i] = i - 1;
+            pr.push_back(i);
+        }
+        else
+        {
+            //Calculating phi
+            if (lp[i] == lp[i / lp[i]])
+                phi[i] = phi[i / lp[i]] * lp[i];
+            else
+                phi[i] = phi[i / lp[i]] * (lp[i] - 1);
+        }
+        for (int j = 0; j < (int)pr.size() && pr[j] <= lp[i] && i * pr[j] <= N; ++j)
+            lp[i * pr[j]] = pr[j];
+    }
+}
+ll b[500005];
+ll func()
+{
+    ll y,ans=0,i=2,j;
+    b[1]=1;
+    for(i=2;i<=500000;i++)
+	b[i]=phi[i]+i;
+	for(i=2;i<=sqrt(500000);i++)
+	{
+	    for(j=i;j*i<=500000;j++)
+	    {
+	        b[j*i]+=phi[i]*j;
+	        if(j!=i)
+	         b[j*i]+=phi[j]*i;
+	         
+	         if(b[j*i]>=mod)
+	         b[j*i]%=mod;
+	    }
+	}
+	//printf("%lld\n",b[3]);
+   return 0;
+}
+void build_tree(int v,int tl,int tr)
+{
+    if(tl==tr)
+    {
+        t[v]=a[tl]%mod;
+        return ;
+    }
+    int tm=(tl+tr)/2;
+    build_tree(2*v,tl,tm);
+    build_tree(2*v+1,tm+1,tr);
+    t[v]=(t[2*v]+t[2*v+1])%mod;
+}
+int query(int v,int tl,int tr,int l,int r)
+{
+    if(l>r)
+    return 0;
+    if(tl==l && tr==r)
+    {
+        return t[v]%mod;
+    }
+    else
+    {
+        int tm=(tl+tr)/2;
+        return (query(2*v,tl,tm,l,min(r,tm))%mod+query(2*v+1,tm+1,tr,max(l,tm+1),r)%mod)%mod;
+    }
+}
+void update(int v,int tl,int tr,int pos,int val)
+{
+    if(tl==tr)
+    {
+        t[v]=val;
+    }
+    else
+    {
+        int tm=(tl+tr)/2;
+        if(pos<=tm)
+        update(2*v,tl,tm,pos,val);
+        else
+        update(2*v+1,tm+1,tr,pos,val);
+        t[v]=(t[2*v]+t[2*v+1])%mod;
+    }
+}
+int main()
+{
+    ll n,l,r,i,p,q;
+    calc_sieve();
+    func();
+    char ch;
+    scanf("%lld",&n);
+    for(i=1;i<=n;i++)
+    {
+        scanf("%lld",&a[i]);
+        a[i]=b[a[i]]%mod;
+    }
+    build_tree(1,1,n);
+    scanf("%lld",&q);
+    while(q--)
+    {
+        getchar();
+        scanf("%c%lld%lld",&ch,&l,&r);
+        if(ch=='C')
+        {
+            ll ans=query(1,1,n,l,r);
+            ans=ans%mod;
+            if(ans<0)
+            ans+=mod;
+            printf("%lld\n",ans);
+        }
+        else
+        {
+            p=b[r];
+            update(1,1,n,l,p);
+        }
+    }
+    return 0;
+}

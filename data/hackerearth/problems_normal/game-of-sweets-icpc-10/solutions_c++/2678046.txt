@@ -1,0 +1,113 @@
+// Aditya Shah
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define ll long long
+const int mod=1000000007;
+typedef long long LL;
+
+const int N = 100010;
+
+const double EPS = 1e-9;
+
+typedef complex<double> base;
+
+const double PI = 4*atan(1);
+
+
+void add(ll &a,ll &b)
+{
+    a+=b;
+    if (a>=mod)
+        a-=mod;
+}
+
+vector<int> multiply_naive(vector<ll> v1,vector<ll> v2)
+{
+    vector<int> res;
+    res.resize(v1.size()+v2.size());
+    for (int i=0;i<res.size();i++)
+        res[i]=0;
+    for (int i=0;i<v1.size();i++)
+        for (int j=0;j<v2.size();j++)
+            res[i+j]=(res[i+j]+1ll*v1[i]*v2[j])%mod;
+    return res;
+}
+
+typedef complex<double> base;
+
+void fft (vector<base> & a, bool invert) {
+    int n = (int) a.size();
+
+    for (int i=1, j=0; i<n; ++i) {
+        int bit = n >> 1;
+        for (; j>=bit; bit>>=1)
+            j -= bit;
+        j += bit;
+        if (i < j)
+            swap (a[i], a[j]);
+    }
+
+    for (int len=2; len<=n; len<<=1) {
+        double ang = 2*PI/len * (invert ? -1 : 1);
+        base wlen (cos(ang), sin(ang));
+        for (int i=0; i<n; i+=len) {
+            base w (1);
+            for (int j=0; j<len/2; ++j) {
+                base u = a[i+j],  v = a[i+j+len/2] * w;
+                a[i+j] = u + v;
+                a[i+j+len/2] = u - v;
+                w *= wlen;
+            }
+        }
+    }
+    if (invert)
+        for (int i=0; i<n; ++i)
+            a[i] /= n;
+}
+
+void multiply (const vector<ll> & a, const vector<ll> & b, vector<ll> & res) {
+    vector<base> fa (a.begin(), a.end()),  fb (b.begin(), b.end());
+    size_t n = 1;
+    while (n < max (a.size(), b.size()))  n <<= 1;
+    n <<= 1;
+    fa.resize (n),  fb.resize (n);
+
+    fft (fa, false),  fft (fb, false);
+    for (size_t i=0; i<n; ++i)
+        fa[i] *= fb[i];
+    fft (fa, true);
+
+    res.resize (n);
+    for (size_t i=0; i<n; ++i)
+    {
+        long long q=fa[i].real()+0.5;
+        res[i]=q%mod;
+    }
+}
+
+int a;
+
+int main() {
+    int n, res = 0 ;
+    scanf("%d", &n);
+    vector<ll> x(N, 0);
+    vector<ll> y(N, 0);
+    vector<ll> ans;
+    for (int i = 0; i < n; ++i) {
+        scanf("%d", &a);
+        a++;
+        if(x[a]==1) res=1;
+        x[a] = 1;
+        y[N - a] = 1;
+    }
+    multiply(x, y, ans);
+    for (int i = N + 1; i < ans.size(); ++i) {
+        res += ( ans[i] > 0 );
+        assert( ans[i]>=0 );
+    }
+    printf("%d", res);
+    return 0;
+}

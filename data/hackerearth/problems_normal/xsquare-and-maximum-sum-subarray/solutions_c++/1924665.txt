@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+#define MAX 555555
+#define NUL -1111111111111
+#define pii pair<ll, ll> 
+using namespace std;
+
+typedef long long ll;
+
+ll A[MAX];
+
+struct Query
+{
+	int k, id;	
+} Q[MAX];
+
+bool comp(Query a, Query b)
+{
+	return a.k < b.k;
+}
+
+struct Node
+{
+	ll sum, bestL, bestR, best;
+	
+	Node (ll val = 0)
+	{
+		sum = bestL = bestR = best = val;
+	}
+	
+	Node (Node a, Node b)
+	{
+		sum = a.sum + b.sum;
+		bestL = max(a.bestL, a.sum + b.bestL);
+		bestR = max(b.bestR, a.bestR + b.sum);
+		best = max(max(a.best, b.best), a.bestR + b.bestL);
+	}
+	
+} T[MAX * 4];
+
+int pos;
+
+void build(int x, int l, int r)
+{
+	if (l == r)
+	{
+		T[x] = Node(NUL);
+		return;
+	}
+	int m = (l + r) / 2;
+	build(2 * x, l, m);
+	build(2 * x + 1, m + 1, r);
+	T[x] = Node(T[2 * x], T[2 * x + 1]);
+}
+
+void update(int x, int l, int r)
+{
+	if (l == r)
+	{
+		T[x] = Node(A[pos]);
+		return;
+	}
+	int m = (l + r) / 2;
+	if (pos <= m)
+		update(2 * x, l, m);
+	else
+		update(2 * x + 1, m + 1, r);
+	T[x] = Node(T[2 * x], T[2 * x + 1]);
+}
+
+ll ans[MAX];
+
+int main()
+{
+ 	int N, M;
+ 	cin >> N >> M;
+ 	set<pii> S;
+ 	for (int i = 1; i <= N; i++)
+ 	{
+ 		scanf("%lld", A + i);
+ 		S.insert({A[i], i});
+ 	}
+ 	for (int i = 1; i <= M; i++)
+ 	{
+ 		scanf("%lld", &Q[i].k);
+ 		Q[i].id = i;
+ 	}
+ 	build(1, 1, N);
+ 	sort(Q + 1, Q + 1 + M, comp);
+ 	for (int i = 1; i <= M; i++)
+ 	{
+ 		while (!S.empty() and S.begin()->first <= Q[i].k)
+ 		{
+ 			pos = S.begin()->second;
+ 			S.erase(S.begin());
+ 			update(1, 1, N);
+ 		}
+ 		if (S.size() == N) ans[Q[i].id] = NUL;
+ 		else ans[Q[i].id] = T[1].best;
+ 	}
+ 	
+ 	for (int i = 1; i <= M; i++)
+ 	{
+ 		if (ans[i] == NUL) printf("No Solution\n");
+ 		else printf("%lld\n", ans[i]);
+ 	}
+}

@@ -1,0 +1,245 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define fillchar(a, s) memset((a), (s), sizeof(a))
+#define debug(...) fprintf(stderr, __VA_ARGS__)
+#define all(v) (v).begin(), (v).end()
+#define rep(it, v) for (auto it = (v).begin(); it != (v).end(); it++)
+#define rfile(f) freopen(f, "r", stdin)
+#define wfile(f) freopen(f, "w", stdout)
+#define rwfile(prob) rfile(prob".in"); wfile(prob".out")
+#define pb push_back
+#define mpair make_pair
+#define fi first
+#define se second
+#define dri(x) scanf("%d", &x)
+#define drii(x, y) scanf("%d %d", &x, &y)
+#define driii(x, y, z) scanf("%d %d %d", &x, &y, &z)
+#define driiii(x, y, z, w) scanf("%d %d %d %d", &x, &y, &z, &w)
+#define drl(x) scanf("%lld", &x)
+#define drll(x, y) scanf("%lld %lld", &x, &y)
+#define drlll(x, y, z) scanf("%lld %lld %lld", &x, &y, &z)
+#define drllll(x, y, z, w) scanf("%lld %lld %lld %lld", &x, &y, &z, &w)
+
+typedef long long ll;
+typedef pair<int, int> pii;
+typedef pair<ll, ll> pll;
+const int MAXN = 1 << 17, MAXLG = 17;
+
+struct node {
+	ll lmx, rmx;
+	ll mx;
+	ll sum;
+	node() {}
+	node (ll x) : lmx(x), rmx(x), mx(x), sum(x) {}
+};
+
+node operator + (node n1, node n2) {
+	node n;
+	n.lmx = max(n1.lmx, n1.sum + n2.lmx);
+	n.rmx = max(n2.rmx, n1.rmx + n2.sum);
+	n.sum = n1.sum + n2.sum;
+	n.mx = max(max(n1.mx, n2.mx), n1.rmx + n2.lmx);
+	return n;
+}
+
+int N, Q, A[MAXN];
+vector<int> adj[MAXN];
+map<pii, ll> mpw;
+
+struct chain {
+	vector<node> tree;
+	vector<int> nodes;
+	int size;
+	chain() : tree(), nodes(), size() {}
+	void init() {
+		size = nodes.size();
+		tree.resize(4 * size);
+		build(1, 0, size);
+	}
+
+	void build (int cur, int lt, int rt) {
+		if (rt - lt == 1) {
+			tree[cur] = node(A[nodes[lt]]);
+		} else {
+			int mid = (lt + rt) / 2;
+			build(2 * cur, lt, mid);
+			build(2 * cur + 1, mid, rt);
+			tree[cur] = tree[2 * cur] + tree[2 * cur + 1];
+		}
+	}
+
+	node query (int a, int b, int cur, int lt, int rt) {
+		if (rt <= a || b <= lt) {
+			return node();
+		}
+		if (a <= lt && rt <= b) {
+			return tree[cur];
+		}
+		int mid = (lt + rt) / 2;
+		node qlt = query(a, b, 2 * cur, lt, mid), qrt = query(a, b, 2 * cur + 1, mid, rt);
+		bool hasl = !(mid <= a || b <= lt), hasr = !(rt <= a || b <= mid);
+		if (hasl) {
+			return hasr ? qlt + qrt : qlt;
+		} else {
+			assert(hasr);
+			return qrt;
+		}
+	}
+
+	node query (int a, int b) {
+		return query(a, b, 1, 0, size);
+	}
+};
+
+int C = 1;	//# of chains
+chain ch[MAXN];	//chains...
+int chbel[MAXN], chind[MAXN];	//chain belong
+int par[MAXN][MAXLG], depth[MAXN], sub[MAXN];
+
+int dfs1 (int x, int p, int d) {
+	par[x][0] = p;
+	depth[x] = d;
+	if (x != 1) {
+		A[x] = mpw.at(pii(x, p));
+	}
+
+	int res = 1;
+	for (int t : adj[x]) {
+		if (t != p) {
+			res += dfs1(t, x, d + 1);
+		}
+	}
+	return sub[x] = res;
+}
+
+int getpar (int x, int d) {
+	for (int i = 0; d; d /= 2, i++) {
+		if (d & 1) {
+			x = par[x][i];
+		}
+	}
+	return x;
+}
+
+int lca (int x, int y) {
+	if (depth[x] > depth[y]) {
+		swap(x, y);
+	}
+    y = getpar(y, depth[y] - depth[x]);
+	if (x == y) {
+		return x;
+	}
+	for (int k = MAXLG - 1; k >= 0; k--) {
+		if (par[x][k] != par[y][k]) {
+			x = par[x][k];
+			y = par[y][k];
+		}
+	}
+	return par[x][0];
+}
+
+void dfs2 (int x, int chid) {
+	// printf("%d belongs to %d\n", x, chid);
+	chbel[x] = chid;
+	chind[x] = ch[chid].nodes.size();
+	// printf("chbel[%d] = %d, chind[%d] = %d\n", x, chbel[x], x, chind[x]);
+	ch[chid].nodes.push_back(x);
+	for (int t : adj[x]) {
+		if (t == par[x][0]) {
+			continue;
+		}
+		if (sub[t] * 2 >= sub[x]) {
+			dfs2(t, chid);
+		} else {
+			dfs2(t, ++C);
+		}
+	}
+}
+
+node go (int x, int c) {
+	// printf("-----%d %d------\n", x, c);
+	c = getpar(x, depth[x] - depth[c] - 1);
+	bool fst = true;
+	node ans;
+	while (true) {
+		int b = chbel[x];
+		int xind = chind[x];
+		int ltind = (b == chbel[c] ? chind[c] : 0);
+		// printf("query [%d, %d)\n", ltind, xind + 1);
+		node n = ch[b].query(ltind, xind + 1);
+		ans = (fst ? n : n + ans);
+		fst = false;
+		if (b == chbel[c]) {
+			break;
+		}
+		x = par[ch[b].nodes[0]][0];
+	}
+	return ans;
+}
+
+int main() {
+	if (fopen("input.txt", "r")) {
+		rfile("input.txt");
+	}
+	scanf("%d %d", &N, &Q);
+
+	for (int i = 0; i < N - 1; i++) {
+		int a, b;
+		ll w;
+		scanf("%d %d %lld", &a, &b, &w);
+		adj[a].push_back(b);
+		adj[b].push_back(a);
+		// printf("(%d, %d) => %lld\n", a, b, w);
+		mpw[pii(a, b)] = mpw[pii(b, a)] = w;
+	}
+
+	//ok now do this stuff...tree HLD stupid shit...
+	dfs1(1, 0, 0);
+	for (int j = 1; j < MAXLG; j++) {
+		for (int i = 1; i <= N; i++) {
+			par[i][j] = par[par[i][j - 1]][j - 1];
+		}
+	}
+
+	dfs2(1, 1);
+	//modify chains
+	for (int c = 1; c <= C; c++) {
+		/*
+		printf("new chain: ");
+		for (int t : ch[c].nodes) {
+			printf("%d ", t);
+		}
+		puts("");
+		*/
+		ch[c].init();
+	}
+
+	for (int i = 0; i < Q; i++) {
+		int a, b;
+		scanf("%d %d", &a, &b);
+		if (a == b) {
+			//special case...
+			puts("0");
+			continue;
+		}
+
+		if (depth[a] < depth[b]) {
+			swap(a, b);
+		}
+
+		int c = lca(a, b);
+
+		node n = go(a, c);
+		// print(n, "n");
+		if (b != c) {
+			node n2 = go(b, c);
+			swap(n2.lmx, n2.rmx);
+			// print(n2, "n2");
+			n = n2 + n;
+		}
+#warning don't forget to max final ans with 0!!!
+		printf("%lld\n", max(n.mx, 0ll));
+	}
+}

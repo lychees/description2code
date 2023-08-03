@@ -1,0 +1,137 @@
+/**
+ * In this code we have a very large array called arr, and very large set of operations
+ * Operation #1: Increment the elements within range [i, j] with value val
+ * Operation #2: Get max element within range [i, j]
+ * Build tree: build_tree(1, 0, N-1)
+ * Update tree: update_tree(1, 0, N-1, i, j, value)
+ * Query tree: query_tree(1, 0, N-1, i, j)
+ */
+
+#include<iostream>
+#include<algorithm>
+using namespace std;
+
+#include<string.h>
+#include<math.h> 
+
+#define N 20
+#define max 524288
+    // Allocate memory
+    int st[max];
+    int lazy[max];
+int getMid(int s, int e) {  return s + (e -s)/2;  }
+/**
+ * Build and init tree
+ */
+int  build_tree(char arr[], int ss, int se, int si) {
+  	    if (ss == se)
+    {
+        st[si] = (arr[ss]=='>'?1:0);
+        return st[si];
+    }
+ 
+    // If there are more than one elements, then recur for left and
+    // right subtrees and store the sum of values in this node
+    int mid = getMid(ss, se);
+    st[si] =  build_tree(arr, ss, mid, si*2+1) +
+              build_tree(arr, mid+1, se, si*2+2);
+    return st[si];
+}
+
+/**
+ * Increment elements within range [i, j] with value value
+ */
+void update_tree(int ss, int se, int i, int j, int si) {
+      if(lazy[si])
+{
+	st[si]=(se-ss+1)-st[si];
+	if (se > ss)
+	{
+	lazy[2*si+1]=1-lazy[2*si+1];
+	lazy[2*si+2]=1-lazy[2*si+2];
+	}
+	lazy[si]=0;
+}
+	// Base Case: If the input index lies outside the range of 
+    // this segment
+    if (j < ss || i > se)
+        return;
+ 
+    if(i<= ss && se <= j)
+{
+	st[si]=(se-ss+1)-st[si];
+	if (se > ss)
+	{
+	lazy[2*si+1]=1-lazy[2*si+1];
+	lazy[2*si+2]=1-lazy[2*si+2];
+	}
+	return;	
+}
+ 
+    // If the input index is in range of this node, then update 
+    // the value of the node and its children
+ 
+        int mid = getMid(ss, se);
+        update_tree( ss, mid, i, j, 2*si + 1);
+        update_tree( mid+1, se, i, j, 2*si + 2);
+    	st[si]=st[2*si+1]+st[2*si+2];
+	
+  	
+}
+
+/**
+ * Query tree to get max element value within range [i, j]
+ */
+int query_tree(int ss, int se, int qs, int qe, int si) {
+	
+			 if(lazy[si])
+	{
+		st[si]=(se-ss+1)-st[si];
+		if (se > ss)
+		{
+		lazy[2*si+1]=1-lazy[2*si+1];
+		lazy[2*si+2]=1-lazy[2*si+2];
+		}
+		lazy[si]=0;
+	}
+	
+    // If segment of this node is a part of given range, then return
+    // the sum of the segment
+    if (qs <= ss && qe >= se)
+        return st[si];
+ 
+    // If segment of this node is outside the given range
+    if (se < qs || ss > qe)
+        return 0;
+ 
+    // If a part of this segment overlaps with the given range
+    int mid = getMid(ss, se);
+    return query_tree( ss, mid, qs, qe, 2*si+1) +
+           query_tree( mid+1, se, qs, qe, 2*si+2);
+}
+ 
+
+int main() {
+//	for(int i = 0; i < N; i++) arr[i] = 1;
+	int n,m,type,a,b,ans;
+	cin>>n>>m;
+	char arr[200001];
+	cin>>arr;
+	build_tree(arr, 0, n-2, 0);
+	while(m--){
+		cin>>type>>a>>b;
+		if(type==1)
+	   {
+			update_tree(0, n-2, a-1, b-2, 0);
+		}
+		else if(type==2){
+			if(a<b)
+            	ans=  (b-a)-query_tree( 0, n-2, a-1, b-2, 0);
+ 			else if(b<a)
+ 				ans=  query_tree( 0, n-2, b-1, a-2, 0);
+ 			else
+ 				ans=0;
+ 			cout<<ans<<endl;
+		}
+	}
+}

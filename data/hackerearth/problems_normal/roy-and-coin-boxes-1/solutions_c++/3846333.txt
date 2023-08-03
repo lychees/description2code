@@ -1,0 +1,158 @@
+#include<bits/stdc++.h>
+using namespace std;
+long long a[1000005]= {0},s[5000005]= {0},lazy[5000005]= {0};
+void construct(long long start,long long tail,long long si)
+{
+    if(start==tail)
+    {
+        if(a[start]%2)
+            s[si]=0;
+        else
+            s[si]=1;
+        return;
+    }
+    long long mid=(start+tail)/2;
+    construct(start,mid,si*2+1);
+    construct(mid+1,tail,si*2+2);
+    s[si]=s[si*2+1]+s[si*2+2];
+}
+void query(long long start,long long tail,long long x,long long y,long long i)
+{
+    if(lazy[i]!=0)
+    {
+        s[i]+=(tail-start+1)*lazy[i];
+        if(start!=tail)
+        {
+            lazy[2*i+1]+=lazy[i];
+            lazy[2*i+2]+=lazy[i];
+        }
+        lazy[i]=0;
+    }
+    if(start>=x&&tail<=y)
+    {
+
+        s[i]+=(tail-start+1);
+        if(start!=tail)
+        {
+            lazy[2*i+1]+=1;
+            lazy[2*i+2]+=1;
+        }
+        return ;
+    }
+    long long mid=(start+tail)/2;
+    if(mid>=y)
+         query(start,mid,x,y,2*i+1);
+    else if (mid<x)
+         query(mid+1,tail,x,y,2*i+2);
+    else
+    {
+        query(start,mid,x,y,2*i+1);
+        query(mid+1,tail,x,y,2*i+2);
+    }
+    s[i]=s[2*i+1]+s[2*i+2];
+}
+void func(long long start,long long tail,long long i)
+{
+    if(lazy[i]!=0)
+    {
+        s[i]+=(tail-start+1)*lazy[i];
+        if(start!=tail)
+        {
+            lazy[2*i+1]+=lazy[i];
+            lazy[2*i+2]+=lazy[i];
+        }
+        lazy[i]=0;
+    }
+    if(start==tail)
+    {
+        a[start]=s[i];
+        return;
+    }
+    long long mid=(start+tail)/2;
+    func(start,mid,2*i+1);
+    func(mid+1,tail,2*i+2);
+    s[i]=s[2*i+1]+s[2*i+2];
+}
+void update(long long start,long long tail,long long x,long long val,long long i)
+{
+    if(start==tail&&start==x)
+    {
+        if(val%2)
+            a[x]=0;
+        else
+            a[x]=1;
+        s[i]=a[x];
+        return;
+    }
+    long long mid=(start+tail)/2;
+    if(mid>=x)
+        update(start,mid,x,val,2*i+1);
+    else if(mid<x)
+        update(mid+1,tail,x,val,2*i+2);
+    s[i]=s[2*i+1]+s[2*i+2];
+    return;
+}
+long long fsearch(long long start,long long tail,long long x)
+{
+     long long mid=(start+tail)/2;
+    if((mid==0||a[mid-1]<x)&&a[mid]>=x)
+        return mid;
+    if(a[mid]>=x)
+        return fsearch(start,mid-1,x);
+    else
+        return fsearch(mid+1,tail,x);
+}
+int main()
+{
+    long long n,i,m,l,r,q;
+    cin>>n>>m;
+    while(m--)
+    {
+        cin>>l>>r;
+        query(0,n-1,l-1,r-1,0);
+        /*cout<<"Segment tree\n";
+          for(i=0; i<=2*n+1; i++)
+        cout<<s[i]<<" ";
+        cout<<"\n";
+        cout<<"lazy tree\n";
+          for(i=0; i<=2*n+1; i++)
+        cout<<lazy[i]<<" ";
+        cout<<"\n";*/
+    }
+    func(0,n-1,0);
+   /* cout<<"Segment tree\n";
+          for(i=0; i<=2*n+1; i++)
+        cout<<s[i]<<" ";
+        cout<<"\n";
+        cout<<"lazy tree\n";
+          for(i=0; i<=2*n+1; i++)
+        cout<<lazy[i]<<" ";
+        cout<<"\n";
+        cout<<"actual tree\n";
+          for(i=0; i<n; i++)
+        cout<<a[i]<<" ";
+        cout<<"\n";*/
+        sort(a,a+n);
+    cin>>q;
+    for(i=0;i<q;i++)
+    {
+        cin>>l;
+        if(l>a[n-1])
+        {
+            cout<<0<<"\n";
+            continue;
+        }
+        else if(l<=a[0])
+        {
+             cout<<n<<"\n";
+            continue;
+        }
+        r=fsearch(0,n-1,l);
+        if(r==-1)
+            cout<<0;
+        else
+            cout<<n-r;
+            cout<<"\n";
+    }
+    return 0;
+}

@@ -1,0 +1,158 @@
+#include<cstdio>
+#include<cmath>
+#include<cstdlib>
+#include<cstring>
+
+#define getchar_unlocked getchar
+#define putchar_unlocked putchar
+#define INT_MAX       2147483647
+
+
+inline void readint(int &a)
+{
+	register int c;
+	a = 0;
+	do c = getchar_unlocked(); while (c < '0');
+	do{
+		a = (a << 1) + (a << 3) + c - '0';
+		c = getchar_unlocked();
+	} while (c >= '0');
+}
+
+inline void readll(long long &a)
+{
+	register int c;
+	a = 0;
+	do c = getchar_unlocked(); while (c < '0');
+	do{
+		a = (a << 1) + (a << 3) + c - '0';
+		c = getchar_unlocked();
+	} while (c >= '0');
+}
+
+inline void printint(int a)
+{
+	int s[12], t = -1;
+	do
+	{
+		s[++t] = a % 10 + '0';
+		a /= 10;
+	} while (a > 0);
+
+	while (t >= 0)putchar_unlocked(s[t--]);
+	putchar_unlocked('\n');
+}
+
+inline void printll(long long a, char ws)
+{
+	int s[25], t = -1;
+	do
+	{
+		s[++t] = a % 10 + '0';
+		a /= 10;
+	} while (a > 0);
+
+	while (t >= 0)putchar_unlocked(s[t--]);
+	putchar_unlocked(ws);
+}
+
+
+inline int  min(int a, int b)
+{
+	return (((a) < (b)) ? (a) : (b));
+}
+inline int  max(int a, int b)
+{
+	return (((a) > (b)) ? (a) : (b));
+}
+inline int readstr(char s[])
+{
+	register int i = 0,c = 0;
+	do c = getchar_unlocked();while(c < 'A');
+	do{
+		s[i++] = c;
+		c = getchar_unlocked();
+	}while(c >= 'A');
+	return i;
+}
+
+bool check[1000001] = {false};
+
+
+void sieve()
+{
+	for(int l = 2; l <= 1000; l++)
+	{
+		if(!check[l])
+		{
+			int p = l * l;
+			while(p <= 1000000)
+			{
+				check[p] = true;
+				p += l;
+			}
+		}
+	}
+}
+
+bool isAlphaPrime(int x)
+{
+	int denom = 1;
+	int suffix = 0;
+	do {
+		denom *= 10;
+		suffix = x % denom;
+		if(!check[suffix])return true;
+	} while(suffix < x);
+	return false;
+}
+int st[3000001] = {0};
+int constructST(int ss, int se,int si)
+{
+    if (ss == se)
+    {
+		st[si] = isAlphaPrime(ss);
+		return st[si];
+    }
+
+	int mid = (ss + se) >> 1;
+	int sl = (si << 1);
+	int sr = sl | 1;
+	
+    st[si] = constructST(ss, mid, sl) + constructST(mid + 1, se, sr);
+    return st[si];
+}
+
+int RMQ(int index,int ss, int se,int qs, int qe)
+{
+    if(qe < ss || qs > se)return 0;
+	 
+    if (qs <= ss && qe >= se)
+    {
+	return st[index];
+    }
+    int mid = (ss + se) >> 1;
+    return (RMQ((index <<  1), ss, mid, qs, qe) + RMQ((index <<  1) | 1, mid + 1, se, qs, qe));
+}
+
+int main()
+{
+	sieve();
+	check[0] = true;
+	check[1] = true;
+	
+	constructST(1, 1000000, 1);
+	int q;
+	readint(q);
+
+	while (q--)
+	{
+		int l, r;
+		readint(l);
+		readint(r);
+		
+		int cnt = RMQ(1,1,1000000, l, r);
+		printint(cnt);
+	}
+	return 0;
+}

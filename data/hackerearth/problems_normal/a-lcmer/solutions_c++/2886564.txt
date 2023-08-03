@@ -1,0 +1,110 @@
+
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int MX = 3500;
+const int MOD = (1e9) +7;
+#define REP(i, n) for(int i = 0; i < (n); i++)
+
+int t, n, l, r, x;
+
+int liczby[20];
+int MASK_SIZE;
+
+bool get(int i, int mask) {
+	return (mask >> i) &1;
+}
+int ile_podzielnych(int mask) {
+	int product = 1;
+	REP(i, MASK_SIZE) 
+		if(get(i, mask))
+			product *= liczby[i];
+	int p = l + (l%product != 0 ? product - l%product : 0);
+	int q = r - r%product;
+	if(p > q)
+		return 0;
+	return (q-p + product) / product;
+}
+
+int quickpow(int a, int n) {
+	int res = 1;
+	while(n) {
+		if(n&1) {
+			res *= a;
+			res%=MOD;
+		}
+		a*=a;
+		a%=MOD;
+		n/=2;
+	}
+	return res;
+}
+
+int newton(int n, int k) {
+	if(n < k)
+		return 0;
+	int licznik = 1;
+	for(int i = n-k+1; i<=n;i++)
+		licznik = (licznik * i) % MOD;
+	int mian = 1;
+	for(int i = 1; i <=k; i++)
+		mian = (mian * i ) % MOD;
+	return (licznik * quickpow(mian, MOD-2)) %MOD;
+}
+
+int ww(int mask, function<int(int)> f) {
+	int res = 0;
+	int x = 0;
+	do {
+		int tmp = f(x);
+		if(x!=0)
+			res += (__builtin_popcount(x)%2 ? 1 : -1) * tmp;
+		res %= MOD;
+		x=(x+1+~mask)&mask;
+	} while(x!=0);
+	return res;
+}
+
+int fzew(int mask) {
+	int B = r - l + 1 - ww(mask, ile_podzielnych);
+	int res = newton(B+n-1, n);
+	return res;
+}
+
+vector<int> factor(int n) {
+	int oldn = n;
+	vector<int> res;
+	for(int i = 2; (i*i) <= oldn; i++) {
+		int akt = i;
+		if(n%i==0) {
+			while(n % akt == 0) {
+				akt *= i;
+			}
+			akt /= i;
+			res.push_back(akt);
+			n /= akt;
+		}
+	}
+	if( n != 1)
+		res.push_back(n);
+	return res;
+}
+
+main() {
+	scanf("%lld", &t);
+	REP(i, t) {
+		scanf("%lld %lld %lld %lld",&n, &l, &r, &x);
+		auto fac = factor(x);
+		copy(fac.begin(), fac.end(), liczby);
+		MASK_SIZE = fac.size();
+		int fullmask = (1<<MASK_SIZE) - 1;
+		int res = ww(fullmask, fzew);
+		int gowno = newton(r-l+1+n-1, n);
+		res = gowno-res;
+		res %=MOD;
+		res += MOD;
+		res  %=MOD;
+		printf("%lld\n", res);
+	}
+}
+

@@ -1,0 +1,120 @@
+    #include <bits/stdc++.h>
+    using namespace std;
+    const int maxn = (int) 1e6 + 10;
+    const int INF = (int) 1e6 + 3;
+    int g[4 * maxn], cnt[maxn], sum_cnt[4 * maxn], BIT[maxn];
+    int gcd(int a, int b) {
+    if (b == 0) {
+    return a;
+    }
+    return gcd(b, a % b);
+    }
+    void add(int k, int lo, int hi, int idx, int val) {
+    if (lo == hi && lo == idx) {
+    sum_cnt[k] += val;
+    g[k] = idx;
+    if (sum_cnt[k] == 0) {
+    g[k] = 0;
+    }
+    } else {
+    int mid = (lo + hi) / 2;
+    if (idx <= mid) add(2 * k, lo, mid, idx, val);
+    else add(2 * k + 1, mid + 1, hi, idx, val);
+    g[k] = gcd(g[2 * k], g[2 * k + 1]);
+    sum_cnt[k] = sum_cnt[2 * k] + sum_cnt[2 * k + 1];
+    }
+    }
+    int get(int k, int lo, int hi, int left, int right) {
+    if (lo == left && hi == right) {
+    return g[k];
+    } else {
+    int mid = (lo + hi) / 2;
+    if (right <= mid) return get(2 * k, lo, mid, left, right);
+    else if (left > mid) return get(2 * k + 1, mid + 1, hi, left, right);
+    else {
+    int ans1 = get(2 * k, lo, mid, left, mid);
+    int ans2 = get(2 * k + 1, mid + 1, hi, mid + 1, right);
+    return gcd(ans1, ans2);
+    }
+    }
+    }
+
+    int getXth(int k, int lo, int hi, int x)
+   {
+	    if (lo == hi)
+	 {
+	    return lo;
+   	 } 
+	else
+	 {
+		    int mid = (lo + hi) / 2;
+		    if (sum_cnt[2 * k] >= x) return getXth(2 * k, lo, mid, x);
+		    else return getXth(2 * k + 1, mid + 1, hi, x - sum_cnt[2 * k]);
+  	 }
+    }
+
+
+    void addBit(int x, int val) {
+    while (x <= INF) {
+    BIT[x] += val;
+    x += (x & -x);
+    }
+    }
+    int query(int x) {
+    int ans = 0;
+    while (x >= 1) {
+    ans += BIT[x];
+    x -= (x & -x);
+    }
+    return ans;
+    }
+    int main() {
+    //freopen("in.txt", "r", stdin);
+    int Q;
+    scanf("%d", &Q);
+    while (Q--) {
+    int type, x;
+    scanf("%d", &type);
+    if (type == 1) {
+    scanf("%d", &x);
+    add(1, 1, INF, x, 1);
+    addBit(x, 1);
+    cnt[x]++;
+    } else if (type == 2) {
+    scanf("%d", &x);
+    add(1, 1, INF, x, -1);
+    addBit(x, -1);
+    cnt[x]--;
+    } else if (type == 3) {
+    scanf("%d", &x);
+    int lo = 0, hi = (int) 1e6 + 2;
+    while (lo < hi) {
+    int mid = (lo + hi) / 2;
+    if (query(mid) >= x) {
+    hi = mid;
+    } else {
+    lo = mid + 1;
+    }
+    }
+    int ans = getXth(1, 1, INF, x);
+    assert(ans == hi);
+    printf("%d\n", hi);
+    } else {
+    int L, R;
+    scanf("%d %d", &L, &R);
+    int bans = 0;
+    for (int i = L; i <= R; i++) {
+    if (cnt[i] > 0) {
+    bans = gcd(bans, i);
+    if (bans == 1) {
+    break;
+    }
+    }
+    }
+    int ans = get(1, 1, INF, L, R);
+    assert(ans == bans);
+    printf("%d\n", ans);
+    }
+    }
+    return 0;
+    }

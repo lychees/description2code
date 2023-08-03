@@ -1,0 +1,109 @@
+#include <iostream>
+#include <cstdio>
+#include <algorithm>
+#include <cmath>
+#include <string>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <set>
+#include <cstring>
+#include <map>
+#include <cstdlib>
+#include <ctime>
+#include <cassert>
+#include <bitset>
+#define f first
+#define s second
+#define ll long long
+#define ull unsigned long long
+#define mp make_pair
+#define pb push_back
+#define vi vector <int>
+#define pii pair<int, int>
+using namespace std;          
+const int N = int(3e5); 
+int n,a[N];
+int t[N],T,x[N];
+int dp[N],d[N];
+int c[N],cn;
+
+void upd(int v,int val){
+	v += n - 1;
+	t[v] = val;
+	while(v > 1){
+		v /= 2;
+		t[v] = max(t[v+v],t[2*v+1]);
+	}
+}
+void updx(int v,int val){
+	v += n - 1;
+	x[v] = val;
+	while(v > 1){
+		v /= 2;
+		x[v] = max(x[v+v],x[2*v+1]);
+	}
+}
+
+int gett(int l,int r){
+	l += n - 1;
+	r += n - 1 ;
+	int res = 0;
+	while(l <= r){
+		if(l & 1) res = max(res,t[l]);
+		if(!(r&1)) res = max(res,t[r]);
+		l = (l + 1) / 2;
+		r =  (r - 1) / 2;
+	}
+	return res;
+}
+
+int getx(int l,int r){
+	l += n - 1;
+	r += n - 1 ;
+	int res = 0;
+	while(l <= r){
+		if(l & 1) res = max(res,x[l]);
+		if(!(r&1)) res = max(res,x[r]);
+		l = (l + 1) / 2;
+		r =  (r - 1) / 2;
+	}
+	return res;
+}
+
+int main () {
+	scanf("%d",&T);
+	while(T--){
+		scanf("%d",&n);
+		for(int i=1;i<=n;i++){
+			scanf("%d",&a[i]);
+			c[i] = a[i];
+		}
+		sort(c+1,c+n+1);
+		cn = unique(c+1,c+n+1) - c - 1;
+		for(int i=1;i<=n;i++){
+			a[i] = lower_bound(c+1,c+cn+1,a[i]) - c;
+		}
+		memset(x,0,sizeof(x));
+		memset(t,0,sizeof(t));
+		upd(a[1],1);
+		updx(a[1],1);
+		dp[a[1]] = d[a[1]] = 1;
+		for(int i=2;i<=n;i++){
+			int v = getx(1,a[i]);
+			int v1 = gett(a[i],cn);
+			dp[a[i]] = v + 1;
+			upd(a[i],dp[a[i]]);
+			d[a[i]] = v1 + 1;
+			updx(a[i],d[a[i]]);
+		}
+		int ans = 0;
+		for(int i=1;i<=n;i++){
+			ans = max(ans,dp[a[i]]);
+			ans = max(ans,d[a[i]]);
+		}
+		printf("%d\n",ans);
+	}
+
+return 0;
+}

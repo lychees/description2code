@@ -1,0 +1,146 @@
+//satyaki3794
+#include <bits/stdc++.h>
+#define ff first
+#define ss second
+#define pb push_back
+#define MOD (1000000007LL)
+// #define LEFT(n) (2*(n))
+// #define RIGHT(n) (2*(n)+1)
+ 
+using namespace std;
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<ll, ll> ii;
+typedef pair<int, ii> iii;
+ 
+ll pwr(ll base, ll p, ll mod = MOD){
+ll ans = 1;while(p){if(p&1)ans=(ans*base)%mod;base=(base*base)%mod;p/=2;}return ans;
+}
+ 
+ll gcd(ll a, ll b){
+    if(b == 0)  return a;
+    return gcd(b, a%b);
+}
+
+ll invMod(ll n){
+    return pwr(n, MOD-2);
+}
+
+
+#define LEFT 0
+#define RIGHT 1
+int n;
+ll BIT[2][2][100005], powers[2][100005], invPowers[2][100005], bases[2], mods[2];
+char str[100005];
+
+
+void update(int dir, int k, int idx, ull val){
+	while(idx <= n){
+		BIT[dir][k][idx] += val;
+		BIT[dir][k][idx] %= mods[k];
+		idx += idx & (-idx);
+	}
+}
+
+ll sum(int dir, int k, int idx){
+	ll ans = 0;
+	while(idx){
+		ans += BIT[dir][k][idx];
+		ans %= mods[k];
+		idx -= idx & (-idx);
+	}
+	return ans;
+}
+
+
+ii get_hash(int dir, int l, int r){
+
+	ii ans;
+	if(dir == LEFT){
+		ans = ii (sum(LEFT, 0, r+1)-sum(LEFT, 0, l), sum(LEFT, 1, r+1)-sum(LEFT, 1, l));
+		ans.ff = (ans.ff * invPowers[0][l]) % mods[0];
+		ans.ss = (ans.ss * invPowers[1][l]) % mods[1];
+	}
+	else{
+		ans = ii (sum(RIGHT, 0, r+1)-sum(RIGHT, 0, l), sum(RIGHT, 1, r+1)-sum(RIGHT, 1, l));
+		ans.ff = (ans.ff * invPowers[0][n-1-r]) % mods[0];
+		ans.ss = (ans.ss * invPowers[1][n-1-r]) % mods[1];
+	}
+	if(ans.ff < 0)	ans.ff += mods[0];
+	if(ans.ss < 0)	ans.ss += mods[1];
+	return ans;
+}
+
+
+int main(){
+
+    ios_base::sync_with_stdio(0);
+
+    bases[0] = 31;   bases[1] = 37;
+    mods[0] = 999999937;    mods[1] = 999999929;
+
+    powers[0][0] = powers[1][0] = 1;
+    invPowers[0][0] = invPowers[1][0] = 1;
+    for(int i=1;i<=100000;i++){
+    	for(int k=0;k<2;k++){
+    		powers[k][i] = (powers[k][i-1] * bases[k]) % mods[k];
+    		invPowers[k][i] = pwr(powers[k][i], mods[k]-2, mods[k]);
+    	}
+    }
+
+    int q;
+    cin>>n>>q>>str;
+
+    for(int i=0;i<n;i++){
+    	update(LEFT, 0, i+1, str[i]*powers[0][i]);
+    	update(LEFT, 1, i+1, str[i]*powers[1][i]);
+    }
+
+    for(int i=0;i<n;i++){
+    	update(RIGHT, 0, i+1, str[i]*powers[0][n-1-i]);
+    	update(RIGHT, 1, i+1, str[i]*powers[1][n-1-i]);
+    }
+
+// q=1;
+    while(q--){
+
+    	int type;
+    	cin>>type;
+    	if(type == 0){
+    		
+    		int pos;
+    		char ch;
+    		cin>>pos>>ch;
+    		pos--;
+
+	    	update(LEFT, 0, pos+1, (ch-str[pos])*powers[0][pos]);
+	    	update(LEFT, 1, pos+1, (ch-str[pos])*powers[1][pos]);
+
+	    	update(RIGHT, 0, pos+1, (ch-str[pos])*powers[0][n-1-pos]);
+	    	update(RIGHT, 1, pos+1, (ch-str[pos])*powers[1][n-1-pos]);
+
+		    str[pos] = ch;
+    	}
+    	else{
+
+    		int l, r;
+    		cin>>l>>r;
+    		l--;	r--;
+
+// ii z = get_hash(LEFT, l, r);
+// cout<<z.ff<<" "<<z.ss<<endl;
+
+// z = get_hash(RIGHT, l, r);
+// cout<<z.ff<<" "<<z.ss<<endl;
+
+    		if(get_hash(LEFT, l, r) == get_hash(RIGHT, l, r))	cout<<"Yes\n";
+    		else	cout<<"No\n";
+    	}
+    }
+
+    return 0;
+}
+
+
+
+

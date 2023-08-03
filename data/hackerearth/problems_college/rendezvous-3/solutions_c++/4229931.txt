@@ -1,0 +1,67 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <set>
+#include <list>
+#include <queue>
+#include <map>
+#include <stack>
+#include <cmath>
+
+using namespace std;
+
+const long long inf = 100000000000000000LL;
+int n, m, pre[100005];
+long long d[100005];
+vector<int> vert[100005];
+vector<long long> wt[100005];
+bool seen[100005];
+
+int main()
+{
+	ios::sync_with_stdio(false);
+
+	cin >> n >> m;
+
+	for(int i = 0; i < m; i++)
+	{
+		int u, v;
+		long long w;
+		cin >> u >> v >> w;
+		vert[u].push_back(v);
+		vert[v].push_back(u);
+		wt[u].push_back(w);
+		wt[v].push_back(w);
+	}
+
+	auto comp = [](int a, int b){ return (d[a] == d[b]) ? (a < b) : (d[a] < d[b]); };
+	set<int, decltype(comp)> dist(comp);
+	d[1] = 0;
+	dist.insert(1);
+	for(int i = 2; i <= n; i++)
+	{
+		d[i] = inf;
+		dist.insert(i);	
+	}
+
+	long long ans = 0;
+
+	while(dist.size() != 0)
+	{
+		int v = *dist.begin();
+		ans += d[v];
+		seen[v] = true;
+		dist.erase(v);
+		for(int i = 0; i < vert[v].size(); i++)
+		{
+			if(!seen[vert[v][i]] && d[vert[v][i]] > wt[v][i])
+			{
+				dist.erase(vert[v][i]);
+				d[vert[v][i]] = wt[v][i];
+				dist.insert(vert[v][i]);
+			}
+		}
+	}
+
+	cout << ans;
+}

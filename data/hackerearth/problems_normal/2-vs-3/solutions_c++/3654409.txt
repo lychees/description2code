@@ -1,0 +1,106 @@
+#include <bits/stdc++.h>
+using namespace std;
+pair<int, int > tree[400005],p1,p2,ans;
+int arr[100001];
+int m1 = 3;
+int p[100001];
+
+void build(int node,int start, int end){
+	if(start>end)
+		return;
+	if(start==end){
+	 	tree[node] = make_pair(arr[start],1);
+	} else {
+		int mid = (start+end)/2;
+		build(2*node,start,mid);
+		build(2*node+1,mid+1,end);
+		tree[node] = make_pair(((tree[node*2].first*p[tree[node*2+1].second])%3 + tree[node*2+1].first)%3,tree[node*2+1].second+tree[2*node].second);
+	}
+}
+
+pair<int,int> query(int node,int start, int end , int l , int r){
+	int len;
+	if(l>end || r<start || l>r)
+		return make_pair(0, 0);
+	
+	if(l<=start && end <= r){
+		
+		return tree[node];
+	}
+
+	int mid=(start+end)/2;
+	pair<int, int> p1, p2;
+
+	p1 = query(2*node,start,mid,l,r);
+	p2 = query(2*node+1,mid+1,end,l,r);
+	
+	return make_pair((p1.first*p[p2.second] + p2.first)%3,p2.second+p1.second);
+}
+
+void update(int node,int start,int end,int idx){
+	if(start==end)
+	{
+		arr[start] = 1;
+		tree[node].first = 1;
+		tree[node].second = 1;
+	}
+	else{
+		int mid=(end+start)/2;
+		if(idx<=mid)
+			update(2*node,start,mid,idx);
+		else
+			update(2*node+1,mid+1,end,idx);
+		tree[node]=make_pair((tree[node*2].first*p[tree[node*2+1].second] + tree[node*2+1].first)%3,tree[node*2+1].second+tree[2*node].second);
+	}
+}
+
+
+int main()
+{
+
+	memset(p,0,sizeof(p));
+	p[0]=1;
+	for(int i=1;i<100001;i++){
+	p[i] = p[i-1]*2;
+	p[i] = p[i]%3;
+	}
+	int n;
+	cin >> n;
+	char ch[n];
+	memset(arr,0,sizeof(arr));
+	memset(tree,0,sizeof(tree));
+	scanf("%s",ch);
+	for(int i=0;i<n;i++){
+		if(ch[i]=='0')
+		arr[i]=0;
+		else
+		arr[i]=1;
+	}
+
+	build(1,0,n-1);
+		
+	int q;
+	cin >> q;
+	while(q--){
+		int a,b,c;
+		cin >> a;
+		if(a==0){
+			cin >> b >> c;
+			ans = query(1,0,n-1,b,c);
+			cout << ans.first << endl;
+		}
+		if(a==1){
+			cin >> b;
+			if(arr[b]==1){
+				
+			}
+			else
+			update(1,0,n-1,b);
+		}
+	}
+	
+	
+    return 0;
+}
+
+

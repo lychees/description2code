@@ -1,0 +1,89 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+int main()
+{
+	int t;
+	cin>>t;
+	while(t--){
+		int m,n;
+		cin>>m>>n;
+		vector<vector<int>> A(m,vector<int>(n,0));
+		vector<vector<int>> obst(m,vector<int>(n,0));
+		for(int i=0;i<m;i++){
+			for(int j=0;j<n;j++){
+				string s;
+				cin>>s;
+				if(s=="##"){
+					A[i][j]=-1;
+					obst[i][j]=1;
+				}
+				else{
+					A[i][j]=stoi(s);
+				}
+			}
+		}
+		//for(int i=0;i<m;i++){
+		//	for(int j=0;j<n;j++){
+		//		cout<<A[i][j]<<" ";
+		//	}
+		//	cout<<endl;
+		//}
+		vector<int> dp[102][102];
+		if(!obst[0][0]) dp[0][0].push_back(A[0][0]);
+		for(int i=1;i<m;i++){
+			if(!obst[i][0]) if(dp[i-1][0].size()>0) dp[i][0].push_back(dp[i-1][0][0]+A[i][0]);
+		}
+		for(int i=1;i<n;i++){
+			if(!obst[0][i]) if(dp[0][i-1].size()>0) dp[0][i].push_back(dp[0][i-1][0]+A[0][i]);
+		}
+		for(int i=1;i<m;i++){
+			for(int j=1;j<n;j++){
+				if(!obst[i][j]){
+				int sz1=dp[i-1][j].size();
+				int sz2=dp[i][j-1].size();
+				int i1=0,i2=0,cnt=0;
+				while((i1<sz1 || i2<sz2)&& cnt!=101){
+					if(i2==sz2){
+						dp[i][j].push_back(dp[i-1][j][i1]+A[i][j]);
+						i1++;
+					}
+					else if(i1==sz1){
+						dp[i][j].push_back(dp[i][j-1][i2]+A[i][j]);
+						i2++;
+					}
+					else{
+						if(dp[i-1][j][i1]<dp[i][j-1][i2]){
+							dp[i][j].push_back(dp[i-1][j][i1]+A[i][j]);
+							i1++;
+						}
+						else{
+							dp[i][j].push_back(dp[i][j-1][i2]+A[i][j]);
+							i2++;
+						}
+					}
+					cnt++;
+				}
+				}
+				
+			}
+		}
+		int q;
+		cin>>q;
+		while(q--){
+			int x1,y1,k;
+			cin>>x1>>y1>>k;
+			if(obst[x1][y1]==1){
+				cout<<"Obstacle\n";
+			}
+			else if(dp[x1][y1].size()<k){
+				cout<<"Not so many paths\n";
+			}
+			else{
+				cout<<dp[x1][y1][k-1]<<endl;
+			}
+		}
+	}
+    //cout << "Hello World!" << endl;
+    return 0;
+}

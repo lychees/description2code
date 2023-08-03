@@ -1,0 +1,423 @@
+/**
+ *    author:  enot.1.10, Vladimir Smykalov (enot.1.10@gmail.com)
+ *    created: 15.08.2015 14:28:19       
+**/
+#include <bits/stdc++.h>
+
+#define forn(i, n) for(int i = 0 ; (i) < (n) ; ++i)
+#ifdef home
+#   define eprintf(...) fprintf(stderr, __VA_ARGS__),fflush(stderr)
+#else
+#   define eprintf(...) {}
+#endif
+
+using namespace std;
+
+typedef long long ll;
+typedef double dbl;
+
+const int inf = (int)1.01e9;
+const dbl eps = 1e-9;
+
+/** --- main part --- **/
+
+#define TASK "a"
+
+#define pb push_back
+#define sz(a) ((int)(a).size())
+#define all(a) (a).begin(),a.end()
+typedef vector<int> vi;
+
+#define fs first
+#define sc second
+#define mp make_pair
+typedef pair<int, int> pi;
+
+#define next blabla_next
+
+
+struct MagicTree
+{
+    int N;
+    vector<pair<ll, int> > t;
+    vector<ll> toAdd;
+
+    MagicTree() {}
+
+    MagicTree(int n)
+    {
+        N = 1;
+        while (N < n) N <<= 1;
+        t = vector<pair<ll, int> >(2 * N, mp(0, 0));
+        toAdd = vector<ll>(2 * N, 0);
+        for (int i = 2 * N - 1; i >= 1; --i)
+        {
+            if (i >= N)
+            {
+                t[i] = mp(0, i - N);
+            }
+            else
+            {
+                t[i] = max(t[2 * i], t[2 * i + 1]);
+            }
+        }
+    }
+
+    inline void relax(int x)
+    {
+        if (x < N && toAdd[x] != 0)
+        {
+            toAdd[2 * x] += toAdd[x];
+            t[2 * x].fs += toAdd[x];
+
+            toAdd[2 * x + 1] += toAdd[x];
+            t[2 * x + 1].fs += toAdd[x];
+
+            toAdd[x] = 0;
+        }
+    }
+            
+
+    inline void upd(int x)
+    {
+        if (x < N)
+        {
+            t[x] = max(t[2 * x], t[2 * x + 1]);
+        }
+    }
+
+    void _modify(int x, int l, int r, int lq, int rq, ll val)
+    {
+        if (lq <= l && r <= rq)
+        {
+            toAdd[x] += val;
+            t[x].fs += val;
+            return;
+        }
+        if (lq >= r || l >= rq) return;
+        relax(x);
+        int m = (l + r) >> 1;
+        _modify(2 * x, l, m, lq, rq, val);
+        _modify(2 * x + 1, m, r, lq, rq, val);
+        upd(x);
+    }
+
+    
+    void modify(int l, int r, ll val)
+    {
+        _modify(1, 0, N, l, r, val);
+    }
+
+    pair<ll, int> _get(int x, int l, int r, int lq, int rq)
+    {
+        if (lq <= l && r <= rq) return t[x];
+        if (lq >= r || l >= rq) return mp(-inf, -1111111);
+        relax(x);
+        int m = (l + r) >> 1;
+        pair<ll, int> res = max(_get(2 * x, l, m, lq, rq), _get(2 * x + 1, m, r, lq, rq));
+        upd(x);
+        return res;
+    }
+
+    pair<ll, int> get(int l, int r)
+    {
+        return _get(1, 0, N, l, r);
+    }
+};
+
+
+const int maxn = (int)1e5 + 10;
+const int maxe = 2 * maxn;
+
+int head[maxn], next[maxe], to[maxe], ec = 1, len[maxe];
+
+inline void add(int x, int y, int l)
+{
+    ec += 1;
+    to[ec] = y;
+    next[ec] = head[x];
+    head[x] = ec;
+    len[ec] = l;
+}
+
+
+int dep[maxn];
+int cnt[maxn];
+int parentEdge[maxn];
+
+int p[maxn];
+
+inline int get(int x)
+{
+    if (p[x] != x) p[x] = get(p[x]);
+    return p[x];
+}
+
+vi sons[maxn];
+
+void dfs(int x, int d)
+{
+    dep[x] = d;
+    cnt[x] = 1;
+    for (int e = head[x]; e; e = next[e])
+    {
+        int y = to[e];
+        if (dep[y]) continue;
+        sons[x].pb(y);
+        parentEdge[y] = e ^ 1;
+        dfs(y, d + 1);
+        cnt[x] += cnt[y];
+    }
+    //eprintf("x = %d, cnt = %d, dep = %d\n", x + 1, cnt[x], dep[x]);
+    forn(i, sz(sons[x]))
+    {
+        int y = sons[x][i];
+        if (cnt[y] >= (cnt[x] + 1) / 2)
+        {
+            //eprintf("merge %d %d\n", x + 1, y + 1);
+            p[y] = x;
+        }
+    }
+}
+
+vi paths[maxn];
+int pathLen[maxn];
+vi pathIds;
+
+inline bool compDepth(int x, int y)
+{
+    return dep[x] < dep[y];
+}
+
+
+MagicTree Mpos[maxn], Mneg[maxn];
+set<pair<ll, int> > S[maxn];
+ll T[maxn];
+
+int order[maxn];
+
+inline bool compPath(int x, int y)
+{
+    assert(sz(paths[p[x]]) > 0);
+    assert(sz(paths[p[y]]) > 0);
+    return dep[paths[p[x]][0]] < dep[paths[p[y]][0]];
+}
+
+void initSet(int x)
+{
+    forn(i, sz(sons[x]))
+    {
+        int y = sons[x][i];
+        if (p[x] != p[y]) S[x].insert(mp(0, y));
+    }
+}
+
+
+void updateTop(int x)
+{
+    if (x == 0) return;
+    assert(p[x] == x);
+    int e = parentEdge[x];
+    int y = to[e];
+    assert(p[x] != p[y]);
+    ll mx = Mpos[x].get(0, pathLen[x]).fs + len[e];
+    if (mx == T[x]) return;
+
+    ll oldVal = -S[y].begin()->fs;
+    
+    S[y].erase(mp(-T[x], x));
+    T[x] = mx;
+    S[y].insert(mp(-T[x], x));
+
+    ll newVal = -S[y].begin()->fs;
+
+    ll diff = newVal - oldVal;
+    
+    if (diff == 0) return;
+    
+    int yPos = dep[y] - dep[p[y]];
+    //eprintf("modify path = %d, yPos = %d, diff = %I64d\n", p[y], yPos, diff);
+    Mpos[p[y]].modify(yPos, yPos + 1, diff);
+    Mneg[p[y]].modify(yPos, yPos + 1, diff);
+    
+    updateTop(p[y]);
+}
+
+void changeWeight(int x, int y, int w, int fl = 0)
+{
+    if (dep[x] < dep[y]) swap(x, y);
+    int e = parentEdge[x];
+    assert(e != 0);
+    assert(to[e] == y);
+    ll diff = w - len[e];
+    if (fl) diff = w;
+    if (p[x] == p[y])
+    {
+        len[e] = w;
+        int amount = pathLen[p[x]];
+        int xPos = dep[x] - dep[p[x]];
+        //eprintf("update weight path = %d, [%d .. %d), %I64d\n", p[x], xPos, amount, diff);
+        Mpos[p[x]].modify(xPos, amount, diff);
+        Mneg[p[x]].modify(xPos, amount, -diff);
+        updateTop(p[x]);
+    }
+    else
+    {
+        assert(p[x] == x);
+        len[e] = w;
+        updateTop(p[x]);
+    }         
+}
+
+void doStuff(int x)
+{
+    int e = parentEdge[x];
+    if (e == 0) return;
+    int y = to[e];
+    changeWeight(x, y, len[e], 1);
+}
+
+ll getTop(int x, int prev)
+{
+    //eprintf("------ start getTop x = %d, prev = %d\n", x, prev);
+    ll A = 0;
+    if (sz(S[x]) >= 1)
+    {
+        A = -S[x].begin()->fs;
+    }
+
+    int xPos = dep[x] - dep[p[x]];
+    ll sumToTop = Mpos[p[x]].get(xPos, xPos + 1).fs - A;
+    //eprintf("A = %I64d, sumToTop = %I64d\n", A, sumToTop);
+    //eprintf("Mpos[p[x]].get(xPos, xPos + 1).fs = %I64d\n", Mpos[p[x]].get(xPos, xPos + 1).fs);
+
+    ll res = 0;
+
+    for (set<pair<ll, int> >::iterator it = S[x].begin(); it != S[x].end(); ++it)
+    {
+        if (it->sc != prev)
+        {
+            res = max(res, -it->fs);
+            break;
+        }
+    }
+    
+    //eprintf("getTop, x = %d, prev = %d, res = %I64d, sumToTop = %I64d\n", x, prev, res, sumToTop);
+    res = max(res, Mneg[p[x]].get(0, xPos).fs + sumToTop);
+    //eprintf("res = %I64d\n", res);
+    res = max(res, Mpos[p[x]].get(xPos + 1, pathLen[p[x]]).fs - sumToTop);
+    //eprintf("res = %I64d\n", res);
+    int y = p[x];
+    if (y != 0)
+    {
+        int e = parentEdge[y];
+        //eprintf("res = %I64d + %d + getTop\n", sumToTop, len[e]);
+        res = max(res, sumToTop + len[e] + getTop(to[e], y));
+    }
+
+    //eprintf("---- getTop end x = %d, res = %I64d\n", x, res);
+    return res;
+}
+
+ll getLongestPath(int x)
+{
+    ll A = 0;
+    int blocked = -1;
+    if (sz(S[x]) >= 1)
+    {
+        A = -S[x].begin()->fs;
+        blocked = S[x].begin()->sc;
+    }
+
+    int xPos = dep[x] - dep[p[x]];
+    ll sumToTop = Mpos[p[x]].get(xPos, xPos + 1).fs - A;
+
+    ll res = 0;
+
+    //eprintf("A = %I64d\n", A);
+    res = max(res, Mpos[p[x]].get(xPos + 1, pathLen[p[x]]).fs + Mneg[p[x]].get(0, xPos).fs);
+    //eprintf("res = %I64d\n", res);
+    res = max(res, getTop(x, blocked) + A);
+    
+    int y = p[x];
+    if (y != 0)
+    {
+        int e = parentEdge[y];
+        //eprintf("res = %I64d + %d + %I64d + %I64d\n", sumToTop, len[e], getTop(to[e], y));
+        res = max(res, sumToTop + len[e] + getTop(to[e], y) + Mpos[p[x]].get(xPos + 1, pathLen[p[x]]).fs - sumToTop);
+    }
+    //eprintf("res = %I64d\n", res);
+
+    return res;     
+}
+
+int main()
+{
+    #ifdef home
+        assert(freopen(TASK".in", "r", stdin));
+        assert(freopen(TASK".out", "w", stdout));
+    #endif
+    int n, q;
+    scanf("%d%d", &n, &q);
+    forn(i, n - 1)
+    {
+        int x, y, l;
+        scanf("%d%d%d", &x, &y, &l);
+        --x, --y;
+        add(x, y, l);
+        add(y, x, l);
+    }
+    forn(i, n) p[i] = i;
+    dfs(0, 1);
+    forn(i, n) paths[get(i)].pb(i);
+    forn(i, n) if (p[i] == i)
+    {
+        pathIds.pb(i);
+        sort(all(paths[i]), compDepth);
+        pathLen[i] = sz(paths[i]);
+        Mpos[i] = MagicTree(pathLen[i]);
+        Mneg[i] = MagicTree(pathLen[i]);
+    }
+
+    //forn(i, n) if (p[i] == i) forn(j, sz(paths[i])) eprintf("%d%c", paths[i][j] + 1, " \n"[j + 1 == sz(paths[i])]);
+
+    forn(i, n) order[i] = i;
+    sort(order, order + n, compPath);
+
+    forn(i, n)
+    {
+        initSet(i);
+    }
+
+    for (int i = n - 1; i >= 0; --i)
+    {
+        doStuff(i);
+    }
+
+    forn(_, q)
+    {
+        int t;
+        scanf("%d", &t);
+        if (t == 1) 
+        {
+            int v, u, w;
+            scanf("%d%d%d", &v, &u, &w);
+            --v, --u;
+            changeWeight(v, u, w);
+        }
+        else
+        {
+            int v;
+            scanf("%d", &v);
+            --v;
+            ll res = getLongestPath(v);
+            printf("%lld\n", res);
+        }
+    }
+                    
+    #ifdef home
+        eprintf("Time: %d ms\n", (int)(clock() * 1000. / CLOCKS_PER_SEC));
+    #endif
+    return 0;
+}
+ 

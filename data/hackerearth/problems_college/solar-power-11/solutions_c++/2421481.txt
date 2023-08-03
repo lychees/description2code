@@ -1,0 +1,107 @@
+#include <iostream>
+#define MOD 1000000007
+
+using namespace std;
+
+void build(long long int *arr, int n, int in);
+void update(int index, int n, int val, int in);
+long long int query(int index, int in);
+long long int fenwick[1001][1001];
+
+int main()
+{
+	int T;
+	int N, K;
+	int i, j;
+	int A;
+	char type;
+	long long int val;
+	int x1, y1, x2, y2;
+	int Z;
+	
+	cin>>T;
+	long long int arr[1001][1001];
+	
+	while(T--)
+	{
+		cin>>N>>K;
+		for(i=1; i<=N; i++)
+		{
+			for(j=1; j<=N; j++)
+			{
+				arr[i][j] = K;
+			}
+		}
+		
+		for(i=1; i<=N; i++)
+		{
+			build(arr[i], N, i);
+		}
+		
+		cin>>A;
+		while(A--)
+		{
+		cin>>type;
+		if(type == 'm')
+		{
+			cin>>x1>>y1>>x2>>y2;
+			//cout<<x1<<y1<<x2<<y2<<endl;
+			val = 0;
+			for(i = x1; i<=x2; i++)
+			{
+				val = (val + (query(y2, i)-query(y1, i) + arr[i][y1]))%MOD;
+			}
+			cout<<val<<endl;
+		}
+		else
+		{
+			cin>>x1>>y1>>Z;
+			//cout<<x1<<y1<<Z;
+			val = Z*arr[x1][y1]-arr[x1][y1];
+			while(val<0)
+			{
+				val = val + MOD;
+			}
+			update(y1, N, val%MOD, x1);
+			arr[x1][y1] = (arr[x1][y1]*Z)%MOD;
+		}
+		}
+	}
+	
+    return 0;
+}
+
+void build(long long int *arr, int n, int in)
+{
+	int i;
+	for(i=0; i<=n; i++)
+	{
+		fenwick[in][i]=0;
+	}
+	for(i=1; i<=n; i++)
+	{
+		update(i, n, arr[i], in);
+	}
+}
+
+void update(int index, int n, int val, int in)
+{
+	while(index<=n)
+	{
+		fenwick[in][index] = (fenwick[in][index]+val)%MOD;
+		index = index + (index&(-index));
+	}
+}
+
+long long int query(int index, int in)
+{
+	long long int ans = 0;
+	
+	while(index>0)
+	{
+		ans = (ans + fenwick[in][index])%MOD;
+		index = index - (index & (-index));
+	}
+	
+	return ans;
+}

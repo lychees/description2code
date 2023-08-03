@@ -1,0 +1,140 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+const int MOD=1000000007;
+const string alpha="ACGT";
+int N, Q;
+int A[1000001];
+int f[1000001];
+int qa[100001];
+int qb[100001];
+
+struct node
+{
+    int flag;
+    int mask;
+    int* cnt[4];
+} seg[1<<21];
+
+node make_node(int val, int flag)
+{
+    node ret;
+    ret.flag=flag;
+    ret.mask=1<<val;
+    for(int i=0; i<4; i++)
+    {
+        ret.cnt[i]=new int[16];
+        for(int j=0; j<16; j++)
+            ret.cnt[i][j]=0;
+    }
+    ret.cnt[val][15]=1;
+    return ret;
+}
+
+inline void addmod(int& x, int v)
+{
+    x+=v;
+    if(x>=MOD)
+        x-=MOD;
+}
+
+void combine(node a, node b, node& c)
+{
+    c.flag=a.flag|b.flag;
+    c.mask=a.mask|b.mask;
+    static int sum[4][4];
+    memset(sum, 0, sizeof sum);
+    for(int i=0; i<4; i++)
+        for(int k=0; k<4; k++)
+        {
+            long long tmp=0;
+            for(int j=0; j<(1<<4); j++)
+                if((j>>k)&1)
+                    tmp+=a.cnt[i][j];
+            sum[i][k]=tmp%MOD;
+        }
+    for(int i=0; i<4; i++)
+    {
+        for(int j=0; j<(1<<4); j++)
+        {
+            long long tmp=0;
+            if(!((a.mask>>i)&1))
+                tmp=b.cnt[i][j];
+            for(int k=0; k<4; k++)
+                tmp+=1LL*sum[i][k]*b.cnt[k][j];
+            c.cnt[i][j]=tmp%MOD;
+        }
+    }
+    for(int i=0; i<4; i++)
+        for(int j=0; j<16; j++)
+            addmod(c.cnt[i][j&~b.mask], a.cnt[i][j]);
+}
+
+void build(int idx, int begin, int end)
+{
+    if(begin==end)
+        seg[idx]=make_node(A[begin], f[begin]);
+    else
+    {
+        int mid=(begin+end)/2;
+        build(idx*2, begin, mid);
+        build(idx*2+1, mid+1, end);
+        for(int i=0; i<4; i++)
+            seg[idx].cnt[i]=new int[16];
+        combine(seg[idx*2], seg[idx*2+1], seg[idx]);
+        if(!seg[idx].flag)
+        {
+            for(int i=0; i<4; i++)
+            {
+                delete seg[idx*2].cnt[i];
+                delete seg[idx*2+1].cnt[i];
+            }
+        }
+    }
+}
+
+void update(int idx, int begin, int end, int x, int v)
+{
+    if(x<begin || end<x)
+        return;
+    if(begin==end)
+        seg[idx]=make_node(v, 1);
+    else
+    {
+        int mid=(begin+end)/2;
+        update(idx*2, begin, mid, x, v);
+        update(idx*2+1, mid+1, end, x, v);
+        combine(seg[idx*2], seg[idx*2+1], seg[idx]);
+    }
+}
+
+int main()
+{
+    scanf("%d%d", &N, &Q);
+    char c;
+    for(int i=1; i<=N; i++)
+    {
+        scanf(" %c", &c);
+        A[i]=alpha.find(c);
+    }
+    int a;
+    for(int i=0; i<Q; i++)
+    {
+        scanf("%d %c", &a, &c);
+        qa[i]=a;
+        qb[i]=alpha.find(c);
+        f[a]=1;
+    }
+    build(1, 1, N);
+    for(int i=0; i<Q; i++)
+    {
+        update(1, 1, N, qa[i], qb[i]);
+        int ans=1;
+        for(int j=0; j<4; j++)
+            for(int k=0; k<(1<<4); k++)
+                addmod(ans, seg[1].cnt[j][k]);
+        printf("%d\n", ans);
+    }
+    return 0;
+}

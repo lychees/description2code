@@ -1,0 +1,104 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+#include<string>
+#include<cctype>
+#include<cstdlib>
+#include<algorithm>
+#include<bitset>
+#include<vector>
+#include<list>
+#include<deque>
+#include<queue>
+#include<map>
+#include<set>
+#include<stack>
+#include<cmath>
+#include<sstream>
+#include<fstream>
+#include<iomanip>
+#include<ctime>
+#include<complex>
+#include<functional>
+#include<climits>
+#include<cassert>
+#include<iterator>
+using namespace std;
+#define MAX 100001
+bool ok[MAX];
+#define MOD 1000000007
+long long int dp[MAX];
+int a[101];
+int n;
+struct st{
+	st *b[2];
+	st(){
+		b[0] = NULL;
+		b[1] = NULL;
+	}
+};
+st *root = new st();
+void in(st *a, int val,int h=18){
+	if (h < 0){
+		return;
+	}
+	if (!a->b[(val>>h) & 1]){
+		a->b[(val>>h) & 1] = new st();
+	}
+	in(a->b[(val>>h) & 1], val,h-1);
+	return;
+}
+int f(st *a, int val, int g = 0,int h=18){
+	if (h < 0){
+		return g;
+	}
+	if (a->b[0] == NULL&&a->b[1] == NULL){
+		for (int i = 0; i <= h; i++){
+			g <<= 1;
+		}
+		return g;
+	}
+	int want = (val>>h) & 1;
+	if (!a->b[want]){
+		g <<= 1;
+		g |= (want ^ 1);
+		return f(a->b[want ^ 1], val, g,h-1);
+	}
+	else{
+		g <<= 1;
+		g |= (want);
+		return f(a->b[want], val, g,h-1);
+	}
+	return -1;
+}
+int main(){
+	scanf("%d", &n);
+	int s = 0;
+	ok[0] = true;
+	dp[0] = 1;
+	for (int i = 0; i < n; i++){
+		scanf("%d", &a[i]);
+		s += a[i];
+		for (int j = s; j >= a[i]; j--){
+			if (ok[j - a[i]]){
+				ok[j] = true;
+				dp[j] += dp[j - a[i]];
+				dp[j] %= MOD;
+			}
+		}
+	}
+	for (int i = 1; i <= s; i++){
+		if (ok[i]){
+			in(root, i);
+		}
+	}
+	int t;
+	scanf("%d", &t);
+	while (t--){
+		int q;
+		scanf("%d", &q);
+		int ans = f(root, q);
+		printf("%d %lld\n", ans, dp[ans]);
+	}
+	return 0;
+}

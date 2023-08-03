@@ -1,0 +1,119 @@
+#include <bits/stdc++.h>
+using namespace std ;
+#define LL long long int
+#define ft first
+#define sd second
+#define PII pair<int,int>
+#define MAXN 1005
+#define mp make_pair
+#define f_in(st) freopen(st,"r",stdin)
+#define f_out(st) freopen(st,"w",stdout)
+#define sc(x) scanf("%d",&x)
+#define pr(x) printf("%d\n",x)
+#define pb push_back
+#define MAXM 20001
+#define MOD 1000000007
+bool V[MAXN] ;
+int CNT[MAXN];
+vector<PII> P[MAXN] ;
+short int M[MAXN][MAXM] ;
+int T , N , Q , C , L , R , A[MAXM];
+void sieve(){
+    for(int i=2;i<MAXN;i++){
+        int j = 2 , X ;
+        X = i ;
+        while(j*j <= X){
+            bool f = 0 ;
+            int cnt = 0 ;
+            while(X%j == 0){
+                f = 1 ;
+                X /= j ;
+                cnt ++ ;
+            }
+            if(f)
+                P[i].pb(mp(j,cnt)) ;
+            j ++ ;
+        }
+        if(X > 1)
+            P[i].pb(mp(X,1)) ;
+    }
+}
+
+int power(int a,int b){
+    int res = 1 ;
+    while(b){
+        if(b&1)
+            res = (1LL * res * a ) % MOD ;
+        b /= 2 ;
+        a = (1LL * a * a) % MOD ;
+    }
+    return res ;
+}
+int main(){
+
+    sieve() ;
+    sc(T) ;
+    while(T--){
+        sc(N) ;
+        for(int i=1;i<MAXN;i++)
+            for(int j=1;j<=N;j++)
+                M[i][j] = 0 ;
+
+        for(int i=1;i<=N;i++){
+            sc(A[i]) ;
+            M[A[i]][i] ++ ;
+        }
+
+        for(int i=1;i<=1000;i++){
+            for(int j=1;j<=N;j++){
+                M[i][j] += M[i][j-1] ;
+            }
+        }
+      //  for(int j=0;j<P[4].size();j++)
+        //    cout << P[4][j].ft << " " << P[4][j].sd << endl ;
+        sc(Q) ;
+        int ans ;
+        while(Q--){
+
+            sc(C) , sc(L) , sc(R) ;
+            if(C){
+                int X , Y ;
+                X = min(L,R) ;
+                Y = max(L,R) ;
+                L = X ;
+                R = Y ;
+               for(int i=1;i<=1000;i++){
+                    V[i] = M[i][R] - M[i][L-1] ;
+                    CNT[i] = 0 ;
+                }
+                ans = 1 ;
+                for(int i=1;i<=1000;i++){
+                    if(V[i]){
+                        for(int j=0;j<P[i].size();j++){
+                            CNT[P[i][j].ft] = max(CNT[P[i][j].ft],P[i][j].sd) ;
+                        }
+                    }
+                }
+                for(int i=1;i<=1000;i++){
+                    if(CNT[i] > 0 ){
+                           ans = (1LL * ans * power(i,CNT[i]) ) % MOD ;
+                    }
+                }
+                pr(ans) ;
+            }else{
+            	if(L < 1 || L > N) continue ;
+                int X ;
+                X = A[L] ;
+                A[L] = R ;
+                for(int i=L;i<=N;i++){
+                    M[X][i] -- ;
+                }
+                X = A[L] ;
+                for(int i=L;i<=N;i++){
+                    M[X][i] ++ ;
+                }
+            }
+        }
+    }
+    return 0 ;
+}

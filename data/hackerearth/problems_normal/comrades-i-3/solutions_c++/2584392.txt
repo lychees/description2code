@@ -1,0 +1,92 @@
+using namespace std;
+#include<bits/stdc++.h>
+
+#define BG begin()
+#define ED end()
+#define st first
+#define nd second
+#define PB push_back
+#define PF push_front
+#define FOR(i,a,b) for (int i=a;i<b;i++)
+#define FORE(i,a,b) for (int i=a;i<=b;i++)
+#define FORD(i,a,b) for (int i=a;i>=b; i--)
+#define ri(n)({\
+    int neg=0;\
+    n=0;\
+    char ch;\
+    for(ch=getchar(); ch<'0' || ch>'9'; ch=getchar()) if (ch=='-') neg=1-neg;\
+    n=ch-48;\
+    for(ch=getchar(); ch>='0' && ch<='9'; ch=getchar()) n=(n<<3)+(n<<1)+ch-48;\
+    if (neg) n=-n;\
+})
+
+typedef long long ll;
+typedef unsigned long long ull;
+typedef pair<int,int> II;
+typedef pair<ll,ll> LL;
+const ll INF=1000000000+7;
+const double esp=1e-13;
+const double pi=3.141592653589;
+
+int test,b[100000+10][20],root,height[100000+10],base,n,x,q,anc,u,v;
+vector<int> a[100000+10];
+
+void dfs(int u, int par){
+    vector<int>::iterator it;
+    for(it=a[u].BG; it!=a[u].ED; it++)
+    if (*it!=par){
+        height[*it]=height[u]+1;
+        b[*it][0]=u;
+        dfs(*it,u);
+    }
+}
+
+int bit(int x, int y){
+    return x>>(y-1)&1;
+}
+
+int lca(int u, int v){
+    if (height[u]<height[v]) swap(u,v);
+    int t=height[u]-height[v];
+    FORE(i,1,base)
+    if (bit(t,i)) u=b[u][i-1];
+    int res;
+    FORD(i,base,0)
+    if (b[u][i]!=b[v][i]){
+        u=b[u][i];
+        v=b[v][i];
+    }
+    else res=b[u][i];
+    if (u==v) res=u;
+    return res;
+}
+
+int main(){
+ //   freopen("comrades-i-3.inp", "r", stdin);
+ //   freopen("comrades-i-3.out", "w", stdout);
+    ri(test);
+    while (test--){
+        ri(n);
+        FORE(i,1,n) a[i].clear();
+        FORE(i,1,n) height[i]=0;
+        FORE(i,1,n){
+            ri(x);
+            if (x==0) root=i;
+            else{
+                a[i].PB(x);
+                a[x].PB(i);
+            }
+        }
+        dfs(root,0);
+        base=(int)log2(n)+1;
+        FORE(j,1,base)
+        FORE(i,1,n) b[i][j]=b[ b[i][j-1] ][j-1];
+        ri(q);
+        while (q--){
+            ri(u); ri(v);
+            anc=lca(u,v);
+            if (anc!=v) puts("-1");
+            else printf("%d\n", height[u]-height[v]-1);
+        }
+    }
+}

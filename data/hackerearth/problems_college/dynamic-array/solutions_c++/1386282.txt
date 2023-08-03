@@ -1,0 +1,262 @@
+#include <iostream>
+#include <stdio.h>
+#include <algorithm>
+#include <stdlib.h>
+#include <math.h>
+#include <set>
+#include <assert.h>
+#include <cstring>
+#include <string>
+#include <string.h>
+#include <queue>
+#include <stack>
+#include <vector>
+#include <map>
+#include <time.h>
+#include <climits>
+
+using namespace std;
+
+#define FOR(i,a,b) for(int i=a;i<b;++i)
+#define FORR(i,a,b) for(int i=a;i>=b;--i)
+#define FORC(it,container) for(typeof(container.begin()) it=container.begin();it!=container.end();++it)
+#define INT(x) scanf("%d",&x)
+#define LLD(x) scanf("%lld",&x)
+#define STR(x) scanf("%s",x)
+#define CHAR(x) scanf("%c",&x)
+#define PINT(x) printf("%d\n",x)
+#define PLLD(x) printf("%lld\n",x)
+#define CLR(x) memset(x,0,sizeof(x));
+#define F first
+#define S second
+#define PB push_back
+
+const int INF = INT_MAX;
+const int MAX = 1000001;
+const int MOD = 1e9 + 7;
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef pair<int,int> PII;
+typedef map<int,int> MII;
+typedef vector<pair<int,int> > VPII;
+typedef vector<int> VI;
+typedef vector<char> VC;
+typedef vector<LL> VLL;
+typedef vector<VI> VVI;
+typedef vector<VLL> VVL;
+typedef set<int> SI;
+typedef set<char> SC;
+
+//Add(x) :- Add x to the dynamic list
+//Delete(x) :- Delete one occurence of x from the dynamic list
+//ReportKth(k) :- Print the 1-based Kth smallest element in the list
+
+//ins = 1 for insert , 0 for delete 
+
+int gcd(int a,int b)
+{
+	if(b==0) return a;
+	else return gcd(b,a%b);
+}
+
+
+
+int arr[MAX+5];
+
+struct data
+{
+	int sum;  //no of elements in the interval
+	int uniq; // no of unique elements in the interval
+	bool used; //used or not
+	int gcdresult;
+	void assignleaf()
+	{	
+		used=false;
+		sum=0;
+		uniq=0;
+		gcdresult=0;
+	}
+
+	void assignleaf(int idx ,int ins)
+	{
+		if(ins==1)
+		{
+			if(arr[idx]==0)
+			{
+				arr[idx] = 1 ;
+				sum = 1;
+				uniq = 1;	
+				used = true;
+				gcdresult = idx;
+						
+			}
+			else if(arr[idx]>0)
+			{
+				arr[idx] += 1 ;
+				sum += 1;
+				uniq = 1;	
+				used = true;
+				gcdresult  = idx;			
+			}
+		}
+		else if(ins==0)
+		{
+			arr[idx] -= 1;  
+			--sum;
+			if(arr[idx]==0)
+				uniq=0 , sum=0 , gcdresult=0, used=false;
+
+		}
+	}
+
+	void combine(data &l, data &r)
+	{
+		sum = r.sum + l.sum ;
+		uniq = l.uniq + r.uniq;
+		used = l.used || r.used;
+		
+		if(l.used==true || r.used==true)
+			gcdresult = gcd(l.gcdresult,r.gcdresult);
+		else gcdresult = 0;
+				
+	}
+
+
+
+};
+		
+
+data tree[4*MAX+5];
+
+void build_tree(int node,int s,int e)
+{
+	if(s>e) return;
+	
+	if(s==e)
+	{
+		tree[node].assignleaf();
+		return;
+	}
+	
+	int mid=(s+e)/2;
+
+	build_tree(2*node,s,mid);
+	build_tree(2*node+1,mid+1,e);
+
+	tree[node].combine(tree[2*node],tree[2*node+1]);
+
+}
+
+void point_update(int node,int segs,int sege,int index,int ins)
+{
+	if(segs==sege && segs==index)
+	{
+		tree[node].assignleaf(index,ins);
+		 return;
+	}
+
+	int mid = (segs+sege)/2;
+
+	if(index<=mid)
+		point_update(2*node,segs,mid,index,ins);
+	else 
+		point_update(2*node+1,mid+1,sege,index,ins);
+
+
+	tree[node].combine(tree[2*node],tree[2*node+1]);
+
+}
+
+int Xth_smallest(int node,int segs,int sege,int x)
+{
+
+	if(segs==sege && arr[segs]>0)
+		return segs;		
+
+	int mid = (segs+sege)/2;
+	
+	
+	if(tree[2*node].sum<x)
+	{
+		x = x -  tree[2*node].sum;
+		return Xth_smallest(2*node+1,mid+1,sege,x);
+	}
+	else
+	{
+		return Xth_smallest(2*node,segs,mid,x);
+	}
+	
+
+}
+
+int gcd_query(int node,int segs,int sege,int qs,int qe)
+{
+
+	if(segs>sege || sege<qs || segs>qe) return 0;
+
+	if(segs>=qs && sege<= qe) 
+	{
+		return tree[node].gcdresult;		
+	}
+
+	
+	int mid = (segs+sege)/2;
+
+	int q1 = gcd_query(2*node, segs,mid, qs, qe);
+	int q2 = gcd_query(2*node+1, 1+mid, sege, qs, qe);
+
+	int res ;
+ 
+	res = gcd(q1, q2);
+ 
+	return res;
+}
+
+
+int main()
+{
+		
+		CLR(arr);
+
+		int q; INT(q);
+			
+		while(q>0)
+		{
+			--q;
+			int k,x;
+			INT(k); 
+
+			if(k==1)
+			{	
+				INT(x);
+				point_update(1,0,MAX,x,1);
+			}
+			else if(k==2)
+			{
+				INT(x);
+				point_update(1,0,MAX,x,0);		
+			}
+			else if(k==3)
+			{	
+				INT(x);
+				int a = Xth_smallest(1,0,MAX,x);
+				assert(a>=1 && a<= 1000000);
+				
+				PINT(a);			
+			}
+			else if(k==4)
+			{
+				int L,R;
+				INT(L); INT(R);				
+				int a = gcd_query(1,0,MAX,L,R);
+
+				assert(a>=1 && a<= 1000000);
+				PINT(a);
+			}
+
+		}
+
+
+return 0;
+}

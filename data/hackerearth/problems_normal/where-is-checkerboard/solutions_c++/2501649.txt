@@ -1,0 +1,56 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+int N,M;
+
+bool valid(vector<string>& grid, int index_i, int index_j){
+	if (grid[index_i][index_j] != '_' || grid[index_i][index_j+1] != '#') return false;
+	if (grid[index_i+1][index_j] != '#' || grid[index_i+1][index_j+1] != '_') return false;
+	
+	for (int i = index_i; i < index_i+2; i++){
+		for (int j = index_j+2; j < index_j+32; j++){
+			if (grid[i][j] != grid[i][j-2]) return false;
+		}
+	}
+	
+	for (int i = index_i+2; i < index_i+32; i++){
+		for (int j = index_j; j < index_j+32; j++){
+			if (grid[i][j] != grid[i-2][j]) return false;
+		}
+	}
+	return true;
+}
+
+int numOfOccurrences(vector<string>& grid){
+	vector<vector<bool>> dp(N+1, vector<bool>(M+1, false));
+	int count = 0;
+	
+	for (int i = 32; i <= N; i++){
+		for (int j = 32; j <= M; j++){
+			if (grid[i-2][j-2] != '_' || grid[i-2][j-1] != '#') dp[i][j] = false;
+			else if (grid[i-1][j-2] != '#' || grid[i-1][j-1] != '_') dp[i][j] = false;
+			else if (dp[i-2][j] && dp[i][j-2]) dp[i][j] = true;
+			else dp[i][j] = valid(grid, i-32, j-32);
+			count += dp[i][j];
+		}
+	}
+	return count;
+}
+
+int main()
+{
+    cin >> N;
+    cin >> M;
+    vector<string> grid (N, "");
+    
+    for (int i = 0; i < N; i++){
+    	cin >> grid[i];
+    }
+    
+    int res = 0;
+    if (N >= 32 && M >= 32) res = numOfOccurrences(grid);
+    cout << res << endl;
+    
+    return 0;
+}

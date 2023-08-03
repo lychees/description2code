@@ -1,0 +1,92 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define X first
+#define Y second
+#define INPUT freopen("novclasha.inp","r",stdin)
+#define OUTPUT freopen("novclasha.out","w",stdout)
+#define FOR(i,l,r) for(auto i=(l);i<=(r);i++)
+#define REP(i,l,r) for(auto i=(l);i<(r);i++)
+#define FORD(i,l,r) for(auto i=(l);i>=(r);i--)
+#define REPD(i,l,r) for(auto i=(l);i>(r);i--)
+#define ENDL printf("\n")
+#define debug 1
+
+typedef long long ll;
+typedef pair<int,int> ii;
+
+const int inf=1e9;
+const int MOD=1e9+7;
+const int N=1e5+10;
+
+int n,a[N];
+struct info{
+    ll v;
+    int lt,llen,rt,rlen,len;
+    info (ll _v=0,int _lt=0,int _llen=0,int _rt=0,int _rlen=0,int _len=0){
+        v=_v;lt=_lt;llen=_llen;rt=_rt;rlen=_rlen;len=_len;
+    }
+};
+info merge(info a,info b){
+    info tmp(a.v+b.v,a.lt,a.llen,b.rt,b.rlen,a.len+b.len);
+    if (a.lt==b.lt&&a.llen==a.len) tmp.llen+=b.llen;
+    if (b.rt==a.rt&&b.rlen==b.len) tmp.rlen+=a.rlen;
+    if (a.rt==b.lt) tmp.v+=1LL*a.rlen*b.llen;
+    return tmp;
+}
+info b[N<<2];
+int laz[N<<2];
+void build(int node,int L,int R){
+    if (L==R){
+        b[node]=info(1,a[L],1,a[L],1,1);
+        return;
+    }
+    build(node*2,L,(L+R)/2);
+    build(node*2+1,(L+R)/2+1,R);
+    b[node]=merge(b[node*2],b[node*2+1]);
+}
+void lazyupdate(int node,int L,int R){
+    if (laz[node]){
+        int len=R-L+1;
+        b[node]=info(1LL*len*(len+1)/2,laz[node],len,laz[node],len,len);
+        if (len>1) laz[node*2]=laz[node*2+1]=laz[node];
+        laz[node]=0;
+    }
+}
+void update(int node,int L,int R,int l,int r,int v){
+    lazyupdate(node,L,R);
+    if (L>r||R<l) return;
+    if (l<=L&&R<=r){
+        laz[node]=v;
+        lazyupdate(node,L,R);
+        return;
+    }
+    update(node*2,L,(L+R)/2,l,r,v);
+    update(node*2+1,(L+R)/2+1,R,l,r,v);
+    b[node]=merge(b[node*2],b[node*2+1]);
+}
+info query(int node,int L,int R,int l,int r){
+    lazyupdate(node,L,R);
+    if (L>r||R<l) return info();
+    if (l<=L&&R<=r) return b[node];
+    return merge(query(node*2,L,(L+R)/2,l,r),query(node*2+1,(L+R)/2+1,R,l,r));
+}
+void prepare(){
+    int m,type,x,y,z;
+    //
+    scanf("%d%d",&n,&m);
+    FOR(i,1,n) scanf("%d",a+i);
+    build(1,1,n);
+    while (m--){
+        scanf("%d%d%d",&type,&x,&y);
+        if (!type) {
+            scanf("%d",&z);
+            update(1,1,n,x,y,z);
+        }else printf("%lld\n",query(1,1,n,x,y).v);
+    }
+}
+
+int main(){
+    prepare();
+}

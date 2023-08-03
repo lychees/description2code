@@ -1,0 +1,98 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define fast cin.sync_with_stdio(0);cin.tie(0)
+#define pii pair<int,int>
+#define ff first
+#define ss second
+#define mp make_pair
+#define pb push_back
+#define INF 99999999
+#define N 100005
+#define ll long long
+#define llu unsigned long long 
+#define mod 3
+pii tree[3*N];
+char str[N];
+int po[N];
+void build(int n,int b,int e)
+{
+	if(b==e)
+	{
+		tree[n].ff=(int)(str[b]-48);
+		tree[n].ss=1;
+		return;
+	}
+	int m=(b+e)/2;
+	build(2*n,b,m);
+	build(2*n+1,m+1,e);
+	tree[n].ff=((tree[2*n].ff*po[tree[2*n+1].ss])%mod+tree[2*n+1].ff)%mod;
+	tree[n].ss=tree[2*n].ss+tree[2*n+1].ss;
+}	
+void update(int n,int b,int e,int ind)
+{
+	if(b==e)
+	{
+		tree[n].ff=1;
+		return;
+	}
+	int m=(b+e)/2;
+	if(ind>=b&&ind<=m)
+	  update(2*n,b,m,ind);
+	else
+	  update(2*n+1,m+1,e,ind);
+	tree[n].ff=((tree[2*n].ff*po[tree[2*n+1].ss])%mod+tree[2*n+1].ff)%mod;
+	tree[n].ss=tree[2*n].ss+tree[2*n+1].ss;  
+}
+pii emp;
+pii query(int n,int b,int e,int l,int r)
+{
+	if(b>e||b>r||e<l)
+	  return emp;
+	if(b>=l&&e<=r)
+	  return tree[n];
+	int m=(b+e)/2;
+	pii p1=query(2*n,b,m,l,r);
+	pii p2=query(2*n+1,m+1,e,l,r); 
+	pii p3;
+	p3.ff=((p1.ff*po[p2.ss])%mod+p2.ff)%mod;
+	p3.ss=p1.ss+p2.ss;
+	return p3;
+}
+int main()
+{
+	int n;
+	emp.ff=emp.ss=0;
+	scanf("%d",&n);
+	scanf("%s",str);
+	int q;
+	scanf("%d",&q);
+	int type,l,r;
+	po[0]=1;
+	for(int i=1;i<=n;i++)
+	{
+		po[i]=(po[i-1]*2)%mod;
+	}
+	build(1,0,n-1);
+	pii qe;
+	while(q--)
+	{
+		scanf("%d",&type);
+		if(type==0)
+		{
+		  scanf("%d%d",&l,&r);
+		  qe=query(1,0,n-1,l,r);
+		 printf("%d\n",qe.ff);
+		} 
+		else
+		{
+		  scanf("%d",&l);
+		  if(str[l]=='0')
+		  {
+		    str[l]='1';
+		    update(1,0,n-1,l);
+		  }  
+		}   
+		
+	}
+	return 0;
+}	

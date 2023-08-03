@@ -1,0 +1,64 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+long long doLogic(long long S, long long E, vector<pair<long long, long long> > &data) {
+    vector<pair<long long, long long> > intervals;
+    for (vector<pair<long long, long long> >::iterator it = data.begin(); it != data.end(); ++it) {
+        const pair<long long, long long> &line = *it;
+        pair<long long, long long> interval;
+        interval.first = max(S, line.first - line.second);
+        interval.second = min(E, line.first + line.second);
+        intervals.push_back(interval);
+    }
+    // Sort by 1-st arg, then by 2-nd
+    sort(intervals.begin(), intervals.end(), [](const pair<long long, long long>& lhs, const pair<long long, long long>& rhs) {
+
+        if (lhs.first == rhs.first) {
+            return lhs.second < rhs.second;
+        } else {
+            return lhs.first < rhs.first;
+        }
+    });
+
+    // Find min starting from S
+    //  4 - 8
+    //  3 - 10
+    long long start = S;
+    long long end = E;
+    long long len = 0;
+
+    for (vector<pair<long long, long long> >::iterator it = intervals.begin(); it != intervals.end(); ++it) {
+        end = min(end, (*it).first);
+        len += max(0LL, end-start);
+        start = max(start, (*it).second);
+        end = E;
+    }
+
+    len += max(0LL, end-start);
+    return len;
+}
+
+#ifndef DEF_CPP4TDD
+
+int main() {
+    int N;
+    long long S;
+    long long E;
+    vector<pair<long long, long long> > data;
+    cin >> N >> S >> E;
+    for (int i=0; i < N; ++i) {
+        long long a;
+        long long b;
+        cin >> a >> b;
+        data.push_back(pair<long long, long long>(a, b));
+    }
+    long long len = doLogic(S, E, data);
+    cout << len << endl;
+    return 0;
+}
+
+#endif

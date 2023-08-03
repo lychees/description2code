@@ -1,0 +1,60 @@
+#include <iostream>
+#include <string>
+#include <cstdio>
+
+using namespace std;
+
+bool deleted[200000];
+int f[256];
+int c[256];
+
+struct Tree {
+	int* idx;
+	int* h;
+	void init(int id, int l, int r) {
+		h[id] = r-l+1;
+		if (l == r) return;
+		int m = (l+r) / 2;
+		init(id*2, l, m);
+		init(id*2+1, m+1, r);
+	}
+	void update(int id, int l, int r, int x, int v) {
+		if (l == r) {
+			idx[id] = v;
+			return;
+		}
+		int m = (l+r) / 2;
+		if (x < h[id*2]) update(id*2, l, m, x, v); else update(id*2+1, m+1, r, x-h[id*2], v);
+	}
+	void del(int id, int l, int r, int x) {
+		h[id]--;
+		if (l == r) {
+			deleted[idx[id]] = true;
+			return;
+		}
+		int m = (l+r) / 2;
+		if (x < h[id*2]) del(id*2, l, m, x); else del(id*2+1, m+1, r, x-h[id*2]);
+	}
+	Tree(int n) {
+		idx = new int[n*4];
+		h = new int[n*4];
+		init(1, 0, n-1);
+	}
+};
+
+Tree* p[256];
+
+int main() {
+	string s; cin >> s;
+	for (int i = 0; i < s.size(); i++) f[s[i]]++;
+	for (int i = 'a'; i <= 'z'; i++) if (f[i]) p[i] = new Tree(f[i]);
+	for (int i = 0; i < s.size(); i++) p[s[i]]->update(1, 0, f[s[i]]-1, c[s[i]]++, i);
+	int q; cin >> q;
+	while (q--) {
+		int x; string t; cin >> x >> t; x--;
+		p[t[0]]->del(1, 0, f[t[0]]-1, x);
+	}
+	for (int i = 0; i < s.size(); i++) if (!deleted[i]) putchar(s[i]);
+	putchar('\n');
+    return 0;
+}

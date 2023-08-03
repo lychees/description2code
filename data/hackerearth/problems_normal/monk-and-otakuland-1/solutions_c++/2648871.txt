@@ -1,0 +1,140 @@
+#include<bits/stdc++.h>
+#define ll long long int
+#define sc(a) scanf("%lld",&a)
+using namespace std;
+
+ll arr[200008],n,zero=0;
+struct data
+{
+    ll sum1,sum2,po;
+};
+data tree[4*200008];
+
+void update(ll node, ll b, ll e, ll i, ll j, ll bu)
+{
+    ll left,right,mid;
+
+    mid=(b+e)/2;
+    left=2*node;
+    right=2*node+1;
+
+    if(tree[node].po==1)
+    {
+        swap(tree[node].sum1,tree[node].sum2);
+        if(b!=e)
+        {
+            tree[left].po=!tree[left].po;
+            tree[right].po=!tree[right].po;
+        }
+        tree[node].po=0;
+    }
+
+    if(j<b || i>e || b>e)
+        return;
+    if(i==b && i==e && i==j && bu==1)
+    {
+        if(arr[i]==1)
+            tree[node].sum1=arr[i];
+        else
+            tree[node].sum2=-1*arr[i];
+        //tree[node].po=0;
+        return;
+    }
+    if(i<=b && j>=e)
+    {
+        swap(tree[node].sum1,tree[node].sum2);
+        if(b!=e)
+        {
+            tree[left].po=!tree[left].po;
+            tree[right].po=!tree[right].po;
+        }
+        return;
+    }
+
+    update(left,b,mid,i,j,bu);
+    update(right,mid+1,e,i,j,bu);
+
+    tree[node].sum1=tree[left].sum1+tree[right].sum1;
+    tree[node].sum2=tree[left].sum2+tree[right].sum2;
+}
+
+ll query(ll node, ll b, ll e, ll i, ll j, ll qu)
+{
+    ll left,right,mid,ans;
+
+    mid=(b+e)/2;
+    left=2*node;
+    right=2*node+1;
+
+    if(j<b || i>e || b>e)
+        return 0;
+
+    if(tree[node].po==1)
+    {
+        swap(tree[node].sum1,tree[node].sum2);
+        if(b!=e)
+        {
+            tree[left].po=!tree[left].po;
+            tree[right].po=!tree[right].po;
+        }
+        tree[node].po=0;
+    }
+
+    if(i<=b && j>=e)
+    {
+        if(qu==2)
+            return tree[node].sum1;
+        else
+            return tree[node].sum2;
+    }
+
+    ans=query(left,b,mid,i,j,qu)+query(right,mid+1,e,i,j,qu);
+    //cout<<ans<<endl;
+
+    return ans;
+}
+
+int main()
+{
+    ll q,i,j,c,l,r;
+    char s[200008];
+    while(scanf("%lld %lld",&n,&q)!=EOF)
+    {
+        scanf("%s",&s);
+        memset(tree,0,sizeof tree);
+        for(i=1; i<n; i++)
+        {
+            if(s[i-1]=='>')
+                arr[i]=1;
+            else
+                arr[i]=-1;
+            update(1,1,n-1,i,i,1);
+        }
+
+//        for(i=1; i<20; i++)
+//            cout<<tree[i].sum1<<ends;
+//        cout<<endl;
+        for(i=1; i<=q; i++)
+        {
+            scanf("%lld %lld %lld",&c,&l,&r);
+            if(c==2)
+            {
+                if(l==r)
+                    printf("0\n");
+                else if(l<r)
+                    printf("%lld\n",query(1,1,n-1,l,r-1,1));
+                else
+                    printf("%lld\n",query(1,1,n-1,r,l-1,2));
+            }
+            else
+            {
+                update(1,1,n-1,l,r-1,2);
+
+//                for(j=1; j<20; j++)
+//                    cout<<tree[j].sum1<<ends;
+//                cout<<endl;
+            }
+        }
+    }
+    return 0;
+}

@@ -1,0 +1,91 @@
+#include <bits/stdc++.h>
+using namespace std;
+int arr [100005]; 
+int newarr [200005]; 
+int num [6*100005]; 
+long long hasher [200005][21];
+long long pow29 [(1<<21)+5];  
+const int mod=1e9+349; 
+void update (int start, int end, int i, int node)
+{
+	if (start>i || end<i) return;
+	if (start==end)
+	{
+		num[node]++;return;  
+	}
+	update(start, (start+end)/2, i, 2*node); 
+	update((start+end)/2+1, end, i, 2*node+1); 
+	num[node]=num[2*node]+num[2*node+1]; 
+}
+int query (int start, int end, int i, int j, int node)
+{
+	if (start>j || end<i || i>j) return 0;
+	if (start>=i && end<=j) return num[node]; 
+	return query(start, (start+end)/2, i, j, 2*node)+query((start+end)/2+1, end, i, j, 2*node+1); 
+}
+main()
+{pow29[0]=1; 
+	for (int g=1; g<=(1<<21)+4; g++)
+	{
+		pow29[g]=(pow29[g-1]*29)%mod; 
+	}
+	int T;scanf("%d", &T); 
+	for (int g=0; g<T; g++)
+	{memset(arr,0,sizeof(arr)); memset(num,0,sizeof(num));
+		int N; scanf("%d", &N); 
+		map <int, int> isit, compress; 
+		for (int y=1; y<=N; y++) {scanf("%d", &arr[y]); isit[arr[y]]=1;}
+		int counter=1;
+		for (map <int, int> :: iterator y=isit.begin(); y!=isit.end(); y++)
+		{
+			compress[y->first]=counter++; 
+		} 
+		for (int y=1; y<=N; y++) arr[y]=compress[arr[y]]; 
+		for (int y=1; y<=N; y++)
+		{
+			newarr[y]=arr[y]; 
+			newarr[N+y]=newarr[y];
+			hasher[y][0]=arr[y]; 
+			hasher[N+y][0]=arr[y]; 
+		}
+		for (int y=1; y<=20; y++)
+		{
+			for (int z=1; z<=2*N; z++)
+			{
+				hasher[z][y]=(((1<<(y-1))+z)>2*N)?(hasher[z][y-1]):(hasher[z][y-1]+pow29[1<<(y-1)]*hasher[z+(1<<(y-1))][y-1]);
+				hasher[z][y]%=mod; 
+			}
+		}
+		long long inv=0; 
+		for (int y=N; y>=1; y--)
+		{
+			inv+=query(1, counter-1, 1, arr[y]-1, 1); 
+			update (1, counter-1, arr[y], 1); 
+		}
+		long long maxi=inv, index=0; 
+		long long curinv=inv; 
+		for (int g=1; g<=N; g++)
+		{
+			long long gain=query (1, counter-1, arr[g]+1, counter-1, 1); // the number you will gain
+			long long lose=query (1, counter-1, 1, arr[g]-1, 1); // the number you will lose
+			curinv+=gain-lose; 
+			if (curinv>maxi) maxi=curinv, index=g; 
+			else if (curinv==maxi)
+			{
+				int first=index, second=g; 
+				first++,second++; 
+				for (int t=20; t>=0; t--)
+				{
+					if (hasher[first][t]==hasher[second][t])
+					{
+						first+=(1<<t), second+=(1<<t); 
+					}
+				}
+				if (second>=2*N+1) continue; 
+				if (newarr[first]>newarr[second]) index=g; 
+			}
+		}
+		printf("%d %lld\n", index, maxi);  
+	}
+	return 0; 
+}

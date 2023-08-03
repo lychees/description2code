@@ -1,0 +1,85 @@
+    #include <cstdio>
+    #include <string>
+    #include <cstring>
+    #include <sstream>
+    using namespace std;
+    char s[100];
+    int q[1024005];   
+    int pre[1024][1000];
+    int a[1024];
+    int digit[10];
+    int cal(int n,int num,int want) {
+    int head,tail = 1,i,x,y,s,state;
+    	memset(pre,0xff,sizeof(pre));
+    	for (i = digit[0]?0 : 1; i < num; ++i) {
+    		q[tail] = (x = digit[i] % n) | ((state = 1 << digit[i]) << 10) | (digit[i] << 20);
+    		pre[state][x] = 0;
+    		if ((x == 0) && (state == want)) {
+    			return tail;
+    		}
+    		++tail;
+    	}
+    	for (head = 1;head < tail;++head) {
+    		y = (q[head] & 1023) * 10 % n;
+    		s = (q[head] >> 10) & 1023;
+    		for (i = 0; i < num; ++i) {
+    			x = (y + digit[i]) % n;
+    			state = s | (1 << digit[i]);
+    			if (pre[state][x] < 0) {
+    				q[tail] = x | (state << 10)| (digit[i] << 20);
+    				pre[state][x] = head;
+    				if ((x == 0) && (state == want)) {
+    					return tail;
+    				}
+    				++tail;
+    			}
+    		}
+    	}
+    	return 0;
+    }
+    		
+    int main() {
+    int n,i,j,k,z;
+    bool yes;
+    	scanf("%d",&z);
+    	for (gets(s);z;--z) {
+    		gets(s);
+    		stringstream in((string) s);
+    		j = 0;
+    		while (in >> i) {
+    			j |= (1 << i);
+    		}
+    		for (i = k = 0; i < 10; ++i) {
+    			if (j & (1 << i)) {
+    				digit[k++] = i;
+    			}
+    		}
+    		scanf("%d",&n);
+    		gets(s);
+    		i = cal(n,k,j);
+    		if (i) {
+    			for (k = 0;i;i = pre[(q[i] >> 10) & 1023][q[i] & 1023]) {
+    				a[k++] = q[i] >> 20;
+    			}
+    			for (i = k - 1;i >= 0;--i) {
+    				printf("%d",a[i]);
+    			}
+    			printf(" = %d * ",n);
+    			yes=false;
+    			for (i = 0,j = k - 1;j >= 0;--j) {
+    				i = i * 10 + a[j];
+    				if ((yes) || (i >= n)) {
+    					yes = true;
+    					printf("%d",i / n);
+    					i %= n;
+    				}
+    			}
+    			puts("");
+    		}
+    		else {
+    			puts("Impossible");
+    		}
+    	}
+    	return 0;
+    }
+

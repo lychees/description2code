@@ -1,0 +1,164 @@
+#include<bits/stdc++.h>
+
+// Isme kya hai ;)
+
+using namespace std;
+
+#define TRACE
+
+#ifdef TRACE
+    #define trace1(x)                cerr << #x << ": " << x << endl;
+    #define trace2(x, y)             cerr << #x << ": " << x << " | " << #y << ": " << y << endl;
+    #define trace3(x, y, z)          cerr << #x << ": " << x << " | " << #y << ": " << y << " | " << #z << ": " << z << endl;
+    #define trace4(a, b, c, d)       cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << endl;
+    #define trace5(a, b, c, d, e)    cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << endl;
+    #define trace6(a, b, c, d, e, f) cerr << #a << ": " << a << " | " << #b << ": " << b << " | " << #c << ": " << c << " | " << #d << ": " << d << " | " << #e << ": " << e << " | " << #f << ": " << f << endl;
+
+#else
+
+    #define trace1(x)
+    #define trace2(x, y)
+    #define trace3(x, y, z)
+    #define trace4(a, b, c, d)
+    #define trace5(a, b, c, d, e)
+    #define trace6(a, b, c, d, e, f)
+
+#endif
+
+#define ull unsigned long long
+#define ll long long
+#define Max(x,y) ((x)>(y)?(x):(y))
+#define Min(x,y) ((x)<(y)?(x):(y))
+#define Sl(x) scanf("%lld",&x)
+#define Su(x) scanf("%llu",&x)
+#define all(v) v.begin(),v.end()
+#define allr(v) v.rbegin(),v.rend()
+#define S(x) scanf("%d",&x)
+#define I(x) cin>>x
+#define IS(x) getline(cin,x)
+#define pii pair<int,int>
+#define pll pair<ll,ll>
+#define mii map<int,int>
+#define pps pair<ll,pll>
+#define ppi pair<pii,int>
+#define ppf pair<pll,ll>
+#define psi pair<string,int>
+#define pis pair<int,string>
+#define fr first
+#define se second
+#define p(x) cout<<(x)
+#define MOD 1000000007
+#define eps 1e-7
+#define V(x) vector<x>
+#define pb(x) push_back(x)
+#define mem(x,i) memset(x,i,sizeof(x))
+#define fori(i,s,n) for(int i=(s);i<(n);i++)
+#define ford(i,s,n) for(int i=(n)-1;i>=(s);--i)
+#define INF 8944674407370955161LL
+#define debug(i,st,arr) fori(i,0,st){cout<<arr[i]<<" ";}cout<<endl;
+#define forci(i,sw) for((i)=(sw).begin();(i)!=(sw).end();(i)++)
+#define forcd(i,sw) for((i)=(sw).rbegin();(i)!=(sw).rend();(i)++)
+
+int abs(int x) {if(x < 0) return -x; return x;}
+
+int addmod(int v1, int v2) {
+    int v3 = v1+v2;
+    if(v3 >= MOD) v3 -= MOD;
+    return v3;
+}
+
+int cc[100];
+
+bool check(string ss)
+{
+    fori(i,0,ss.size()) {
+        if(ss[i] != ss[ss.size()-i-1]) return false;
+    }
+    return true;
+}
+
+V(V(ll)) mat, ans;
+
+
+int n, m;
+int a[1000000];
+
+V(V(ll)) mul(V(V(ll)) v1, V(V(ll)) v2)
+{
+    V(V(ll)) vv(n*m);
+    fori(i,0,n*m){
+        vv[i].resize(n*m);
+    }
+    fori(i,0,n*m) fori(j,0,n*m) fori(k,0,n*m) {
+        vv[i][j]=(vv[i][j]+(v1[i][k]*v2[k][j])%MOD)%MOD;
+    }
+    return vv;
+}
+
+
+V(V(ll)) solve(ll n)
+{
+    if(n == 1) return mat;
+    if(n % 2 == 1) {
+        V(V(ll)) vv = solve(n-1);
+        vv = mul(mat, vv);
+        return vv;
+    }
+    else {
+        V(V(ll)) vv = solve(n/2);
+        vv = mul(vv,vv);
+        return vv;
+    }
+}
+
+int main()
+{
+//    freopen("input.in", "r", stdin);
+//    freopen("output.in", "w", stdout);
+    S(n), S(m);
+    string s;
+    fori(i,0,n) {
+        fori(j,0,m) {
+            I(s);
+            map<string, int> mm;
+            fori(k,0,s.size()) {
+                string ss = "";
+                fori(l,k,s.size()) {
+                    ss += s[l];
+                    if(check(ss)) mm[ss]++;
+                }
+            }
+            a[i*m + j] = mm.size();
+        }
+    }
+
+    int t;
+
+    S(t);
+    mat.resize((n*m));
+    fori(i,0,n*m) mat[i].resize(n*m);
+    int x, y, xx, yy;
+    fori(i,0,t) {
+        S(x), S(y), S(xx), S(yy);
+        mat[x*m + y][xx*m + yy]++;
+        mat[xx*m + yy][x*m + y]++;
+    }
+
+    fori(i,0,m*n) mat[i][i] = 1;
+    int d;
+    S(d);
+    ans = solve(d);
+
+    fori(i,0,n*m) {
+        ll val = 0;
+        fori(j,0,n*m) {
+            val += ans[i][j]*a[j];
+            val %= MOD;
+        }
+        if(i && i % m == 0) p(endl);
+        p(val), p(" ");
+    }
+    return 0;
+}
+
+

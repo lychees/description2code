@@ -1,0 +1,110 @@
+#include <bits/stdc++.h>
+
+#define nl cout << "\n" 
+#define pb(a) push_back(a)
+#define mp(a,b) make_pair(a,b)
+#define ll long long
+#define fl(i,a,b) for(int i=a;i<b;++i)
+#define flr(i,a,b) for(int i=a;i>=b;--i)
+#define all(a) a.begin(),a.end()
+
+#define pii pair<int,int> 
+#define vi vector<int> 
+#define vll vector<ll>
+#define vb vector<bool>
+#define vpii vector<pair<int,int> > 
+#define vpib vector<pair<int,bool> >
+#define vvi vector<vector<int> >
+
+#define DEBUG(x) cout << "value of " << #x << " is " << x << "\n"
+#define c_false ios_base::sync_with_stdio(false); cin.tie(0)
+
+const int mod = 1000000007;
+const ll nmax = 1000000000000000007;
+
+using namespace std;
+
+vi t ;
+
+int power(int a,int b){
+	if(b==0)
+	return 1 ;
+	if(b&1)
+	return (power(a,b-1)*a)%3 ;
+	int tmp = power(a,b/2) ;
+	return (tmp*tmp)%3 ;
+}
+
+void build(string &str,int v,int tl,int tr)
+{
+	if(tl == tr)
+	{
+		t[v] = (int)(str[tl]-'0') ;
+		return ;
+	}
+	int tm = (tl+tr)/2 ;
+	build(str,v*2,tl,tm) ;
+	build(str,v*2+1,tm+1,tr) ;
+	t[v] = (t[v*2])*power(2,(tr-tm))+(t[v*2+1]) ;
+	t[v] %= 3 ;
+}
+
+void update(int v,int tl,int tr,int pos){
+	if(tl == tr){
+		t[v] = 1 ;
+		return ;
+	}
+	int tm = (tl+tr)/2 ;
+	if(pos <= tm)
+		update(v*2,tl,tm,pos);
+	else
+		update(v*2+1,tm+1,tr,pos) ;
+	t[v] = (t[v*2])*power(2,(tr-tm))+(t[v*2+1]) ;
+	t[v] %= 3 ;
+}
+
+int result(int v,int tl,int tr,int l,int r,int end){
+	if(l>r)
+	return 0 ;
+	if(tl==l && tr==r)
+	{
+	//	DEBUG(tl);DEBUG(tr);DEBUG(end);
+	//	DEBUG(end-tr) ;
+		return (t[v]*power(2,end-tr))%3 ;
+	}
+	int tm = (tl+tr)/2 ;
+	int p1 = result(v*2,tl,tm,l,min(r,tm),end) ;
+	int p2 = result(v*2+1,tm+1,tr,max(tm+1,l),r,end) ;
+	return (p1+p2)%3 ;
+}
+
+int main(){
+	c_false ;
+ //   freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w", stdout);
+  	int n ;
+  	cin >> n ;
+  	t.clear() ;
+  	t.resize(4*n) ;
+  	string str ;
+  	cin >> str ;
+	
+	// seg tree creation 
+	build(str,1,0,n-1) ;  
+	
+	int q ;
+	cin >> q ;	
+	fl(i,0,q){
+		int a,b,c;
+		cin >> a ;
+		if(a==0){
+			cin >> b >> c;
+			cout << result(1,0,n-1,b,c,c) << "\n";
+		}
+		else{
+			cin >> b ;
+			update(1,0,n-1,b);
+		}
+	}
+	return 0;
+}

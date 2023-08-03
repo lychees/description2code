@@ -1,0 +1,121 @@
+#include <iostream>
+#include <math.h>
+using namespace std;
+
+static const int MAXPRIMECOUNT = 80000;
+
+class eratosthenes {
+public:
+    eratosthenes();
+    int getPosition(int n, bool less);
+
+    static const int MAXPRIME = 1000000;
+    bool sieve[MAXPRIME];
+    int primecounter;
+    int primes[MAXPRIMECOUNT];
+    long long sigma[MAXPRIMECOUNT];
+};
+
+eratosthenes::eratosthenes() {
+    for (int i=0; i<MAXPRIME; ++i) {
+	sieve[i] = true;
+    }
+    sieve[0] = false;
+    sieve[1] = false;
+    primecounter = 0;
+    int foo = sqrt(MAXPRIME);
+    for (int i=0; i<foo; ++i) {
+	if (sieve[i] == true) {
+	    for (int j=2*i; j<MAXPRIME; j+= i) {
+		sieve[j] = false;
+	    }
+	}
+    }
+    sigma[0] = 0;
+    primes[0] = 1;
+    primecounter = 1;
+    for (int i=0; i<MAXPRIME; ++i) {
+	if (sieve[i] == true) {
+	    primes[primecounter] = i;
+	    if (primecounter == 0) {
+		sigma[primecounter] = i;
+	    } else {
+		sigma[primecounter] = sigma[primecounter-1]+i;
+	    }
+	    primecounter++;
+	}
+    }
+
+    primes[primecounter] = MAXPRIME;
+    sigma[primecounter] = sigma[primecounter-1];
+}
+
+int eratosthenes::getPosition(int n, bool less) {
+    int low = 0, high = primecounter;
+    int mid;
+    mid = (low+high)/2;
+    while ((high-low) > 1) {
+	if (primes[mid] < n) {
+	    low = mid;
+	} else if (primes[mid] == n) {
+	    return mid;
+	} else {
+	    high = mid;
+	}
+	mid = (low+high)/2;
+    }
+    if (primes[low] == n) {
+	return low;
+    }
+    if (primes[high] == n) {
+	return high;
+    }
+    if (less) {
+	return low;
+    } else {
+	return high;
+    }
+}
+
+int main() {
+    eratosthenes *sieve = new eratosthenes();;
+    int t;
+    cin >> t;
+    for (int tc=0; tc<t; ++tc) {
+        int m, n, p1, p2;
+        cin >> m >> n;
+	p1 = sieve->getPosition(m, false);
+	p2 = sieve->getPosition(n, true);
+	long long sigma1 = 0, sigma2 = 0, delta = 0;
+
+	sigma1 = sieve->sigma[p1];
+	if (p1 > 0) {
+	    sigma1 -= sieve->primes[p1];
+	}
+	sigma2 = sieve->sigma[p2];
+	delta = sigma2 - sigma1;
+
+	if (delta > eratosthenes::MAXPRIME) {
+	    bool isprime = true;
+	    for (int i=1;i<sieve->primecounter; ++i) {
+		if (delta % (sieve->primes[i]) == 0) {
+		    isprime = false;
+		    break;
+		}
+	    }
+	    if (isprime) {
+		cout << "YES" << endl;
+	    } else {
+		cout << "NO" << endl;
+	    }
+	} else {
+	    int p = sieve->getPosition(delta, true);
+	    if (sieve->primes[p] == delta) {
+		cout << "YES" << endl;
+	    } else {
+		cout << "NO" << endl;
+	    }
+	}
+    }
+    return 0;
+}

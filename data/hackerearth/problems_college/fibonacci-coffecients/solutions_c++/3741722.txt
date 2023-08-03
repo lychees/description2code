@@ -1,0 +1,119 @@
+#include "bits/stdc++.h"
+using namespace std;
+const int N = 2e5 + 5;
+const int SN = 1 << 19;
+int n , q , mod;
+int arr[N];
+int segtree[SN][2][2];
+int fib[N][2][2];
+int inv[N][2][2];
+int type , l , r;
+int res[2];
+inline int add(int a , int b){
+	int res = a + b;
+	if(res >= mod){
+		return res - mod;
+	}
+	return res;
+}
+inline int mult(int a , int b){
+	long long res = a;
+	res *= b;
+	if(res >= mod){
+		return res % mod;
+	}
+	return res;
+}
+void pre(){
+	fib[0][0][0] = 1;
+	fib[0][0][1] = 0;
+	fib[0][1][0] = 0;
+	fib[0][1][1] = 1;
+	for(int i = 1 ; i <= n ; ++i){
+		fib[i][0][0] = add(fib[i - 1][0][0] , fib[i - 1][0][1]);
+		fib[i][0][1] = fib[i - 1][0][0];
+		fib[i][1][0] = add(fib[i - 1][1][0] , fib[i - 1][1][1]);
+		fib[i][1][1] = fib[i - 1][1][0];
+	}
+	inv[0][0][0] = 1;
+	inv[0][0][1] = 0;
+	inv[0][1][0] = 0;
+	inv[0][1][1] = 1;
+	for(int i = 1 ; i <= n ; ++i){
+		inv[i][0][0] = inv[i - 1][0][1];
+		inv[i][0][1] = add(inv[i - 1][0][0] , mod - inv[i - 1][0][1]);
+		inv[i][1][0] = inv[i - 1][1][1];
+		inv[i][1][1] = add(inv[i - 1][1][0] , mod - inv[i - 1][1][1]);
+	}
+}
+void build(int l , int r , int node){
+	if(l == r){
+		segtree[node][0][0] = mult(fib[l][0][0] , arr[r]);
+		segtree[node][0][1] = mult(fib[l][0][1] , arr[r]);
+		segtree[node][1][0] = mult(fib[l][1][0] , arr[r]);
+		segtree[node][1][1] = mult(fib[l][1][1] , arr[r]);
+	}
+	else{
+		int mid = l + r >> 1;
+		build(l , mid , node + node);
+		build(mid + 1 , r , node + node + 1);
+		segtree[node][0][0] = add(segtree[node + node][0][0] , segtree[node + node + 1][0][0]);
+		segtree[node][0][1] = add(segtree[node + node][0][1] , segtree[node + node + 1][0][1]);
+		segtree[node][1][0] = add(segtree[node + node][1][0] , segtree[node + node + 1][1][0]);
+		segtree[node][1][1] = add(segtree[node + node][1][1] , segtree[node + node + 1][1][1]);
+	}
+}
+void update(int l , int r , int node , int idx , int val){
+	if(l == r){
+		segtree[node][0][0] = mult(fib[idx][0][0] , val);
+		segtree[node][0][1] = mult(fib[idx][0][1] , val);
+		segtree[node][1][0] = mult(fib[idx][1][0] , val);
+		segtree[node][1][1] = mult(fib[idx][1][1] , val);
+	}
+	else{
+		int mid = l + r >> 1;
+		if(idx <= mid){
+			update(l , mid , node + node , idx , val);
+		}
+		else{
+			update(mid + 1 , r , node + node + 1 , idx , val);
+		}
+		segtree[node][0][0] = add(segtree[node + node][0][0] , segtree[node + node + 1][0][0]);
+		segtree[node][0][1] = add(segtree[node + node][0][1] , segtree[node + node + 1][0][1]);
+		segtree[node][1][0] = add(segtree[node + node][1][0] , segtree[node + node + 1][1][0]);
+		segtree[node][1][1] = add(segtree[node + node][1][1] , segtree[node + node + 1][1][1]);
+	}
+}
+void query(int l , int r , int node , int ql , int qr){
+	if(l > qr || r < ql){
+		return;
+	}
+	if(l >= ql && r <= qr){
+		res[0] = add(res[0] , segtree[node][0][0]);
+		res[1] = add(res[1] , segtree[node][0][1]);
+		return;
+	}
+	int mid = l + r >> 1;
+	query(l , mid , node + node , ql , qr);
+	query(mid + 1 , r , node + node + 1 , ql , qr);
+}
+int main(){
+	scanf("%d %d %d" , &n , &q , &mod);
+	for(int i = 1 ; i <= n ; ++i){
+		scanf("%d" , arr + i);
+	}
+	pre();
+	build(1 , n , 1);
+	while(q--){
+		scanf("%d %d %d" , &type , &l , &r);
+		if(type == 1){
+			update(1 , n , 1 , l , r);
+		}
+		else{
+			res[0] = 0;
+			res[1] = 0;
+			query(1 , n , 1 , l , r);
+			printf("%d\n" , add(mult(res[0] , inv[l - 1][0][1]) , mult(res[1] , inv[l - 1][1][1])));
+		}
+	}
+}

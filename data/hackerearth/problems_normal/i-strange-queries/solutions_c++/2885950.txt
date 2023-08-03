@@ -1,0 +1,126 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+#define fru(j,n) for(int j=0; j<(n); ++j)
+//#define tr(it,v) for(typeof((v).begin()) it=(v).begin(); it!=(v).end(); ++it)
+#define tr(it,v) for(auto it=(v).begin(); it!=(v).end(); ++it)
+#define x first
+#define y second
+#define pb push_back
+#define ALL(G) (G).begin(),(G).end()
+
+#if 1
+	#define DEB printf
+#else
+	#define DEB(...)
+#endif
+
+typedef long long ll;
+typedef long long LL;
+typedef double D;
+typedef pair<int,int> pii;
+typedef vector<int> vi;
+
+const int inft = 1000000009;
+const int mod = 1000000007;
+const int MAXN = 50005;
+const int SQ=180;
+
+int A[MAXN];
+vi wyst[MAXN];
+vector<vector<int> > H;
+/*
+const int MAXD = 64*1024;
+vi drz[2*MAXD];
+
+void dodaj(int a, int b) {
+	a += MAXD;
+	while(a) {
+		drz[a].pb(b);
+		a/=2;
+	}
+}
+
+void init() {
+	fru(i,2*MAXD) sort(ALL(drz[i]));
+}
+
+int licz(int a,int b,int x,int y) {
+	a+=MAXD; b+=MAXD;
+	int ans = 0;
+	while(a <= b) {
+		if(a%2==1) ans += upper_bound(ALL(drz[a]),y) -
+						  lower_bound(ALL(drz[a]),x);
+		if(b%2==0) ans += upper_bound(ALL(drz[b]),y) -
+						  lower_bound(ALL(drz[b]),x);
+		a = (a+1)/2;
+		b = (b-1)/2;
+	}
+	return ans;
+}*/
+
+inline int mnr(const vi &V, int b) {
+	return upper_bound(ALL(V),b) - V.begin();
+}
+
+inline int ile(int p,int a,int b){
+	return H[p][b]-H[p][a-1];
+//	return mnr(H[p],b)-mnr(H[p],a-1);
+}
+LL ANS[MAXN];
+int W[MAXN];
+inline int mag(int x){return x-(x&(x-1));}
+inline void add(int a){
+	a+=2;
+	while(a<MAXN){
+		W[a]++;
+		a+=mag(a);
+	}
+}
+inline int licz(int a){
+	a+=2;
+	int ret=0;
+	while(a>0){
+		ret+=W[a];
+		a-=mag(a);
+	}
+	return ret;
+}
+typedef pair<unsigned short,unsigned short> pss;
+typedef pair<pss,int> zap;
+vector<zap> Z;
+int main() {
+	int n;
+	scanf("%d",&n);
+	fru(i,n) scanf("%d",&A[i]);
+	fru(i,n) wyst[A[i]].pb(i+1);
+	Z.reserve(1<<23);
+	fru(i,n+1) if(wyst[i].size()>SQ) {
+		vi c(n+1,0);
+		tr(it,wyst[i]) ++c[*it];
+		for(int j=1;j<=n;++j) c[j]+=c[j-1];
+		H.pb(c);
+	}
+	else tr(i1,wyst[i]) tr(i2,wyst[i]) Z.pb(zap(pss(*i1,*i2),-1));
+	int q;
+	scanf("%d",&q);
+	fru(i,q){
+		int l1,r1,l2,r2;
+		scanf("%d%d%d%d",&l1,&r1,&l2,&r2);
+		fru(j,H.size()) ANS[i]+=1LL*ile(j,l1,r1)*ile(j,l2,r2);
+		Z.pb(zap(pss(r1,r2),i));
+		Z.pb(zap(pss(l1-1,l2-1),i));
+		Z.pb(zap(pss(r1,l2-1),i+MAXN));
+		Z.pb(zap(pss(l1-1,r2),i+MAXN));
+	}
+	sort(ALL(Z));
+	tr(it,Z){
+		if(it->y==-1) add((it->x).y);
+		else{
+			int s=licz((it->x).y);
+			ANS[it->y%MAXN]+=it->y>=MAXN?-s:s;
+		}
+	}
+	fru(i,q) printf("%lld\n",ANS[i]);
+	return 0;
+}

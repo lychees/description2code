@@ -1,0 +1,211 @@
+#include <bits/stdc++.h>
+using namespace std;
+long long arr[100010];
+#define INF 99999999999999
+struct data
+{
+	long long left;
+	long long right;
+	long long mxcnt;
+	long long rcnt;
+	long long lcnt;
+	long long val;
+}tree[400040];
+
+void build(int node,int l,int r)
+{
+	if(l==r)
+	{
+		tree[node].val = arr[l];
+		tree[node].left = arr[l];
+		tree[node].right = arr[l];
+		tree[node].mxcnt = 1;
+		tree[node].rcnt = 1;
+		tree[node].lcnt = 1;
+
+		return;
+	}
+	int mid = l+r;
+	mid/=2;
+	build(2*node+1,l,mid);
+	build(2*node+2,mid+1,r);
+	if(tree[2*node+1].right<tree[2*node+2].left)
+	{
+		tree[node].mxcnt = max(tree[2*node+1].mxcnt,tree[2*node+2].mxcnt);
+		tree[node].mxcnt = max(tree[node].mxcnt,max(tree[2*node+1].rcnt+tree[2*node+2].lcnt,max(tree[2*node+1].lcnt,tree[2*node+2].rcnt)));
+		if(tree[2*node+2].rcnt==r-mid)
+		{
+			tree[node].rcnt = tree[2*node+2].rcnt + tree[2*node+1].rcnt;
+		}
+		else
+		{
+			tree[node].rcnt = tree[2*node+2].rcnt;
+		}
+		if(tree[2*node+1].lcnt==mid-l+1)
+		{
+			tree[node].lcnt = tree[2*node+1].lcnt + tree[2*node+2].lcnt;
+		}
+		else
+		{
+			tree[node].lcnt = tree[2*node+1].lcnt;
+		}
+
+	}
+	else
+	{
+		tree[node].mxcnt = max(tree[2*node+1].mxcnt,tree[2*node+2].mxcnt);
+		tree[node].rcnt = tree[2*node+2].rcnt;
+		tree[node].lcnt = tree[2*node+1].lcnt;
+	}
+	tree[node].right = tree[2*node+2].right;
+	tree[node].left = tree[2*node+1].left;
+	//cout<<"Node : "<<node<<" : Range : "<<l<<" : "<<r<<" : Value : "<<tree[node].mxcnt<<endl;
+}
+
+void update(int node,int l,int r,int index,int y)
+{
+    //cout<<"Node : "<<node<<" : Range : "<<l<<" : "<<r<<" : Value : "<<tree[node].mxcnt<<endl;
+	if(l==r)
+	{
+		tree[node].val = tree[node].val + y;
+		tree[node].right = tree[node].val;
+		tree[node].left = tree[node].val;
+		return;
+	}
+	int mid = l+r;
+	mid/=2;
+	if(index<=mid)
+    {
+        update(2*node+1,l,mid,index,y);
+    }
+    else
+    {
+        update(2*node+2,mid+1,r,index,y);
+    }
+
+	if(tree[2*node+1].right<tree[2*node+2].left)
+	{
+		tree[node].mxcnt = max(tree[2*node+1].mxcnt,tree[2*node+2].mxcnt);
+		tree[node].mxcnt = max(tree[node].mxcnt,max(tree[2*node+1].rcnt+tree[2*node+2].lcnt,max(tree[2*node+1].lcnt,tree[2*node+2].rcnt)));
+
+		if(tree[2*node+2].rcnt==r-mid)
+		{
+			tree[node].rcnt = tree[2*node+2].rcnt + tree[2*node+1].rcnt;
+		}
+		else
+		{
+			tree[node].rcnt = tree[2*node+2].rcnt;
+		}
+		if(tree[2*node+1].lcnt==mid-l+1)
+		{
+			tree[node].lcnt = tree[2*node+1].lcnt + tree[2*node+2].lcnt;
+		}
+		else
+		{
+			tree[node].lcnt = tree[2*node+1].lcnt;
+		}
+
+	}
+	else
+	{
+		tree[node].mxcnt = max(tree[2*node+1].mxcnt,tree[2*node+2].mxcnt);
+		tree[node].rcnt = tree[2*node+2].rcnt;
+		tree[node].lcnt = tree[2*node+1].lcnt;
+	}
+	tree[node].right = tree[2*node+2].right;
+	tree[node].left = tree[2*node+1].left;
+	//cout<<"Node : "<<node<<" : Range : "<<l<<" : "<<r<<" : Value : "<<tree[node].right<<endl;
+}
+
+data query(int node,int l,int r,int qs,int qe)
+{
+    //cout<<"Node : "<<node<<" : Range : "<<l<<" : "<<r<<" : Value : "<<tree[node].right<<endl;
+	if(qs<=l && qe>=r)
+	{
+		return tree[node];
+	}
+	if(qs>r || qe<l)
+    {
+        data dummy;
+        dummy.mxcnt = 0;
+        dummy.lcnt = 0;
+        dummy.rcnt = 0;
+        dummy.left = (-1)*INF;
+        dummy.right = INF;
+        return dummy;
+    }
+	int mid = l+r;
+	mid/=2;
+	data d1 = query(2*node+1,l,mid,qs,qe);
+	data d2 = query(2*node+2,mid+1,r,qs,qe);
+	data ans;
+	if(d1.right<d2.left)
+	{
+		ans.mxcnt = max(d1.mxcnt,d2.mxcnt);
+		ans.mxcnt = max(ans.mxcnt,max(d1.rcnt+d2.lcnt,max(d1.lcnt,d2.rcnt)));
+		if(d2.rcnt==r-mid)
+		{
+			ans.rcnt = d2.rcnt + d1.rcnt;
+		}
+		else
+		{
+			ans.rcnt = d2.rcnt;
+		}
+		if(d1.lcnt==mid-l+1)
+		{
+			ans.lcnt = d1.lcnt + d2.lcnt;
+		}
+		else
+		{
+			ans.lcnt = d1.lcnt;
+		}
+
+	}
+	else
+	{
+		ans.mxcnt = max(d1.mxcnt,d2.mxcnt);
+		ans.rcnt = d2.rcnt;
+		ans.lcnt = d1.lcnt;
+	}
+	ans.right = d2.right;
+	ans.left = d1.left;
+	return ans;
+}
+int main()
+{
+	int n,q,t;
+	scanf("%d",&t);
+	while(t--)
+    {
+        for(int i=0;i<=100000;i++)
+        {
+            tree[i].val = tree[i].right = tree[i].left = tree[i].rcnt = tree[i].lcnt = tree[i].mxcnt = 0;
+        }
+	scanf("%d %d",&n,&q);
+	for(int i=0;i<n;i++)
+	{
+		scanf("%d",&arr[i]);
+	}
+	build(0,0,n-1);
+	for(int i=0;i<q;i++)
+	{
+		int ty;
+		scanf("%d",&ty);
+		if(ty==0)
+		{
+			int l,r;
+			scanf("%d %d",&l,&r);
+			l--;
+			r--;
+			printf("%lld\n",query(0,0,n-1,l,r).mxcnt);
+		}
+		else
+		{
+			int ind,val;
+			scanf("%d %d",&ind,&val);
+			ind--;
+			update(0,0,n-1,ind,val);
+		}
+	}
+    }
+}

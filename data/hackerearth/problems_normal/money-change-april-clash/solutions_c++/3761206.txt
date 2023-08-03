@@ -1,0 +1,70 @@
+#include <stdio.h>
+#define mod 1000000009
+
+#define N 5100
+#define M 1100
+int F[N][M], Ans[110][M], w[M], s[M];
+int A[100];
+
+
+void doit(int x, int y, int bit, int id) {
+    int z = (1 << (y + 1)) - 1;
+    z = z ^ ((1 << x) - 1);
+    int k = z;
+    while(k) {
+        int xx = bit | k;
+        Ans[id + 1][xx] += 1ll * Ans[id][bit] * F[s[id + 1]][k] % mod;
+        if(Ans[id + 1][xx] >= mod) Ans[id + 1][xx] -= mod;
+        k = z & (k - 1);
+    }
+    return ;
+}
+
+int main() {
+    //freopen("1.in", "r", stdin);
+    int T, n, K;
+    for(scanf("%d", &T); T --;) {
+        scanf("%d%d", &n, &K);
+        for(int i = 0; i < K; i ++) scanf("%d", &w[i]);
+        for(int i = 1; i <= n; i ++) scanf("%d", &s[i]);
+        F[0][0] = 1;
+        for(int i = 1; i <= 5000; i ++) for(int j = 1; j < (1<<K); j ++) F[i][j] = 0;
+        for(int i = 1; i <= 5000; i ++) for(int j = 1; j < (1<<K); j ++) {
+            for(int k = 0; k < K; k ++) if(((j >> k) & 1)) {
+                if(i < w[k]) break;
+                int x = F[i - w[k]][j - (1<<k)] + F[i - w[k]][j];
+                if(x >= mod) x -= mod;
+                F[i][j] += x;
+                if(F[i][j] >= mod) F[i][j] -= mod;
+                break;
+            }
+        }
+        int m = 1 << K;
+        for(int i = 1; i <= n; i ++) for(int j = 1; j < m; j ++) Ans[i][j] = 0;
+        for(int j = 1; j < m; j ++) Ans[1][j] = F[s[1]][j];
+        for(int i = 1; i < n; i ++) {
+            for(int j = 1; j < m; j ++) if(Ans[i][j]) {
+                int cnt = 0;
+                for(int k = 0; k < K; k ++) if((j >> k) & 1) A[cnt ++] = k;
+                doit(0, A[0], j, i);
+                for(int k = 0; k < cnt - 1; k ++) {
+                    int x = A[k];
+                    int y = A[k + 1];
+                    doit(x, y, j, i);
+                }
+                doit(A[cnt - 1], K - 1, j, i);
+                for(int k = 0; k < cnt; k ++) {
+                    Ans[i + 1][j] -= 1ll * Ans[i][j] * F[s[i + 1]][(1 <<A[k])] % mod;
+                    if(Ans[i + 1][j] < 0) Ans[i + 1][j] += mod;
+                }
+            }
+        }
+        int ans = 0;
+        for(int i = 1; i < m; i ++) {
+            ans += Ans[n][i];
+            if(ans >= mod) ans -= mod;
+        }
+        printf("%d\n", ans);
+    }
+    return 0;
+}

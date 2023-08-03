@@ -1,0 +1,146 @@
+//HackerEarth--Distinct Digits
+#include<bits/stdc++.h>
+#define MAX 100005
+
+using namespace std;
+
+typedef long long int lli;
+
+struct node{
+	
+	int distinct[11];
+	
+	void makeLeaf(lli val){
+		
+		set<lli> s;
+		if(val==0) s.insert(0);
+				
+		while(val){
+			
+			s.insert(val%10);
+			val/=10;
+			
+		}
+		
+	    memset(distinct,0,sizeof distinct);
+	    distinct[s.size()]=1;		
+		
+	}
+	
+	void merge(const struct node &lhs,const struct node &rhs){
+		
+		for(int i=0;i<11;i++)
+		  distinct[i]=rhs.distinct[i]+lhs.distinct[i];
+		
+	}	
+	
+};
+
+void update(int ,int ,int ,int ,int ,lli ,int );
+int query(int ,int ,int ,int ,int ,int );
+void makeTree(int,int,int);
+lli Array[MAX];
+struct node Tree[4*MAX];
+
+int main(void){
+	
+	int i,totalElements,queries,idx,type;
+	lli n;
+	
+	scanf("%d",&totalElements);
+	
+   for(i=0;i<totalElements;i++)
+     scanf("%lld",&Array[i]);
+	
+	makeTree(0,0,totalElements-1);
+	
+	scanf("%d",&queries);
+	
+	while(queries--){
+		
+		scanf("%d",&type);
+		
+		if(type<=1){
+			
+			scanf("%d%lld",&idx,&n);
+		    idx--;			
+			update(0,0,totalElements-1,idx,idx,n,type);
+		
+		}
+	
+		else if(type==2){
+			
+			int start,end,c;
+			scanf("%d%d%d",&start,&end,&c);
+			
+			start--;end--;
+			
+			printf("%d\n",query(0,0,totalElements-1,start,end,c));
+			
+		}
+		
+	}
+	
+	return 0;
+	
+}
+
+void makeTree(int idx,int assStart,int assEnd){
+	
+	if(assStart==assEnd){
+		
+		Tree[idx].makeLeaf(Array[assStart]);
+		return;
+		
+	}
+	
+	int mid=(assStart+assEnd)/2;
+	
+	makeTree(2*idx+1,assStart,mid);
+	makeTree(2*idx+2,mid+1,assEnd);
+	
+	Tree[idx].merge(Tree[2*idx+1],Tree[2*idx+2]);
+	
+}
+
+void update(int idx,int assStart,int assEnd,int s,int e,lli val,int type){
+	
+	if(assStart>assEnd||assStart>e||s>assEnd)//out of range
+	  return;
+	
+	if(assStart>=s&&assEnd<=e){
+		
+		if(type==0) Array[assStart]+=val;
+		else Array[assStart]=val;		
+		
+		Tree[idx].makeLeaf(Array[assStart]);
+		return;
+		
+	}
+	
+	int mid=(assStart+assEnd)/2;
+	
+	update(2*idx+1,assStart,mid,s,e,val,type);
+	update(2*idx+2,mid+1,assEnd,s,e,val,type);
+	
+	Tree[idx].merge(Tree[2*idx+1],Tree[2*idx+2]);
+	
+}
+
+int query(int idx,int assStart,int assEnd,int s,int e,int val){
+	
+	if(assStart>assEnd||assStart>e||s>assEnd) //out of range
+	  return 0;
+	
+	if(assStart>=s&&assEnd<=e)
+	  return Tree[idx].distinct[val];
+	  
+	int mid=(assStart+assEnd)/2;
+	int v1,v2;
+	
+	v1=query(2*idx+1,assStart,mid,s,e,val);
+	v2=query(2*idx+2,mid+1,assEnd,s,e,val);
+	
+	return v1+v2;
+	
+}

@@ -1,0 +1,106 @@
+#pragma comment(linker, "/STACK:1024000000,1024000000") 
+#include <iostream>
+#include <stdio.h>
+#include <algorithm>
+#include <string.h>
+#include <vector>
+#include <map>
+#include <queue>
+#include <set>
+#include <assert.h>
+#include <cmath>
+#define x first 
+#define y second 
+#define pb push_back 
+#define mp make_pair 
+#define vi vector<int> 
+#define pii pair<int,int> 
+#define ll long long 
+#define ull unsigned long long 
+#define inf 1000000007 
+#define mod 1000000007 
+#define all(x) x.begin(),x.end() 
+#define N 100010
+#define pi acos(-1.)
+#define DBG(x) cerr<<#x<<"="<<x<<"\n"; 
+#define FOREACH(it,x) for(__typeof(x.begin()) it=x.begin();it!=x.end();it++) 
+using namespace std;
+
+vi g[N];
+int d[N],p[N][18],sz[N];
+ll dp[N];
+ll cal(int n){return 1LL*n*(n-1)/2;}
+void dfs(int u,int fa){
+    d[u]=d[fa]+1;sz[u]=1;
+    for(int i=0;i<g[u].size();i++){
+        int j=g[u][i];
+        if(j==fa)continue;
+        p[j][0]=u;dfs(j,u);
+        sz[u]+=sz[j];
+    }
+}
+void go(int u,int fa){
+    for(int i=0;i<g[u].size();i++){
+        int j=g[u][i];
+        if(j==fa)continue;
+        dp[j]=dp[u]+cal(sz[u]-sz[j]);
+        go(j,u);
+    }
+}
+int lca(int a,int b){
+    if(d[a]<d[b])swap(a,b);
+    int h=d[a]-d[b];
+    for(int i=17;i>=0;i--)if(h>>i&1)a=p[a][i];
+        if(a==b)return a;
+    for(int i=17;i>=0;i--)if(p[a][i]!=p[b][i])a=p[a][i],b=p[b][i];
+        return p[a][0];
+}
+int find(int a,int h){
+    for(int i=17;i>=0;i--)if(h>>i&1)a=p[a][i];
+    return a;
+}
+
+int main()
+{
+    //clock_t start=clock();
+    int T,i,j,k,ca=0,n,m;
+    scanf("%d",&n);
+    for(i=1;i<n;i++){
+        scanf("%d%d",&j,&k);
+        g[j].pb(k);g[k].pb(j);
+    }
+    dfs(1,0);
+    p[1][0]=1;
+    for(i=1;i<18;i++)
+        for(j=1;j<=n;j++)p[j][i]=p[p[j][i-1]][i-1];
+    go(1,0);
+    scanf("%d",&m);
+    ll ans=cal(n);
+    //DBG(ans)
+    while(m--){
+        scanf("%d%d",&i,&j);
+        if(i==j){
+            printf("0\n");continue;
+        }
+        int fa=lca(i,j);
+        //cerr<<i<<" "<<j<<" "<<fa<<"\n";
+        ll res=ans;
+        if(i==fa||j==fa){
+            if(i!=fa)swap(i,j);
+            int a=find(j,d[j]-d[i]-1);
+            assert(a>0&&a<=n);
+            res-=cal(sz[j])+(dp[j]-dp[a])+cal(n-sz[a]);
+        }
+        else{
+            int h=d[i]-d[fa]-1;
+            int a=find(i,h);
+            assert(a>0&&a<=n);
+            h=d[j]-d[fa]-1;
+            int b=find(j,h);
+            assert(b>0&&b<=n);
+            res-=cal(sz[i])+cal(sz[j])+(dp[i]-dp[a])+(dp[j]-dp[b])+cal(n-sz[a]-sz[b]);
+        }
+        printf("%lld\n",res);
+    }
+    return 0;
+}

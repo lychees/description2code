@@ -1,0 +1,156 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+struct node
+{
+	int index;
+	long value;
+	node(int index_= 0, long value_=0):index(index_),value(value_) {};
+	node(node &n)
+	{
+		index = n.index;
+		value = n.value;
+	};
+};
+void rebalance(node *A, int N, int index)
+{
+	int left = 2*index;
+	int right = 2*index + 1;
+	if (right <= N)
+	{
+		long tmp = max(A[left].value,A[right].value);
+		if (A[index].value < tmp)
+		{
+			if ((A[left].value >= A[right].value))
+			{
+				node t = A[left];
+				A[left] = A[index];
+				A[index] = t;
+				rebalance(A,N,left);
+			}else
+			{
+				node t = A[right];
+				A[right] = A[index];
+				A[index] = t;
+				rebalance(A,N,right);
+			}
+		}
+	}else if (left == N)
+	{
+		long tmp = A[left].value;
+		if (A[index].value < tmp)
+		{
+			node t = A[left];
+			A[left] = A[index];
+			A[index] = t;
+		}
+	}
+};
+int main()
+{
+	int N;
+	cin >> N;
+	string str;
+	node *A = new node[N+1];
+	for(int i = 1; i <= N; ++i)
+	{
+		A[i].value = 0;
+		A[i].index = i;
+	}
+	for(int i = 1; i <= N; ++i)
+	{
+		cin >> str;
+		int size = str.size();
+		for(int j = 0; j < size; ++j)
+		{
+			A[i].value *= 26;
+			A[i].value += (str[j]-'a');
+		}
+	}
+	for(int i = N/2; i >= 1; --i)
+	{
+		rebalance(A,N,i);
+	};
+	for(int i = N; i >= 2; --i)
+	{
+		rebalance(A,i,1);
+		node t = A[i];
+		A[i] = A[1];
+		A[1] = t;
+	};
+	vector<long> B;
+	B.push_back(A[1].value);
+	
+	vector<vector<int>> C;
+	vector<int> t;
+	t.push_back(A[1].index);
+	C.push_back(t);
+	for(int i = 2; i <= N; ++i)
+	{
+		if (A[i].value == A[i-1].value)
+		{
+			C.back().push_back(A[i].index);
+		}else
+		{
+			B.push_back(A[i].value);
+			vector<int> t;
+			t.push_back(A[i].index);
+			C.push_back(t);
+		}
+	}
+	
+	int Q;
+	cin >> Q;
+	for(int i = 0; i < Q; ++i)
+	{
+		int L,R;
+		string qstr;
+		cin >> L >> R >> qstr;
+		int qsize = qstr.size();
+		long qvalue = 0;
+		for(int j = 0; j < qsize; ++j)
+		{
+			qvalue *= 26;
+			qvalue += (qstr[j]-'a');
+		}
+		
+		int start = 0;
+		int end = B.size()-1;
+		bool found = false;
+		int mid;
+		while(start < end)
+		{
+			mid = (start + end)/2;
+			if (qvalue < B[mid])
+			{
+				end = mid;
+			}else if (qvalue > B[mid])
+			{
+				start = mid + 1;
+			}else
+			{
+				found = true;
+				break;
+			}
+		}
+		if (B[start] == qvalue)
+		{
+			mid = start;
+			found = true;
+		}
+		int count = 0;
+		if (found)
+		{
+			for(int k = 0; k < C[mid].size();++k)
+			{
+				if ((C[mid][k] >= L) && (C[mid][k] <= R))
+				{
+					++count;
+				}
+			}
+		}
+		cout << count << endl;
+	}
+    //cout << "Hello World!" << endl;
+    return 0;
+}

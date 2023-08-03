@@ -1,0 +1,101 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#define pb push_back
+#define mp make_pair
+#define REP(i, n) for (int i = 0; i < (int)(n); ++i)
+typedef long long LL;
+typedef pair<int, int> PII;
+
+int n, q;
+int w[300][300], y[300];
+int a[3][300][300], b[3][300][300];
+bool can[300][7190] = {};
+const int MOD = 7190;
+
+int binPow(int x, int p, int mod) {
+    int res = 1;
+    while (p) {
+        if (p & 1) res = res * x % mod;
+        p >>= 1;
+        if (p) x = x * x % mod;
+    }
+    return res;
+}
+
+void gauss(int (&a)[300][300], int (&b)[300][300], int MOD) {
+    REP(i, n) REP(j, n) a[i][j] = w[i][j] % MOD;
+    REP(i, n) REP(j, n) b[i][j] = i == j;
+    int line = 0;
+    REP(i, n) {
+        int pos = -1;
+        for (int j = line; j < n; ++j) if (a[j][i] != 0) {
+            pos = j;
+            break;
+        }
+        if (pos == -1) continue;
+        if (pos != line) REP(j, n) {
+            swap(a[line][j], a[pos][j]);
+            swap(b[line][j], b[pos][j]);
+        }
+        int mul = binPow(a[line][i], MOD - 2, MOD);
+        REP(j, n) a[line][j] = a[line][j] * mul % MOD;
+        REP(j, n) b[line][j] = b[line][j] * mul % MOD;
+        for (int j = line + 1; j < n; ++j) if (a[j][i]) {
+            mul = MOD - a[j][i];
+            for (int k = i; k < n; ++k) {
+                a[j][k] = (a[j][k] + mul * a[line][k]) % MOD;
+            }
+            REP(k, n) {
+                b[j][k] = (b[j][k] + mul * b[line][k]) % MOD;
+            }
+        }
+        ++line;
+    }
+    ++a[0][0];
+    --a[0][0];
+}
+
+const int mods[3] = {2, 5, 719};
+int from[3];
+
+int main() {
+    //freopen("input.txt", "r", stdin);
+    scanf("%d%d", &n, &q);
+    REP(i, n) REP(j, n) scanf("%d", w[i] + j);
+    REP(i, 3) gauss(a[i], b[i], mods[i]);
+    REP(i, 3) {
+        from[i] = n;
+        while (from[i] > 0) {
+            --from[i];
+            bool ok = true;
+            REP(j, n) if (a[i][from[i]][j] != 0) {
+                ok = false;
+                break;
+            }
+            if (!ok) {
+                ++from[i];
+                break;
+            }
+        }
+    }
+    REP(times, q) {
+        REP(i, n) scanf("%d", y + i);
+        bool ok = true;
+        REP(z, 3) {
+            for (int j = from[z]; j < n; ++j) {
+                int sum = 0;
+                REP(k, n) sum = (sum + y[k] * b[z][j][k]) % mods[z];
+                if (sum != 0) {
+                    ok = false;
+                    break;
+                }
+            }
+            if (!ok) break;
+        }
+        if (ok) printf("Yes\n");
+        else printf("No\n");
+    }
+    return 0;
+}

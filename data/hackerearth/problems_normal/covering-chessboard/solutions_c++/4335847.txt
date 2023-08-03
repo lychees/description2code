@@ -1,0 +1,122 @@
+#include "bits/stdc++.h"
+using namespace std;
+#define rep(i,n) for(int (i)=0;(i)<(int)(n);++(i))
+#define rer(i,l,u) for(int (i)=(int)(l);(i)<=(int)(u);++(i))
+#define reu(i,l,u) for(int (i)=(int)(l);(i)<(int)(u);++(i))
+static const int INF = 0x3f3f3f3f; static const long long INFL = 0x3f3f3f3f3f3f3f3fLL;
+typedef vector<int> vi; typedef pair<int, int> pii; typedef vector<pair<int, int> > vpii; typedef long long ll;
+template<typename T, typename U> static void amin(T &x, U y) { if(y < x) x = y; }
+template<typename T, typename U> static void amax(T &x, U y) { if(x < y) x = y; }
+
+struct MaximumFlow {
+	typedef int Index;
+	typedef int Flow;
+	static const Flow InfCapacity = INF;
+	struct Edge {
+		Index to;
+		Flow capacity;
+		Index rev;
+	};
+	vector<vector<Edge> > g;
+	void init(Index n) { g.assign(n, vector<Edge>()); }
+	void add(Index i, Index j, Flow capacity) {
+		Edge e, f; e.to = j, f.to = i; e.capacity = capacity, f.capacity = 0;
+		g[i].push_back(e); g[j].push_back(f);
+		g[i].back().rev = (Index)g[j].size() - 1; g[j].back().rev = (Index)g[i].size() - 1;
+	}
+	void addB(Index i, Index j, Flow capacity) {
+		Edge e, f; e.to = j, f.to = i; e.capacity = capacity, f.capacity = capacity;
+		g[i].push_back(e); g[j].push_back(f);
+		g[i].back().rev = (Index)g[j].size() - 1; g[j].back().rev = (Index)g[i].size() - 1;
+	}
+	//gを破壊する
+	Flow maximumFlow(int s, int t) {
+		int n = g.size();
+		vector<Index> level(n);
+		Flow total = 0; bool update;
+		do {
+			update = false;
+			fill(level.begin(), level.end(), -1); level[s] = 0;
+			queue<Index> q; q.push(s);
+			for(Index d = n; !q.empty() && level[q.front()] < d; ) {
+				int u = q.front(); q.pop();
+				if(u == t) d = level[u];
+				for(auto e : g[u]) if(e.capacity > 0 && level[e.to] == -1)
+					q.push(e.to), level[e.to] = level[u] + 1;
+			}
+			vector<Index> iter(n);
+			for(Index i = 0; i < n; i ++) iter[i] = (int)g[i].size() - 1;
+			while(1) {
+				Flow f = augment(level, iter, s, t, InfCapacity);
+				if(f == 0) break;
+				total += f; update = true;
+			}
+		} while(update);
+		return total;
+	}
+	Flow augment(vector<Index> &level, vector<Index> &iter, Index u, Index t, Flow f) {
+		if(u == t || f == 0) return f;
+		Index lv = level[u];
+		if(lv == -1) return 0;
+		level[u] = -1;
+		for(; iter[u] >= 0; -- iter[u]) {
+			Edge &e = g[u][iter[u]];
+			if(level[e.to] <= lv) continue;
+			Flow l = augment(level, iter, e.to, t, min(f, e.capacity));
+			if(l == 0) continue;
+			e.capacity -= l; g[e.to][e.rev].capacity += l;
+			level[u] = lv;
+			return l;
+		}
+		return 0;
+	}
+};
+
+
+int main() {
+	int H; int W;
+	while(~scanf("%d%d", &H, &W)) {
+		vector<vector<int> > v(H, vector<int>(W));
+		for(int i = 0; i < H; ++ i) for(int j = 0; j < W; ++ j)
+			scanf("%d", &v[i][j]);
+		vector<vector<int> > b(H, vector<int>(W));
+		for(int i = 0; i < H; ++ i) for(int j = 0; j < W; ++ j)
+			scanf("%d", &b[i][j]);
+		vector<vector<int> > c(H, vector<int>(W));
+		for(int i = 0; i < H; ++ i) for(int j = 0; j < W; ++ j)
+			scanf("%d", &c[i][j]);
+		int src = H * W * 2, dst = src + 1;
+		MaximumFlow mf; mf.init(dst + 1);
+		int base = 0;
+		rep(i, H) rep(j, W) {
+			int x = i * W + j, y = H * W + x;
+			static const int dy[4] = { 0, 1, 0, -1 }, dx[4] = { 1, 0, -1, 0 };
+			for(int d = 0; d < 4; ++ d) {
+				int yy = i + dy[d], xx = j + dx[d];
+				if(yy < 0 || yy >= H || xx < 0 || xx >= W) continue;
+				int z = yy * W + xx;
+				if((i + j) % 2 == 0)
+					mf.add(y, z, INF);
+				else
+					mf.add(z, y, INF);
+			}
+			if((i + j) % 2 == 0) {
+				//directが反転
+				mf.add(y, x, INF);
+				mf.add(x, y, v[i][j]);
+				mf.add(y, dst, b[i][j]);
+				mf.add(src, x, c[i][j]);
+			} else {
+				//indirectが反転
+				mf.add(x, y, INF);
+				mf.add(y, x, v[i][j]);
+				mf.add(src, y, b[i][j]);
+				mf.add(x, dst, c[i][j]);
+			}
+			base += v[i][j];
+		}
+		int ans = base - mf.maximumFlow(src, dst);
+		printf("%d\n", ans);
+	}
+	return 0;
+}

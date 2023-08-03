@@ -1,0 +1,184 @@
+#include <cstdio>
+// bitch please
+#include <iostream>
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <list>
+#include <cmath>
+#include <iomanip>
+#define dibs reserve
+#define OVER9000 1234567890123456780LL
+#define ALL_THE(CAKE,LIE) for(auto LIE =CAKE.begin(); LIE != CAKE.end(); LIE++)
+#define tisic 47
+#define soclose 1e-10
+#define quadratic complexity win
+// so much quadratic complexity
+#define patkan 9
+#define ff first
+#define ss second
+#define abs(x) ((x < 0)?-(x):x)
+#define uint unsigned int
+using namespace std;
+// mylittledoge
+ 
+int K =50, F =100000+tisic;
+long long mod =1000000007;
+ 
+struct fin {
+	vector<long long> T;
+	fin(int N) {T.resize(N,0);}
+ 
+	int lastone(int x) {return x&(x^(x-1));}
+ 
+	void put(int pos, long long val) {
+		for(int i =pos+1; i < (int)T.size(); i +=lastone(i)) T[i] +=val;}
+ 
+	long long get(int pos) {
+		long long ret =0;
+		for(int i =pos+1; i > 0; i -=lastone(i)) ret +=T[i];
+		return ret;}
+	};
+ 
+long long Pow(long long a, long long e) {
+	if(e <= 0) return 1;
+	long long x =Pow(a,e/2);
+	x =(x*x)%mod;
+	if(e%2 != 0) x =(x*a)%mod;
+	return x;}
+ 
+int main() {
+	cin.tie(0);
+	cin.sync_with_stdio(0);
+	int N;
+	cin >> N;
+	vector<int> A(N);
+	for(int i =0; i < N; i++) cin >> A[i];
+	long long ans =0;
+ 
+	vector< vector<int> > occF(F);
+	set<int> occFs;
+	vector<int> typF(F,-1);
+	vector<int> f1,f2;
+	for(int i =0; i < N; i++) occF[A[i]].push_back(i);
+	for(int i =0; i < F; i++) if(!occF[i].empty()) occFs.insert(occF[i].size());
+	vector<int> occFv(occFs.begin(),occFs.end());
+	for(int i =0; i < F; i++) if(occF[i].size() > 0) {
+		if((int)occF[i].size() > K) {
+			typF[i] =1;
+			f1.push_back(i);}
+		else {
+			typF[i] =2;
+			f2.push_back(i);}}
+ 
+	// 2 vzacne farby
+	fin X(F); // pre kazdu vzacnu farbu jej pocet za aktualnym bodom
+	vector<long long> R(F,0);
+	for(int i =0; i < F; i++) R[i] =occF[i].size();
+	for(int i =0; i < N; i++) if(typF[A[i]] == 2) {
+		// odober 1 od vsetkych tejto farby
+		R[A[i]]--;
+		ALL_THE(occF[A[i]],it) {
+			if(*it == i) break;
+			X.put(*it,-1);}
+		X.put(i,R[A[i]]);
+		// pre kazdy arc prirataj sucet pod nim
+		long long x =X.get(i-1);
+		ALL_THE(occF[A[i]],it) {
+			if(*it >= i) break;
+			ans +=x-X.get(*it);}
+		ans %=mod;}
+ 
+	// 2 bezne farby
+	for(int i =0; i < F; i++) R[i] =occF[i].size();
+	vector< vector<long long> > L(f1.size(),vector<long long>(f1.size(),0));
+	vector<long long> L0(F,0);
+	for(int i =0; i < N; i++) if(typF[A[i]] == 1) {
+		R[A[i]]--;
+		ALL_THE(f1,it) if(*it == A[i]) {
+			ALL_THE(f1,jt) ans +=R[*jt]*L[it-f1.begin()][jt-f1.begin()];
+			ans %=mod;
+			for(uint j =0; j < f1.size(); j++) L[j][it-f1.begin()] +=L0[f1[j]];
+			break;}
+		L0[A[i]]++;}
+ 
+	// mix
+	int co =0;
+	vector< vector<long long> > S(F);
+	for(int k =0; k < 2; k++) {
+		ALL_THE(f1,it) {
+			if(k == 0) S[*it].resize(N+patkan,0);
+			else for(int i =0; i <= N; i++) S[*it][i] =0;
+			ALL_THE(occF[*it],jt) S[*it][(k == 0)?(*jt+1):(N-1-(*jt)+1)]++;
+			for(int i =0; i < N; i++) S[*it][i+1] +=S[*it][i];}
+		vector<long long> Y(N,0); // R[A[i]] pred poslednym updatom
+		vector<long long> Z(N+patkan,0);
+		vector<long long> L(F,0),R(F,0);
+		for(int i =0; i < F; i++) R[i] =occF[i].size();
+		set<int> ch;
+		vector<int> chV;
+		int u =-1;
+		for(int i =0; i < N; i++) {
+			// ak je typu 1 tak si zapametaj ze sa zmenila
+			if(typF[A[i]] == 1) {
+				ch.insert(A[i]);
+				chV.push_back(i);
+				// bolo vela zmenenych? prerataj Y,Z
+				R[A[i]]--;
+				continue;}
+			if((int)i-u > 600 || ch.size() > K) {
+				for(int j =i-1; j >= 0; j--) if(typF[A[j]] == 1) Y[j] =R[A[j]];
+				for(int j =i-1; j >= 0; j--) Z[j] =Y[j]+Z[j+1];
+				ch.clear();
+				chV.clear();
+				u =i;}
+			// ak je typu 2 tak vyskusaj vsetky predosle
+			long long p =0;
+			vector<int> ct;
+			for(uint j =0; j < occF[A[i]].size(); j++) {
+				int a =(k == 0)?occF[A[i]][j]:(N-1-occF[A[i]][occF[A[i]].size()-1-j]);
+				if(a == i) break;
+				if(a >= u) {
+					ct.push_back(a);
+					continue;}
+				p++;
+				ans +=Z[a+1];
+				co +=ch.size();
+				ALL_THE(ch,it) ans -=(S[*it][u]-S[*it][a+1])*(S[*it][i+1]-S[*it][u+1]);
+				ans %=mod;}
+			ALL_THE(ch,it) ans +=p*R[*it]*(S[*it][i]-S[*it][u+1]);
+			if(u >= 0 && typF[A[u]] == 1) ans +=p*R[A[u]];
+			ans %=mod;
+			int a =chV.size()-1;
+			long long s =0;
+			for(int j =ct.size()-1; j >= 0; j--) {
+				while(a >= 0 && chV[a] > ct[j]) {s +=R[A[chV[a]]]; a--;}
+				ans =(ans+s)%mod;}
+//			fix typ 2: [a,b], posledny update bol pri c
+//			odpoved: Z[a] - pocet arcov typu 1 s koncom v [c+1,b] + pocet typu 1 s koncom v [c,b-1]
+			}
+		reverse(A.begin(),A.end());}
+ 
+	for(int i =0; i < F; i++) {
+		long long x =occF[i].size();
+		long long p =(x*(x-1))%mod;
+		if(p < 0) p +=mod;
+		p =(p*(x-2))%mod;
+		if(p < 0) p +=mod;
+		p =(p*(x-3))%mod;
+		if(p < 0) p +=mod;
+		p =(p*Pow(24,mod-2))%mod;
+		if(p < 0) p +=mod;
+		ans -=p;}
+	ans %=mod;
+	if(ans < 0) ans +=mod;
+	cout << ans << "\n";
+	return 0;}
+ 
+// look at my O(N^2) code
+// my O(N^2) code is amazing
+ 

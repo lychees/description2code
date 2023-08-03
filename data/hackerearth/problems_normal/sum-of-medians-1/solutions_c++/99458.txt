@@ -1,0 +1,276 @@
+#include <iostream>
+#include <cassert>
+using namespace std;
+
+const int MAX_SIZE = 100000; //the maximum amount of elements our heap should have. This may be changed to any number so long as memory permits, depending on how the heap will be used.
+
+//Max Heap Impl
+class Heap
+{
+public:
+   Heap();
+   int left(int) const;
+   int right(int) const;
+   int parent(int) const;
+   //void insert(const int&);
+   //int remove_max();
+   bool IsEmpty() const;
+   bool IsFull() const;
+   int count() const;
+   int value(int) const;
+protected:
+   int array[MAX_SIZE];
+   int elements; //how many elements are in the heap
+   //void ReHeap(int);
+};
+
+//default constructor - initialize private variables
+Heap::Heap()
+{
+   elements = 0;
+}
+
+int Heap::count() const
+{
+   return elements;
+}
+
+int Heap::value(int pos) const
+{
+   //assert(pos < elements); //is pos a valid index in the heap
+   if(pos < elements)
+        return array[pos];
+}
+
+bool Heap::IsEmpty() const
+{
+   return (elements == 0);
+}
+
+bool Heap::IsFull() const
+{
+   return (elements == MAX_SIZE);
+}
+
+int Heap::left(int root) const
+{
+    if(elements > 1 && (root < elements/2)){
+   //assert(root < elements/2);
+   return (root * 2) + 1;
+    }
+    else return -1;
+}
+
+int Heap::right(int root) const
+{
+    if(elements > 1 && root < (elements-1)/2) {
+   //assert(root < (elements-1)/2); //does a right child exist?
+   return (root * 2) + 2;
+    }
+    else return -1;
+}
+
+int Heap::parent(int child) const
+{
+   //assert(child != 0); //main root has no parent
+   if(child != 0)
+    return (child - 1) / 2;
+}
+
+class MaxHeap : public Heap
+{
+public:
+    MaxHeap();
+    void insert(const int&);
+    int remove_max();
+private:
+    void ReHeap(int);
+};
+
+MaxHeap::MaxHeap()
+{
+    elements = 0;
+}
+
+void MaxHeap::insert(const int &item)
+{
+   assert(!IsFull());
+   array[elements] = item; //elements represents the array position after the last, since indexing starts with 0
+   int new_pos = elements; //index of the new item
+   elements++; //update the amount of elements in heap
+   while((new_pos != 0) && (array[new_pos] > array[parent(new_pos)])) //loop while the item has not become the main root, and while its value is less than its parent
+   {
+      swap(array[new_pos],array[parent(new_pos)]); //swap the value of item with its lesser parent
+      new_pos = parent(new_pos); //update the item's positions
+   }
+}
+
+int MaxHeap::remove_max()
+{
+   assert(!IsEmpty());
+   elements--; //update the amount of elements in heap
+   if(elements != 0) //if we didn't delete the root
+   {
+      swap(array[0],array[elements]);
+      ReHeap(0);
+   }
+   return array[elements];
+}
+
+void MaxHeap::ReHeap(int root)
+{
+   int child = left(root);
+   if(child < elements && child != -1) {
+   if((array[child] < array[child+1]) && (child < (elements-1))) //if a right child exists, and it's bigger than the left child, it will be used
+      child++;
+   if(array[root] >= array[child]) //if root is bigger than its largest child, stop.
+      return;
+   swap(array[root],array[child]); //swap root and its biggest child
+   ReHeap(child); //continue the process on root's new children
+   }
+}
+
+class MinHeap : public Heap
+{
+public:
+    MinHeap();
+    void insert(const int&);
+    int remove_min();
+private:
+    void ReHeap(int);
+};
+
+MinHeap::MinHeap()
+{
+    elements = 0;
+}
+
+void MinHeap::insert(const int &item)
+{
+   assert(!IsFull());
+   array[elements] = item; //elements represents the array position after the last, since indexing starts with 0
+   int new_pos = elements; //index of the new item
+   elements++; //update the amount of elements in heap
+   while((new_pos != 0) && (array[new_pos] < array[parent(new_pos)])) //loop while the item has not become the main root, and while its value is greater than its parent
+   {
+      swap(array[new_pos],array[parent(new_pos)]); //swap the value of item with its lesser parent
+      new_pos = parent(new_pos); //update the item's positions
+   }
+}
+
+int MinHeap::remove_min()
+{
+   assert(!IsEmpty());
+   elements--; //update the amount of elements in heap
+   if(elements != 0) //if we didn't delete the root
+   {
+      swap(array[0],array[elements]);
+      ReHeap(0);
+   }
+   return array[elements];
+}
+
+void MinHeap::ReHeap(int root)
+{
+   int child = left(root);
+   if(child < elements && child != -1) {
+   if((array[child+1] < array[child]) && (child < (elements-1))) //if a right child exists, and it's smaller than the left child, it will be used
+      child++;
+   if(array[root] <= array[child]) //if root is smaller than its largest child, stop.
+      return;
+   swap(array[root],array[child]); //swap root and its biggest child
+   ReHeap(child); //continue the process on root's new children
+   }
+}
+
+class DynamicArray
+{
+private:
+    MinHeap minHeap;
+    MaxHeap maxHeap;
+
+public:
+    void insert(int num)
+    {
+        if(((minHeap.count() + maxHeap.count()) & 1) == 0)
+        {
+            if(maxHeap.count() > 0 && num < maxHeap.value(0))
+            {
+                maxHeap.insert(num);
+
+                num = maxHeap.value(0);
+                maxHeap.remove_max();
+            }
+
+            minHeap.insert(num);
+
+        }
+        else
+        {
+            if(minHeap.count() > 0 && minHeap.value(0) < num)
+            {
+                minHeap.insert(num);
+
+                num = minHeap.value(0);
+                minHeap.remove_min();
+            }
+
+            maxHeap.insert(num);
+
+        }
+    }
+
+    int getMedian()
+    {
+        int count = minHeap.count() + maxHeap.count();
+        if(count == 0)
+            cout<<"No numbers are available";
+
+        int median = 0;
+        if(count & 1 == 1)
+            median = minHeap.value(0);
+        else
+            //median = (minHeap.value(0) + maxHeap.value(0)) / 2;
+            median = maxHeap.value(0);
+
+//        cout<<"Maxheap :";
+//        for(int i=0;i<maxHeap.count();i++)
+//            cout<<maxHeap.value(i)<<" ";
+//
+//        cout<<"Minheap :";
+//        for(int i=0;i<minHeap.count();i++)
+//            cout<<minHeap.value(i)<<" ";
+//
+//        cout<<endl;
+        return median;
+    }
+};
+
+int main()
+{
+    //MinHeap minheap;
+    //minheap.insert(15);
+    //minheap.insert(10);
+    //minheap.remove_min();
+    //cout<<minheap.value(0)<<endl;
+
+    //MaxHeap maxheap;
+    //maxheap.insert(5);
+    //maxheap.insert(10);
+    //maxheap.remove_max();
+    //cout<<maxheap.value(0)<<endl;
+    //cout << "Hello world!" << endl;
+    DynamicArray da;
+    int N, num;
+    cin>>N;
+    //int arr[] = {10,5,1,2,15,0,3,5,6,9};
+    long long int sum = 0;
+    for(int i=0;i<N;i++) {
+    	cin>>num;
+        da.insert(num);
+        sum += da.getMedian();
+        //cout<<da.getMedian()<<endl;
+    }
+    cout<<sum%100000<<endl;
+    return 0;
+}

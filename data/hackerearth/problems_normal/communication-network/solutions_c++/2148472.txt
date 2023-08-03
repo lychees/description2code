@@ -1,0 +1,101 @@
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <cassert>
+#include <iostream>
+#include <vector>
+#include <set>
+#include <map>
+#include <queue>
+#include <stack>
+#include <string>
+#include <algorithm>
+using namespace std;
+#define SZ(x) ( (int) (x).size() )
+#define CNT(s, x) ( (s).find(x) != (s).end() )
+#define ALL(x) (x).begin(), (x).end()
+#define dbg(x) cerr << #x << " = " << x << endl;
+#define mp make_pair
+#define pb push_back
+#define fi first
+#define se second
+typedef long long ll;
+typedef pair<int, int> pii;
+const int MAXN = 1e5+5;
+const int MAXK = 100;
+inline ll sq(ll x) { return x * x; } 
+
+int N, K;
+int A[MAXN];
+ll F[MAXK];
+
+struct line
+{
+    int m;
+    ll b;
+};
+
+struct chull
+{
+    line L[MAXN];
+    int p, s;
+
+    double intersection(line& l1, line& l2)
+    {
+        return 1.0 * (l1.b - l2.b) / (l2.m - l1.m);
+    }
+
+    bool irrelevant(line& l1, line& l2, line& l3)
+    {
+        return intersection(l1, l3) <= intersection(l1, l2);
+    }
+
+    void push(line l)
+    {
+        while(s >= 2 && irrelevant(L[s - 2], L[s - 1], l))
+            s--;
+        L[s++] = l;
+    }
+
+    void push(int m, ll b)
+    {
+        push({m, b});
+    }
+    
+    ll query(int x)
+    {
+        p = min(p, s - 1);
+        while(p + 1 < s && intersection(L[p], L[p + 1]) <= x)
+            p ++;
+        return 1LL * L[p].m * x + L[p].b;
+    }
+
+} C[MAXK];
+
+
+ll fast_solve()
+{
+    C[1].push(-2LL * 1, sq(K) * A[1] + 1*1);
+
+    int K2 = min(MAXK - 1, K);
+
+    for(int i = 2; i <= N; i++)
+    {
+        for(int j = min(K2, i); j >= 2; j--)
+        {
+            F[j] = C[j - 1].query(i) + sq(i) + 1LL * sq(K) * A[i];
+            C[j].push(-2 * i, F[j] + sq(i));
+        }
+    }
+
+    return *min_element(F + 2, F + K2 + 1);
+}
+
+int main()
+{
+    scanf("%d%d", &N, &K);
+    for(int i = 1; i <= N; i++)
+        scanf("%d", &A[i]);
+    printf("%lld\n", fast_solve());
+    return 0;
+}

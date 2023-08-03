@@ -1,0 +1,129 @@
+// 2015-07-29
+#include <bits/stdc++.h>
+#include <unordered_map>
+#include <array>
+#include <forward_list>
+#include <unordered_set>
+using namespace std;
+
+
+#ifndef LOCAL
+//#define LOCAL
+#endif
+
+#define SET_BIT(mask, index) (mask |= (1 << index))
+#define TEST_BIT(mask, index) (mask & (1 << index))
+#define CLEAR_BIT(mask, index) (mask &= ~(1 << index))
+#define TOGGLE_BIT(mask, index) (mask ^= (1 << index))
+const int INF = 1000000000;
+const double EPS = 1.0e-11;
+const int NO_VALUE = -1;
+using ii = pair < int, int > ;
+using ll = long long;
+using iii = pair<int, ii>;
+
+const int MOD = 1000000007;
+
+struct DisjointSet {
+	vector<int> parent;
+	vector<int> rank;
+	vector<int> setSize;
+    vector<int> sizesFreq;
+    set<int> differentSizes;
+	
+	
+	DisjointSet(int n) {
+		parent.assign(n + 2, 0);
+		rank.assign(n + 2, 0);
+		setSize.assign(n + 2, 1);
+        
+        sizesFreq.assign(n + 2, 0);
+        sizesFreq[1] = n;
+        differentSizes.insert(1);
+        
+		for (int i = 1; i <= n; i++) {
+			parent[i] = i;
+		}
+	}
+
+	int findRoot(int u) {
+        while (parent[u] != u) {
+            parent[u] = parent[parent[u]];
+            u = parent[u];
+        }
+        return u;
+	}
+
+	bool isSameSet(int u, int v) {
+		return findRoot(u) == findRoot(v);
+	}
+
+	void mergeSets(int u, int v) {
+		if (!isSameSet(u, v)) {
+			int largerSetRoot = findRoot(u);
+			int smallerSetRoot = findRoot(v);
+            
+            if (rank[largerSetRoot] < rank[smallerSetRoot]) {
+                swap(largerSetRoot, smallerSetRoot);
+            }
+            
+            sizesFreq[setSize[largerSetRoot]]--;
+            sizesFreq[setSize[smallerSetRoot]]--;
+            if (sizesFreq[setSize[largerSetRoot]] == 0) {
+                differentSizes.erase(setSize[largerSetRoot]);
+            }
+            if (sizesFreq[setSize[smallerSetRoot]] == 0) {
+                differentSizes.erase(setSize[smallerSetRoot]);
+            }
+            
+            setSize[largerSetRoot] += setSize[smallerSetRoot];
+            differentSizes.insert(setSize[largerSetRoot]);
+            sizesFreq[setSize[largerSetRoot]]++;
+            parent[smallerSetRoot] = largerSetRoot;
+            
+            if (rank[largerSetRoot] == rank[smallerSetRoot]) {
+                rank[largerSetRoot]++;
+            }
+		}
+	}
+
+	int getSetSize(int u) {
+		return setSize[findRoot(u)];
+	}
+};
+
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+#ifdef LOCAL
+    freopen("input.txt", "r", stdin);
+    //freopen("output.txt", "w+", stdout);
+#endif
+
+    int tc;
+    cin >> tc;
+    while (tc--) {
+        int n, m;
+        cin >> n >> m;
+        vector<iii> edges;
+        while (m--) {
+            int a, b, c;
+            cin >> a >> b >> c;
+            edges.push_back(iii(c, ii(a, b)));
+        }
+        sort(begin(edges), end(edges));
+        
+        DisjointSet ds(n);
+        ll qc = 1;
+        for (auto e : edges) {
+            if (!ds.isSameSet(e.second.first, e.second.second)) {
+                ds.mergeSets(e.second.first, e.second.second);
+                qc = (qc * (e.first % MOD) * 1LL) % MOD;
+            }
+        }
+        cout << qc << "\n";
+    }
+
+    return 0;
+}

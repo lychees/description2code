@@ -1,0 +1,105 @@
+#include<bits/stdc++.h>
+const int N = 101000;
+using namespace std;
+const int L = 17;
+int n, m;
+int clr[N];
+vector<int> entries[N];
+int dep[N];
+int tin[N], tout[N];
+int up[N][L];
+int timer;
+vector<int> g[N];
+void dfs(int v, int p)
+{
+	tin[v] = timer;
+	++timer;
+	up[v][0] = p;
+	for (int i = 1; i <L; i++)
+	{
+		up[v][i] = up[up[v][i - 1]][i - 1];
+	}
+	for (int i = 0; i < g[v].size(); i++)
+	{
+		int to = g[v][i];
+		if (to == p)
+			continue;
+		dep[to] = dep[v] + 1;
+		dfs(to, v);
+	}
+	tout[v] = timer;
+	++timer;
+}
+bool upper(int a, int b)
+{
+	return (tin[a] <= tin[b] && tout[a] >= tout[b]);
+}
+int lca(int a, int b)
+{
+	if (upper(a, b))
+		return a;
+	if (upper(b, a))
+		return b;
+	for (int i = L - 1; i >= 0; --i)
+	{
+		if (!upper(up[a][i], b))
+			a = up[a][i];
+	}
+	return up[a][0];
+}
+int get_dist(int a, int b)
+{
+	int q = lca(a, b);
+	return dep[a] + dep[b] - 2 * dep[q];
+}
+int main(){
+	ios_base::sync_with_stdio(0);
+	//cin.tie(0);
+	cin >> n >> m;
+	for (int i = 1; i <= n; i++)
+	{
+		cin >> clr[i];
+		entries[clr[i]].push_back(i);
+	}
+	for (int i = 1; i < n; i++)
+	{
+		int a, b;
+		cin >> a >> b;
+		g[a].push_back(b);
+		g[b].push_back(a);
+	}
+	dfs(1, 1);
+	for (int i = 1; i <= m; i++)
+	{
+		int start = entries[i][0];
+		int bst = 0;
+		int bp = -1;
+		for (int j = 0; j < entries[i].size(); j++)
+		{
+			int v2 = entries[i][j];
+			int dist = get_dist(start, v2);
+			if (dist>=bst)
+			{
+				bst = dist;
+				bp = v2;
+			}
+		}
+		start = bp;
+		bst = 0;
+		for (int j = 0; j < entries[i].size(); j++)
+		{
+			int v2 = entries[i][j];
+			int dist = get_dist(start, v2);
+			if (dist>=bst)
+			{
+				bst = dist;
+				bp = v2;
+			}
+		}
+		if (i > 1)
+			cout << " ";
+		cout << bst;
+	}
+	cout << endl;
+	return 0;
+}

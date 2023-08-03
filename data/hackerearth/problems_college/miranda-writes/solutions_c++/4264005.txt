@@ -1,0 +1,53 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+#define ff first
+#define ss second
+#define pb push_back
+#define mp make_pair
+#define all(x) x.begin(),x.end()
+#define sz(x) ((int)x.size())
+
+const int MOD = 1e9+7;
+
+typedef long long ll;
+typedef pair<int,int> pii;
+int k,n;
+const int MAXN =405;
+int dp[MAXN][MAXN];
+int mem[17][1<<16];
+int POWER[MAXN];
+int need[MAXN];
+int go(int previ, int mask) {
+	if(mask==POWER[k]-1) {
+		if(k==0) return dp[1][n];
+		return dp[need[previ]][n];
+	}
+	if(mem[previ][mask]!=-1) return mem[previ][mask];
+	int ret=1e9;
+	for(int i=0;i<k;i++) {
+		if(POWER[i]&mask) continue;
+		ret=min(ret,go(i,POWER[i]|mask)+(mask==0?dp[1][need[i]]:dp[need[previ]][need[i]]));
+	}
+	return mem[previ][mask]=ret;
+}
+int main() {
+	// freopen("TASK.in","r",stdin);freopen("TASK.out","w",stdout);
+	POWER[0]=1;
+	for(int i=1;i<20;i++) POWER[i]=POWER[i-1]<<1;
+	int m;
+	cin>>n>>m>>k;
+	for(int i=1;i<=n;i++) for(int j=1;j<=n;j++) dp[i][j]=1000000000;
+	for(int i=1;i<=n;i++) dp[i][i]=0;
+	for(int i=1;i<=m;i++) {
+		int x,y,c;
+		cin>>x>>y>>c;
+		dp[x][y]=dp[y][x]=min(dp[x][y],c);
+	}
+	for(int i=0;i<k;i++) cin>>need[i];
+	for(int p=1;p<=n;p++) for(int i=1;i<=n;i++) for(int j=1;j<=n;j++) dp[i][j]=min(dp[i][j],dp[i][p]+dp[p][j]);
+	memset(mem,-1,sizeof(mem));
+	cout<<go(0,0)<<endl;
+	return 0;
+}

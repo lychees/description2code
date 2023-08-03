@@ -1,0 +1,109 @@
+#include <map>
+#include <set>
+#include <cmath>
+#include <ctime>
+#include <deque>
+#include <queue>
+#include <stack>
+#include <bitset>
+#include <cctype>
+#include <cstdio>
+#include <vector>
+#include <cassert>
+#include <complex>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
+
+const int N = (int)1e5 + 6;
+int a[N], bit[N], upleft[N], upright[N], downleft[N], downright[N];
+
+struct fenwick
+{
+	fenwick() { memset(bit, 0, sizeof(bit)); }
+	int pref(int x)
+	{
+		int ret = 0;
+		for (int i = x; i >= 0; i = (i & (i+1)) - 1) ret += bit[i];
+		return ret;
+	}
+	inline void upd(int x) { for (int i = x; i < N; i |= i+1) bit[i]++; }
+	inline int que(int x, int y) { return pref(y) - pref(x-1); }
+} bb;
+
+void go(int n)
+{
+	memset(bit, 0, sizeof(bit));
+	for (int i = 0; i < n; i++)
+	{
+		upleft[i] = bb.que(a[i]+1, N-1);
+		bb.upd(a[i]);
+	}
+
+	memset(bit, 0, sizeof(bit));
+	for (int i = 0; i < n; i++)
+	{
+		downleft[i] = bb.pref(a[i]-1);
+		bb.upd(a[i]);
+	}
+
+	memset(bit, 0, sizeof(bit));
+	for (int i = n-1; i >= 0; i--)
+	{
+		upright[i] = bb.que(a[i]+1, N-1);
+		bb.upd(a[i]);
+	}
+
+	memset(bit, 0, sizeof(bit));
+	for (int i = n-1; i >= 0; i--)
+	{
+		downright[i] = bb.pref(a[i]-1);
+		bb.upd(a[i]);
+	}
+}
+
+vector <int> V;
+
+int main()
+{
+	int t; scanf("%d", &t);
+	while (t--)
+	{
+		int n; scanf("%d", &n);
+		for (int i = 0; i < n; i++) scanf("%d", a+i);
+
+		V.resize(0);
+		for (int i = 0; i < n; i++) V.push_back(a[i]);
+		sort(V.begin(), V.end());
+		V.resize(unique(V.begin(), V.end()) - V.begin());
+		for (int i = 0; i < n; i++)
+			a[i] = lower_bound(V.begin(), V.end(), a[i]) - V.begin();
+		go(n);
+
+		long long fst = 0, snd = 0;
+		for (int i = 0; i < n; i++)
+		{
+			fst += downleft[i] * 1ll * downright[i];
+			snd += upleft[i] * 1ll * upright[i];
+		}
+		long long get = min(fst, snd);
+
+		int start; scanf("%d", &start);
+		if (fst <= snd)
+		{
+			puts(start == 1 ? "Ananya" : "Sarika");
+			printf("%lld\n", 2 * get);
+		}
+		else
+		{
+			puts(start == 0 ? "Ananya" : "Sarika");
+			printf("%lld\n", 2 * get + 1);
+		}
+	}
+	return 0;
+}

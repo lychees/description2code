@@ -1,0 +1,178 @@
+#include <cstdio>
+#include <algorithm>
+#include <cstring>
+#include <cassert>
+#include <vector>
+using namespace std;
+
+typedef int calc(int n);
+
+typedef long long llong;
+
+const int MOD = 1000 * 1000 * 1000 + 7;
+const llong MOD2 = 1ll * MOD * MOD;
+
+int inv9 = 111111112;
+int inv3 = 333333336;
+
+struct matrix {
+    vector<vector<int> > A;
+    matrix(int n, int v = 0) : A(n, vector<int>(n)) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                A[i][j] = (i == j) * v;
+            }
+        }
+    }
+    vector<int>& operator [](int i) {
+        return A[i];
+    }
+    friend matrix operator *(matrix a, matrix b) {
+        assert(a.A.size() == b.A.size());
+        matrix c(a.A.size()); 
+        for (int i = 0; i < a.A.size(); i++) {
+            for (int j = 0; j < a.A.size(); j++) {
+                llong res = 0;
+                for (int k = 0; k < a.A.size(); k++) {
+                    res += a[i][k] * 1ll * b[k][j];
+                    if (res >= MOD2)
+                        res -= MOD2;
+                }
+                c[i][j] = res % MOD;
+            }
+        }
+        return c;
+    }
+    matrix() {}
+};
+
+matrix powmod(matrix a, int k) {
+    matrix res(a.A.size(), 1);
+    while (k) {
+        if (k & 1)
+            res = res * a;
+        k >>= 1;
+        a = a * a;
+    }
+    return res;
+}
+
+int powmod(int a, int k) {
+    int res = 1;
+    while (k) {
+        if (k & 1)
+            res = 1ll * res * a % MOD;
+        k >>= 1;
+        a = 1ll * a * a % MOD;
+    }
+    return res;
+}
+
+int len(int n) {
+    char buf[10];
+    sprintf(buf, "%d", n);
+    int l = strlen(buf);
+    return l;
+}
+
+int rev(int n) {
+    char buf[10];
+    sprintf(buf, "%d", n);
+    int l = strlen(buf);
+    reverse(buf, buf + l);
+    return atoi(buf);
+}
+
+int cnt_between(int r) {
+    return (r < 0) ? 0 : (((powmod(10, r + 1) + MOD - 1) * 1ll * inv9) % MOD);
+}
+
+int brute(int n, int k) {
+    int ans = 0;
+    for (int x = k; len(x) <= n; x += k)
+        ans += rev(x) % k == 0;
+    return ans;
+}
+
+int calc1(int n) {
+    return (powmod(10, n) + MOD - 1) % MOD;
+}
+
+int calc2(int n) {
+    return (brute(min(1, n), 2) + 4ll * 5ll * cnt_between(n - 2)) % MOD;
+}
+
+int calc3(int n) {
+    return ((powmod(10, n) + MOD - 1) * 1ll * inv3) % MOD;
+}
+
+int calc4(int n) {
+    return (brute(min(3, n), 4) + 20ll * 25ll * cnt_between(n - 4)) % MOD;
+}
+
+int calc5(int n) {
+    return (brute(min(1, n), 5) + 2 * cnt_between(n - 2)) % MOD;
+}
+
+int calc6(int n) {
+    matrix m(6);
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 10; j++) {
+            m[i][(i + 3 - j % 3) % 3]++;
+        }
+        m[i + 3][i] = m[i + 3][i + 3] = 1;
+    }
+
+    int b = brute(min(1, n), 6);
+    if (n >= 2) {
+        matrix res = powmod(m, n - 1);
+        return (b + 
+                2ll * (1ll * (res[3][0]) + 1ll * (res[3][1]) + 2ll * (res[3][2])) +
+                2ll * (1ll * (res[4][0]) + 1ll * (res[4][1]) + 2ll * (res[4][2])) + 
+                1ll * (1ll * (res[5][0]) + 1ll * (res[5][1]) + 2ll * (res[5][2]))) % MOD;
+    } else {
+        return b;
+    }
+}
+
+int calc7(int n) {
+    matrix m(49);
+    for (int i = 0; i < 7; i++) {
+        for (int j = 0; j < 7; j++) {
+            for (int c = 0; c < 10; c++) {
+                m[((i * 3 + c) % 7) * 7 + ((j * 5 + c) % 7)][i * 7 + j]++;
+            }
+        }
+    }  
+    matrix res = powmod(m, n);
+    
+    return (res[0][0] + MOD - 1) % MOD; 
+}
+
+int calc8(int n) {
+    return (brute(min(5, n), 8) + 100ll * 125ll * cnt_between(n - 6)) % MOD;
+}
+
+int calc9(int n) {
+    return ((powmod(10, n) + MOD - 1) * 1ll * inv9) % MOD;
+}
+
+int calc10(int n) {
+    return 0;
+}
+
+void solve() {
+    int n, k;
+    scanf("%d %d", &n, &k);
+    calc* funcs[] = {NULL, calc1, calc2, calc3, calc4, calc5, calc6, calc7, calc8, calc9, calc10};
+    int res = (funcs[k](n) + 1) % MOD;
+    printf("%d\n", res);
+}
+
+int main() {
+    int T;
+    scanf("%d", &T);
+    for (int i = 0; i < T; i++) {
+        solve();
+    }
+}

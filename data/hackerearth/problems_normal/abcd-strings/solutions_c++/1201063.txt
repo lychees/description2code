@@ -1,0 +1,135 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+typedef vector<int> vi;
+typedef pair<int, int> pi;
+const int MOD = 1000000007;
+
+#define repu(i, a, b) for (int i = (a); i < (b); ++i)
+#define foru(i, a, b) for (int i = (a); i <= (b); ++i)
+#define repd(i, a, b) for (int i = (a); i > (b); --i)
+#define ford(i, a, b) for (int i = (a); i >= (b); --i)
+#define sz(a) ((int) a.size())
+#define pb(a) push_back(a)
+#define mp(a, b) make_pair(a, b)
+#define mem(a) memset(a, 0, sizeof(a))
+#define all(a) a.begin(), a.end()
+
+template<class T> inline T tmin(T a, T b) {return (a < b) ? a : b;}
+template<class T> inline T tmax(T a, T b) {return (a > b) ? a : b;}
+template<class T> inline void add_max(T &a, T b) {if (b > a) a = b;}
+template<class T> inline void add_min(T &a, T b) {if (b < a) a = b;}
+template<class T> inline T tabs(T a) {return (a > 0) ? a : -a;}
+template<class T> T gcd(T a, T b) {if (b == 0) return a; return gcd(b, a % b);}
+
+ll n;
+int k, dp[16];
+string s[55];
+vector<int> goods;
+typedef vector<vector<ll> > M;
+
+M mul(M x, M y) {
+	int tt = goods.size();
+	M ans(tt, vector<ll>(tt, 0));
+	repu(i, 0, tt) {
+		repu(j, 0, tt) {
+			repu(k, 0, tt) ans[i][j] = (ans[i][j] + x[i][k] * y[k][j]) % MOD;
+		}
+	}
+	return ans;
+}
+
+M pown(M x, ll n) {
+	if (n == 1) return x;
+	M ans = pown(x, n >> 1);
+	ans = mul(ans, ans);
+	if (n & 1) ans = mul(ans, x);
+	return ans;
+}
+
+inline int str2int(string x) {
+	int ans = 0;
+	foru(i, 0, 1) ans = 4 * ans + (x[i] - 'a');
+	return ans;
+}
+
+inline string int2str(int x) {
+	string ans = "";
+	foru(i, 0, 1) {
+		ans += ('a' + x % 4);
+		x >>= 2;
+	}
+	reverse(all(ans));
+	return ans;
+}
+
+bool isgood(string x) {
+	repu(i, 0, k) {
+		if (x.find(s[i]) != string::npos) return false;
+	}
+	return true;
+}
+
+inline int calc(int x, int y) {
+	string sx = int2str(x);
+	string sy = int2str(y);
+	if (sx[0] != sy[1]) return 0;
+	string tot = sy + sx[1];
+	if (isgood(tot)) return 1;
+	return 0;
+}
+
+int solve(int x) {
+	int tot = 1;
+	int ans = 0;
+	repu(i, 0, x) tot *= 4;
+	repu(i, 0, tot) {
+		string t = "";
+		int num = i;
+		repu(j, 0, x) {
+			t += ('a' + num % 4);
+			num >>= 2;
+		}
+		reverse(all(t));
+		if (isgood(t)) ans++;
+	}
+	return ans;
+}
+
+int main(int argc, char *argv[]) {
+    ios_base::sync_with_stdio(false);
+    int ntest;
+    cin >> ntest;
+    while (ntest--) {
+    	goods.clear();
+    	cin >> n >> k;
+    	repu(i, 0, k) cin >> s[i];
+    	if (n <= 3) {
+    		printf("%d\n", solve(n));
+    		continue;
+    	}
+    	int lim = 0;
+    	repu(i, 0, 16) {
+    		dp[i] = isgood(int2str(i)) ? 1 : 0;
+    		if (dp[i]) goods.pb(i);
+    	}
+    	M base(64, vector<ll>(goods.size(), 0));
+    	repu(i, 0, goods.size()) {
+    	    repu(j, 0, goods.size()) {
+    	    	base[i][j] = calc(goods[i], goods[j]);
+    	    }
+    	}
+    	M ans = pown(base, n - 2);
+    	ll res = 0;
+    	repu(i, 0, goods.size()) {
+    		repu(j, 0, goods.size()) {
+    			res += ans[i][j];
+    			if (res >= MOD) res -= MOD;
+    		}
+    	}
+    	printf("%lld\n", res);
+    }
+
+    return 0;
+}

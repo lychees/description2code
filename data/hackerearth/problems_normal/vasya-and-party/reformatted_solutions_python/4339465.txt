@@ -1,0 +1,62 @@
+def getRoots(aNeigh):
+    def findRoot(aNode, aRoot):
+        while aNode != aRoot[aNode][0]:
+            aNode = aRoot[aNode][0]
+        return (aNode, aRoot[aNode][1])
+    myRoot = {}
+    for myNode in aNeigh.keys():
+        myRoot[myNode] = (myNode, 0)
+    for myI in aNeigh:
+        for myJ in aNeigh[myI]:
+            (myRoot_myI, myDepthMyI) = findRoot(myI, myRoot)
+            (myRoot_myJ, myDepthMyJ) = findRoot(myJ, myRoot)
+            if myRoot_myI != myRoot_myJ:
+                myMin = myRoot_myI
+                myMax = myRoot_myJ
+                if myDepthMyI > myDepthMyJ:
+                    myMin = myRoot_myJ
+                    myMax = myRoot_myI
+                myRoot[myMax] = (
+                    myMax, max(
+                        myRoot[myMin][1]+1, myRoot[myMax][1]))
+                myRoot[myMin] = (myRoot[myMax][0], -1)
+    myToRet = {}
+    for myI in aNeigh:
+        if myRoot[myI][0] == myI:
+            myToRet[myI] = []
+    for myI in aNeigh:
+        myToRet[findRoot(myI, myRoot)[0]].append(myI)
+    return myToRet
+
+
+nodes, total_edges = tuple(map(int, raw_input().split()))
+
+array_knowledge = list(map(int, raw_input().split()))
+# print nodes
+
+keys = range(1, nodes+1)
+# print keys
+mydict = dict(zip(keys, [[]]*len(keys)))
+
+# print mydict
+
+temp = total_edges
+while temp > 0:
+    u, v = map(int, raw_input().split())
+    mydict[u] = mydict[u]+[v]
+    mydict[v] = mydict[v]+[u]
+    temp = temp-1
+# print mydict
+# print getRoots(mydict)
+# print len(getRoots(mydict).keys())
+num_ways_list = []
+for i in getRoots(mydict).itervalues():
+    temp_list = []
+    for j in i:
+        temp_list.append(array_knowledge[j-1])
+#    print temp_list
+    max_knowledge = max(temp_list)
+    num_ways_list.append(temp_list.count(max_knowledge))
+# print num_ways_list
+result = reduce(lambda x, y: x*y, num_ways_list)
+print result % (1000000007)

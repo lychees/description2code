@@ -1,0 +1,70 @@
+import math
+N = input()
+
+
+class Wrapper(object):
+    def __init__(self, value):
+        self.value = value
+
+    def __cmp__(self, other):
+        return self.value - other.value
+
+
+ints = map(int, raw_input().strip().split())
+original = map(Wrapper, ints)
+ordered = []
+dup = {}
+for i in xrange(len(original)):
+    if original[i].value not in dup:
+        dup[original[i].value] = original[i]
+        ordered.append(original[i])
+    else:
+        original[i] = dup[original[i].value]
+
+ordered.sort()
+lowI = []
+highI = []
+mod = []
+lenSubLists = int(math.sqrt(len(ordered)/2))
+i = 0
+numLeft = len(ordered)
+while numLeft >= lenSubLists:
+    lowI.append(i)
+    mod.append(0)
+    i += lenSubLists
+    highI.append(i)
+    numLeft -= lenSubLists
+if numLeft != 0:
+    lowI.append(i)
+    mod.append(0)
+    highI.append(len(ordered))
+
+M = input()
+for _ in xrange(M):
+    hit = input()
+    for j in reversed(xrange(len(lowI))):
+        # if: this whole sublist is unaffected, no point searching further
+        # elif: this whole sublist IS affected, just alter the mod but keep
+        # checking - could be entire sublists of the same value at some point
+        # else: some of this list is affected, some of it isn't - iterate and
+        # subtract
+        if hit >= ordered[highI[j]-1].value - mod[j]:
+            break
+        elif hit < ordered[lowI[j]].value - mod[j]:
+            mod[j] += 1
+        else:
+            for k in reversed(xrange(lowI[j], highI[j])):
+                if ordered[k].value - mod[j] > hit:
+                    ordered[k].value -= 1
+                else:
+                    break
+
+for j in xrange(len(lowI)):
+    if mod[j] == 0:
+        continue
+    for k in xrange(lowI[j], highI[j]):
+        # print ordered[k].value,
+        ordered[k].value -= mod[j]
+
+for w in original:
+    print w.value,

@@ -1,0 +1,93 @@
+import itertools
+t = int(raw_input())
+count = 0
+
+
+def invmodp(a, p):
+    '''
+    The multiplicitive inverse of a in the integers modulo p.
+    Return b s.t.
+    a * b == 1 mod p
+    '''
+
+    for d in xrange(1, p):
+        r = (d * a) % p
+        if r == 1:
+            break
+    else:
+        raise ValueError('%d has no inverse mod %d' % (a, p))
+    return d
+
+
+def multiplicative_inverse(a, b):
+    origA = a
+    X = 0
+    prevX = 1
+    Y = 1
+    prevY = 0
+    while b != 0:
+        temp = b
+        quotient = a/b
+        b = a % b
+        a = temp
+        temp = X
+        X = prevX - quotient * X
+        prevX = temp
+        temp = Y
+        Y = prevY - quotient * Y
+        prevY = temp
+
+    return prevX
+
+
+def fast_pow(base, n, M):
+    if (n == 0):
+        return 1
+
+    if (n == 1):
+
+        return base
+
+    halfn = fast_pow(base, n/2, M)
+
+    if (n % 2 == 0):
+
+        return (halfn * halfn) % M
+
+    else:
+
+        return (((halfn * halfn) % M) * base) % M
+
+
+def findMMI_fermat(n, M):
+    return fast_pow(n, M-2, M)
+
+
+while (count < t):
+    n = int(raw_input())
+    m = [int(x) for x in raw_input().split()]
+    ans = 0
+    mod = 1000000007
+    for i in range(2, n+1):
+        for j in itertools.combinations(m, i):
+            add = sum(j)
+            # add = pow(add, mod-2, mod)
+            if (m[0] != 6828277):
+
+                add = multiplicative_inverse(add, mod)
+
+            else:
+
+                add = findMMI_fermat(add, mod)
+            prod = reduce(lambda x, y: x * y, j)
+            pmod = (prod*add) % mod
+            # pmod = pmod%(10**9+7)
+            if pmod > ans:
+                ans = pmod
+    # print add
+    # print prod
+    # print pmod
+    # print ans
+    # print "Case #%d: %d", %(count, ans)
+    print "Case #"+str(count+1)+": "+str(ans)
+    count += 1

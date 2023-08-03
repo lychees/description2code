@@ -1,0 +1,96 @@
+(n, q) = [int(v) for v in raw_input().strip().split(' ')]
+data = list(raw_input().strip())
+
+tree = []
+
+for i in range(0, n+1):
+    tree.append(dict())
+
+
+def updateInternal(idx, newChar, oldChar, isAdd):
+    while idx <= n:
+        # print newChar,oldChar,isAdd,idx
+        dc = tree[idx]
+        if newChar not in dc:
+            dc[newChar] = 1
+        else:
+            dc[newChar] += 1
+        if not isAdd and oldChar in dc:
+            dc[oldChar] -= 1
+        idx += idx & (-idx)
+
+
+def updateOrAdd(pos, newChar, isAdd):
+    oldChar = data[pos-1]
+    updateInternal(pos, newChar, oldChar, isAdd)
+    if not isAdd:
+        data[pos-1] = newChar
+
+
+def merge(d1, d2):
+    res = dict()
+    for k, v in d1.iteritems():
+        if k not in res:
+            res[k] = 0
+        res[k] += v
+    for k, v in d2.iteritems():
+        if k not in res:
+            res[k] = 0
+        res[k] += v
+    return res
+
+
+def diff(d1, d2):
+    res = dict()
+    for k, v in d1.iteritems():
+        if k not in res:
+            res[k] = 0
+        res[k] += v
+    for k, v in d2.iteritems():
+        if k not in res:
+            res[k] = 0
+        res[k] = abs(res[k]-v)
+    return res
+
+
+def queryInternal(idx):
+    res = dict()
+    while idx > 0:
+        dc = tree[idx]
+        res = merge(res, dc)
+        idx -= idx & (-idx)
+    return res
+
+
+def query(l, r):
+    (d1, d2) = (queryInternal(l-1), queryInternal(r))
+    return diff(d1, d2)
+
+
+def isPalindrome(dc):
+    hasOdd = False
+    for k, v in dc.iteritems():
+        if v % 2 == 1:
+            if not hasOdd:
+                hasOdd = True
+            else:
+                return False
+    return True
+
+
+for i in range(0, len(data)):
+    updateOrAdd(i+1, data[i], True)
+# print tree
+
+for i in range(0, q):
+    (tp, v1, v2) = raw_input().strip().split(' ')
+    if tp == '1':
+        pos = int(v1)
+        updateOrAdd(pos, v2, False)
+    else:
+        (l, r) = (int(v1), int(v2))
+        res = query(l, r)
+        if isPalindrome(res):
+            print 'yes'
+        else:
+            print 'no'

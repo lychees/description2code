@@ -1,0 +1,64 @@
+from collections import deque
+mod = 10**9 + 7
+edgeHistory = set()
+N, G, ANS, V, K = 0, [], [], [], []
+
+
+def bfs(i, node):
+    global G, V, K, ANS
+    q = deque()
+    q.append(i)
+    while q:
+        # print '\nq: ', q, ' MAX: ', ANS[node][0], ' c: ', ANS[node][1]
+        val = q.popleft()
+        if V[val] != 1:
+            V[val] = 1
+            if K[val] == ANS[node][0] and val != node:
+                ANS[node][1] += 1
+
+            elif K[val] > ANS[node][0]:
+                ANS[node][1] = 1
+                ANS[node][0] = K[val]
+
+            for adj in G[val]:
+                if not V[adj]:
+                    q.append(adj)
+
+
+def solve():
+    global V, ANS, K, N, G
+    # assert len(G) == N + 1 and len(ANS) == N + 1
+    # Solves the given graph using DFS
+    ways = 1
+    V = [0] * (N + 1)
+    ANS = [[K[i], 1] for i in xrange(N + 1)]
+
+    for i in xrange(1, N + 1):
+        if not V[i]:
+            bfs(i, i)
+    for i in xrange(N + 1):
+        ways = (ways * ANS[i][1]) % mod
+    return ways
+
+
+if __name__ == '__main__':
+    N, M = map(int, raw_input().split())
+    K = [0] + map(int, raw_input().split())
+    G = [[] for i in xrange(N + 1)]
+
+    ways = 1
+    for _ in xrange(M):
+        # there can be multiple and self loops
+        u, v = map(int, raw_input().split())
+        # saved from self edges
+        if u == v:
+            continue
+        if tuple(sorted([u, v])) in edgeHistory:
+            continue
+        else:
+            edgeHistory.add(tuple(sorted([u, v])))
+        G[u].append(v)
+        G[v].append(u)
+
+    # print G
+    print solve()

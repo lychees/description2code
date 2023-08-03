@@ -1,0 +1,191 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# https://www.hackerearth.com/problem/algorithm/andrew-and-wengaluru-city/
+
+# Idea:
+# - find topmost building(s)
+# - in case if there're many of such buildings, all spaces between them are
+#   filled with water
+# - find topmost buildings to the left and to the right from it
+# - repeat
+#
+# to find max building on a segment quickly enough, we can use Fenwick tree or
+# segment tree
+
+import math
+import copy
+
+
+# There can be following usecases for segment tree:
+# 1. Set values and find max/min/sum on an interval
+
+
+class SegmentTree:
+
+    def __init__(self, size):
+        # size of array | size of tree | depth
+        # 1, 1, 1
+        # 2, 3, 2
+        # 3, 7, 3
+        # 4, 7, 3
+        # 5, 15, 4
+
+        self.size = size
+        pow_of_2 = int(math.log(size) / math.log(2))
+        if pow(2, pow_of_2) != size:
+            pow_of_2 += 1
+        self.depth = pow_of_2 + 1
+        self.pow_2_size = (1 << pow_of_2)
+        self.array = [{"value": 0, "pos": []}] * (1 << self.depth)
+
+    def __update(self, pos, value, fro, to, index, depth):
+        if depth < self.depth:
+            if value > self.array[index]["value"]:
+                self.array[index] = {"value": value, "pos": [pos]}
+            elif value == self.array[index]["value"]:
+                self.array[index]["pos"].append(pos)
+            index <<= 1
+            mid = (fro + to) // 2
+            depth += 1
+            if fro <= pos < mid:
+                self.__update(pos, value, fro, mid, index, depth)
+            else:
+                self.__update(pos, value, mid, to, index | 1, depth)
+
+    def update(self, pos, value):
+        self.__update(pos, value, 0, self.pow_2_size, 1, 0)
+
+    def __find_max_value_and_pos(self, left, right, fro, to, index, depth):
+        if left == fro and right == to:
+            return self.array[index]
+        else:
+            index <<= 1
+            mid = (fro + to) // 2
+            max_value_and_pos = {"value": 0, "pos": []}
+            depth += 1
+            if fro <= left and right <= mid:
+                max_value_and_pos = self.__find_max_value_and_pos(
+                    left, right, fro, mid, index, depth)
+            elif mid <= left and right <= to:
+                max_value_and_pos = self.__find_max_value_and_pos(
+                    left, right, mid, to, index | 1, depth)
+            else:
+                value_and_pos = self.__find_max_value_and_pos(
+                    left, mid, fro, mid, index, depth)
+                if value_and_pos["value"] > max_value_and_pos["value"]:
+                    max_value_and_pos = value_and_pos
+                elif (value_and_pos["value"] == max_value_and_pos["value"] and
+                        value_and_pos["value"] != 0):
+                    max_value_and_pos["pos"].extend(value_and_pos["pos"])
+
+                value_and_pos = self.__find_max_value_and_pos(
+                    mid, right, mid, to, index | 1, depth)
+                if value_and_pos["value"] > max_value_and_pos["value"]:
+                    max_value_and_pos = value_and_pos
+                elif (value_and_pos["value"] == max_value_and_pos["value"] and
+                        value_and_pos["value"] != 0):
+                    max_value_and_pos["pos"].extend(value_and_pos["pos"])
+            return max_value_and_pos
+
+    def find_max_value_and_pos(self, left, right):
+        return self.__find_max_value_and_pos(left, right, 0, self.pow_2_size,
+                                             1, 0)
+
+    def find_bounds_and_amount_of_water(self, left, right, bound):
+        add = 0
+        max_value_and_pos = self.find_max_value_and_pos(left, right)
+        if bound == -1:
+            pos_list = max_value_and_pos["pos"]
+        else:
+            pos_list = copy.copy(max_value_and_pos["pos"])
+            if pos_list:
+                if bound < pos_list[0]:
+                    pos_list.insert(0, bound)
+                else:
+                    pos_list.append(bound)
+        prev_pos = -1
+        for pos in pos_list:
+            if prev_pos != -1:
+                for i in xrange(prev_pos, pos):
+                    add += max_value_and_pos["value"] - A[i]
+            prev_pos = pos + 1
+        if not max_value_and_pos["pos"]:
+            return (add, left, right)
+        else:
+            return (add, max_value_and_pos["pos"][0],
+                    max_value_and_pos["pos"][-1] + 1)
+
+# class FenwickTree:
+#
+#     def __init__(self, size, func):
+#         self.func = func
+#         self.data = [0] * size
+#         self.min = None
+#
+#     def update(self, pos, value):
+#         assert pos < len(self.data)
+#         if None == self.min:
+#             self.min = value
+#         else:
+#             self.min = min(self.min, value)
+#         while pos < len(self.data):
+#             self.data[pos] = self.func(self.data[pos], value)
+#             pos |= pos + 1
+#
+#     def lookup(self, pos):
+#         assert pos < len(self.data)
+#         result = self.min
+#         while pos >= 0:
+#             result = self.func(self.data[pos], result)
+#             pos &= pos + 1
+#             pos -= 1
+#         return result
+
+
+T = int(raw_input())
+for t in xrange(0, T):
+    N = int(raw_input())
+    A = [int(x) for x in raw_input().split()]
+
+    segment_tree = SegmentTree(N)
+    for i in xrange(0, N):
+        segment_tree.update(i, A[i])
+
+    total = 0
+    add, left, right = segment_tree.find_bounds_and_amount_of_water(0, N, -1)
+    total += add
+
+    while left != 0:
+        was_left = left
+        add, left, _ = segment_tree.find_bounds_and_amount_of_water(
+            0, left, left)
+        total += add
+    while right != N:
+        was_right = right
+        add, _, right = segment_tree.find_bounds_and_amount_of_water(
+            right, N, right - 1)
+        total += add
+
+    print total % 1000000007
+
+# ft_left = FenwickTree(len(A), lambda x, y: x.value > y.value and x or y)
+# ft_right = FenwickTree(len(A), lambda x, y: x.value > y.value and x or y)
+# for i in xrange(0, len(A)):
+#     ft_left.update(i, {'value': A[len(A) - 1 - i], 'index': len(A) - 1 - i})
+#
+# topmost_left = ft_left.lookup(N - 1)
+# topmost_right = topmost_left
+#
+# total_sum = 0
+# while topmost_left.index != 0:
+#     next_topmost_left = ft_left.lookup(topmost_left - 1)
+#     for i in xrange(topmost_left.index, next_topmost_left.index):
+#         total_sum += A[i] - next_topmost_left.value
+#     topmost_left = next_topmost_left
+#
+# while topmost_right.index != len(A) - 1:
+#     next_topmost_right = ft_right.lookup(topmost_right + 1)
+#     for i in xrange(topmost_right.index + 1, next_topmost_right.index):
+#         total_sum += A[i] - next_topmost_right.value
+#     topmost_right = next_topmost_right

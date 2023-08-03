@@ -1,0 +1,72 @@
+from collections import defaultdict
+
+
+class UnionFind:
+
+    def __init__(self):
+        self.parents = defaultdict(int)
+        self.ranks = defaultdict(int)
+
+    def make_set(self, node_list):
+        for node in node_list:
+            self.parents[node] = node
+            self.ranks[node] = 0
+
+    def Union(self, node1, node2):
+        node1_root = self.Find(node1)
+        node2_root = self.Find(node2)
+
+        if node1_root == node2_root:
+            return
+
+        if self.ranks[node1_root] < self.ranks[node2_root]:
+            self.parents[node1_root] = node2_root
+
+        elif self.ranks[node1_root] > self.ranks[node2_root]:
+            self.parents[node2_root] = node1_root
+
+        else:
+            self.parents[node2_root] = node1_root
+            self.ranks[node1_root] += 1
+
+    def Find(self, node):
+        if self.parents[node] != node:
+            self.parents[node] = self.Find(self.parents[node])
+        return self.parents[node]
+
+
+t = int(raw_input())
+
+while t > 0:
+    N, M = [int(x) for x in raw_input().split()]
+    edges = []
+
+    for i in range(M):
+        edge = [int(x) for x in raw_input().split()]
+        edges.append(tuple(edge))
+
+    edge_order = [int(x) for x in raw_input().split()]
+
+    node_list = list(range(1, N+1))
+
+    uf = UnionFind()
+
+    uf.make_set(node_list)
+    check = 0
+    for edge_index in edge_order:
+        node1, node2 = edges[edge_index-1]
+
+        root1 = uf.Find(node1)
+        root2 = uf.Find(node2)
+        uf.Union(node1, node2)
+
+        if root1 == root2:
+            print "NO"
+            check = 1
+            break
+
+    if check == 0:
+        print "YES"
+        check = 0
+
+    t -= 1

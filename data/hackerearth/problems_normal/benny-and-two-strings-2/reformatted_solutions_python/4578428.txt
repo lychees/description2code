@@ -1,0 +1,50 @@
+N, M, K = map(int, raw_input().split())
+S = raw_input()
+T = raw_input()
+lenS = len(S)
+shifts = set([])
+for i in xrange(1, lenS):
+    if S[:-i] == S[i:]:
+        shifts.add(i)
+Sn = [ord(S[i])-ord('a') for i in xrange(lenS)]
+Tn = [ord(T[i])-ord('a') for i in xrange(len(T))]
+arrEnds = [{} for _ in xrange(lenS-1)]
+arrBest = [{} for _ in xrange(lenS-1)]
+cost = sum(min(abs(Sn[i]-Tn[i]), Sn[i]+26-Tn[i], Tn[i]+26-Sn[i])
+           for i in xrange(lenS))
+if cost <= K:
+    arrEnds.append({1: cost})
+    arrBest.append({1: cost})
+for i in xrange(lenS, len(T)):
+    ends = {}
+    cost = 0
+    for j in xrange(1, lenS+1):  # shift range
+        Snj = Sn[-j]
+        Tnij = Tn[i-j+1]
+        cost += min(abs(Snj-Tnij), Snj+26-Tnij, Tnij+26-Snj)
+        if j in shifts:
+            # combine cases when ended there and adding this cost
+            prev = arrEnds[i-j]
+            for num in prev:
+                if prev[num]+cost <= K:
+                    if num+1 not in ends:
+                        ends[num+1] = prev[num]+cost
+                    elif ends[num+1] > prev[num]+cost:
+                        ends[num+1] = prev[num]+cost
+    # combine cases when ended here without
+    if cost <= K:
+        # no 0 in ends (neither the previously calculated nor arrEnds)
+        ends[1] = cost
+    prev = arrBest[i-lenS]
+    for num in prev:
+        if prev[num]+cost <= K:
+            if num+1 not in ends:
+                ends[num+1] = prev[num]+cost
+            elif ends[num+1] > prev[num]+cost:
+                ends[num+1] = prev[num]+cost
+    arrEnds.append(ends)
+    best = arrBest[-1].copy()
+    for num in ends:
+        best[num] = min(best[num], ends[num]) if num in best else ends[num]
+    arrBest.append(best)
+print max(arrBest[-1].keys()) if arrBest[-1] else "0"

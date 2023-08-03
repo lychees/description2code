@@ -1,0 +1,81 @@
+
+# linear algorithm (3 pointers i,j,m go through the input length)
+
+K = int(raw_input())
+inpstr = raw_input()
+inplen = len(inpstr)
+numpairs = 0
+
+if K == 1:
+    i = 0
+    while i < inplen:
+        j = i+1
+        while j < inplen and inpstr[j] == inpstr[i]:
+            j += 1
+        # all (k,l) are valid where k<=l and i<=k,l<=j [is exactly 1 if j==i+1]
+        numpairs += (j-i)*(j-i+1)/2
+        i = j
+    print numpairs
+else:
+    lastseen = {x: -1 for x in "abcdefghijklmnoprqstuvwxyz"}
+    numtomiddle = {x: 0 for x in "abcdefghijklmnoprqstuvwxyz"}
+
+    numch = 0
+    i = 0  # begin of section
+    j = 0  # end of section (exclusive)
+    while j < inplen and numch < K:
+        if lastseen[inpstr[j]] == -1:
+            numch += 1
+        lastseen[inpstr[j]] = j
+        numtomiddle[inpstr[j]] += 1
+        j += 1
+    if numch < K:  # there are no K different chars in input
+        print 0
+    else:
+        # middle of section, first time we see K different (from i, both
+        # inclusive)
+        m = j-1
+        while j < inplen and lastseen[inpstr[j]] >= 0:  # no new chars
+            lastseen[inpstr[j]] = j
+            j += 1
+        numpairs += j-m  # now (i,x) is good pair for x in m, m+1, ..., j-1
+        # there are enough different till the end (actually until j-1)
+        while numch == K:
+            # not last occurence of char, i+1, ..., j has still K different
+            while i < lastseen[inpstr[i]]:
+                while numtomiddle[inpstr[i]] > 1:  # we can leave it
+                    # the ith char occurs later, somewhere before m, so i+1,
+                    # ..., m has still K different
+                    numtomiddle[inpstr[i]] -= 1
+                    i += 1
+                    numpairs += j-m  # m, m+1, ..., j-1 with i is still OK
+                if i < lastseen[inpstr[i]]:  # we have the ith but later than m
+                    # find next occurence of char which will be dropped - new
+                    # middle
+                    while inpstr[m] != inpstr[i]:
+                        m += 1
+                        numtomiddle[inpstr[m]] += 1
+                    numtomiddle[inpstr[i]] -= 1
+                    i += 1  # so m is again first occurence of the Kth different counting from the new i
+                    numpairs += j-m
+            # last char from ith, we drop it
+            lastseen[inpstr[i]] = -1
+            numch -= 1
+            # if next "wrong" (j) is a char, we use it as a new element (else
+            # no K different available)
+            if j < inplen:
+                numtomiddle[inpstr[i]] -= 1
+                i += 1
+                lastseen[inpstr[j]] = j
+                numch += 1
+                while m < j:
+                    m += 1
+                    numtomiddle[inpstr[m]] += 1
+                # m==j, m is still the first occurence of the Kth different
+                # (from i)
+                j += 1
+                while j < inplen and lastseen[inpstr[j]] >= 0:
+                    lastseen[inpstr[j]] = j
+                    j += 1
+                numpairs += j-m
+        print numpairs

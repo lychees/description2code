@@ -1,0 +1,86 @@
+import sys
+
+
+def MakeSet(x):
+    x.parent = x
+    x.rank = 0
+
+
+def Union(x, y):
+    xRoot = Find(x)
+    yRoot = Find(y)
+    if xRoot.rank > yRoot.rank:
+        yRoot.parent = xRoot
+    elif xRoot.rank < yRoot.rank:
+        xRoot.parent = yRoot
+    elif xRoot != yRoot:  # Unless x and y are already in same set, merge them
+        yRoot.parent = xRoot
+        xRoot.rank = xRoot.rank + 1
+
+
+def Find(x):
+    if x.parent == x:
+        return x
+    else:
+        x.parent = Find(x.parent)
+        return x.parent
+
+
+class Node:
+    def __init__(self, label, risk):
+        self.label = label
+        self.risk = risk
+
+    def __str__(self):
+        return str(self.label)
+
+
+ff = sys.stdin
+
+N = int(ff.readline())
+
+M = pow(10, 9) + 7
+
+E = [int(x) for x in ff.readline().split()]
+
+K = int(ff.readline())
+
+node_list = [Node(x, E[x-1]) for x in xrange(1, N+1)]
+
+for node in node_list:
+    MakeSet(node)
+
+for k in xrange(K):
+    i, j = [int(x) for x in ff.readline().split()]
+    Union(node_list[i-1], node_list[j-1])
+
+
+d = dict()
+
+for x in node_list:
+    r = Find(x)
+    # print("r: %s"%(r,))
+    yy = d.get(r, [1001, 0])
+
+    # print("yy: %s, x.risk : %d"%(yy,x.risk))
+    if x.risk <= yy[0]:
+        # print("yes")
+        if yy[0] == x.risk:
+            yy[1] += 1
+        else:
+            yy[1] = 1
+            yy[0] = x.risk
+
+    d[r] = yy
+
+total = 1
+# for x in node_list:
+#     print(str(x))
+
+# for key in d :
+#     print(str(key) + ":" + str(d[key]))
+
+for key in d:
+    total = (total * d[key][1]) % M
+
+print(total)

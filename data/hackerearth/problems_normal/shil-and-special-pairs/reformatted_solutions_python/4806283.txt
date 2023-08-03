@@ -1,0 +1,41 @@
+(n, m, d) = [int(v) for v in raw_input().strip().split(' ')]
+arr = [int(v) for v in raw_input().strip().split(' ')]
+pos = [0] * (n + 1)
+q = []
+
+for i in range(0, len(arr)):
+    pos[arr[i]] = i
+
+for i in range(0, m):
+    (l, r) = [int(v) for v in raw_input().strip().split(' ')]
+    q.append(((l, r), i))
+q = sorted(q, key=lambda tp: tp[0][1])
+
+tree = [0] * (n + 1)
+
+
+def update(pos):
+    while pos <= n:
+        tree[pos] += 1
+        pos += pos & (-pos)
+
+
+def query(pos):
+    ans = 0
+    while pos > 0:
+        ans += tree[pos]
+        pos -= pos & (-pos)
+    return ans
+
+
+j = 0
+ans = [0] * (m + 1)
+for i in range(1, n + 1):
+    for v in range(max(1, arr[i - 1] - d), min(n + 1, arr[i - 1] + d + 1)):
+        if pos[v] + 1 <= i:
+            update(pos[v] + 1)
+    while j < len(q) and q[j][0][1] == i:
+        ans[q[j][1]] = query(q[j][0][1]) - query(q[j][0][0] - 1)
+        j += 1
+for i in range(m):
+    print ans[i]

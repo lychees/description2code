@@ -1,0 +1,79 @@
+'''
+# Read input from stdin and provide input before running code
+
+name = raw_input('What is your name?\n')
+print 'Hi, %s.' % name
+'''
+import math
+
+
+def retrieve(heap, value):
+    indC = 1
+    valP = -1
+    while indC < heap.__len__() and heap[indC] >= value:
+        if 2*indC + \
+                1 < heap.__len__() and heap[2*indC] < value and heap[indC] == heap[indC*2+1]:
+            indC = 2 * indC + 1
+            valP = heap[indC]
+            continue
+        valP = heap[indC]
+        indC = 2 * indC
+
+    return valP
+
+
+def update(tree, ind, value, twoPow, hashedIndexLocations):
+    indT = int(ind + twoPow - 1)
+
+    hashedIndexLocations[tree[indT]] = -1
+    hashedIndexLocations[value] = ind
+
+    tree[indT] = value
+    indC = indT
+    while indC > 0:
+        indP = int(indC/2)
+        parentPrev = tree[indP]
+        tree[indP] = max(tree[indP*2], tree[indP*2+1])
+        if parentPrev == tree[indP]:
+            break
+        else:
+            indC = indP
+
+
+def treeC(theArray):
+    twoPow = math.pow(2, math.ceil(math.log(theArray.__len__(), 2)))
+    theArray.extend([-1] * (int(twoPow - theArray.__len__())))
+
+    lC = theArray.__len__()
+    # Initialize tree array
+    tree = [-1] * lC
+    tree.extend(theArray)
+
+    for i in xrange(lC-1, 0, -1):
+        if 2*i+1 < tree.__len__()-1:
+            tree[i] = max(tree[2*i+1], tree[2*i])
+        else:
+            tree[i] = tree[2*i]
+    return tree, twoPow
+
+
+def mainworker(N, arr, Q):
+    hashedIndexLocations = {-1: -1}
+    for i in range(arr.__len__()):
+        hashedIndexLocations[arr[i]] = i+1
+
+    heap, twoPow = treeC(arr)
+    while Q > 0:
+        Q -= 1
+        # print ' query is' , query, 'end' ,
+        x = map(int, raw_input().split())
+        if x[0] == 0:
+            update(heap, x[1], x[2], twoPow, hashedIndexLocations)
+        elif x[0] == 1:
+            print hashedIndexLocations[retrieve(heap, x[1])]
+
+
+N, Q = raw_input().split()
+arr = map(int, raw_input().split())
+
+mainworker(N, arr, int(Q))

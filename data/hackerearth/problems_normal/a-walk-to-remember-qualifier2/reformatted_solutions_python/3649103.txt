@@ -1,0 +1,99 @@
+Graph = {}
+
+N, M = map(int, raw_input().split())
+for i in xrange(1, N+1):
+    Graph[i] = []
+for i in xrange(M):
+    u, v = map(int, raw_input().split())
+    Graph[u].append(v)
+
+marked = set()
+visit_stack = []
+visit_index = {}
+parent = {}
+
+dfsPos = 1
+
+oReps = []
+oNodes = []
+components = [-1]*(N+1)
+components_count = {}
+
+
+def root(s):
+    global dfsPos
+    components[s] = -dfsPos
+    dfsPos += 1
+
+    oReps.append(s)
+    oNodes.append(s)
+
+
+def backtrack(a, b):
+    if b == oReps[-1]:
+        oReps.pop()
+
+        while True:
+            c = oNodes.pop()
+            components[c] = b
+            components_count.setdefault(b, 0)
+            components_count[b] += 1
+            if b == c:
+                break
+
+
+def traverse(a, b):
+    global dfsPos
+    components[b] = -dfsPos
+    dfsPos += 1
+
+    oReps.append(b)
+    oNodes.append(b)
+
+
+def traverse_non_tree(a, b):
+    if components[b] < 0:  # b is in oNodes
+        while components[b] > components[oReps[-1]]:
+            oReps.pop()
+
+
+for s in Graph:  # all nodes in Graph
+    pass
+    if s not in marked:
+        marked.add(s)
+        root(s)
+        parent[s] = s
+        visit_stack.append(s)
+        visit_index[s] = 0
+
+        while visit_stack:
+            current_node = visit_stack[-1]
+
+            if visit_index[current_node] == len(Graph[current_node]):
+                backtrack(parent[current_node], current_node)
+                visit_stack.pop()
+
+            else:
+                next_node_idx = visit_index[current_node]
+                next_node = Graph[current_node][next_node_idx]
+                visit_index[current_node] = next_node_idx + 1
+
+                if next_node in marked:
+                    traverse_non_tree(current_node, next_node)
+                else:
+                    marked.add(next_node)
+                    parent[next_node] = current_node
+                    visit_index[next_node] = 0
+
+                    traverse(current_node, next_node)
+                    visit_stack.append(next_node)
+
+
+simple_loop = []
+for i in xrange(1, N+1):
+    if components_count[components[i]] > 1:
+        simple_loop.append(1)
+    else:
+        simple_loop.append(0)
+
+print " ".join(map(str, simple_loop))

@@ -1,0 +1,101 @@
+import math
+from sys import stdin
+
+
+class Graph(object):
+    """Adjacency list"""
+
+    def __init__(self, _numVertices):
+        self.numVertices = _numVertices
+        self._adjacencies = {}
+
+    def _isValidVertex(self, v):
+        if v > 0 and v <= self.numVertices:
+            return True
+        return False
+
+    def AddEdge(self, u, v, weight):
+        if not (self._isValidVertex(u) and self._isValidVertex(v)):
+            print "Invalid edge for graph. Number of vertices : %s, edge (%s,%s)" % (self.numVertices, u, v)
+        if not self._adjacencies.has_key(u):
+            self._adjacencies[u] = {}
+
+        self._adjacencies[u][v] = weight
+
+    def AddBidirectionalEdge(self, u, v, w):
+        self.AddEdge(u, v, w)
+        self.AddEdge(v, u, w)
+
+    def getNeighbors(self, v):
+        if self._adjacencies.has_key(v):
+            return self._adjacencies[v]
+        else:
+            return {}
+
+    def dump(self):
+        for k, v in self._adjacencies.items():
+            print "%s : %s" % (k, v)
+
+
+maxCap = 0
+maxCapPaths = []
+
+
+def dfs(graph, current, dest, visited, minThisPath):
+    # base case
+    if len(visited) == graph.numVertices:
+        return
+    global maxCap
+    global maxCapPaths
+    if current == dest:
+        if minThisPath > maxCap:
+            maxCap = minThisPath
+            maxCapPaths = []
+            maxCapPaths.append(visited)
+        elif minThisPath == maxCap:
+            maxCapPaths.append(visited)
+        return
+
+    # recursive case
+    children = graph.getNeighbors(current)
+    keys = children.keys()
+    for child in keys:
+        if child not in visited:
+            if children[child] < minThisPath:
+                nextMin = children[child]
+            else:
+                nextMin = minThisPath
+            dfs(graph, child, dest, visited+[child], nextMin)
+
+
+def main():
+    numNodes, numEdges = [int(x) for x in stdin.readline().split()]
+
+    graph = Graph(numNodes)
+
+    for i in xrange(numEdges):
+        u, v, cap = [int(y) for y in stdin.readline().split()]
+        graph.AddBidirectionalEdge(u, v, cap)
+
+    source, dest, numTourists = [int(z) for z in stdin.readline().split()]
+
+    visited = [source]
+    dfs(graph, source, dest, visited, float("inf"))
+
+    global maxCap
+    maxCap = maxCap - 1
+    numTrips = int(math.ceil((numTourists*1.0)/(maxCap*1.0)))
+
+    paths = []
+    global maxCapPaths
+    for path in maxCapPaths:
+        paths.append(" ".join([str(a) for a in path]))
+    paths.sort()
+
+    print paths[0]
+
+    print numTrips
+
+
+if __name__ == "__main__":
+    main()

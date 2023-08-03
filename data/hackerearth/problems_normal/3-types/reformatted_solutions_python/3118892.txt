@@ -1,0 +1,82 @@
+class Vertex(object):
+    rank = 0
+
+    def __init__(self, label):
+        self.label = label
+        self.p = self
+
+    def __repr__(self):
+        return "{}".format(self.label)
+
+
+class Edge(object):
+    def __init__(self, u, v, w):
+        self.u = u
+        self.v = v
+        self.w = w
+
+    def __repr__(self):
+        return "({}, {};{})".format(self.u, self.v, self.w)
+
+
+def union(x, y):
+    link(find_set(x), find_set(y))
+
+
+def link(x, y):
+    if x.rank > y.rank:
+        y.p = x
+    else:
+        x.p = y
+        if y.rank == x.rank:
+            y.rank += 1
+
+
+def find_set(x):
+    if x != x.p:
+        x.p = find_set(x.p)
+    return x.p
+
+
+def kruskal(vertices, edges):
+    mst = set()
+    edges.sort(key=lambda x: x.w)
+    for e in edges:
+        if find_set(e.u) != find_set(e.v):
+            mst.add((e.u.label, e.v.label))
+            union(e.u, e.v)
+    return mst
+
+
+def main():
+    n, m = map(int, raw_input().split())
+    vertices = []
+    roads_for_men = []
+    roads_for_woman = []
+
+    for i in xrange(n):
+        vertices.append(Vertex(i))
+
+    for i in xrange(m):
+        u, v, t = map(int, raw_input().split())
+        if t == 3:
+            roads_for_men.append(Edge(vertices[u - 1], vertices[v - 1], 0))
+            roads_for_woman.append(Edge(vertices[u - 1], vertices[v - 1], 0))
+        elif t == 2:
+            roads_for_woman.append(Edge(vertices[u - 1], vertices[v - 1], 1))
+        elif t == 1:
+            roads_for_men.append(Edge(vertices[u - 1], vertices[v - 1], 1))
+
+    mstw = kruskal(vertices, roads_for_woman)
+    for v in vertices:
+        v.rank = 0
+        v.p = v
+    mstm = kruskal(vertices, roads_for_men)
+    if len(mstw) < (n-1) or len(mstm) < (n-1):
+        print(-1)
+    else:
+        print m - len(mstm.union(mstw))
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,102 @@
+# coding=utf-8
+"""
+    @author: Hai
+"""
+
+import fileinput
+import sys
+n = 0
+L = []
+D = []
+
+
+def build(cache, step, mask):
+    print '*'*20
+    print "mask =",  "{0:b}".format(mask), "step= ", step
+    # print bin(mask)
+    if cache[mask] <> 0:
+        print 'temp= ', cache[mask]
+        return cache[mask]
+
+    temp = -sys.maxint - 1
+    for i in range(0, n):
+        print "i= ", i
+        if not mask & (1 << i):
+            value = n * L[i] + i * D[i] * step * \
+                (step + 1) / 2 - n * i * D[i] * step
+            print 'value= ', value
+            temp = max(temp, value + build(cache, step+1, mask | (1 << i)))
+    cache[mask] = temp
+    print 'temp= ', temp
+    return temp
+
+
+def solve(cache, mask, i):
+    if i < 0:
+        return 0
+    if cache[mask] <> -sys.maxint - 1:
+        # print "return from cache", bin(mask), i
+        return cache[mask]
+    temp = -sys.maxint - 1
+    for step in range(0, n):
+        if not mask & (1 << step):  # chua xaistep
+            value = n * L[i] + i * D[i] * step * \
+                (step + 1) / 2 - n * i * D[i] * step
+            '''
+            if i==2:
+                print "i= ", i, bin(mask), step, value
+            if i==1:
+                print "i= ", i, bin(mask), step, value
+            if i==0:
+                print "i= ", i, bin(mask), step, value
+            '''
+            temp = max(temp, value + solve(cache, mask | (1 << step), i-1))
+            '''
+            if i==2:
+                print 'i= ',i , step, temp
+            '''
+    cache[mask] = temp
+    return temp
+
+
+def solve1(cache, mask, i):  # mask of step
+    if i == 0:
+        return n * L[i]
+    for step in range(0, n):
+
+        if not mask & (1 << step):
+            pass
+
+
+if __name__ == '__main__':
+    # prepare data
+
+    for index, line in enumerate(fileinput.input()):
+        data = line.strip()
+        if index == 0:
+            n = int(data)
+        elif index == 1:
+            L = map(int, data.split(" "))
+        elif index == 2:
+            D = map(int, data.split(" "))
+
+    # n=4 #n=4
+    cache = {}
+    for i in range(0, 2**n):
+        cache[i] = -sys.maxint - 1
+        '''
+        for j in range(0,n):
+            cache[i][j]=0
+        '''
+
+    # L=[0,0,3,4] #[5,6,7]
+    # D=[0,0,3,3] #[2,3,4]
+    # L=[5,6,7]
+    # D=[2,3,4]
+    # print cache
+    mask = 0
+    print solve(cache, mask, n-1)
+    '''
+    for key, value in cache.iteritems():
+        print bin(key), ":",  value
+    '''

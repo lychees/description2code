@@ -1,0 +1,100 @@
+
+import math
+from collections import OrderedDict
+
+
+class Nodes(object):
+    def __init__(self):
+        self.data = None
+        self.next = None
+        self.prev = None
+        self.seq_number = 0
+
+
+def create_node(value):
+    n = Nodes()
+    n.data = value
+    return n
+
+
+def make_struc(s):
+    head = None
+    end = None
+    nodes = OrderedDict()
+    count = 0
+    for i in s:
+        n = create_node(i)
+        n.seq_number = count + 1
+        nodes[n.seq_number] = 0
+        if head is None:
+            head = n
+            end = head
+        else:
+            n.prev = end
+            end.next = n
+            end = n
+        count += 1
+    return head, end, nodes
+
+
+def get_winner(head, end, nodes):
+    i = 0
+    l = len(nodes)
+    if math.log(l, 2) % 1 == 0:
+        limit = int(math.floor(math.log(l, 2)))
+    else:
+        limit = int(math.ceil(math.log(l, 2)))
+
+    while i <= limit:
+        temp1 = head
+        temp2 = None
+        prev = None
+        count = 0
+        while temp1 is not None:
+            temp2 = temp1.next
+            if temp2 is not None:
+                result = cmp(temp1.data, temp2.data)
+                nodes[temp1.seq_number] += 1
+                nodes[temp2.seq_number] += 1
+                if result == 1:
+                    temp1.next = temp2.next
+                    del temp2
+                else:
+                    # covering both conditions when result = -1 or 0
+                    del temp1
+                    temp1 = temp2
+                    del temp2
+
+                if count == 0:
+                    temp1.prev = None
+                    head = temp1
+                else:
+                    temp1.prev = prev
+                    prev.next = temp1
+
+                prev = temp1
+                count += 1
+
+            temp1 = temp1.next
+
+        i += 1
+
+    return nodes
+
+
+def main():
+    N, Q = [int(i) for i in raw_input().split()]
+    if 1 <= N <= 100000 and 1 <= Q <= 1000000:
+        s = [int(i) for i in raw_input().split()]
+        if len(s) == N:
+            queries = [int(raw_input()) for i in range(Q)]
+            head, end, nodes = make_struc(s)
+            nodes = get_winner(head, end, nodes)
+            for i in queries:
+                print nodes.get(i)
+
+
+try:
+    main()
+except Exception as e:
+    print e.__str__()

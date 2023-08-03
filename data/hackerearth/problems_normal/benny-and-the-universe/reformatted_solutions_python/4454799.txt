@@ -1,0 +1,55 @@
+N, Q = map(int, raw_input().split())
+arrD = map(int, raw_input().split())
+
+if N == 1:
+    for iCase in xrange(Q):
+        print "YES" if int(raw_input()) % arrD[0] == 0 else "NO"
+else:
+    gcd = arrD[0]
+    for i in xrange(1, N):
+        b = arrD[i]
+        while b:
+            gcd, b = b, gcd % b
+    if gcd > 1:
+        for i in xrange(N):
+            arrD[i] /= gcd
+
+    MAX = 1000000001
+    mindiv = min(arrD)  # mindiv<=10000
+    if mindiv == 1:  # every number (if multiplyer of gcd) is easy to construct
+        for iCase in xrange(Q):
+            print "YES" if int(raw_input()) % gcd == 0 else "NO"
+    else:
+        minmods = {}
+        for x in arrD:
+            minmods[x % mindiv] = x if x % mindiv not in minmods else min(
+                x, minmods[x % mindiv])
+        arrD = [minmods[i] for i in minmods if i != 0]
+        minmods = {}  # get back memory
+
+        minOK = {}
+
+        minOK[0] = 0
+        modified = [0]
+        while modified:
+            old = modified
+            modified = []
+            for j in old:
+                for d in arrD:
+                    num = minOK[j]*mindiv+j+d
+                    if num < MAX:
+                        rem = num % mindiv
+                        if rem not in minOK or minOK[rem] > num/mindiv:
+                            minOK[rem] = num/mindiv
+                            modified.append(rem)
+        for i in xrange(Q):
+            try:
+                inpstr = raw_input()
+            except BaseException:
+                inpstr = "1"
+            act = int(inpstr)
+            if act % gcd != 0:
+                print "NO"
+            else:
+                act /= gcd
+                print "YES" if act % mindiv in minOK and minOK[act % mindiv] <= act/mindiv else "NO"

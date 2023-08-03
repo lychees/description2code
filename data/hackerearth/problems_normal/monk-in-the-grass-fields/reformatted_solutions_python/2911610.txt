@@ -1,0 +1,66 @@
+'''
+Created on Nov 15, 2015
+
+@author: Ismael
+'''
+from heapq import heappush, heappop
+
+
+def init_heap_lines(mat):
+    h = []
+    for l in mat:
+        heappush(h, sum(l))
+    return h
+
+
+def init_heap_columns(mat):
+    h = []
+    for j in xrange(N):
+        col = []
+        for i in xrange(N):
+            col.append(mat[i][j])
+        heappush(h, sum(col))
+    return h
+
+
+def precompute(h):
+    N = len(h)
+    v_res = [0]
+    for _ in xrange(K):
+        v = heappop(h)
+        heappush(h, v+N)
+        v_res.append(v_res[-1]+v)
+    return v_res
+
+
+def precompute_col_lines(mat):
+    h_l = init_heap_lines(mat)
+    v_l = precompute(h_l)
+    h_c = init_heap_columns(mat)
+    v_c = precompute(h_c)
+    return v_l, v_c
+
+
+def combine(v_l, v_c):
+    K = len(v_l)-1
+    r = 10**20
+    for i in xrange(0, K+1):
+        j = K-i
+        s = v_l[i]+v_c[j]+i*j
+        r = min(r, s)
+    return r
+
+
+def solve(mat, K):
+    v_l, v_c = precompute_col_lines(mat)
+    r = combine(v_l, v_c)
+    return r
+
+
+t = int(raw_input())
+for _ in xrange(t):
+    N, K = map(int, raw_input().split())
+    mat = []
+    for _ in xrange(N):
+        mat.append([int(v) for v in raw_input().split()])
+    print(solve(mat, K))

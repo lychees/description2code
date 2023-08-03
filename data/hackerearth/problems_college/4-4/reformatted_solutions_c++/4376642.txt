@@ -1,0 +1,88 @@
+#include <bits/stdc++.h>
+#include <iostream>
+using namespace std;
+#define lli long long int
+#define inf 1e17
+#define sc(x) scanf("%lld", &x)
+#define pii pair<lli, lli>
+vector<pii> v[1000005];
+lli st[1000005], d[1000005], nd[1000005];
+vector<pair<pii, lli>> edg;
+struct cmp {
+  bool operator()(const pii &a, const pii &b) { return a.second > b.second; }
+};
+priority_queue<pii, vector<pii>, cmp> pq;
+void dij1(lli n, lli s) {
+  lli i, t, x, y;
+  for (i = 1; i <= n; i++) {
+    d[i] = inf;
+    st[i] = 0;
+  }
+  pq.push(make_pair(s, 0));
+  d[s] = 0;
+  while (!pq.empty()) {
+    t = pq.top().first;
+    pq.pop();
+    st[t] = 1;
+    for (i = 0; i < v[t].size(); i++) {
+      x = v[t][i].first;
+      y = v[t][i].second;
+      if (d[t] + y < d[x]) {
+        d[x] = y + d[t];
+        pq.push(make_pair(x, d[x]));
+      }
+    }
+  }
+}
+void dij2(lli n, lli s) {
+  lli i, t, x, y;
+  for (i = 1; i <= n; i++) {
+    nd[i] = inf;
+    st[i] = 0;
+  }
+  pq.push(make_pair(s, 0));
+  nd[s] = 0;
+  while (!pq.empty()) {
+    t = pq.top().first;
+    pq.pop();
+    st[t] = 1;
+    for (i = 0; i < v[t].size(); i++) {
+      x = v[t][i].first;
+      y = v[t][i].second;
+      if (nd[t] + y < nd[x]) {
+        nd[x] = y + nd[t];
+        pq.push(make_pair(x, nd[x]));
+      }
+    }
+  }
+}
+int main() {
+  lli n, m, i, x, y, z, ans;
+  sc(n);
+  sc(m);
+  for (i = 1; i <= m; i++) {
+    sc(x);
+    sc(y);
+    sc(z);
+    v[x].push_back(make_pair(y, z));
+    v[y].push_back(make_pair(x, z));
+    edg.push_back(make_pair(make_pair(x, y), z));
+  }
+  dij1(n, 1);
+  dij2(n, n);
+  ans = 0;
+  if (d[n] != 1e17) {
+    for (i = 0; i < edg.size(); i++) {
+      x = edg[i].first.first;
+      y = edg[i].first.second;
+      z = edg[i].second;
+      if (z + d[x] + nd[y] == d[n] || z + nd[x] + d[y] == d[n]) {
+        ans += z;
+      }
+    }
+  } else {
+    ans = -1;
+  }
+  printf("%lld\n", ans);
+  return 0;
+}

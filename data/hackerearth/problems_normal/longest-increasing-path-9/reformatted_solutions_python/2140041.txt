@@ -1,0 +1,48 @@
+from functools import wraps
+for _ in xrange(int(raw_input())):
+    NM = raw_input().split()
+    N = int(NM[0])
+    M = int(NM[1])
+    Matrix = [0 for _ in xrange(N)]
+    for x in xrange(N):
+        Matrix[x] = [int(y) for y in raw_input().split()]
+    # Allcooltillhere
+
+    def memo(func):
+        cache = {}
+
+        @wraps(func)
+        def wrapper(*args):
+            if args not in cache:
+                cache[args] = func(*args)
+            return cache[args]
+        return wrapper
+
+    @memo
+    def longest(i, j):
+        current = Matrix[i][j]
+        nextRow = i+1 if i+1 < N else None
+        nextColumn = j+1 if j+1 < M else None
+        if nextRow is not None and nextColumn is not None:  # possible to move via both
+            if Matrix[nextRow][j] > current and Matrix[i][nextColumn] > current:
+                # pick the best if you will move via both or take one
+                return max(1+longest(nextRow, j), 1+longest(i, nextColumn))
+            elif Matrix[nextRow][j] > current:
+                return 1+longest(nextRow, j)
+            elif Matrix[i][nextColumn] > current:
+                return 1+longest(i, nextColumn)
+            else:
+                return 1
+        elif nextRow is None and nextColumn is not None:  # possible to move only via columns
+            if Matrix[i][nextColumn] > current:  # will you go to next column?
+                return 1+longest(i, nextColumn)
+            else:
+                return 1
+        elif nextRow is not None and nextColumn is None:  # possible to move only via rows
+            if Matrix[nextRow][j] > current:  # will you move to next row?
+                return 1+longest(nextRow, j)
+            else:
+                return 1
+        else:  # no way out
+            return 1
+    print longest(0, 0)

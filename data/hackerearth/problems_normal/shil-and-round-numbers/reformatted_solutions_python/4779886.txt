@@ -1,0 +1,74 @@
+'''
+# Read input from stdin and provide input before running code
+
+name = raw_input('What is your name?\n')
+print 'Hi, %s.' % name
+'''
+(n, q) = [int(v) for v in raw_input().strip().split(' ')]
+arr = [int(v) for v in raw_input().strip().split(' ')]
+tree = [0]*(n+1)
+nums = [-1]*(n+1)
+
+
+def ndigs(num):
+    if num == 0:
+        return 0
+    return 1+ndigs(num/10)
+
+
+def firstDig(num, digs):
+    if digs == 1:
+        return num % 10
+    return firstDig(num/10, digs-1)
+
+
+def isRound(num):
+    if num < 0:
+        return False
+    (n1, n2) = (num % 10, firstDig(num, ndigs(num)))
+    return n1 == n2
+
+
+def update(tree, ind, num):
+    (b1, b2) = (isRound(num), isRound(nums[ind]))
+    if b1 and b2:
+        return
+    elif not b1 and not b2:
+        return
+    elif b1 and not b2:
+        updateVal(tree, ind, 1)
+    else:
+        updateVal(tree, ind, -1)
+    nums[ind] = num
+
+
+def updateVal(tree, ind, val):
+    while ind <= n:
+        tree[ind] += val
+        ind += ind & (-ind)
+
+
+def query(tree, l, r):
+    return qr(tree, r)-qr(tree, l-1)
+
+
+def qr(tree, pos):
+    ans = 0
+    while pos > 0:
+        ans += tree[pos]
+        pos -= pos & (-pos)
+    return ans
+
+
+for i in range(1, n+1):
+    update(tree, i, arr[i-1])
+
+
+while q > 0:
+    q -= 1
+    (t, v1, v2) = [int(v) for v in raw_input().strip().split(' ')]
+    if t == 1:
+        ans = query(tree, v1, v2)
+        print ans
+    else:
+        update(tree, v1, v2)

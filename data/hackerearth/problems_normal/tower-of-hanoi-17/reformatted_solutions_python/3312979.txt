@@ -1,0 +1,94 @@
+'''
+# Read input from stdin and provide input before running code
+
+name = raw_input('What is your name?\n')
+print 'Hi, %s.' % name
+'''
+import sys
+
+testCases = int(sys.stdin.readline())
+
+
+class Tower:
+    def __init__(self, totalHeight, startingHeight):
+        self.tHeight = totalHeight
+        self.sHeight = startingHeight
+
+
+while testCases > 0:
+    rDict = {}
+    numDisks = int(sys.stdin.readline())
+    rList = []
+
+    while numDisks > 0:
+        curLine = sys.stdin.readline()
+        r = int(curLine.split()[0])
+        h = int(curLine.split()[1])
+
+        if r not in rDict:
+            rDict[r] = []
+            rList.append(r)
+
+        if h not in rDict[r]:
+            rDict[r].append(h)
+
+        numDisks = numDisks - 1
+
+    subTowers = []
+    subTowers.append(Tower(0, 0))
+    maxHeight = 0
+    rList.sort()
+
+    # just iterate through known r's
+    for radius in rList:
+        towersToRemove = []
+        towersToAdd = []
+        # for the disks at that particular radius
+        for height in rDict[radius]:
+
+            # Find the max tower you could make with Disk(r,h) as the base
+            curMaxSubtowerHeight = 0
+            for subTower in subTowers:
+                # we're iterating by R, so we know R is greater as well
+                if (height > subTower.sHeight) and (
+                        subTower.tHeight > curMaxSubtowerHeight):
+                    curMaxSubtowerHeight = subTower.tHeight
+            newTower = Tower(height + curMaxSubtowerHeight, height)
+
+            # Consider the ramifications of adding this tower to the subtowers list
+            # Wait till after we're done considering this RADIUS to add them
+            # all
+            shouldAddTower = True
+            for tower in subTowers:
+                # if newTower is directly inferior to another subtower, break
+                # and don't add it
+                if (newTower.sHeight >= tower.sHeight) and (
+                        newTower.tHeight <= tower.tHeight):
+                    shouldAddTower = False
+                    break
+                # if newTower is directly superior to this subtower, note that
+                # we should remove it later
+                if (tower.sHeight >= newTower.sHeight) and (
+                        tower.tHeight <= newTower.tHeight):
+                    towersToRemove.append(tower)
+
+            if shouldAddTower:
+                towersToAdd.append(newTower)
+
+        for badTower in towersToRemove:
+            if badTower in subTowers:
+                subTowers.remove(badTower)
+
+        for goodTower in towersToAdd:
+            reallyReallySureWeShouldAddTower = True
+            for otherTower in towersToAdd:
+                if (goodTower.sHeight >= otherTower.sHeight) and (
+                        goodTower.tHeight < otherTower.tHeight):
+                    reallyReallySureWeShouldAddTower = False
+            if reallyReallySureWeShouldAddTower:
+                subTowers.append(goodTower)
+                if (goodTower.tHeight > maxHeight):
+                    maxHeight = goodTower.tHeight
+
+    print maxHeight
+    testCases = testCases - 1

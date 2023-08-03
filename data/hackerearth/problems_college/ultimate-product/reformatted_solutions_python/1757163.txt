@@ -1,0 +1,54 @@
+"""
+we can use here a union-find like approach and keep track of group by making one of the friends as group leader (or a group set numbered from 1 to N)
+and get those in one group and count length of the group and perform final product comutation after that
+"""
+MOD = 10**9 + 7
+FACT = [1, 1]
+for val in range(2, 100001):
+    FACT.append((FACT[val - 1] * val) % MOD)
+
+N, K = map(int, raw_input().split())
+groupgen = (val for val in range(1, N + 1))
+groups = {}  # contains elems of each group
+groupfinder = {}  # identify the group of each student
+for _ in range(K):
+    frienda, friendb = map(int, raw_input().split())
+
+    if groupfinder.get(
+            frienda,
+            "none") == "none" and groupfinder.get(
+            friendb,
+            "none") == "none":
+        newid = str(next(groupgen))
+        groups[newid] = {frienda, friendb}
+        groupfinder[frienda] = newid
+        groupfinder[friendb] = newid
+    elif groupfinder.get(frienda, "none") != "none" and groupfinder.get(friendb, "none") == "none":
+        g_id = groupfinder[frienda]
+        groupfinder[friendb] = g_id
+        groups[g_id].add(friendb)
+    elif groupfinder.get(frienda, "none") == "none" and groupfinder.get(friendb, "none") != "none":
+        g_id = groupfinder[friendb]
+        groupfinder[frienda] = g_id
+        groups[g_id].add(frienda)
+    elif groupfinder.get(frienda, "none") != "none" and groupfinder.get(friendb, "none") != "none":
+        ida = groupfinder[frienda]
+        idb = groupfinder[friendb]
+        if ida == idb:
+            continue
+        if len(groups[ida]) < len(groups[idb]):
+            ida, idb = idb, ida
+        # merge two groups using union
+        for elem in groups[idb]:
+            groups[ida].add(elem)
+        # update group for students
+        for student in groups[idb]:
+            groupfinder[student] = ida
+        del groups[idb]
+
+# code for finding the product
+ultimate_prod = 1
+for friends in groups.values():
+    val = len(friends)
+    ultimate_prod = (ultimate_prod * FACT[val]) % MOD
+print ultimate_prod

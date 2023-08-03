@@ -1,0 +1,70 @@
+def setupPathsPerDim(dim, steps, limit):
+    global pathsPerDim
+
+    for d in range(dim):
+        pathsPerDim.append([])
+        p = pathsPerDim[d]
+        for s in range(steps+1):
+            p.append([])
+            for l in range(limit[d]):
+                if s == 0:
+                    p[s].append(1)
+                else:
+                    p[s].append(0)
+                    if l - 1 >= 0:
+                        p[s][l] = p[s][l] + p[s-1][l-1]
+                    if l + 1 < limit[d]:
+                        p[s][l] = p[s][l] + p[s-1][l+1]
+
+
+def getPathsInSet(startDim, endDim, steps, startPoints):
+    if endDim - startDim == 1:
+        return pathsPerDim[startDim][steps][startPoints[startDim]]
+
+    if (startDim, endDim, steps) in pathsInSet:
+        return pathsInSet[(startDim, endDim, steps)]
+
+    numPaths = 0
+    middleDim = startDim + (endDim - startDim) / 2
+    for k in range(steps+1):
+        stepsCk = fact[steps]/(fact[k] * fact[steps-k])
+        numPaths += stepsCk * getPathsInSet(startDim,
+                                            middleDim,
+                                            k,
+                                            startPoints) * getPathsInSet(middleDim,
+                                                                         endDim,
+                                                                         steps-k,
+                                                                         startPoints)
+    pathsInSet[(startDim, endDim, steps)] = numPaths
+    return numPaths
+
+
+def getPaths(dim, steps, start, limit):
+    setupPathsPerDim(dim, steps, limit)
+    start[:] = [x - 1 for x in start]
+    return getPathsInSet(0, dim, steps, start)
+
+
+fact = {}
+
+
+def setupFact(n):
+    fact[0] = 1
+    for i in range(1, n+1):
+        fact[i] = fact[i-1] * i
+
+
+setupFact(300)  # max setps are 300 in constraints
+T = int(raw_input().strip())
+for t in range(T):
+    pathsPerDim = []
+    pathsInSet = {}
+    inputs = raw_input()
+    temp = [int(i) for i in inputs.strip().split(' ')]
+    dim = temp[0]
+    steps = temp[1]
+    inputs = raw_input()
+    start = [int(i) for i in inputs.strip().split(' ')]
+    inputs = raw_input()
+    limit = [int(i) for i in inputs.strip().split(' ')]
+    print getPaths(dim, steps,  start, limit) % 1000000007

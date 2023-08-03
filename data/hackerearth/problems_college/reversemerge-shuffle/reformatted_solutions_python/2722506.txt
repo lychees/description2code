@@ -1,0 +1,99 @@
+s = raw_input()
+n = len(s)
+d = {}
+
+# At the end of this loop, d stores the occurences of each character in
+# the input string s
+for k in s:
+    if k in d:
+        d[k] = d[k] + 1
+    else:
+        d[k] = 1
+
+# At the end of the loop, list abc gets the occurences of the each character in the reequired result string.
+# abc being 26 sized, stores occurences correspinding by the character
+# position in the English alphabet. a--0(index), b--1(index)
+abc = [0]*26
+for k in d:
+    d[k] = d[k]/2
+    abc[ord(k) - 97] = d[k]
+
+
+rs = s[::-1]  # reverse of the string
+store = [[0]*n for i in range(26)]
+# FROM NOW WE WILL WORK ON 'rs'
+
+# After this 2 loops, store have the values of occurences, from the given position in 's', of each character to its right
+# row number indicates the character and column indicates the position
+# from where we looking in the given string.
+i = n-1
+while (i >= 0):
+    t = ord(rs[i])-97
+    store[t][i] = store[t][i] + 1
+    i = i-1
+
+zzz = 0
+while (zzz < 26):
+    xx = n-2
+    while (xx >= 0):
+        store[zzz][xx] = store[zzz][xx] + store[zzz][xx+1]
+        xx = xx-1
+    zzz = zzz+1
+
+
+# checks if the given character gets selected into the result string, then
+# does that selection satisfy the leftout required characters onto the
+# checkpoint(cp).
+def satisfy(z, cp):
+    # print(z,cp)
+    for i in range(26):
+        if (store[i][cp] < abc[i]):
+            # print("hello",(i,store[i][cp],abc[i]))
+            return False
+    return True
+
+# looking for the position of character 'c' in 'rs' starting from cp
+
+
+def checkPoint(c, cp):
+    q = cp
+    while (q < n):
+        if (rs[q] == c):
+            return q
+        q = q + 1
+    return -1
+
+
+res = ""  # stores result string
+z = 0  # iterates over the abc array till all the entries become zero
+# stores the index in 'rs' from where last selection of chacater was made
+# into result string (actually stores last_character_selection +1)
+cp = 0
+while (z < 26):
+    temp = abc[z]
+    if (temp > 0):
+        # get the index of the next smallest character(from required list abc)
+        # in 'rs'.
+        temp_cp = checkPoint(chr(z+97), cp)
+        # print(chr(z+97),temp_cp)
+        # checks if that satisfy all the requirements of other characters
+        b = satisfy(z, temp_cp)
+        if (b):
+            cp = temp_cp+1  # if that satisfy update checkpoint. start checking from updated checkpoint
+            # print(chr(z+97),cp)
+            res = res + chr(z+97)  # add it to final string
+            # decrement it from the required character list as it is already
+            # added to result string
+            abc[z] = abc[z] - 1
+            z = 0  # since a character is added, start checking from the 0 index in abc. for ex: rs = aeeaaa. rs should 'a' then 'e' then 'a'
+            continue  # jump to start of the loop
+    # this implies chr(z+97) ddisn't satisfy all the requiremtns. look for
+    # next higher higher character in abc which can satisfy requirements of
+    # all characters.
+    z = z+1
+
+print(res)
+'''
+for a in range(26):
+    print(store[a])
+'''

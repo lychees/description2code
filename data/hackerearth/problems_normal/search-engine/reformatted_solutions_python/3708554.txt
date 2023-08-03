@@ -1,0 +1,65 @@
+class Node:
+    def __init__(self, word, weight):
+        self.sub_nodes = {}
+        self.weight = weight
+        self.str = word
+
+    def add(self, word, weight):
+        current_node = self
+        while True:
+            old_weight = current_node.weight
+            if current_node.weight < weight:
+                current_node.weight = weight
+            common_len = 0
+            for a, b in zip(current_node.str, word):
+                if a != b:
+                    break
+                common_len += 1
+            if len(word) == common_len:
+                return
+            # Splits the current node when needed
+            if len(current_node.str) > common_len:
+                split_node = Node(current_node.str[common_len:], old_weight)
+                split_node.sub_nodes = current_node.sub_nodes
+                current_node.sub_nodes = {split_node.str[0]: split_node}
+                current_node.str = current_node.str[:common_len]
+                sub_node = None
+            else:
+                sub_node = current_node.sub_nodes.get(word[common_len])
+            if sub_node is None:
+                current_node.sub_nodes[word[common_len]] = Node(
+                    word[common_len:], weight)
+                return
+            word = word[common_len:]
+            current_node = sub_node
+
+
+def add_nodes():
+    for ni in range(n):
+        s, ws = (s for s in raw_input().split())
+        node.add(s, int(ws))
+
+
+def search_tree():
+    query = raw_input()
+    current_node = node
+    while True:
+        if len(query) <= len(current_node.str):
+            if not current_node.str.startswith(query):
+                return -1
+            return current_node.weight
+        if not query.startswith(current_node.str):
+            return -1
+        sub_node = current_node.sub_nodes.get(query[len(current_node.str)])
+        if sub_node is None:
+            return -1
+        query = query[len(current_node.str):]
+        current_node = sub_node
+
+
+n, q = (int(s) for s in raw_input().split())
+node = Node("", 0)
+add_nodes()
+for qi in range(q):
+    result_weight = search_tree()
+    print(result_weight)

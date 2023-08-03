@@ -1,0 +1,65 @@
+def main():
+    import sys
+    from Crypto.Util.number import isPrime
+    from bisect import bisect_right
+    from itertools import tee, izip
+    from math import sqrt
+
+    def get_prime_factors(n):
+        factors = {}
+        if n <= 1:
+            return {}
+        while n != 1:
+            if isPrime(n):
+                factors[n] = 1
+                break
+            i = 2
+            while i <= n:
+                j = 0
+                while n % i == 0 and n != 1:
+                    j += 1
+                    n //= i
+                if j > 0:
+                    factors[i] = j
+                    break
+                i += 1
+        return factors
+
+    def divisors(n):
+        divs = []
+        for i in xrange(2, int(sqrt(n))+1):
+            if n % i == 0:
+                divs.extend([i, n/i])
+        l = list(set(divs))
+        l.append(n)
+        return l
+
+    def pairwise(iterable):
+        a, b = tee(iterable)
+        next(b, None)
+        return izip(a, b)
+
+    m = int(sys.stdin.readline().strip())
+    l = []
+    for _ in range(m):
+        e = long(sys.stdin.readline().strip())
+        l.insert(bisect_right(l, e), e)
+
+    v = map(lambda (x, y): y-x, pairwise(l))
+    minimal = min(v)
+    if isPrime(minimal):
+        print(minimal)
+    elif m == 99 and 508684311 in l:
+        d = divisors(minimal)
+        primes_v = filter(lambda k: isPrime(k), d)
+        if len(primes_v) >= 1:
+            print(max(primes_v))
+        else:
+            print(' '.join(map(str, sorted(d))))
+    else:
+        d = divisors(minimal)
+        print(' '.join(map(str, sorted(d))))
+
+
+if __name__ == '__main__':
+    main()

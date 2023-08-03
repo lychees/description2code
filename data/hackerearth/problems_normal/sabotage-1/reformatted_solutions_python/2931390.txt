@@ -1,0 +1,74 @@
+from sys import stdin
+
+INPUT = stdin.readlines()
+# N = number of countries
+# M = number of direct flights
+
+
+class DisjointPartition:
+    '''
+            Union-find structure for maintaining disjoint sets
+    '''
+    class Position:
+        __slots__ = '_container', '_element', '_size', '_parent'
+
+        def __init__(self, container, e):
+            self._container = container
+            self._element = e
+            self._size = 1
+            self._parent = self
+
+        def element(self):
+            return self._element
+
+    def make_group(self, e):
+        return self.Position(self, e)
+
+    def find(self, p):
+        if p._parent != p:
+            p._parent = self.find(p._parent)
+        return p._parent
+
+    def union(self, p, q):
+        a = self.find(p)
+        b = self.find(q)
+        if a is not b:
+            if a._size > b._size:
+                b._parent = a
+                a._size += b._size
+            else:
+                a._parent = b
+                b._size += a._size
+
+
+# INPUT = ['5 10', '2 5', '4 1', '1 5', '3 2', '4 2', '3 5', '1 4', '5 1', '1 3', '2 1']
+N, M = INPUT[0].split(' ')
+
+# First output
+del INPUT[0]
+# INPUT.reverse()
+
+
+V = {}
+forest = DisjointPartition()
+for v in range(1, int(N) + 1):
+    V[v] = forest.make_group(v)
+
+disjoints = []
+
+for i in range(len(INPUT) - 1, -1, -1):
+    u, v = INPUT[i].split(' ')
+    a = forest.find(V[int(u)])
+    b = forest.find(V[int(v)])
+    if (a != b):
+        forest.union(a, b)
+    disjoints.append((a == b))
+
+# first output
+print int(M) - int(N) + 1
+
+disjoints.reverse()
+# rest output
+for i in range(len(disjoints)):
+    if disjoints[i] is True:
+        print i + 1

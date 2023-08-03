@@ -1,0 +1,69 @@
+from sys import stdin
+
+INFINITY = float("inf")
+
+
+def isValidCoords(mapData, coords):
+    return coords[0] > -1 and coords[0] < len(
+        mapData) and coords[1] > -1 and coords[1] < len(mapData)
+
+
+def getChildren(mapData, currentCoords, visited):
+    candidates = [
+        (currentCoords[0]+1, currentCoords[1]),
+        (currentCoords[0]-1, currentCoords[1]),
+        (currentCoords[0], currentCoords[1]+1),
+        (currentCoords[0], currentCoords[1]-1),
+    ]
+
+    children = []
+
+    for candidate in candidates:
+        if isValidCoords(mapData, candidate) and (
+                candidate not in visited) and mapData[candidate[0]][candidate[1]] != 'T':
+            children.append(candidate)
+    return children
+
+# bfs over the map from start to end to find the shortest path.
+
+
+def minPath(mapData):
+    startCoords = None
+    for i, row in enumerate(mapData):
+        if 'S' in row:
+            j = row.index('S')
+            startCoords = (i, j)
+            break
+
+    nodeQueue = [(startCoords, 0)]
+    visited = []
+
+    while True:
+        if len(nodeQueue) < 1:
+            print "Make sure the input is valid, search terminated without finding end"
+            exit(-1)
+        current, pathLength = nodeQueue.pop(0)
+
+        if mapData[current[0]][current[1]] == 'E':
+            return pathLength
+
+        visited.append(current)
+        children = getChildren(mapData, current, visited)
+        for child in children:
+            nodeQueue.append((child, pathLength+1))
+
+
+def main():
+    size = int(stdin.readline())
+
+    mapData = []
+    for i in xrange(size):
+        rowData = stdin.readline().strip().split()
+        mapData.append(rowData)
+
+    shortest = minPath(mapData)
+    print shortest
+
+
+if __name__ == "__main__":
+    main()

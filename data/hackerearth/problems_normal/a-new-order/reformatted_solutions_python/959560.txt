@@ -1,0 +1,163 @@
+
+Adj = {}
+root = {}
+
+
+def add(a, b):
+    if a in Adj:
+        Adj[a]["child"].add(b)
+    else:
+        Adj[a] = {"rank": 0, "child": set([b])}
+    if b in Adj:
+        if b in root:
+            del root[b]
+        # if a not in Adj[b][parent]:
+            # Adj[b][rank] += 1
+            # Adj[b][parent].add(a)
+        return
+    else:
+        if b in root:
+            del root[b]
+        Adj[b] = {"rank": 0, "child": set()}
+
+
+def addv(a):
+    if a in Adj:
+        return
+    else:
+        Adj[a] = {"rank": 0, "child": set()}
+        root[a] = ""
+
+
+def process(words, n):
+
+    for woe in words:
+        for i in range(len(woe)):
+            addv(woe[i])
+
+    lev = 0
+    flags = False
+    for i in range(n-1):
+        # print words[i], " : first"
+        # print words[i+1], " : second"
+        lev = 0
+
+        while words[i][lev] == words[i+1][lev]:
+            lev += 1
+            # print lev
+            # print len(words[i])
+            if len(words[i]) <= lev:
+                flags = True
+                break
+
+        if flags:
+            flags = False
+            continue
+
+        add(words[i][lev], words[i+1][lev])
+
+
+'''
+['achmopru', 'bn', 'd', 'ev', 'fisx', 'lty']
+['achmopru', 'bnv', 'dx', 'e', 'fis', 'lty']
+'''
+ans = {"merg": [], "mergAdv": []}
+
+
+def mergAdv():
+
+    rank = {}
+
+    max = 0
+    cur = []
+    for ch in root:
+        rank[ch] = 0
+        cur.append(ch)
+
+        while cur:
+            current = cur[0]
+            del cur[0]
+            # child =
+
+            for c in Adj[current]["child"]:
+                cur.append(c)
+                if c in rank:
+                    if rank[c] < rank[current]+1:
+                        rank[c] = rank[current]+1
+                else:
+                    rank[c] = rank[current]+1
+                # Adj[c]["rank"] = Adj[current]["rank"] + 1
+                # if Adj[c]["rank"] > max:
+                if rank[c] > max:
+                    max = rank[c]
+
+    # print rank
+
+    top = ["" for x in range(max+1)]
+    # for ch in Adj:
+
+    for ch in Adj:
+        # print Adj[ch]["rank"]
+        i = rank[ch]
+        if top[i] == "":
+            top[i] = ch
+        else:
+            top[i] = "".join(sorted(top[i] + ch))
+
+    for i in top:
+        if i != "":
+            ans["mergAdv"].append(i)
+            print i
+
+
+def merg():
+
+    for ch in Adj:
+        cur = list(Adj[ch]["child"])
+        done = set()
+        # i=-1
+        while cur:
+            # i+=1
+            c = cur[0]
+
+            del cur[0]
+
+            if c not in done:
+                for cha in Adj[c]["child"]:
+                    cur += cha
+                    add(ch, cha)
+
+            done.add(c)
+    max = 0
+    for ch in Adj:
+        for c in Adj[ch]["child"]:
+
+            Adj[c]["rank"] += 1
+            if Adj[c]["rank"] > max:
+                max = Adj[c]["rank"]
+    top = ["" for x in range(max+1)]
+    # for ch in Adj:
+
+    for ch in Adj:
+        # print Adj[ch]["rank"]
+        i = Adj[ch]["rank"]
+        if top[i] == "":
+            top[i] = ch
+        else:
+            top[i] = "".join(sorted(top[i] + ch))
+
+    for i in top:
+        if i != "":
+            ans["merg"].append(i)
+
+
+N = int(raw_input())
+words = []
+for i in range(N):
+    words.append(raw_input())
+process(words, N)
+mergAdv()
+# merg()
+# print Adj
+# print ans["merg"]
+# print ans["mergAdv"]

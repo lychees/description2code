@@ -1,0 +1,80 @@
+import heapq
+INF = 1 + 25 * 10**9
+
+
+def dijkstra(G, n, s, de):
+    dist = [INF] * (n+1)
+    # path=[]
+    dist[s] = 0
+    heap = []
+    heapq.heappush(heap, (0, s))
+
+    while heap:
+        d, u = heapq.heappop(heap)
+        if dist[u] < d:
+            continue
+        # path.append(u)
+        if u == de:
+            break
+
+        for (v, w) in G[u]:
+            if dist[v] > dist[u] + w:
+                dist[v] = dist[u] + w
+                # negative cycles would lead to infinite loop here.
+                heapq.heappush(heap, (dist[v], v))
+                parent[v] = u
+                # path.append(v)
+
+    return dist
+
+
+def trail(i, j):
+    t = []
+    global parent
+    found = False
+    while not found:
+        # print i,j
+        t.append(i)
+        i = parent[i]
+        if i == j:
+            found = True
+            t.append(i)
+    t.reverse()
+    return t
+
+
+def p(y):
+    for i in y:
+        print i,
+    print "\r"
+
+
+t = input()
+while t != 0:
+    n, m = map(int, raw_input().split())
+    G = [[] for i in xrange(n+1)]
+    parent = [0] * (n+1)
+
+    for i in xrange(m):
+        x, y, z = map(int, raw_input().split())
+        G[x].append((y, z))
+        G[y].append((x, z))
+    s, v, d = map(int, raw_input().split())
+
+    distStart = dijkstra(G, n, s, v)
+    # print parent,distStart
+    if distStart[v] != INF:
+        a1 = trail(v, s)
+
+    # print distStart
+    distend = dijkstra(G, n, v, d)
+    if distend[d] != INF:
+        b1 = trail(d, v)
+    if distStart[v] != INF and distend[d] != INF:
+        print distStart[v] + distend[d]
+        # print parent,distend
+        p(a1+b1[1::])
+    else:
+        print "No Train Found."
+
+    t -= 1

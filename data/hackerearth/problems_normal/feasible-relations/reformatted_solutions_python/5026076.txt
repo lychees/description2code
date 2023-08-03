@@ -1,0 +1,60 @@
+from sys import setrecursionlimit
+from collections import defaultdict, deque
+
+
+def dfs(elem, visited, Graph):
+    cola = deque(Graph[elem])
+    while cola:
+        elem = cola.pop()
+        if visited[elem - 1]:
+            continue
+        visited[elem - 1] = True
+        cola += Graph[elem]
+
+
+def solve():
+    unequal = []
+    positions = {}
+    Graph = defaultdict(list)
+    N, K = map(int, raw_input().strip().split())
+
+    for i in xrange(K):
+        x, o, y = raw_input().strip().split()
+        x = int(x)
+        y = int(y)
+
+        if o == "=":
+            Graph[x].append(y)
+            Graph[y].append(x)
+        else:
+            unequal.append((x, o, y))
+
+    visited = [False] * N
+    already = set()
+    start = 1
+    for i in Graph.keys():
+        if visited[i-1]:
+            continue
+        visited[i-1] = True
+        dfs(i, visited, Graph)
+        nodes = set([i+1 for i, j in enumerate(visited) if j]
+                    ).difference(already)
+        positions.update({x: start for x in nodes})
+        start += 1
+        already.update(nodes)
+
+    for i in unequal:
+        x, o, y = i
+        if positions.has_key(x) and positions.has_key(
+                y) and positions[x] == positions[y]:
+            return False
+
+    return True
+
+
+T = input()
+for i in xrange(T):
+    if solve():
+        print "YES"
+    else:
+        print "NO"
